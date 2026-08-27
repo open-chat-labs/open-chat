@@ -1,9 +1,9 @@
 use crate::model::files::Files;
-use crate::{RuntimeState, calc_chunk_count, read_state};
+use crate::{RuntimeState, chunk_bounds, read_state};
 use http_request::{Route, build_json_response, encode_logs, extract_route};
 use ic_cdk::query;
 use num_traits::cast::ToPrimitive;
-use std::cmp::min;
+use std::cmp::max;
 use std::num::ParseIntError;
 use std::str::FromStr;
 use types::{
@@ -80,35 +80,39 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
             let (start, end) = match range {
                 BytesRange::From(start, end) => {
                     if start >= file_size {
-                        return HttpResponse::range_not_satisfiable();
+                        return range_not_satisfiable(response_headers, file_size);
                     }
                     // The last byte position in a Range header is inclusive
                     let end = [
-                        start + MAX_RESPONSE_SIZE_BYTES,
+                        start.saturating_add(MAX_RESPONSE_SIZE_BYTES),
                         file_size,
-                        end.map(|e| e + 1).unwrap_or(start + DEFAULT_RANGE_RESPONSE_CHUNK_SIZE),
+                        end.map(|e| e.saturating_add(1))
+                            .unwrap_or(start.saturating_add(DEFAULT_RANGE_RESPONSE_CHUNK_SIZE)),
                     ]
                     .into_iter()
                     .min()
                     .unwrap();
 
                     if end <= start {
-                        return HttpResponse::range_not_satisfiable();
+                        return range_not_satisfiable(response_headers, file_size);
                     }
                     (start, end)
                 }
                 BytesRange::Suffix(len) => {
                     if len == 0 {
-                        return HttpResponse::range_not_satisfiable();
+                        return range_not_satisfiable(response_headers, file_size);
                     }
-                    let start = file_size.saturating_sub(len);
-                    (start, min(file_size, start + MAX_RESPONSE_SIZE_BYTES))
+                    // A suffix range is anchored at the end of the file, so cap it by moving the
+                    // start forward rather than truncating the tail
+                    let start = max(
+                        file_size.saturating_sub(len),
+                        file_size.saturating_sub(MAX_RESPONSE_SIZE_BYTES),
+                    );
+                    (start, file_size)
                 }
             };
 
-            let Some(range_bytes) = files.blob_range(&file.hash, start, end) else {
-                return HttpResponse::not_found();
-            };
+            let range_bytes = files.blob_range(&file.hash, start, end);
             response_headers.push(HeaderField("Content-Length".to_string(), range_bytes.len().to_string()));
 
             let last_byte = end - 1;
@@ -127,7 +131,7 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
         } else {
             let canister_id = state.env.canister_id();
 
-            let Some((chunk_bytes, stream_next_chunk)) = read_chunk(files, &file.hash, file_size, 0) else {
+            let Some((chunk_bytes, stream_next_chunk)) = read_chunk(files, &file.hash, file_size as u64, 0) else {
                 return HttpResponse::not_found();
             };
 
@@ -165,7 +169,7 @@ fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallb
             .filter(|f| !files.is_vault_pinned(&f.hash) && !state.data.vault.is_csam_hash(&f.hash))
             .and_then(|f| {
                 let size = files.data_size(&f.hash)?;
-                read_chunk(files, &f.hash, size as usize, chunk_index)
+                read_chunk(files, &f.hash, size, chunk_index)
             })
         {
             let token = if stream_next_chunk { Some(build_token(file_id, chunk_index + 1)) } else { None };
@@ -183,20 +187,23 @@ fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallb
 }
 
 // Reads the chunk at `chunk_index` (in MAX_RESPONSE_SIZE_BYTES units) and returns whether more chunks follow
-fn read_chunk(files: &Files, hash: &Hash, total_size: usize, chunk_index: u32) -> Option<(Vec<u8>, bool)> {
-    if total_size == 0 {
-        return None;
-    }
-    let total_chunks = calc_chunk_count(MAX_RESPONSE_SIZE_BYTES as u32, total_size as u64);
-    if chunk_index >= total_chunks {
-        return None;
-    }
+fn read_chunk(files: &Files, hash: &Hash, total_size: u64, chunk_index: u32) -> Option<(Vec<u8>, bool)> {
+    let (range, chunk_count) = chunk_bounds(MAX_RESPONSE_SIZE_BYTES as u32, total_size, chunk_index)?;
+    let bytes = files.blob_range(hash, range.start, range.end);
 
-    let start = MAX_RESPONSE_SIZE_BYTES * (chunk_index as usize);
-    let end = min(start + MAX_RESPONSE_SIZE_BYTES, total_size);
-    let bytes = files.blob_range(hash, start, end)?;
+    Some((bytes, chunk_index + 1 < chunk_count))
+}
 
-    Some((bytes, chunk_index + 1 < total_chunks))
+// RFC 9110 §15.5.17: a 416 should carry `Content-Range: bytes */<size>` so clients can recover
+fn range_not_satisfiable(mut headers: Vec<HeaderField>, file_size: usize) -> HttpResponse {
+    headers.push(HeaderField("Content-Range".to_string(), format!("bytes */{file_size}")));
+    HttpResponse {
+        status_code: 416,
+        headers,
+        body: Vec::new(),
+        streaming_strategy: None,
+        upgrade: None,
+    }
 }
 
 fn build_token(blob_id: u128, index: u32) -> Token {

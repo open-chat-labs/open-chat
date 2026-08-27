@@ -1,4 +1,4 @@
-use crate::{RuntimeState, calc_chunk_count, mutate_state};
+use crate::{RuntimeState, chunk_bounds, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_bucket_canister::vault_file_chunk::{Response::*, *};
@@ -64,10 +64,9 @@ fn vault_file_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotFound;
     };
 
-    let chunk_count = calc_chunk_count(VAULT_CHUNK_SIZE_BYTES, total_size);
-    if args.chunk_index >= chunk_count {
+    let Some((range, chunk_count)) = chunk_bounds(VAULT_CHUNK_SIZE_BYTES, total_size, args.chunk_index) else {
         return NotFound;
-    }
+    };
 
     let now = state.env.now();
     let authorized = if let Some(claims) = export_claims {
@@ -90,11 +89,7 @@ fn vault_file_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         return SessionRequired;
     }
 
-    let start = (args.chunk_index as usize) * (VAULT_CHUNK_SIZE_BYTES as usize);
-    let end = std::cmp::min(start + VAULT_CHUNK_SIZE_BYTES as usize, total_size as usize);
-    let Some(bytes) = state.data.files.blob_range(&hash, start, end) else {
-        return NotFound;
-    };
+    let bytes = state.data.files.blob_range(&hash, range.start, range.end);
 
     Success(SuccessResult {
         bytes,

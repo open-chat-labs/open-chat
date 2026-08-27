@@ -72,7 +72,7 @@ impl Files {
     }
 
     // Bytes in the range [start, end), reading only the stable memory chunks which overlap it
-    pub fn blob_range(&self, hash: &Hash, start: usize, end: usize) -> Option<Vec<u8>> {
+    pub fn blob_range(&self, hash: &Hash, start: usize, end: usize) -> Vec<u8> {
         self.blobs.get_range(hash, start, end)
     }
 

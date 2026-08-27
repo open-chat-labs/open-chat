@@ -18,45 +18,41 @@ pub struct StableBlobStorage {
 
 impl StableBlobStorage {
     // Returns the bytes in the range [start, end) without materialising the whole blob. Only the
-    // chunks which overlap the range are read from stable memory.
-    pub fn get_range(&self, hash: &Hash, start: usize, end: usize) -> Option<Vec<u8>> {
+    // chunks which overlap the range are read from stable memory. Callers are expected to have
+    // clamped the range to the blob's size (see `data_size`).
+    pub fn get_range(&self, hash: &Hash, start: usize, end: usize) -> Vec<u8> {
         if end <= start {
-            return self.exists(hash).then(Vec::new);
+            return Vec::new();
         }
 
         let first_chunk = (start / MAX_CHUNK_SIZE) as u32;
         let last_chunk = ((end - 1) / MAX_CHUNK_SIZE) as u32;
 
         let mut bytes = Vec::with_capacity(end - start);
-        let mut found = false;
         for (key, chunk) in self
             .blobs
             .range(Key::new(*hash, first_chunk)..=Key::new(*hash, last_chunk))
             .map(|e| e.into_pair())
         {
-            found = true;
             let chunk_start = key.chunk_index() as usize * MAX_CHUNK_SIZE;
             let from = start.saturating_sub(chunk_start);
             let to = min(chunk.bytes.len(), end - chunk_start);
             bytes.extend_from_slice(&chunk.bytes[from..to]);
         }
 
-        found.then_some(bytes)
+        bytes
     }
 
-    // All chunks except the last are exactly MAX_CHUNK_SIZE, so the size can be derived from the
-    // key count plus the length of the final chunk, without reading every chunk's bytes.
+    // Chunks are dense from index 0 and all but the last are exactly MAX_CHUNK_SIZE, so the size
+    // follows from the last key (an O(log n) reverse seek) plus the length of that one chunk.
     pub fn data_size(&self, hash: &Hash) -> Option<u64> {
-        let range_start = Key::new(*hash, 0);
-        let mut count = 0u64;
-        let mut last_key = None;
-        for key in self.blobs.keys_range(range_start..).take_while(|k| k.prefix == *hash) {
-            count += 1;
-            last_key = Some(key);
-        }
-        let last_chunk = self.blobs.get(&last_key?)?;
+        let last_key = self
+            .blobs
+            .keys_range(Key::new(*hash, 0)..=Key::new(*hash, u32::MAX))
+            .next_back()?;
+        let last_chunk = self.blobs.get(&last_key)?;
 
-        Some((count - 1) * MAX_CHUNK_SIZE as u64 + last_chunk.bytes.len() as u64)
+        Some(last_key.chunk_index() as u64 * MAX_CHUNK_SIZE as u64 + last_chunk.bytes.len() as u64)
     }
 
     pub fn exists(&self, hash: &Hash) -> bool {
@@ -234,7 +230,7 @@ mod tests {
 
         stable_storage.insert(hash, value_in.clone());
 
-        let value_out = stable_storage.get_range(&hash, 0, value_in.len()).unwrap();
+        let value_out = stable_storage.get_range(&hash, 0, value_in.len());
 
         assert_eq!(value_in, value_out)
     }
@@ -260,14 +256,14 @@ mod tests {
             (100, 100),
         ] {
             assert_eq!(
-                stable_storage.get_range(&hash, start, end).unwrap(),
+                stable_storage.get_range(&hash, start, end),
                 value_in[start..end].to_vec(),
                 "range {start}..{end}"
             );
         }
 
         let other_hash = [1u8; 32];
-        assert_eq!(stable_storage.get_range(&other_hash, 0, 10), None);
+        assert!(stable_storage.get_range(&other_hash, 0, 10).is_empty());
         assert_eq!(stable_storage.data_size(&other_hash), None);
     }
 
