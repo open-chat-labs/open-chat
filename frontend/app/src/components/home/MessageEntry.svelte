@@ -1,5 +1,9 @@
 <script lang="ts">
-    import RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import {
+        loadRichTextEditor,
+        richTextEditorIfLoaded,
+    } from "@shared_components/richTextEditorLoader";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import type {
@@ -125,6 +129,22 @@
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
     let editor = $state<RichTextEditor>();
+    // The editor is its own chunk (see richTextEditorLoader). Normally already
+    // warm; the placeholder is only visible on direct-to-chat entry while the
+    // chunk is in flight. A tap on the placeholder focuses the editor once it
+    // arrives.
+    const alreadyLoaded = richTextEditorIfLoaded();
+    let EditorComponent = $state(alreadyLoaded);
+    let focusWhenReady = false;
+    if (alreadyLoaded === undefined) {
+        loadRichTextEditor().then(
+            (c) => {
+                EditorComponent = c;
+                if (focusWhenReady) tick().then(() => editor?.focus());
+            },
+            (err) => console.error("Failed to load the rich text editor", err),
+        );
+    }
     let editorEmpty = $state(true);
 
     // let inp: HTMLDivElement | undefined = $state();
@@ -486,30 +506,37 @@
                     {/if}
 
                     <div class="textbox">
-                        <RichTextEditor
-                            bind:this={editor}
-                            bind:empty={editorEmpty}
-                            placeholder={interpolate($_, placeholder)}
-                            members={$selectedChatMembersStore}
-                            {onPaste}
-                            onKeydown={keyDown}
-                            oninput={onInput}>
-                            {#snippet mentionPicker(args)}
-                                <MentionPicker
-                                    supportsUserGroups
-                                    offset={messageEntryHeight}
-                                    onClose={args.onClose}
-                                    onMention={args.onMention}
-                                    prefix={args.query} />
-                            {/snippet}
-                            {#snippet emojiPicker(args)}
-                                <EmojiAutocompleter
-                                    offset={messageEntryHeight}
-                                    onClose={args.onClose}
-                                    onSelect={args.onSelect}
-                                    query={args.query} />
-                            {/snippet}
-                        </RichTextEditor>
+                        {#if EditorComponent}
+                            <EditorComponent
+                                bind:this={editor}
+                                bind:empty={editorEmpty}
+                                placeholder={interpolate($_, placeholder)}
+                                members={$selectedChatMembersStore}
+                                {onPaste}
+                                onKeydown={keyDown}
+                                oninput={onInput}>
+                                {#snippet mentionPicker(args)}
+                                    <MentionPicker
+                                        supportsUserGroups
+                                        offset={messageEntryHeight}
+                                        onClose={args.onClose}
+                                        onMention={args.onMention}
+                                        prefix={args.query} />
+                                {/snippet}
+                                {#snippet emojiPicker(args)}
+                                    <EmojiAutocompleter
+                                        offset={messageEntryHeight}
+                                        onClose={args.onClose}
+                                        onSelect={args.onSelect}
+                                        query={args.query} />
+                                {/snippet}
+                            </EditorComponent>
+                        {:else}
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="editor-placeholder" onpointerdown={() => (focusWhenReady = true)}>
+                                {interpolate($_, placeholder)}
+                            </div>
+                        {/if}
                     </div>
                 </div>
             {/key}
@@ -602,6 +629,16 @@
         margin: 0 $sp3;
         flex: 1;
         position: relative;
+    }
+
+    // mirrors :global(.ProseMirror) + its empty-editor placeholder
+    .editor-placeholder {
+        width: 100%;
+        min-width: 0;
+        font-size: 1rem;
+        line-height: 1.3;
+        color: var(--txt-light, var(--chat-input-placeholder));
+        cursor: text;
     }
 
     .textbox {
