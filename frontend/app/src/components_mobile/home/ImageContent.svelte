@@ -159,6 +159,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <div class="image_wrapper">
                 <img
+                    decoding="async"
                     class="img"
                     class:landscape
                     class:fill
@@ -198,6 +199,7 @@
         <div class="image_wrapper" class:narrow onclick={focusImage}>
             {#if normalised.url !== undefined}
                 <img
+                    decoding="async"
                     bind:this={imgElement}
                     bind:clientWidth={imageWidth}
                     draggable="false"
