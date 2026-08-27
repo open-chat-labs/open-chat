@@ -43,6 +43,9 @@ const FILE_ICON =
 
 staticResourceCache({
     matchCallback: ({ request }) => {
+        // Video is deliberately excluded: media elements fetch it via sequential range requests
+        // (206) which are never cached here anyway, so routing them through the service worker
+        // adds a hop and a body clone per chunk for no benefit.
         return [
             "style",
             "script",
@@ -52,7 +55,6 @@ staticResourceCache({
             "frame",
             "image",
             "manifest",
-            "video",
         ].includes(request.destination);
     },
     cacheName: "openchat_stale_while_revalidate",

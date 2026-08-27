@@ -154,6 +154,21 @@ pub fn calc_chunk_count(chunk_size: u32, total_size: u64) -> u32 {
     (((total_size - 1) / (chunk_size as u64)) + 1) as u32
 }
 
+// The byte range [start, end) covered by chunk `chunk_index` of a blob of `total_size` bytes split
+// into `chunk_size` chunks, plus the total chunk count. None if the index is past the end.
+pub fn chunk_bounds(chunk_size: u32, total_size: u64, chunk_index: u32) -> Option<(std::ops::Range<usize>, u32)> {
+    if total_size == 0 {
+        return None;
+    }
+    let chunk_count = calc_chunk_count(chunk_size, total_size);
+    if chunk_index >= chunk_count {
+        return None;
+    }
+    let start = chunk_index as usize * chunk_size as usize;
+    let end = std::cmp::min(start + chunk_size as usize, total_size as usize);
+    Some((start..end, chunk_count))
+}
+
 fn check_cycles_balance() {
     let storage_index_canister_id = read_state(|state| state.data.storage_index_canister_id);
     utils::cycles::check_cycles_balance(storage_index_canister_id);

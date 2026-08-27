@@ -71,8 +71,9 @@ impl Files {
         self.pending_files.get(file_id)
     }
 
-    pub fn blob_bytes(&self, hash: &Hash) -> Option<Vec<u8>> {
-        self.blobs.get(hash)
+    // Bytes in the range [start, end), reading only the stable memory chunks which overlap it
+    pub fn blob_range(&self, hash: &Hash, start: usize, end: usize) -> Vec<u8> {
+        self.blobs.get_range(hash, start, end)
     }
 
     pub fn owner(&self, file_id: &FileId) -> Option<Principal> {
@@ -411,7 +412,7 @@ impl Files {
 
     fn file_and_size(&self, file_id: &FileId) -> Option<(File, u64)> {
         let file = self.get(file_id)?;
-        let size = self.blobs.get(&file.hash).map(|b| b.len() as u64)?;
+        let size = self.blobs.data_size(&file.hash)?;
 
         Some((file.clone(), size))
     }
