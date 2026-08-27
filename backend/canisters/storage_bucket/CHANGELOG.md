@@ -11,6 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Token-gated evidence export on `vault_file_chunk` for the NCA reporting service, logged as `ExportedForAuthorityReport` in the chain of custody ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 - Accept the `SetAuthorityReporter` vault op carrying the service principal and the OC public key needed to verify export tokens ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 
+### Changed
+
+- Serve HTTP range requests by reading only the requested chunks from stable memory rather than materialising the whole blob per request ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
+- Increase the default response size for open-ended range requests from 256KB to 1MB ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
+
+### Fixed
+
+- Treat the last byte position of a `Range` header as inclusive and add the `Accept-Ranges` header ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
+
 ## [[2.0.2032](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2032-storage_bucket)] - 2026-08-20
 
 ### Added
