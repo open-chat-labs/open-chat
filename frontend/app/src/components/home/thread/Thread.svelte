@@ -29,6 +29,7 @@
         subscribe,
         threadEventsStore,
         threadsFollowedByMeStore,
+        TimelineGrouper,
         unconfirmedStore,
     } from "@client";
     import { getContext, onMount } from "svelte";
@@ -37,7 +38,7 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import AreYouSure from "../../AreYouSure.svelte";
     import Loading from "@shared_components/Loading.svelte";
-    import { flattenTimeline } from "@shared_components/flatChatItems";
+    import { TimelineFlattener } from "@shared_components/flatChatItems";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
@@ -96,8 +97,10 @@
     let events = $derived(
         atRoot && rootEvent !== undefined ? [rootEvent, ...$threadEventsStore] : $threadEventsStore,
     );
+    const grouper = new TimelineGrouper();
+    const flattener = new TimelineFlattener<Message>();
     let timeline = $derived(
-        client.groupEvents(
+        grouper.group(
             events,
             $currentUserIdStore,
             chat.kind === "channel" && chat.public,
@@ -106,7 +109,7 @@
             true,
         ) as TimelineItem<Message>[],
     );
-    let items = $derived(flattenTimeline(timeline));
+    let items = $derived(flattener.flatten(timeline));
     let readonly = $derived(client.isChatReadOnly(chat.id));
     let thread = $derived(rootEvent?.event.thread);
     let loading = $derived(!initialised && $threadEventsStore.length === 0 && thread !== undefined);

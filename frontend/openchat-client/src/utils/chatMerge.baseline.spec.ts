@@ -13,6 +13,7 @@ import DRange from "drange";
 import { MessageLocalUpdates } from "../state/message/localUpdates";
 import {
     groupEvents,
+    TimelineGrouper,
     mergeEventsAndLocalUpdates,
     mergeEventsAndLocalUpdatesWithRange,
     mergeServerEvents,
@@ -54,7 +55,11 @@ function msg(
     };
 }
 
-function ev<T extends ChatEvent>(index: number, event: T, timestamp = BASE + index * 1000): EventWrapper<T> {
+function ev<T extends ChatEvent>(
+    index: number,
+    event: T,
+    timestamp = BASE + index * 1000,
+): EventWrapper<T> {
     return { index, event, timestamp: BigInt(timestamp) };
 }
 
@@ -72,7 +77,10 @@ describe("mergeServerEvents", () => {
         const incoming = [ev(2, msg(2, "u1", "edited 2")), msgEv(4)];
         const merged = mergeServerEvents(existing, incoming, ctx);
         expect(indexes(merged)).toEqual([1, 2, 3, 4]);
-        expect((merged[1].event as Message).content).toEqual({ kind: "text_content", text: "edited 2" });
+        expect((merged[1].event as Message).content).toEqual({
+            kind: "text_content",
+            text: "edited 2",
+        });
     });
 
     test("sorts by timestamp before index", () => {
@@ -162,8 +170,14 @@ describe("updateExistingMessages", () => {
         ];
         const out = updateExistingMessages(events, [ev(3, msg(3, "u1", "updated 3"))]);
         expect(out).toBe(events);
-        expect((events[2].event as Message).content).toEqual({ kind: "text_content", text: "updated 3" });
-        expect((events[0].event as Message).content).toEqual({ kind: "text_content", text: "msg 1" });
+        expect((events[2].event as Message).content).toEqual({
+            kind: "text_content",
+            text: "updated 3",
+        });
+        expect((events[0].event as Message).content).toEqual({
+            kind: "text_content",
+            text: "msg 1",
+        });
         expect(events[1].event.kind).toBe("member_joined");
     });
 });
@@ -208,7 +222,10 @@ describe("mergeEventsAndLocalUpdates", () => {
         const out = run(events, [], updates);
         expect(out[0]).not.toBe(events[0]);
         expect((out[0].event as Message).content).toEqual({ kind: "text_content", text: "edited" });
-        expect((events[0].event as Message).content).toEqual({ kind: "text_content", text: "msg 1" });
+        expect((events[0].event as Message).content).toEqual({
+            kind: "text_content",
+            text: "msg 1",
+        });
     });
 
     test("applies local delete", () => {
@@ -230,7 +247,10 @@ describe("mergeEventsAndLocalUpdates", () => {
             undefined,
             new MessageMap([[1n, "bonjour"]]),
         );
-        expect((out[0].event as Message).content).toMatchObject({ kind: "text_content", text: "bonjour" });
+        expect((out[0].event as Message).content).toMatchObject({
+            kind: "text_content",
+            text: "bonjour",
+        });
     });
 
     test("hides messages from blocked senders", () => {
@@ -428,7 +448,10 @@ describe("mergeEventsAndLocalUpdates fast path", () => {
     });
 
     test("fast path still tracks confirmed ids and contiguity for unconfirmed messages", () => {
-        const out = run([msgEv(1), msgEv(2)], [ev(2, msg(2, "me")), msgEv(3, "me"), msgEv(9, "me")]);
+        const out = run(
+            [msgEv(1), msgEv(2)],
+            [ev(2, msg(2, "me")), msgEv(3, "me"), msgEv(9, "me")],
+        );
         expect(indexes(out)).toEqual([1, 2, 3]);
     });
 });
@@ -515,5 +538,191 @@ describe("mergeEventsAndLocalUpdatesWithRange", () => {
     test("range excludes unconfirmed messages that were dropped", () => {
         const { range } = run([msgEv(1)], [msgEv(10, "me")]);
         expect(range.subranges()).toEqual([{ low: 1, high: 1, length: 1 }]);
+    });
+});
+
+describe("TimelineGrouper", () => {
+    function base(): EventWrapper<ChatEvent>[] {
+        return [
+            msgEv(1, "u1", BASE),
+            ev(2, { kind: "member_joined", userId: "a" }, BASE + 1),
+            msgEv(3, "u1", BASE + 2000),
+            msgEv(4, "u2", BASE + 3000),
+            ev(
+                5,
+                msg(5, "u3", "gone", {
+                    content: { kind: "deleted_content", deletedBy: "u3", timestamp: 0n },
+                }),
+                BASE + 4000,
+            ),
+            msgEv(6, "u2", BASE + DAY),
+            msgEv(7, "u1", BASE + DAY + 1000),
+        ];
+    }
+
+    function groupsOf(timeline: ReturnType<typeof groupEvents>) {
+        return timeline.map((t) => (t.kind === "timeline_event_group" ? t.group : t.kind));
+    }
+
+    test("first call matches groupEvents exactly", () => {
+        const events = base();
+        const expanded = new Set<number>();
+        const g = new TimelineGrouper();
+        for (const backwards of [false, true]) {
+            expect(g.group(events, "me", false, expanded, undefined, backwards)).toEqual(
+                groupEvents(events, "me", false, expanded, undefined, backwards),
+            );
+        }
+    });
+
+    test("same array returns the same timeline instance", () => {
+        const events = base();
+        const expanded = new Set<number>();
+        const g = new TimelineGrouper();
+        const a = g.group(events, "me", false, expanded, undefined, true);
+        expect(g.group(events, "me", false, expanded, undefined, true)).toBe(a);
+    });
+
+    test("cosmetic replacement of one message patches the timeline, keeping untouched groups", () => {
+        const events = base();
+        const expanded = new Set<number>();
+        const g = new TimelineGrouper();
+        const before = g.group(events, "me", false, expanded, undefined, true);
+
+        const reacted = {
+            ...events[3],
+            event: {
+                ...(events[3].event as Message),
+                reactions: [{ reaction: "x", userIds: new Set(["me"]) }],
+            },
+        };
+        const next = [...events];
+        next[3] = reacted;
+        const after = g.group(next, "me", false, expanded, undefined, true);
+
+        expect(after).toEqual(groupEvents(next, "me", false, expanded, undefined, true));
+        expect(after).not.toBe(before);
+        // Day 2 (timeline[0]/[1] in backwards order) is untouched: identity kept.
+        expect(after[0]).toBe(before[0]);
+        expect(after[1]).toBe(before[1]);
+        // Day 1's item is new, but only the group holding index 4 was copied.
+        expect(after[2]).not.toBe(before[2]);
+        const g2a = groupsOf(after)[2] as EventWrapper<ChatEvent>[][];
+        const g2b = groupsOf(before)[2] as EventWrapper<ChatEvent>[][];
+        expect(g2a.length).toBe(g2b.length);
+        for (let i = 0; i < g2a.length; i++) {
+            const holdsReacted = g2a[i].some((e) => e === reacted);
+            if (holdsReacted) expect(g2a[i]).not.toBe(g2b[i]);
+            else expect(g2a[i]).toBe(g2b[i]);
+        }
+    });
+
+    test("replacing a hidden (aggregated) message keeps the whole timeline", () => {
+        const events = base();
+        const expanded = new Set<number>();
+        const g = new TimelineGrouper();
+        const before = g.group(events, "me", false, expanded, undefined, true);
+        const next = [...events];
+        next[4] = { ...events[4], event: { ...(events[4].event as Message) } };
+        const after = g.group(next, "me", false, expanded, undefined, true);
+        expect(after).toBe(before);
+        expect(after).toEqual(groupEvents(next, "me", false, expanded, undefined, true));
+    });
+
+    test("structural changes fall back to a full regroup", () => {
+        const events = base();
+        const expanded = new Set<number>();
+        const g = new TimelineGrouper();
+        g.group(events, "me", false, expanded, undefined, true);
+
+        const cases: [string, EventWrapper<ChatEvent>[], ReadonlySet<number>, string][] = [
+            ["appended", [...events, msgEv(8, "u1", BASE + DAY + 2000)], expanded, "me"],
+            ["removed", events.slice(1), expanded, "me"],
+            [
+                "sender changed",
+                events.map((e, i) => (i === 3 ? msgEv(4, "u1", BASE + 3000) : e)),
+                expanded,
+                "me",
+            ],
+            [
+                "timestamp changed",
+                events.map((e, i) => (i === 3 ? msgEv(4, "u2", BASE + DAY) : e)),
+                expanded,
+                "me",
+            ],
+            [
+                "message deleted",
+                events.map((e, i) =>
+                    i === 3
+                        ? ev(
+                              4,
+                              msg(4, "u2", "", {
+                                  content: {
+                                      kind: "deleted_content",
+                                      deletedBy: "u2",
+                                      timestamp: 0n,
+                                  },
+                              }),
+                              BASE + 3000,
+                          )
+                        : e,
+                ),
+                expanded,
+                "me",
+            ],
+            [
+                "non-message replaced",
+                events.map((e, i) =>
+                    i === 1 ? ev(2, { kind: "member_joined", userId: "b" }, BASE + 1) : e,
+                ),
+                expanded,
+                "me",
+            ],
+            ["deleted message expanded", events.map((e) => ({ ...e })), new Set([5]), "me"],
+            ["different user", events.map((e) => ({ ...e })), expanded, "u3"],
+        ];
+        for (const [name, next, exp, me] of cases) {
+            const actual = g.group(next, me, false, exp, undefined, true);
+            expect(actual, name).toEqual(groupEvents(next, me, false, exp, undefined, true));
+        }
+    });
+
+    test("a new groupInner forces a regroup", () => {
+        const events = [msgEv(1, "u1", BASE), msgEv(2, "u1", BASE + 1000)];
+        const expanded = new Set<number>();
+        const g = new TimelineGrouper();
+        const one = (evs: EventWrapper<ChatEvent>[]) => evs.map((e) => [e]);
+        const a = g.group(events, "me", false, expanded, one, true);
+        expect(a).toEqual(groupEvents(events, "me", false, expanded, one, true));
+        const b = g.group([...events], "me", false, expanded, undefined, true);
+        expect(b).toEqual(groupEvents(events, "me", false, expanded, undefined, true));
+        expect(b).not.toEqual(a);
+    });
+
+    test("proposal messages require identical content", () => {
+        const proposal = { kind: "nns", id: 1n, topic: 3 };
+        const mk = (content: unknown) =>
+            ev(4, msg(4, "u2", "", { content: content as Message["content"] }), BASE + 3000);
+        const events = base();
+        events[3] = mk({
+            kind: "proposal_content",
+            governanceCanisterId: "x",
+            proposal,
+            myVote: undefined,
+        });
+        const expanded = new Set<number>();
+        const g = new TimelineGrouper();
+        const inner = (evs: EventWrapper<ChatEvent>[]) => evs.map((e) => [e]);
+        const before = g.group(events, "me", false, expanded, inner, true);
+        const next = [...events];
+        next[3] = mk({
+            kind: "proposal_content",
+            governanceCanisterId: "x",
+            proposal: { ...proposal },
+            myVote: undefined,
+        });
+        const after = g.group(next, "me", false, expanded, inner, true);
+        expect(after).toEqual(groupEvents(next, "me", false, expanded, inner, true));
+        expect(after).not.toBe(before);
     });
 });
