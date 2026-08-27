@@ -18,6 +18,7 @@
         eventsStore,
         failedMessagesStore,
         FilteredProposals,
+        TimelineGrouper,
         localUpdates,
         messageIndexStore,
         messagesRead,
@@ -43,7 +44,7 @@
     import Witch from "@shared_components/Witch.svelte";
     import {
         chatStartItem,
-        flattenTimeline,
+        TimelineFlattener,
         type FlatChatItem,
     } from "@shared_components/flatChatItems";
     import ChatEvent from "./ChatEvent.svelte";
@@ -273,18 +274,23 @@
     });
     let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
     let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
+    const grouper = new TimelineGrouper();
+    const flattener = new TimelineFlattener();
+    // Derived (not inline) so its identity only changes with filteredProposals,
+    // which is what the grouper's memo keys on.
+    let groupInnerFn = $derived(groupInner(filteredProposals));
     let timeline = $derived(
-        client.groupEvents(
+        grouper.group(
             $eventsStore,
             $currentUserIdStore,
             chat.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
-            groupInner(filteredProposals),
+            groupInnerFn,
             true,
         ),
     );
     let items = $derived.by<FlatChatItem[]>(() => {
-        const flat: FlatChatItem[] = flattenTimeline(timeline);
+        const flat: FlatChatItem[] = flattener.flatten(timeline);
         if (showAvatar) {
             // rendered at the oldest end of the list (the visual top)
             flat.push(chatStartItem(chatIdentifierToString(chat.id)));

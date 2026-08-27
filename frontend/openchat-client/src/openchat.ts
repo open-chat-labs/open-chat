@@ -4904,10 +4904,10 @@ export class OpenChat {
     }
 
     expandDeletedMessages(messageIndexes: Set<number>): void {
-        selectedChatExpandedDeletedMessageStore.update((set) => {
-            messageIndexes.forEach((i) => set.add(i));
-            return set;
-        });
+        // A new set each time: consumers (TimelineGrouper) memoise by identity
+        selectedChatExpandedDeletedMessageStore.update(
+            (set) => new Set([...set, ...messageIndexes]),
+        );
     }
 
     remoteUserToggledReaction(
