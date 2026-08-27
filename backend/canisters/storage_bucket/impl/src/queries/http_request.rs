@@ -1,3 +1,4 @@
+use crate::model::files::Files;
 use crate::{RuntimeState, calc_chunk_count, read_state};
 use http_request::{Route, build_json_response, encode_logs, extract_route};
 use ic_cdk::query;
@@ -6,12 +7,15 @@ use std::cmp::min;
 use std::num::ParseIntError;
 use std::str::FromStr;
 use types::{
-    CallbackFunc, FileId, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy,
+    CallbackFunc, FileId, Hash, HeaderField, HttpRequest, HttpResponse, StreamingCallbackHttpResponse, StreamingStrategy,
     TimestampMillis, Token,
 };
 
 const MAX_RESPONSE_SIZE_BYTES: usize = 3 << 19; // 1.5MB
-const DEFAULT_RANGE_RESPONSE_CHUNK_SIZE: usize = 1 << 18; // 256KB
+// Browsers stream media with open-ended ranges (`bytes=N-`) issued strictly one after another, so
+// the per-request round trip (gateway + query) dominates throughput. Keep this large enough that
+// a typical phone video (3-4Mbps) stays ahead of playback.
+const DEFAULT_RANGE_RESPONSE_CHUNK_SIZE: usize = 1 << 20; // 1MB
 const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 
 #[query]
@@ -48,20 +52,22 @@ fn http_request_streaming_callback(token: Token) -> StreamingCallbackHttpRespons
 }
 
 fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], state: &RuntimeState) -> HttpResponse {
-    if let Some(file) = state.data.files.get(&file_id)
+    let files = &state.data.files;
+    if let Some(file) = files.get(&file_id)
         // Quarantined blobs are never served publicly. The check is hash-based, so any file
         // referencing a quarantined blob (including re-uploads of the same content) is covered.
         // A hash whose content was upheld as CSAM stays blocked forever, even after the
         // vaulted record itself is released.
-        && !state.data.files.is_vault_pinned(&file.hash)
+        && !files.is_vault_pinned(&file.hash)
         && !state.data.vault.is_csam_hash(&file.hash)
-        && let Some(file_bytes) = state.data.files.blob_bytes(&file.hash)
+        && let Some(file_size) = files.data_size(&file.hash)
     {
-        let file_bytes_len = file_bytes.len();
+        let file_size = file_size as usize;
         let mut response_headers = vec![
             HeaderField("Content-Type".to_string(), file.mime_type.clone()),
             HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
             HeaderField("X-Cacheable-Resource".to_string(), "true".to_string()),
+            HeaderField("Accept-Ranges".to_string(), "bytes".to_string()),
             HeaderField("Access-Control-Allow-Origin".to_string(), "*".to_string()),
             HeaderField(
                 "Content-Security-Policy".to_string(),
@@ -70,39 +76,45 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
         ];
 
         return if let Some(range) = extract_range_from_headers(request_headers) {
+            // (start, end) where end is exclusive
             let (start, end) = match range {
                 BytesRange::From(start, end) => {
+                    if start >= file_size {
+                        return HttpResponse::range_not_satisfiable();
+                    }
+                    // The last byte position in a Range header is inclusive
                     let end = [
                         start + MAX_RESPONSE_SIZE_BYTES,
-                        file_bytes_len,
-                        end.unwrap_or(start + DEFAULT_RANGE_RESPONSE_CHUNK_SIZE),
+                        file_size,
+                        end.map(|e| e + 1).unwrap_or(start + DEFAULT_RANGE_RESPONSE_CHUNK_SIZE),
                     ]
                     .into_iter()
                     .min()
                     .unwrap();
 
-                    if start > end {
+                    if end <= start {
                         return HttpResponse::range_not_satisfiable();
-                    } else {
-                        (start, end)
                     }
+                    (start, end)
                 }
                 BytesRange::Suffix(len) => {
-                    let Some(start) = file_bytes_len.checked_sub(len) else {
+                    if len == 0 {
                         return HttpResponse::range_not_satisfiable();
-                    };
-
-                    (start, file_bytes_len)
+                    }
+                    let start = file_size.saturating_sub(len);
+                    (start, min(file_size, start + MAX_RESPONSE_SIZE_BYTES))
                 }
             };
 
-            let range_bytes = file_bytes[start..end].to_vec();
+            let Some(range_bytes) = files.blob_range(&file.hash, start, end) else {
+                return HttpResponse::not_found();
+            };
             response_headers.push(HeaderField("Content-Length".to_string(), range_bytes.len().to_string()));
 
             let last_byte = end - 1;
             response_headers.push(HeaderField(
                 "Content-Range".to_string(),
-                format!("bytes {start}-{last_byte}/{file_bytes_len}"),
+                format!("bytes {start}-{last_byte}/{file_size}"),
             ));
 
             HttpResponse {
@@ -115,7 +127,9 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
         } else {
             let canister_id = state.env.canister_id();
 
-            let (chunk_bytes, stream_next_chunk) = chunk_bytes(file_bytes, 0);
+            let Some((chunk_bytes, stream_next_chunk)) = read_chunk(files, &file.hash, file_size, 0) else {
+                return HttpResponse::not_found();
+            };
 
             let streaming_strategy = if stream_next_chunk {
                 Some(StreamingStrategy::Callback {
@@ -126,7 +140,7 @@ fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], s
                 None
             };
 
-            response_headers.push(HeaderField("Content-Length".to_string(), file_bytes_len.to_string()));
+            response_headers.push(HeaderField("Content-Length".to_string(), file_size.to_string()));
 
             HttpResponse {
                 status_code: 200,
@@ -146,13 +160,14 @@ fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallb
         let chunk_index = token.index.0.to_u32().unwrap();
         let files = &state.data.files;
 
-        if let Some(bytes) = files
+        if let Some((chunk_bytes, stream_next_chunk)) = files
             .get(&file_id)
             .filter(|f| !files.is_vault_pinned(&f.hash) && !state.data.vault.is_csam_hash(&f.hash))
-            .and_then(|f| files.blob_bytes(&f.hash))
+            .and_then(|f| {
+                let size = files.data_size(&f.hash)?;
+                read_chunk(files, &f.hash, size as usize, chunk_index)
+            })
         {
-            let (chunk_bytes, stream_next_chunk) = chunk_bytes(bytes, chunk_index);
-
             let token = if stream_next_chunk { Some(build_token(file_id, chunk_index + 1)) } else { None };
             return StreamingCallbackHttpResponse {
                 body: chunk_bytes,
@@ -167,23 +182,21 @@ fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallb
     }
 }
 
-fn chunk_bytes(mut blob_bytes: Vec<u8>, chunk_index: u32) -> (Vec<u8>, bool) {
-    let total_size = blob_bytes.len();
+// Reads the chunk at `chunk_index` (in MAX_RESPONSE_SIZE_BYTES units) and returns whether more chunks follow
+fn read_chunk(files: &Files, hash: &Hash, total_size: usize, chunk_index: u32) -> Option<(Vec<u8>, bool)> {
+    if total_size == 0 {
+        return None;
+    }
     let total_chunks = calc_chunk_count(MAX_RESPONSE_SIZE_BYTES as u32, total_size as u64);
-    let last_chunk_index = total_chunks - 1;
-    let stream_next_chunk = chunk_index < last_chunk_index;
-
-    if chunk_index > last_chunk_index {
-        panic!("Invalid request");
+    if chunk_index >= total_chunks {
+        return None;
     }
 
     let start = MAX_RESPONSE_SIZE_BYTES * (chunk_index as usize);
     let end = min(start + MAX_RESPONSE_SIZE_BYTES, total_size);
+    let bytes = files.blob_range(hash, start, end)?;
 
-    blob_bytes.drain(end..);
-    blob_bytes.drain(0..start);
-
-    (blob_bytes, stream_next_chunk)
+    Some((bytes, chunk_index + 1 < total_chunks))
 }
 
 fn build_token(blob_id: u128, index: u32) -> Token {

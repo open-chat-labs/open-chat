@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Serve HTTP range requests by reading only the requested chunks from stable memory rather than materialising the whole blob per request ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+- Increase the default response size for open-ended range requests from 256KB to 1MB ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+
+### Fixed
+
+- Treat the last byte position of a `Range` header as inclusive and add the `Accept-Ranges` header ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+
 ### Added
 
 - Token-gated evidence export on `vault_file_chunk` for the NCA reporting service, logged as `ExportedForAuthorityReport` in the chain of custody ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))

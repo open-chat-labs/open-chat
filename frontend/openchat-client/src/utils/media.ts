@@ -1,6 +1,7 @@
 import type { AttachmentContent, Message } from "@shared";
 import { LazyFile } from "@shared";
 import { dataToBlobUrl } from "./blob";
+import { mp4FastStart } from "./mp4";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
 const DEFAULT_JPEG_QUALITY = 0.75;
@@ -364,7 +365,8 @@ async function handleVideoFile(file: File): Promise<AttachmentContent> {
     const [thumb, image] = await extractVideoThumbnail(file);
 
     // TODO resize video instead of checking max dims?
-    const data = await file.arrayBuffer();
+    // Move the moov atom to the front so playback can start after the first range request
+    const data = mp4FastStart(await file.arrayBuffer());
     const blobUrl = dataToBlobUrl(data, file.type);
 
     return {
