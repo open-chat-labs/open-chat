@@ -60,6 +60,7 @@ import { IndexedDbConnectionManager } from "./indexedDb";
 
 const CACHE_VERSION = 150;
 const MAX_INDEX = 9999999999;
+const CHAT_STATE_WRITE_INTERVAL_MS = 30_000;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -265,6 +266,11 @@ export class ChatsDb {
     private readonly connectionManager: IndexedDbConnectionManager<ChatSchema>;
     private readonly principalString: string;
     private expiredEventSweeperJob: NodeJS.Timeout | undefined;
+    private pendingChatState:
+        | { state: ChatStateFull; updatedEvents: ChatMap<UpdatedEvent[]> }
+        | undefined;
+    private chatStateWriteTimer: ReturnType<typeof setTimeout> | undefined;
+    private lastChatStateWrite = 0;
 
     constructor(principal: Principal) {
         this.principalString = principal.toString();
@@ -337,6 +343,47 @@ export class ChatsDb {
             return undefined;
         }
         return chats;
+    }
+
+    // setCachedChats rewrites the WHOLE chat state under one key (~1.5 MB for a
+    // heavy account) and is requested by every poll that carried an update —
+    // potentially every 5s. Coalesce those requests: at most one write per
+    // CHAT_STATE_WRITE_INTERVAL_MS, always writing the latest state together
+    // with the union of the events to mark dirty (they are consistent with each
+    // other, and land in the same transaction). The first request after a quiet
+    // period writes immediately so a cold cache is populated promptly.
+    //
+    // Losing a trailing write on unload is harmless: the cached
+    // latestUserCanisterUpdates timestamp means the next session fetches — and
+    // re-marks — the same updates again.
+    setCachedChatsThrottled(chatState: ChatStateFull, updatedEvents: ChatMap<UpdatedEvent[]>) {
+        if (this.pendingChatState === undefined) {
+            this.pendingChatState = { state: chatState, updatedEvents: new ChatMap() };
+        } else {
+            this.pendingChatState.state = chatState;
+        }
+        const pending = this.pendingChatState.updatedEvents;
+        for (const [chatId, events] of updatedEvents.entries()) {
+            const existing = pending.get(chatId);
+            pending.set(chatId, existing === undefined ? events : [...existing, ...events]);
+        }
+        if (this.chatStateWriteTimer !== undefined) return;
+        const delay = Math.max(
+            0,
+            this.lastChatStateWrite + CHAT_STATE_WRITE_INTERVAL_MS - Date.now(),
+        );
+        this.chatStateWriteTimer = setTimeout(() => this.flushPendingChatState(), delay);
+    }
+
+    private flushPendingChatState() {
+        this.chatStateWriteTimer = undefined;
+        const pending = this.pendingChatState;
+        this.pendingChatState = undefined;
+        if (pending === undefined) return;
+        this.lastChatStateWrite = Date.now();
+        this.setCachedChats(pending.state, pending.updatedEvents).catch((err) =>
+            console.error("Failed to cache chat state", err),
+        );
     }
 
     async setCachedChats(
@@ -954,6 +1001,9 @@ export class ChatsDb {
     }
 
     async clearCache(): Promise<void> {
+        clearTimeout(this.chatStateWriteTimer);
+        this.chatStateWriteTimer = undefined;
+        this.pendingChatState = undefined;
         const name = `openchat_db_${this.principalString}`;
         try {
             (await this.getDb()).close();

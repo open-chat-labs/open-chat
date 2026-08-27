@@ -1929,7 +1929,7 @@ export class OpenChatAgent extends EventTarget {
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
 
         if (this.userClient.userId !== ANON_USER_ID) {
-            this._chatsDb.setCachedChats(state, updatedEvents);
+            this._chatsDb.setCachedChatsThrottled(state, updatedEvents);
         }
 
         const directChatsAddedUpdatedIds = new Set([

@@ -1,6 +1,6 @@
-import type { ChatIdentifier, GroupChatIdentifier } from "@shared";
+import { ChatMap, type ChatIdentifier, type GroupChatIdentifier, type UpdatedEvent } from "@shared";
 import type { Principal } from "@icp-sdk/core/principal";
-import { beforeAll, describe, expect, test } from "vitest";
+import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 import { ChatsDb, createCacheKey } from "./chatsDb";
 
 const chatId: GroupChatIdentifier = { kind: "group_chat", groupId: "gid" };
@@ -163,5 +163,92 @@ describe("loadMessagesByMessageIndex", () => {
 
         expect([...missing]).toEqual([]);
         expect([...dirty]).toEqual([100]);
+    });
+});
+
+describe("setCachedChatsThrottled", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function state(tag: string): any {
+        return { tag };
+    }
+    function updated(chatId: ChatIdentifier, ...indexes: number[]): ChatMap<UpdatedEvent[]> {
+        const m = new ChatMap<UpdatedEvent[]>();
+        m.set(
+            chatId,
+            indexes.map((eventIndex) => ({ eventIndex, timestamp: 0n })),
+        );
+        return m;
+    }
+    const other: ChatIdentifier = { kind: "group_chat", groupId: "other" };
+
+    function setup() {
+        vi.useFakeTimers();
+        const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal);
+        const writes: [unknown, ChatMap<UpdatedEvent[]>][] = [];
+        vi.spyOn(chatsDb, "setCachedChats").mockImplementation(async (s, u) => {
+            writes.push([s, u]);
+        });
+        return { chatsDb, writes };
+    }
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    test("first request writes immediately", async () => {
+        const { chatsDb, writes } = setup();
+        chatsDb.setCachedChatsThrottled(state("a"), updated(chatId, 1));
+        expect(writes).toHaveLength(0);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(writes).toHaveLength(1);
+        expect(writes[0][0]).toEqual(state("a"));
+        expect(writes[0][1].get(chatId)?.map((e) => e.eventIndex)).toEqual([1]);
+    });
+
+    test("requests inside the interval coalesce into one trailing write with the latest state and all dirty marks", async () => {
+        const { chatsDb, writes } = setup();
+        chatsDb.setCachedChatsThrottled(state("a"), updated(chatId, 1));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(writes).toHaveLength(1);
+
+        await vi.advanceTimersByTimeAsync(5_000);
+        chatsDb.setCachedChatsThrottled(state("b"), updated(chatId, 2));
+        await vi.advanceTimersByTimeAsync(5_000);
+        chatsDb.setCachedChatsThrottled(state("c"), updated(other, 7));
+        await vi.advanceTimersByTimeAsync(5_000);
+        chatsDb.setCachedChatsThrottled(state("d"), updated(chatId, 3));
+        expect(writes).toHaveLength(1);
+
+        // 30s after the first write the trailing write lands
+        await vi.advanceTimersByTimeAsync(15_000);
+        expect(writes).toHaveLength(2);
+        expect(writes[1][0]).toEqual(state("d"));
+        expect(writes[1][1].get(chatId)?.map((e) => e.eventIndex)).toEqual([2, 3]);
+        expect(writes[1][1].get(other)?.map((e) => e.eventIndex)).toEqual([7]);
+
+        // nothing more pending
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(writes).toHaveLength(2);
+    });
+
+    test("a request after a quiet period writes immediately again", async () => {
+        const { chatsDb, writes } = setup();
+        chatsDb.setCachedChatsThrottled(state("a"), updated(chatId, 1));
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(45_000);
+        chatsDb.setCachedChatsThrottled(state("b"), updated(chatId, 2));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(writes.map(([s]) => s)).toEqual([state("a"), state("b")]);
+    });
+
+    test("a failed write is logged, not thrown", async () => {
+        vi.useFakeTimers();
+        const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal);
+        vi.spyOn(chatsDb, "setCachedChats").mockRejectedValue(new Error("quota"));
+        const err = vi.spyOn(console, "error").mockImplementation(() => {});
+        chatsDb.setCachedChatsThrottled(state("a"), updated(chatId, 1));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(err).toHaveBeenCalledWith("Failed to cache chat state", expect.any(Error));
     });
 });
