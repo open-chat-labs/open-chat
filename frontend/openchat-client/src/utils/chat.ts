@@ -574,6 +574,174 @@ export function groupEvents(
     );
 }
 
+type GroupEventsInner = (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][];
+
+// Memoising wrapper around `groupEvents`. One instance per timeline consumer.
+//
+// Most publishes of the events store are cosmetic: a reaction, read receipt,
+// edit or translation replaces ONE message's wrapper and leaves every other
+// wrapper identical (see the fast path in mergeEventsAndLocalUpdates). None
+// of that affects grouping, so instead of re-running filter → sameDate →
+// reduceJoinedOrLeft → groupBySender over the whole list, the previous
+// timeline is patched: replaced wrappers are swapped in, and every untouched
+// group / timeline item keeps its identity (which lets the flattened rows
+// keep theirs too, so unchanged rows are not re-rendered).
+//
+// A full regroup happens whenever anything structural changes: a different
+// number of events, any non-message event replaced, or a message whose
+// grouping inputs (index, timestamp, sender, hidden-ness, proposal content)
+// differ. All other arguments are compared by identity, so callers must pass
+// a NEW `expandedDeletedMessages` set / `groupInner` function when their
+// contents change.
+export class TimelineGrouper {
+    #prev:
+        | {
+              events: EventWrapper<ChatEvent>[];
+              myUserId: string;
+              isPublicChannel: boolean;
+              expandedDeletedMessages: ReadonlySet<number>;
+              groupInner: GroupEventsInner | undefined;
+              iterateBackwards: boolean;
+              timeline: TimelineItem<ChatEvent>[];
+          }
+        | undefined;
+
+    group(
+        events: EventWrapper<ChatEvent>[],
+        myUserId: string,
+        isPublicChannel: boolean,
+        expandedDeletedMessages: ReadonlySet<number>,
+        groupInner?: GroupEventsInner,
+        iterateBackwards = false,
+    ): TimelineItem<ChatEvent>[] {
+        const prev = this.#prev;
+        let timeline: TimelineItem<ChatEvent>[] | undefined;
+        if (
+            prev !== undefined &&
+            prev.myUserId === myUserId &&
+            prev.isPublicChannel === isPublicChannel &&
+            prev.expandedDeletedMessages === expandedDeletedMessages &&
+            prev.groupInner === groupInner &&
+            prev.iterateBackwards === iterateBackwards
+        ) {
+            timeline =
+                prev.events === events
+                    ? prev.timeline
+                    : patchTimeline(
+                          prev.events,
+                          events,
+                          prev.timeline,
+                          myUserId,
+                          expandedDeletedMessages,
+                      );
+        }
+        timeline ??= groupEvents(
+            events,
+            myUserId,
+            isPublicChannel,
+            expandedDeletedMessages,
+            groupInner,
+            iterateBackwards,
+        );
+        this.#prev = {
+            events,
+            myUserId,
+            isPublicChannel,
+            expandedDeletedMessages,
+            groupInner,
+            iterateBackwards,
+            timeline,
+        };
+        return timeline;
+    }
+}
+
+// Returns `prevTimeline` with replaced wrappers swapped in, or undefined if
+// the new events cannot share the previous grouping structure.
+function patchTimeline(
+    prevEvents: EventWrapper<ChatEvent>[],
+    events: EventWrapper<ChatEvent>[],
+    prevTimeline: TimelineItem<ChatEvent>[],
+    myUserId: string,
+    expandedDeletedMessages: ReadonlySet<number>,
+): TimelineItem<ChatEvent>[] | undefined {
+    if (prevEvents.length !== events.length) return undefined;
+    let replaced: Map<EventWrapper<ChatEvent>, EventWrapper<ChatEvent>> | undefined;
+    for (let i = 0; i < events.length; i++) {
+        const a = prevEvents[i];
+        const b = events[i];
+        if (a === b) continue;
+        if (!groupingEquivalent(a, b, myUserId, expandedDeletedMessages)) return undefined;
+        (replaced ??= new Map()).set(a, b);
+    }
+    if (replaced === undefined) return prevTimeline;
+
+    // Hidden (aggregated) messages never appear in the timeline as themselves,
+    // so their replacements simply never match and the aggregate is kept.
+    let timeline: TimelineItem<ChatEvent>[] | undefined;
+    for (let t = 0; t < prevTimeline.length; t++) {
+        const item = prevTimeline[t];
+        if (item.kind !== "timeline_event_group") continue;
+        let groups: EventWrapper<ChatEvent>[][] | undefined;
+        for (let g = 0; g < item.group.length; g++) {
+            const group = item.group[g];
+            let copy: EventWrapper<ChatEvent>[] | undefined;
+            for (let i = 0; i < group.length; i++) {
+                const r = replaced.get(group[i]);
+                if (r !== undefined) {
+                    copy ??= [...group];
+                    copy[i] = r;
+                }
+            }
+            if (copy !== undefined) {
+                groups ??= [...item.group];
+                groups[g] = copy;
+            }
+        }
+        if (groups !== undefined) {
+            timeline ??= [...prevTimeline];
+            timeline[t] = { kind: "timeline_event_group", group: groups };
+        }
+    }
+    return timeline ?? prevTimeline;
+}
+
+// Two different wrappers at the same position may share grouping structure
+// only if every input to isEventKindHidden / sameDate / reduceJoinedOrLeft /
+// groupBySender is unchanged. Only messages are ever replaced in place by
+// local updates; any other kind of change forces a full regroup. Proposal
+// messages are grouped by their collapse state (CurrentChatMessages'
+// groupInner), which depends on the proposal itself, so those require
+// identical content.
+function groupingEquivalent(
+    a: EventWrapper<ChatEvent>,
+    b: EventWrapper<ChatEvent>,
+    myUserId: string,
+    expandedDeletedMessages: ReadonlySet<number>,
+): boolean {
+    if (a.index !== b.index || a.timestamp !== b.timestamp) return false;
+    if (a.event.kind !== "message" || b.event.kind !== "message") return false;
+    const am = a.event;
+    const bm = b.event;
+    if (
+        am.messageId !== bm.messageId ||
+        am.messageIndex !== bm.messageIndex ||
+        am.sender !== bm.sender
+    ) {
+        return false;
+    }
+    if (
+        (am.content.kind === "proposal_content" || bm.content.kind === "proposal_content") &&
+        am.content !== bm.content
+    ) {
+        return false;
+    }
+    return (
+        messageIsHidden(am, myUserId, expandedDeletedMessages) ===
+        messageIsHidden(bm, myUserId, expandedDeletedMessages)
+    );
+}
+
 export function flattenTimeline(grouped: EventWrapper<ChatEvent>[][][]): TimelineItem<ChatEvent>[] {
     const timeline: TimelineItem<ChatEvent>[] = [];
     grouped.forEach((dayGroup) => {
