@@ -42,6 +42,7 @@
         recordError,
     } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
+    import { warmRichTextEditor } from "@shared_components/richTextEditorLoader";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
@@ -285,10 +286,12 @@
 
     if ($identityStateStore.kind === "logged_in") {
         setupNativeApp();
+        warmRichTextEditor();
     }
 
     function onUserLoggedIn(userId: string) {
         setupNativeApp();
+        warmRichTextEditor();
         broadcastLoggedInUser(userId);
     }
 
