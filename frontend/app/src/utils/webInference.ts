@@ -18,7 +18,18 @@
 
 import type { InferenceRequest, InferenceResult, ModelFile, ModelModality } from "@shared";
 import { writable } from "svelte/store";
+import { resolveTransformersWebGpuMaxOutputTokens } from "../stores/transformersWebGpuSettings";
 import { splitModelFiles, WEB_MODEL_MAX_BYTES } from "./modelCatalog";
+import { TRANSFORMERS_QWEN_ARTIFACT_BYTES } from "./transformersWebGpuProtocol";
+import {
+    disposeTransformersWebGpuInference,
+    preloadTransformersWebGpuModel,
+    TRANSFORMERS_WEBGPU_MODEL_NOT_DOWNLOADED_MESSAGE,
+    transformersWebGpuInfer,
+    transformersWebGpuModelDownloaded,
+    transformersWebGpuSelectionCanHandle,
+    transformersWebGpuSpikeCanHandle,
+} from "./transformersWebGpuInference";
 
 // Vite turns this into a served asset URL. wllama 3.x ships ONE unified wasm (esm/wasm/) and picks
 // thread count itself from crossOriginIsolated + hardware concurrency.
@@ -393,6 +404,67 @@ export async function useWebModelFromUrl(entry: {
     if (weights.length !== 1 || mmproj.length > 1) {
         return "this model's file layout isn't supported in the browser — use the desktop app for it";
     }
+    // The explicit phone experiment owns a separate revision-keyed ONNX cache. Selecting this
+    // model downloads that exact manifest in Model Manager; its GGUF/projector catalog pair belongs
+    // to the normal Wllama route and must not be downloaded as an accidental fallback.
+    if (transformersWebGpuSelectionCanHandle(entry.id)) {
+        await unloadWebModel();
+        state.file = undefined;
+        state.handle = undefined;
+        state.url = weights[0].url;
+        state.mmprojUrl = mmproj[0]?.url;
+        state.catalogFiles = entry.files.map((file) => ({ ...file }));
+        state.catalogVerified = false;
+        state.id = entry.id;
+        state.name = entry.name;
+        state.declaredModalities = entry.modalities;
+        state.imageSupported = true;
+        state.status = "downloading";
+        state.error = undefined;
+        state.progress = { received: 0, total: TRANSFORMERS_QWEN_ARTIFACT_BYTES };
+        publish();
+        try {
+            await preloadTransformersWebGpuModel({
+                onProgress(received, total) {
+                    state.progress = { received, total };
+                    publish();
+                },
+            });
+            state.status = "verifying";
+            state.progress = undefined;
+            publish();
+            if (!(await transformersWebGpuModelDownloaded())) {
+                throw new Error("The completed all-WebGPU model could not be verified.");
+            }
+            state.catalogVerified = true;
+            state.status = "attached";
+            publish();
+            try {
+                localStorage.setItem(
+                    LS_URL_MODEL,
+                    JSON.stringify({
+                        id: entry.id,
+                        name: entry.name,
+                        url: state.url,
+                        mmprojUrl: state.mmprojUrl,
+                        modalities: entry.modalities,
+                        files: state.catalogFiles,
+                        sizeBytes: entry.sizeBytes,
+                    }),
+                );
+            } catch {
+                /* persistence best-effort */
+            }
+            return undefined;
+        } catch (err) {
+            state.status = "error";
+            state.catalogVerified = false;
+            state.error = err instanceof Error ? err.message : String(err);
+            state.progress = undefined;
+            publish();
+            return state.error;
+        }
+    }
     await unloadWebModel();
     state.file = undefined;
     state.handle = undefined;
@@ -477,17 +549,22 @@ export async function restoreWebModel(): Promise<void> {
         if (raw !== null) {
             const saved = parsePersistedCatalogModel(raw);
             if (saved !== undefined) {
+                const transformers = transformersWebGpuSelectionCanHandle(saved.id);
+                const downloaded = !transformers || (await transformersWebGpuModelDownloaded());
                 state.file = undefined;
                 state.handle = undefined;
                 state.url = saved.url;
                 state.mmprojUrl = saved.mmprojUrl;
                 state.catalogFiles = saved.files;
-                state.catalogVerified = false; // the cache is re-hashed before the first load
+                state.catalogVerified = transformers ? downloaded : false;
                 state.id = saved.id;
                 state.name = saved.name;
                 state.declaredModalities = saved.modalities;
-                state.imageSupported = undefined;
-                state.status = "attached";
+                state.imageSupported = transformers ? true : undefined;
+                state.status = downloaded ? "attached" : "error";
+                state.error = downloaded
+                    ? undefined
+                    : TRANSFORMERS_WEBGPU_MODEL_NOT_DOWNLOADED_MESSAGE;
                 publish();
                 return;
             }
@@ -568,6 +645,10 @@ export function webModelLabel(): string | undefined {
     return state.name;
 }
 
+export function webModelCatalogId(): string | undefined {
+    return state.id;
+}
+
 /**
  * What the attached browser model can READ — the browser half of `onDeviceInferenceCapability`, and
  * therefore what decides whether proposing on an image is offered at all (see imageUnsupportedReason).
@@ -580,6 +661,7 @@ export function webModelLabel(): string | undefined {
  *      until its first inference loads it; that costs one text-only propose, never a wrong answer.
  */
 export function webModelModalities(): ModelModality[] {
+    if (transformersWebGpuSelectionCanHandle(state.id)) return ["image"];
     if (state.imageSupported !== undefined) {
         return state.imageSupported ? ["text", "image"] : ["text"];
     }
@@ -600,6 +682,7 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 }
 
 async function unloadWebModel(): Promise<void> {
+    await disposeTransformersWebGpuInference();
     if (runtime !== undefined) {
         try {
             await runtime.exit();
@@ -609,7 +692,7 @@ async function unloadWebModel(): Promise<void> {
         runtime = undefined;
     }
     if (state.status === "loaded" || state.status === "loading") {
-        state.status = state.file !== undefined ? "attached" : "none";
+        state.status = state.file !== undefined || state.url !== undefined ? "attached" : "none";
     }
 }
 
@@ -690,6 +773,18 @@ async function ensureLoaded(): Promise<void> {
 export async function webInfer(request: InferenceRequest): Promise<InferenceResult> {
     if (!isWebInferenceReady()) {
         return { kind: "unavailable", reason: "no browser model attached" };
+    }
+    if (transformersWebGpuSelectionCanHandle(state.id)) {
+        if (!transformersWebGpuSpikeCanHandle(request, state.id)) {
+            return {
+                kind: "unavailable",
+                reason: "The selected all-WebGPU phone trial accepts image requests only.",
+            };
+        }
+        return transformersWebGpuInfer({
+            ...request,
+            maxTokens: resolveTransformersWebGpuMaxOutputTokens(request.maxTokens),
+        });
     }
     try {
         await ensureLoaded();

@@ -1,7 +1,11 @@
-import type { ModelFile } from "@shared";
+import type { ModelFile, ModelModality } from "@shared";
 import { webcrypto } from "node:crypto";
 import { get } from "svelte/store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    resetTransformersWebGpuMaxOutputTokens,
+    updateTransformersWebGpuMaxOutputTokens,
+} from "../stores/transformersWebGpuSettings";
 import {
     clearWebModel,
     restoreWebModel,
@@ -39,6 +43,43 @@ const wl = vi.hoisted(() => ({
     // the cached files getModelOrDownload resolves to
     cached: [] as { url: string; bytes: Uint8Array }[],
 }));
+
+const transformers = vi.hoisted(() => ({
+    enabled: false,
+    downloaded: false,
+    preloadCalls: 0,
+    disposeCalls: 0,
+    requests: [] as { prompt: string; image?: Uint8Array; maxTokens?: number }[],
+}));
+
+vi.mock("./transformersWebGpuInference", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("./transformersWebGpuInference")>();
+    const selected = (id: string | undefined) =>
+        transformers.enabled && id === "qwen3-vl-2b-instruct-q4";
+    return {
+        ...actual,
+        transformersWebGpuSelectionCanHandle: selected,
+        transformersWebGpuSpikeCanHandle: (
+            request: { image?: Uint8Array },
+            id: string | undefined,
+        ) => selected(id) && request.image !== undefined,
+        transformersWebGpuModelDownloaded: vi.fn(async () => transformers.downloaded),
+        preloadTransformersWebGpuModel: vi.fn(
+            async (options?: { onProgress?: (received: number, total: number) => void }) => {
+                transformers.preloadCalls += 1;
+                transformers.downloaded = true;
+                options?.onProgress?.(1_534_532_835, 1_534_532_835);
+            },
+        ),
+        transformersWebGpuInfer: vi.fn(async (request) => {
+            transformers.requests.push(request);
+            return { kind: "ok", text: "all-webgpu result" };
+        }),
+        disposeTransformersWebGpuInference: vi.fn(async () => {
+            transformers.disposeCalls += 1;
+        }),
+    };
+});
 
 vi.mock("@wllama/wllama/esm/index.js", () => {
     class Wllama {
@@ -508,5 +549,80 @@ describe("webModelModalities", () => {
         await attachVisionModel();
         await webInfer({ prompt: "hi" });
         expect(webModelModalities()).toEqual(["text", "image"]);
+    });
+});
+
+describe("pinned Qwen3-VL all-WebGPU integration", () => {
+    const weightsUrl = "https://host/models/Qwen3VL-2B-Instruct-Q4_K_M.gguf";
+    const projectorUrl = "https://host/models/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf";
+    const entry = {
+        id: "qwen3-vl-2b-instruct-q4",
+        name: "Qwen3-VL 2B (vision)",
+        files: [file(weightsUrl, "1".repeat(64), 4), file(projectorUrl, "2".repeat(64), 3)],
+        sizeBytes: 7,
+        modalities: ["text", "image"] as ModelModality[],
+    };
+
+    beforeEach(async () => {
+        transformers.enabled = false;
+        await clearWebModel();
+        localStorage.clear();
+        resetTransformersWebGpuMaxOutputTokens();
+        transformers.enabled = true;
+        transformers.downloaded = false;
+        transformers.preloadCalls = 0;
+        transformers.disposeCalls = 0;
+        transformers.requests = [];
+        resetWllama();
+    });
+
+    it("downloads and verifies the ONNX manifest during model selection without touching Wllama", async () => {
+        await expect(useWebModelFromUrl(entry)).resolves.toBeUndefined();
+
+        expect(transformers.preloadCalls).toBe(1);
+        expect(transformers.downloaded).toBe(true);
+        expect(wl.modelSource).toBeUndefined();
+        expect(get(webModelStatus)).toMatchObject({
+            id: entry.id,
+            name: entry.name,
+            status: "attached",
+        });
+    });
+
+    it("dispatches the original image to the all-WebGPU worker with the configured output cap", async () => {
+        await useWebModelFromUrl(entry);
+        updateTransformersWebGpuMaxOutputTokens(48);
+        const image = new Uint8Array([21, 22, 23]);
+
+        await expect(webInfer({ prompt: "read receipt", image })).resolves.toEqual({
+            kind: "ok",
+            text: "all-webgpu result",
+        });
+        expect(transformers.requests).toEqual([{ prompt: "read receipt", image, maxTokens: 48 }]);
+        expect(wl.loadCount).toBe(0);
+    });
+
+    it("fails closed for text instead of downloading or replaying the catalog GGUF", async () => {
+        await useWebModelFromUrl(entry);
+
+        await expect(webInfer({ prompt: "text only" })).resolves.toEqual({
+            kind: "unavailable",
+            reason: "The selected all-WebGPU phone trial accepts image requests only.",
+        });
+        expect(transformers.requests).toEqual([]);
+        expect(wl.loadCount).toBe(0);
+    });
+
+    it("reports a persisted selection as unavailable when its pinned ONNX cache is incomplete", async () => {
+        await useWebModelFromUrl(entry);
+        transformers.downloaded = false;
+
+        await restoreWebModel();
+
+        expect(get(webModelStatus)).toMatchObject({
+            id: entry.id,
+            status: "error",
+            error: expect.stringContaining("not completely downloaded"),
+        });
     });
 });

@@ -462,7 +462,7 @@ describe("onDeviceInferenceCapability in a browser", () => {
         const cap = onDeviceInferenceCapability();
         expect(cap.available).toBe(true);
         expect(cap.selectedModalities).toEqual(["text", "image"]);
-        expect(cap.selectedModelId).toBe("SmolVLM 256M (vision)");
+        expect(cap.selectedModelId).toBe("smolvlm-256m-instruct-q8");
     });
 
     it("still reports text-only for a text model", async () => {

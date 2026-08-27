@@ -14,6 +14,7 @@
     } from "@src/stores/customModels";
     import { defaultModelCatalog, mergeCatalogs, webEligibleModels } from "@utils/modelCatalog";
     import { isNativeClient } from "@utils/onDeviceInference";
+    import { transformersWebGpuSelectionCanHandle } from "@utils/transformersWebGpuInference";
     import {
         clearWebModel,
         pickWebModelFromDisk,
@@ -47,6 +48,7 @@
     import Input from "../../Input.svelte";
     import Toggle from "../../Toggle.svelte";
     import Translatable from "../../Translatable.svelte";
+    import WebInferenceRuntimeSettings from "../../../components_shared/WebInferenceRuntimeSettings.svelte";
 
     // On-device inference runs wherever the Tauri native bridge is present (desktop + mobile); degrade
     // gracefully in the plain web/PWA build. The catalog is data; nothing is bundled.
@@ -126,6 +128,11 @@
     );
     let currentWebId = $derived(webActive ? $webModelStatus.id : undefined);
     let webDiskAttached = $derived(webActive && $webModelStatus.id === undefined);
+    let webRuntimeSettingsBusy = $derived(
+        $webModelStatus.status === "downloading" ||
+            $webModelStatus.status === "verifying" ||
+            $webModelStatus.status === "loading",
+    );
     let webStatusText = $derived(
         $webModelStatus.status === "loading"
             ? "loading into memory…"
@@ -497,6 +504,14 @@
         {/if}
         {#if webError !== ""}
             <p class="error"><Translatable resourceKey={i18nKey(webError)} /></p>
+        {/if}
+        {#if currentWebId !== undefined && transformersWebGpuSelectionCanHandle(currentWebId) && $webModelStatus.name !== undefined}
+            <WebInferenceRuntimeSettings
+                context="desktop"
+                modelId={currentWebId}
+                modelName={$webModelStatus.name}
+                busy={webRuntimeSettingsBusy}
+            />
         {/if}
     </div>
 {:else}

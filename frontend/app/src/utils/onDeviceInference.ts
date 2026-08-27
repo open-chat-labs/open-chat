@@ -8,7 +8,13 @@ import { get } from "svelte/store";
 import { infer as nativeInfer, listLocalModels } from "tauri-plugin-oc-api";
 import { selectedModelId } from "../stores/onDeviceModels";
 import { defaultModelCatalog } from "./modelCatalog";
-import { isWebInferenceReady, webInfer, webModelLabel, webModelModalities } from "./webInference";
+import {
+    isWebInferenceReady,
+    webInfer,
+    webModelCatalogId,
+    webModelLabel,
+    webModelModalities,
+} from "./webInference";
 
 // Generic on-device inference facade (design deliverable A). This is the seam any in-client feature calls
 // to run the user's selected model with its OWN prompt. It feature-detects the native runtime and degrades
@@ -134,7 +140,7 @@ export function onDeviceInferenceCapability(): OnDeviceInferenceCapability {
         return {
             available: true,
             runtimesSupported: ["llama-cpp"],
-            selectedModelId: webModelLabel(),
+            selectedModelId: webModelCatalogId() ?? webModelLabel(),
             selectedModalities: webModelModalities(),
         };
     }
