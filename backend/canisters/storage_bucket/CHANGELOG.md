@@ -8,12 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Serve HTTP range requests by reading only the requested chunks from stable memory rather than materialising the whole blob per request ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
-- Increase the default response size for open-ended range requests from 256KB to 1MB ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+- Serve HTTP range requests by reading only the requested chunks from stable memory rather than materialising the whole blob per request ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
+- Increase the default response size for open-ended range requests from 256KB to 1MB ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
 
 ### Fixed
 
-- Treat the last byte position of a `Range` header as inclusive and add the `Accept-Ranges` header ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+- Treat the last byte position of a `Range` header as inclusive and add the `Accept-Ranges` header ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
 
 ### Added
 
