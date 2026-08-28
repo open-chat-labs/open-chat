@@ -119,6 +119,7 @@
 
         const unsubs = [
             messagesRead.subscribe(() => {
+                if (chat === undefined) return;
                 unreadMessages = getUnreadMessageCount(chat);
                 firstUnreadMention = client.getFirstUnreadMention(chat);
             }),

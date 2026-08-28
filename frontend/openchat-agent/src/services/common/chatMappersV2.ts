@@ -115,6 +115,9 @@ import type {
     WebhookDetails,
 } from "@shared";
 import {
+    ErrorCode,
+    isError,
+    parseBigInt,
     CommonResponses,
     ICP_SYMBOL,
     ProposalDecisionStatus,
@@ -278,6 +281,7 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import type { ApiPrincipal } from "../index";
+import { ReplicaNotUpToDateError } from "../error";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -301,6 +305,25 @@ export async function getEventsSuccess(
             latestEventIndex: value.latest_event_index,
         }
     );
+}
+
+// The canister answers ReplicaNotUpToDate (with its own timestamp as the message) when the replica
+// a query landed on is behind the client's latest_known_update. Returned as a plain error response
+// nothing would retry it and event merging would throw on it; rethrown as ReplicaNotUpToDateError
+// it goes through the query retry loop in CanisterAgent (backoff, so a later attempt lands on a
+// replica that has caught up) exactly like the client-side replica check does.
+export function throwIfReplicaNotUpToDate<T>(
+    response: T | OCError,
+    latestKnownUpdate: bigint | undefined,
+): T | OCError {
+    if (isError(response) && response.code === ErrorCode.ReplicaNotUpToDate) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            parseBigInt(response.message ?? "") ?? BigInt(0),
+            latestKnownUpdate ?? BigInt(0),
+            false,
+        );
+    }
+    return response;
 }
 
 export function eventWrapper(value: TEventWrapperChatEvent): EventWrapper<ChatEvent> {

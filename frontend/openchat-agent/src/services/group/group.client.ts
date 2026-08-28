@@ -151,6 +151,7 @@ import {
     inviteCodeSuccess,
     isSuccess,
     mapResult,
+    throwIfReplicaNotUpToDate,
     proposalTallies,
     pushEventSuccess,
     searchGroupChatResponse,
@@ -222,7 +223,11 @@ export class GroupClient
             chatId.groupId,
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             GroupEventsByIndexArgs,
             GroupEventsResponse,
         );
@@ -247,7 +252,11 @@ export class GroupClient
             chatId.groupId,
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             GroupEventsWindowArgs,
             GroupEventsResponse,
         );
@@ -274,7 +283,11 @@ export class GroupClient
             chatId.groupId,
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             GroupEventsArgs,
             GroupEventsResponse,
         );
@@ -670,7 +683,11 @@ export class GroupClient
             chatId.groupId,
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );

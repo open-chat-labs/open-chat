@@ -144,6 +144,7 @@
     function setUnreadPinned(hasPinned: boolean, chat: ChatSummary) {
         hasUnreadPinned =
             hasPinned &&
+            chat !== undefined &&
             (chat.kind === "group_chat" || chat.kind === "channel") &&
             client.unreadPinned(chat.id, chat.dateLastPinned);
     }

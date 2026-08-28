@@ -204,6 +204,7 @@ import {
     getMessagesSuccess,
     isSuccess,
     mapResult,
+    throwIfReplicaNotUpToDate,
     undeleteMessageSuccess,
     unitResult,
     apiOgPreview,
@@ -398,7 +399,11 @@ export class UserClient
         return this.query(
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             UserEventsByIndexArgs,
             UserEventsResponse,
         );
@@ -422,7 +427,11 @@ export class UserClient
         return this.query(
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             UserEventsWindowArgs,
             UserEventsResponse,
         );
@@ -450,7 +459,11 @@ export class UserClient
         return this.query(
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             UserEventsArgs,
             UserEventsResponse,
         );
@@ -471,7 +484,11 @@ export class UserClient
         return this.query(
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             UserMessagesByMessageIndexArgs,
             UserMessagesByMessageIndexResponse,
         );

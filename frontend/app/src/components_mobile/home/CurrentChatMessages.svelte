@@ -272,7 +272,9 @@
             }
         }
     });
-    let showAvatar = $derived(initialised && shouldShowAvatar(chat, $eventsStore[0]?.index));
+    let showAvatar = $derived(
+        initialised && chat !== undefined && shouldShowAvatar(chat, $eventsStore[0]?.index),
+    );
     let messageContext = $derived({ chatId: chat?.id, threadRootMessageIndex: undefined });
     const grouper = new TimelineGrouper();
     const flattener = new TimelineFlattener();
@@ -283,7 +285,7 @@
         grouper.group(
             $eventsStore,
             $currentUserIdStore,
-            chat.kind === "channel" && chat.public,
+            chat?.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
             groupInnerFn,
             true,
@@ -291,7 +293,7 @@
     );
     let items = $derived.by<FlatChatItem[]>(() => {
         const flat: FlatChatItem[] = flattener.flatten(timeline);
-        if (showAvatar) {
+        if (showAvatar && chat !== undefined) {
             // rendered at the oldest end of the list (the visual top)
             flat.push(chatStartItem(chatIdentifierToString(chat.id)));
         }
