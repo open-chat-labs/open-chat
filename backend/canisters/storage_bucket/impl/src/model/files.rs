@@ -32,9 +32,12 @@ pub struct Files {
     // can remove the blob while it is quarantined (see model::vault).
     #[serde(default)]
     vault_pins: BTreeSet<Hash>,
-    // Stored hash -> hashes of the bytes clients transcoded to produce it (see
-    // upload_chunk_v2::Args::source_hash). A verdict on the stored hash denylists these too,
-    // and an upload declaring one of them is refused while the stored hash is vault-pinned.
+    // Stored hash -> hashes clients DECLARED they transcoded to produce it (see
+    // upload_chunk_v2::Args::source_hash). Claims, not facts - the bucket never sees the source
+    // bytes - so a verdict on the stored hash denylists these only as derived (uploads refused,
+    // nobody sanctioned), and an upload declaring one of them is refused the same way while the
+    // stored hash is vault-pinned. Kept past blob removal, since a verdict can land on a later
+    // copy of the same bytes; pruned only when a pinned blob is purged.
     #[serde(default)]
     source_hashes: BTreeMap<Hash, BTreeSet<Hash>>,
 }
@@ -51,8 +54,6 @@ pub struct File {
     pub hash: Hash,
     #[serde(rename = "m")]
     pub mime_type: String,
-    #[serde(rename = "s", default, skip_serializing_if = "Option::is_none")]
-    pub source_hash: Option<Hash>,
 }
 
 impl File {
@@ -213,7 +214,6 @@ impl Files {
             accessors,
             hash,
             mime_type: file.mime_type,
-            source_hash: file.source_hash,
         };
 
         self.files.insert(new_file_id, new_file);
@@ -235,24 +235,18 @@ impl Files {
 
         let file_ids = self.accessors_map.remove(*accessor_id);
         for file_id in file_ids {
-            let mut blob_to_delete = None;
             if let Some(mut file) = self.get(&file_id) {
                 file.accessors.remove(accessor_id);
                 if file.accessors.is_empty() {
-                    let delete_blob = self.reference_counts.decr(file.hash) == 0;
-                    if delete_blob {
-                        blob_to_delete = Some(file.hash);
-                    }
+                    // `remove_file` releases the file's reference to the blob (and the blob itself
+                    // when that was the last one); decrementing here as well would drop a
+                    // reference held by another file or by a vault pin
                     if let Some(file_removed) = self.remove_file(file_id) {
                         files_removed.push(file_removed);
                     }
                 } else {
                     self.files.insert(file_id, file);
                 }
-            }
-
-            if let Some(blob_to_delete) = blob_to_delete {
-                self.remove_blob(&blob_to_delete);
             }
         }
 
@@ -353,7 +347,6 @@ impl Files {
                 accessors: completed_file.accessors,
                 hash: completed_file.hash,
                 mime_type: completed_file.mime_type,
-                source_hash: completed_file.source_hash,
             },
         );
     }
@@ -409,13 +402,14 @@ impl Files {
             self.reference_counts.decr(*hash);
         }
         self.remove_blob(hash);
+        self.source_hashes.remove(hash);
     }
 
     pub fn is_vault_pinned(&self, hash: &Hash) -> bool {
         self.vault_pins.contains(hash)
     }
 
-    // The vault-pinned hash whose bytes were transcoded from the given source hash, if any.
+    // The vault-pinned hash some client declared was transcoded from the given source, if any.
     // Pins are few (one per quarantined blob), so scanning them is cheaper than a reverse map.
     pub fn vault_pinned_hash_for_source(&self, source_hash: &Hash) -> Option<Hash> {
         self.vault_pins
@@ -436,7 +430,6 @@ impl Files {
             self.blobs.remove(hash);
             self.total_file_bytes = self.total_file_bytes.saturating_sub(size);
         }
-        self.source_hashes.remove(hash);
     }
 
     fn file_and_size(&self, file_id: &FileId) -> Option<(File, u64)> {
@@ -697,44 +690,21 @@ mod tests {
     }
 
     #[test]
-    fn source_hash_is_recorded_against_the_stored_hash_and_dropped_with_the_blob() {
+    fn source_hash_is_recorded_against_the_stored_hash_and_outlives_the_blob() {
         let mut files = files();
         let source = hash_bytes(b"the original phone recording");
         let hash = put(&mut files, 1, b"transcoded".to_vec(), Some(source));
-
         assert_eq!(files.source_hashes(&hash), vec![source]);
-        assert_eq!(files.get(&1).unwrap().source_hash, Some(source));
 
-        // Last reference gone: the blob and everything keyed by its hash go with it
-        files.remove_file(1);
-        assert!(files.source_hashes(&hash).is_empty());
-    }
-
-    #[test]
-    fn source_hash_equal_to_the_stored_hash_is_not_recorded() {
-        let mut files = files();
+        // A source equal to the stored hash (uploaded as-is) is not a transcode
         let bytes = b"uploaded as-is".to_vec();
-        let hash = put(&mut files, 1, bytes.clone(), Some(hash_bytes(&bytes)));
-        assert!(files.source_hashes(&hash).is_empty());
-    }
+        let same = put(&mut files, 2, bytes.clone(), Some(hash_bytes(&bytes)));
+        assert!(files.source_hashes(&same).is_empty());
 
-    #[test]
-    fn same_bytes_from_two_originals_accumulate_both_sources() {
-        let mut files = files();
-        let source_a = hash_bytes(b"original a");
-        let source_b = hash_bytes(b"original b");
-        let hash = put(&mut files, 1, b"transcoded".to_vec(), Some(source_a));
-        put(&mut files, 2, b"transcoded".to_vec(), Some(source_b));
-
-        let mut sources = files.source_hashes(&hash);
-        sources.sort();
-        let mut expected = vec![source_a, source_b];
-        expected.sort();
-        assert_eq!(sources, expected);
-
-        // One file removed: the blob survives on the other reference, so do its sources
+        // Last reference gone: the blob goes, the claim stays for a verdict on a later copy
         files.remove_file(1);
-        assert_eq!(files.source_hashes(&hash).len(), 2);
+        assert!(files.get(&1).is_none());
+        assert_eq!(files.source_hashes(&hash), vec![source]);
     }
 
     #[test]
@@ -752,35 +722,28 @@ mod tests {
         // The file record can be deleted while quarantined; the pin keeps the blob and its sources
         files.remove_file(1);
         assert_eq!(files.vault_pinned_hash_for_source(&source), Some(hash));
-        assert_eq!(files.source_hashes(&hash), vec![source]);
 
-        // Releasing the last reference clears both
+        // Releasing the pin ends the pre-verdict refusal; purging the evidence drops the claims
         files.vault_unpin(&hash);
         assert_eq!(files.vault_pinned_hash_for_source(&source), None);
+        assert_eq!(files.source_hashes(&hash), vec![source]);
+        files.vault_purge(&hash);
         assert!(files.source_hashes(&hash).is_empty());
     }
 
     #[test]
-    fn forwarded_file_carries_the_source_hash() {
+    fn removing_an_accessor_releases_one_reference_only() {
         let mut files = files();
-        let source = hash_bytes(b"the original phone recording");
-        let hash = put(&mut files, 1, b"transcoded".to_vec(), Some(source));
+        let hash = put(&mut files, 1, b"pinned".to_vec(), None);
+        assert_eq!(files.vault_pin(&1).map(|(h, _)| h), Some(hash));
 
-        let forwarder = Principal::from_slice(&[2]);
-        let ForwardFileResult::Success(added) = files.forward(
-            forwarder,
-            1,
-            CanisterId::from_slice(&[9]),
-            42,
-            [forwarder].into_iter().collect(),
-            2000,
-        ) else {
-            panic!("forward should succeed");
-        };
-        assert_eq!(files.get(&added.file_id).unwrap().source_hash, Some(source));
+        // File reference released, the pin's reference must survive it
+        let removed = files.remove_accessor(&Principal::from_slice(&[1]));
+        assert_eq!(removed.len(), 1);
+        assert!(files.get(&1).is_none());
+        assert!(files.blobs.exists(&hash));
 
-        // The original can go; the forwarded copy keeps the blob and its sources
-        files.remove_file(1);
-        assert_eq!(files.source_hashes(&hash), vec![source]);
+        files.vault_unpin(&hash);
+        assert!(!files.blobs.exists(&hash));
     }
 }

@@ -85,7 +85,11 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                         state.data.vault.clear_blocked_attempts_for_hash(&hash);
                         state
                             .data
-                            .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted { hash, report_index }));
+                            .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
+                                hash,
+                                report_index,
+                                derived: false,
+                            }));
                         denylist_source_hashes(&hash, report_index, state);
                     }
                     _ => (),
@@ -129,10 +133,17 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             VaultOp::DenylistHash(d) => {
                 // Propagated from the bucket which applied the verdict: blocks uploads of the
                 // same content here, and stops any copy already stored here being served
-                if state.data.vault.denylist_hash(d.hash, d.report_index) {
+                if state.data.vault.denylist_hash(d.hash, d.report_index, d.derived) {
                     state.data.vault.clear_blocked_attempts_for_hash(&d.hash);
-                    info!(report_index = d.report_index, "Vault: CSAM hash denylisted");
-                    denylist_source_hashes(&d.hash, d.report_index, state);
+                    info!(
+                        report_index = d.report_index,
+                        derived = d.derived,
+                        "Vault: CSAM hash denylisted"
+                    );
+                    // A copy of the upheld bytes stored HERE may carry source claims of its own
+                    if !d.derived {
+                        denylist_source_hashes(&d.hash, d.report_index, state);
+                    }
                 }
             }
         }
@@ -143,21 +154,22 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
     Success(SuccessResult { quarantine_failures })
 }
 
-// The bytes behind a denylisted hash may be a client-side transcode of some original file
-// (see upload_chunk_v2::Args::source_hash): a re-upload of that original transcodes to
-// different bytes every time, so the original's hash is denylisted too, and pushed to the
-// index so every bucket refuses it. Only the bucket still holding the transcoded blob knows
-// its sources; the index dedupes hashes it has already seen.
+// The bytes behind an upheld hash may be a client-side transcode of some original file (see
+// upload_chunk_v2::Args::source_hash): a re-upload of that original transcodes to different
+// bytes every time, so the declared original hashes are denylisted too - as DERIVED, since no
+// moderator saw those bytes: uploads of them are refused, nobody is sanctioned. Pushed to the
+// index so every bucket refuses them; the index dedupes hashes it has already seen.
 fn denylist_source_hashes(hash: &types::Hash, report_index: u64, state: &mut RuntimeState) {
     for source_hash in state.data.files.source_hashes(hash) {
-        if state.data.vault.denylist_hash(source_hash, report_index) {
+        if state.data.vault.denylist_hash(source_hash, report_index, true) {
             state
                 .data
                 .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
                     hash: source_hash,
                     report_index,
+                    derived: true,
                 }));
-            info!(report_index, "Vault: source hash of denylisted content denylisted");
+            info!(report_index, "Vault: declared source of upheld content denylisted as derived");
         }
     }
 }

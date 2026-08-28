@@ -21,12 +21,15 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     let denylisted_hashes: Vec<_> = args
         .files_added
         .iter()
-        .filter(|f| state.data.csam_hashes.contains_key(&f.hash))
-        .map(|f| (f.hash, state.data.csam_hashes[&f.hash]))
+        .filter_map(|f| {
+            let verified = state.data.csam_hashes.get(&f.hash).map(|r| (*r, false));
+            let derived = state.data.derived_csam_hashes.get(&f.hash).map(|r| (*r, true));
+            verified.or(derived).map(|(r, d)| (f.hash, r, d))
+        })
         .collect();
-    for (hash, report_index) in denylisted_hashes {
-        tracing::error!(%bucket, report_index, "File uploaded with a hash upheld as CSAM; re-pushing the denylist");
-        state.data.push_denylisted_hash_to_bucket(bucket, hash, report_index);
+    for (hash, report_index, derived) in denylisted_hashes {
+        tracing::error!(%bucket, report_index, derived, "File uploaded with a denylisted hash; re-pushing the denylist");
+        state.data.push_denylisted_hash_to_bucket(bucket, hash, report_index, derived);
     }
 
     let files_rejected = args
@@ -42,7 +45,7 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     for denylisted in args.csam_hashes_denylisted {
         state
             .data
-            .denylist_csam_hash(bucket, denylisted.hash, denylisted.report_index);
+            .denylist_csam_hash(bucket, denylisted.hash, denylisted.report_index, denylisted.derived);
     }
 
     if !args.csam_matches.is_empty() {

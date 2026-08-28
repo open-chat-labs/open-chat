@@ -24,6 +24,14 @@ pub struct Vault {
     // and reported. Maps to the report whose verdict denylisted the hash.
     #[serde(default)]
     csam_hashes: BTreeMap<Hash, u64>,
+    // Hashes a client DECLARED as the source of content later upheld as CSAM (a video
+    // transcoded at upload, see upload_chunk_v2::Args::source_hash). No moderator ever saw
+    // these bytes - the bucket cannot verify the claim - so they get the blocking half of the
+    // denylist only: uploads refused, serving stopped, but never a sanction or a report against
+    // whoever uploads them. Separate from `csam_hashes` so a lie about a source can never get
+    // an innocent uploader of that source reported. Maps to the report of the upheld content.
+    #[serde(default)]
+    derived_csam_hashes: BTreeMap<Hash, u64>,
     // (uploader, file id) pairs whose upload/forward was refused because of a denylisted
     // hash: dedupes the report to the user_index, which would otherwise fire once per chunk
     // (chunks upload in parallel and each one is refused) and once per retry of the same
@@ -317,12 +325,20 @@ impl Vault {
         self.quarantine_failures += 1;
     }
 
+    // Gates serving and uploading: verified and derived alike
     pub fn is_csam_hash(&self, hash: &Hash) -> bool {
-        self.csam_hashes.contains_key(hash)
+        self.csam_hashes.contains_key(hash) || self.derived_csam_hashes.contains_key(hash)
     }
 
+    // The report which upheld these exact bytes: a match sanctions the uploader
     pub fn known_csam_report_index(&self, hash: &Hash) -> Option<u64> {
         self.csam_hashes.get(hash).copied()
+    }
+
+    // The report whose upheld content a client declared these bytes the source of: a match
+    // only refuses the upload (see `derived_csam_hashes`)
+    pub fn derived_csam_report_index(&self, hash: &Hash) -> Option<u64> {
+        self.derived_csam_hashes.get(hash).copied()
     }
 
     // The report holding this hash quarantined while its verdict is pending, if any:
@@ -478,13 +494,23 @@ impl Vault {
         VaultOpOutcome::Applied
     }
 
-    // Records a hash denylisted by a verdict applied in ANOTHER bucket, so that content upheld
-    // as CSAM can never be uploaded to (or served from) this bucket either. Returns true if the
-    // hash was not already known, so the caller can avoid re-propagating it.
-    pub fn denylist_hash(&mut self, hash: Hash, report_index: u64) -> bool {
+    // Records a hash denylisted by a verdict applied in ANOTHER bucket (or, when `derived`, a
+    // hash declared as the source of upheld content), so that the content can never be uploaded
+    // to (or served from) this bucket either. A verified entry always wins: it replaces a derived
+    // one for the same hash, and a derived one never downgrades a verified one. Returns true if
+    // the entry is new at that tier, so the caller can avoid re-propagating it.
+    pub fn denylist_hash(&mut self, hash: Hash, report_index: u64, derived: bool) -> bool {
+        if derived {
+            if self.csam_hashes.contains_key(&hash) || self.derived_csam_hashes.contains_key(&hash) {
+                return false;
+            }
+            self.derived_csam_hashes.insert(hash, report_index);
+            return true;
+        }
         let newly_denylisted = !self.csam_hashes.contains_key(&hash);
         self.csam_hashes.entry(hash).or_insert(report_index);
         if newly_denylisted {
+            self.derived_csam_hashes.remove(&hash);
             self.clear_blocked_attempts_for_hash(&hash);
         }
         newly_denylisted
@@ -643,6 +669,7 @@ impl Vault {
             log_length: self.log.len() as u64,
             quarantine_failures: self.quarantine_failures,
             csam_hashes: self.csam_hashes.len() as u64,
+            derived_csam_hashes: self.derived_csam_hashes.len() as u64,
             unresolved_quarantines: self.records.values().filter(|r| r.has_unresolved_claims()).count() as u64,
             oldest_unresolved_quarantined_at: self
                 .records
@@ -694,6 +721,7 @@ pub struct VaultMetrics {
     pub log_length: u64,
     pub quarantine_failures: u64,
     pub csam_hashes: u64,
+    pub derived_csam_hashes: u64,
     pub unresolved_quarantines: u64,
     pub oldest_unresolved_quarantined_at: Option<TimestampMillis>,
 }
@@ -993,9 +1021,31 @@ mod tests {
 
         // A hash denylisted elsewhere blocks uploads (and serving) here too, once only
         let elsewhere = [9u8; 32];
-        assert!(vault.denylist_hash(elsewhere, 11));
-        assert!(!vault.denylist_hash(elsewhere, 12));
+        assert!(vault.denylist_hash(elsewhere, 11, false));
+        assert!(!vault.denylist_hash(elsewhere, 12, false));
         assert_eq!(vault.known_csam_report_index(&elsewhere), Some(11));
+    }
+
+    #[test]
+    fn derived_hash_blocks_but_never_sanctions_and_a_verified_entry_replaces_it() {
+        let mut vault = vault_with_reviewer();
+        let source = [3u8; 32];
+
+        assert!(vault.denylist_hash(source, 5, true));
+        assert!(!vault.denylist_hash(source, 6, true));
+        assert!(vault.is_csam_hash(&source));
+        assert_eq!(vault.derived_csam_report_index(&source), Some(5));
+        assert_eq!(vault.known_csam_report_index(&source), None);
+        assert_eq!(vault.metrics().derived_csam_hashes, 1);
+
+        // The bytes themselves later upheld: verified from now on, and worth propagating
+        assert!(vault.denylist_hash(source, 7, false));
+        assert_eq!(vault.known_csam_report_index(&source), Some(7));
+        assert_eq!(vault.derived_csam_report_index(&source), None);
+
+        // A later derived claim never downgrades a verified entry
+        assert!(!vault.denylist_hash(source, 8, true));
+        assert_eq!(vault.known_csam_report_index(&source), Some(7));
     }
 
     #[test]

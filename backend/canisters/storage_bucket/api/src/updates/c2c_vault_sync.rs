@@ -114,6 +114,11 @@ pub struct DenylistHashOp {
     pub hash: Hash,
     // The report whose UpheldAsCsam verdict denylisted the hash
     pub report_index: u64,
+    // True when the hash was never seen by a moderator: it was only DECLARED by a client as the
+    // source of upheld content (see upload_chunk_v2::Args::source_hash). Uploads of it are
+    // refused, nobody is sanctioned. Absent from older senders, which only ever sent verified
+    #[serde(default)]
+    pub derived: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

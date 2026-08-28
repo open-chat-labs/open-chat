@@ -2718,12 +2718,14 @@ fn blocked_reupload_of_pending_content_reports_and_dismissal_reverses() {
 }
 
 // Source hashes (client-side video transcode, #9252 / #9254): a re-encode never reproduces the
-// bytes it started from, so the hash of the ORIGINAL rides along with the upload. While the
-// transcoded copy is quarantined pending a verdict, both the original re-uploaded raw and any
-// fresh transcode of it are refused and reported like the pinned bytes themselves - and a
-// dismissal frees all of them again
+// bytes it started from, so the hash of the ORIGINAL rides along with the upload. The bucket
+// cannot verify that claim, so it is given the blocking half of the machinery only: while the
+// transcode is quarantined, the original re-uploaded raw and any fresh transcode of it are
+// refused - but nobody is sanctioned or reported on the strength of a claim. A dismissal frees
+// all of them again. Declaring the QUARANTINED BYTES THEMSELVES as a source is the uploader's own
+// claim about bytes a moderator will see, and is treated like uploading them.
 #[test]
-fn pending_quarantine_of_a_transcode_blocks_its_source_bytes_and_other_transcodes() {
+fn pending_quarantine_of_a_transcode_refuses_its_declared_source_without_sanction() {
     use utils::hasher::hash_bytes;
 
     let mut wrapper = ENV.deref().get();
@@ -2756,24 +2758,11 @@ fn pending_quarantine_of_a_transcode_blocks_its_source_bytes_and_other_transcode
 
     let attempter_state =
         client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
-    assert!(attempter_state.suspension_details.is_some(), "attempter should be suspended");
-    // Both refusals anchor on the pending report: one attempt report, the retry tallied (I6)
-    let attempt_reports = attempt_reports_for(env, &test_data, &test_data.reporter);
-    assert_eq!(attempt_reports.len(), 1, "{attempt_reports:?}");
     assert!(
-        attempt_reports[0]
-            .content_excerpt
-            .as_deref()
-            .is_some_and(|e| e.contains("quarantined pending review")),
-        "{:?}",
-        attempt_reports[0].content_excerpt
+        attempter_state.suspension_details.is_none(),
+        "a refusal on a declared source must not suspend anyone"
     );
-    assert!(
-        moderation_notices(env, &test_data)
-            .iter()
-            .any(|t| t.contains("Repeat attempt") && t.contains("quarantined pending review")),
-        "the second refusal must be visible as a tallied notice"
-    );
+    assert!(attempt_reports_for(env, &test_data, &test_data.reporter).is_empty());
 
     // Dismissal releases the pin: the original, and a transcode of it, upload freely again
     let resolve_response = client::user_index::resolve_moderation_report(
@@ -2793,11 +2782,12 @@ fn pending_quarantine_of_a_transcode_blocks_its_source_bytes_and_other_transcode
     upload_transcode_expecting(env, canister_ids, &test_data.reporter, &random_file(), source_hash, success);
 }
 
-// A CSAM verdict on a transcoded copy denylists the hash of the original it came from, so the
-// original re-uploaded raw, and any later transcode of it, are refused and reported as
-// post-verdict attempts - exactly as the transcoded bytes themselves would be
+// A CSAM verdict on a transcoded copy denylists the declared hash of the original it came from
+// as DERIVED: the original re-uploaded raw, and any later transcode of it, are refused everywhere
+// - but with no moderator having seen those bytes, nobody is sanctioned or reported for them. The
+// transcoded bytes themselves are denylisted as verified and carry the full sanction
 #[test]
-fn verdict_on_a_transcode_denylists_its_source_hash() {
+fn verdict_on_a_transcode_denylists_its_declared_source_as_derived() {
     use utils::hasher::hash_bytes;
 
     let mut wrapper = ENV.deref().get();
@@ -2834,12 +2824,10 @@ fn verdict_on_a_transcode_denylists_its_source_hash() {
     assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
     tick_many(env, 10);
 
-    // The transcoded bytes are denylisted directly (existing behaviour) ...
-    upload_expecting(env, canister_ids, &test_data.reporter, &transcode, blocked);
-    // ... and so is the original they came from, raw or re-transcoded
+    // The original, raw or re-transcoded, is refused ...
     upload_expecting(env, canister_ids, &test_data.reporter, &original, blocked);
     upload_transcode_expecting(env, canister_ids, &test_data.reporter, &random_file(), source_hash, blocked);
-    // Control: fresh bytes declaring an unrelated source are unaffected
+    // ... fresh bytes declaring an unrelated source are unaffected ...
     upload_transcode_expecting(
         env,
         canister_ids,
@@ -2848,22 +2836,26 @@ fn verdict_on_a_transcode_denylists_its_source_hash() {
         hash_bytes(b"other"),
         success,
     );
+    // ... and none of that sanctioned anyone: the source was only ever a claim
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(
+        attempter_state.suspension_details.is_none(),
+        "a refusal on a derived hash must not suspend anyone"
+    );
+    assert!(attempt_reports_for(env, &test_data, &test_data.reporter).is_empty());
 
-    // The first refusal is an attempt report born resolved against the verdict; the later
-    // refusals tally onto it and surface as post-verdict repeat notices (I6/I14)
+    // The transcoded bytes are denylisted as verified (existing behaviour): refused AND sanctioned
+    upload_expecting(env, canister_ids, &test_data.reporter, &transcode, blocked);
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(attempter_state.suspension_details.is_some(), "attempter should be suspended");
     let attempt_reports = attempt_reports_for(env, &test_data, &test_data.reporter);
     assert_eq!(attempt_reports.len(), 1, "{attempt_reports:?}");
     assert!(
         matches!(attempt_reports[0].status, ModerationReportStatus::UpheldAsCsam(_)),
         "{:?}",
         attempt_reports[0].status
-    );
-    let notices = moderation_notices(env, &test_data);
-    assert!(
-        notices
-            .iter()
-            .any(|t| t.contains("Repeat attempt") && t.contains("upheld as CSAM")),
-        "refused attempts on the source hash must be reported as post-verdict repeats: {notices:?}"
     );
 }
 
