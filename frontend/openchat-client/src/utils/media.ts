@@ -363,13 +363,19 @@ async function handleImageFile(
 // then reads the video data and returns the attachment content. Thumbnails
 // come from the transcoded file so a source this browser can't play (HEVC on
 // Chrome without hardware decode) still gets one.
+//
+// The size cap applies to the bytes that will actually be uploaded, so it is
+// checked after the transcode: a 24MB phone clip that comes out at 4MB is
+// fine, and only what the cap is for - the stored size - is measured.
 // TODO blob data should be loaded lazyily for any content
 async function handleVideoFile(
     original: File,
+    maxBytes: number,
     transcode: VideoTranscodeOptions | undefined,
 ): Promise<AttachmentContent> {
     const transcoded = transcode ? await transcodeVideo(original, transcode) : undefined;
     const file = transcoded?.file ?? original;
+    if (file.size > maxBytes) throw "maxVideoSize";
     const [thumb, image] = await extractVideoThumbnail(file);
 
     const data = await file.arrayBuffer();
@@ -455,9 +461,9 @@ export async function messageContentFromFile(
         }
 
         case "video":
-            if (dataSizeInBytes > maxSizes.video) throw "maxVideoSize";
             return await handleVideoFile(
                 file instanceof LazyFile ? await file.load() : file,
+                maxSizes.video,
                 transcode,
             );
 

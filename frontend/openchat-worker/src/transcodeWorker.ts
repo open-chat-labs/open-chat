@@ -58,6 +58,17 @@ function post(msg: TranscodeResponse, transfer?: Transferable[]) {
     (self as unknown as Worker).postMessage(msg, transfer ?? []);
 }
 
+// SHA3-256 over the blob in slices: the source is only bounded by what the
+// user picked, so it is never pulled into memory whole just to be hashed.
+async function hashBlob(blob: Blob): Promise<Uint8Array> {
+    const SLICE = 8 * 1024 * 1024;
+    const hasher = sha3_256.create();
+    for (let offset = 0; offset < blob.size; offset += SLICE) {
+        hasher.update(await blob.slice(offset, offset + SLICE).arrayBuffer());
+    }
+    return new Uint8Array(hasher.arrayBuffer());
+}
+
 function fitTo(width: number, height: number): { width: number; height: number } {
     const landscape = width >= height;
     const maxW = landscape ? TARGET_LONG_SIDE : TARGET_SHORT_SIDE;
@@ -158,7 +169,7 @@ async function transcode(file: Blob): Promise<void> {
         if (buffer.byteLength >= file.size) {
             return post({ kind: "skipped", reason: "output not smaller than source" });
         }
-        const sourceHash = new Uint8Array(sha3_256.arrayBuffer(await file.arrayBuffer()));
+        const sourceHash = await hashBlob(file);
         post({ kind: "done", buffer, mimeType: "video/mp4", sourceHash }, [buffer]);
     } finally {
         input.dispose();
