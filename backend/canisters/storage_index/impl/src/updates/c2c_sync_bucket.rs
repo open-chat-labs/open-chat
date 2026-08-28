@@ -43,14 +43,12 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     for denylisted in args.csam_hashes_denylisted {
-        state
-            .data
-            .denylist_csam_hash(
-                bucket,
-                denylisted.hash,
-                denylisted.report_index,
-                denylisted.derived.unwrap_or(false),
-            );
+        state.data.denylist_csam_hash(
+            bucket,
+            denylisted.hash,
+            denylisted.report_index,
+            denylisted.derived.unwrap_or(false),
+        );
     }
 
     if !args.csam_matches.is_empty() {

@@ -136,11 +136,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 let derived = d.derived.unwrap_or(false);
                 if state.data.vault.denylist_hash(d.hash, d.report_index, derived) {
                     state.data.vault.clear_blocked_attempts_for_hash(&d.hash);
-                    info!(
-                        report_index = d.report_index,
-                        derived,
-                        "Vault: CSAM hash denylisted"
-                    );
+                    info!(report_index = d.report_index, derived, "Vault: CSAM hash denylisted");
                     // A copy of the upheld bytes stored HERE may carry source claims of its own
                     if !derived {
                         denylist_source_hashes(&d.hash, d.report_index, state);
