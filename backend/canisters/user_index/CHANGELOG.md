@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off `post_upgrade` privilege re-sync now that it has run on prod in the 2.0.2046 release ([#9255](https://github.com/open-chat-labs/open-chat/pull/9255))
+
+## [[2.0.2046](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2046-user_index)] - 2026-08-26
+
 ### Added
 
 - Automated NCA (CSEA-IRP) filing path for the off-chain reporting service: `authority_report_token` mints a vault-export + submitter token pair, `record_authority_report_attempt` opens a crash-safe attempt marker and returns the certified report data, and `clear_authority_report_attempt` / `record_authority_report_filed` complete the loop, classifying failures into the new `Attempting`, `ContingencyRequired` and `ValidationFailed` report states ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))

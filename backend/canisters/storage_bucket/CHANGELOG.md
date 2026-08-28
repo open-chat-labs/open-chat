@@ -9,8 +9,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Optional `source_hash` on `upload_chunk_v2`: the hash of the bytes a client transcoded from (video re-encoded at upload). A verdict on the transcode denylists its declared sources as *derived* - uploads of them are refused platform-wide, but since the bucket cannot verify the claim nobody is sanctioned or reported on a derived match; only bytes a moderator saw carry sanctions ([#9254](https://github.com/open-chat-labs/open-chat/pull/9254))
-- Token-gated evidence export on `vault_file_chunk` for the NCA reporting service, logged as `ExportedForAuthorityReport` in the chain of custody ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
-- Accept the `SetAuthorityReporter` vault op carrying the service principal and the OC public key needed to verify export tokens ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 
 ### Changed
 
@@ -20,6 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Treat the last byte position of a `Range` header as inclusive and add the `Accept-Ranges` header ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
+
+## [[2.0.2043](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2043-storage_bucket)] - 2026-08-26
+
+### Added
+
+- Token-gated evidence export on `vault_file_chunk` for the NCA reporting service, logged as `ExportedForAuthorityReport` in the chain of custody ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- Accept the `SetAuthorityReporter` vault op carrying the service principal and the OC public key needed to verify export tokens ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 
 ## [[2.0.2032](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2032-storage_bucket)] - 2026-08-20
 
