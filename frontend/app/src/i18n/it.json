@@ -1111,6 +1111,7 @@
     "maxImageSize": "Superata la dimensione massima dell'immagine di 1 MB",
     "maxStorage": "È possibile eseguire l'aggiornamento a un massimo di 1 GB di spazio di archiviazione",
     "maxVideoSize": "Superata la dimensione massima del video di 5 MB",
+    "videoProcessing": "Ottimizzazione del video…",
     "member": "membro",
     "memberCount": "{count} membro/i",
     "memberIsTyping": "{username} sta digitando",

@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
-    import type { AttachmentContent, ChatSummary, OpenChat } from "@client";
+    import type { AttachmentContent, MessageContext, OpenChat } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import PlusCircle from "svelte-material-icons/PlusCircle.svelte";
@@ -14,22 +14,24 @@
     interface Props {
         children: Snippet;
         mode: "thread" | "message";
-        chat: ChatSummary;
-        onFileSelected: (content: AttachmentContent) => void;
+        messageContext: MessageContext;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
     }
 
-    let { children, mode = "message", onFileSelected, chat }: Props = $props();
+    let { children, mode = "message", onFileSelected, messageContext }: Props = $props();
     let dragging: boolean = $state(false);
 
     function onDataTransfer(data: DataTransfer): void {
         const file = fileFromDataTransferItems([...data.items]);
         if (file) {
+            // Captured now: preparing a video can take a while and the chat may change under it
+            const context = messageContext;
             client
-                .messageContentFromFile(file)
+                .messageContentFromFile(file, context)
                 .then((content) => {
                     let permission = client.contentTypeToPermission(content.kind);
-                    if (client.canSendMessage(chat.id, mode, permission)) {
-                        onFileSelected(content);
+                    if (client.canSendMessage(context.chatId, mode, permission)) {
+                        onFileSelected(content, context);
                     } else {
                         const errorMessage = i18nKey("permissions.notPermitted", {
                             permission: $_(`permissions.threadPermissions.${permission}`),

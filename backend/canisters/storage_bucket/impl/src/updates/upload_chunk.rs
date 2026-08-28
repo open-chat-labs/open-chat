@@ -7,6 +7,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::upload_chunk_v2::{Response::*, *};
 use storage_index_canister::c2c_sync_bucket::{CsamMatch, CsamMatchKind};
+use tracing::info;
 use types::{FileRemoved, RejectedReason};
 use utils::file_id::validate_file_id;
 
@@ -33,39 +34,66 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     // told so the uploader receives the same sanction as the original sender. Checking the
     // declared hash is airtight: an upload only ever completes if the bytes hash to the
     // declared value (see the HashMismatch arm below).
-    if let Some(report_index) = state.data.vault.known_csam_report_index(&args.hash) {
-        // Report once per file id: chunks upload in parallel and each is refused here, and a
-        // retry of the same attempt reuses the file id - only the first sighting is reported
-        if state.data.vault.record_blocked_attempt(user_id, file_id, args.hash) {
-            state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
-                uploader: user_id,
-                file_id,
-                hash: args.hash,
-                csam_report_index: report_index,
-                kind: CsamMatchKind::UploadAttempt,
-            }));
-        }
-        return Blocked;
-    }
-
+    //
     // Content quarantined pending a verdict is refused the same way: the bucket will not
     // serve it, so handing out a fresh reference would only create a message nobody can view
     // while the re-share attempt itself went unrecorded. Reported against the pending report;
     // a pin retained only by a legal hold has no active claim, so the upload is refused
     // without reporting or sanctioning anyone against the already-resolved report.
-    if state.data.files.is_vault_pinned(&args.hash) {
-        if let Some(report_index) = state.data.vault.pinned_report_index(&args.hash)
-            && state.data.vault.record_blocked_attempt(user_id, file_id, args.hash)
-        {
-            state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
-                uploader: user_id,
-                file_id,
-                hash: args.hash,
-                csam_report_index: report_index,
-                kind: CsamMatchKind::PendingQuarantineAttempt,
-            }));
+    //
+    // A client-side transcode (video re-encoded at upload) never reproduces the hash of the
+    // bytes it started from, so the client also declares that source hash, and both declared
+    // hashes go through the same checks. Source hashes are claims the bucket cannot verify, so
+    // whatever is known only through such a claim - a hash denylisted as DERIVED, or a hash
+    // recorded as the source of quarantined bytes - refuses the upload but never sanctions or
+    // reports anyone: a lie about a source must not get an innocent uploader of that source
+    // treated as a CSAM uploader. Only bytes a moderator actually saw carry sanctions.
+    //
+    // The sanctioning checks run over BOTH declared hashes before any refuse-only one: a
+    // refuse-only match on one hash must not shadow a sanctioning match on the other, or
+    // whether an attempt gets reported would depend on which slot the client put it in.
+    let declared_hashes = || std::iter::once(args.hash).chain(args.source_hash);
+    for declared in declared_hashes() {
+        if let Some(report_index) = state.data.vault.known_csam_report_index(&declared) {
+            // Report once per file id: chunks upload in parallel and each is refused here, and a
+            // retry of the same attempt reuses the file id - only the first sighting is reported
+            if state.data.vault.record_blocked_attempt(user_id, file_id, declared) {
+                state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                    uploader: user_id,
+                    file_id,
+                    hash: declared,
+                    csam_report_index: report_index,
+                    kind: CsamMatchKind::UploadAttempt,
+                }));
+            }
+            return Blocked;
         }
-        return Blocked;
+
+        if state.data.files.is_vault_pinned(&declared) {
+            if let Some(report_index) = state.data.vault.pinned_report_index(&declared)
+                && state.data.vault.record_blocked_attempt(user_id, file_id, declared)
+            {
+                state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                    uploader: user_id,
+                    file_id,
+                    hash: declared,
+                    csam_report_index: report_index,
+                    kind: CsamMatchKind::PendingQuarantineAttempt,
+                }));
+            }
+            return Blocked;
+        }
+    }
+    for declared in declared_hashes() {
+        if let Some(report_index) = state.data.vault.derived_csam_report_index(&declared) {
+            info!(%user_id, %file_id, report_index, "Upload refused: hash declared as the source of upheld content");
+            return Blocked;
+        }
+
+        if state.data.files.vault_pinned_hash_for_source(&declared).is_some() {
+            info!(%user_id, %file_id, "Upload refused: hash declared as the source of quarantined content");
+            return Blocked;
+        }
     }
 
     let mut index_sync_complete = IndexSyncComplete::No;

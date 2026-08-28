@@ -153,8 +153,8 @@
         });
     }
 
-    function onFileSelected(content: AttachmentContent) {
-        localUpdates.draftMessages.setAttachment({ chatId: chat.id }, content);
+    function onFileSelected(content: AttachmentContent, context: MessageContext) {
+        localUpdates.draftMessages.setAttachment(context, content);
     }
 
     function makeMeme() {

@@ -53,6 +53,7 @@ export const idlFactory = ({ IDL }) => {
         expiry: IDL.Opt(TimestampMillis),
         chunk_size: IDL.Nat32,
         file_id: FileId,
+        source_hash: IDL.Opt(Hash),
     });
     const VaultFileInfoArgs = IDL.Record({ file_id: FileId });
     const VaultFileInfoResponse = IDL.Variant({

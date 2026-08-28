@@ -114,6 +114,13 @@ pub struct DenylistHashOp {
     pub hash: Hash,
     // The report whose UpheldAsCsam verdict denylisted the hash
     pub report_index: u64,
+    // True when the hash was never seen by a moderator: it was only DECLARED by a client as the
+    // source of upheld content (see upload_chunk_v2::Args::source_hash). Uploads of it are
+    // refused, nobody is sanctioned. Option rather than bool so that this hop stays
+    // candid-decodable across the release window (candid rejects a missing non-opt field);
+    // None means verified, the only tier older senders knew
+    #[serde(default)]
+    pub derived: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

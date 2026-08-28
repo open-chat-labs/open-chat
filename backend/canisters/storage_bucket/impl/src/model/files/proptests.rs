@@ -81,6 +81,7 @@ fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMilli
                 total_size: bytes.len() as u64,
                 bytes,
                 expiry: None,
+                source_hash: None,
                 now: timestamp,
             });
         }

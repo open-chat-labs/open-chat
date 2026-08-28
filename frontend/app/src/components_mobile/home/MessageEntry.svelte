@@ -44,6 +44,7 @@
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
+        videoProcessingProgress,
         type CreatedUser,
     } from "@client";
     import { getContext, onMount, tick } from "svelte";
@@ -62,6 +63,7 @@
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
     import Send from "../icons/Send.svelte";
+    import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
@@ -91,7 +93,7 @@
         messageContext: MessageContext;
         user: CreatedUser;
         inputTrayVisible: boolean;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
         onStartTyping: () => void;
@@ -715,6 +717,15 @@
                     {#if !editingEvent && attachment !== undefined}
                         <DraftMediaMessage {onRemoveAttachment} content={attachment} />
                     {/if}
+                    {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}
+                        <Row padding="md">
+                            <Progress
+                                colour={ColourVars.primaryMuted}
+                                percent={Math.round($videoProcessingProgress.progress * 100)}>
+                                <Translatable resourceKey={i18nKey("videoProcessing")} />
+                            </Progress>
+                        </Row>
+                    {/if}
                     {#if editingEvent !== undefined}
                         <Row
                             height={{ size: "1rem" }}
@@ -816,7 +827,7 @@
                                 </IconButton>
 
                                 {#if messageIsEmpty && canAddImageOrVideo}
-                                    <FileAttacher {onFileSelected}>
+                                    <FileAttacher {messageContext} {onFileSelected}>
                                         {#snippet children(onClick)}
                                             <IconButton
                                                 onclick={onClick}
@@ -848,7 +859,7 @@
                                 mimeType={audioMimeType}
                                 bind:activeStream
                                 bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected} />
+                                onAudioCaptured={(content) => onFileSelected(content, messageContext)} />
                         {:else if canEnterText}
                             <IconButton
                                 padding={"md"}

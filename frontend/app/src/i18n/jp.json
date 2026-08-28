@@ -1111,6 +1111,7 @@
     "maxImageSize": "最大イメージサイズ1MBを超えています",
     "maxStorage": "最大1GBのストレージにアップグレードすることができます",
     "maxVideoSize": "最大ビデオサイズ5MBを超えています",
+    "videoProcessing": "動画を最適化しています…",
     "member": "メンバー",
     "memberCount": "{カウント}メンバー",
     "memberIsTyping": "{username}は入力中です",

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Optional `source_hash` on `upload_chunk_v2`: the hash of the bytes a client transcoded from (video re-encoded at upload). A verdict on the transcode denylists its declared sources as *derived* - uploads of them are refused platform-wide, but since the bucket cannot verify the claim nobody is sanctioned or reported on a derived match; only bytes a moderator saw carry sanctions ([#9254](https://github.com/open-chat-labs/open-chat/pull/9254))
 - Token-gated evidence export on `vault_file_chunk` for the NCA reporting service, logged as `ExportedForAuthorityReport` in the chain of custody ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 - Accept the `SetAuthorityReporter` vault op carrying the service principal and the OC public key needed to verify export tokens ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 

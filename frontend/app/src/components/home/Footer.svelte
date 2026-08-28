@@ -4,6 +4,7 @@
         iconSize,
         messageContextsEqual,
         subscribe,
+        videoProcessingProgress,
         type AttachmentContent,
         type ChatSummary,
         type CreatedUser,
@@ -26,6 +27,7 @@
     import EphemeralMessage from "../bots/EphemeralMessage.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
@@ -48,7 +50,7 @@
         mode?: "thread" | "message";
         externalContent?: boolean;
         messageContext: MessageContext;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         onCancelReply: () => void;
         onSetTextContent: (txt?: string) => void;
         onStartTyping: () => void;
@@ -119,12 +121,14 @@
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
         const file = fileFromDataTransferItems(items);
         if (file) {
+            // Captured now: preparing a video can take a while and the chat may change under it
+            const context = messageContext;
             client
-                .messageContentFromFile(file)
+                .messageContentFromFile(file, context)
                 .then((content) => {
                     let permission = client.contentTypeToPermission(content.kind);
-                    if (client.canSendMessage(chat.id, mode, permission)) {
-                        onFileSelected(content);
+                    if (client.canSendMessage(context.chatId, mode, permission)) {
+                        onFileSelected(content, context);
                     } else {
                         const errorMessage = i18nKey("permissions.notPermitted", {
                             permission: $_(`permissions.threadPermissions.${permission}`),
@@ -190,6 +194,13 @@
             <EphemeralMessage
                 onClose={() => (ephemeralMessageEvent = undefined)}
                 event={ephemeralMessageEvent} />
+        {/if}
+        {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}
+            <div class="draft-container video-progress">
+                <Progress size="24px" percent={Math.round($videoProcessingProgress.progress * 100)}>
+                    <Translatable resourceKey={i18nKey("videoProcessing")} />
+                </Progress>
+            </div>
         {/if}
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
@@ -296,5 +307,12 @@
     .draft-container {
         max-width: 80%;
         padding: 0 $sp4 $sp4 $sp4;
+    }
+
+    .video-progress {
+        width: toRem(500);
+        max-width: 85%;
+        padding-top: $sp3;
+        @include font(book, normal, fs-80);
     }
 </style>

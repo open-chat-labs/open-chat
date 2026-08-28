@@ -1111,6 +1111,7 @@
     "maxImageSize": "अधिकतम छवि आकार 1एमबी से अधिक हो गया",
     "maxStorage": "आप अधिकतम 1GB स्टोरेज तक अपग्रेड कर सकते हैं",
     "maxVideoSize": "वीडियो का अधिकतम आकार 5एमबी से अधिक हो गया",
+    "videoProcessing": "वीडियो अनुकूलित किया जा रहा है…",
     "member": "सदस्य",
     "memberCount": "{count} सदस्य",
     "memberIsTyping": "{username} टाइप कर रहा है",

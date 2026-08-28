@@ -79,7 +79,7 @@
         mode?: "thread" | "message";
         externalContent: boolean;
         messageContext: MessageContext;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
         onStartTyping: () => void;
@@ -556,7 +556,7 @@
                                 bind:percentRecorded
                                 bind:recording
                                 bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected} />
+                                onAudioCaptured={(content) => onFileSelected(content, messageContext)} />
                         </div>
                     {:else if canEnterText}
                         <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
@@ -581,6 +581,7 @@
                         {onMakeMeme}
                         {onCreatePoll}
                         {onClearAttachment}
+                        {messageContext}
                         {onFileSelected} />
                 {:else}
                     <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { AttachmentContent, OpenChat } from "@client";
+    import type { AttachmentContent, MessageContext, OpenChat } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -8,11 +8,12 @@
 
     interface Props {
         accept?: string;
-        onFileSelected: (content: AttachmentContent) => void;
+        messageContext: MessageContext;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         children: Snippet<[() => void]>;
     }
 
-    let { accept, onFileSelected, children }: Props = $props();
+    let { accept, messageContext, onFileSelected, children }: Props = $props();
 
     let fileinput: HTMLInputElement | undefined = $state();
 
@@ -24,10 +25,12 @@
         if (e.currentTarget) {
             const target = e.currentTarget;
             if (target.files && target.files[0]) {
+                // Captured now: preparing a video can take a while and the chat may change under it
+                const context = messageContext;
                 client
-                    .messageContentFromFile(target.files[0])
+                    .messageContentFromFile(target.files[0], context)
                     .then((content) => {
-                        onFileSelected(content);
+                        onFileSelected(content, context);
                     })
                     .catch((err) => {
                         toastStore.showFailureToast(i18nKey(err));

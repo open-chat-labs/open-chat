@@ -1111,6 +1111,7 @@
     "maxImageSize": "Đã vượt quá kích thước hình tối đa 1MB",
     "maxStorage": "Bạn có thể nâng cấp tối đa 1GB cho dung lượng lưu trữ",
     "maxVideoSize": "Đã vượt quá kích thước video tối đa 5MB",
+    "videoProcessing": "Đang tối ưu hoá video…",
     "member": "hội viên",
     "memberCount": "{count} thành viên",
     "memberIsTyping": "{username} đang nhập",

@@ -234,8 +234,8 @@
         }
     }
 
-    function onFileSelected(content: AttachmentContent) {
-        localUpdates.draftMessages.setAttachment(messageContext, content);
+    function onFileSelected(content: AttachmentContent, context: MessageContext) {
+        localUpdates.draftMessages.setAttachment(context, content);
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
@@ -351,7 +351,7 @@
         onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
-<DropTarget {chat} mode={"thread"} {onFileSelected}>
+<DropTarget {messageContext} mode={"thread"} {onFileSelected}>
     <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
 
     {#if loading || rootEvent === undefined}

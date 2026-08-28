@@ -201,8 +201,8 @@
         creatingP2PSwapMessage = true;
     }
 
-    function onFileSelected(content: AttachmentContent) {
-        localUpdates.draftMessages.setAttachment({ chatId: chat.id }, content);
+    function onFileSelected(content: AttachmentContent, context: MessageContext) {
+        localUpdates.draftMessages.setAttachment(context, content);
     }
 
     function attachGif(search: string) {
@@ -428,7 +428,7 @@
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
-<DropTarget {chat} mode={"message"} {onFileSelected}>
+<DropTarget {messageContext} mode={"message"} {onFileSelected}>
     <div class="wrapper">
         {#if showSearchHeader}
             <CurrentChatSearchHeader

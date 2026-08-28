@@ -1111,6 +1111,7 @@
     "maxImageSize": "Przekroczono maksymalny rozmiar obrazu 1 MB",
     "maxStorage": "Możesz rozszerzyć pamięć do maksymalnie 1 GB",
     "maxVideoSize": "Przekroczono maksymalny rozmiar pliku wideo wynoszący 5 MB",
+    "videoProcessing": "Optymalizowanie wideo…",
     "member": "członek",
     "memberCount": "{count} członków",
     "memberIsTyping": "{username} pisze",

@@ -1,6 +1,7 @@
 import type { AttachmentContent, Message } from "@shared";
 import { LazyFile } from "@shared";
 import { dataToBlobUrl } from "./blob";
+import { transcodeVideo, type VideoTranscodeOptions } from "./videoTranscode";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
 const DEFAULT_JPEG_QUALITY = 0.75;
@@ -27,6 +28,9 @@ export const DIAMOND_MAX_SIZES: MaxMediaSizes = {
     audio: 1024 * 1024 * 20,
     file: 1024 * 1024 * 5,
 };
+
+// The most a transcode is expected to shrink a clip by (see messageContentFromFile)
+const MAX_TRANSCODE_SHRINK = 25;
 
 export type Dimensions = {
     width: number;
@@ -357,13 +361,32 @@ async function handleImageFile(
 
 // Handle video files
 //
-// Extracts video thumbnail and a full image, then reads the video data and
-// returns the attachment content.
+// Transcodes to 720p H.264 where the source is bigger than that or not H.264
+// (and the browser has WebCodecs), extracts a thumbnail and a full image,
+// then reads the video data and returns the attachment content. Thumbnails
+// come from the transcoded file so a source this browser can't play (HEVC on
+// Chrome without hardware decode) still gets one.
+//
+// The size cap applies to the bytes that will actually be uploaded, so it is
+// checked after the transcode: a 24MB phone clip that comes out at 4MB is
+// fine, and only what the cap is for - the stored size - is measured. The
+// worker refuses up front any clip whose duration alone puts the output over
+// the cap; the encoder's bitrate is a target rather than a bound though, and
+// the audio track is copied through untouched, so a transcode can still land
+// just over it. An original that fits is then uploaded instead of failing.
 // TODO blob data should be loaded lazyily for any content
-async function handleVideoFile(file: File): Promise<AttachmentContent> {
+async function handleVideoFile(
+    original: File,
+    maxBytes: number,
+    transcode: VideoTranscodeOptions | undefined,
+): Promise<AttachmentContent> {
+    const transcoded = transcode ? await transcodeVideo(original, maxBytes, transcode) : undefined;
+    const useTranscode =
+        transcoded !== undefined && (transcoded.file.size <= maxBytes || original.size > maxBytes);
+    const file = useTranscode ? transcoded.file : original;
+    if (file.size > maxBytes) throw "maxVideoSize";
     const [thumb, image] = await extractVideoThumbnail(file);
 
-    // TODO resize video instead of checking max dims?
     const data = await file.arrayBuffer();
     const blobUrl = dataToBlobUrl(data, file.type);
 
@@ -381,6 +404,7 @@ async function handleVideoFile(file: File): Promise<AttachmentContent> {
             blobUrl: blobUrl,
         },
         thumbnailData: thumb.url,
+        sourceHash: useTranscode ? transcoded.sourceHash : undefined,
     };
 }
 
@@ -422,6 +446,7 @@ async function handleRegularFiles(file: File): Promise<AttachmentContent> {
 export async function messageContentFromFile(
     file: File | LazyFile,
     isDiamond: boolean,
+    transcode?: VideoTranscodeOptions,
 ): Promise<AttachmentContent> {
     const dataSizeInBytes = file.size;
     const mediaType = mimeToMediaType(file.type);
@@ -444,9 +469,20 @@ export async function messageContentFromFile(
             return await handleImageFile(f, maxSizes, mediaType);
         }
 
-        case "video":
-            if (dataSizeInBytes > maxSizes.video) throw "maxVideoSize";
-            return await handleVideoFile(file instanceof LazyFile ? await file.load() : file);
+        case "video": {
+            // Refuse before the bytes are pulled into the heap: without WebCodecs nothing
+            // can shrink the clip, and with it no transcode gets a clip this far over the
+            // cap under it (the worker targets 2Mbps; phone footage tops out ~25x that)
+            const canTranscode = transcode !== undefined && typeof VideoEncoder !== "undefined";
+            if (dataSizeInBytes > (canTranscode ? MAX_TRANSCODE_SHRINK : 1) * maxSizes.video) {
+                throw "maxVideoSize";
+            }
+            return await handleVideoFile(
+                file instanceof LazyFile ? await file.load() : file,
+                maxSizes.video,
+                transcode,
+            );
+        }
 
         case "audio":
             if (dataSizeInBytes > maxSizes.audio) throw "maxAudioSize";
