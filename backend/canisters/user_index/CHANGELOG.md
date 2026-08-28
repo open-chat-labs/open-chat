@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off `post_upgrade` privilege re-sync now that it has run on prod in the 2.0.2046 release ([#9255](https://github.com/open-chat-labs/open-chat/pull/9255))
+
 ## [[2.0.2046](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2046-user_index)] - 2026-08-26
 
 ### Added
