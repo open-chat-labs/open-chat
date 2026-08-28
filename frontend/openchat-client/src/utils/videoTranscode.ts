@@ -15,8 +15,14 @@ export type TranscodedVideo = {
     sourceHash: Uint8Array;
 };
 
+// No message from the worker for this long and it is presumed dead: a worker the browser
+// kills for memory fires no error event on the parent, and a stalled decoder never resolves.
+// Progress arrives at least every 1%, so a healthy transcode never goes quiet this long.
+const STALL_TIMEOUT_MS = 60_000;
+
 export function transcodeVideo(
     file: File,
+    maxBytes: number,
     { websiteVersion, onProgress }: VideoTranscodeOptions,
 ): Promise<TranscodedVideo | undefined> {
     // Cheap up-front gate — the worker checks again, but there's no point
@@ -26,11 +32,21 @@ export function transcodeVideo(
     return new Promise((resolve) => {
         const workerUrl = `/transcode_worker.js?v=${websiteVersion}`;
         const worker = new Worker(new URL(workerUrl, import.meta.url), { type: "module" });
+        let stallTimer: ReturnType<typeof setTimeout> | undefined;
 
         function finish(result: TranscodedVideo | undefined) {
+            clearTimeout(stallTimer);
             worker.terminate();
             onProgress?.(undefined);
             resolve(result);
+        }
+
+        function resetStallTimer() {
+            clearTimeout(stallTimer);
+            stallTimer = setTimeout(() => {
+                console.warn("VIDEO_TRANSCODE: worker stalled, uploading original");
+                finish(undefined);
+            }, STALL_TIMEOUT_MS);
         }
 
         worker.onerror = (ev) => {
@@ -38,7 +54,13 @@ export function transcodeVideo(
             finish(undefined);
         };
 
+        worker.onmessageerror = () => {
+            console.warn("VIDEO_TRANSCODE: undecodable worker message, uploading original");
+            finish(undefined);
+        };
+
         worker.onmessage = (ev: MessageEvent<TranscodeResponse>) => {
+            resetStallTimer();
             const msg = ev.data;
             switch (msg.kind) {
                 case "progress":
@@ -68,7 +90,8 @@ export function transcodeVideo(
         };
 
         onProgress?.(0);
-        const req: TranscodeRequest = { kind: "transcode", file };
+        resetStallTimer();
+        const req: TranscodeRequest = { kind: "transcode", file, maxBytes };
         worker.postMessage(req);
     });
 }

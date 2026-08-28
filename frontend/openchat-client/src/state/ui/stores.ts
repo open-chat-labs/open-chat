@@ -4,6 +4,7 @@ import {
     ScreenWidth,
     type Dimensions,
     type FontScale,
+    type MessageContext,
     type RightPanelContent,
     type RightPanelMode,
     type RouteParams,
@@ -27,8 +28,11 @@ function translateScale(scale: FontScale): number {
 
 export const runningInIframe: Readable<boolean> = writable(window.self !== window.top);
 export const activityFeedShowing = writable(false);
-// 0..1 while a picked video is being transcoded for upload, else undefined.
-export const videoProcessingProgress = writable<number | undefined>(undefined);
+// While a picked video is being transcoded for upload: the message context it was picked
+// in (only that context's composer shows the bar) and 0..1 progress; else undefined.
+export const videoProcessingProgress = writable<
+    { context: MessageContext; progress: number } | undefined
+>(undefined);
 export const notificationsSupported =
     !isCanisterUrl &&
     "serviceWorker" in navigator &&

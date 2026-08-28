@@ -46,7 +46,7 @@
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onMakeMeme: () => void;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         messageContext: MessageContext;
     }
 
@@ -84,14 +84,16 @@
     async function onMediaSelected(media: RecentMedia) {
         console.log(media);
         const { filename, mimeType, size } = media;
+        // Captured now: preparing a video can take a while and the chat may change under it
+        const context = messageContext;
         try {
             // iOS photo-library items have no file path until the asset is
             // exported to a temp file (media.uri is the PHAsset identifier).
             const filePath = media.filePath || (await exportMedia(media.uri));
             const assetUrl = convertFileSrc(filePath);
             const lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
-            const content = await client.messageContentFromFile(lazyFile);
-            onFileSelected(content);
+            const content = await client.messageContentFromFile(lazyFile, context);
+            onFileSelected(content, context);
         } catch (err) {
             toastStore.showFailureToast(i18nKey(err as string));
         }
@@ -177,7 +179,7 @@
         <div class="attach-buttons">
             <!-- Open Gallery -->
             {#if mediaPermitted}
-                <FileAttacher accept="image/*,video/*" {onFileSelected}>
+                <FileAttacher accept="image/*,video/*" {messageContext} {onFileSelected}>
                     {#snippet children(onClick)}
                         {@render attachOption(
                             "Open Gallery",
@@ -191,7 +193,7 @@
 
             <!-- Send File -->
             {#if permittedMessages.get("file")}
-                <FileAttacher {onFileSelected}>
+                <FileAttacher {messageContext} {onFileSelected}>
                     {#snippet children(onClick)}
                         {@render attachOption(
                             "Send File",

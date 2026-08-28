@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
         iconSize,
         messageContextsEqual,
@@ -18,7 +19,6 @@
         type SelectedEmoji,
         type User,
     } from "@client";
-    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -50,7 +50,7 @@
         mode?: "thread" | "message";
         externalContent?: boolean;
         messageContext: MessageContext;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         onCancelReply: () => void;
         onSetTextContent: (txt?: string) => void;
         onStartTyping: () => void;
@@ -121,12 +121,14 @@
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
         const file = fileFromDataTransferItems(items);
         if (file) {
+            // Captured now: preparing a video can take a while and the chat may change under it
+            const context = messageContext;
             client
-                .messageContentFromFile(file)
+                .messageContentFromFile(file, context)
                 .then((content) => {
                     let permission = client.contentTypeToPermission(content.kind);
-                    if (client.canSendMessage(chat.id, mode, permission)) {
-                        onFileSelected(content);
+                    if (client.canSendMessage(context.chatId, mode, permission)) {
+                        onFileSelected(content, context);
                     } else {
                         const errorMessage = i18nKey("permissions.notPermitted", {
                             permission: $_(`permissions.threadPermissions.${permission}`),
@@ -193,9 +195,9 @@
                 onClose={() => (ephemeralMessageEvent = undefined)}
                 event={ephemeralMessageEvent} />
         {/if}
-        {#if $videoProcessingProgress !== undefined}
+        {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}
             <div class="draft-container video-progress">
-                <Progress size="24px" percent={Math.round($videoProcessingProgress * 100)}>
+                <Progress size="24px" percent={Math.round($videoProcessingProgress.progress * 100)}>
                     <Translatable resourceKey={i18nKey("videoProcessing")} />
                 </Progress>
             </div>

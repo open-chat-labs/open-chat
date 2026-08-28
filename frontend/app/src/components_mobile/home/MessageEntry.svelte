@@ -1,4 +1,19 @@
 <script lang="ts">
+    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import {
+        loadRichTextEditor,
+        richTextEditorIfLoaded,
+    } from "@shared_components/richTextEditorLoader";
+    import { keyboard } from "@src/stores/keyboard.svelte";
+    import { isIosTauriApp } from "@shared";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import { detectMarkdown } from "@src/utils/detectMarkdown";
+    import {
+        popHistoryStateWithAction,
+        pushDummyHistoryState,
+        type CustomHistoryAction,
+    } from "@src/utils/history";
+    import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -32,21 +47,6 @@
         videoProcessingProgress,
         type CreatedUser,
     } from "@client";
-    import { isIosTauriApp } from "@shared";
-    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
-    import {
-        loadRichTextEditor,
-        richTextEditorIfLoaded,
-    } from "@shared_components/richTextEditorLoader";
-    import { keyboard } from "@src/stores/keyboard.svelte";
-    import { detectMarkdown } from "@src/utils/detectMarkdown";
-    import { trackedEffect } from "@src/utils/effects.svelte";
-    import {
-        popHistoryStateWithAction,
-        pushDummyHistoryState,
-        type CustomHistoryAction,
-    } from "@src/utils/history";
-    import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
@@ -93,7 +93,7 @@
         messageContext: MessageContext;
         user: CreatedUser;
         inputTrayVisible: boolean;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
         onStartTyping: () => void;
@@ -567,6 +567,7 @@
         tick().then(() => editor?.focus());
     }
 
+
     let directChatBotId = $derived(client.directChatWithBot(chat));
     let directBot = $derived(
         directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
@@ -716,11 +717,11 @@
                     {#if !editingEvent && attachment !== undefined}
                         <DraftMediaMessage {onRemoveAttachment} content={attachment} />
                     {/if}
-                    {#if $videoProcessingProgress !== undefined}
+                    {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}
                         <Row padding="md">
                             <Progress
                                 colour={ColourVars.primaryMuted}
-                                percent={Math.round($videoProcessingProgress * 100)}>
+                                percent={Math.round($videoProcessingProgress.progress * 100)}>
                                 <Translatable resourceKey={i18nKey("videoProcessing")} />
                             </Progress>
                         </Row>
@@ -799,9 +800,7 @@
                                     </EditorComponent>
                                 {:else}
                                     <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                    <div
-                                        class="editor-placeholder"
-                                        onpointerdown={() => (focusWhenReady = true)}>
+                                    <div class="editor-placeholder" onpointerdown={() => (focusWhenReady = true)}>
                                         {interpolate($_, placeholder)}
                                     </div>
                                 {/if}
@@ -828,14 +827,15 @@
                                 </IconButton>
 
                                 {#if messageIsEmpty && canAddImageOrVideo}
-                                    <FileAttacher {onFileSelected}>
+                                    <FileAttacher {messageContext} {onFileSelected}>
                                         {#snippet children(onClick)}
                                             <IconButton
                                                 onclick={onClick}
                                                 padding={["sm", "zero", "md", "zero"]}
                                                 size={"md"}>
                                                 {#snippet icon()}
-                                                    <Camera color={ColourVars.textPlaceholder} />
+                                                    <Camera
+                                                        color={ColourVars.textPlaceholder} />
                                                 {/snippet}
                                             </IconButton>
                                         {/snippet}
@@ -859,7 +859,7 @@
                                 mimeType={audioMimeType}
                                 bind:activeStream
                                 bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected} />
+                                onAudioCaptured={(content) => onFileSelected(content, messageContext)} />
                         {:else if canEnterText}
                             <IconButton
                                 padding={"md"}

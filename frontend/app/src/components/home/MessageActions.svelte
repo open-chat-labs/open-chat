@@ -4,6 +4,7 @@
         mobileWidth,
         type AttachmentContent,
         type MessageAction,
+        type MessageContext,
         type MessagePermission,
     } from "@client";
     import { _ } from "svelte-i18n";
@@ -33,7 +34,8 @@
         onCreatePoll: () => void;
         onAttachGif: (search: string) => void;
         onMakeMeme: () => void;
-        onFileSelected: (content: AttachmentContent) => void;
+        messageContext: MessageContext;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
     }
 
     let {
@@ -49,6 +51,7 @@
         onCreatePoll,
         onAttachGif,
         onMakeMeme,
+        messageContext,
         onFileSelected,
     }: Props = $props();
 
@@ -195,7 +198,7 @@
 
     {#if !editing && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
         <div class="attach">
-            <FileAttacher {onFileSelected} onOpen={openFilePicker} />
+            <FileAttacher {messageContext} {onFileSelected} onOpen={openFilePicker} />
         </div>
     {/if}
 {/if}
@@ -225,7 +228,7 @@
     {#if !editing}
         {#if supportedActions.has("attach")}
             <div style={`${supportedActions.get("attach")}`} class="attach">
-                <FileAttacher {onFileSelected} onOpen={openFilePicker} />
+                <FileAttacher {messageContext} {onFileSelected} onOpen={openFilePicker} />
             </div>
         {/if}
         {#if supportedActions.has("crypto")}

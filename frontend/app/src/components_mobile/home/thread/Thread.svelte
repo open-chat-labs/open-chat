@@ -210,8 +210,8 @@
         }
     }
 
-    function onFileSelected(content: AttachmentContent) {
-        localUpdates.draftMessages.setAttachment(messageContext, content);
+    function onFileSelected(content: AttachmentContent, context: MessageContext) {
+        localUpdates.draftMessages.setAttachment(context, content);
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {

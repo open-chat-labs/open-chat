@@ -33,6 +33,8 @@ const INPUT_FORMATS = [MP4, QTFF, WEBM, MATROSKA];
 export type TranscodeRequest = {
     kind: "transcode";
     file: Blob;
+    // Size cap on the uploaded bytes: a clip that cannot come out under it is not transcoded
+    maxBytes: number;
 };
 
 export type TranscodeResponse =
@@ -77,7 +79,7 @@ function fitTo(width: number, height: number): { width: number; height: number }
     return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
 
-async function transcode(file: Blob): Promise<void> {
+async function transcode(file: Blob, maxBytes: number): Promise<void> {
     if (typeof VideoEncoder === "undefined" || typeof VideoDecoder === "undefined") {
         return post({ kind: "unsupported", reason: "no WebCodecs" });
     }
@@ -100,6 +102,16 @@ async function transcode(file: Blob): Promise<void> {
             return post({
                 kind: "skipped",
                 reason: `already avc ${displayWidth}x${displayHeight} @ ${Math.round(bitrate / 1000)}kbps`,
+            });
+        }
+
+        // The encoder targets TARGET_BITRATE, so a clip whose video track alone would land over
+        // the size cap is refused before any decoding: the main thread then applies the cap to
+        // the original bytes instead and fails the attachment with the usual message.
+        if ((duration * TARGET_BITRATE) / 8 > maxBytes) {
+            return post({
+                kind: "skipped",
+                reason: `${Math.round(duration)}s clip cannot come out under the size cap`,
             });
         }
 
@@ -160,16 +172,19 @@ async function transcode(file: Blob): Promise<void> {
             }
         };
 
-        await conversion.execute();
+        // Hashing only reads the source, so it overlaps with the conversion rather than
+        // stalling the bar at 100% afterwards.
+        const [sourceHash] = await Promise.all([hashBlob(file), conversion.execute()]);
 
         const buffer = output.target.buffer;
         if (buffer === null) {
             return post({ kind: "error", message: "conversion produced no output" });
         }
-        if (buffer.byteLength >= file.size) {
+        // A bigger output is only worth uploading when the source was not H.264: a compact
+        // HEVC/VP9 clip may grow, but the original would not play on every browser.
+        if (codec === "avc" && buffer.byteLength >= file.size) {
             return post({ kind: "skipped", reason: "output not smaller than source" });
         }
-        const sourceHash = await hashBlob(file);
         post({ kind: "done", buffer, mimeType: "video/mp4", sourceHash }, [buffer]);
     } finally {
         input.dispose();
@@ -178,7 +193,7 @@ async function transcode(file: Blob): Promise<void> {
 
 self.onmessage = (ev: MessageEvent<TranscodeRequest>) => {
     if (ev.data?.kind !== "transcode") return;
-    transcode(ev.data.file).catch((err) => {
+    transcode(ev.data.file, ev.data.maxBytes).catch((err) => {
         post({ kind: "error", message: err instanceof Error ? err.message : String(err) });
     });
 };

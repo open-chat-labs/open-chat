@@ -366,14 +366,16 @@ async function handleImageFile(
 //
 // The size cap applies to the bytes that will actually be uploaded, so it is
 // checked after the transcode: a 24MB phone clip that comes out at 4MB is
-// fine, and only what the cap is for - the stored size - is measured.
+// fine, and only what the cap is for - the stored size - is measured. The
+// worker refuses up front any clip whose duration alone puts the output over
+// the cap, so the transcode is never run only to be thrown away here.
 // TODO blob data should be loaded lazyily for any content
 async function handleVideoFile(
     original: File,
     maxBytes: number,
     transcode: VideoTranscodeOptions | undefined,
 ): Promise<AttachmentContent> {
-    const transcoded = transcode ? await transcodeVideo(original, transcode) : undefined;
+    const transcoded = transcode ? await transcodeVideo(original, maxBytes, transcode) : undefined;
     const file = transcoded?.file ?? original;
     if (file.size > maxBytes) throw "maxVideoSize";
     const [thumb, image] = await extractVideoThumbnail(file);
