@@ -299,7 +299,7 @@ impl Data {
                     storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
                         hash,
                         report_index,
-                        derived,
+                        derived: Some(derived),
                     },
                 ),
             );
@@ -315,13 +315,15 @@ impl Data {
     // a verified one (mirrors storage_bucket Vault::denylist_hash).
     pub fn denylist_csam_hash(&mut self, source_bucket: CanisterId, hash: Hash, report_index: u64, derived: bool) {
         if derived {
-            if self.csam_hashes.contains_key(&hash) || self.derived_csam_hashes.insert(hash, report_index).is_some() {
+            if self.csam_hashes.contains_key(&hash) || self.derived_csam_hashes.contains_key(&hash) {
                 return;
             }
+            self.derived_csam_hashes.insert(hash, report_index);
         } else {
-            if self.csam_hashes.insert(hash, report_index).is_some() {
+            if self.csam_hashes.contains_key(&hash) {
                 return;
             }
+            self.csam_hashes.insert(hash, report_index);
             self.derived_csam_hashes.remove(&hash);
         }
         let buckets: Vec<_> = self
@@ -342,7 +344,7 @@ impl Data {
                 storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
                     hash,
                     report_index,
-                    derived,
+                    derived: Some(derived),
                 },
             ),
         );

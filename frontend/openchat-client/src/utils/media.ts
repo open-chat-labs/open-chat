@@ -29,6 +29,9 @@ export const DIAMOND_MAX_SIZES: MaxMediaSizes = {
     file: 1024 * 1024 * 5,
 };
 
+// The most a transcode is expected to shrink a clip by (see messageContentFromFile)
+const MAX_TRANSCODE_SHRINK = 25;
+
 export type Dimensions = {
     width: number;
     height: number;
@@ -368,7 +371,9 @@ async function handleImageFile(
 // checked after the transcode: a 24MB phone clip that comes out at 4MB is
 // fine, and only what the cap is for - the stored size - is measured. The
 // worker refuses up front any clip whose duration alone puts the output over
-// the cap, so the transcode is never run only to be thrown away here.
+// the cap; the encoder's bitrate is a target rather than a bound though, and
+// the audio track is copied through untouched, so a transcode can still land
+// just over it. An original that fits is then uploaded instead of failing.
 // TODO blob data should be loaded lazyily for any content
 async function handleVideoFile(
     original: File,
@@ -376,7 +381,9 @@ async function handleVideoFile(
     transcode: VideoTranscodeOptions | undefined,
 ): Promise<AttachmentContent> {
     const transcoded = transcode ? await transcodeVideo(original, maxBytes, transcode) : undefined;
-    const file = transcoded?.file ?? original;
+    const useTranscode =
+        transcoded !== undefined && (transcoded.file.size <= maxBytes || original.size > maxBytes);
+    const file = useTranscode ? transcoded.file : original;
     if (file.size > maxBytes) throw "maxVideoSize";
     const [thumb, image] = await extractVideoThumbnail(file);
 
@@ -397,7 +404,7 @@ async function handleVideoFile(
             blobUrl: blobUrl,
         },
         thumbnailData: thumb.url,
-        sourceHash: transcoded?.sourceHash,
+        sourceHash: useTranscode ? transcoded.sourceHash : undefined,
     };
 }
 
@@ -462,12 +469,20 @@ export async function messageContentFromFile(
             return await handleImageFile(f, maxSizes, mediaType);
         }
 
-        case "video":
+        case "video": {
+            // Refuse before the bytes are pulled into the heap: without WebCodecs nothing
+            // can shrink the clip, and with it no transcode gets a clip this far over the
+            // cap under it (the worker targets 2Mbps; phone footage tops out ~25x that)
+            const canTranscode = transcode !== undefined && typeof VideoEncoder !== "undefined";
+            if (dataSizeInBytes > (canTranscode ? MAX_TRANSCODE_SHRINK : 1) * maxSizes.video) {
+                throw "maxVideoSize";
+            }
             return await handleVideoFile(
                 file instanceof LazyFile ? await file.load() : file,
                 maxSizes.video,
                 transcode,
             );
+        }
 
         case "audio":
             if (dataSizeInBytes > maxSizes.audio) throw "maxAudioSize";

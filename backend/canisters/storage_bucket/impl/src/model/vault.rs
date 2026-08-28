@@ -26,10 +26,12 @@ pub struct Vault {
     csam_hashes: BTreeMap<Hash, u64>,
     // Hashes a client DECLARED as the source of content later upheld as CSAM (a video
     // transcoded at upload, see upload_chunk_v2::Args::source_hash). No moderator ever saw
-    // these bytes - the bucket cannot verify the claim - so they get the blocking half of the
-    // denylist only: uploads refused, serving stopped, but never a sanction or a report against
-    // whoever uploads them. Separate from `csam_hashes` so a lie about a source can never get
-    // an innocent uploader of that source reported. Maps to the report of the upheld content.
+    // these bytes - the bucket cannot verify the claim - so they get the narrowest half of the
+    // denylist only: uploads and forwards refused, but never a sanction or a report against
+    // whoever uploads them, and copies already stored keep being served (an unverified claim
+    // must not be able to take down arbitrary existing content platform-wide). Separate from
+    // `csam_hashes` so a lie about a source can never get an innocent uploader of that source
+    // reported. Maps to the report of the upheld content.
     #[serde(default)]
     derived_csam_hashes: BTreeMap<Hash, u64>,
     // (uploader, file id) pairs whose upload/forward was refused because of a denylisted
@@ -325,9 +327,9 @@ impl Vault {
         self.quarantine_failures += 1;
     }
 
-    // Gates serving and uploading: verified and derived alike
+    // Gates serving: verified only - a derived entry is a claim, and refuses uploads only
     pub fn is_csam_hash(&self, hash: &Hash) -> bool {
-        self.csam_hashes.contains_key(hash) || self.derived_csam_hashes.contains_key(hash)
+        self.csam_hashes.contains_key(hash)
     }
 
     // The report which upheld these exact bytes: a match sanctions the uploader
@@ -482,6 +484,8 @@ impl Vault {
             let newly_denylisted = !self.csam_hashes.contains_key(&hash);
             self.csam_hashes.entry(hash).or_insert(denylist_report_index);
             if newly_denylisted {
+                // Verified always replaces derived (see denylist_hash)
+                self.derived_csam_hashes.remove(&hash);
                 // The hash's adjudication state changed: pre-verdict blocked-attempt
                 // sightings must not suppress reporting of post-verdict attempts (I14)
                 self.clear_blocked_attempts_for_hash(&hash);
@@ -496,7 +500,7 @@ impl Vault {
 
     // Records a hash denylisted by a verdict applied in ANOTHER bucket (or, when `derived`, a
     // hash declared as the source of upheld content), so that the content can never be uploaded
-    // to (or served from) this bucket either. A verified entry always wins: it replaces a derived
+    // to (or, when verified, served from) this bucket either. A verified entry always wins: it replaces a derived
     // one for the same hash, and a derived one never downgrades a verified one. Returns true if
     // the entry is new at that tier, so the caller can avoid re-propagating it.
     pub fn denylist_hash(&mut self, hash: Hash, report_index: u64, derived: bool) -> bool {
@@ -1033,13 +1037,15 @@ mod tests {
 
         assert!(vault.denylist_hash(source, 5, true));
         assert!(!vault.denylist_hash(source, 6, true));
-        assert!(vault.is_csam_hash(&source));
+        // Refuses uploads, but never stops serving existing copies of an unverified claim
+        assert!(!vault.is_csam_hash(&source));
         assert_eq!(vault.derived_csam_report_index(&source), Some(5));
         assert_eq!(vault.known_csam_report_index(&source), None);
         assert_eq!(vault.metrics().derived_csam_hashes, 1);
 
         // The bytes themselves later upheld: verified from now on, and worth propagating
         assert!(vault.denylist_hash(source, 7, false));
+        assert!(vault.is_csam_hash(&source));
         assert_eq!(vault.known_csam_report_index(&source), Some(7));
         assert_eq!(vault.derived_csam_report_index(&source), None);
 

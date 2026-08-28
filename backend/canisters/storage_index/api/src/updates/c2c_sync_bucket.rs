@@ -26,9 +26,9 @@ pub struct Args {
 pub struct CsamHashDenylisted {
     pub hash: Hash,
     pub report_index: u64,
-    // See storage_bucket c2c_vault_sync::DenylistHashOp::derived
+    // See storage_bucket c2c_vault_sync::DenylistHashOp::derived (Option for the same reason)
     #[serde(default)]
-    pub derived: bool,
+    pub derived: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

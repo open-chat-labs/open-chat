@@ -36,8 +36,8 @@ pub struct Files {
     // upload_chunk_v2::Args::source_hash). Claims, not facts - the bucket never sees the source
     // bytes - so a verdict on the stored hash denylists these only as derived (uploads refused,
     // nobody sanctioned), and an upload declaring one of them is refused the same way while the
-    // stored hash is vault-pinned. Kept past blob removal, since a verdict can land on a later
-    // copy of the same bytes; pruned only when a pinned blob is purged.
+    // stored hash is vault-pinned. Dropped with the blob unless it is vault-pinned (a later
+    // copy of the same bytes re-declares its own source), so this cannot grow past the blobs.
     #[serde(default)]
     source_hashes: BTreeMap<Hash, BTreeSet<Hash>>,
 }
@@ -320,6 +320,7 @@ impl Files {
             pending_files: self.pending_files.len() as u64,
             total_file_bytes: self.total_file_bytes,
             expiration_queue_len: self.expiration_queue.len() as u64,
+            source_hashes: self.source_hashes.len() as u64,
         }
     }
 
@@ -402,7 +403,6 @@ impl Files {
             self.reference_counts.decr(*hash);
         }
         self.remove_blob(hash);
-        self.source_hashes.remove(hash);
     }
 
     pub fn is_vault_pinned(&self, hash: &Hash) -> bool {
@@ -429,6 +429,9 @@ impl Files {
         if let Some(size) = self.blobs.data_size(hash) {
             self.blobs.remove(hash);
             self.total_file_bytes = self.total_file_bytes.saturating_sub(size);
+        }
+        if !self.vault_pins.contains(hash) {
+            self.source_hashes.remove(hash);
         }
     }
 
@@ -653,6 +656,7 @@ pub struct Metrics {
     pub pending_files: u64,
     pub total_file_bytes: u64,
     pub expiration_queue_len: u64,
+    pub source_hashes: u64,
 }
 
 #[cfg(test)]
@@ -690,7 +694,7 @@ mod tests {
     }
 
     #[test]
-    fn source_hash_is_recorded_against_the_stored_hash_and_outlives_the_blob() {
+    fn source_hash_is_recorded_against_the_stored_hash_and_goes_with_the_blob() {
         let mut files = files();
         let source = hash_bytes(b"the original phone recording");
         let hash = put(&mut files, 1, b"transcoded".to_vec(), Some(source));
@@ -701,10 +705,10 @@ mod tests {
         let same = put(&mut files, 2, bytes.clone(), Some(hash_bytes(&bytes)));
         assert!(files.source_hashes(&same).is_empty());
 
-        // Last reference gone: the blob goes, the claim stays for a verdict on a later copy
+        // Last reference gone: the blob goes and so does the claim
         files.remove_file(1);
         assert!(files.get(&1).is_none());
-        assert_eq!(files.source_hashes(&hash), vec![source]);
+        assert!(files.source_hashes(&hash).is_empty());
     }
 
     #[test]
@@ -723,11 +727,9 @@ mod tests {
         files.remove_file(1);
         assert_eq!(files.vault_pinned_hash_for_source(&source), Some(hash));
 
-        // Releasing the pin ends the pre-verdict refusal; purging the evidence drops the claims
+        // Releasing the pin ends the pre-verdict refusal, and the last reference takes the claims
         files.vault_unpin(&hash);
         assert_eq!(files.vault_pinned_hash_for_source(&source), None);
-        assert_eq!(files.source_hashes(&hash), vec![source]);
-        files.vault_purge(&hash);
         assert!(files.source_hashes(&hash).is_empty());
     }
 

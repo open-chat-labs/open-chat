@@ -88,7 +88,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                             .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
                                 hash,
                                 report_index,
-                                derived: false,
+                                derived: Some(false),
                             }));
                         denylist_source_hashes(&hash, report_index, state);
                     }
@@ -133,15 +133,16 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
             VaultOp::DenylistHash(d) => {
                 // Propagated from the bucket which applied the verdict: blocks uploads of the
                 // same content here, and stops any copy already stored here being served
-                if state.data.vault.denylist_hash(d.hash, d.report_index, d.derived) {
+                let derived = d.derived.unwrap_or(false);
+                if state.data.vault.denylist_hash(d.hash, d.report_index, derived) {
                     state.data.vault.clear_blocked_attempts_for_hash(&d.hash);
                     info!(
                         report_index = d.report_index,
-                        derived = d.derived,
+                        derived,
                         "Vault: CSAM hash denylisted"
                     );
                     // A copy of the upheld bytes stored HERE may carry source claims of its own
-                    if !d.derived {
+                    if !derived {
                         denylist_source_hashes(&d.hash, d.report_index, state);
                     }
                 }
@@ -167,7 +168,7 @@ fn denylist_source_hashes(hash: &types::Hash, report_index: u64, state: &mut Run
                 .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
                     hash: source_hash,
                     report_index,
-                    derived: true,
+                    derived: Some(true),
                 }));
             info!(report_index, "Vault: declared source of upheld content denylisted as derived");
         }

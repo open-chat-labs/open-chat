@@ -48,7 +48,12 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
     // recorded as the source of quarantined bytes - refuses the upload but never sanctions or
     // reports anyone: a lie about a source must not get an innocent uploader of that source
     // treated as a CSAM uploader. Only bytes a moderator actually saw carry sanctions.
-    for declared in std::iter::once(args.hash).chain(args.source_hash) {
+    //
+    // The sanctioning checks run over BOTH declared hashes before any refuse-only one: a
+    // refuse-only match on one hash must not shadow a sanctioning match on the other, or
+    // whether an attempt gets reported would depend on which slot the client put it in.
+    let declared_hashes = || std::iter::once(args.hash).chain(args.source_hash);
+    for declared in declared_hashes() {
         if let Some(report_index) = state.data.vault.known_csam_report_index(&declared) {
             // Report once per file id: chunks upload in parallel and each is refused here, and a
             // retry of the same attempt reuses the file id - only the first sighting is reported
@@ -78,7 +83,8 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
             return Blocked;
         }
-
+    }
+    for declared in declared_hashes() {
         if let Some(report_index) = state.data.vault.derived_csam_report_index(&declared) {
             info!(%user_id, %file_id, report_index, "Upload refused: hash declared as the source of upheld content");
             return Blocked;

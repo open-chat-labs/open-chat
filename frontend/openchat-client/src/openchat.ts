@@ -3285,20 +3285,12 @@ export class OpenChat {
 
     diffGroupPermissions = diffGroupPermissions;
 
-    // Attachments are prepared one at a time: a video transcode is CPU-bound and reports
-    // through a single progress store, so a pick made during one waits for it to settle
-    private pendingAttachment: Promise<unknown> = Promise.resolve();
-
     messageContentFromFile(file: File | LazyFile, context: MessageContext): Promise<AttachmentContent> {
-        const next = this.pendingAttachment.then(() =>
-            messageContentFromFile(file, isDiamondStore.value, {
-                websiteVersion: this.config.websiteVersion,
-                onProgress: (p) =>
-                    videoProcessingProgress.set(p === undefined ? undefined : { context, progress: p }),
-            }),
-        );
-        this.pendingAttachment = next.catch(() => undefined);
-        return next;
+        return messageContentFromFile(file, isDiamondStore.value, {
+            websiteVersion: this.config.websiteVersion,
+            onProgress: (p) =>
+                videoProcessingProgress.set(p === undefined ? undefined : { context, progress: p }),
+        });
     }
 
     formatFileSize = formatFileSize;

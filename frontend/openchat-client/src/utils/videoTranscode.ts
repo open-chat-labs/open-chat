@@ -20,15 +20,30 @@ export type TranscodedVideo = {
 // Progress arrives at least every 1%, so a healthy transcode never goes quiet this long.
 const STALL_TIMEOUT_MS = 60_000;
 
+// Transcodes run one at a time: each is CPU-bound and reports through a single progress
+// store, so a video picked during one waits for it to settle. Only videos queue here -
+// every other attachment kind is unaffected.
+let pending: Promise<unknown> = Promise.resolve();
+
 export function transcodeVideo(
     file: File,
     maxBytes: number,
-    { websiteVersion, onProgress }: VideoTranscodeOptions,
+    options: VideoTranscodeOptions,
 ): Promise<TranscodedVideo | undefined> {
     // Cheap up-front gate — the worker checks again, but there's no point
     // fetching it on a browser without WebCodecs at all.
     if (typeof VideoEncoder === "undefined") return Promise.resolve(undefined);
 
+    const next = pending.then(() => runTranscode(file, maxBytes, options));
+    pending = next.catch(() => undefined);
+    return next;
+}
+
+function runTranscode(
+    file: File,
+    maxBytes: number,
+    { websiteVersion, onProgress }: VideoTranscodeOptions,
+): Promise<TranscodedVideo | undefined> {
     return new Promise((resolve) => {
         const workerUrl = `/transcode_worker.js?v=${websiteVersion}`;
         const worker = new Worker(new URL(workerUrl, import.meta.url), { type: "module" });

@@ -8,6 +8,7 @@ use canister_tracing_macros::trace;
 use rand::RngExt;
 use storage_bucket_canister::forward_file::{Response::*, *};
 use storage_index_canister::c2c_sync_bucket::{CsamMatch, CsamMatchKind};
+use tracing::info;
 
 #[update(guard = "caller_is_known_user", candid = true, json = true, msgpack = true)]
 #[trace]
@@ -56,6 +57,19 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
             }));
         }
         return Blocked;
+    }
+
+    // Content known only through a client's source claim is refused without sanction or
+    // report, exactly like re-uploading it (see upload_chunk_v2)
+    if let Some(file) = state.data.files.get(&args.file_id) {
+        if let Some(report_index) = state.data.vault.derived_csam_report_index(&file.hash) {
+            info!(%caller, file_id = %args.file_id, report_index, "Forward refused: hash declared as the source of upheld content");
+            return Blocked;
+        }
+        if state.data.files.vault_pinned_hash_for_source(&file.hash).is_some() {
+            info!(%caller, file_id = %args.file_id, "Forward refused: hash declared as the source of quarantined content");
+            return Blocked;
+        }
     }
 
     let accessors = args.accessors.into_iter().collect();
