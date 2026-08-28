@@ -1,4 +1,4 @@
-// Builds the web worker and service worker from TypeScript source into their
+// Builds the web worker, transcode worker and service worker from TypeScript source into their
 // lib/ directories, which the production rollup build then copies into build/.
 // Replaces the per-package rollup builds that Turbo used to run. Reuses the
 // same source aliases as the dev server and the app build so the worker and
@@ -20,6 +20,12 @@ const targets = [
         entry: "../openchat-service-worker/src/service_worker.ts",
         outDir: "../openchat-service-worker/lib",
         fileName: "service_worker.js",
+    },
+    // Video transcode worker (#9252): loaded on demand when a video is attached.
+    {
+        entry: "../openchat-worker/src/transcodeWorker.ts",
+        outDir: "../openchat-worker/lib",
+        fileName: "transcode_worker.js",
     },
 ];
 

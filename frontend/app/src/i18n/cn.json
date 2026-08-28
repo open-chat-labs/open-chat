@@ -1111,6 +1111,7 @@
     "maxImageSize": "图片大小超过1MB限制",
     "maxStorage": "您可以升级到最大 1GB 的存储空间",
     "maxVideoSize": "视频大小超过1MB限制",
+    "videoProcessing": "正在优化视频…",
     "member": "成员",
     "memberCount": "{count} 个成员",
     "memberIsTyping": "{username} 正在输入",

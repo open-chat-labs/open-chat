@@ -12,9 +12,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    BlobReference, ChannelId, ChatEvent, ChatId, CommunityId, EventIndex, FileContent, ImageContent, MediaScanBlobOutcome,
-    MediaScanConfig, MediaScanMatch, MediaScanProvider, MediaScanVerdict, MessageContent, MessageContentInitial,
-    ModerationReportContent, ModerationReportStatus, SuspensionAction, ThumbnailData, UnitResult,
+    BlobReference, ChannelId, ChatEvent, ChatId, CommunityId, EventIndex, FileContent, Hash, ImageContent,
+    MediaScanBlobOutcome, MediaScanConfig, MediaScanMatch, MediaScanProvider, MediaScanVerdict, MessageContent,
+    MessageContentInitial, ModerationReportContent, ModerationReportStatus, SuspensionAction, ThumbnailData, UnitResult,
 };
 use user_index_canister::propose_protected_action::ProtectedAction;
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
@@ -2376,6 +2376,20 @@ fn establish_pending_hash_match_report_from(
     file: &[u8],
     poster: Option<&User>,
 ) -> (BlobReference, u64) {
+    establish_pending_hash_match_report_for_transcode(env, canister_ids, test_data, scanner, file, None, poster)
+}
+
+// As above, where `file` was uploaded as a client-side transcode of the bytes hashing to
+// `source_hash` (see upload_chunk_v2::Args::source_hash)
+fn establish_pending_hash_match_report_for_transcode(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    test_data: &TestData,
+    scanner: Principal,
+    file: &[u8],
+    source_hash: Option<Hash>,
+    poster: Option<&User>,
+) -> (BlobReference, u64) {
     client::user_index::happy_path::execute_protected_action(
         env,
         test_data.moderator.principal,
@@ -2401,7 +2415,7 @@ fn establish_pending_hash_match_report_from(
 
     let poster = poster.unwrap_or(&test_data.sender);
     let bucket = client::storage_index::happy_path::allocated_bucket(env, poster.principal, canister_ids.storage_index, file);
-    client::storage_bucket::happy_path::upload_file(
+    client::storage_bucket::happy_path::upload_file_with_source_hash(
         env,
         poster.principal,
         bucket.canister_id,
@@ -2409,6 +2423,7 @@ fn establish_pending_hash_match_report_from(
         file.to_vec(),
         vec![poster.canister()],
         None,
+        source_hash,
     );
     let blob_reference = BlobReference {
         canister_id: bucket.canister_id,
@@ -2492,6 +2507,20 @@ fn upload_declaring_hash_expecting(
     declared_hash: [u8; 32],
     expected: fn(&storage_bucket_canister::upload_chunk_v2::Response) -> bool,
 ) {
+    upload_declaring_hashes_expecting(env, canister_ids, uploader, file, declared_hash, None, expected);
+}
+
+// As above, additionally declaring `source_hash`: the hash of the bytes `file` claims to be a
+// client-side transcode of
+fn upload_declaring_hashes_expecting(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    uploader: &User,
+    file: &[u8],
+    declared_hash: [u8; 32],
+    source_hash: Option<Hash>,
+    expected: fn(&storage_bucket_canister::upload_chunk_v2::Response) -> bool,
+) {
     let storage_index_canister::allocated_bucket_v2::Response::Success(bucket) = client::storage_index::allocated_bucket_v2(
         env,
         uploader.principal,
@@ -2518,10 +2547,40 @@ fn upload_declaring_hash_expecting(
             total_size: file.len() as u64,
             bytes: file.to_vec(),
             expiry: None,
+            source_hash,
         },
     );
     assert!(expected(&response), "{response:?}");
     tick_many(env, 10);
+}
+
+// Uploads `file` as a client-side transcode of the bytes hashing to `source_hash`
+fn upload_transcode_expecting(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    uploader: &User,
+    file: &[u8],
+    source_hash: Hash,
+    expected: fn(&storage_bucket_canister::upload_chunk_v2::Response) -> bool,
+) {
+    use utils::hasher::hash_bytes;
+    upload_declaring_hashes_expecting(
+        env,
+        canister_ids,
+        uploader,
+        file,
+        hash_bytes(file),
+        Some(source_hash),
+        expected,
+    );
+}
+
+fn blocked(r: &storage_bucket_canister::upload_chunk_v2::Response) -> bool {
+    matches!(r, storage_bucket_canister::upload_chunk_v2::Response::Blocked)
+}
+
+fn success(r: &storage_bucket_canister::upload_chunk_v2::Response) -> bool {
+    matches!(r, storage_bucket_canister::upload_chunk_v2::Response::Success)
 }
 
 fn random_file() -> Vec<u8> {
@@ -2656,6 +2715,156 @@ fn blocked_reupload_of_pending_content_reports_and_dismissal_reverses() {
     upload_expecting(env, canister_ids, &test_data.reporter, &file, |r| {
         matches!(r, storage_bucket_canister::upload_chunk_v2::Response::Success)
     });
+}
+
+// Source hashes (client-side video transcode, #9252 / #9254): a re-encode never reproduces the
+// bytes it started from, so the hash of the ORIGINAL rides along with the upload. While the
+// transcoded copy is quarantined pending a verdict, both the original re-uploaded raw and any
+// fresh transcode of it are refused and reported like the pinned bytes themselves - and a
+// dismissal frees all of them again
+#[test]
+fn pending_quarantine_of_a_transcode_blocks_its_source_bytes_and_other_transcodes() {
+    use utils::hasher::hash_bytes;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let original = random_file();
+    let source_hash = hash_bytes(&original);
+    let transcode = random_file();
+    let (_, original_report_index) = establish_pending_hash_match_report_for_transcode(
+        env,
+        canister_ids,
+        &test_data,
+        random_principal(),
+        &transcode,
+        Some(source_hash),
+        None,
+    );
+
+    // A second transcode of the same original: different bytes, same declared source
+    upload_transcode_expecting(env, canister_ids, &test_data.reporter, &random_file(), source_hash, blocked);
+    // The original itself, uploaded raw (a client without WebCodecs, or a bot)
+    upload_expecting(env, canister_ids, &test_data.reporter, &original, blocked);
+    // Control: unrelated bytes with no declared source are unaffected
+    upload_expecting(env, canister_ids, &test_data.reporter, &random_file(), success);
+
+    let attempter_state =
+        client::user_index::happy_path::current_user(env, test_data.reporter.principal, canister_ids.user_index);
+    assert!(attempter_state.suspension_details.is_some(), "attempter should be suspended");
+    // Both refusals anchor on the pending report: one attempt report, the retry tallied (I6)
+    let attempt_reports = attempt_reports_for(env, &test_data, &test_data.reporter);
+    assert_eq!(attempt_reports.len(), 1, "{attempt_reports:?}");
+    assert!(
+        attempt_reports[0]
+            .content_excerpt
+            .as_deref()
+            .is_some_and(|e| e.contains("quarantined pending review")),
+        "{:?}",
+        attempt_reports[0].content_excerpt
+    );
+    assert!(
+        moderation_notices(env, &test_data)
+            .iter()
+            .any(|t| t.contains("Repeat attempt") && t.contains("quarantined pending review")),
+        "the second refusal must be visible as a tallied notice"
+    );
+
+    // Dismissal releases the pin: the original, and a transcode of it, upload freely again
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::Dismissed,
+            urgent: None,
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    upload_expecting(env, canister_ids, &test_data.reporter, &original, success);
+    upload_transcode_expecting(env, canister_ids, &test_data.reporter, &random_file(), source_hash, success);
+}
+
+// A CSAM verdict on a transcoded copy denylists the hash of the original it came from, so the
+// original re-uploaded raw, and any later transcode of it, are refused and reported as
+// post-verdict attempts - exactly as the transcoded bytes themselves would be
+#[test]
+fn verdict_on_a_transcode_denylists_its_source_hash() {
+    use utils::hasher::hash_bytes;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let test_data = init_test_data(env, canister_ids, *controller);
+    let original = random_file();
+    let source_hash = hash_bytes(&original);
+    let transcode = random_file();
+    let (_, original_report_index) = establish_pending_hash_match_report_for_transcode(
+        env,
+        canister_ids,
+        &test_data,
+        random_principal(),
+        &transcode,
+        Some(source_hash),
+        None,
+    );
+
+    let resolve_response = client::user_index::resolve_moderation_report(
+        env,
+        test_data.moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::resolve_moderation_report::Args {
+            report_index: original_report_index,
+            verdict: ModerationVerdict::UpheldAsCsam,
+            urgent: Some(false),
+        },
+    );
+    assert!(matches!(resolve_response, UnitResult::Success), "{resolve_response:?}");
+    tick_many(env, 10);
+
+    // The transcoded bytes are denylisted directly (existing behaviour) ...
+    upload_expecting(env, canister_ids, &test_data.reporter, &transcode, blocked);
+    // ... and so is the original they came from, raw or re-transcoded
+    upload_expecting(env, canister_ids, &test_data.reporter, &original, blocked);
+    upload_transcode_expecting(env, canister_ids, &test_data.reporter, &random_file(), source_hash, blocked);
+    // Control: fresh bytes declaring an unrelated source are unaffected
+    upload_transcode_expecting(
+        env,
+        canister_ids,
+        &test_data.reporter,
+        &random_file(),
+        hash_bytes(b"other"),
+        success,
+    );
+
+    // The first refusal is an attempt report born resolved against the verdict; the later
+    // refusals tally onto it and surface as post-verdict repeat notices (I6/I14)
+    let attempt_reports = attempt_reports_for(env, &test_data, &test_data.reporter);
+    assert_eq!(attempt_reports.len(), 1, "{attempt_reports:?}");
+    assert!(
+        matches!(attempt_reports[0].status, ModerationReportStatus::UpheldAsCsam(_)),
+        "{:?}",
+        attempt_reports[0].status
+    );
+    let notices = moderation_notices(env, &test_data);
+    assert!(
+        notices
+            .iter()
+            .any(|t| t.contains("Repeat attempt") && t.contains("upheld as CSAM")),
+        "refused attempts on the source hash must be reported as post-verdict repeats: {notices:?}"
+    );
 }
 
 // I8b: evidence-affecting entry points reject attempt report indexes - the attempt report
@@ -4176,6 +4385,7 @@ fn post_verdict_reupload_of_same_file_id_is_still_reported() {
                 total_size: file.len() as u64,
                 bytes: file.clone(),
                 expiry: None,
+                source_hash: None,
             },
         )
     };

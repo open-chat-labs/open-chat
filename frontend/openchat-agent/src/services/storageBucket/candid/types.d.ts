@@ -1707,6 +1707,7 @@ export interface UploadChunkArgs {
     expiry: [] | [TimestampMillis];
     chunk_size: number;
     file_id: FileId;
+    source_hash: [] | [Hash];
 }
 export type UploadChunkResponse =
     | { ChunkAlreadyExists: null }

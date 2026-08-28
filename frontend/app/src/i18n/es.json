@@ -1111,6 +1111,7 @@
     "maxImageSize": "Se excedió el tamaño máximo de imagen de 1 MB",
     "maxStorage": "Puedes mejorar a un máximo de 1 GB de almacenamiento",
     "maxVideoSize": "Se excedió el tamaño máximo de video de 5 MB",
+    "videoProcessing": "Optimizando el vídeo…",
     "member": "miembro",
     "memberCount": "{contar} miembro(s)",
     "memberIsTyping": "{username} está escribiendo",

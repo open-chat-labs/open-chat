@@ -32,6 +32,11 @@ pub struct Files {
     // can remove the blob while it is quarantined (see model::vault).
     #[serde(default)]
     vault_pins: BTreeSet<Hash>,
+    // Stored hash -> hashes of the bytes clients transcoded to produce it (see
+    // upload_chunk_v2::Args::source_hash). A verdict on the stored hash denylists these too,
+    // and an upload declaring one of them is refused while the stored hash is vault-pinned.
+    #[serde(default)]
+    source_hashes: BTreeMap<Hash, BTreeSet<Hash>>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -46,6 +51,8 @@ pub struct File {
     pub hash: Hash,
     #[serde(rename = "m")]
     pub mime_type: String,
+    #[serde(rename = "s", default, skip_serializing_if = "Option::is_none")]
+    pub source_hash: Option<Hash>,
 }
 
 impl File {
@@ -206,6 +213,7 @@ impl Files {
             accessors,
             hash,
             mime_type: file.mime_type,
+            source_hash: file.source_hash,
         };
 
         self.files.insert(new_file_id, new_file);
@@ -329,6 +337,9 @@ impl Files {
 
         self.reference_counts.incr(completed_file.hash);
         self.add_blob_if_not_exists(completed_file.hash, completed_file.bytes);
+        if let Some(source_hash) = completed_file.source_hash.filter(|s| *s != completed_file.hash) {
+            self.source_hashes.entry(completed_file.hash).or_default().insert(source_hash);
+        }
 
         if let Some(expiry) = completed_file.expiry {
             self.expiration_queue.insert((expiry, file_id));
@@ -342,6 +353,7 @@ impl Files {
                 accessors: completed_file.accessors,
                 hash: completed_file.hash,
                 mime_type: completed_file.mime_type,
+                source_hash: completed_file.source_hash,
             },
         );
     }
@@ -403,11 +415,28 @@ impl Files {
         self.vault_pins.contains(hash)
     }
 
+    // The vault-pinned hash whose bytes were transcoded from the given source hash, if any.
+    // Pins are few (one per quarantined blob), so scanning them is cheaper than a reverse map.
+    pub fn vault_pinned_hash_for_source(&self, source_hash: &Hash) -> Option<Hash> {
+        self.vault_pins
+            .iter()
+            .find(|pinned| self.source_hashes.get(*pinned).is_some_and(|s| s.contains(source_hash)))
+            .copied()
+    }
+
+    pub fn source_hashes(&self, hash: &Hash) -> Vec<Hash> {
+        self.source_hashes
+            .get(hash)
+            .map(|s| s.iter().copied().collect())
+            .unwrap_or_default()
+    }
+
     fn remove_blob(&mut self, hash: &Hash) {
         if let Some(size) = self.blobs.data_size(hash) {
             self.blobs.remove(hash);
             self.total_file_bytes = self.total_file_bytes.saturating_sub(size);
         }
+        self.source_hashes.remove(hash);
     }
 
     fn file_and_size(&self, file_id: &FileId) -> Option<(File, u64)> {
@@ -473,6 +502,8 @@ pub struct PendingFile {
     pub bytes: Vec<u8>,
     #[serde(rename = "e", alias = "expiry", skip_serializing_if = "Option::is_none")]
     pub expiry: Option<TimestampMillis>,
+    #[serde(rename = "s", default, skip_serializing_if = "Option::is_none")]
+    pub source_hash: Option<Hash>,
 }
 
 impl PendingFile {
@@ -536,6 +567,7 @@ pub struct PutChunkArgs {
     total_size: u64,
     bytes: Vec<u8>,
     expiry: Option<TimestampMillis>,
+    source_hash: Option<Hash>,
     now: TimestampMillis,
 }
 
@@ -552,6 +584,7 @@ impl PutChunkArgs {
             total_size: upload_chunk_args.total_size,
             bytes: upload_chunk_args.bytes,
             expiry: upload_chunk_args.expiry,
+            source_hash: upload_chunk_args.source_hash,
             now,
         }
     }
@@ -572,6 +605,7 @@ impl From<PutChunkArgs> for PendingFile {
             remaining_chunks: (0..chunk_count).collect(),
             bytes: vec![0; args.total_size as usize],
             expiry: args.expiry,
+            source_hash: args.source_hash,
         };
         pending_file.add_chunk(args.chunk_index, args.bytes);
         pending_file
@@ -626,4 +660,127 @@ pub struct Metrics {
     pub pending_files: u64,
     pub total_file_bytes: u64,
     pub expiration_queue_len: u64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    fn files() -> Files {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(2)));
+        Files::new_with_blobs_memory(memory.get(MemoryId::new(1)))
+    }
+
+    fn put(files: &mut Files, file_id: FileId, bytes: Vec<u8>, source_hash: Option<Hash>) -> Hash {
+        let owner = Principal::from_slice(&[1]);
+        let hash = hash_bytes(&bytes);
+        let result = files.put_chunk(PutChunkArgs {
+            owner,
+            file_id,
+            hash,
+            mime_type: "video/mp4".to_string(),
+            accessors: vec![owner],
+            chunk_index: 0,
+            chunk_size: bytes.len() as u32,
+            total_size: bytes.len() as u64,
+            bytes,
+            expiry: None,
+            source_hash,
+            now: 1000,
+        });
+        assert!(matches!(result, PutChunkResult::Success(_)));
+        hash
+    }
+
+    #[test]
+    fn source_hash_is_recorded_against_the_stored_hash_and_dropped_with_the_blob() {
+        let mut files = files();
+        let source = hash_bytes(b"the original phone recording");
+        let hash = put(&mut files, 1, b"transcoded".to_vec(), Some(source));
+
+        assert_eq!(files.source_hashes(&hash), vec![source]);
+        assert_eq!(files.get(&1).unwrap().source_hash, Some(source));
+
+        // Last reference gone: the blob and everything keyed by its hash go with it
+        files.remove_file(1);
+        assert!(files.source_hashes(&hash).is_empty());
+    }
+
+    #[test]
+    fn source_hash_equal_to_the_stored_hash_is_not_recorded() {
+        let mut files = files();
+        let bytes = b"uploaded as-is".to_vec();
+        let hash = put(&mut files, 1, bytes.clone(), Some(hash_bytes(&bytes)));
+        assert!(files.source_hashes(&hash).is_empty());
+    }
+
+    #[test]
+    fn same_bytes_from_two_originals_accumulate_both_sources() {
+        let mut files = files();
+        let source_a = hash_bytes(b"original a");
+        let source_b = hash_bytes(b"original b");
+        let hash = put(&mut files, 1, b"transcoded".to_vec(), Some(source_a));
+        put(&mut files, 2, b"transcoded".to_vec(), Some(source_b));
+
+        let mut sources = files.source_hashes(&hash);
+        sources.sort();
+        let mut expected = vec![source_a, source_b];
+        expected.sort();
+        assert_eq!(sources, expected);
+
+        // One file removed: the blob survives on the other reference, so do its sources
+        files.remove_file(1);
+        assert_eq!(files.source_hashes(&hash).len(), 2);
+    }
+
+    #[test]
+    fn vault_pin_is_found_by_source_hash_for_as_long_as_the_pin_holds() {
+        let mut files = files();
+        let source = hash_bytes(b"the original phone recording");
+        let hash = put(&mut files, 1, b"transcoded".to_vec(), Some(source));
+        put(&mut files, 2, b"unrelated".to_vec(), None);
+
+        assert_eq!(files.vault_pinned_hash_for_source(&source), None);
+        assert_eq!(files.vault_pin(&1).map(|(h, _)| h), Some(hash));
+        assert_eq!(files.vault_pinned_hash_for_source(&source), Some(hash));
+        assert_eq!(files.vault_pinned_hash_for_source(&hash), None);
+
+        // The file record can be deleted while quarantined; the pin keeps the blob and its sources
+        files.remove_file(1);
+        assert_eq!(files.vault_pinned_hash_for_source(&source), Some(hash));
+        assert_eq!(files.source_hashes(&hash), vec![source]);
+
+        // Releasing the last reference clears both
+        files.vault_unpin(&hash);
+        assert_eq!(files.vault_pinned_hash_for_source(&source), None);
+        assert!(files.source_hashes(&hash).is_empty());
+    }
+
+    #[test]
+    fn forwarded_file_carries_the_source_hash() {
+        let mut files = files();
+        let source = hash_bytes(b"the original phone recording");
+        let hash = put(&mut files, 1, b"transcoded".to_vec(), Some(source));
+
+        let forwarder = Principal::from_slice(&[2]);
+        let ForwardFileResult::Success(added) = files.forward(
+            forwarder,
+            1,
+            CanisterId::from_slice(&[9]),
+            42,
+            [forwarder].into_iter().collect(),
+            2000,
+        ) else {
+            panic!("forward should succeed");
+        };
+        assert_eq!(files.get(&added.file_id).unwrap().source_hash, Some(source));
+
+        // The original can go; the forwarded copy keeps the blob and its sources
+        files.remove_file(1);
+        assert_eq!(files.source_hashes(&hash), vec![source]);
+    }
 }

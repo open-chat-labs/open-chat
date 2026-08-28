@@ -1111,6 +1111,7 @@
     "maxImageSize": "Maximale Bildgröße von 1 MB überschritten",
     "maxStorage": "Sie können auf maximal 1 GB Speicherplatz aufrüsten",
     "maxVideoSize": "Maximale Videogröße von 5 MB überschritten",
+    "videoProcessing": "Video wird optimiert…",
     "member": "Mitglied",
     "memberCount": "{count} Mitglied(er)",
     "memberIsTyping": "{username} tippt",

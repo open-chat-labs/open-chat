@@ -73,6 +73,7 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
         chunkIndex: number,
         bytes: Uint8Array,
         expiryTimestampMillis: bigint | undefined,
+        sourceHash: Uint8Array | undefined,
     ): Promise<UploadChunkResponse> {
         return this.handleResponse(
             this.service.upload_chunk_v2({
@@ -85,6 +86,7 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
                 bytes,
                 chunk_size: chunkSize,
                 expiry: expiryTimestampMillis !== undefined ? [expiryTimestampMillis] : [],
+                source_hash: sourceHash !== undefined ? [sourceHash] : [],
             }),
             uploadChunkResponse,
         );

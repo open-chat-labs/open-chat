@@ -391,6 +391,7 @@ import {
     notFoundStore,
     notificationStatus,
     notificationsSupported,
+    videoProcessingProgress,
     oneSecAddress,
     pathContextStore,
     pinNumberFailureStore,
@@ -3285,7 +3286,10 @@ export class OpenChat {
     diffGroupPermissions = diffGroupPermissions;
 
     messageContentFromFile(file: File | LazyFile): Promise<AttachmentContent> {
-        return messageContentFromFile(file, isDiamondStore.value);
+        return messageContentFromFile(file, isDiamondStore.value, {
+            websiteVersion: this.config.websiteVersion,
+            onProgress: (p) => videoProcessingProgress.set(p),
+        });
     }
 
     formatFileSize = formatFileSize;

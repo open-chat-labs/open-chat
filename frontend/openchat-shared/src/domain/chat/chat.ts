@@ -618,6 +618,9 @@ export const VideoContentSchema = Type.Object({
     mimeType: Type.String(),
     imageData: DataContentSchema,
     videoData: DataContentSchema,
+    // Draft only: SHA3-256 of the file the user picked when videoData is a client-side
+    // transcode of it, sent with the upload so CSAM checks also cover the original bytes
+    sourceHash: Type.Optional(Type.Uint8Array()),
 });
 export type VideoContent = Static<typeof VideoContentSchema>;
 

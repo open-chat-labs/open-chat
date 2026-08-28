@@ -44,6 +44,7 @@
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
+        videoProcessingProgress,
         type CreatedUser,
     } from "@client";
     import { getContext, onMount, tick } from "svelte";
@@ -715,6 +716,19 @@
                     {#if !editingEvent && attachment !== undefined}
                         <DraftMediaMessage {onRemoveAttachment} content={attachment} />
                     {/if}
+                    {#if $videoProcessingProgress !== undefined}
+                        <div class="video-progress">
+                            <BodySmall colour="textSecondary">
+                                <Translatable resourceKey={i18nKey("videoProcessing")} />
+                            </BodySmall>
+                            <div class="bar">
+                                <div
+                                    class="meter"
+                                    style={`width: ${Math.round($videoProcessingProgress * 100)}%`}>
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
                     {#if editingEvent !== undefined}
                         <Row
                             height={{ size: "1rem" }}
@@ -910,6 +924,26 @@
 {/if}
 
 <style lang="scss">
+    .video-progress {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp2);
+        padding: var(--sp2) var(--sp3) 0 var(--sp3);
+
+        .bar {
+            height: 4px;
+            border-radius: 2px;
+            background-color: var(--background-2);
+            overflow: hidden;
+        }
+
+        .meter {
+            height: 100%;
+            background-color: var(--primary);
+            transition: width 200ms;
+        }
+    }
+
     .message_entry_wrapper {
         width: 100%;
         // overflow: auto;

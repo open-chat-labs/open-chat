@@ -104,6 +104,9 @@ export class DataClient extends EventTarget {
                         content.mimeType,
                         accessorIds,
                         content.videoData.blobData.slice().buffer,
+                        undefined,
+                        undefined,
+                        content.sourceHash,
                     ),
                     this.uploadFile(
                         "image/jpg",
@@ -305,6 +308,8 @@ export class DataClient extends EventTarget {
         bytes: ArrayBuffer,
         expiryTimestampMillis?: bigint,
         onProgress?: (percentComplete: number) => void,
+        // Hash of the bytes these were transcoded from, when the client re-encoded them
+        sourceHash?: Uint8Array,
     ): Promise<UploadFileResponse> {
         const hash = new Uint8Array(hashBytes(bytes));
         const fileSize = bytes.byteLength;
@@ -352,6 +357,7 @@ export class DataClient extends EventTarget {
                         chunkIndex,
                         chunkBytes,
                         expiryTimestampMillis,
+                        sourceHash,
                     );
 
                     if (chunkResponse === "success") {

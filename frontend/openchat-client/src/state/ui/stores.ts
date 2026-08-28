@@ -27,6 +27,8 @@ function translateScale(scale: FontScale): number {
 
 export const runningInIframe: Readable<boolean> = writable(window.self !== window.top);
 export const activityFeedShowing = writable(false);
+// 0..1 while a picked video is being transcoded for upload, else undefined.
+export const videoProcessingProgress = writable<number | undefined>(undefined);
 export const notificationsSupported =
     !isCanisterUrl &&
     "serviceWorker" in navigator &&

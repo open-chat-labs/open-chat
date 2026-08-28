@@ -4,6 +4,7 @@
         iconSize,
         messageContextsEqual,
         subscribe,
+        videoProcessingProgress,
         type AttachmentContent,
         type ChatSummary,
         type CreatedUser,
@@ -26,6 +27,7 @@
     import EphemeralMessage from "../bots/EphemeralMessage.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
@@ -191,6 +193,13 @@
                 onClose={() => (ephemeralMessageEvent = undefined)}
                 event={ephemeralMessageEvent} />
         {/if}
+        {#if $videoProcessingProgress !== undefined}
+            <div class="draft-container video-progress">
+                <Progress size="24px" percent={Math.round($videoProcessingProgress * 100)}>
+                    <Translatable resourceKey={i18nKey("videoProcessing")} />
+                </Progress>
+            </div>
+        {/if}
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}
@@ -296,5 +305,11 @@
     .draft-container {
         max-width: 80%;
         padding: 0 $sp4 $sp4 $sp4;
+    }
+
+    .video-progress {
+        width: toRem(260);
+        padding-top: $sp3;
+        @include font(book, normal, fs-80);
     }
 </style>

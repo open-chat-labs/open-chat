@@ -36,7 +36,10 @@ const port = Number(process.env.OC_DEV_PORT ?? 5001);
 // Directory (gitignored, under node_modules) where the dev web worker bundle is
 // emitted before being served at /worker.js.
 const workerBuildDir = path.resolve(__dirname, "node_modules/.oc-worker");
-const workerEntry = path.resolve(__dirname, "../openchat-worker/src/worker.ts");
+const workerEntries: Record<string, string> = {
+    "worker.js": path.resolve(__dirname, "../openchat-worker/src/worker.ts"),
+    "transcode_worker.js": path.resolve(__dirname, "../openchat-worker/src/transcodeWorker.ts"),
+};
 
 // Builds the web worker from TypeScript source — reusing the sub-package
 // aliases so it pulls agent/shared from source too — and serves it at
@@ -46,24 +49,26 @@ const workerEntry = path.resolve(__dirname, "../openchat-worker/src/worker.ts");
 // those lib files to appear.
 function ocWorkerPlugin(): Plugin {
     async function buildWorker() {
-        await build({
-            configFile: false,
-            logLevel: "warn",
-            resolve: { alias: ocPackageAliases },
-            define: { "process.env.NODE_ENV": JSON.stringify("development") },
-            build: {
-                outDir: workerBuildDir,
-                emptyOutDir: false,
-                target: "es2020",
-                minify: false,
-                sourcemap: true,
-                lib: {
-                    entry: workerEntry,
-                    formats: ["es"],
-                    fileName: () => "worker.js",
+        for (const [fileName, entry] of Object.entries(workerEntries)) {
+            await build({
+                configFile: false,
+                logLevel: "warn",
+                resolve: { alias: ocPackageAliases },
+                define: { "process.env.NODE_ENV": JSON.stringify("development") },
+                build: {
+                    outDir: workerBuildDir,
+                    emptyOutDir: false,
+                    target: "es2020",
+                    minify: false,
+                    sourcemap: true,
+                    lib: {
+                        entry,
+                        formats: ["es"],
+                        fileName: () => fileName,
+                    },
                 },
-            },
-        });
+            });
+        }
     }
 
     return {
@@ -71,13 +76,13 @@ function ocWorkerPlugin(): Plugin {
         async configureServer(server) {
             await buildWorker();
 
-            // Serve the built worker (and its sourcemap) regardless of the ?v=
-            // cache-busting query string the client appends.
+            // Serve the built workers (and their sourcemaps) regardless of the
+            // ?v= cache-busting query string the client appends.
             server.middlewares.use((req, res, next) => {
                 const fileName = path.basename((req.url ?? "").split("?")[0]);
                 const filePath = path.join(workerBuildDir, fileName);
                 if (
-                    (fileName === "worker.js" || fileName === "worker.js.map") &&
+                    (fileName.replace(/\.map$/, "") in workerEntries) &&
                     fs.existsSync(filePath)
                 ) {
                     res.setHeader(

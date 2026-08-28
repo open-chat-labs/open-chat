@@ -86,6 +86,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                         state
                             .data
                             .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted { hash, report_index }));
+                        denylist_source_hashes(&hash, report_index, state);
                     }
                     _ => (),
                 }
@@ -131,6 +132,7 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 if state.data.vault.denylist_hash(d.hash, d.report_index) {
                     state.data.vault.clear_blocked_attempts_for_hash(&d.hash);
                     info!(report_index = d.report_index, "Vault: CSAM hash denylisted");
+                    denylist_source_hashes(&d.hash, d.report_index, state);
                 }
             }
         }
@@ -139,4 +141,23 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
     crate::jobs::vault_retention::start_job_if_required(state);
 
     Success(SuccessResult { quarantine_failures })
+}
+
+// The bytes behind a denylisted hash may be a client-side transcode of some original file
+// (see upload_chunk_v2::Args::source_hash): a re-upload of that original transcodes to
+// different bytes every time, so the original's hash is denylisted too, and pushed to the
+// index so every bucket refuses it. Only the bucket still holding the transcoded blob knows
+// its sources; the index dedupes hashes it has already seen.
+fn denylist_source_hashes(hash: &types::Hash, report_index: u64, state: &mut RuntimeState) {
+    for source_hash in state.data.files.source_hashes(hash) {
+        if state.data.vault.denylist_hash(source_hash, report_index) {
+            state
+                .data
+                .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
+                    hash: source_hash,
+                    report_index,
+                }));
+            info!(report_index, "Vault: source hash of denylisted content denylisted");
+        }
+    }
 }

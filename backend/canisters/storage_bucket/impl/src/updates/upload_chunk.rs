@@ -68,6 +68,47 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         return Blocked;
     }
 
+    // A client-side transcode (video re-encoded at upload) never reproduces the hash of the
+    // bytes it started from, so the client also declares that source hash, and it is checked
+    // against the denylist like the stored hash: a verdict on a transcoded copy denylists its
+    // source hashes too (see c2c_vault_sync). Not airtight the way `hash` is - the bucket
+    // cannot verify the source bytes - but a client that lies about it only forfeits the
+    // check, and one that omits it is treated exactly like one uploading the original.
+    if let Some(source_hash) = args.source_hash
+        && let Some(report_index) = state.data.vault.known_csam_report_index(&source_hash)
+    {
+        if state.data.vault.record_blocked_attempt(user_id, file_id, source_hash) {
+            state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                uploader: user_id,
+                file_id,
+                hash: source_hash,
+                csam_report_index: report_index,
+                kind: CsamMatchKind::UploadAttempt,
+            }));
+        }
+        return Blocked;
+    }
+
+    // Pre-verdict, the pin sits on the transcoded bytes only, so either declared hash being a
+    // recorded SOURCE of a pinned hash is refused the same way as the pinned hash itself: the
+    // original file re-uploaded raw (`hash`), or re-transcoded to fresh bytes (`source_hash`)
+    for declared in std::iter::once(args.hash).chain(args.source_hash) {
+        if let Some(pinned_hash) = state.data.files.vault_pinned_hash_for_source(&declared) {
+            if let Some(report_index) = state.data.vault.pinned_report_index(&pinned_hash)
+                && state.data.vault.record_blocked_attempt(user_id, file_id, pinned_hash)
+            {
+                state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                    uploader: user_id,
+                    file_id,
+                    hash: pinned_hash,
+                    csam_report_index: report_index,
+                    kind: CsamMatchKind::PendingQuarantineAttempt,
+                }));
+            }
+            return Blocked;
+        }
+    }
+
     let mut index_sync_complete = IndexSyncComplete::No;
     let mut status = None;
     if let Some(status) = user.file_status(&file_id) {

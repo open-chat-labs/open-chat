@@ -1111,6 +1111,7 @@
     "maxImageSize": "חרג מגודל התמונה המרבי של 1MB",
     "maxStorage": "אתה יכול לשדרג לאחסון של 1GB לכל היותר",
     "maxVideoSize": "חרג מגודל הווידאו המרבי של 5MB",
+    "videoProcessing": "מייעל את הווידאו…",
     "member": "חבר",
     "memberCount": "{count} חברים",
     "memberIsTyping": "{username} מקליד",

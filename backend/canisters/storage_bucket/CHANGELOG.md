@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Optional `source_hash` on `upload_chunk_v2`: the hash of the bytes a client transcoded from (video re-encoded at upload). Checked against the CSAM denylist and vault pins alongside the stored hash, and denylisted with it when a verdict lands, so re-uploads of an original whose transcode was upheld as CSAM are still refused ([#9252](https://github.com/open-chat-labs/open-chat/issues/9252))
 - Token-gated evidence export on `vault_file_chunk` for the NCA reporting service, logged as `ExportedForAuthorityReport` in the chain of custody ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 - Accept the `SetAuthorityReporter` vault op carrying the service principal and the OC public key needed to verify export tokens ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 

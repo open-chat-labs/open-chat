@@ -10,6 +10,7 @@ type UploadChunkArgs = record {
     total_size : nat64;
     bytes : blob;
     expiry : opt TimestampMillis;
+    source_hash : opt Hash;
 };
 
 type UploadChunkResponse = variant {

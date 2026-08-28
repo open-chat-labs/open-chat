@@ -1,6 +1,7 @@
 import type { AttachmentContent, Message } from "@shared";
 import { LazyFile } from "@shared";
 import { dataToBlobUrl } from "./blob";
+import { transcodeVideo, type VideoTranscodeOptions } from "./videoTranscode";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
 const DEFAULT_JPEG_QUALITY = 0.75;
@@ -357,13 +358,20 @@ async function handleImageFile(
 
 // Handle video files
 //
-// Extracts video thumbnail and a full image, then reads the video data and
-// returns the attachment content.
+// Transcodes to 720p H.264 where the source is bigger than that or not H.264
+// (and the browser has WebCodecs), extracts a thumbnail and a full image,
+// then reads the video data and returns the attachment content. Thumbnails
+// come from the transcoded file so a source this browser can't play (HEVC on
+// Chrome without hardware decode) still gets one.
 // TODO blob data should be loaded lazyily for any content
-async function handleVideoFile(file: File): Promise<AttachmentContent> {
+async function handleVideoFile(
+    original: File,
+    transcode: VideoTranscodeOptions | undefined,
+): Promise<AttachmentContent> {
+    const transcoded = transcode ? await transcodeVideo(original, transcode) : undefined;
+    const file = transcoded?.file ?? original;
     const [thumb, image] = await extractVideoThumbnail(file);
 
-    // TODO resize video instead of checking max dims?
     const data = await file.arrayBuffer();
     const blobUrl = dataToBlobUrl(data, file.type);
 
@@ -381,6 +389,7 @@ async function handleVideoFile(file: File): Promise<AttachmentContent> {
             blobUrl: blobUrl,
         },
         thumbnailData: thumb.url,
+        sourceHash: transcoded?.sourceHash,
     };
 }
 
@@ -422,6 +431,7 @@ async function handleRegularFiles(file: File): Promise<AttachmentContent> {
 export async function messageContentFromFile(
     file: File | LazyFile,
     isDiamond: boolean,
+    transcode?: VideoTranscodeOptions,
 ): Promise<AttachmentContent> {
     const dataSizeInBytes = file.size;
     const mediaType = mimeToMediaType(file.type);
@@ -446,7 +456,10 @@ export async function messageContentFromFile(
 
         case "video":
             if (dataSizeInBytes > maxSizes.video) throw "maxVideoSize";
-            return await handleVideoFile(file instanceof LazyFile ? await file.load() : file);
+            return await handleVideoFile(
+                file instanceof LazyFile ? await file.load() : file,
+                transcode,
+            );
 
         case "audio":
             if (dataSizeInBytes > maxSizes.audio) throw "maxAudioSize";
