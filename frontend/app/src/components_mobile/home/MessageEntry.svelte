@@ -1,19 +1,4 @@
 <script lang="ts">
-    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
-    import {
-        loadRichTextEditor,
-        richTextEditorIfLoaded,
-    } from "@shared_components/richTextEditorLoader";
-    import { keyboard } from "@src/stores/keyboard.svelte";
-    import { isIosTauriApp } from "@shared";
-    import { trackedEffect } from "@src/utils/effects.svelte";
-    import { detectMarkdown } from "@src/utils/detectMarkdown";
-    import {
-        popHistoryStateWithAction,
-        pushDummyHistoryState,
-        type CustomHistoryAction,
-    } from "@src/utils/history";
-    import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -47,6 +32,21 @@
         videoProcessingProgress,
         type CreatedUser,
     } from "@client";
+    import { isIosTauriApp } from "@shared";
+    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import {
+        loadRichTextEditor,
+        richTextEditorIfLoaded,
+    } from "@shared_components/richTextEditorLoader";
+    import { keyboard } from "@src/stores/keyboard.svelte";
+    import { detectMarkdown } from "@src/utils/detectMarkdown";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import {
+        popHistoryStateWithAction,
+        pushDummyHistoryState,
+        type CustomHistoryAction,
+    } from "@src/utils/history";
+    import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
@@ -63,6 +63,7 @@
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
     import Send from "../icons/Send.svelte";
+    import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
@@ -566,7 +567,6 @@
         tick().then(() => editor?.focus());
     }
 
-
     let directChatBotId = $derived(client.directChatWithBot(chat));
     let directBot = $derived(
         directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
@@ -717,17 +717,13 @@
                         <DraftMediaMessage {onRemoveAttachment} content={attachment} />
                     {/if}
                     {#if $videoProcessingProgress !== undefined}
-                        <div class="video-progress">
-                            <BodySmall colour="textSecondary">
+                        <Row padding="md">
+                            <Progress
+                                colour={ColourVars.primaryMuted}
+                                percent={Math.round($videoProcessingProgress * 100)}>
                                 <Translatable resourceKey={i18nKey("videoProcessing")} />
-                            </BodySmall>
-                            <div class="bar">
-                                <div
-                                    class="meter"
-                                    style={`width: ${Math.round($videoProcessingProgress * 100)}%`}>
-                                </div>
-                            </div>
-                        </div>
+                            </Progress>
+                        </Row>
                     {/if}
                     {#if editingEvent !== undefined}
                         <Row
@@ -803,7 +799,9 @@
                                     </EditorComponent>
                                 {:else}
                                     <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                    <div class="editor-placeholder" onpointerdown={() => (focusWhenReady = true)}>
+                                    <div
+                                        class="editor-placeholder"
+                                        onpointerdown={() => (focusWhenReady = true)}>
                                         {interpolate($_, placeholder)}
                                     </div>
                                 {/if}
@@ -837,8 +835,7 @@
                                                 padding={["sm", "zero", "md", "zero"]}
                                                 size={"md"}>
                                                 {#snippet icon()}
-                                                    <Camera
-                                                        color={ColourVars.textPlaceholder} />
+                                                    <Camera color={ColourVars.textPlaceholder} />
                                                 {/snippet}
                                             </IconButton>
                                         {/snippet}
@@ -924,26 +921,6 @@
 {/if}
 
 <style lang="scss">
-    .video-progress {
-        display: flex;
-        flex-direction: column;
-        gap: var(--sp2);
-        padding: var(--sp2) var(--sp3) 0 var(--sp3);
-
-        .bar {
-            height: 4px;
-            border-radius: 2px;
-            background-color: var(--background-2);
-            overflow: hidden;
-        }
-
-        .meter {
-            height: 100%;
-            background-color: var(--primary);
-            transition: width 200ms;
-        }
-    }
-
     .message_entry_wrapper {
         width: 100%;
         // overflow: auto;

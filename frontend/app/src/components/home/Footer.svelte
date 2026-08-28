@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
         iconSize,
         messageContextsEqual,
@@ -19,6 +18,7 @@
         type SelectedEmoji,
         type User,
     } from "@client";
+    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -308,7 +308,8 @@
     }
 
     .video-progress {
-        width: toRem(260);
+        width: toRem(500);
+        max-width: 85%;
         padding-top: $sp3;
         @include font(book, normal, fs-80);
     }
