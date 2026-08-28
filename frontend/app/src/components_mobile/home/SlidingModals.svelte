@@ -42,7 +42,7 @@
         type UserGroupDetails,
     } from "@client";
     import page from "page";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import { minimizeApp } from "tauri-plugin-oc-api";
     import { expectBackPress } from "../../utils/native/notification_channels";
     import { flushPendingNavigation, hasPendingNavigation } from "../../utils/navigation";
@@ -321,15 +321,6 @@
             subscribe("shareMessage", (share) =>
                 push({ kind: "share_message", share: share as unknown as ShareType }),
             ),
-            // Android share-target events use a store (rather than pubsub) so
-            // cold-start shares that arrive before this onMount runs aren't
-            // dropped. We consume on subscribe and clear so opening the modal
-            // a second time requires a fresh share.
-            pendingShareStore.subscribe((share) => {
-                if (share === undefined) return;
-                push({ kind: "share_message", share });
-                pendingShareStore.set(undefined);
-            }),
             subscribe("viewBotCommand", (command) => push({ kind: "view_bot_command", command })),
             subscribe("registerBot", () => push({ kind: "register_bot" })),
             subscribe("updateBot", () => push({ kind: "update_bot" })),
@@ -549,6 +540,18 @@
             history.pushState = originalPushState;
             unsubs.forEach((u) => u());
         };
+    });
+
+    // Android share-target events use a store (rather than pubsub) so cold-start shares that
+    // arrive before this component mounts aren't dropped. Consume and clear so opening the modal
+    // a second time requires a fresh share.
+    $effect(() => {
+        const share = $pendingShareStore;
+        if (share === undefined) return;
+        untrack(() => {
+            push({ kind: "share_message", share });
+            pendingShareStore.set(undefined);
+        });
     });
 </script>
 

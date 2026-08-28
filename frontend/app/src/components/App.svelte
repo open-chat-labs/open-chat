@@ -160,6 +160,10 @@
 
     trackedEffect("calculate-height", calculateHeight);
 
+    $effect(() => {
+        botState.messageFormatter = $_;
+    });
+
     onMount(() => {
         const unsubs = [
             subscribe("startVideoCall", startVideoCall),
@@ -213,9 +217,6 @@
             resumeEventLoop: () => client.resumeEventLoop(),
         };
 
-        const unsub = _.subscribe((formatter) => {
-            botState.messageFormatter = formatter;
-        });
 
         if (client.isNativeApp()) {
             // Inform the native app that svelte code is ready! SetTimeout
@@ -235,7 +236,6 @@
                 window.visualViewport?.removeEventListener("resize", calculateHeight);
             }
             unsubs.forEach((u) => u());
-            unsub();
             unsubKeyboard();
         };
     });

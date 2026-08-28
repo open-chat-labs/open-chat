@@ -24,7 +24,7 @@
         selectedCommunitySummaryStore,
         type ThreadPreview,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -74,16 +74,15 @@
         }
     }
 
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            if (syncDetails !== undefined) {
-                unreadCount = client.unreadThreadMessageCount(
-                    thread.chatId,
-                    threadRootMessageIndex,
-                    syncDetails.latestMessageIndex,
-                );
-            }
-        });
+    $effect(() => {
+        void $messagesRead;
+        if (syncDetails !== undefined) {
+            unreadCount = client.unreadThreadMessageCount(
+                thread.chatId,
+                threadRootMessageIndex,
+                syncDetails.latestMessageIndex,
+            );
+        }
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));

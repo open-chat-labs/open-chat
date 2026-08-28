@@ -34,7 +34,7 @@
         byContext as typersByContext,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { getContext, onMount, untrack } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -112,10 +112,9 @@
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
 
-    $effect(() => updateUnreadCounts(chatSummary));
-
-    onMount(() => {
-        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
+    $effect(() => {
+        void $messagesRead;
+        updateUnreadCounts(chatSummary);
     });
 
     /***

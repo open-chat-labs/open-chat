@@ -187,21 +187,19 @@
                 }
             });
         }
+    });
 
-        if (expiresAt !== undefined) {
-            return now.subscribe((t) => {
-                const ttl = expiresAt ? expiresAt - Number(timestamp) : 0;
-                const age = t - Number(timestamp);
-                const expired = age > ttl;
-                percentageExpired = expired ? 100 : (age / ttl) * 100;
-                // if this message is the root of a thread, make sure that we close that thread when the message expires
-                if (percentageExpired >= 100 && msg.thread) {
-                    client.filterRightPanelHistory(
-                        (panel) => panel.kind !== "message_thread_panel",
-                    );
-                    navigate(removeQueryStringParam("open"));
-                }
-            });
+    $effect(() => {
+        if (expiresAt === undefined) return;
+        const ttl = expiresAt - Number(timestamp);
+        const age = $now - Number(timestamp);
+        const expired = age > ttl;
+        const percentage = expired ? 100 : (age / ttl) * 100;
+        percentageExpired = percentage;
+        // if this message is the root of a thread, make sure that we close that thread when the message expires
+        if (percentage >= 100 && msg.thread) {
+            client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            navigate(removeQueryStringParam("open"));
         }
     });
 

@@ -29,7 +29,7 @@
         type OpenChat,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -162,25 +162,29 @@
             onScroll();
         });
 
-        const unsub = exploreCommunitiesFiltersStore.subscribe((filters) => {
+        return () => {
+            scrollableElement?.removeEventListener("scroll", onScroll);
+        };
+    });
+
+    $effect(() => {
+        const filters = $exploreCommunitiesFiltersStore;
+        untrack(() => {
             if (initialised || communitySearchState.results.length === 0) {
                 searchCommunities(filters, true);
             }
             initialised = true;
         });
+    });
 
-        const unsubBot = showUnpublishedBots.subscribe((show) => {
+    $effect(() => {
+        const show = $showUnpublishedBots;
+        untrack(() => {
             if (initialised || botSearchState.results.length === 0) {
                 searchBots(show);
             }
             initialised = true;
-        }, undefined);
-
-        return () => {
-            scrollableElement?.removeEventListener("scroll", onScroll);
-            unsub();
-            unsubBot();
-        };
+        });
     });
 
     function setView(v: View) {

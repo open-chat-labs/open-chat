@@ -132,6 +132,10 @@
 
     trackedEffect("calculate-height", calculateHeight);
 
+    $effect(() => {
+        botState.messageFormatter = $_;
+    });
+
     onMount(() => {
         const unsubs = [
             subscribe("startVideoCall", startVideoCall),
@@ -149,9 +153,6 @@
             window.visualViewport?.addEventListener("resize", calculateHeight);
         }
 
-        const unsub = _.subscribe((formatter) => {
-            botState.messageFormatter = formatter;
-        });
 
         const unsubKeyboard = setupKeyboardTracking();
         return () => {
@@ -161,7 +162,6 @@
                 window.visualViewport?.removeEventListener("resize", calculateHeight);
             }
             unsubs.forEach((u) => u());
-            unsub();
             unsubKeyboard();
         };
     });

@@ -118,11 +118,6 @@
         }
 
         const unsubs = [
-            messagesRead.subscribe(() => {
-                if (chat === undefined) return;
-                unreadMessages = getUnreadMessageCount(chat);
-                firstUnreadMention = client.getFirstUnreadMention(chat);
-            }),
             subscribe("createPoll", onCreatePoll),
             subscribe("attachGif", onAttachGif),
             subscribe("tokenTransfer", onTokenTransfer),
@@ -167,6 +162,12 @@
             setRightPanelHistory([]);
         }
     }
+
+    $effect(() => {
+        void $messagesRead;
+        unreadMessages = getUnreadMessageCount(chat);
+        firstUnreadMention = client.getFirstUnreadMention(chat);
+    });
 
     function getUnreadMessageCount(chat: ChatSummary): number {
         if (client.isPreviewing(chat.id) || client.isLapsed(chat.id)) return 0;
