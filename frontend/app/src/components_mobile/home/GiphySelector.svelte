@@ -25,6 +25,7 @@
     const gutter = 5;
     let imgWidth = $state(0);
     let pos = "";
+    let exhausted = false;
 
     const TRENDING_API_URL = `https://api.klipy.com/v2/featured?contentfilter=off&media_filter=tinygif,mediumgif,mp4&key=${
         import.meta.env.OC_KLIPY_APIKEY
@@ -93,6 +94,7 @@
             .then((res: KlipySearchResponse) => {
                 if (!res) return [];
                 pos = `${res.next}`;
+                exhausted = pos === "";
                 return res.results;
             })
             .then((res) => {
@@ -106,6 +108,7 @@
         searchTerm = search;
         gifs = [];
         pos = "";
+        exhausted = false;
         nextPage();
     }
 
@@ -132,9 +135,10 @@
     }
 
     async function nextPage() {
-        if (refreshing) return;
+        if (refreshing || exhausted) return;
         const nextPage = await getMoreGifs();
-        gifs = [...gifs, ...nextPage];
+        const seen = new Set(gifs.map((g) => g.id));
+        gifs = [...gifs, ...nextPage.filter((g) => !seen.has(g.id))];
     }
 
     $effect(() => {
