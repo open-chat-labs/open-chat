@@ -22,9 +22,10 @@ type Stores =
     | SvelteReadable<unknown>
     | [SvelteReadable<unknown>, ...Array<SvelteReadable<unknown>>]
     | Array<SvelteReadable<unknown>>;
-type StoresValues<T> = T extends SvelteReadable<infer U>
-    ? U
-    : { [K in keyof T]: T[K] extends SvelteReadable<infer U> ? U : never };
+type StoresValues<T> =
+    T extends SvelteReadable<infer U>
+        ? U
+        : { [K in keyof T]: T[K] extends SvelteReadable<infer U> ? U : never };
 
 let pauseCount = 0;
 // Callbacks to publish dirty values from writable stores
@@ -40,14 +41,17 @@ export function withPausedStores<T>(fn: () => T) {
         return fn();
     } finally {
         if (pauseCount === 1) {
-            // Publish all changes to writable stores
-            executeCallbacks(publishesPending);
+            try {
+                // Publish all changes to writable stores
+                executeCallbacks(publishesPending);
+            } finally {
+                // Unpause - must happen even if a publish threw, or every later store update
+                // would be queued behind a pause that never ends
+                pauseCount = 0;
 
-            // Unpause
-            pauseCount = 0;
-
-            // Run the derived store subscriptions
-            runSubscriptions();
+                // Run the derived store subscriptions
+                runSubscriptions();
+            }
         } else {
             pauseCount--;
         }
@@ -66,10 +70,24 @@ function runSubscriptions() {
 }
 
 function executeCallbacks(callbacks: (() => void)[]) {
+    // A callback that throws must not leave the queue populated: #publish only runs
+    // subscriptions when subscriptionsPending is empty, so a stranded queue would silently
+    // stop every subsequent store update reaching its subscribers until the page is reloaded.
+    // Run everything, clear the queue, then rethrow the first error so it is still reported.
+    let thrown = false;
+    let error: unknown;
     for (let index = 0; index < callbacks.length; index++) {
-        callbacks[index]();
+        try {
+            callbacks[index]();
+        } catch (err) {
+            if (!thrown) {
+                thrown = true;
+                error = err;
+            }
+        }
     }
     callbacks.length = 0;
+    if (thrown) throw error;
 }
 
 export function writable<T>(
@@ -184,9 +202,14 @@ class _Writable<T> {
                 const shouldRunSubscriptions =
                     pauseCount === 0 && subscriptionsPending.length === 0;
 
-                for (const [subscription, invalidate] of this.#subscriptions.values()) {
+                for (const [id, [subscription, invalidate]] of this.#subscriptions) {
                     invalidate?.();
-                    subscriptionsPending.push(() => subscription(this.#value));
+                    subscriptionsPending.push(() => {
+                        // The subscriber may have unsubscribed (its component unmounted) between
+                        // this being queued and it running - calling it then would hand torn-down
+                        // state to dead code
+                        if (this.#subscriptions.has(id)) subscription(this.#value);
+                    });
                 }
 
                 if (shouldRunSubscriptions) {

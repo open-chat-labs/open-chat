@@ -18,7 +18,7 @@
         type ThreadSummary,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
 
@@ -73,14 +73,13 @@
         }),
     );
 
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            unreadCount = client.unreadThreadMessageCount(
-                chatId,
-                threadRootMessageIndex,
-                lastMessageIndex,
-            );
-        });
+    $effect(() => {
+        void $messagesRead;
+        unreadCount = client.unreadThreadMessageCount(
+            chatId,
+            threadRootMessageIndex,
+            lastMessageIndex,
+        );
     });
 </script>
 

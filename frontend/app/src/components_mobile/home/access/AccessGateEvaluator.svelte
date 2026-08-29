@@ -31,7 +31,7 @@
         Row,
         transition,
     } from "component-lib";
-    import { onMount } from "svelte";
+    import { untrack } from "svelte";
     import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
@@ -57,10 +57,9 @@
 
     let { gate, onClose, onComplete }: Props = $props();
 
-    onMount(() => {
-        return cryptoBalanceStore.subscribe((_) => {
-            refreshBalanceGates();
-        });
+    $effect(() => {
+        void $cryptoBalanceStore;
+        untrack(refreshBalanceGates);
     });
 
     let flattenedGates = $state<SatisfiedLeafGate[]>(normaliseGates(gate));

@@ -13,7 +13,7 @@
         ScreenWidth,
         screenWidth,
     } from "@client";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
@@ -104,7 +104,11 @@
             }
             onScroll();
         });
-        return exploreCommunitiesFiltersStore.subscribe((filters) => {
+    });
+
+    $effect(() => {
+        const filters = $exploreCommunitiesFiltersStore;
+        untrack(() => {
             if (initialised || communitySearchState.results.length === 0) {
                 search(filters, true);
             }

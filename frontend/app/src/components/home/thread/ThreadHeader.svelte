@@ -41,7 +41,7 @@
     let { chatSummary, rootEvent, threadRootMessageIndex, onCloseThread }: Props = $props();
 
     function close() {
-        onCloseThread(chatSummary.id);
+        if (chatSummary !== undefined) onCloseThread(chatSummary.id);
     }
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {

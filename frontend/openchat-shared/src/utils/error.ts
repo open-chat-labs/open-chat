@@ -56,6 +56,8 @@ const NETWORK_NOISE_PATTERN =
 
 const REQWEST_NOISE_PATTERN = /error decoding response body/i;
 
+const RETRY_EXHAUSTED_PATTERN = /retry strategy exhausted after \d+ attempts/i;
+
 function isTransientNetworkError(error: unknown): boolean {
     // Structural checks rather than instanceof: errors which crossed the worker boundary
     // arrive as plain objects where only name/message/code survive
@@ -68,6 +70,9 @@ function isTransientNetworkError(error: unknown): boolean {
     // Exempt from the TypeError rule below because it only ever originates from the Tauri
     // native fetch layer
     if (REQWEST_NOISE_PATTERN.test(message)) return true;
+    // The IC agent gave up after its fetch retries: every attempt failed at the transport
+    // layer (a replica rejection is thrown immediately, without retrying)
+    if (name === "HttpError" && RETRY_EXHAUSTED_PATTERN.test(message)) return true;
     // Only for the browser's own TypeError: our code also throws Errors whose text happens to
     // start "Failed to fetch ...", and those must stay reportable. A bare string carries no
     // name, so it can never satisfy this and is reported like any other unrecognised failure.
@@ -92,6 +97,9 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /failed to delete record from object store/i,
     /unable to store record in object store/i,
     /delete range from database without an in-progress transaction/i,
+    /get a record from database without an in-progress transaction/i,
+    // Safari / Firefox-on-iOS dropping the IndexedDB connection; only a reload recovers it
+    /connection to indexed database server lost/i,
     // The client's clock is wrong, so the replica certificate looks like it is from the future
     /certificate is signed more than 5 minutes in the future/i,
     // Safari's built-in media controls script, no frame of ours involved
@@ -109,6 +117,20 @@ function errorMessage(error: unknown): string {
     if (typeof error === "string") return error;
     if (error == null || typeof error !== "object" || !("message" in error)) return "";
     return typeof error.message === "string" ? error.message : "";
+}
+
+// The throw site is browser-extension code (wallet inpage scripts, injected wasm hitting our
+// CSP, ...): not ours to fix. Rollbar's checkIgnore does the same from the payload frames for
+// uncaught errors that bypass the logger; this covers the ones the window error handler routes
+// through the logger, where only the Error (and its stack string) is available.
+const EXTENSION_FRAME_PATTERN = /^\s*(at .*|.*@)(chrome|moz|safari-web)-extension:\/\//;
+function thrownByExtension(error: unknown): boolean {
+    if (error == null || typeof error !== "object" || !("stack" in error)) return false;
+    if (typeof error.stack !== "string") return false;
+    // V8 puts "Name: message" on the first line and frames below ("    at fn (url)"); JSC and
+    // Gecko start with frames ("fn@url"). Either way the first frame line is the throw site.
+    const frame = error.stack.split("\n").find((line) => /^\s*at |@/.test(line));
+    return frame !== undefined && EXTENSION_FRAME_PATTERN.test(frame);
 }
 
 function isEnvironmentNoise(error: unknown): boolean {
@@ -148,7 +170,8 @@ export function shouldReportError(error: unknown): boolean {
         isExpectedSessionError(error) ||
         isTransientNetworkError(error) ||
         isEnvironmentNoise(error) ||
-        isExpectedAccessError(error)
+        isExpectedAccessError(error) ||
+        thrownByExtension(error)
     );
 }
 

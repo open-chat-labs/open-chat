@@ -19,7 +19,7 @@
         publish,
         setRightPanelHistory,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -134,11 +134,8 @@
     let hasUnreadPinned = $state(false);
 
     $effect(() => {
+        void $messagesRead;
         setUnreadPinned(hasPinned, selectedChatSummary);
-    });
-
-    onMount(() => {
-        return messagesRead.subscribe(() => setUnreadPinned(hasPinned, selectedChatSummary));
     });
 
     function setUnreadPinned(hasPinned: boolean, chat: ChatSummary) {

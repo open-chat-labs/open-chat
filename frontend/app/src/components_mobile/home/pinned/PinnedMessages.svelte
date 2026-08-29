@@ -39,15 +39,12 @@
     let pinnedMessages = $derived($selectedChatPinnedMessagesStore);
 
     onMount(() => {
-        const unsubs = [
-            subscribe("chatWith", () => publish("closeModalPage")),
-            messagesRead.subscribe(() => {
-                unread = client.unreadPinned(chat.id, chat.dateLastPinned);
-            }),
-        ];
-        return () => {
-            unsubs.forEach((u) => u());
-        };
+        return subscribe("chatWith", () => publish("closeModalPage"));
+    });
+
+    $effect(() => {
+        void $messagesRead;
+        unread = client.unreadPinned(chat.id, chat.dateLastPinned);
     });
 
     let messagesDiv: HTMLDivElement | undefined = $state();

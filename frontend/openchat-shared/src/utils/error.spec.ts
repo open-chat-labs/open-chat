@@ -6,7 +6,12 @@ import {
     INVALID_DELEGATION_ERROR_NAME,
     SESSION_EXPIRY_ERROR_NAME,
 } from "../domain";
-import { requiresLogout, shouldReportMessage, shouldReportWorkerError } from "./error";
+import {
+    requiresLogout,
+    shouldReportError,
+    shouldReportMessage,
+    shouldReportWorkerError,
+} from "./error";
 
 // `toCanisterResponseError` copies the IC error code of the rejection onto the mapped error
 function rejection(rejectErrorCode: string): HttpError {
@@ -73,10 +78,7 @@ describe("shouldReportWorkerError", () => {
     test("silences gateway errors and failed fetches for every kind", () => {
         expect(shouldReportWorkerError("chatEvents", boundary)).toBe(false);
         expect(
-            shouldReportWorkerError(
-                "getUsers",
-                new HttpError(504, new Error("Gateway timeout")),
-            ),
+            shouldReportWorkerError("getUsers", new HttpError(504, new Error("Gateway timeout"))),
         ).toBe(false);
         expect(shouldReportWorkerError("getBots", new TypeError("Failed to fetch"))).toBe(false);
         expect(shouldReportWorkerError("getBots", new TypeError("Load failed"))).toBe(false);
@@ -89,6 +91,54 @@ describe("shouldReportWorkerError", () => {
         expect(
             shouldReportWorkerError("chatEvents", new HttpError(500, new Error("canister trap"))),
         ).toBe(true);
+    });
+});
+
+describe("shouldReportError", () => {
+    test("silences IndexedDB backing-store failures", () => {
+        const noTx = new Error(
+            "Attempt to get a record from database without an in-progress transaction",
+        );
+        noTx.name = "UnknownError";
+        const lost = new Error(
+            "Connection to Indexed Database server lost. Refresh the page to try again",
+        );
+        lost.name = "UnknownError";
+
+        expect(shouldReportError(noTx)).toBe(false);
+        expect(shouldReportError(lost)).toBe(false);
+    });
+
+    test("silences the IC agent giving up after its fetch retries", () => {
+        expect(
+            shouldReportError(
+                new HttpError(500, new Error("Retry strategy exhausted after 1 attempts.")),
+            ),
+        ).toBe(false);
+        // the same words from anything other than the agent's HttpError are still a signal
+        expect(shouldReportError(new Error("Retry strategy exhausted after 1 attempts."))).toBe(
+            true,
+        );
+    });
+
+    test("silences errors thrown from browser-extension code", () => {
+        const v8 = new Error("func sseError not found");
+        v8.stack =
+            "Error: func sseError not found\n" +
+            "    at Object.<anonymous> (chrome-extension://cadiboklkpojfamcoggejbbdjcoiljjk/inpage.js:252:19758)\n" +
+            "    at S (chrome-extension://cadiboklkpojfamcoggejbbdjcoiljjk/inpage.js:219:37976)";
+        const gecko = new Error("boom");
+        gecko.stack = "inject@moz-extension://abc/inject.js:25:10\nrun@https://oc.app/main.js:1:2";
+        // an extension frame further up the stack does not make it the extension's error
+        const ours = new Error("boom");
+        ours.stack =
+            "Error: boom\n" +
+            "    at fn (https://oc.app/main.js:1:2)\n" +
+            "    at hook (chrome-extension://abc/inject.js:1:2)";
+
+        expect(shouldReportError(v8)).toBe(false);
+        expect(shouldReportError(gecko)).toBe(false);
+        expect(shouldReportError(ours)).toBe(true);
     });
 });
 

@@ -2,7 +2,7 @@
     import { Avatar } from "component-lib";
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "@client";
     import { allUsersStore, messagesRead, threadsFollowedByMeStore } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
 
@@ -29,14 +29,13 @@
         client.unreadThreadMessageCount(chatId, threadRootMessageIndex, lastMessageIndex),
     );
 
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            unreadCount = client.unreadThreadMessageCount(
-                chatId,
-                threadRootMessageIndex,
-                lastMessageIndex,
-            );
-        });
+    $effect(() => {
+        void $messagesRead;
+        unreadCount = client.unreadThreadMessageCount(
+            chatId,
+            threadRootMessageIndex,
+            lastMessageIndex,
+        );
     });
 </script>
 
