@@ -1,7 +1,6 @@
+use crate::Data;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::model::moderation;
-use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -27,23 +26,6 @@ fn post_upgrade(args: Args) {
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
-
-    // One-off: the suspension privilege freeze only runs on suspend/unsuspend transitions, so
-    // accounts already suspended when it shipped still hold moderator/operator flags on the
-    // local user indexes and sit on the bucket vault-reviewer allowlist. Re-sync them now.
-    // TODO remove after the release containing this has been deployed
-    mutate_state(|state| {
-        let suspended: Vec<_> = state
-            .data
-            .users
-            .iter()
-            .filter(|u| u.suspension_details.is_some())
-            .map(|u| u.user_id)
-            .collect();
-        for user_id in suspended {
-            moderation::sync_suspended_privileges(user_id, true, state);
-        }
-    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
