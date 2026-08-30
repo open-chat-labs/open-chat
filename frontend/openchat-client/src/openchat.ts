@@ -3283,6 +3283,16 @@ export class OpenChat {
         localUpdates.removeCommunity(id);
     }
 
+    // Called when the selected community changes. If we were only previewing the
+    // community we just left, drop the preview (and any of its channels we were
+    // previewing) so that leaving by any route behaves the same as cancelling.
+    removeCommunityIfPreviewing(id: CommunityIdentifier): void {
+        const preview = localUpdates.getPreviewingCommunity(id);
+        if (preview === undefined) return;
+        preview.channels.forEach((c) => localUpdates.removeGroupPreview(c.id));
+        localUpdates.removeCommunityPreview(id);
+    }
+
     diffGroupPermissions = diffGroupPermissions;
 
     messageContentFromFile(file: File | LazyFile, context: MessageContext): Promise<AttachmentContent> {
