@@ -300,7 +300,7 @@ class CommunityPreview {
     cancelPreview(client: OpenChat) {
         if (this.#previewing && this.#community) {
             client.removeCommunity(this.#community.id);
-            history.back();
+            navigate(routeForScope(client.getDefaultScope()));
         }
     }
 }
