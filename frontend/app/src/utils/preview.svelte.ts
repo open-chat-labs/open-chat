@@ -200,6 +200,9 @@ class CommunityPreview {
     #gateCheckFailed = $state<EnhancedAccessGate>();
     #gatesToEvaluate = $state<EnhancedAccessGate>();
     #community = $state<CommunitySummary>();
+    // Where cancelling the preview should return to, if the preview was entered
+    // from somewhere other than the default scope (e.g. the community explorer)
+    #origin: { communityId: string; path: string } | undefined = undefined;
     #gatesInEffect = $derived(
         this.#community !== undefined &&
             // Suspended (unique person) gates are stripped, so a lone unique person gate is no gate.
@@ -246,6 +249,10 @@ class CommunityPreview {
     reset() {
         this.#gatesToEvaluate = undefined;
         this.#gateCheckFailed = undefined;
+    }
+
+    setOrigin(communityId: string, path: string) {
+        this.#origin = { communityId, path };
     }
 
     doJoinCommunity(client: OpenChat, gateCheck?: GateCheckSucceeded): Promise<void> {
@@ -299,8 +306,15 @@ class CommunityPreview {
 
     cancelPreview(client: OpenChat) {
         if (this.#previewing && this.#community) {
+            const communityId = this.#community.id.communityId;
+            const origin = this.#origin;
+            this.#origin = undefined;
             client.removeCommunity(this.#community.id);
-            navigate(routeForScope(client.getDefaultScope()));
+            navigate(
+                origin?.communityId === communityId
+                    ? origin.path
+                    : routeForScope(client.getDefaultScope()),
+            );
         }
     }
 }

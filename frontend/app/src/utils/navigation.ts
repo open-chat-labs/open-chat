@@ -195,6 +195,8 @@ export function parentRoute(from: RouteParams): string | null {
  *   non-root tab → chat                    → push
  *   community → channel (same community)   → push
  *   community → chats                      → pop
+ *   explore/welcome → community            → push    (drill in from explorer / welcome)
+ *   community → explore/welcome            → pop     (back out to explorer / welcome)
  *   channel   → community                  → push
  *   chat (no thread) → same chat + thread  → push     (open thread)
  *   chat + thread → same chat (no thread)  → pop      (close thread)
@@ -220,8 +222,12 @@ export function navigationMode(
     const toIsNonRootTab = TAB_ROUTES.includes(toKind) && !toIsRootTab;
     const toIsChat = ["global_chat_selected_route", "selected_channel_route"].includes(toKind);
     const toIsCommunity = toKind === "selected_community_route";
+    const fromIsExplore = from.kind === "communities_route" || from.kind === "welcome_route";
+    const toIsExplore = toKind === "communities_route" || toKind === "welcome_route";
 
     if (fromIsRootTab && !toIsRootTab) return "push";
+    if (fromIsExplore && toIsCommunity) return "push";
+    if (fromIsCommunity && toIsExplore) return "pop";
     if (fromIsNonRootTab && toIsRootTab) return "pop";
     if (fromIsNonRootTab && toIsNonRootTab) return "replace";
     if (fromIsNonRootTab && toIsChat) return "push";

@@ -84,6 +84,9 @@ const channelWithOpenThread: RouteParams = {
 
 const notFound: RouteParams = { kind: "not_found_route", scope: { kind: "none" } };
 
+const explore: RouteParams = { kind: "communities_route", scope: { kind: "none" } };
+const welcome: RouteParams = { kind: "welcome_route", scope: { kind: "none" } };
+
 // ---------------------------------------------------------------------------
 // Real destination paths used in assertions
 // ---------------------------------------------------------------------------
@@ -91,6 +94,8 @@ const notFound: RouteParams = { kind: "not_found_route", scope: { kind: "none" }
 const P = {
     chats: "/chats",
     chatsRoot: "/",
+    explore: "/communities",
+    welcome: "/welcome",
     notifications: "/notifications",
     profile: "/profile_summary",
     group: "/group/group_1",
@@ -184,6 +189,20 @@ describe("navigationMode", () => {
         it("should be a pop", () => {
             expect(navigationMode(P.chats, community)).toBe("pop");
             expect(navigationMode(P.chatsRoot, community)).toBe("pop");
+        });
+    });
+
+    describe("explore/welcome -> community", () => {
+        it("should be a push", () => {
+            expect(navigationMode(P.community, explore)).toBe("push");
+            expect(navigationMode(P.community, welcome)).toBe("push");
+        });
+    });
+
+    describe("community -> explore/welcome", () => {
+        it("should be a pop", () => {
+            expect(navigationMode(P.explore, community)).toBe("pop");
+            expect(navigationMode(P.welcome, community)).toBe("pop");
         });
     });
 
