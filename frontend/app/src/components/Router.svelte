@@ -2,7 +2,7 @@
 <script lang="ts">
     import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
-    import { type ChatIdentifier, OpenChat, type RouteParams, adminRoute, blogRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, messageIndexStore, notFoundStore, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore } from "@client";
+    import { type ChatIdentifier, type CommunityIdentifier, OpenChat, type RouteParams, adminRoute, blogRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, messageIndexStore, notFoundStore, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore } from "@client";
     import page from "page";
     import { getContext, onMount, untrack } from "svelte";
     import Home, { type HomeType } from "./home/HomeRoute.svelte";
@@ -227,6 +227,21 @@
 
     // This is where our general effects are going to go. They don't *really* belong in a component at all
     // but unfortunately unowned effects do not respond to store value changes
+
+    // Drop a previewed community once we navigate away from it
+    let previousCommunityId: CommunityIdentifier | undefined = undefined;
+    $effect(() => {
+        const id = $selectedCommunityIdStore;
+        untrack(() => {
+            if (
+                previousCommunityId !== undefined &&
+                !communityIdentifiersEqual(previousCommunityId, id)
+            ) {
+                client.removeCommunityIfPreviewing(previousCommunityId);
+            }
+            previousCommunityId = id;
+        });
+    });
 
     // Set selected community
     $effect(() => {
