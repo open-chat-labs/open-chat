@@ -12,13 +12,46 @@ export type CrashLogEntry = {
     stack?: string;
 };
 
+const MAX_MESSAGE = 2000;
+
+// Non-Error values (plain objects, OC error responses, DOMExceptions on old
+// browsers) used to be logged via String(), which yields "[object Object]".
+export function describeError(err: unknown): string {
+    if (err instanceof Error) return `${err.name}: ${err.message}`;
+    if (typeof err === "string") return err;
+    if (err === null || typeof err !== "object") return String(err);
+    const { name, message } = err as { name?: unknown; message?: unknown };
+    if (typeof message === "string") {
+        return typeof name === "string" && name !== "" ? `${name}: ${message}` : message;
+    }
+    try {
+        const seen = new WeakSet<object>();
+        return JSON.stringify(err, (_k, v) => {
+            if (typeof v === "bigint") return v.toString();
+            if (typeof v === "function") return `[function ${v.name}]`;
+            if (v !== null && typeof v === "object") {
+                if (seen.has(v)) return "[circular]";
+                seen.add(v);
+            }
+            return v;
+        }).slice(0, MAX_MESSAGE);
+    } catch {
+        return Object.prototype.toString.call(err);
+    }
+}
+
+function stackOf(err: unknown): string | undefined {
+    const stack = (err as { stack?: unknown } | null)?.stack;
+    return typeof stack === "string" ? stack.slice(0, 2000) : undefined;
+}
+
 export function recordError(source: string, err: unknown): void {
     try {
         const entry: CrashLogEntry = {
             ts: new Date().toISOString(),
             source,
-            message: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
-            stack: err instanceof Error ? err.stack?.slice(0, 2000) : undefined,
+            message: describeError(err),
+            stack: stackOf(err),
         };
         const log = readCrashLog();
         log.push(entry);
