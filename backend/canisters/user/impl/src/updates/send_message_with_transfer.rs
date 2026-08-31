@@ -1,3 +1,4 @@
+use crate::crypto::validate_from_account;
 use crate::guards::caller_is_owner;
 use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
@@ -52,7 +53,7 @@ async fn send_message_with_transfer_to_channel_impl(
     }) {
         Ok(PrepareResult::Success(t)) => (t, None),
         Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
-            match set_up_p2p_swap(escrow_canister_id, create_swap_args, from_account).await {
+            match set_up_p2p_swap(escrow_canister_id, *create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
                 Err(error) => return Error(error.into()),
             }
@@ -161,7 +162,7 @@ async fn send_message_with_transfer_to_group_impl(
     }) {
         Ok(PrepareResult::Success(t)) => (t, None),
         Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
-            match set_up_p2p_swap(escrow_canister_id, create_swap_args, from_account).await {
+            match set_up_p2p_swap(escrow_canister_id, *create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
                 Err(error) => return Error(error.into()),
             }
@@ -235,7 +236,7 @@ async fn send_message_with_transfer_to_group_impl(
 
 enum PrepareResult {
     Success(PendingCryptoTransaction),
-    P2PSwap(CanisterId, escrow_canister::create_swap::Args, Option<icrc1::Account>),
+    P2PSwap(CanisterId, Box<escrow_canister::create_swap::Args>, Option<icrc1::Account>),
 }
 
 fn prepare(
@@ -309,6 +310,8 @@ fn prepare(
             if !state.data.membership(now).is_diamond_member() {
                 return Err(OCErrorCode::NotDiamondMember.into());
             }
+            validate_from_account(p.from_account, state.env.canister_id().into())?;
+
             let chat_canister_id = chat.canister_id();
             let create_swap_args = escrow_canister::create_swap::Args {
                 location: P2PSwapLocation::from_message(chat, thread_root_message_index, message_id),
@@ -323,8 +326,11 @@ fn prepare(
                 canister_to_notify: Some(chat_canister_id),
                 is_public: false,
             };
-            crate::crypto::validate_from_account(p.from_account, state.env.canister_id().into())?;
-            return Ok(P2PSwap(state.data.escrow_canister_id, create_swap_args, p.from_account));
+            return Ok(P2PSwap(
+                state.data.escrow_canister_id,
+                Box::new(create_swap_args),
+                p.from_account,
+            ));
         }
         _ => return Err(OCErrorCode::InvalidRequest.with_message("Message must include a crypto transfer")),
     };

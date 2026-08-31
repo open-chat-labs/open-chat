@@ -94,6 +94,9 @@ pub(crate) async fn deposit_to_accept_p2p_swap(
         .await?
         .map_err(|error| match error {
             TransferFromError::InsufficientFunds { .. } => OCErrorCode::InsufficientFunds.into(),
+            // The likeliest failure when funding from a wallet - the user approved too little, or
+            // the approval has already been spent - so it gets its own code to report on.
+            TransferFromError::InsufficientAllowance { .. } => OCErrorCode::InsufficientAllowance.into(),
             error => OCErrorCode::TransferFailed.with_json(&error),
         })?,
         None => icrc_ledger_canister_c2c_client::icrc1_transfer(
