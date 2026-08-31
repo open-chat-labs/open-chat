@@ -1,17 +1,15 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
-    import {
-        setThemeV2Appearance,
-        themeV2Appearance,
-        themeV2Family,
-    } from "@src/theme/themeV2";
+    import { setThemeV2Appearance, themeV2Appearance } from "@src/theme/themeV2";
     import { Body, BodySmall, Chip, Container, Row, type ThemeAppearance } from "component-lib";
     import { locale } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
     import LanguageSelector from "../LanguageSelector.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import FontSize from "./FontSize.svelte";
-    import ThemeSelector from "./ThemeSelector.svelte";
+    // Re-enable along with the ThemeSelector below once there is more than one
+    // theme family to choose from.
+    // import ThemeSelector from "./ThemeSelector.svelte";
 
     const appearanceOptions: ThemeAppearance[] = ["system", "dark", "light"];
     const appearanceLabels: Record<ThemeAppearance, string> = {
@@ -62,9 +60,8 @@
                         </Chip>
                     {/each}
                 </Row>
-
-                <ThemeSelector selected={$themeV2Family} />
             </Container>
+            <!-- <ThemeSelector selected={$themeV2Family} /> -->
         </Container>
 
         <Container gap={"xl"} direction={"vertical"}>

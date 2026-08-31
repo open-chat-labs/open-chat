@@ -114,29 +114,39 @@ export const neonDark: ThemeColourHexMap = composeDarkTheme(
     },
 );
 
-// A starting point only — the light variant hasn't had a design pass yet.
+// Light variant. Follows the big-chat derivation rules: same brand hues,
+// accents flip from pale tints to darker shades (readable on white), colour
+// surfaces flip from deep shades to pale washes (sit behind dark text).
 export const neonLight: ThemeColourHexMap = composeLightTheme(
     // required colours
     {
-        primary: "#FF5672",
-        primaryAccent: "#dc3954",
-        primarySurface: "#ffdbe2",
-        secondary: "#23A2EE",
-        secondaryAccent: "#0c76b9",
-        secondarySurface: "#c9e9ff",
-        tertiary: "#e41e79",
-        tertiaryAccent: "#c01362",
-        tertiarySurface: "#f7cee2",
-        textPrimary: "#24192d",
-        textSecondary: "#65566d",
-        textOnPrimary: "#ffffff",
+        primary: "#f23c5c", // Hot pink, slightly deepened to hold on white
+        primaryAccent: "#d81b44", // Darker pink for accent text on light surfaces
+        primarySurface: "#ffe0e6", // Pale pink wash
+        secondary: "#1387d6", // Deeper blue for light mode
+        secondaryAccent: "#0c6db3", // Darker blue accent
+        secondarySurface: "#d6ecfd", // Pale blue wash
+        tertiary: "#e41e79", // Magenta already deep enough on white
+        tertiaryAccent: "#b8125e", // Darker magenta accent
+        tertiarySurface: "#fbd8ea", // Pale magenta wash
+        textPrimary: "#24192d", // Near-black with a plum tint
+        textSecondary: "#65566d", // Mid plum-grey
+        textOnPrimary: "#ffffff", // White on the strong pink surfaces
         gradientPrimary: "#e41e79",
-        gradientSecondary: "#FF5672",
+        gradientSecondary: "#f23c5c",
     },
     // optional colours, fine tuning
     {
-        chatBubbleSent: "#ffc3e0",
-        chatTextSent: "#24192d",
+        chatBackground: "#fff5f7", // Very pale pink-tinted background
+        chatHeaderSeparator: "#f6dde3",
+        chatDecorations: "#f6dde3",
+        chatBubbleSent: "#ef476f", // Punchy pink sent bubble, white text
+        chatTextSent: "#ffffff",
+        chatMetadataSent: "#ffd3dc", // Pale pink metadata on the sent bubble
+        chatMetadataFill: "#ffffff",
+        chatBubbleDeleted: "#d8ccd4",
+        chatBubbleFocusOutline: "#1387d6",
+        chatReactionBackground: "#ffffff",
     },
 );
 
