@@ -1233,6 +1233,7 @@ function getAction(
                 payload.messageId,
                 payload.pin,
                 payload.newAchievement,
+                payload.fromAccount,
             );
 
         case "cancelP2PSwap":

@@ -532,6 +532,7 @@ pub mod happy_path {
             &group_canister::accept_p2p_swap::Args {
                 thread_root_message_index: None,
                 message_id,
+                from_account: None,
                 pin: None,
                 new_achievement: false,
             },

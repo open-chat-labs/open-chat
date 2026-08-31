@@ -43,7 +43,7 @@ async fn c2c_claim_prize_impl(args: Args) -> PrizeClaimResponse {
                 Success
             }
         }
-        Ok(Err(failed_transaction)) => {
+        Ok(Err((failed_transaction, _))) => {
             // Rollback the prize reservation
             let error_message = mutate_state(|state| rollback(args, prepare_result.user_id, prize_amount, true, state));
             TransferFailed(error_message, failed_transaction)

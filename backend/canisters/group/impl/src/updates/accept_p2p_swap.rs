@@ -120,6 +120,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2P
             token1: result.content.token1,
             token1_amount: result.content.token1_amount,
             expires_at: result.content.expires_at,
+            from_account: args.from_account,
             pin: args.pin,
         },
     })

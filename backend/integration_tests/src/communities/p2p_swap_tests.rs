@@ -52,6 +52,7 @@ fn p2p_swap_in_channel_succeeds() {
                 token1_amount: 10_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
+                from_account: None,
             }),
             sender_name: user1.username(),
             sender_display_name: None,
@@ -81,6 +82,7 @@ fn p2p_swap_in_channel_succeeds() {
             message_id,
             pin: None,
             new_achievement: false,
+            from_account: None,
         },
     );
 
@@ -163,6 +165,7 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
                 token1_amount: 1_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
+                from_account: None,
             }),
             sender_name: user1.username(),
             sender_display_name: None,

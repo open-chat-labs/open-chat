@@ -3535,15 +3535,6 @@ export const CommunityAcceptP2pSwapResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type CommunityAcceptP2pSwapArgs = Static<typeof CommunityAcceptP2pSwapArgs>;
-export const CommunityAcceptP2pSwapArgs = /* @__PURE__ */ Type.Object({
-    channel_id: ChannelId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    pin: Type.Optional(PinNumberWrapper),
-    new_achievement: Type.Boolean(),
-});
-
 export type CommunityCreateChannelSuccessResult = Static<
     typeof CommunityCreateChannelSuccessResult
 >;
@@ -4542,14 +4533,6 @@ export const GroupAcceptP2pSwapResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type GroupAcceptP2pSwapArgs = Static<typeof GroupAcceptP2pSwapArgs>;
-export const GroupAcceptP2pSwapArgs = /* @__PURE__ */ Type.Object({
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    pin: Type.Optional(PinNumberWrapper),
-    new_achievement: Type.Boolean(),
-});
-
 export type GroupReportMessageArgs = Static<typeof GroupReportMessageArgs>;
 export const GroupReportMessageArgs = /* @__PURE__ */ Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
@@ -4947,14 +4930,6 @@ export const UserAcceptP2pSwapResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
-
-export type UserAcceptP2pSwapArgs = Static<typeof UserAcceptP2pSwapArgs>;
-export const UserAcceptP2pSwapArgs = /* @__PURE__ */ Type.Object({
-    user_id: UserId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    pin: Type.Optional(PinNumberWrapper),
-});
 
 export type UserDeleteCommunityArgs = Static<typeof UserDeleteCommunityArgs>;
 export const UserDeleteCommunityArgs = /* @__PURE__ */ Type.Object({
@@ -6929,6 +6904,16 @@ export const CommunityRegisterWebhookResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type CommunityAcceptP2pSwapArgs = Static<typeof CommunityAcceptP2pSwapArgs>;
+export const CommunityAcceptP2pSwapArgs = /* @__PURE__ */ Type.Object({
+    channel_id: ChannelId,
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    from_account: Type.Optional(AccountICRC1),
+    pin: Type.Optional(PinNumberWrapper),
+    new_achievement: Type.Boolean(),
+});
+
 export type CommunityCreateChannelResponse = Static<typeof CommunityCreateChannelResponse>;
 export const CommunityCreateChannelResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
@@ -7135,6 +7120,15 @@ export const GroupRegisterWebhookResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type GroupAcceptP2pSwapArgs = Static<typeof GroupAcceptP2pSwapArgs>;
+export const GroupAcceptP2pSwapArgs = /* @__PURE__ */ Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    from_account: Type.Optional(AccountICRC1),
+    pin: Type.Optional(PinNumberWrapper),
+    new_achievement: Type.Boolean(),
+});
 
 export type GroupSelectedUpdatesResponse = Static<typeof GroupSelectedUpdatesResponse>;
 export const GroupSelectedUpdatesResponse = /* @__PURE__ */ Type.Union([
@@ -7474,6 +7468,15 @@ export const UserMarkReadChatMessagesRead = /* @__PURE__ */ Type.Object({
     date_read_pinned: Type.Optional(Type.BigInt()),
 });
 
+export type UserAcceptP2pSwapArgs = Static<typeof UserAcceptP2pSwapArgs>;
+export const UserAcceptP2pSwapArgs = /* @__PURE__ */ Type.Object({
+    user_id: UserId,
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    from_account: Type.Optional(AccountICRC1),
+    pin: Type.Optional(PinNumberWrapper),
+});
+
 export type UserChitEventsSuccessResult = Static<typeof UserChitEventsSuccessResult>;
 export const UserChitEventsSuccessResult = /* @__PURE__ */ Type.Object({
     events: Type.Array(ChitEvent),
@@ -7603,6 +7606,7 @@ export const P2PSwapContentInitial = /* @__PURE__ */ Type.Object({
     token1_amount: Type.BigInt(),
     expires_in: Type.BigInt(),
     caption: Type.Optional(Type.String()),
+    from_account: Type.Optional(AccountICRC1),
 });
 
 export type PendingCryptoTransaction = Static<typeof PendingCryptoTransaction>;

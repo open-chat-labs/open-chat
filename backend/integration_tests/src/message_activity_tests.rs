@@ -396,6 +396,7 @@ fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
         token1_amount: 10_000_000_000,
         expires_in: DAY_IN_MS,
         caption: None,
+        from_account: None,
     });
 
     match chat {
