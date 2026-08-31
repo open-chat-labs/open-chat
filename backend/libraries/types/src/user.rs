@@ -8,7 +8,7 @@ use ts_export::ts_export;
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct UserId(pub(crate) CanisterId);
+pub struct UserId(pub(crate) Principal);
 
 // Canister ids are a big-endian u64 followed by the IC's canister and opaque class tags, so they
 // are always exactly this long.
@@ -21,8 +21,11 @@ const INDEXED_TAG: u8 = 0x80;
 pub const MAX_USER_INDEX: u16 = (1 << 15) - 1;
 
 impl UserId {
-    pub const fn new(canister_id: CanisterId) -> UserId {
-        UserId(canister_id)
+    // The id of a user who is not held alongside others - a canister id where that canister holds
+    // the user alone, and otherwise whatever principal identifies them, eg. a bot or a webhook.
+    // Use `new_indexed` for a user sharing a canister.
+    pub const fn new(principal: Principal) -> UserId {
+        UserId(principal)
     }
 
     // A user whose data is held alongside other users' in a single canister is identified by that
