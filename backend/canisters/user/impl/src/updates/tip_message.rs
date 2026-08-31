@@ -5,11 +5,12 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
+use icrc_ledger_types::icrc1::account::Account as LedgerAccount;
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
     Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, OCResult, PendingCryptoTransaction, TimestampNanos, UserId,
-    icrc1,
+    icrc1, icrc2,
 };
 use user_canister::UserCanisterEvent;
 use user_canister::tip_message::{Response::*, *};
@@ -26,15 +27,29 @@ async fn tip_message_impl(mut args: Args) -> Response {
         Err(response) => return Error(response),
     };
 
-    let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-        ledger: args.ledger,
-        token_symbol: args.token_symbol.clone(),
-        amount: args.amount,
-        to: icrc1::Account::for_user(args.recipient),
-        fee: args.fee,
-        memo: Some(MEMO_TIP.to_vec().into()),
-        created: now_nanos,
-    });
+    let pending_transfer = match args.from_account {
+        // The allowance is what authorises this - the ledger only lets us pull from an account which
+        // has approved this canister as spender - so there is nothing for us to check here.
+        Some(from) => PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+            ledger: args.ledger,
+            token_symbol: args.token_symbol.clone(),
+            amount: args.amount,
+            from,
+            to: icrc1::Account::for_user(args.recipient),
+            fee: args.fee,
+            memo: Some(MEMO_TIP.to_vec().into()),
+            created: now_nanos,
+        }),
+        None => PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+            ledger: args.ledger,
+            token_symbol: args.token_symbol.clone(),
+            amount: args.amount,
+            to: icrc1::Account::for_user(args.recipient),
+            fee: args.fee,
+            memo: Some(MEMO_TIP.to_vec().into()),
+            created: now_nanos,
+        }),
+    };
     // Make the crypto transfer
     match process_transaction(pending_transfer).await {
         Ok(Ok(_)) => {}
@@ -87,6 +102,10 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
         Err(OCErrorCode::TransferCannotBeZero.into())
     } else if my_user_id == args.recipient {
         Err(OCErrorCode::CannotTipSelf.into())
+    } else if args.from_account.is_some_and(|a| LedgerAccount::from(a) == my_user_id.into()) {
+        // Pulling from our own account would need an approval we had granted ourselves, so this is
+        // always a client bug. Reject it rather than let the ledger fail with an allowance error.
+        Err(OCErrorCode::InvalidRequest.with_message("Tip cannot be taken from the user's own account"))
     } else {
         let now = state.env.now();
         let now_nanos = now * NANOS_PER_MILLISECOND;

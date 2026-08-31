@@ -190,6 +190,7 @@ import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import type { IChatEventsReader } from "../common/chatEvents";
 import {
     acceptP2PSwapSuccess,
+    addressToIcrcAccount,
     apiChatIdentifier,
     apiCommunityPermissions,
     apiExternalBotPermissions,
@@ -943,6 +944,7 @@ export class UserClient
                 ledger: principalStringToBytes(transfer.ledger),
                 amount: transfer.amountE8s,
                 thread_root_message_index: messageContext.threadRootMessageIndex,
+                from_account: mapOptional(transfer.fromAccount, addressToIcrcAccount),
                 pin,
             },
             tipMessageResponse,

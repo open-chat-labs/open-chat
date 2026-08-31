@@ -7,8 +7,8 @@ use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::{random_from_u128, random_string};
-use types::{Chat, ChatEvent};
+use testing::rng::{random_from_u128, random_principal, random_string};
+use types::{Chat, ChatEvent, icrc1};
 
 #[test]
 fn tip_direct_message_succeeds() {
@@ -219,6 +219,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             amount: tip_amount,
             fee: ICP_TRANSFER_FEE,
             decimals: 8,
+            from_account: None,
             pin: None,
         },
     );
@@ -293,6 +294,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             amount: tip_amount,
             fee: ICP_TRANSFER_FEE,
             decimals: 8,
+            from_account: None,
             pin: None,
         },
     );
@@ -317,6 +319,133 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     assert_eq!(
         *message.tips.first().unwrap(),
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
+    );
+}
+
+// A tip taken from an account OpenChat does not control, pulled via ICRC-2 against an allowance
+// that account granted to the tipper's canister. This is how tipping from an external wallet works.
+#[test]
+fn tip_direct_message_from_approved_account_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, user2 } = init_test_data(env, canister_ids, *controller);
+
+    let tip_amount = 1_0000_0000;
+    let external_wallet = random_principal();
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, external_wallet, 10_000_000_000);
+    // The allowance has to cover the transfer fee too, since that is charged to the `from` account.
+    client::ledger::happy_path::approve(
+        env,
+        external_wallet,
+        canister_ids.icp_ledger,
+        user1.user_id,
+        tip_amount + ICP_TRANSFER_FEE,
+    );
+
+    let user1_balance_before = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+
+    let message_id = random_from_u128();
+    let event_index =
+        client::user::happy_path::send_text_message(env, &user2, user1.user_id, "TEXT", Some(message_id)).event_index;
+
+    tick_many(env, 3);
+
+    let response = client::user::tip_message(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::tip_message::Args {
+            chat: Chat::Direct(user2.user_id.into()),
+            recipient: user2.user_id,
+            thread_root_message_index: None,
+            message_id,
+            ledger: canister_ids.icp_ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount: tip_amount,
+            fee: ICP_TRANSFER_FEE,
+            decimals: 8,
+            from_account: Some(external_wallet.into()),
+            pin: None,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Success),
+        "{response:?}"
+    );
+
+    tick_many(env, 3);
+
+    // The tip is attributed to the OpenChat user, not to the account which funded it.
+    let message = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![event_index])
+        .events
+        .pop()
+        .map(|e| if let ChatEvent::Message(m) = e.event { *m } else { panic!() })
+        .unwrap();
+
+    assert_eq!(message.tips.len(), 1);
+    assert_eq!(
+        *message.tips.first().unwrap(),
+        (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
+    );
+
+    // The funds came out of the approved account, so the tipper's own balance is untouched.
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id),
+        user1_balance_before
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        tip_amount
+    );
+}
+
+// Spending from our own account would need an approval we had granted ourselves, so it is rejected
+// up front rather than left to fail at the ledger.
+#[test]
+fn tip_from_own_account_is_rejected() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, user2 } = init_test_data(env, canister_ids, *controller);
+
+    let message_id = random_from_u128();
+    client::user::happy_path::send_text_message(env, &user2, user1.user_id, "TEXT", Some(message_id));
+
+    tick_many(env, 3);
+
+    let response = client::user::tip_message(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::tip_message::Args {
+            chat: Chat::Direct(user2.user_id.into()),
+            recipient: user2.user_id,
+            thread_root_message_index: None,
+            message_id,
+            ledger: canister_ids.icp_ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount: 1_0000_0000,
+            fee: ICP_TRANSFER_FEE,
+            decimals: 8,
+            from_account: Some(icrc1::Account::for_user(user1.user_id)),
+            pin: None,
+        },
+    );
+
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Error(_)),
+        "{response:?}"
     );
 }
 
