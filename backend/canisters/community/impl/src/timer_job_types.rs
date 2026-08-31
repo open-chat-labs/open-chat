@@ -11,9 +11,7 @@ use group_chat_core::AddResult;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
-use types::{
-    BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId,
-};
+use types::{BlobReference, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -340,12 +338,11 @@ impl Job for FinalPrizePaymentsJob {
 
 impl Job for MakeTransferJob {
     fn execute(self) {
-        let sender = read_state(|state| state.env.canister_id());
         let pending = self.pending_transaction;
-        ic_cdk::futures::spawn_migratory(make_transfer(pending, sender, self.attempt));
+        ic_cdk::futures::spawn_migratory(make_transfer(pending, self.attempt));
 
-        async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, sender: CanisterId, attempt: u32) {
-            if let Err(error) = process_transaction(pending_transaction.clone(), sender, true).await {
+        async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, attempt: u32) {
+            if let Err(error) = process_transaction(pending_transaction.clone(), None, true).await {
                 error!(?error, "Transaction failed");
                 if attempt < 50 {
                     mutate_state(|state| {
