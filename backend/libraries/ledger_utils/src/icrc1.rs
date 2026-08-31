@@ -9,13 +9,13 @@ use types::{
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: CanisterId,
+    sender: Account,
     retry_if_bad_fee: bool,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
-    let from = Account::from(sender);
-
     let args = TransferArg {
-        from_subaccount: None,
+        // The ledger takes the owner from the caller, so the subaccount is the only part of
+        // `sender` it lets us choose.
+        from_subaccount: sender.subaccount,
         to: transaction.to.into(),
         fee: Some(transaction.fee.into()),
         created_at_time: Some(transaction.created),
@@ -30,7 +30,7 @@ pub async fn process_transaction(
             token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee: transaction.fee,
-            from: from.into(),
+            from: sender.into(),
             to: transaction.to.into(),
             memo: transaction.memo.clone(),
             created: transaction.created,
@@ -41,7 +41,7 @@ pub async fn process_transaction(
             token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee: transaction.fee,
-            from: from.into(),
+            from: sender.into(),
             to: transaction.to.into(),
             memo: transaction.memo,
             created: transaction.created,

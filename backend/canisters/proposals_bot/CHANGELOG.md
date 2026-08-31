@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+- Take the sender's full account rather than only its canister id when processing a transfer, so that transfers can be sent from a subaccount ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 
 ### Fixed
 

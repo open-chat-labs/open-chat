@@ -55,7 +55,7 @@ async fn submit_proposal_impl(args: Args) -> Response {
         Err(error) => return InternalError(format!("Failed to lookup user: {error:?}")),
     };
 
-    match process_transaction(args.transaction.clone(), this_canister_id).await {
+    match process_transaction(args.transaction.clone(), this_canister_id.into()).await {
         Ok(Ok(_)) => {}
         Ok(Err(error)) => return PaymentFailed(error.error_message),
         Err(error) => return InternalError(format!("{error:?}")),

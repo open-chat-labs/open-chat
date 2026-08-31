@@ -1,6 +1,7 @@
 use candid::Principal;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Subaccount};
 use sha2::{Digest, Sha256};
+use types::icrc1::Account;
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
 };
@@ -31,7 +32,7 @@ pub fn create_pending_transaction(
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: CanisterId,
+    sender: Account,
     retry_if_bad_fee: bool,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     match transaction {

@@ -1,16 +1,25 @@
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use tracing::error;
 use types::{
-    C2CError, CanisterId,
+    C2CError, UserId,
+    icrc1::Account,
     icrc2::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
 };
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: CanisterId,
+    spender: Account,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
+    // The recorded spender is a UserId, which cannot carry an arbitrary subaccount, so it holds the
+    // owner alone. Nothing is lost today because every caller spends from its default subaccount.
+    let spender_user_id = UserId::from(spender.owner);
+
     let args = TransferFromArgs {
-        spender_subaccount: None,
+        // The ledger takes the spender's owner from the caller, so the subaccount is the only part
+        // of `spender` it lets us choose. Note this picks which approval is spent - `icrc2_approve`
+        // grants to an exact (owner, subaccount) pair, so a non-default subaccount here can only
+        // spend an approval that named it.
+        spender_subaccount: spender.subaccount,
         from: transaction.from.into(),
         to: transaction.to.into(),
         fee: Some(transaction.fee.into()),
@@ -26,7 +35,7 @@ pub async fn process_transaction(
             token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee: transaction.fee,
-            spender: sender.into(),
+            spender: spender_user_id,
             from: transaction.from.into(),
             to: transaction.to.into(),
             memo: transaction.memo.clone(),
@@ -46,7 +55,7 @@ pub async fn process_transaction(
                 token_symbol: transaction.token_symbol,
                 amount: transaction.amount,
                 fee: transaction.fee,
-                spender: sender.into(),
+                spender: spender_user_id,
                 from: transaction.from.into(),
                 to: transaction.to.into(),
                 memo: transaction.memo,

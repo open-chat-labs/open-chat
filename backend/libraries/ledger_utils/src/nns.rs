@@ -1,16 +1,16 @@
-use crate::default_ledger_account;
-use ic_ledger_types::{Memo, Timestamp, TransferArgs};
+use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Memo, Subaccount, Timestamp, TransferArgs};
+use types::icrc1::Account;
 use types::nns::Tokens;
-use types::{C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
+use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction};
 
 pub async fn process_transaction(
     transaction: types::nns::PendingCryptoTransaction,
-    sender: CanisterId,
+    sender: Account,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     let memo = transaction.memo.unwrap_or_default();
     let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 
-    let from = default_ledger_account(sender);
+    let from = AccountIdentifier::new(&sender.owner, &sender.subaccount.map_or(DEFAULT_SUBACCOUNT, Subaccount));
     let to = match transaction.to {
         types::nns::UserOrAccount::User(u) => u.into(),
         types::nns::UserOrAccount::Account(a) => a,
@@ -20,7 +20,9 @@ pub async fn process_transaction(
         memo: Memo(memo),
         amount: transaction.amount.into(),
         fee: fee.into(),
-        from_subaccount: None,
+        // The ledger takes the owner from the caller, so the subaccount is the only part of
+        // `sender` it lets us choose.
+        from_subaccount: sender.subaccount.map(Subaccount),
         to,
         created_at_time: Some(Timestamp {
             timestamp_nanos: transaction.created,
