@@ -129,7 +129,7 @@
     <Sheet onDismiss={closeModal}>
         <Column gap={"lg"} padding={"lg"}>
             <Subtitle fontWeight={"bold"}>Crop image</Subtitle>
-            <Column backgroundColor={ColourVars.background1} height={{ size: "25rem" }}>
+            <Column backgroundColor={ColourVars.surface1} height={{ size: "25rem" }}>
                 <Cropper
                     image={selectedImage}
                     oncropcomplete={onCrop}

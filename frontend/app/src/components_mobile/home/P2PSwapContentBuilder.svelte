@@ -166,7 +166,7 @@
     <Column gap={"xl"} padding={["lg", "lg", "huge"]} overflow="auto" height="fill">
         <!-- Container for swap info -->
         <Column
-            backgroundColor={ColourVars.background1}
+            backgroundColor={ColourVars.surface1}
             padding={["xl", "lg"]}
             borderRadius="lg"
             gap="xxl">

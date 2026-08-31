@@ -64,7 +64,7 @@
 <style lang="scss">
     .border {
         position: relative;
-        background: var(--background-0);
+        background: var(--surface-0);
         width: var(--size);
         height: var(--size);
 

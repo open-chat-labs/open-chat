@@ -326,7 +326,7 @@
                 gap={"md"}
                 direction={"vertical"}
                 borderRadius={["lg", "lg", "zero", "zero"]}
-                background={ColourVars.background2}>
+                background={ColourVars.surface2}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("Recipient")} />
                     {#if account}
@@ -339,7 +339,7 @@
             </Container>
             <Container
                 gap={"lg"}
-                background={ColourVars.background2}
+                background={ColourVars.surface2}
                 padding={["md", "lg", "md", "lg"]}
                 borderRadius={["zero", "zero", "lg", "lg"]}
                 direction={"vertical"}>

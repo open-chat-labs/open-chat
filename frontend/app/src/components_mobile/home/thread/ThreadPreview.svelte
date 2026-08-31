@@ -137,7 +137,7 @@
 {#if chat !== undefined}
     <Container direction={"vertical"}>
         <Container
-            background={ColourVars.background1}
+            background={ColourVars.surface1}
             padding={["lg", "md"]}
             onClick={clickedThread}
             mainAxisAlignment={"spaceBetween"}

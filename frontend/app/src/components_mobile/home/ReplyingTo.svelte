@@ -129,7 +129,7 @@
             width: 100%;
             position: relative;
             padding-left: var(--sp-xl);
-            background-color: var(--background-2);
+            background-color: var(--draft-reply-surface);
             border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md);
 
             &:before {
@@ -140,12 +140,12 @@
                 left: 0.5rem;
                 top: 0.5rem;
                 bottom: 0.5rem;
-                background-color: var(--primary-light);
+                background-color: var(--primary-accent);
                 border-radius: var(--rad-circle);
             }
 
             &.me:before {
-                background-color: var(--secondary-light);
+                background-color: var(--secondary-accent);
             }
 
             &.with_padding {
@@ -161,7 +161,7 @@
             z-index: 1;
 
             &.filled {
-                background-color: var(--background-2);
+                background-color: var(--surface-2);
                 border-radius: var(--rad-circle);
             }
 

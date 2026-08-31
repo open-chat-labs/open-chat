@@ -205,9 +205,9 @@
                 {:else}
                     <Row gap="xs" crossAxisAlignment="center">
                         <Gift
-                            color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                            color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent}
                             size="1.15rem" />
-                        <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                        <ChatCaption colour={me ? "secondaryAccent" : "primaryAccent"}>
                             <Translatable resourceKey={i18nKey("Prize")} />
                         </ChatCaption>
                     </Row>
@@ -223,7 +223,7 @@
             <Column
                 padding={["xs", "sm"]}
                 borderRadius={["xl", "xl", "md", "md"]}
-                backgroundColor={ColourVars.background0}>
+                backgroundColor={ColourVars.surface0}>
                 <Row padding="sm" width="fill" gap="sm" crossAxisAlignment="center">
                     <Gift size="1rem" color={ColourVars.primary} />
                     <Body width="hug" fontWeight="semi-bold">
@@ -240,7 +240,7 @@
                 <Row
                     width="fill"
                     height={{ size: "0.25rem" }}
-                    background={ColourVars.background1}
+                    background={ColourVars.surface1}
                     borderRadius="circle">.</Row>
                 <Row padding="sm">
                     <TransferFeesMessage
@@ -283,7 +283,7 @@
                     gap="xs"
                     padding="md"
                     crossAxisAlignment="center"
-                    backgroundColor={me ? ColourVars.primaryMuted : ColourVars.background1}>
+                    backgroundColor={me ? ColourVars.primarySurface : ColourVars.surface1}>
                     <!-- Time remaining -->
                     <Row gap="xs" mainAxisAlignment="center" crossAxisAlignment="center">
                         {#if allClaimed}
@@ -318,8 +318,8 @@
                                 chitEarned={content.minChitEarned}
                                 streak={content.streakOnly}
                                 borderColor={me
-                                    ? ColourVars.primaryMuted
-                                    : ColourVars.background1} />
+                                    ? ColourVars.primarySurface
+                                    : ColourVars.surface1} />
                         </Row>
                     {/if}
                 </Column>
@@ -330,7 +330,7 @@
                 gap="md"
                 padding={["sm", me ? "sm" : "xs", me ? "lg" : "xs"]}
                 borderRadius={["zero", "zero", "lg", "lg"]}
-                backgroundColor={me ? ColourVars.primaryMuted : ColourVars.background1}>
+                backgroundColor={me ? ColourVars.primarySurface : ColourVars.surface1}>
                 <Column gap="xxs">
                     <!-- Claimed count -->
                     <Row mainAxisAlignment="center">
@@ -402,7 +402,7 @@
     {onRemove} />
 
 {#snippet restrictionsBanner(key: string)}
-    <Column padding="md" borderRadius="md" backgroundColor={ColourVars.secondaryMuted}>
+    <Column padding="md" borderRadius="md" backgroundColor={ColourVars.secondarySurface}>
         <BodySmall>
             <Translatable resourceKey={i18nKey(key)} />
         </BodySmall>
@@ -416,7 +416,7 @@
             gap="md"
             borderRadius="md"
             padding={["md", "xl", "xxl"]}
-            backgroundColor={ColourVars.background1}>
+            backgroundColor={ColourVars.surface1}>
             {#if restrictedPrize}
                 <Column>
                     <Subtitle fontWeight="semi-bold">
@@ -436,7 +436,7 @@
                                 height={{ size: "1.375rem" }}
                                 mainAxisAlignment="center"
                                 crossAxisAlignment="center"
-                                backgroundColor={ColourVars.background2}>
+                                backgroundColor={ColourVars.surface2}>
                                 <Fingerprint
                                     viewBox={"0 -1 24 24"}
                                     size={"1rem"}
@@ -453,7 +453,7 @@
                     {#if content.diamondOnly || content.lifetimeDiamondOnly}
                         <Row gap="md">
                             <Diamond
-                                borderColor={ColourVars.background1}
+                                borderColor={ColourVars.surface1}
                                 size={"default"}
                                 status={content.lifetimeDiamondOnly ? "lifetime" : "active"} />
 
@@ -472,7 +472,7 @@
                     {#if content.streakOnly > 0}
                         <Row gap="md">
                             <Streak
-                                borderColor={ColourVars.background1}
+                                borderColor={ColourVars.surface1}
                                 days={content.streakOnly} />
                             <Body>
                                 <Translatable
@@ -486,7 +486,7 @@
                     {#if content.minChitEarned > 0}
                         <Row gap="md">
                             <ChitEarnedBadge
-                                borderColor={ColourVars.background1}
+                                borderColor={ColourVars.surface1}
                                 earned={content.minChitEarned} />
 
                             <Body>
@@ -519,7 +519,7 @@
         border-radius: var(--rad-lg);
 
         &:not(.me) {
-            background: var(--background-0);
+            background: var(--surface-0);
         }
 
         &.me {

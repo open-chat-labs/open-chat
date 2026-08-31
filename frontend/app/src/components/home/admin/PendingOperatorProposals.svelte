@@ -153,7 +153,7 @@
                 {formatTimestamp(proposal.expires_at)}
             </BodySmall>
             {#if isOwnProposal(proposal)}
-                <Body fontWeight="bold" colour="warning">
+                <Body fontWeight="bold" colour="validationWarning">
                     You proposed this, so you cannot confirm it — another platform operator must.
                 </Body>
             {/if}

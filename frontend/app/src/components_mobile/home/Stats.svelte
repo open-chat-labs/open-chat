@@ -212,11 +212,11 @@
     {#if showReported}
         <Container gap={"md"} direction={"vertical"}>
             <Container crossAxisAlignment={"center"} gap={"xs"}>
-                <Flag color={ColourVars.error} />
-                <Subtitle width={"hug"} colour={"error"} fontWeight={"bold"}>
+                <Flag color={ColourVars.validationError} />
+                <Subtitle width={"hug"} colour={"validationError"} fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
                 </Subtitle>
-                <Subtitle width={"hug"} colour={"error"} fontWeight={"bold"}>
+                <Subtitle width={"hug"} colour={"validationError"} fontWeight={"bold"}>
                     / {stats.reportedMessages.toLocaleString()}
                 </Subtitle>
             </Container>

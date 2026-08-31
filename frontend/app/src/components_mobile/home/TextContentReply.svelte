@@ -36,7 +36,7 @@
 
     let text = $derived(truncateText(content.text));
 
-    let textColorTxt = $derived<ColourVarKeys>(me ? "secondaryLight" : "primaryLight");
+    let textColorTxt = $derived<ColourVarKeys>(me ? "secondaryAccent" : "primaryAccent");
 </script>
 
 {@render title()}

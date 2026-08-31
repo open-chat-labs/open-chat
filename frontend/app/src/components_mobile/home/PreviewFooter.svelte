@@ -56,7 +56,7 @@
     direction={"vertical"}
     padding={"lg"}
     borderRadius="md"
-    background={ColourVars.background1}>
+    background={ColourVars.surface1}>
     <Container crossAxisAlignment={"center"}>
         <Container>
             <CommonButton

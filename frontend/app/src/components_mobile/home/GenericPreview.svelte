@@ -35,7 +35,7 @@
         }
     }
 
-    const textColour = $derived(me ? "primaryLight" : "textSecondary");
+    const textColour = $derived(me ? "primaryAccent" : "textSecondary");
     const urlColour = $derived(me ? "textPrimary" : "secondary");
 </script>
 
@@ -87,11 +87,11 @@
         }
 
         &.me {
-            background-color: var(--primary-muted);
+            background-color: var(--primary-surface);
         }
 
         &:not(.me) {
-            background-color: var(--background-1);
+            background-color: var(--surface-1);
         }
     }
 </style>

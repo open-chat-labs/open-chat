@@ -55,19 +55,19 @@
         right: 0px;
         padding: 2px;
         border-radius: var(--rad-circle);
-        background-color: var(--text-tertiary);
-        border: 6px solid var(--background-0);
+        background-color: var(--surface-2);
+        border: 6px solid var(--surface-0);
     }
 
     .border {
-        background: var(--background-0);
+        background: var(--surface-0);
         border-radius: var(--rad-circle);
         padding: 6px;
         position: relative;
 
         &.highlight {
             background: var(--gradient);
-            background: var(--text-tertiary);
+            background: var(--text-on-disabled-surface);
         }
     }
 

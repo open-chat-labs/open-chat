@@ -170,7 +170,7 @@
 <div class="body">
     {#if authStep === "choose_provider"}
         <div class="info">
-            <Body colour={"error"}>
+            <Body colour={"validationError"}>
                 <Translatable resourceKey={message} />
             </Body>
         </div>

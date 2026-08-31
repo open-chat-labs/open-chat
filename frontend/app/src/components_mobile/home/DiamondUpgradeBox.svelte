@@ -25,7 +25,7 @@
             parts={[
                 {
                     text: i18nKey(disableDiamondPaymentFeature ? "Explore " : "Upgrade to "),
-                    colour: "primaryLight",
+                    colour: "primaryAccent",
                 },
                 {
                     text: i18nKey("Diamond"),
@@ -38,7 +38,7 @@
             parts={[
                 {
                     text: message,
-                    colour: "primaryLight",
+                    colour: "primaryAccent",
                 },
                 {
                     text: i18nKey(disableDiamondPaymentFeature ? "Explore!" : "Join now!"),

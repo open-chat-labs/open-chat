@@ -306,7 +306,7 @@
         direction={"vertical"}
         padding={["zero", "zero", "lg", "zero"]}
         gap={"lg"}
-        background={ColourVars.background0}>
+        background={ColourVars.surface0}>
         <Container padding={["zero", "lg"]}>
             <Search
                 bind:value={searchState.term}
@@ -471,7 +471,7 @@
     }
 
     .robot {
-        border: 4px solid var(--background-0);
+        border: 4px solid var(--surface-0);
         background-color: var(--primary);
         border-radius: var(--rad-circle);
         width: 2rem;

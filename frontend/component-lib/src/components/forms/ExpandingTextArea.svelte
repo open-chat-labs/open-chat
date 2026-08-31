@@ -110,7 +110,7 @@
         minHeight="3.5rem"
         padding={["lg", "xl"]}
         crossAxisAlignment={"start"}
-        background={ColourVars.textTertiary}>
+        background={ColourVars.inputBackground}>
         <textarea
             bind:this={textarea}
             bind:value
@@ -145,7 +145,7 @@
 
     {#if subtext}
         <div class="subtext">
-            <BodySmall colour={error ? "error" : "textSecondary"}>
+            <BodySmall colour={error ? "validationError" : "textSecondary"}>
                 {@render subtext()}
             </BodySmall>
         </div>
@@ -176,7 +176,7 @@
         }
 
         &::placeholder {
-            color: var(--text-placeholder);
+            color: var(--input-placeholder);
         }
 
         /* Hide scrollbar visually while allowing growth */
@@ -206,7 +206,7 @@
         }
 
         &.warn {
-            color: var(--warning);
+            color: var(--validation-warning);
         }
     }
 </style>

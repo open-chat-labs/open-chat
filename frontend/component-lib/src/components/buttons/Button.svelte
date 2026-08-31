@@ -38,7 +38,7 @@
     </span>
     {#if loading}
         <span class="button_icon">
-            <Spinner backgroundColour={"var(--text-tertiary)"} foregroundColour={spinnerColour} />
+            <Spinner backgroundColour={"var(--text-on-disabled-surface)"} foregroundColour={spinnerColour} />
         </span>
     {:else if icon}
         <span class="button_icon">{@render icon(iconColour)}</span>
@@ -87,7 +87,7 @@
             position: absolute;
             inset: calc(-1 * var(--bw-thick));
             border-radius: var(--rad-md);
-            background: var(--error);
+            background: var(--validation-error);
             z-index: -1;
         }
 
@@ -96,7 +96,7 @@
         }
 
         &.disabled {
-            background: var(--disabled-button);
+            background: var(--surface-disabled);
         }
 
         &:disabled {
@@ -117,8 +117,8 @@
             border: var(--bw-thick) solid var(--gradient-secondary);
 
             &.disabled {
-                color: var(--disabled-button);
-                border-color: var(--disabled-button);
+                color: var(--surface-disabled);
+                border-color: var(--surface-disabled);
             }
         }
 

@@ -240,7 +240,7 @@
     <Column>
         <Row gap="sm">
             {#if csam}
-                <Subtitle width="hug" colour="error">
+                <Subtitle width="hug" colour="validationError">
                     <Translatable resourceKey={i18nKey("moderationReport.csam")} />
                 </Subtitle>
             {/if}
@@ -296,7 +296,7 @@
             </Body>
         {/if}
         {#if content.status.kind === "contested"}
-            <Body colour="error" fontWeight="bold">
+            <Body colour="validationError" fontWeight="bold">
                 <Translatable resourceKey={i18nKey("moderationReport.contested")} />
             </Body>
         {/if}
@@ -328,7 +328,7 @@
     {#if authorityReport !== undefined}
         <Column gap="sm">
             {#if authorityReport.kind === "due"}
-                <Body fontWeight="bold" colour={authorityReport.urgent ? "error" : "textSecondary"}>
+                <Body fontWeight="bold" colour={authorityReport.urgent ? "validationError" : "textSecondary"}>
                     <Translatable
                         resourceKey={i18nKey(
                             authorityReport.urgent
@@ -368,7 +368,7 @@
                     <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                 </a>
             {:else if authorityReport.kind === "attempting"}
-                <Body fontWeight="bold" colour={attemptIsStale ? "error" : "textSecondary"}>
+                <Body fontWeight="bold" colour={attemptIsStale ? "validationError" : "textSecondary"}>
                     <Translatable
                         resourceKey={i18nKey(
                             attemptIsStale
@@ -398,14 +398,14 @@
                         <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                     </a>
                     {#if clearAttemptFailed}
-                        <Body colour="error">
+                        <Body colour="validationError">
                             <Translatable
                                 resourceKey={i18nKey("moderationReport.clearAttemptFailed")} />
                         </Body>
                     {/if}
                 {/if}
             {:else if authorityReport.kind === "contingency_required"}
-                <Body fontWeight="bold" colour="error">
+                <Body fontWeight="bold" colour="validationError">
                     <span class="authority-error">
                         <Translatable
                             resourceKey={i18nKey("moderationReport.ncaContingency", {
@@ -424,7 +424,7 @@
                     <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                 </a>
             {:else if authorityReport.kind === "validation_failed"}
-                <Body fontWeight="bold" colour="error">
+                <Body fontWeight="bold" colour="validationError">
                     <span class="authority-error">
                         <Translatable
                             resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
@@ -473,17 +473,17 @@
             </Row>
         {/if}
         {#if reviewerRequired}
-            <Body colour="error" fontWeight="bold">
+            <Body colour="validationError" fontWeight="bold">
                 <Translatable resourceKey={i18nKey("moderationReport.reviewerRequired")} />
             </Body>
         {/if}
         {#if mediaUnavailable}
-            <Body colour="error">
+            <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
             </Body>
         {/if}
         {#if needsMediaReview && mediaFetchFailed}
-            <Body colour="error">
+            <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
             </Body>
         {/if}
@@ -522,7 +522,7 @@
             </Row>
         {/if}
         {#if failed}
-            <Body colour="error" fontWeight="bold">
+            <Body colour="validationError" fontWeight="bold">
                 {#if failureReason !== undefined}
                     {failureReason}
                 {:else}
@@ -588,7 +588,7 @@
     .excerpt {
         margin: 0;
         padding-left: var(--sp-sm);
-        border-left: var(--sp-xs) solid var(--error);
+        border-left: var(--sp-xs) solid var(--validation-error);
         font-style: italic;
         white-space: pre-wrap;
     }

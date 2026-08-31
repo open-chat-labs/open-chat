@@ -121,9 +121,9 @@
             {:else}
                 <Row gap="xs" crossAxisAlignment="center">
                     <ImageOutline
-                        color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                        color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent}
                         size="1.25rem" />
-                    <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                    <ChatCaption colour={me ? "secondaryAccent" : "primaryAccent"}>
                         <Translatable resourceKey={i18nKey("Photo")} />
                     </ChatCaption>
                 </Row>
@@ -273,7 +273,7 @@
                 }
 
                 .image_wrapper.narrow {
-                    background-color: var(--primary-muted);
+                    background-color: var(--primary-surface);
                 }
             }
 
@@ -284,7 +284,7 @@
                 }
 
                 .image_wrapper.narrow {
-                    background-color: var(--background-1);
+                    background-color: var(--surface-1);
                 }
             }
 
@@ -389,7 +389,7 @@
             flex-direction: column;
             align-items: center;
             padding: var(--sp-xs);
-            background-color: var(--background-0);
+            background-color: var(--surface-0);
             border-radius: var(--rad-lg) var(--rad-lg) var(--rad-lg) var(--rad-lg);
         }
 

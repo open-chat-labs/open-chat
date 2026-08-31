@@ -189,7 +189,7 @@
 {:else}
     <Column
         gap="xl"
-        background={ColourVars.background1}
+        background={ColourVars.surface1}
         borderRadius="lg"
         padding={["xl", "xl", "lg"]}>
         {@render summary()}

@@ -81,7 +81,7 @@
 {#snippet icon_view()}
     {#if loading}
         <span class="icon">
-            <Spinner size={iconSize} backgroundColour={"var(--text-tertiary)"} />
+            <Spinner size={iconSize} backgroundColour={"var(--text-on-disabled-surface)"} />
         </span>
     {:else if icon}
         <span class="icon">{@render icon(iconColour, iconSize)}</span>
@@ -156,11 +156,11 @@
             cursor: not-allowed;
 
             &:not(.text) {
-                background: var(--disabled-button);
+                background: var(--surface-disabled);
             }
 
             &.primary.text {
-                color: var(--disabled-button);
+                color: var(--text-on-disabled-surface);
             }
         }
 
@@ -179,7 +179,7 @@
         }
 
         &.primary.text:not(.disabled):active {
-            color: var(--primary-light);
+            color: var(--primary-accent);
         }
     }
 
@@ -187,13 +187,13 @@
         .common_button_2 {
             &.primary.text:not(.disabled):active {
                 .icon path {
-                    fill: var(--primary-light) !important;
+                    fill: var(--primary-accent) !important;
                 }
             }
 
             &.primary.text.disabled {
                 .icon path {
-                    fill: var(--disabled-button) !important;
+                    fill: var(--text-on-disabled-surface) !important;
                 }
             }
         }

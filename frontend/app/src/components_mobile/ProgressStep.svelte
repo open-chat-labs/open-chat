@@ -19,8 +19,8 @@
 
     const colours: Record<string, string> = {
         todo: ColourVars.textPrimary,
-        done: ColourVars.success,
-        failed: ColourVars.error,
+        done: ColourVars.validationSuccess,
+        failed: ColourVars.validationError,
     };
 </script>
 
@@ -39,9 +39,9 @@
             </div>
         </div>
     {:else if status === "overall-done"}
-        <DoneIcon size="1.6rem" color={ColourVars.success} />
+        <DoneIcon size="1.6rem" color={ColourVars.validationSuccess} />
     {:else if status === "overall-failed"}
-        <FailedIcon size="1.6rem" color={ColourVars.error} />
+        <FailedIcon size="1.6rem" color={ColourVars.validationError} />
     {:else}
         <Container
             borderColour={colours[status] ?? ColourVars.textPrimary}

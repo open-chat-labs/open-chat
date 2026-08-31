@@ -44,7 +44,7 @@
         $threadsFollowedByMeStore.get(chatId)?.has(threadRootMessageIndex) ?? false,
     );
     let borderColour = $derived(
-        hasUnread && isFollowedByMe ? ColourVars.primary : ColourVars.disabledButton,
+        hasUnread && isFollowedByMe ? ColourVars.primary : ColourVars.surfaceDisabled,
     );
     let borderRadius = $derived<Radius>(me ? ["xl", "sm", "xl", "xl"] : ["sm", "xl", "xl", "xl"]); // this will need more logic
     let padding = $derived<Padding>(me ? ["xs", "md", "xs", "xs"] : ["xs", "xs", "xs", "md"]);
@@ -105,7 +105,7 @@
     <ChatFootnote width={"hug"} colour={"textSecondary"}>{text}</ChatFootnote>
     <Container width={"hug"}>
         <div class={`arrow`} class:hasUnread>
-            <ChevronRight color={ColourVars.background0} />
+            <ChevronRight color={ColourVars.surface0} />
         </div>
     </Container>
     {#if hasUnread}
@@ -129,12 +129,12 @@
     }
 
     .arrow {
-        background-color: var(--secondary-light);
+        background-color: var(--secondary-accent);
         border-radius: var(--rad-circle);
         height: 16px;
         display: flex;
         &.hasUnread {
-            background-color: var(--primary-light);
+            background-color: var(--primary-accent);
         }
     }
 

@@ -17,9 +17,9 @@
         if (satisfied) {
             return defaultBackgroundGradient;
         } else if (!satisfiable) {
-            return ColourVars.error;
+            return ColourVars.validationError;
         } else {
-            return ColourVars.background2;
+            return ColourVars.surface2;
         }
     });
 </script>
@@ -32,11 +32,11 @@
         borderRadius={"md"}
         minHeight={"4rem"}
         gap={"md"}
-        background={satisfied ? ColourVars.background0 : ColourVars.background2}
+        background={satisfied ? ColourVars.surface0 : ColourVars.surface2}
         padding={["md", "lg"]}>
         {@render children()}
         {#if satisfied}
-            <Check color={ColourVars.success} size={"1rem"} />
+            <Check color={ColourVars.validationSuccess} size={"1rem"} />
         {:else if onClick}
             <ChevronRight color={ColourVars.primary} size={"1.5rem"} />
         {/if}

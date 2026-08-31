@@ -74,7 +74,7 @@
     function getTextColour(): ColourVarKeys {
         switch (internalMode) {
             case "default":
-                if (disabled) return "disabledButton";
+                if (disabled) return "textOnDisabledSurface";
                 switch (size) {
                     case "small_text":
                         return "textPrimary";
@@ -82,7 +82,7 @@
                         return "textSecondary";
                 }
             case "pressed":
-                if (disabled) return "disabledButton";
+                if (disabled) return "textOnDisabledSurface";
                 switch (size) {
                     case "small_text":
                         return "primary";
@@ -90,7 +90,7 @@
                         return "textPrimary";
                 }
             case "active": {
-                if (disabled) return "textTertiary";
+                if (disabled) return "textOnDisabledSurface";
                 switch (size) {
                     case "small":
                     case "small_text":
@@ -105,7 +105,7 @@
     function getIconColour(): string {
         switch (internalMode) {
             case "default":
-                if (disabled) return ColourVars.disabledButton;
+                if (disabled) return ColourVars.textOnDisabledSurface;
                 switch (size) {
                     case "small_text":
                         return ColourVars.textPrimary;
@@ -113,7 +113,7 @@
                         return ColourVars.textSecondary;
                 }
             case "pressed":
-                if (disabled) return ColourVars.disabledButton;
+                if (disabled) return ColourVars.textOnDisabledSurface;
                 switch (size) {
                     case "small_text":
                         return ColourVars.primary;
@@ -121,7 +121,7 @@
                         return ColourVars.textPrimary;
                 }
             case "active": {
-                if (disabled) return ColourVars.textTertiary;
+                if (disabled) return ColourVars.textOnDisabledSurface;
                 switch (size) {
                     case "small":
                     case "small_text":
@@ -158,7 +158,7 @@
         <span class="icon">
             <Spinner
                 size={iconSize}
-                backgroundColour={"var(--text-tertiary)"}
+                backgroundColour={"var(--text-on-disabled-surface)"}
                 foregroundColour={spinnerColour} />
         </span>
     {:else if icon}
@@ -222,8 +222,8 @@
 
         &.default {
             border-radius: var(--rad-circle);
-            border: var(--bw-thick) solid var(--background-2);
-            background: var(--background-1);
+            border: var(--bw-thick) solid var(--surface-2);
+            background: var(--surface-1);
             color: var(--text-secondary);
 
             &.small,
@@ -240,11 +240,11 @@
         &.pressed {
             border-radius: var(--rad-lg);
             border: var(--bw-thick) solid transparent;
-            background: var(--background-2);
+            background: var(--surface-2);
             color: var(--text-primary);
 
             &.small_text {
-                background: var(--primary-light);
+                background: var(--primary-accent);
                 color: var(--primary);
             }
         }
@@ -310,7 +310,7 @@
         }
 
         &.disabled {
-            background: var(--disabled-button);
+            background: var(--surface-disabled);
         }
 
         &:disabled {

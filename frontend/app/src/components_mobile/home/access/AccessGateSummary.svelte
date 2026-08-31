@@ -70,14 +70,14 @@
 {#snippet booleanGate(restricted: boolean, Icon: any, title: string, subtitle?: string)}
     <AccessGateBox {satisfied} satisfiable onClick={restricted ? undefined : () => onClick(gate)}>
         <Row mainAxisAlignment={"center"} width={{ size: "2.5rem" }}>
-            <Icon color={ColourVars.warning} size={"1.5rem"} />
+            <Icon color={ColourVars.validationWarning} size={"1.5rem"} />
         </Row>
         <Column>
             <Body fontWeight="bold" colour={"textPrimary"}>
                 <Translatable resourceKey={i18nKey(title)} />
             </Body>
             {#if subtitle !== undefined}
-                <Caption colour={restricted ? "error" : "textSecondary"}>
+                <Caption colour={restricted ? "validationError" : "textSecondary"}>
                     {#if restricted}
                         <Translatable resourceKey={restrictedMsg} />
                     {:else}
@@ -130,7 +130,7 @@
                         colour={insufficient ? "textSecondary" : "textPrimary"}
                         width={"hug"}>{label}</Body>
                 </Row>
-                <Caption colour={insufficient ? "error" : "textSecondary"}>
+                <Caption colour={insufficient ? "validationError" : "textSecondary"}>
                     <Translatable resourceKey={restrictedMsg} />
                 </Caption>
             </Column>
@@ -156,7 +156,7 @@
                             colour={insufficient ? "textSecondary" : "textPrimary"}
                             width={"hug"}>{label}</Body>
                     </Row>
-                    <Caption colour={insufficient ? "error" : "textSecondary"}>
+                    <Caption colour={insufficient ? "validationError" : "textSecondary"}>
                         {balance}
                         {#if insufficient}
                             {`/ Insufficient ${symbol}`}

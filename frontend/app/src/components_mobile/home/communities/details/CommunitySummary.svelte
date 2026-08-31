@@ -108,7 +108,7 @@
 
 <Container
     closeMenuOnScroll
-    background={ColourVars.background0}
+    background={ColourVars.surface0}
     height={"fill"}
     direction={"vertical"}>
     <Container gap={"xl"} direction={"vertical"} padding={["lg", "md", "md", "md"]}>

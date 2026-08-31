@@ -112,16 +112,16 @@
     );
     let backgroundColour = $derived.by(() => {
         if (failed) {
-            return ColourVars.error;
+            return ColourVars.validationError;
         }
         if (placeholderContent) {
             return "transparent";
         }
         if (me) {
-            return ColourVars.myChatBubble;
+            return ColourVars.chatBubbleSent;
         }
 
-        return ColourVars.background2;
+        return ColourVars.chatBubbleReceived;
     });
     let borderRadius = $derived.by<Radius>(() => {
         // top, right, bottom, left
@@ -145,7 +145,7 @@
     // Show only for deleted messages!
     let borderColour = $derived.by(() => {
         if (!placeholderContent) return "transparent";
-        return ColourVars.background2;
+        return ColourVars.chatBubbleDeleted;
     });
 
     let classList = $derived.by(() => {
@@ -287,7 +287,7 @@
             .fill {
                 z-index: 1;
                 position: absolute;
-                color: var(--text-primary);
+                color: var(--chat-metadata-fill);
                 text-shadow: 0 0 0.125rem var(--backdrop);
             }
         }
@@ -300,10 +300,6 @@
             color: inherit;
         }
 
-        .container.message_bubble .typo {
-            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
-        }
-
         .container.message_bubble button .typo {
             text-shadow: none;
         }
@@ -313,11 +309,11 @@
         }
 
         .container.message_bubble.focused {
-            box-shadow: 0 0 0 0.25rem var(--primary-muted);
+            box-shadow: 0 0 0 0.25rem var(--primary-surface);
         }
 
         .container.message_bubble:not(.read_by_me) {
-            box-shadow: 0 0 0 0.25rem var(--primary-muted);
+            box-shadow: 0 0 0 0.25rem var(--primary-surface);
         }
 
         // Removes extra space between sender name and content of the message.

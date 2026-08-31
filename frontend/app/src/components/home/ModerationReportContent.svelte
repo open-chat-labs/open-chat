@@ -249,10 +249,10 @@
 </script>
 
 {#snippet reportCard()}
-    <Column borderRadius="md" backgroundColor={ColourVars.background1}>
+    <Column borderRadius="md" backgroundColor={ColourVars.surface1}>
         <Row
             padding="lg"
-            backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}
+            backgroundColor={csam ? ColourVars.tertiarySurface : ColourVars.surface0}
             gap="md"
         >
             {#if csam}
@@ -265,7 +265,7 @@
             </Subtitle>
         </Row>
         {#if csamish}
-            <Row backgroundColor={ColourVars.background0} padding="lg" gap="md">
+            <Row backgroundColor={ColourVars.surface0} padding="lg" gap="md">
                 <Body>
                     <Translatable resourceKey={i18nKey("moderationReport.vaultOnly")} />
                 </Body>
@@ -326,7 +326,7 @@
             </Row>
         </Column>
         {#if content.contentExcerpt !== undefined}
-            <Column backgroundColor={ColourVars.background0} padding="lg" gap="md">
+            <Column backgroundColor={ColourVars.surface0} padding="lg" gap="md">
                 <BodySmall colour="textSecondary" uppercase>
                     <Translatable resourceKey={i18nKey("moderationReport.reportedMessage")} />
                 </BodySmall>
@@ -339,7 +339,7 @@
             {#if hasMedia}
                 <Row
                     padding="lg"
-                    backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}
+                    backgroundColor={csam ? ColourVars.tertiarySurface : ColourVars.surface0}
                 >
                     {#if csam}
                         <Column>
@@ -377,7 +377,7 @@
             {/if}
         {/if}
         {#if content.autoSanctioned && hasMedia}
-            <Row padding="lg" backgroundColor={ColourVars.background0}>
+            <Row padding="lg" backgroundColor={ColourVars.surface0}>
                 <Button secondary onClick={() => (showAccessLog = true)}>
                     <Translatable resourceKey={i18nKey("vaultLog.button")} />
                 </Button>
@@ -389,7 +389,7 @@
 {#snippet statusLine()}
     {@const classifierLine = content.flaggedCategories === 0 && content.status.kind === "pending"}
     {#if (content.status.kind === "pending" || content.status.kind === "contested") && (classifierLine || content.status.kind === "contested" || content.autoSanctioned)}
-        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.background1}>
+        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.surface1}>
             {#if classifierLine}
                 <Body width="hug">
                     <Translatable
@@ -402,7 +402,7 @@
                 </Body>
             {/if}
             {#if content.status.kind === "contested"}
-                <Body width="hug" fontWeight="bold" colour="error">
+                <Body width="hug" fontWeight="bold" colour="validationError">
                     <Translatable resourceKey={i18nKey("moderationReport.contested")} />
                 </Body>
             {/if}
@@ -423,8 +423,8 @@
         padding="lg"
         borderRadius="md"
         backgroundColor={content.status.kind === "upheld_as_csam"
-            ? ColourVars.tertiaryMuted
-            : ColourVars.background1}
+            ? ColourVars.tertiarySurface
+            : ColourVars.surface1}
     >
         {#if content.status.kind === "dismissed"}
             <Dismissed color="var(--text-secondary)" size="1.6rem" />
@@ -504,7 +504,7 @@
             </Button>
         </Row>
 
-        <Row borderRadius="md" padding="lg" backgroundColor={ColourVars.tertiaryMuted}>
+        <Row borderRadius="md" padding="lg" backgroundColor={ColourVars.tertiarySurface}>
             <Checkbox
                 id={`urgent-${content.messageId}`}
                 small
@@ -539,14 +539,14 @@
             borderRadius="md"
             backgroundColor={authorityReport.kind === "filed" ||
             authorityReport.kind === "attempting"
-                ? ColourVars.background1
-                : ColourVars.tertiaryMuted}
+                ? ColourVars.surface1
+                : ColourVars.tertiarySurface}
         >
             {#if authorityReport.kind === "due"}
                 <Body
                     width="hug"
                     fontWeight="bold"
-                    colour={authorityReport.urgent ? "error" : undefined}
+                    colour={authorityReport.urgent ? "validationError" : undefined}
                 >
                     <Translatable
                         resourceKey={i18nKey(
@@ -583,7 +583,7 @@
                     <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                 </a>
             {:else if authorityReport.kind === "attempting"}
-                <Body width="hug" fontWeight="bold" colour={attemptIsStale ? "error" : undefined}>
+                <Body width="hug" fontWeight="bold" colour={attemptIsStale ? "validationError" : undefined}>
                     <Translatable
                         resourceKey={i18nKey(
                             attemptIsStale
@@ -611,7 +611,7 @@
                         <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
                     </a>
                     {#if clearAttemptFailed}
-                        <Body colour="error">
+                        <Body colour="validationError">
                             <Translatable
                                 resourceKey={i18nKey("moderationReport.clearAttemptFailed")} />
                         </Body>
@@ -619,7 +619,7 @@
                 {/if}
             {:else if authorityReport.kind === "contingency_required"}
                 <Column gap="md">
-                    <Body fontWeight="bold" colour="error">
+                    <Body fontWeight="bold" colour="validationError">
                         <span class="authority-error">
                             <Translatable
                                 resourceKey={i18nKey("moderationReport.ncaContingency", {
@@ -642,7 +642,7 @@
                 </Column>
             {:else if authorityReport.kind === "validation_failed"}
                 <Column gap="md">
-                    <Body fontWeight="bold" colour="error">
+                    <Body fontWeight="bold" colour="validationError">
                         <span class="authority-error">
                             <Translatable
                                 resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
@@ -671,7 +671,7 @@
     <!-- report -->
     {@render reportCard()}
     {#if mediaMatches.length > 0}
-        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.background1}>
+        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.surface1}>
             <Body width="hug">
                 <Translatable resourceKey={i18nKey("moderationReport.hashMatched")} />
                 {hashMatchLine}
@@ -687,16 +687,16 @@
     {@render authReport()}
 
     {#if canResolve && reviewerRequired}
-        <Body colour="error">
+        <Body colour="validationError">
             <Translatable resourceKey={i18nKey("moderationReport.reviewerRequired")} />
         </Body>
     {:else if canResolve && needsMediaReview && mediaFetchFailed}
-        <Body colour="error">
+        <Body colour="validationError">
             <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
         </Body>
     {:else if canResolve && !needsMediaReview}
         {#if mediaUnavailable}
-            <Body colour="error">
+            <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
             </Body>
         {/if}
@@ -704,7 +704,7 @@
     {/if}
 
     {#if failed}
-        <Body colour="error">
+        <Body colour="validationError">
             {#if failureReason !== undefined}
                 {failureReason}
             {:else}

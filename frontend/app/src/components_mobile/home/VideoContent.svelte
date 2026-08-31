@@ -104,9 +104,9 @@
             {:else}
                 <Row gap="xs" crossAxisAlignment="center">
                     <VideoOutline
-                        color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                        color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent}
                         size="1.25rem" />
-                    <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                    <ChatCaption colour={me ? "secondaryAccent" : "primaryAccent"}>
                         <Translatable resourceKey={i18nKey("Video")} />
                     </ChatCaption>
                 </Row>
@@ -250,7 +250,7 @@
             flex-direction: column;
             align-items: center;
             padding: var(--sp-xs);
-            background-color: var(--background-0);
+            background-color: var(--surface-0);
             border-radius: var(--rad-lg) var(--rad-lg) var(--rad-lg) var(--rad-lg);
         }
 
@@ -287,7 +287,7 @@
                 text-shadow: 0 0 0.125rem var(--backdrop);
 
                 path {
-                    filter: drop-shadow(0 0 0.125rem var(--background-0));
+                    filter: drop-shadow(0 0 0.125rem var(--surface-0));
                 }
             }
         }

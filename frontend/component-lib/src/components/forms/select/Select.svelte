@@ -38,7 +38,7 @@
 
 <Container onClick={() => (popupVisible = true)} direction={"vertical"}>
     <Container
-        background={ColourVars.textTertiary}
+        background={ColourVars.inputBackground}
         height={{ size: "3.5rem" }}
         padding={["xs", "xl"]}
         borderRadius={"circle"}
@@ -49,19 +49,19 @@
                 {@render selectedValue(value)}
             </Body>
         {:else}
-            <Body colour={"textPlaceholder"}>
+            <Body colour={"inputPlaceholder"}>
                 {placeholder}
             </Body>
         {/if}
         {#if !disabled}
             <div class="icon">
-                <ChevronDown color={"var(--text-placeholder)"} size="1.5rem" />
+                <ChevronDown color={"var(--input-placeholder)"} size="1.5rem" />
             </div>
         {/if}
     </Container>
     {#if subtext}
         <div class="subtext">
-            <BodySmall colour={error ? "error" : "textSecondary"}>
+            <BodySmall colour={error ? "validationError" : "textSecondary"}>
                 {@render subtext()}
             </BodySmall>
         </div>
@@ -79,7 +79,7 @@
 
 <style lang="scss">
     :global(option) {
-        color: var(--text-placeholder);
+        color: var(--input-placeholder);
         font-weight: normal;
     }
 
@@ -95,7 +95,7 @@
     .select {
         transition: border ease-in-out 300ms;
         display: block;
-        color: var(--text-placeholder);
+        color: var(--input-placeholder);
         line-height: 24px;
         width: 100%;
         max-width: 100%;
@@ -104,7 +104,7 @@
         -moz-appearance: none;
         -webkit-appearance: none;
         appearance: none;
-        background-color: var(--text-tertiary);
+        background-color: var(--text-on-disabled-surface);
     }
 
     .select::-ms-expand {

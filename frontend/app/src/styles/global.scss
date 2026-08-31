@@ -523,7 +523,7 @@ svelte-virtual-list-viewport {
             height: 0%;
             z-index: -1;
             border-radius: var(--rad-lg);
-            background-color: var(--background-1);
+            background-color: var(--surface-1);
         }
 
         &:not(.collapse) {

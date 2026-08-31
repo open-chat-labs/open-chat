@@ -57,7 +57,7 @@
                     </Translatable>
                 </BodySmall>
 
-                <BodySmall colour={"error"} fontWeight={"bold"}>
+                <BodySmall colour={"validationError"} fontWeight={"bold"}>
                     <Translatable
                         resourceKey={i18nKey(
                             "Press the button below to re-authenticate and delete your account.",

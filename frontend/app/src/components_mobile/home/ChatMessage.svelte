@@ -844,7 +844,7 @@
     }
 
     :global(.pan-action.active path) {
-        fill: var(--primary-light);
+        fill: var(--primary-accent);
     }
 
     .pan-action {

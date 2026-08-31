@@ -83,12 +83,12 @@
         bottom: 0;
         @include z-index("sliding-page");
         display: flex;
-        background-color: var(--background-0);
+        background-color: var(--surface-0);
         opacity: 0.5;
     }
 
     .sliding_page_overlay_before {
         z-index: 4;
-        background-color: var(--background-1);
+        background-color: var(--surface-1);
     }
 </style>

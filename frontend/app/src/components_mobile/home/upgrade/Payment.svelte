@@ -218,15 +218,15 @@
     {@const insufficient = insufficientFundsForSub(option.index)}
     {@const bg = lifetime
         ? insufficient
-            ? ColourVars.disabledButton
+            ? ColourVars.surfaceDisabled
             : defaultBackgroundGradient
         : undefined}
-    {@const txt: ColourVarKeys = lifetime ? "textOnPrimary" : (insufficient ? "disabledButton" : "textPrimary")}
-    {@const extendTxt: ColourVarKeys = lifetime ? "textOnPrimary" :(insufficient ? "disabledButton" : "textSecondary")}
+    {@const txt: ColourVarKeys = lifetime ? "textOnPrimary" : (insufficient ? "textOnDisabledSurface" : "textPrimary")}
+    {@const extendTxt: ColourVarKeys = lifetime ? "textOnPrimary" :(insufficient ? "textOnDisabledSurface" : "textSecondary")}
     {@const icon = lifetime
         ? ColourVars.textOnPrimary
         : insufficient
-          ? ColourVars.disabledButton
+          ? ColourVars.textOnDisabledSurface
           : ColourVars.textPrimary}
     <Row
         onClick={() => {
@@ -244,7 +244,7 @@
         background={bg}
         borderRadius={"md"}
         borderWidth={lifetime ? "zero" : "thick"}
-        borderColour={insufficient ? ColourVars.disabledButton : ColourVars.primary}
+        borderColour={insufficient ? ColourVars.surfaceDisabled : ColourVars.primary}
         padding={["md", "lg"]}>
         <Column>
             <Body fontWeight={"bold"} colour={txt} width={"hug"}>
@@ -300,7 +300,7 @@
                 </Setting>
 
                 <StatusCard
-                    background={ColourVars.background2}
+                    background={ColourVars.surface2}
                     mode={"warning"}
                     title={interpolate($_, i18nKey("Posted files and media"))}
                     body={interpolate(
@@ -328,7 +328,7 @@
                 borderRadius={"lg"}
                 gap={"lg"}
                 padding={"lg"}
-                background={ColourVars.background2}>
+                background={ColourVars.surface2}>
                 <Row mainAxisAlignment={"spaceBetween"}>
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Payment amount")} />
@@ -443,8 +443,8 @@
 
 {#snippet insufficientWarning()}
     <Row crossAxisAlignment={"center"} gap={"md"}>
-        <Warning size={"1.5rem"} color={ColourVars.warning} />
-        <BodySmall fontWeight={"bold"} colour={"warning"}>
+        <Warning size={"1.5rem"} color={ColourVars.validationWarning} />
+        <BodySmall fontWeight={"bold"} colour={"validationWarning"}>
             <Translatable
                 resourceKey={i18nKey(
                     `Insufficient funds! Top up your ${
@@ -474,7 +474,7 @@
                     width={{ size: "3.5rem" }}
                     height={"fill"}
                     borderRadius={"lg"}
-                    background={ColourVars.background2}
+                    background={ColourVars.surface2}
                     padding={["sm", "md"]}>
                     <QrCode size={"2rem"} color={ColourVars.textSecondary} />
                 </Column>
@@ -491,7 +491,7 @@
         }}>
         <Column gap={"xs"} padding={"xl"}>
             <AccountInfo
-                background={ColourVars.background2}
+                background={ColourVars.surface2}
                 padding={"zero"}
                 ledger={tokenState.ledger} />
             {@render refreshBalance()}

@@ -86,12 +86,12 @@
                 top: var(--sp-sm);
                 bottom: var(--sp-sm);
                 width: 0.25rem;
-                background-color: var(--primary-light);
+                background-color: var(--primary-accent);
                 border-radius: var(--rad-circle);
             }
 
             &.me:before {
-                background-color: var(--secondary-light);
+                background-color: var(--secondary-accent);
             }
         }
 
@@ -100,17 +100,17 @@
             border-top-left-radius: var(--rad-lg) !important;
 
             &.me {
-                background-color: var(--background-2);
+                background-color: var(--surface-2);
             }
 
             &:not(.me) {
-                background-color: var(--primary-muted);
+                background-color: var(--primary-surface);
             }
         }
 
         .reply_wrapper:not(.me) > .replies_to {
             border-top-right-radius: var(--rad-lg) !important;
-            background-color: var(--background-0);
+            background-color: var(--chat-bubble-reply-received);
         }
     }
 </style>

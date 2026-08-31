@@ -46,7 +46,7 @@
             </a>
         </Body>
         {#if failed}
-            <Body colour={"error"}
+            <Body colour={"validationError"}
                 ><Translatable resourceKey={i18nKey("termsUpdated.failed")} /></Body
             >
         {/if}

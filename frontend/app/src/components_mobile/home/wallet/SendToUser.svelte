@@ -151,7 +151,7 @@
                 padding={"lg"}
                 gap={"md"}
                 borderRadius={["lg", "lg", "zero", "zero"]}
-                background={ColourVars.background2}>
+                background={ColourVars.surface2}>
                 <Avatar url={client.userAvatarUrl(selectedUser)}></Avatar>
                 <Container direction={"vertical"}>
                     <BodySmall colour={"textSecondary"}>
@@ -168,7 +168,7 @@
             </Container>
             <Container
                 gap={"lg"}
-                background={ColourVars.background2}
+                background={ColourVars.surface2}
                 padding={"lg"}
                 direction={"vertical"}>
                 <Container mainAxisAlignment={"spaceBetween"}>
@@ -209,7 +209,7 @@
                 padding={"lg"}
                 gap={"md"}
                 borderRadius={["zero", "zero", "lg", "lg"]}
-                background={ColourVars.background2}>
+                background={ColourVars.surface2}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("With message")} />
                 </BodySmall>

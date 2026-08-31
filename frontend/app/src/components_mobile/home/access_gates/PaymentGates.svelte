@@ -37,6 +37,6 @@
     gateSubtext={(gate) => gateSubtext(gate as PaymentGate)}
     onEdit={(gate) => publish("updatePaymentGate", { data, gate: gate as PaymentGate })}>
     {#snippet gateTypeSummary()}
-        <AboutPaymentGate padding={"lg"} background={ColourVars.background1} />
+        <AboutPaymentGate padding={"lg"} background={ColourVars.surface1} />
     {/snippet}
 </AccessGateList>
