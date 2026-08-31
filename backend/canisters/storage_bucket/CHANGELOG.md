@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2048](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2048-storage_bucket)] - 2026-08-31
+
 ### Added
 
 - Optional `source_hash` on `upload_chunk_v2`: the hash of the bytes a client transcoded from (video re-encoded at upload). A verdict on the transcode denylists its declared sources as *derived* - uploads of them are refused platform-wide, but since the bucket cannot verify the claim nobody is sanctioned or reported on a derived match; only bytes a moderator saw carry sanctions ([#9254](https://github.com/open-chat-labs/open-chat/pull/9254))
