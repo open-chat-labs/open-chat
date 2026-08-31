@@ -1,16 +1,22 @@
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use tracing::error;
 use types::{
-    C2CError, CanisterId,
+    C2CError, UserId,
+    icrc1::Account,
     icrc2::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
 };
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: CanisterId,
+    spender: Option<UserId>,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
+    let spender = crate::resolve_sender(spender);
+
     let args = TransferFromArgs {
-        spender_subaccount: None,
+        // The owner is implied by the caller, so only the subaccount goes in the args. Note this
+        // picks which approval is spent - `icrc2_approve` grants to an exact (owner, subaccount)
+        // pair, so a non-default subaccount here can only spend an approval that named it.
+        spender_subaccount: Account::for_user(spender).subaccount,
         from: transaction.from.into(),
         to: transaction.to.into(),
         fee: Some(transaction.fee.into()),
@@ -26,7 +32,7 @@ pub async fn process_transaction(
             token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee: transaction.fee,
-            spender: sender.into(),
+            spender,
             from: transaction.from.into(),
             to: transaction.to.into(),
             memo: transaction.memo.clone(),
@@ -46,7 +52,7 @@ pub async fn process_transaction(
                 token_symbol: transaction.token_symbol,
                 amount: transaction.amount,
                 fee: transaction.fee,
-                spender: sender.into(),
+                spender,
                 from: transaction.from.into(),
                 to: transaction.to.into(),
                 memo: transaction.memo,

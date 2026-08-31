@@ -407,6 +407,7 @@ pub mod happy_path {
                 fee,
                 decimals: 8,
                 token_symbol,
+                from_account: None,
                 pin: None,
             },
         );
