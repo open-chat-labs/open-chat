@@ -1373,6 +1373,7 @@ export class UserClient
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        fromAccount: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         return this.update(
             "accept_p2p_swap",
@@ -1380,6 +1381,7 @@ export class UserClient
                 user_id: principalStringToBytes(userId),
                 message_id: messageId,
                 thread_root_message_index: threadRootMessageIndex,
+                from_account: mapOptional(fromAccount, addressToIcrcAccount),
                 pin,
             },
             (resp) => mapResult(resp, acceptP2PSwapSuccess),

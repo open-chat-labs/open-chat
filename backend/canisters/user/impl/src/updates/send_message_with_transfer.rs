@@ -13,7 +13,7 @@ use types::icrc1::Account;
 use types::{
     Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MAX_TEXT_LENGTH,
     MAX_TEXT_LENGTH_USIZE, MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction,
-    PinNumberWrapper, TimestampMillis, UserId, icrc1,
+    PinNumberWrapper, TimestampMillis, UserId, icrc1, icrc2,
 };
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
@@ -51,8 +51,8 @@ async fn send_message_with_transfer_to_channel_impl(
         )
     }) {
         Ok(PrepareResult::Success(t)) => (t, None),
-        Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args)) => {
-            match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
+        Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
+            match set_up_p2p_swap(escrow_canister_id, create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
                 Err(error) => return Error(error.into()),
             }
@@ -160,8 +160,8 @@ async fn send_message_with_transfer_to_group_impl(
         )
     }) {
         Ok(PrepareResult::Success(t)) => (t, None),
-        Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args)) => {
-            match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
+        Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
+            match set_up_p2p_swap(escrow_canister_id, create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
                 Err(error) => return Error(error.into()),
             }
@@ -235,7 +235,7 @@ async fn send_message_with_transfer_to_group_impl(
 
 enum PrepareResult {
     Success(PendingCryptoTransaction),
-    P2PSwap(CanisterId, escrow_canister::create_swap::Args),
+    P2PSwap(CanisterId, escrow_canister::create_swap::Args, Option<icrc1::Account>),
 }
 
 fn prepare(
@@ -323,7 +323,8 @@ fn prepare(
                 canister_to_notify: Some(chat_canister_id),
                 is_public: false,
             };
-            return Ok(P2PSwap(state.data.escrow_canister_id, create_swap_args));
+            crate::crypto::validate_from_account(p.from_account, state.env.canister_id().into())?;
+            return Ok(P2PSwap(state.data.escrow_canister_id, create_swap_args, p.from_account));
         }
         _ => return Err(OCErrorCode::InvalidRequest.with_message("Message must include a crypto transfer")),
     };
@@ -359,6 +360,7 @@ async fn process_transaction(
 pub(crate) async fn set_up_p2p_swap(
     escrow_canister_id: CanisterId,
     args: escrow_canister::create_swap::Args,
+    from_account: Option<icrc1::Account>,
 ) -> Result<(u32, PendingCryptoTransaction), SetUpP2PSwapError> {
     use SetUpP2PSwapError::*;
 
@@ -385,18 +387,33 @@ pub(crate) async fn set_up_p2p_swap(
             expires_at: args.expires_at,
         });
 
-        let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-            ledger: args.token0.ledger,
-            token_symbol: args.token0.symbol.clone(),
-            amount: args.token0_amount + args.token0.fee,
-            to: Account {
-                owner: state.data.escrow_canister_id,
-                subaccount: Some(deposit_subaccount(my_user_id.as_principal(), id)),
-            },
-            fee: args.token0.fee,
-            memo: Some(MEMO_P2P_SWAP_CREATE.to_vec().into()),
-            created: now * NANOS_PER_MILLISECOND,
-        });
+        let to = Account {
+            owner: state.data.escrow_canister_id,
+            subaccount: Some(deposit_subaccount(my_user_id.as_principal(), id)),
+        };
+        let pending_transfer = match from_account {
+            // The allowance is what authorises this - the ledger only lets us pull from an account
+            // which has approved this canister as spender - so there is nothing for us to check here.
+            Some(from) => PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+                ledger: args.token0.ledger,
+                token_symbol: args.token0.symbol.clone(),
+                amount: args.token0_amount + args.token0.fee,
+                from,
+                to,
+                fee: args.token0.fee,
+                memo: Some(MEMO_P2P_SWAP_CREATE.to_vec().into()),
+                created: now * NANOS_PER_MILLISECOND,
+            }),
+            None => PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+                ledger: args.token0.ledger,
+                token_symbol: args.token0.symbol.clone(),
+                amount: args.token0_amount + args.token0.fee,
+                to,
+                fee: args.token0.fee,
+                memo: Some(MEMO_P2P_SWAP_CREATE.to_vec().into()),
+                created: now * NANOS_PER_MILLISECOND,
+            }),
+        };
 
         Ok((id, pending_transfer))
     })

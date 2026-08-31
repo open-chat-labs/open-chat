@@ -4007,6 +4007,7 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         pin: string | undefined,
         newAchievement: boolean,
+        fromAccount: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this._communityClient.acceptP2PSwap(
@@ -4015,6 +4016,7 @@ export class OpenChatAgent extends EventTarget {
                 messageId,
                 pin,
                 newAchievement,
+                fromAccount,
             );
         } else if (chatId.kind === "group_chat") {
             return this._groupClient.acceptP2PSwap(
@@ -4023,6 +4025,7 @@ export class OpenChatAgent extends EventTarget {
                 messageId,
                 pin,
                 newAchievement,
+                fromAccount,
             );
         } else {
             return this.userClient.acceptP2PSwap(
@@ -4030,6 +4033,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 messageId,
                 pin,
+                fromAccount,
             );
         }
     }

@@ -2,7 +2,7 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey,
     MessageId, MessageIndex, MessagePermission, Milliseconds, ModerationInput, P2PSwapStatus, PendingCryptoTransaction,
-    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -901,6 +901,9 @@ pub struct P2PSwapContentInitial {
     pub token1_amount: u128,
     pub expires_in: Milliseconds,
     pub caption: Option<String>,
+    // The account token0 is deposited from, defaulting to this canister's own. Any other account
+    // must have approved this canister as spender, since the deposit is then pulled via ICRC-2.
+    pub from_account: Option<icrc1::Account>,
 }
 
 #[ts_export]

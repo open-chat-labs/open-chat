@@ -1,5 +1,5 @@
 use super::c2c_send_messages::{HandleMessageArgs, handle_message_impl};
-use crate::crypto::process_transaction_without_caller_check;
+use crate::crypto::{process_transaction_without_caller_check, validate_from_account};
 use crate::guards::{caller_is_local_user_index, caller_is_owner};
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
@@ -96,16 +96,20 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
             }
             ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
             ValidateNewMessageContentResult::SuccessP2PSwap(content) => {
-                let (escrow_canister_id, now, is_diamond) = read_state(|state| {
+                let (escrow_canister_id, now, is_diamond, my_user_id) = read_state(|state| {
                     let now = state.env.now();
                     (
                         state.data.escrow_canister_id,
                         now,
                         state.data.membership(now).is_diamond_member(),
+                        UserId::from(state.env.canister_id()),
                     )
                 });
                 if !is_diamond {
                     return Error(OCErrorCode::NotDiamondMember.into());
+                }
+                if let Err(error) = validate_from_account(content.from_account, my_user_id) {
+                    return Error(error);
                 }
                 let create_swap_args = escrow_canister::create_swap::Args {
                     location: P2PSwapLocation::from_message(Chat::Direct(args.recipient.into()), None, args.message_id),
@@ -120,7 +124,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     canister_to_notify: Some(args.recipient.canister_id()),
                     is_public: false,
                 };
-                match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
+                match set_up_p2p_swap(escrow_canister_id, create_swap_args, content.from_account).await {
                     Ok((swap_id, pending_transaction)) => {
                         match process_transaction_without_caller_check(pending_transaction).await {
                             Ok(Ok(completed)) => {
