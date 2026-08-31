@@ -11,8 +11,9 @@ use ts_export::ts_export;
 pub struct UserId(pub(crate) Principal);
 
 // Canister ids are a big-endian u64 followed by the IC's canister and opaque class tags, so they
-// are always exactly this long.
+// are always exactly this long, and always end in exactly these two bytes.
 const CANISTER_ID_LEN: usize = 10;
+const CANISTER_ID_TAG: [u8; 2] = [0x01, 0x01];
 // Set in the final byte to mark a UserId as carrying an index. The final byte of a well-formed
 // principal is its class tag, and every class tag the IC defines is in 0x01..=0x04, so a byte with
 // the top bit set cannot be one. That leaves the low 7 bits of this byte, plus all 8 bits of the
@@ -33,8 +34,14 @@ impl UserId {
     // the canister id's two trailing tag bytes. The result is deliberately not a well-formed
     // principal, which is exactly what tells it apart from a canister id - see `is_indexed`.
     pub fn new_indexed(canister_id: CanisterId, index: u16) -> UserId {
+        // Both the length and the trailing tag bytes, because `canister_id` rebuilds the latter
+        // from scratch. Anything else 10 bytes long - a vanity principal, say - would pass a length
+        // check and then reconstruct as some other canister entirely.
         let bytes = canister_id.as_slice();
-        assert_eq!(bytes.len(), CANISTER_ID_LEN, "Not a canister id: {canister_id}");
+        assert!(
+            bytes.len() == CANISTER_ID_LEN && bytes[8..] == CANISTER_ID_TAG,
+            "Not a canister id: {canister_id}"
+        );
         assert!(index <= MAX_USER_INDEX, "Index {index} is out of range");
 
         let mut new_bytes = [0; CANISTER_ID_LEN];
@@ -59,8 +66,9 @@ impl UserId {
     pub fn canister_id(&self) -> CanisterId {
         if self.is_indexed() {
             // Rebuilding the canister id means restoring the two tag bytes the index displaced.
-            let mut bytes = [0x01; CANISTER_ID_LEN];
+            let mut bytes = [0; CANISTER_ID_LEN];
             bytes[..8].copy_from_slice(&self.0.as_slice()[..8]);
+            bytes[8..].copy_from_slice(&CANISTER_ID_TAG);
             Principal::from_slice(&bytes)
         } else {
             self.0
@@ -245,6 +253,14 @@ mod tests {
     #[should_panic(expected = "Index 32768 is out of range")]
     fn index_beyond_the_available_bits_is_rejected() {
         UserId::new_indexed(canister_id(), MAX_USER_INDEX + 1);
+    }
+
+    // The `OPENCHAT_BOT_USER_ID` bytes: canister id length, but not a canister id, so
+    // `canister_id` would have reconstructed a different principal from it.
+    #[test]
+    #[should_panic(expected = "Not a canister id")]
+    fn vanity_principal_of_canister_id_length_is_rejected() {
+        UserId::new_indexed(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]), 1000);
     }
 
     #[test]
