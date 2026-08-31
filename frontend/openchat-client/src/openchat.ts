@@ -7336,6 +7336,7 @@ export class OpenChat {
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
+        fromAccount?: string,
     ): Promise<PayForDiamondMembershipResponse> {
         return this.#worker
             .send({
@@ -7345,6 +7346,7 @@ export class OpenChat {
                 duration,
                 recurring,
                 expectedPriceE8s,
+                fromAccount,
             })
             .then((resp) => {
                 if (resp.kind === "success") {

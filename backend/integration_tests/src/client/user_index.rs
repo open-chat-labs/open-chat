@@ -158,6 +158,7 @@ pub mod happy_path {
                 ledger: if pay_in_chat { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
                 expected_price_e8s: if pay_in_chat { fees.chat_price_e8s(duration) } else { fees.icp_price_e8s(duration) },
                 recurring,
+                from_account: None,
             },
         );
 

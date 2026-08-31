@@ -2150,6 +2150,7 @@ type PayForDiamondMembership = {
     duration: DiamondMembershipDuration;
     recurring: boolean;
     expectedPriceE8s: bigint;
+    fromAccount: string | undefined;
     kind: "payForDiamondMembership";
 };
 

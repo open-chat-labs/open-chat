@@ -2284,16 +2284,6 @@ export const UserIndexPayForDiamondMembershipResponse = /* @__PURE__ */ Type.Uni
     }),
 ]);
 
-export type UserIndexPayForDiamondMembershipArgs = Static<
-    typeof UserIndexPayForDiamondMembershipArgs
->;
-export const UserIndexPayForDiamondMembershipArgs = /* @__PURE__ */ Type.Object({
-    duration: DiamondMembershipPlanDuration,
-    ledger: TSPrincipal,
-    expected_price_e8s: Type.BigInt(),
-    recurring: Type.Boolean(),
-});
-
 export type UserIndexSearchArgs = Static<typeof UserIndexSearchArgs>;
 export const UserIndexSearchArgs = /* @__PURE__ */ Type.Object({
     search_term: Type.String(),
@@ -6491,6 +6481,17 @@ export const UserIndexAuthorityReportTokenResponse = /* @__PURE__ */ Type.Union(
         Error: OCError,
     }),
 ]);
+
+export type UserIndexPayForDiamondMembershipArgs = Static<
+    typeof UserIndexPayForDiamondMembershipArgs
+>;
+export const UserIndexPayForDiamondMembershipArgs = /* @__PURE__ */ Type.Object({
+    duration: DiamondMembershipPlanDuration,
+    ledger: TSPrincipal,
+    expected_price_e8s: Type.BigInt(),
+    recurring: Type.Boolean(),
+    from_account: Type.Optional(AccountICRC1),
+});
 
 export type UserIndexSearchResult = Static<typeof UserIndexSearchResult>;
 export const UserIndexSearchResult = /* @__PURE__ */ Type.Object({

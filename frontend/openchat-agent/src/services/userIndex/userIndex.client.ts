@@ -106,7 +106,7 @@ import {
     UserIndexUsersResponse,
 } from "../../typebox";
 import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
-import { unitResult } from "../common/chatMappersV2";
+import { addressToIcrcAccount, unitResult } from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -868,6 +868,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
+        fromAccount: string | undefined,
     ): Promise<PayForDiamondMembershipResponse> {
         return this.update(
             "pay_for_diamond_membership",
@@ -876,6 +877,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 duration: apiJsonDiamondDuration(duration),
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
+                from_account: mapOptional(fromAccount, addressToIcrcAccount),
             },
             (res) => payForDiamondMembershipResponse(duration, res),
             UserIndexPayForDiamondMembershipArgs,

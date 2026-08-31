@@ -14,10 +14,12 @@ use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
 use jwt::{Claims, sign_and_encode_token};
 use local_user_index_canister::{DiamondMembershipPaymentReceived, UserIndexEvent};
+use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
+use types::icrc2::TransferFromError;
 use types::{CLAIM_TYPE_DIAMOND_MEMBERSHIP, DiamondMembershipPlanDuration, ICP, UserId};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 
@@ -48,6 +50,9 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
     let c2c_args = user_canister::c2c_charge_user_account::Args {
         ledger_canister_id: args.ledger,
         amount: ICP::from_e8s(args.expected_price_e8s - fee as u64),
+        // Recurring payments are taken long after the user last approved anything, so they always
+        // come from the user's own account.
+        from_account: manual_payment.then_some(args.from_account).flatten(),
     };
 
     let response = match user_canister_c2c_client::c2c_charge_user_account(user_id.canister_id(), &c2c_args).await {
@@ -57,6 +62,7 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
             }
             user_canister::c2c_charge_user_account::Response::TransferError(error) => process_error(error),
             user_canister::c2c_charge_user_account::Response::TransferErrorV2(error) => process_error_v2(error),
+            user_canister::c2c_charge_user_account::Response::TransferFromError(error) => process_transfer_from_error(error),
             user_canister::c2c_charge_user_account::Response::InternalError(error) => InternalError(error),
             user_canister::c2c_charge_user_account::Response::Error(error) => Error(error),
         },
@@ -252,6 +258,16 @@ fn process_error(transfer_error: TransferError) -> Response {
 fn process_error_v2(transfer_error: icrc1::transfer::TransferError) -> Response {
     match transfer_error {
         icrc1::transfer::TransferError::InsufficientFunds { balance } => InsufficientFunds(balance.0.try_into().unwrap()),
+        error => TransferFailed(format!("{error:?}")),
+    }
+}
+
+fn process_transfer_from_error(transfer_error: TransferFromError) -> Response {
+    match transfer_error {
+        TransferFromError::InsufficientFunds { balance } => InsufficientFunds(balance.try_into().unwrap()),
+        // Too small an approval is the likeliest failure when paying from a wallet, so it gets its
+        // own code rather than being lumped in with every other transfer failure.
+        TransferFromError::InsufficientAllowance { .. } => Error(OCErrorCode::InsufficientAllowance.into()),
         error => TransferFailed(format!("{error:?}")),
     }
 }

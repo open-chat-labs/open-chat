@@ -3453,6 +3453,7 @@ export class OpenChatAgent extends EventTarget {
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
+        fromAccount: string | undefined,
     ): Promise<PayForDiamondMembershipResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -3462,6 +3463,7 @@ export class OpenChatAgent extends EventTarget {
             duration,
             recurring,
             expectedPriceE8s,
+            fromAccount,
         );
     }
 
