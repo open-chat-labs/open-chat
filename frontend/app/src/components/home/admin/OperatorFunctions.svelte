@@ -657,7 +657,7 @@
     proposed: Snippet<[]>,
     current?: Snippet<[]>,
 )}
-    <Column backgroundColor={ColourVars.background0} borderRadius="md" padding="lg" gap="lg">
+    <Column backgroundColor={ColourVars.surface0} borderRadius="md" padding="lg" gap="lg">
         <Column gap="xs">
             <Subtitle>{name}</Subtitle>
             <Body colour="textSecondary">{desc}</Body>
@@ -961,7 +961,7 @@
 
     <Column
         backgroundColor="color-mix(in srgb, var(--warning), transparent 90%)"
-        borderColour={ColourVars.warning}
+        borderColour={ColourVars.validationWarning}
         borderWidth="thin"
         supplementalClass="danger_zone"
         borderRadius="md"

@@ -18,13 +18,13 @@
             <Row width="hug" height="fill" padding={["xs", "md"]} crossAxisAlignment="center">
                 <Spinner
                     size="1.5rem"
-                    backgroundColour={ColourVars.primaryLight}
-                    foregroundColour={ColourVars.primaryMuted} />
+                    backgroundColour={ColourVars.primaryAccent}
+                    foregroundColour={ColourVars.primarySurface} />
             </Row>
         {/if}
         <TextContent me>
             {#snippet content()}
-                <ChatCaption colour={failed ? "error" : "primaryLight"}>
+                <ChatCaption colour={failed ? "validationError" : "primaryAccent"}>
                     <Translatable resourceKey={text} />
                 </ChatCaption>
             {/snippet}

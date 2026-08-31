@@ -107,8 +107,8 @@
                 gap={"lg"}
                 crossAxisAlignment={"center"}
                 mainAxisAlignment={"spaceAround"}>
-                {@render button(PhoneHangup, ColourVars.error, cancel)}
-                {@render button(Phone, ColourVars.success, join)}
+                {@render button(PhoneHangup, ColourVars.validationError, cancel)}
+                {@render button(Phone, ColourVars.validationSuccess, join)}
             </Row>
         </Column>
     </Sheet>

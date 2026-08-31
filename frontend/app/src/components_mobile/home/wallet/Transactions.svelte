@@ -170,7 +170,7 @@
 
 <Container height={"fill"} gap={"xl"} direction={"vertical"}>
     <Container padding={["lg", "zero", "zero", "zero"]}>
-        <BodySmall colour={"textTertiary"} fontWeight={"bold"}>
+        <BodySmall colour={"textOnDisabledSurface"} fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("cryptoAccount.transactions")} />
         </BodySmall>
     </Container>

@@ -1,5 +1,7 @@
 export * from "./colour";
 export * from "./neon";
+export * from "./presets";
+export * from "./types";
 export * from "./shadow";
 export * from "./sizes";
 export * from "./theme";

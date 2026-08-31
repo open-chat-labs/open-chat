@@ -284,9 +284,9 @@
             {/if}
             <Row gap="xs" crossAxisAlignment="center">
                 <Cached
-                    color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                    color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent}
                     size="1.25rem" />
-                <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                <ChatCaption colour={me ? "secondaryAccent" : "primaryAccent"}>
                     <Translatable
                         resourceKey={i18nKey("p2pSwap.summaryShort", {
                             fromAmount,
@@ -302,7 +302,7 @@
 
 {#snippet draftView()}
     <Column padding="xs">
-        <Column padding="xs" borderRadius="lg" background={ColourVars.background2}>
+        <Column padding="xs" borderRadius="lg" background={ColourVars.surface2}>
             <Row
                 gap={"xs"}
                 padding={["xs", "lg", "xs", "md"]}
@@ -323,7 +323,7 @@
         <Column
             gap="xs"
             padding={me ? "xs" : "zero"}
-            backgroundColor={ColourVars.background2}
+            backgroundColor={ColourVars.surface2}
             borderRadius={[me ? "lg" : "md", !me ? "lg" : "md", "lg", "lg"]}>
             <Row supplementalClass="swap_header_title" padding={["sm", "sm", "zero"]}>
                 <Body
@@ -393,7 +393,7 @@
         gap="lg"
         borderRadius="md"
         padding={[!isTopSection ? "lg" : "md", "md", isTopSection ? "lg" : "md", "md"]}
-        background={ColourVars.background0}
+        background={ColourVars.surface0}
         crossAxisAlignment="center">
         <Avatar size={"md"} url={getProxyAdjustedBlobUrl(tokenState.logo) ?? tokenState.logo} />
         <Column width="fill">
@@ -422,8 +422,8 @@
             height={{ size: "2rem" }}
             borderRadius={"circle"}
             borderWidth={"extraThick"}
-            borderColour={ColourVars.background2}
-            background={ColourVars.background0}
+            borderColour={ColourVars.surface2}
+            background={ColourVars.surface0}
             mainAxisAlignment={"center"}
             crossAxisAlignment={"center"}>
             <ArrowDown size={"1rem"} />

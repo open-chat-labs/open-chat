@@ -14,9 +14,9 @@
     padding="sm"
     crossAxisAlignment="center"
     mainAxisAlignment="center"
-    borderColour={ColourVars.primaryMuted}>
-    <BodySmall italic={true} colour={"primaryLight"} width="hug">
+    borderColour={ColourVars.primarySurface}>
+    <BodySmall italic={true} colour={"primaryAccent"} width="hug">
         <Translatable resourceKey={i18nKey("unresolvedReply")} />
     </BodySmall>
-    <AlertCircleOutline size="1rem" color={ColourVars.primaryLight} />
+    <AlertCircleOutline size="1rem" color={ColourVars.primaryAccent} />
 </Row>

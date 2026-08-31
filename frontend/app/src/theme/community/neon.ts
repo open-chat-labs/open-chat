@@ -2,19 +2,19 @@ import { theme as neon } from "component-lib";
 import type { Theme } from "../types";
 
 const primary = neon.colours.primary.toString();
-const primaryMuted = neon.colours.primaryMuted.toString();
+const primaryMuted = neon.colours.primarySurface.toString();
 const secondary = neon.colours.secondary.toString();
-const success = neon.colours.success.toString();
-const warning = neon.colours.warning.toString();
-const error = neon.colours.error.toString();
-const buttonDisabled = neon.colours.disabledButton.toString();
-const level0 = neon.colours.background0.toString();
-const level1 = neon.colours.background1.toString();
+const success = neon.colours.validationSuccess.toString();
+const warning = neon.colours.validationWarning.toString();
+const error = neon.colours.validationError.toString();
+const buttonDisabled = neon.colours.surfaceDisabled.toString();
+const level0 = neon.colours.surface0.toString();
+const level1 = neon.colours.surface1.toString();
 const txtOnPrimary = neon.colours.textOnPrimary.toString();
 const txtPrimary = neon.colours.textPrimary.toString();
 const txtSecondary = neon.colours.textSecondary.toString();
-const txtTertiary = neon.colours.textTertiary.toString();
-const txtPlaceholder = neon.colours.textPlaceholder.toString();
+const inputBg = neon.colours.inputBackground.toString();
+const txtPlaceholder = neon.colours.inputPlaceholder.toString();
 // const buttonGradient = neon.colours.gradientInverted.toString();
 
 export function getTheme(base: Theme): Theme {
@@ -48,11 +48,11 @@ export function getTheme(base: Theme): Theme {
     base.button.disabled = buttonDisabled;
     base.button["disabled-txt"] = level0;
     base.button.spinner = primary;
-    base.input.bg = txtTertiary;
+    base.input.bg = inputBg;
     base.input.bd = "none";
     base.input.sh = "none";
     base.input.accent = secondary;
-    base.chatSearch.bg = txtTertiary;
+    base.chatSearch.bg = inputBg;
     base.toast.failure.bg = error;
     base.toast.failure.txt = txtPrimary;
     base.toast.success.bg = success;

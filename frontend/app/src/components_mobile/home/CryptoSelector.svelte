@@ -49,7 +49,7 @@
     <Row crossAxisAlignment={"center"} gap={"sm"}>
         <Row
             {width}
-            background={ColourVars.textTertiary}
+            background={ColourVars.inputBackground}
             gap={"md"}
             borderRadius={"circle"}
             onClick={() => (showTokenSelector = true)}
@@ -97,7 +97,7 @@
     .refresh {
         all: unset;
         border-radius: var(--rad-circle);
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
         display: flex;
         justify-content: center;
         align-items: center;

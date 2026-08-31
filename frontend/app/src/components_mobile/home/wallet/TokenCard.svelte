@@ -19,7 +19,7 @@
 </script>
 
 <Container
-    background={ColourVars.background1}
+    background={ColourVars.surface1}
     supplementalClass={"wallet_token"}
     gap={"lg"}
     borderRadius={"lg"}

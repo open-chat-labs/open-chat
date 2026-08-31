@@ -291,7 +291,7 @@
                                         },
                                         {
                                             text: i18nKey("ALL access gates."),
-                                            colour: "warning",
+                                            colour: "validationWarning",
                                         },
                                     ]} />
                             {/if}

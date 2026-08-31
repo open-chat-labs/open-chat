@@ -124,7 +124,7 @@
 
         &.error {
             :global(input[name="date_input"]) {
-                box-shadow: 0 0 0 1px var(--error);
+                box-shadow: 0 0 0 1px var(--validation-error);
             }
         }
 
@@ -137,7 +137,7 @@
             transform: translateY(-50%);
 
             :global(svg > path) {
-                fill: var(--error);
+                fill: var(--validation-error);
             }
         }
     }

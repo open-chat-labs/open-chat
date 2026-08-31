@@ -1,7 +1,7 @@
 import { CssVariable } from "./variable";
 
 export const defaultBackgroundGradient =
-    "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
+    "linear-gradient(90deg, var(--validation-warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
 
 export class Colour {
     #r: number;
@@ -18,6 +18,10 @@ export class Colour {
 
     cssVariable(name: string): CssVariable {
         return new CssVariable(name, this.toString());
+    }
+
+    rgbComponentCssVariable(name: string): CssVariable {
+        return new CssVariable(`${name}-rgb-cmp`, `${this.#r} ${this.#g} ${this.#b}`);
     }
 
     toString(): string {
@@ -131,7 +135,7 @@ export class Colour {
         else if (h < 180) [r, g, b] = [0, c, x];
         else if (h < 240) [r, g, b] = [0, x, c];
         else if (h < 300) [r, g, b] = [x, 0, c];
-        else[r, g, b] = [c, 0, x];
+        else [r, g, b] = [c, 0, x];
 
         return new Colour(
             Math.round((r + m) * 255),
@@ -165,10 +169,10 @@ export class Gradient {
 
 export type TypographyColour =
     | "error"
+    | "warning"
     | "accent"
     | "primary"
     | "secondary"
-    | "tertiary"
     | "placeholder"
     | "on-primary";
 
@@ -177,32 +181,58 @@ export class Colours {
     public gradientInverted: Gradient;
 
     constructor(
+        // Theme static colours
+        public surface0: Colour,
+        public surface1: Colour,
+        public surface2: Colour,
+        public surfaceDisabled: Colour,
+        public textOnDisabledSurface: Colour,
+        public inputBackground: Colour,
+        public inputPlaceholder: Colour,
+        public backdrop: Colour,
+        public mainNavBackground: Colour,
+        public draftAttachmentSurface: Colour,
+        public draftReplySurface: Colour,
+        public chatBubbleReceived: Colour,
+        public chatBubbleReplyReceived: Colour,
+        public chatInputBackground: Colour,
+        public chatInputPlaceholder: Colour,
+        // Feedback colours
+        public validationSuccess: Colour,
+        public validationWarning: Colour,
+        public validationError: Colour,
+        public successSurface: Colour,
+        public warningSurface: Colour,
+        public errorSurface: Colour,
+        public textOnFeedbackSurface: Colour,
+        // Theme specific colours
         public primary: Colour,
+        public primaryAccent: Colour,
+        public primarySurface: Colour,
         public secondary: Colour,
+        public secondaryAccent: Colour,
+        public secondarySurface: Colour,
         public tertiary: Colour,
-        public success: Colour,
-        public warning: Colour,
-        public error: Colour,
-        public primaryMuted: Colour,
-        public secondaryMuted: Colour,
-        public tertiaryMuted: Colour,
-        public primaryLight: Colour,
-        public secondaryLight: Colour,
-        public tertiaryLight: Colour,
-        public background0: Colour,
-        public background1: Colour,
-        public background2: Colour,
-        public disabledButton: Colour,
-        public myChatBubble: Colour,
+        public tertiaryAccent: Colour,
+        public tertiarySurface: Colour,
         public textPrimary: Colour,
         public textSecondary: Colour,
-        public textTertiary: Colour,
-        public textPlaceholder: Colour,
         public textOnPrimary: Colour,
-        public textAccent: Colour,
         public gradientPrimary: Colour,
         public gradientSecondary: Colour,
-        public backdrop: Colour,
+        // Optional colours
+        public chatBackground?: Colour,
+        public chatHeaderSeparator?: Colour,
+        public chatDecorations?: Colour,
+        public chatBubbleSent?: Colour,
+        public chatTextSent?: Colour,
+        public chatMetadataSent?: Colour,
+        public chatMetadataFill?: Colour,
+        public chatBubbleDeleted?: Colour,
+        public chatBubbleFocusOutline?: Colour,
+        public chatReactionBackground?: Colour,
+        // Static across all themes
+        public transparent: Colour = Colour.fromRGBA(0, 0, 0, 0),
     ) {
         this.gradient = new Gradient(gradientPrimary, gradientSecondary);
         this.gradientInverted = new Gradient(gradientSecondary, gradientPrimary);
@@ -210,35 +240,66 @@ export class Colours {
 
     cssVariables(): CssVariable[] {
         return [
+            // Theme static colours
+            this.surface0.cssVariable("surface-0"),
+            this.surface1.cssVariable("surface-1"),
+            this.surface2.cssVariable("surface-2"),
+            this.surface0.rgbComponentCssVariable("surface-0"),
+            this.surface1.rgbComponentCssVariable("surface-1"),
+            this.surface2.rgbComponentCssVariable("surface-2"),
+            this.surfaceDisabled.cssVariable("surface-disabled"),
+            this.textOnDisabledSurface.cssVariable("text-on-disabled-surface"),
+            this.inputBackground.cssVariable("input-background"),
+            this.inputPlaceholder.cssVariable("input-placeholder"),
+            this.backdrop.cssVariable("backdrop"),
+            this.mainNavBackground.cssVariable("main-nav-background"),
+            this.draftAttachmentSurface.cssVariable("draft-attachment-surface"),
+            this.draftReplySurface.cssVariable("draft-reply-surface"),
+            this.chatBubbleReceived.cssVariable("chat-bubble-received"),
+            this.chatBubbleReplyReceived.cssVariable("chat-bubble-reply-received"),
+            this.chatInputBackground.cssVariable("chat-input-background"),
+            this.chatInputPlaceholder.cssVariable("chat-input-placeholder"),
+            // Feedback colours
+            this.validationSuccess.cssVariable("validation-success"),
+            this.validationWarning.cssVariable("validation-warning"),
+            this.validationError.cssVariable("validation-error"),
+            this.successSurface.cssVariable("success-surface"),
+            this.warningSurface.cssVariable("warning-surface"),
+            this.errorSurface.cssVariable("error-surface"),
+            this.textOnFeedbackSurface.cssVariable("text-on-feedback-surface"),
+            // Theme specific colours
             this.primary.cssVariable("primary"),
+            this.primaryAccent.cssVariable("primary-accent"),
+            this.primarySurface.cssVariable("primary-surface"),
             this.secondary.cssVariable("secondary"),
+            this.secondaryAccent.cssVariable("secondary-accent"),
+            this.secondarySurface.cssVariable("secondary-surface"),
             this.tertiary.cssVariable("tertiary"),
-            this.success.cssVariable("success"),
-            this.warning.cssVariable("warning"),
-            this.error.cssVariable("error"),
-            this.primaryMuted.cssVariable("primary-muted"),
-            this.secondaryMuted.cssVariable("secondary-muted"),
-            this.tertiaryMuted.cssVariable("tertiary-muted"),
-            this.primaryLight.cssVariable("primary-light"),
-            this.secondaryLight.cssVariable("secondary-light"),
-            this.tertiaryLight.cssVariable("tertiary-light"),
-            this.background0.cssVariable("background-0"),
-            this.background1.cssVariable("background-1"),
-            this.background2.cssVariable("background-2"),
-            this.disabledButton.cssVariable("disabled-button"),
-            this.myChatBubble.cssVariable("my-chat-bubble"),
+            this.tertiaryAccent.cssVariable("tertiary-accent"),
+            this.tertiarySurface.cssVariable("tertiary-surface"),
             this.textPrimary.cssVariable("text-primary"),
             this.textSecondary.cssVariable("text-secondary"),
-            this.textTertiary.cssVariable("text-tertiary"),
-            this.textPlaceholder.cssVariable("text-placeholder"),
             this.textOnPrimary.cssVariable("text-on-primary"),
-            this.textAccent.cssVariable("text-accent"),
-            this.gradient.cssVariable("gradient"),
-            this.gradientInverted.cssVariable("gradient-inverted"),
             this.gradientPrimary.cssVariable("gradient-primary"),
             this.gradientSecondary.cssVariable("gradient-secondary"),
-            this.myChatBubble.cssVariable("my-chat-bubble"),
-            this.backdrop.cssVariable("backdrop"),
+            this.gradient.cssVariable("gradient"),
+            this.gradientInverted.cssVariable("gradient-inverted"),
+            // Optional colours
+            (this.chatBackground ?? this.surface0).cssVariable("chat-background"),
+            (this.chatHeaderSeparator ?? this.surface1).cssVariable("chat-header-separator"),
+            (this.chatDecorations ?? this.surface1).cssVariable("chat-decorations"),
+            (this.chatBubbleSent ?? this.primarySurface).cssVariable("chat-bubble-sent"),
+            (this.chatTextSent ?? this.textOnPrimary).cssVariable("chat-text-sent"),
+            (this.chatMetadataSent ?? this.primaryAccent).cssVariable("chat-metadata-sent"),
+            // TODO is this a special case, static across dark and light themes?
+            (this.chatMetadataFill ?? Colour.fromHex("#FFFFFF")).cssVariable("chat-metadata-fill"),
+            (this.chatBubbleDeleted ?? this.surfaceDisabled).cssVariable("chat-bubble-deleted"),
+            (this.chatBubbleFocusOutline ?? this.secondary).cssVariable(
+                "chat-bubble-focus-outline",
+            ),
+            (this.chatReactionBackground ?? this.surface1).cssVariable("chat-reaction-background"),
+            // Static across all themes
+            this.transparent.cssVariable("transparent"),
         ];
     }
 }
@@ -259,6 +320,16 @@ const dummyColour = Colour.fromHex("#000000");
 export const ColourVars: ColourVarsType = Object.fromEntries(
     Object.keys(
         new Colours(
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
             dummyColour,
             dummyColour,
             dummyColour,

@@ -7,7 +7,7 @@
     .separator {
         height: 6px;
         align-self: stretch;
-        background-color: var(--background-1);
+        background-color: var(--surface-1);
         border-radius: var(--rad-circle);
         margin: 0 var(--sp-md);
     }

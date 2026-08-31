@@ -95,7 +95,7 @@
 {/if}
 
 {#snippet slashSeparator()}
-    <Subtitle width={"hug"} colour="textTertiary" fontWeight="bold">/</Subtitle>
+    <Subtitle width={"hug"} colour="textOnDisabledSurface" fontWeight="bold">/</Subtitle>
 {/snippet}
 
 {#if !disableReceiveCryptoFeature || !disableSendCryptoFeature || !disableSwapFeature}
@@ -103,7 +103,7 @@
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
         padding={["sm", "zero"]}
-        borderColour={ColourVars.background2}
+        borderColour={ColourVars.surface2}
         borderWidth="thick"
         borderRadius="md">
         {#if !disableReceiveCryptoFeature}

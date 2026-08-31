@@ -100,7 +100,7 @@
         {#if checking}
             <Spinner
                 size={"1.4rem"}
-                backgroundColour={"var(--text-tertiary)"}
+                backgroundColour={"var(--text-on-disabled-surface)"}
                 foregroundColour={color} />
         {/if}
     {/snippet}

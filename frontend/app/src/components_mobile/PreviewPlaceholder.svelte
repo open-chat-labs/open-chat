@@ -23,10 +23,10 @@
     <div class="generic-preview placeholder" class:me>
         <div
             class="image-preview"
-            style:background-color={me ? ColourVars.myChatBubble : ColourVars.background2}>
+            style:background-color={me ? ColourVars.chatBubbleSent : ColourVars.surface2}>
             <TooltipImageOutline
                 size="3rem"
-                color={me ? ColourVars.primaryMuted : ColourVars.background1} />
+                color={me ? ColourVars.primarySurface : ColourVars.surface1} />
         </div>
         <Column padding={["sm", "md"]} gap="sm" width="fill">
             <div class="title-preview">
@@ -53,11 +53,11 @@
         width: 100%;
 
         &.me {
-            background-color: var(--primary-muted);
+            background-color: var(--primary-surface);
         }
 
         &:not(.me) {
-            background-color: var(--background-1);
+            background-color: var(--surface-1);
         }
 
         .row {
@@ -96,11 +96,11 @@
         }
 
         &.me .row {
-            background-color: var(--my-chat-bubble);
+            background-color: var(--chat-bubble-sent);
         }
 
         &:not(.me) .row {
-            background-color: var(--background-2);
+            background-color: var(--surface-2);
         }
 
         .image-preview {

@@ -76,7 +76,7 @@
 <SlidingPageContent onBack={back} title={i18nKey(`poll.app.viewPollVotesTitle`)}>
     <Column padding="xl" gap="xxl">
         <Row>
-            <Subtitle colour="primaryLight" fontWeight="bold">{content.config?.text}</Subtitle>
+            <Subtitle colour="primaryAccent" fontWeight="bold">{content.config?.text}</Subtitle>
         </Row>
         {#each [...content.config.options] as answer, i (answer)}
             {@const pct = percentageOfVote(content, i)}
@@ -145,11 +145,11 @@
     }
 
     .separator {
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
     }
 
     .pct {
         height: 0.25rem;
-        background-color: var(--primary-light);
+        background-color: var(--primary-accent);
     }
 </style>

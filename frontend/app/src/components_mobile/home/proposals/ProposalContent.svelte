@@ -78,12 +78,12 @@
     );
     let proposal = $derived(content.proposal);
     let statusColour: Record<ProposalDecisionStatus, string> = {
-        0: ColourVars.disabledButton, // unspecified
-        1: ColourVars.error, // failed
-        2: ColourVars.warning, // open
-        3: ColourVars.error, // rejected
-        4: ColourVars.success, // executed
-        5: ColourVars.success, // adopted
+        0: ColourVars.surfaceDisabled, // unspecified
+        1: ColourVars.validationError, // failed
+        2: ColourVars.validationWarning, // open
+        3: ColourVars.validationError, // rejected
+        4: ColourVars.validationSuccess, // executed
+        5: ColourVars.validationSuccess, // adopted
     };
     let proposalUrl = $derived(
         isNns
@@ -234,7 +234,7 @@
         <!-- Proposal type -->
         <Row gap="sm">
             {#if isCritical}
-                <Alert color={ColourVars.error} size="1.25rem" />
+                <Alert color={ColourVars.validationError} size="1.25rem" />
             {:else}
                 <InfoSlabBoxOut color={ColourVars.textPrimary} size="1.25rem" />
             {/if}
@@ -243,7 +243,7 @@
                     {typeValue}
                 </ChatText>
                 {#if isCritical}
-                    <BodySmall colour="error">
+                    <BodySmall colour="validationError">
                         <Translatable resourceKey={i18nKey("proposal.criticalProposal")} />
                     </BodySmall>
                 {/if}
@@ -282,7 +282,7 @@
             padding="md"
             borderRadius={["lg", "lg", "md", "md"]}
             crossAxisAlignment="center"
-            backgroundColor={ColourVars.background1}>
+            backgroundColor={ColourVars.surface1}>
             <Subtitle fontWeight="semi-bold" colour="primary">
                 {proposal.title}
             </Subtitle>
@@ -300,7 +300,7 @@
         padding={["md", "md"]}
         width={{ size: "72vw" }}
         borderRadius={["lg", "lg", "md", "md"]}
-        backgroundColor={ColourVars.background0}>
+        backgroundColor={ColourVars.surface0}>
         {@render header()}
         {@render metadata()}
         <div class="separator"></div>
@@ -345,11 +345,11 @@
                     {#if isCritical}
                         <Row
                             width="hug"
-                            borderColour={ColourVars.error}
+                            borderColour={ColourVars.validationError}
                             borderWidth="thick"
                             borderRadius="md"
                             padding={["xs", "sm"]}>
-                            <Body colour="error">
+                            <Body colour="validationError">
                                 <Translatable resourceKey={i18nKey("proposal.criticalProposal")} />
                             </Body>
                         </Row>
@@ -516,7 +516,7 @@
         width: 100%;
         height: 0.125rem;
         border-radius: var(--rad-md);
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
 
         &.thick {
             height: 0.25rem;

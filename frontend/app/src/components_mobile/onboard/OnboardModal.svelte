@@ -239,7 +239,7 @@
                     "Let's reconnect your account so you can continue exactly where you left off.",
                 )} />
         </Subtitle>
-        <BodySmall colour={"textTertiary"}>
+        <BodySmall colour={"textOnDisabledSurface"}>
             <Translatable
                 resourceKey={i18nKey(
                     "If you expected to use an existing passkey, it may not be available on this device at the moment.",
@@ -317,7 +317,7 @@
         height: 6px;
         width: 100%;
         border-radius: var(--rad-xl);
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
     }
 
     .alc-container {

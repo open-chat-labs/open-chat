@@ -100,7 +100,7 @@
 
         <Container padding={["zero", "md"]} gap={"sm"} direction={"vertical"}>
             <Container>
-                <Body colour={diamond ? "textPrimary" : "textTertiary"} fontWeight={"bold"}>
+                <Body colour={diamond ? "textPrimary" : "textOnDisabledSurface"} fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("Access gates")}></Translatable>
                 </Body>
                 <CommonButton
@@ -111,7 +111,7 @@
                 </CommonButton>
             </Container>
 
-            <BodySmall colour={diamond ? "textSecondary" : "textTertiary"}>
+            <BodySmall colour={diamond ? "textSecondary" : "textOnDisabledSurface"}>
                 <Translatable
                     resourceKey={i18nKey(
                         "Control who can join your group with a set of well defined access gates. Access gates provide a way to fine tune the profile of users you would want to have in your group. Users explicitly invited to this group will not be required to pass access gates.",
@@ -126,7 +126,7 @@
                         parts={[
                             {
                                 text: i18nKey("Upgrade to "),
-                                colour: "primaryLight",
+                                colour: "primaryAccent",
                             },
                             {
                                 text: i18nKey("Diamond"),
@@ -139,7 +139,7 @@
                         parts={[
                             {
                                 text: i18nKey("Only diamond members can add access gates."),
-                                colour: "primaryLight",
+                                colour: "primaryAccent",
                             },
                             {
                                 text: i18nKey("Join now!"),

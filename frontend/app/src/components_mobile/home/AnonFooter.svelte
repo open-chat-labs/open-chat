@@ -78,7 +78,7 @@
         borderRadius={"circle"}
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
-        background={ColourVars.background2}
+        background={ColourVars.surface2}
         onClick={back}>
         <ChevronLeft size={"1.6rem"} color={ColourVars.textSecondary} />
         <Body width={"hug"}>

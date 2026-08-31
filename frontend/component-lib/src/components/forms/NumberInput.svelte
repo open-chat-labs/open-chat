@@ -82,7 +82,7 @@
 <Container direction={"vertical"} gap={"xs"}>
     <Container mainAxisAlignment={"spaceBetween"} gap={"sm"}>
         <Container
-            background={ColourVars.textTertiary}
+            background={ColourVars.inputBackground}
             minHeight="3.5rem"
             {padding}
             borderRadius={"circle"}
@@ -136,7 +136,7 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <BodySmall colour={error ? "error" : "textSecondary"}>
+            <BodySmall colour={error ? "validationError" : "textSecondary"}>
                 {@render subtext()}
             </BodySmall>
         </div>
@@ -162,7 +162,7 @@
         line-height: var(--typo-body-lh);
 
         &::placeholder {
-            color: var(--text-placeholder);
+            color: var(--input-placeholder);
         }
     }
 
@@ -176,7 +176,7 @@
         width: 0.75rem;
         height: 0.75rem;
         border-radius: var(--rad-sm);
-        background-color: var(--error);
+        background-color: var(--validation-error);
         transform: rotate(45deg);
     }
 

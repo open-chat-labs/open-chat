@@ -28,11 +28,11 @@
 
 <style lang="scss">
     :global(.multi_avatars .second img) {
-        border: var(--bw-thick) solid var(--background-2);
+        border: var(--bw-thick) solid var(--surface-2);
     }
 
     :global(.multi_avatars .badge.additive-mode) {
-        border: var(--bw-thick) solid var(--background-1);
+        border: var(--bw-thick) solid var(--surface-1);
     }
 
     .multi_avatars {

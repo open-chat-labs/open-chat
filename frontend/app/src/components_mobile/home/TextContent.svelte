@@ -76,7 +76,7 @@
                 <ChatCaption
                     width={"hug"}
                     maxLines={truncate ? 3 : undefined}
-                    colour={me ? "secondaryLight" : "primaryLight"}>
+                    colour={me ? "secondaryAccent" : "primaryAccent"}>
                     <Markdown inline={!blockLevelMarkdown} {suppressLinks} {text} />
                 </ChatCaption>
             {:else}

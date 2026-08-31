@@ -28,12 +28,12 @@
     {#if avatarUrl}
         <Avatar size={avatarSize} url={avatarUrl}></Avatar>
     {/if}
-    <Label colour={"secondaryLight"} width={"hug"}>
+    <Label colour={"secondaryAccent"} width={"hug"}>
         {@render children?.()}
     </Label>
     {#if onRemove}
         <span class="icon">
-            <Close color={ColourVars.secondaryLight} />
+            <Close color={ColourVars.secondaryAccent} />
         </span>
     {/if}
 </Container>

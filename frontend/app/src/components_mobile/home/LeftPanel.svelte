@@ -82,7 +82,7 @@
 <Container
     mainAxisAlignment={"spaceBetween"}
     supplementalClass={sectionClass}
-    background={ColourVars.background0}
+    background={ColourVars.surface0}
     tag={"section"}
     height={"fill"}
     direction={"vertical"}>
@@ -116,7 +116,7 @@
                         gap={"sm"}
                         direction={"vertical"}
                         padding={"lg"}
-                        background={ColourVars.background1}>
+                        background={ColourVars.surface1}>
                         <Container crossAxisAlignment={"center"}>
                             <Container>
                                 <CommonButton onClick={cancelPreview} size={"small_text"}>

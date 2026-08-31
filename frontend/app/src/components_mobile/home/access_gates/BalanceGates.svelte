@@ -38,6 +38,6 @@
     gateSubtext={(gate) => gateSubtext(gate as TokenBalanceGate)}
     onEdit={(gate) => publish("updateTokenBalanceGate", { data, gate: gate as TokenBalanceGate })}>
     {#snippet gateTypeSummary()}
-        <AboutBalanceGate padding={"lg"} background={ColourVars.background1} />
+        <AboutBalanceGate padding={"lg"} background={ColourVars.surface1} />
     {/snippet}
 </AccessGateList>

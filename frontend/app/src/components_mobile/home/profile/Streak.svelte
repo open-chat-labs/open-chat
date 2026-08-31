@@ -67,7 +67,7 @@
         {size}
         {borderColor}
         supplementalClass="streak-badge"
-        backgroundColor={ColourVars.error}>
+        backgroundColor={ColourVars.validationError}>
         {#if size === "default"}
             <Caption align="center" fontWeight="bold">{num}</Caption>
         {:else}
@@ -83,7 +83,7 @@
             xmlns="http://www.w3.org/2000/svg">
             <path
                 d="M8.41613 4.90705L10.3144 0.956614C10.3144 0.956614 2.63919 4.12504 0.320312 6C-1.99856 7.87496 8.90159 20.1676 12.6179 17.6467C16.3343 15.1257 16.0091 4.30476 16.0091 4.30476L12.2126 7.54332L15.5345 0L8.41613 4.90705Z"
-                fill={ColourVars.error} />
+                fill={ColourVars.validationError} />
         </svg>
     </BadgeContainer>
 {/snippet}
@@ -126,10 +126,10 @@
                 scale: 0.8;
                 width: 100%;
                 text-shadow:
-                    -1px -1px 0 var(--primary-muted),
-                    1px -1px 0 var(--primary-muted),
-                    -1px 1px 0 var(--primary-muted),
-                    1px 1px 0 var(--primary-muted);
+                    -1px -1px 0 var(--primary-surface),
+                    1px -1px 0 var(--primary-surface),
+                    -1px 1px 0 var(--primary-surface),
+                    1px 1px 0 var(--primary-surface);
             }
         }
     }

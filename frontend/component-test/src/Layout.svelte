@@ -23,7 +23,7 @@
 
 {#snippet contentBlock(name: string, fixed = true)}
     <Row
-        colour={"var(--secondary-muted)"}
+        colour={"var(--secondary-surface)"}
         borderWidth={"thick"}
         padding={"lg"}
         borderColour={"var(--secondary)"}
@@ -95,7 +95,7 @@
                 {@render contentBlock("A", false)}
                 <Row
                     gap={"md"}
-                    colour={"var(--secondary-muted)"}
+                    colour={"var(--secondary-surface)"}
                     borderWidth={"thick"}
                     padding={"lg"}
                     borderColour={"var(--secondary)"}
@@ -150,7 +150,7 @@
         padding: var(--sp-xs);
         height: 30px;
         width: 100%;
-        background-color: var(--text-tertiary);
-        color: var(--text-placeholder);
+        background-color: var(--input-background);
+        color: var(--input-placeholder);
     }
 </style>

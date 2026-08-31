@@ -154,8 +154,8 @@
     <Row supplementalClass="gif-search-row">
         <Search
             padding={["sm", "lg"]}
-            background={ColourVars.background1}
-            borderColour={ColourVars.textTertiary}
+            background={ColourVars.surface1}
+            borderColour={ColourVars.textOnDisabledSurface}
             borderWidth={"thin"}
             bind:value={searchTerm}
             onSearch={reset}
