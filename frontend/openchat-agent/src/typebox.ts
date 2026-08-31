@@ -7271,6 +7271,7 @@ export const UserTipMessageArgs = /* @__PURE__ */ Type.Object({
     amount: Type.BigInt(),
     fee: Type.BigInt(),
     decimals: Type.Number(),
+    from_account: Type.Optional(AccountICRC1),
     pin: Type.Optional(PinNumberWrapper),
 });
 
