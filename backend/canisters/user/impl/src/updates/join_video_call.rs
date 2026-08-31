@@ -34,7 +34,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         )?;
 
         state.push_user_canister_event(
-            args.user_id.into(),
+            args.user_id.canister_id(),
             UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {
                 message_id: args.message_id,
             })),

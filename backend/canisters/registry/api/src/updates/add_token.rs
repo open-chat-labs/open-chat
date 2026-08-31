@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, UnitResult, UserId};
@@ -29,7 +29,7 @@ impl ToHumanReadable for Args {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
             ledger_canister_id: self.ledger_canister_id.into(),
-            payer: self.payer.map(|user_id| Principal::from(user_id).into()),
+            payer: self.payer.map(|user_id| user_id.as_principal().into()),
             info_url: self.info_url.clone(),
             transaction_url_format: self.transaction_url_format.clone(),
             one_sec_enabled: self.one_sec_enabled == Some(true),

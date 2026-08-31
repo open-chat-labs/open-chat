@@ -67,7 +67,7 @@ async fn process_user(user: UserToDelete) {
 
 async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2CError> {
     let user_id = user.user_id;
-    let canister_id = user_id.into();
+    let canister_id = user_id.canister_id();
 
     let (groups, communities) = user_canister_c2c_client::c2c_groups_and_communities(canister_id, &Empty {})
         .await

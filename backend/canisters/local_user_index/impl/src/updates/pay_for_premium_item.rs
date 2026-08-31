@@ -13,7 +13,7 @@ async fn pay_for_premium_item(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
         Ok(PrepareResult { user_id }) => {
             match user_canister_c2c_client::c2c_pay_for_premium_item(
-                user_id.into(),
+                user_id.canister_id(),
                 &user_canister::c2c_pay_for_premium_item::Args {
                     item_id: args.item_id,
                     pay_in_chat: args.pay_in_chat,

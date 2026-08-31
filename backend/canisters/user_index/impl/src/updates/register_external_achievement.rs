@@ -1,6 +1,5 @@
 use crate::guards::caller_is_governance_principal;
 use crate::{RuntimeState, mutate_state, read_state};
-use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
@@ -26,11 +25,10 @@ async fn register_external_achievement(args: Args) -> Response {
 
     let payment_block_index = if !result.test_mode {
         // Try to make the CHAT transfer from the given user's wallet
-        let from: Principal = args.submitted_by.into();
         let amount = (chit_budget as u128) * CHAT_FEE_PER_CHIT_AWARD;
         let transfer_args = TransferFromArgs {
             spender_subaccount: None,
-            from: from.into(),
+            from: args.submitted_by.into(),
             to: result.this_canister_id.into(),
             amount: amount.into(),
             fee: Some(CHAT_TRANSFER_FEE.into()),

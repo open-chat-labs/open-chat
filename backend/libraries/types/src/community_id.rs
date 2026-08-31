@@ -22,7 +22,9 @@ impl From<CommunityId> for CanisterId {
 
 impl From<UserId> for CommunityId {
     fn from(user_id: UserId) -> Self {
-        Principal::from(user_id).into()
+        // The id itself, not `user_id.canister_id()` - this has to round trip back to the same
+        // user, and many users can share a canister.
+        CommunityId(user_id.0)
     }
 }
 

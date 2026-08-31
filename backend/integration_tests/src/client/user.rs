@@ -427,7 +427,7 @@ pub mod happy_path {
         let response = super::start_video_call_v2(
             env,
             VIDEO_CALL_OPERATOR,
-            recipient.into(),
+            recipient.canister_id(),
             &user_canister::start_video_call_v2::Args {
                 message_id,
                 initiator: user.user_id,
@@ -460,7 +460,7 @@ pub mod happy_path {
         let response = super::end_video_call_v2(
             env,
             VIDEO_CALL_OPERATOR,
-            recipient.into(),
+            recipient.canister_id(),
             &user_canister::end_video_call_v2::Args {
                 user_id: initiator,
                 message_id,

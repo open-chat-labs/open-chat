@@ -289,7 +289,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
-                proposals_bot: self.data.proposals_bot_user_id.into(),
+                proposals_bot: self.data.proposals_bot_user_id.canister_id(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
                 event_relay: self.data.event_relay_canister_id,

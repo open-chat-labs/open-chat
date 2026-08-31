@@ -41,7 +41,7 @@ pub(crate) fn invite_users_to_community_impl(
     }
 
     let invited_by = if let Some(initiator) = caller.initiator() {
-        let member = state.data.members.get_verified_member(*initiator)?;
+        let member = state.data.members.get_verified_member(initiator.as_principal())?;
         if !member.role().can_invite_users(&state.data.permissions) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }

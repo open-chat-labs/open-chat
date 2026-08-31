@@ -15,7 +15,7 @@ async fn remove_platform_moderator(args: Args) -> Response {
     }
 
     let c2c_args = c2c_revoke_super_admin::Args {};
-    match user_canister_c2c_client::c2c_revoke_super_admin(args.user_id.into(), &c2c_args).await {
+    match user_canister_c2c_client::c2c_revoke_super_admin(args.user_id.canister_id(), &c2c_args).await {
         Ok(_) => {
             mutate_state(|state| commit(args.user_id, state));
             Success

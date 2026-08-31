@@ -2,7 +2,6 @@ use crate::env::ENV;
 use crate::p2p_swap_tests::verify_swap_status;
 use crate::utils::{chat_token_info, icp_token_info, tick_many};
 use crate::{TestEnv, client};
-use candid::Principal;
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
 use std::ops::Deref;
 use std::time::Duration;
@@ -32,20 +31,8 @@ fn p2p_swap_in_channel_succeeds() {
 
     client::community::happy_path::join_community(env, user2.principal, community_id);
 
-    client::ledger::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        Principal::from(user1.user_id),
-        1_100_000_000,
-    );
-    client::ledger::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.chat_ledger,
-        Principal::from(user2.user_id),
-        11_000_000_000,
-    );
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
 
     let message_id = random_from_u128();
 
@@ -105,12 +92,12 @@ fn p2p_swap_in_channel_succeeds() {
     tick_many(env, 10);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
         10_000_000_000
     );
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user2.user_id)),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
         1_000_000_000
     );
 
@@ -154,7 +141,7 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
         env,
         *controller,
         canister_ids.chat_ledger,
-        Principal::from(user1.user_id),
+        user1.user_id,
         original_chat_balance,
     );
 
@@ -238,7 +225,7 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
     tick_many(env, 10);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
         original_chat_balance - (2 * CHAT_TRANSFER_FEE)
     );
 

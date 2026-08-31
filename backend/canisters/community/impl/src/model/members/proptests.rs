@@ -94,7 +94,7 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
                     Some(get_from_map(&members.members_and_channels, i))
                 }
             });
-            members.add(user_id, user_id.into(), UserType::User, referred_by, timestamp);
+            members.add(user_id, user_id.as_principal(), UserType::User, referred_by, timestamp);
         }
         Operation::ChangeRole {
             owner_index,

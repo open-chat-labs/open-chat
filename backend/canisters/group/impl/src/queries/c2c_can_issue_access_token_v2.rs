@@ -14,7 +14,7 @@ fn c2c_can_issue_access_token_v2(args: Args) -> Response {
 fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Response {
     if let AccessTypeArgs::BotActionByCommand(args) = &args_outer {
         // Ensure the initiator is a member
-        let Some(member) = state.data.get_member(args.initiator.into()) else {
+        let Some(member) = state.data.get_member(args.initiator.as_principal()) else {
             return Response::Failure;
         };
 

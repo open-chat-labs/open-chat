@@ -11,7 +11,6 @@ use chat_events::{
     TextContentInternal, ValidateNewMessageContentResult,
 };
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
-use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use std::ops::Not;
@@ -45,7 +44,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         recipient_type
     } else {
         let c2c_args = local_user_index_canister::c2c_lookup_user::Args {
-            user_id_or_principal: args.recipient.into(),
+            user_id_or_principal: args.recipient.as_principal(),
         };
         match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
             Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) => RecipientType::Other(result.user_type),
@@ -76,7 +75,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                 // When transferring to bot users, each user transfers to their own subaccount, this way it
                 // is trivial for the bots to keep track of each user's funds
                 if recipient_type.user_type().is_bot() {
-                    pending_transfer.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
+                    pending_transfer.set_recipient(args.recipient.as_principal(), my_user_id.as_principal().into());
                 }
 
                 // We have to use `process_transaction_without_caller_check` because we may be within a
@@ -118,7 +117,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     token1_principal: None,
                     expires_at: now + content.expires_in,
                     additional_admins: Vec::new(),
-                    canister_to_notify: Some(args.recipient.into()),
+                    canister_to_notify: Some(args.recipient.canister_id()),
                     is_public: false,
                 };
                 match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
@@ -509,7 +508,7 @@ fn send_message_impl(
             ));
         } else {
             state.push_user_canister_event(
-                recipient.into(),
+                recipient.canister_id(),
                 UserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
                     messages: vec![send_message_args],
                     sender_name,
@@ -564,7 +563,7 @@ async fn send_to_bot_canister(
     message_index: MessageIndex,
     args: legacy_bot_api::handle_direct_message::Args,
 ) {
-    match legacy_bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
+    match legacy_bot_c2c_client::handle_direct_message(recipient.canister_id(), &args).await {
         Ok(legacy_bot_api::handle_direct_message::Response::Success(result)) => {
             mutate_state(|state| {
                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {

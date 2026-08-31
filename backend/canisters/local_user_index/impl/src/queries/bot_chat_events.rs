@@ -35,7 +35,7 @@ async fn bot_chat_events(args: Args) -> Response {
             args: args.events,
             latest_known_update: None,
         },
-        context.bot_id.into(),
+        context.bot_id.canister_id(),
         context.bot_id,
         Some(context.initiator),
     )

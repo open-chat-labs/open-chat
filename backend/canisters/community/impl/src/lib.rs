@@ -88,7 +88,7 @@ impl RuntimeState {
     }
 
     pub fn is_caller_proposals_bot(&self) -> bool {
-        self.env.caller() == self.data.proposals_bot_user_id.into()
+        self.env.caller() == self.data.proposals_bot_user_id.canister_id()
     }
 
     pub fn is_caller_escrow_canister(&self) -> bool {
@@ -478,7 +478,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
-                proposals_bot: self.data.proposals_bot_user_id.into(),
+                proposals_bot: self.data.proposals_bot_user_id.canister_id(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: ICP_LEDGER_CANISTER_ID,
                 internet_identity: self.data.internet_identity_canister_id,

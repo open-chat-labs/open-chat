@@ -139,7 +139,7 @@ pub mod happy_path {
         let response = user::send_message_with_transfer_to_group(
             env,
             sender.principal,
-            sender.user_id.into(),
+            sender.user_id.canister_id(),
             &user_canister::send_message_with_transfer_to_group::Args {
                 thread_root_message_index: None,
                 message_id: message_id.unwrap_or_else(random_from_u128),

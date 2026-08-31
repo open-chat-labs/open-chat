@@ -9,8 +9,8 @@ use timer_job_queues::TimerJobItem;
 use tracing::{error, info, trace};
 use types::icrc1::{self, Account};
 use types::{
-    BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
-    MessageContentInitial, Milliseconds, UserId,
+    BotMessage, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, MessageContentInitial,
+    Milliseconds, UserId,
 };
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 use utils::time::{MONTHS, MonthKey};
@@ -132,7 +132,7 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), Option<Mi
         )
     });
 
-    let to = Account::from(action.recipient);
+    let to = Account::for_user(action.recipient);
     let memo = match action.airdrop_type {
         AirdropType::Main(_) => MEMO_CHIT_FOR_CHAT_AIRDROP,
         AirdropType::Lottery(_) => MEMO_CHIT_FOR_CHAT_LOTTERY,
@@ -228,7 +228,7 @@ async fn handle_main_message_action(action: AirdropMessage) -> Result<(), Option
         }],
     };
 
-    match user_canister_c2c_client::c2c_handle_bot_messages(CanisterId::from(action.recipient), &args).await {
+    match user_canister_c2c_client::c2c_handle_bot_messages(action.recipient.canister_id(), &args).await {
         Ok(user_canister::c2c_handle_bot_messages::Response::Success) => Ok(()),
         Ok(resp) => {
             error!(?args, ?resp, "Failed to send DM");

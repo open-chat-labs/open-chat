@@ -74,7 +74,7 @@ async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Cal
     // to check whether they are a "platform moderator" in which case this removal
     // is not authorized
     if prepare_result.is_user_to_remove_an_owner {
-        match lookup_user(user_id.into(), prepare_result.local_user_index_canister_id).await {
+        match lookup_user(user_id.as_principal(), prepare_result.local_user_index_canister_id).await {
             Ok(Some(user)) if !user.is_platform_moderator => (),
             Ok(_) => return Response::Error(OCErrorCode::InitiatorNotAuthorized.into()),
             Err(error) => return Response::Error(error.into()),
@@ -118,7 +118,7 @@ fn prepare(user_id: UserId, block: bool, ext_caller: Option<Caller>, state: &Run
 
         // Check if the caller is authorized to remove the user
         if let Some(initiator) = caller.initiator() {
-            let member = state.data.members.get_verified_member(*initiator)?;
+            let member = state.data.members.get_verified_member(initiator.as_principal())?;
             if !member
                 .role()
                 .can_remove_members_with_role(user_to_remove_role, &state.data.permissions)
@@ -205,7 +205,7 @@ fn remove_membership_from_user_canister(
         public,
     };
     fire_and_forget_handler.send(
-        user_id.into(),
+        user_id.canister_id(),
         "c2c_remove_from_community_msgpack".to_string(),
         serialize_then_unwrap(args),
     );
