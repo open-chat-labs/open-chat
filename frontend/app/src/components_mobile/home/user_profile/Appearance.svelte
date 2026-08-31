@@ -47,20 +47,18 @@
                 </BodySmall>
             </Container>
 
-            <Container padding={["zero", "lg"]} gap={"lg"} direction={"vertical"}>
-                <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
-                    {#each appearanceOptions as appearance (appearance)}
-                        {@const selected = $themeV2Appearance === appearance}
-                        <Chip
-                            width={selected ? { share: 1.3 } : { share: 1 }}
-                            mode={selected ? "rounded" : "unselected"}
-                            onClick={() => setThemeV2Appearance(appearance)}>
-                            <Translatable resourceKey={i18nKey(appearanceLabels[appearance])}
-                            ></Translatable>
-                        </Chip>
-                    {/each}
-                </Row>
-            </Container>
+            <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
+                {#each appearanceOptions as appearance (appearance)}
+                    {@const selected = $themeV2Appearance === appearance}
+                    <Chip
+                        width={selected ? { share: 1.3 } : { share: 1 }}
+                        mode={selected ? "rounded" : "unselected"}
+                        onClick={() => setThemeV2Appearance(appearance)}>
+                        <Translatable resourceKey={i18nKey(appearanceLabels[appearance])}
+                        ></Translatable>
+                    </Chip>
+                {/each}
+            </Row>
             <!-- <ThemeSelector selected={$themeV2Family} /> -->
         </Container>
 

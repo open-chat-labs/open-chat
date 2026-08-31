@@ -300,10 +300,6 @@
             color: inherit;
         }
 
-        .container.message_bubble .typo {
-            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
-        }
-
         .container.message_bubble button .typo {
             text-shadow: none;
         }
