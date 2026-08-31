@@ -33,11 +33,11 @@
             borderRadius={"lg"}
             width={"hug"}
             padding={["zero", "xs"]}
-            background={ColourVars.background2}
+            background={ColourVars.surface2}
             crossAxisAlignment={"center"}
             gap={"xs"}
             borderWidth={"thin"}
-            borderColour={ColourVars.background0}>
+            borderColour={ColourVars.surface0}>
             <img alt={details.symbol} class="tip-icon" src={details.logo} />
             <ChatFootnote>
                 {userTipsList.length > 999 ? "999+" : userTipsList.length}

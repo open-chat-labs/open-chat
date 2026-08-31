@@ -360,14 +360,14 @@
     {#if !$favouritesStore.has(chatSummary.id)}
         <MenuItem onclick={addToFavourites}>
             {#snippet icon(_, size)}
-                <HeartPlus color={"var(--error)"} {size} />
+                <HeartPlus color={"var(--validation-error)"} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
         </MenuItem>
     {:else}
         <MenuItem onclick={removeFromFavourites}>
             {#snippet icon(_, size)}
-                <HeartMinus color={"var(--error)"} {size} />
+                <HeartMinus color={"var(--validation-error)"} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
         </MenuItem>
@@ -495,7 +495,7 @@
                     <!-- <VideoCallIcon video={chat.video} /> -->
                     {#if chat.private}
                         <div class="private">
-                            <LockOutline size="0.85rem" color={ColourVars.error} />
+                            <LockOutline size="0.85rem" color={ColourVars.validationError} />
                         </div>
                     {/if}
                 </div>
@@ -617,7 +617,7 @@
         align-content: center;
         width: $size;
         height: $size;
-        background-color: var(--background-0);
+        background-color: var(--surface-0);
         border-radius: var(--rad-circle);
     }
 </style>

@@ -44,6 +44,6 @@
     gateSubtext={(gate) => gateSubtext(gate as NeuronGate)}
     onEdit={(gate) => publish("updateNeuronGate", { data, gate: gate as NeuronGate })}>
     {#snippet gateTypeSummary()}
-        <AboutNeuronGate padding={"lg"} background={ColourVars.background1} />
+        <AboutNeuronGate padding={"lg"} background={ColourVars.surface1} />
     {/snippet}
 </AccessGateList>

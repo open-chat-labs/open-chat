@@ -231,11 +231,11 @@
         borderWidth={"thick"}
         onClick={() => selectToken(token)}>
         <Avatar size={"xs"} url={token.logo}></Avatar>
-        <Label colour={"primaryLight"} width={"hug"}>
+        <Label colour={"primaryAccent"} width={"hug"}>
             {token.symbol}
         </Label>
         <span class="icon">
-            <Close color={ColourVars.primaryLight} />
+            <Close color={ColourVars.primaryAccent} />
         </span>
     </Container>
 {/snippet}

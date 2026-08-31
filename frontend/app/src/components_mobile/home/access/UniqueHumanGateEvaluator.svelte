@@ -134,7 +134,7 @@
 
                 {#if expiry !== undefined}
                     <StatusCard
-                        background={ColourVars.background2}
+                        background={ColourVars.surface2}
                         mode={"warning"}
                         title={interpolate($_, i18nKey("Recurring access gate"))}>
                         {#snippet body()}

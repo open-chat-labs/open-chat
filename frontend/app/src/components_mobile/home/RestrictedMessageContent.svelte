@@ -5,7 +5,7 @@
 </script>
 
 <Column padding={["xs", "sm"]}>
-    <BodySmall fontWeight={"light"} colour={"textTertiary"} italic={true}>
+    <BodySmall fontWeight={"light"} colour={"textOnDisabledSurface"} italic={true}>
         <Translatable resourceKey={i18nKey("appStore.messageNotAvailable")} />
     </BodySmall>
 </Column>

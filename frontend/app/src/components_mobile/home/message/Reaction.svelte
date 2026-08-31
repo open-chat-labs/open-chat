@@ -82,13 +82,13 @@
         height={{ size: "1.75rem" }}
         minWidth={"2.25rem"}
         padding={["xxs", moreThanOne ? "sm" : "xxs", "xxs", "xxs"]}
-        background={selected ? ColourVars.disabledButton : ColourVars.background2}
+        background={selected ? ColourVars.surfaceDisabled : ColourVars.chatReactionBackground}
         crossAxisAlignment={"center"}
         mainAxisAlignment={"center"}
         gap={"xxs"}
         borderRadius={"circle"}
         borderWidth={"thick"}
-        borderColour={ColourVars.background0}>
+        borderColour={ColourVars.chatBackground}>
         {#if customEmoji !== undefined}
             {#if intersecting}
                 <custom-emoji class="emoji" data-id={customEmoji.code}></custom-emoji>

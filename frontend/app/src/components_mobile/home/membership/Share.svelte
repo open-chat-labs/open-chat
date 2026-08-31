@@ -105,7 +105,7 @@
                 title={"Share using this link"}
                 body={link}>
             </CopyCard>
-            <Container padding={"md"} background={ColourVars.background1}>
+            <Container padding={"md"} background={ColourVars.surface1}>
                 <QRCode text={link} fullWidthOnMobile />
             </Container>
         </Container>

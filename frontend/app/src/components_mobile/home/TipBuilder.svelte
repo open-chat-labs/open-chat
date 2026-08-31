@@ -221,10 +221,10 @@
     <Column gap={"xl"} padding={["xl", "lg"]}>
         <CryptoSelector showRefresh draftAmount={tokenState.draftAmount} bind:ledger />
         {#if zero || toppingUp}
-            <AccountInfo background={ColourVars.background0} {ledger} />
+            <AccountInfo background={ColourVars.surface0} {ledger} />
             {#if zero}
                 <StatusCard
-                    background={ColourVars.background0}
+                    background={ColourVars.surface0}
                     mode={"warning"}
                     title={"Insufficient funds"}>
                     {#snippet body()}

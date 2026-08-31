@@ -66,7 +66,7 @@
 </script>
 
 <div class="picker" style={`bottom: ${offset}px; height: ${matches.length * ITEM_HEIGHT}px`}>
-    <Column backgroundColor={ColourVars.background1}>
+    <Column backgroundColor={ColourVars.surface1}>
         {#each matches as match, i}
             <MenuItem selected={i === index} onclick={() => select(match)}>
                 {#snippet icon()}

@@ -27,40 +27,40 @@
     let { children, icon, mode = "default", onRemove, fill, width, onClick }: Props = $props();
 
     const iconColours: Record<Mode, string> = {
-        filled: ColourVars.primaryLight,
-        filter: ColourVars.primaryLight,
+        filled: ColourVars.primaryAccent,
+        filter: ColourVars.primaryAccent,
         rounded: ColourVars.primary,
         default: ColourVars.primary,
         unselected: ColourVars.textSecondary,
     };
 
     const textColours: Record<Mode, ColourVarKeys> = {
-        filled: "primaryLight",
-        filter: "secondaryLight",
+        filled: "primaryAccent",
+        filter: "secondaryAccent",
         rounded: "primary",
         default: "textSecondary",
         unselected: "textSecondary",
     };
 
     const textColourVars: Record<Mode, string> = {
-        filled: ColourVars.primaryLight,
-        filter: ColourVars.secondaryLight,
+        filled: ColourVars.primaryAccent,
+        filter: ColourVars.secondaryAccent,
         rounded: ColourVars.primary,
         default: ColourVars.textSecondary,
         unselected: ColourVars.textSecondary,
     };
 
     const borderColours: Record<Mode, string> = {
-        filled: ColourVars.primaryMuted,
-        filter: ColourVars.secondaryMuted,
+        filled: ColourVars.primarySurface,
+        filter: ColourVars.secondarySurface,
         rounded: ColourVars.primary,
-        default: ColourVars.textTertiary,
-        unselected: ColourVars.background2,
+        default: ColourVars.textOnDisabledSurface,
+        unselected: ColourVars.surface2,
     };
 
     const backgroundColours: Record<Mode, string> = {
-        filled: ColourVars.primaryMuted,
-        filter: ColourVars.secondaryMuted,
+        filled: ColourVars.primarySurface,
+        filter: ColourVars.secondarySurface,
         rounded: "transparent",
         default: "transparent",
         unselected: "transparent",

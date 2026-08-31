@@ -54,10 +54,10 @@
     }: Props = $props();
 
     let textColorVar = $derived(
-        fill ? ColourVars.textPrimary : me ? ColourVars.primaryLight : ColourVars.textSecondary,
+        fill ? ColourVars.chatMetadataFill : me ? ColourVars.chatMetadataSent : ColourVars.textSecondary,
     );
     let textColorTxt = $derived<ColourVarKeys>(
-        fill ? "textPrimary" : me ? "primaryLight" : "textSecondary",
+        fill ? "chatMetadataFill" : me ? "chatMetadataSent" : "textSecondary",
     );
     let padding = $derived<Padding>(
         fill ? (me ? "xs" : ["sm", "md"]) : ["zero", "sm", "xs", "zero"],
@@ -68,13 +68,13 @@
     <div class="bubble_check" class:fill>
         <Container
             borderRadius="circle"
-            borderColour={fill ? "transparent" : ColourVars.primaryLight}
+            borderColour={fill ? "transparent" : ColourVars.chatMetadataSent}
             borderWidth="thin"
             backgroundColor={fill
                 ? "transparent"
                 : checked
-                  ? ColourVars.primaryLight
-                  : ColourVars.myChatBubble}>
+                  ? ColourVars.chatMetadataSent
+                  : ColourVars.chatBubbleSent}>
             <Check
                 size={fill ? "0.85rem" : "0.75rem"}
                 color={fill
@@ -82,8 +82,8 @@
                         ? ColourVars.textPrimary
                         : ColourVars.textSecondary
                     : checked
-                      ? ColourVars.myChatBubble
-                      : ColourVars.primaryLight} />
+                      ? ColourVars.chatBubbleSent
+                      : ColourVars.chatMetadataSent} />
         </Container>
     </div>
 {/snippet}
@@ -154,7 +154,7 @@
                 }
 
                 .bubble_check path {
-                    filter: drop-shadow(0 0 0.125rem var(--background-0));
+                    filter: drop-shadow(0 0 0.125rem var(--surface-0));
                 }
             }
         }
@@ -188,7 +188,7 @@
         }
 
         &:not(.fill) {
-            border-color: var(--my-chat-bubble);
+            border-color: var(--chat-bubble-sent);
         }
     }
 </style>

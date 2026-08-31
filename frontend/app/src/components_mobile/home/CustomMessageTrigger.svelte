@@ -125,12 +125,12 @@
                 borderRadius="md"
                 mainAxisAlignment="center"
                 crossAxisAlignment="center"
-                backgroundColor={ColourVars.background0}>
+                backgroundColor={ColourVars.surface0}>
                 {#if mediaPermission === "denied"}
                     <!-- TODO wire this in, open settings for user to allow permissions -->
-                    <ShieldAlertOutline size="1.75rem" color={ColourVars.warning} />
+                    <ShieldAlertOutline size="1.75rem" color={ColourVars.validationWarning} />
                     <Column gap="xxs">
-                        <Subtitle colour="warning">
+                        <Subtitle colour="validationWarning">
                             <Translatable resourceKey={i18nKey("Media permission not granted")} />
                         </Subtitle>
                         <Body colour="textSecondary">
@@ -139,7 +139,7 @@
                     </Column>
                     <ChevronRight size="1.25rem" color={ColourVars.textSecondary} />
                 {:else}
-                    <Subtitle colour="textTertiary" width="hug">
+                    <Subtitle colour="textOnDisabledSurface" width="hug">
                         <Translatable resourceKey={i18nKey("No media available")} />
                     </Subtitle>
                 {/if}
@@ -267,7 +267,7 @@
             height: 8rem;
             border: none;
             border-radius: 0 0 var(--rad-md) var(--rad-md);
-            background-color: var(--background-0);
+            background-color: var(--surface-0);
         }
 
         .media-preview {

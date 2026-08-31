@@ -68,7 +68,7 @@
                 {#if $toastStore.err !== undefined}
                     <Tooltip position="top" align="middle">
                         <div class="report" onclick={report}>
-                            <Bug size={$iconSize} color={"var(--text-primary)"} />
+                            <Bug size={$iconSize} color={"var(--text-on-feedback-surface)"} />
                         </div>
                         {#snippet popup()}
                             <Translatable resourceKey={i18nKey("reportBug")} />
@@ -76,7 +76,7 @@
                     </Tooltip>
                 {/if}
                 <div class="close" onclick={toastStore.hideToast}>
-                    <Close size={$iconSize} color={"var(--text-primary)"} />
+                    <Close size={$iconSize} color={"var(--text-on-feedback-surface)"} />
                 </div>
             {/if}
         </div>
@@ -96,7 +96,7 @@
 
     .message {
         transition: background 200ms ease-in-out;
-        background: var(--success);
+        background: var(--success-surface);
         border-radius: var(--rad-md);
         padding: $sp4;
         max-width: 800px;
@@ -105,15 +105,15 @@
         gap: $sp4;
         justify-content: center;
         align-items: center;
-        color: var(--text-primary);
+        color: var(--text-on-feedback-surface);
         width: 100%;
 
         &.failure {
-            background: var(--error);
+            background: var(--error-surface);
         }
 
         &.success {
-            background: var(--success);
+            background: var(--success-surface);
         }
 
         .close,

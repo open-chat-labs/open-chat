@@ -305,7 +305,7 @@
         }} />
 {/if}
 
-<Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
+<Container background={ColourVars.surface0} height={"fill"} direction={"vertical"}>
     <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
     {#if loading}
         <Loading />

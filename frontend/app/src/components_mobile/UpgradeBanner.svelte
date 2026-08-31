@@ -79,7 +79,7 @@
     <Column
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
-        backgroundColor={ColourVars.warning}
+        backgroundColor={ColourVars.validationWarning}
         padding={"lg"}
         supplementalClass={"upgrade_banner"}>
         <Row wrap>

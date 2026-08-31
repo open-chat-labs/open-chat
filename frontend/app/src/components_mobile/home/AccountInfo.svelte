@@ -29,7 +29,7 @@
         background?: string;
     }
 
-    let { ledger, padding = ["lg", "xl"], background = ColourVars.background1 }: Props = $props();
+    let { ledger, padding = ["lg", "xl"], background = ColourVars.surface1 }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -146,18 +146,18 @@
 {/snippet}
 
 {#snippet fetchingFeeError()}
-    <Subtitle colour={"error"}>
+    <Subtitle colour={"validationError"}>
         {$_("cryptoAccount.failedToFetchDepositFee")}
     </Subtitle>
-    <RobotConfusedOutline color={ColourVars.error} size="1.25rem" />
+    <RobotConfusedOutline color={ColourVars.validationError} size="1.25rem" />
 {/snippet}
 
 <!-- TODO open fee breakdown modal -->
 {#snippet displayFee(values: { amount: string; token: string })}
-    <Subtitle colour={"warning"}>
+    <Subtitle colour={"validationWarning"}>
         {$_("cryptoAccount.networkFee", { values })}
     </Subtitle>
-    <AlertCircleOutline color={ColourVars.warning} size="1.25rem" />
+    <AlertCircleOutline color={ColourVars.validationWarning} size="1.25rem" />
 {/snippet}
 
 <Container gap={"xxs"} direction={"vertical"}>
@@ -222,10 +222,10 @@
         borderRadius={["zero", "zero", "lg", "lg"]}>
         {#if account === undefined}
             {#if error !== undefined}
-                <Subtitle colour={"error"}>
+                <Subtitle colour={"validationError"}>
                     {$_("cryptoAccount.failedToGenera4teAddress")}
                 </Subtitle>
-                <RobotConfusedOutline color={ColourVars.error} size="1.25rem" />
+                <RobotConfusedOutline color={ColourVars.validationError} size="1.25rem" />
             {:else}
                 <!-- TODO add spinner? -->
                 <Subtitle colour={"textSecondary"}>

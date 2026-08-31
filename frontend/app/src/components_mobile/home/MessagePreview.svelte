@@ -88,16 +88,16 @@
         &.me {
             &.sender_is_me {
                 // TODO bgs are same as for replies, reduce duplication
-                background-color: var(--background-2);
+                background-color: var(--surface-2);
             }
 
             &:not(.sender_is_me) {
-                background-color: var(--primary-muted);
+                background-color: var(--primary-surface);
             }
         }
 
         &:not(.me) {
-            background-color: var(--background-1);
+            background-color: var(--surface-1);
         }
 
         .inert {

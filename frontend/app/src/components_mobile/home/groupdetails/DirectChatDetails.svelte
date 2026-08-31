@@ -126,7 +126,7 @@
     }
 </script>
 
-<Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
+<Container background={ColourVars.surface0} height={"fill"} direction={"vertical"}>
     {#if user !== undefined}
         <Container
             supplementalClass={"direct_chat_details"}
@@ -200,7 +200,7 @@
     .separator {
         height: 6px;
         align-self: stretch;
-        background-color: var(--background-1);
+        background-color: var(--surface-1);
         border-radius: var(--rad-circle);
         margin: 0 var(--sp-md);
     }

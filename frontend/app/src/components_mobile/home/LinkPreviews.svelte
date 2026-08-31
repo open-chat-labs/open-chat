@@ -29,7 +29,7 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div class="remove" onclick={() => removePreview(url)}>
-                <CloseIcon viewBox="0 0 24 24" size="1.25rem" color={ColourVars.primaryLight} />
+                <CloseIcon viewBox="0 0 24 24" size="1.25rem" color={ColourVars.primaryAccent} />
             </div>
         </div>
     {/if}
@@ -66,7 +66,7 @@
             position: absolute;
             padding: var(--sp-xxs);
             border-radius: var(--rad-circle);
-            background-color: var(--primary-muted);
+            background-color: var(--primary-surface);
 
             &.rtl {
                 right: unset;

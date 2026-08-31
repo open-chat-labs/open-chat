@@ -62,7 +62,7 @@
 </script>
 
 <Row
-    backgroundColor={ColourVars.textTertiary}
+    backgroundColor={ColourVars.chatInputBackground}
     borderRadius="huge"
     maxHeight="3.5rem"
     padding="sm"

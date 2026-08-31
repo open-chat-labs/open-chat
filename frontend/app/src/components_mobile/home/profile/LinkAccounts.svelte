@@ -361,7 +361,7 @@
             <Translatable resourceKey={i18nKey(error)} />
         </ErrorMessage>
     {:else if step === "explain"}
-        <StatusCard background={ColourVars.background2} title={"Link identity"} mode={"warning"}>
+        <StatusCard background={ColourVars.surface2} title={"Link identity"} mode={"warning"}>
             {#snippet body()}
                 {#each explanations as explanation}
                     <Translatable resourceKey={explanation} />

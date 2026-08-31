@@ -30,7 +30,7 @@
 
     <Container
         onClick={() => (confirmed = !confirmed)}
-        background={ColourVars.background2}
+        background={ColourVars.surface2}
         crossAxisAlignment={"center"}
         borderRadius={"md"}
         gap={"lg"}

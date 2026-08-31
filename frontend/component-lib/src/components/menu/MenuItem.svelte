@@ -25,7 +25,7 @@
         onclick,
     }: MenuItemProps & { icon?: Snippet<[string, string]>; children?: Snippet } = $props();
 
-    let iconColour = $derived(danger ? ColourVars.error : ColourVars.textPrimary);
+    let iconColour = $derived(danger ? ColourVars.validationError : ColourVars.textPrimary);
     let iconSize = "24px";
 </script>
 
@@ -58,7 +58,7 @@
                 {@render icon(iconColour, iconSize)}
             </span>
         {/if}
-        <Subtitle colour={danger ? "error" : "textPrimary"} width={"hug"}>
+        <Subtitle colour={danger ? "validationError" : "textPrimary"} width={"hug"}>
             {@render children?.()}
         </Subtitle>
     </a>
@@ -103,12 +103,12 @@
         }
 
         &.danger {
-            color: var(--error);
+            color: var(--validation-error);
         }
     }
 
     :global(.menu_item_separator) {
-        border: var(--bw-thin) solid var(--background-2);
+        border: var(--bw-thin) solid var(--surface-2);
         width: 100%;
 
         &:last-child {

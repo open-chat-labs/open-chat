@@ -10,7 +10,7 @@
     mainAxisAlignment={"spaceBetween"}
     crossAxisAlignment={"center"}
     supplementalClass={"offline_footer"}
-    backgroundColor={ColourVars.warning}>
+    backgroundColor={ColourVars.validationWarning}>
     <CloudOffOutline size={"1.5em"} color={"currentColor"} />
     <Title width={"hug"} uppercase>
         <Translatable resourceKey={i18nKey("offlineMessage")} />

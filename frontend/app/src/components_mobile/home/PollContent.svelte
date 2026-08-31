@@ -143,7 +143,7 @@
         <Row gap="xs" crossAxisAlignment="center">
             <ChartBoxOutline
                 size="1rem"
-                color={me ? ColourVars.secondaryLight : ColourVars.primaryLight} />
+                color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent} />
             {@render textContent?.()}
         </Row>
     </Column>
@@ -156,12 +156,12 @@
             gap="sm"
             padding="md"
             overflow="hidden"
-            background={me ? ColourVars.primaryMuted : ColourVars.background0}
+            background={me ? ColourVars.primarySurface : ColourVars.surface0}
             borderRadius={[me ? "lg" : "md", me ? "md" : "lg", "lg", "lg"]}>
-            <Poll size="2rem" color={me ? ColourVars.primaryLight : ColourVars.textSecondary} />
+            <Poll size="2rem" color={me ? ColourVars.primaryAccent : ColourVars.textSecondary} />
             <Column gap="sm">
                 <ChatText fontWeight="bold">{content.config?.text ?? "..."}</ChatText>
-                <ChatCaption colour="primaryLight">
+                <ChatCaption colour="primaryAccent">
                     <Translatable resourceKey={i18nKey(shortStatus.visibility)} /> •
                     <Translatable resourceKey={i18nKey(shortStatus.voteType)} /> •
                     <Translatable resourceKey={i18nKey(shortStatus.voteEdit)} />
@@ -180,7 +180,7 @@
                 {@const pctSingleDec = Math.round(pct * 10) / 10}
                 <Column gap="sm" onClick={() => vote(i)}>
                     <Row gap="sm" padding={["zero", "xs"]} crossAxisAlignment="center">
-                        <BodySmall width={{ size: "2.1rem" }} colour="primaryLight">
+                        <BodySmall width={{ size: "2.1rem" }} colour="primaryAccent">
                             {#if showVotes}
                                 {`${pctSingleDec}%`}
                             {:else}
@@ -193,7 +193,7 @@
                         {:else}
                             <CheckboxBlankCircleOutline
                                 size="1.25rem"
-                                color={me ? ColourVars.primaryLight : ColourVars.textSecondary} />
+                                color={me ? ColourVars.primaryAccent : ColourVars.textSecondary} />
                         {/if}
                     </Row>
                     <div class="progress" class:me>
@@ -220,7 +220,7 @@
                 {/if}
             </Row>
 
-            <Caption colour={me ? "primaryLight" : "textSecondary"}>
+            <Caption colour={me ? "primaryAccent" : "textSecondary"}>
                 {#if content.ended}
                     <Translatable resourceKey={i18nKey("poll.finished")} />
                 {:else if date}
@@ -253,11 +253,11 @@
     }
 
     .progress.me {
-        background-color: var(--primary-muted);
+        background-color: var(--primary-surface);
     }
 
     .progress:not(.me) {
-        background-color: var(--background-0);
+        background-color: var(--surface-0);
     }
 
     .progress {

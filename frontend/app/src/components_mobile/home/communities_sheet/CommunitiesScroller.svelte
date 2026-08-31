@@ -99,7 +99,7 @@
         width: toRem(40);
         height: toRem(40);
         border-radius: toRem(12);
-        background-color: var(--background-0);
+        background-color: var(--surface-0);
         font-size: toRem(18);
     }
 

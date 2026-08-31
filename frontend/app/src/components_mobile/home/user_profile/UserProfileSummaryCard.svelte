@@ -153,19 +153,19 @@
                     width="hug"
                     padding={["sm", "md"]}
                     borderRadius="circle"
-                    backgroundColor={ColourVars.background1}
+                    backgroundColor={ColourVars.surface1}
                     crossAxisSelfAlignment={"end"}>
                     <Body colour="textSecondary">
                         <Translatable resourceKey={i18nKey("Currently")} />
                     </Body>
                     <Row crossAxisAlignment="center" gap="sm">
                         {#if online}
-                            <Body colour="success">
+                            <Body colour="validationSuccess">
                                 <Translatable resourceKey={i18nKey("online")} />
                             </Body>
                             <div class="online_status"></div>
                         {:else}
-                            <Body colour="warning">
+                            <Body colour="validationWarning">
                                 <Translatable resourceKey={i18nKey("offline")} />
                             </Body>
                         {/if}
@@ -224,7 +224,7 @@
 
         <!-- Member since-->
         <Column
-            backgroundColor={ColourVars.background1}
+            backgroundColor={ColourVars.surface1}
             borderRadius="md"
             padding={["lg", "xl"]}
             gap="xs">
@@ -240,7 +240,7 @@
                 gap="sm"
                 borderRadius="md"
                 padding={["lg", "xl"]}
-                backgroundColor={ColourVars.background1}
+                backgroundColor={ColourVars.surface1}
                 supplementalClass="user_bio"
                 onClick={() => (showAboutSheet = true)}>
                 <Row mainAxisAlignment="spaceBetween">
@@ -261,7 +261,7 @@
             <!-- Account principal -->
             <Row
                 onClick={onCopy}
-                backgroundColor={ColourVars.background1}
+                backgroundColor={ColourVars.surface1}
                 borderRadius="md"
                 padding={["lg", "md", "lg", "xl"]}
                 crossAxisAlignment="center">
@@ -283,7 +283,7 @@
                 gap="sm"
                 borderRadius="md"
                 padding={["lg", "xl"]}
-                backgroundColor={ColourVars.background1}>
+                backgroundColor={ColourVars.surface1}>
                 <Body colour="textSecondary" fontWeight="bold">
                     <Translatable resourceKey={i18nKey("Online account storage usage")} />
                 </Body>
@@ -316,7 +316,7 @@
         border-radius: var(--rad-circle);
         width: 0.5rem;
         height: 0.5rem;
-        background-color: var(--success);
+        background-color: var(--validation-success);
     }
 
     .icon {
@@ -330,7 +330,7 @@
         height: 0.5rem;
         margin-top: 1px;
         border-radius: var(--rad-circle);
-        background-color: var(--success);
+        background-color: var(--validation-success);
     }
 
     :global(.user_bio .markdown-wrapper) {

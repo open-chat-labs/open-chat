@@ -32,7 +32,7 @@
         display: flex;
         width: 3.25rem;
         height: 3.25rem;
-        background-color: var(--background-1);
+        background-color: var(--surface-1);
         border-radius: var(--rad-circle);
         justify-content: center;
         align-items: center;

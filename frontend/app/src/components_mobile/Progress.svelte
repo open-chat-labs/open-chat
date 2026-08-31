@@ -28,7 +28,7 @@
         width: 100%;
         height: var(--size);
         position: relative;
-        background-color: var(--text-tertiary);
+        background-color: var(--text-on-disabled-surface);
         border-radius: var(--rad-circle);
         overflow: hidden;
     }

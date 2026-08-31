@@ -50,7 +50,7 @@
 </script>
 
 {#snippet fileContent(borderRadius: Radius, backgroundColor: string, padding?: Padding)}
-    {@const subtextColour = me && reply ? "secondaryLight" : "primaryLight"}
+    {@const subtextColour = me && reply ? "secondaryAccent" : "primaryAccent"}
     <Column
         supplementalClass="link_contents"
         padding={padding ?? "sm"}
@@ -90,9 +90,9 @@
     <Column padding="xs">
         <Column
             supplementalClass="file_draft_contents"
-            backgroundColor={ColourVars.background0}
+            backgroundColor={ColourVars.surface0}
             borderRadius="lg">
-            {@render fileContent("zero", "background1")}
+            {@render fileContent("zero", "surface1")}
             {@render textContent?.()}
         </Column>
     </Column>
@@ -108,7 +108,7 @@
 {#snippet regularView(textContent?: Snippet)}
     <!-- User has sent a message with file attached, and we're rendering the message -->
     {@const borderRadius: Radius = [me ? "lg" : "md", me ? "md" : "lg", "md", "md"]}
-    {@const backgroundColor = me ? ColourVars.primaryMuted : ColourVars.background1}
+    {@const backgroundColor = me ? ColourVars.primarySurface : ColourVars.surface1}
     {#if content.blobUrl}
         <a
             href={getProxyAdjustedBlobUrl(content.blobUrl)}

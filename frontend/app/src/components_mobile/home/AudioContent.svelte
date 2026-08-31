@@ -65,7 +65,7 @@
         content.caption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
     let hasContent = $derived(!!textContent?.text);
-    let textHighlightColour = $derived<ColourVarKeys>(me ? "secondaryLight" : "primaryLight");
+    let textHighlightColour = $derived<ColourVarKeys>(me ? "secondaryAccent" : "primaryAccent");
 
     let currentTime = $state<string>();
     let waveformDiv: HTMLDivElement | undefined;
@@ -116,7 +116,7 @@
     }
 
     const textPrimaryColor = getColor("--text-primary");
-    const primaryLightColor = getColor("--primary-light");
+    const primaryAccentColor = getColor("--primary-accent");
     const secondaryColor = getColor("--secondary");
 
     onMount(() => {
@@ -126,7 +126,7 @@
                 barHeight: 0.65,
                 width: "100%",
                 container: waveformDiv,
-                waveColor: draft || !me ? textPrimaryColor : primaryLightColor,
+                waveColor: draft || !me ? textPrimaryColor : primaryAccentColor,
                 progressColor: draft || !me ? secondaryColor : textPrimaryColor,
                 barWidth: 3,
                 barRadius: 6,
@@ -180,7 +180,7 @@
 
 {#snippet remainingTime()}
     {@const currentColor = me && !draft ? "textPrimary" : "secondary"}
-    {@const durationColor = me && !draft ? "primaryLight" : "textSecondary"}
+    {@const durationColor = me && !draft ? "primaryAccent" : "textSecondary"}
     <Container gap={"xxs"} padding={["zero", "sm"]}>
         <ChatFootnote colour={currentColor} width={"hug"}>
             {currentTime ?? "0:00"}
@@ -208,8 +208,8 @@
 {#snippet waveformView()}
     {@const bgColor = hasContent
         ? me
-            ? ColourVars.primaryMuted
-            : ColourVars.background1
+            ? ColourVars.primarySurface
+            : ColourVars.surface1
         : "transparent"}
     <Row
         minWidth={"18rem"}
@@ -234,7 +234,7 @@
         </Row>
         <Row width="hug" padding={["xs", "zero"]}>
             <Container
-                backgroundColor={me && !draft ? ColourVars.primaryLight : ColourVars.textTertiary}
+                backgroundColor={me && !draft ? ColourVars.primaryAccent : ColourVars.textOnDisabledSurface}
                 borderRadius={"xl"}
                 mainAxisAlignment={"center"}
                 onClick={cycleSpeed}
@@ -246,7 +246,7 @@
                 <Body
                     width={"hug"}
                     fontWeight={"bold"}
-                    colour={me && !draft ? "myChatBubble" : "textPrimary"}>
+                    colour={me && !draft ? "chatBubbleSent" : "textPrimary"}>
                     x{speed}
                 </Body>
             </Container>
@@ -261,7 +261,7 @@
         <Row gap="xs" crossAxisAlignment="center">
             <MicrophoneOutline
                 size="1rem"
-                color={me ? ColourVars.secondaryLight : ColourVars.primaryLight} />
+                color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent} />
             <BodySmall colour={textHighlightColour}>
                 <!-- TODO i18n -->
                 <Translatable resourceKey={i18nKey("Audio message")} /> ({formatTime(duration)})
@@ -275,7 +275,7 @@
             supplementalClass="audio_draft_contents"
             padding={["md", "sm", "sm", "sm"]}
             borderRadius="lg"
-            background={ColourVars.background1}>
+            background={ColourVars.surface1}>
             {@render waveformView()}
             <div class="close" class:rtl={$rtlStore}>
                 <IconButton size="sm" onclick={onRemove}>
@@ -327,7 +327,7 @@
                 background-color: var(--secondary);
                 border-width: var(--bw-thick);
                 border-style: solid;
-                border-color: var(--background-1);
+                border-color: var(--surface-1);
             }
 
             ::part(region) {
@@ -341,11 +341,11 @@
                 }
 
                 &.has_content ::part(cursor):before {
-                    border-color: var(--primary-muted);
+                    border-color: var(--primary-surface);
                 }
 
                 &:not(.has_content) ::part(cursor):before {
-                    border-color: var(--my-chat-bubble);
+                    border-color: var(--chat-bubble-sent);
                 }
             }
         }

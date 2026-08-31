@@ -676,7 +676,7 @@
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={activeStream !== undefined ? "center" : "end"}
-        background={ColourVars.background0}
+        background={ColourVars.surface0}
         padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}>
         {#if frozen}
             <div class="frozen">
@@ -690,7 +690,7 @@
             <PreviewFooter {lapsed} {chat} />
         {:else if externalContent}
             <Row crossAxisAlignment={"center"} gap={"md"}>
-                <Alert size={"1.5rem"} color={"var(--warning)"} />
+                <Alert size={"1.5rem"} color={"var(--validation-warning)"} />
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
                 </BodySmall>
@@ -720,7 +720,7 @@
                     {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}
                         <Row padding="md">
                             <Progress
-                                colour={ColourVars.primaryMuted}
+                                colour={ColourVars.primarySurface}
                                 percent={Math.round($videoProcessingProgress.progress * 100)}>
                                 <Translatable resourceKey={i18nKey("videoProcessing")} />
                             </Progress>
@@ -757,7 +757,7 @@
                                 padding={["sm", "zero", "md", "sm"]}
                                 size={"md"}>
                                 {#snippet icon()}
-                                    <StickerEmoji color={ColourVars.textPlaceholder} />
+                                    <StickerEmoji color={ColourVars.inputPlaceholder} />
                                 {/snippet}
                             </IconButton>
                         {:else}
@@ -766,7 +766,7 @@
                                 padding={["sm", "zero", "md", "sm"]}
                                 size={"md"}>
                                 {#snippet icon()}
-                                    <Keyboard color={ColourVars.textPlaceholder} />
+                                    <Keyboard color={ColourVars.inputPlaceholder} />
                                 {/snippet}
                             </IconButton>
                         {/if}
@@ -821,7 +821,7 @@
                                             class:open={inputTrayMode === "attachments" &&
                                                 !keyboard.visible}
                                             class="drawer_trigger">
-                                            <PlusCircle color={ColourVars.textPlaceholder} />
+                                            <PlusCircle color={ColourVars.inputPlaceholder} />
                                         </div>
                                     {/snippet}
                                 </IconButton>
@@ -835,7 +835,7 @@
                                                 size={"md"}>
                                                 {#snippet icon()}
                                                     <Camera
-                                                        color={ColourVars.textPlaceholder} />
+                                                        color={ColourVars.inputPlaceholder} />
                                                 {/snippet}
                                             </IconButton>
                                         {/snippet}
@@ -925,7 +925,7 @@
         width: 100%;
         // overflow: auto;
         border-radius: var(--rad-huge);
-        background-color: var(--text-tertiary);
+        background-color: var(--chat-input-background);
         transition: border-radius 200ms ease-out;
 
         &.has_reply,
@@ -993,7 +993,7 @@
         width: 100%;
         padding-bottom: 0;
         overflow: hidden;
-        background: var(--background-1);
+        background: var(--surface-1);
         border-radius: var(--rad-lg) var(--rad-lg) 0 0;
         transition:
             height 0.2s cubic-bezier(0.4, 0, 0.2, 1),

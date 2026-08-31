@@ -65,7 +65,7 @@
                         <Container
                             supplementalClass={"account_list_item"}
                             crossAxisAlignment={"center"}
-                            borderColour={ColourVars.background2}
+                            borderColour={ColourVars.surface2}
                             borderWidth={"thick"}
                             gap={"md"}
                             padding={["md", "xs", "md", "lg"]}
@@ -89,7 +89,7 @@
                                     {#if deleting === account.account}
                                         <span class="busy_icon">
                                             <Spinner
-                                                backgroundColour={ColourVars.textTertiary}
+                                                backgroundColour={ColourVars.textOnDisabledSurface}
                                                 foregroundColour={ColourVars.textSecondary} />
                                         </span>
                                     {:else}

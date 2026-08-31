@@ -61,7 +61,7 @@
             padding="md"
             borderRadius="md"
             crossAxisAlignment="center"
-            background={ColourVars.background0}>
+            background={ColourVars.surface0}>
             <Column>
                 <Subtitle fontWeight="bold">
                     {#if me}
@@ -86,7 +86,7 @@
         gap="lg"
         borderRadius="md"
         padding="md"
-        background={ColourVars.background0}
+        background={ColourVars.surface0}
         crossAxisAlignment="center">
         <Avatar size={"md"} url={tokenState.logo} />
         <Column width="fill">
@@ -122,7 +122,7 @@
 
 {#snippet draftView()}
     <Column supplementalClass="send_tx_draft" padding="xs">
-        <Column padding="xs" gap="xs" borderRadius="lg" background={ColourVars.background2}>
+        <Column padding="xs" gap="xs" borderRadius="lg" background={ColourVars.surface2}>
             <Row
                 supplementalClass="tx_header"
                 gap={"xs"}
@@ -140,9 +140,9 @@
                 borderRadius={["md", "md", "lg", "lg"]}
                 crossAxisAlignment={"center"}
                 padding={["sm", "lg", "sm", "sm"]}
-                background={ColourVars.background0}>
-                <Alert size={"1.5rem"} color={ColourVars.warning} />
-                <BodySmall colour={"warning"}>
+                background={ColourVars.surface0}>
+                <Alert size={"1.5rem"} color={ColourVars.validationWarning} />
+                <BodySmall colour={"validationWarning"}>
                     <Translatable
                         resourceKey={i18nKey("tokenTransfer.warning", {
                             token: tokenState.symbol,
@@ -159,7 +159,7 @@
             gap={"xs"}
             padding={me ? "xs" : "zero"}
             borderRadius={me ? ["lg", "md", "md", "md"] : "zero"}
-            background={me ? ColourVars.background2 : undefined}>
+            background={me ? ColourVars.surface2 : undefined}>
             <Row width="fill" mainAxisAlignment="end" padding={["xs", "xs", "xxs"]}>
                 <BodySmall colour="primary" fontWeight="bold" align="end">
                     <Translatable

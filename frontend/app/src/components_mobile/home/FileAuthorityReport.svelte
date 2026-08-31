@@ -129,7 +129,7 @@
         {#if mode === "manual"}
             <Input placeholder={$_("moderationReport.filingReference")} bind:value={reference} />
             {#if failed}
-                <Body colour={"error"}>
+                <Body colour={"validationError"}>
                     <Translatable resourceKey={i18nKey("moderationReport.failed")} />
                 </Body>
             {/if}
@@ -159,7 +159,7 @@
             <Input placeholder={$_("moderationReport.phone")} bind:value={phone} />
             <Input placeholder={$_("moderationReport.email")} bind:value={email} />
             {#if needsOohAck}
-                <Body colour={"error"}>
+                <Body colour={"validationError"}>
                     <Translatable resourceKey={i18nKey("moderationReport.oohWarning")} />
                 </Body>
                 <Checkbox
@@ -170,7 +170,7 @@
                     onChange={() => (oohAcknowledged = !oohAcknowledged)} />
             {/if}
             {#if failed}
-                <Body colour={"error"}>
+                <Body colour={"validationError"}>
                     {#if failureMessage !== undefined}
                         {failureMessage}
                     {:else}

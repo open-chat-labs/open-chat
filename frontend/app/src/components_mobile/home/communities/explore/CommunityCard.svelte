@@ -77,7 +77,7 @@
 <Container
     padding={["zero", "zero", "lg", "zero"]}
     borderRadius={"md"}
-    background={ColourVars.background1}
+    background={ColourVars.surface1}
     direction={"vertical"}>
     <IntersectionObserver>
         {#snippet children(intersecting)}
@@ -89,9 +89,9 @@
                     gap={"xs"}
                     borderRadius={"md"}
                     padding={["xs", "md"]}
-                    background={ColourVars.background0}>
-                    <Translate color={ColourVars.primaryLight} />
-                    <BodySmall colour={"primaryLight"}>
+                    background={ColourVars.surface0}>
+                    <Translate color={ColourVars.primaryAccent} />
+                    <BodySmall colour={"primaryAccent"}>
                         {supportedLanguagesByCode[language]?.name}
                     </BodySmall>
                 </Container>
