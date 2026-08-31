@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+
 ## [[2.0.1979](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1979-identity)] - 2026-04-10
 
 ### Removed
