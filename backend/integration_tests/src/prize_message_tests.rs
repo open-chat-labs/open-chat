@@ -40,7 +40,7 @@ fn prize_messages_can_be_claimed_successfully() {
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
@@ -149,7 +149,7 @@ fn prize_message_requiring_reauthentication() {
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
@@ -267,7 +267,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
@@ -364,7 +364,7 @@ fn old_transactions_fixed_by_updating_created_date() {
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
         user.principal,
-        user.user_id.into(),
+        user.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,

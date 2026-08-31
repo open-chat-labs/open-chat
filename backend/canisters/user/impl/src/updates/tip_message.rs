@@ -5,7 +5,6 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
-use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
@@ -31,7 +30,7 @@ async fn tip_message_impl(mut args: Args) -> Response {
         ledger: args.ledger,
         token_symbol: args.token_symbol.clone(),
         amount: args.amount,
-        to: Principal::from(args.recipient).into(),
+        to: icrc1::Account::for_user(args.recipient),
         fee: args.fee,
         memo: Some(MEMO_TIP.to_vec().into()),
         created: now_nanos,
@@ -163,7 +162,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
             let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
             state.push_user_canister_event(
-                args.recipient.into(),
+                args.recipient.canister_id(),
                 UserCanisterEvent::TipMessage(Box::new(user_canister::TipMessageArgs {
                     thread_root_message_id,
                     message_id: args.message_id,

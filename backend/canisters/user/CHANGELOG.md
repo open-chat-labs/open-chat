@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+
+### Fixed
+
+- Validate the whole recipient account rather than only its owner when sending crypto ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-13
 
 ### Changed

@@ -85,7 +85,7 @@ fn user_canister_notified_of_community_deleted() {
     // next attempt (still inside the 10 minute window) is delivered.
     tick_many(env, 3);
 
-    start_canister(env, user2.local_user_index, user2.user_id.into());
+    start_canister(env, user2.local_user_index, user2.user_id.canister_id());
 
     env.tick();
 
@@ -108,7 +108,7 @@ fn user_canister_notified_of_community_deleted() {
     // cannot show this (it reads zero while the attempt is in flight), so wait for the drop
     // itself: group_index's failed count rising is the deterministic endpoint.
     wait_for_community_deleted_notification_dropped(env, canister_ids.group_index, failed_before);
-    start_canister(env, user3.local_user_index, user3.user_id.into());
+    start_canister(env, user3.local_user_index, user3.user_id.canister_id());
     env.tick();
 
     // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister

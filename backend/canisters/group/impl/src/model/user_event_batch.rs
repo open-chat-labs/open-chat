@@ -13,7 +13,7 @@ impl TimerJobItem for UserEventBatch {
         }
 
         let response = user_canister_c2c_client::c2c_group_canister(
-            self.key.into(),
+            self.key.canister_id(),
             &user_canister::c2c_group_canister::Args {
                 events: self.items.clone(),
             },

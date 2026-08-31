@@ -85,10 +85,15 @@ fn commit(
         .iter()
         .filter(|(user_id, _)| active_users_filter.as_ref().is_none_or(|a| a.contains(user_id)))
         .filter(|(user_id, user)| {
-            should_perform_upgrade((**user_id).into(), user.wasm_version, version, &filter, state.data.test_mode)
-                && !state.data.global_users.is_bot(user_id)
+            should_perform_upgrade(
+                user_id.canister_id(),
+                user.wasm_version,
+                version,
+                &filter,
+                state.data.test_mode,
+            ) && !state.data.global_users.is_bot(user_id)
         })
-        .map(|(user_id, _)| CanisterId::from(*user_id))
+        .map(|(user_id, _)| user_id.canister_id())
         .sorted_by_key(|&c| Reverse(state.data.global_users.diamond_membership_expiry_date(&c.into())))
     {
         state.data.users_requiring_upgrade.enqueue(canister_id, false);

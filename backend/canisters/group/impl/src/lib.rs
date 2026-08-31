@@ -523,7 +523,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
-                proposals_bot: self.data.proposals_bot_user_id.into(),
+                proposals_bot: self.data.proposals_bot_user_id.canister_id(),
                 escrow_canister_id: self.data.escrow_canister_id,
                 icp_ledger: ICP_LEDGER_CANISTER_ID,
             },

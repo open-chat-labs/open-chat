@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, SuccessOnly, TimestampMillis, UserId};
@@ -37,7 +37,7 @@ impl ToHumanReadable for Args {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
             id: self.id,
-            submitted_by: Principal::from(self.submitted_by).into(),
+            submitted_by: self.submitted_by.as_principal().into(),
             name: self.name.clone(),
             logo: self.logo.clone(),
             url: self.url.clone(),

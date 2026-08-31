@@ -96,7 +96,7 @@ impl UserAuth {
 
 impl User {
     pub fn canister(&self) -> CanisterId {
-        self.user_id.into()
+        self.user_id.canister_id()
     }
 
     pub fn username(&self) -> String {

@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
@@ -30,7 +30,7 @@ impl ToHumanReadable for Args {
 
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
-            bot_id: Principal::from(self.bot_id).into(),
+            bot_id: self.bot_id.as_principal().into(),
         }
     }
 }

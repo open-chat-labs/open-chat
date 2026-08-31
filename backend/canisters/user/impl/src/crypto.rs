@@ -30,5 +30,5 @@ async fn process_transaction_internal(
         UserId::from(state.env.canister_id())
     });
 
-    ledger_utils::process_transaction(transaction, my_user_id.into(), false).await
+    ledger_utils::process_transaction(transaction, my_user_id.canister_id(), false).await
 }

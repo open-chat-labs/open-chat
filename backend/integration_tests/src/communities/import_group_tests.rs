@@ -122,7 +122,7 @@ fn read_up_to_data_maintained_after_import() {
     client::user::mark_read(
         env,
         user2.principal,
-        user2.user_id.into(),
+        user2.user_id.canister_id(),
         &user_canister::mark_read::Args {
             messages_read: vec![ChatMessagesRead {
                 chat_id: group_id,

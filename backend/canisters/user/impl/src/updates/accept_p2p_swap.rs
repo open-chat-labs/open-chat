@@ -40,7 +40,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
             from_subaccount: None,
             to: Account {
                 owner: escrow_canister_id,
-                subaccount: Some(deposit_subaccount(my_user_id.into(), content.swap_id)),
+                subaccount: Some(deposit_subaccount(my_user_id.as_principal(), content.swap_id)),
             },
             fee: Some(content.token1.fee.into()),
             created_at_time: Some(now * NANOS_PER_MILLISECOND),
@@ -81,7 +81,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                     if let Ok(result) = chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now) {
                         let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
                         state.push_user_canister_event(
-                            args.user_id.into(),
+                            args.user_id.canister_id(),
                             UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
                                 thread_root_message_id,
                                 message_id: args.message_id,

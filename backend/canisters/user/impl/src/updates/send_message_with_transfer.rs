@@ -391,7 +391,7 @@ pub(crate) async fn set_up_p2p_swap(
             amount: args.token0_amount + args.token0.fee,
             to: Account {
                 owner: state.data.escrow_canister_id,
-                subaccount: Some(deposit_subaccount(my_user_id.into(), id)),
+                subaccount: Some(deposit_subaccount(my_user_id.as_principal(), id)),
             },
             fee: args.token0.fee,
             memo: Some(MEMO_P2P_SWAP_CREATE.to_vec().into()),

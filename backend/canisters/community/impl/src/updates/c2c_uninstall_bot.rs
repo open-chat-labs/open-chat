@@ -15,7 +15,7 @@ fn c2c_uninstall_bot(args: Args) -> Response {
 
 fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if args.caller != OPENCHAT_BOT_USER_ID {
-        let member = state.data.members.get_verified_member(args.caller.into())?;
+        let member = state.data.members.get_verified_member(args.caller.as_principal())?;
         if !member.role().is_owner() {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }

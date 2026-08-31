@@ -46,7 +46,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
             from: random_principal.into(),
-            to: user2.user_id.into(),
+            to: types::icrc1::Account::for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -59,7 +59,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
-            to: user2.user_id.into(),
+            to: types::icrc1::Account::for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -68,7 +68,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
     let send_message_result = client::user::send_message_v2(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
@@ -154,7 +154,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
             from: random_principal.into(),
-            to: user2.user_id.into(),
+            to: types::icrc1::Account::for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -167,7 +167,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
-            to: user2.user_id.into(),
+            to: types::icrc1::Account::for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -180,7 +180,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     let send_message_result = client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,

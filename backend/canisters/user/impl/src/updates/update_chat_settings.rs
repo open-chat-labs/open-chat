@@ -16,7 +16,7 @@ async fn update_chat_settings(args: Args) -> Response {
 
 async fn update_chat_settings_impl(args: Args) -> OCResult {
     if let Err(local_user_index_canister) = read_state(|state| check_chat_exists(args.user_id, state)) {
-        let user = local_user_index_canister_c2c_client::lookup_user(args.user_id.into(), local_user_index_canister)
+        let user = local_user_index_canister_c2c_client::lookup_user(args.user_id.as_principal(), local_user_index_canister)
             .await?
             .ok_or(OCErrorCode::TargetUserNotFound)?;
 
@@ -39,7 +39,7 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
                 .set_events_time_to_live(state.env.canister_id().into(), events_ttl, now);
 
             state.push_user_canister_event(
-                args.user_id.into(),
+                args.user_id.canister_id(),
                 UserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {
                     events_ttl,
                     timestamp: now,
