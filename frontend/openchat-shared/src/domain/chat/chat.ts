@@ -156,6 +156,9 @@ export interface P2PSwapContentInitial {
     token1Amount: bigint;
     caption?: string;
     expiresIn: bigint;
+    // An ICRC-1 textual account to take the funds from, for spending from a wallet OpenChat does
+    // not control. Left undefined to spend from the user's own canister.
+    fromAccount?: string;
 }
 
 export interface TokenInfo {

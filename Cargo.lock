@@ -6593,6 +6593,7 @@ dependencies = [
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
+ "oc_error_codes",
  "sha2 0.11.0",
  "test-case",
  "tracing",

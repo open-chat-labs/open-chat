@@ -2316,6 +2316,7 @@ type AcceptP2PSwap = {
     messageId: bigint;
     pin: string | undefined;
     newAchievement: boolean;
+    fromAccount: string | undefined;
     kind: "acceptP2PSwap";
 };
 

@@ -1,5 +1,6 @@
 use candid::Principal;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Subaccount};
+use oc_error_codes::{OCError, OCErrorCode};
 use sha2::{Digest, Sha256};
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
@@ -33,17 +34,27 @@ pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: Option<UserId>,
     retry_if_bad_fee: bool,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
+) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     match transaction {
-        PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
+        PendingCryptoTransaction::NNS(t) => match nns::process_transaction(t, sender).await {
+            Ok(Ok(c)) => Ok(Ok(c)),
+            Ok(Err(c)) => {
+                let error = OCErrorCode::TransferFailed.with_message(c.error_message());
+                Ok(Err((c, error)))
+            }
+            Err(e) => Err(e),
+        },
         PendingCryptoTransaction::ICRC1(t) => match icrc1::process_transaction(t, sender, retry_if_bad_fee).await {
             Ok(Ok(c)) => Ok(Ok(c.into())),
-            Ok(Err(c)) => Ok(Err(c.into())),
+            Ok(Err(c)) => {
+                let error = OCErrorCode::TransferFailed.with_message(&c.error_message);
+                Ok(Err((c.into(), error)))
+            }
             Err(e) => Err(e),
         },
         PendingCryptoTransaction::ICRC2(t) => match icrc2::process_transaction(t, sender).await {
             Ok(Ok(c)) => Ok(Ok(c.into())),
-            Ok(Err(c)) => Ok(Err(c.into())),
+            Ok(Err((c, error))) => Ok(Err((c.into(), error))),
             Err(e) => Err(e),
         },
     }
