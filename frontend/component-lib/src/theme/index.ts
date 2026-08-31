@@ -1,3 +1,4 @@
+export * from "./applyTheme";
 export * from "./colour";
 export * from "./neon";
 export * from "./presets";

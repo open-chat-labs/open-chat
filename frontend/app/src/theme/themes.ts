@@ -1,4 +1,5 @@
 import { theme as neon } from "component-lib";
+import { initThemeV2 } from "./themeV2";
 import { derived, readable, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 import { getTheme as getBarbieTheme } from "./community/barbie";
@@ -91,7 +92,7 @@ export function writeNativeCssVariables() {
 }
 
 export function setNativeTheme() {
-    writeNativeCssVariables();
+    initThemeV2();
     themeOverride.set("neon_dark");
 }
 

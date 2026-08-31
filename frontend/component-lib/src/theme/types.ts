@@ -71,3 +71,6 @@ export type ThemeColourHexMap = Record<StaticColourArgs, string> &
     Record<FeedbackColourArgs, string> &
     Record<RequiredThemeColourArgs, string> &
     Partial<Record<OptionalThemeColourArgs, string>>;
+
+export type ThemeMode = "light" | "dark";
+export type ThemeAppearance = ThemeMode | "system";

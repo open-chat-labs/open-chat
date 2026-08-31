@@ -5,7 +5,13 @@ import type {
     RequiredThemeColourArgs,
     StaticColourArgs,
     ThemeColourHexMap,
+    ThemeMode,
 } from "./types";
+
+export type BuiltinThemeDefinition = {
+    mode: ThemeMode;
+    colours: ThemeColourHexMap;
+};
 
 // Light and dark backgrounds are const between themes!
 const baseDarkTheme: Record<StaticColourArgs, string> = {
@@ -133,6 +139,17 @@ export const neonLight: ThemeColourHexMap = composeLightTheme(
         chatTextSent: "#24192d",
     },
 );
+
+export const builtinThemes: Record<string, BuiltinThemeDefinition> = {
+    neon: { mode: "dark", colours: neonDark },
+    "neon-light": { mode: "light", colours: neonLight },
+};
+
+export function getBuiltinThemeNames(mode?: ThemeMode): string[] {
+    return Object.entries(builtinThemes)
+        .filter(([, t]) => mode === undefined || t.mode === mode)
+        .map(([id]) => id);
+}
 
 function parseColour(value: string): Colour {
     if (value.startsWith("rgba(")) {
