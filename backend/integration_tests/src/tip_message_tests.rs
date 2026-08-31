@@ -322,7 +322,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     );
 }
 
-// A tip taken from an account OpenChat does not control, pulled via ICRC-2 against an allowance
+// A tip given from an account OpenChat does not control, pulled via ICRC-2 against an allowance
 // that account granted to the tipper's canister. This is how tipping from an external wallet works.
 #[test]
 fn tip_direct_message_from_approved_account_succeeds() {

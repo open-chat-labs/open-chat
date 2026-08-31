@@ -105,7 +105,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
     } else if args.from_account.is_some_and(|a| LedgerAccount::from(a) == my_user_id.into()) {
         // Pulling from our own account would need an approval we had granted ourselves, so this is
         // always a client bug. Reject it rather than let the ledger fail with an allowance error.
-        Err(OCErrorCode::InvalidRequest.with_message("Tip cannot be taken from the user's own account"))
+        Err(OCErrorCode::InvalidRequest.with_message("`from_account` cannot be the user's own account"))
     } else {
         let now = state.env.now();
         let now_nanos = now * NANOS_PER_MILLISECOND;
