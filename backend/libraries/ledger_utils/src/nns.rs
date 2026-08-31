@@ -1,16 +1,17 @@
-use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Memo, Subaccount, Timestamp, TransferArgs};
+use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, TransferArgs};
 use types::icrc1::Account;
 use types::nns::Tokens;
-use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction};
+use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, UserId};
 
 pub async fn process_transaction(
     transaction: types::nns::PendingCryptoTransaction,
-    sender: Account,
+    sender: Option<UserId>,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
+    let sender = crate::resolve_sender(sender);
     let memo = transaction.memo.unwrap_or_default();
     let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 
-    let from = AccountIdentifier::new(&sender.owner, &sender.subaccount.map_or(DEFAULT_SUBACCOUNT, Subaccount));
+    let from = AccountIdentifier::from(sender);
     let to = match transaction.to {
         types::nns::UserOrAccount::User(u) => u.into(),
         types::nns::UserOrAccount::Account(a) => a,
@@ -20,9 +21,8 @@ pub async fn process_transaction(
         memo: Memo(memo),
         amount: transaction.amount.into(),
         fee: fee.into(),
-        // The ledger takes the owner from the caller, so the subaccount is the only part of
-        // `sender` it lets us choose.
-        from_subaccount: sender.subaccount.map(Subaccount),
+        // The owner is implied by the caller, so only the subaccount goes in the args.
+        from_subaccount: Account::for_user(sender).subaccount.map(Subaccount),
         to,
         created_at_time: Some(Timestamp {
             timestamp_nanos: transaction.created,

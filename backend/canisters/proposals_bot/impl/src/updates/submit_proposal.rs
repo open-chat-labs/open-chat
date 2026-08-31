@@ -40,7 +40,6 @@ async fn submit_proposal(args: Args) -> Response {
 async fn submit_proposal_impl(args: Args) -> Response {
     let PrepareResult {
         caller,
-        this_canister_id,
         user_index_canister_id,
         neuron_id,
         chat,
@@ -55,7 +54,7 @@ async fn submit_proposal_impl(args: Args) -> Response {
         Err(error) => return InternalError(format!("Failed to lookup user: {error:?}")),
     };
 
-    match process_transaction(args.transaction.clone(), this_canister_id.into()).await {
+    match process_transaction(args.transaction.clone(), None).await {
         Ok(Ok(_)) => {}
         Ok(Err(error)) => return PaymentFailed(error.error_message),
         Err(error) => return InternalError(format!("{error:?}")),
@@ -80,7 +79,6 @@ async fn submit_proposal_impl(args: Args) -> Response {
 
 struct PrepareResult {
     caller: Principal,
-    this_canister_id: CanisterId,
     user_index_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
     chat: MultiUserChat,
@@ -99,7 +97,6 @@ fn prepare(
     ) {
         Ok(neuron_id) => Ok(PrepareResult {
             caller: state.env.caller(),
-            this_canister_id: state.env.canister_id(),
             user_index_canister_id: state.data.user_index_canister_id,
             neuron_id,
             chat: state.data.nervous_systems.get_chat_id(&governance_canister_id).unwrap(),

@@ -8,18 +8,15 @@ use types::{
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    spender: Account,
+    spender: Option<UserId>,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
-    // The recorded spender is a UserId, which cannot carry an arbitrary subaccount, so it holds the
-    // owner alone. Nothing is lost today because every caller spends from its default subaccount.
-    let spender_user_id = UserId::from(spender.owner);
+    let spender = crate::resolve_sender(spender);
 
     let args = TransferFromArgs {
-        // The ledger takes the spender's owner from the caller, so the subaccount is the only part
-        // of `spender` it lets us choose. Note this picks which approval is spent - `icrc2_approve`
-        // grants to an exact (owner, subaccount) pair, so a non-default subaccount here can only
-        // spend an approval that named it.
-        spender_subaccount: spender.subaccount,
+        // The owner is implied by the caller, so only the subaccount goes in the args. Note this
+        // picks which approval is spent - `icrc2_approve` grants to an exact (owner, subaccount)
+        // pair, so a non-default subaccount here can only spend an approval that named it.
+        spender_subaccount: Account::for_user(spender).subaccount,
         from: transaction.from.into(),
         to: transaction.to.into(),
         fee: Some(transaction.fee.into()),
@@ -35,7 +32,7 @@ pub async fn process_transaction(
             token_symbol: transaction.token_symbol,
             amount: transaction.amount,
             fee: transaction.fee,
-            spender: spender_user_id,
+            spender,
             from: transaction.from.into(),
             to: transaction.to.into(),
             memo: transaction.memo.clone(),
@@ -55,7 +52,7 @@ pub async fn process_transaction(
                 token_symbol: transaction.token_symbol,
                 amount: transaction.amount,
                 fee: transaction.fee,
-                spender: spender_user_id,
+                spender,
                 from: transaction.from.into(),
                 to: transaction.to.into(),
                 memo: transaction.memo,

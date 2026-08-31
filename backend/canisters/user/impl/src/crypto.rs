@@ -1,5 +1,4 @@
 use crate::read_state;
-use types::icrc1::Account;
 use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserId};
 
 pub async fn process_transaction(
@@ -31,5 +30,5 @@ async fn process_transaction_internal(
         UserId::from(state.env.canister_id())
     });
 
-    ledger_utils::process_transaction(transaction, Account::for_user(my_user_id), false).await
+    ledger_utils::process_transaction(transaction, Some(my_user_id), false).await
 }

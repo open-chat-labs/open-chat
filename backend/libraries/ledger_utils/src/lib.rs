@@ -1,7 +1,6 @@
 use candid::Principal;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Subaccount};
 use sha2::{Digest, Sha256};
-use types::icrc1::Account;
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
 };
@@ -32,7 +31,7 @@ pub fn create_pending_transaction(
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: Account,
+    sender: Option<UserId>,
     retry_if_bad_fee: bool,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
     match transaction {
@@ -47,6 +46,24 @@ pub async fn process_transaction(
             Ok(Err(c)) => Ok(Err(c.into())),
             Err(e) => Err(e),
         },
+    }
+}
+
+// The user this canister is transferring on behalf of, defaulting to the canister itself where
+// there isn't one. The owner is always this canister because the ledger takes it from the caller, so
+// resolving it here rather than accepting it as an argument means the recorded `from` cannot
+// disagree with where the funds actually moved.
+pub(crate) fn resolve_sender(sender: Option<UserId>) -> UserId {
+    let canister_id = ic_cdk::api::canister_self();
+
+    match sender {
+        // Transferring for a user held elsewhere would debit whichever of our own users shares their
+        // index, so refuse rather than move somebody else's funds.
+        Some(user_id) => {
+            assert_eq!(user_id.canister_id(), canister_id, "{user_id} is not held by this canister");
+            user_id
+        }
+        None => UserId::from(canister_id),
     }
 }
 
