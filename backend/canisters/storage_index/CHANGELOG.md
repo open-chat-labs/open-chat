@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2049](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2049-storage_index)] - 2026-08-31
+
 ### Added
 
 - Hold and fan out *derived* CSAM hashes (declared sources of upheld transcodes) alongside verified ones, seeding new buckets with both ([#9254](https://github.com/open-chat-labs/open-chat/pull/9254))
