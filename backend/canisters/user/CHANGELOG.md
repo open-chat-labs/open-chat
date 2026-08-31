@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add optional `from_account` to `tip_message`, so a tip can be taken from an account OpenChat does not control ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))
+
 ### Changed
 
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
