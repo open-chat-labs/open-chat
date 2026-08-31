@@ -1,11 +1,10 @@
-use crate::crypto::process_transaction;
+use crate::crypto::{process_transaction, validate_from_account};
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
-use icrc_ledger_types::icrc1::account::Account as LedgerAccount;
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
@@ -53,7 +52,7 @@ async fn tip_message_impl(mut args: Args) -> Response {
     // Make the crypto transfer
     match process_transaction(pending_transfer).await {
         Ok(Ok(_)) => {}
-        Ok(Err(failed)) => return Error(OCErrorCode::TransferFailed.with_message(failed.error_message())),
+        Ok(Err((_, error))) => return Error(error),
         Err(error) => return Error(error.into()),
     }
 
@@ -102,11 +101,9 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
         Err(OCErrorCode::TransferCannotBeZero.into())
     } else if my_user_id == args.recipient {
         Err(OCErrorCode::CannotTipSelf.into())
-    } else if args.from_account.is_some_and(|a| LedgerAccount::from(a) == my_user_id.into()) {
-        // Pulling from our own account would need an approval we had granted ourselves, so this is
-        // always a client bug. Reject it rather than let the ledger fail with an allowance error.
-        Err(OCErrorCode::InvalidRequest.with_message("`from_account` cannot be the user's own account"))
     } else {
+        validate_from_account(args.from_account, my_user_id)?;
+
         let now = state.env.now();
         let now_nanos = now * NANOS_PER_MILLISECOND;
         state.data.pin_number.verify(args.pin.as_mut(), now)?;

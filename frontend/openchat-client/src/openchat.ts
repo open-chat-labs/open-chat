@@ -7097,6 +7097,7 @@ export class OpenChat {
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        fromAccount?: string,
     ): Promise<AcceptP2PSwapResponse> {
         let pin: string | undefined = undefined;
 
@@ -7119,6 +7120,7 @@ export class OpenChat {
                 messageId,
                 pin,
                 newAchievement,
+                fromAccount,
             })
             .then((resp) => {
                 if (resp.kind === "success") {

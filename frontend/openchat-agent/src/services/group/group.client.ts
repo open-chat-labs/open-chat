@@ -136,6 +136,7 @@ import { MultiCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import type { IChatEventsReader } from "../common/chatEvents";
 import {
     acceptP2PSwapSuccess,
+    addressToIcrcAccount,
     apiAccessGateConfig,
     apiExternalBotPermissions,
     apiMessageContent,
@@ -974,6 +975,7 @@ export class GroupClient
         messageId: bigint,
         pin: string | undefined,
         newAchievement: boolean,
+        fromAccount: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         return this.update(
             groupId,
@@ -981,6 +983,7 @@ export class GroupClient
             {
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
+                from_account: mapOptional(fromAccount, addressToIcrcAccount),
                 pin,
                 new_achievement: newAchievement,
             },

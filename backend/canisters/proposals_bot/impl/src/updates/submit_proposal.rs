@@ -56,7 +56,7 @@ async fn submit_proposal_impl(args: Args) -> Response {
 
     match process_transaction(args.transaction.clone(), None).await {
         Ok(Ok(_)) => {}
-        Ok(Err(error)) => return PaymentFailed(error.error_message),
+        Ok(Err((error, _))) => return PaymentFailed(error.error_message),
         Err(error) => return InternalError(format!("{error:?}")),
     }
 

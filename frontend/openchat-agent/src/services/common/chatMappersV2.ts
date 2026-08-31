@@ -2101,6 +2101,7 @@ export function apiP2PSwapContentInitial(domain: P2PSwapContentInitial): TP2PSwa
         token1_amount: domain.token1Amount,
         caption: domain.caption,
         expires_in: domain.expiresIn,
+        from_account: mapOptional(domain.fromAccount, addressToIcrcAccount),
     };
 }
 

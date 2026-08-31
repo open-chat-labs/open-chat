@@ -191,6 +191,7 @@ pub enum OCErrorCode {
     LedgerNotFound = 347,
     PrizeUserNotElligible = 348,
     NoEventsToDelete = 349,
+    InsufficientAllowance = 350,
 
     // InternalError
     C2CError = 500,
