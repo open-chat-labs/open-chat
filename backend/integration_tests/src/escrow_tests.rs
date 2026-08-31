@@ -29,7 +29,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let swap_id = client::escrow::happy_path::create_swap(
         env,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
         icp_token_info(),
@@ -43,7 +43,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let user1_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user1.user_id.into(), swap_id)),
+        subaccount: Some(deposit_subaccount(user1.user_id.as_principal(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -56,7 +56,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let user2_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user2.user_id.into(), swap_id)),
+        subaccount: Some(deposit_subaccount(user2.user_id.as_principal(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -67,8 +67,10 @@ fn swap_via_escrow_canister_succeeds() {
         chat_amount + 100_000,
     );
 
-    let result1 = client::escrow::happy_path::notify_deposit(env, user1.user_id.into(), canister_ids.escrow, swap_id, None);
-    let result2 = client::escrow::happy_path::notify_deposit(env, user2.user_id.into(), canister_ids.escrow, swap_id, None);
+    let result1 =
+        client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    let result2 =
+        client::escrow::happy_path::notify_deposit(env, user2.user_id.canister_id(), canister_ids.escrow, swap_id, None);
 
     assert!(!result1.complete);
     assert!(result2.complete);
@@ -172,7 +174,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let swap_id = client::escrow::happy_path::create_swap(
         env,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
         icp_token_info(),
@@ -186,7 +188,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let user1_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user1.user_id.into(), swap_id)),
+        subaccount: Some(deposit_subaccount(user1.user_id.as_principal(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -199,7 +201,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let user2_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user2.user_id.into(), swap_id)),
+        subaccount: Some(deposit_subaccount(user2.user_id.as_principal(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -210,17 +212,17 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
         chat_amount + 100_000,
     );
 
-    client::escrow::happy_path::notify_deposit(env, user1.user_id.into(), canister_ids.escrow, swap_id, None);
+    client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
 
     if expired {
         env.advance_time(Duration::from_millis((60 * MINUTE_IN_MS) + 1));
     } else {
-        client::escrow::happy_path::cancel_swap(env, user1.user_id.into(), canister_ids.escrow, swap_id);
+        client::escrow::happy_path::cancel_swap(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id);
     }
 
     let notify_response = client::escrow::notify_deposit(
         env,
-        user2.user_id.into(),
+        user2.user_id.canister_id(),
         canister_ids.escrow,
         &escrow_canister::notify_deposit::Args {
             swap_id,

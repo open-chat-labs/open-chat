@@ -101,7 +101,7 @@ fn direct_message_notification_muted() {
     client::user::mute_notifications(
         env,
         user2.principal,
-        user2.user_id.into(),
+        user2.user_id.canister_id(),
         &user_canister::mute_notifications::Args {
             chat_id: user1.user_id.into(),
         },

@@ -13,7 +13,7 @@ async fn create_account_linking_code(_args: Args) -> Response {
     match mutate_state(prepare) {
         PrepareResult::ExistingCode(linking_code) => Response::Success(linking_code),
         PrepareResult::NewCode(user_id, user_index_canister_id) => {
-            match user_index_canister_c2c_client::lookup_user(user_id.into(), user_index_canister_id).await {
+            match user_index_canister_c2c_client::lookup_user(user_id.as_principal(), user_index_canister_id).await {
                 Ok(Some(user_details)) => mutate_state(|state| {
                     let now = state.env.now();
                     let rng = state.env.rng();

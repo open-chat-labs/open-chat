@@ -15,7 +15,7 @@ async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalance
     };
     let amount = prepare_ok.top_up.amount;
 
-    if deposit_cycles(prepare_ok.user_id.into(), amount).await.is_ok() {
+    if deposit_cycles(prepare_ok.user_id.canister_id(), amount).await.is_ok() {
         mutate_state(|state| commit(prepare_ok.user_id, prepare_ok.top_up, state));
         NotifyLowBalanceResponse::Success(amount)
     } else {

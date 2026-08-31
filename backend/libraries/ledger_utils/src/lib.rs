@@ -23,7 +23,7 @@ pub fn create_pending_transaction(
         fee,
         token_symbol: token_symbol.clone(),
         amount,
-        to: user_id.into(),
+        to: types::icrc1::Account::for_user(user_id),
         memo: memo.map(|bytes| bytes.to_vec().into()),
         created: now_nanos,
     })

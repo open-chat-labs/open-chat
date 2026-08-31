@@ -161,7 +161,7 @@ impl RuntimeState {
     }
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
-        if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
+        if canister_id != OPENCHAT_BOT_USER_ID.canister_id() && canister_id != self.env.canister_id() {
             self.data.user_canister_events_queue.push(
                 canister_id.into(),
                 IdempotentEnvelope {

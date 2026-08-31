@@ -233,7 +233,7 @@ fn send_crypto_message_and_check_activity_feed(chat_type: ChatType) {
         fee: 10_000,
         token_symbol: ICP_SYMBOL.to_string(),
         amount,
-        to: us.user_id.into(),
+        to: types::icrc1::Account::for_user(us.user_id),
         memo: None,
         created: now_nanos(env),
     });
@@ -384,21 +384,9 @@ fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
         true,
     );
 
-    client::ledger::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        Principal::from(us.user_id),
-        1_100_000_000,
-    );
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, us.user_id, 1_100_000_000);
 
-    client::ledger::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.chat_ledger,
-        Principal::from(them.user_id),
-        11_000_000_000,
-    );
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, them.user_id, 11_000_000_000);
 
     let message_id = random_from_u128();
     let content = MessageContentInitial::P2PSwap(P2PSwapContentInitial {

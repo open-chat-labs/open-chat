@@ -66,7 +66,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
                 state.push_user_canister_event(
-                    args.user_id.into(),
+                    args.user_id.canister_id(),
                     UserCanisterEvent::DeleteMessages(Box::new(user_canister::DeleteUndeleteMessagesArgs {
                         thread_root_message_id,
                         message_ids: my_messages,

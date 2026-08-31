@@ -1719,11 +1719,13 @@ impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
                     subaccount: None,
                 }
                 .into(),
-                to: types::icrc1::Account {
-                    owner: my_user_id.map(|u| u.into()).unwrap_or(Principal::anonymous()),
-                    subaccount: None,
-                }
-                .into(),
+                to: my_user_id
+                    .map(types::icrc1::Account::for_user)
+                    .unwrap_or(types::icrc1::Account {
+                        owner: Principal::anonymous(),
+                        subaccount: None,
+                    })
+                    .into(),
                 fee: self.fee,
                 memo: None,
                 created: 0,

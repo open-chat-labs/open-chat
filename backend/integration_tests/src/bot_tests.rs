@@ -665,7 +665,7 @@ fn send_direct_message() {
     env.advance_time(Duration::from_millis(1));
     let owner = client::register_diamond_user(env, canister_ids, *controller);
 
-    let local_user_index = canister_ids.local_user_index(env, owner.user_id);
+    let local_user_index = canister_ids.local_user_index(env, owner.user_id.canister_id());
 
     // Register a bot
     let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(

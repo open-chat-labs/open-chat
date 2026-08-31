@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Expose count of failed community-deleted notifications in metrics ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
 
+### Changed
+
+- Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+
 ## [[2.0.2034](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2034-group_index)] - 2026-08-20
 
 ### Added

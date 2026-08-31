@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use types::{SuccessOnly, UserId};
@@ -20,7 +20,7 @@ impl ToHumanReadable for Args {
 
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
-            user_id: Principal::from(self.user_id).into(),
+            user_id: self.user_id.as_principal().into(),
         }
     }
 }

@@ -315,7 +315,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
                     swap_id: self.swap_id,
-                    deposited_by: Some(self.user_id.into()),
+                    deposited_by: Some(self.user_id.as_principal()),
                 },
             )
             .await

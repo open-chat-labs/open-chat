@@ -1,7 +1,6 @@
 use crate::guards::caller_is_governance_principal;
 use crate::metadata_helper::MetadataHelper;
 use crate::{mutate_state, read_state};
-use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_LIST_TOKEN, SNS_GOVERNANCE_CANISTER_ID};
@@ -97,10 +96,9 @@ async fn add_token_impl(
     let mut payment: Option<Payment> = None;
     if let Some(user_id) = payer {
         let amount = if test_mode { 100_000_000 } else { TOKEN_LISTING_FEE_E8S };
-        let from: Principal = user_id.into();
         let transfer_args = TransferFromArgs {
             spender_subaccount: None,
-            from: from.into(),
+            from: user_id.into(),
             to: SNS_GOVERNANCE_CANISTER_ID.into(),
             amount: amount.into(),
             fee: None, // No transfer fee for BURNing

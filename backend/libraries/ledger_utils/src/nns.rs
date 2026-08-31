@@ -12,7 +12,7 @@ pub async fn process_transaction(
 
     let from = default_ledger_account(sender);
     let to = match transaction.to {
-        types::nns::UserOrAccount::User(u) => default_ledger_account(u.into()),
+        types::nns::UserOrAccount::User(u) => u.into(),
         types::nns::UserOrAccount::Account(a) => a,
     };
 

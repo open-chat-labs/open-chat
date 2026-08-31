@@ -29,7 +29,7 @@ async fn register_proposal_vote_impl(args: Args) -> Response {
         proposal_id,
         adopt: args.adopt,
     };
-    match user_canister_c2c_client::c2c_vote_on_proposal(user_id.into(), &c2c_args).await {
+    match user_canister_c2c_client::c2c_vote_on_proposal(user_id.canister_id(), &c2c_args).await {
         Ok(response) => match response {
             user_canister::c2c_vote_on_proposal::Response::Success => {
                 if let Err(error) = mutate_state(|state| commit(args.channel_id, user_id, args, state)) {

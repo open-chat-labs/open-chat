@@ -3,6 +3,7 @@ use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Deserializer, Serialize};
 use ts_export::ts_export;
 
@@ -182,15 +183,16 @@ impl PendingCryptoTransaction {
     }
 
     pub fn validate_recipient(&self, recipient: UserId) -> bool {
+        // The whole account, not just the owner. Once a canister holds many users the owner alone
+        // is satisfied by a transfer destined for any of them.
+        let account = Account::from(recipient);
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
-                UserOrAccount::Account(a) => {
-                    a == AccountIdentifier::new(&recipient.into(), &ic_ledger_types::DEFAULT_SUBACCOUNT)
-                }
+                UserOrAccount::Account(a) => a == AccountIdentifier::from(recipient),
                 UserOrAccount::User(u) => u == recipient,
             },
-            PendingCryptoTransaction::ICRC1(t) => t.to.owner == recipient.into(),
-            PendingCryptoTransaction::ICRC2(t) => t.to.owner == recipient.into(),
+            PendingCryptoTransaction::ICRC1(t) => Account::from(t.to) == account,
+            PendingCryptoTransaction::ICRC2(t) => Account::from(t.to) == account,
         }
     }
 
@@ -554,6 +556,18 @@ pub mod icrc1 {
             Account {
                 owner: value.into(),
                 subaccount: None,
+            }
+        }
+    }
+
+    impl Account {
+        // A user's account. Note the owner is the canister holding the user's data, which is not
+        // the same as the UserId once a canister holds more than one user.
+        pub fn for_user(user_id: UserId) -> Account {
+            let account = icrc_ledger_types::icrc1::account::Account::from(user_id);
+            Account {
+                owner: account.owner,
+                subaccount: account.subaccount,
             }
         }
     }

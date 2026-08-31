@@ -9,7 +9,7 @@ grouped_timer_job_batch!(UserEventBatch, UserId, IdempotentEnvelope<UserEvent>, 
 impl TimerJobItem for UserEventBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
         let response = user_canister_c2c_client::c2c_local_user_index(
-            self.key.into(),
+            self.key.canister_id(),
             &user_canister::c2c_local_user_index::Args {
                 events: self
                     .items
@@ -26,7 +26,7 @@ impl TimerJobItem for UserEventBatch {
             Ok(user_canister::c2c_local_user_index::Response::Success) => Ok(()),
             Err(error) => {
                 if is_out_of_cycles_error(error.reject_code(), error.message()) {
-                    top_up_child_canister(Some(self.key.into())).await;
+                    top_up_child_canister(Some(self.key.canister_id())).await;
                 }
                 let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
                 Err(delay_if_should_retry)
