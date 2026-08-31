@@ -52,7 +52,7 @@ async fn tip_message_impl(mut args: Args) -> Response {
     // Make the crypto transfer
     match process_transaction(pending_transfer).await {
         Ok(Ok(_)) => {}
-        Ok(Err(failed)) => return Error(OCErrorCode::TransferFailed.with_message(failed.error_message())),
+        Ok(Err((_, error))) => return Error(error),
         Err(error) => return Error(error.into()),
     }
 

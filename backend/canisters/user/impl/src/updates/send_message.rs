@@ -90,7 +90,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                         );
                         (content, Some(completed))
                     }),
-                    Ok(Err(failed)) => return Error(OCErrorCode::TransferFailed.with_message(failed.error_message())),
+                    Ok(Err((_, error))) => return Error(error),
                     Err(error) => return Error(error.into()),
                 }
             }
@@ -137,9 +137,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                                 );
                                 (content, Some(completed))
                             }
-                            Ok(Err(failed)) => {
-                                return Error(OCErrorCode::TransferFailed.with_message(failed.error_message()));
-                            }
+                            Ok(Err((_, error))) => return Error(error),
                             Err(error) => return Error(error.into()),
                         }
                     }

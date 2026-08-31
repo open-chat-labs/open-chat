@@ -65,7 +65,7 @@ async fn send_message_with_transfer_to_channel_impl(
     let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_swap_id, now).await
     {
         Ok(Ok((c, t))) => (c, t),
-        Ok(Err(error)) => return Error(OCErrorCode::TransferFailed.with_message(error)),
+        Ok(Err(error)) => return Error(error),
         Err(error) => return Error(error.into()),
     };
 
@@ -174,7 +174,7 @@ async fn send_message_with_transfer_to_group_impl(
     let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_swap_id, now).await
     {
         Ok(Ok((c, t))) => (c, t),
-        Ok(Err(error)) => return Error(OCErrorCode::TransferFailed.with_message(error)),
+        Ok(Err(error)) => return Error(error),
         Err(error) => return Error(error.into()),
     };
 
@@ -347,7 +347,7 @@ async fn process_transaction(
     pending_transaction: PendingCryptoTransaction,
     p2p_swap_id: Option<u32>,
     now: TimestampMillis,
-) -> Result<Result<(MessageContentInternal, CompletedCryptoTransaction), String>, C2CError> {
+) -> Result<Result<(MessageContentInternal, CompletedCryptoTransaction), OCError>, C2CError> {
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(Ok(completed)) => {
             if let Some(id) = p2p_swap_id {
@@ -358,7 +358,7 @@ async fn process_transaction(
                 completed,
             )))
         }
-        Ok(Err(failed)) => Ok(Err(failed.error_message().to_string())),
+        Ok(Err((_, error))) => Ok(Err(error)),
         Err(error) => Err(error),
     }
 }

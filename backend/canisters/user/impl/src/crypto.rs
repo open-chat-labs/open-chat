@@ -4,7 +4,7 @@ use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account as LedgerAccount;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use types::icrc2::TransferFromError;
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, OCResult, PendingCryptoTransaction,
@@ -13,7 +13,7 @@ use types::{
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
+) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     process_transaction_internal(transaction, true).await
 }
 
@@ -24,14 +24,14 @@ pub async fn process_transaction(
 // If calling this method, ensure that the caller has been validated earlier on.
 pub async fn process_transaction_without_caller_check(
     transaction: PendingCryptoTransaction,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
+) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     process_transaction_internal(transaction, false).await
 }
 
 async fn process_transaction_internal(
     transaction: PendingCryptoTransaction,
     check_caller: bool,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
+) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     let my_user_id = read_state(|state| {
         if check_caller && state.env.caller() != state.data.owner {
             panic!("Only the owner can transfer cryptocurrency");
