@@ -12,9 +12,9 @@ pub struct Args {
     pub expected_price_e8s: u64,
     pub recurring: bool,
     // The account to pay from, defaulting to the user's own. Any other account must have approved
-    // the user's canister as spender, since the payment is then pulled via ICRC-2. Recurring
-    // payments always come from the user's own account - a one off approval must not silently fund
-    // renewals - so this is ignored for those.
+    // the user's canister as spender, since the payment is then pulled via ICRC-2. This only funds
+    // the payment being made now: renewals of a recurring membership always come from the user's
+    // own account, since a one off approval must not silently fund them.
     pub from_account: Option<icrc1::Account>,
 }
 

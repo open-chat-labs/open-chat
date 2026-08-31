@@ -6,7 +6,8 @@ use canister_tracing_macros::trace;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
-use types::{UserId, icrc1};
+use oc_error_codes::OCErrorCode;
+use types::icrc1;
 use user_canister::c2c_charge_user_account::{Response::*, *};
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
@@ -16,10 +17,15 @@ async fn c2c_charge_user_account(args: Args) -> Response {
 }
 
 async fn c2c_charge_user_account_impl(args: Args) -> Response {
-    let (user_index_canister_id, my_user_id) =
-        read_state(|state| (state.data.user_index_canister_id, UserId::from(state.env.canister_id())));
+    let (user_index_canister_id, canister_id) = read_state(|state| (state.data.user_index_canister_id, state.env.canister_id()));
 
-    if let Err(error) = validate_from_account(args.from_account, my_user_id) {
+    // Charging a user held elsewhere would debit whichever of our own users shares their index, so
+    // refuse rather than take somebody else's funds.
+    if args.user_id.canister_id() != canister_id {
+        return Error(OCErrorCode::InvalidRequest.with_message(format!("{} is not held by this canister", args.user_id)));
+    }
+
+    if let Err(error) = validate_from_account(args.from_account, args.user_id) {
         return Error(error);
     }
 
@@ -27,7 +33,7 @@ async fn c2c_charge_user_account_impl(args: Args) -> Response {
     let amount = args.amount.e8s().into();
     // Whichever account we charge, the owner is this canister, so only the subaccount is ours to
     // choose. For ICRC-2 it picks which approval is spent rather than which account is debited.
-    let subaccount = icrc1::Account::for_user(my_user_id).subaccount;
+    let subaccount = icrc1::Account::for_user(args.user_id).subaccount;
 
     match args.from_account {
         // The allowance is what authorises this - the ledger only lets us pull from an account
