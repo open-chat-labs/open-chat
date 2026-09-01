@@ -30,7 +30,7 @@
         Row,
         Switch,
     } from "component-lib";
-    import type { MessageContext, PrizeContentInitial } from "@client";
+    import type { MessageContext, PrizeContentInitial, SignerWallet } from "@client";
     import {
         bigIntMax,
         chitBands,
@@ -54,9 +54,11 @@
     import Translatable from "../Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationSelector from "./DurationSelector.svelte";
+    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
     import SelectChitEarned from "./SelectChitEarned.svelte";
     import SelectMinStreak from "./SelectMinStreak.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
@@ -97,6 +99,13 @@
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let requiresAuth = $state($prizeConfig.requiresAuth);
+    // The external wallet the prize fund will come from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
+    let approval: ExternalWalletApproval | undefined = $state();
+    let approving = $state(false);
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails));
@@ -105,7 +114,11 @@
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
     let totalFees = $derived(transferFee + prizeFees);
     let minAmount = $derived(100n * BigInt(numberOfWinners ?? 0) * transferFee);
-    let maxAmount = $derived(bigIntMax(cryptoBalance - totalFees, BigInt(0)));
+    // What the user is able to spend, or undefined when that is the external wallet's business
+    // rather than ours
+    let maxAmount = $derived(
+        payFromWallet ? undefined : bigIntMax(cryptoBalance - totalFees, BigInt(0)),
+    );
     let valid = $derived(numberOfWinnersValid && tokenInputState === "ok");
     let selectMinChitEarned = $state(false);
     let selectMinStreak = $state(false);
@@ -165,6 +178,30 @@
     }
 
     function send() {
+        if (approval !== undefined) {
+            // The wallet has to approve us taking the prize fund before we take it. Nothing may
+            // be awaited before this call - the wallet opens in a popup, which the browser only
+            // allows while it is still handling the tap. The attached draft is only sent when the
+            // user sends the message, so the approval has to be granted here, while we still have
+            // a tap to open the wallet from; if the draft is abandoned, or sits longer than the
+            // approval's validity, the allowance expires unspent and the send fails cleanly.
+            approving = true;
+            approval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        attach(fromAccount);
+                    }
+                })
+                .finally(() => (approving = false));
+        } else {
+            attach();
+        }
+    }
+
+    // `fromAccount` is an external wallet which has just approved the transfer. Without it the
+    // prize is funded from the user's own OpenChat account, as it always has been.
+    function attach(fromAccount?: string) {
         const prizes = generatePrizes();
         const amountE8s = prizes.reduce((total, p) => total + p) + prizeFees;
 
@@ -185,6 +222,7 @@
                 amountE8s,
                 feeE8s: transferFee,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                fromAccount,
             },
             amount: draftAmount,
             fees: totalFees,
@@ -326,7 +364,10 @@
         <!-- Token select -->
         <Column gap={"md"}>
             {@render sectionTitle("Select the prize token")}
-            <CryptoSelector {draftAmount} showRefresh bind:ledger />
+            <!-- An external wallet's balance is its own business, so while one is selected the
+                 OpenChat balance is hidden -->
+            <CryptoSelector {draftAmount} showRefresh hideBalance={payFromWallet} bind:ledger />
+            <SourceWalletSelector bind:wallet={sourceWallet} />
         </Column>
 
         <!-- Withdrawal amount -->
@@ -467,12 +508,27 @@
             </Row>
         </Column>
 
+        {#if sourceWallet !== undefined}
+            <!-- The prize fund leaves the wallet as one transfer: the amount plus the fees the
+                 message carries to fund each winner's payout -->
+            <ExternalWalletApproval
+                bind:this={approval}
+                wallet={sourceWallet}
+                {ledger}
+                amount={draftAmount + prizeFees} />
+        {/if}
+
         <!-- Buttons -->
         <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
             <CommonButton2 variant="primary" mode="text" onClick={onClose}>
                 <Translatable resourceKey={i18nKey("cancel")} />
             </CommonButton2>
-            <CommonButton2 variant="primary" mode="regular" disabled={!valid} onClick={send}>
+            <CommonButton2
+                variant="primary"
+                mode="regular"
+                disabled={!valid || approving}
+                loading={approving}
+                onClick={send}>
                 {#snippet icon(color, size)}
                     <Gift {color} {size} />
                 {/snippet}

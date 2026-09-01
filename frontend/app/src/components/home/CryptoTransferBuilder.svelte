@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ChatSummary, OpenChat, UserSummary } from "@client";
+    import type { ChatSummary, OpenChat, SignerWallet, UserSummary } from "@client";
     import {
         allUsersStore,
         cryptoBalanceStore,
@@ -24,7 +24,9 @@
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
     import SingleUserSelector from "./SingleUserSelector.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -57,6 +59,12 @@
     let receiver: UserSummary | undefined = $state(undefined);
     let validAmount: boolean = $state(false);
     let sending = $state(false);
+    // The external wallet the transfer will come from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
+    let approval: ExternalWalletApproval | undefined = $state();
 
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
@@ -66,12 +74,18 @@
     let remainingBalance = $state(0n);
     $effect(() => {
         remainingBalance =
-            draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
+            draftAmount > BigInt(0) && !payFromWallet
+                ? cryptoBalance - draftAmount - transferFees
+                : cryptoBalance;
     });
+    // What the user is able to spend, or undefined when that is the external wallet's business
+    // rather than ours
+    let spendingLimit = $derived(payFromWallet ? undefined : maxAmount(cryptoBalance));
     let valid = $derived(
         error === undefined && validAmount && receiver !== undefined && !tokenChanging,
     );
-    let zero = $derived(cryptoBalance <= transferFees && !tokenChanging);
+    // An empty OpenChat account is only a dead end while the user is paying from it
+    let zero = $derived(cryptoBalance <= transferFees && !tokenChanging && !payFromWallet);
     let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
 
     onMount(() => {
@@ -98,8 +112,31 @@
             return;
         }
 
-        if (receiver === undefined) return;
+        const to = receiver;
+        if (to === undefined) return;
 
+        sending = true;
+        error = undefined;
+
+        if (approval !== undefined) {
+            // The wallet has to approve us taking the transfer before we make it. Nothing may be
+            // awaited before this call - the wallet opens in a popup, which the browser only
+            // allows while it is still handling the click
+            approval.approve().then((fromAccount) => {
+                if (fromAccount === undefined) {
+                    sending = false;
+                } else {
+                    transfer(to, fromAccount);
+                }
+            });
+        } else {
+            transfer(to);
+        }
+    }
+
+    // `fromAccount` is an external wallet which has just approved the transfer. Without it the
+    // funds come from the user's own OpenChat account, as they always have.
+    function transfer(to: UserSummary, fromAccount?: string) {
         const content: CryptocurrencyContent = {
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
@@ -107,15 +144,13 @@
                 kind: "pending",
                 ledger,
                 token: symbol,
-                recipient: receiver.userId,
+                recipient: to.userId,
                 amountE8s: draftAmount,
                 feeE8s: transferFees,
                 createdAtNanos: nowNanos(),
+                fromAccount,
             },
         };
-
-        sending = true;
-        error = undefined;
 
         client
             .sendMessageWithContent(messageContext, content, false)
@@ -147,7 +182,7 @@
     function onBalanceRefreshFinished() {
         toppingUp = false;
         tokenChanging = false;
-        if (remainingBalance < 0) {
+        if (remainingBalance < 0 && !payFromWallet) {
             remainingBalance = BigInt(0);
             draftAmount = cryptoBalance - transferFees;
             if (draftAmount < 0) {
@@ -169,17 +204,22 @@
                         </div>
                     </div>
                 </div>
-                <BalanceWithRefresh
-                    bind:toppingUp
-                    bind:this={balanceWithRefresh}
-                    {ledger}
-                    value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
-                    showTopUp
-                    onClick={() => (confirming = false)}
-                    onRefreshed={onBalanceRefreshed}
-                    onError={onBalanceRefreshError} />
+                <SourceWalletSelector bind:wallet={sourceWallet} />
+                <!-- The balance is the external wallet's business while one is selected, so only
+                     show OpenChat's own - but keep its space so the selector does not move -->
+                <div class="oc-balance" class:hidden={payFromWallet}>
+                    <BalanceWithRefresh
+                        bind:toppingUp
+                        bind:this={balanceWithRefresh}
+                        {ledger}
+                        value={remainingBalance}
+                        label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                        bold
+                        showTopUp
+                        onClick={() => (confirming = false)}
+                        onRefreshed={onBalanceRefreshed}
+                        onError={onBalanceRefreshError} />
+                </div>
             </span>
         {/snippet}
         {#snippet body()}
@@ -211,7 +251,7 @@
                                 {transferFees}
                                 autofocus={!multiUserChat}
                                 bind:valid={validAmount}
-                                maxAmount={maxAmount(cryptoBalance)}
+                                maxAmount={spendingLimit}
                                 bind:amount={draftAmount} />
                         </div>
                         <div class="message">
@@ -242,6 +282,13 @@
                                     ><Translatable resourceKey={errorMessage} /></ErrorMessage>
                             </div>
                         {/if}
+                    {/if}
+                    {#if sourceWallet !== undefined}
+                        <ExternalWalletApproval
+                            bind:this={approval}
+                            wallet={sourceWallet}
+                            {ledger}
+                            amount={draftAmount} />
                     {/if}
                 </div>
             </form>
@@ -303,6 +350,10 @@
     .body {
         transition: background-color 100ms ease-in-out;
         @include font(book, normal, fs-100, 28);
+    }
+
+    .oc-balance.hidden {
+        visibility: hidden;
     }
 
     .confirming {
