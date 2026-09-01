@@ -163,7 +163,7 @@
     let messageEntryHeight = $state<number>(0);
 
     $effect(() => {
-        if (messageEntryElement === undefined) return;
+        if (messageEntryElement == null) return;
         const el = messageEntryElement;
         const observer = new ResizeObserver(() => {
             messageEntryHeight = el.clientHeight;
