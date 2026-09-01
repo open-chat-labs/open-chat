@@ -64,9 +64,11 @@
         gap: $sp2;
     }
 
+    // Matches the "Balance" label alongside, in BalanceWithRefresh
     .label {
-        @include font(light, normal, fs-80);
+        @include font(bold, normal, fs-100, 22);
         color: var(--txt-light);
+        font-weight: 400;
         white-space: nowrap;
     }
 
