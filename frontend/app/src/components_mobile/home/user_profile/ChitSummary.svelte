@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { chitStateStore, i18nKey, OpenChat, publish } from "@client";
     import SparkleBoxOutline from "@src/components_mobile/SparkleBoxOutline.svelte";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
@@ -6,13 +7,12 @@
         BodySmall,
         Button,
         ColourVars,
+        Column,
         CommonButton2,
         Container,
         H2,
         Subtitle,
-        Column,
     } from "component-lib";
-    import { chitStateStore, i18nKey, OpenChat, publish } from "@client";
     import { getContext } from "svelte";
     import PartyPopper from "svelte-material-icons/PartyPopper.svelte";
     import Rocket from "svelte-material-icons/RocketLaunchOutline.svelte";
@@ -100,7 +100,7 @@
 
 {#snippet summary()}
     <!-- Streak bar-->
-    <Container gap={"sm"} crossAxisAlignment={"center"}>
+    <Container overflow="visible" gap={"sm"} crossAxisAlignment={"center"}>
         <Container
             supplementalClass={"streak_bubble"}
             borderRadius={"circle"}
@@ -222,6 +222,10 @@
         margin-bottom: 3px;
 
         .badge {
+            // these vars were previously inherited from a :root rule in the v1
+            // DailyChitModal, which is no longer loaded alongside the v2 tree
+            --offset: -18px;
+            --scale: 2;
             top: 6px;
             position: absolute;
             transform-origin: 50% 50%;
