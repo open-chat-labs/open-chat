@@ -45,6 +45,7 @@
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
+    import ExternalWalletPayment from "../ExternalWalletPayment.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
     import SelectMembershipHeader from "./SelectMembershipHeader.svelte";
 
@@ -143,6 +144,12 @@
     }
 
     function confirm() {
+        pay();
+    }
+
+    // `fromAccount` is an external wallet which has just approved us taking the payment. Without it
+    // the payment comes from the user's own OpenChat account, as it always has.
+    function pay(fromAccount?: string) {
         confirming = true;
         client
             .payForDiamondMembership(
@@ -150,6 +157,7 @@
                 selectedDuration,
                 autoRenew && selectedDuration !== "lifetime",
                 toPayE8s,
+                fromAccount,
             )
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -366,6 +374,11 @@
             {#if step === "confirm"}
                 {#if insufficientFundsForSelectedSub}
                     {@render refreshBalance()}
+                    <ExternalWalletPayment
+                        ledger={tokenDetails.ledger}
+                        amount={toPayE8s}
+                        disabled={confirming}
+                        onApproved={pay} />
                 {:else}
                     <CommonButton
                         width={"fill"}

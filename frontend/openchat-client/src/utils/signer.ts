@@ -227,3 +227,42 @@ const approveIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
         ),
     });
 };
+
+export type ExternalWalletApproval = {
+    wallet: SignerWallet;
+    ledger: string;
+    // What the payment will pull, plus the fee the ledger burns moving it. The allowance has to
+    // cover both or `icrc2_transfer_from` fails once we come to spend it.
+    amount: bigint;
+    spender: IcrcAccount;
+};
+
+// Connects to the wallet, settles on the account to pay from and has the wallet approve the spend,
+// returning that account for the caller to pass on as `fromAccount`. Returns undefined if the user
+// backs out without choosing an account.
+//
+// Must be called synchronously from a click handler - see `SignerConnection.connect`. Choosing an
+// account may await the user, which is fine: only opening the channel is tied to the click.
+export async function approveFromExternalWallet(
+    { wallet, ledger, amount, spender }: ExternalWalletApproval,
+    icUrl: string,
+    chooseAccount: (accounts: WalletAccount[]) => Promise<WalletAccount | undefined>,
+    // Called once the wallet is showing the user the approval to sign, which is where the flow
+    // spends most of its time
+    onApproving?: () => void,
+): Promise<string | undefined> {
+    const connection = await SignerConnection.connect(wallet, icUrl);
+    try {
+        const accounts = await connection.accounts();
+        const account = accounts.length === 1 ? accounts[0] : await chooseAccount(accounts);
+        if (account === undefined) return undefined;
+
+        onApproving?.();
+        await connection.approveSpending({ account, ledger, amount, spender });
+        return account.address;
+    } finally {
+        // The popup is the user's window onto their wallet, so it closes with the flow whether or
+        // not the approval went through
+        await connection.disconnect();
+    }
+}

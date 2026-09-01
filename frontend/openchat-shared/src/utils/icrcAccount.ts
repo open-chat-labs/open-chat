@@ -122,3 +122,54 @@ function hexStringToUint8Array(hex: string): Uint8Array {
 
     return bytes;
 }
+
+// The IC's canister ids are a big-endian u64 followed by two class tag bytes, so they are always
+// exactly this long and always end in exactly these bytes.
+const CANISTER_ID_LENGTH = 10;
+const CANISTER_ID_TAG = [0x01, 0x01];
+// Set in a UserId's final byte to mark it as carrying the user's index within their canister. No
+// class tag the IC defines has the top bit set, so a byte which does cannot be one.
+const INDEXED_TAG = 0x80;
+
+// The ledger account holding a user's funds, which is also the account their canister spends as
+// when pulling from an external wallet via ICRC-2. Mirrors `impl From<UserId> for Account` in
+// backend/libraries/types/src/user.rs: the owner is the canister holding the user rather than the
+// UserId itself, since nobody can sign for an indexed UserId, and the user's index within that
+// canister goes in the subaccount. Index 0 maps to no subaccount so that users who predate indexing
+// keep the address they already have.
+export function userIdToIcrcAccount(userId: string): IcrcAccount {
+    const bytes = Principal.fromText(userId).toUint8Array();
+    const index = userIndex(bytes);
+
+    if (index === 0) {
+        return { owner: Principal.fromUint8Array(canisterIdBytes(bytes)) };
+    }
+
+    const subaccount = new Uint8Array(32);
+    subaccount[30] = (index >> 8) & 0xff;
+    subaccount[31] = index & 0xff;
+
+    return { owner: Principal.fromUint8Array(canisterIdBytes(bytes)), subaccount };
+}
+
+// Rebuilding the canister id means restoring the two tag bytes the index displaced.
+function canisterIdBytes(bytes: Uint8Array): Uint8Array {
+    if (!isIndexed(bytes)) return bytes;
+
+    const canisterId = new Uint8Array(CANISTER_ID_LENGTH);
+    canisterId.set(bytes.subarray(0, 8));
+    canisterId.set(CANISTER_ID_TAG, 8);
+    return canisterId;
+}
+
+function userIndex(bytes: Uint8Array): number {
+    if (!isIndexed(bytes)) return 0;
+
+    return bytes[8] | ((bytes[9] & ~INDEXED_TAG) << 8);
+}
+
+function isIndexed(bytes: Uint8Array): boolean {
+    return (
+        bytes.length === CANISTER_ID_LENGTH && (bytes[CANISTER_ID_LENGTH - 1] & INDEXED_TAG) !== 0
+    );
+}
