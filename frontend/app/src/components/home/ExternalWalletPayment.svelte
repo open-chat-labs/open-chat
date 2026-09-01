@@ -14,16 +14,19 @@
 
     interface Props {
         ledger: string;
-        // What the payment itself will take. The transfer fee is added on top of this, because the
-        // ledger charges it against the allowance as well as the amount it moves.
+        // What the payment itself will take
         amount: bigint;
+        // What the ledger will charge against the allowance on top of `amount`. Defaults to a
+        // single transfer fee, which is what a payment made as one transfer costs; a flow which
+        // moves the funds more than once has to say so.
+        fees?: bigint;
         disabled?: boolean;
         // The wallet account to pay from, once it has approved us spending `amount` plus the fee.
         // The approval is short lived, so make the payment now rather than holding on to this.
         onApproved: (fromAccount: string) => void;
     }
 
-    let { ledger, amount, disabled = false, onApproved }: Props = $props();
+    let { ledger, amount, fees, disabled = false, onApproved }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -56,7 +59,7 @@
             .approveExternalWalletSpending(
                 wallet,
                 ledger,
-                amount + tokenDetails.transferFee,
+                amount + (fees ?? tokenDetails.transferFee),
                 (accounts) =>
                     new Promise((resolve) => {
                         flow = { kind: "choosing", wallet, accounts, choose: resolve };

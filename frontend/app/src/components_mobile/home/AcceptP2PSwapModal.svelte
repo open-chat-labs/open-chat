@@ -6,6 +6,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import AccountInfo from "./AccountInfo.svelte";
+    import ExternalWalletPayment from "./ExternalWalletPayment.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -16,7 +17,9 @@
         amount0: bigint;
         amount1: bigint;
         onClose: () => void;
-        onAccept: () => void;
+        // `fromAccount` is an external wallet which has just approved us taking the swap amount.
+        // Without it the swap is funded from the user's own OpenChat account, as it always has been.
+        onAccept: (fromAccount?: string) => void;
     }
 
     let { ledger0, ledger1, amount0, amount1, onClose, onAccept }: Props = $props();
@@ -66,6 +69,11 @@
                         })} />
                 </Body>
                 <AccountInfo ledger={ledger1} />
+                <ExternalWalletPayment
+                    ledger={ledger1}
+                    amount={amount1}
+                    fees={transferFees}
+                    onApproved={onAccept} />
             {:else}
                 <Body colour={"textSecondary"}>
                     <Translatable
@@ -95,7 +103,8 @@
                     mode={"active"}
                     size={"medium"}
                     disabled={!valid}
-                    onClick={onAccept}><Translatable resourceKey={i18nKey("yes")} /></CommonButton>
+                    onClick={() => onAccept()}
+                    ><Translatable resourceKey={i18nKey("yes")} /></CommonButton>
             {/if}
         </Row>
     </Column>
