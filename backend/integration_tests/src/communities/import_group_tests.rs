@@ -199,7 +199,7 @@ fn pending_prizes_transferred_to_community() {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
                     amount: amount_to_transfer,
-                    to: group_id.into(),
+                    to: types::CanisterId::from(group_id).into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
