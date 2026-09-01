@@ -58,7 +58,7 @@
         {borderRadius}
         {backgroundColor}>
         <Row>
-            <Body fontWeight="semi-bold">{content.name}</Body>
+            <Body fontWeight="semi-bold" colour="textPrimary">{content.name}</Body>
         </Row>
         <Row crossAxisAlignment="center" gap="xs">
             <FileUploadOutline size="1rem" color={ColourVars[subtextColour]} />

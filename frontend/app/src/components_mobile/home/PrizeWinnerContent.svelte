@@ -11,9 +11,10 @@
 
     interface Props {
         content: PrizeWinnerContent;
+        intersecting?: boolean;
     }
 
-    let { content }: Props = $props();
+    let { content, intersecting = true }: Props = $props();
 
     function username(userId: string): string {
         return userId === $currentUserIdStore
@@ -47,11 +48,11 @@
 
 <div class="msg">
     <div class="wrapper" class:other={!me}>
-        <div class="graphic" class:tiny={!me}>
+        <div class="graphic" class:tiny={!me} class:paused={!intersecting}>
             {#if me}
                 <img class="lid" src={"/assets/lid.png"} />
                 <div class="winner-coin">
-                    <SpinningToken spin mirror={false} size={"small"} {logo} />
+                    <SpinningToken spin={intersecting} mirror={false} size={"small"} {logo} />
                 </div>
                 <img class="box" src={"/assets/box.png"} />
             {:else}
@@ -104,6 +105,11 @@
         display: flex;
         flex-direction: column;
         padding: 10px 60px;
+
+        &.paused .winner-coin,
+        &.paused .lid {
+            animation-play-state: paused;
+        }
 
         &.tiny {
             padding: 0 10px;

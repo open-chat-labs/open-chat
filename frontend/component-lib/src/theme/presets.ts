@@ -46,7 +46,7 @@ const baseLightTheme: Record<StaticColourArgs, string> = {
     draftReplySurface: "#eeeeee",
     chatBubbleReceived: "#ffffff",
     chatBubbleReplyReceived: "#f4f4f4",
-    chatInputBackground: "#ffffff",
+    chatInputBackground: "#f4f4f4",
     chatInputPlaceholder: "#4f4f4f",
 };
 
