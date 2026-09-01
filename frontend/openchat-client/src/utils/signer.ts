@@ -1,12 +1,9 @@
-import { IDL } from "@icp-sdk/core/candid";
-import { Principal } from "@icp-sdk/core/principal";
-import {
-    Signer,
-    createAccountsPermissionScope,
-    createCallCanisterPermissionScope,
-} from "@slide-computer/signer";
-import { SignerAgent } from "@slide-computer/signer-agent";
-import { PostMessageTransport } from "@slide-computer/signer-web";
+import { Actor } from "@icp-sdk/core/agent";
+import type { IDL } from "@icp-sdk/core/candid";
+import type { Principal } from "@icp-sdk/core/principal";
+import { Signer, type PermissionScope } from "@icp-sdk/signer";
+import { SignerAgent } from "@icp-sdk/signer/agent";
+import { PostMessageTransport } from "@icp-sdk/signer/web";
 import { encodeIcrcAccount, type IcrcAccount } from "@shared";
 
 export type SignerWalletId = "oisy" | "nfid";
@@ -24,6 +21,11 @@ export const SIGNER_WALLETS: SignerWallet[] = [
     { id: "oisy", name: "OISY", signerUrl: "https://oisy.com/sign" },
     { id: "nfid", name: "NFID", signerUrl: "https://nfid.one/rpc" },
 ];
+
+// Listing the wallet's accounts and asking it to sign a canister call are the only two things we
+// ever need it to do
+const ACCOUNTS_SCOPE: PermissionScope = { method: "icrc27_accounts" };
+const CALL_CANISTER_SCOPE: PermissionScope = { method: "icrc49_call_canister" };
 
 export type WalletAccount = IcrcAccount & {
     // The textual encoding of the account, which is what the rest of OpenChat passes around as
@@ -64,10 +66,7 @@ export class SignerConnection {
     static async connect(wallet: SignerWallet): Promise<SignerConnection> {
         const transport = new PostMessageTransport({ url: wallet.signerUrl });
         const signer = new Signer({ transport });
-        const permissions = await signer.requestPermissions([
-            createAccountsPermissionScope(),
-            createCallCanisterPermissionScope(),
-        ]);
+        const permissions = await signer.requestPermissions([ACCOUNTS_SCOPE, CALL_CANISTER_SCOPE]);
         const denied = permissions.filter((p) => p.state === "denied").map((p) => p.scope.method);
         if (denied.length > 0) {
             await signer.closeChannel();
@@ -77,7 +76,7 @@ export class SignerConnection {
     }
 
     async accounts(): Promise<WalletAccount[]> {
-        const accounts = await this.signer.accounts();
+        const accounts = await this.signer.getAccounts();
         return accounts.map((account) => ({ ...account, address: encodeIcrcAccount(account) }));
     }
 
@@ -89,18 +88,11 @@ export class SignerConnection {
             signer: this.signer,
             account: args.account.owner,
         });
-        // SignerAgent's `query` sends the request as a real (update) call through the signer,
-        // validates that the signed content matches what we asked for and that the certificate is
-        // genuine, and hands back the reply. We go through it rather than an Actor because Actor
-        // now drives calls via `Agent.update`, which SignerAgent does not implement yet.
-        const response = await agent.query(Principal.fromText(args.ledger), {
-            methodName: "icrc2_approve",
-            arg: new Uint8Array(IDL.encode([ApproveArgsIdl], [buildApproveArgs(args)])),
+        const ledger = Actor.createActor<ApproveService>(approveIdlFactory, {
+            agent,
+            canisterId: args.ledger,
         });
-        if (response.status !== "replied") {
-            throw new ApproveError("Rejected", formatErrorDetail(response));
-        }
-        const [result] = IDL.decode([ApproveResultIdl], response.reply.arg) as [ApproveResult];
+        const result = await ledger.icrc2_approve(buildApproveArgs(args));
         if ("Err" in result) {
             const [kind, detail] = Object.entries(result.Err)[0] ?? ["Unknown", null];
             throw new ApproveError(kind, formatErrorDetail(detail));
@@ -125,6 +117,10 @@ type CandidApproveArgs = {
 };
 
 type ApproveResult = { Ok: bigint } | { Err: Record<string, unknown> };
+
+type ApproveService = {
+    icrc2_approve: (args: CandidApproveArgs) => Promise<ApproveResult>;
+};
 
 function formatErrorDetail(detail: unknown): string {
     if (detail === null || detail === undefined) return "";
@@ -154,23 +150,21 @@ export function buildApproveArgs({
     };
 }
 
-const ApproveArgsIdl = IDL.Record({
-    from_subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-    spender: IDL.Record({
-        owner: IDL.Principal,
-        subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-    }),
-    amount: IDL.Nat,
-    expected_allowance: IDL.Opt(IDL.Nat),
-    expires_at: IDL.Opt(IDL.Nat64),
-    fee: IDL.Opt(IDL.Nat),
-    memo: IDL.Opt(IDL.Vec(IDL.Nat8)),
-    created_at_time: IDL.Opt(IDL.Nat64),
-});
-
-const ApproveResultIdl = IDL.Variant({
-    Ok: IDL.Nat,
-    Err: IDL.Variant({
+const approveIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
+    const ApproveArgs = IDL.Record({
+        from_subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+        spender: IDL.Record({
+            owner: IDL.Principal,
+            subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+        }),
+        amount: IDL.Nat,
+        expected_allowance: IDL.Opt(IDL.Nat),
+        expires_at: IDL.Opt(IDL.Nat64),
+        fee: IDL.Opt(IDL.Nat),
+        memo: IDL.Opt(IDL.Vec(IDL.Nat8)),
+        created_at_time: IDL.Opt(IDL.Nat64),
+    });
+    const ApproveError = IDL.Variant({
         BadFee: IDL.Record({ expected_fee: IDL.Nat }),
         InsufficientFunds: IDL.Record({ balance: IDL.Nat }),
         AllowanceChanged: IDL.Record({ current_allowance: IDL.Nat }),
@@ -180,5 +174,12 @@ const ApproveResultIdl = IDL.Variant({
         Duplicate: IDL.Record({ duplicate_of: IDL.Nat }),
         TemporarilyUnavailable: IDL.Null,
         GenericError: IDL.Record({ error_code: IDL.Nat, message: IDL.Text }),
-    }),
-});
+    });
+    return IDL.Service({
+        icrc2_approve: IDL.Func(
+            [ApproveArgs],
+            [IDL.Variant({ Ok: IDL.Nat, Err: ApproveError })],
+            [],
+        ),
+    });
+};
