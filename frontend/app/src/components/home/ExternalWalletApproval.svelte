@@ -39,7 +39,13 @@
 
     let tokenDetails = $derived($cryptoLookup.get(ledger));
 
-    onDestroy(() => (abandoned = true));
+    onDestroy(() => {
+        abandoned = true;
+        // Backing out of the account choice is the only way to end it, and the dialog closing has
+        // taken away the buttons which would. Left pending, it strands the approval mid flight and
+        // the wallet popup never closes.
+        if (flow.kind === "choosing") flow.choose(undefined);
+    });
 
     // Opens the wallet and asks it to approve the payment, resolving to the account to pass as the
     // payment's `fromAccount`, or undefined if the user backs out or the approval fails. Call this

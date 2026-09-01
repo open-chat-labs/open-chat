@@ -132,7 +132,10 @@ describe("approveFromExternalWallet", () => {
         expect(wallet.approveSpending).not.toHaveBeenCalled();
     });
 
-    test("backing out of the account choice approves nothing", async () => {
+    // Backing out is also how the caller ends a choice which can no longer be made - closing the
+    // dialog takes the chooser away with it - so it has to end the flow rather than leave the
+    // wallet holding a popup open on a request nothing will answer
+    test("backing out of the account choice approves nothing, and closes the popup", async () => {
         const wallet = connection([account(1), account(2)]);
 
         await expect(
@@ -141,6 +144,7 @@ describe("approveFromExternalWallet", () => {
             ),
         ).resolves.toBeUndefined();
         expect(wallet.approveSpending).not.toHaveBeenCalled();
+        expect(wallet.disconnect).toHaveBeenCalled();
     });
 
     test.each([
