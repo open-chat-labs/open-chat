@@ -83,11 +83,6 @@
                         </p>
                         <AccountInfo ledger={ledger1} />
                         <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                        <ExternalWalletPayment
-                            ledger={ledger1}
-                            amount={amount1}
-                            fees={transferFees}
-                            onApproved={onAccept} />
                     {:else}
                         <Translatable
                             resourceKey={i18nKey("p2pSwap.confirmAccept", {
@@ -97,6 +92,11 @@
                                 tokenOther: symbol0,
                             })} />
                     {/if}
+                    <ExternalWalletPayment
+                        ledger={ledger1}
+                        amount={amount1}
+                        fees={transferFees}
+                        onApproved={onAccept} />
                 </div>
             </form>
         {/snippet}

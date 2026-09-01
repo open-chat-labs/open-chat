@@ -374,12 +374,13 @@
             {#if step === "confirm"}
                 {#if insufficientFundsForSelectedSub}
                     {@render refreshBalance()}
-                    <ExternalWalletPayment
-                        ledger={tokenDetails.ledger}
-                        amount={toPayE8s}
-                        disabled={confirming}
-                        onApproved={pay} />
-                {:else}
+                {/if}
+                <ExternalWalletPayment
+                    ledger={tokenDetails.ledger}
+                    amount={toPayE8s}
+                    disabled={confirming || toPayE8s === 0n}
+                    onApproved={pay} />
+                {#if !insufficientFundsForSelectedSub}
                     <CommonButton
                         width={"fill"}
                         size={"small_text"}

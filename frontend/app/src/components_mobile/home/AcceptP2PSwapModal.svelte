@@ -69,11 +69,6 @@
                         })} />
                 </Body>
                 <AccountInfo ledger={ledger1} />
-                <ExternalWalletPayment
-                    ledger={ledger1}
-                    amount={amount1}
-                    fees={transferFees}
-                    onApproved={onAccept} />
             {:else}
                 <Body colour={"textSecondary"}>
                     <Translatable
@@ -85,6 +80,11 @@
                         })} />
                 </Body>
             {/if}
+            <ExternalWalletPayment
+                ledger={ledger1}
+                amount={amount1}
+                fees={transferFees}
+                onApproved={onAccept} />
         </div>
         <Row gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"center"}>
             <CommonButton size={"small_text"} onClick={onClose}

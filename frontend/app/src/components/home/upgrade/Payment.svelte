@@ -241,12 +241,13 @@
                             token: tokenDetails.symbol,
                             amount: `${toPay} ${tokenDetails.symbol}`,
                         })} /></ErrorMessage>
-                <ExternalWalletPayment
-                    ledger={tokenDetails.ledger}
-                    amount={toPayE8s}
-                    disabled={confirming}
-                    onApproved={pay} />
             {/if}
+
+            <ExternalWalletPayment
+                ledger={tokenDetails.ledger}
+                amount={toPayE8s}
+                disabled={confirming || toPayE8s === 0n}
+                onApproved={pay} />
 
             {#if error}
                 <ErrorMessage>
