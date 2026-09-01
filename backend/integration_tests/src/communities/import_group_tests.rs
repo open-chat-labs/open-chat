@@ -8,7 +8,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, MultiUserChat,
+    CanisterId, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, MultiUserChat,
     PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent, icrc1,
 };
 use user_canister::mark_read::ChatMessagesRead;
@@ -199,7 +199,7 @@ fn pending_prizes_transferred_to_community() {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
                     amount: amount_to_transfer,
-                    to: types::CanisterId::from(group_id).into(),
+                    to: CanisterId::from(group_id).into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
