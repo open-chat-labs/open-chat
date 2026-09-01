@@ -505,9 +505,10 @@
         <Row gap={"sm"}>
             <CryptoSelector
                 bind:ledger
+                hideBalance={sourceWallet !== undefined}
                 filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
 
-            {#if insufficientFundsForAllSubs}
+            {#if insufficientFundsForAllSubs && sourceWallet === undefined}
                 <Column
                     onClick={() => (topup = true)}
                     mainAxisAlignment={"center"}

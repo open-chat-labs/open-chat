@@ -84,12 +84,16 @@
                     {#if step === "payment"}
                         <div class="balance">
                             <SourceWalletSelector bind:wallet={sourceWallet} />
-                            <BalanceWithRefresh
-                                {ledger}
-                                value={tokenDetails.balance}
-                                bind:refreshing={refreshingBalance}
-                                onRefreshed={onBalanceRefreshed}
-                                onError={onBalanceRefreshError} />
+                            <!-- The balance is the external wallet's business while one is
+                                 selected, so only show OpenChat's own -->
+                            {#if sourceWallet === undefined}
+                                <BalanceWithRefresh
+                                    {ledger}
+                                    value={tokenDetails.balance}
+                                    bind:refreshing={refreshingBalance}
+                                    onRefreshed={onBalanceRefreshed}
+                                    onError={onBalanceRefreshError} />
+                            {/if}
                         </div>
                     {/if}
                 {/if}

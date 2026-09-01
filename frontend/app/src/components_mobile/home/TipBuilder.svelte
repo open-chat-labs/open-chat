@@ -257,7 +257,11 @@
 
 <Sheet onDismiss={onClose}>
     <Column gap={"xl"} padding={["xl", "lg"]}>
-        <CryptoSelector showRefresh draftAmount={tokenState.draftAmount} bind:ledger />
+        <CryptoSelector
+            showRefresh
+            hideBalance={payFromWallet}
+            draftAmount={tokenState.draftAmount}
+            bind:ledger />
         <SourceWalletSelector bind:wallet={sourceWallet} />
         {#if zero || toppingUp}
             <AccountInfo background={ColourVars.surface0} {ledger} />

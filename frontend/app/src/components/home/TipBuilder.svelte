@@ -292,17 +292,21 @@
                     </div>
                 </div>
                 <SourceWalletSelector bind:wallet={sourceWallet} />
-                <BalanceWithRefresh
-                    bind:toppingUp
-                    bind:this={balanceWithRefresh}
-                    {ledger}
-                    value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
-                    showTopUp
-                    bind:refreshing
-                    onRefreshed={onBalanceRefreshed}
-                    onError={onBalanceRefreshError} />
+                <!-- The balance is the external wallet's business while one is selected, so only
+                     show OpenChat's own -->
+                {#if !payFromWallet}
+                    <BalanceWithRefresh
+                        bind:toppingUp
+                        bind:this={balanceWithRefresh}
+                        {ledger}
+                        value={remainingBalance}
+                        label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                        bold
+                        showTopUp
+                        bind:refreshing
+                        onRefreshed={onBalanceRefreshed}
+                        onError={onBalanceRefreshError} />
+                {/if}
             </span>
         {/snippet}
         {#snippet body()}

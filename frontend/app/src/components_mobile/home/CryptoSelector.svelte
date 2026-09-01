@@ -20,6 +20,9 @@
         onSelect?: (ledger: string, urlFormat: string) => void;
         draftAmount?: bigint;
         showRefresh?: boolean;
+        // Hides the OpenChat balance (and its refresh), for when the payment is coming from
+        // somewhere else and the balance is not the one being spent
+        hideBalance?: boolean;
     }
 
     let {
@@ -29,6 +32,7 @@
         width = "fill",
         draftAmount,
         showRefresh = false,
+        hideBalance = false,
     }: Props = $props();
     let token = $derived($enhancedCryptoLookup.get(ledger)!);
     let showTokenSelector = $state(false);
@@ -59,16 +63,18 @@
             <Avatar url={getProxyAdjustedBlobUrl(tokenState.logo) ?? tokenState.logo}></Avatar>
             <Column>
                 <Body width={"hug"} fontWeight={"bold"}>{tokenState.symbol}</Body>
-                <BodySmall
-                    colour={"textSecondary"}
-                    blur={$hideTokenBalances}
-                    align={"end"}
-                    width={"hug"}
-                    fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
+                {#if !hideBalance}
+                    <BodySmall
+                        colour={"textSecondary"}
+                        blur={$hideTokenBalances}
+                        align={"end"}
+                        width={"hug"}
+                        fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
+                {/if}
             </Column>
             <ChevronDown size={"1.5rem"} color={ColourVars.textSecondary} />
         </Row>
-        {#if showRefresh}
+        {#if showRefresh && !hideBalance}
             <button
                 onclick={() => tokenState.refreshBalance(client)}
                 class="refresh"

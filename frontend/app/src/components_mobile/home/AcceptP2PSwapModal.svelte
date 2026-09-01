@@ -85,10 +85,14 @@
             </Subtitle>
             <Row width={"hug"} crossAxisAlignment={"center"} gap={"md"}>
                 <SourceWalletSelector bind:wallet={sourceWallet} />
-                <BalanceWithRefresh
-                    bind:this={balanceWithRefresh}
-                    ledger={ledger1}
-                    value={cryptoBalance} />
+                <!-- The balance is the external wallet's business while one is selected, so only
+                     show OpenChat's own -->
+                {#if sourceWallet === undefined}
+                    <BalanceWithRefresh
+                        bind:this={balanceWithRefresh}
+                        ledger={ledger1}
+                        value={cryptoBalance} />
+                {/if}
             </Row>
         </Row>
         <div class="body" class:insufficient>

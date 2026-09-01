@@ -92,12 +92,16 @@
                         )} />
                 </div>
                 <SourceWalletSelector bind:wallet={sourceWallet} />
-                <BalanceWithRefresh
-                    bind:this={balanceWithRefresh}
-                    ledger={ledger1}
-                    value={cryptoBalance}
-                    label={i18nKey("p2pSwap.tokenBalance", { token: symbol1 })}
-                    bold />
+                <!-- The balance is the external wallet's business while one is selected, so only
+                     show OpenChat's own -->
+                {#if sourceWallet === undefined}
+                    <BalanceWithRefresh
+                        bind:this={balanceWithRefresh}
+                        ledger={ledger1}
+                        value={cryptoBalance}
+                        label={i18nKey("p2pSwap.tokenBalance", { token: symbol1 })}
+                        bold />
+                {/if}
             </span>
         {/snippet}
         {#snippet body()}
