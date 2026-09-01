@@ -41,6 +41,7 @@
         selectedChatMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
+        SIGNER_WALLETS,
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
@@ -69,6 +70,7 @@
     import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
     import EmojiOrGif from "./EmojiOrGif.svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import MentionPicker from "./MentionPicker.svelte";
@@ -531,9 +533,58 @@
         return false;
     }
 
-    function sendMessage() {
-        if (showCommandSelector || messageIsEmpty) return;
+    // A crypto or prize draft paying from an external wallet carries the intended wallet on its
+    // pending transfer as `fromWallet`. The wallet has not yet approved anything - the approval
+    // waits for the send, whose tap is the one that consumes it.
+    let externalWalletDraft = $derived.by(() => {
+        if (attachment?.kind !== "crypto_content" && attachment?.kind !== "prize_content_initial")
+            return undefined;
+        const transfer = attachment.transfer;
+        if (transfer.kind !== "pending" || transfer.fromAccount !== undefined) return undefined;
+        const wallet = SIGNER_WALLETS.find((w) => w.id === transfer.fromWallet);
+        if (wallet === undefined) return undefined;
+        return { content: attachment, transfer, wallet };
+    });
+    let walletApproval = $state<ExternalWalletApproval | undefined>();
+    let approvingTransfer = $state(false);
 
+    function sendMessage() {
+        if (showCommandSelector || messageIsEmpty || approvingTransfer) return;
+
+        const draft = externalWalletDraft;
+        if (draft !== undefined) {
+            // Never fall through: a send without the approval would silently take the funds from
+            // the user's OpenChat account instead of the wallet they chose
+            if (walletApproval === undefined) return;
+            // The draft spends from an external wallet, which has to approve us taking the
+            // transfer before the message carrying it is sent. Nothing may be awaited before
+            // this call - the wallet opens in a popup, which the browser only allows while it is
+            // still handling the tap. If the user backs out, or the approval fails, nothing is
+            // sent and the draft stays put, so sending again just asks again.
+            approvingTransfer = true;
+            walletApproval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        // The account the wallet approved is now the one to take the funds from
+                        localUpdates.draftMessages.setAttachment(messageContext, {
+                            ...draft.content,
+                            transfer: {
+                                ...draft.transfer,
+                                fromWallet: undefined,
+                                fromAccount,
+                            },
+                        });
+                        completeSend();
+                    }
+                })
+                .finally(() => (approvingTransfer = false));
+        } else {
+            completeSend();
+        }
+    }
+
+    function completeSend() {
         const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
@@ -716,6 +767,18 @@
                     {/if}
                     {#if !editingEvent && attachment !== undefined}
                         <DraftMediaMessage {onRemoveAttachment} content={attachment} />
+                    {/if}
+                    {#if externalWalletDraft !== undefined}
+                        <!-- Renders nothing until the send asks the wallet for its approval,
+                             then shows where that has got to -->
+                        <div class="wallet_approval">
+                            <ExternalWalletApproval
+                                bind:this={walletApproval}
+                                wallet={externalWalletDraft.wallet}
+                                ledger={externalWalletDraft.transfer.ledger}
+                                amount={externalWalletDraft.transfer.amountE8s}
+                                fees={externalWalletDraft.transfer.feeE8s} />
+                        </div>
                     {/if}
                     {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}
                         <Row padding="md">
@@ -935,6 +998,15 @@
 
         &.is_editing {
             border-radius: var(--rad-xl);
+        }
+    }
+
+    .wallet_approval {
+        padding: var(--sp-md);
+
+        // The approval renders nothing while idle - collapse the padding with it
+        &:empty {
+            display: none;
         }
     }
 

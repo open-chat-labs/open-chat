@@ -16,7 +16,6 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import Translatable from "../Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
-    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
@@ -41,8 +40,6 @@
     // OpenChat one, so none of the limits derived from the latter apply while one is selected.
     let sourceWallet = $state<SignerWallet | undefined>();
     let payFromWallet = $derived(sourceWallet !== undefined);
-    let approval: ExternalWalletApproval | undefined = $state();
-    let approving = $state(false);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
@@ -61,31 +58,14 @@
     function send() {
         const to = receiver;
         if (to === undefined) return;
-
-        if (approval !== undefined) {
-            // The wallet has to approve us taking the transfer before we make it. Nothing may be
-            // awaited before this call - the wallet opens in a popup, which the browser only
-            // allows while it is still handling the tap. The attached draft is only sent when the
-            // user sends the message, so the approval has to be granted here, while we still have
-            // a tap to open the wallet from; if the draft is abandoned, or sits longer than the
-            // approval's validity, the allowance expires unspent and the send fails cleanly.
-            approving = true;
-            approval
-                .approve()
-                .then((fromAccount) => {
-                    if (fromAccount !== undefined) {
-                        attach(to, fromAccount);
-                    }
-                })
-                .finally(() => (approving = false));
-        } else {
-            attach(to);
-        }
+        attach(to);
     }
 
-    // `fromAccount` is an external wallet which has just approved the transfer. Without it the
-    // funds come from the user's own OpenChat account, as they always have.
-    function attach(to: UserSummary, fromAccount?: string) {
+    // This only attaches a draft - the transfer is made when the user sends the message. An
+    // external wallet's approval is not asked for here: it would spend a tap on an allowance the
+    // user may abandon without sending. Instead the draft carries the chosen wallet as
+    // `fromWallet`, and the send itself asks for the approval, from the tap which consumes it.
+    function attach(to: UserSummary) {
         const content: CryptocurrencyContent = {
             kind: "crypto_content",
             transfer: {
@@ -96,7 +76,7 @@
                 amountE8s: tokenState.draftAmount,
                 feeE8s: tokenState.transferFees,
                 createdAtNanos: nowNanos(),
-                fromAccount,
+                fromWallet: sourceWallet?.id,
             },
         };
 
@@ -161,14 +141,6 @@
             </div>
         {/if}
 
-        {#if sourceWallet !== undefined}
-            <ExternalWalletApproval
-                bind:this={approval}
-                wallet={sourceWallet}
-                {ledger}
-                amount={tokenState.draftAmount} />
-        {/if}
-
         <Container
             mainAxisAlignment={"spaceBetween"}
             crossAxisAlignment={"center"}
@@ -180,8 +152,7 @@
 
             <CommonButton
                 onClick={send}
-                disabled={!valid || !tokenState.draftAmount || approving}
-                loading={approving}
+                disabled={!valid || !tokenState.draftAmount}
                 mode={"active"}>
                 {#snippet icon(color, size)}
                     <Chat {color} {size} />

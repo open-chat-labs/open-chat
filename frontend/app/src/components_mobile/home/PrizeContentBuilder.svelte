@@ -54,7 +54,6 @@
     import Translatable from "../Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationSelector from "./DurationSelector.svelte";
-    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
     import SelectChitEarned from "./SelectChitEarned.svelte";
     import SelectMinStreak from "./SelectMinStreak.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
@@ -104,8 +103,6 @@
     // OpenChat one, so none of the limits derived from the latter apply while one is selected.
     let sourceWallet = $state<SignerWallet | undefined>();
     let payFromWallet = $derived(sourceWallet !== undefined);
-    let approval: ExternalWalletApproval | undefined = $state();
-    let approving = $state(false);
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails));
@@ -177,31 +174,11 @@
         return BigInt(BigInt(Date.now()) + selectedDuration);
     }
 
-    function send() {
-        if (approval !== undefined) {
-            // The wallet has to approve us taking the prize fund before we take it. Nothing may
-            // be awaited before this call - the wallet opens in a popup, which the browser only
-            // allows while it is still handling the tap. The attached draft is only sent when the
-            // user sends the message, so the approval has to be granted here, while we still have
-            // a tap to open the wallet from; if the draft is abandoned, or sits longer than the
-            // approval's validity, the allowance expires unspent and the send fails cleanly.
-            approving = true;
-            approval
-                .approve()
-                .then((fromAccount) => {
-                    if (fromAccount !== undefined) {
-                        attach(fromAccount);
-                    }
-                })
-                .finally(() => (approving = false));
-        } else {
-            attach();
-        }
-    }
-
-    // `fromAccount` is an external wallet which has just approved the transfer. Without it the
-    // prize is funded from the user's own OpenChat account, as it always has been.
-    function attach(fromAccount?: string) {
+    // This only attaches a draft - the prize fund is taken when the user sends the message. An
+    // external wallet's approval is not asked for here: it would spend a tap on an allowance the
+    // user may abandon without sending. Instead the draft carries the chosen wallet as
+    // `fromWallet`, and the send itself asks for the approval, from the tap which consumes it.
+    function attach() {
         const prizes = generatePrizes();
         const amountE8s = prizes.reduce((total, p) => total + p) + prizeFees;
 
@@ -222,7 +199,7 @@
                 amountE8s,
                 feeE8s: transferFee,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-                fromAccount,
+                fromWallet: sourceWallet?.id,
             },
             amount: draftAmount,
             fees: totalFees,
@@ -508,16 +485,6 @@
             </Row>
         </Column>
 
-        {#if sourceWallet !== undefined}
-            <!-- The prize fund leaves the wallet as one transfer: the amount plus the fees the
-                 message carries to fund each winner's payout -->
-            <ExternalWalletApproval
-                bind:this={approval}
-                wallet={sourceWallet}
-                {ledger}
-                amount={draftAmount + prizeFees} />
-        {/if}
-
         <!-- Buttons -->
         <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
             <CommonButton2 variant="primary" mode="text" onClick={onClose}>
@@ -526,9 +493,8 @@
             <CommonButton2
                 variant="primary"
                 mode="regular"
-                disabled={!valid || approving}
-                loading={approving}
-                onClick={send}>
+                disabled={!valid}
+                onClick={attach}>
                 {#snippet icon(color, size)}
                     <Gift {color} {size} />
                 {/snippet}
