@@ -63,7 +63,6 @@ pub struct NotifyEscrowCanisterOfDepositJob {
     pub swap_id: u32,
     // `None` only for jobs queued before this field existed; escrow then falls back to the
     // caller, which is correct for those jobs since they predate indexed UserIds.
-    #[serde(default)]
     pub user_id: Option<UserId>,
     pub attempt: u32,
 }
