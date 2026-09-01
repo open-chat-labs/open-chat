@@ -34,6 +34,7 @@
     import Translatable from "../Translatable.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import ExternalWalletPayment from "./ExternalWalletPayment.svelte";
     import TipButton from "./TipButton.svelte";
     import TokenInput from "./TokenInput.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
@@ -66,6 +67,9 @@
     let centAmount = $state(0);
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);
+    // Paying from an external wallet spends that wallet's balance rather than the user's OpenChat
+    // one, so none of the limits derived from the latter apply while it is on
+    let payFromWallet = $state(false);
 
     onMount(() => {
         let d = document.getElementById("tip-dollar");
@@ -140,6 +144,12 @@
 
     function send(e: Event) {
         e.preventDefault();
+        tip();
+    }
+
+    // `fromAccount` is an external wallet which has just approved us taking the tip. Without it the
+    // tip comes from the user's own OpenChat account, as it always has.
+    function tip(fromAccount?: string) {
         const transfer: PendingCryptocurrencyTransfer = {
             kind: "pending",
             ledger,
@@ -148,6 +158,7 @@
             amountE8s: tokenState.draftAmount,
             feeE8s: tokenDetails.transferFee,
             createdAtNanos: BigInt(Date.now()) * 1_000_000n,
+            fromAccount,
         };
         lastCryptoSent.set(ledger);
 
@@ -195,13 +206,19 @@
         client.formatTokens(tokenState.draftAmount, tokenDetails.decimals),
     );
     let displayFee = $derived(client.formatTokens(tokenDetails.transferFee, tokenDetails.decimals));
+    // What the user is able to spend, or undefined when that is the external wallet's business
+    // rather than ours
+    let spendingLimit = $derived(payFromWallet ? undefined : tokenState.maxAmount);
     let valid = $derived(
         tokenState.draftAmount > 0n &&
-            tokenState.remainingBalance >= 0n &&
+            (payFromWallet || tokenState.remainingBalance >= 0n) &&
             error === undefined &&
             !tokenChanging,
     );
-    let zero = $derived(tokenState.cryptoBalance <= tokenDetails.transferFee && !tokenChanging);
+    // An empty OpenChat account is only a dead end while the user is paying from it
+    let zero = $derived(
+        tokenState.cryptoBalance <= tokenDetails.transferFee && !tokenChanging && !payFromWallet,
+    );
     $effect(() => {
         centAmount = calculateCentAmount(tokenState.draftAmount, exchangeRate);
     });
@@ -246,8 +263,9 @@
                             label={i18nKey(amountLabel(increment))}
                             onClick={(e) => clickAmount(e, increment)}
                             disabled={exchangeRate === 0 ||
-                                calculateAmount(centAmount + increment, exchangeRate) >
-                                    tokenState.cryptoBalance - tokenDetails.transferFee} />
+                                (spendingLimit !== undefined &&
+                                    calculateAmount(centAmount + increment, exchangeRate) >
+                                        spendingLimit)} />
                     {/each}
                 </Row>
                 {#if tokenState.draftAmount > 0}
@@ -290,10 +308,10 @@
             {#if showCustomTip || exchangeRate <= 0}
                 <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
                     <TokenInput
-                        balance={tokenState.cryptoBalance}
+                        balance={payFromWallet ? undefined : tokenState.cryptoBalance}
                         {ledger}
                         bind:valid={validAmount}
-                        maxAmount={tokenState.maxAmount}
+                        maxAmount={spendingLimit}
                         bind:amount={tokenState.draftAmount} />
                 </div>
             {/if}
@@ -303,9 +321,25 @@
                 </div>
             {/if}
         {/if}
+        <Row
+            mainAxisAlignment={"center"}
+            crossAxisAlignment={"center"}
+            onClick={() => (payFromWallet = !payFromWallet)}>
+            <Body width={"hug"} colour={"secondary"}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        payFromWallet ? "externalWallet.useOwnAccount" : "externalWallet.use",
+                    )} />
+            </Body>
+        </Row>
+        {#if payFromWallet && tokenState.draftAmount > 0n}
+            <ExternalWalletPayment {ledger} amount={tokenState.draftAmount} onApproved={tip} />
+        {/if}
         <Column gap={"md"}>
-            <Button disabled={!valid} onClick={send}
-                ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
+            {#if !payFromWallet}
+                <Button disabled={!valid} onClick={send}
+                    ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
+            {/if}
             <Button secondary onClick={cancel}
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
         </Column>

@@ -31,6 +31,7 @@
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import ExternalWalletPayment from "./ExternalWalletPayment.svelte";
     import TipButton from "./TipButton.svelte";
     import TokenInput from "./TokenInput.svelte";
 
@@ -65,6 +66,9 @@
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);
     let draftAmount = $state(0n);
+    // Paying from an external wallet spends that wallet's balance rather than the user's OpenChat
+    // one, so none of the limits derived from the latter apply while it is on
+    let payFromWallet = $state(false);
 
     onMount(() => {
         let d = document.getElementById("tip-dollar");
@@ -121,7 +125,7 @@
     function onBalanceRefreshFinished() {
         toppingUp = false;
         tokenChanging = false;
-        if (remainingBalance < 0) {
+        if (remainingBalance < 0 && !payFromWallet) {
             remainingBalance = 0n;
             draftAmount = cryptoBalance - tokenDetails.transferFee;
             if (draftAmount < 0) {
@@ -164,6 +168,12 @@
 
     function send(e: Event) {
         e.preventDefault();
+        tip();
+    }
+
+    // `fromAccount` is an external wallet which has just approved us taking the tip. Without it the
+    // tip comes from the user's own OpenChat account, as it always has.
+    function tip(fromAccount?: string) {
         const transfer: PendingCryptocurrencyTransfer = {
             kind: "pending",
             ledger,
@@ -172,6 +182,7 @@
             amountE8s: draftAmount,
             feeE8s: tokenDetails.transferFee,
             createdAtNanos: BigInt(Date.now()) * 1_000_000n,
+            fromAccount,
         };
         lastCryptoSent.set(ledger);
 
@@ -214,14 +225,23 @@
     let remainingBalance = $state(0n);
     $effect(() => {
         remainingBalance =
-            draftAmount > 0n
+            draftAmount > 0n && !payFromWallet
                 ? cryptoBalance - draftAmount - tokenDetails.transferFee
                 : cryptoBalance;
     });
+    // What the user is able to spend, or undefined when that is the external wallet's business
+    // rather than ours
+    let spendingLimit = $derived(payFromWallet ? undefined : maxAmount(cryptoBalance));
     let valid = $derived(
-        draftAmount > 0n && remainingBalance >= 0n && error === undefined && !tokenChanging,
+        draftAmount > 0n &&
+            (payFromWallet || remainingBalance >= 0n) &&
+            error === undefined &&
+            !tokenChanging,
     );
-    let zero = $derived(cryptoBalance <= tokenDetails.transferFee && !tokenChanging);
+    // An empty OpenChat account is only a dead end while the user is paying from it
+    let zero = $derived(
+        cryptoBalance <= tokenDetails.transferFee && !tokenChanging && !payFromWallet,
+    );
     let transferFees = $derived(tokenDetails.transferFee);
     $effect(() => {
         centAmount = calculateCentAmount(draftAmount, exchangeRate);
@@ -285,8 +305,11 @@
                                         label={i18nKey(amountLabel(increment))}
                                         onClick={(e) => clickAmount(e, increment)}
                                         disabled={exchangeRate === 0 ||
-                                            calculateAmount(centAmount + increment, exchangeRate) >
-                                                cryptoBalance - tokenDetails.transferFee} />
+                                            (spendingLimit !== undefined &&
+                                                calculateAmount(
+                                                    centAmount + increment,
+                                                    exchangeRate,
+                                                ) > spendingLimit)} />
                                 {/each}
                             </div>
                             <div in:fade|local={{ duration: 300 }} class="message">
@@ -335,9 +358,31 @@
                                         {ledger}
                                         {transferFees}
                                         bind:valid={validAmount}
-                                        maxAmount={maxAmount(cryptoBalance)}
+                                        maxAmount={spendingLimit}
                                         bind:amount={draftAmount} />
                                 </div>
+                            {/if}
+                        </div>
+                        <div class="funding">
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_missing_attribute -->
+                            <a
+                                role="button"
+                                tabindex="0"
+                                class="options"
+                                onclick={() => (payFromWallet = !payFromWallet)}>
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        payFromWallet
+                                            ? "externalWallet.useOwnAccount"
+                                            : "externalWallet.use",
+                                    )} />
+                            </a>
+                            {#if payFromWallet && draftAmount > 0n}
+                                <ExternalWalletPayment
+                                    {ledger}
+                                    amount={draftAmount}
+                                    onApproved={tip} />
                             {/if}
                         </div>
                         {#if error !== undefined}
@@ -362,7 +407,7 @@
                             tiny={$mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
-                    {:else}
+                    {:else if !payFromWallet}
                         <Button
                             small={!$mobileWidth}
                             disabled={!valid}
@@ -459,5 +504,11 @@
         .custom-tip-amount {
             padding: $sp4 $sp5;
         }
+    }
+
+    .funding {
+        padding: 0 $sp5;
+        text-align: center;
+        @include font(light, normal, fs-80);
     }
 </style>

@@ -746,7 +746,9 @@
         "connecting": "Waiting for {wallet}…",
         "failed": "Could not set up the payment from your wallet",
         "subtitle": "Approve the payment in your own wallet and we will take it from there. Your keys never leave it.",
-        "title": "Or pay from an external wallet"
+        "title": "Or pay from an external wallet",
+        "use": "Pay from an external wallet",
+        "useOwnAccount": "Pay from my OpenChat account"
     },
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "failedToCopyToClipboard": "Unable to copy to clipboard. {account}",
