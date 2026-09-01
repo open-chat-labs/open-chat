@@ -69,6 +69,7 @@
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
+    import SlidingModals from "./SlidingModals.svelte";
     import SuspendModal from "./SuspendModal.svelte";
     import SetPinNumberModal from "./wallet/SetPinNumberModal.svelte";
 
@@ -560,6 +561,8 @@
         />
     {/if}
 {/if}
+
+<SlidingModals />
 
 <Container height={"fill"} width={"fill"} supplementalClass={mainClass} tag="main">
     {#if showOnboarding}
