@@ -150,6 +150,9 @@
 
     let classList = $derived.by(() => {
         const classes = ["message_bubble"];
+        if (me && !placeholderContent && !failed) {
+            classes.push("me");
+        }
         if (focused) {
             classes.push("focused");
         }
@@ -294,6 +297,10 @@
 
         .container.message_bubble {
             transition: box-shadow ease-in 300ms;
+        }
+
+        .container.message_bubble.me {
+            color: var(--chat-text-sent);
         }
 
         .container.message_bubble a {
