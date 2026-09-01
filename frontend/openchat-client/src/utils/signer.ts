@@ -1,10 +1,10 @@
-import { Actor } from "@icp-sdk/core/agent";
+import { Actor, HttpAgent } from "@icp-sdk/core/agent";
 import type { IDL } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
 import { Signer, type PermissionScope } from "@icp-sdk/signer";
 import { SignerAgent } from "@icp-sdk/signer/agent";
 import { PostMessageTransport } from "@icp-sdk/signer/web";
-import { encodeIcrcAccount, type IcrcAccount } from "@shared";
+import { encodeIcrcAccount, isMainnet, type IcrcAccount } from "@shared";
 
 export type SignerWalletId = "oisy" | "nfid";
 
@@ -24,8 +24,17 @@ export const SIGNER_WALLETS: SignerWallet[] = [
 
 // Listing the wallet's accounts and asking it to sign a canister call are the only two things we
 // ever need it to do
-const ACCOUNTS_SCOPE: PermissionScope = { method: "icrc27_accounts" };
-const CALL_CANISTER_SCOPE: PermissionScope = { method: "icrc49_call_canister" };
+const REQUIRED_SCOPES: PermissionScope[] = [
+    { method: "icrc27_accounts" },
+    { method: "icrc49_call_canister" },
+];
+
+// How long an approval we request stays spendable. The allowance is the whole of the access the
+// user grants us, so it should outlive the payment it is for and nothing more - an approval left
+// standing is one we could spend at any point later.
+export const APPROVAL_VALIDITY_MS = 10 * 60 * 1000;
+
+const NANOS_PER_MILLISECOND = 1_000_000n;
 
 export type WalletAccount = IcrcAccount & {
     // The textual encoding of the account, which is what the rest of OpenChat passes around as
@@ -40,7 +49,8 @@ export type ApproveSpendingArgs = {
     // burns - the ledger checks the allowance against amount + fee
     amount: bigint;
     spender: IcrcAccount;
-    expiresAt?: bigint; // nanos since epoch
+    // Nanos since epoch, defaulting to `APPROVAL_VALIDITY_MS` from now
+    expiresAt?: bigint;
 };
 
 export class ApproveError extends Error {
@@ -59,20 +69,35 @@ export class SignerConnection {
     private constructor(
         readonly wallet: SignerWallet,
         private readonly signer: Signer,
+        private readonly agent: HttpAgent | undefined,
     ) {}
 
     // Opens the wallet in a popup and asks for permission to list accounts and request canister
     // calls. Must be called from a user gesture or the popup will be blocked.
-    static async connect(wallet: SignerWallet): Promise<SignerConnection> {
+    static async connect(wallet: SignerWallet, icUrl: string): Promise<SignerConnection> {
         const transport = new PostMessageTransport({ url: wallet.signerUrl });
-        const signer = new Signer({ transport });
-        const permissions = await signer.requestPermissions([ACCOUNTS_SCOPE, CALL_CANISTER_SCOPE]);
-        const denied = permissions.filter((p) => p.state === "denied").map((p) => p.scope.method);
-        if (denied.length > 0) {
+        // The popup can only be opened from within a click, so the channel has to stay open for
+        // the calls which follow rather than being reopened per request.
+        const signer = new Signer({ transport, autoCloseTransportChannel: false });
+        try {
+            // Nothing may be awaited before this: the popup is opened by the first request sent,
+            // and a signer window opened outside the click which triggered it is rejected.
+            const permissions = await signer.requestPermissions(REQUIRED_SCOPES);
+            const missing = REQUIRED_SCOPES.map((required) => required.method).filter((method) => {
+                // ICRC-25 answers with the scopes it is granting, so one we asked for being absent
+                // is a refusal just as much as one returned as denied. `ask_on_use` is a grant -
+                // the wallet prompts the user when we call rather than now.
+                const granted = permissions.find((p) => p.scope.method === method);
+                return granted === undefined || granted.state === "denied";
+            });
+            if (missing.length > 0) {
+                throw new Error(`Wallet did not grant permissions: ${missing.join(", ")}`);
+            }
+            return new SignerConnection(wallet, signer, await createVerifyingAgent(icUrl));
+        } catch (err) {
             await signer.closeChannel();
-            throw new Error(`Wallet denied permissions: ${denied.join(", ")}`);
+            throw err;
         }
-        return new SignerConnection(wallet, signer);
     }
 
     async accounts(): Promise<WalletAccount[]> {
@@ -87,6 +112,7 @@ export class SignerConnection {
         const agent = SignerAgent.createSync({
             signer: this.signer,
             account: args.account.owner,
+            agent: this.agent,
         });
         const ledger = Actor.createActor<ApproveService>(approveIdlFactory, {
             agent,
@@ -122,6 +148,17 @@ type ApproveService = {
     icrc2_approve: (args: CandidApproveArgs) => Promise<ApproveResult>;
 };
 
+// Approvals are only accepted once their certificate verifies, which needs the root key of
+// whichever network we are pointed at. Mainnet's is built in; anything else has to fetch it, or
+// every approval fails as though it had been tampered with.
+async function createVerifyingAgent(icUrl: string): Promise<HttpAgent | undefined> {
+    if (isMainnet(icUrl)) return undefined;
+
+    const agent = HttpAgent.createSync({ host: icUrl });
+    await agent.fetchRootKey();
+    return agent;
+}
+
 function formatErrorDetail(detail: unknown): string {
     if (detail === null || detail === undefined) return "";
     return JSON.stringify(detail, (_, value) =>
@@ -129,12 +166,10 @@ function formatErrorDetail(detail: unknown): string {
     );
 }
 
-export function buildApproveArgs({
-    account,
-    amount,
-    spender,
-    expiresAt,
-}: ApproveSpendingArgs): CandidApproveArgs {
+export function buildApproveArgs(
+    { account, amount, spender, expiresAt }: ApproveSpendingArgs,
+    now: number = Date.now(),
+): CandidApproveArgs {
     return {
         from_subaccount: account.subaccount !== undefined ? [account.subaccount] : [],
         spender: {
@@ -143,7 +178,7 @@ export function buildApproveArgs({
         },
         amount,
         expected_allowance: [],
-        expires_at: expiresAt !== undefined ? [expiresAt] : [],
+        expires_at: [expiresAt ?? BigInt(now + APPROVAL_VALIDITY_MS) * NANOS_PER_MILLISECOND],
         fee: [],
         memo: [],
         created_at_time: [],

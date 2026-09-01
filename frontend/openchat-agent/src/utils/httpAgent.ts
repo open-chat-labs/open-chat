@@ -1,6 +1,5 @@
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
-import { isMainnet } from "./network";
-import { offline } from "@shared";
+import { isMainnet, offline } from "@shared";
 
 export function createHttpAgentSync(identity: Identity, icUrl: string): HttpAgent {
     const [agent] = createHttpAgentInternal(identity, icUrl);

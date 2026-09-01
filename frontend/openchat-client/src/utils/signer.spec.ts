@@ -1,6 +1,6 @@
 import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
-import { buildApproveArgs, type ApproveSpendingArgs } from "./signer";
+import { APPROVAL_VALIDITY_MS, buildApproveArgs, type ApproveSpendingArgs } from "./signer";
 
 const walletOwner = Principal.selfAuthenticating(new Uint8Array(32).fill(7));
 const spenderOwner = Principal.fromText("dfdal-2uaaa-aaaaa-qaama-cai");
@@ -19,18 +19,25 @@ function args(overrides: Partial<ApproveSpendingArgs> = {}): ApproveSpendingArgs
 
 describe("buildApproveArgs", () => {
     test("omits optional fields which are not set", () => {
-        const approveArgs = buildApproveArgs(args());
+        const approveArgs = buildApproveArgs(args(), 1_000);
 
         expect(approveArgs).toEqual({
             from_subaccount: [],
             spender: { owner: spenderOwner, subaccount: [] },
             amount: 100_000_000n,
             expected_allowance: [],
-            expires_at: [],
+            expires_at: [BigInt(1_000 + APPROVAL_VALIDITY_MS) * 1_000_000n],
             fee: [],
             memo: [],
             created_at_time: [],
         });
+    });
+
+    test("expires the approval by default, rather than leaving it standing", () => {
+        const [expiresAt] = buildApproveArgs(args(), 1_000).expires_at;
+
+        expect(expiresAt).toEqual(BigInt(1_000 + APPROVAL_VALIDITY_MS) * 1_000_000n);
+        expect(APPROVAL_VALIDITY_MS).toEqual(10 * 60 * 1000);
     });
 
     test("includes subaccounts and expiry when set", () => {
