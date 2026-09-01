@@ -1,6 +1,6 @@
 <script lang="ts">
     import { SIGNER_WALLETS, type SignerWallet } from "@client";
-    import { Body, BodySmall, ColourVars, Column, Row, Sheet, Subtitle } from "component-lib";
+    import { Body, ColourVars, Column, Row, Sheet, Subtitle } from "component-lib";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -24,9 +24,10 @@
 </script>
 
 <Row onClick={() => (choosing = true)} width={"hug"} crossAxisAlignment={"center"} gap={"sm"}>
-    <BodySmall colour={"textSecondary"} width={"hug"}>
+    <!-- The same size as the balance text alongside, but in the label colour -->
+    <Body colour={"textSecondary"} width={"hug"}>
         <Translatable resourceKey={i18nKey("externalWallet.sourceWallet")} />
-    </BodySmall>
+    </Body>
     <img class="wallet-logo" alt={wallet?.name ?? "OpenChat"} src={wallet?.logo ?? OPENCHAT_LOGO} />
     <ChevronDown size={"1.5rem"} color={ColourVars.textSecondary} />
 </Row>
