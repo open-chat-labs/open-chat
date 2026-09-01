@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
-- Pay swap payouts and refunds to the user's wallet account rather than their raw principal ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
+- Support paying out to users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
 
 ## [[2.0.1985](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1985-escrow)] - 2026-05-20
 
