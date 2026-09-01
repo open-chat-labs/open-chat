@@ -266,11 +266,15 @@
             {/if}
 
             {#if sourceWallet !== undefined}
+                <!-- The price is what the ledger takes from the wallet in total: the user index
+                     charges a fee less than it and lets the ledger add that fee back on, so there
+                     is no second fee to cover here -->
                 <ExternalWalletApproval
                     bind:this={approval}
                     wallet={sourceWallet}
                     ledger={tokenDetails.ledger}
-                    amount={toPayE8s} />
+                    amount={toPayE8s}
+                    fees={0n} />
             {/if}
 
             {#if error}

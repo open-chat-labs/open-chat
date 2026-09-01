@@ -257,6 +257,12 @@ export async function approveFromExternalWallet(
     const connection = await SignerConnection.connect(wallet, icUrl);
     try {
         const accounts = await connection.accounts();
+        // A wallet which grants the scope and then names no accounts leaves nothing to pay from,
+        // and asking the user to choose from an empty list would strand the flow
+        if (accounts.length === 0) {
+            throw new Error(`${wallet.name} did not return an account to pay from`);
+        }
+
         const account = accounts.length === 1 ? accounts[0] : await chooseAccount(accounts);
         if (account === undefined) return undefined;
 

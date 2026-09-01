@@ -1,7 +1,7 @@
 <script lang="ts">
     import { cryptoLookup, type OpenChat, type SignerWallet, type WalletAccount } from "@client";
     import { BodySmall, ColourVars, Column, CommonButton, Row } from "component-lib";
-    import { getContext } from "svelte";
+    import { getContext, onDestroy } from "svelte";
     import Warning from "svelte-material-icons/AlertRhombusOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -33,8 +33,13 @@
 
     let flow = $state<Flow>({ kind: "idle" });
     let failed = $state(false);
+    // Set when the flow this belongs to goes away while the wallet still has the user, which is
+    // the user calling the payment off part way through
+    let abandoned = false;
 
     let tokenDetails = $derived($cryptoLookup.get(ledger));
+
+    onDestroy(() => (abandoned = true));
 
     // Opens the wallet and asks it to approve the payment, resolving to the account to pass as the
     // payment's `fromAccount`, or undefined if the user backs out or the approval fails. Call this
@@ -57,7 +62,12 @@
                     }),
                 () => (flow = { kind: "approving" }),
             )
-            .catch(() => {
+            // Closing the payment sheet cancels the payment, even though the wallet has by then
+            // been asked to approve it. Any approval which did go through is left to expire
+            // unspent rather than being taken after the user backed out.
+            .then((fromAccount) => (abandoned ? undefined : fromAccount))
+            .catch((err) => {
+                client.logError(`Failed to approve payment from ${wallet.name}`, err);
                 failed = true;
                 return undefined;
             })
@@ -79,6 +89,12 @@
                     {account.address}
                 </CommonButton>
             {/each}
+            <CommonButton
+                width={"fill"}
+                size={"small_text"}
+                onClick={() => flow.kind === "choosing" && flow.choose(undefined)}>
+                <Translatable resourceKey={i18nKey("cancel")} />
+            </CommonButton>
         {:else if flow.kind === "connecting" || flow.kind === "approving"}
             <BodySmall colour={"textSecondary"}>
                 <Translatable
