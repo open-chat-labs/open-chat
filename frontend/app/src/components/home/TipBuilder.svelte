@@ -293,8 +293,8 @@
                 </div>
                 <SourceWalletSelector bind:wallet={sourceWallet} />
                 <!-- The balance is the external wallet's business while one is selected, so only
-                     show OpenChat's own -->
-                {#if !payFromWallet}
+                     show OpenChat's own - but keep its space so the selector does not move -->
+                <div class="oc-balance" class:hidden={payFromWallet}>
                     <BalanceWithRefresh
                         bind:toppingUp
                         bind:this={balanceWithRefresh}
@@ -306,7 +306,7 @@
                         bind:refreshing
                         onRefreshed={onBalanceRefreshed}
                         onError={onBalanceRefreshError} />
-                {/if}
+                </div>
             </span>
         {/snippet}
         {#snippet body()}
@@ -466,6 +466,10 @@
         &.zero {
             padding: 0 $sp4;
         }
+    }
+
+    .oc-balance.hidden {
+        visibility: hidden;
     }
 
     .message {

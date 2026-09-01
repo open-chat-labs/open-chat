@@ -86,13 +86,13 @@
             <Row width={"hug"} crossAxisAlignment={"center"} gap={"md"}>
                 <SourceWalletSelector bind:wallet={sourceWallet} />
                 <!-- The balance is the external wallet's business while one is selected, so only
-                     show OpenChat's own -->
-                {#if sourceWallet === undefined}
+                     show OpenChat's own - but keep its space so the selector does not move -->
+                <div class="oc-balance" class:hidden={sourceWallet !== undefined}>
                     <BalanceWithRefresh
                         bind:this={balanceWithRefresh}
                         ledger={ledger1}
                         value={cryptoBalance} />
-                {/if}
+                </div>
             </Row>
         </Row>
         <div class="body" class:insufficient>
@@ -149,3 +149,9 @@
         </Row>
     </Column>
 </Sheet>
+
+<style lang="scss">
+    .oc-balance.hidden {
+        visibility: hidden;
+    }
+</style>

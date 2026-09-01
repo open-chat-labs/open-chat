@@ -93,15 +93,15 @@
                 </div>
                 <SourceWalletSelector bind:wallet={sourceWallet} />
                 <!-- The balance is the external wallet's business while one is selected, so only
-                     show OpenChat's own -->
-                {#if sourceWallet === undefined}
+                     show OpenChat's own - but keep its space so the selector does not move -->
+                <div class="oc-balance" class:hidden={sourceWallet !== undefined}>
                     <BalanceWithRefresh
                         bind:this={balanceWithRefresh}
                         ledger={ledger1}
                         value={cryptoBalance}
                         label={i18nKey("p2pSwap.tokenBalance", { token: symbol1 })}
                         bold />
-                {/if}
+                </div>
             </span>
         {/snippet}
         {#snippet body()}
@@ -171,6 +171,10 @@
         align-items: center;
         justify-content: space-between;
         gap: $sp2;
+    }
+
+    .oc-balance.hidden {
+        visibility: hidden;
     }
 
     .body {

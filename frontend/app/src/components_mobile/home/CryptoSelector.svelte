@@ -21,7 +21,8 @@
         draftAmount?: bigint;
         showRefresh?: boolean;
         // Hides the OpenChat balance (and its refresh), for when the payment is coming from
-        // somewhere else and the balance is not the one being spent
+        // somewhere else and the balance is not the one being spent. Their space is kept so the
+        // layout around them does not move.
         hideBalance?: boolean;
     }
 
@@ -63,21 +64,22 @@
             <Avatar url={getProxyAdjustedBlobUrl(tokenState.logo) ?? tokenState.logo}></Avatar>
             <Column>
                 <Body width={"hug"} fontWeight={"bold"}>{tokenState.symbol}</Body>
-                {#if !hideBalance}
+                <div class="balance" class:hidden={hideBalance}>
                     <BodySmall
                         colour={"textSecondary"}
                         blur={$hideTokenBalances}
                         align={"end"}
                         width={"hug"}
                         fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
-                {/if}
+                </div>
             </Column>
             <ChevronDown size={"1.5rem"} color={ColourVars.textSecondary} />
         </Row>
-        {#if showRefresh && !hideBalance}
+        {#if showRefresh}
             <button
                 onclick={() => tokenState.refreshBalance(client)}
                 class="refresh"
+                class:hidden={hideBalance}
                 class:refreshing={tokenState.refreshingBalance}>
                 <Refresh size={"1.5rem"} color={ColourVars.textPrimary} />
             </button>
@@ -113,5 +115,13 @@
         &.refreshing {
             @include spin();
         }
+
+        &.hidden {
+            visibility: hidden;
+        }
+    }
+
+    .balance.hidden {
+        visibility: hidden;
     }
 </style>
