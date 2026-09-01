@@ -1,3 +1,4 @@
+import { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
     AccessGate,
@@ -133,6 +134,7 @@ import {
     chatIdentifiersEqual,
     codeToText,
     decodeIcrcAccount,
+    encodeIcrcAccount,
     isAccountIdentifierValid,
     messagePermissionsList,
     nullMembership,
@@ -1221,7 +1223,7 @@ function cryptoTransfer(
     throw new UnsupportedValueError("Unexpected ApiCryptoTransaction type received", value);
 }
 
-function pendingCryptoTransfer(
+export function pendingCryptoTransfer(
     value: TPendingCryptoTransaction,
     recipient: string,
 ): PendingCryptocurrencyTransfer {
@@ -1251,7 +1253,17 @@ function pendingCryptoTransfer(
         };
     }
     if ("ICRC2" in value) {
-        throw new Error("ICRC2 is not supported yet");
+        return {
+            kind: "pending",
+            ledger: principalBytesToString(value.ICRC2.ledger),
+            token: value.ICRC2.token_symbol,
+            recipient,
+            amountE8s: value.ICRC2.amount,
+            feeE8s: value.ICRC2.fee,
+            memo: mapOptional(value.ICRC2.memo, bytesToBigint),
+            createdAtNanos: value.ICRC2.created,
+            fromAccount: formatIcrcAccount(value.ICRC2.from),
+        };
     }
 
     throw new UnsupportedValueError("Unexpected ApiPendingCryptoTransaction type received", value);
@@ -2124,6 +2136,24 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): TCryptoC
 
 export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCryptoTransaction {
     if (domain.kind === "pending") {
+        // A fromAccount means spending from a wallet OpenChat does not control, which the user's
+        // canister pulls from via ICRC-2, so the wallet must have approved it as spender.
+        if (domain.fromAccount !== undefined) {
+            return {
+                Pending: {
+                    ICRC2: {
+                        ledger: principalStringToBytes(domain.ledger),
+                        token_symbol: domain.token,
+                        from: addressToIcrcAccount(domain.fromAccount),
+                        to: principalToIcrcAccount(domain.recipient),
+                        amount: domain.amountE8s,
+                        fee: domain.feeE8s ?? BigInt(0),
+                        memo: mapOptional(domain.memo, bigintToBytes),
+                        created: domain.createdAtNanos,
+                    },
+                },
+            };
+        }
         return {
             Pending: {
                 ICRC1: {
@@ -3011,6 +3041,13 @@ export function addressToIcrcAccount(address: string): AccountICRC1 {
                 ? ([...icrcAccount.subaccount] as NumberArray32)
                 : undefined,
     };
+}
+
+export function formatIcrcAccount(account: AccountICRC1): string {
+    return encodeIcrcAccount({
+        owner: Principal.fromText(principalBytesToString(account.owner)),
+        subaccount: mapOptional(account.subaccount, consolidateBytes),
+    });
 }
 
 export function unitResult(
