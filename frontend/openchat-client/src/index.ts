@@ -12,6 +12,15 @@ export type { TypersByKey } from "./stores/typing";
 export { builtinBot } from "./utils/builtinBotCommands";
 export * from "./utils/restrictedContent";
 export {
+    ApproveError,
+    SIGNER_WALLETS,
+    SignerConnection,
+    type ApproveSpendingArgs,
+    type SignerWallet,
+    type SignerWalletId,
+    type WalletAccount,
+} from "./utils/signer";
+export {
     buildCryptoTransferText,
     buildTransactionUrl,
     subrangesCover,
