@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "@client";
+    import type { MessageContext, OpenChat, P2PSwapContentInitial, SignerWallet } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         isDiamondStore,
@@ -22,6 +22,8 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationPicker from "./DurationPicker.svelte";
+    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -46,6 +48,12 @@
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let confirming = $state(false);
     let sending = $state(false);
+    // The external wallet the offer will be funded from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
+    let approval: ExternalWalletApproval | undefined = $state();
 
     let fromDetails = $derived($cryptoLookup.get(fromLedger)!);
     let toDetails = $derived($cryptoLookup.get(toLedger)!);
@@ -53,8 +61,13 @@
     let remainingBalance = $state(0n);
     $effect(() => {
         remainingBalance =
-            fromAmount > 0n ? fromDetails.balance - fromAmount - totalFees : fromDetails.balance;
+            fromAmount > 0n && !payFromWallet
+                ? fromDetails.balance - fromAmount - totalFees
+                : fromDetails.balance;
     });
+    // What the user is able to offer, or undefined when that is the external wallet's business
+    // rather than ours
+    let spendingLimit = $derived(payFromWallet ? undefined : fromDetails.balance - totalFees);
     let minAmount = $derived(fromDetails.transferFee * BigInt(10));
     let valid = $derived(error === undefined && fromAmountValid && toAmountValid && durationValid);
     let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
@@ -92,6 +105,28 @@
             return Promise.resolve();
         }
 
+        sending = true;
+        error = undefined;
+
+        if (approval !== undefined) {
+            // The wallet has to approve us taking the offer's funds before we take them. Nothing
+            // may be awaited before this call - the wallet opens in a popup, which the browser
+            // only allows while it is still handling the click
+            return approval.approve().then((fromAccount) => {
+                if (fromAccount === undefined) {
+                    sending = false;
+                } else {
+                    return sendSwap(fromAccount);
+                }
+            });
+        } else {
+            return sendSwap();
+        }
+    }
+
+    // `fromAccount` is an external wallet which has just approved the transfer. Without it the
+    // offer is funded from the user's own OpenChat account, as it always has been.
+    function sendSwap(fromAccount?: string): Promise<void> {
         const content: P2PSwapContentInitial = {
             kind: "p2p_swap_content_initial",
             token0: {
@@ -110,10 +145,8 @@
             token1Amount: toAmount,
             caption: message === "" ? undefined : message,
             expiresIn,
+            fromAccount,
         };
-
-        sending = true;
-        error = undefined;
 
         return client
             .sendMessageWithContent(messageContext, content, false)
@@ -142,7 +175,7 @@
     }
 
     function onBalanceRefreshFinished() {
-        if (remainingBalance < 0) {
+        if (remainingBalance < 0 && !payFromWallet) {
             remainingBalance = BigInt(0);
             fromAmount = fromDetails.balance - totalFees;
         }
@@ -173,13 +206,18 @@
                 <div class="main-title">
                     <Translatable resourceKey={i18nKey("p2pSwap.builderTitle")} />
                 </div>
-                <BalanceWithRefresh
-                    ledger={fromLedger}
-                    value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
-                    onRefreshed={onBalanceRefreshed}
-                    onError={onBalanceRefreshError} />
+                <SourceWalletSelector bind:wallet={sourceWallet} />
+                <!-- The balance is the external wallet's business while one is selected, so only
+                     show OpenChat's own - but keep its space so the selector does not move -->
+                <div class="oc-balance" class:hidden={payFromWallet}>
+                    <BalanceWithRefresh
+                        ledger={fromLedger}
+                        value={remainingBalance}
+                        label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                        bold
+                        onRefreshed={onBalanceRefreshed}
+                        onError={onBalanceRefreshError} />
+                </div>
             </span>
         {/snippet}
         {#snippet body()}
@@ -188,8 +226,10 @@
                     <div class="select-from">
                         <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
                         <div class="inner">
+                            <!-- An external wallet's balance is its own business, so while one is
+                                 selected tokens the user holds none of stay available -->
                             <CryptoSelector
-                                filter={(t) => t.balance > 0}
+                                filter={payFromWallet ? undefined : (t) => t.balance > 0}
                                 bind:ledger={fromLedger}
                                 onSelect={onSelectFromToken} />
                         </div>
@@ -198,7 +238,7 @@
                         <TokenInput
                             ledger={fromLedger}
                             {minAmount}
-                            maxAmount={fromDetails.balance - totalFees}
+                            maxAmount={spendingLimit}
                             showDollarAmount
                             bind:status={tokenInputState}
                             bind:valid={fromAmountValid}
@@ -240,6 +280,16 @@
                         <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
                     </div>
                 {/if}
+                {#if sourceWallet !== undefined}
+                    <!-- The escrowed amount funds the swap's outbound transfer as well, so the
+                         ledger charges the offer's amount plus two fees against the allowance -->
+                    <ExternalWalletApproval
+                        bind:this={approval}
+                        wallet={sourceWallet}
+                        ledger={fromLedger}
+                        amount={fromAmount}
+                        fees={totalFees} />
+                {/if}
             </form>
         {/snippet}
         {#snippet footer()}
@@ -276,6 +326,10 @@
         .main-title {
             flex: auto;
         }
+    }
+
+    .oc-balance.hidden {
+        visibility: hidden;
     }
 
     .body {

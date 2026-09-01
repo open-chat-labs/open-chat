@@ -533,17 +533,58 @@
         return false;
     }
 
-    // A crypto or prize draft paying from an external wallet carries the intended wallet on its
-    // pending transfer as `fromWallet`. The wallet has not yet approved anything - the approval
-    // waits for the send, whose tap is the one that consumes it.
+    // A crypto, prize or swap-offer draft paying from an external wallet carries the intended
+    // wallet as `fromWallet`. The wallet has not yet approved anything - the approval waits for
+    // the send, whose tap is the one that consumes it. Each kind knows what the ledger will
+    // charge against the allowance (`amount` + `fees`) and how to absorb the approved account
+    // into the content once it is granted.
     let externalWalletDraft = $derived.by(() => {
-        if (attachment?.kind !== "crypto_content" && attachment?.kind !== "prize_content_initial")
-            return undefined;
-        const transfer = attachment.transfer;
-        if (transfer.kind !== "pending" || transfer.fromAccount !== undefined) return undefined;
-        const wallet = SIGNER_WALLETS.find((w) => w.id === transfer.fromWallet);
+        const draft = attachment;
+        if (draft === undefined) return undefined;
+
+        let details;
+        switch (draft.kind) {
+            case "crypto_content":
+            case "prize_content_initial": {
+                const transfer = draft.transfer;
+                if (transfer.kind !== "pending" || transfer.fromAccount !== undefined)
+                    return undefined;
+                details = {
+                    fromWallet: transfer.fromWallet,
+                    ledger: transfer.ledger,
+                    amount: transfer.amountE8s,
+                    fees: transfer.feeE8s,
+                    approved: (fromAccount: string): AttachmentContent => ({
+                        ...draft,
+                        transfer: { ...transfer, fromWallet: undefined, fromAccount },
+                    }),
+                };
+                break;
+            }
+            case "p2p_swap_content_initial": {
+                if (draft.fromAccount !== undefined) return undefined;
+                details = {
+                    fromWallet: draft.fromWallet,
+                    ledger: draft.token0.ledger,
+                    amount: draft.token0Amount,
+                    // The escrowed amount funds the swap's outbound transfer as well, so the
+                    // ledger charges the offer's amount plus two fees against the allowance
+                    fees: draft.token0.fee * 2n,
+                    approved: (fromAccount: string): AttachmentContent => ({
+                        ...draft,
+                        fromWallet: undefined,
+                        fromAccount,
+                    }),
+                };
+                break;
+            }
+            default:
+                return undefined;
+        }
+
+        const wallet = SIGNER_WALLETS.find((w) => w.id === details.fromWallet);
         if (wallet === undefined) return undefined;
-        return { content: attachment, transfer, wallet };
+        return { ...details, wallet };
     });
     let walletApproval = $state<ExternalWalletApproval | undefined>();
     let approvingTransfer = $state(false);
@@ -567,14 +608,10 @@
                 .then((fromAccount) => {
                     if (fromAccount !== undefined) {
                         // The account the wallet approved is now the one to take the funds from
-                        localUpdates.draftMessages.setAttachment(messageContext, {
-                            ...draft.content,
-                            transfer: {
-                                ...draft.transfer,
-                                fromWallet: undefined,
-                                fromAccount,
-                            },
-                        });
+                        localUpdates.draftMessages.setAttachment(
+                            messageContext,
+                            draft.approved(fromAccount),
+                        );
                         completeSend();
                     }
                 })
@@ -775,9 +812,9 @@
                             <ExternalWalletApproval
                                 bind:this={walletApproval}
                                 wallet={externalWalletDraft.wallet}
-                                ledger={externalWalletDraft.transfer.ledger}
-                                amount={externalWalletDraft.transfer.amountE8s}
-                                fees={externalWalletDraft.transfer.feeE8s} />
+                                ledger={externalWalletDraft.ledger}
+                                amount={externalWalletDraft.amount}
+                                fees={externalWalletDraft.fees} />
                         </div>
                     {/if}
                     {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}
