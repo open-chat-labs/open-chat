@@ -6,6 +6,7 @@
         cryptoBalanceStore,
         cryptoLookup,
         isDiamondStore,
+        type SignerWallet,
     } from "@client";
     import { onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -15,6 +16,7 @@
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
+    import SourceWalletSelector from "../SourceWalletSelector.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
 
@@ -30,6 +32,7 @@
 
     let step: "features" | "payment" = $state("features");
     let error: string | undefined = $state();
+    let sourceWallet = $state<SignerWallet | undefined>();
     let confirming = $state(false);
     let confirmed = $state(false);
     let refreshingBalance = $state(false);
@@ -80,12 +83,20 @@
                     </div>
                     {#if step === "payment"}
                         <div class="balance">
-                            <BalanceWithRefresh
-                                {ledger}
-                                value={tokenDetails.balance}
-                                bind:refreshing={refreshingBalance}
-                                onRefreshed={onBalanceRefreshed}
-                                onError={onBalanceRefreshError} />
+                            <SourceWalletSelector bind:wallet={sourceWallet} />
+                            <!-- The balance is the external wallet's business while one is
+                                 selected, so only show OpenChat's own - but keep its space so
+                                 the selector does not move -->
+                            <div
+                                class="oc-balance"
+                                class:hidden={sourceWallet !== undefined}>
+                                <BalanceWithRefresh
+                                    {ledger}
+                                    value={tokenDetails.balance}
+                                    bind:refreshing={refreshingBalance}
+                                    onRefreshed={onBalanceRefreshed}
+                                    onError={onBalanceRefreshError} />
+                            </div>
                         </div>
                     {/if}
                 {/if}
@@ -107,6 +118,7 @@
                         bind:refreshingBalance
                         {ledger}
                         {error}
+                        {sourceWallet}
                         accountBalance={Number(tokenDetails.balance)}
                         {onCancel}
                         onFeatures={() => (step = "features")} />
@@ -133,5 +145,15 @@
         display: flex;
         align-items: center;
         gap: $sp3;
+    }
+
+    .balance {
+        display: flex;
+        align-items: center;
+        gap: $sp4;
+    }
+
+    .oc-balance.hidden {
+        visibility: hidden;
     }
 </style>

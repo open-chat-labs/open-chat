@@ -4,6 +4,7 @@
         MessageContext,
         OpenChat,
         PendingCryptocurrencyTransfer,
+        SignerWallet,
     } from "@client";
     import {
         cryptoBalanceStore,
@@ -31,6 +32,8 @@
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TipButton from "./TipButton.svelte";
     import TokenInput from "./TokenInput.svelte";
 
@@ -65,6 +68,13 @@
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);
     let draftAmount = $state(0n);
+    // The external wallet the tip will come from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
+    let approval: ExternalWalletApproval | undefined = $state();
+    let approving = $state(false);
 
     onMount(() => {
         let d = document.getElementById("tip-dollar");
@@ -121,7 +131,7 @@
     function onBalanceRefreshFinished() {
         toppingUp = false;
         tokenChanging = false;
-        if (remainingBalance < 0) {
+        if (remainingBalance < 0 && !payFromWallet) {
             remainingBalance = 0n;
             draftAmount = cryptoBalance - tokenDetails.transferFee;
             if (draftAmount < 0) {
@@ -164,6 +174,27 @@
 
     function send(e: Event) {
         e.preventDefault();
+        if (approval !== undefined) {
+            // The wallet has to approve us taking the tip before we take it. Nothing may be
+            // awaited before this call - the wallet opens in a popup, which the browser only
+            // allows while it is still handling the click
+            approving = true;
+            approval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        tip(fromAccount);
+                    }
+                })
+                .finally(() => (approving = false));
+        } else {
+            tip();
+        }
+    }
+
+    // `fromAccount` is an external wallet which has just approved us taking the tip. Without it the
+    // tip comes from the user's own OpenChat account, as it always has.
+    function tip(fromAccount?: string) {
         const transfer: PendingCryptocurrencyTransfer = {
             kind: "pending",
             ledger,
@@ -172,6 +203,7 @@
             amountE8s: draftAmount,
             feeE8s: tokenDetails.transferFee,
             createdAtNanos: BigInt(Date.now()) * 1_000_000n,
+            fromAccount,
         };
         lastCryptoSent.set(ledger);
 
@@ -214,14 +246,23 @@
     let remainingBalance = $state(0n);
     $effect(() => {
         remainingBalance =
-            draftAmount > 0n
+            draftAmount > 0n && !payFromWallet
                 ? cryptoBalance - draftAmount - tokenDetails.transferFee
                 : cryptoBalance;
     });
+    // What the user is able to spend, or undefined when that is the external wallet's business
+    // rather than ours
+    let spendingLimit = $derived(payFromWallet ? undefined : maxAmount(cryptoBalance));
     let valid = $derived(
-        draftAmount > 0n && remainingBalance >= 0n && error === undefined && !tokenChanging,
+        draftAmount > 0n &&
+            (payFromWallet || remainingBalance >= 0n) &&
+            error === undefined &&
+            !tokenChanging,
     );
-    let zero = $derived(cryptoBalance <= tokenDetails.transferFee && !tokenChanging);
+    // An empty OpenChat account is only a dead end while the user is paying from it
+    let zero = $derived(
+        cryptoBalance <= tokenDetails.transferFee && !tokenChanging && !payFromWallet,
+    );
     let transferFees = $derived(tokenDetails.transferFee);
     $effect(() => {
         centAmount = calculateCentAmount(draftAmount, exchangeRate);
@@ -250,17 +291,22 @@
                         </div>
                     </div>
                 </div>
-                <BalanceWithRefresh
-                    bind:toppingUp
-                    bind:this={balanceWithRefresh}
-                    {ledger}
-                    value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
-                    showTopUp
-                    bind:refreshing
-                    onRefreshed={onBalanceRefreshed}
-                    onError={onBalanceRefreshError} />
+                <SourceWalletSelector bind:wallet={sourceWallet} />
+                <!-- The balance is the external wallet's business while one is selected, so only
+                     show OpenChat's own - but keep its space so the selector does not move -->
+                <div class="oc-balance" class:hidden={payFromWallet}>
+                    <BalanceWithRefresh
+                        bind:toppingUp
+                        bind:this={balanceWithRefresh}
+                        {ledger}
+                        value={remainingBalance}
+                        label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                        bold
+                        showTopUp
+                        bind:refreshing
+                        onRefreshed={onBalanceRefreshed}
+                        onError={onBalanceRefreshError} />
+                </div>
             </span>
         {/snippet}
         {#snippet body()}
@@ -285,8 +331,11 @@
                                         label={i18nKey(amountLabel(increment))}
                                         onClick={(e) => clickAmount(e, increment)}
                                         disabled={exchangeRate === 0 ||
-                                            calculateAmount(centAmount + increment, exchangeRate) >
-                                                cryptoBalance - tokenDetails.transferFee} />
+                                            (spendingLimit !== undefined &&
+                                                calculateAmount(
+                                                    centAmount + increment,
+                                                    exchangeRate,
+                                                ) > spendingLimit)} />
                                 {/each}
                             </div>
                             <div in:fade|local={{ duration: 300 }} class="message">
@@ -335,7 +384,7 @@
                                         {ledger}
                                         {transferFees}
                                         bind:valid={validAmount}
-                                        maxAmount={maxAmount(cryptoBalance)}
+                                        maxAmount={spendingLimit}
                                         bind:amount={draftAmount} />
                                 </div>
                             {/if}
@@ -345,6 +394,15 @@
                                 <ErrorMessage>{$_(error)}</ErrorMessage>
                             </div>
                         {/if}
+                    {/if}
+                    {#if sourceWallet !== undefined}
+                        <div class="funding">
+                            <ExternalWalletApproval
+                                bind:this={approval}
+                                wallet={sourceWallet}
+                                {ledger}
+                                amount={draftAmount} />
+                        </div>
                     {/if}
                 </div>
             </form>
@@ -365,7 +423,8 @@
                     {:else}
                         <Button
                             small={!$mobileWidth}
-                            disabled={!valid}
+                            disabled={!valid || approving}
+                            loading={approving}
                             tiny={$mobileWidth}
                             onClick={send}
                             ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
@@ -407,6 +466,10 @@
         &.zero {
             padding: 0 $sp4;
         }
+    }
+
+    .oc-balance.hidden {
+        visibility: hidden;
     }
 
     .message {
@@ -459,5 +522,11 @@
         .custom-tip-amount {
             padding: $sp4 $sp5;
         }
+    }
+
+    .funding {
+        padding: 0 $sp5;
+        text-align: center;
+        @include font(light, normal, fs-80);
     }
 </style>

@@ -335,12 +335,18 @@ import {
     type ProposedProtectedAction,
     isAndroidTauriApp,
     isIosTauriApp,
+    userIdToIcrcAccount,
 } from "@shared";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
 import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
+import {
+    approveFromExternalWallet,
+    type SignerWallet,
+    type WalletAccount,
+} from "./utils/signer";
 import {
     FilteredProposals,
     achievementsStore,
@@ -7329,6 +7335,37 @@ export class OpenChat {
             kind: "reportedMessages",
             userId,
         });
+    }
+
+    // Opens the given wallet and asks it to approve OpenChat spending `amount` of `ledger`, so that
+    // the payment which follows can be pulled straight from it. Returns the account to pass as that
+    // payment's `fromAccount`, or undefined if the user backed out.
+    //
+    // `amount` must include the transfer fee, which the ledger charges against the allowance on top
+    // of the amount moved.
+    //
+    // Call this directly from a click handler and await nothing first: the wallet opens in a popup,
+    // which browsers only allow while the click which asked for it is still being handled.
+    approveExternalWalletSpending(
+        wallet: SignerWallet,
+        ledger: string,
+        amount: bigint,
+        chooseAccount: (accounts: WalletAccount[]) => Promise<WalletAccount | undefined>,
+        onApproving?: () => void,
+    ): Promise<string | undefined> {
+        return approveFromExternalWallet(
+            {
+                wallet,
+                ledger,
+                amount,
+                // The user's canister pulls the funds, spending as the same account which holds the
+                // user's own OpenChat balance, so that is what the wallet has to name as spender
+                spender: userIdToIcrcAccount(currentUserIdStore.value),
+            },
+            this.config.icUrl ?? window.location.origin,
+            chooseAccount,
+            onApproving,
+        );
     }
 
     payForDiamondMembership(
