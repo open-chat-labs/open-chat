@@ -63,7 +63,7 @@
             crossAxisAlignment="center"
             background={ColourVars.surface0}>
             <Column>
-                <Subtitle fontWeight="bold">
+                <Subtitle fontWeight="bold" colour="textPrimary">
                     {#if me}
                         <Markdown text={`@UserId(${participantUserId})`} inline={true} />
                     {:else}
@@ -90,13 +90,13 @@
         crossAxisAlignment="center">
         <Avatar size={"md"} url={tokenState.logo} />
         <Column width="fill">
-            <Subtitle fontWeight="bold">{tokenState.symbol}</Subtitle>
+            <Subtitle fontWeight="bold" colour="textPrimary">{tokenState.symbol}</Subtitle>
             <Body colour="textSecondary" fontWeight="bold" maxLines={1}>
                 {tokenState.token.name}
             </Body>
         </Column>
         <Column width="hug">
-            <Subtitle fontWeight="bold" align="end">
+            <Subtitle fontWeight="bold" align="end" colour="textPrimary">
                 {tokenState.formatTokens(content.transfer.amountE8s)}
             </Subtitle>
             <Body colour="primary" fontWeight="bold" align="end">

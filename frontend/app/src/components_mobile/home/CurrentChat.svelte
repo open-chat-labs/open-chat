@@ -348,7 +348,7 @@
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
-<Container background={ColourVars.surface0} height={"fill"} direction={"vertical"}>
+<Container background={ColourVars.chatBackground} height={"fill"} direction={"vertical"}>
     {#if showSearchHeader}
         <CurrentChatSearchHeader
             {chat}
