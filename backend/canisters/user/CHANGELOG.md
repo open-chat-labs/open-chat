@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Identify the depositing user to the escrow canister when creating and funding P2P swaps ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
+- Send from the user's wallet subaccount when paying for streak insurance, swapping tokens, approving transfers and withdrawing BTC or via OneSec ([#9276](https://github.com/open-chat-labs/open-chat/pull/9276))
 
 ### Fixed
 
