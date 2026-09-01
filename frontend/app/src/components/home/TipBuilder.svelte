@@ -363,34 +363,34 @@
                                 </div>
                             {/if}
                         </div>
-                        <div class="funding">
-                            <!-- svelte-ignore a11y_click_events_have_key_events -->
-                            <!-- svelte-ignore a11y_missing_attribute -->
-                            <a
-                                role="button"
-                                tabindex="0"
-                                class="options"
-                                onclick={() => (payFromWallet = !payFromWallet)}>
-                                <Translatable
-                                    resourceKey={i18nKey(
-                                        payFromWallet
-                                            ? "externalWallet.useOwnAccount"
-                                            : "externalWallet.use",
-                                    )} />
-                            </a>
-                            {#if payFromWallet && draftAmount > 0n}
-                                <ExternalWalletPayment
-                                    {ledger}
-                                    amount={draftAmount}
-                                    onApproved={tip} />
-                            {/if}
-                        </div>
                         {#if error !== undefined}
                             <div class="error">
                                 <ErrorMessage>{$_(error)}</ErrorMessage>
                             </div>
                         {/if}
                     {/if}
+                    <div class="funding">
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <!-- svelte-ignore a11y_missing_attribute -->
+                        <a
+                            role="button"
+                            tabindex="0"
+                            class="options"
+                            onclick={() => (payFromWallet = !payFromWallet)}>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    payFromWallet
+                                        ? "externalWallet.useOwnAccount"
+                                        : "externalWallet.use",
+                                )} />
+                        </a>
+                        {#if payFromWallet && draftAmount > 0n}
+                            <ExternalWalletPayment
+                                {ledger}
+                                amount={draftAmount}
+                                onApproved={tip} />
+                        {/if}
+                    </div>
                 </div>
             </form>
         {/snippet}
