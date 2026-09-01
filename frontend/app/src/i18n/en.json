@@ -740,6 +740,13 @@
         "label": "External Content",
         "name": "External content url"
     },
+    "externalWallet": {
+        "approving": "Approve the payment in {wallet}",
+        "chooseAccount": "Choose the account to pay from",
+        "connecting": "Waiting for {wallet}…",
+        "failed": "Could not set up the payment from your wallet",
+        "sourceWallet": "Source wallet"
+    },
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "failedToCopyToClipboard": "Unable to copy to clipboard. {account}",
     "failedToCopyUrlToClipboard": "Unable to copy url ({url}) to clipboard",
