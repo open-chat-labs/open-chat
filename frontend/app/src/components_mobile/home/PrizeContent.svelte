@@ -287,16 +287,16 @@
                     <!-- Time remaining -->
                     <Row gap="xs" mainAxisAlignment="center" crossAxisAlignment="center">
                         {#if allClaimed}
-                            <BodySmall width="hug" fontWeight="semi-bold">
+                            <BodySmall width="hug" fontWeight="semi-bold" colour="textPrimary">
                                 <Translatable resourceKey={i18nKey("prizes.allClaimed")} />
                             </BodySmall>
                         {:else if finished}
-                            <BodySmall width="hug" fontWeight="semi-bold">
+                            <BodySmall width="hug" fontWeight="semi-bold" colour="textPrimary">
                                 <Translatable resourceKey={i18nKey("prizes.finished")} />
                             </BodySmall>
                         {:else}
                             <Clock size="1em" color={ColourVars.textPrimary} />
-                            <BodySmall width={{ size: "4.75rem" }} fontWeight="semi-bold">
+                            <BodySmall width={{ size: "4.75rem" }} fontWeight="semi-bold" colour="textPrimary">
                                 {timeRemaining}
                             </BodySmall>
                         {/if}
@@ -334,7 +334,7 @@
                 <Column gap="xxs">
                     <!-- Claimed count -->
                     <Row mainAxisAlignment="center">
-                        <BodySmall width="hug">
+                        <BodySmall width="hug" colour="textPrimary">
                             {content.winnerCount}/{total}
                             <Translatable resourceKey={i18nKey("claimed")} />
                         </BodySmall>

@@ -397,13 +397,13 @@
         crossAxisAlignment="center">
         <Avatar size={"md"} url={getProxyAdjustedBlobUrl(tokenState.logo) ?? tokenState.logo} />
         <Column width="fill">
-            <Subtitle fontWeight="bold">{tokenState.symbol}</Subtitle>
+            <Subtitle fontWeight="bold" colour="textPrimary">{tokenState.symbol}</Subtitle>
             <Body colour="textSecondary" fontWeight="bold" maxLines={1}>
                 {tokenState.token.name}
             </Body>
         </Column>
         <Column width="hug">
-            <Subtitle fontWeight="bold" align="end">
+            <Subtitle fontWeight="bold" align="end" colour="textPrimary">
                 {tokenState.formatTokens(amount)}
             </Subtitle>
             <Body colour="primary" fontWeight="bold" align="end">
@@ -426,7 +426,7 @@
             background={ColourVars.surface0}
             mainAxisAlignment={"center"}
             crossAxisAlignment={"center"}>
-            <ArrowDown size={"1rem"} />
+            <ArrowDown size={"1rem"} color={ColourVars.textPrimary} />
         </Row>
         {@render tokenDetailsView(toState, content.token1Amount)}
     </Column>

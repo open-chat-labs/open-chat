@@ -116,8 +116,9 @@
     }
 
     const textPrimaryColor = getColor("--text-primary");
-    const primaryAccentColor = getColor("--primary-accent");
     const secondaryColor = getColor("--secondary");
+    const chatTextSentColor = getColor("--chat-text-sent");
+    const chatMetadataSentColor = getColor("--chat-metadata-sent");
 
     onMount(() => {
         if (waveformDiv !== undefined) {
@@ -126,8 +127,8 @@
                 barHeight: 0.65,
                 width: "100%",
                 container: waveformDiv,
-                waveColor: draft || !me ? textPrimaryColor : primaryAccentColor,
-                progressColor: draft || !me ? secondaryColor : textPrimaryColor,
+                waveColor: draft || !me ? textPrimaryColor : chatMetadataSentColor,
+                progressColor: draft || !me ? secondaryColor : chatTextSentColor,
                 barWidth: 3,
                 barRadius: 6,
                 dragToSeek: true,
@@ -166,7 +167,7 @@
 </script>
 
 {#snippet togglePlayButton()}
-    {@const color = me && !draft ? ColourVars.textPrimary : ColourVars.textSecondary}
+    {@const color = me && !draft ? ColourVars.chatTextSent : ColourVars.textSecondary}
     <IconButton padding="xs" size={"lg"} onclick={togglePlay} mode={"transparent"}>
         {#snippet icon()}
             {#if playing}
@@ -179,8 +180,8 @@
 {/snippet}
 
 {#snippet remainingTime()}
-    {@const currentColor = me && !draft ? "textPrimary" : "secondary"}
-    {@const durationColor = me && !draft ? "primaryAccent" : "textSecondary"}
+    {@const currentColor = me && !draft ? "chatTextSent" : "secondary"}
+    {@const durationColor = me && !draft ? "chatMetadataSent" : "textSecondary"}
     <Container gap={"xxs"} padding={["zero", "sm"]}>
         <ChatFootnote colour={currentColor} width={"hug"}>
             {currentTime ?? "0:00"}
@@ -208,7 +209,7 @@
 {#snippet waveformView()}
     {@const bgColor = hasContent
         ? me
-            ? ColourVars.primarySurface
+            ? "rgba(0, 0, 0, 0.25)"
             : ColourVars.surface1
         : "transparent"}
     <Row
@@ -234,7 +235,7 @@
         </Row>
         <Row width="hug" padding={["xs", "zero"]}>
             <Container
-                backgroundColor={me && !draft ? ColourVars.primaryAccent : ColourVars.textOnDisabledSurface}
+                backgroundColor={me && !draft ? ColourVars.chatMetadataSent : ColourVars.inputBackground}
                 borderRadius={"xl"}
                 mainAxisAlignment={"center"}
                 onClick={cycleSpeed}
@@ -337,14 +338,7 @@
 
             &.me:not(.draft) {
                 ::part(cursor):before {
-                    background-color: var(--text-primary);
-                }
-
-                &.has_content ::part(cursor):before {
-                    border-color: var(--primary-surface);
-                }
-
-                &:not(.has_content) ::part(cursor):before {
+                    background-color: var(--chat-text-sent);
                     border-color: var(--chat-bubble-sent);
                 }
             }

@@ -160,7 +160,7 @@
             borderRadius={[me ? "lg" : "md", me ? "md" : "lg", "lg", "lg"]}>
             <Poll size="2rem" color={me ? ColourVars.primaryAccent : ColourVars.textSecondary} />
             <Column gap="sm">
-                <ChatText fontWeight="bold">{content.config?.text ?? "..."}</ChatText>
+                <ChatText fontWeight="bold" colour="textPrimary">{content.config?.text ?? "..."}</ChatText>
                 <ChatCaption colour="primaryAccent">
                     <Translatable resourceKey={i18nKey(shortStatus.visibility)} /> •
                     <Translatable resourceKey={i18nKey(shortStatus.voteType)} /> •
@@ -180,7 +180,7 @@
                 {@const pctSingleDec = Math.round(pct * 10) / 10}
                 <Column gap="sm" onClick={() => vote(i)}>
                     <Row gap="sm" padding={["zero", "xs"]} crossAxisAlignment="center">
-                        <BodySmall width={{ size: "2.1rem" }} colour="primaryAccent">
+                        <BodySmall width={{ size: "2.1rem" }} colour={me ? "chatMetadataSent" : "primaryAccent"}>
                             {#if showVotes}
                                 {`${pctSingleDec}%`}
                             {:else}
@@ -189,11 +189,11 @@
                         </BodySmall>
                         <ChatText>{answer}</ChatText>
                         {#if voted}
-                            <CheckCircleOutline size="1.25rem" color={ColourVars.textPrimary} />
+                            <CheckCircleOutline size="1.25rem" color={me ? ColourVars.chatTextSent : ColourVars.textPrimary} />
                         {:else}
                             <CheckboxBlankCircleOutline
                                 size="1.25rem"
-                                color={me ? ColourVars.primaryAccent : ColourVars.textSecondary} />
+                                color={me ? ColourVars.chatMetadataSent : ColourVars.textSecondary} />
                         {/if}
                     </Row>
                     <div class="progress" class:me>
@@ -215,12 +215,12 @@
 
                 {#if !content.config.anonymous && showVotes}
                     <button class="view_votes" onclick={viewPublicVotes}>
-                        <ChatCaption colour="textPrimary" fontWeight="bold">View votes</ChatCaption>
+                        <ChatCaption colour={me ? "chatTextSent" : "textPrimary"} fontWeight="bold">View votes</ChatCaption>
                     </button>
                 {/if}
             </Row>
 
-            <Caption colour={me ? "primaryAccent" : "textSecondary"}>
+            <Caption colour={me ? "chatMetadataSent" : "textSecondary"}>
                 {#if content.ended}
                     <Translatable resourceKey={i18nKey("poll.finished")} />
                 {:else if date}
@@ -257,7 +257,7 @@
     }
 
     .progress:not(.me) {
-        background-color: var(--surface-0);
+        background-color: var(--chat-bubble-reply-received);
     }
 
     .progress {
@@ -269,6 +269,10 @@
         height: 100%;
         background-color: var(--text-primary);
         transition: width 200ms ease-out;
+    }
+
+    .progress.me .pct {
+        background-color: var(--chat-text-sent);
     }
 
     .view_votes {

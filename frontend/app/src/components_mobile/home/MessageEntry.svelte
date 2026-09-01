@@ -676,7 +676,7 @@
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={activeStream !== undefined ? "center" : "end"}
-        background={ColourVars.surface0}
+        background={ColourVars.chatBackground}
         padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}>
         {#if frozen}
             <div class="frozen">
@@ -974,6 +974,14 @@
 
         &.recording {
             display: none;
+        }
+
+        :global(.ProseMirror) {
+            scrollbar-width: none;
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
         }
     }
 
