@@ -146,6 +146,7 @@ impl Job for RecurringDiamondMembershipPayment {
                 ledger: if pay_in_chat { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
                 expected_price_e8s: price_e8s,
                 recurring: true,
+                from_account: None,
             };
 
             match pay_for_diamond_membership_impl(args, user_id, false).await {

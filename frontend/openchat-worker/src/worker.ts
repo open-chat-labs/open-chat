@@ -877,6 +877,7 @@ function getAction(
                 payload.duration,
                 payload.recurring,
                 payload.expectedPriceE8s,
+                payload.fromAccount,
             );
 
         case "updateMarketMakerConfig":

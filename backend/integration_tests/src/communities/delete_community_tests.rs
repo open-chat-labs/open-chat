@@ -167,7 +167,7 @@ fn community_deleted_notifications_failed(env: &mut PocketIc, group_index: Princ
 // Ticks until the user's canister has processed the community-deleted notification. Ticks don't
 // advance time, so this stays inside the retry window in which delivery is guaranteed.
 fn wait_for_community_deleted_notification(env: &mut PocketIc, user: &User, community_id: CommunityId) {
-    for _ in 0..200 {
+    for _ in 0..10 {
         env.tick();
         let initial_state = client::user::happy_path::initial_state(env, user);
         if !initial_state
