@@ -4,6 +4,7 @@
         MessageContext,
         OpenChat,
         PendingCryptocurrencyTransfer,
+        SignerWallet,
     } from "@client";
     import {
         cryptoBalanceStore,
@@ -31,7 +32,8 @@
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
-    import ExternalWalletPayment from "./ExternalWalletPayment.svelte";
+    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TipButton from "./TipButton.svelte";
     import TokenInput from "./TokenInput.svelte";
 
@@ -66,9 +68,13 @@
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);
     let draftAmount = $state(0n);
-    // Paying from an external wallet spends that wallet's balance rather than the user's OpenChat
-    // one, so none of the limits derived from the latter apply while it is on
-    let payFromWallet = $state(false);
+    // The external wallet the tip will come from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
+    let approval: ExternalWalletApproval | undefined = $state();
+    let approving = $state(false);
 
     onMount(() => {
         let d = document.getElementById("tip-dollar");
@@ -168,7 +174,22 @@
 
     function send(e: Event) {
         e.preventDefault();
-        tip();
+        if (approval !== undefined) {
+            // The wallet has to approve us taking the tip before we take it. Nothing may be
+            // awaited before this call - the wallet opens in a popup, which the browser only
+            // allows while it is still handling the click
+            approving = true;
+            approval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        tip(fromAccount);
+                    }
+                })
+                .finally(() => (approving = false));
+        } else {
+            tip();
+        }
     }
 
     // `fromAccount` is an external wallet which has just approved us taking the tip. Without it the
@@ -270,6 +291,7 @@
                         </div>
                     </div>
                 </div>
+                <SourceWalletSelector bind:wallet={sourceWallet} />
                 <BalanceWithRefresh
                     bind:toppingUp
                     bind:this={balanceWithRefresh}
@@ -369,28 +391,15 @@
                             </div>
                         {/if}
                     {/if}
-                    <div class="funding">
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_missing_attribute -->
-                        <a
-                            role="button"
-                            tabindex="0"
-                            class="options"
-                            onclick={() => (payFromWallet = !payFromWallet)}>
-                            <Translatable
-                                resourceKey={i18nKey(
-                                    payFromWallet
-                                        ? "externalWallet.useOwnAccount"
-                                        : "externalWallet.use",
-                                )} />
-                        </a>
-                        {#if payFromWallet && draftAmount > 0n}
-                            <ExternalWalletPayment
+                    {#if sourceWallet !== undefined}
+                        <div class="funding">
+                            <ExternalWalletApproval
+                                bind:this={approval}
+                                wallet={sourceWallet}
                                 {ledger}
-                                amount={draftAmount}
-                                onApproved={tip} />
-                        {/if}
-                    </div>
+                                amount={draftAmount} />
+                        </div>
+                    {/if}
                 </div>
             </form>
         {/snippet}
@@ -407,10 +416,11 @@
                             tiny={$mobileWidth}
                             onClick={reset}
                             ><Translatable resourceKey={i18nKey("refresh")} /></Button>
-                    {:else if !payFromWallet}
+                    {:else}
                         <Button
                             small={!$mobileWidth}
-                            disabled={!valid}
+                            disabled={!valid || approving}
+                            loading={approving}
                             tiny={$mobileWidth}
                             onClick={send}
                             ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>

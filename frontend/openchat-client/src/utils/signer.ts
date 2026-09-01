@@ -14,12 +14,15 @@ export type SignerWallet = {
     // The wallet's ICRC-29 signer endpoint, opened in a popup which the ICRC-25 messages are
     // exchanged with
     signerUrl: string;
+    // The wallet's brand mark, served from the app's own assets
+    logo: string;
 };
 
-// Any wallet implementing ICRC-25/27/29/49 works here - these are just the ones we surface
+// Any wallet implementing ICRC-25/27/29/49 works here - these are just the ones we surface. The
+// endpoints and logos are the ones each wallet publishes via NFID's identitykit.
 export const SIGNER_WALLETS: SignerWallet[] = [
-    { id: "oisy", name: "OISY", signerUrl: "https://oisy.com/sign" },
-    { id: "nfid", name: "NFID", signerUrl: "https://nfid.one/rpc" },
+    { id: "oisy", name: "OISY", signerUrl: "https://signer.oisy.com", logo: "/assets/wallets/oisy.svg" },
+    { id: "nfid", name: "NFID", signerUrl: "https://nfid.one/rpc", logo: "/assets/wallets/nfid.svg" },
 ];
 
 // Listing the wallet's accounts and asking it to sign a canister call are the only two things we

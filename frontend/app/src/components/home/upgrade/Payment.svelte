@@ -4,6 +4,7 @@
         type DiamondMembershipFees,
         type OpenChat,
         type ResourceKey,
+        type SignerWallet,
         cryptoLookup,
         E8S_PER_TOKEN,
         mobileWidth,
@@ -19,7 +20,7 @@
     import Loading from "@shared_components/Loading.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
-    import ExternalWalletPayment from "../ExternalWalletPayment.svelte";
+    import ExternalWalletApproval from "../ExternalWalletApproval.svelte";
     import Congratulations from "./Congratulations.svelte";
     import Expiry from "./Expiry.svelte";
     import Footer from "./Footer.svelte";
@@ -31,6 +32,9 @@
         confirmed?: boolean;
         refreshingBalance?: boolean;
         ledger: string;
+        // The external wallet the payment will come from, or undefined for the user's own
+        // OpenChat account
+        sourceWallet?: SignerWallet;
         allowBack?: boolean;
         lifetime?: boolean;
         showExpiry?: boolean;
@@ -47,6 +51,7 @@
         confirmed = $bindable(false),
         refreshingBalance = $bindable(false),
         ledger,
+        sourceWallet,
         allowBack = true,
         lifetime = false,
         showExpiry = true,
@@ -90,6 +95,8 @@
 
     let autoRenew = $state(true);
     let selectedOption: Option | undefined = $state(options[lifetime ? 3 : 0]);
+    let approval: ExternalWalletApproval | undefined = $state();
+    let approving = $state(false);
 
     type Option = {
         index: number;
@@ -121,7 +128,22 @@
     }
 
     function confirm() {
-        pay();
+        if (approval !== undefined) {
+            // The wallet has to approve us taking the payment before we take it. Nothing may be
+            // awaited before this call - the wallet opens in a popup, which the browser only
+            // allows while it is still handling the click
+            approving = true;
+            approval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        pay(fromAccount);
+                    }
+                })
+                .finally(() => (approving = false));
+        } else {
+            pay();
+        }
     }
 
     // `fromAccount` is an external wallet which has just approved us taking the payment. Without it
@@ -234,7 +256,7 @@
         {/if}
 
         <div class="autorenew">
-            {#if insufficientFunds}
+            {#if insufficientFunds && sourceWallet === undefined}
                 <ErrorMessage
                     ><Translatable
                         resourceKey={i18nKey("upgrade.insufficientFunds", {
@@ -243,11 +265,13 @@
                         })} /></ErrorMessage>
             {/if}
 
-            <ExternalWalletPayment
-                ledger={tokenDetails.ledger}
-                amount={toPayE8s}
-                disabled={confirming || toPayE8s === 0n}
-                onApproved={pay} />
+            {#if sourceWallet !== undefined}
+                <ExternalWalletApproval
+                    bind:this={approval}
+                    wallet={sourceWallet}
+                    ledger={tokenDetails.ledger}
+                    amount={toPayE8s} />
+            {/if}
 
             {#if error}
                 <ErrorMessage>
@@ -279,8 +303,11 @@
         {/if}
         <Button
             small={!$mobileWidth}
-            disabled={confirming || insufficientFunds}
-            loading={confirming || refreshingBalance}
+            disabled={confirming ||
+                approving ||
+                toPayE8s === 0n ||
+                (sourceWallet === undefined && insufficientFunds)}
+            loading={confirming || refreshingBalance || approving}
             onClick={confirm}
             tiny={$mobileWidth}><Translatable resourceKey={i18nKey("upgrade.confirm")} /></Button>
     {/if}

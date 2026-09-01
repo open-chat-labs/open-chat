@@ -6,6 +6,7 @@
         cryptoBalanceStore,
         cryptoLookup,
         isDiamondStore,
+        type SignerWallet,
     } from "@client";
     import { onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -15,6 +16,7 @@
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
+    import SourceWalletSelector from "../SourceWalletSelector.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
 
@@ -30,6 +32,7 @@
 
     let step: "features" | "payment" = $state("features");
     let error: string | undefined = $state();
+    let sourceWallet = $state<SignerWallet | undefined>();
     let confirming = $state(false);
     let confirmed = $state(false);
     let refreshingBalance = $state(false);
@@ -80,6 +83,7 @@
                     </div>
                     {#if step === "payment"}
                         <div class="balance">
+                            <SourceWalletSelector bind:wallet={sourceWallet} />
                             <BalanceWithRefresh
                                 {ledger}
                                 value={tokenDetails.balance}
@@ -107,6 +111,7 @@
                         bind:refreshingBalance
                         {ledger}
                         {error}
+                        {sourceWallet}
                         accountBalance={Number(tokenDetails.balance)}
                         {onCancel}
                         onFeatures={() => (step = "features")} />
@@ -133,5 +138,11 @@
         display: flex;
         align-items: center;
         gap: $sp3;
+    }
+
+    .balance {
+        display: flex;
+        align-items: center;
+        gap: $sp4;
     }
 </style>

@@ -14,6 +14,7 @@
         MessageContext,
         OpenChat,
         PendingCryptocurrencyTransfer,
+        SignerWallet,
     } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
@@ -34,7 +35,8 @@
     import Translatable from "../Translatable.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
-    import ExternalWalletPayment from "./ExternalWalletPayment.svelte";
+    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TipButton from "./TipButton.svelte";
     import TokenInput from "./TokenInput.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
@@ -67,9 +69,13 @@
     let centAmount = $state(0);
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);
-    // Paying from an external wallet spends that wallet's balance rather than the user's OpenChat
-    // one, so none of the limits derived from the latter apply while it is on
-    let payFromWallet = $state(false);
+    // The external wallet the tip will come from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
+    let approval: ExternalWalletApproval | undefined = $state();
+    let approving = $state(false);
 
     onMount(() => {
         let d = document.getElementById("tip-dollar");
@@ -144,7 +150,22 @@
 
     function send(e: Event) {
         e.preventDefault();
-        tip();
+        if (approval !== undefined) {
+            // The wallet has to approve us taking the tip before we take it. Nothing may be
+            // awaited before this call - the wallet opens in a popup, which the browser only
+            // allows while it is still handling the tap
+            approving = true;
+            approval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        tip(fromAccount);
+                    }
+                })
+                .finally(() => (approving = false));
+        } else {
+            tip();
+        }
     }
 
     // `fromAccount` is an external wallet which has just approved us taking the tip. Without it the
@@ -237,6 +258,7 @@
 <Sheet onDismiss={onClose}>
     <Column gap={"xl"} padding={["xl", "lg"]}>
         <CryptoSelector showRefresh draftAmount={tokenState.draftAmount} bind:ledger />
+        <SourceWalletSelector bind:wallet={sourceWallet} />
         {#if zero || toppingUp}
             <AccountInfo background={ColourVars.surface0} {ledger} />
             {#if zero}
@@ -321,25 +343,16 @@
                 </div>
             {/if}
         {/if}
-        <Row
-            mainAxisAlignment={"center"}
-            crossAxisAlignment={"center"}
-            onClick={() => (payFromWallet = !payFromWallet)}>
-            <Body width={"hug"} colour={"secondary"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        payFromWallet ? "externalWallet.useOwnAccount" : "externalWallet.use",
-                    )} />
-            </Body>
-        </Row>
-        {#if payFromWallet && tokenState.draftAmount > 0n}
-            <ExternalWalletPayment {ledger} amount={tokenState.draftAmount} onApproved={tip} />
+        {#if sourceWallet !== undefined}
+            <ExternalWalletApproval
+                bind:this={approval}
+                wallet={sourceWallet}
+                {ledger}
+                amount={tokenState.draftAmount} />
         {/if}
         <Column gap={"md"}>
-            {#if !payFromWallet}
-                <Button disabled={!valid} onClick={send}
-                    ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
-            {/if}
+            <Button disabled={!valid || approving} loading={approving} onClick={send}
+                ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
             <Button secondary onClick={cancel}
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
         </Column>
