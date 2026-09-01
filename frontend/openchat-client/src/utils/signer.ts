@@ -1,7 +1,7 @@
 import { Actor, HttpAgent } from "@icp-sdk/core/agent";
 import type { IDL } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
-import { Signer, type PermissionScope } from "@icp-sdk/signer";
+import { Signer, type PermissionScope, type PermissionState } from "@icp-sdk/signer";
 import { SignerAgent } from "@icp-sdk/signer/agent";
 import { PostMessageTransport } from "@icp-sdk/signer/web";
 import { encodeIcrcAccount, isMainnet, type IcrcAccount } from "@shared";
@@ -83,13 +83,7 @@ export class SignerConnection {
             // Nothing may be awaited before this: the popup is opened by the first request sent,
             // and a signer window opened outside the click which triggered it is rejected.
             const permissions = await signer.requestPermissions(REQUIRED_SCOPES);
-            const missing = REQUIRED_SCOPES.map((required) => required.method).filter((method) => {
-                // ICRC-25 answers with the scopes it is granting, so one we asked for being absent
-                // is a refusal just as much as one returned as denied. `ask_on_use` is a grant -
-                // the wallet prompts the user when we call rather than now.
-                const granted = permissions.find((p) => p.scope.method === method);
-                return granted === undefined || granted.state === "denied";
-            });
+            const missing = missingScopes(REQUIRED_SCOPES, permissions);
             if (missing.length > 0) {
                 throw new Error(`Wallet did not grant permissions: ${missing.join(", ")}`);
             }
@@ -147,6 +141,21 @@ type ApproveResult = { Ok: bigint } | { Err: Record<string, unknown> };
 type ApproveService = {
     icrc2_approve: (args: CandidApproveArgs) => Promise<ApproveResult>;
 };
+
+// The scopes we asked for which the wallet is not letting us use. ICRC-25 answers with the scopes
+// it is granting, so one we asked for being absent is a refusal just as much as one returned as
+// denied. `ask_on_use` is a grant - the wallet prompts the user when we call rather than now.
+export function missingScopes(
+    required: PermissionScope[],
+    granted: { scope: PermissionScope; state: PermissionState }[],
+): string[] {
+    return required
+        .map((scope) => scope.method)
+        .filter((method) => {
+            const match = granted.find((p) => p.scope.method === method);
+            return match === undefined || match.state === "denied";
+        });
+}
 
 // Approvals are only accepted once their certificate verifies, which needs the root key of
 // whichever network we are pointed at. Mainnet's is built in; anything else has to fetch it, or

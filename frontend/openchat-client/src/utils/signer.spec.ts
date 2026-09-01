@@ -1,6 +1,11 @@
 import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
-import { APPROVAL_VALIDITY_MS, buildApproveArgs, type ApproveSpendingArgs } from "./signer";
+import {
+    APPROVAL_VALIDITY_MS,
+    buildApproveArgs,
+    missingScopes,
+    type ApproveSpendingArgs,
+} from "./signer";
 
 const walletOwner = Principal.selfAuthenticating(new Uint8Array(32).fill(7));
 const spenderOwner = Principal.fromText("dfdal-2uaaa-aaaaa-qaama-cai");
@@ -52,5 +57,46 @@ describe("buildApproveArgs", () => {
         expect(approveArgs.from_subaccount).toEqual([subaccount]);
         expect(approveArgs.spender.subaccount).toEqual([subaccount]);
         expect(approveArgs.expires_at).toEqual([1_000_000n]);
+    });
+});
+
+describe("missingScopes", () => {
+    const required = [{ method: "icrc27_accounts" }, { method: "icrc49_call_canister" }];
+
+    test("nothing is missing when both are granted", () => {
+        expect(
+            missingScopes(required, [
+                { scope: { method: "icrc27_accounts" }, state: "granted" },
+                { scope: { method: "icrc49_call_canister" }, state: "granted" },
+            ]),
+        ).toEqual([]);
+    });
+
+    test("ask_on_use counts as granted", () => {
+        expect(
+            missingScopes(required, [
+                { scope: { method: "icrc27_accounts" }, state: "ask_on_use" },
+                { scope: { method: "icrc49_call_canister" }, state: "ask_on_use" },
+            ]),
+        ).toEqual([]);
+    });
+
+    test("a denied scope is missing", () => {
+        expect(
+            missingScopes(required, [
+                { scope: { method: "icrc27_accounts" }, state: "denied" },
+                { scope: { method: "icrc49_call_canister" }, state: "granted" },
+            ]),
+        ).toEqual(["icrc27_accounts"]);
+    });
+
+    // A wallet which grants nothing can answer with an empty list rather than denying each scope
+    test("a scope left out of the response is missing", () => {
+        expect(
+            missingScopes(required, [
+                { scope: { method: "icrc49_call_canister" }, state: "granted" },
+            ]),
+        ).toEqual(["icrc27_accounts"]);
+        expect(missingScopes(required, [])).toEqual(["icrc27_accounts", "icrc49_call_canister"]);
     });
 });
