@@ -17,7 +17,8 @@ async fn c2c_charge_user_account(args: Args) -> Response {
 }
 
 async fn c2c_charge_user_account_impl(args: Args) -> Response {
-    let (user_index_canister_id, canister_id) = read_state(|state| (state.data.user_index_canister_id, state.env.canister_id()));
+    let (user_index_canister_id, canister_id) =
+        read_state(|state| (state.data.user_index_canister_id, state.env.canister_id()));
 
     // Charging a user held elsewhere would debit whichever of our own users shares their index, so
     // refuse rather than take somebody else's funds.
