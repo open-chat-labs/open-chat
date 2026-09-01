@@ -27,25 +27,23 @@ function args(overrides: Partial<ApproveSpendingArgs> = {}): ApproveSpendingArgs
 }
 
 describe("buildApproveArgs", () => {
-    test("omits optional fields which are not set", () => {
+    test("leaves out the optional fields which are not set", () => {
         const approveArgs = buildApproveArgs(args(), 1_000);
 
+        // The spender is the one field the ledger's candid reaches us unconverted, so it is the
+        // one which still has to be opt encoded by hand
         expect(approveArgs).toEqual({
-            from_subaccount: [],
+            from_subaccount: undefined,
             spender: { owner: spenderOwner, subaccount: [] },
             amount: 100_000_000n,
-            expected_allowance: [],
-            expires_at: [BigInt(1_000 + APPROVAL_VALIDITY_MS) * 1_000_000n],
-            fee: [],
-            memo: [],
-            created_at_time: [],
+            expires_at: BigInt(1_000 + APPROVAL_VALIDITY_MS) * 1_000_000n,
         });
     });
 
     test("expires the approval by default, rather than leaving it standing", () => {
-        const [expiresAt] = buildApproveArgs(args(), 1_000).expires_at;
-
-        expect(expiresAt).toEqual(BigInt(1_000 + APPROVAL_VALIDITY_MS) * 1_000_000n);
+        expect(buildApproveArgs(args(), 1_000).expires_at).toEqual(
+            BigInt(1_000 + APPROVAL_VALIDITY_MS) * 1_000_000n,
+        );
         expect(APPROVAL_VALIDITY_MS).toEqual(10 * 60 * 1000);
     });
 
@@ -58,9 +56,9 @@ describe("buildApproveArgs", () => {
             }),
         );
 
-        expect(approveArgs.from_subaccount).toEqual([subaccount]);
+        expect(approveArgs.from_subaccount).toEqual(subaccount);
         expect(approveArgs.spender.subaccount).toEqual([subaccount]);
-        expect(approveArgs.expires_at).toEqual([1_000_000n]);
+        expect(approveArgs.expires_at).toEqual(1_000_000n);
     });
 });
 
