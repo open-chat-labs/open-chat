@@ -49,7 +49,7 @@ impl State {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             canisters: self.data.canisters.metrics(),
             icp_account: default_ledger_account(self.env.canister_id()).to_string(),

@@ -80,7 +80,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             public_key: hex::encode(&self.data.public_key),
             public_key_der: hex::encode(self.data.get_public_key_der()),
             principal: self.data.get_principal(),

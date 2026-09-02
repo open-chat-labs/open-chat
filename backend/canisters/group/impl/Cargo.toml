@@ -26,6 +26,7 @@ escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
 event_store_types = { workspace = true, features = ["json"] }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 gated_groups = { path = "../../../libraries/gated_groups" }
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 group_canister = { path = "../api" }
 group_chat_core = { path = "../../../libraries/group_chat_core" }
 group_community_common = { path = "../../../libraries/group_community_common" }
