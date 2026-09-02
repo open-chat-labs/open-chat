@@ -5884,6 +5884,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "constants",
+ "hex",
  "http_request",
  "ic-canister-sig-creation",
  "ic-captcha",

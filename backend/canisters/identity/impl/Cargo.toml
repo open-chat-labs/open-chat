@@ -16,6 +16,7 @@ canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 constants = { path = "../../../libraries/constants" }
+hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-canister-sig-creation = { workspace = true }
 ic-captcha = { workspace = true }

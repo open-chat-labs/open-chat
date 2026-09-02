@@ -39,7 +39,13 @@ fn post_upgrade(args: Args) {
                 .data
                 .user_principals
                 .replace_auth_principal(old_principal, new_principal);
-            info!(%old_principal, %new_principal, remapped, "Repaired malformed WebAuthn key");
+            info!(
+                credential_id = %hex::encode(&repaired.credential_id),
+                %old_principal,
+                %new_principal,
+                remapped,
+                "Repaired malformed WebAuthn key"
+            );
         }
     });
 

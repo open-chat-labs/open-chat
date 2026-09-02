@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Repair WebAuthn keys stored with trailing extension bytes and remap their auth principals ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+- Repair WebAuthn keys stored with trailing extension bytes and remap their auth principals ([#9279](https://github.com/open-chat-labs/open-chat/pull/9279))
 
 ### Changed
 
