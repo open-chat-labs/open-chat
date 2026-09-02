@@ -37,13 +37,15 @@ pub fn run() {
 async fn process_payment(pending_payment: PendingPayment) {
     let from_user = match pending_payment.reason {
         PendingPaymentReason::Swap(other_user_id) => other_user_id,
-        PendingPaymentReason::Refund => pending_payment.principal,
+        PendingPaymentReason::Refund => pending_payment.user_id,
     };
     let created_at_time = pending_payment.timestamp * NANOS_PER_MILLISECOND;
 
     let args = TransferArg {
-        from_subaccount: Some(deposit_subaccount(from_user, pending_payment.swap_id)),
-        to: pending_payment.principal.into(),
+        // Deposits are keyed by the depositor's raw principal, so the raw principal - not the
+        // user's wallet account - is what reconstructs the deposit subaccount.
+        from_subaccount: Some(deposit_subaccount(from_user.as_principal(), pending_payment.swap_id)),
+        to: pending_payment.user_id.into(),
         fee: Some(pending_payment.token_info.fee.into()),
         created_at_time: Some(created_at_time),
         memo: None,
@@ -64,7 +66,7 @@ async fn process_payment(pending_payment: PendingPayment) {
                         subaccount: args.from_subaccount,
                     }
                     .into(),
-                    to: Account::from(pending_payment.principal).into(),
+                    to: Account::for_user(pending_payment.user_id).into(),
                     fee: pending_payment.token_info.fee,
                     memo: None,
                     created: created_at_time,

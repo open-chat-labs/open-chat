@@ -4,6 +4,7 @@
         type DiamondMembershipFees,
         type OpenChat,
         type ResourceKey,
+        type SignerWallet,
         cryptoLookup,
         E8S_PER_TOKEN,
         mobileWidth,
@@ -19,6 +20,7 @@
     import Loading from "@shared_components/Loading.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
+    import ExternalWalletApproval from "../ExternalWalletApproval.svelte";
     import Congratulations from "./Congratulations.svelte";
     import Expiry from "./Expiry.svelte";
     import Footer from "./Footer.svelte";
@@ -30,6 +32,9 @@
         confirmed?: boolean;
         refreshingBalance?: boolean;
         ledger: string;
+        // The external wallet the payment will come from, or undefined for the user's own
+        // OpenChat account
+        sourceWallet?: SignerWallet;
         allowBack?: boolean;
         lifetime?: boolean;
         showExpiry?: boolean;
@@ -46,6 +51,7 @@
         confirmed = $bindable(false),
         refreshingBalance = $bindable(false),
         ledger,
+        sourceWallet,
         allowBack = true,
         lifetime = false,
         showExpiry = true,
@@ -89,6 +95,8 @@
 
     let autoRenew = $state(true);
     let selectedOption: Option | undefined = $state(options[lifetime ? 3 : 0]);
+    let approval: ExternalWalletApproval | undefined = $state();
+    let approving = $state(false);
 
     type Option = {
         index: number;
@@ -120,6 +128,27 @@
     }
 
     function confirm() {
+        if (approval !== undefined) {
+            // The wallet has to approve us taking the payment before we take it. Nothing may be
+            // awaited before this call - the wallet opens in a popup, which the browser only
+            // allows while it is still handling the click
+            approving = true;
+            approval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        pay(fromAccount);
+                    }
+                })
+                .finally(() => (approving = false));
+        } else {
+            pay();
+        }
+    }
+
+    // `fromAccount` is an external wallet which has just approved us taking the payment. Without it
+    // the payment comes from the user's own OpenChat account, as it always has.
+    function pay(fromAccount?: string) {
         confirming = true;
         client
             .payForDiamondMembership(
@@ -127,6 +156,7 @@
                 selectedDuration,
                 autoRenew && selectedDuration !== "lifetime",
                 toPayE8s,
+                fromAccount,
             )
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -226,13 +256,25 @@
         {/if}
 
         <div class="autorenew">
-            {#if insufficientFunds}
+            {#if insufficientFunds && sourceWallet === undefined}
                 <ErrorMessage
                     ><Translatable
                         resourceKey={i18nKey("upgrade.insufficientFunds", {
                             token: tokenDetails.symbol,
                             amount: `${toPay} ${tokenDetails.symbol}`,
                         })} /></ErrorMessage>
+            {/if}
+
+            {#if sourceWallet !== undefined}
+                <!-- The price is what the ledger takes from the wallet in total: the user index
+                     charges a fee less than it and lets the ledger add that fee back on, so there
+                     is no second fee to cover here -->
+                <ExternalWalletApproval
+                    bind:this={approval}
+                    wallet={sourceWallet}
+                    ledger={tokenDetails.ledger}
+                    amount={toPayE8s}
+                    fees={0n} />
             {/if}
 
             {#if error}
@@ -265,8 +307,11 @@
         {/if}
         <Button
             small={!$mobileWidth}
-            disabled={confirming || insufficientFunds}
-            loading={confirming || refreshingBalance}
+            disabled={confirming ||
+                approving ||
+                toPayE8s === 0n ||
+                (sourceWallet === undefined && insufficientFunds)}
+            loading={confirming || refreshingBalance || approving}
             onClick={confirm}
             tiny={$mobileWidth}><Translatable resourceKey={i18nKey("upgrade.confirm")} /></Button>
     {/if}

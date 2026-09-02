@@ -20,6 +20,10 @@
         onSelect?: (ledger: string, urlFormat: string) => void;
         draftAmount?: bigint;
         showRefresh?: boolean;
+        // Hides the OpenChat balance (and its refresh), for when the payment is coming from
+        // somewhere else and the balance is not the one being spent. Their space is kept so the
+        // layout around them does not move.
+        hideBalance?: boolean;
     }
 
     let {
@@ -29,6 +33,7 @@
         width = "fill",
         draftAmount,
         showRefresh = false,
+        hideBalance = false,
     }: Props = $props();
     let token = $derived($enhancedCryptoLookup.get(ledger)!);
     let showTokenSelector = $state(false);
@@ -59,12 +64,14 @@
             <Avatar url={getProxyAdjustedBlobUrl(tokenState.logo) ?? tokenState.logo}></Avatar>
             <Column>
                 <Body width={"hug"} fontWeight={"bold"}>{tokenState.symbol}</Body>
-                <BodySmall
-                    colour={"textSecondary"}
-                    blur={$hideTokenBalances}
-                    align={"end"}
-                    width={"hug"}
-                    fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
+                <div class="balance" class:hidden={hideBalance}>
+                    <BodySmall
+                        colour={"textSecondary"}
+                        blur={$hideTokenBalances}
+                        align={"end"}
+                        width={"hug"}
+                        fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
+                </div>
             </Column>
             <ChevronDown size={"1.5rem"} color={ColourVars.textSecondary} />
         </Row>
@@ -72,6 +79,7 @@
             <button
                 onclick={() => tokenState.refreshBalance(client)}
                 class="refresh"
+                class:hidden={hideBalance}
                 class:refreshing={tokenState.refreshingBalance}>
                 <Refresh size={"1.5rem"} color={ColourVars.textPrimary} />
             </button>
@@ -107,5 +115,13 @@
         &.refreshing {
             @include spin();
         }
+
+        &.hidden {
+            visibility: hidden;
+        }
+    }
+
+    .balance.hidden {
+        visibility: hidden;
     }
 </style>

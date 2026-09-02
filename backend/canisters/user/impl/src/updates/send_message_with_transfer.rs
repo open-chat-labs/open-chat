@@ -310,14 +310,15 @@ fn prepare(
             if !state.data.membership(now).is_diamond_member() {
                 return Err(OCErrorCode::NotDiamondMember.into());
             }
-            validate_from_account(p.from_account, state.env.canister_id().into())?;
+            let my_user_id = UserId::from(state.env.canister_id());
+            validate_from_account(p.from_account, my_user_id)?;
 
             let chat_canister_id = chat.canister_id();
             let create_swap_args = escrow_canister::create_swap::Args {
                 location: P2PSwapLocation::from_message(chat, thread_root_message_index, message_id),
                 token0: p.token0.clone(),
                 token0_amount: p.token0_amount,
-                token0_principal: None,
+                token0_principal: Some(my_user_id.as_principal()),
                 token1: p.token1.clone(),
                 token1_amount: p.token1_amount,
                 token1_principal: None,
@@ -351,7 +352,8 @@ async fn process_transaction(
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(Ok(completed)) => {
             if let Some(id) = p2p_swap_id {
-                NotifyEscrowCanisterOfDepositJob::run(id);
+                let my_user_id = read_state(|state| UserId::from(state.env.canister_id()));
+                NotifyEscrowCanisterOfDepositJob::run(id, my_user_id);
             }
             Ok(Ok((
                 MessageContentInternal::new_with_transfer(content, completed.clone().into(), p2p_swap_id, now),

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, Subtitle, Column, CommonButton2, Row, ColourVars } from "component-lib";
-    import type { MessageContext, OpenChat, P2PSwapContentInitial } from "@client";
+    import type { MessageContext, OpenChat, P2PSwapContentInitial, SignerWallet } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         isDiamondStore,
@@ -17,6 +17,7 @@
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationSelector from "./DurationSelector.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
@@ -45,6 +46,11 @@
     let error: string | undefined = $state(undefined);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let confirming = $state(false);
+    // The external wallet the offer will be funded from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
 
     let totalFees = $derived(fromDetails.transferFee * BigInt(2));
     let minAmount = $derived(fromDetails.transferFee * BigInt(10));
@@ -129,6 +135,12 @@
             token1Amount: toAmount,
             caption: undefined,
             expiresIn,
+            // This only attaches a draft - the offer is funded when the user sends the message.
+            // An external wallet's approval is not asked for here: it would spend a tap on an
+            // allowance the user may abandon without sending. Instead the draft carries the
+            // chosen wallet, and the send itself asks for the approval, from the tap which
+            // consumes it.
+            fromWallet: sourceWallet?.id,
         };
 
         localUpdates.draftMessages.setAttachment(messageContext, content);
@@ -183,12 +195,16 @@
                             )} />
                     </Body>
                 </Column>
+                <!-- An external wallet's balance is its own business, so while one is selected the
+                     OpenChat balance is hidden and tokens the user holds none of stay available -->
                 <CryptoSelector
-                    filter={(t) => t.balance > 0}
+                    filter={payFromWallet ? undefined : (t) => t.balance > 0}
+                    hideBalance={payFromWallet}
                     bind:ledger={fromLedger}
                     draftAmount={fromAmount}
                     showRefresh
                     onSelect={onSelectFromToken} />
+                <SourceWalletSelector bind:wallet={sourceWallet} />
                 <TokenInput
                     placeholder="Swap amount"
                     balance={fromState.cryptoBalance}

@@ -194,7 +194,7 @@
         return Promise.resolve();
     }
 
-    function accept() {
+    function accept(fromAccount?: string) {
         if (!messageContext || !messageId) return;
         confirming = false;
 
@@ -204,6 +204,7 @@
                     messageContext.chatId,
                     messageContext.threadRootMessageIndex,
                     messageId,
+                    fromAccount,
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
