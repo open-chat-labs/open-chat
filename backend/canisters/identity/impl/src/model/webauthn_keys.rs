@@ -128,6 +128,9 @@ pub fn validate_der_cose_key(der: &[u8]) -> Result<(), String> {
     };
     let kty = fields.get(&KTY).ok_or("COSE key is missing kty")?;
     let alg = fields.get(&ALG).ok_or("COSE key is missing alg")?;
+    // The COSE spec defines key_ops as an array, but the IC's parser (`ic_crypto_internal_basic_sig_cose`)
+    // only accepts it as the bare text "verify" and rejects anything else, including ["verify"]. Since a
+    // key the IC rejects would lock the user out, this deliberately mirrors the IC rather than the spec.
     if fields
         .get(&KEY_OPS)
         .is_some_and(|ops| *ops != Value::Text("verify".to_string()))
@@ -343,6 +346,12 @@ mod tests {
         // {1: 1, 3: -8, -1: 6, -2: x}
         let ed25519 = hex(&format!("a401010327200621{}{}", "5820", "44".repeat(32)));
         assert_eq!(validate_der_cose_key(&der_wrap_cose_key(&ed25519)), Ok(()));
+
+        // key_ops as the bare text "verify" is accepted, matching the IC's parser
+        let x = format!("5820{}", "11".repeat(32));
+        let y = format!("5820{}", "22".repeat(32));
+        let with_key_ops = hex(&format!("a60102032604 6676 6572 6966 79 2001 21{x} 22{y}").replace(' ', ""));
+        assert_eq!(validate_der_cose_key(&der_wrap_cose_key(&with_key_ops)), Ok(()));
     }
 
     #[test]
@@ -375,9 +384,14 @@ mod tests {
         );
         // Coordinate not a byte string
         reject(&format!("a5010203262001 21{x} 2201").replace(' ', ""), "not a byte string");
-        // Unsupported key_ops
+        // Unsupported key_ops (["sign"])
         reject(
             &format!("a6010203260481 6473 6967 6e2001 21{x} 22{y}").replace(' ', ""),
+            "key_ops",
+        );
+        // key_ops as an array is rejected by the IC even when it is ["verify"]
+        reject(
+            &format!("a6010203260481 6676 6572 6966 792001 21{x} 22{y}").replace(' ', ""),
             "key_ops",
         );
         // Missing RSA exponent
