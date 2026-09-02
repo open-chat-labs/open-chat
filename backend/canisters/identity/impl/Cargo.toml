@@ -17,6 +17,7 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 constants = { path = "../../../libraries/constants" }
 git_commit_id = { path = "../../../libraries/git_commit_id" }
+hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-canister-sig-creation = { workspace = true }
 ic-captcha = { workspace = true }
@@ -34,6 +35,7 @@ p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serde_cbor = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }
 sign_in_with_email_canister = { path = "../../sign_in_with_email/api" }
 sign_in_with_email_canister_c2c_client = { path = "../../sign_in_with_email/c2c_client" }
