@@ -586,7 +586,7 @@ import {
     toRelativeTime,
     toShortTimeString,
 } from "./utils/date";
-import { getErc20TokenBalances } from "./utils/evm";
+import { getErc20TokenBalances, type Erc20TokenBalance } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
@@ -8373,11 +8373,13 @@ export class OpenChat {
         this.#oneSecAddressUnsub?.();
         this.#oneSecAddressUnsub = oneSecAddress.subscribe((addr) => {
             if (addr !== undefined) {
-                this.#oneSecEnableForwarding(currentUserIdStore.value, addr).then(() => {
-                    // Check balances in case a deposit was made before the OneSecForwarder
-                    // canister started tracking the address
-                    this.#checkOneSecBalances(addr);
-                });
+                this.#oneSecEnableForwarding(currentUserIdStore.value, addr)
+                    .then(() => {
+                        // Check balances in case a deposit was made before the OneSecForwarder
+                        // canister started tracking the address
+                        this.#checkOneSecBalances(addr);
+                    })
+                    .catch((err) => this.logError("Failed to enable OneSec forwarding", err));
             }
         });
     }
@@ -8391,7 +8393,13 @@ export class OpenChat {
     }
 
     async #checkOneSecBalances(address: string) {
-        const balances = await getErc20TokenBalances(address, this.#evmContractAddresses);
+        let balances: Erc20TokenBalance[];
+        try {
+            balances = await getErc20TokenBalances(address, this.#evmContractAddresses);
+        } catch (err) {
+            this.logError("Failed to check OneSec balances", err);
+            return;
+        }
         if (balances.length > 0) {
             // Notify the OneSec minter of any tokens with non-zero balances
             for (const balance of balances) {
