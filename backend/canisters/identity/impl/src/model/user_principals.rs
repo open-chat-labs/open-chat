@@ -17,7 +17,7 @@ pub struct UserPrincipals {
     temp_keys: HashMap<Principal, TempKey>,
 }
 
-#[expect(dead_code)]
+#[cfg_attr(not(test), expect(dead_code))]
 pub struct UserPrincipal {
     pub index: u32,
     pub principal: Principal,
@@ -165,24 +165,23 @@ impl UserPrincipals {
     }
 
     /// Re-keys the auth principal `old` as `new`, leaving everything else about it unchanged.
-    /// Returns false if `old` doesn't exist or `new` is already in use.
+    /// Returns false, changing nothing, if `old` doesn't exist, `new` is already in use, or `old`
+    /// points at a user principal which doesn't exist.
     pub fn replace_auth_principal(&mut self, old: Principal, new: Principal) -> bool {
         if old == new || self.auth_principals.contains_key(&new) {
             return false;
         }
-        let Some(auth_principal) = self.auth_principals.remove(&old) else {
+        // Check the user exists before touching anything so a failure can't leave the auth
+        // principal map and the user's list of auth principals disagreeing
+        let Some(user) = self.user_principal_mut(&old) else {
             return false;
         };
-        if let Some(user) = self
-            .user_principals
-            .get_mut(usize::try_from(auth_principal.user_principal_index).unwrap())
-        {
-            for p in user.auth_principals.iter_mut() {
-                if *p == old {
-                    *p = new;
-                }
+        for p in user.auth_principals.iter_mut() {
+            if *p == old {
+                *p = new;
             }
         }
+        let auth_principal = self.auth_principals.remove(&old).unwrap();
         self.auth_principals.insert(new, auth_principal);
         for temp_key in self.temp_keys.values_mut() {
             if temp_key.auth_principal == old {
@@ -377,5 +376,69 @@ impl From<UserPrincipalsTrimmed> for UserPrincipals {
             originating_canisters: value.originating_canisters,
             temp_keys: value.temp_keys,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn principal(byte: u8) -> Principal {
+        Principal::from_slice(&[byte; 10])
+    }
+
+    #[test]
+    fn replace_auth_principal_rekeys_everything_referencing_it() {
+        let mut user_principals = UserPrincipals::default();
+        let (user, old, new, temp_key, canister) = (principal(1), principal(2), principal(3), principal(4), principal(5));
+        user_principals.push(0, user, old, canister, None, false, 100);
+        user_principals.add_temp_key(temp_key, old, 100, 200);
+
+        assert!(user_principals.replace_auth_principal(old, new));
+
+        assert!(user_principals.get_by_auth_principal(&old).is_none());
+        let by_new = user_principals.get_by_auth_principal(&new).unwrap();
+        assert_eq!(by_new.principal, user);
+        assert_eq!(by_new.auth_principals, vec![new]);
+        assert_eq!(user_principals.get_auth_principal(&new).unwrap().last_used, 100);
+        assert_eq!(user_principals.temp_keys[&temp_key].auth_principal, new);
+    }
+
+    #[test]
+    fn replace_auth_principal_rejects_unknown_old_and_in_use_new() {
+        let mut user_principals = UserPrincipals::default();
+        let (user, old, other, canister) = (principal(1), principal(2), principal(3), principal(5));
+        user_principals.push(0, user, old, canister, None, false, 100);
+        user_principals.push(1, principal(6), other, canister, None, false, 100);
+
+        assert!(!user_principals.replace_auth_principal(principal(9), principal(10)));
+        assert!(!user_principals.replace_auth_principal(old, other));
+        assert!(!user_principals.replace_auth_principal(old, old));
+        assert_eq!(
+            user_principals.get_by_auth_principal(&old).unwrap().auth_principals,
+            vec![old]
+        );
+    }
+
+    #[test]
+    fn replace_auth_principal_leaves_state_untouched_if_user_is_missing() {
+        let mut user_principals = UserPrincipals::default();
+        let (old, new, canister) = (principal(2), principal(3), principal(5));
+        // An auth principal pointing at a user principal index which doesn't exist
+        user_principals.auth_principals.insert(
+            old,
+            AuthPrincipalInternal {
+                originating_canister: canister,
+                user_principal_index: 7,
+                webauthn_credential_id: None,
+                is_ii_principal: false,
+                last_used: 100,
+            },
+        );
+
+        assert!(!user_principals.replace_auth_principal(old, new));
+
+        assert!(user_principals.auth_principal_exists(&old));
+        assert!(!user_principals.auth_principal_exists(&new));
     }
 }
