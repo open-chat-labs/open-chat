@@ -70,7 +70,7 @@ jobs:
               uses: ./.github/workflows/setup-rust
               with:
                   cache: "write"
-                  install-tauri-libs: true
+                  install-tauri-libs: "true"
 
             - name: Cache Gradle packages
               uses: actions/cache@v3
