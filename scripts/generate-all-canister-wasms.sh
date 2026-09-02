@@ -40,6 +40,14 @@ CANISTERS=(
   user_index
 )
 
+# Install ic-wasm before RUSTFLAGS is set below: those flags are for the wasm target only, and
+# the `getrandom_backend="custom"` cfg in particular makes a native build fail to link.
+if ! cargo install --list | grep -Fxq "ic-wasm v0.9.11:"
+then
+  echo Installing ic-wasm
+  cargo install --version 0.9.11 ic-wasm || exit 1
+fi
+
 echo Building wasms
 # `--cfg getrandom_backend="custom"` selects getrandom's custom backend on wasm (see
 # .cargo/config.toml). Setting RUSTFLAGS here means cargo ignores that config file, so the cfg has
@@ -61,12 +69,6 @@ done
 cargo build --locked --target wasm32-unknown-unknown --release "${PACKAGES[@]}" || exit 1
 
 echo Optimising and compressing wasms
-if ! cargo install --list | grep -Fxq "ic-wasm v0.9.11:"
-then
-  echo Installing ic-wasm
-  cargo install --version 0.9.11 ic-wasm || exit 1
-fi
-
 mkdir -p wasms
 
 optimise_and_compress() {
