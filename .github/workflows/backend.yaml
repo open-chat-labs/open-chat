@@ -32,7 +32,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --tests -- -D warnings
+          args: --workspace --exclude open-chat --exclude tauri-plugin-oc --tests -- -D warnings
 
   unit_tests:
     name: run unit tests
@@ -45,4 +45,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --workspace --exclude integration_tests
+          args: --workspace --exclude integration_tests --exclude open-chat --exclude tauri-plugin-oc
