@@ -2,6 +2,15 @@ on:
   push:
     branches:
       - master
+    # Same filter as integration_tests.yaml, plus the inputs of the wasm build itself: a cache
+    # is only worth rebuilding when something that feeds a build has changed
+    paths:
+      - "**.rs"
+      - "**.toml"
+      - "**/Cargo.lock"
+      - "scripts/generate-all-canister-wasms.sh"
+      - ".github/workflows/setup-rust/**"
+      - ".github/workflows/build_caches.yaml"
 
 name: Build caches
 
