@@ -3,6 +3,10 @@ inputs:
   cache:
     description: 'Cache behaviour (use "read", "write", or leave empty)'
     type: string
+  shared-key:
+    description: 'Which cache to use (jobs sharing a key share a cache)'
+    type: string
+    default: 'build-debug'
 
 runs:
   using: 'composite'
@@ -19,7 +23,7 @@ runs:
       if: ${{ inputs.cache == 'read' || inputs.cache == 'write' }}
       uses: Swatinem/rust-cache@v2
       with:
-        shared-key: 'build-debug'
+        shared-key: ${{ inputs.shared-key }}
         save-if: ${{ inputs.cache == 'write' }}
 
     - name: Install additional libs
