@@ -64,14 +64,24 @@ then
 fi
 
 mkdir -p wasms
-for CANISTER in "${CANISTERS[@]}"; do
+
+optimise_and_compress() {
+  CANISTER=$1
   PACKAGE="${CANISTER}_canister_impl"
   # Invoke the version installed above rather than whatever is first on the PATH - a different
-  # `ic-wasm` there (eg. from a package manager) may not take the same arguments, and this loop
-  # would then silently reuse the `-opt.wasm` left behind by an earlier build
+  # `ic-wasm` there (eg. from a package manager) may not take the same arguments, and this would
+  # then silently reuse the `-opt.wasm` left behind by an earlier build
   ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink || exit 1
   ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz || exit 1
-  gzip -fckn9 target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER.wasm.gz
-done
+  gzip -fckn9 target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER.wasm.gz || exit 1
+  echo "Optimised $CANISTER"
+}
+export -f optimise_and_compress
+export CARGO_HOME
+
+# Each canister is independent, so optimise them in parallel (one at a time this step takes
+# several minutes). `xargs` exits non-zero if any invocation fails.
+JOBS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
+printf '%s\n' "${CANISTERS[@]}" | xargs -P "$JOBS" -I{} bash -c 'optimise_and_compress "$1"' _ {} || exit 1
 
 echo Finished generating wasms

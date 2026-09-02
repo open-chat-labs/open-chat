@@ -23,16 +23,24 @@ jobs:
       - image=ubuntu24-full-x64
       - family=m7i
       - run-id=${{ github.run_id }}
+    env:
+      # Baked into every canister via `option_env!`, so a per-commit value would rebuild most of
+      # the workspace on every PR and defeat the cache. The integration tests never read it.
+      GIT_COMMIT_ID: integration-tests
     steps:
       - name: Install Rustup
         run: |
           curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-rust
+        with:
+          cache: read
+          shared-key: build-wasm
       - uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build canister wasms
-        run: ./scripts/docker-build-all-wasms.sh
-      - name: Run integration tests
-        run: ./scripts/run-integration-tests.sh local
+      # Builds the wasms natively (incrementally, from the cache written on master by
+      # build_caches.yaml) rather than from scratch in docker. Reproducible builds only matter
+      # for releases, which still go through docker.
+      - name: Build canister wasms and run integration tests
+        run: ./scripts/run-integration-tests.sh build
