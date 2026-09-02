@@ -164,6 +164,34 @@ impl UserPrincipals {
         }
     }
 
+    /// Re-keys the auth principal `old` as `new`, leaving everything else about it unchanged.
+    /// Returns false if `old` doesn't exist or `new` is already in use.
+    pub fn replace_auth_principal(&mut self, old: Principal, new: Principal) -> bool {
+        if old == new || self.auth_principals.contains_key(&new) {
+            return false;
+        }
+        let Some(auth_principal) = self.auth_principals.remove(&old) else {
+            return false;
+        };
+        if let Some(user) = self
+            .user_principals
+            .get_mut(usize::try_from(auth_principal.user_principal_index).unwrap())
+        {
+            for p in user.auth_principals.iter_mut() {
+                if *p == old {
+                    *p = new;
+                }
+            }
+        }
+        self.auth_principals.insert(new, auth_principal);
+        for temp_key in self.temp_keys.values_mut() {
+            if temp_key.auth_principal == old {
+                temp_key.auth_principal = new;
+            }
+        }
+        true
+    }
+
     pub fn remove_auth_principal(&mut self, caller: Principal, linked_principal: Principal) -> RemovePrincipalResponse {
         if caller == linked_principal {
             RemovePrincipalResponse::CannotUnlinkActivePrincipal

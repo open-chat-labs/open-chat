@@ -5901,6 +5901,7 @@ dependencies = [
  "rand 0.10.2",
  "serde",
  "serde_bytes",
+ "serde_cbor",
  "sha256",
  "sign_in_with_email_canister",
  "sign_in_with_email_canister_c2c_client",

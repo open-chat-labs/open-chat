@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Repair WebAuthn keys stored with trailing extension bytes and remap their auth principals ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+
 ### Changed
 
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
