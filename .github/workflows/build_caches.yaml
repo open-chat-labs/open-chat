@@ -30,10 +30,6 @@ jobs:
       - image=ubuntu24-full-x64
       - family=m7i
       - run-id=${{ github.run_id }}
-    env:
-      # Baked into every canister via `option_env!`, so a per-commit value would rebuild most of
-      # the workspace on every PR. The integration tests never read it.
-      GIT_COMMIT_ID: integration-tests
     steps:
       - name: Install Rustup
         run: |
