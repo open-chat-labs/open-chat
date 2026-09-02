@@ -377,7 +377,7 @@ Your streak is now {new_streak} days!"
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             direct_chats: self.data.direct_chats.len() as u32,
             group_chats: self.data.group_chats.len() as u32,
             communities: self.data.communities.len() as u32,

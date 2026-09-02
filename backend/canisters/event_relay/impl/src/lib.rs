@@ -55,7 +55,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             push_events_whitelist: self.data.push_events_whitelist.iter().copied().collect(),
             event_store_client_info,
             ledger_transaction_processed_up_to: self.data.ledger_transaction_processed_up_to,

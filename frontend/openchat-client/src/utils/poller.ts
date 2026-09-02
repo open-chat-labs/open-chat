@@ -64,10 +64,12 @@ export class Poller {
         const runThenLoop = () => {
             if (this.stopped || this.runnerId !== runnerId) return;
 
-            this.fn().finally(() => {
-                this.lastExecutionTimestamp = Date.now();
-                this.timeoutId = window.setTimeout(runThenLoop, interval);
-            });
+            this.fn()
+                .catch((err) => console.warn("Poller: task failed", err))
+                .finally(() => {
+                    this.lastExecutionTimestamp = Date.now();
+                    this.timeoutId = window.setTimeout(runThenLoop, interval);
+                });
         };
 
         this.immediate = false;

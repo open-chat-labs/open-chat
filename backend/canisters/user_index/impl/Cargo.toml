@@ -27,6 +27,7 @@ event_store_producer = { workspace = true, features = ["json"] }
 event_store_producer_cdk_runtime = { workspace = true }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 futures = { workspace = true }
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 group_canister = { path = "../../group/api" }
 group_community_common = { path = "../../../libraries/group_community_common" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
