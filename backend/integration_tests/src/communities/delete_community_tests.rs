@@ -119,6 +119,9 @@ fn user_canister_notified_of_community_deleted() {
             .iter()
             .any(|c| c.community_id == community_id)
     );
+
+    // 11 minutes were added to the clock: this env must not go back to the pool
+    wrapper.discard();
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
@@ -136,6 +139,15 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         community_id,
         vec![(user2.user_id, user2.principal), (user3.user_id, user3.principal)],
     );
+
+    // The user canisters learn of the membership asynchronously (community -> local user index ->
+    // user canister), and `user_canister_notified_of_community_deleted` stops user2 and user3
+    // right after this returns. A join event which reaches a stopped canister is rejected and
+    // only retried after a 10 second delay, which never elapses while the clock stands still, so
+    // a user stopped before its join landed would never hold the community and the final
+    // assertion (that user3 still has it) would fail. Wait for the memberships to land first.
+    wait_for_community_membership(env, &user2, community_id);
+    wait_for_community_membership(env, &user3, community_id);
 
     TestData {
         user1,
@@ -162,6 +174,23 @@ fn community_deleted_notifications_failed(env: &mut PocketIc, group_index: Princ
     let response = client::http_request(env, Principal::anonymous(), group_index, &request);
     let metrics: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
     metrics["community_deleted_notifications_failed"].as_u64().unwrap()
+}
+
+// Ticks until the user's canister lists the community, ie. the join event has been delivered
+fn wait_for_community_membership(env: &mut PocketIc, user: &User, community_id: CommunityId) {
+    for _ in 0..20 {
+        let initial_state = client::user::happy_path::initial_state(env, user);
+        if initial_state
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+        {
+            return;
+        }
+        env.tick();
+    }
+    panic!("User {} was not notified of joining the community", user.user_id);
 }
 
 // Ticks until the user's canister has processed the community-deleted notification. Ticks don't
