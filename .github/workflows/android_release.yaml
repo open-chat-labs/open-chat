@@ -48,8 +48,8 @@ jobs:
             - name: Setup Java
               uses: actions/setup-java@v4
               with:
-                  distribution: "temurin"
-                  java-version: "17"
+                  distribution: 'temurin'
+                  java-version: '17'
 
             - name: Setup Android SDK
               uses: android-actions/setup-android@v3
@@ -69,8 +69,8 @@ jobs:
             - name: Setup Rust
               uses: ./.github/workflows/setup-rust
               with:
-                  cache: "write"
-                  install-tauri-libs: "true"
+                  cache: 'write'
+                  install-tauri-libs: 'true'
 
             - name: Cache Gradle packages
               uses: actions/cache@v3
@@ -99,8 +99,8 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v3
               with:
-                  node-version: "20.20.0"
-                  cache: "npm"
+                  node-version: '20.20.0'
+                  cache: 'npm'
                   cache-dependency-path: frontend/package-lock.json
 
             - name: Install frontend dependencies
@@ -110,7 +110,7 @@ jobs:
               uses: baptiste0928/cargo-install@v3
               with:
                   crate: tauri-cli
-                  version: "2.10.0"
+                  version: '2.10.0'
 
             - name: Setup Keystore
               run: |
@@ -175,8 +175,8 @@ jobs:
               env:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
-                  OC_APP_STORE: "false"
-                  OC_OTA_UPDATES: "major"
+                  OC_APP_STORE: 'false'
+                  OC_OTA_UPDATES: 'major'
 
             - name: Clean Target Directory
               run: rm -rf src-tauri/target
@@ -188,8 +188,8 @@ jobs:
               env:
                   # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
                   ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
-                  OC_APP_STORE: "true"
-                  OC_OTA_UPDATES: "patch"
+                  OC_APP_STORE: 'true'
+                  OC_OTA_UPDATES: 'patch'
 
             - name: Upload APKs
               uses: actions/upload-artifact@v4
