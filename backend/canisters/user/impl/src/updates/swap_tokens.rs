@@ -8,12 +8,11 @@ use crate::{Data, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MEMO_SWAP, MEMO_SWAP_APPROVAL, NANOS_PER_MILLISECOND, SECOND_IN_MS};
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use oc_error_codes::OCErrorCode;
 use tracing::{error, info};
-use types::{Achievement, OCResult, TimestampMillis, Timestamped, UserId};
+use types::{Achievement, OCResult, TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -89,15 +88,12 @@ pub(crate) async fn process_token_swap(
     let amount_to_dex = args.input_amount.saturating_sub(args.input_token.fee);
 
     if extract_result(&token_swap.transfer_or_approval).is_none() {
-        let (now, from_subaccount) = read_state(|state| {
-            let my_user_id = UserId::from(state.env.canister_id());
-            (state.env.now(), Account::from(my_user_id).subaccount)
-        });
+        let now = read_state(|state| state.env.now());
         let transfer_or_approve_result = if let Some(account) = icrc1_account {
             match icrc_ledger_canister_c2c_client::icrc1_transfer(
                 args.input_token.ledger,
                 &TransferArg {
-                    from_subaccount,
+                    from_subaccount: None,
                     to: account.into(),
                     fee: Some(args.input_token.fee.into()),
                     created_at_time: Some(now * NANOS_PER_MILLISECOND),
@@ -115,7 +111,7 @@ pub(crate) async fn process_token_swap(
             match icrc_ledger_canister_c2c_client::icrc2_approve(
                 args.input_token.ledger,
                 &ApproveArgs {
-                    from_subaccount,
+                    from_subaccount: None,
                     spender: swap_client.canister_id().into(),
                     amount: amount_to_dex.into(),
                     expected_allowance: None,

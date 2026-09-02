@@ -18,7 +18,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Support P2P swaps for users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
-- Support payments, BTC deposits and withdrawals for users whose wallets use subaccounts (to support multiple users per canister) ([#9276](https://github.com/open-chat-labs/open-chat/pull/9276))
 
 ### Fixed
 

@@ -6,10 +6,8 @@ use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
 use constants::{CKBTC_LEDGER_CANISTER_ID, MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use event_store_types::EventBuilder;
-use icrc_ledger_types::icrc1::account::Account;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
-use types::UserId;
 use user_canister::withdraw_btc::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -23,15 +21,12 @@ async fn withdraw_btc_impl(mut args: Args) -> Response {
         return Error(error.into());
     }
 
-    let (now_nanos, my_user_id) = read_state(|state| (state.env.now_nanos(), UserId::from(state.env.canister_id())));
-    // The minter burns from the (owner, subaccount) pair which granted the approval, so the same
-    // subaccount goes into both calls.
-    let from_subaccount = Account::from(my_user_id).subaccount;
+    let now_nanos = read_state(|state| state.env.now_nanos());
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
         CKBTC_LEDGER_CANISTER_ID,
         &icrc_ledger_canister::icrc2_approve::Args {
-            from_subaccount,
+            from_subaccount: None,
             spender: CKBTC_MINTER_CANISTER_ID.into(),
             amount: args.amount.into(),
             expected_allowance: None,
@@ -53,14 +48,14 @@ async fn withdraw_btc_impl(mut args: Args) -> Response {
         &ckbtc_minter_canister::retrieve_btc_with_approval::Args {
             amount: args.amount,
             address: args.address,
-            from_subaccount,
+            from_subaccount: None,
         },
     )
     .await
     {
         Ok(Ok(result)) => {
             mutate_state(|state| {
-                let user_id_string = my_user_id.to_string();
+                let user_id_string = state.env.canister_id().to_string();
                 let now = state.env.now();
                 state.push_local_user_index_canister_event(
                     LocalUserIndexEvent::EventStoreEvent(

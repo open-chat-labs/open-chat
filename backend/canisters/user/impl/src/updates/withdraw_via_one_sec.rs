@@ -9,7 +9,7 @@ use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
 use one_sec_minter_canister::{EvmAccount, IcpAccount, Token};
 use serde::Serialize;
-use types::{EvmChain, OCResult, UserId};
+use types::{EvmChain, OCResult};
 use user_canister::withdraw_via_one_sec::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -35,15 +35,15 @@ async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
     })
     .await?;
 
-    let my_user_id = read_state(|state| UserId::from(state.env.canister_id()));
+    let canister_id = read_state(|state| state.env.canister_id());
 
-    // Instruct the OneSec minter to make the transfer from the account which granted the approval
+    // Instruct the OneSec minter to make the transfer
     match one_sec_minter_canister_c2c_client::transfer_icp_to_evm(
         ONE_SEC_MINTER_CANISTER_ID,
         &one_sec_minter_canister::transfer_icp_to_evm::Args {
             token,
             evm_account: EvmAccount { address: args.address },
-            icp_account: IcpAccount::ICRC(my_user_id.into()),
+            icp_account: IcpAccount::ICRC(canister_id.into()),
             evm_chain: args.evm_chain,
             icp_amount: args.amount.into(),
             evm_amount: None,
@@ -59,7 +59,7 @@ async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
     }
 
     mutate_state(|state| {
-        let user_id_string = my_user_id.to_string();
+        let user_id_string = canister_id.to_string();
         let now = state.env.now();
         state.push_local_user_index_canister_event(
             LocalUserIndexEvent::EventStoreEvent(

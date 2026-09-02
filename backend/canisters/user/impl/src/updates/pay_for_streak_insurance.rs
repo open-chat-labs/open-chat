@@ -7,7 +7,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, UserCanisterStreakInsurancePayment, UserId};
+use types::{OCResult, UserCanisterStreakInsurancePayment};
 use user_canister::pay_for_streak_insurance::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -17,10 +17,7 @@ async fn pay_for_streak_insurance(args: Args) -> Response {
 }
 
 async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
-    let PrepareOk {
-        days_currently_insured,
-        my_user_id,
-    } = match mutate_state(|state| prepare(&mut args, state)) {
+    let PrepareOk { days_currently_insured } = match mutate_state(|state| prepare(&mut args, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),
     };
@@ -28,7 +25,7 @@ async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
     let transfer_result = make_transfer(
         CHAT_LEDGER_CANISTER_ID,
         &TransferArg {
-            from_subaccount: Account::from(my_user_id).subaccount,
+            from_subaccount: None,
             to: Account {
                 owner: SNS_GOVERNANCE_CANISTER_ID,
                 subaccount: None,
@@ -65,7 +62,6 @@ async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
 
 struct PrepareOk {
     days_currently_insured: u8,
-    my_user_id: UserId,
 }
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
@@ -93,9 +89,6 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     } else if !state.data.streak.acquire_payment_lock() {
         Err(OCErrorCode::AlreadyInProgress.into())
     } else {
-        Ok(PrepareOk {
-            days_currently_insured,
-            my_user_id: state.env.canister_id().into(),
-        })
+        Ok(PrepareOk { days_currently_insured })
     }
 }

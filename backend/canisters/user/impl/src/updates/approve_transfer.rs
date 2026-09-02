@@ -3,10 +3,9 @@ use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::NANOS_PER_MILLISECOND;
-use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, TimestampNanos, UserId};
+use types::{OCResult, TimestampNanos};
 use user_canister::approve_transfer::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -16,12 +15,12 @@ async fn approve_transfer(args: Args) -> Response {
 }
 
 pub(crate) async fn approve_transfer_impl(mut args: Args) -> OCResult {
-    let (now_nanos, from_subaccount) = mutate_state(|state| prepare(&mut args, state))?;
+    let now_nanos = mutate_state(|state| prepare(&mut args, state))?;
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
         args.ledger_canister_id,
         &ApproveArgs {
-            from_subaccount,
+            from_subaccount: None,
             spender: args.spender.into(),
             amount: args.amount.into(),
             expected_allowance: None,
@@ -40,12 +39,10 @@ pub(crate) async fn approve_transfer_impl(mut args: Args) -> OCResult {
     }
 }
 
-// Returns the current time in nanos and the subaccount the approval is granted from
-fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(TimestampNanos, Option<Subaccount>)> {
+fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<TimestampNanos> {
     state.data.verify_not_suspended()?;
     let now = state.env.now();
     state.data.pin_number.verify(args.pin.as_mut(), now)?;
 
-    let my_user_id = UserId::from(state.env.canister_id());
-    Ok((now * NANOS_PER_MILLISECOND, Account::from(my_user_id).subaccount))
+    Ok(now * NANOS_PER_MILLISECOND)
 }
