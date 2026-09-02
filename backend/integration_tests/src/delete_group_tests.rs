@@ -80,9 +80,6 @@ fn user_canister_notified_of_group_deleted() {
     // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister
     let initial_state3 = client::user::happy_path::initial_state(env, &user3);
     assert!(initial_state3.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
-
-    // 11 minutes were added to the clock: this env must not go back to the pool
-    wrapper.discard();
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {

@@ -119,9 +119,6 @@ fn user_canister_notified_of_community_deleted() {
             .iter()
             .any(|c| c.community_id == community_id)
     );
-
-    // 11 minutes were added to the clock: this env must not go back to the pool
-    wrapper.discard();
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
