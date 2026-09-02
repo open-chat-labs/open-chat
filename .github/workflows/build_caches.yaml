@@ -26,7 +26,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --tests
+          args: --workspace --exclude open-chat --exclude tauri-plugin-oc --tests
 
   # Warms the cache the integration tests restore: the canister wasms, `ic-wasm`, and the debug
   # build of the test crate. Uses the same runner spec as the integration tests so the cached
