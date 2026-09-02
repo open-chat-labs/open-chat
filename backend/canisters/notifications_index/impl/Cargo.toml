@@ -19,6 +19,7 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 constants = { path = "../../../libraries/constants" }
 cycles_dispenser_canister = { path = "../../cycles_dispenser/api" }
 futures = { workspace = true }
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }

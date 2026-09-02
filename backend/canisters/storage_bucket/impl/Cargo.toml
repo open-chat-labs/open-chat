@@ -10,6 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 hex = { workspace = true }
 time = { workspace = true, features = ["formatting"] }
 candid = { workspace = true }

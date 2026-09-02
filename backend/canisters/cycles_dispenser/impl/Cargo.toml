@@ -20,6 +20,7 @@ constants = { path = "../../../libraries/constants" }
 cycles_dispenser_canister = { path = "../api" }
 cycles_minting_canister = { path = "../../../external_canisters/cmc/api" }
 cycles_minting_canister_c2c_client = { path = "../../../external_canisters/cmc/c2c_client" }
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
