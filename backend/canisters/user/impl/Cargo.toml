@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 async-trait = { workspace = true }
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 legacy_bot_api = { path = "../../../legacy_bots/api" }
 legacy_bot_c2c_client = { path = "../../../legacy_bots/c2c_client" }
 candid = { workspace = true }

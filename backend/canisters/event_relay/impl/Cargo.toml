@@ -20,6 +20,7 @@ event_store_canister = { workspace = true }
 event_store_producer = { workspace = true, features = ["json"] }
 event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }

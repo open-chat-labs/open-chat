@@ -551,12 +551,21 @@ pub mod icrc1 {
         pub subaccount: Option<[u8; 32]>,
     }
 
-    impl<T: Into<Principal>> From<T> for Account {
-        fn from(value: T) -> Self {
+    // The default account of a canister or other non-user principal. A principal which actually
+    // identifies a user must go through `for_user`/`From<UserId>` instead - building a user's
+    // account from their principal drops the subaccount their wallet lives in.
+    impl From<Principal> for Account {
+        fn from(value: Principal) -> Self {
             Account {
-                owner: value.into(),
+                owner: value,
                 subaccount: None,
             }
+        }
+    }
+
+    impl From<UserId> for Account {
+        fn from(value: UserId) -> Self {
+            Account::for_user(value)
         }
     }
 
