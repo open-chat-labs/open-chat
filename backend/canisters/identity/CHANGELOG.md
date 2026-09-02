@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Repair WebAuthn keys stored with trailing extension bytes and remap their auth principals ([#9279](https://github.com/open-chat-labs/open-chat/pull/9279))
+
 ### Changed
 
+- Validate WebAuthn keys at registration and reject any the IC would not accept ([#9280](https://github.com/open-chat-labs/open-chat/pull/9280))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 
 ## [[2.0.1979](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1979-identity)] - 2026-04-10
