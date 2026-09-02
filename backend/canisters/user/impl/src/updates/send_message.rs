@@ -115,7 +115,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     location: P2PSwapLocation::from_message(Chat::Direct(args.recipient.into()), None, args.message_id),
                     token0: content.token0.clone(),
                     token0_amount: content.token0_amount,
-                    token0_principal: None,
+                    token0_principal: Some(my_user_id.as_principal()),
                     token1: content.token1.clone(),
                     token1_amount: content.token1_amount,
                     token1_principal: None,
@@ -128,7 +128,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     Ok((swap_id, pending_transaction)) => {
                         match process_transaction_without_caller_check(pending_transaction).await {
                             Ok(Ok(completed)) => {
-                                NotifyEscrowCanisterOfDepositJob::run(swap_id);
+                                NotifyEscrowCanisterOfDepositJob::run(swap_id, my_user_id);
                                 let content = MessageContentInternal::new_with_transfer(
                                     MessageContentInitial::P2PSwap(content),
                                     completed.clone().into(),
