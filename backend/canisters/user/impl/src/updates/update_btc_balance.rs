@@ -4,12 +4,13 @@ use canister_tracing_macros::trace;
 use ckbtc_minter_canister::update_balance::{UpdateBalanceError, UtxoStatus};
 use ckbtc_minter_canister::{CKBTC_MINTER_CANISTER_ID, TESTNET_CKBTC_MINTER_CANISTER_ID};
 use event_store_types::EventBuilder;
+use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::format_crypto_amount;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use tracing::error;
-use types::Achievement;
+use types::{Achievement, UserId};
 use user_canister::update_btc_balance::*;
 
 #[update(msgpack = true)]
@@ -19,12 +20,16 @@ async fn update_btc_balance(_args: Args) -> Response {
 }
 
 async fn update_btc_balance_impl() -> Response {
-    let test_mode = read_state(|state| state.data.test_mode);
+    let (test_mode, my_user_id) = read_state(|state| (state.data.test_mode, UserId::from(state.env.canister_id())));
     let ckbtc_minter_canister_id = if test_mode { TESTNET_CKBTC_MINTER_CANISTER_ID } else { CKBTC_MINTER_CANISTER_ID };
 
+    // Must match the (owner, subaccount) pair the BTC address was generated for
     match ckbtc_minter_canister_c2c_client::update_balance(
         ckbtc_minter_canister_id,
-        &ckbtc_minter_canister::update_balance::Args::default(),
+        &ckbtc_minter_canister::update_balance::Args {
+            owner: None,
+            subaccount: Account::from(my_user_id).subaccount,
+        },
     )
     .await
     {
@@ -50,7 +55,7 @@ Your account has been credited with {formatted} BTC."
                         false,
                         state,
                     );
-                    let user_id_string = state.env.canister_id().to_string();
+                    let user_id_string = my_user_id.to_string();
                     let now = state.env.now();
                     state.push_local_user_index_canister_event(
                         LocalUserIndexEvent::EventStoreEvent(
