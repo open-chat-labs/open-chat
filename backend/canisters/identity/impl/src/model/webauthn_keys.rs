@@ -30,21 +30,29 @@ impl WebAuthnKeys {
         self.keys.get(&ByteBuf::from(credential_id))
     }
 
-    /// Strips trailing bytes from any stored keys whose COSE key is followed by additional data (see
-    /// `strip_trailing_bytes_from_der_cose_key`) and returns the details of each key that was repaired.
-    pub fn repair_malformed_keys(&mut self) -> Vec<RepairedWebAuthnKey> {
-        let mut repaired = Vec::new();
+    /// Finds any stored keys whose COSE key is followed by additional data (see
+    /// `strip_trailing_bytes_from_der_cose_key`) and calls `remap` with the details of each. The stored
+    /// key is only replaced with the repaired one if `remap` returns true, so that a key and the auth
+    /// principal derived from it can't be left disagreeing with each other. Returns the details of every
+    /// malformed key found, along with whether it was repaired.
+    pub fn repair_malformed_keys(&mut self, mut remap: impl FnMut(&RepairedWebAuthnKey) -> bool) -> Vec<RepairedWebAuthnKey> {
+        let mut results = Vec::new();
         for (credential_id, key) in self.keys.iter_mut() {
             if let Some(new_public_key) = strip_trailing_bytes_from_der_cose_key(&key.public_key) {
-                let old_public_key = std::mem::replace(&mut key.public_key, new_public_key.clone());
-                repaired.push(RepairedWebAuthnKey {
+                let mut repaired = RepairedWebAuthnKey {
                     credential_id: credential_id.to_vec(),
-                    old_public_key,
+                    old_public_key: key.public_key.clone(),
                     new_public_key,
-                });
+                    repaired: false,
+                };
+                if remap(&repaired) {
+                    key.public_key = repaired.new_public_key.clone();
+                    repaired.repaired = true;
+                }
+                results.push(repaired);
             }
         }
-        repaired
+        results
     }
 }
 
@@ -52,6 +60,7 @@ pub struct RepairedWebAuthnKey {
     pub credential_id: Vec<u8>,
     pub old_public_key: Vec<u8>,
     pub new_public_key: Vec<u8>,
+    pub repaired: bool,
 }
 
 // DER encoding of `SEQUENCE { OBJECT IDENTIFIER 1.3.6.1.4.1.56387.1.1 }`, the OID the IC uses to wrap COSE keys
@@ -253,14 +262,23 @@ mod tests {
         add(&mut keys, 1, valid_key());
         add(&mut keys, 2, malformed_key());
 
-        let repaired = keys.repair_malformed_keys();
+        // The malformed key is left untouched if the remap fails
+        let not_remapped = keys.repair_malformed_keys(|_| false);
+        assert_eq!(not_remapped.len(), 1);
+        assert_eq!(not_remapped[0].credential_id, vec![2]);
+        assert!(!not_remapped[0].repaired);
+        assert_eq!(keys.get(vec![1]).unwrap().public_key, valid_key());
+        assert_eq!(keys.get(vec![2]).unwrap().public_key, malformed_key());
+
+        let repaired = keys.repair_malformed_keys(|_| true);
         assert_eq!(repaired.len(), 1);
         assert_eq!(repaired[0].credential_id, vec![2]);
         assert_eq!(repaired[0].old_public_key, malformed_key());
         assert_eq!(repaired[0].new_public_key, valid_key());
+        assert!(repaired[0].repaired);
 
         assert_eq!(keys.get(vec![1]).unwrap().public_key, valid_key());
         assert_eq!(keys.get(vec![2]).unwrap().public_key, valid_key());
-        assert!(keys.repair_malformed_keys().is_empty());
+        assert!(keys.repair_malformed_keys(|_| true).is_empty());
     }
 }
