@@ -22,6 +22,10 @@ echo Building package $PACKAGE
 # .cargo/config.toml). Setting RUSTFLAGS here means cargo ignores that config file, so the cfg has
 # to be repeated in the flags below.
 export RUSTFLAGS="--cfg getrandom_backend=\"custom\" --remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
+# The remap below depends on the registry sources being unpacked. On a fresh machine they aren't
+# until something is built, and a restored CI cache holds the directory but not its contents, so
+# without this the flags (and hence every cached artifact's fingerprint) would differ between runs.
+cargo metadata --format-version 1 --locked > /dev/null || exit 1
 for l in $(ls ${CARGO_HOME}/registry/src/)
 do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
