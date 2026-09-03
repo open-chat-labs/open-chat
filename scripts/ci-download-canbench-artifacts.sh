@@ -3,6 +3,16 @@ set -Eexuo pipefail
 
 # Identifies the benchmarks provided in the artifacts and outputs them.
 
+# No result artifacts means the benchmarks job was skipped (a frontend-only PR), so there is
+# nothing to post. Leave pr_number empty; the post-comment job checks it and skips. Results
+# without a PR number are a broken upload, and fall through to fail on the missing file below.
+if ! compgen -G "canbench_result_*" > /dev/null; then
+  echo "No benchmark result artifacts found, nothing to post"
+  echo "matrix={\"benchmark\": []}" >> "$GITHUB_OUTPUT"
+  echo "pr_number=" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
+
 json_array="["
 # Loop through each file with prefix "canbench_result_" in the current directory
 for file in canbench_result_*; do
@@ -23,6 +33,11 @@ json_array=${json_array%,}
 
 # Close the JSON array string
 json_array+="]"
+
+if [ ! -e ./pr_number/pr_number ]; then
+  echo "Benchmark results were uploaded but the pr_number artifact is missing" >&2
+  exit 1
+fi
 
 # Output the benchmarks and PR number to be used by the next job.
 echo "matrix={\"benchmark\": $json_array}" >> "$GITHUB_OUTPUT"
