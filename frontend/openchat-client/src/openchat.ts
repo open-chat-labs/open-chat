@@ -3123,6 +3123,17 @@ export class OpenChat {
                     messageIndex = undefined;
                 }
             }
+
+            // A member who has never read anything gets message 0 as the first unread. In a
+            // chat whose history is hidden from them that message is below their min visible
+            // index, and a window anchored on it fails.
+            if (
+                messageIndex !== undefined &&
+                clientChat.kind !== "direct_chat" &&
+                messageIndex < clientChat.minVisibleMessageIndex
+            ) {
+                messageIndex = undefined;
+            }
         }
 
         // TODO - this might belong as a derivation in the selected chat state
