@@ -596,7 +596,7 @@
         if (draft !== undefined) {
             // Never fall through: a send without the approval would silently take the funds from
             // the user's OpenChat account instead of the wallet they chose
-            if (walletApproval === undefined) return;
+            if (walletApproval == null) return;
             // The draft spends from an external wallet, which has to approve us taking the
             // transfer before the message carrying it is sent. Nothing may be awaited before
             // this call - the wallet opens in a popup, which the browser only allows while it is
