@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Return no events instead of trapping when an events query's start index is below the caller's min visible event index ([#XXXX](https://github.com/open-chat-labs/open-chat/pull/XXXX))
+- Return no events instead of trapping when an events query's start index is below the caller's min visible event index ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
 
 ## [[2.0.2036](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2036-group)] - 2026-08-20
 
