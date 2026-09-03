@@ -665,10 +665,11 @@ export class OpenChat {
     #userLocation: string | undefined;
     #logger: Logger;
     // Diagnostics for the "selected chat renders empty" report. Every path that can leave a
-    // chat empty does so without an error, so record which one fired. One report per reason
-    // and three per session, so a widespread cause cannot flood Rollbar.
-    #emptyChatReports = 0;
-    #emptyChatReasons = new Set<string>();
+    // chat empty does so without an error, so record which one fired. One chat selection is
+    // one incident, and at most three incidents are reported per session so a widespread
+    // cause cannot flood Rollbar.
+    #chatSelectionSeq = 0;
+    #emptyChatIncidents = new Set<number>();
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     #membershipCheck: number | undefined;
@@ -915,37 +916,59 @@ export class OpenChat {
     }
 
     #reportEmptyChat(reason: string, context: Record<string, unknown>): void {
-        if (this.#emptyChatReports >= 3 || this.#emptyChatReasons.has(reason)) return;
-        this.#emptyChatReports++;
-        this.#emptyChatReasons.add(reason);
+        // The logger only sends when online, so an offline report would spend the budget
+        // for nothing
+        if (get(offlineStore)) return;
+        const incident = this.#chatSelectionSeq;
+        if (this.#emptyChatIncidents.size >= 3 && !this.#emptyChatIncidents.has(incident)) {
+            return;
+        }
+        this.#emptyChatIncidents.add(incident);
         const message = `EmptyChatDiagnostic: ${reason}`;
         this.#logger.error(message, new Error(message), context);
     }
 
-    // Fires a few seconds after a chat is selected: if it is still the selected chat and nothing
-    // has been loaded into the event store, report it along with what the selection did.
-    #watchForEmptyChat(chatId: ChatIdentifier, load: { path: string; result: string }): void {
-        window.setTimeout(() => {
-            const chat = chatSummariesStore.value.get(chatId);
-            if (
-                chat === undefined ||
-                chat.latestEventIndex <= 0 ||
-                !chatIdentifiersEqual(chatId, selectedChatIdStore.value) ||
-                serverEventsStore.value.length > 0 ||
-                expiredServerEventRanges.value.length > 0
-            ) {
-                return;
-            }
-            this.#reportEmptyChat("still_empty_after_select", {
-                chatId: chatIdentifierToString(chatId),
-                chatKind: chat.kind,
-                path: load.path,
-                result: load.result,
-                latestEventIndex: chat.latestEventIndex,
-                minVisibleEventIndex: this.earliestAvailableEventIndex(chat),
-                offline: get(offlineStore),
-            });
-        }, 5000);
+    // Runs once the initial load of a selected chat has settled: if it is still the selected
+    // chat and nothing reached the event store, report it along with what the selection did.
+    #checkForEmptyChat(chatId: ChatIdentifier, path: string): void {
+        const chat = chatSummariesStore.value.get(chatId);
+        if (
+            chat === undefined ||
+            chat.latestEventIndex <= 0 ||
+            !chatIdentifiersEqual(chatId, selectedChatIdStore.value) ||
+            this.maskChatMessages(chat) ||
+            serverEventsStore.value.length > 0 ||
+            expiredServerEventRanges.value.length > 0
+        ) {
+            return;
+        }
+        this.#reportEmptyChat("still_empty_after_load", {
+            chatId: chatIdentifierToString(chatId),
+            chatKind: chat.kind,
+            path,
+            latestEventIndex: chat.latestEventIndex,
+            minVisibleEventIndex: this.earliestAvailableEventIndex(chat),
+        });
+    }
+
+    // The initial load is the only thing that loads a freshly selected chat or thread: if it
+    // fails nothing publishes loadedMessageWindow, the event list never initialises, and
+    // scroll-driven loading stays gated off. Load the latest history instead, from a clean
+    // store, since a partially cached window may already have been applied to it.
+    async #fallBackToPreviousMessages(
+        chatId: ChatIdentifier,
+        threadRootEvent?: EventWrapper<Message>,
+    ): Promise<void> {
+        if (threadRootEvent === undefined) {
+            if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) return;
+            serverEventsStore.set([]);
+            expiredServerEventRanges.set(new DRange());
+        } else {
+            const context = { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex };
+            if (!messageContextsEqual(context, selectedThreadIdStore.value)) return;
+            serverThreadEventsStore.set([]);
+        }
+        await this.loadPreviousMessages(chatId, threadRootEvent, true);
     }
 
     logError(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
@@ -2716,6 +2739,9 @@ export class OpenChat {
             .catch(CommonResponses.failure);
 
         if (!isSuccessfulEventsResponse(eventsResponse)) {
+            if (initialLoad) {
+                await this.#fallBackToPreviousMessages(chatId, threadRootEvent);
+            }
             return undefined;
         }
 
@@ -2772,7 +2798,7 @@ export class OpenChat {
                 )
                 .toPromise()
                 .catch((err) => {
-                    if (initialLoad) {
+                    if (initialLoad && !this.maskChatMessages(clientChat)) {
                         this.#reportEmptyChat("window_load_failed", {
                             chatId: chatIdentifierToString(chatId),
                             messageIndex,
@@ -2783,6 +2809,9 @@ export class OpenChat {
                 });
 
             if (!isSuccessfulEventsResponse(eventsResponse)) {
+                if (initialLoad) {
+                    await this.#fallBackToPreviousMessages(chatId);
+                }
                 return undefined;
             }
 
@@ -3128,6 +3157,11 @@ export class OpenChat {
                 }
             }
             chat = chatSummariesStore.value.get(chatId);
+
+            // The user may have moved on while the preview was in flight
+            if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
+                return;
+            }
         }
 
         if (chat !== undefined) {
@@ -3156,6 +3190,8 @@ export class OpenChat {
             return;
         }
 
+        this.#chatSelectionSeq++;
+
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
                 ? undefined
@@ -3171,17 +3207,22 @@ export class OpenChat {
                     messageIndex = undefined;
                 }
             }
+        }
 
-            // A member who has never read anything gets message 0 as the first unread. In a
-            // chat whose history is hidden from them that message is below their min visible
-            // index, and a window anchored on it fails.
-            if (
-                messageIndex !== undefined &&
-                clientChat.kind !== "direct_chat" &&
-                messageIndex < clientChat.minVisibleMessageIndex
-            ) {
-                messageIndex = undefined;
-            }
+        // A message below the caller's min visible index cannot anchor a window: a member who
+        // has never read anything gets message 0 as their first unread even when the chat's
+        // history is hidden from them, and a link can point into that history. Anchor on the
+        // first visible message instead, if there is one.
+        if (
+            messageIndex !== undefined &&
+            clientChat.kind !== "direct_chat" &&
+            messageIndex < clientChat.minVisibleMessageIndex
+        ) {
+            const latestMessageIndex = clientChat.latestMessage?.event.messageIndex ?? -1;
+            messageIndex =
+                clientChat.minVisibleMessageIndex <= latestMessageIndex
+                    ? clientChat.minVisibleMessageIndex
+                    : undefined;
         }
 
         // TODO - this might belong as a derivation in the selected chat state
@@ -3201,42 +3242,17 @@ export class OpenChat {
         }
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
-                const load = {
-                    path: messageIndex !== undefined ? "window" : "previous",
-                    result: "pending",
-                };
-                this.#watchForEmptyChat(chatId, load);
-                if (messageIndex !== undefined) {
-                    // The window is anchored on the first unread message, which is
-                    // usually not cached yet, so this is a network round trip even when
-                    // the chat's history is fully cached. If it fails (offline, replica
-                    // behind, gateway error) nothing else loads the chat: no
-                    // loadedMessageWindow is published, the event list never
-                    // initialises, and scroll-driven loading stays gated off. Fall back
-                    // to the cached history so the user is not left staring at an empty
-                    // chat.
-                    this.loadEventWindow(chatId, messageIndex, undefined, true)
-                        .then((loaded) => {
-                            load.result = loaded === undefined ? "window_failed" : "window_ok";
-                            return loaded === undefined
-                                ? this.loadPreviousMessages(chatId, undefined, true).then(
-                                      () => (load.result = "window_failed_fallback_done"),
-                                  )
-                                : undefined;
-                        })
-                        .then(() => {
-                            if (serverChat !== undefined) {
-                                this.#loadChatDetails(serverChat);
-                            }
-                        });
-                } else {
-                    this.loadPreviousMessages(chatId, undefined, true).then(() => {
-                        load.result = "previous_done";
-                        if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat);
-                        }
-                    });
-                }
+                const path = messageIndex !== undefined ? "window" : "previous";
+                const load =
+                    messageIndex !== undefined
+                        ? this.loadEventWindow(chatId, messageIndex, undefined, true)
+                        : this.loadPreviousMessages(chatId, undefined, true);
+                load.then(() => {
+                    this.#checkForEmptyChat(chatId, path);
+                    if (serverChat !== undefined) {
+                        this.#loadChatDetails(serverChat);
+                    }
+                });
             }
             if (selectedChat.kind === "direct_chat") {
                 const them = userStore.get(selectedChat.them.userId);
@@ -3526,23 +3542,8 @@ export class OpenChat {
         const criteria = this.#previousMessagesCriteria(serverChat);
 
         const eventsResponse = criteria
-            ? await this.#loadEvents(serverChat, criteria[0], criteria[1])
+            ? await this.#loadEvents(serverChat, criteria[0], criteria[1], initialLoad)
             : undefined;
-
-        if (initialLoad && eventIndexesLoaded(chatId).length === 0) {
-            if (criteria === undefined) {
-                this.#reportEmptyChat("no_previous_criteria", {
-                    chatId: chatIdentifierToString(chatId),
-                    latestEventIndex: serverChat.latestEventIndex,
-                });
-            } else if (!isSuccessfulEventsResponse(eventsResponse)) {
-                this.#reportEmptyChat("previous_load_failed", {
-                    chatId: chatIdentifierToString(chatId),
-                    startIndex: criteria[0],
-                    kind: eventsResponse?.kind,
-                });
-            }
-        }
 
         if (criteria && isSuccessfulEventsResponse(eventsResponse)) {
             this.#fillLoadedEventGaps(serverChat, eventsResponse, criteria[0], criteria[1]);
@@ -3614,6 +3615,7 @@ export class OpenChat {
         serverChat: ChatSummary,
         startIndex: number,
         ascending: boolean,
+        initialLoad = false,
     ): Promise<EventsResponse<ChatEvent>> {
         return this.#worker
             .stream({
@@ -3629,7 +3631,16 @@ export class OpenChat {
             .aggregate(mergeEventStreamResponses, emptyEventsResponse())
             .mapAsync((resp) => this.#handleEventsResponse(serverChat, undefined, resp))
             .toPromise()
-            .catch(CommonResponses.failure);
+            .catch((err) => {
+                if (initialLoad && !this.maskChatMessages(serverChat)) {
+                    this.#reportEmptyChat("previous_load_failed", {
+                        chatId: chatIdentifierToString(serverChat.id),
+                        startIndex,
+                        error: (err as { message?: string })?.message ?? String(err),
+                    });
+                }
+                return CommonResponses.failure();
+            });
     }
 
     #previousMessagesCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
@@ -4221,7 +4232,12 @@ export class OpenChat {
                             };
                         }
                     }
-                } else if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
+                } else if (
+                    serverEventsStore.value.length === 0 &&
+                    chatIdentifiersEqual(chatId, selectedChatIdStore.value)
+                ) {
+                    // Dropping new events while scrolled up is routine; dropping them into an
+                    // empty store means the expired ranges are stale and the chat stays empty
                     const loaded = eventIndexesLoaded(chatId);
                     this.#reportEmptyChat("non_contiguous_dropped", {
                         chatId: chatIdentifierToString(chatId),
@@ -4229,7 +4245,6 @@ export class OpenChat {
                         newTo: newEvents[newEvents.length - 1]?.index,
                         loadedFrom: loaded.length > 0 ? loaded.index(0) : undefined,
                         loadedTo: loaded.length > 0 ? loaded.index(loaded.length - 1) : undefined,
-                        storeEmpty: serverEventsStore.value.length === 0,
                     });
                 }
             } else if (isContiguousInThread({ chatId, threadRootMessageIndex }, newEvents)) {
