@@ -5,6 +5,7 @@ import {
     bigIntMax,
     chatIdentifierToString,
     emptyUnreadCounts,
+    latestMessageExpired,
     mergeUnreadCounts,
     type ChatIdentifier,
     type ChatSummary,
@@ -493,10 +494,9 @@ export class MessageReadTracker {
             contribution.chat !== chat ||
             contribution.version !== version
         ) {
-            const unreadMessages = this.unreadMessageCount(
-                chat.id,
-                chat.latestMessage?.event.messageIndex,
-            );
+            const unreadMessages = latestMessageExpired(chat)
+                ? 0
+                : this.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
             contribution = {
                 chat,
                 version,

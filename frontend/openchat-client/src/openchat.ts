@@ -46,6 +46,7 @@ import {
     buildDelegationChain,
     canRetryMessage,
     chatIdentifierToString,
+    latestMessageExpired,
     chatIdentifiersEqual,
     communityIdentifiersEqual,
     communityRoles,
@@ -3200,11 +3201,21 @@ export class OpenChat {
                       clientChat.latestMessage?.event.messageIndex,
                   );
 
-            if (messageIndex !== undefined) {
-                const latestServerMessageIndex = serverChat?.latestMessage?.event.messageIndex ?? 0;
-
-                if (messageIndex > latestServerMessageIndex) {
+            const latestMessageIndex = clientChat.latestMessage?.event.messageIndex;
+            if (messageIndex !== undefined && latestMessageIndex !== undefined) {
+                if (latestMessageExpired(clientChat)) {
+                    // Every unread message has disappeared: nothing to anchor a window on, and
+                    // nothing that could ever be read to clear the unread count. Mark the chat
+                    // read and load the latest events instead.
+                    messagesRead.markReadUpTo({ chatId }, latestMessageIndex);
                     messageIndex = undefined;
+                } else {
+                    const latestServerMessageIndex =
+                        serverChat?.latestMessage?.event.messageIndex ?? 0;
+
+                    if (messageIndex > latestServerMessageIndex) {
+                        messageIndex = undefined;
+                    }
                 }
             }
         }
