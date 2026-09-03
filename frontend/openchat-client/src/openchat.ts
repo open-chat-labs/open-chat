@@ -3132,11 +3132,25 @@ export class OpenChat {
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
                 if (messageIndex !== undefined) {
-                    this.loadEventWindow(chatId, messageIndex, undefined, true).then(() => {
-                        if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat);
-                        }
-                    });
+                    // The window is anchored on the first unread message, which is
+                    // usually not cached yet, so this is a network round trip even when
+                    // the chat's history is fully cached. If it fails (offline, replica
+                    // behind, gateway error) nothing else loads the chat: no
+                    // loadedMessageWindow is published, the event list never
+                    // initialises, and scroll-driven loading stays gated off. Fall back
+                    // to the cached history so the user is not left staring at an empty
+                    // chat.
+                    this.loadEventWindow(chatId, messageIndex, undefined, true)
+                        .then((loaded) =>
+                            loaded === undefined
+                                ? this.loadPreviousMessages(chatId, undefined, true)
+                                : undefined,
+                        )
+                        .then(() => {
+                            if (serverChat !== undefined) {
+                                this.#loadChatDetails(serverChat);
+                            }
+                        });
                 } else {
                     this.loadPreviousMessages(chatId, undefined, true).then(() => {
                         if (serverChat !== undefined) {
@@ -3388,10 +3402,16 @@ export class OpenChat {
         return threadEventsStore.value.length === 0 ? undefined : threadEventsStore.value[0].index;
     }
 
-    previousThreadMessagesCriteria(thread: ThreadSummary): [number, boolean] {
+    previousThreadMessagesCriteria(thread: ThreadSummary): [number, boolean] | undefined {
         const minLoadedEventIndex = this.earliestLoadedThreadIndex();
         if (minLoadedEventIndex === undefined) {
             return [thread.latestEventIndex, false];
+        }
+        // Thread events start at index 0. Once it is loaded there is nothing
+        // earlier to ask for; a start index of -1 makes the cache iterator
+        // throw ("Start index exceeds bound") and the whole load fails.
+        if (minLoadedEventIndex <= 0) {
+            return undefined;
         }
         return [minLoadedEventIndex - 1, false];
     }
@@ -3409,7 +3429,11 @@ export class OpenChat {
 
         if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
             const thread = threadRootEvent.event.thread;
-            const [index, ascending] = this.previousThreadMessagesCriteria(thread);
+            const threadCriteria = this.previousThreadMessagesCriteria(thread);
+            if (threadCriteria === undefined) {
+                return;
+            }
+            const [index, ascending] = threadCriteria;
             return this.loadThreadMessages(
                 chatId,
                 [0, thread.latestEventIndex],
