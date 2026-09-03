@@ -115,6 +115,17 @@
     let destroyed = false;
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
+    // The load currently in flight, from whichever caller started it. A caller
+    // that finds one running must WAIT for it, not return early: the
+    // scrollToMessageIndex recursion treats a true result as "a load happened,
+    // re-check", and its iterations are microtask-only (scrollToIndex, tick,
+    // an instant return). Returning true without awaiting sends it round again
+    // with nothing yielding to the task queue, so the network reply that would
+    // clear the flags never runs — the tab spins at 100% until killed. Seen on
+    // selecting a chat with unread messages while the previous chat's
+    // fire-and-forget load was still in flight (the flags are not reset on a
+    // context switch while the list stays visible).
+    let inflightLoad: Promise<void> | undefined = undefined;
     // After a scroll-triggered load, block further scroll-triggered loads until
     // the gesture fully stops (see trackScrollStop) — prevents runaway loading
     // while momentum keeps the viewport inside a loading threshold.
@@ -718,21 +729,46 @@
         await interruptScroll(-fromBottom);
     }
 
+    // Waits for a load already in progress. Resolves true so callers behave as
+    // if they had loaded; the next check re-evaluates the thresholds.
+    async function awaitInflightLoad(): Promise<boolean> {
+        await inflightLoad?.catch(() => undefined);
+        return true;
+    }
+
+    // Runs the given loads as THE in-flight load and always clears the loading
+    // flags afterwards — a rejection used to leave them stuck true, which
+    // gated every later load and navigation in this chat.
+    async function runLoads(loads: Promise<void>[]): Promise<void> {
+        const load = Promise.all(loads).then(() => undefined);
+        inflightLoad = load;
+        try {
+            await load;
+        } finally {
+            // Only the load that owns the flags may clear them: the hidden-panel
+            // reset can let a newer load start while this one is still in flight.
+            if (inflightLoad === load) {
+                inflightLoad = undefined;
+                loadingPrevMessages = false;
+                loadingNewMessages = false;
+                loadingFromUserScroll = false;
+            }
+        }
+    }
+
     async function loadNewMessagesIfRequired(fromScroll = false): Promise<boolean> {
-        if (loadingNewMessages || loadingPrevMessages) return true;
+        if (loadingNewMessages || loadingPrevMessages) return awaitInflightLoad();
         loadingNewMessages = shouldLoadNewMessages();
         loadingFromUserScroll = loadingNewMessages && fromScroll;
         if (loadingNewMessages) {
-            await loadNew();
-            loadingNewMessages = false;
-            loadingFromUserScroll = false;
+            await runLoads([loadNew()]);
             return true;
         }
         return false;
     }
 
     async function loadMoreIfRequired(fromScroll = false, initialLoad = false): Promise<boolean> {
-        if (loadingPrevMessages || loadingNewMessages) return true;
+        if (loadingPrevMessages || loadingNewMessages) return awaitInflightLoad();
 
         // After a scroll-triggered load of OLDER messages, block further such
         // loads until the gesture fully stops (trackScrollStop clears the flag)
@@ -771,10 +807,7 @@
         if (shouldLoadPrev) {
             loadPromises.push(loadPrev(initialLoad));
         }
-        await Promise.all(loadPromises);
-        loadingPrevMessages = false;
-        loadingNewMessages = false;
-        loadingFromUserScroll = false;
+        await runLoads(loadPromises);
 
         if (
             items.length === preLen &&
