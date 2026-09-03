@@ -6,10 +6,12 @@
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
+        encodeIcrcAccount,
         ICP_SYMBOL,
         Lazy,
         OpenChat,
         type OneSecTransferFees,
+        userIdToIcrcAccount,
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -66,7 +68,9 @@
         } else if (isOneSecNetwork) {
             return oneSecAddress;
         } else {
-            return $currentUserIdStore;
+            // The user's wallet, which is a subaccount of their canister once a canister holds
+            // many users. For a user alone in their canister this is just their user id.
+            return encodeIcrcAccount(userIdToIcrcAccount($currentUserIdStore));
         }
     });
 
