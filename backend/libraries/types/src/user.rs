@@ -34,18 +34,11 @@ impl UserId {
     // the canister id's two trailing tag bytes. The result is deliberately not a well-formed
     // principal, which is exactly what tells it apart from a canister id - see `is_indexed`.
     pub fn new_indexed(canister_id: CanisterId, index: u16) -> UserId {
-        // Both the length and the trailing tag bytes, because `canister_id` rebuilds the latter
-        // from scratch. Anything else 10 bytes long - a vanity principal, say - would pass a length
-        // check and then reconstruct as some other canister entirely.
-        let bytes = canister_id.as_slice();
-        assert!(
-            bytes.len() == CANISTER_ID_LEN && bytes[8..] == CANISTER_ID_TAG,
-            "Not a canister id: {canister_id}"
-        );
+        assert!(is_canister_id(&canister_id), "Not a canister id: {canister_id}");
         assert!(index <= MAX_USER_INDEX, "Index {index} is out of range");
 
         let mut new_bytes = [0; CANISTER_ID_LEN];
-        new_bytes[..8].copy_from_slice(&bytes[..8]);
+        new_bytes[..8].copy_from_slice(&canister_id.as_slice()[..8]);
         new_bytes[8] = index as u8;
         new_bytes[9] = INDEXED_TAG | (index >> 8) as u8;
         UserId(Principal::from_slice(&new_bytes))
@@ -75,6 +68,29 @@ impl UserId {
         }
     }
 
+    // The user whose wallet this ledger account is - the inverse of `From<UserId> for Account`.
+    // None for an account which is not a user's wallet: one whose subaccount is not of the form
+    // `From<UserId>` produces, or an indexed subaccount of an owner which is not a canister. The
+    // default subaccount maps to the owner itself, whether it is a canister or not, so that the
+    // wallets of bots and other non-canister users resolve too.
+    //
+    // There is no equivalent for `AccountIdentifier`, which is a hash and cannot be inverted.
+    pub fn from_account(account: &Account) -> Option<UserId> {
+        let index = match account.subaccount {
+            None => 0,
+            Some(bytes) if bytes[..30] == [0; 30] => u16::from_be_bytes([bytes[30], bytes[31]]),
+            Some(_) => return None,
+        };
+
+        if index == 0 {
+            Some(UserId(account.owner))
+        } else if index <= MAX_USER_INDEX && is_canister_id(&account.owner) {
+            Some(UserId::new_indexed(account.owner, index))
+        } else {
+            None
+        }
+    }
+
     // The user's index within the canister which holds their data. Zero when that canister holds
     // this user alone.
     pub fn index(&self) -> u16 {
@@ -94,6 +110,14 @@ impl UserId {
         let bytes = self.0.as_slice();
         bytes.len() == CANISTER_ID_LEN && bytes[CANISTER_ID_LEN - 1] & INDEXED_TAG != 0
     }
+}
+
+// Both the length and the trailing tag bytes, because `canister_id` rebuilds the latter from
+// scratch. Anything else 10 bytes long - a vanity principal, say - would pass a length check and
+// then reconstruct as some other canister entirely.
+fn is_canister_id(principal: &Principal) -> bool {
+    let bytes = principal.as_slice();
+    bytes.len() == CANISTER_ID_LEN && bytes[8..] == CANISTER_ID_TAG
 }
 
 impl From<Principal> for UserId {
@@ -279,5 +303,44 @@ mod tests {
         let mut expected = [0; 32];
         expected[30..].copy_from_slice(&1000u16.to_be_bytes());
         assert_eq!(account.subaccount, Some(expected));
+    }
+
+    #[test]
+    fn user_id_round_trips_through_its_account() {
+        let bot = UserId::from(Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]));
+        let mut user_ids = vec![UserId::new(canister_id()), bot];
+        user_ids.extend([1, 255, 256, 1000, MAX_USER_INDEX].map(|i| UserId::new_indexed(canister_id(), i)));
+
+        for user_id in user_ids {
+            assert_eq!(UserId::from_account(&Account::from(user_id)), Some(user_id), "{user_id}");
+        }
+    }
+
+    // The ledger treats an all-zero subaccount as the default one, so both spellings are the same
+    // account and must resolve to the same user.
+    #[test]
+    fn explicit_default_subaccount_resolves_to_the_unindexed_user() {
+        let account = Account { owner: canister_id(), subaccount: Some([0; 32]) };
+
+        assert_eq!(UserId::from_account(&account), Some(UserId::new(canister_id())));
+    }
+
+    #[test]
+    fn account_which_is_not_a_user_wallet_has_no_user_id() {
+        let mut arbitrary = [0; 32];
+        arbitrary[0] = 1;
+        let mut out_of_range = [0; 32];
+        out_of_range[30..].copy_from_slice(&(MAX_USER_INDEX + 1).to_be_bytes());
+        let mut indexed = [0; 32];
+        indexed[31] = 1;
+        let not_a_canister = Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]);
+
+        for account in [
+            Account { owner: canister_id(), subaccount: Some(arbitrary) },
+            Account { owner: canister_id(), subaccount: Some(out_of_range) },
+            Account { owner: not_a_canister, subaccount: Some(indexed) },
+        ] {
+            assert_eq!(UserId::from_account(&account), None, "{account:?}");
+        }
     }
 }
