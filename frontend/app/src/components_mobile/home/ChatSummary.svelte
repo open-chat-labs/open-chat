@@ -26,6 +26,7 @@
         communitiesStore,
         currentUserIdStore,
         favouritesStore,
+        latestMessageExpired,
         messageFlagsRestricted,
         messagesRead,
         notificationsSupported,
@@ -132,10 +133,12 @@
      */
     function updateUnreadCounts(chatSummary: ChatSummary) {
         untrack(() => {
-            unreadMessages = client.unreadMessageCount(
-                chatSummary.id,
-                chatSummary.latestMessage?.event.messageIndex,
-            );
+            unreadMessages = latestMessageExpired(chatSummary)
+                ? 0
+                : client.unreadMessageCount(
+                      chatSummary.id,
+                      chatSummary.latestMessage?.event.messageIndex,
+                  );
 
             unreadMentions = getUnreadMentionCount(chatSummary);
 
@@ -258,7 +261,7 @@
                 : $_("disappearingMessages.disabled");
         }
 
-        if (chatSummary.latestMessage === undefined) {
+        if (chatSummary.latestMessage === undefined || latestMessageExpired(chatSummary)) {
             return "";
         }
 

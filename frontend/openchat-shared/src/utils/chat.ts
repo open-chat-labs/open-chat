@@ -339,6 +339,15 @@ export function chatIdentifierToString(chatId: ChatIdentifier): string {
     }
 }
 
+// A chat whose latest message has disappeared has nothing left to read, whatever the
+// read-up-to index says: every earlier message expired first, unless the TTL was shortened
+// after they were sent. The summary keeps the expired message, so the unread count and the
+// preview would otherwise point at messages that no longer exist.
+export function latestMessageExpired(chat: ChatSummary, now = Date.now()): boolean {
+    const expiresAt = chat.latestMessage?.expiresAt;
+    return expiresAt !== undefined && expiresAt < now;
+}
+
 export function contentTypeToPermission(contentType: AttachmentContent["kind"]): MessagePermission {
     switch (contentType) {
         case "image_content":
