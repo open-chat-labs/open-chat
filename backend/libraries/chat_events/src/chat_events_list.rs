@@ -143,7 +143,10 @@ impl ChatEventsList {
                 if ascending {
                     // A start below the caller's min visible index (stale client summary, explicit
                     // link into hidden history) must not expose events they cannot see
-                    (max(index, min_visible_event_index), self.latest_event_index.unwrap_or_default())
+                    (
+                        max(index, min_visible_event_index),
+                        self.latest_event_index.unwrap_or_default(),
+                    )
                 } else {
                     (min_visible_event_index, index)
                 }
