@@ -24,6 +24,15 @@ json_array=${json_array%,}
 # Close the JSON array string
 json_array+="]"
 
+# No artifacts means the benchmarks job was skipped (a frontend-only PR), so there is nothing to
+# post. Leave pr_number empty; the post-comment job checks it and skips.
+if [ ! -e ./pr_number/pr_number ]; then
+  echo "No benchmark artifacts found, nothing to post"
+  echo "matrix={\"benchmark\": []}" >> "$GITHUB_OUTPUT"
+  echo "pr_number=" >> "$GITHUB_OUTPUT"
+  exit 0
+fi
+
 # Output the benchmarks and PR number to be used by the next job.
 echo "matrix={\"benchmark\": $json_array}" >> "$GITHUB_OUTPUT"
 echo "pr_number=$(cat ./pr_number/pr_number)" >> "$GITHUB_OUTPUT"
