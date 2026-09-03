@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { SIGNER_WALLETS, type SignerWallet } from "@client";
+    import { EXTERNAL_WALLETS_ENABLED, SIGNER_WALLETS, type SignerWallet } from "@client";
     import { Body, ColourVars, Column, Row, Sheet, Subtitle } from "component-lib";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -23,33 +23,35 @@
     }
 </script>
 
-<Row onClick={() => (choosing = true)} width={"hug"} crossAxisAlignment={"center"} gap={"sm"}>
-    <!-- The same size as the balance text alongside, but in the label colour -->
-    <Body colour={"textSecondary"} width={"hug"}>
-        <Translatable resourceKey={i18nKey("externalWallet.sourceWallet")} />
-    </Body>
-    <img class="wallet-logo" alt={wallet?.name ?? "OpenChat"} src={wallet?.logo ?? OPENCHAT_LOGO} />
-    <ChevronDown size={"1.5rem"} color={ColourVars.textSecondary} />
-</Row>
+{#if EXTERNAL_WALLETS_ENABLED}
+    <Row onClick={() => (choosing = true)} width={"hug"} crossAxisAlignment={"center"} gap={"sm"}>
+        <!-- The same size as the balance text alongside, but in the label colour -->
+        <Body colour={"textSecondary"} width={"hug"}>
+            <Translatable resourceKey={i18nKey("externalWallet.sourceWallet")} />
+        </Body>
+        <img class="wallet-logo" alt={wallet?.name ?? "OpenChat"} src={wallet?.logo ?? OPENCHAT_LOGO} />
+        <ChevronDown size={"1.5rem"} color={ColourVars.textSecondary} />
+    </Row>
 
-{#if choosing}
-    <Sheet onDismiss={() => (choosing = false)}>
-        <Column gap={"lg"} padding={"xl"}>
-            <Subtitle fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("externalWallet.sourceWallet")} />
-            </Subtitle>
-            <Row onClick={() => choose(undefined)} crossAxisAlignment={"center"} gap={"md"}>
-                <img class="wallet-logo large" alt="OpenChat" src={OPENCHAT_LOGO} />
-                <Body fontWeight={wallet === undefined ? "bold" : "normal"}>OpenChat</Body>
-            </Row>
-            {#each SIGNER_WALLETS as w (w.id)}
-                <Row onClick={() => choose(w)} crossAxisAlignment={"center"} gap={"md"}>
-                    <img class="wallet-logo large" alt={w.name} src={w.logo} />
-                    <Body fontWeight={wallet?.id === w.id ? "bold" : "normal"}>{w.name}</Body>
+    {#if choosing}
+        <Sheet onDismiss={() => (choosing = false)}>
+            <Column gap={"lg"} padding={"xl"}>
+                <Subtitle fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("externalWallet.sourceWallet")} />
+                </Subtitle>
+                <Row onClick={() => choose(undefined)} crossAxisAlignment={"center"} gap={"md"}>
+                    <img class="wallet-logo large" alt="OpenChat" src={OPENCHAT_LOGO} />
+                    <Body fontWeight={wallet === undefined ? "bold" : "normal"}>OpenChat</Body>
                 </Row>
-            {/each}
-        </Column>
-    </Sheet>
+                {#each SIGNER_WALLETS as w (w.id)}
+                    <Row onClick={() => choose(w)} crossAxisAlignment={"center"} gap={"md"}>
+                        <img class="wallet-logo large" alt={w.name} src={w.logo} />
+                        <Body fontWeight={wallet?.id === w.id ? "bold" : "normal"}>{w.name}</Body>
+                    </Row>
+                {/each}
+            </Column>
+        </Sheet>
+    {/if}
 {/if}
 
 <style lang="scss">

@@ -13,6 +13,7 @@ export { builtinBot } from "./utils/builtinBotCommands";
 export * from "./utils/restrictedContent";
 export {
     ApproveError,
+    EXTERNAL_WALLETS_ENABLED,
     SIGNER_WALLETS,
     SignerConnection,
     type ApproveSpendingArgs,

@@ -23,6 +23,13 @@ export type SignerWallet = {
     logo: string;
 };
 
+// Whether payment flows offer a choice of external wallet at all. The backends read the
+// `from_account` these flows send only once the user, group, community and user_index canisters
+// carrying that support are released; until then an older canister silently ignores the field and
+// pays from the user's OpenChat wallet, which is not what they were just asked to approve.
+// TODO: flip to true (or remove) once those canisters are live on prod
+export const EXTERNAL_WALLETS_ENABLED = false;
+
 // Any wallet implementing ICRC-25/27/29/49 works here - these are just the ones we surface. The
 // endpoints and logos are the ones each wallet publishes via NFID's identitykit.
 export const SIGNER_WALLETS: SignerWallet[] = [
