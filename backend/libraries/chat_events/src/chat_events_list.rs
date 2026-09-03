@@ -7,6 +7,7 @@ use crate::{
 };
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use std::iter::Peekable;
@@ -140,7 +141,9 @@ impl ChatEventsList {
         let (min, max) = if let Some(start) = start {
             if let Some(index) = self.event_index(start) {
                 if ascending {
-                    (index, self.latest_event_index.unwrap_or_default())
+                    // A start below the caller's min visible index (stale client summary, explicit
+                    // link into hidden history) must not expose events they cannot see
+                    (max(index, min_visible_event_index), self.latest_event_index.unwrap_or_default())
                 } else {
                     (min_visible_event_index, index)
                 }
@@ -763,6 +766,29 @@ mod tests {
         let results = events_reader.scan(Some(EventKey::EventIndex(30.into())), false, usize::MAX, usize::MAX, None);
 
         assert!(results.is_empty());
+    }
+
+    #[test]
+    fn scan_ascending_below_min_visible_starts_at_min_visible() {
+        let events = setup_group_events();
+        let events_reader = events.visible_main_events_reader(50.into());
+
+        let results = events_reader.scan(Some(EventKey::EventIndex(30.into())), true, usize::MAX, usize::MAX, None);
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
+        assert_eq!(event_indexes[0], 50);
+    }
+
+    #[test]
+    fn window_below_min_visible_returns_only_visible_events() {
+        let events = setup_group_events();
+        let events_reader = events.visible_main_events_reader(50.into());
+
+        let results = events_reader.window(EventKey::EventIndex(30.into()), usize::MAX, usize::MAX, None);
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
+        assert!(!event_indexes.is_empty());
+        assert!(event_indexes.iter().all(|i| *i >= 50));
     }
 
     #[test]
