@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 
+### Fixed
+
+- Return no events instead of trapping when an events query's start index is below the caller's min visible event index ([#XXXX](https://github.com/open-chat-labs/open-chat/pull/XXXX))
+
 ## [[2.0.2036](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2036-group)] - 2026-08-20
 
 ### Added
