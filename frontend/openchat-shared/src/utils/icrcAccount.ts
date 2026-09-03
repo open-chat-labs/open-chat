@@ -130,6 +130,10 @@ const CANISTER_ID_TAG = [0x01, 0x01];
 // Set in a UserId's final byte to mark it as carrying the user's index within their canister. No
 // class tag the IC defines has the top bit set, so a byte which does cannot be one.
 const INDEXED_TAG = 0x80;
+// Every ICRC-1 subaccount is exactly this long, the index occupying the final two bytes.
+const SUBACCOUNT_LENGTH = 32;
+// The largest index the seven spare bits of a UserId's final byte, plus the byte before it, hold.
+const MAX_USER_INDEX = (1 << 15) - 1;
 
 // The ledger account holding a user's funds, which is also the account their canister spends as
 // when pulling from an external wallet via ICRC-2. Mirrors `impl From<UserId> for Account` in
@@ -145,9 +149,9 @@ export function userIdToIcrcAccount(userId: string): IcrcAccount {
         return { owner: Principal.fromUint8Array(canisterIdBytes(bytes)) };
     }
 
-    const subaccount = new Uint8Array(32);
-    subaccount[30] = (index >> 8) & 0xff;
-    subaccount[31] = index & 0xff;
+    const subaccount = new Uint8Array(SUBACCOUNT_LENGTH);
+    subaccount[SUBACCOUNT_LENGTH - 2] = (index >> 8) & 0xff;
+    subaccount[SUBACCOUNT_LENGTH - 1] = index & 0xff;
 
     return { owner: Principal.fromUint8Array(canisterIdBytes(bytes)), subaccount };
 }
@@ -171,5 +175,56 @@ function userIndex(bytes: Uint8Array): number {
 function isIndexed(bytes: Uint8Array): boolean {
     return (
         bytes.length === CANISTER_ID_LENGTH && (bytes[CANISTER_ID_LENGTH - 1] & INDEXED_TAG) !== 0
+    );
+}
+
+// The user whose wallet this ledger account is - the inverse of `userIdToIcrcAccount`, mirroring
+// `UserId::from_account` in backend/libraries/types/src/user.rs. Undefined for an account which is
+// not a user's wallet: one whose subaccount is not of the form `userIdToIcrcAccount` produces, or
+// an indexed subaccount of an owner which is not a canister. The default subaccount maps to the
+// owner itself, whether or not that is a canister, so the wallets of bots and other non-canister
+// users resolve too.
+//
+// There is no equivalent for the ICP ledger's AccountIdentifier, which is a hash and so cannot be
+// inverted.
+export function icrcAccountToUserId({ owner, subaccount }: IcrcAccount): string | undefined {
+    const index = subaccountIndex(subaccount);
+
+    if (index === undefined) return undefined;
+    if (index === 0) return owner.toText();
+    if (index > MAX_USER_INDEX || !isCanisterId(owner)) return undefined;
+
+    return indexedUserId(owner, index);
+}
+
+// The index a subaccount carries, or undefined if it is not one `userIdToIcrcAccount` produces.
+// Both the default subaccount and an all-zero one mean index 0.
+function subaccountIndex(subaccount: Uint8Array | undefined): number | undefined {
+    if (subaccount === undefined) return 0;
+    if (subaccount.length !== SUBACCOUNT_LENGTH) return undefined;
+    if (!subaccount.subarray(0, SUBACCOUNT_LENGTH - 2).every((b) => b === 0)) return undefined;
+
+    return (subaccount[SUBACCOUNT_LENGTH - 2] << 8) | subaccount[SUBACCOUNT_LENGTH - 1];
+}
+
+// Mirrors `UserId::new_indexed`: the index takes the place of the canister id's two trailing tag
+// bytes, which is what `canisterIdBytes` reverses.
+function indexedUserId(canisterId: Principal, index: number): string {
+    const bytes = new Uint8Array(CANISTER_ID_LENGTH);
+    bytes.set(canisterId.toUint8Array().subarray(0, 8));
+    bytes[8] = index & 0xff;
+    bytes[9] = INDEXED_TAG | (index >> 8);
+    return Principal.fromUint8Array(bytes).toText();
+}
+
+// Both the length and the trailing tag bytes, because `indexedUserId` rebuilds an id from the
+// leading 8 alone. Anything else of canister id length would pass a length check and then come
+// back as some other canister entirely.
+function isCanisterId(principal: Principal): boolean {
+    const bytes = principal.toUint8Array();
+    return (
+        bytes.length === CANISTER_ID_LENGTH &&
+        bytes[8] === CANISTER_ID_TAG[0] &&
+        bytes[9] === CANISTER_ID_TAG[1]
     );
 }

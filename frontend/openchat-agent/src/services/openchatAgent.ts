@@ -2983,15 +2983,15 @@ export class OpenChatAgent extends EventTarget {
         return this._dataClient.storageStatus();
     }
 
-    refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
+    refreshAccountBalance(ledger: string, userId: string): Promise<bigint> {
         if (offline()) return Promise.resolve(0n);
 
-        return this._ledgerClient.accountBalance(ledger, principal);
+        return this._ledgerClient.accountBalance(ledger, userId);
     }
 
     getAccountTransactions(
         ledgerIndex: string,
-        principal: string,
+        userId: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
         const isNns = this._registryValue?.nervousSystemSummary.some(
@@ -3003,9 +3003,9 @@ export class OpenChatAgent extends EventTarget {
                 this.identity,
                 this._agent,
                 ledgerIndex,
-            ).getAccountTransactions(principal, fromId);
+            ).getAccountTransactions(userId, fromId);
         }
-        return this._ledgerIndexClient.getAccountTransactions(ledgerIndex, principal, fromId);
+        return this._ledgerIndexClient.getAccountTransactions(ledgerIndex, userId, fromId);
     }
 
     getMessagesByMessageIndex(
