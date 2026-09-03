@@ -10,8 +10,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Frontend-only PRs have nothing here to check. The jobs below are required status checks, so
+  # they must still run on every PR (a workflow-level `paths:` filter would leave the checks
+  # pending and the PR unmergeable); instead they skip themselves when nothing they depend on
+  # changed. A skipped job satisfies branch protection.
+  #
+  # The filter must name every input of these jobs, not just Rust sources. The same block lives
+  # in backend.yaml, candid.yaml and benchmarks.yaml; keep the three identical.
+  changes:
+    name: detect backend changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - "**.rs"
+              - "**.toml"
+              - "**.did"
+              - "**/Cargo.lock"
+              - "canbench*.yml"
+              - "scripts/**"
+              - ".github/workflows/**"
+
   fmt:
     name: run fmt
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,6 +49,8 @@ jobs:
 
   clippy:
     name: run clippy
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +67,8 @@ jobs:
 
   unit_tests:
     name: run unit tests
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
