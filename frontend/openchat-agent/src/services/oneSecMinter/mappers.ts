@@ -20,7 +20,7 @@ import {
     USDT_SYMBOL,
 } from "@shared";
 import { identity, optional } from "../../utils/mapping";
-import { Principal } from "@icp-sdk/core/principal";
+import { userIdToApiIcrcAccount } from "../../utils/icrcAccount";
 
 export function forwardingResponse(
     candid: { Ok: ApiForwardingResponse } | { Err: string },
@@ -65,12 +65,7 @@ export function apiForwardEvmToIcpArgs(
         token: apiToken(tokenSymbol),
         chain: apiEvmChain(chain),
         address,
-        receiver: {
-            ICRC: {
-                owner: Principal.fromText(receiver),
-                subaccount: [] as [],
-            },
-        },
+        receiver: { ICRC: userIdToApiIcrcAccount(receiver) },
     };
 }
 

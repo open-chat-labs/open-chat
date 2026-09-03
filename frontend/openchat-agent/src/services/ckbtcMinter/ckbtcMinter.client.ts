@@ -1,10 +1,10 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import { Principal } from "@icp-sdk/core/principal";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { idlFactory, type CkbtcMinterService } from "./candid/idl";
 import { utxo } from "../bitcoin/mappers";
 import type { CkbtcMinterDepositInfo, CkbtcMinterWithdrawalInfo, Utxo } from "@shared";
 import { identity } from "../../utils/mapping";
+import { userIdToApiIcrcAccount } from "../../utils/icrcAccount";
 
 const MAINNET_CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";
 const TESTNET_CKBTC_MINTER_CANISTER_ID = "ml52i-qqaaa-aaaar-qaaba-cai";
@@ -23,12 +23,11 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
     }
 
     getKnownUtxos(userId: string): Promise<Utxo[]> {
+        // The minter derives each BTC address from an (owner, subaccount) pair, so this has to
+        // name the same account the user's canister generated the address for
+        const { owner, subaccount } = userIdToApiIcrcAccount(userId);
         return this.handleQueryResponse(
-            () =>
-                this.service.get_known_utxos({
-                    owner: [Principal.fromText(userId)],
-                    subaccount: [],
-                }),
+            () => this.service.get_known_utxos({ owner: [owner], subaccount }),
             (resp) => resp.map(utxo),
         );
     }
