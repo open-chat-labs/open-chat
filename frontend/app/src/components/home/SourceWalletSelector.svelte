@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, SIGNER_WALLETS, type SignerWallet } from "@client";
+    import { EXTERNAL_WALLETS_ENABLED, iconSize, SIGNER_WALLETS, type SignerWallet } from "@client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Menu from "../Menu.svelte";
@@ -18,44 +18,46 @@
     let { wallet = $bindable() }: Props = $props();
 </script>
 
-<div class="source-wallet">
-    <div class="label">
-        <Translatable resourceKey={i18nKey("externalWallet.sourceWallet")} />
-    </div>
-    <MenuIcon centered position={"bottom"} align={"end"}>
-        {#snippet menuIcon()}
-            <div class="trigger">
-                <img
-                    class="wallet-logo"
-                    alt={wallet?.name ?? "OpenChat"}
-                    src={wallet?.logo ?? OPENCHAT_LOGO} />
-                <ChevronDown viewBox={"0 0 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
-            </div>
-        {/snippet}
-        {#snippet menuItems()}
-            <Menu centered>
-                <MenuItem onclick={() => (wallet = undefined)}>
-                    {#snippet icon()}
-                        <img class="wallet-logo" alt="OpenChat" src={OPENCHAT_LOGO} />
-                    {/snippet}
-                    {#snippet text()}
-                        OpenChat
-                    {/snippet}
-                </MenuItem>
-                {#each SIGNER_WALLETS as w (w.id)}
-                    <MenuItem onclick={() => (wallet = w)}>
+{#if EXTERNAL_WALLETS_ENABLED}
+    <div class="source-wallet">
+        <div class="label">
+            <Translatable resourceKey={i18nKey("externalWallet.sourceWallet")} />
+        </div>
+        <MenuIcon centered position={"bottom"} align={"end"}>
+            {#snippet menuIcon()}
+                <div class="trigger">
+                    <img
+                        class="wallet-logo"
+                        alt={wallet?.name ?? "OpenChat"}
+                        src={wallet?.logo ?? OPENCHAT_LOGO} />
+                    <ChevronDown viewBox={"0 0 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
+                </div>
+            {/snippet}
+            {#snippet menuItems()}
+                <Menu centered>
+                    <MenuItem onclick={() => (wallet = undefined)}>
                         {#snippet icon()}
-                            <img class="wallet-logo" alt={w.name} src={w.logo} />
+                            <img class="wallet-logo" alt="OpenChat" src={OPENCHAT_LOGO} />
                         {/snippet}
                         {#snippet text()}
-                            {w.name}
+                            OpenChat
                         {/snippet}
                     </MenuItem>
-                {/each}
-            </Menu>
-        {/snippet}
-    </MenuIcon>
-</div>
+                    {#each SIGNER_WALLETS as w (w.id)}
+                        <MenuItem onclick={() => (wallet = w)}>
+                            {#snippet icon()}
+                                <img class="wallet-logo" alt={w.name} src={w.logo} />
+                            {/snippet}
+                            {#snippet text()}
+                                {w.name}
+                            {/snippet}
+                        </MenuItem>
+                    {/each}
+                </Menu>
+            {/snippet}
+        </MenuIcon>
+    </div>
+{/if}
 
 <style lang="scss">
     .source-wallet {
