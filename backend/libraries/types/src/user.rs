@@ -320,7 +320,10 @@ mod tests {
     // account and must resolve to the same user.
     #[test]
     fn explicit_default_subaccount_resolves_to_the_unindexed_user() {
-        let account = Account { owner: canister_id(), subaccount: Some([0; 32]) };
+        let account = Account {
+            owner: canister_id(),
+            subaccount: Some([0; 32]),
+        };
 
         assert_eq!(UserId::from_account(&account), Some(UserId::new(canister_id())));
     }
@@ -336,9 +339,18 @@ mod tests {
         let not_a_canister = Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]);
 
         for account in [
-            Account { owner: canister_id(), subaccount: Some(arbitrary) },
-            Account { owner: canister_id(), subaccount: Some(out_of_range) },
-            Account { owner: not_a_canister, subaccount: Some(indexed) },
+            Account {
+                owner: canister_id(),
+                subaccount: Some(arbitrary),
+            },
+            Account {
+                owner: canister_id(),
+                subaccount: Some(out_of_range),
+            },
+            Account {
+                owner: not_a_canister,
+                subaccount: Some(indexed),
+            },
         ] {
             assert_eq!(UserId::from_account(&account), None, "{account:?}");
         }
