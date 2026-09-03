@@ -108,7 +108,7 @@
         sending = true;
         error = undefined;
 
-        if (approval !== undefined) {
+        if (approval != null) {
             // The wallet has to approve us taking the offer's funds before we take them. Nothing
             // may be awaited before this call - the wallet opens in a popup, which the browser
             // only allows while it is still handling the click
