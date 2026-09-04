@@ -32,6 +32,17 @@ jobs:
                   echo "VERSION=$VERSION" >> $GITHUB_ENV
                   echo "Detected version: $VERSION"
 
+                  # Gradle derives versionCode from this name, so only the
+                  # name is passed. A workflow_dispatch build has no release
+                  # version and falls back to tauri.properties, which keeps
+                  # manual builds visibly distinct from releases.
+                  if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                    echo "OC_ANDROID_VERSION_NAME=$VERSION" >> $GITHUB_ENV
+                    echo "Release version: $VERSION"
+                  else
+                    echo "Not a release version, using tauri.properties defaults"
+                  fi
+
             - name: Free Disk Space
               run: |
                   sudo rm -rf /usr/share/dotnet
@@ -114,16 +125,43 @@ jobs:
 
             - name: Setup Keystore
               run: |
-                  mkdir -p ~/.android
-
-                  if [ ! -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-                    echo "Using provided keystore from secrets..."
-                    echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
-                  else
-                    echo "No keystore secret found. Generating a temporary debug keystore..."
-                    echo "WARNING: App Links validation (assetlinks.json) will fail because the signature won't match."
-                    keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+                  # Both artifacts are signed with the same release key: the AAB
+                  # so Play accepts the upload, the APK so hand-installed builds
+                  # match the fingerprint in assetlinks.json. No fallback to a
+                  # generated debug key here - that silently produces artifacts
+                  # Play rejects and that break App Links and passkeys.
+                  # Secrets arrive through env, never through GitHub
+                  # expression interpolation into the script body. That
+                  # interpolation is textual and happens before bash parses the
+                  # line, so a password containing a quote would break the test
+                  # and one containing a command substitution would execute.
+                  #
+                  # Do not write an expression here, even in a comment: they are
+                  # evaluated anywhere in the file, and an empty or malformed one
+                  # fails the whole workflow at startup.
+                  #
+                  # All four are checked, not just the keystore: a missing
+                  # password or alias leaves signingProperty returning null and
+                  # surfaces as an opaque gradle failure half an hour later.
+                  MISSING=""
+                  [ -z "$KEYSTORE_BASE64" ] && MISSING="$MISSING ANDROID_UPLOAD_KEYSTORE_BASE64"
+                  [ -z "$KEYSTORE_PASSWORD" ] && MISSING="$MISSING ANDROID_KEYSTORE_PASSWORD"
+                  [ -z "$KEY_ALIAS" ] && MISSING="$MISSING ANDROID_KEY_ALIAS"
+                  [ -z "$KEY_PASSWORD" ] && MISSING="$MISSING ANDROID_KEY_PASSWORD"
+                  if [ -n "$MISSING" ]; then
+                    echo "::error::Missing repository secrets:$MISSING"
+                    exit 1
                   fi
+
+                  KEYSTORE_PATH="$HOME/openchat-release.jks"
+                  printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+                  chmod 600 "$KEYSTORE_PATH"
+                  echo "OC_ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> $GITHUB_ENV
+              env:
+                  KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+                  KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+                  KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+                  KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
             - name: Create Env File
               run: |
@@ -170,43 +208,97 @@ jobs:
 
             - name: Build Android APK (Full)
               run: |
-                  cargo tauri android build --verbose --target aarch64 armv7
+                  cargo tauri android build --verbose --apk --target aarch64 armv7
                   mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk ./openchat_${{ env.VERSION }}_full.apk
               env:
-                  # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
-                  ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
+                  OC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+                  OC_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+                  OC_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
                   OC_APP_STORE: 'false'
-                  OC_OTA_UPDATES: 'major'
+                  # Sideloaded builds take feature releases over the air but stop
+                  # at a major bump, which is what marks a bundle an older shell
+                  # cannot run. See tauri-plugin-oc/OTA_UPDATES.md.
+                  OC_OTA_UPDATES: 'minor'
 
-            - name: Clean Target Directory
-              run: rm -rf src-tauri/target
+            - name: Clean Build Directories
+              # The gradle outputs too, not just the rust target: the AAB is
+              # located by pattern below, and a leftover bundle from the APK
+              # build would be a candidate for it.
+              run: rm -rf src-tauri/target src-tauri/gen/android/app/build
 
-            - name: Build Android APK (Store)
+            - name: Build Android AAB (Store)
               run: |
-                  cargo tauri android build --verbose --target aarch64 armv7 --features store
-                  mv src-tauri/gen/android/app/build/outputs/apk/universal/release/openchat-release.apk ./openchat_${{ env.VERSION }}_store.apk
+                  cargo tauri android build --verbose --aab --target aarch64 armv7 --features store
+
+                  # The universal bundle specifically. Building for two ABIs
+                  # also produces per-flavour bundles, so an unordered match
+                  # could hand Play an arm-only artifact. Insist on exactly one
+                  # rather than picking the first of several.
+                  BUNDLES=src-tauri/gen/android/app/build/outputs/bundle
+                  AABS=$(find "$BUNDLES" -path '*universal*' -name '*.aab' | sort)
+                  COUNT=$(printf '%s\n' "$AABS" | grep -c . || true)
+                  if [ "$COUNT" -ne 1 ]; then
+                    echo "::error::Expected exactly one universal .aab, found $COUNT"
+                    find "$BUNDLES" -name '*.aab' || true
+                    exit 1
+                  fi
+                  mv "$AABS" ./openchat_${{ env.VERSION }}_store.aab
               env:
-                  # Ensure these are passed if needed, though the gradle file uses the debug fallback we set up
-                  ANDROID_KEY_STORE_FILE: ${{ env.ANDROID_KEY_STORE_FILE }}
+                  OC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+                  OC_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+                  OC_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
                   OC_APP_STORE: 'true'
                   OC_OTA_UPDATES: 'patch'
 
-            - name: Upload APKs
+            - name: Verify signing certificate
+              run: |
+                  # Catches a fallback to debug signing, which would be rejected
+                  # by Play and would not match assetlinks.json.
+                  APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+                  if [ -z "$APKSIGNER" ]; then
+                    echo "::error::apksigner not found under $ANDROID_HOME/build-tools"
+                    exit 1
+                  fi
+                  APK="./openchat_${{ env.VERSION }}_full.apk"
+                  AAB="./openchat_${{ env.VERSION }}_store.aab"
+
+                  "$APKSIGNER" verify --print-certs "$APK" | grep -i 'SHA-256 digest\|certificate DN'
+                  if "$APKSIGNER" verify --print-certs "$APK" | grep -q 'CN=Android Debug'; then
+                    echo "::error::APK is debug-signed"
+                    exit 1
+                  fi
+
+                  # apksigner cannot read a bundle, but an AAB is a jar. This is
+                  # the artifact that actually goes to Play, so leaving it
+                  # unchecked would miss the case the APK check exists for.
+                  jarsigner -verify -verbose:summary -certs "$AAB" | grep -i 'CN=\|jar verified' || true
+                  if ! jarsigner -verify "$AAB" | grep -qi 'jar verified'; then
+                    echo "::error::AAB is not signed"
+                    exit 1
+                  fi
+                  if jarsigner -verify -verbose:summary -certs "$AAB" | grep -q 'CN=Android Debug'; then
+                    echo "::error::AAB is debug-signed"
+                    exit 1
+                  fi
+
+            - name: Upload build artifacts
               uses: actions/upload-artifact@v4
               with:
-                  name: android-release-apks
+                  name: android-release-artifacts
                   path: |
                       frontend/openchat_${{ env.VERSION }}_full.apk
-                      frontend/openchat_${{ env.VERSION }}_store.apk
+                      frontend/openchat_${{ env.VERSION }}_store.aab
                   if-no-files-found: error
 
-            - name: Upload APKs to Release
+            # Only the APK. The AAB is for the Play Console and is fetched
+            # from the workflow artifacts above; attaching it to a public
+            # release would just offer people a file they cannot install.
+            - name: Upload APK to Release
               if: github.event_name == 'release'
               uses: softprops/action-gh-release@v2
               with:
                   files: |
                       frontend/openchat_${{ env.VERSION }}_full.apk
-                      frontend/openchat_${{ env.VERSION }}_store.apk
 
             - name: Notify Release
               if: github.event_name == 'release'

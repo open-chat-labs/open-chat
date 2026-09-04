@@ -12,6 +12,7 @@ permissions = [
     "allow-release-notifications",
     "allow-minimize-app",
     "allow-get-server-version",
+    "allow-get-shell-version",
     "allow-download-update",
     "allow-restart-app",
     "allow-load-recent-media",

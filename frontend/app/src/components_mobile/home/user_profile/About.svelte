@@ -13,20 +13,38 @@
         Subtitle,
     } from "component-lib";
     import { publish, type OpenChat } from "@client";
+    import { isAndroidTauriApp } from "@shared";
     import { toastStore } from "@src/stores/toast";
     import { clearCrashLog, formatCrashLog } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
-    import { openUrl } from "tauri-plugin-oc-api";
+    import { getShellVersion, openUrl } from "tauri-plugin-oc-api";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     type OnClick = { kind: "route"; url: string } | { kind: "action"; action: () => void };
 
     const client = getContext<OpenChat>("client");
 
+    // The web version currently running, which after an OTA update is the
+    // downloaded bundle rather than the one the shell shipped with.
     //@ts-ignore
     let version = window.OC_WEBSITE_VERSION;
+
+    // The version of the installed binary. Only differs from `version` once an
+    // OTA update has been applied, and knowing which is which matters when
+    // reading a crash report.
+    let shellVersion = $state<string | undefined>(undefined);
+
+    onMount(() => {
+        // Android only, matching VersionChecker. iOS has no OTA path, so its
+        // shell and web versions cannot diverge and the row would be noise.
+        if (isAndroidTauriApp()) {
+            getShellVersion()
+                .then((v) => (shellVersion = v))
+                .catch(() => (shellVersion = undefined));
+        }
+    });
 
     let crashLogTaps = 0;
     let crashLogTapTimer: number | undefined = undefined;
@@ -89,6 +107,11 @@
             <BodySmall fontWeight={"bold"} align={"center"} colour={"textSecondary"}
                 >Android / {version}</BodySmall
             >
+            {#if shellVersion !== undefined}
+                <BodySmall align={"center"} colour={"textSecondary"}
+                    >Shell / {shellVersion}</BodySmall
+                >
+            {/if}
         </div>
         <div class="line"></div>
         <Container direction={"vertical"} gap={"xl"}>

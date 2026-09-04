@@ -41,6 +41,10 @@ where
     // Lazily load cached assets into memory on first request
     let cache = memory_cache.get_or_init(|| {
         let um = update_manager::UpdateManager::new(handle.clone());
+        // Before anything is loaded: a cache left behind by a store update is
+        // older than the assets this binary ships with, and serving it would
+        // pin the webview to the previous release. See discard_cache_if_stale.
+        um.discard_cache_if_stale();
         um.get_cache_dir()
             .map(|dir| load_cache_into_memory(&dir))
             .unwrap_or_default()

@@ -10,6 +10,7 @@ const COMMANDS: &[&str] = &[
     "release_notifications",
     "minimize_app",
     "get_server_version",
+    "get_shell_version",
     "download_update",
     "restart_app",
     "load_recent_media",

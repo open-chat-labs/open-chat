@@ -2,7 +2,7 @@
     "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
     "productName": "OpenChat",
     "version": "0.1.0",
-    "identifier": "com.oc.app",
+    "identifier": "com.oclabs.openchat",
     "build": {
         "beforeDevCommand": "npm run dev:mobile",
         "devUrl": "http://localhost:5001",

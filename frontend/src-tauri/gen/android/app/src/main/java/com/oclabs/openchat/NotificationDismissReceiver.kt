@@ -1,4 +1,4 @@
-package com.oc.app
+package com.oclabs.openchat
 
 import android.content.BroadcastReceiver
 import android.content.Context

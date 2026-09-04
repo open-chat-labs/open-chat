@@ -1,4 +1,4 @@
-package com.oc.app
+package com.oclabs.openchat
 
 import android.app.Application
 import android.util.Log
