@@ -130,8 +130,16 @@ jobs:
                   # match the fingerprint in assetlinks.json. No fallback to a
                   # generated debug key here - that silently produces artifacts
                   # Play rejects and that break App Links and passkeys.
-                  if [ -z "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" ]; then
-                    echo "::error::ANDROID_UPLOAD_KEYSTORE_BASE64 is not set. Add the base64 of the release keystore, plus ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD, to the repository secrets."
+                  # All four, not just the keystore: a missing password or
+                  # alias leaves signingProperty returning null and surfaces as
+                  # an opaque gradle signing failure half an hour into the build.
+                  MISSING=""
+                  [ -z "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" ] && MISSING="$MISSING ANDROID_UPLOAD_KEYSTORE_BASE64"
+                  [ -z "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && MISSING="$MISSING ANDROID_KEYSTORE_PASSWORD"
+                  [ -z "${{ secrets.ANDROID_KEY_ALIAS }}" ] && MISSING="$MISSING ANDROID_KEY_ALIAS"
+                  [ -z "${{ secrets.ANDROID_KEY_PASSWORD }}" ] && MISSING="$MISSING ANDROID_KEY_PASSWORD"
+                  if [ -n "$MISSING" ]; then
+                    echo "::error::Missing repository secrets:$MISSING"
                     exit 1
                   fi
 
@@ -197,20 +205,29 @@ jobs:
                   # cannot run. See tauri-plugin-oc/OTA_UPDATES.md.
                   OC_OTA_UPDATES: 'minor'
 
-            - name: Clean Target Directory
-              run: rm -rf src-tauri/target
+            - name: Clean Build Directories
+              # The gradle outputs too, not just the rust target: the AAB is
+              # located by pattern below, and a leftover bundle from the APK
+              # build would be a candidate for it.
+              run: rm -rf src-tauri/target src-tauri/gen/android/app/build
 
             - name: Build Android AAB (Store)
               run: |
                   cargo tauri android build --verbose --aab --target aarch64 armv7 --features store
-                  # Glob rather than hardcode: the bundle path carries the ABI
-                  # flavour and gradle does not honour the APK rename hook here.
-                  AAB=$(find src-tauri/gen/android/app/build/outputs/bundle -name '*.aab' | head -1)
-                  if [ -z "$AAB" ]; then
-                    echo "::error::No .aab was produced"
+
+                  # The universal bundle specifically. Building for two ABIs
+                  # also produces per-flavour bundles, so an unordered match
+                  # could hand Play an arm-only artifact. Insist on exactly one
+                  # rather than picking the first of several.
+                  BUNDLES=src-tauri/gen/android/app/build/outputs/bundle
+                  AABS=$(find "$BUNDLES" -path '*universal*' -name '*.aab' | sort)
+                  COUNT=$(printf '%s\n' "$AABS" | grep -c . || true)
+                  if [ "$COUNT" -ne 1 ]; then
+                    echo "::error::Expected exactly one universal .aab, found $COUNT"
+                    find "$BUNDLES" -name '*.aab' || true
                     exit 1
                   fi
-                  mv "$AAB" ./openchat_${{ env.VERSION }}_store.aab
+                  mv "$AABS" ./openchat_${{ env.VERSION }}_store.aab
               env:
                   OC_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
                   OC_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -227,9 +244,25 @@ jobs:
                     echo "::error::apksigner not found under $ANDROID_HOME/build-tools"
                     exit 1
                   fi
-                  "$APKSIGNER" verify --print-certs "./openchat_${{ env.VERSION }}_full.apk" | grep -i 'SHA-256 digest\|certificate DN'
-                  if "$APKSIGNER" verify --print-certs "./openchat_${{ env.VERSION }}_full.apk" | grep -q 'CN=Android Debug'; then
+                  APK="./openchat_${{ env.VERSION }}_full.apk"
+                  AAB="./openchat_${{ env.VERSION }}_store.aab"
+
+                  "$APKSIGNER" verify --print-certs "$APK" | grep -i 'SHA-256 digest\|certificate DN'
+                  if "$APKSIGNER" verify --print-certs "$APK" | grep -q 'CN=Android Debug'; then
                     echo "::error::APK is debug-signed"
+                    exit 1
+                  fi
+
+                  # apksigner cannot read a bundle, but an AAB is a jar. This is
+                  # the artifact that actually goes to Play, so leaving it
+                  # unchecked would miss the case the APK check exists for.
+                  jarsigner -verify -verbose:summary -certs "$AAB" | grep -i 'CN=\|jar verified' || true
+                  if ! jarsigner -verify "$AAB" | grep -qi 'jar verified'; then
+                    echo "::error::AAB is not signed"
+                    exit 1
+                  fi
+                  if jarsigner -verify -verbose:summary -certs "$AAB" | grep -q 'CN=Android Debug'; then
+                    echo "::error::AAB is debug-signed"
                     exit 1
                   fi
 

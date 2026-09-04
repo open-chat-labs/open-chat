@@ -12,14 +12,24 @@
     const DIRECT_DOWNLOAD_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
 
     let checker = new VersionChecker();
+    let dismissed = $state(false);
 
     onDestroy(() => checker.stop());
 
     // A store build can only be updated through the store it came from; a
     // sideloaded build has to fetch a new APK itself.
     let upgradeUrl = $derived(appStoreBuild ? PLAY_STORE_URL : DIRECT_DOWNLOAD_URL);
+    let upgradeLabel = $derived(
+        appStoreBuild ? "Update from the Play Store" : "Download the latest version",
+    );
 </script>
 
+<!--
+    A major bump: this shell cannot run the new bundle, so there is nothing to
+    dismiss to. Safe to block only because the release-train runbook requires
+    the store update to be live and rolled out BEFORE the website announces a
+    major, so the button always leads somewhere.
+-->
 {#if checker.versionState.kind === "incompatible"}
     <Sheet>
         <Column gap={"xl"} padding={"xxl"}>
@@ -32,10 +42,31 @@
             </BodySmall>
 
             <Button onClick={() => openUrl({ url: upgradeUrl })} secondary>
+                <Translatable resourceKey={i18nKey(upgradeLabel)} />
+            </Button>
+        </Column>
+    </Sheet>
+{/if}
+
+<!--
+    A minor bump on a store build. The app works perfectly well on what it has;
+    the new version is simply waiting on review, and the store listing may show
+    nothing at all for days. Passing onDismiss is what makes SheetWrapper honour
+    the drag handle, backdrop and Escape.
+-->
+{#if checker.versionState.kind === "store_update_available" && !dismissed}
+    <Sheet onDismiss={() => (dismissed = true)}>
+        <Column gap={"xl"} padding={"xxl"}>
+            <Overview colour={"primary"}>Update available</Overview>
+            <BodySmall width={"hug"} fontWeight={"bold"}>
                 <Translatable
                     resourceKey={i18nKey(
-                        appStoreBuild ? "Update from the Play Store" : "Download the latest version",
+                        `Version ${checker.versionState.available.toText()} is available. This one keeps working in the meantime.`,
                     )} />
+            </BodySmall>
+
+            <Button onClick={() => openUrl({ url: upgradeUrl })} secondary>
+                <Translatable resourceKey={i18nKey(upgradeLabel)} />
             </Button>
         </Column>
     </Sheet>
