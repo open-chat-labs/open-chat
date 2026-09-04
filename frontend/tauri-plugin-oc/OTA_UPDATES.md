@@ -247,9 +247,14 @@ Selected at compile time via the `store` cargo feature flag.
    until the app restarts (which is the intended flow — the user is prompted to
    restart).
 
-6. **The frontend may call `download_update` more than once** due to the poller
-   timing. The Rust side is idempotent — if the server version matches the
-   cached version, it returns `false` without re-downloading.
+6. **`download_update` returning `false` is ambiguous.** It means both "the
+   download failed" and "nothing to do, the cache already matches the server",
+   and the frontend reads it as failure either way. That is why `VersionChecker`
+   stops polling once a download has completed and is waiting for a restart:
+   the running JS still reports the pre-download client version, so the next
+   tick would re-enter the download branch, reset the progress bar, get `false`
+   back, and turn a finished download into "update failed". Polling does resume
+   after a genuine failure, so a transient one retries.
 
 7. **`RestartApp.kt` does `exitProcess(0)`** followed by
    `startActivity(mainIntent)`. This fully kills the process so the `OnceLock`

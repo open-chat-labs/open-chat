@@ -64,6 +64,7 @@ export class VersionChecker {
                 };
 
                 let unsubscribe: UnlistenFn | undefined;
+                let downloaded = false;
 
                 try {
                     // listen out for download progress
@@ -83,6 +84,7 @@ export class VersionChecker {
                         };
                         console.log("Native update failed or was not needed");
                     } else {
+                        downloaded = true;
                         if (this.#versionState.kind === "out_of_date") {
                             this.#versionState.downloadProgress = 100;
                         }
@@ -93,11 +95,26 @@ export class VersionChecker {
                     return;
                 } finally {
                     unsubscribe?.();
+                    // Only resume polling if there is still something polling
+                    // could achieve. Once the bundle is on disk the user has to
+                    // restart, and nothing the poller learns changes that: the
+                    // running JS still reports the old client version, so the
+                    // next tick would re-enter this branch, reset the progress
+                    // bar to zero, call download_update again, and get back
+                    // false because the cache already matches the server -
+                    // which this code reads as failure. A finished download and
+                    // its restart prompt would turn into "update failed" 60
+                    // seconds later.
+                    //
+                    // A failure does resume, so a transient one retries.
+                    //
                     // Must reassign: #poller still points at the instance
-                    // stopped above, so dropping this would leave the live
-                    // poller unreachable - stop() and onDestroy would both
+                    // stopped above, so dropping the result would leave the
+                    // live poller unreachable - stop() and onDestroy would both
                     // act on the dead one while it kept firing.
-                    this.#poller = this.#startPoller(false);
+                    if (!downloaded) {
+                        this.#poller = this.#startPoller(false);
+                    }
                 }
             } else if (sv.isGreaterThan(this.#clientVersion)) {
                 // Newer, but across a boundary the strategy will not cross.
