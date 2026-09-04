@@ -100,7 +100,7 @@
         </provider>
 
         <service
-            android:name="com.oc.app.OpenChatNotificationService"
+            android:name="com.oclabs.openchat.OpenChatNotificationService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

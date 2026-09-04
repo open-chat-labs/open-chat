@@ -61,7 +61,11 @@ impl<R: Runtime> UpdateManager<R> {
         None
     }
 
-    pub fn get_bundled_version(&self) -> Option<Version> {
+    /// The version of the web assets compiled into the installed binary, which
+    /// is what identifies the shell itself. It never changes without a
+    /// reinstall. Distinct from `get_cached_version`, which is the most recent
+    /// bundle downloaded over the air.
+    pub fn get_shell_version(&self) -> Option<Version> {
         if let Some(asset) = self.app_handle.asset_resolver().get("version".to_string())
             && let Ok(info) = serde_json::from_slice::<ServerVersion>(&asset.bytes)
         {
@@ -87,17 +91,17 @@ impl<R: Runtime> UpdateManager<R> {
     pub async fn check_for_updates(&self) -> Result<bool, Box<dyn std::error::Error>> {
         let server_version = self.get_server_version().await?;
 
-        let bundled_version = self
-            .get_bundled_version()
+        let shell_version = self
+            .get_shell_version()
             .unwrap_or_else(|| Version::parse("0.0.0").unwrap());
         let cached_version = self
             .get_cached_version()
             .unwrap_or_else(|| Version::parse("0.0.0").unwrap());
 
-        let current_version = if cached_version > bundled_version {
+        let current_version = if cached_version > shell_version {
             cached_version.clone()
         } else {
-            bundled_version.clone()
+            shell_version.clone()
         };
 
         if server_version > current_version {

@@ -1,4 +1,4 @@
-package com.oc.app
+package com.oclabs.openchat
 
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService

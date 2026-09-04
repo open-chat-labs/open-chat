@@ -50,6 +50,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         commands::minimize_app,
         commands::restart_app,
         commands::get_server_version,
+        commands::get_shell_version,
         commands::download_update,
         commands::load_recent_media,
         commands::enable_viewport_resize,

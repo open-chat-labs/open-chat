@@ -30,10 +30,35 @@ air. The check is performed in the frontend before any download begins.
 
 The type is `OTAUpdateStrategy = "none" | "patch" | "minor" | "major"`.
 
-The idea is that a **major** version bump may require native code changes
-(new Kotlin commands, Rust API changes, etc.) that can't be delivered OTA. By
-setting the strategy to `"minor"` or `"patch"`, the app will refuse to OTA
-across a major boundary and instead wait for an APK update from the store.
+### What each level means
+
+The strategy only works if the version number is bumped deliberately, so the
+components carry fixed meanings. Note that `major` does NOT mean "big". It means
+**incompatible**: web code an already-installed shell cannot run.
+
+| Bump | Meaning | Store build | Sideloaded build |
+|------|---------|-------------|------------------|
+| patch | Bug fixes, copy, styling. Nothing a reviewer needs to see. | OTA | OTA |
+| minor | A new user-facing feature. Any existing shell can run it. | Play update | OTA |
+| major | Web code that requires shell changes: a new plugin command, a new Rust API, a new permission. Older shells cannot run this bundle. | Play update | New APK |
+
+So the store build ships with `OC_OTA_UPDATES=patch` and the sideloaded build
+with `minor`.
+
+Two consequences worth being explicit about.
+
+A shell change on its own bumps nothing. What forces a major bump is the web
+layer starting to DEPEND on a shell capability. Add a Kotlin command that no
+frontend code calls yet and every existing install is still fine.
+
+A one-line shell dependency is still a major bump, however small the diff. The
+size of the change is irrelevant; the question is only whether an installed
+shell can run the new bundle.
+
+Getting this wrong in the permissive direction means shipping a feature to store
+users without Play ever seeing it. Getting it wrong in the other direction means
+users sitting on a stale build waiting for a store update they don't need. The
+release-train skill asks about this at tag time rather than trusting memory.
 
 The strategy is evaluated by `Version.canUpdateTo(server, strategy)` in the
 frontend. The Rust side always downloads if `server > current` — the gating
@@ -62,7 +87,7 @@ The `VersionChecker` is only active when `OC_APP_TYPE === "android"` and
 │                                                         │
 │  update_manager.rs                                      │
 │    ├── get_server_version  → GET /version               │
-│    ├── get_bundled_version → reads "version" asset file │
+│    ├── get_shell_version   → reads "version" asset file │
 │    ├── get_cached_version  → reads version.json in cache│
 │    ├── check_for_updates   → compares & downloads       │
 │    └── download_and_install→ fetches zip, extracts      │
@@ -137,12 +162,13 @@ cached). The user must update via the Play Store to get across the boundary.
 
 | Source | Location | Notes |
 |--------|----------|-------|
-| **Bundled version** | `build/version` asset file | Written by rollup build from `OC_WEBSITE_VERSION` env var. Has `v` prefix (e.g. `v2.0.1973`), stripped when parsed. |
+| **Shell version** | `build/version` asset file | Written by rollup build from `OC_WEBSITE_VERSION` env var. Has `v` prefix (e.g. `v2.0.1973`), stripped when parsed. |
 | **Cached version** | `<app_data>/updates/version.json` | Written after successful OTA extraction. No `v` prefix. |
 | **Server version** | `https://oc.app/version` | JSON `{"version": "2.0.1975"}` |
 | **Client version (JS)** | `import.meta.env.OC_WEBSITE_VERSION` | Baked into JS at build time. After OTA, the cached JS has the updated value. |
 | **OTA strategy** | `import.meta.env.OC_OTA_UPDATES` | Build-time env var. One of `"none"`, `"patch"`, `"minor"`, `"major"`. |
-| **tauri.conf.json** | `"version": "0.1.0"` | **NOT used.** This is a stale placeholder. Do not rely on it. |
+| **Android versionName / versionCode** | APK/AAB manifest | Set by CI from `OC_ANDROID_VERSION_NAME` (the release tag version). versionCode is derived as `major*1000000 + minor*10000 + patch`. Equals the shell version above, since both come from the same tag. |
+| **tauri.conf.json** | `"version": "0.1.0"` | **NOT used** for any of the above. A stale placeholder. Do not rely on it. |
 
 ## Cache Directory Layout
 
@@ -201,14 +227,14 @@ Selected at compile time via the `store` cargo feature flag.
 ## Gotchas & Lessons Learned
 
 1. **`tauri.conf.json` version is stale.** It says `0.1.0` and is never updated.
-   Always read the bundled version from the `version` asset file.
+   Always read the shell version from the `version` asset file.
 
 2. **`Access-Control-Allow-Origin: *` breaks passkeys.** The Android Credential
    Manager rejects WebAuthn assertions when the origin header is a wildcard.
    Always use the specific origin `https://tauri.localhost`.
 
 3. **Stale cached files persist across installs of the same package.** If you're
-   testing OTA, clear app data (`adb shell pm clear com.oc.app`) to reset.
+   testing OTA, clear app data (`adb shell pm clear com.oclabs.openchat`) to reset.
    Uninstalling also clears the data.
 
 4. **The scheme handler cannot be `"oc"` or any other custom scheme.** Using a

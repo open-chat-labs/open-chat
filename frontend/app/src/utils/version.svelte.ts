@@ -15,7 +15,12 @@ type VersionState =
     | { kind: "unknown" }
     | { kind: "up_to_date" }
     | { kind: "failed_update"; available: Version; error: unknown }
-    | { kind: "out_of_date"; compatible: boolean; available: Version; downloadProgress: number };
+    // A newer version exists but the OTA strategy refuses it, so the user is
+    // stuck on what they have until they install a new binary. See
+    // tauri-plugin-oc/OTA_UPDATES.md: for a store build that means any feature
+    // release, for a sideloaded build only a major one.
+    | { kind: "incompatible"; available: Version }
+    | { kind: "out_of_date"; available: Version; downloadProgress: number };
 
 export class VersionChecker {
     #clientVersion = Version.parse(import.meta.env.OC_WEBSITE_VERSION);
@@ -45,7 +50,6 @@ export class VersionChecker {
 
                 this.#versionState = {
                     kind: "out_of_date",
-                    compatible: true,
                     available: sv,
                     downloadProgress: 0,
                 };
@@ -82,6 +86,15 @@ export class VersionChecker {
                     unsubscribe?.();
                     this.#startPoller(false);
                 }
+            } else if (sv.isGreaterThan(this.#clientVersion)) {
+                // Newer, but across a boundary the strategy will not cross. No
+                // amount of polling changes that - only a new binary does - so
+                // stop asking and tell the user.
+                this.#poller?.stop();
+                this.#versionState = { kind: "incompatible", available: sv };
+                console.log(
+                    `Server version (${sv.toText()}) cannot be applied over the air to client version (${this.#clientVersion.toText()}) under strategy "${this.#strategy}"`,
+                );
             } else {
                 this.#versionState = { kind: "up_to_date" };
                 console.log(

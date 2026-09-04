@@ -44,9 +44,11 @@ proper Apple Developer account exists.
   Before the production account is set up, INVESTIGATE: ask the team whether
   any OpenChat/DFINITY-era Apple developer account ever existed and check old
   credentials. If a stranger holds it there is no Apple reclaim process for
-  bundle ids (only for app names) and the production iOS id will have to
-  differ from Android's `com.oc.app`. Either way, do NOT register the
-  intended final id under the interim team (that would burn it too).
+  bundle ids (only for app names). This is now moot for parity: Android moved
+  off `com.oc.app` to `com.oclabs.openchat` on 2026-09-04 for the Play Store
+  submission, so the production iOS id can match Android. Either way, do NOT
+  register the intended final id under the interim team (that would burn it
+  too).
 - Interim dev builds use **`com.oclabs.openchat.dev`** (set in
   `tauri.ios.conf.json` + `gen/apple/project.yml`); the oc.app AASA lists only
   that app id (#9242 — the `A468T66XSK.com.oc.app` entry was dropped as it can

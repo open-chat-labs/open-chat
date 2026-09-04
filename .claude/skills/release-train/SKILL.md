@@ -18,8 +18,25 @@ description: OpenChat release train runbook — tagging components, prod-test (i
 2. Unreleased work per component:
    `git log --oneline <last-tag>..master -- backend/canisters/<component>` (frontend for website).
    A component whose only diff is CHANGELOG.md needs no release.
-3. Version numbers are globally sequential across ALL components (next free number, regardless of component). Tag format: `v2.0.NNNN-<component>`, lightweight, at master head:
+3. Canister version numbers are globally sequential across all canister components (next free number, regardless of component). Tag format: `v2.0.NNNN-<component>`, lightweight, at master head:
    `git tag v2.0.NNNN-<component> master && git push origin <tags...>`
+   **The website no longer shares that sequence** (decided 2026-09-04). Its version drives the Android OTA gate, so its bump level is a decision, not the next free number. See step 3a.
+3a. **Website bump level — ASK, do not assume.** The Android app compares its own version against `oc.app/version` and decides over the air whether to update itself. The component that moves decides who gets the release and who has to install a new binary. Getting this wrong ships a feature to Play Store users without Play ever reviewing it.
+
+   Put the question to the developer explicitly, with the diff in hand:
+
+   | Bump | When | Store build | Sideloaded build |
+   |------|------|-------------|------------------|
+   | patch `2.0.2051 → 2.0.2052` | Bug fixes, copy, styling. Nothing a reviewer needs to see. | OTA | OTA |
+   | minor `2.0.2052 → 2.1.0` | A new user-facing feature. Any installed shell can still run it. | Play update | OTA |
+   | major `2.1.0 → 3.0.0` | Web code that now depends on the shell: a new plugin command, a new Rust API, a new permission. Older shells cannot run this bundle. | Play update | New APK |
+
+   `major` means INCOMPATIBLE, not big. A one-line dependency on a new Kotlin command is a major bump. A shell change that no web code calls yet is not a bump at all.
+
+   Checks worth running before answering: `git log <last-website-tag>..master -- frontend/` for user-facing features, and `git log <last-website-tag>..master -- frontend/tauri-plugin-oc frontend/src-tauri` for anything that would make the bundle require a newer shell.
+
+   Full detail in `frontend/tauri-plugin-oc/OTA_UPDATES.md`.
+
 4. Release order is dependency-driven, decided per train. Rule of thumb: a canister must accept a new candid field before anything starts sending it (e.g. video transcode train: storage_bucket → storage_index → website). Website last.
 5. Pushing a tag triggers CI to build and upload wasms to S3 keyed by COMMIT id (`https://openchat-canister-wasms.s3.amazonaws.com/<commit>/<canister>.wasm.gz`). The prod proposal route downloads from there — confirm the CI run finished before prod release.
 
@@ -74,6 +91,17 @@ curl -s https://openchat-canister-wasms.s3.amazonaws.com/<tag commit>/<canister>
 When the developer says the proposal has executed, Claude checks the canister's prod metrics (same checks as Phase 1, `ic` ids) to confirm the new version is live with no obvious errors, before the next component's proposal is submitted.
 
 ### Website
+
+**A major website bump changes the order.** Store and sideloaded users cannot cross a major boundary over the air, and they are not broken by it, they simply freeze on the bundle they already have until a new binary reaches them. So for a major release, get the Android shell out first:
+
+1. Release the canisters as normal.
+2. Build the AAB, submit to Play, wait for approval AND rollout. This is the step whose duration you do not control, so start it early.
+3. Publish the APK for sideloaded users.
+4. Deploy the website last, as always.
+
+That makes a constraint that is otherwise incidental load-bearing: the canisters must be LIVE before the AAB is submitted, because the AAB bundles the new web assets and runs them the moment someone installs, possibly days before the website deploy.
+
+For patch and minor bumps none of this applies. OTA delivers them and the Android shell ships whenever convenient.
 
 Before the prod proposal, deploy the website to **web-test**. Web-test runs against the live prod backend, so do this once the backend canisters in the train are released and up to date on prod. It is the final check that the website is safe to deploy:
 

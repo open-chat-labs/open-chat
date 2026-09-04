@@ -1,3 +1,4 @@
+import java.io.File
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -16,24 +17,92 @@ val tauriProperties = Properties().apply {
     }
 }
 
+// Release signing.
+//
+// Reads gen/android/keystore.properties (gitignored - it holds the password),
+// overridable by OC_ANDROID_* env vars so CI can inject the key from secrets.
+//
+// The APK handed out from oc.app and the AAB uploaded to Play are signed with
+// the SAME key. Its SHA-256 must appear in frontend/app/assetlinks.json or the
+// installed app loses App Links AND passkeys (the statement claims
+// get_login_creds).
+//
+// No keystore at all falls back to debug signing, so a fresh clone can still
+// build a release locally. A keystore that is CONFIGURED but absent is a hard
+// failure: falling through to debug signing there produces an artifact Play
+// rejects outright, and one that no device will accept as an update over a
+// properly signed build (INSTALL_FAILED_UPDATE_INCOMPATIBLE, fixable only by
+// uninstalling, which wipes the account's local data). CI supplies the keystore
+// and fails before the build if the secret is missing.
+val keystoreDir = rootProject.projectDir
+val keystoreProperties = Properties().apply {
+    val propFile = File(keystoreDir, "keystore.properties")
+    if (propFile.exists()) propFile.inputStream().use { load(it) }
+}
+fun signingProperty(name: String, env: String): String? =
+    System.getenv(env)?.takeIf { it.isNotBlank() }
+        ?: keystoreProperties.getProperty(name)?.takeIf { it.isNotBlank() }
+
+// A relative storeFile resolves against the directory holding the properties file.
+val releaseKeystore = signingProperty("storeFile", "OC_ANDROID_KEYSTORE_PATH")
+    ?.let { path -> File(path).takeIf { it.isAbsolute } ?: File(keystoreDir, path) }
+    ?.also { if (!it.exists()) throw GradleException("Android keystore not found: $it") }
+
+// Release version, passed in by CI as the tag's version (e.g. 2.0.2051).
+//
+// Play requires versionCode to increase on every upload and never allows a
+// value to be reused, so it is DERIVED from the name rather than supplied
+// separately - the two can then never disagree.
+//
+// major*1000000 + minor*10000 + patch stays monotonic across the version bumps
+// the OTA convention relies on: 2.0.2051 -> 2002051, then 2.1.0 -> 2010000,
+// then 3.0.0 -> 3000000. Taking the patch component alone would send 2051 -> 0
+// on a minor bump and Play would reject the upload. Tauri's own formula
+// (major*1000000 + minor*1000 + patch) caps patch at 999 and cannot express an
+// OpenChat version at all, which is why every APK so far has been stuck at 1000.
+//
+// Unset for local and manual builds, which fall back to tauri.properties.
+val releaseVersionName: String? =
+    System.getenv("OC_ANDROID_VERSION_NAME")?.takeIf { it.isNotBlank() }
+
+val releaseVersionCode: Int? = releaseVersionName?.let { name ->
+    val parts = name.split(".")
+    if (parts.size != 3) {
+        throw GradleException("OC_ANDROID_VERSION_NAME is not major.minor.patch: $name")
+    }
+    val (major, minor, patch) = parts.map {
+        it.toIntOrNull()
+            ?: throw GradleException("OC_ANDROID_VERSION_NAME is not major.minor.patch: $name")
+    }
+    if (minor > 99 || patch > 9999) {
+        throw GradleException(
+            "Version $name overflows the versionCode formula (minor <= 99, patch <= 9999)")
+    }
+    major * 1_000_000 + minor * 10_000 + patch
+}
+
 android {
     compileSdk = 36
-    namespace = "com.oc.app"
+    namespace = "com.oclabs.openchat"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "com.oc.app"
+        applicationId = "com.oclabs.openchat"
         minSdk = 24
         targetSdk = 36
-        versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
-        versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+        versionCode = releaseVersionCode
+            ?: tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
+        versionName = releaseVersionName
+            ?: tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
     
     signingConfigs {
-        create("debugRelease") {
-            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = signingProperty("storePassword", "OC_ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = signingProperty("keyAlias", "OC_ANDROID_KEY_ALIAS")
+                keyPassword = signingProperty("keyPassword", "OC_ANDROID_KEY_PASSWORD")
+            }
         }
     }
 
@@ -51,7 +120,10 @@ android {
             }
         }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("debugRelease")
+            // The real release key when it is configured (see above), debug
+            // otherwise so a local release build still works without it.
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }

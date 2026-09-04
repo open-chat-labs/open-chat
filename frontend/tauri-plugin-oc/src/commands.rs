@@ -72,6 +72,14 @@ pub(crate) async fn load_recent_media<R: Runtime>(
 }
 
 #[command]
+pub(crate) async fn get_shell_version<R: Runtime>(
+    app: AppHandle<R>,
+) -> std::result::Result<Option<String>, String> {
+    let manager = update_manager::UpdateManager::new(app);
+    Ok(manager.get_shell_version().map(|v| v.to_string()))
+}
+
+#[command]
 pub(crate) async fn get_server_version<R: Runtime>(
     app: AppHandle<R>,
 ) -> std::result::Result<String, String> {

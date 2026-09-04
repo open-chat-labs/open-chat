@@ -6,6 +6,19 @@
         ],
         "target": {
             "namespace": "android_app",
+            "package_name": "com.oclabs.openchat",
+            "sha256_cert_fingerprints": [
+                "00:F4:D0:31:0A:9F:DC:36:0C:12:5A:1B:BF:F1:70:45:CF:11:A2:BA:44:0E:F8:C8:54:ED:70:9D:2D:44:51:7E"
+            ]
+        }
+    },
+    {
+        "relation": [
+            "delegate_permission/common.get_login_creds",
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
             "package_name": "com.oc.app",
             "sha256_cert_fingerprints": [
                 "C5:F5:1D:E2:56:14:54:74:01:9E:5B:5E:11:CF:85:A6:A9:EC:B5:B3:F4:E3:7A:A3:FC:E0:04:05:99:7B:CB:90",
