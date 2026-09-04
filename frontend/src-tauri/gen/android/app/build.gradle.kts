@@ -74,9 +74,14 @@ val releaseVersionCode: Int? = releaseVersionName?.let { name ->
         it.toIntOrNull()
             ?: throw GradleException("OC_ANDROID_VERSION_NAME is not major.minor.patch: $name")
     }
-    if (minor > 99 || patch > 9999) {
+    // toIntOrNull accepts a leading minus, and the formula silently overflows
+    // Int somewhere above major 2147. Both produce a negative versionCode that
+    // Play rejects at upload, long after the build. The upper bound also keeps
+    // the result under Play's own ceiling of 2100000000.
+    if (major !in 0..2000 || minor !in 0..99 || patch !in 0..9999) {
         throw GradleException(
-            "Version $name overflows the versionCode formula (minor <= 99, patch <= 9999)")
+            "Version $name is out of range for the versionCode formula " +
+                "(major 0..2000, minor 0..99, patch 0..9999)")
     }
     major * 1_000_000 + minor * 10_000 + patch
 }
@@ -98,10 +103,21 @@ android {
     signingConfigs {
         if (releaseKeystore != null) {
             create("release") {
+                // Named up front rather than left null. A keystore.properties
+                // missing one line otherwise builds a signing config full of
+                // nulls and fails deep inside AGP, saying nothing about which
+                // property was absent. CI checks its secrets; this is the same
+                // guarantee for a local build.
+                fun required(name: String, env: String): String =
+                    signingProperty(name, env)
+                        ?: throw GradleException(
+                            "Signing is configured but '$name' is missing. Set it in " +
+                                "$keystoreDir/keystore.properties or pass $env.")
+
                 storeFile = releaseKeystore
-                storePassword = signingProperty("storePassword", "OC_ANDROID_KEYSTORE_PASSWORD")
-                keyAlias = signingProperty("keyAlias", "OC_ANDROID_KEY_ALIAS")
-                keyPassword = signingProperty("keyPassword", "OC_ANDROID_KEY_PASSWORD")
+                storePassword = required("storePassword", "OC_ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = required("keyAlias", "OC_ANDROID_KEY_ALIAS")
+                keyPassword = required("keyPassword", "OC_ANDROID_KEY_PASSWORD")
             }
         }
     }

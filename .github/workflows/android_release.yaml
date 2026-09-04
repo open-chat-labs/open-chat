@@ -130,23 +130,33 @@ jobs:
                   # match the fingerprint in assetlinks.json. No fallback to a
                   # generated debug key here - that silently produces artifacts
                   # Play rejects and that break App Links and passkeys.
-                  # All four, not just the keystore: a missing password or
-                  # alias leaves signingProperty returning null and surfaces as
-                  # an opaque gradle signing failure half an hour into the build.
+                  # Secrets arrive through env, never interpolated into the
+                  # script body: ${{ }} is substituted textually before bash
+                  # parses the line, so a password containing a quote would
+                  # break the test and one containing $( ) would execute.
+                  #
+                  # All four are checked, not just the keystore: a missing
+                  # password or alias leaves signingProperty returning null and
+                  # surfaces as an opaque gradle failure half an hour later.
                   MISSING=""
-                  [ -z "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" ] && MISSING="$MISSING ANDROID_UPLOAD_KEYSTORE_BASE64"
-                  [ -z "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && MISSING="$MISSING ANDROID_KEYSTORE_PASSWORD"
-                  [ -z "${{ secrets.ANDROID_KEY_ALIAS }}" ] && MISSING="$MISSING ANDROID_KEY_ALIAS"
-                  [ -z "${{ secrets.ANDROID_KEY_PASSWORD }}" ] && MISSING="$MISSING ANDROID_KEY_PASSWORD"
+                  [ -z "$KEYSTORE_BASE64" ] && MISSING="$MISSING ANDROID_UPLOAD_KEYSTORE_BASE64"
+                  [ -z "$KEYSTORE_PASSWORD" ] && MISSING="$MISSING ANDROID_KEYSTORE_PASSWORD"
+                  [ -z "$KEY_ALIAS" ] && MISSING="$MISSING ANDROID_KEY_ALIAS"
+                  [ -z "$KEY_PASSWORD" ] && MISSING="$MISSING ANDROID_KEY_PASSWORD"
                   if [ -n "$MISSING" ]; then
                     echo "::error::Missing repository secrets:$MISSING"
                     exit 1
                   fi
 
                   KEYSTORE_PATH="$HOME/openchat-release.jks"
-                  echo "${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}" | base64 --decode > "$KEYSTORE_PATH"
+                  printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
                   chmod 600 "$KEYSTORE_PATH"
                   echo "OC_ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> $GITHUB_ENV
+              env:
+                  KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+                  KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+                  KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+                  KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
             - name: Create Env File
               run: |

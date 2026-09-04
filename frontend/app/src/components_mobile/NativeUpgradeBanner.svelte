@@ -12,7 +12,10 @@
     const DIRECT_DOWNLOAD_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
 
     let checker = new VersionChecker();
-    let dismissed = $state(false);
+    // Keyed by version, not a boolean: the poller keeps running so a release
+    // can be rolled back and a different one announced later, and that one
+    // should be shown rather than swallowed by an earlier dismissal.
+    let dismissedVersion = $state<string | undefined>(undefined);
 
     onDestroy(() => checker.stop());
 
@@ -54,8 +57,9 @@
     nothing at all for days. Passing onDismiss is what makes SheetWrapper honour
     the drag handle, backdrop and Escape.
 -->
-{#if checker.versionState.kind === "store_update_available" && !dismissed}
-    <Sheet onDismiss={() => (dismissed = true)}>
+{#if checker.versionState.kind === "store_update_available" && checker.versionState.available.toText() !== dismissedVersion}
+    {@const available = checker.versionState.available.toText()}
+    <Sheet onDismiss={() => (dismissedVersion = available)}>
         <Column gap={"xl"} padding={"xxl"}>
             <Overview colour={"primary"}>Update available</Overview>
             <BodySmall width={"hug"} fontWeight={"bold"}>

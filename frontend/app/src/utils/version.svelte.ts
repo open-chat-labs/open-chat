@@ -100,16 +100,19 @@ export class VersionChecker {
                     this.#poller = this.#startPoller(false);
                 }
             } else if (sv.isGreaterThan(this.#clientVersion)) {
-                // Newer, but across a boundary the strategy will not cross. No
-                // amount of polling changes that - only a new binary does - so
-                // stop asking and tell the user.
+                // Newer, but across a boundary the strategy will not cross.
                 //
                 // Whether this shell could have run the bundle is a separate
                 // question from whether the strategy allowed it: "minor" is
                 // exactly the test for "same major", i.e. no new native code
                 // needed.
+                //
+                // The poller deliberately keeps running. A bad release can be
+                // rolled back, and that is the case this state must recover
+                // from: stopping here would leave the app showing an update
+                // prompt for a version that no longer exists until the user
+                // killed and relaunched it.
                 const runnable = this.#clientVersion.canUpdateTo(sv, "minor");
-                this.#poller?.stop();
                 this.#versionState = runnable
                     ? { kind: "store_update_available", available: sv }
                     : { kind: "incompatible", available: sv };

@@ -13,6 +13,7 @@
         Subtitle,
     } from "component-lib";
     import { publish, type OpenChat } from "@client";
+    import { isAndroidTauriApp } from "@shared";
     import { toastStore } from "@src/stores/toast";
     import { clearCrashLog, formatCrashLog } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
@@ -36,7 +37,9 @@
     let shellVersion = $state<string | undefined>(undefined);
 
     onMount(() => {
-        if (client.isNativeApp()) {
+        // Android only, matching VersionChecker. iOS has no OTA path, so its
+        // shell and web versions cannot diverge and the row would be noise.
+        if (isAndroidTauriApp()) {
             getShellVersion()
                 .then((v) => (shellVersion = v))
                 .catch(() => (shellVersion = undefined));

@@ -71,13 +71,11 @@ impl<R: Runtime> UpdateManager<R> {
         {
             return Version::parse(info.version.trim_start_matches('v')).ok();
         }
-        // Fallback to package info
-        self.app_handle
-            .package_info()
-            .version
-            .to_string()
-            .parse()
-            .ok()
+        // No fallback to package_info(): that reads tauri.conf.json's version,
+        // a stale "0.1.0" placeholder unrelated to the shipped web assets. This
+        // value exists to tell a crash report which shell is running, and a
+        // confident wrong answer is worse than none.
+        None
     }
 
     pub async fn get_server_version(&self) -> Result<Version, Box<dyn std::error::Error>> {
