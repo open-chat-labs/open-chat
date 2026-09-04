@@ -50,9 +50,10 @@ Android treats the renamed app as unrelated software, so those installs:
   the same account, and both apps will ring
 
 Nothing in the app can fix this, because the code deciding it is already on the
-device. Migration has to be announced, and the new APK link published where those
-users will see it. Until that happens, expect duplicate notifications from anyone
-running both.
+device. **Decision (2026-09-04): handle it with an announcement**, published where
+those users will see it, carrying the new APK link and telling people to uninstall
+the old app rather than run both. Expect duplicate notifications from anyone who
+ignores that until they do.
 
 Removing the `com.oc.app` client from `google-services.json` would stop the
 duplicates by silently killing push for everyone still on the old build. Do not.
