@@ -130,10 +130,15 @@ jobs:
                   # match the fingerprint in assetlinks.json. No fallback to a
                   # generated debug key here - that silently produces artifacts
                   # Play rejects and that break App Links and passkeys.
-                  # Secrets arrive through env, never interpolated into the
-                  # script body: ${{ }} is substituted textually before bash
-                  # parses the line, so a password containing a quote would
-                  # break the test and one containing $( ) would execute.
+                  # Secrets arrive through env, never through GitHub
+                  # expression interpolation into the script body. That
+                  # interpolation is textual and happens before bash parses the
+                  # line, so a password containing a quote would break the test
+                  # and one containing a command substitution would execute.
+                  #
+                  # Do not write an expression here, even in a comment: they are
+                  # evaluated anywhere in the file, and an empty or malformed one
+                  # fails the whole workflow at startup.
                   #
                   # All four are checked, not just the keystore: a missing
                   # password or alias leaves signingProperty returning null and
