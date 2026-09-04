@@ -22,10 +22,12 @@ val tauriProperties = Properties().apply {
 // Reads gen/android/keystore.properties (gitignored - it holds the password),
 // overridable by OC_ANDROID_* env vars so CI can inject the key from secrets.
 //
-// The APK handed out from oc.app and the AAB uploaded to Play are signed with
-// the SAME key. Its SHA-256 must appear in frontend/app/assetlinks.json or the
-// installed app loses App Links AND passkeys (the statement claims
-// get_login_creds).
+// This key signs both artifacts, but only the APK still carries it once
+// installed: Play App Signing re-signs the AAB with a key Google holds, so a
+// Play install presents a DIFFERENT certificate. assetlinks.json therefore has
+// to list both fingerprints, this one for hand-installed APKs and Google's for
+// Play installs, or the affected channel loses App Links and, because the
+// statement claims get_login_creds, passkeys. See PLAY_STORE_RELEASE.md.
 //
 // No keystore at all falls back to debug signing, so a fresh clone can still
 // build a release locally. A keystore that is CONFIGURED but absent is a hard

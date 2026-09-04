@@ -99,6 +99,8 @@ When the developer says the proposal has executed, Claude checks the canister's 
 3. Publish the APK for sideloaded users.
 4. Deploy the website last, as always.
 
+This assumes `assetlinks.json` already claims the package with both fingerprints, the upload key and Play's app signing key. It does from the second release onwards. For the FIRST release of a new package name that is not true, and the order is different: nothing may be distributed until the deployed assetlinks lists it. See `frontend/src-tauri/PLAY_STORE_RELEASE.md`.
+
 That makes a constraint that is otherwise incidental load-bearing: the canisters must be LIVE before the AAB is submitted, because the AAB bundles the new web assets and runs them the moment someone installs, possibly days before the website deploy.
 
 For patch and minor bumps none of this applies. OTA delivers them and the Android shell ships whenever convenient.

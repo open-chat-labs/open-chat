@@ -61,6 +61,50 @@ impl<R: Runtime> UpdateManager<R> {
         None
     }
 
+    /// Delete the OTA cache when it is no longer newer than the shell.
+    ///
+    /// A Play or APK update replaces the binary but Android keeps app data, so
+    /// a cache written before the update survives it and can be OLDER than the
+    /// assets the new shell ships with. The scheme handler serves the cache
+    /// whenever version.json exists, without comparing, which pins the webview
+    /// to the stale bundle permanently:
+    ///
+    ///   shell 2.1.0 installed -> OTA to 2.1.1 -> website goes to 2.2.0 -> user
+    ///   updates from Play to shell 2.2.0 -> webview still serves 2.1.1.
+    ///
+    /// check_for_updates compares max(shell, cached) against the server and
+    /// sees nothing to do, while the running JS reports 2.1.1 and asks the user
+    /// to update again, forever. Across a major bump it is worse: the shell is
+    /// new enough but the JS believes it is not, so the blocking "update
+    /// required" sheet appears on a device that has already done everything
+    /// asked of it, and only clearing app data recovers.
+    ///
+    /// Equal counts as stale: the shell's own copy is authoritative, and
+    /// keeping a redundant cache only risks this again later.
+    pub fn discard_cache_if_stale(&self) {
+        // No shell version means no basis for comparison - keep the cache
+        // rather than discard something that might be the newer of the two.
+        let (Some(cached), Some(shell)) = (self.get_cached_version(), self.get_shell_version())
+        else {
+            return;
+        };
+
+        if cached > shell {
+            return;
+        }
+
+        if let Some(dir) = self.get_cache_dir()
+            && dir.exists()
+        {
+            match fs::remove_dir_all(&dir) {
+                Ok(()) => println!("Discarded OTA cache {cached} superseded by shell {shell}"),
+                // Failing to delete is survivable: the next launch tries again,
+                // and load_cache_into_memory is only reached through this call.
+                Err(e) => eprintln!("Failed to discard stale OTA cache: {e}"),
+            }
+        }
+    }
+
     /// The version of the web assets compiled into the installed binary, which
     /// is what identifies the shell itself. It never changes without a
     /// reinstall. Distinct from `get_cached_version`, which is the most recent

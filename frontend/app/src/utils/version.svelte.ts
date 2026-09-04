@@ -35,6 +35,9 @@ export class VersionChecker {
     #clientVersion = Version.parse(import.meta.env.OC_WEBSITE_VERSION);
     #versionState = $state<VersionState>({ kind: "unknown" });
     #strategy: OTAUpdateStrategy = import.meta.env.OC_OTA_UPDATES;
+    // stop() can land while download_update is still awaiting, and the finally
+    // below would then start a fresh poller that nothing is left to stop.
+    #stopped = false;
     #poller = this.#startPoller(true);
 
     get versionState() {
@@ -42,6 +45,7 @@ export class VersionChecker {
     }
 
     #startPoller(immediate: boolean) {
+        if (this.#stopped) return;
         // this should only operate if we are in the android app and the ota strategy is not set to none
         if (!isAndroidTauriApp() || this.#strategy === "none") {
             this.#versionState = { kind: "up_to_date" };
@@ -115,6 +119,8 @@ export class VersionChecker {
                     if (!downloaded) {
                         this.#poller = this.#startPoller(false);
                     }
+                    // #startPoller returns undefined once stopped, so a
+                    // component destroyed mid-download leaves nothing running.
                 }
             } else if (sv.isGreaterThan(this.#clientVersion)) {
                 // Newer, but across a boundary the strategy will not cross.
@@ -154,6 +160,7 @@ export class VersionChecker {
     }
 
     stop() {
+        this.#stopped = true;
         this.#poller?.stop();
     }
 }

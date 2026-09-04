@@ -33,7 +33,13 @@ bundle is uploaded. The order is therefore:
 4. Deploy the website so `https://oc.app/.well-known/assetlinks.json` serves it.
 5. Verify on a device installed from Play: deep links open in the app, and
    passkey sign-in completes.
-6. Only then promote to production.
+6. Only then promote to production, and only then publish the APK.
+
+Step 6 covers both channels deliberately. Nothing carrying the new package name
+should reach a user before the deployed `assetlinks.json` lists it, or that user
+installs an app with no App Links and no passkeys and has to wait for a website
+deploy to fix it. That includes the hand-distributed APK, whose own fingerprint
+is already in the file but whose package name is not claimed until it deploys.
 
 `com.oc.app` keeps its own entry with the old fingerprints so existing sideloaded
 installs are unaffected.
@@ -43,11 +49,23 @@ installs are unaffected.
 Builds before the rename are `com.oc.app` with `OC_OTA_UPDATES=major` compiled in.
 Android treats the renamed app as unrelated software, so those installs:
 
-- keep applying web updates over the air indefinitely, so they stay usable
+- keep applying web updates over the air indefinitely, so they stay usable until
+  the first major release
+- **break at the first major release.** They have `OC_OTA_UPDATES=major` compiled
+  in, meaning "take anything newer", and they poll the same
+  `oc.app/downloads/full-<version>.zip`. So they will download a bundle that by
+  definition requires a newer shell, and no APK will ever again carry that
+  package name for them to get one from. The strategy that protects the new
+  sideloaded build (`minor`) is not on those devices.
 - never receive native fixes again, since no APK will ever have that package name
 - see none of the update prompts added for the new package
 - will, if the user also installs the new app, hold a second valid FCM token for
   the same account, and both apps will ring
+
+The break is not hypothetical and it has a deadline: it lands the day a major
+website version is published. Either the migration is announced and taken up well
+before then, or the first major bundle must not be published at
+`downloads/full-<version>.zip` where the old app will find it.
 
 Nothing in the app can fix this, because the code deciding it is already on the
 device. **Decision (2026-09-04): handle it with an announcement**, published where

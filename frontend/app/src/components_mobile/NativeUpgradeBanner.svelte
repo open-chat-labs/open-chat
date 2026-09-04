@@ -12,10 +12,34 @@
     const DIRECT_DOWNLOAD_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
 
     let checker = new VersionChecker();
-    // Keyed by version, not a boolean: the poller keeps running so a release
-    // can be rolled back and a different one announced later, and that one
-    // should be shown rather than swallowed by an earlier dismissal.
-    let dismissedVersion = $state<string | undefined>(undefined);
+
+    // Persisted, and keyed by version rather than a boolean.
+    //
+    // Persisted because review and staged rollout take days, and component
+    // state would put the sheet back on every cold start for the whole of it.
+    // Keyed by version because the poller keeps running, so a release can be
+    // rolled back and a different one announced later; that one should be
+    // shown rather than swallowed by the earlier dismissal.
+    const DISMISSED_KEY = "oc_dismissed_update_version";
+
+    let dismissedVersion = $state<string | undefined>(readDismissed());
+
+    function readDismissed(): string | undefined {
+        try {
+            return localStorage.getItem(DISMISSED_KEY) ?? undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
+    function dismiss(version: string) {
+        dismissedVersion = version;
+        try {
+            localStorage.setItem(DISMISSED_KEY, version);
+        } catch {
+            // Storage unavailable just means it reappears next launch.
+        }
+    }
 
     onDestroy(() => checker.stop());
 
@@ -59,7 +83,7 @@
 -->
 {#if checker.versionState.kind === "store_update_available" && checker.versionState.available.toText() !== dismissedVersion}
     {@const available = checker.versionState.available.toText()}
-    <Sheet onDismiss={() => (dismissedVersion = available)}>
+    <Sheet onDismiss={() => dismiss(available)}>
         <Column gap={"xl"} padding={"xxl"}>
             <Overview colour={"primary"}>Update available</Overview>
             <BodySmall width={"hug"} fontWeight={"bold"}>
