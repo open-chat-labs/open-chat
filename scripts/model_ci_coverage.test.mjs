@@ -387,6 +387,47 @@ const compatibilityScripts = [
   "scripts/transformers_sharp_compatibility.mjs",
 ];
 
+test("CI separately builds and verifies the opt-in WebGPU production candidate", () => {
+  const frontend = read(".github/workflows/frontend.yaml");
+  const name =
+    "- name: Build and verify the opt-in production WebGPU candidate";
+  const candidate = frontend.split(name)[1]?.split(/\n {6}- /u)[0];
+  assert.ok(candidate, "missing real production WebGPU packaging gate");
+  assert.match(candidate, /npm run build:prod/u);
+  assert.match(
+    candidate,
+    /node \.\.\/scripts\/verify_webgpu_distribution\.mjs app\/build/u,
+  );
+  assert.match(candidate, /OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE: "true"/u);
+  assert.match(
+    candidate,
+    /OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY: immutable-hub-v1/u,
+  );
+  assert.doesNotMatch(
+    candidate,
+    /continue-on-error|\|\|\s*true|npm (?:install|update)|deploy/u,
+  );
+  const standard = frontend
+    .split("- name: Build frontend")[1]
+    ?.split(/\n {6}- /u)[0];
+  assert.ok(standard);
+  assert.match(standard, /npm run build:ci/u);
+  assert.doesNotMatch(standard, /OC_TRANSFORMERS_WEBGPU_/u);
+  assert.ok(frontend.indexOf("run: npm run build:ci") < frontend.indexOf(name));
+});
+
+test("frontend checks also cover the published model branch with read-only repository permissions", () => {
+  const frontend = read(".github/workflows/frontend.yaml");
+  const events = mappingBlock(frontend, "on", 0);
+  const push = mappingBlock(events, "push", 2);
+  assert.match(push, /^ +- codex\/pr1-local-models\r?$/mu);
+  assert.match(
+    mappingBlock(frontend, "permissions", 0),
+    /^ +contents: read\r?$/mu,
+  );
+  assert.doesNotMatch(frontend, /contents: write/u);
+});
+
 test("frontend CI runs every scoped dependency contract against the frozen install", () => {
   const frontend = read(".github/workflows/frontend.yaml");
   const jobs = mappingBlock(frontend, "jobs", 0);

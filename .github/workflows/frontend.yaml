@@ -2,8 +2,15 @@ on:
   pull_request:
     branches:
       - master
+  push:
+    branches:
+      - codex/pr1-local-models
+  workflow_dispatch:
 
 name: Frontend linting, type check & unit tests
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -69,6 +76,22 @@ jobs:
           OC_WEBSITE_VERSION: 1.0.0
           OC_METERED_APIKEY: DUMMY_METERED_APIKEY
           OC_VAPID_PUBLIC_KEY: DUMMY_VAPID_PUBLIC_KEY
+
+      # Packaging evidence only: this does not deploy or verify device inference.
+      # Keep the default production build separate from this opt-in candidate.
+      - name: Build and verify the opt-in production WebGPU candidate
+        run: |
+          npm run build:prod
+          node ../scripts/verify_webgpu_distribution.mjs app/build
+        env:
+          NODE_ENV: ci
+          OC_USERGEEK_APIKEY: DUMMY_USERGEEK_APIKEY
+          OC_ROLLBAR_ACCESS_TOKEN: DUMMY_ROLLBAR_ACCESS_TOKEN
+          OC_WEBSITE_VERSION: 1.0.0
+          OC_METERED_APIKEY: DUMMY_METERED_APIKEY
+          OC_VAPID_PUBLIC_KEY: DUMMY_VAPID_PUBLIC_KEY
+          OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE: "true"
+          OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY: immutable-hub-v1
 
       - name: Save dependencies to cache
         if: ${{ github.ref == 'refs/heads/master' }}
