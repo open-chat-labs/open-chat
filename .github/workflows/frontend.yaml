@@ -26,14 +26,31 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20.20.0"
+          node-version: "24.18.1"
 
       - name: Install dependencies
         run: npm ci
 
-        # This acts as a safety net if a Mac-generated lockfile stripped the Linux binary
-      - name: Ensure Rollup Linux Binary
-        run: npm install @rollup/rollup-linux-x64-gnu
+        # A missing platform package is a lockfile failure, not permission to rewrite it in CI.
+      - name: Verify locked Rollup Linux Binary
+        run: node -e "require('@rollup/rollup-linux-x64-gnu')"
+
+      - name: Verify OTA archive prerequisites
+        run: |
+          command -v zip
+          command -v unzip
+
+      - name: Check OTA archive packaging
+        working-directory: .
+        run: node --test scripts/android_bundle.test.mjs
+
+      - name: Install the repository-pinned dfx build prerequisite
+        uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
+        with:
+          dfx-version: "0.31.0-beta.1"
+
+      - name: Verify dfx is available for the public-key query
+        run: dfx --version
 
       - name: Build frontend
         run: npm run build:ci

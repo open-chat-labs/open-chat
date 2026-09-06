@@ -1,10 +1,33 @@
 /* eslint-disable no-undef */
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import fs from "fs-extra";
 import path from "path";
 import { promisify } from "util";
 
-const execPromise = promisify(exec);
+const execFilePromise = promisify(execFile);
+
+// Windows includes bsdtar with ZIP support; other build hosts use Info-ZIP.
+// Pass paths as arguments instead of shell text so spaces and metacharacters
+// in a checkout path cannot break packaging or execute a shell command.
+export function bundleArchiveCommand(directory, archive, platform = process.platform) {
+    const cwd = path.resolve(directory);
+    const target = path.resolve(archive);
+    return platform === "win32"
+        ? {
+              command: path.join(process.env.SystemRoot ?? "C:/Windows", "System32", "tar.exe"),
+              // bsdtar otherwise uses the Windows OEM charset, which can replace
+              // non-Latin filenames with '?'. Android's Rust ZIP reader requires
+              // UTF-8 filename bytes and the ZIP UTF-8 flag for lossless names.
+              args: ["-a", "-c", "--options", "zip:hdrcharset=UTF-8", "-f", target, "-C", cwd, "."],
+              cwd,
+          }
+        : { command: "zip", args: ["-q", "-r", target, "."], cwd };
+}
+
+export async function createBundleArchive(directory, archive) {
+    const { command, args, cwd } = bundleArchiveCommand(directory, archive);
+    await execFilePromise(command, args, { cwd });
+}
 
 /**
  * We need to create two different bundles here:
@@ -104,5 +127,5 @@ async function writeBundleZip(
     const injection = `<script>window.OC_CONFIG={OC_MOBILE_LAYOUT:"v2", OC_APP_STORE: "${store}", OC_OTA_UPDATES: "${ota}"}</script>`;
     const updatedIndexHtml = indexHtml.replace("<head>", `<head>${injection}`);
     await fs.writeFile(indexHtmlPath, updatedIndexHtml);
-    await execPromise(`cd ${distBundleDir} && zip -r ../${zipFile} .`);
+    await createBundleArchive(distBundleDir, zipFile);
 }
