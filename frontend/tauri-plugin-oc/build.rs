@@ -26,6 +26,7 @@ const COMMANDS: &[&str] = &[
     "system_resources",
     "list_local_models",
     "delete_model",
+    "inference_runtime_available",
     "infer",
 ];
 

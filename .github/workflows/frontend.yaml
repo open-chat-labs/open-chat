@@ -40,9 +40,9 @@ jobs:
           command -v zip
           command -v unzip
 
-      - name: Check OTA archive packaging
+      - name: Check model and packaging policy regressions
         working-directory: .
-        run: node --test scripts/android_bundle.test.mjs
+        run: node --test scripts/android_bundle.test.mjs scripts/model_asset_notices.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_ci_coverage.test.mjs
 
       - name: Install the repository-pinned dfx build prerequisite
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365

@@ -241,3 +241,22 @@ pub(crate) async fn infer<R: Runtime>(
         .infer(payload)
         .await
 }
+
+// Compile-time capability probe. Keeping this command present in every build lets the guest avoid
+// mistaking "a Tauri bridge exists" for "this binary contains llama.cpp". Older binaries do not have
+// the command at all; the guest treats that rejection as update-required too.
+#[command]
+pub(crate) fn inference_runtime_available() -> bool {
+    cfg!(feature = "inference")
+}
+
+#[cfg(test)]
+mod inference_capability_tests {
+    #[test]
+    fn reports_the_compiled_native_runtime_feature() {
+        assert_eq!(
+            super::inference_runtime_available(),
+            cfg!(feature = "inference")
+        );
+    }
+}

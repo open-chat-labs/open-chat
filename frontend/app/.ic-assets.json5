@@ -23,7 +23,7 @@
         allow_raw_access: false,
     },
     {
-        match: "{*.css,*.js,*.wasm}",
+        match: "{*.css,*.js,*.mjs,*.wasm}",
         headers: {
             "Cache-Control": "max-age=31536000, immutable",
             "X-Cacheable-Resource": "true",

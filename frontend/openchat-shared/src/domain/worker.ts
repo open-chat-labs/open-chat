@@ -403,6 +403,7 @@ export type WorkerRequest =
     | ResolveModerationReport
     | ContestModerationSanction
     | VaultFileChunk
+    | DownloadPublicBlob
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -914,6 +915,15 @@ type VaultFileChunk = {
     bucketCanisterId: string;
     fileId: bigint;
     chunkIndex: number;
+};
+
+export type PublicBlobMediaKind = "image" | "audio";
+
+type DownloadPublicBlob = {
+    kind: "downloadPublicBlob";
+    ref: BlobReference;
+    maxBytes: number;
+    mediaKind?: PublicBlobMediaKind;
 };
 
 type ImportGroupToCommunity = {
@@ -2614,6 +2624,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends VaultFileChunk
     ? VaultFileChunkResponse
+    : T extends DownloadPublicBlob
+    ? Uint8Array | undefined
     : T extends CreateUserGroup
     ? CreateUserGroupResponse
     : T extends UpdateUserGroup

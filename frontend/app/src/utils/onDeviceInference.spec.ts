@@ -2,9 +2,21 @@ import type { InferenceRequest } from "@shared";
 import { webcrypto } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { InferResponse, LocalModel } from "tauri-plugin-oc-api";
-import { infer as nativeInfer, listLocalModels } from "tauri-plugin-oc-api";
+import {
+    infer as nativeInfer,
+    inferenceRuntimeAvailable,
+    listLocalModels,
+} from "tauri-plugin-oc-api";
 import { selectedModelId } from "../stores/onDeviceModels";
-import { inferOnDevice, isNativeClient, onDeviceInferenceCapability } from "./onDeviceInference";
+import { defaultModelCatalog } from "./modelCatalog";
+import {
+    inferOnDevice,
+    isNativeClient,
+    onDeviceInferenceCapability,
+    onDeviceInferenceReadiness,
+    NATIVE_INFERENCE_UPDATE_REQUIRED,
+    NATIVE_MODEL_UPDATE_REQUIRED,
+} from "./onDeviceInference";
 import { clearWebModel, useWebModelFromUrl, webInfer } from "./webInference";
 
 const webRuntime = vi.hoisted(() => ({
@@ -64,10 +76,12 @@ async function hashOf(bytes: Uint8Array): Promise<string> {
 // network / model load) is ever touched — every test is deterministic.
 vi.mock("tauri-plugin-oc-api", () => ({
     infer: vi.fn(),
+    inferenceRuntimeAvailable: vi.fn(),
     listLocalModels: vi.fn(),
 }));
 
 const mockInfer = vi.mocked(nativeInfer);
+const mockInferenceRuntimeAvailable = vi.mocked(inferenceRuntimeAvailable);
 const mockListLocalModels = vi.mocked(listLocalModels);
 
 const MODEL_ID = "gemma-4-e2b-it-q4";
@@ -85,14 +99,20 @@ function localModel(overrides: Partial<LocalModel> = {}): LocalModel {
         modelId: MODEL_ID,
         runtime: "llama-cpp",
         sizeBytes: 4092392352,
+        files: defaultModelCatalog.models.find((model) => model.id === MODEL_ID)!.files,
         path: "/models/gemma-4-e2b-it-q4",
         ...overrides,
     };
 }
 
-beforeEach(() => {
+beforeEach(async () => {
     mockInfer.mockReset();
     mockListLocalModels.mockReset();
+    // Reset the facade's measured native capability through the actual probe boundary.
+    setNative(true);
+    mockInferenceRuntimeAvailable.mockReset().mockResolvedValue(false);
+    await onDeviceInferenceReadiness();
+    mockInferenceRuntimeAvailable.mockReset().mockResolvedValue(true);
     // Default: no model downloaded and none selected — each test opts into what it needs.
     mockListLocalModels.mockResolvedValue([]);
     selectedModelId.set("");
@@ -305,9 +325,11 @@ describe("inferOnDevice — error path (thrown -> error, NOT unavailable)", () =
 });
 
 describe("onDeviceInferenceCapability", () => {
-    it("is available when native AND a model is selected, and reports catalog modalities", () => {
+    it("is available after probing the native runtime and verified selected install", async () => {
         setNative(true);
         selectedModelId.set(MODEL_ID);
+        mockListLocalModels.mockResolvedValue([localModel()]);
+        await expect(onDeviceInferenceReadiness()).resolves.toEqual({ available: true });
 
         const cap = onDeviceInferenceCapability();
 
@@ -411,8 +433,68 @@ describe("onDeviceInferenceCapability", () => {
         mockListLocalModels.mockResolvedValue([localModel({ sizeBytes: 1 })]);
 
         await expect(inferOnDevice({ prompt: "hi" })).resolves.toEqual({
-            kind: "error",
-            error: "installed model metadata does not match the trusted catalog",
+            kind: "unavailable",
+            reason: NATIVE_MODEL_UPDATE_REQUIRED,
+        });
+        expect(mockInfer).not.toHaveBeenCalled();
+    });
+});
+
+describe("native runtime availability", () => {
+    it.each(["not compiled", "old binary"])(
+        "fails closed for a runtime %s before reading models",
+        async (scenario) => {
+            setNative(true);
+            selectedModelId.set(MODEL_ID);
+            if (scenario === "old binary") {
+                mockInferenceRuntimeAvailable.mockRejectedValue(new Error("unknown command"));
+            } else {
+                mockInferenceRuntimeAvailable.mockResolvedValue(false);
+            }
+            await expect(onDeviceInferenceReadiness()).resolves.toEqual({
+                available: false,
+                reason: NATIVE_INFERENCE_UPDATE_REQUIRED,
+            });
+            await expect(inferOnDevice({ prompt: "Read this" })).resolves.toEqual({
+                kind: "unavailable",
+                reason: NATIVE_INFERENCE_UPDATE_REQUIRED,
+            });
+            expect(onDeviceInferenceCapability().available).toBe(false);
+            expect(mockListLocalModels).not.toHaveBeenCalled();
+            expect(mockInfer).not.toHaveBeenCalled();
+        },
+    );
+
+    it("does not advertise the bridge before measuring runtime and selected artifact readiness", async () => {
+        setNative(true);
+        selectedModelId.set(MODEL_ID);
+        mockListLocalModels.mockResolvedValue([localModel()]);
+        expect(onDeviceInferenceCapability().available).toBe(false);
+        await expect(onDeviceInferenceReadiness()).resolves.toEqual({ available: true });
+        expect(onDeviceInferenceCapability().available).toBe(true);
+        selectedModelId.set("qwen3-vl-2b-instruct-q4");
+        expect(onDeviceInferenceCapability().available).toBe(false);
+    });
+
+    it("requires an update for a stale installed file identity even when sizes still match", async () => {
+        setNative(true);
+        selectedModelId.set(MODEL_ID);
+        const installed = localModel();
+        mockListLocalModels.mockResolvedValue([
+            {
+                ...installed,
+                files: installed.files.map((file, index) =>
+                    index === 0 ? { ...file, sha256: "0".repeat(64) } : file,
+                ),
+            },
+        ]);
+        await expect(onDeviceInferenceReadiness()).resolves.toEqual({
+            available: false,
+            reason: NATIVE_MODEL_UPDATE_REQUIRED,
+        });
+        await expect(inferOnDevice({ prompt: "Read this" })).resolves.toEqual({
+            kind: "unavailable",
+            reason: NATIVE_MODEL_UPDATE_REQUIRED,
         });
         expect(mockInfer).not.toHaveBeenCalled();
     });

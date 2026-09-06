@@ -235,14 +235,101 @@ export function webEligibleModels(models: ModelCatalogEntry[]): ModelCatalogEntr
     });
 }
 
+export type InstalledModelMetadata = {
+    modelId: string;
+    runtime: string;
+    sizeBytes: number;
+    files?: InstalledModelFileMetadata[];
+};
+
+export type InstalledModelFileMetadata = {
+    url: string;
+    sha256?: string | null;
+    bytes: number;
+    filename?: string | null;
+};
+
+export type TrustedModelMetadata = Pick<ModelCatalogEntry, "id" | "runtime" | "sizeBytes"> & {
+    files: readonly InstalledModelFileMetadata[];
+};
+
+export type NativeModelInstallStatus = "missing" | "current" | "update_required";
+
+function sameModelFiles(
+    installed: readonly InstalledModelFileMetadata[] | undefined,
+    trusted: readonly InstalledModelFileMetadata[],
+): boolean {
+    if (installed === undefined || installed.length !== trusted.length) return false;
+    const remaining = [...installed];
+    for (const expected of trusted) {
+        const expectedDigest = expected.sha256?.trim().toLowerCase();
+        const match = remaining.findIndex((actual) => {
+            const actualDigest = actual.sha256?.trim().toLowerCase();
+            return (
+                /^[0-9a-f]{64}$/u.test(actualDigest ?? "") &&
+                actual.url === expected.url &&
+                actual.bytes === expected.bytes &&
+                // Rust's Option<String> historically crossed the Tauri boundary as null while the
+                // catalog expresses the same absent filename by omitting it. They are one identity:
+                // only a concrete destination filename may distinguish two otherwise equal files.
+                (actual.filename ?? undefined) === (expected.filename ?? undefined) &&
+                (expectedDigest === undefined || actualDigest === expectedDigest)
+            );
+        });
+        if (match < 0) return false;
+        remaining.splice(match, 1);
+    }
+    return remaining.length === 0;
+}
+
 /**
- * Merge the remote (on-chain, owner-curated) catalog OVER the built-in default.
+ * Compare a local install with the exact artifacts this client trusts for the displayed entry.
  *
- * The remote catalog is a per-id overlay, never a wholesale replacement: remote entries come first
- * (in remote order, so the operator controls ranking) and win on id conflicts; builtin entries whose
- * id the remote doesn't mention are appended in builtin order. A stale or partial remote catalog can
- * therefore never shrink the chooser below the builtin floor — removing a builtin model remains a
- * client-release concern.
+ * A built-in id is always checked against the built-in entry, even if an older/conflicting remote
+ * catalog entry reached the caller. APK install-over preserves the native model directory, so this
+ * distinction matters when a pinned GGUF is replaced under the same stable id. Unknown/custom ids
+ * have no built-in authority and are compared with their own displayed metadata.
+ */
+export function nativeModelInstallStatus(
+    entry: TrustedModelMetadata,
+    installed: InstalledModelMetadata[],
+    builtin: TrustedModelMetadata[] = defaultModelCatalog.models,
+): NativeModelInstallStatus {
+    const local = installed.find((model) => model.modelId === entry.id);
+    if (local === undefined) return "missing";
+    const authoritative = builtin.find((model) => model.id === entry.id) ?? entry;
+    return local.runtime === authoritative.runtime &&
+        local.sizeBytes === authoritative.sizeBytes &&
+        sameModelFiles(local.files, authoritative.files)
+        ? "current"
+        : "update_required";
+}
+
+export type SelectedNativeModelStatus =
+    | { kind: "none" }
+    | { kind: "untrusted" }
+    | { kind: NativeModelInstallStatus; entry: ModelCatalogEntry };
+
+/** One shared selected-model status contract for proposal readiness and the two model-manager UIs. */
+export function selectedNativeModelStatus(
+    modelId: string,
+    installed: InstalledModelMetadata[],
+    builtin: ModelCatalogEntry[] = defaultModelCatalog.models,
+): SelectedNativeModelStatus {
+    if (modelId === "") return { kind: "none" };
+    const entry = builtin.find((model) => model.id === modelId);
+    if (entry === undefined) return { kind: "untrusted" };
+    return { kind: nativeModelInstallStatus(entry, installed, builtin), entry };
+}
+
+/**
+ * Merge the remote (on-chain, owner-curated) catalog with the built-in default.
+ *
+ * Remote entries still control ranking and may introduce new ids. For a built-in id, however, the
+ * exact client-shipped entry wins: inference validates installed metadata against that trust root,
+ * so allowing a conflicting remote artifact to win in the downloader would create an install which
+ * this same client must reject. Built-in entries the remote does not mention are appended in their
+ * original order, so a stale or partial remote catalog cannot shrink the chooser.
  */
 export function mergeCatalogs(
     remote: ModelCatalogEntry[],
@@ -250,7 +337,14 @@ export function mergeCatalogs(
 ): ModelCatalogEntry[] {
     const merged: ModelCatalogEntry[] = [];
     const seen = new Set<string>();
-    for (const entry of [...remote, ...builtin]) {
+    const builtinById = new Map(builtin.map((entry) => [entry.id, entry]));
+    for (const remoteEntry of remote) {
+        const entry = builtinById.get(remoteEntry.id) ?? remoteEntry;
+        if (seen.has(entry.id)) continue;
+        seen.add(entry.id);
+        merged.push(entry);
+    }
+    for (const entry of builtin) {
         if (seen.has(entry.id)) continue;
         seen.add(entry.id);
         merged.push(entry);

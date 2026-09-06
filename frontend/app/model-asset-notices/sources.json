@@ -1,0 +1,124 @@
+{
+    "schemaVersion": 1,
+    "checkedOn": "2026-09-06",
+    "textRepresentation": "UTF-8, CRLF normalized to LF, one terminal LF; otherwise upstream text preserved. Header extracts identify their source explicitly.",
+    "packages": [
+        {
+            "name": "@wllama/wllama",
+            "version": "3.5.1",
+            "integrity": "sha512-m5L0KKtmUTKz5lGvVVa/Y3qRtoobu80Jne51U0CSR6O930aOUURzhMEAolNsN4v0kfQ9u58wi2IdpUicLfaXUw=="
+        },
+        {
+            "name": "@huggingface/transformers",
+            "version": "4.2.0",
+            "integrity": "sha512-8BRCoBMH0XsWaEIamuR0LrJGAfftgHAfb2Vrffy0VKlSAE/MnUJ5/h/zTfEP3fDIft+nk7TqB8xXEyABGitBjQ=="
+        },
+        {
+            "name": "onnxruntime-web",
+            "version": "1.29.0-dev.20260723-1b1e1db7bc",
+            "integrity": "sha512-I5v9h+LYg98gEzwIa2B09M9SNihMpUfPHLs6fCrZcQVi1D9WQ7e3AdBlO6+mYMXkmHeAjJenDcXm3x4A+tj/Pw=="
+        }
+    ],
+    "documents": [
+        {
+            "name": "onnxruntime-MIT.txt",
+            "bytes": 1073,
+            "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+            "group": "webgpu",
+            "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/1b1e1db7bcf583e5927588e8d85c5a89717dc45c/LICENSE"
+        },
+        {
+            "name": "onnxruntime-ThirdPartyNotices.txt",
+            "bytes": 325054,
+            "sha256": "0e07b95f3a8d6230037707c5c4a2b554d12c4cb67369669ac255635528ffcee2",
+            "group": "webgpu",
+            "source": "https://raw.githubusercontent.com/microsoft/onnxruntime/1b1e1db7bcf583e5927588e8d85c5a89717dc45c/ThirdPartyNotices.txt"
+        },
+        {
+            "name": "wllama-MIT.txt",
+            "bytes": 1072,
+            "sha256": "164c94eef320be0a33a433240afef7a37371394acb66134425c366af1caaa207",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/ngxson/wllama/912c18b75d4358c1405a64646b8dbe43a205943b/LICENCE"
+        },
+        {
+            "name": "wllama-llama.cpp-MIT.txt",
+            "bytes": 1078,
+            "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/ggml-org/llama.cpp/dd4623a74f0c85e6b1dd9ee99a92b9c67cac3708/LICENSE"
+        },
+        {
+            "name": "wllama-jsonhpp-MIT.txt",
+            "bytes": 1075,
+            "sha256": "c0d068392ea65358b798b8c165103560f06e9e3b38c4ab4e2d8810a7b931af86",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/ggml-org/llama.cpp/dd4623a74f0c85e6b1dd9ee99a92b9c67cac3708/licenses/LICENSE-jsonhpp"
+        },
+        {
+            "name": "wllama-cpp-httplib-MIT.txt",
+            "bytes": 1075,
+            "sha256": "4b45cbe16d7b71b89ae6127e26e0d90a029198ca5e958ad8e3d0b8bbed364d8b",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/ggml-org/llama.cpp/dd4623a74f0c85e6b1dd9ee99a92b9c67cac3708/vendor/cpp-httplib/LICENSE"
+        },
+        {
+            "name": "wllama-emscripten-LICENSE.txt",
+            "bytes": 5093,
+            "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/6913738ec5371a88c4af5a80db0ab42bad3de681/LICENSE"
+        },
+        {
+            "name": "wllama-musl-COPYRIGHT.txt",
+            "bytes": 6204,
+            "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/6913738ec5371a88c4af5a80db0ab42bad3de681/system/lib/libc/musl/COPYRIGHT"
+        },
+        {
+            "name": "wllama-libcxx-LICENSE.txt",
+            "bytes": 16703,
+            "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/6913738ec5371a88c4af5a80db0ab42bad3de681/system/lib/libcxx/LICENSE.TXT"
+        },
+        {
+            "name": "wllama-libcxxabi-LICENSE.txt",
+            "bytes": 16706,
+            "sha256": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/6913738ec5371a88c4af5a80db0ab42bad3de681/system/lib/libcxxabi/LICENSE.TXT"
+        },
+        {
+            "name": "wllama-miniaudio-LICENSE.txt",
+            "bytes": 2601,
+            "sha256": "8ee059f719506d610d0e11e15a36d5c6fd9a55801931b80215f9d26ed019e0d1",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/ggml-org/llama.cpp/dd4623a74f0c85e6b1dd9ee99a92b9c67cac3708/vendor/miniaudio/miniaudio.h",
+            "extraction": "Trailing license block of the immutable header, excluding the opening C comment delimiter."
+        },
+        {
+            "name": "wllama-stb_image-LICENSE.txt",
+            "bytes": 2592,
+            "sha256": "36df9677aa6a2ae37a01c7aaa39c3206fa02a4e06bb5037ebe89e5828b931f31",
+            "group": "wllama",
+            "source": "https://raw.githubusercontent.com/ggml-org/llama.cpp/dd4623a74f0c85e6b1dd9ee99a92b9c67cac3708/vendor/stb/stb_image.h",
+            "extraction": "Trailing license block of the immutable header, excluding the opening C comment delimiter."
+        },
+        {
+            "name": "Qwen3-VL-2B-original-MODEL_CARD.md",
+            "bytes": 7137,
+            "sha256": "ce3d04086821c582d900a1f9cf0f665dba1ec15bff2a0f39e4803d9c0cc89b39",
+            "group": "webgpu",
+            "source": "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct/raw/89644892e4d85e24eaac8bacfd4f463576704203/README.md"
+        },
+        {
+            "name": "Gemma4-E2B-ONNX-MODEL_CARD.md",
+            "bytes": 27836,
+            "sha256": "6abaa10b933c4e261ff586325f4ae37660613b153f8ddf86a09b0ce0b41b350f",
+            "group": "webgpu",
+            "source": "https://huggingface.co/onnx-community/gemma-4-E2B-it-ONNX/raw/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/README.md"
+        }
+    ]
+}

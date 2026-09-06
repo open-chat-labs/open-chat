@@ -2,6 +2,7 @@ import replace from "@rollup/plugin-replace";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import chokidar from "chokidar";
 import fs from "fs";
+import { pathToFileURL } from "node:url";
 import path from "path";
 import execute from "rollup-plugin-shell";
 import { build, defineConfig, type Plugin, type PluginOption } from "vite";
@@ -16,14 +17,19 @@ import {
 } from "./rollup.extras.mjs";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
 import {
+    createTransformersWebGpuDevRuntimeVersion,
+    TRANSFORMERS_WEBGPU_DEV_RUNTIME_VERSION_META,
+} from "./src/utils/transformersWebGpuDevRuntimeVersion";
+import {
     patchQwen3Vl2bDecoderGraph,
     QWEN3_VL_2B_DECODER_PATCHED_BYTES,
 } from "./transformersWebGpuDecoderGraph.mjs";
-import { transformersWebGpuSequentialSessionsPlugin } from "./transformersWebGpuSequentialSessions.mjs";
+import { transformersWebGpuFeatureEnabled } from "./transformersWebGpuFeatureFlag.mjs";
 
 const version = `1000.0.${Date.now()}`;
 const inlineScripts = [`window.OC_WEBSITE_VERSION = "${version}";`];
 process.env.OC_WEBSITE_VERSION = version;
+const devTransformersWebGpuRuntimeVersion = createTransformersWebGpuDevRuntimeVersion(version);
 
 initEnv();
 
@@ -49,7 +55,7 @@ const transformersWebGpuOrtJspiAlias = {
     find: "onnxruntime-web/webgpu",
     replacement: "onnxruntime-web/jspi",
 };
-const transformersWebGpuSpikeEnabled = process.env.OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE === "true";
+const transformersWebGpuSpikeEnabled = transformersWebGpuFeatureEnabled(process.env);
 const workerTargets = [
     { entry: workerEntry, fileName: "worker.js", sequentialWebGpuSessions: false },
     ...(transformersWebGpuSpikeEnabled
@@ -235,7 +241,13 @@ function qwen3Vl2bModelOverridesPlugin(): Plugin {
 // openchat-worker/lib/worker.js together with the chokidar poll that waited for
 // those lib files to appear.
 function ocWorkerPlugin(): Plugin {
+    let buildAttempt = 0;
     async function buildWorker() {
+        // This helper is itself watched. Import it afresh for every attempt so changing the
+        // transform rebuilds with new code, including when the preceding attempt failed.
+        const { transformersWebGpuSequentialSessionsPlugin } = await import(
+            `${pathToFileURL(path.resolve(__dirname, "transformersWebGpuSequentialSessions.mjs")).href}?worker-build=${++buildAttempt}`
+        );
         for (const target of workerTargets) {
             await build({
                 configFile: false,
@@ -269,10 +281,26 @@ function ocWorkerPlugin(): Plugin {
                 },
             });
         }
+        // The model worker is immutable once selected. Rotate only after every target has rebuilt
+        // successfully so the ensuing full reload cannot restore an older worker under the same URL.
+        devTransformersWebGpuRuntimeVersion.rotate();
     }
 
     return {
         name: "oc-worker",
+        transformIndexHtml() {
+            if (!transformersWebGpuSpikeEnabled) return [];
+            return [
+                {
+                    tag: "meta",
+                    attrs: {
+                        name: TRANSFORMERS_WEBGPU_DEV_RUNTIME_VERSION_META,
+                        content: devTransformersWebGpuRuntimeVersion.current(),
+                    },
+                    injectTo: "head-prepend",
+                },
+            ];
+        },
         async configureServer(server) {
             await buildWorker();
 
@@ -294,6 +322,13 @@ function ocWorkerPlugin(): Plugin {
                         "Content-Type",
                         fileName.endsWith(".map") ? "application/json" : "text/javascript",
                     );
+                    if (fileName === "transformers_webgpu_worker.js") {
+                        // Its request URL includes the current website version. Model Manager
+                        // consumes that exact response before enabling inference, so later Worker
+                        // construction must reuse the browser cache rather than download on Run.
+                        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+                    }
+                    res.setHeader("Content-Length", String(fs.statSync(filePath).size));
                     fs.createReadStream(filePath).pipe(res);
                     return;
                 }
@@ -307,8 +342,16 @@ function ocWorkerPlugin(): Plugin {
                 "../openchat-agent/src",
                 "../openchat-shared/src",
                 "./src/workers/transformersWebGpuInference.worker.ts",
+                "./src/utils/transformersWebGpuDeviceRetirement.ts",
                 "./src/utils/transformersWebGpuProtocol.ts",
                 "./src/utils/transformersWebGpuProcessorConfig.ts",
+                "./src/utils/gemma4WebGpuEmbedding.ts",
+                "./src/utils/imageDimensions.ts",
+                "./src/utils/transformersWebGpuAudio.ts",
+                "./src/utils/transformersWebGpuImageLayout.ts",
+                "./src/utils/transformersWebGpuOrtDiagnostics.ts",
+                "./src/utils/transformersWebGpuPipelineCompilation.ts",
+                "./transformersWebGpuSequentialSessions.mjs",
             ].map((d) => path.resolve(__dirname, d));
 
             let timer: ReturnType<typeof setTimeout> | undefined;

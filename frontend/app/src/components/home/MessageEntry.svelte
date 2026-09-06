@@ -36,7 +36,7 @@
         userGroupMentionRegex,
         userIdMentionRegex,
     } from "@client";
-    import { getContext, tick } from "svelte";
+    import { getContext, onDestroy, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -46,11 +46,12 @@
     import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import { toastStore } from "../../stores/toast";
+    import { parseLocalAiCommand, routeComposerInput } from "../../utils/localAiCommand";
     import {
-        parseLocalAiCommand,
-        routeComposerInput,
-        runLocalAiCommand,
-    } from "../../utils/localAiCommand";
+        captureLocalAiComposerContext,
+        createLocalAiComposerRunner,
+        localAiComposerContextIsCurrent,
+    } from "../../utils/localAiComposer";
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
@@ -65,6 +66,11 @@
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
 
     const client = getContext<OpenChat>("client");
+    const localAiComposer = createLocalAiComposerRunner();
+    let componentMounted = true;
+    onDestroy(() => {
+        componentMounted = false;
+    });
 
     interface Props {
         chat: ChatSummary;
@@ -323,6 +329,12 @@
                 toastStore.showFailureToast(i18nKey("Type a prompt after /ai"));
                 return;
             }
+            if (localAiComposer.running) {
+                toastStore.showFailureToast(
+                    i18nKey("An on-device model request is already running."),
+                );
+                return;
+            }
             void handleLocalAiCommand(prompt);
             afterSendMessage();
             return;
@@ -347,26 +359,28 @@
         afterSendMessage();
     }
 
-    // Post the prompt as the user's message (so the question is visible in-chat), run the on-device
-    // model, then post its reply as a real message marked with a robot glyph. The reply is sent by
-    // the current user because the local model has no on-chain identity of its own.
+    // Capture the selected media and destination before the normal send clears composer state.
+    // A late result is discarded after account/chat/thread changes or component teardown.
     async function handleLocalAiCommand(prompt: string) {
-        onSendMessage([prompt, [], containsMarkdown]);
-        const outcome = await runLocalAiCommand(prompt);
-        if (outcome.kind === "ok") {
-            const reply = outcome.reply.length > 0 ? outcome.reply : "(no output)";
-            client.sendMessageWithContent(
-                messageContext,
-                { kind: "text_content", text: `🤖 ${reply}` },
-                true,
-                [],
-                false,
-            );
-        } else if (outcome.kind === "unavailable") {
-            toastStore.showFailureToast(
-                i18nKey("On-device model unavailable — download and select a model in Settings."),
-            );
-        } else {
+        const captured = captureLocalAiComposerContext($currentUserIdStore, messageContext);
+        const capturedAttachment = attachment;
+        const capturedReply = replyingTo?.content;
+        const capturedMarkdown = containsMarkdown;
+        const stillCurrent = () =>
+            componentMounted &&
+            localAiComposerContextIsCurrent(captured, $currentUserIdStore, messageContext);
+        const outcome = await localAiComposer.run({
+            client,
+            prompt,
+            attachment: capturedAttachment,
+            repliedContent: capturedReply,
+            captured,
+            stillCurrent,
+            onAccepted: () => onSendMessage([prompt, [], capturedMarkdown]),
+        });
+        if (outcome.kind === "unavailable") {
+            toastStore.showFailureToast(i18nKey(outcome.reason));
+        } else if (outcome.kind === "error") {
             toastStore.showFailureToast(i18nKey(`On-device model error: ${outcome.error}`));
         }
     }

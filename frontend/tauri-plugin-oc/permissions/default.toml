@@ -28,5 +28,6 @@ permissions = [
     "allow-system-resources",
     "allow-list-local-models",
     "allow-delete-model",
+    "allow-inference-runtime-available",
     "allow-infer",
 ]

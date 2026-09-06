@@ -31,6 +31,7 @@ Default permissions for the plugin
 - `allow-system-resources`
 - `allow-list-local-models`
 - `allow-delete-model`
+- `allow-inference-runtime-available`
 - `allow-infer`
 
 ## Permission Table
@@ -350,6 +351,32 @@ Enables the infer command without any pre-configured scope.
 <td>
 
 Denies the infer command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-inference-runtime-available`
+
+</td>
+<td>
+
+Enables the inference_runtime_available command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-inference-runtime-available`
+
+</td>
+<td>
+
+Denies the inference_runtime_available command without any pre-configured scope.
 
 </td>
 </tr>

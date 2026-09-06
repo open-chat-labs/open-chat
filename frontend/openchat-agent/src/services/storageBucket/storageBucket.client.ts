@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import { Actor, type ActorSubclass, type HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
 import { idlFactory, type StorageBucketService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
@@ -17,11 +17,25 @@ import type {
     ForwardFileResponse,
     UploadChunkResponse,
     VaultFileChunkResponse,
+    PublicBlobMediaKind,
 } from "@shared";
+import {
+    createAnonymousPublicBlobAgent,
+    downloadPublicMediaBlob,
+    MAX_PUBLIC_IMAGE_BYTES,
+    publicBlobIdlFactory,
+    type PublicBlobHttpService,
+} from "./publicBlob";
 
 export class StorageBucketClient extends CandidCanisterAgent<StorageBucketService> {
+    readonly #publicBlobService: ActorSubclass<PublicBlobHttpService>;
+
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, idlFactory, "StorageBucket");
+        this.#publicBlobService = Actor.createActor<PublicBlobHttpService>(publicBlobIdlFactory, {
+            agent: createAnonymousPublicBlobAgent(agent),
+            canisterId,
+        });
     }
 
     // A page of the vault's tamper-evident access log, readable by designated vault reviewers
@@ -90,5 +104,20 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
 
     fileInfo(fileId: bigint): Promise<FileInfoResponse> {
         return this.handleResponse(this.service.file_info({ file_id: fileId }), fileInfoResponse);
+    }
+
+    downloadPublicBlob(
+        fileId: bigint,
+        maxBytes = MAX_PUBLIC_IMAGE_BYTES,
+        mediaKind?: PublicBlobMediaKind,
+    ): Promise<Uint8Array | undefined> {
+        // This optional public fallback has a strict query/deadline budget. Do not
+        // route it through the authenticated client's retrying query wrapper.
+        return downloadPublicMediaBlob(
+            fileId,
+            maxBytes,
+            (request) => this.#publicBlobService.http_request(request),
+            mediaKind,
+        );
     }
 }

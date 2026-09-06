@@ -29,3 +29,7 @@ store = ["tauri-plugin-oc/store"]
 # Enables the on-device inference runtime in the bundled app (llama.cpp via the plugin). Off by default so
 # normal/dev builds stay fast; the shipping build turns it on (e.g. `cargo tauri build --features inference`).
 inference = ["tauri-plugin-oc/inference"]
+# Selects the feature-flagged Android Transformers/WebGPU packaging contract. Keep this separate
+# from `inference`: ordinary native llama.cpp builds must not accidentally claim the all-WebGPU APK
+# contract just because a transient process environment happened to be present.
+transformers-webgpu-android = []

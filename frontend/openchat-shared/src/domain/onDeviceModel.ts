@@ -1,22 +1,19 @@
 // On-device model manager + inference — a generic, bring-your-own-model capability.
 //
-// Nothing is bundled: the user browses a catalog, downloads/selects/removes models, and any in-client
-// feature can run the selected model with its OWN prompt (text and/or image). Inference executes in the
-// native client runtime; OpenChat has no opinion on a caller's prompt or how it parses the output.
+// The user downloads/selects/removes model weights. Enabled builds package the compatible runtime,
+// supporting graphs and notices; weights remain separately downloaded and verified. Any in-client
+// feature supplies its OWN prompt and optional media and owns parsing the model's output.
 //
 // This module is the generic CONTRACT. The catalog is data (fetched from a configurable source); the
-// runtime is pluggable (a catalog entry declares which native backend can load it); and the inference
-// API is caller-driven. No model and no model-specific logic ships in OpenChat.
+// runtime is pluggable (native llama.cpp or the explicitly enabled all-WebGPU runtime), and the
+// inference API is caller-driven. Runtime/model compatibility code is generic, not app-domain logic.
 
-export type ModelModality = "text" | "image";
+export type ModelModality = "text" | "image" | "audio";
 
-// Which native backend can load/run a given model. Pluggable — this is a named, extensible union so more
-// backends can be added without changing the catalog or inference contract; a catalog entry declares its
-// runtime so the client can match it against the backends the current build supports. Chosen runtime:
-// llama.cpp via the `llama-cpp-2` crate, on BOTH desktop and mobile — Gemma 4 text+image via a GGUF model +
-// an mmproj vision projector; it compiles uniformly into the Rust plugin (desktop MSVC, Android NDK, iOS
-// XCFramework), so one runtime + one model format serves every platform.
-export type ModelRuntime = "llama-cpp";
+// A build matches a model to its supported runtime and artifact format. Native llama.cpp uses GGUF
+// and optional projectors; explicitly enabled browser/Android acceleration uses pinned ONNX graphs
+// with Transformers.js. Selecting all-WebGPU does not enable an automatic CPU/native fallback.
+export type ModelRuntime = "llama-cpp" | "transformers-webgpu";
 
 export interface ModelFile {
     // Publicly reachable download URL (the catalog is BYO-model — files are not hosted by OpenChat).
@@ -64,7 +61,8 @@ export interface ManagedModel {
 }
 
 // The generic inference request — the seam every in-client consumer calls through. The prompt is
-// caller-supplied; OpenChat passes it (and any image/text) to the selected on-device model unchanged.
+// caller-supplied; OpenChat passes it (and any image/audio/text) to the selected on-device model
+// unchanged. Media bytes remain optional because a runtime may support only a subset of modalities.
 export interface InferenceRequest {
     // A model the user has downloaded and selected. If omitted, the manager's currently-selected model.
     modelId?: string;
@@ -72,6 +70,10 @@ export interface InferenceRequest {
     prompt: string;
     // Optional image (e.g. extracted from a message) for vision-capable models.
     image?: Uint8Array;
+    // Optional encoded audio (e.g. an OpenChat voice message) for audio-capable models. The MIME
+    // type describes these exact bytes; callers must provide both fields together.
+    audio?: Uint8Array;
+    audioMimeType?: string;
     // Optional additional text context.
     text?: string;
     maxTokens?: number;
@@ -81,14 +83,14 @@ export interface InferenceRequest {
 
 export type InferenceResult =
     | { kind: "ok"; text: string }
-    // On-device inference is not available in this client (e.g. a plain web/PWA build with no native
-    // runtime). Callers must degrade gracefully — there is no autonomous fallback.
+    // A compatible runtime/model is not ready in this client. The caller receives the reason and
+    // owns the next interaction; there is no automatic fallback to another runtime or provider.
     | { kind: "unavailable"; reason: string }
     | { kind: "error"; error: string };
 
 // Capability descriptor the client reports so a consumer can decide whether to offer an AI action.
 export interface OnDeviceInferenceCapability {
-    // True only when a native runtime is present (native client) AND a compatible model is selected.
+    // Whether the selected runtime/model reports ready in this client; execution can still fail.
     available: boolean;
     runtimesSupported: ModelRuntime[];
     selectedModelId?: string;

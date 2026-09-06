@@ -6,17 +6,63 @@ on:
     paths:
       - ".github/dependabot.yml"
       - ".github/security/openchat-pr1-security-baseline.json"
+      - ".github/workflows/frontend.yaml"
       - ".github/workflows/on_device_model_security.yaml"
+      - ".gitattributes"
       - "Cargo.lock"
       - "Cargo.toml"
       - "frontend/**/package.json"
       - "frontend/package-lock.json"
-      - "frontend/app/src/utils/modelCatalog*"
+      - "frontend/vitest.config.ts"
+      - "frontend/vite-env.d.ts"
+      - "frontend/global.d.ts"
+      - "frontend/app/.ic-assets.json5"
+      - "frontend/app/vitest.config.ts"
+      - "frontend/app/vite.config.ts"
+      - "frontend/app/tsconfig.json"
+      - "frontend/app/src/bootstrapSecurity*"
+      - "frontend/app/src/utils/model*"
       - "frontend/app/src/utils/onDeviceInference*"
-      - "frontend/openchat-shared/src/domain/onDeviceModel.ts"
+      - "frontend/app/src/utils/nativeInferenceRuntimeBridge*"
+      - "frontend/app/src/utils/imageDimensions*"
+      - "frontend/app/src/utils/webInference*"
+      - "frontend/app/src/utils/transformersWebGpu*"
+      - "frontend/app/src/utils/gemma4WebGpu*"
+      - "frontend/app/src/utils/localAi*"
+      - "frontend/app/src/utils/localAudioInput*"
+      - "frontend/app/src/utils/configuredLocalBlobUrl*"
+      - "frontend/app/src/utils/localImageInput*"
+      - "frontend/app/src/stores/customModels*"
+      - "frontend/app/src/stores/onDeviceModels*"
+      - "frontend/app/src/stores/transformersWebGpu*"
+      - "frontend/app/src/workers/transformersWebGpu*"
+      - "frontend/app/src/components*/**/ModelManager.svelte"
+      - "frontend/app/src/components/home/MessageEntry.svelte"
+      - "frontend/app/src/components_mobile/home/MessageEntry.svelte"
+      - "frontend/app/src/components_shared/WebInferenceRuntimeSettings*"
+      - "frontend/app/transformersWebGpu*"
+      - "frontend/app/build*"
+      - "frontend/app/rollup*"
+      - "frontend/app/modelAssetNotices.mjs"
+      - "frontend/app/model-asset-notices/**"
+      - "frontend/app/model-overrides/**"
+      - "frontend/openchat-shared/src/domain/onDeviceModel*"
+      - "frontend/openchat-agent/src/services/registry/modelCatalog*"
+      - "frontend/openchat-client/src/openchat.ts"
+      - "frontend/openchat-worker/src/worker.ts"
+      - "frontend/openchat-shared/src/domain/worker.ts"
+      - "frontend/openchat-agent/src/services/openchatAgent.ts"
+      - "frontend/openchat-agent/src/services/storageBucket/publicBlob*"
+      - "frontend/openchat-agent/src/services/storageBucket/storageBucket.client.ts"
       - "frontend/src-tauri/**"
       - "frontend/tauri-plugin-oc/**"
       - "scripts/check_openchat_pr1_security.mjs"
+      - "scripts/model_ci_coverage*"
+      - "scripts/model_asset_notices*"
+      - "scripts/verify_webgpu_distribution*"
+      - "scripts/android_bundle*"
+  push:
+    branches: [codex/pr1-local-models]
   workflow_dispatch:
 
 permissions:
@@ -88,14 +134,18 @@ jobs:
           sudo apt-get install --yes build-essential libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf libclang-dev cmake
       - name: Run downloader, store and boundary unit tests
         run: cargo test -p tauri-plugin-oc --lib
-      - name: Compile the shipping plugin feature set (Linux)
+      - name: Compile both shipping app feature sets (Linux)
         if: runner.os == 'Linux'
-        run: cargo check -p tauri-plugin-oc --features inference,store
-      - name: Compile the shipping plugin feature set (Windows)
+        run: |
+          cargo check -p open-chat --features inference
+          cargo check -p open-chat --features inference,store
+      - name: Compile both shipping app feature sets (Windows)
         if: runner.os == 'Windows'
         env:
           CMAKE_GENERATOR: Visual Studio 17 2022
-        run: cargo check -p tauri-plugin-oc --features inference,store
+        run: |
+          cargo check -p open-chat --features inference
+          cargo check -p open-chat --features inference,store
 
   frontend-contracts:
     name: Frontend model contracts
@@ -115,15 +165,27 @@ jobs:
         run: npm ci
       - name: Run all local-model frontend contracts
         working-directory: frontend
+        # Vitest uses literal path filters, not shell globs. Prefixes also select
+        # Gemma/audio/lifecycle/build variants and future suites in these families.
         run: >-
-          npm --workspace app test --
-          src/stores/customModels.spec.ts
-          src/utils/localAiCommand.spec.ts
-          src/utils/modelCatalog.spec.ts
-          src/utils/modelSuitability.spec.ts
-          src/utils/onDeviceInference.spec.ts
-          src/utils/webInference.spec.ts
-          src/bootstrapSecurity.spec.ts
+          npm test --
+          app/rollup-plugin-wasm-url
+          app/src/stores/customModels
+          app/src/stores/onDeviceModels
+          app/src/stores/transformersWebGpu
+          app/src/components_shared/WebInferenceRuntimeSettings
+          app/src/utils/localAi
+          app/src/utils/localAudioInput
+          app/src/utils/configuredLocalBlobUrl
+          app/src/utils/localImageInput
+          app/src/utils/model
+          app/src/utils/onDeviceInference
+          app/src/utils/nativeInferenceRuntimeBridge
+          app/src/utils/webInference
+          app/src/utils/transformersWebGpu
+          app/src/utils/gemma4WebGpu
+          app/src/bootstrapSecurity
+          openchat-agent/src/services/storageBucket/publicBlob
 
   real-text-inference:
     name: Real inference with pinned 14 MB fixture

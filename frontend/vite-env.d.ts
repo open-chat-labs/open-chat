@@ -38,6 +38,8 @@ interface ImportMetaEnv {
     readonly OC_STORAGE_INDEX_CANISTER: string;
     readonly OC_KLIPY_APIKEY: string;
     readonly OC_TRANSLATIONS_CANISTER: string;
+    readonly OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE: string | undefined;
+    readonly OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY: string | undefined;
     readonly OC_USER_INDEX_CANISTER: string;
     readonly OC_USERGEEK_APIKEY: string;
     readonly OC_VIDEO_BRIDGE_URL: string;

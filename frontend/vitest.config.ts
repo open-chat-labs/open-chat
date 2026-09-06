@@ -43,6 +43,7 @@ export default defineConfig({
         environment: "jsdom",
         include: [
             "app/src/**/*.{test,spec}.ts",
+            "app/rollup-plugin-wasm-url*.{test,spec}.ts",
             "openchat-shared/src/**/*.{test,spec}.ts",
             "openchat-client/src/**/*.{test,spec}.ts",
             "openchat-agent/src/**/*.{test,spec}.ts",

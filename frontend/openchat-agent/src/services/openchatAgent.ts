@@ -15,6 +15,7 @@ import type {
     ArchiveChatResponse,
     AuthenticationPrincipalsResponse,
     BlobReference,
+    PublicBlobMediaKind,
     BlockUserResponse,
     BotCommandResponse,
     BotDefinition,
@@ -2281,6 +2282,26 @@ export class OpenChatAgent extends EventTarget {
             this._storageBucketClients.set(bucketCanisterId, bucketClient);
         }
         return bucketClient.vaultFileChunk(fileId, chunkIndex);
+    }
+
+    async downloadPublicBlob(
+        ref: BlobReference,
+        maxBytes: number,
+        mediaKind?: PublicBlobMediaKind,
+    ): Promise<Uint8Array | undefined> {
+        if (offline()) return undefined;
+        try {
+            // Sender-selected public references use an anonymous, request-bounded actor,
+            // not the authenticated vault's trusted-bucket client cache.
+            const bucketClient = new StorageBucketClient(
+                this.identity,
+                this._agent,
+                ref.canisterId,
+            );
+            return await bucketClient.downloadPublicBlob(ref.blobId, maxBytes, mediaKind);
+        } catch {
+            return undefined;
+        }
     }
 
     setModerationFlags(flags: number): Promise<boolean> {

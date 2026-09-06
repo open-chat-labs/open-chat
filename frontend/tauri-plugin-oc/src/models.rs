@@ -120,10 +120,10 @@ pub struct UpdateChatShortcutsResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ModelFileSpec {
     pub url: String,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sha256: Option<String>,
     pub bytes: u64,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub filename: Option<String>,
 }
 
@@ -181,6 +181,9 @@ pub struct LocalModel {
     pub model_id: String,
     pub runtime: String,
     pub size_bytes: u64,
+    /// Exact verified download manifest. The frontend compares this identity with its trusted
+    /// catalog entry, so a same-size artifact revision cannot be mistaken for the current model.
+    pub files: Vec<ModelFileSpec>,
     pub path: String,
 }
 

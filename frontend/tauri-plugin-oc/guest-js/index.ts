@@ -23,6 +23,7 @@ export {
     systemResources,
     listLocalModels,
     deleteModel,
+    inferenceRuntimeAvailable,
     infer,
     onModelDownloadProgress,
     type ModelFileSpec,

@@ -169,12 +169,12 @@ fn is_public_ip(ip: IpAddr) -> bool {
                 return is_public_ip(IpAddr::V4(mapped));
             }
             let segments = ip.segments();
-            !ip.is_unspecified()
-                && !ip.is_loopback()
-                && !ip.is_multicast()
-                && (segments[0] & 0xfe00) != 0xfc00
-                && (segments[0] & 0xffc0) != 0xfe80
-                && !(segments[0] == 0x2001 && segments[1] == 0x0db8)
+            !(ip.is_unspecified()
+                || ip.is_loopback()
+                || ip.is_multicast()
+                || (segments[0] & 0xfe00) == 0xfc00
+                || (segments[0] & 0xffc0) == 0xfe80
+                || (segments[0] == 0x2001 && segments[1] == 0x0db8))
         }
     }
 }
@@ -293,13 +293,12 @@ fn validate_infer_request(req: &InferRequest) -> Result<(), String> {
     {
         return Err("image is too large".to_string());
     }
-    if let Some(schema) = &req.response_schema {
-        if schema.len() > MAX_SCHEMA_BYTES
+    if let Some(schema) = &req.response_schema
+        && (schema.len() > MAX_SCHEMA_BYTES
             || !serde_json::from_str::<serde_json::Value>(schema)
-                .is_ok_and(|value| value.is_object())
-        {
-            return Err("response schema is invalid or too large".to_string());
-        }
+                .is_ok_and(|value| value.is_object()))
+    {
+        return Err("response schema is invalid or too large".to_string());
     }
     let max_tokens = req.max_tokens.unwrap_or(512);
     if max_tokens == 0 || max_tokens > MAX_OUTPUT_TOKENS {
@@ -683,16 +682,14 @@ impl<R: Runtime> ModelManager<R> {
                 fs::rename(&dir, &backup_path).map_err(|e| e.to_string())?;
             }
             if let Err(promotion_error) = fs::rename(&staging_path, &dir) {
-                if had_existing {
-                    if let Err(rollback_error) = fs::rename(&backup_path, &dir) {
-                        // Neither verified replacement nor known-good rollback is live. The cache
-                        // must fail closed rather than retain content with no verified store state.
-                        #[cfg(feature = "inference")]
-                        crate::inference::invalidate_model_cache(&dir);
-                        return Err(format!(
-                            "failed to promote model: {promotion_error}; failed to restore previous model: {rollback_error}"
-                        ));
-                    }
+                if had_existing && let Err(rollback_error) = fs::rename(&backup_path, &dir) {
+                    // Neither verified replacement nor known-good rollback is live. The cache
+                    // must fail closed rather than retain content with no verified store state.
+                    #[cfg(feature = "inference")]
+                    crate::inference::invalidate_model_cache(&dir);
+                    return Err(format!(
+                        "failed to promote model: {promotion_error}; failed to restore previous model: {rollback_error}"
+                    ));
                 }
                 return Err(promotion_error.to_string());
             }
@@ -814,6 +811,7 @@ impl<R: Runtime> ModelManager<R> {
                 model_id,
                 runtime: manifest.runtime,
                 size_bytes: manifest.size_bytes,
+                files: manifest.files,
                 path: entry.path().to_string_lossy().to_string(),
             });
         }
@@ -1055,6 +1053,7 @@ mod cycle_tests {
             model_id: MODEL_ID.to_string(),
             runtime: "llama-cpp".to_string(),
             size_bytes: total,
+            files: Vec::new(),
             path: dir.to_string_lossy().to_string(),
         };
         fs::write(
@@ -1239,6 +1238,12 @@ mod helper_tests {
             model_id: "gemma-4-e2b-it-q4".to_string(),
             runtime: "llama-cpp".to_string(),
             size_bytes: 4_092_392_352,
+            files: vec![ModelFileSpec {
+                url: "https://models.example/gemma.gguf".to_string(),
+                sha256: Some("a".repeat(64)),
+                bytes: 4_092_392_352,
+                filename: None,
+            }],
             path: dir.to_string_lossy().to_string(),
         };
 
@@ -1256,6 +1261,10 @@ mod helper_tests {
         assert_eq!(read_back.model_id, manifest.model_id);
         assert_eq!(read_back.runtime, manifest.runtime);
         assert_eq!(read_back.size_bytes, manifest.size_bytes);
+        assert_eq!(read_back.files.len(), 1);
+        assert_eq!(read_back.files[0].url, manifest.files[0].url);
+        assert_eq!(read_back.files[0].sha256, manifest.files[0].sha256);
+        assert_eq!(read_back.files[0].bytes, manifest.files[0].bytes);
         assert_eq!(read_back.path, manifest.path);
 
         // Serde rename_all = camelCase must be honoured on the wire (TS reads modelId / sizeBytes).
@@ -1268,8 +1277,50 @@ mod helper_tests {
             json.contains("\"sizeBytes\""),
             "manifest must use camelCase sizeBytes, got {json}"
         );
+        assert!(
+            !json.contains("\"filename\":null"),
+            "an absent optional filename must be omitted so native list output matches the catalog identity, got {json}"
+        );
 
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn manifest_and_list_output_canonicalize_absent_optional_file_identity() {
+        let manifest = ModelManifestV1 {
+            version: 1,
+            model_id: "gemma-4-e2b-it-q4".to_string(),
+            runtime: "llama-cpp".to_string(),
+            size_bytes: 42,
+            files: vec![ModelFileSpec {
+                url: "https://models.example/gemma.gguf".to_string(),
+                sha256: Some("a".repeat(64)),
+                bytes: 42,
+                filename: None,
+            }],
+        };
+
+        // download_model persists ModelManifestV1. New manifests omit an absent filename instead of
+        // encoding it as null, but old manifests containing null must remain readable after upgrade.
+        let manifest_json = serde_json::to_value(&manifest).expect("serialize manifest");
+        assert!(manifest_json["files"][0].get("filename").is_none());
+        let mut legacy_json = manifest_json.clone();
+        legacy_json["files"][0]["filename"] = serde_json::Value::Null;
+        let legacy: ModelManifestV1 =
+            serde_json::from_value(legacy_json).expect("read legacy null filename");
+        assert_eq!(legacy.files[0].filename, None);
+
+        // list_local_models returns the same file specs inside LocalModel. Its wire JSON must use the
+        // same canonical identity, so the frontend cannot see null after reading a legacy manifest.
+        let listed = LocalModel {
+            model_id: legacy.model_id,
+            runtime: legacy.runtime,
+            size_bytes: legacy.size_bytes,
+            files: legacy.files,
+            path: "models/gemma-4-e2b-it-q4".to_string(),
+        };
+        let listed_json = serde_json::to_value(listed).expect("serialize listed model");
+        assert!(listed_json["files"][0].get("filename").is_none());
     }
 }
 
@@ -1482,6 +1533,44 @@ mod security_regression_tests {
     }
 
     #[test]
+    fn ipv6_network_policy_preserves_range_boundaries_and_mapped_ipv4_checks() {
+        for (address, allowed) in [
+            ("::", false),
+            ("::1", false),
+            ("fc00::", false),
+            ("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", false),
+            ("fe80::", false),
+            ("febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff", false),
+            ("ff00::", false),
+            ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", false),
+            ("2001:db8::", false),
+            ("2001:db8:ffff:ffff:ffff:ffff:ffff:ffff", false),
+            ("2001:db7:ffff:ffff:ffff:ffff:ffff:ffff", true),
+            ("2001:db9::", true),
+            ("2001:4860:4860::8888", true),
+        ] {
+            assert_eq!(is_public_ip(address.parse().unwrap()), allowed, "{address}");
+        }
+
+        for ipv4 in [
+            Ipv4Addr::UNSPECIFIED,
+            Ipv4Addr::LOCALHOST,
+            Ipv4Addr::BROADCAST,
+            Ipv4Addr::new(10, 0, 0, 1),
+            Ipv4Addr::new(169, 254, 169, 254),
+            Ipv4Addr::new(192, 0, 2, 1),
+            Ipv4Addr::new(224, 0, 0, 1),
+            Ipv4Addr::new(1, 1, 1, 1),
+        ] {
+            assert_eq!(
+                is_public_ip(IpAddr::V6(ipv4.to_ipv6_mapped())),
+                is_public_ip(IpAddr::V4(ipv4)),
+                "mapped IPv4 address must retain the IPv4 policy: {ipv4}"
+            );
+        }
+    }
+
+    #[test]
     fn declared_and_streamed_sizes_fail_closed() {
         assert!(validate_content_length(Some(3), 3).is_ok());
         assert!(validate_content_length(None, 3).is_err());
@@ -1532,8 +1621,19 @@ mod security_regression_tests {
         req.response_schema = Some("x".repeat(MAX_SCHEMA_BYTES + 1));
         assert!(validate_infer_request(&req).is_err());
 
+        for schema in ["[]", "null", "false", "\"schema\"", "{", ""] {
+            let mut req = base.clone();
+            req.response_schema = Some(schema.to_string());
+            assert!(validate_infer_request(&req).is_err(), "{schema:?}");
+        }
+
         let mut req = base.clone();
-        req.response_schema = Some("[]".to_string());
+        req.response_schema = Some("{}".to_string());
+        assert!(validate_infer_request(&req).is_ok());
+
+        req.response_schema = Some(format!("{{}}{}", " ".repeat(MAX_SCHEMA_BYTES - 2)));
+        assert!(validate_infer_request(&req).is_ok());
+        req.response_schema.as_mut().unwrap().push(' ');
         assert!(validate_infer_request(&req).is_err());
 
         for max_tokens in [0, MAX_OUTPUT_TOKENS + 1] {

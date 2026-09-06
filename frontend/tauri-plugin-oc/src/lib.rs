@@ -64,6 +64,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         commands::system_resources,
         commands::list_local_models,
         commands::delete_model,
+        commands::inference_runtime_available,
         commands::infer,
     ]);
 

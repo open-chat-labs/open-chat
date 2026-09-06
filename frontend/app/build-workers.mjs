@@ -8,16 +8,14 @@ import { fileURLToPath } from "node:url";
 import { build } from "vite";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
 import { transformersWebGpuSequentialSessionsPlugin } from "./transformersWebGpuSequentialSessions.mjs";
+import { transformersWebGpuFeatureEnabled } from "./transformersWebGpuFeatureFlag.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const transformersWebGpuOrtJspiAlias = {
     find: "onnxruntime-web/webgpu",
     replacement: "onnxruntime-web/jspi",
 };
-const transformersWebGpuSpikeEnabled =
-    process.env.OC_BUILD_ENV === "development" &&
-    process.env.OC_DFX_NETWORK === "local" &&
-    process.env.OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE === "true";
+const transformersWebGpuSpikeEnabled = transformersWebGpuFeatureEnabled(process.env);
 
 const targets = [
     {

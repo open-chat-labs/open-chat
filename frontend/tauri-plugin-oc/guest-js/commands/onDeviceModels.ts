@@ -7,9 +7,9 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export type ModelFileSpec = {
     url: string;
-    sha256?: string;
+    sha256?: string | null;
     bytes: number;
-    filename?: string;
+    filename?: string | null;
 };
 
 export type DownloadModelRequest = {
@@ -42,6 +42,8 @@ export type LocalModel = {
     modelId: string;
     runtime: string;
     sizeBytes: number;
+    /** Exact per-file identity recorded after native SHA-256 verification. */
+    files: ModelFileSpec[];
     path: string;
 };
 
@@ -82,6 +84,11 @@ export async function systemResources(): Promise<SystemResources> {
 
 export async function listLocalModels(): Promise<LocalModel[]> {
     return await invoke<LocalModel[]>("plugin:oc|list_local_models");
+}
+
+/** Whether this installed native binary includes its optional inference runtime. */
+export async function inferenceRuntimeAvailable(): Promise<boolean> {
+    return await invoke<boolean>("plugin:oc|inference_runtime_available");
 }
 
 export async function deleteModel(modelId: string): Promise<void> {

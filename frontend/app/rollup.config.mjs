@@ -9,6 +9,7 @@ import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import autoprefixer from "autoprefixer";
 import fs from "fs-extra";
+import { createHash } from "node:crypto";
 import path from "path";
 import { rimrafSync } from "rimraf";
 import copy from "rollup-plugin-copy";
@@ -21,6 +22,16 @@ import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
 import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
 import { wasmUrlAsset } from "./rollup-plugin-wasm-url.mjs";
+import { modelAssetNoticesPlugin } from "./modelAssetNotices.mjs";
+import { transformersWebGpuFeatureEnabled } from "./transformersWebGpuFeatureFlag.mjs";
+import {
+    TRANSFORMERS_QWEN_ARTIFACTS,
+    TRANSFORMERS_WEBGPU_RUNTIME_ASSETS,
+} from "./src/utils/transformersWebGpuProtocol.ts";
+import {
+    patchQwen3Vl2bDecoderGraph,
+    QWEN3_VL_2B_DECODER_PATCHED_BYTES,
+} from "./transformersWebGpuDecoderGraph.mjs";
 import {
     __dirname,
     copyFile,
@@ -64,21 +75,42 @@ function clean() {
     };
 }
 
-const { version, production } = initEnv();
+const { version, production, development, env } = initEnv();
+
+// Vite substitutes import.meta.env built-ins while serving the browser app. Native packages use
+// this Rollup build instead, so every built-in consumed by shared UI code must be replaced here as
+// well. Leaving `import.meta.env.DEV` in an Android bundle makes the first model-surface lookup throw
+// because a plain WebView module exposes `import.meta`, but not Vite's synthetic `env` object.
+function rejectUnresolvedViteEnv() {
+    return {
+        name: "reject-unresolved-vite-env",
+        generateBundle(_options, bundle) {
+            const unresolvedChunks = Object.values(bundle)
+                .filter(
+                    (artifact) =>
+                        artifact.type === "chunk" && artifact.code.includes("import.meta.env"),
+                )
+                .map((artifact) => artifact.fileName);
+            if (unresolvedChunks.length > 0) {
+                this.error(
+                    `Unresolved import.meta.env reference in ${unresolvedChunks.join(", ")}`,
+                );
+            }
+        },
+    };
+}
 
 const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
 
-const transformersWebGpuSpikeEnabled =
-    process.env.OC_BUILD_ENV === "development" &&
-    process.env.OC_DFX_NETWORK === "local" &&
-    process.env.OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE === "true";
-const localOnlyTransformersWebGpuSpike = JSON.stringify(
+const transformersWebGpuSpikeEnabled = transformersWebGpuFeatureEnabled(process.env);
+const explicitTransformersWebGpuFlag = JSON.stringify(
     transformersWebGpuSpikeEnabled ? "true" : "false",
 );
-const isNativeApp = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios";
+const isNativeAndroid = process.env.OC_APP_TYPE === "android";
+const isNativeApp = isNativeAndroid || process.env.OC_APP_TYPE === "ios";
 
 const transformersWebGpuCopyTargets =
-    isNativeApp || !transformersWebGpuSpikeEnabled
+    !transformersWebGpuSpikeEnabled || (isNativeApp && !isNativeAndroid)
         ? []
         : [
               {
@@ -95,6 +127,71 @@ const transformersWebGpuCopyTargets =
                   rename: "huggingface-transformers-Apache-2.0.txt",
               },
           ];
+
+function packagedAndroidTransformersGraphs() {
+    return {
+        name: "packaged-android-transformers-graphs",
+        generateBundle() {
+            if (!transformersWebGpuSpikeEnabled || (isNativeApp && !isNativeAndroid)) return;
+            // Production web and Android both redistribute exact reviewed runtime bytes.
+            // Never let a different installed ORT package silently become a release asset.
+            for (const artifact of TRANSFORMERS_WEBGPU_RUNTIME_ASSETS.filter(
+                (asset) => asset.kind === "pinned",
+            )) {
+                const source = fs.readFileSync(
+                    path.resolve(
+                        __dirname,
+                        "../node_modules/onnxruntime-web/dist",
+                        path.basename(artifact.path),
+                    ),
+                );
+                if (
+                    source.byteLength !== artifact.bytes ||
+                    createHash("sha256").update(source).digest("hex") !== artifact.sha256
+                ) {
+                    throw new Error(
+                        `Packaged runtime asset differs from its immutable manifest: ${artifact.path}`,
+                    );
+                }
+            }
+            const graphDir = path.resolve(__dirname, "model-overrides/qwen3vl2b/onnx");
+            const decoder = patchQwen3Vl2bDecoderGraph(
+                fs.readFileSync(path.join(graphDir, "decoder_model_merged_q4.onnx")),
+            );
+            if (decoder.byteLength !== QWEN3_VL_2B_DECODER_PATCHED_BYTES) {
+                throw new Error("The packaged Qwen decoder byte count changed.");
+            }
+            const vision = fs.readFileSync(path.join(graphDir, "vision_encoder_q4.onnx"));
+            for (const [name, bytes] of [
+                ["decoder_model_merged_q4.onnx", decoder],
+                ["vision_encoder_q4.onnx", vision],
+            ]) {
+                const artifact = TRANSFORMERS_QWEN_ARTIFACTS.find(
+                    (entry) => entry.path === `onnx/${name}`,
+                );
+                if (
+                    !artifact ||
+                    bytes.byteLength !== artifact.bytes ||
+                    createHash("sha256").update(bytes).digest("hex") !== artifact.sha256
+                ) {
+                    throw new Error(
+                        `Packaged model graph differs from its immutable manifest: ${name}`,
+                    );
+                }
+            }
+            this.emitFile({
+                type: "asset",
+                fileName: "assets/transformers-webgpu/qwen3vl2b/onnx/decoder_model_merged_q4.onnx",
+                source: decoder,
+            });
+            this.emitFile({
+                type: "asset",
+                fileName: "assets/transformers-webgpu/qwen3vl2b/onnx/vision_encoder_q4.onnx",
+                source: vision,
+            });
+        },
+    };
+}
 
 export default {
     input: `./src/main.ts`,
@@ -180,6 +277,7 @@ export default {
             include: [
                 "./src/**/*",
                 "../vite-env.d.ts",
+                "../global.d.ts",
                 "../node_modules/component-lib/src/**/*.ts",
                 // The former sub-packages are now compiled from source.
                 "../openchat-shared/src/**/*",
@@ -197,6 +295,13 @@ export default {
 
         replace({
             preventAssignment: true,
+            // Match Vite's builtin substitutions and erase any remaining bare env-object guard.
+            "import.meta.env.MODE": JSON.stringify(env),
+            "import.meta.env.DEV": JSON.stringify(development),
+            "import.meta.env.PROD": JSON.stringify(!development),
+            "import.meta.env.SSR": "false",
+            "import.meta.env.BASE_URL": JSON.stringify("/"),
+            "import.meta.env": "{}",
             "import.meta.env.OC_APP_STORE": override(
                 "OC_APP_STORE",
                 JSON.stringify(process.env.OC_APP_STORE),
@@ -219,7 +324,10 @@ export default {
             ),
             "import.meta.env.OC_NFID_URL": JSON.stringify(process.env.OC_NFID_URL),
             "import.meta.env.OC_DFX_NETWORK": JSON.stringify(process.env.OC_DFX_NETWORK),
-            "import.meta.env.OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE": localOnlyTransformersWebGpuSpike,
+            "import.meta.env.OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE": explicitTransformersWebGpuFlag,
+            "import.meta.env.OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY": maybeStringify(
+                process.env.OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY,
+            ),
             "import.meta.env.OC_NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "production"),
             "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(process.env.OC_WEBSITE_VERSION),
             "import.meta.env.OC_ROLLBAR_ACCESS_TOKEN": JSON.stringify(
@@ -307,6 +415,7 @@ export default {
             "import.meta.env.OC_BASE_ORIGIN": JSON.stringify(process.env.OC_BASE_ORIGIN),
         }),
 
+        rejectUnresolvedViteEnv(),
         html({
             template: ({ files }) => {
                 const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
@@ -412,10 +521,15 @@ export default {
         terser(),
 
         // Pull in the worker and service worker
+        packagedAndroidTransformersGraphs(),
+        modelAssetNoticesPlugin({
+            includeWllama: true,
+            includeWebGpu: transformersWebGpuSpikeEnabled && (!isNativeApp || isNativeAndroid),
+        }),
         copy({
             targets: [
                 {
-                    // The experimental model worker is copied only by the guarded target below;
+                    // The all-WebGPU model worker is copied only by the explicit feature-flagged target below;
                     // an old local artifact can therefore never leak into a release build.
                     src: "../openchat-worker/lib/worker.js*",
                     dest: "build",

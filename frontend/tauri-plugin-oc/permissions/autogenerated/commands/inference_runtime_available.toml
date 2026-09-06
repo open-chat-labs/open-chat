@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-inference-runtime-available"
+description = "Enables the inference_runtime_available command without any pre-configured scope."
+commands.allow = ["inference_runtime_available"]
+
+[[permission]]
+identifier = "deny-inference-runtime-available"
+description = "Denies the inference_runtime_available command without any pre-configured scope."
+commands.deny = ["inference_runtime_available"]

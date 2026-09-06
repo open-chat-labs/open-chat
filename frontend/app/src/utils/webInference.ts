@@ -20,15 +20,28 @@ import type { InferenceRequest, InferenceResult, ModelFile, ModelModality } from
 import { writable } from "svelte/store";
 import { resolveTransformersWebGpuMaxOutputTokens } from "../stores/transformersWebGpuSettings";
 import { splitModelFiles, WEB_MODEL_MAX_BYTES } from "./modelCatalog";
-import { TRANSFORMERS_QWEN_ARTIFACT_BYTES } from "./transformersWebGpuProtocol";
+import {
+    transformersWebGpuModelSpec,
+    type TransformersWebGpuModelId,
+} from "./transformersWebGpuProtocol";
 import {
     disposeTransformersWebGpuInference,
+    deleteTransformersWebGpuModel,
+    invalidateTransformersWebGpuReadiness,
     preloadTransformersWebGpuModel,
-    TRANSFORMERS_WEBGPU_MODEL_NOT_DOWNLOADED_MESSAGE,
+    refreshTransformersWebGpuRuntimeAssets,
+    subscribeTransformersWebGpuStatus,
+    transformersWebGpuAudioDownloaded,
+    transformersWebGpuAudioReady,
     transformersWebGpuInfer,
+    transformersWebGpuModelArtifactsPresent,
     transformersWebGpuModelDownloaded,
+    transformersWebGpuModelNotDownloadedMessage,
     transformersWebGpuSelectionCanHandle,
     transformersWebGpuSpikeCanHandle,
+    transformersWebGpuRuntimeAvailableOffline,
+    transformersWebGpuRuntimeAvailability,
+    type TransformersWebGpuStatus,
 } from "./transformersWebGpuInference";
 
 // Vite turns this into a served asset URL. wllama 3.x ships ONE unified wasm (esm/wasm/) and picks
@@ -78,6 +91,12 @@ type PersistedCatalogModel = {
     sizeBytes: number;
 };
 
+type PersistedTransformersWebGpuModel = {
+    runtime: "transformers-webgpu";
+    id: TransformersWebGpuModelId;
+    name: string;
+};
+
 type WebModelState = {
     file?: File;
     handle?: FileSystemFileHandle;
@@ -103,10 +122,39 @@ type WebModelState = {
     status: "none" | "attached" | "downloading" | "verifying" | "loading" | "loaded" | "error";
     error?: string;
     progress?: { received: number; total: number };
+    /** Ephemeral all-WebGPU engine progress. Prompt, image and generated content are never exposed. */
+    generation?: {
+        stage: "text" | "image" | "audio";
+        phase: "loading" | "downloading" | "inference";
+        progress?: number;
+        file?: string;
+    };
 };
 
 const state: WebModelState = { status: "none" };
+let modelSelectionGeneration = 0;
+const CATALOG_DOWNLOAD_STALL_MS = 90_000;
 
+type CatalogModelSelection = {
+    id: string;
+    name: string;
+    files: ModelFile[];
+    sizeBytes: number;
+    modalities?: ModelModality[];
+};
+
+type CatalogDownloadAttempt = {
+    controller: AbortController;
+    generation: number;
+    selectionGeneration: number;
+    previous: WebModelState;
+    reason?: "cancelled" | "backgrounded" | "stalled";
+    done: Promise<void>;
+    resolveDone(): void;
+};
+
+let activeCatalogDownload: CatalogDownloadAttempt | undefined;
+let catalogDownloadGeneration = 0;
 /** UI-facing snapshot: the attached model's catalog id + name + lifecycle status (+ download progress). */
 export const webModelStatus = writable<{
     id?: string;
@@ -114,7 +162,63 @@ export const webModelStatus = writable<{
     status: WebModelState["status"];
     error?: string;
     progress?: { received: number; total: number };
+    generation?: WebModelState["generation"];
 }>({ status: "none" });
+
+export type WebModelInstallState = "checking" | "downloaded" | "not_downloaded";
+
+/** Per-model CacheStorage presence for Model Manager. This is deliberately independent from the
+ * one active model in `webModelStatus`: choosing Gemma must not make cached Qwen look absent (or
+ * vice versa). A downloaded hint never authorizes inference; activation still performs the full
+ * pinned body verification. */
+export const webModelInstallStatus = writable<Readonly<Record<string, WebModelInstallState>>>({});
+let webModelInstallStates: Record<string, WebModelInstallState> = {};
+const webModelInstallGenerations = new Map<string, number>();
+
+function nextWebModelInstallGeneration(modelId: string): number {
+    const generation = (webModelInstallGenerations.get(modelId) ?? 0) + 1;
+    webModelInstallGenerations.set(modelId, generation);
+    return generation;
+}
+
+function setWebModelInstallState(modelId: string, status: WebModelInstallState): void {
+    nextWebModelInstallGeneration(modelId);
+    webModelInstallStates = { ...webModelInstallStates, [modelId]: status };
+    webModelInstallStatus.set(webModelInstallStates);
+}
+
+/** Refresh cheap per-model installed hints without reading multi-gigabyte cache bodies. */
+export async function refreshWebModelInstallStatus(modelIds: readonly string[]): Promise<void> {
+    const ids = [...new Set(modelIds)].filter(
+        (id) => transformersWebGpuModelSpec(id) !== undefined,
+    );
+    const generations = new Map(ids.map((id) => [id, nextWebModelInstallGeneration(id)]));
+    webModelInstallStates = {
+        ...webModelInstallStates,
+        ...Object.fromEntries(ids.map((id) => [id, "checking" as const])),
+    };
+    webModelInstallStatus.set(webModelInstallStates);
+    const results = await Promise.all(
+        ids.map(async (id) => ({
+            id,
+            downloaded: await transformersWebGpuModelArtifactsPresent(id),
+        })),
+    );
+    const current = results.filter(
+        ({ id }) => webModelInstallGenerations.get(id) === generations.get(id),
+    );
+    if (current.length === 0) return;
+    webModelInstallStates = {
+        ...webModelInstallStates,
+        ...Object.fromEntries(
+            current.map(({ id, downloaded }) => [
+                id,
+                downloaded ? ("downloaded" as const) : ("not_downloaded" as const),
+            ]),
+        ),
+    };
+    webModelInstallStatus.set(webModelInstallStates);
+}
 
 function publish(): void {
     webModelStatus.set({
@@ -123,7 +227,76 @@ function publish(): void {
         status: state.status,
         error: state.error,
         progress: state.progress,
+        generation: state.generation,
     });
+}
+
+subscribeTransformersWebGpuStatus((status: TransformersWebGpuStatus) => {
+    state.generation =
+        status.phase === "idle"
+            ? undefined
+            : {
+                  stage: status.stage ?? "image",
+                  phase: status.phase,
+                  progress: status.progress,
+                  file: status.file,
+              };
+    publish();
+});
+
+/** Exact allow-list shared by both browser Model Manager surfaces. Only models with immutable
+ * registry entries and an enabled all-WebGPU runtime can enter this path. */
+export function allWebGpuCatalogModelSupported(modelId: string): boolean {
+    return (
+        transformersWebGpuModelSpec(modelId) !== undefined &&
+        transformersWebGpuSelectionCanHandle(modelId)
+    );
+}
+
+function cloneWebModelState(value: WebModelState): WebModelState {
+    return {
+        ...value,
+        catalogFiles: value.catalogFiles?.map((file) => ({ ...file })),
+        declaredModalities: value.declaredModalities?.slice(),
+        progress: value.progress === undefined ? undefined : { ...value.progress },
+        generation: value.generation === undefined ? undefined : { ...value.generation },
+    };
+}
+
+function restoreState(snapshot: WebModelState): void {
+    for (const key of Object.keys(state) as (keyof WebModelState)[]) {
+        delete state[key];
+    }
+    Object.assign(state, cloneWebModelState(snapshot));
+}
+
+function stopCatalogDownload(
+    attempt: CatalogDownloadAttempt,
+    reason: CatalogDownloadAttempt["reason"],
+): void {
+    if (attempt.controller.signal.aborted) return;
+    attempt.reason = reason;
+    attempt.controller.abort(new DOMException(reason ?? "cancelled", "AbortError"));
+}
+
+/** Cancel only the currently owned preload attempt. A late completion cannot replace the selection. */
+export function cancelWebModelDownload(): void {
+    if (activeCatalogDownload !== undefined) {
+        stopCatalogDownload(activeCatalogDownload, "cancelled");
+    }
+}
+
+function catalogDownloadFailure(attempt: CatalogDownloadAttempt, error: unknown): string {
+    switch (attempt.reason) {
+        case "cancelled":
+            return "Download cancelled. Tap Retry download when you are ready.";
+        case "backgrounded":
+            return "Download stopped when OpenChat went to the background. Keep it open and tap Retry download.";
+        case "stalled":
+            return "The download stopped making progress. Check the connection and tap Retry download.";
+        default:
+            return error instanceof Error ? error.message : String(error);
+    }
 }
 
 // ── IndexedDB persistence for the picker handle (structured-cloneable) ─────────────────────────
@@ -251,10 +424,33 @@ function parsePersistedCatalogModel(raw: string): PersistedCatalogModel | undefi
     };
 }
 
+function parsePersistedTransformersWebGpuModel(
+    raw: string,
+): PersistedTransformersWebGpuModel | undefined {
+    const saved = JSON.parse(raw) as Partial<PersistedTransformersWebGpuModel>;
+    const spec = transformersWebGpuModelSpec(saved.id);
+    if (
+        saved.runtime !== "transformers-webgpu" ||
+        spec === undefined ||
+        typeof saved.name !== "string" ||
+        saved.name === ""
+    ) {
+        return undefined;
+    }
+    return {
+        runtime: saved.runtime,
+        id: spec.id,
+        name: saved.name,
+    };
+}
+
 /** Attach a session-scoped File (from `<input type=file>`). */
 export async function setWebModelFile(file: File): Promise<string | undefined> {
     const err = validate(file);
     if (err) return err;
+    modelSelectionGeneration += 1;
+    const download = activeCatalogDownload;
+    if (download !== undefined) stopCatalogDownload(download, "cancelled");
     await unloadWebModel();
     state.file = file;
     state.handle = undefined;
@@ -296,6 +492,9 @@ export async function pickWebModelFromDisk(): Promise<string | undefined> {
     const file = await handle.getFile();
     const err = validate(file);
     if (err) return err;
+    modelSelectionGeneration += 1;
+    const download = activeCatalogDownload;
+    if (download !== undefined) stopCatalogDownload(download, "cancelled");
     await unloadWebModel();
     state.file = file;
     state.handle = handle;
@@ -387,69 +586,169 @@ async function verifyCachedFiles(
  *  and re-attaches instantly on later visits. A vision entry brings a second file — the mmproj
  *  projector — which is downloaded, verified and loaded alongside the weights. Progress is reported
  *  across BOTH (wllama's Model.refresh sums the shards). The choice persists in localStorage. */
-export async function useWebModelFromUrl(entry: {
-    id: string;
-    name: string;
-    files: ModelFile[];
-    sizeBytes: number;
-    modalities?: ModelModality[];
-}): Promise<string | undefined> {
-    const manifestError = catalogManifestError(entry.files, entry.sizeBytes);
-    if (manifestError !== undefined) return manifestError;
-    // The budget is the TOTAL: weights and projector share one wasm heap (see WEB_MODEL_MAX_BYTES).
-    if (entry.sizeBytes > WEB_MODEL_MAX_BYTES) {
-        return "this model exceeds the browser's ~2 GB limit — use the desktop app for it";
+export async function useWebModelFromUrl(
+    entry: CatalogModelSelection,
+): Promise<string | undefined> {
+    if (activeCatalogDownload !== undefined) {
+        return "A model download is already in progress. Cancel it before choosing another model.";
     }
-    const { weights, mmproj } = splitModelFiles(entry.files);
-    if (weights.length !== 1 || mmproj.length > 1) {
+    const modelSpec = transformersWebGpuModelSpec(entry.id);
+    const allWebGpu = modelSpec !== undefined;
+    // The pinned Transformers selection is not a GGUF catalog download. Decide that first so stale
+    // GGUF URLs, hashes, files, and prior browser cache entries are completely irrelevant.
+    if (!allWebGpu) {
+        const manifestError = catalogManifestError(entry.files, entry.sizeBytes);
+        if (manifestError !== undefined) return manifestError;
+        if (entry.sizeBytes > WEB_MODEL_MAX_BYTES) {
+            return "this model exceeds the browser's ~2 GB limit — use the desktop app for it";
+        }
+    }
+    const { weights, mmproj } = allWebGpu
+        ? { weights: [] as ModelFile[], mmproj: [] as ModelFile[] }
+        : splitModelFiles(entry.files);
+    if (!allWebGpu && (weights.length !== 1 || mmproj.length > 1)) {
         return "this model's file layout isn't supported in the browser — use the desktop app for it";
     }
     // The explicit phone experiment owns a separate revision-keyed ONNX cache. Selecting this
     // model downloads that exact manifest in Model Manager; its GGUF/projector catalog pair belongs
     // to the normal Wllama route and must not be downloaded as an accidental fallback.
-    if (transformersWebGpuSelectionCanHandle(entry.id)) {
-        await unloadWebModel();
+    if (modelSpec !== undefined) {
+        if (!transformersWebGpuSelectionCanHandle(entry.id)) {
+            const availability = transformersWebGpuRuntimeAvailability();
+            return availability.available
+                ? "The selected all-WebGPU runtime is not enabled in this browser."
+                : availability.reason;
+        }
+        const previous = cloneWebModelState(state);
+        const selectionGeneration = ++modelSelectionGeneration;
+        let resolveDone: () => void = () => undefined;
+        const done = new Promise<void>((resolve) => {
+            resolveDone = resolve;
+        });
+        const attempt: CatalogDownloadAttempt = {
+            controller: new AbortController(),
+            generation: ++catalogDownloadGeneration,
+            selectionGeneration,
+            previous,
+            done,
+            resolveDone,
+        };
+        activeCatalogDownload = attempt;
+        const isCurrentAttempt = () =>
+            activeCatalogDownload === attempt &&
+            attempt.generation === catalogDownloadGeneration &&
+            attempt.selectionGeneration === modelSelectionGeneration &&
+            !attempt.controller.signal.aborted;
+        let stallTimer: ReturnType<typeof setTimeout> | undefined;
+        const armStallTimer = () => {
+            if (stallTimer !== undefined) clearTimeout(stallTimer);
+            stallTimer = setTimeout(
+                () => stopCatalogDownload(attempt, "stalled"),
+                CATALOG_DOWNLOAD_STALL_MS,
+            );
+        };
+        const onVisibilityChange = () => {
+            if (document.hidden) stopCatalogDownload(attempt, "backgrounded");
+        };
+        const onPageHide = () => stopCatalogDownload(attempt, "backgrounded");
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        window.addEventListener("pagehide", onPageHide);
+
         state.file = undefined;
         state.handle = undefined;
-        state.url = weights[0].url;
-        state.mmprojUrl = mmproj[0]?.url;
-        state.catalogFiles = entry.files.map((file) => ({ ...file }));
+        state.url = undefined;
+        state.mmprojUrl = undefined;
+        state.catalogFiles = undefined;
         state.catalogVerified = false;
         state.id = entry.id;
         state.name = entry.name;
-        state.declaredModalities = entry.modalities;
+        state.declaredModalities = [...modelSpec.modalities];
         state.imageSupported = true;
-        state.status = "downloading";
+        const installed = webModelInstallStates[entry.id] === "downloaded";
+        state.status = installed ? "verifying" : "downloading";
         state.error = undefined;
-        state.progress = { received: 0, total: TRANSFORMERS_QWEN_ARTIFACT_BYTES };
+        state.progress = installed ? undefined : { received: 0, total: modelSpec.artifactBytes };
+        state.generation = undefined;
         publish();
         try {
-            await preloadTransformersWebGpuModel({
-                onProgress(received, total) {
-                    state.progress = { received, total };
-                    publish();
-                },
-            });
+            // A previously verified model keeps its own revisioned cache when another model is
+            // selected. Re-activating it is cache-only: reuse the per-page proof instead of entering
+            // the downloader (which invalidates that proof and rehashes every model shard).
+            const cachedAndVerified =
+                installed &&
+                (await transformersWebGpuModelDownloaded(entry.id, {
+                    signal: attempt.controller.signal,
+                }));
+            if (!isCurrentAttempt()) throw attempt.controller.signal.reason;
+            if (!cachedAndVerified) {
+                state.status = "downloading";
+                state.progress = { received: 0, total: modelSpec.artifactBytes };
+                publish();
+                // The stall timeout belongs only to network/cache population. A cold local
+                // verification can legitimately hash several gigabytes without progress events;
+                // cancellation is carried by the AbortSignal passed to that verifier above.
+                armStallTimer();
+                await preloadTransformersWebGpuModel(entry.id, {
+                    signal: attempt.controller.signal,
+                    onProgress(received, total) {
+                        if (!isCurrentAttempt()) return;
+                        armStallTimer();
+                        state.progress = { received, total };
+                        publish();
+                    },
+                });
+            }
+            if (!isCurrentAttempt()) throw attempt.controller.signal.reason;
             state.status = "verifying";
             state.progress = undefined;
             publish();
-            if (!(await transformersWebGpuModelDownloaded())) {
+            if (
+                !(await transformersWebGpuModelDownloaded(entry.id, {
+                    signal: attempt.controller.signal,
+                }))
+            ) {
                 throw new Error("The completed all-WebGPU model could not be verified.");
             }
+            if (!isCurrentAttempt()) throw attempt.controller.signal.reason;
+            setWebModelInstallState(entry.id, "downloaded");
+            if (modelSpec.optionalAudio !== undefined) {
+                // Re-verify an already installed add-on without downloading it. A base-only Gemma
+                // selection returns false immediately and remains fully usable for text/images.
+                await transformersWebGpuAudioDownloaded(entry.id, {
+                    signal: attempt.controller.signal,
+                });
+                if (!isCurrentAttempt()) throw attempt.controller.signal.reason;
+            }
+
+            // Downloading must not evict a usable resident model. Retire it only after the new
+            // artifact is complete, and keep an already-loaded instance of this exact model.
+            const preserveResident =
+                previous.id === entry.id &&
+                (previous.status === "attached" || previous.status === "loaded");
+            if (!preserveResident) await unloadWebModel();
+            if (!isCurrentAttempt()) throw attempt.controller.signal.reason;
+
+            state.file = undefined;
+            state.handle = undefined;
+            state.url = undefined;
+            state.mmprojUrl = undefined;
+            state.catalogFiles = undefined;
             state.catalogVerified = true;
-            state.status = "attached";
+            state.id = entry.id;
+            state.name = entry.name;
+            state.declaredModalities = [...modelSpec.modalities];
+            state.imageSupported = true;
+            state.status = preserveResident ? previous.status : "attached";
+            state.error = undefined;
+            state.progress = undefined;
             publish();
             try {
                 localStorage.setItem(
                     LS_URL_MODEL,
                     JSON.stringify({
+                        runtime: "transformers-webgpu",
                         id: entry.id,
                         name: entry.name,
-                        url: state.url,
-                        mmprojUrl: state.mmprojUrl,
-                        modalities: entry.modalities,
-                        files: state.catalogFiles,
-                        sizeBytes: entry.sizeBytes,
                     }),
                 );
             } catch {
@@ -457,14 +756,24 @@ export async function useWebModelFromUrl(entry: {
             }
             return undefined;
         } catch (err) {
-            state.status = "error";
-            state.catalogVerified = false;
-            state.error = err instanceof Error ? err.message : String(err);
-            state.progress = undefined;
-            publish();
-            return state.error;
+            const failure = catalogDownloadFailure(attempt, err);
+            if (
+                activeCatalogDownload === attempt &&
+                attempt.selectionGeneration === modelSelectionGeneration
+            ) {
+                restoreState(previous);
+                publish();
+            }
+            return failure;
+        } finally {
+            if (stallTimer !== undefined) clearTimeout(stallTimer);
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            window.removeEventListener("pagehide", onPageHide);
+            if (activeCatalogDownload === attempt) activeCatalogDownload = undefined;
+            attempt.resolveDone();
         }
     }
+    modelSelectionGeneration += 1;
     await unloadWebModel();
     state.file = undefined;
     state.handle = undefined;
@@ -547,25 +856,97 @@ export async function restoreWebModel(): Promise<void> {
     try {
         const raw = localStorage.getItem(LS_URL_MODEL);
         if (raw !== null) {
-            const saved = parsePersistedCatalogModel(raw);
+            const pinned = parsePersistedTransformersWebGpuModel(raw);
+            const legacy = pinned === undefined ? parsePersistedCatalogModel(raw) : undefined;
+            const saved = pinned ?? legacy;
             if (saved !== undefined) {
-                const transformers = transformersWebGpuSelectionCanHandle(saved.id);
-                const downloaded = !transformers || (await transformersWebGpuModelDownloaded());
+                const restoreGeneration = ++modelSelectionGeneration;
+                let runtimeRefreshFailure: string | undefined;
+                const modelSpec = transformersWebGpuModelSpec(saved.id);
+                const allWebGpu = pinned !== undefined || modelSpec !== undefined;
+                const transformers = allWebGpu && transformersWebGpuSelectionCanHandle(saved.id);
+                let downloaded = !allWebGpu;
+                if (allWebGpu && transformers) {
+                    // Cold start only needs enough information to restore the user's selection.
+                    // Streaming and hashing every cached model body here can read several GB on the
+                    // main thread while chats are initialising. The cache metadata is pinned to the
+                    // exact byte count and SHA written by Model Manager; inference still calls
+                    // transformersWebGpuModelDownloaded and fully re-verifies every body before a
+                    // worker can run.
+                    const modelArtifactsPresent = await transformersWebGpuModelArtifactsPresent(
+                        saved.id,
+                    );
+                    setWebModelInstallState(
+                        saved.id,
+                        modelArtifactsPresent ? "downloaded" : "not_downloaded",
+                    );
+                    downloaded =
+                        modelArtifactsPresent &&
+                        (await transformersWebGpuRuntimeAvailableOffline(saved.id));
+                    if (modelArtifactsPresent && !downloaded) {
+                        // APK updates rotate the worker URL with OC_WEBSITE_VERSION, but the pinned
+                        // multi-gigabyte model revision has not changed. Refresh only the small
+                        // build-owned worker/ORT payload at startup; inference remains cache-only
+                        // and never becomes a hidden model-download trigger.
+                        try {
+                            await refreshTransformersWebGpuRuntimeAssets(saved.id);
+                            downloaded = await transformersWebGpuRuntimeAvailableOffline(saved.id);
+                            if (!downloaded) {
+                                runtimeRefreshFailure =
+                                    "Your downloaded model is intact, but OpenChat could not verify this build's refreshed all-WebGPU worker and ORT files. Restart or reload OpenChat and try again; reinstall the current app build if the error continues.";
+                            }
+                        } catch {
+                            // Preserve the selected model and identify the small runtime layer as
+                            // the failure. A transient packaged-asset/HTTP-cache failure must not
+                            // forget or misdiagnose the user's already-verified model weights.
+                            downloaded = false;
+                            runtimeRefreshFailure =
+                                "Your downloaded model is intact, but OpenChat could not refresh this build's all-WebGPU worker and ORT files. Restart or reload OpenChat and try again; reinstall the current app build if the error continues.";
+                        }
+                    }
+                }
+                if (downloaded && modelSpec?.optionalAudio !== undefined) {
+                    // Restore voice capability only after its separate cache has been verified.
+                    // Missing audio never prevents the base text/image model from attaching.
+                    await transformersWebGpuAudioDownloaded(saved.id);
+                }
+                if (restoreGeneration !== modelSelectionGeneration) return;
                 state.file = undefined;
                 state.handle = undefined;
-                state.url = saved.url;
-                state.mmprojUrl = saved.mmprojUrl;
-                state.catalogFiles = saved.files;
-                state.catalogVerified = transformers ? downloaded : false;
+                state.url = allWebGpu ? undefined : legacy?.url;
+                state.mmprojUrl = allWebGpu ? undefined : legacy?.mmprojUrl;
+                state.catalogFiles = allWebGpu ? undefined : legacy?.files;
+                // Pinned all-WebGPU bodies are intentionally not marked verified by cold restore;
+                // the inference boundary performs that full proof immediately before worker use.
+                state.catalogVerified = allWebGpu ? undefined : false;
                 state.id = saved.id;
                 state.name = saved.name;
-                state.declaredModalities = saved.modalities;
-                state.imageSupported = transformers ? true : undefined;
+                state.declaredModalities = allWebGpu
+                    ? [...(modelSpec?.modalities ?? ["text", "image"])]
+                    : legacy?.modalities;
+                state.imageSupported = allWebGpu ? true : undefined;
                 state.status = downloaded ? "attached" : "error";
                 state.error = downloaded
                     ? undefined
-                    : TRANSFORMERS_WEBGPU_MODEL_NOT_DOWNLOADED_MESSAGE;
+                    : (runtimeRefreshFailure ??
+                      (transformers
+                          ? transformersWebGpuModelNotDownloadedMessage(saved.id)
+                          : "The selected all-WebGPU runtime is not enabled in this browser."));
                 publish();
+                if (allWebGpu) {
+                    try {
+                        localStorage.setItem(
+                            LS_URL_MODEL,
+                            JSON.stringify({
+                                runtime: "transformers-webgpu",
+                                id: saved.id as TransformersWebGpuModelId,
+                                name: saved.name,
+                            } satisfies PersistedTransformersWebGpuModel),
+                        );
+                    } catch {
+                        /* persistence best-effort */
+                    }
+                }
                 return;
             }
             localStorage.removeItem(LS_URL_MODEL);
@@ -613,7 +994,25 @@ export async function restoreWebModel(): Promise<void> {
 
 /** Drop the attached model, free the wasm runtime, and forget every persisted choice. */
 export async function clearWebModel(): Promise<void> {
+    const transformersModelId = transformersWebGpuModelSpec(state.id)?.id;
+    modelSelectionGeneration += 1;
+    // Explicit removal is target-specific. Do not discard another downloaded model's in-page
+    // verification proof merely because the current model is being removed.
+    if (transformersModelId !== undefined) {
+        invalidateTransformersWebGpuReadiness(transformersModelId);
+    }
+    const download = activeCatalogDownload;
+    if (download !== undefined) {
+        stopCatalogDownload(download, "cancelled");
+        await download.done;
+    }
     await unloadWebModel();
+    if (transformersModelId !== undefined) {
+        // Do not forget the selection or claim the cache is absent when CacheStorage removal
+        // fails. The caller surfaces this error and can retry the explicit Remove action.
+        await deleteTransformersWebGpuModel(transformersModelId);
+        setWebModelInstallState(transformersModelId, "not_downloaded");
+    }
     state.file = undefined;
     state.handle = undefined;
     state.url = undefined;
@@ -627,6 +1026,7 @@ export async function clearWebModel(): Promise<void> {
     state.status = "none";
     state.error = undefined;
     state.progress = undefined;
+    state.generation = undefined;
     publish();
     await idbDelete().catch(() => undefined);
     try {
@@ -661,11 +1061,75 @@ export function webModelCatalogId(): string | undefined {
  *      until its first inference loads it; that costs one text-only propose, never a wrong answer.
  */
 export function webModelModalities(): ModelModality[] {
-    if (transformersWebGpuSelectionCanHandle(state.id)) return ["image"];
+    const modelSpec = transformersWebGpuModelSpec(state.id);
+    if (modelSpec !== undefined && transformersWebGpuSelectionCanHandle(state.id)) {
+        return modelSpec.modalities.filter(
+            (modality) => modality !== "audio" || transformersWebGpuAudioReady(modelSpec.id),
+        );
+    }
     if (state.imageSupported !== undefined) {
         return state.imageSupported ? ["text", "image"] : ["text"];
     }
     return state.declaredModalities ?? ["text"];
+}
+
+let restoreInFlight: Promise<void> | undefined;
+
+export async function ensureWebModelRestored(): Promise<void> {
+    if (isWebInferenceReady()) return;
+    restoreInFlight ??= restoreWebModel().finally(() => {
+        restoreInFlight = undefined;
+    });
+    await restoreInFlight;
+}
+
+export type BrowserImageModelFirstReadiness =
+    | { available: true }
+    | { available: false; reason?: string };
+
+export type BrowserImageModelFirstReadinessOptions = {
+    retryAfterRecentFailure?: boolean;
+};
+
+export async function browserImageModelFirstReadiness(
+    _options: BrowserImageModelFirstReadinessOptions = {},
+): Promise<BrowserImageModelFirstReadiness> {
+    await ensureWebModelRestored();
+    const selected = webModelCatalogId();
+
+    // A persisted all-WebGPU selection can survive a client/model revision update while its old
+    // Cache API entries no longer satisfy the new pinned manifest. Keep that as a MODEL-UPDATE
+    // failure. Falling through to the modality probe here made the error-state selection look like
+    // an unselected/text-only model, so Propose incorrectly said that Qwen did not support images.
+    // The Model Manager already owns the repair (Retry download); preserve its exact actionable
+    // reason for the proposal flow instead of replacing it with an unrelated modality verdict.
+    if (!isWebInferenceReady()) {
+        return {
+            available: false,
+            reason:
+                state.error ??
+                (transformersWebGpuModelSpec(selected) !== undefined
+                    ? transformersWebGpuModelNotDownloadedMessage(selected)
+                    : undefined),
+        };
+    }
+    if (
+        transformersWebGpuSpikeCanHandle(
+            { prompt: "image readiness", image: new Uint8Array([0]) },
+            selected,
+        )
+    ) {
+        return transformersWebGpuRuntimeAvailability();
+    }
+    return isWebInferenceReady() && webModelModalities().includes("image")
+        ? { available: true }
+        : { available: false };
+}
+
+export async function prepareBrowserImageModelFirst(
+    options: BrowserImageModelFirstReadinessOptions = {},
+): Promise<boolean> {
+    return (await browserImageModelFirstReadiness(options)).available;
 }
 
 // ── inference ──────────────────────────────────────────────────────────────────────────────────
@@ -771,20 +1235,45 @@ async function ensureLoaded(): Promise<void> {
 
 /** Run a text OR image inference against the attached browser model. Mirrors the native contract. */
 export async function webInfer(request: InferenceRequest): Promise<InferenceResult> {
+    await ensureWebModelRestored();
     if (!isWebInferenceReady()) {
         return { kind: "unavailable", reason: "no browser model attached" };
     }
-    if (transformersWebGpuSelectionCanHandle(state.id)) {
+    const selected = state.id;
+    if (request.modelId !== undefined && request.modelId !== selected) {
+        return { kind: "error", error: "the selected browser model changed before inference" };
+    }
+    if (
+        transformersWebGpuModelSpec(selected) !== undefined &&
+        !transformersWebGpuSelectionCanHandle(selected)
+    ) {
+        return {
+            kind: "unavailable",
+            reason: "The selected all-WebGPU runtime is not enabled in this browser.",
+        };
+    }
+    if (transformersWebGpuSelectionCanHandle(selected)) {
         if (!transformersWebGpuSpikeCanHandle(request, state.id)) {
             return {
                 kind: "unavailable",
-                reason: "The selected all-WebGPU phone trial accepts image requests only.",
+                reason: "The selected all-WebGPU runtime cannot handle this request.",
             };
         }
-        return transformersWebGpuInfer({
+        // Wllama and Transformers own independent runtimes. Release any legacy resident decoder
+        // before allocating the one-shot all-WebGPU worker on a constrained phone.
+        await unloadWebModel();
+        const result = await transformersWebGpuInfer({
             ...request,
+            modelId: selected,
             maxTokens: resolveTransformersWebGpuMaxOutputTokens(request.maxTokens),
         });
+        return result;
+    }
+    if (request.audio !== undefined || request.audioMimeType !== undefined) {
+        return {
+            kind: "unavailable",
+            reason: "The selected browser runtime does not support audio.",
+        };
     }
     try {
         await ensureLoaded();

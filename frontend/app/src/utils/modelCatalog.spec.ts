@@ -4,6 +4,8 @@ import {
     defaultModelCatalog,
     isMmprojFile,
     mergeCatalogs,
+    nativeModelInstallStatus,
+    selectedNativeModelStatus,
     splitModelFiles,
     WEB_MODEL_MAX_BYTES,
     webEligibleModels,
@@ -104,8 +106,8 @@ describe("defaultModelCatalog", () => {
 });
 
 // These specs pin the catalog-merge contract the browser chooser relies on: the remote (on-chain)
-// catalog is a per-id OVERLAY on the built-in default, never a wholesale replacement — so a stale or
-// partial remote catalog can never shrink the chooser below the builtin floor. They also pin the
+// catalog may add/rank entries but cannot replace a client-trusted built-in artifact, and is never a
+// wholesale replacement — so a stale or partial remote catalog cannot shrink the builtin floor. They also pin the
 // browser-eligibility filter (one GGUF + an optional mmproj projector, ≤ 2 GB in TOTAL) that both
 // ModelManager trees share.
 
@@ -178,7 +180,7 @@ describe("mergeCatalogs", () => {
         expect(webEligibleModels(merged).map((m) => m.id)).toEqual(BUILTIN_WEB_IDS);
     });
 
-    it("remote wins per-id: a same-id remote entry overrides the builtin without duplicating it", () => {
+    it("builtin trust wins per-id while the remote still controls ranking", () => {
         const pinned = entry("gemma-3-1b-it-q4", {
             name: "Gemma 3 1B (pinned)",
             files: [
@@ -190,8 +192,9 @@ describe("mergeCatalogs", () => {
         expect(merged.length).toBe(defaultModelCatalog.models.length);
         const ids = merged.map((m) => m.id);
         expect(new Set(ids).size).toBe(ids.length); // no duplicate ids
-        expect(merged[0].name).toBe("Gemma 3 1B (pinned)"); // remote version, ranked first
-        expect(merged[0].files[0].url).toBe("https://cdn.example/gemma-pinned.gguf");
+        const builtin = defaultModelCatalog.models.find((m) => m.id === pinned.id)!;
+        expect(merged[0]).toBe(builtin); // remote position, exact built-in artifact/trust root
+        expect(merged[0].files[0].url).not.toBe("https://cdn.example/gemma-pinned.gguf");
         // Every builtin id is still present.
         for (const id of BUILTIN_IDS) {
             expect(ids).toContain(id);
@@ -308,6 +311,85 @@ describe("webEligibleModels", () => {
         const remote = [nativeOnlyEntry("big-a"), nativeOnlyEntry("big-b")];
         const merged = mergeCatalogs(remote, defaultModelCatalog.models);
         expect(webEligibleModels(merged).map((m) => m.id)).toEqual(BUILTIN_WEB_IDS);
+    });
+});
+
+describe("native model install status", () => {
+    const trusted = defaultModelCatalog.models.find((m) => m.id === "gemma-4-e2b-it-q4")!;
+    const current = {
+        modelId: trusted.id,
+        runtime: trusted.runtime,
+        sizeBytes: trusted.sizeBytes,
+        files: trusted.files.map((file) => ({ ...file })),
+    };
+    const stale = { ...current, sizeBytes: trusted.sizeBytes - 2_016 };
+
+    it("marks a current selected install ready", () => {
+        expect(nativeModelInstallStatus(trusted, [current])).toBe("current");
+        expect(selectedNativeModelStatus(trusted.id, [current])).toEqual({
+            kind: "current",
+            entry: trusted,
+        });
+    });
+
+    it("treats native null and catalog omission as the same absent filename", () => {
+        // serde historically emitted Option::None as JSON null from list_local_models, whereas the
+        // built-in catalog omits filename. A successful update must become Current across that wire
+        // representation difference instead of offering Update forever.
+        const nativeRoundTrip = {
+            ...current,
+            files: current.files.map((file) => ({ ...file, filename: null })),
+        };
+
+        expect(nativeModelInstallStatus(trusted, [nativeRoundTrip])).toBe("current");
+        expect(selectedNativeModelStatus(trusted.id, [nativeRoundTrip])).toEqual({
+            kind: "current",
+            entry: trusted,
+        });
+    });
+
+    it("marks the same-id stale install update-required whether selected or not", () => {
+        expect(nativeModelInstallStatus(trusted, [stale])).toBe("update_required");
+        expect(selectedNativeModelStatus(trusted.id, [stale])).toEqual({
+            kind: "update_required",
+            entry: trusted,
+        });
+        expect(selectedNativeModelStatus("", [stale])).toEqual({ kind: "none" });
+    });
+
+    it("rejects a same-size same-id install when any verified artifact identity changed", () => {
+        const wrongHash = {
+            ...current,
+            files: current.files.map((file, index) =>
+                index === 0 ? { ...file, sha256: "0".repeat(64) } : file,
+            ),
+        };
+        const wrongRevisionUrl = {
+            ...current,
+            files: current.files.map((file, index) =>
+                index === 0 ? { ...file, url: `${file.url}?stale=1` } : file,
+            ),
+        };
+        const missingManifest = { ...current, files: undefined };
+
+        expect(nativeModelInstallStatus(trusted, [wrongHash])).toBe("update_required");
+        expect(nativeModelInstallStatus(trusted, [wrongRevisionUrl])).toBe("update_required");
+        expect(nativeModelInstallStatus(trusted, [missingManifest])).toBe("update_required");
+    });
+
+    it("uses built-in metadata even when passed a conflicting remote overlay", () => {
+        const conflict = { ...trusted, sizeBytes: stale.sizeBytes };
+        expect(nativeModelInstallStatus(conflict, [stale])).toBe("update_required");
+        expect(nativeModelInstallStatus(conflict, [current])).toBe("current");
+    });
+
+    it("distinguishes a missing trusted model from an unknown selection", () => {
+        expect(nativeModelInstallStatus(trusted, [])).toBe("missing");
+        expect(selectedNativeModelStatus(trusted.id, [])).toEqual({
+            kind: "missing",
+            entry: trusted,
+        });
+        expect(selectedNativeModelStatus("remote-only", [current])).toEqual({ kind: "untrusted" });
     });
 });
 
