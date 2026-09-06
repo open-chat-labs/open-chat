@@ -62,6 +62,15 @@ Android treats the renamed app as unrelated software, so those installs:
 - will, if the user also installs the new app, hold a second valid FCM token for
   the same account, and both apps will ring
 
+`LegacyInstallBanner.svelte` reaches these users through the one channel still
+open to them, the OTA bundles they keep taking. It probes for `get_shell_version`,
+which was added with the rename and so is absent from any orphaned shell, and asks
+them to reinstall and then uninstall the old app. It has to be published on a
+patch release and taken up BEFORE the major that strands them, not alongside it.
+
+Adoption cannot be measured: nothing distinguishes an old install from a new one
+server-side. Assume some devices never migrate.
+
 The break is not hypothetical and it has a deadline: it lands the day a major
 website version is published. Either the migration is announced and taken up well
 before then, or the first major bundle must not be published at

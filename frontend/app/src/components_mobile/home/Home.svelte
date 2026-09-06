@@ -52,6 +52,7 @@
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
+    import LegacyInstallBanner from "../LegacyInstallBanner.svelte";
     import NativeUpgradeBanner from "../NativeUpgradeBanner.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
@@ -570,6 +571,7 @@
     {:else}
         {#if client.isNativeApp()}
             <NativeUpgradeBanner />
+            <LegacyInstallBanner />
         {/if}
         <LeftPanel />
         <MiddlePanel />

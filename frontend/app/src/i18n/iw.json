@@ -163,6 +163,21 @@
         "notAvailable": "התוכן הזה אינו זמין בגרסה זו של האפליקציה. עדיין באפשרותך לגשת אליו מאפליקציית הווב בכתובת [oc.app](https://oc.app).",
         "notAvailableTitle": "התוכן אינו זמין"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "רגע אחד! מתעדכן ...",
+        "downloadingMessage": "אנחנו מורידים עדכון קצר ומיד אפשר יהיה להמשיך ...",
+        "reload": "טען מחדש והמשך",
+        "requiredTitle": "נדרש עדכון",
+        "requiredMessage": "גרסה {version} זמינה, אך היא דורשת גרסה חדשה יותר של האפליקציה מזו שמותקנת אצלך. האפליקציה הזו אינה יכולה לעדכן את עצמה עד לשם.",
+        "availableTitle": "עדכון זמין",
+        "availableMessage": "גרסה {version} זמינה. בינתיים הגרסה הזו ממשיכה לעבוד.",
+        "fromPlayStore": "עדכון דרך חנות Play",
+        "downloadLatest": "הורד את הגרסה האחרונה",
+        "reinstallTitle": "נא להתקין מחדש את OpenChat",
+        "reinstallMessage": "לא ניתן עוד לעדכן את העותק הזה של OpenChat והוא יפסיק לעבוד בשלב מסוים. הורד את הגרסה הנוכחית כדי להמשיך לקבל עדכונים.",
+        "reinstallUninstallOld": "לאחר התקנת הגרסה החדשה, הסר את זו. אם שתיהן מותקנות, כל התראה מגיעה פעמיים.",
+        "reinstallDownload": "הורד את הגרסה הנוכחית"
+    },
     "appWallet": {
         "header": {
             "asset": "נֶכֶס",

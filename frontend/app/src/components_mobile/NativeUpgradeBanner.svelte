@@ -47,7 +47,7 @@
     // sideloaded build has to fetch a new APK itself.
     let upgradeUrl = $derived(appStoreBuild ? PLAY_STORE_URL : DIRECT_DOWNLOAD_URL);
     let upgradeLabel = $derived(
-        appStoreBuild ? "Update from the Play Store" : "Download the latest version",
+        appStoreBuild ? "nativeUpdate.fromPlayStore" : "nativeUpdate.downloadLatest",
     );
 </script>
 
@@ -60,12 +60,14 @@
 {#if checker.versionState.kind === "incompatible"}
     <Sheet>
         <Column gap={"xl"} padding={"xxl"}>
-            <Overview colour={"primary"}>Update required</Overview>
+            <Overview colour={"primary"}>
+                <Translatable resourceKey={i18nKey("nativeUpdate.requiredTitle")} />
+            </Overview>
             <BodySmall width={"hug"} fontWeight={"bold"}>
                 <Translatable
-                    resourceKey={i18nKey(
-                        `Version ${checker.versionState.available.toText()} is available, but it needs a newer version of the app than the one you have installed. This one cannot update itself the rest of the way.`,
-                    )} />
+                    resourceKey={i18nKey("nativeUpdate.requiredMessage", {
+                        version: checker.versionState.available.toText(),
+                    })} />
             </BodySmall>
 
             <Button onClick={() => openUrl({ url: upgradeUrl })} secondary>
@@ -85,12 +87,14 @@
     {@const available = checker.versionState.available.toText()}
     <Sheet onDismiss={() => dismiss(available)}>
         <Column gap={"xl"} padding={"xxl"}>
-            <Overview colour={"primary"}>Update available</Overview>
+            <Overview colour={"primary"}>
+                <Translatable resourceKey={i18nKey("nativeUpdate.availableTitle")} />
+            </Overview>
             <BodySmall width={"hug"} fontWeight={"bold"}>
                 <Translatable
-                    resourceKey={i18nKey(
-                        `Version ${checker.versionState.available.toText()} is available. This one keeps working in the meantime.`,
-                    )} />
+                    resourceKey={i18nKey("nativeUpdate.availableMessage", {
+                        version: available,
+                    })} />
             </BodySmall>
 
             <Button onClick={() => openUrl({ url: upgradeUrl })} secondary>
@@ -103,12 +107,11 @@
 {#if checker.versionState.kind === "out_of_date"}
     <Sheet>
         <Column gap={"xl"} padding={"xxl"}>
-            <Overview colour={"primary"}>One second! Updating ...</Overview>
+            <Overview colour={"primary"}>
+                <Translatable resourceKey={i18nKey("nativeUpdate.downloadingTitle")} />
+            </Overview>
             <BodySmall width={"hug"} fontWeight={"bold"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        `We are just downloading a quick update and then we will have you on your way ...`,
-                    )} />
+                <Translatable resourceKey={i18nKey("nativeUpdate.downloadingMessage")} />
             </BodySmall>
 
             <Progress
@@ -120,7 +123,7 @@
                 disabled={checker.versionState.downloadProgress < 100}
                 onClick={() => checker.reload()}
                 secondary>
-                <Translatable resourceKey={i18nKey("Reload and continue")} />
+                <Translatable resourceKey={i18nKey("nativeUpdate.reload")} />
             </Button>
         </Column>
     </Sheet>

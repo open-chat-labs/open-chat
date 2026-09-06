@@ -163,6 +163,21 @@
         "notAvailable": "このコンテンツは、このバージョンのアプリでは利用できません。ウェブアプリ [oc.app](https://oc.app) からは引き続きアクセスできます。",
         "notAvailableTitle": "コンテンツを利用できません"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "少々お待ちください！更新中 ...",
+        "downloadingMessage": "簡単な更新をダウンロードしています。まもなく続行できます ...",
+        "reload": "再読み込みして続行",
+        "requiredTitle": "更新が必要です",
+        "requiredMessage": "バージョン {version} が利用可能ですが、インストールされているアプリより新しいバージョンが必要です。このアプリは自身をそこまで更新できません。",
+        "availableTitle": "更新が利用可能です",
+        "availableMessage": "バージョン {version} が利用可能です。それまでは現在のバージョンをそのままご利用いただけます。",
+        "fromPlayStore": "Play ストアで更新",
+        "downloadLatest": "最新バージョンをダウンロード",
+        "reinstallTitle": "OpenChatを再インストールしてください",
+        "reinstallMessage": "このOpenChatは更新できなくなり、いずれ動作しなくなります。更新を受け取り続けるには、現在のバージョンをダウンロードしてください。",
+        "reinstallUninstallOld": "新しいバージョンをインストールしたら、こちらはアンインストールしてください。両方を残すと通知が二重に届きます。",
+        "reinstallDownload": "現在のバージョンをダウンロード"
+    },
     "appWallet": {
         "header": {
             "asset": "資産",

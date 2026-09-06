@@ -163,6 +163,21 @@
         "notAvailable": "此内容在此版本的应用中不可用。您仍可通过网页应用 [oc.app](https://oc.app) 访问。",
         "notAvailableTitle": "内容不可用"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "稍等！正在更新 ...",
+        "downloadingMessage": "我们正在下载一个快速更新，稍后即可继续 ...",
+        "reload": "重新加载并继续",
+        "requiredTitle": "需要更新",
+        "requiredMessage": "版本 {version} 已推出，但它需要比您已安装的应用更新的版本。当前应用无法自行更新到该版本。",
+        "availableTitle": "有可用更新",
+        "availableMessage": "版本 {version} 已推出。在此期间当前版本仍可正常使用。",
+        "fromPlayStore": "在 Play Store 更新",
+        "downloadLatest": "下载最新版本",
+        "reinstallTitle": "请重新安装 OpenChat",
+        "reinstallMessage": "此 OpenChat 副本已无法更新，并将在某个时候停止工作。请下载当前版本以继续接收更新。",
+        "reinstallUninstallOld": "安装新版本后，请卸载此版本。同时保留两个版本会导致每条通知重复出现。",
+        "reinstallDownload": "下载当前版本"
+    },
     "appWallet": {
         "header": {
             "asset": "资产",
