@@ -656,6 +656,19 @@ const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
+// Diagnostic reports carried "[object Object]" wherever the thrown value was a plain object
+// rather than an Error, which is most of them once an error has crossed the worker boundary.
+function describeError(err: unknown): string {
+    if (typeof err === "string") return err;
+    const message = (err as { message?: unknown })?.message;
+    if (typeof message === "string" && message.length > 0) return message;
+    try {
+        return JSON.stringify(err) ?? String(err);
+    } catch {
+        return String(err);
+    }
+}
+
 export class OpenChat {
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
@@ -930,8 +943,23 @@ export class OpenChat {
     }
 
     // Runs once the initial load of a selected chat has settled: if it is still the selected
-    // chat and nothing reached the event store, report it along with what the selection did.
-    #checkForEmptyChat(chatId: ChatIdentifier, path: string): void {
+    // chat and nothing reached the event store, recover it and report what happened.
+    //
+    // Four paths through loadPreviousMessages arrive here having loaded nothing AND thrown
+    // nothing, and the original report could not tell them apart:
+    //
+    //   - the chat is absent from allServerChatsStore (the summary read here comes from
+    //     chatSummariesStore, and those two diverge for previews and uninitialised direct chats)
+    //   - it is a private preview
+    //   - #previousMessagesCriteria concludes there is nothing left to fetch
+    //   - the events stream completes without emitting, so .aggregate falls back to
+    //     emptyEventsResponse(), which is a SUCCESS carrying zero events - indistinguishable
+    //     from a genuinely empty chat
+    //
+    // Whichever it was, a chat with history rendering nothing is wrong, and nothing retries
+    // until the user reselects it. So load the latest events directly instead of only filing a
+    // report. The extra fields identify which path it was, for when we come to remove this.
+    async #checkForEmptyChat(chatId: ChatIdentifier, path: string): Promise<void> {
         const chat = chatSummariesStore.value.get(chatId);
         if (
             chat === undefined ||
@@ -943,13 +971,52 @@ export class OpenChat {
         ) {
             return;
         }
-        this.#reportEmptyChat("still_empty_after_load", {
+
+        const serverChat = allServerChatsStore.value.get(chatId);
+        const context = {
             chatId: chatIdentifierToString(chatId),
             chatKind: chat.kind,
             path,
             latestEventIndex: chat.latestEventIndex,
             minVisibleEventIndex: this.earliestAvailableEventIndex(chat),
+            hasServerChat: serverChat !== undefined,
+            privatePreview: serverChat !== undefined && this.#isPrivatePreview(serverChat),
+            earliestLoadedIndex: this.#earliestLoadedIndex(chatId),
+        };
+
+        const recovered = await this.#recoverEmptyChat(chatId, serverChat);
+        this.#reportEmptyChat("still_empty_after_load", { ...context, recovered });
+    }
+
+    // Load the latest events straight from the server chat, bypassing
+    // #previousMessagesCriteria, which is one of the things that may have decided there was
+    // nothing to fetch. Deliberately does NOT go through loadPreviousMessages, so it cannot
+    // re-enter #checkForEmptyChat however it turns out.
+    async #recoverEmptyChat(
+        chatId: ChatIdentifier,
+        serverChat: ChatSummary | undefined,
+    ): Promise<boolean> {
+        if (serverChat === undefined) return false;
+
+        const seq = this.#chatSelectionSeq;
+        const startIndex = serverChat.latestEventIndex;
+        const resp = await this.#loadEvents(serverChat, startIndex, false);
+
+        // The user may have moved on while that was in flight.
+        if (
+            seq !== this.#chatSelectionSeq ||
+            !chatIdentifiersEqual(chatId, selectedChatIdStore.value) ||
+            !isSuccessfulEventsResponse(resp)
+        ) {
+            return false;
+        }
+
+        this.#fillLoadedEventGaps(serverChat, resp, startIndex, false);
+        publish("loadedPreviousMessages", {
+            context: { chatId, threadRootMessageIndex: undefined },
+            initialLoad: true,
         });
+        return serverEventsStore.value.length > 0;
     }
 
     // The initial load is the only thing that loads a freshly selected chat or thread: if it
@@ -2803,7 +2870,7 @@ export class OpenChat {
                         this.#reportEmptyChat("window_load_failed", {
                             chatId: chatIdentifierToString(chatId),
                             messageIndex,
-                            error: (err as { message?: string })?.message ?? String(err),
+                            error: describeError(err),
                         });
                     }
                     return CommonResponses.failure();
@@ -3259,7 +3326,7 @@ export class OpenChat {
                         ? this.loadEventWindow(chatId, messageIndex, undefined, true)
                         : this.loadPreviousMessages(chatId, undefined, true);
                 load.then(() => {
-                    this.#checkForEmptyChat(chatId, path);
+                    void this.#checkForEmptyChat(chatId, path);
                     if (serverChat !== undefined) {
                         this.#loadChatDetails(serverChat);
                     }
@@ -3656,6 +3723,19 @@ export class OpenChat {
 
     #previousMessagesCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
         if (serverChat.latestEventIndex < 0) {
+            return undefined;
+        }
+
+        // An uninitialised direct chat is a local placeholder for someone we have never
+        // messaged (localUpdates.addUninitialisedDirectChat), carrying latestEventIndex 0 and
+        // no latestMessage. There is no event 0 to fetch: asking the user canister for one
+        // returns ChatNotFound, which was filing a previous_load_failed report for every new
+        // conversation anyone started.
+        if (
+            serverChat.kind === "direct_chat" &&
+            serverChat.latestEventIndex === 0 &&
+            serverChat.latestMessage === undefined
+        ) {
             return undefined;
         }
 
