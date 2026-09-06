@@ -1286,6 +1286,21 @@
         "chatNotAvailable": "A group you're a member of is not available in this version of the app",
         "messageNotAvailable": "This message is not available in this version of the app"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "One second! Updating ...",
+        "downloadingMessage": "We are just downloading a quick update and then we will have you on your way ...",
+        "reload": "Reload and continue",
+        "requiredTitle": "Update required",
+        "requiredMessage": "Version {version} is available, but it needs a newer version of the app than the one you have installed. This one cannot update itself the rest of the way.",
+        "availableTitle": "Update available",
+        "availableMessage": "Version {version} is available. This one keeps working in the meantime.",
+        "fromPlayStore": "Update from the Play Store",
+        "downloadLatest": "Download the latest version",
+        "reinstallTitle": "Please reinstall OpenChat",
+        "reinstallMessage": "This copy of OpenChat can no longer be updated and will stop working at some point. Download the current version to keep receiving updates.",
+        "reinstallUninstallOld": "Once you have installed it, uninstall this one. Running both means every notification arrives twice.",
+        "reinstallDownload": "Download the current version"
+    },
     "noAccess": "No access",
     "noAccessText": "Sorry, but you do not have access to the community, group or channel that you are trying to access.",
     "noAudio": "You browser does not support embedded audio",

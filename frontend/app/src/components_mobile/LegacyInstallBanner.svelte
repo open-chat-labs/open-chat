@@ -73,22 +73,18 @@
 {#if show}
     <Sheet onDismiss={dismiss}>
         <Column gap={"xl"} padding={"xxl"}>
-            <Overview colour={"primary"}>Please reinstall OpenChat</Overview>
+            <Overview colour={"primary"}>
+                <Translatable resourceKey={i18nKey("nativeUpdate.reinstallTitle")} />
+            </Overview>
             <BodySmall width={"hug"} fontWeight={"bold"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "This copy of OpenChat can no longer be updated and will stop working at some point. Download the current version to keep receiving updates.",
-                    )} />
+                <Translatable resourceKey={i18nKey("nativeUpdate.reinstallMessage")} />
             </BodySmall>
             <BodySmall width={"hug"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "Once you have installed it, uninstall this one. Running both means every notification arrives twice.",
-                    )} />
+                <Translatable resourceKey={i18nKey("nativeUpdate.reinstallUninstallOld")} />
             </BodySmall>
 
             <Button onClick={() => openUrl({ url: DOWNLOAD_URL })} secondary>
-                <Translatable resourceKey={i18nKey("Download the current version")} />
+                <Translatable resourceKey={i18nKey("nativeUpdate.reinstallDownload")} />
             </Button>
         </Column>
     </Sheet>
