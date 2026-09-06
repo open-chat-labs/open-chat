@@ -52,6 +52,7 @@
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
+    import LegacyInstallBanner from "../LegacyInstallBanner.svelte";
     import NativeUpgradeBanner from "../NativeUpgradeBanner.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
@@ -69,6 +70,7 @@
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
+    import SlidingModals from "./SlidingModals.svelte";
     import SuspendModal from "./SuspendModal.svelte";
     import SetPinNumberModal from "./wallet/SetPinNumberModal.svelte";
 
@@ -561,12 +563,15 @@
     {/if}
 {/if}
 
+<SlidingModals />
+
 <Container height={"fill"} width={"fill"} supplementalClass={mainClass} tag="main">
     {#if showOnboarding}
         <OnboardModal />
     {:else}
         {#if client.isNativeApp()}
             <NativeUpgradeBanner />
+            <LegacyInstallBanner />
         {/if}
         <LeftPanel />
         <MiddlePanel />

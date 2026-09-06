@@ -105,7 +105,7 @@
         height = "hug",
         colour,
         borderStyle = "solid",
-        borderColour = ColourVars.background2,
+        borderColour = ColourVars.surface2,
         mainAxisAlignment = "start",
         crossAxisAlignment = "start",
         mainAxisSelfAlignment,

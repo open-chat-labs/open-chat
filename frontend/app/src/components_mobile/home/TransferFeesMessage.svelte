@@ -18,9 +18,9 @@
 </script>
 
 <Container crossAxisAlignment="center" gap="sm">
-    <Info size="1rem" color={ColourVars.warning} />
+    <Info size="1rem" color={ColourVars.validationWarning} />
     <Container direction={"vertical"}>
-        <BodySmall colour={"warning"}>
+        <BodySmall colour={"validationWarning"}>
             <Translatable
                 resourceKey={i18nKey("tokenTransfer.fee", {
                     fee: client.formatTokens(transferFees, tokenDecimals),
@@ -28,7 +28,7 @@
                 })} />
         </BodySmall>
         {#if networkFee !== undefined}
-            <BodySmall colour={"warning"}>
+            <BodySmall colour={"validationWarning"}>
                 <Translatable
                     resourceKey={i18nKey("cryptoAccount.networkFee", {
                         amount: `~${client.formatTokens(networkFee, tokenDecimals)}`,

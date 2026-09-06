@@ -11,7 +11,22 @@ export { createSetStore } from "./stores/setStore";
 export type { TypersByKey } from "./stores/typing";
 export { builtinBot } from "./utils/builtinBotCommands";
 export * from "./utils/restrictedContent";
-export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
+export {
+    ApproveError,
+    EXTERNAL_WALLETS_ENABLED,
+    SIGNER_WALLETS,
+    SignerConnection,
+    type ApproveSpendingArgs,
+    type SignerWallet,
+    type SignerWalletId,
+    type WalletAccount,
+} from "./utils/signer";
+export {
+    buildCryptoTransferText,
+    buildTransactionUrl,
+    subrangesCover,
+    TimelineGrouper,
+} from "./utils/chat";
 export * from "./utils/cryptoFormatter";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";

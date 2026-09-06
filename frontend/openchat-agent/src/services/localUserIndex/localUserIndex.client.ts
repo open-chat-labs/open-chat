@@ -142,14 +142,15 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
         const partialCachedResults = [] as EventWrapper<ChatEvent>[][];
         const requestsToBackend = [] as ChatEventsArgs[];
 
+        const cacheResults = await Promise.all(
+            requests.map((request) =>
+                this.getEventsFromCache(request.context, request.args, !cachePrimer),
+            ),
+        );
+
         for (let i = 0; i < requests.length; i++) {
             const request = requests[i];
-
-            const [cached, missing, dirty, totalMiss] = await this.getEventsFromCache(
-                request.context,
-                request.args,
-                !cachePrimer,
-            );
+            const [cached, missing, dirty, totalMiss] = cacheResults[i];
 
             if (missing.size + dirty.size > MAX_MISSING || totalMiss) {
                 requestsToBackend.push(request);
@@ -184,15 +185,20 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                 requestsToBackend,
             );
 
+            const cacheWrites: Promise<void>[] = [];
             for (let i = 0; i < batchResponse.responses.length; i++) {
                 const request = requestsToBackend[i];
                 const response = batchResponse.responses[i];
 
                 if (response.kind === "success") {
-                    await this.chatsDb.setCachedEvents(
-                        request.context.chatId,
-                        response.result,
-                        request.context.threadRootMessageIndex,
+                    // Snapshot `result` since `events` may be reassigned below (merged with cached events)
+                    // before the write reads it
+                    cacheWrites.push(
+                        this.chatsDb.setCachedEvents(
+                            request.context.chatId,
+                            { ...response.result },
+                            request.context.threadRootMessageIndex,
+                        ),
                     );
                     if (cachePrimer) {
                         this.chatsDb.setCachePrimerEventIndex(
@@ -219,6 +225,7 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                     }
                 }
             }
+            await Promise.all(cacheWrites);
         }
 
         return responses;

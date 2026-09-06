@@ -151,6 +151,26 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
         LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim) => state.data.streak_insurance_logs.mark_claim(*claim),
+        LocalUserIndexEvent::MediaScanStalled(ev) => {
+            // The off-chain media_hasher worker has stopped consuming a local index's scan
+            // job log. Raised in the internal moderation channel because that is the surface
+            // the moderation team already watches - queued jobs are potentially unscanned
+            // CSAM, and log overflow silently drops the oldest.
+            crate::model::moderation::post_moderation_notice(
+                format!(
+                    "\u{26a0} Media scan pipeline stalled on local index {caller}: {} jobs pending, oldest waiting ~{} minutes with no verdicts submitted. The media_hasher worker needs investigation.",
+                    ev.jobs_pending,
+                    ev.oldest_job_age / 60_000,
+                ),
+                state,
+            );
+        }
+        LocalUserIndexEvent::MediaScanRecovered => {
+            crate::model::moderation::post_moderation_notice(
+                format!("\u{2705} Media scan pipeline recovered on local index {caller}: verdicts are flowing again."),
+                state,
+            );
+        }
         LocalUserIndexEvent::NotifyOfUserDeleted(c, u) => state.data.group_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: **now,
             idempotency_id: state.env.rng().next_u64(),

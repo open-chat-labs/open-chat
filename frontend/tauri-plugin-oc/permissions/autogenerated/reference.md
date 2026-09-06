@@ -15,12 +15,14 @@ Default permissions for the plugin
 - `allow-release-notifications`
 - `allow-minimize-app`
 - `allow-get-server-version`
+- `allow-get-shell-version`
 - `allow-download-update`
 - `allow-restart-app`
 - `allow-load-recent-media`
 - `allow-enable-viewport-resize`
 - `allow-disable-viewport-resize`
 - `allow-save-media`
+- `allow-export-media`
 - `allow-update-chat-shortcuts`
 - `allow-get-pending-deep-link`
 - `allow-get-pending-notification-tap`
@@ -228,6 +230,32 @@ Denies the enable_viewport_resize command without any pre-configured scope.
 <tr>
 <td>
 
+`oc:allow-export-media`
+
+</td>
+<td>
+
+Enables the export_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-export-media`
+
+</td>
+<td>
+
+Denies the export_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `oc:allow-get-fcm-token`
 
 </td>
@@ -325,6 +353,32 @@ Enables the get_server_version command without any pre-configured scope.
 <td>
 
 Denies the get_server_version command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-get-shell-version`
+
+</td>
+<td>
+
+Enables the get_shell_version command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-shell-version`
+
+</td>
+<td>
+
+Denies the get_shell_version command without any pre-configured scope.
 
 </td>
 </tr>

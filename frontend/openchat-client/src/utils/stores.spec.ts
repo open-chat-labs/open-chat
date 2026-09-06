@@ -259,3 +259,79 @@ describe("store value can be accessed", () => {
         });
     });
 });
+
+describe("writable with notEq equality check", () => {
+    const notEq = () => false;
+
+    test("publishes on every set, even with the same reference", () => {
+        const map = new Map<string, number>();
+        const w = writable(map, undefined, notEq);
+        let publishes = 0;
+        w.subscribe(() => publishes++);
+        publishes = 0;
+        w.set(map);
+        w.update((m) => m);
+        expect(publishes).toBe(2);
+    });
+
+    test("not calling set/update is the only way to skip a publish", () => {
+        const w = writable(new Map<string, number>(), undefined, notEq);
+        let publishes = 0;
+        w.subscribe(() => publishes++);
+        publishes = 0;
+        if (w.value.get("a") !== 1) {
+            w.update((m) => m.set("a", 1));
+        }
+        if (w.value.get("a") !== 1) {
+            w.update((m) => m.set("a", 1));
+        }
+        expect(publishes).toBe(1);
+    });
+});
+
+describe("subscriber failures do not wedge the store machinery", () => {
+    test("a subscriber that throws does not stop later updates reaching other subscribers", () => {
+        const w = writable(0);
+        const seen: number[] = [];
+        w.subscribe((v) => {
+            if (v > 0) throw new Error("boom");
+        });
+        w.subscribe((v) => seen.push(v));
+
+        expect(() => w.set(1)).toThrow("boom");
+        // the throw must not leave the pending queue populated
+        expect(() => w.set(2)).toThrow("boom");
+        expect(seen).toEqual([0, 1, 2]);
+    });
+
+    test("a throw inside withPausedStores still unpauses and publishes", () => {
+        const w = writable(0);
+        const seen: number[] = [];
+        const unsub = w.subscribe((v) => {
+            if (v > 0) throw new Error("boom");
+        });
+        w.subscribe((v) => seen.push(v));
+
+        expect(() => withPausedStores(() => w.set(1))).toThrow("boom");
+        unsub();
+        w.set(2);
+        expect(seen).toEqual([0, 1, 2]);
+    });
+
+    test("a subscriber that unsubscribes while an update is pending is not called", () => {
+        const w = writable(0);
+        const seen: number[] = [];
+        let unsubB: () => void = () => {};
+        w.subscribe((v) => {
+            seen.push(v);
+            // unsubscribe b while b's callback for this same publish is still queued
+            if (v === 1) unsubB();
+        });
+        const calls: number[] = [];
+        unsubB = w.subscribe((v) => calls.push(v));
+
+        w.set(1);
+        expect(seen).toEqual([0, 1]);
+        expect(calls).toEqual([0]);
+    });
+});

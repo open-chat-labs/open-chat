@@ -59,18 +59,28 @@ fn mark_online_pushes_event() {
     env.tick();
     env.tick();
 
+    // The event store is shared with every other test running against this env, so events from
+    // unrelated tests can land after ours. Look for our event among the most recent ones rather
+    // than asserting it is the very latest.
     let latest_event_index = client::event_store::happy_path::events(env, *controller, canister_ids.event_store, 0, 0)
         .latest_event_index
         .unwrap();
 
-    let latest_event =
-        client::event_store::happy_path::events(env, *controller, canister_ids.event_store, latest_event_index, 1)
-            .events
-            .pop()
-            .unwrap();
+    let window = 100;
+    let events = client::event_store::happy_path::events(
+        env,
+        *controller,
+        canister_ids.event_store,
+        latest_event_index.saturating_sub(window),
+        window + 1,
+    )
+    .events;
 
-    assert_eq!(latest_event.name, "user_online");
-    assert_eq!(latest_event.timestamp, timestamp);
+    assert!(
+        events.iter().any(|e| e.name == "user_online" && e.timestamp == timestamp),
+        "no user_online event at {timestamp} in the last {window} events: {:?}",
+        events.iter().map(|e| (e.name.as_str(), e.timestamp)).collect::<Vec<_>>()
+    );
 }
 
 #[test]

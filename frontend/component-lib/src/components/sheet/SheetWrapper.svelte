@@ -56,7 +56,7 @@
     parentDirection={"vertical"}
     borderRadius={["md", "md", "zero", "zero"]}
     width={"fill"}
-    background={ColourVars.background1}>
+    background={ColourVars.surface1}>
     {#if onDismiss}
         <button
             bind:this={sheetBehavior.handle}
@@ -118,7 +118,7 @@
         .inner {
             height: 0.25rem;
             border-radius: var(--rad-circle);
-            background-color: var(--text-tertiary);
+            background-color: var(--text-on-disabled-surface);
             transition:
                 background-color 0.2s ease,
                 box-shadow 0.2s ease;
@@ -126,7 +126,7 @@
 
         &.dragged .inner {
             background-color: var(--primary);
-            box-shadow: 0 0 0.5rem 0.125rem var(--primary-muted);
+            box-shadow: 0 0 0.5rem 0.125rem var(--primary-surface);
         }
     }
 </style>

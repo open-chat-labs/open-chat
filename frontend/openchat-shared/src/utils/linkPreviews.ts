@@ -18,13 +18,27 @@ export type OgData = {
     title?: string;
     description?: string;
     image?: string;
-    image_alt?: string;
-    image_width?: number;
-    image_height?: number;
+    imageAlt?: string;
+    imageWidth?: number;
+    imageHeight?: number;
 };
 
+// Bounded caches: Map preserves insertion order, so deleting the first key evicts the oldest entry
+export const OG_CACHE_MAX = 300;
 const ogPromiseCache = new Map<string, Promise<OgData | null>>();
 const ogResolvedCache = new Map<string, OgData | null>();
+
+function cacheSet<V>(cache: Map<string, V>, key: string, value: V) {
+    cache.delete(key);
+    cache.set(key, value);
+    if (cache.size > OG_CACHE_MAX) {
+        cache.delete(cache.keys().next().value as string);
+    }
+}
+
+export function ogCacheSizes(): { promises: number; resolved: number } {
+    return { promises: ogPromiseCache.size, resolved: ogResolvedCache.size };
+}
 
 export function getCachedOgData(url: string): OgData | null | undefined {
     return ogResolvedCache.get(url); // undefined = not yet resolved
@@ -170,12 +184,12 @@ export function fetchOgData(url: string, proxyUrl: string): Promise<OgData | nul
         .then((data) => (data?.title ? data : null))
         .catch(() => null)
         .then((data) => {
-            if (data !== null) ogResolvedCache.set(url, data);
+            if (data !== null) cacheSet(ogResolvedCache, url, data);
             else ogPromiseCache.delete(url); // don't cache failures — let next mount retry
             return data;
         });
 
-    ogPromiseCache.set(url, promise);
+    cacheSet(ogPromiseCache, url, promise);
     return promise;
 }
 
@@ -191,9 +205,12 @@ async function fetchSinglePreview(url: string, proxyUrl: string): Promise<OgPrev
     };
 
     if (data.image) {
-        let width = data.image_width;
-        let height = data.image_height;
+        let width = data.imageWidth;
+        let height = data.imageHeight;
         if (width === undefined || height === undefined) {
+            // The preview service only reports dimensions when the source page
+            // provides og:image:width/height, so fall back to measuring in the
+            // browser - otherwise GenericPreview drops the image altogether.
             const dims = await getImageDimensions(data.image);
             width = dims?.width;
             height = dims?.height;

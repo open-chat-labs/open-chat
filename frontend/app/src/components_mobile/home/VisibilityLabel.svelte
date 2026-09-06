@@ -14,7 +14,7 @@
 {#if !isPublic}
     <Container gap={"xs"} width={"hug"} supplementalClass="visibility-indicator">
         <Container gap={"xs"} crossAxisAlignment={"center"}>
-            <LockOutline color={ColourVars.error} />
+            <LockOutline color={ColourVars.validationError} />
             <Translatable resourceKey={i18nKey(isPublic ? "access.public" : "access.private")} />
         </Container>
         //

@@ -96,6 +96,17 @@ mod tests {
         );
     }
 
+    // A UserId whose final byte is tagged is read as carrying an index into a shared canister. No
+    // sentinel may look like one, else it would resolve to the wrong canister and to a non-zero
+    // index.
+    #[test]
+    fn sentinel_user_ids_are_not_indexed() {
+        for user_id in [OPENCHAT_BOT_USER_ID, DELETED_USER_ID] {
+            assert_eq!(user_id.index(), 0, "{user_id}");
+            assert_eq!(user_id.canister_id(), user_id.as_principal(), "{user_id}");
+        }
+    }
+
     #[test]
     fn sns_root_canister_id() {
         assert_eq!(

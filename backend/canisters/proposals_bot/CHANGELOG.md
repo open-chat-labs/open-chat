@@ -10,9 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `og_previews` field to messages for handling OpenGraph previews ([#9002](https://github.com/open-chat-labs/open-chat/pull/9002))
 
+### Changed
+
+- Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+- Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
+
 ### Fixed
 
 - Detect an already pushed proposal via `MessageIdAlreadyExists` rather than the error message ([#9124](https://github.com/open-chat-labs/open-chat/pull/9124))
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 
 ## [[2.0.1957](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1957-proposals_bot)] - 2026-01-16
 

@@ -193,6 +193,13 @@ fn process_send_message_result(
         if !input.is_empty() {
             state.queue_message_for_moderation(thread_root_message_index, message_id, input);
         }
+        // Deliberately a sibling of the classification gate, not nested inside it: `input` is
+        // empty for an image with no caption, which is exactly the message media scanning
+        // must not skip
+        let blobs = message_event.event.content.scannable_blobs();
+        if !blobs.is_empty() {
+            state.queue_media_for_scanning(thread_root_message_index, message_id, blobs);
+        }
     }
 
     if !result.unfinalised_bot_message {

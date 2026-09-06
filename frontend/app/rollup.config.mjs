@@ -71,6 +71,8 @@ function clean() {
             }
             copyFile(".", "build", ".ic-assets.json5");
             copyFile(".", "build/.well-known", "assetlinks.json");
+            // iOS counterpart of assetlinks.json, required for native passkeys.
+            copyFile(".", "build/.well-known", "apple-app-site-association");
         },
     };
 }
@@ -250,6 +252,12 @@ export default {
                 },
                 { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
                 { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
+                // svelte-i18n pulls in a ~250 KB Intl.getCanonicalLocales polyfill;
+                // every runtime we target has it natively.
+                {
+                    find: "@formatjs/intl-getcanonicallocales",
+                    replacement: path.resolve(__dirname, "src/utils/intlGetCanonicalLocales.ts"),
+                },
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
                 { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
                 { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },
@@ -389,6 +397,7 @@ export default {
             ),
             "import.meta.env.OC_USERGEEK_APIKEY": JSON.stringify(process.env.OC_USERGEEK_APIKEY),
             "import.meta.env.OC_VIDEO_BRIDGE_URL": JSON.stringify(process.env.OC_VIDEO_BRIDGE_URL),
+            "import.meta.env.OC_NCA_REPORTER_URL": JSON.stringify(process.env.OC_NCA_REPORTER_URL),
             "import.meta.env.OC_PREVIEW_PROXY_URL": JSON.stringify(
                 process.env.OC_PREVIEW_PROXY_URL,
             ),
@@ -418,7 +427,22 @@ export default {
         rejectUnresolvedViteEnv(),
         html({
             template: ({ files }) => {
-                const jsEntryFile = files.js.find((f) => f.isEntry).fileName;
+                const jsEntry = files.js.find((f) => f.isEntry);
+                const jsEntryFile = jsEntry.fileName;
+                // The entry is a tiny facade that statically imports the real
+                // main-*.js and vendor-*.js chunks; preload them so the browser
+                // doesn't spend a round trip discovering them from the facade.
+                const modulePreloads = jsEntry.imports
+                    .map((f) => `<link rel="modulepreload" href="/${f}" />`)
+                    .join("");
+                // Google Analytics is disabled: GA4 sets cookies which would
+                // require a consent banner under PECR, and cookieless consent
+                // mode yields almost no usable data. To re-enable, set
+                // gaEnabled to true AND add https://www.googletagmanager.com/
+                // back to script-src in rollup.extras.mjs, then revisit the
+                // analytics wording in the privacy policy (PrivacyContent.svelte
+                // sections 4 and 6) and the cookie-consent question.
+                const gaEnabled = false;
                 // Google Tag Manager + gtag is production-only: gated on the build
                 // env, never included otherwise. gtag stays defined as a no-op
                 // dataLayer push in non-production builds so page-view calls
@@ -427,8 +451,9 @@ export default {
                 // page is governed by this meta CSP (the canister only sets a
                 // `frame-ancestors` header), which has no `'unsafe-inline'`, so an
                 // un-hashed inline script would be blocked.
-                const analyticsBody = production
-                    ? `window.dataLayer = window.dataLayer || [];
+                const analyticsBody =
+                    production && gaEnabled
+                        ? `window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
                     gtag('config', 'G-7P9R6CJLNR');
@@ -441,7 +466,7 @@ export default {
                     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
                     })(window,document,'script','dataLayer','GTM-WQD48GK2');`
-                    : `window.dataLayer = window.dataLayer || [];
+                        : `window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}`;
 
                 const inlineScripts = [
@@ -451,9 +476,10 @@ export default {
                 ];
                 const csp = generateCspForScripts(inlineScripts);
 
-                const analyticsNoscript = production
-                    ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
-                    : "";
+                const analyticsNoscript =
+                    production && gaEnabled
+                        ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
+                        : "";
 
                 // TODO this is a duplicate of the index.html file, we should
                 // have only one source for our index html.
@@ -477,9 +503,6 @@ export default {
                                 <meta charset="utf-8" />
                                 <meta name="viewport" content="width=device-width, initial-scale=1">
                                 <meta name="apple-mobile-web-app-title" content="OpenChat" />
-                                <meta name="twitter:widgets:autoload" content="off">
-                                <meta name="twitter:dnt" content="on">
-                                <meta name="twitter:widgets:csp" content="on">
                                 <link rel="canonical" href="/">
                                 <title>OpenChat</title>
                                 <link rel="manifest" href="/openchat.webmanifest" />
@@ -492,7 +515,7 @@ export default {
                                     href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
                                     rel="stylesheet"
                                 />
-                                <script type="module" src="https://platform.twitter.com/widgets.js"></script>
+                                ${modulePreloads}
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
@@ -532,6 +555,10 @@ export default {
                     // The all-WebGPU model worker is copied only by the explicit feature-flagged target below;
                     // an old local artifact can therefore never leak into a release build.
                     src: "../openchat-worker/lib/worker.js*",
+                    dest: "build",
+                },
+                {
+                    src: "../openchat-worker/lib/transcode_worker.js*",
                     dest: "build",
                 },
                 {

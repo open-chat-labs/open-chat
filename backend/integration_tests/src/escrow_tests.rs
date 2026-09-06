@@ -9,7 +9,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::time::Duration;
 use test_case::test_case;
-use types::{Chat, P2PSwapLocation};
+use types::{Chat, P2PSwapLocation, UserId};
 
 #[test]
 fn swap_via_escrow_canister_succeeds() {
@@ -29,7 +29,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let swap_id = client::escrow::happy_path::create_swap(
         env,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
         icp_token_info(),
@@ -43,7 +43,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let user1_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user1.user_id.into(), swap_id)),
+        subaccount: Some(deposit_subaccount(user1.user_id.as_principal(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -56,7 +56,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let user2_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user2.user_id.into(), swap_id)),
+        subaccount: Some(deposit_subaccount(user2.user_id.as_principal(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -67,8 +67,10 @@ fn swap_via_escrow_canister_succeeds() {
         chat_amount + 100_000,
     );
 
-    let result1 = client::escrow::happy_path::notify_deposit(env, user1.user_id.into(), canister_ids.escrow, swap_id, None);
-    let result2 = client::escrow::happy_path::notify_deposit(env, user2.user_id.into(), canister_ids.escrow, swap_id, None);
+    let result1 =
+        client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    let result2 =
+        client::escrow::happy_path::notify_deposit(env, user2.user_id.canister_id(), canister_ids.escrow, swap_id, None);
 
     assert!(!result1.complete);
     assert!(result2.complete);
@@ -172,7 +174,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let swap_id = client::escrow::happy_path::create_swap(
         env,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
         icp_token_info(),
@@ -186,7 +188,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let user1_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user1.user_id.into(), swap_id)),
+        subaccount: Some(deposit_subaccount(user1.user_id.as_principal(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -199,7 +201,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let user2_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user2.user_id.into(), swap_id)),
+        subaccount: Some(deposit_subaccount(user2.user_id.as_principal(), swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -210,17 +212,17 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
         chat_amount + 100_000,
     );
 
-    client::escrow::happy_path::notify_deposit(env, user1.user_id.into(), canister_ids.escrow, swap_id, None);
+    client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
 
     if expired {
         env.advance_time(Duration::from_millis((60 * MINUTE_IN_MS) + 1));
     } else {
-        client::escrow::happy_path::cancel_swap(env, user1.user_id.into(), canister_ids.escrow, swap_id);
+        client::escrow::happy_path::cancel_swap(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id);
     }
 
     let notify_response = client::escrow::notify_deposit(
         env,
-        user2.user_id.into(),
+        user2.user_id.canister_id(),
         canister_ids.escrow,
         &escrow_canister::notify_deposit::Args {
             swap_id,
@@ -250,4 +252,128 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id),
         chat_amount
     );
+}
+
+// Indexed users share a canister, so their wallets are subaccounts of it. Payouts and refunds
+// must land in those subaccounts - the raw UserId principal is an account nobody can sign for.
+#[test_case(true)]
+#[test_case(false)]
+fn swap_funds_reach_indexed_users_wallet_subaccounts(complete: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let sender = Principal::from_slice(&[1]);
+    let offerer = UserId::new_indexed(canister_ids.user_index, 5);
+    let accepter = UserId::new_indexed(canister_ids.user_index, 6);
+
+    let now = now_millis(env);
+
+    let icp_amount = 100_000_000_000;
+    let chat_amount = 1_000_000_000_000;
+
+    let swap_id = client::escrow::happy_path::create_swap(
+        env,
+        sender,
+        canister_ids.escrow,
+        P2PSwapLocation::External,
+        icp_token_info(),
+        icp_amount,
+        Some(offerer.as_principal()),
+        chat_token_info(),
+        chat_amount,
+        Some(accepter.as_principal()),
+        now + DAY_IN_MS,
+    );
+
+    client::ledger::happy_path::transfer(
+        env,
+        *controller,
+        canister_ids.icp_ledger,
+        Account {
+            owner: canister_ids.escrow,
+            subaccount: Some(deposit_subaccount(offerer.as_principal(), swap_id)),
+        },
+        icp_amount + 10_000,
+    );
+
+    client::ledger::happy_path::transfer(
+        env,
+        *controller,
+        canister_ids.chat_ledger,
+        Account {
+            owner: canister_ids.escrow,
+            subaccount: Some(deposit_subaccount(accepter.as_principal(), swap_id)),
+        },
+        chat_amount + 100_000,
+    );
+
+    client::escrow::happy_path::notify_deposit(env, sender, canister_ids.escrow, swap_id, Some(offerer.as_principal()));
+
+    if complete {
+        let result = client::escrow::happy_path::notify_deposit(
+            env,
+            sender,
+            canister_ids.escrow,
+            swap_id,
+            Some(accepter.as_principal()),
+        );
+        assert!(result.complete);
+
+        tick_many(env, 10);
+
+        assert_eq!(
+            client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, offerer),
+            chat_amount
+        );
+        assert_eq!(
+            client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, accepter),
+            icp_amount
+        );
+    } else {
+        client::escrow::happy_path::cancel_swap(env, sender, canister_ids.escrow, swap_id);
+
+        let notify_response = client::escrow::notify_deposit(
+            env,
+            sender,
+            canister_ids.escrow,
+            &escrow_canister::notify_deposit::Args {
+                swap_id,
+                deposited_by: Some(accepter.as_principal()),
+            },
+        );
+        assert!(matches!(
+            notify_response,
+            escrow_canister::notify_deposit::Response::SwapCancelled
+        ));
+
+        tick_many(env, 10);
+
+        assert_eq!(
+            client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, offerer),
+            icp_amount
+        );
+        assert_eq!(
+            client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, accepter),
+            chat_amount
+        );
+    }
+
+    // The raw principals must hold nothing - funds there would be unrecoverable.
+    for (ledger, user_id) in [(canister_ids.icp_ledger, offerer), (canister_ids.chat_ledger, accepter)] {
+        assert_eq!(
+            client::ledger::happy_path::balance_of(
+                env,
+                ledger,
+                Account {
+                    owner: user_id.as_principal(),
+                    subaccount: None,
+                },
+            ),
+            0
+        );
+    }
 }

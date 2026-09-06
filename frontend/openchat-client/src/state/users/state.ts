@@ -60,8 +60,14 @@ export class UsersState {
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {
+        const toUpdate = userIds.filter((id) => {
+            const user = allUsersStore.value.get(id);
+            return user !== undefined && user.updated !== timestamp;
+        });
+        if (toUpdate.length === 0) return;
+
         allUsersStore.update((map) => {
-            for (const userId of userIds) {
+            for (const userId of toUpdate) {
                 const user = map.get(userId);
                 if (user !== undefined) {
                     user.updated = timestamp;
@@ -73,6 +79,9 @@ export class UsersState {
     }
 
     userSuspended(userId: string, suspended: boolean) {
+        const existing = allUsersStore.value.get(userId);
+        if (existing === undefined || existing.suspended === suspended) return;
+
         allUsersStore.update((users) => {
             const u = users.get(userId);
             if (u) {

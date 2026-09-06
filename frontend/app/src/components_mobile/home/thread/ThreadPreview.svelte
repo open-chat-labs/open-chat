@@ -24,7 +24,7 @@
         selectedCommunitySummaryStore,
         type ThreadPreview,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -37,10 +37,9 @@
 
     interface Props {
         thread: ThreadPreview;
-        observer: IntersectionObserver;
     }
 
-    let { thread, observer }: Props = $props();
+    let { thread }: Props = $props();
 
     let expanded = $state(false);
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
@@ -75,16 +74,15 @@
         }
     }
 
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            if (syncDetails !== undefined) {
-                unreadCount = client.unreadThreadMessageCount(
-                    thread.chatId,
-                    threadRootMessageIndex,
-                    syncDetails.latestMessageIndex,
-                );
-            }
-        });
+    $effect(() => {
+        void $messagesRead;
+        if (syncDetails !== undefined) {
+            unreadCount = client.unreadThreadMessageCount(
+                thread.chatId,
+                threadRootMessageIndex,
+                syncDetails.latestMessageIndex,
+            );
+        }
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));
@@ -139,7 +137,7 @@
 {#if chat !== undefined}
     <Container direction={"vertical"}>
         <Container
-            background={ColourVars.background1}
+            background={ColourVars.surface1}
             padding={["lg", "md"]}
             onClick={clickedThread}
             mainAxisAlignment={"spaceBetween"}
@@ -188,7 +186,6 @@
                     <ChatMessage
                         sender={$allUsersStore.get(thread.rootMessage.event.sender)}
                         focused={false}
-                        {observer}
                         accepted
                         confirmed
                         failed={false}
@@ -235,7 +232,6 @@
                             <ChatMessage
                                 sender={$allUsersStore.get(evt.event.sender)}
                                 focused={false}
-                                {observer}
                                 accepted
                                 confirmed
                                 failed={false}

@@ -3,6 +3,7 @@ use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Deserializer, Serialize};
 use ts_export::ts_export;
 
@@ -155,42 +156,17 @@ impl PendingCryptoTransaction {
         }
     }
 
-    pub fn user_id(&self) -> Option<UserId> {
-        match self {
-            PendingCryptoTransaction::NNS(t) => {
-                if let UserOrAccount::User(u) = t.to {
-                    Some(u)
-                } else {
-                    None
-                }
-            }
-            PendingCryptoTransaction::ICRC1(t) => {
-                if t.to.subaccount.unwrap_or_default() == [0; 32] {
-                    Some(t.to.owner.into())
-                } else {
-                    None
-                }
-            }
-            PendingCryptoTransaction::ICRC2(t) => {
-                if t.to.subaccount.unwrap_or_default() == ic_ledger_types::DEFAULT_SUBACCOUNT.0 {
-                    Some(t.to.owner.into())
-                } else {
-                    None
-                }
-            }
-        }
-    }
-
     pub fn validate_recipient(&self, recipient: UserId) -> bool {
+        // The whole account, not just the owner. Once a canister holds many users the owner alone
+        // is satisfied by a transfer destined for any of them.
+        let account = Account::from(recipient);
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
-                UserOrAccount::Account(a) => {
-                    a == AccountIdentifier::new(&recipient.into(), &ic_ledger_types::DEFAULT_SUBACCOUNT)
-                }
+                UserOrAccount::Account(a) => a == AccountIdentifier::from(recipient),
                 UserOrAccount::User(u) => u == recipient,
             },
-            PendingCryptoTransaction::ICRC1(t) => t.to.owner == recipient.into(),
-            PendingCryptoTransaction::ICRC2(t) => t.to.owner == recipient.into(),
+            PendingCryptoTransaction::ICRC1(t) => Account::from(t.to) == account,
+            PendingCryptoTransaction::ICRC2(t) => Account::from(t.to) == account,
         }
     }
 
@@ -549,11 +525,32 @@ pub mod icrc1 {
         pub subaccount: Option<[u8; 32]>,
     }
 
-    impl<T: Into<Principal>> From<T> for Account {
-        fn from(value: T) -> Self {
+    // The default account of a canister or other non-user principal. A principal which actually
+    // identifies a user must go through `for_user`/`From<UserId>` instead - building a user's
+    // account from their principal drops the subaccount their wallet lives in.
+    impl From<Principal> for Account {
+        fn from(value: Principal) -> Self {
             Account {
-                owner: value.into(),
+                owner: value,
                 subaccount: None,
+            }
+        }
+    }
+
+    impl From<UserId> for Account {
+        fn from(value: UserId) -> Self {
+            Account::for_user(value)
+        }
+    }
+
+    impl Account {
+        // A user's account. Note the owner is the canister holding the user's data, which is not
+        // the same as the UserId once a canister holds more than one user.
+        pub fn for_user(user_id: UserId) -> Account {
+            let account = icrc_ledger_types::icrc1::account::Account::from(user_id);
+            Account {
+                owner: account.owner,
+                subaccount: account.subaccount,
             }
         }
     }

@@ -64,24 +64,92 @@ export function flattenTimeline<T extends ChatEvent>(
     const result: FlatChatItem<T>[] = [];
     for (const item of timeline) {
         if (item.kind === "timeline_date") {
-            result.push({
-                kind: "timeline_date",
-                key: dateKey(item.timestamp),
-                timestamp: item.timestamp,
-            });
+            result.push(dateItem(item.timestamp));
         } else {
-            for (const group of item.group) {
-                for (let i = 0; i < group.length; i++) {
-                    result.push({
-                        kind: "event",
-                        key: eventKey(group[i]),
-                        event: group[i],
-                        first: i + 1 === group.length,
-                        last: i === 0,
-                    });
-                }
-            }
+            pushGroup(result, item.group);
         }
     }
     return result;
+}
+
+function dateItem<T extends ChatEvent>(timestamp: bigint): FlatChatItem<T> {
+    return { kind: "timeline_date", key: dateKey(timestamp), timestamp };
+}
+
+function eventItem<T extends ChatEvent>(
+    event: EventWrapper<T>,
+    first: boolean,
+    last: boolean,
+): FlatChatEvent<T> {
+    return { kind: "event", key: eventKey(event), event, first, last };
+}
+
+function pushGroup<T extends ChatEvent>(result: FlatChatItem<T>[], groups: EventWrapper<T>[][]) {
+    for (const group of groups) {
+        for (let i = 0; i < group.length; i++) {
+            result.push(eventItem(group[i], i + 1 === group.length, i === 0));
+        }
+    }
+}
+
+// Memoising wrapper around `flattenTimeline`. One instance per list.
+//
+// Paired with TimelineGrouper: after a cosmetic update the new timeline shares
+// every untouched item/group with the previous one, so the flat rows for those
+// can be reused as-is. Rows whose identity is preserved are not re-rendered by
+// the keyed {#each} downstream. Always returns a new array.
+export class TimelineFlattener<T extends ChatEvent = ChatEvent> {
+    #prevTimeline: TimelineItem<T>[] = [];
+    #prevFlat: FlatChatItem<T>[] = [];
+
+    flatten(timeline: TimelineItem<T>[]): FlatChatItem<T>[] {
+        const prevTimeline = this.#prevTimeline;
+        const prevFlat = this.#prevFlat;
+        const result: FlatChatItem<T>[] = [];
+        // Walk both timelines in lockstep; `offset` tracks where the previous
+        // item's rows start in prevFlat.
+        let offset = 0;
+        for (let t = 0; t < timeline.length; t++) {
+            const item = timeline[t];
+            const prevItem = t < prevTimeline.length ? prevTimeline[t] : undefined;
+            const prevLen = prevItem === undefined ? 0 : flatLength(prevItem);
+            if (item === prevItem) {
+                for (let i = 0; i < prevLen; i++) result.push(prevFlat[offset + i]);
+            } else if (item.kind === "timeline_date") {
+                result.push(dateItem(item.timestamp));
+            } else if (prevItem?.kind === "timeline_event_group" && prevLen === flatLength(item)) {
+                // Same shape (the grouper patched wrappers in place): reuse
+                // rows whose wrapper and flags are unchanged.
+                let i = 0;
+                for (const group of item.group) {
+                    for (let g = 0; g < group.length; g++, i++) {
+                        const first = g + 1 === group.length;
+                        const last = g === 0;
+                        const prev = prevFlat[offset + i];
+                        result.push(
+                            prev.kind === "event" &&
+                                prev.event === group[g] &&
+                                prev.first === first &&
+                                prev.last === last
+                                ? prev
+                                : eventItem(group[g], first, last),
+                        );
+                    }
+                }
+            } else {
+                pushGroup(result, item.group);
+            }
+            offset += prevLen;
+        }
+        this.#prevTimeline = timeline;
+        this.#prevFlat = result;
+        return result;
+    }
+}
+
+function flatLength<T extends ChatEvent>(item: TimelineItem<T>): number {
+    if (item.kind === "timeline_date") return 1;
+    let n = 0;
+    for (const group of item.group) n += group.length;
+    return n;
 }

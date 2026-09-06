@@ -1,3 +1,4 @@
+import { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
     AccessGate,
@@ -115,6 +116,9 @@ import type {
     WebhookDetails,
 } from "@shared";
 import {
+    ErrorCode,
+    isError,
+    parseBigInt,
     CommonResponses,
     ICP_SYMBOL,
     ProposalDecisionStatus,
@@ -130,6 +134,7 @@ import {
     chatIdentifiersEqual,
     codeToText,
     decodeIcrcAccount,
+    encodeIcrcAccount,
     isAccountIdentifierValid,
     messagePermissionsList,
     nullMembership,
@@ -278,6 +283,7 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import type { ApiPrincipal } from "../index";
+import { ReplicaNotUpToDateError } from "../error";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -301,6 +307,25 @@ export async function getEventsSuccess(
             latestEventIndex: value.latest_event_index,
         }
     );
+}
+
+// The canister answers ReplicaNotUpToDate (with its own timestamp as the message) when the replica
+// a query landed on is behind the client's latest_known_update. Returned as a plain error response
+// nothing would retry it and event merging would throw on it; rethrown as ReplicaNotUpToDateError
+// it goes through the query retry loop in CanisterAgent (backoff, so a later attempt lands on a
+// replica that has caught up) exactly like the client-side replica check does.
+export function throwIfReplicaNotUpToDate<T>(
+    response: T | OCError,
+    latestKnownUpdate: bigint | undefined,
+): T | OCError {
+    if (isError(response) && response.code === ErrorCode.ReplicaNotUpToDate) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            parseBigInt(response.message ?? "") ?? BigInt(0),
+            latestKnownUpdate ?? BigInt(0),
+            false,
+        );
+    }
+    return response;
 }
 
 export function eventWrapper(value: TEventWrapperChatEvent): EventWrapper<ChatEvent> {
@@ -739,14 +764,37 @@ function moderationReportContent(value: TModerationReportContent): ModerationRep
         reporters: value.reporters.map(principalBytesToString),
         flaggedCategories: value.flagged_categories,
         classificationFailed: value.classification_failed ?? false,
-        authorityReport: mapOptional(value.authority_report, (a) =>
-            "Due" in a
-                ? ({ kind: "due", urgent: a.Due.urgent } as const)
-                : ({ kind: "filed", portalReference: a.Filed.portal_reference } as const),
-        ),
+        isBlockedAttempt: value.is_blocked_attempt ?? false,
+        authorityReport: mapOptional(value.authority_report, (a) => {
+            if ("Due" in a) return { kind: "due", urgent: a.Due.urgent } as const;
+            if ("Filed" in a)
+                return { kind: "filed", portalReference: a.Filed.portal_reference } as const;
+            if ("Attempting" in a)
+                return { kind: "attempting", startedAt: a.Attempting.started_at } as const;
+            if ("ContingencyRequired" in a)
+                return {
+                    kind: "contingency_required",
+                    error: a.ContingencyRequired.error,
+                    urgent: a.ContingencyRequired.urgent ?? false,
+                } as const;
+            return {
+                kind: "validation_failed",
+                error: a.ValidationFailed.error,
+                urgent: a.ValidationFailed.urgent ?? false,
+            } as const;
+        }),
         autoSanctioned: value.auto_sanctioned,
         contentExcerpt: value.content_excerpt,
         blobReferences: value.blob_references.map(blobReference),
+        mediaMatches: (value.media_matches ?? []).map((m) => ({
+            provider: m.provider === "PhotoDna" ? "PhotoDNA" : String(m.provider),
+            blobId: m.blob_id,
+            source: m.source,
+            violations: m.violations,
+            matchDistance: m.match_distance,
+            matchId: m.match_id,
+            hash: m.hash,
+        })),
         reportedAt: value.reported_at,
         status: moderationReportStatus(value.status),
     };
@@ -1175,7 +1223,7 @@ function cryptoTransfer(
     throw new UnsupportedValueError("Unexpected ApiCryptoTransaction type received", value);
 }
 
-function pendingCryptoTransfer(
+export function pendingCryptoTransfer(
     value: TPendingCryptoTransaction,
     recipient: string,
 ): PendingCryptocurrencyTransfer {
@@ -1205,7 +1253,17 @@ function pendingCryptoTransfer(
         };
     }
     if ("ICRC2" in value) {
-        throw new Error("ICRC2 is not supported yet");
+        return {
+            kind: "pending",
+            ledger: principalBytesToString(value.ICRC2.ledger),
+            token: value.ICRC2.token_symbol,
+            recipient,
+            amountE8s: value.ICRC2.amount,
+            feeE8s: value.ICRC2.fee,
+            memo: mapOptional(value.ICRC2.memo, bytesToBigint),
+            createdAtNanos: value.ICRC2.created,
+            fromAccount: formatIcrcAccount(value.ICRC2.from),
+        };
     }
 
     throw new UnsupportedValueError("Unexpected ApiPendingCryptoTransaction type received", value);
@@ -2055,6 +2113,7 @@ export function apiP2PSwapContentInitial(domain: P2PSwapContentInitial): TP2PSwa
         token1_amount: domain.token1Amount,
         caption: domain.caption,
         expires_in: domain.expiresIn,
+        from_account: mapOptional(domain.fromAccount, addressToIcrcAccount),
     };
 }
 
@@ -2077,6 +2136,24 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): TCryptoC
 
 export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCryptoTransaction {
     if (domain.kind === "pending") {
+        // A fromAccount means spending from a wallet OpenChat does not control, which the user's
+        // canister pulls from via ICRC-2, so the wallet must have approved it as spender.
+        if (domain.fromAccount !== undefined) {
+            return {
+                Pending: {
+                    ICRC2: {
+                        ledger: principalStringToBytes(domain.ledger),
+                        token_symbol: domain.token,
+                        from: addressToIcrcAccount(domain.fromAccount),
+                        to: principalToIcrcAccount(domain.recipient),
+                        amount: domain.amountE8s,
+                        fee: domain.feeE8s ?? BigInt(0),
+                        memo: mapOptional(domain.memo, bigintToBytes),
+                        created: domain.createdAtNanos,
+                    },
+                },
+            };
+        }
         return {
             Pending: {
                 ICRC1: {
@@ -2964,6 +3041,13 @@ export function addressToIcrcAccount(address: string): AccountICRC1 {
                 ? ([...icrcAccount.subaccount] as NumberArray32)
                 : undefined,
     };
+}
+
+export function formatIcrcAccount(account: AccountICRC1): string {
+    return encodeIcrcAccount({
+        owner: Principal.fromText(principalBytesToString(account.owner)),
+        subaccount: mapOptional(account.subaccount, consolidateBytes),
+    });
 }
 
 export function unitResult(

@@ -163,6 +163,21 @@
         "notAvailable": "Ta treść jest niedostępna w tej wersji aplikacji. Nadal możesz uzyskać do niej dostęp w aplikacji internetowej pod adresem [oc.app](https://oc.app).",
         "notAvailableTitle": "Treść niedostępna"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "Chwileczkę! Aktualizowanie ...",
+        "downloadingMessage": "Pobieramy szybką aktualizację i za chwilę będzie można kontynuować ...",
+        "reload": "Załaduj ponownie i kontynuuj",
+        "requiredTitle": "Wymagana aktualizacja",
+        "requiredMessage": "Wersja {version} jest dostępna, ale wymaga nowszej wersji aplikacji niż zainstalowana. Ta wersja nie może zaktualizować się sama do tego stopnia.",
+        "availableTitle": "Dostępna aktualizacja",
+        "availableMessage": "Wersja {version} jest dostępna. W międzyczasie ta wersja nadal działa.",
+        "fromPlayStore": "Zaktualizuj w Sklepie Play",
+        "downloadLatest": "Pobierz najnowszą wersję",
+        "reinstallTitle": "Zainstaluj ponownie OpenChat",
+        "reinstallMessage": "Ta kopia OpenChat nie może być już aktualizowana i w pewnym momencie przestanie działać. Pobierz aktualną wersję, aby nadal otrzymywać aktualizacje.",
+        "reinstallUninstallOld": "Po zainstalowaniu nowej odinstaluj tę. Jeśli obie są zainstalowane, każde powiadomienie przychodzi dwa razy.",
+        "reinstallDownload": "Pobierz aktualną wersję"
+    },
     "appWallet": {
         "header": {
             "asset": "Zaleta",
@@ -1111,6 +1126,7 @@
     "maxImageSize": "Przekroczono maksymalny rozmiar obrazu 1 MB",
     "maxStorage": "Możesz rozszerzyć pamięć do maksymalnie 1 GB",
     "maxVideoSize": "Przekroczono maksymalny rozmiar pliku wideo wynoszący 5 MB",
+    "videoProcessing": "Optymalizowanie wideo…",
     "member": "członek",
     "memberCount": "{count} członków",
     "memberIsTyping": "{username} pisze",
@@ -1916,9 +1932,9 @@
     "termsUpdated": {
         "agree": "Zgadzam się",
         "failed": "Coś poszło nie tak podczas zapisywania Twojej akceptacji. Sprawdź połączenie i spróbuj ponownie.",
-        "info": "Zaktualizowaliśmy warunki korzystania z OpenChat, w tym nowe zasady dotyczące zabronionych treści oraz sposobu działania moderacji. Zapoznaj się z zaktualizowanymi warunkami. Wybierając \"Zgadzam się\", akceptujesz zaktualizowane warunki.",
         "link": "Przeczytaj zaktualizowane warunki",
-        "title": "Nasze warunki uległy zmianie"
+        "title": "Nasze warunki uległy zmianie",
+        "info": "Zaktualizowaliśmy warunki korzystania z usługi OpenChat oraz informację o prywatności, aby opisać, w jaki sposób multimedia publikowane w publicznych grupach i kanałach są porównywane z bazami danych znanych materiałów przedstawiających seksualne wykorzystywanie dzieci: OpenChat korzysta z technologii PhotoDNA licencjonowanej przez Microsoft, z usługą porównującą udostępniany jest wyłącznie nieodwracalny cyfrowy odcisk multimediów, w przypadku braku dopasowania nic nie jest przechowywane, a treści zatrzymane na potrzeby weryfikacji moderacyjnej lub prawnych obowiązków zgłoszeniowych nie mogą zostać usunięte, dopóki te obowiązki obowiązują. Prosimy o zapoznanie się ze zaktualizowanymi warunkami. Wybierając \"Zgadzam się\", akceptujesz zaktualizowane warunki."
     },
     "theInternetComputer": "Komputer internetowy",
     "theme": {

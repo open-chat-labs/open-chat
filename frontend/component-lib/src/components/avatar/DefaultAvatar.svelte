@@ -16,9 +16,9 @@
 
     // TODO add more combos
     const colourCombos = [
-        [ColourVars.primaryMuted, ColourVars.primaryLight],
-        [ColourVars.secondaryMuted, ColourVars.secondaryLight],
-        [ColourVars.tertiaryMuted, ColourVars.tertiaryLight],
+        [ColourVars.primarySurface, ColourVars.primaryAccent],
+        [ColourVars.secondarySurface, ColourVars.secondaryAccent],
+        [ColourVars.tertiarySurface, ColourVars.tertiaryAccent],
     ];
     const [circleColor, pathColor] = colourCombos[hashString(name)];
 

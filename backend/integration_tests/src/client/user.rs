@@ -407,6 +407,7 @@ pub mod happy_path {
                 fee,
                 decimals: 8,
                 token_symbol,
+                from_account: None,
                 pin: None,
             },
         );
@@ -427,7 +428,7 @@ pub mod happy_path {
         let response = super::start_video_call_v2(
             env,
             VIDEO_CALL_OPERATOR,
-            recipient.into(),
+            recipient.canister_id(),
             &user_canister::start_video_call_v2::Args {
                 message_id,
                 initiator: user.user_id,
@@ -460,7 +461,7 @@ pub mod happy_path {
         let response = super::end_video_call_v2(
             env,
             VIDEO_CALL_OPERATOR,
-            recipient.into(),
+            recipient.canister_id(),
             &user_canister::end_video_call_v2::Args {
                 user_id: initiator,
                 message_id,
@@ -539,6 +540,7 @@ pub mod happy_path {
             &user_canister::accept_p2p_swap::Args {
                 thread_root_message_index: None,
                 message_id,
+                from_account: None,
                 pin: None,
                 user_id,
             },

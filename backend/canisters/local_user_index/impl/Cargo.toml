@@ -10,6 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 group_community_common = { path = "../../../libraries/group_community_common" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }

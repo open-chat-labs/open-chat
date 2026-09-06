@@ -3,6 +3,7 @@ use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableBTreeMap, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::cmp::min;
 use std::mem::size_of;
 use types::Hash;
 
@@ -16,16 +17,42 @@ pub struct StableBlobStorage {
 }
 
 impl StableBlobStorage {
-    pub fn get(&self, hash: &Hash) -> Option<Vec<u8>> {
-        let iter = self.value_chunks_iterator(*hash)?;
+    // Returns the bytes in the range [start, end) without materialising the whole blob. Only the
+    // chunks which overlap the range are read from stable memory. Callers are expected to have
+    // clamped the range to the blob's size (see `data_size`).
+    pub fn get_range(&self, hash: &Hash, start: usize, end: usize) -> Vec<u8> {
+        if end <= start {
+            return Vec::new();
+        }
 
-        Some(iter.flat_map(|(_, c)| c.bytes).collect())
+        let first_chunk = (start / MAX_CHUNK_SIZE) as u32;
+        let last_chunk = ((end - 1) / MAX_CHUNK_SIZE) as u32;
+
+        let mut bytes = Vec::with_capacity(end - start);
+        for (key, chunk) in self
+            .blobs
+            .range(Key::new(*hash, first_chunk)..=Key::new(*hash, last_chunk))
+            .map(|e| e.into_pair())
+        {
+            let chunk_start = key.chunk_index() as usize * MAX_CHUNK_SIZE;
+            let from = start.saturating_sub(chunk_start);
+            let to = min(chunk.bytes.len(), end - chunk_start);
+            bytes.extend_from_slice(&chunk.bytes[from..to]);
+        }
+
+        bytes
     }
 
+    // Chunks are dense from index 0 and all but the last are exactly MAX_CHUNK_SIZE, so the size
+    // follows from the last key (an O(log n) reverse seek) plus the length of that one chunk.
     pub fn data_size(&self, hash: &Hash) -> Option<u64> {
-        let iter = self.value_chunks_iterator(*hash)?;
+        let last_key = self
+            .blobs
+            .keys_range(Key::new(*hash, 0)..=Key::new(*hash, u32::MAX))
+            .next_back()?;
+        let last_chunk = self.blobs.get(&last_key)?;
 
-        Some(iter.map(|(_, c)| c.bytes.len() as u64).sum())
+        Some(last_key.chunk_index() as u64 * MAX_CHUNK_SIZE as u64 + last_chunk.bytes.len() as u64)
     }
 
     pub fn exists(&self, hash: &Hash) -> bool {
@@ -121,6 +148,10 @@ impl Key {
             chunk_index_bytes: chunk_index.to_be_bytes(),
         }
     }
+
+    fn chunk_index(&self) -> u32 {
+        u32::from_be_bytes(self.chunk_index_bytes)
+    }
 }
 
 impl Storable for Key {
@@ -199,9 +230,41 @@ mod tests {
 
         stable_storage.insert(hash, value_in.clone());
 
-        let value_out = stable_storage.get(&hash).unwrap();
+        let value_out = stable_storage.get_range(&hash, 0, value_in.len());
 
         assert_eq!(value_in, value_out)
+    }
+
+    #[test]
+    fn get_range_and_data_size() {
+        let mut stable_storage = StableBlobStorage::default();
+
+        let hash = default_hash();
+        // 2.5 chunks so the final chunk is partial
+        let value_in: Vec<_> = (0..(MAX_CHUNK_SIZE * 5 / 2)).map(|i| (i % 101) as u8).collect();
+        stable_storage.insert(hash, value_in.clone());
+
+        assert_eq!(stable_storage.data_size(&hash), Some(value_in.len() as u64));
+
+        for (start, end) in [
+            (0, 1),
+            (0, MAX_CHUNK_SIZE),
+            (1, MAX_CHUNK_SIZE + 1),
+            (MAX_CHUNK_SIZE - 1, MAX_CHUNK_SIZE * 2 + 1),
+            (MAX_CHUNK_SIZE * 2, value_in.len()),
+            (0, value_in.len()),
+            (100, 100),
+        ] {
+            assert_eq!(
+                stable_storage.get_range(&hash, start, end),
+                value_in[start..end].to_vec(),
+                "range {start}..{end}"
+            );
+        }
+
+        let other_hash = [1u8; 32];
+        assert!(stable_storage.get_range(&other_hash, 0, 10).is_empty());
+        assert_eq!(stable_storage.data_size(&other_hash), None);
     }
 
     // Checks that for keys with matching prefixes, KeyA > KeyB <=> chunk_index A > chunk_index B

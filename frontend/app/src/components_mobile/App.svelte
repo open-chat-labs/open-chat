@@ -21,7 +21,6 @@
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
     import { expectShareTarget, handleShareTarget } from "@utils/native/share_target";
-    import "@utils/scream";
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
@@ -37,8 +36,13 @@
         routeForScope,
         subscribe,
     } from "@client";
-    import { eventToError, recordError } from "@utils/errorPostmortem";
+    import {
+        eventToError,
+        isIdbConnectionClosingError,
+        recordError,
+    } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
+    import { warmRichTextEditor } from "@shared_components/richTextEditorLoader";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
@@ -55,7 +59,6 @@
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import Router from "./Router.svelte";
-    import Snow from "@shared_components/Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
 
@@ -129,6 +132,10 @@
 
     trackedEffect("calculate-height", calculateHeight);
 
+    $effect(() => {
+        botState.messageFormatter = $_;
+    });
+
     onMount(() => {
         const unsubs = [
             subscribe("startVideoCall", startVideoCall),
@@ -146,9 +153,6 @@
             window.visualViewport?.addEventListener("resize", calculateHeight);
         }
 
-        const unsub = _.subscribe((formatter) => {
-            botState.messageFormatter = formatter;
-        });
 
         const unsubKeyboard = setupKeyboardTracking();
         return () => {
@@ -158,7 +162,6 @@
                 window.visualViewport?.removeEventListener("resize", calculateHeight);
             }
             unsubs.forEach((u) => u());
-            unsub();
             unsubKeyboard();
         };
     });
@@ -283,10 +286,12 @@
 
     if ($identityStateStore.kind === "logged_in") {
         setupNativeApp();
+        warmRichTextEditor();
     }
 
     function onUserLoggedIn(userId: string) {
         setupNativeApp();
+        warmRichTextEditor();
         broadcastLoggedInUser(userId);
     }
 
@@ -313,6 +318,10 @@
         }
 
         const err = eventToError(ev);
+        if (isIdbConnectionClosingError(err)) {
+            ev.preventDefault();
+            return;
+        }
         recordError("window", err);
         logger?.error("Unhandled error: ", err);
         if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
@@ -354,7 +363,13 @@
         videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 
+    // The native-android class carries the shared native-webview rules (status
+    // bar padding, touch-action, gesture-nav paddings) which iOS needs too;
+    // native-ios is added on top for the few iOS-specific overrides.
     document.body.classList.add("native-android");
+    if (client.isNativeIos()) {
+        document.body.classList.add("native-ios");
+    }
     detectNeedsSafeInset();
 </script>
 
@@ -383,7 +398,11 @@
     {/if}
 
     {#if $snowing}
-        <Snow />
+        {#await import("@shared_components/Snow.svelte") then { default: Snow }}
+            <Snow />
+        {:catch}
+            <!-- snow is cosmetic; ignore a failed chunk load -->
+        {/await}
     {/if}
 
     {#snippet failed(error, reset)}

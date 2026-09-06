@@ -38,7 +38,7 @@
     <Container
         height={"fill"}
         padding={"md"}
-        background={ColourVars.background2}
+        background={ColourVars.surface2}
         borderRadius={["md", "md", "zero", "zero"]}
         mainAxisAlignment={"center"}
         width={{ share: 1 }}>

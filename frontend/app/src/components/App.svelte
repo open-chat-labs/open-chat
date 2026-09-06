@@ -16,7 +16,6 @@
         expectNotificationTap,
         expectPushNotifications,
     } from "@utils/native/notification_channels";
-    import "@utils/scream";
     import {
         isLandingPageRoute,
         isScrollingRoute,
@@ -44,8 +43,13 @@
         routeStore,
         subscribe,
     } from "@client";
-    import { eventToError, recordError } from "@utils/errorPostmortem";
+    import {
+        eventToError,
+        isIdbConnectionClosingError,
+        recordError,
+    } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
+    import { warmRichTextEditor } from "@shared_components/richTextEditorLoader";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
@@ -58,7 +62,6 @@
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Router from "./Router.svelte";
-    import Snow from "@shared_components/Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import Witch from "@shared_components/Witch.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
@@ -157,6 +160,10 @@
 
     trackedEffect("calculate-height", calculateHeight);
 
+    $effect(() => {
+        botState.messageFormatter = $_;
+    });
+
     onMount(() => {
         const unsubs = [
             subscribe("startVideoCall", startVideoCall),
@@ -210,12 +217,9 @@
             resumeEventLoop: () => client.resumeEventLoop(),
         };
 
-        const unsub = _.subscribe((formatter) => {
-            botState.messageFormatter = formatter;
-        });
 
-        if (client.isNativeAndroid()) {
-            // Inform the native android app that svelte code is ready! SetTimeout
+        if (client.isNativeApp()) {
+            // Inform the native app that svelte code is ready! SetTimeout
             // delays the fn execution until the call stack is empty, just to
             // make sure anything else non-async that needs to run is done.
             //
@@ -232,7 +236,6 @@
                 window.visualViewport?.removeEventListener("resize", calculateHeight);
             }
             unsubs.forEach((u) => u());
-            unsub();
             unsubKeyboard();
         };
     });
@@ -303,10 +306,12 @@
 
     if ($identityStateStore.kind === "logged_in") {
         setupNativeApp();
+        warmRichTextEditor();
     }
 
     function onUserLoggedIn(userId: string) {
         setupNativeApp();
+        warmRichTextEditor();
         broadcastLoggedInUser(userId);
     }
 
@@ -628,6 +633,10 @@
         }
 
         const err = eventToError(ev);
+        if (isIdbConnectionClosingError(err)) {
+            ev.preventDefault();
+            return;
+        }
         recordError("window", err);
         logger?.error("Unhandled error: ", err);
         if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
@@ -670,6 +679,8 @@
 
     if (client.isNativeAndroid()) {
         document.body.classList.add("native-android");
+    } else if (client.isNativeIos()) {
+        document.body.classList.add("native-ios");
     }
     detectNeedsSafeInset();
 </script>
@@ -715,7 +726,11 @@
     <UpgradeBanner />
 
     {#if $snowing}
-        <Snow />
+        {#await import("@shared_components/Snow.svelte") then { default: Snow }}
+            <Snow />
+        {:catch}
+            <!-- snow is cosmetic; ignore a failed chunk load -->
+        {/await}
     {/if}
 
     {#snippet failed(error, reset)}

@@ -138,6 +138,7 @@
             </div>
         {/if}
         <img
+            decoding="async"
             bind:this={imgElement}
             onclick={onClick}
             ondblclick={onDoubleClick}
@@ -174,6 +175,7 @@
             {#snippet body()}
                 <span class="body">
                     <img
+                        decoding="async"
                         class="zoomed"
                         class:landscape
                         width={zoomedWidth}

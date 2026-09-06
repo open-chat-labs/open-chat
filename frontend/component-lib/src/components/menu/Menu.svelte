@@ -42,7 +42,7 @@
     {:else}
         <Container
             padding={["lg", "zero"]}
-            background={"var(--background-1)"}
+            background={"var(--surface-1)"}
             minWidth={Rem.fromPixels(200).toString()}
             borderRadius={"xl"}
             shadow={"var(--shadow-menu)"}

@@ -121,9 +121,9 @@
             {:else}
                 <Row gap="xs" crossAxisAlignment="center">
                     <ImageOutline
-                        color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                        color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent}
                         size="1.25rem" />
-                    <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                    <ChatCaption colour={me ? "secondaryAccent" : "primaryAccent"}>
                         <Translatable resourceKey={i18nKey("Photo")} />
                     </ChatCaption>
                 </Row>
@@ -159,6 +159,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <div class="image_wrapper">
                 <img
+                    decoding="async"
                     class="img"
                     class:landscape
                     class:fill
@@ -198,6 +199,7 @@
         <div class="image_wrapper" class:narrow onclick={focusImage}>
             {#if normalised.url !== undefined}
                 <img
+                    decoding="async"
                     bind:this={imgElement}
                     bind:clientWidth={imageWidth}
                     draggable="false"
@@ -271,7 +273,7 @@
                 }
 
                 .image_wrapper.narrow {
-                    background-color: var(--primary-muted);
+                    background-color: var(--primary-surface);
                 }
             }
 
@@ -282,7 +284,7 @@
                 }
 
                 .image_wrapper.narrow {
-                    background-color: var(--background-1);
+                    background-color: var(--surface-1);
                 }
             }
 
@@ -387,7 +389,7 @@
             flex-direction: column;
             align-items: center;
             padding: var(--sp-xs);
-            background-color: var(--background-0);
+            background-color: var(--surface-0);
             border-radius: var(--rad-lg) var(--rad-lg) var(--rad-lg) var(--rad-lg);
         }
 

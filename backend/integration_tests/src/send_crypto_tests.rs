@@ -46,7 +46,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
             from: random_principal.into(),
-            to: user2.user_id.into(),
+            to: types::icrc1::Account::for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -59,7 +59,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
-            to: user2.user_id.into(),
+            to: types::icrc1::Account::for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -68,7 +68,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
     let send_message_result = client::user::send_message_v2(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
@@ -98,8 +98,10 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
     assert_eq!(user2_balance, amount);
 
     if with_c2c_error {
-        env.advance_time(Duration::from_secs(10));
+        // Start the canister before advancing the time, else the retry falls due while it is still
+        // stopped and is spent on another failure
         start_canister(env, user2.local_user_index, user2.canister());
+        env.advance_time(Duration::from_secs(10));
         tick_many(env, 3);
     }
 
@@ -152,7 +154,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
             from: random_principal.into(),
-            to: user2.user_id.into(),
+            to: types::icrc1::Account::for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -165,7 +167,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
-            to: user2.user_id.into(),
+            to: types::icrc1::Account::for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -178,7 +180,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     let send_message_result = client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,

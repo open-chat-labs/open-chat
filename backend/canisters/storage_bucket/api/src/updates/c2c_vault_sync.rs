@@ -24,6 +24,16 @@ pub enum VaultOp {
     // platform-wide: it is keyed by content hash, and without this the same content simply
     // uploads again to any other bucket and is served publicly.
     DenylistHash(DenylistHashOp),
+    // The off-chain NCA reporting service's principal plus the OC public key: the pair the
+    // bucket needs to serve a token-gated evidence export (it cannot verify a vault-export
+    // token without the key, so the two always travel together)
+    SetAuthorityReporter(SetAuthorityReporterOp),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SetAuthorityReporterOp {
+    pub principal: Option<Principal>,
+    pub oc_public_key_pem: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -81,12 +91,22 @@ pub struct ApplyVerdictOp {
 pub struct SetLegalHoldOp {
     pub file_id: FileId,
     pub legal_hold: bool,
+    // The preservation request the hold was applied under, carried into the vault log.
+    // Option so an op from an older storage_index still decodes.
+    #[serde(default)]
+    pub reference: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DestroyOp {
     pub file_id: FileId,
     pub le_request_ref: String,
+    // The two operators behind the dual-authorized destruction (#9136); Option so an op from
+    // an older storage_index still decodes
+    #[serde(default)]
+    pub proposed_by: Option<UserId>,
+    #[serde(default)]
+    pub confirmed_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -94,6 +114,13 @@ pub struct DenylistHashOp {
     pub hash: Hash,
     // The report whose UpheldAsCsam verdict denylisted the hash
     pub report_index: u64,
+    // True when the hash was never seen by a moderator: it was only DECLARED by a client as the
+    // source of upheld content (see upload_chunk_v2::Args::source_hash). Uploads of it are
+    // refused, nobody is sanctioned. Option rather than bool so that this hop stays
+    // candid-decodable across the release window (candid rejects a missing non-opt field);
+    // None means verified, the only tier older senders knew
+    #[serde(default)]
+    pub derived: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

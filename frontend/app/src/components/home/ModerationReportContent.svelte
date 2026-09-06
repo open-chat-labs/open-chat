@@ -12,6 +12,7 @@
     import Markdown from "@src/components_shared/Markdown.svelte";
     import { Body, BodySmall, ColourVars, Column, Row, Subtitle } from "component-lib";
     import { getContext } from "svelte";
+        import { copyToClipboard } from "../../utils/urls";
     import Upheld from "svelte-material-icons/CheckCircleOutline.svelte";
     import Dismissed from "svelte-material-icons/CloseCircleOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -19,6 +20,7 @@
     import Checkbox from "../Checkbox.svelte";
     import Translatable from "../Translatable.svelte";
     import FileAuthorityReport from "./FileAuthorityReport.svelte";
+    import { ncaReporterUrl } from "../../utils/ncaFiling";
     import VaultAccessLog from "./VaultAccessLog.svelte";
     import VaultMediaViewer from "./VaultMediaViewer.svelte";
 
@@ -32,6 +34,9 @@
 
     let busy = $state(false);
     let failed = $state(false);
+    // The canister explains WHY a verdict was refused (your own assertion, already
+    // resolved); showing "failed" alone leaves the moderator guessing
+    let failureReason: string | undefined = $state(undefined);
     let resolved = $state(false);
     let urgent = $state(false);
     let showViewer = $state(false);
@@ -39,10 +44,64 @@
     let showFiling = $state(false);
     // Set once a filing is recorded from this card, ahead of the content update round-trip
     let filedReference = $state<string | undefined>(undefined);
-    let authorityReport = $derived(
-        filedReference !== undefined
-            ? { kind: "filed" as const, portalReference: filedReference }
-            : content.authorityReport,
+    // Set once an automated filing was accepted by the reporting service, ahead of the
+    // on-chain attempt marker reaching the card. The overlay lapses as soon as the on-chain
+    // state changes (whatever it changes to - the service may have failed before opening a
+    // marker) and after a bounded time regardless, so a genuine return to Due is never hidden
+    let filingStartedAt = $state<number | undefined>(undefined);
+    const OPTIMISTIC_ATTEMPT_MS = 2 * 60 * 1000;
+    // Ticks so the time-based states below re-evaluate while the card stays mounted
+    let now = $state(Date.now());
+    $effect(() => {
+        const interval = setInterval(() => (now = Date.now()), 30_000);
+        return () => clearInterval(interval);
+    });
+    $effect(() => {
+        void content.authorityReport;
+        filingStartedAt = undefined;
+        attemptCleared = false;
+    });
+    let authorityReport = $derived.by(() => {
+        if (filedReference !== undefined) {
+            return { kind: "filed" as const, portalReference: filedReference };
+        }
+        const onChain = content.authorityReport;
+        if (
+            filingStartedAt !== undefined &&
+            now - filingStartedAt < OPTIMISTIC_ATTEMPT_MS &&
+            onChain !== undefined &&
+            onChain.kind !== "filed" &&
+            onChain.kind !== "attempting"
+        ) {
+            return { kind: "attempting" as const, startedAt: BigInt(filingStartedAt) };
+        }
+        return onChain;
+    });
+    // An attempt marker much older than a filing takes means the service crashed mid-flight:
+    // a human must check the portal before anything re-files
+    const STALE_ATTEMPT_MS = 30 * 60 * 1000;
+    let attemptIsStale = $derived(
+        authorityReport?.kind === "attempting" &&
+            now - Number(authorityReport.startedAt) > STALE_ATTEMPT_MS,
+    );
+    // Operator reconciliation of an orphaned marker: clears it on chain so the report returns
+    // to Due (the card update carries the new state)
+    let clearingAttempt = $state(false);
+    let attemptCleared = $state(false);
+    let clearAttemptFailed = $state(false);
+    function clearAttempt() {
+        if (content.reportIndex === undefined) return;
+        clearingAttempt = true;
+        clearAttemptFailed = false;
+        client.clearAuthorityReportAttempt(content.reportIndex).then((ok) => {
+            clearingAttempt = false;
+            attemptCleared = ok;
+            clearAttemptFailed = !ok;
+        });
+    }
+    let canOpenFiling = $derived(
+        content.reportIndex !== undefined &&
+            ($platformOperatorStore || (ncaReporterUrl !== "" && $platformModeratorStore)),
     );
     // A verdict on a media report requires the media to have been reviewed first: deciding
     // without looking is exactly what this system exists to prevent. Two exceptions surface
@@ -83,6 +142,17 @@
     // protective quarantine applied after classification): the flagged bits alone miss the
     // assertion cases, and the card must show the CSAM treatment (no in-place viewing)
     let csam = $derived((content.flaggedCategories & 2) !== 0 || content.autoSanctioned);
+    // Non-empty when the detection was a media hash match rather than the text classifier.
+    // Report content restored from the IndexedDB cache can pre-date the field entirely.
+    let mediaMatches = $derived(content.mediaMatches ?? []);
+    let hashMatchLine = $derived(
+        mediaMatches
+            .map(
+                (m) =>
+                    `${m.provider}${m.matchId !== undefined ? ` record ${m.matchId}` : ""} (distance ${m.matchDistance})`,
+            )
+            .join("; "),
+    );
     // Alleged OR confirmed CSAM: a classifier-clean escalated report upheld as CSAM has no
     // flag bits, but must still never link to the content in place
     let csamish = $derived(csam || content.status.kind === "upheld_as_csam");
@@ -108,8 +178,52 @@
     let canResolve = $derived(
         $platformModeratorStore &&
             content.reportIndex !== undefined &&
+            !content.isBlockedAttempt &&
             (content.status.kind === "pending" || content.status.kind === "contested"),
     );
+    // Assembles the hash lines for the NCA report: the vault sha256 per quarantined blob
+    // (reviewer-gated query) plus the scanner's perceptual hash per match
+    let hashCopyState = $state<"idle" | "copied" | "failed">("idle");
+    async function copyHashes() {
+        const lines: string[] = [];
+        for (const ref of content.blobReferences) {
+            const resp = await client.vaultFileInfo(ref.canisterId, ref.blobId);
+            if (resp.kind === "success") {
+                lines.push(
+                    `file ${ref.blobId}: sha256 ${resp.hash} (${resp.mimeType}, ${resp.size} bytes)`,
+                );
+            }
+        }
+        for (const m of mediaMatches) {
+            if (m.hash !== undefined) {
+                lines.push(`file ${m.blobId}: ${m.provider} hash ${m.hash}`);
+            }
+        }
+        const ok = lines.length > 0 && (await copyToClipboard(lines.join("\n")));
+        hashCopyState = ok ? "copied" : "failed";
+        window.setTimeout(() => (hashCopyState = "idle"), 2000);
+    }
+
+    // The manual-filing checklist opens in its own tab so the moderator can keep the
+    // report card open while working through it
+    let checklistUrl = $derived.by(() => {
+        const params = new URLSearchParams();
+        if (content.reportIndex !== undefined) {
+            params.set("report", content.reportIndex.toString());
+        }
+        params.set("origin", mediaMatches.length > 0 ? "hash" : "manual");
+        if (content.authorityReport?.kind === "due" && content.authorityReport.urgent) {
+            params.set("urgent", "true");
+        }
+        if (content.authorityReport?.kind === "contingency_required") {
+            params.set("state", "contingency");
+        } else if (content.authorityReport?.kind === "validation_failed") {
+            params.set("state", "validation");
+        } else if (content.authorityReport?.kind === "attempting") {
+            params.set("state", "reconcile");
+        }
+        return `/csea-reporting?${params}`;
+    });
     let hasMedia = $derived(content.blobReferences.length > 0);
     let needsMediaReview = $derived(hasMedia && !mediaReviewed);
 
@@ -118,25 +232,27 @@
 
         busy = true;
         failed = false;
+        failureReason = undefined;
         client
             .resolveModerationReport(
                 content.reportIndex,
                 verdict,
                 verdict === "upheld_as_csam" ? urgent : undefined,
             )
-            .then((success) => {
+            .then((result) => {
                 busy = false;
-                resolved = success;
-                failed = !success;
+                resolved = result.kind === "success";
+                failed = result.kind !== "success";
+                failureReason = result.kind === "error" ? result.message : undefined;
             });
     }
 </script>
 
 {#snippet reportCard()}
-    <Column borderRadius="md" backgroundColor={ColourVars.background1}>
+    <Column borderRadius="md" backgroundColor={ColourVars.surface1}>
         <Row
             padding="lg"
-            backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}
+            backgroundColor={csam ? ColourVars.tertiarySurface : ColourVars.surface0}
             gap="md"
         >
             {#if csam}
@@ -149,7 +265,7 @@
             </Subtitle>
         </Row>
         {#if csamish}
-            <Row backgroundColor={ColourVars.background0} padding="lg" gap="md">
+            <Row backgroundColor={ColourVars.surface0} padding="lg" gap="md">
                 <Body>
                     <Translatable resourceKey={i18nKey("moderationReport.vaultOnly")} />
                 </Body>
@@ -210,7 +326,7 @@
             </Row>
         </Column>
         {#if content.contentExcerpt !== undefined}
-            <Column backgroundColor={ColourVars.background0} padding="lg" gap="md">
+            <Column backgroundColor={ColourVars.surface0} padding="lg" gap="md">
                 <BodySmall colour="textSecondary" uppercase>
                     <Translatable resourceKey={i18nKey("moderationReport.reportedMessage")} />
                 </BodySmall>
@@ -223,7 +339,7 @@
             {#if hasMedia}
                 <Row
                     padding="lg"
-                    backgroundColor={csam ? ColourVars.tertiaryMuted : ColourVars.background0}
+                    backgroundColor={csam ? ColourVars.tertiarySurface : ColourVars.surface0}
                 >
                     {#if csam}
                         <Column>
@@ -261,7 +377,7 @@
             {/if}
         {/if}
         {#if content.autoSanctioned && hasMedia}
-            <Row padding="lg" backgroundColor={ColourVars.background0}>
+            <Row padding="lg" backgroundColor={ColourVars.surface0}>
                 <Button secondary onClick={() => (showAccessLog = true)}>
                     <Translatable resourceKey={i18nKey("vaultLog.button")} />
                 </Button>
@@ -273,7 +389,7 @@
 {#snippet statusLine()}
     {@const classifierLine = content.flaggedCategories === 0 && content.status.kind === "pending"}
     {#if (content.status.kind === "pending" || content.status.kind === "contested") && (classifierLine || content.status.kind === "contested" || content.autoSanctioned)}
-        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.background1}>
+        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.surface1}>
             {#if classifierLine}
                 <Body width="hug">
                     <Translatable
@@ -286,7 +402,7 @@
                 </Body>
             {/if}
             {#if content.status.kind === "contested"}
-                <Body width="hug" fontWeight="bold" colour="error">
+                <Body width="hug" fontWeight="bold" colour="validationError">
                     <Translatable resourceKey={i18nKey("moderationReport.contested")} />
                 </Body>
             {/if}
@@ -307,8 +423,8 @@
         padding="lg"
         borderRadius="md"
         backgroundColor={content.status.kind === "upheld_as_csam"
-            ? ColourVars.tertiaryMuted
-            : ColourVars.background1}
+            ? ColourVars.tertiarySurface
+            : ColourVars.surface1}
     >
         {#if content.status.kind === "dismissed"}
             <Dismissed color="var(--text-secondary)" size="1.6rem" />
@@ -388,7 +504,7 @@
             </Button>
         </Row>
 
-        <Row borderRadius="md" padding="lg" backgroundColor={ColourVars.tertiaryMuted}>
+        <Row borderRadius="md" padding="lg" backgroundColor={ColourVars.tertiarySurface}>
             <Checkbox
                 id={`urgent-${content.messageId}`}
                 small
@@ -421,15 +537,16 @@
             wrap
             padding="lg"
             borderRadius="md"
-            backgroundColor={authorityReport.kind === "due"
-                ? ColourVars.tertiaryMuted
-                : ColourVars.background1}
+            backgroundColor={authorityReport.kind === "filed" ||
+            authorityReport.kind === "attempting"
+                ? ColourVars.surface1
+                : ColourVars.tertiarySurface}
         >
             {#if authorityReport.kind === "due"}
                 <Body
                     width="hug"
                     fontWeight="bold"
-                    colour={authorityReport.urgent ? "error" : undefined}
+                    colour={authorityReport.urgent ? "validationError" : undefined}
                 >
                     <Translatable
                         resourceKey={i18nKey(
@@ -439,12 +556,108 @@
                         )}
                     />
                 </Body>
-                {#if $platformOperatorStore && content.reportIndex !== undefined}
+                {#if canOpenFiling}
                     <Button tiny onClick={() => (showFiling = true)}>
-                        <Translatable resourceKey={i18nKey("moderationReport.recordFiling")} />
+                        <Translatable
+                            resourceKey={i18nKey(
+                                ncaReporterUrl !== ""
+                                    ? "moderationReport.fileWithNca"
+                                    : "moderationReport.recordFiling",
+                            )} />
                     </Button>
                 {/if}
-            {:else}
+                {#if hasMedia || mediaMatches.length > 0}
+                    <Button tiny secondary disabled={hashCopyState !== "idle"} onClick={copyHashes}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                hashCopyState === "idle"
+                                    ? "moderationReport.copyHashes"
+                                    : hashCopyState === "copied"
+                                      ? "moderationReport.hashesCopied"
+                                      : "moderationReport.hashesFailed",
+                            )}
+                        />
+                    </Button>
+                {/if}
+                <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                    <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                </a>
+            {:else if authorityReport.kind === "attempting"}
+                <Body width="hug" fontWeight="bold" colour={attemptIsStale ? "validationError" : undefined}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            attemptIsStale
+                                ? "moderationReport.ncaAttemptingStale"
+                                : "moderationReport.ncaAttempting",
+                            {
+                                when: new Date(
+                                    Number(authorityReport.startedAt),
+                                ).toLocaleString(),
+                            },
+                        )} />
+                </Body>
+                {#if attemptIsStale}
+                    {#if $platformOperatorStore && !attemptCleared}
+                        <Button
+                            tiny
+                            danger
+                            disabled={clearingAttempt}
+                            loading={clearingAttempt}
+                            onClick={clearAttempt}>
+                            <Translatable resourceKey={i18nKey("moderationReport.clearAttempt")} />
+                        </Button>
+                    {/if}
+                    <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                        <Translatable resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                    </a>
+                    {#if clearAttemptFailed}
+                        <Body colour="validationError">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.clearAttemptFailed")} />
+                        </Body>
+                    {/if}
+                {/if}
+            {:else if authorityReport.kind === "contingency_required"}
+                <Column gap="md">
+                    <Body fontWeight="bold" colour="validationError">
+                        <span class="authority-error">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.ncaContingency", {
+                                    error: authorityReport.error,
+                                })} />
+                        </span>
+                    </Body>
+                    <Row gap="md" crossAxisAlignment="center">
+                        {#if canOpenFiling}
+                            <Button tiny onClick={() => (showFiling = true)}>
+                                <Translatable
+                                    resourceKey={i18nKey("moderationReport.retryFiling")} />
+                            </Button>
+                        {/if}
+                        <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                        </a>
+                    </Row>
+                </Column>
+            {:else if authorityReport.kind === "validation_failed"}
+                <Column gap="md">
+                    <Body fontWeight="bold" colour="validationError">
+                        <span class="authority-error">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.ncaValidationFailed", {
+                                    error: authorityReport.error,
+                                })} />
+                        </span>
+                    </Body>
+                    <Row gap="md" crossAxisAlignment="center">
+                        <a class="checklist-link" href={checklistUrl} target="_blank" rel="noreferrer">
+                            <Translatable
+                                resourceKey={i18nKey("moderationReport.filingChecklist")} />
+                        </a>
+                    </Row>
+                </Column>
+            {:else if authorityReport.kind === "filed"}
                 <Body width="hug">
                     <Translatable resourceKey={i18nKey("moderationReport.ncaFiled")} />: {authorityReport.portalReference}
                 </Body>
@@ -457,6 +670,14 @@
     {@const status = content.status.kind}
     <!-- report -->
     {@render reportCard()}
+    {#if mediaMatches.length > 0}
+        <Row gap="sm" wrap padding="lg" borderRadius="md" backgroundColor={ColourVars.surface1}>
+            <Body width="hug">
+                <Translatable resourceKey={i18nKey("moderationReport.hashMatched")} />
+                {hashMatchLine}
+            </Body>
+        </Row>
+    {/if}
     {@render statusLine()}
 
     {#if status === "upheld" || status === "upheld_as_csam" || status === "dismissed"}
@@ -466,16 +687,16 @@
     {@render authReport()}
 
     {#if canResolve && reviewerRequired}
-        <Body colour="error">
+        <Body colour="validationError">
             <Translatable resourceKey={i18nKey("moderationReport.reviewerRequired")} />
         </Body>
     {:else if canResolve && needsMediaReview && mediaFetchFailed}
-        <Body colour="error">
+        <Body colour="validationError">
             <Translatable resourceKey={i18nKey("moderationReport.mediaFetchFailed")} />
         </Body>
     {:else if canResolve && !needsMediaReview}
         {#if mediaUnavailable}
-            <Body colour="error">
+            <Body colour="validationError">
                 <Translatable resourceKey={i18nKey("moderationReport.mediaUnavailable")} />
             </Body>
         {/if}
@@ -483,13 +704,17 @@
     {/if}
 
     {#if failed}
-        <Body colour="error">
-            <Translatable resourceKey={i18nKey("moderationReport.failed")} />
+        <Body colour="validationError">
+            {#if failureReason !== undefined}
+                {failureReason}
+            {:else}
+                <Translatable resourceKey={i18nKey("moderationReport.failed")} />
+            {/if}
         </Body>
     {/if}
 </Column>
 
-{#if showFiling && content.reportIndex !== undefined && authorityReport?.kind === "due"}
+{#if showFiling && content.reportIndex !== undefined && authorityReport !== undefined && authorityReport.kind !== "filed" && authorityReport.kind !== "attempting"}
     <FileAuthorityReport
         reportIndex={content.reportIndex}
         urgent={authorityReport.urgent}
@@ -497,6 +722,7 @@
             filedReference = ref;
             showFiling = false;
         }}
+        onFilingStarted={() => (filingStartedAt = Date.now())}
         onClose={() => (showFiling = false)}
     />
 {/if}
@@ -536,6 +762,17 @@
         border-left: $sp1 solid var(--error);
         font-style: italic;
         white-space: pre-wrap;
+    }
+    .checklist-link {
+        color: var(--secondary);
+        text-decoration: underline;
+        white-space: nowrap;
+    }
+    // Failure states quote raw error strings with long unbroken tokens (canister ids, urls)
+    // which would otherwise overflow the card
+    :global(.authority-error) {
+        overflow-wrap: anywhere;
+        min-width: 0;
     }
     .link {
         color: var(--secondary);

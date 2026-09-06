@@ -20,7 +20,7 @@
 <Column gap={"xl"} padding={"xl"}>
     <StatusCard
         mode={"warning"}
-        background={ColourVars.background2}
+        background={ColourVars.surface2}
         title={"Access gate check failed"}>
         {#snippet body()}
             <Translatable

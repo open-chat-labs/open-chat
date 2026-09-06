@@ -455,6 +455,7 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
         _threadRootMessageIndex: number | undefined,
         _messageId: bigint,
         _pin: string | undefined,
+        _fromAccount: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         throw new AnonymousOperationError();
     }

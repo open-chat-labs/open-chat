@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2048](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2048-storage_bucket)] - 2026-08-31
+
+### Added
+
+- Optional `source_hash` on `upload_chunk_v2`: the hash of the bytes a client transcoded from (video re-encoded at upload). A verdict on the transcode denylists its declared sources as *derived* - uploads of them are refused platform-wide, but since the bucket cannot verify the claim nobody is sanctioned or reported on a derived match; only bytes a moderator saw carry sanctions ([#9254](https://github.com/open-chat-labs/open-chat/pull/9254))
+
+### Changed
+
+- Serve HTTP range requests by reading only the requested chunks from stable memory rather than materialising the whole blob per request ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
+- Increase the default response size for open-ended range requests from 256KB to 1MB ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
+
+### Fixed
+
+- Treat the last byte position of a `Range` header as inclusive and add the `Accept-Ranges` header ([#9253](https://github.com/open-chat-labs/open-chat/pull/9253))
+
+## [[2.0.2043](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2043-storage_bucket)] - 2026-08-26
+
+### Added
+
+- Token-gated evidence export on `vault_file_chunk` for the NCA reporting service, logged as `ExportedForAuthorityReport` in the chain of custody ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- Accept the `SetAuthorityReporter` vault op carrying the service principal and the OC public key needed to verify export tokens ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+
+## [[2.0.2032](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2032-storage_bucket)] - 2026-08-20
+
+### Added
+
+- Block and report attempts to upload or forward content which is quarantined pending a verdict, mirroring the post-verdict denylist ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
+
+### Fixed
+
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+
+## [[2.0.2009](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2009-storage_bucket)] - 2026-08-10
+
+### Changed
+
+- The vault log records the preservation request a legal hold was applied or cleared under, so the chain of custody shows why evidence was held rather than only that it was ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- A standing legal hold now blocks destruction of vaulted evidence rather than being overridden by it - clearing the hold is a separate, separately logged act ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- The vault log records both the proposing and the confirming operator for a dual-authorized destruction ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+## [[2.0.2004](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2004-storage_bucket)] - 2026-08-05
+
 ### Added
 
 - Hashes upheld as CSAM are reported to the storage index so every other bucket denylists them too ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))

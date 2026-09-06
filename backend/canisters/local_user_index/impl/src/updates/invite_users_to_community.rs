@@ -40,7 +40,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
     let users = args
         .user_ids
         .iter()
-        .filter_map(|user_id| state.data.global_users.get(&(*user_id).into()))
+        .filter_map(|user_id| state.data.global_users.get(&user_id.as_principal()))
         .map(|user| (user.user_id, user.principal))
         .collect();
     PrepareResult { invited_by, users }

@@ -1,8 +1,7 @@
 use crate::model::swaps::Swap;
-use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{TimestampMillis, TokenInfo};
+use types::{TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PendingPaymentsQueue {
@@ -17,7 +16,7 @@ impl PendingPaymentsQueue {
     pub fn push_refunds(&mut self, swap: &Swap, now: TimestampMillis) {
         if swap.token0_received {
             self.push(PendingPayment {
-                principal: swap.offered_by,
+                user_id: swap.offered_by.into(),
                 timestamp: now,
                 token_info: swap.token0.clone(),
                 amount: swap.amount0,
@@ -29,7 +28,7 @@ impl PendingPaymentsQueue {
             && let Some((accepted_by, _)) = swap.accepted_by
         {
             self.push(PendingPayment {
-                principal: accepted_by,
+                user_id: accepted_by.into(),
                 timestamp: now,
                 token_info: swap.token1.clone(),
                 amount: swap.amount1,
@@ -50,8 +49,11 @@ impl PendingPaymentsQueue {
 
 #[derive(Serialize, Deserialize)]
 pub struct PendingPayment {
-    #[serde(alias = "user_id")]
-    pub principal: Principal,
+    // A UserId rather than a Principal because the payout must go to the user's wallet - for an
+    // indexed user that is a subaccount of their holding canister, while their raw principal is an
+    // account nobody can sign for.
+    #[serde(alias = "principal")]
+    pub user_id: UserId,
     pub timestamp: TimestampMillis,
     pub token_info: TokenInfo,
     pub amount: u128,
@@ -61,6 +63,6 @@ pub struct PendingPayment {
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum PendingPaymentReason {
-    Swap(Principal), // The other party in the swap
+    Swap(UserId), // The other party in the swap
     Refund,
 }

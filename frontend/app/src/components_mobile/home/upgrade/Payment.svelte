@@ -29,6 +29,7 @@
         type Level,
         type OpenChat,
         type ResourceKey,
+        type SignerWallet,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -45,6 +46,8 @@
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
+    import ExternalWalletApproval from "../ExternalWalletApproval.svelte";
+    import SourceWalletSelector from "../SourceWalletSelector.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
     import SelectMembershipHeader from "./SelectMembershipHeader.svelte";
 
@@ -108,6 +111,11 @@
     let autoRenew = $state(true);
     let selectedOption: Option | undefined = $state(options[lifetime ? 3 : 0]);
     let topup = $state(false);
+    // The external wallet the payment will come from, or undefined for the user's own OpenChat
+    // account, which is where payments have always come from
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let approval: ExternalWalletApproval | undefined = $state();
+    let approving = $state(false);
 
     let ledger: string = $state(
         import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP,
@@ -143,6 +151,27 @@
     }
 
     function confirm() {
+        if (approval != null) {
+            // The wallet has to approve us taking the payment before we take it. Nothing may be
+            // awaited before this call - the wallet opens in a popup, which the browser only
+            // allows while it is still handling the tap
+            approving = true;
+            approval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        pay(fromAccount);
+                    }
+                })
+                .finally(() => (approving = false));
+        } else {
+            pay();
+        }
+    }
+
+    // `fromAccount` is an external wallet which has just approved us taking the payment. Without it
+    // the payment comes from the user's own OpenChat account, as it always has.
+    function pay(fromAccount?: string) {
         confirming = true;
         client
             .payForDiamondMembership(
@@ -150,6 +179,7 @@
                 selectedDuration,
                 autoRenew && selectedDuration !== "lifetime",
                 toPayE8s,
+                fromAccount,
             )
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -218,25 +248,25 @@
     {@const insufficient = insufficientFundsForSub(option.index)}
     {@const bg = lifetime
         ? insufficient
-            ? ColourVars.disabledButton
+            ? ColourVars.surfaceDisabled
             : defaultBackgroundGradient
         : undefined}
-    {@const txt: ColourVarKeys = lifetime ? "textOnPrimary" : (insufficient ? "disabledButton" : "textPrimary")}
-    {@const extendTxt: ColourVarKeys = lifetime ? "textOnPrimary" :(insufficient ? "disabledButton" : "textSecondary")}
+    {@const txt: ColourVarKeys = lifetime ? "textOnPrimary" : (insufficient ? "textOnDisabledSurface" : "textPrimary")}
+    {@const extendTxt: ColourVarKeys = lifetime ? "textOnPrimary" :(insufficient ? "textOnDisabledSurface" : "textSecondary")}
     {@const icon = lifetime
         ? ColourVars.textOnPrimary
         : insufficient
-          ? ColourVars.disabledButton
+          ? ColourVars.textOnDisabledSurface
           : ColourVars.textPrimary}
     <Row
         onClick={() => {
             if (option.enabled) {
                 selectedOption = option;
-                if (!insufficient) {
-                    transition(["slide_left"], () => {
-                        step = "confirm";
-                    });
-                }
+                // The confirm step is still reachable without the funds: it is where the user can
+                // top up, or choose an external wallet to pay from instead
+                transition(["slide_left"], () => {
+                    step = "confirm";
+                });
             }
         }}
         mainAxisAlignment={"spaceBetween"}
@@ -244,7 +274,7 @@
         background={bg}
         borderRadius={"md"}
         borderWidth={lifetime ? "zero" : "thick"}
-        borderColour={insufficient ? ColourVars.disabledButton : ColourVars.primary}
+        borderColour={insufficient ? ColourVars.surfaceDisabled : ColourVars.primary}
         padding={["md", "lg"]}>
         <Column>
             <Body fontWeight={"bold"} colour={txt} width={"hug"}>
@@ -300,7 +330,7 @@
                 </Setting>
 
                 <StatusCard
-                    background={ColourVars.background2}
+                    background={ColourVars.surface2}
                     mode={"warning"}
                     title={interpolate($_, i18nKey("Posted files and media"))}
                     body={interpolate(
@@ -319,16 +349,17 @@
                 </Body>
             {/if}
 
-            {#if insufficientFundsForAnySub}
+            {#if insufficientFundsForAnySub && sourceWallet === undefined}
                 {@render insufficientWarning()}
             {/if}
             {@render cryptoSelector()}
+            <SourceWalletSelector bind:wallet={sourceWallet} />
 
             <Column
                 borderRadius={"lg"}
                 gap={"lg"}
                 padding={"lg"}
-                background={ColourVars.background2}>
+                background={ColourVars.surface2}>
                 <Row mainAxisAlignment={"spaceBetween"}>
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Payment amount")} />
@@ -351,8 +382,11 @@
 
             <Button
                 onClick={confirm}
-                disabled={confirming || insufficientFundsForSelectedSub}
-                loading={confirming}>
+                disabled={confirming ||
+                    approving ||
+                    toPayE8s === 0n ||
+                    (sourceWallet === undefined && insufficientFundsForSelectedSub)}
+                loading={confirming || approving}>
                 {#snippet icon(color)}
                     {#if selectedDuration === "lifetime"}
                         <Lifetime {color} />
@@ -364,9 +398,20 @@
             </Button>
 
             {#if step === "confirm"}
-                {#if insufficientFundsForSelectedSub}
+                {#if sourceWallet !== undefined}
+                    <!-- The price is what the ledger takes from the wallet in total: the user
+                         index charges a fee less than it and lets the ledger add that fee back
+                         on, so there is no second fee to cover here -->
+                    <ExternalWalletApproval
+                        bind:this={approval}
+                        wallet={sourceWallet}
+                        ledger={tokenDetails.ledger}
+                        amount={toPayE8s}
+                        fees={0n} />
+                {:else if insufficientFundsForSelectedSub}
                     {@render refreshBalance()}
-                {:else}
+                {/if}
+                {#if sourceWallet !== undefined || !insufficientFundsForSelectedSub}
                     <CommonButton
                         width={"fill"}
                         size={"small_text"}
@@ -443,8 +488,8 @@
 
 {#snippet insufficientWarning()}
     <Row crossAxisAlignment={"center"} gap={"md"}>
-        <Warning size={"1.5rem"} color={ColourVars.warning} />
-        <BodySmall fontWeight={"bold"} colour={"warning"}>
+        <Warning size={"1.5rem"} color={ColourVars.validationWarning} />
+        <BodySmall fontWeight={"bold"} colour={"validationWarning"}>
             <Translatable
                 resourceKey={i18nKey(
                     `Insufficient funds! Top up your ${
@@ -464,9 +509,10 @@
         <Row gap={"sm"}>
             <CryptoSelector
                 bind:ledger
+                hideBalance={sourceWallet !== undefined}
                 filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
 
-            {#if insufficientFundsForAllSubs}
+            {#if insufficientFundsForAllSubs && sourceWallet === undefined}
                 <Column
                     onClick={() => (topup = true)}
                     mainAxisAlignment={"center"}
@@ -474,7 +520,7 @@
                     width={{ size: "3.5rem" }}
                     height={"fill"}
                     borderRadius={"lg"}
-                    background={ColourVars.background2}
+                    background={ColourVars.surface2}
                     padding={["sm", "md"]}>
                     <QrCode size={"2rem"} color={ColourVars.textSecondary} />
                 </Column>
@@ -491,7 +537,7 @@
         }}>
         <Column gap={"xs"} padding={"xl"}>
             <AccountInfo
-                background={ColourVars.background2}
+                background={ColourVars.surface2}
                 padding={"zero"}
                 ledger={tokenState.ledger} />
             {@render refreshBalance()}

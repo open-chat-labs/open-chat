@@ -18,6 +18,12 @@ pub struct Args {
     #[serde(with = "serde_bytes")]
     pub bytes: Vec<u8>,
     pub expiry: Option<TimestampMillis>,
+    // Hash of the bytes the client started from when `bytes` is a client-side transcode of
+    // them (video re-encoded at upload): checked against the CSAM denylist alongside `hash`,
+    // since a re-encode never reproduces the original's hash. Unverifiable, so it only ever
+    // affects the uploader declaring it.
+    #[serde(default)]
+    pub source_hash: Option<Hash>,
 }
 
 #[ts_export(storage_bucket, upload_chunk)]
@@ -51,6 +57,7 @@ impl Debug for Args {
             .field("total_size", &self.total_size)
             .field("byte_length", &self.bytes.len())
             .field("expiry", &self.expiry)
+            .field("source_hash", &self.source_hash)
             .finish()
     }
 }

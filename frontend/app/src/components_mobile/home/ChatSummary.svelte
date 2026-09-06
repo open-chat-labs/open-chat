@@ -26,6 +26,7 @@
         communitiesStore,
         currentUserIdStore,
         favouritesStore,
+        latestMessageExpired,
         messageFlagsRestricted,
         messagesRead,
         notificationsSupported,
@@ -41,7 +42,7 @@
         byContext as typersByContext,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { getContext, onMount, untrack } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
@@ -63,7 +64,6 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { rtlStore } from "../../stores/rtl";
-    import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import { buildDisplayName } from "../../utils/user";
     import Bitcoin from "../icons/Bitcoin.svelte";
@@ -95,7 +95,7 @@
     let verified = $derived(chatSummary.kind === "group_chat" && chatSummary.verified);
     let unreadMessages = $state<number>(0);
     let unreadMentions = $state<number>(0);
-    let chat = $derived(normaliseChatSummary($now, chatSummary, $typersByContext));
+    let chat = $derived(normaliseChatSummary(chatSummary, $typersByContext));
     let lastMessage = $derived(formatLatestMessage(chatSummary, $allUsersStore));
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
@@ -115,10 +115,9 @@
 
     let longpressCooldown = $derived(scrollStatus.isCooldown);
 
-    $effect(() => updateUnreadCounts(chatSummary));
-
-    onMount(() => {
-        return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
+    $effect(() => {
+        void $messagesRead;
+        updateUnreadCounts(chatSummary);
     });
 
     trackedEffect("unarchive-chat", () => {
@@ -134,10 +133,12 @@
      */
     function updateUnreadCounts(chatSummary: ChatSummary) {
         untrack(() => {
-            unreadMessages = client.unreadMessageCount(
-                chatSummary.id,
-                chatSummary.latestMessage?.event.messageIndex,
-            );
+            unreadMessages = latestMessageExpired(chatSummary)
+                ? 0
+                : client.unreadMessageCount(
+                      chatSummary.id,
+                      chatSummary.latestMessage?.event.messageIndex,
+                  );
 
             unreadMentions = getUnreadMentionCount(chatSummary);
 
@@ -178,7 +179,7 @@
         }
     }
 
-    function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
+    function normaliseChatSummary(chatSummary: ChatSummary, typing: TypersByKey) {
         const fav =
             $chatListScopeStore.kind !== "favourite" && $favouritesStore.has(chatSummary.id);
         const muted = chatSummary.membership.notificationsMuted;
@@ -260,7 +261,7 @@
                 : $_("disappearingMessages.disabled");
         }
 
-        if (chatSummary.latestMessage === undefined) {
+        if (chatSummary.latestMessage === undefined || latestMessageExpired(chatSummary)) {
             return "";
         }
 
@@ -362,14 +363,14 @@
     {#if !$favouritesStore.has(chatSummary.id)}
         <MenuItem onclick={addToFavourites}>
             {#snippet icon(_, size)}
-                <HeartPlus color={"var(--error)"} {size} />
+                <HeartPlus color={"var(--validation-error)"} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
         </MenuItem>
     {:else}
         <MenuItem onclick={removeFromFavourites}>
             {#snippet icon(_, size)}
-                <HeartMinus color={"var(--error)"} {size} />
+                <HeartMinus color={"var(--validation-error)"} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
         </MenuItem>
@@ -497,7 +498,7 @@
                     <!-- <VideoCallIcon video={chat.video} /> -->
                     {#if chat.private}
                         <div class="private">
-                            <LockOutline size="0.85rem" color={ColourVars.error} />
+                            <LockOutline size="0.85rem" color={ColourVars.validationError} />
                         </div>
                     {/if}
                 </div>
@@ -619,7 +620,7 @@
         align-content: center;
         width: $size;
         height: $size;
-        background-color: var(--background-0);
+        background-color: var(--surface-0);
         border-radius: var(--rad-circle);
     }
 </style>

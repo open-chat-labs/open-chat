@@ -94,7 +94,7 @@
     onMount(() => {
         // Release any active notifications for the current chat when the component mounts
         // TODO include thread index
-        if (client.isNativeAndroid()) {
+        if (client.isNativeApp()) {
             switch (chat.id.kind) {
                 case "direct_chat":
                     releaseNotifications({
@@ -118,10 +118,6 @@
         }
 
         const unsubs = [
-            messagesRead.subscribe(() => {
-                unreadMessages = getUnreadMessageCount(chat);
-                firstUnreadMention = client.getFirstUnreadMention(chat);
-            }),
             subscribe("createPoll", onCreatePoll),
             subscribe("attachGif", onAttachGif),
             subscribe("tokenTransfer", onTokenTransfer),
@@ -167,6 +163,12 @@
         }
     }
 
+    $effect(() => {
+        void $messagesRead;
+        unreadMessages = getUnreadMessageCount(chat);
+        firstUnreadMention = client.getFirstUnreadMention(chat);
+    });
+
     function getUnreadMessageCount(chat: ChatSummary): number {
         if (client.isPreviewing(chat.id) || client.isLapsed(chat.id)) return 0;
 
@@ -201,8 +203,8 @@
         creatingP2PSwapMessage = true;
     }
 
-    function onFileSelected(content: AttachmentContent) {
-        localUpdates.draftMessages.setAttachment({ chatId: chat.id }, content);
+    function onFileSelected(content: AttachmentContent, context: MessageContext) {
+        localUpdates.draftMessages.setAttachment(context, content);
     }
 
     function attachGif(search: string) {
@@ -428,7 +430,7 @@
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
-<DropTarget {chat} mode={"message"} {onFileSelected}>
+<DropTarget {messageContext} mode={"message"} {onFileSelected}>
     <div class="wrapper">
         {#if showSearchHeader}
             <CurrentChatSearchHeader

@@ -8,6 +8,7 @@ use canister_tracing_macros::trace;
 use rand::RngExt;
 use storage_bucket_canister::forward_file::{Response::*, *};
 use storage_index_canister::c2c_sync_bucket::{CsamMatch, CsamMatchKind};
+use tracing::info;
 
 #[update(guard = "caller_is_known_user", candid = true, json = true, msgpack = true)]
 #[trace]
@@ -28,7 +29,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
         && let Some(report_index) = state.data.vault.known_csam_report_index(&file.hash)
     {
         // Report once per file id: a retry of the same refused forward is not a fresh attempt
-        if state.data.vault.record_blocked_attempt(caller, args.file_id) {
+        if state.data.vault.record_blocked_attempt(caller, args.file_id, file.hash) {
             state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
                 uploader: caller,
                 file_id: args.file_id,
@@ -38,6 +39,37 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
             }));
         }
         return Blocked;
+    }
+
+    // Forwarding content quarantined pending a verdict is refused and reported the same way
+    if let Some(file) = state.data.files.get(&args.file_id)
+        && state.data.files.is_vault_pinned(&file.hash)
+    {
+        if let Some(report_index) = state.data.vault.pinned_report_index(&file.hash)
+            && state.data.vault.record_blocked_attempt(caller, args.file_id, file.hash)
+        {
+            state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                uploader: caller,
+                file_id: args.file_id,
+                hash: file.hash,
+                csam_report_index: report_index,
+                kind: CsamMatchKind::PendingQuarantineAttempt,
+            }));
+        }
+        return Blocked;
+    }
+
+    // Content known only through a client's source claim is refused without sanction or
+    // report, exactly like re-uploading it (see upload_chunk_v2)
+    if let Some(file) = state.data.files.get(&args.file_id) {
+        if let Some(report_index) = state.data.vault.derived_csam_report_index(&file.hash) {
+            info!(%caller, file_id = %args.file_id, report_index, "Forward refused: hash declared as the source of upheld content");
+            return Blocked;
+        }
+        if state.data.files.vault_pinned_hash_for_source(&file.hash).is_some() {
+            info!(%caller, file_id = %args.file_id, "Forward refused: hash declared as the source of quarantined content");
+            return Blocked;
+        }
     }
 
     let accessors = args.accessors.into_iter().collect();

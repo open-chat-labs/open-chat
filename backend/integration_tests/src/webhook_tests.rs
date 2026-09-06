@@ -132,24 +132,14 @@ fn post_message_to_webhook(
     let (domain, url) = match chat {
         Chat::Group(group_id) => {
             let domain = format!("{group_id}.localhost");
-            let url = format!(
-                "http://{}:{}/webhook/{}/{}",
-                domain,
-                port,
-                webhook_id.to_text(),
-                webhook_secret
-            );
+            let url = format!("http://{}:{}/webhook/{}/{}", domain, port, webhook_id, webhook_secret);
             (domain, url)
         }
         Chat::Channel(community_id, channel_id) => {
             let domain = format!("{community_id}.localhost");
             let url = format!(
                 "http://{}:{}/channel/{}/webhook/{}/{}",
-                domain,
-                port,
-                channel_id,
-                webhook_id.to_text(),
-                webhook_secret
+                domain, port, channel_id, webhook_id, webhook_secret
             );
             (domain, url)
         }

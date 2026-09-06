@@ -136,6 +136,7 @@ import { MultiCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import type { IChatEventsReader } from "../common/chatEvents";
 import {
     acceptP2PSwapSuccess,
+    addressToIcrcAccount,
     apiAccessGateConfig,
     apiExternalBotPermissions,
     apiMessageContent,
@@ -151,6 +152,7 @@ import {
     inviteCodeSuccess,
     isSuccess,
     mapResult,
+    throwIfReplicaNotUpToDate,
     proposalTallies,
     pushEventSuccess,
     searchGroupChatResponse,
@@ -222,7 +224,11 @@ export class GroupClient
             chatId.groupId,
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             GroupEventsByIndexArgs,
             GroupEventsResponse,
         );
@@ -247,7 +253,11 @@ export class GroupClient
             chatId.groupId,
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             GroupEventsWindowArgs,
             GroupEventsResponse,
         );
@@ -274,7 +284,11 @@ export class GroupClient
             chatId.groupId,
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             GroupEventsArgs,
             GroupEventsResponse,
         );
@@ -670,7 +684,11 @@ export class GroupClient
             chatId.groupId,
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             GroupMessagesByMessageIndexArgs,
             GroupMessagesByMessageIndexResponse,
         );
@@ -957,6 +975,7 @@ export class GroupClient
         messageId: bigint,
         pin: string | undefined,
         newAchievement: boolean,
+        fromAccount: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         return this.update(
             groupId,
@@ -964,6 +983,7 @@ export class GroupClient
             {
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
+                from_account: mapOptional(fromAccount, addressToIcrcAccount),
                 pin,
                 new_achievement: newAchievement,
             },

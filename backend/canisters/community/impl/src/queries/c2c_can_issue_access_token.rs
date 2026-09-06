@@ -16,7 +16,7 @@ fn c2c_can_issue_access_token_impl(args_outer: Args, state: &RuntimeState) -> Re
         // Ensure the initiator has the necessary seniority according to required role
         if !state
             .data
-            .is_same_or_senior(args.initiator.into(), args_outer.channel_id, args.initiator_role)
+            .is_same_or_senior(args.initiator.as_principal(), args_outer.channel_id, args.initiator_role)
         {
             return Response::Failure;
         }

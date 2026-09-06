@@ -8,6 +8,7 @@ generate_query_call!(bot_community_events);
 generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(group_and_community_summary_updates_v2);
 generate_query_call!(latest_notification_index);
+generate_query_call!(media_scan_jobs);
 generate_query_call!(notifications);
 
 // Updates
@@ -24,6 +25,7 @@ generate_msgpack_update_call!(join_community);
 generate_msgpack_update_call!(join_group);
 generate_msgpack_update_call!(pay_for_premium_item);
 generate_msgpack_update_call!(register_user);
+generate_update_call!(submit_media_scan_verdicts);
 generate_msgpack_update_call!(uninstall_bot);
 
 pub mod happy_path {

@@ -51,7 +51,7 @@
                     )} />
             </BodySmall>
 
-            <Container padding={"lg"} borderRadius={"md"} background={ColourVars.background0}>
+            <Container padding={"lg"} borderRadius={"md"} background={ColourVars.surface0}>
                 <BodySmall colour={"textSecondary"}>
                     <Markdown inline={false} text={data.defaultRules.text}></Markdown>
                 </BodySmall>

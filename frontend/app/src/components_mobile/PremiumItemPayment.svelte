@@ -62,7 +62,7 @@
         </Subtitle>
         {#if insufficient}
             <StatusCard
-                background={ColourVars.background0}
+                background={ColourVars.surface0}
                 mode={"warning"}
                 title={"Insufficient CHIT"}
                 body={interpolate(

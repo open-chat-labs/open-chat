@@ -1,4 +1,5 @@
 import { WebAuthnIdentity } from "@icp-sdk/core/identity";
+import { authDataToCose } from "./webAuthn";
 import type { WebAuthnKeyFull } from "@shared";
 import borc from "borc";
 import {
@@ -51,7 +52,7 @@ export async function createAndroidWebAuthnPasskeyIdentity(
 
                     const identity = new WebAuthnIdentity(
                         credentialId,
-                        new Uint8Array(authDataToCose(attObject.authData)),
+                        authDataToCose(attObject.authData),
                         credential.authenticatorAttachment,
                     );
 
@@ -165,15 +166,4 @@ export class AndroidWebAuthnPasskeyIdentity extends SignIdentity {
         }
         return new Uint8Array(cbor) as Signature;
     }
-}
-
-// TODO, this is duplicated/copied from the webAuthn.ts
-function authDataToCose(authData: ArrayBuffer): ArrayBuffer {
-    const dataView = new DataView(new ArrayBuffer(2));
-    const idLenBytes = authData.slice(53, 55);
-    [...new Uint8Array(idLenBytes)].forEach((v, i) => dataView.setUint8(i, v));
-    const credentialIdLength = dataView.getUint16(0);
-
-    // Get the public key object.
-    return authData.slice(55 + credentialIdLength);
 }

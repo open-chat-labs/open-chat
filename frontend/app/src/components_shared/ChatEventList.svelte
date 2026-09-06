@@ -32,6 +32,7 @@
         localUpdates,
         messageContextsEqual,
         routeStore,
+        subrangesCover,
         subscribe,
         withEqCheck,
         type ChatSummary,
@@ -114,6 +115,17 @@
     let destroyed = false;
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
+    // The load currently in flight, from whichever caller started it. A caller
+    // that finds one running must WAIT for it, not return early: the
+    // scrollToMessageIndex recursion treats a true result as "a load happened,
+    // re-check", and its iterations are microtask-only (scrollToIndex, tick,
+    // an instant return). Returning true without awaiting sends it round again
+    // with nothing yielding to the task queue, so the network reply that would
+    // clear the flags never runs — the tab spins at 100% until killed. Seen on
+    // selecting a chat with unread messages while the previous chat's
+    // fire-and-forget load was still in flight (the flags are not reset on a
+    // context switch while the list stays visible).
+    let inflightLoad: Promise<void> | undefined = undefined;
     // After a scroll-triggered load, block further scroll-triggered loads until
     // the gesture fully stops (see trackScrollStop) — prevents runaway loading
     // while momentum keeps the viewport inside a loading threshold.
@@ -128,6 +140,14 @@
     let loadPrevCooldownUntil = 0;
     let loadNewCooldownUntil = 0;
     let messageReadTimers: Record<number, number> = {};
+    // Rows whose MESSAGE_READ_THRESHOLD has elapsed, waiting to be marked read in one batch
+    let pendingReads: {
+        context: MessageContext;
+        idx: number;
+        id: bigint | undefined;
+        target: Element;
+    }[] = [];
+    let pendingReadsTimer: number | undefined;
 
     let threadSummary = $derived(threadRootEvent?.event.thread);
     let messageContext = $derived.by(
@@ -154,7 +174,10 @@
 
     let items = $derived.by<FlatChatItem[]>(() => {
         if (threadRootEvent !== undefined || allItems.length === 0) return allItems;
-        const loaded = $eventIndexesLoadedStore;
+        // Subranges are computed at most once per publish, and only if there
+        // is at least one gap, rather than cloning the DRange per gap.
+        const loadedRange = $eventIndexesLoadedStore;
+        let loaded: { low: number; high: number }[] | undefined;
         // Segment boundaries: a split between adjacent event items whose gap
         // is not fully covered by the loaded ranges (expired/disappeared
         // events count as loaded). allItems is newest-first, so event
@@ -166,8 +189,8 @@
             if (item.kind !== "event") continue;
             const idx = item.event.index;
             if (prev !== undefined && prev - idx > 1) {
-                const gap = prev - idx - 1;
-                if (loaded.clone().intersect(idx + 1, prev - 1).length !== gap) {
+                loaded ??= loadedRange.subranges();
+                if (!subrangesCover(loaded, idx + 1, prev - 1)) {
                     bounds.push(i);
                 }
             }
@@ -198,22 +221,36 @@
             }
         }
         const seg = allItems.slice(bounds[chosen], bounds[chosen + 1]);
-        vclDebug.log("segment", {
-            segs: bounds.length - 1,
-            chosen,
-            anchor: anchorMessageIndex,
-            len: seg.length,
-            of: allItems.length,
-        });
+        if (vclDebug.enabled) {
+            vclDebug.log("segment", {
+                segs: bounds.length - 1,
+                chosen,
+                anchor: anchorMessageIndex,
+                len: seg.length,
+                of: allItems.length,
+            });
+        }
         return seg;
     });
 
     // messageIndex -> flat item index, for programmatic scrolling.
     // Failed messages are excluded (mirrors findMessageEvent).
-    let messageIndexToFlat = $derived.by(() => {
+    // Built lazily on first use and cached per (`items`, `messageContext`)
+    // identity, since most publishes never scroll programmatically. Note that
+    // `items` is also reallocated whenever failedMessages changes (it is an
+    // input of eventsStore), so the isFailed exclusions stay current.
+    let messageIndexToFlatCache:
+        | { items: FlatChatItem[]; context: MessageContext; map: Map<number, number> }
+        | undefined;
+    function messageIndexToFlat(): Map<number, number> {
+        const current = items;
+        const context = messageContext;
+        if (messageIndexToFlatCache?.items === current && messageIndexToFlatCache.context === context) {
+            return messageIndexToFlatCache.map;
+        }
         const map = new Map<number, number>();
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
+        for (let i = 0; i < current.length; i++) {
+            const item = current[i];
             if (
                 item.kind === "event" &&
                 item.event.event.kind === "message" &&
@@ -222,8 +259,9 @@
                 map.set(item.event.event.messageIndex, i);
             }
         }
+        messageIndexToFlatCache = { items: current, context, map };
         return map;
-    });
+    }
 
     const fromTop = () => {
         if (messagesDiv) {
@@ -397,8 +435,10 @@
                                 entry.target.isConnected &&
                                 messageContextsEqual(context, messageContext)
                             ) {
-                                client.markMessageRead(messageContext, idx, id);
-                                messageObserver?.unobserve(entry.target);
+                                pendingReads.push({ context, idx, id, target: entry.target });
+                                // Timers for rows that came into view together are due at
+                                // the same time; flush them all with a single publish
+                                pendingReadsTimer ??= window.setTimeout(flushPendingReads, 0);
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
@@ -436,9 +476,27 @@
                 window.clearTimeout(timer);
             }
             messageReadTimers = {};
+            window.clearTimeout(pendingReadsTimer);
+            pendingReadsTimer = undefined;
+            pendingReads = [];
             clearTimeout(scrollTimeout);
         };
     });
+
+    function flushPendingReads() {
+        pendingReadsTimer = undefined;
+        const reads = pendingReads.filter(
+            (r) => r.target.isConnected && messageContextsEqual(r.context, messageContext),
+        );
+        pendingReads = [];
+        client.markMessagesRead(
+            messageContext,
+            reads.map(({ idx, id }) => ({ messageIndex: idx, messageId: id })),
+        );
+        for (const { target } of reads) {
+            messageObserver?.unobserve(target);
+        }
+    }
 
     function chatsUpdated(ctx: MessageContext) {
         // Never start a background new-message load while a message navigation
@@ -557,7 +615,10 @@
         // repeatedly jumping ~a viewport up from the bottom.
         const preAtBottom = fromBottom < 10;
 
-        await client.loadNewMessages(chat.id, threadRootEvent);
+        const chatId = chat.id;
+        await client.loadNewMessages(chatId, threadRootEvent);
+        // the user may have navigated away while the load was in flight
+        if (chat === undefined) return;
 
         // In column-reverse, new messages are inserted at the visual bottom (scroll
         // origin), shifting existing content upward. Move the browser scroll
@@ -668,21 +729,46 @@
         await interruptScroll(-fromBottom);
     }
 
+    // Waits for a load already in progress. Resolves true so callers behave as
+    // if they had loaded; the next check re-evaluates the thresholds.
+    async function awaitInflightLoad(): Promise<boolean> {
+        await inflightLoad?.catch(() => undefined);
+        return true;
+    }
+
+    // Runs the given loads as THE in-flight load and always clears the loading
+    // flags afterwards — a rejection used to leave them stuck true, which
+    // gated every later load and navigation in this chat.
+    async function runLoads(loads: Promise<void>[]): Promise<void> {
+        const load = Promise.all(loads).then(() => undefined);
+        inflightLoad = load;
+        try {
+            await load;
+        } finally {
+            // Only the load that owns the flags may clear them: the hidden-panel
+            // reset can let a newer load start while this one is still in flight.
+            if (inflightLoad === load) {
+                inflightLoad = undefined;
+                loadingPrevMessages = false;
+                loadingNewMessages = false;
+                loadingFromUserScroll = false;
+            }
+        }
+    }
+
     async function loadNewMessagesIfRequired(fromScroll = false): Promise<boolean> {
-        if (loadingNewMessages || loadingPrevMessages) return true;
+        if (loadingNewMessages || loadingPrevMessages) return awaitInflightLoad();
         loadingNewMessages = shouldLoadNewMessages();
         loadingFromUserScroll = loadingNewMessages && fromScroll;
         if (loadingNewMessages) {
-            await loadNew();
-            loadingNewMessages = false;
-            loadingFromUserScroll = false;
+            await runLoads([loadNew()]);
             return true;
         }
         return false;
     }
 
     async function loadMoreIfRequired(fromScroll = false, initialLoad = false): Promise<boolean> {
-        if (loadingPrevMessages || loadingNewMessages) return true;
+        if (loadingPrevMessages || loadingNewMessages) return awaitInflightLoad();
 
         // After a scroll-triggered load of OLDER messages, block further such
         // loads until the gesture fully stops (trackScrollStop clears the flag)
@@ -721,10 +807,7 @@
         if (shouldLoadPrev) {
             loadPromises.push(loadPrev(initialLoad));
         }
-        await Promise.all(loadPromises);
-        loadingPrevMessages = false;
-        loadingNewMessages = false;
-        loadingFromUserScroll = false;
+        await runLoads(loadPromises);
 
         if (
             items.length === preLen &&
@@ -909,7 +992,7 @@
             anchorMessageIndex = index;
         }
 
-        let flatIndex = messageIndexToFlat.get(index);
+        let flatIndex = messageIndexToFlat().get(index);
         vclDebug.log("scroll-to-msg", {
             index,
             flatIndex,
@@ -1006,7 +1089,7 @@
                 // the event is loaded but does not appear in the flat items (e.g. it
                 // is hidden or filtered out) so we cannot scroll to it. Try the next
                 // message, or failing that, the bottom.
-                const next = messageIndexToFlat.get(index + 1);
+                const next = messageIndexToFlat().get(index + 1);
                 if (next !== undefined) {
                     return scrollToMessageIndexInternal(
                         token,

@@ -1,15 +1,23 @@
 //import type { Level } from "@shared";
 
+// Called for every token amount rendered, so the result is cached per locale
+// rather than building an `Intl.NumberFormat` on each call.
+const decimalSeparators: Record<string, string> = {};
+
 export function getDecimalSeparator(locale: string | null | undefined): string {
     if (!locale) {
         return defaultDecimalSeparator;
     }
-    const numberWithDecimalSeparator = 1.1;
-    return (
-        Intl.NumberFormat(locale)
-            .formatToParts(numberWithDecimalSeparator)
-            .find((part) => part.type === "decimal")?.value ?? defaultDecimalSeparator
-    );
+    let separator = decimalSeparators[locale];
+    if (separator === undefined) {
+        const numberWithDecimalSeparator = 1.1;
+        separator =
+            Intl.NumberFormat(locale)
+                .formatToParts(numberWithDecimalSeparator)
+                .find((part) => part.type === "decimal")?.value ?? defaultDecimalSeparator;
+        decimalSeparators[locale] = separator;
+    }
+    return separator;
 }
 
 const defaultDecimalSeparator = ".";

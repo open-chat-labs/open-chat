@@ -66,7 +66,7 @@
                 <Column
                     parentDirection={"horizontal"}
                     borderRadius={"md"}
-                    backgroundColor={ColourVars.background1}
+                    backgroundColor={ColourVars.surface1}
                     width={"fill"}
                     height={{ size: `${height}px` }}>
                     <VirtualList keyFn={userOrGroupKey} items={filtered}>

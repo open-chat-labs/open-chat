@@ -36,8 +36,10 @@ initEnv();
 const isNativeIos = process.env.OC_APP_TYPE === "ios";
 const isNativeAndroid = process.env.OC_APP_TYPE === "android";
 const isNativeApp = isNativeIos || isNativeAndroid;
-// Dev server port — shared by web and native (Android/iOS) dev.
-const port = 5001;
+// Dev server port — shared by web and native (Android/iOS) dev. Overridable
+// (OC_DEV_PORT) so e.g. the iOS dev flow can run alongside another dev server;
+// the hmr websocket below must follow it, not just the --port CLI flag.
+const port = Number(process.env.OC_DEV_PORT ?? 5001);
 
 // The former workspace sub-packages (@shared/@client/@agent/@worker) resolve
 // directly from their TypeScript source via `ocPackageAliases` — see
@@ -58,6 +60,11 @@ const transformersWebGpuOrtJspiAlias = {
 const transformersWebGpuSpikeEnabled = transformersWebGpuFeatureEnabled(process.env);
 const workerTargets = [
     { entry: workerEntry, fileName: "worker.js", sequentialWebGpuSessions: false },
+    {
+        entry: path.resolve(__dirname, "../openchat-worker/src/transcodeWorker.ts"),
+        fileName: "transcode_worker.js",
+        sequentialWebGpuSessions: false,
+    },
     ...(transformersWebGpuSpikeEnabled
         ? [
               {
@@ -304,8 +311,8 @@ function ocWorkerPlugin(): Plugin {
         async configureServer(server) {
             await buildWorker();
 
-            // Serve the built worker (and its sourcemap) regardless of the ?v=
-            // cache-busting query string the client appends.
+            // Serve the built workers (and their sourcemaps) regardless of the
+            // ?v= cache-busting query string the client appends.
             server.middlewares.use((req, res, next) => {
                 const fileName = path.basename((req.url ?? "").split("?")[0]);
                 const filePath = path.join(workerBuildDir, fileName);
@@ -481,6 +488,11 @@ export default defineConfig({
             },
             { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
             { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
+            // Keep dev in step with the prod build (see rollup.config.mjs).
+            {
+                find: "@formatjs/intl-getcanonicallocales",
+                replacement: path.resolve(__dirname, "./src/utils/intlGetCanonicalLocales.ts"),
+            },
             { find: "@src", replacement: path.resolve(__dirname, "./src") },
             { find: "@actions", replacement: path.resolve(__dirname, "./src/actions") },
             { find: "@i18n", replacement: path.resolve(__dirname, "./src/i18n") },

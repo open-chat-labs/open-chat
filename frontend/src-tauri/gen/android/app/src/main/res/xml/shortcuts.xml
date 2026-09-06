@@ -5,8 +5,8 @@
         instances tagged with the SHARE_TARGET category will surface in the
         Direct Share row of the system share sheet.
     -->
-    <share-target android:targetClass="com.oc.app.MainActivity">
+    <share-target android:targetClass="com.oclabs.openchat.MainActivity">
         <data android:mimeType="*/*" />
-        <category android:name="com.oc.app.category.SHARE_TARGET" />
+        <category android:name="com.oclabs.openchat.category.SHARE_TARGET" />
     </share-target>
 </shortcuts>

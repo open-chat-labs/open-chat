@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { emojiDatabase } from "@src/utils/emojis";
+    import { getEmojiDatabase } from "@src/utils/emojis";
     import { Body, ChatFootnote, ColourVars, Row, Tooltip, type Alignment } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { CustomEmoji, Reaction, UserLookup } from "@client";
@@ -50,7 +50,7 @@
         if (customEmoji !== undefined) {
             return `:${customEmoji.code}:`;
         }
-        const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as
+        const emoji = (await getEmojiDatabase().getEmojiByUnicodeOrName(reaction)) as
             | NativeEmoji
             | undefined;
         if (!emoji) return reaction;
@@ -82,13 +82,13 @@
         height={{ size: "1.75rem" }}
         minWidth={"2.25rem"}
         padding={["xxs", moreThanOne ? "sm" : "xxs", "xxs", "xxs"]}
-        background={selected ? ColourVars.disabledButton : ColourVars.background2}
+        background={selected ? ColourVars.surfaceDisabled : ColourVars.chatReactionBackground}
         crossAxisAlignment={"center"}
         mainAxisAlignment={"center"}
         gap={"xxs"}
         borderRadius={"circle"}
         borderWidth={"thick"}
-        borderColour={ColourVars.background0}>
+        borderColour={ColourVars.chatBackground}>
         {#if customEmoji !== undefined}
             {#if intersecting}
                 <custom-emoji class="emoji" data-id={customEmoji.code}></custom-emoji>

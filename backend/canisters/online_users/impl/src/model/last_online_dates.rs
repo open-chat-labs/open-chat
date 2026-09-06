@@ -12,15 +12,15 @@ pub struct LastOnlineDates {
 
 impl LastOnlineDates {
     pub fn mark_online(&mut self, user_id: UserId, now: TimestampMillis) -> Option<TimestampMillis> {
-        self.map.insert(user_id.into(), now)
+        self.map.insert(user_id.as_principal(), now)
     }
 
     pub fn get(&self, user_id: UserId) -> Option<TimestampMillis> {
-        self.map.get(&user_id.into())
+        self.map.get(&user_id.as_principal())
     }
 
     pub fn remove(&mut self, user_id: UserId) -> Option<TimestampMillis> {
-        self.map.remove(&user_id.into())
+        self.map.remove(&user_id.as_principal())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (Principal, TimestampMillis)> + '_ {

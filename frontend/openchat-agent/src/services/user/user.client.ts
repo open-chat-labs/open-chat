@@ -190,6 +190,7 @@ import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import type { IChatEventsReader } from "../common/chatEvents";
 import {
     acceptP2PSwapSuccess,
+    addressToIcrcAccount,
     apiChatIdentifier,
     apiCommunityPermissions,
     apiExternalBotPermissions,
@@ -204,6 +205,7 @@ import {
     getMessagesSuccess,
     isSuccess,
     mapResult,
+    throwIfReplicaNotUpToDate,
     undeleteMessageSuccess,
     unitResult,
     apiOgPreview,
@@ -398,7 +400,11 @@ export class UserClient
         return this.query(
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             UserEventsByIndexArgs,
             UserEventsResponse,
         );
@@ -422,7 +428,11 @@ export class UserClient
         return this.query(
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             UserEventsWindowArgs,
             UserEventsResponse,
         );
@@ -450,7 +460,11 @@ export class UserClient
         return this.query(
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             UserEventsArgs,
             UserEventsResponse,
         );
@@ -471,7 +485,11 @@ export class UserClient
         return this.query(
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             UserMessagesByMessageIndexArgs,
             UserMessagesByMessageIndexResponse,
         );
@@ -926,6 +944,7 @@ export class UserClient
                 ledger: principalStringToBytes(transfer.ledger),
                 amount: transfer.amountE8s,
                 thread_root_message_index: messageContext.threadRootMessageIndex,
+                from_account: mapOptional(transfer.fromAccount, addressToIcrcAccount),
                 pin,
             },
             tipMessageResponse,
@@ -1354,6 +1373,7 @@ export class UserClient
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        fromAccount: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         return this.update(
             "accept_p2p_swap",
@@ -1361,6 +1381,7 @@ export class UserClient
                 user_id: principalStringToBytes(userId),
                 message_id: messageId,
                 thread_root_message_index: threadRootMessageIndex,
+                from_account: mapOptional(fromAccount, addressToIcrcAccount),
                 pin,
             },
             (resp) => mapResult(resp, acceptP2PSwapSuccess),

@@ -121,6 +121,7 @@
 
         return () => {
             if (isTouchDevice) {
+                document.removeEventListener("touchstart", handleDocumentTouchStart);
                 containerDiv?.removeEventListener("touchend", handleTouchEnd);
                 containerDiv?.removeEventListener("touchmove", handleTouchMove);
                 containerDiv?.removeEventListener("touchstart", handleTouchStart);

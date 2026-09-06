@@ -27,7 +27,7 @@
     }: Props = $props();
 
     const iconColours: Record<InternalMode, string> = {
-        default: "var(--text-tertiary)",
+        default: "var(--text-on-disabled-surface)",
         active: "var(--primary)",
         pressed: "var(--text-primary)",
     };
@@ -98,7 +98,7 @@
     button {
         $speed: var(--speed);
         all: unset;
-        background: var(--background-1);
+        background: var(--surface-1);
         border: none;
         font-weight: 700;
         color: var(--text-primary);
@@ -127,13 +127,13 @@
         }
 
         &.active {
-            background: var(--background-2);
+            background: var(--surface-2);
             color: var(--primary);
         }
 
         &.pressed,
         &:active {
-            background: var(--background-2);
+            background: var(--surface-2);
         }
 
         &.disabled {

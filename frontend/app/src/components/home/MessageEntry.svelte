@@ -1,6 +1,11 @@
 <script lang="ts">
-    import RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import {
+        loadRichTextEditor,
+        richTextEditorIfLoaded,
+    } from "@shared_components/richTextEditorLoader";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { detectMarkdown } from "@src/utils/detectMarkdown";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -86,7 +91,7 @@
         mode?: "thread" | "message";
         externalContent: boolean;
         messageContext: MessageContext;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
         onStartTyping: () => void;
@@ -136,6 +141,22 @@
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
     let editor = $state<RichTextEditor>();
+    // The editor is its own chunk (see richTextEditorLoader). Normally already
+    // warm; the placeholder is only visible on direct-to-chat entry while the
+    // chunk is in flight. A tap on the placeholder focuses the editor once it
+    // arrives.
+    const alreadyLoaded = richTextEditorIfLoaded();
+    let EditorComponent = $state(alreadyLoaded);
+    let focusWhenReady = false;
+    if (alreadyLoaded === undefined) {
+        loadRichTextEditor().then(
+            (c) => {
+                EditorComponent = c;
+                if (focusWhenReady) tick().then(() => editor?.focus());
+            },
+            (err) => console.error("Failed to load the rich text editor", err),
+        );
+    }
     let editorEmpty = $state(true);
 
     // let inp: HTMLDivElement | undefined = $state();
@@ -161,8 +182,13 @@
         editor?.insertEmoji(emoji);
     }
 
+    // The markdown the editor last reported (or was last set to), so the effect below can compare
+    // against it without re-serialising the whole document on every keystroke
+    let lastMarkdown = "";
+
     function onInput() {
         const inputContent = editor?.getMarkdown() ?? "";
+        lastMarkdown = inputContent;
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);
         triggerTypingTimer();
@@ -387,6 +413,7 @@
 
     function afterSendMessage() {
         editor?.clear();
+        lastMarkdown = "";
         onSetTextContent();
 
         messageActions?.close();
@@ -398,27 +425,6 @@
         tick().then(() => editor?.focus());
     }
 
-    function detectMarkdown(text: string | null) {
-        if (!text) return false;
-
-        // a few regexes to detect various block level markdown elements (possibly incomplete)
-        const headerRegex = /^(?:\#{1,6}\s+)/m;
-        const tableRegex = /(?:\|(?:[^\r\n\|\\]|\\.)*\|)+/;
-        const bulletedListRegex = /^(?:\s*[-\*+]\s+)/m;
-        const numberedListRegex = /^(?:\s*\d+\.\s+)/m;
-        const blockquoteRegex = /^(?:\s*>)/m;
-        const codeBlockRegex = /(?:^```[\s\S]*?^```)/m;
-        const regexList = [
-            headerRegex,
-            tableRegex,
-            bulletedListRegex,
-            numberedListRegex,
-            blockquoteRegex,
-            codeBlockRegex,
-        ];
-        const result = regexList.some((regex) => regex.test(text));
-        return result;
-    }
     let directChatBotId = $derived(client.directChatWithBot(chat));
     let directBot = $derived(
         directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
@@ -451,13 +457,15 @@
                     editor.setContent(editingEvent.event.content.caption ?? "");
                 }
                 previousEditingEvent = editingEvent;
-                containsMarkdown = detectMarkdown(editor.getMarkdown());
+                lastMarkdown = editor.getMarkdown();
+                containsMarkdown = detectMarkdown(lastMarkdown);
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
-                if (editor.getMarkdown() !== text) {
+                if (lastMarkdown !== text) {
                     editor.setContent(text);
+                    lastMarkdown = editor.getMarkdown();
                     containsMarkdown = detectMarkdown(text);
                 }
             }
@@ -570,33 +578,43 @@
                     {/if}
 
                     <div class="textbox">
-                        <RichTextEditor
-                            bind:this={editor}
-                            bind:empty={editorEmpty}
-                            placeholder={interpolate($_, placeholder)}
-                            members={$selectedChatMembersStore}
-                            {onPaste}
-                            onKeydown={keyDown}
-                            oninput={onInput}
-                        >
-                            {#snippet mentionPicker(args)}
-                                <MentionPicker
-                                    supportsUserGroups
-                                    offset={messageEntryHeight}
-                                    onClose={args.onClose}
-                                    onMention={args.onMention}
-                                    prefix={args.query}
-                                />
-                            {/snippet}
-                            {#snippet emojiPicker(args)}
-                                <EmojiAutocompleter
-                                    offset={messageEntryHeight}
-                                    onClose={args.onClose}
-                                    onSelect={args.onSelect}
-                                    query={args.query}
-                                />
-                            {/snippet}
-                        </RichTextEditor>
+                        {#if EditorComponent}
+                            <EditorComponent
+                                bind:this={editor}
+                                bind:empty={editorEmpty}
+                                placeholder={interpolate($_, placeholder)}
+                                members={$selectedChatMembersStore}
+                                {onPaste}
+                                onKeydown={keyDown}
+                                oninput={onInput}
+                            >
+                                {#snippet mentionPicker(args)}
+                                    <MentionPicker
+                                        supportsUserGroups
+                                        offset={messageEntryHeight}
+                                        onClose={args.onClose}
+                                        onMention={args.onMention}
+                                        prefix={args.query}
+                                    />
+                                {/snippet}
+                                {#snippet emojiPicker(args)}
+                                    <EmojiAutocompleter
+                                        offset={messageEntryHeight}
+                                        onClose={args.onClose}
+                                        onSelect={args.onSelect}
+                                        query={args.query}
+                                    />
+                                {/snippet}
+                            </EditorComponent>
+                        {:else}
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div
+                                class="editor-placeholder"
+                                onpointerdown={() => (focusWhenReady = true)}
+                            >
+                                {interpolate($_, placeholder)}
+                            </div>
+                        {/if}
                     </div>
                 </div>
             {/key}
@@ -616,7 +634,8 @@
                                 bind:percentRecorded
                                 bind:recording
                                 bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected}
+                                onAudioCaptured={(content) =>
+                                    onFileSelected(content, messageContext)}
                             />
                         </div>
                     {:else if canEnterText}
@@ -642,6 +661,7 @@
                         {onMakeMeme}
                         {onCreatePoll}
                         {onClearAttachment}
+                        {messageContext}
                         {onFileSelected}
                     />
                 {:else}
@@ -691,6 +711,16 @@
         margin: 0 $sp3;
         flex: 1;
         position: relative;
+    }
+
+    // mirrors :global(.ProseMirror) + its empty-editor placeholder
+    .editor-placeholder {
+        width: 100%;
+        min-width: 0;
+        font-size: 1rem;
+        line-height: 1.3;
+        color: var(--txt-light, var(--chat-input-placeholder));
+        cursor: text;
     }
 
     .textbox {

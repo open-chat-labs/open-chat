@@ -19,7 +19,7 @@
     .error {
         width: 100%;
         margin-bottom: $sp3;
-        background-color: var(--error);
+        background-color: var(--validation-error);
         padding: var(--sp-md) var(--sp-lg);
         border-radius: var(--rad-md);
     }

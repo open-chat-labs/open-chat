@@ -2,8 +2,8 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
     BotInstallationLocation, BotPermissions, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContentInitial,
-    MessageId, MessageIndex, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis,
-    UniquePersonProof, User, UserId,
+    MessageId, MessageIndex, Milliseconds, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment,
+    TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -32,6 +32,17 @@ pub enum LocalUserIndexEvent {
     UserUnblocked(UserId, UserId),
     SetMaxStreak(UserId, u16),
     NotifyOfUserDeleted(CanisterId, UserId),
+    MediaScanStalled(Box<MediaScanStalled>),
+    MediaScanRecovered,
+}
+
+// Raised by a local index when media scan jobs are queued but no verdicts are arriving: the
+// off-chain media_hasher worker (or its route to the matching service) needs investigation
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MediaScanStalled {
+    pub jobs_pending: u32,
+    pub oldest_job_age: Milliseconds,
+    pub latest_job_index: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

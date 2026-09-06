@@ -33,6 +33,24 @@
     let answerCount = $derived(content.config.options.length);
     let voteCounts = $derived(getAnsRange().map((i) => voteCount(content, i)));
     let voteProfiles = $derived(getAnsRange().map(getVoterUsernamesForAnswer));
+    let avatarUrls = $state<(string | undefined)[][]>([]);
+
+    // Object URLs are created once per set of voter profiles and revoked when
+    // the profiles change or the component is destroyed.
+    $effect(() => {
+        const created: string[] = [];
+        avatarUrls = voteProfiles.map((profiles) =>
+            profiles.map((profile) => {
+                if (profile.blobData) {
+                    const url = dataToBlobUrl(profile.blobData);
+                    created.push(url);
+                    return url;
+                }
+                return profile.blobUrl;
+            }),
+        );
+        return () => created.forEach((url) => URL.revokeObjectURL(url));
+    });
 
     function back() {
         publish("closeModalPage");
@@ -58,7 +76,7 @@
 <SlidingPageContent onBack={back} title={i18nKey(`poll.app.viewPollVotesTitle`)}>
     <Column padding="xl" gap="xxl">
         <Row>
-            <Subtitle colour="primaryLight" fontWeight="bold">{content.config?.text}</Subtitle>
+            <Subtitle colour="primaryAccent" fontWeight="bold">{content.config?.text}</Subtitle>
         </Row>
         {#each [...content.config.options] as answer, i (answer)}
             {@const pct = percentageOfVote(content, i)}
@@ -99,12 +117,8 @@
                 <!-- Vote count and usernames -->
                 <Column gap="sm">
                     <Row gap="sm" wrap crossAxisAlignment="center">
-                        {#each voteProfiles[i] as profile}
-                            <UserChip
-                                avatarSize="sm"
-                                avatarUrl={profile.blobData
-                                    ? dataToBlobUrl(profile.blobData)
-                                    : profile.blobUrl}>
+                        {#each voteProfiles[i] as profile, j}
+                            <UserChip avatarSize="sm" avatarUrl={avatarUrls[i]?.[j]}>
                                 <Body>{profile.displayName ?? profile.username}</Body>
                             </UserChip>
                         {/each}
@@ -131,11 +145,11 @@
     }
 
     .separator {
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
     }
 
     .pct {
         height: 0.25rem;
-        background-color: var(--primary-light);
+        background-color: var(--primary-accent);
     }
 </style>

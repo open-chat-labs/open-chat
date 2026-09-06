@@ -313,8 +313,9 @@
             preferredDarkThemeName.set("halloween");
         }
         document.body.classList.add("witch");
-        scream.currentTime = 0;
-        scream.play();
+        const audio = scream();
+        audio.currentTime = 0;
+        audio.play();
         window.setTimeout(() => {
             document.body.classList.remove("witch");
         }, 2000);
@@ -806,13 +807,13 @@
                 public: chat.public,
                 frozen: chat.frozen,
                 members: [],
-                permissions: { ...chat.permissions },
+                permissions: structuredClone(chat.permissions),
                 rules,
                 avatar: {
                     blobUrl: chat.blobUrl,
                     blobData: chat.blobData,
                 },
-                gateConfig: { ...chat.gateConfig },
+                gateConfig: structuredClone(chat.gateConfig),
                 level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,

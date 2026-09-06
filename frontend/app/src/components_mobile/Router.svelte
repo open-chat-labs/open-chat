@@ -7,7 +7,7 @@
     } from "@utils/native/notification_channels";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
     import type { TransitionType } from "component-lib";
-    import { type ChatIdentifier, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "@client";
+    import { type ChatIdentifier, type CommunityIdentifier, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "@client";
     import page from "page";
     import { type Component, getContext, onMount, tick, untrack } from "svelte";
     import Home from "./home/HomeRoute.svelte";
@@ -254,6 +254,21 @@
 
     // This is where our general effects are going to go. They don't *really* belong in a component at all
     // but unfortunately unowned effects do not respond to store value changes
+
+    // Drop a previewed community once we navigate away from it
+    let previousCommunityId: CommunityIdentifier | undefined = undefined;
+    $effect(() => {
+        const id = $selectedCommunityIdStore;
+        untrack(() => {
+            if (
+                previousCommunityId !== undefined &&
+                !communityIdentifiersEqual(previousCommunityId, id)
+            ) {
+                client.removeCommunityIfPreviewing(previousCommunityId);
+            }
+            previousCommunityId = id;
+        });
+    });
 
     // Set selected community
     $effect(() => {

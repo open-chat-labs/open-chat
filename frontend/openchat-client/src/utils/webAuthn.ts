@@ -35,7 +35,7 @@ export async function createWebAuthnIdentity(
 
     const identity = new WebAuthnIdentity(
         credentialId,
-        new Uint8Array(authDataToCose(attObject.authData)),
+        authDataToCose(attObject.authData),
         authenticatorAttachment,
     );
 
@@ -161,12 +161,98 @@ function webAuthnCreationOptions(
     };
 }
 
-function authDataToCose(authData: ArrayBuffer): ArrayBuffer {
-    const dataView = new DataView(new ArrayBuffer(2));
-    const idLenBytes = authData.slice(53, 55);
-    [...new Uint8Array(idLenBytes)].forEach((v, i) => dataView.setUint8(i, v));
-    const credentialIdLength = dataView.getUint16(0);
+/**
+ * Extracts the COSE public key from WebAuthn authenticator data.
+ *
+ * Layout (https://www.w3.org/TR/webauthn-2/#sctn-authenticator-data):
+ *   rpIdHash (32) | flags (1) | signCount (4) | aaguid (16) | credentialIdLength (2) |
+ *   credentialId (credentialIdLength) | credentialPublicKey (COSE, variable) | extensions (CBOR map, optional)
+ *
+ * The public key is a CBOR map of variable length, so we must walk the CBOR structure to find where it
+ * ends rather than taking everything to the end of the buffer. Otherwise, when the authenticator sets the
+ * ED flag (eg. YubiKeys which add a `credProtect` extension), the extensions map would be included in the
+ * stored key, the IC would reject it as malformed, and the user would be locked out of their account.
+ */
+export function authDataToCose(authData: ArrayBuffer | Uint8Array): Uint8Array {
+    const bytes = new Uint8Array(authData);
+    const credentialIdLength = new DataView(
+        bytes.buffer,
+        bytes.byteOffset,
+        bytes.byteLength,
+    ).getUint16(53);
+    const start = 55 + credentialIdLength;
+    const length = cborItemLength(bytes, start);
+    return bytes.slice(start, start + length);
+}
 
-    // Get the public key object.
-    return authData.slice(55 + credentialIdLength);
+/**
+ * Returns the encoded length in bytes of the CBOR data item starting at `offset`.
+ * Only definite-length items are supported, which is all that CTAP2 canonical CBOR permits.
+ */
+function cborItemLength(bytes: Uint8Array, offset: number): number {
+    if (offset >= bytes.length) {
+        throw new Error("Unexpected end of CBOR data");
+    }
+    const initial = bytes[offset];
+    const majorType = initial >> 5;
+    const additionalInfo = initial & 0x1f;
+
+    let headerLength = 1;
+    let argument: number;
+    if (additionalInfo < 24) {
+        argument = additionalInfo;
+    } else if (additionalInfo <= 27) {
+        const argumentLength = 1 << (additionalInfo - 24);
+        if (offset + 1 + argumentLength > bytes.length) {
+            throw new Error("Unexpected end of CBOR data");
+        }
+        const view = new DataView(bytes.buffer, bytes.byteOffset + offset + 1, argumentLength);
+        switch (argumentLength) {
+            case 1:
+                argument = view.getUint8(0);
+                break;
+            case 2:
+                argument = view.getUint16(0);
+                break;
+            case 4:
+                argument = view.getUint32(0);
+                break;
+            default:
+                argument = Number(view.getBigUint64(0));
+                break;
+        }
+        headerLength += argumentLength;
+    } else {
+        throw new Error("Indefinite length CBOR items are not supported");
+    }
+
+    let length = headerLength;
+    switch (majorType) {
+        case 0: // unsigned int
+        case 1: // negative int
+        case 7: // simple values and floats (argument bytes already counted in the header)
+            break;
+        case 2: // byte string
+        case 3: // text string
+            length += argument;
+            break;
+        case 4: // array
+            for (let i = 0; i < argument; i++) {
+                length += cborItemLength(bytes, offset + length);
+            }
+            break;
+        case 5: // map
+            for (let i = 0; i < argument * 2; i++) {
+                length += cborItemLength(bytes, offset + length);
+            }
+            break;
+        case 6: // tagged item
+            length += cborItemLength(bytes, offset + length);
+            break;
+    }
+
+    if (offset + length > bytes.length) {
+        throw new Error("Unexpected end of CBOR data");
+    }
+    return length;
 }

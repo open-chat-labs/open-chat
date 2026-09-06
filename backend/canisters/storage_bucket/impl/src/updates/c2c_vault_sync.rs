@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_bucket_canister::c2c_vault_sync::{Response::*, *};
 use storage_index_canister::c2c_sync_bucket::CsamHashDenylisted;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 #[update(guard = "caller_is_storage_index_canister")]
 #[trace]
@@ -44,9 +44,17 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                 match state.data.vault.unquarantine(u.file_id, u.moderator, u.report_index, now) {
                     VaultOpOutcome::ReleasePin(hash) => {
                         state.data.files.vault_unpin(&hash);
+                        state.data.vault.clear_blocked_attempts_for_hash(&hash);
                         info!(%file_id, "Vault: unquarantined");
                     }
                     VaultOpOutcome::Retained => {
+                        // A claim released even though siblings retain the pin: sightings
+                        // anchored to the released report are stale, and the next attempt
+                        // must re-report against a remaining claim rather than be silenced
+                        // (I14) - the anchor changed, which is a hash transition too
+                        if let Some(hash) = state.data.vault.hash_for_file(&file_id) {
+                            state.data.vault.clear_blocked_attempts_for_hash(&hash);
+                        }
                         info!(%file_id, "Vault: release deferred, other reports still hold the blob");
                     }
                     VaultOpOutcome::Blocked => {
@@ -74,35 +82,65 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                     // Tell the index so every other bucket denylists the hash too, otherwise
                     // the same content uploads again elsewhere and is served publicly
                     VaultOpOutcome::AppliedDenylisted(hash, report_index) => {
+                        state.data.vault.clear_blocked_attempts_for_hash(&hash);
                         state
                             .data
-                            .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted { hash, report_index }));
+                            .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
+                                hash,
+                                report_index,
+                                derived: Some(false),
+                            }));
+                        denylist_source_hashes(&hash, report_index, state);
                     }
                     _ => (),
                 }
             }
             VaultOp::SetLegalHold(l) => {
                 // Clearing a hold can perform a release that the hold previously refused
-                if let VaultOpOutcome::ReleasePin(hash) = state.data.vault.set_legal_hold(l.file_id, l.legal_hold, now) {
+                if let VaultOpOutcome::ReleasePin(hash) =
+                    state.data.vault.set_legal_hold(l.file_id, l.legal_hold, l.reference, now)
+                {
                     state.data.files.vault_unpin(&hash);
+                    state.data.vault.clear_blocked_attempts_for_hash(&hash);
                     info!(file_id = %l.file_id, "Vault: unquarantined on legal-hold clear");
                 }
             }
             VaultOp::Destroy(d) => {
                 let file_id = d.file_id;
-                if let VaultOpOutcome::ReleasePin(hash) = state.data.vault.destroy(d.file_id, d.le_request_ref, now) {
-                    state.data.files.vault_purge(&hash);
-                    info!(%file_id, "Vault: destroyed on law enforcement request");
+                match state
+                    .data
+                    .vault
+                    .destroy(d.file_id, d.le_request_ref, d.proposed_by, d.confirmed_by, now)
+                {
+                    VaultOpOutcome::ReleasePin(hash) => {
+                        state.data.files.vault_purge(&hash);
+                        state.data.vault.clear_blocked_attempts_for_hash(&hash);
+                        info!(%file_id, "Vault: destroyed on law enforcement request");
+                    }
+                    VaultOpOutcome::Blocked => {
+                        warn!(%file_id, "Vault: destruction refused - legal hold stands");
+                    }
+                    _ => {}
                 }
             }
             VaultOp::SetReviewers(reviewers) => {
                 state.data.vault.set_reviewers(reviewers);
             }
+            VaultOp::SetAuthorityReporter(op) => {
+                state.data.vault.set_authority_reporter(op.principal, op.oc_public_key_pem);
+                info!("Vault: authority reporter updated");
+            }
             VaultOp::DenylistHash(d) => {
                 // Propagated from the bucket which applied the verdict: blocks uploads of the
                 // same content here, and stops any copy already stored here being served
-                if state.data.vault.denylist_hash(d.hash, d.report_index) {
-                    info!(report_index = d.report_index, "Vault: CSAM hash denylisted");
+                let derived = d.derived.unwrap_or(false);
+                if state.data.vault.denylist_hash(d.hash, d.report_index, derived) {
+                    state.data.vault.clear_blocked_attempts_for_hash(&d.hash);
+                    info!(report_index = d.report_index, derived, "Vault: CSAM hash denylisted");
+                    // A copy of the upheld bytes stored HERE may carry source claims of its own
+                    if !derived {
+                        denylist_source_hashes(&d.hash, d.report_index, state);
+                    }
                 }
             }
         }
@@ -111,4 +149,24 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
     crate::jobs::vault_retention::start_job_if_required(state);
 
     Success(SuccessResult { quarantine_failures })
+}
+
+// The bytes behind an upheld hash may be a client-side transcode of some original file (see
+// upload_chunk_v2::Args::source_hash): a re-upload of that original transcodes to different
+// bytes every time, so the declared original hashes are denylisted too - as DERIVED, since no
+// moderator saw those bytes: uploads of them are refused, nobody is sanctioned. Pushed to the
+// index so every bucket refuses them; the index dedupes hashes it has already seen.
+fn denylist_source_hashes(hash: &types::Hash, report_index: u64, state: &mut RuntimeState) {
+    for source_hash in state.data.files.source_hashes(hash) {
+        if state.data.vault.denylist_hash(source_hash, report_index, true) {
+            state
+                .data
+                .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
+                    hash: source_hash,
+                    report_index,
+                    derived: Some(true),
+                }));
+            info!(report_index, "Vault: declared source of upheld content denylisted as derived");
+        }
+    }
 }

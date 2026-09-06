@@ -34,6 +34,10 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             sender: args.sender,
             flags: categories.bits(),
             blob_references: args.blob_references,
+            media_matches: args.media_matches.clone(),
+            // Persisted (not just shown on the alert): the message is deleted by the sanction
+            // below, and the authority filing later needs the flagged text
+            content_excerpt: args.content_excerpt.clone(),
             timestamp: now,
         })
     else {
@@ -64,7 +68,7 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
         false,
         &mut state.data.fire_and_forget_handler,
     );
-    moderation::suspend_sender(args.sender, now, state);
+    moderation::suspend_sender(args.sender, Some(report_index), now, state);
 
     moderation::post_moderation_alert(
         ModerationAlert {
@@ -80,7 +84,11 @@ fn c2c_csam_detected_impl(args: Args, state: &mut RuntimeState) {
             auto_sanctioned: true,
             content_excerpt: args.content_excerpt,
             blob_references: reported_message.blob_references,
+            media_matches: args.media_matches,
             timestamp: now,
+            authority_report: None,
+            is_blocked_attempt: false,
+            status: types::ModerationReportStatus::Pending,
         },
         state,
     );

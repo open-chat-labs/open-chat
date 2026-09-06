@@ -42,7 +42,7 @@ async fn c2c_user_canister_impl(args: Args) -> Response {
 }
 
 fn c2c_notify_user_canister_events_impl(args: Args, caller_user_id: UserId, state: &mut RuntimeState) -> Response {
-    let caller = caller_user_id.into();
+    let caller = caller_user_id.as_principal();
     for event in args.events {
         if state
             .data

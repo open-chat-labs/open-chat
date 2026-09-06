@@ -235,7 +235,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
     let delete_messages_response = client::user::delete_messages(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::delete_messages::Args {
             user_id: user2.user_id,
             thread_root_message_index: None,
@@ -255,7 +255,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
     let undelete_messages_response = client::user::undelete_messages(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::undelete_messages::Args {
             user_id: user2.user_id,
             thread_root_message_index: None,

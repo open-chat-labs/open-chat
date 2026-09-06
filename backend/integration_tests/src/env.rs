@@ -44,6 +44,15 @@ impl TestEnvWrapper {
     pub fn env(&mut self) -> &mut TestEnv {
         self.env.as_mut().unwrap()
     }
+
+    // Drops the env instead of returning it to the pool. Tests which advance time
+    // significantly MUST call this: a pooled env with its clock pushed forward poisons
+    // whichever test draws it next (pending timers fire, time-based state reconciles), which
+    // surfaces as unrelated flakes.
+    pub fn discard(mut self) {
+        self.env = None;
+        std::mem::forget(self);
+    }
 }
 
 impl Drop for TestEnvWrapper {

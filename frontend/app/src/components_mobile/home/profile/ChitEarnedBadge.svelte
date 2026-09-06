@@ -27,7 +27,7 @@
         {size}
         {borderColor}
         supplementalClass="chit-badge"
-        backgroundColor={ColourVars.tertiaryMuted}
+        backgroundColor={ColourVars.tertiarySurface}
         backgroundImage={"/assets/oc_logo_no_bg.svg"}>
         {#if size === "default"}
             <Caption align="center" fontWeight="bold">{chitIconText}</Caption>
@@ -69,10 +69,10 @@
                 scale: 0.8;
                 width: 100%;
                 text-shadow:
-                    -1px -1px 0 var(--tertiary-muted),
-                    1px -1px 0 var(--tertiary-muted),
-                    -1px 1px 0 var(--tertiary-muted),
-                    1px 1px 0 var(--tertiary-muted);
+                    -1px -1px 0 var(--tertiary-surface),
+                    1px -1px 0 var(--tertiary-surface),
+                    -1px 1px 0 var(--tertiary-surface),
+                    1px 1px 0 var(--tertiary-surface);
             }
         }
     }

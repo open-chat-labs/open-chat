@@ -1,6 +1,6 @@
 use crate::{RuntimeState, execute_update_async, read_state};
 use canister_api_macros::update;
-use canister_client::make_c2c_call_raw;
+use canister_client::make_c2c_call_raw_refunding_spare_cycles;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group::*;
 use group_index_canister::c2c_delete_group;
@@ -55,11 +55,8 @@ fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
 async fn delete_group(group_index_canister_id: CanisterId, args: &c2c_delete_group::Args) -> Response {
     let method_name = "c2c_delete_group_msgpack";
     let payload = msgpack::serialize_then_unwrap(args);
-    let c2c_cost = ic_cdk::api::cost_call(method_name.len() as u64, payload.len() as u64);
-    let buffer = 1_000_000_000; // 1B
-    let cycles = ic_cdk::api::canister_liquid_cycle_balance().saturating_sub(c2c_cost + buffer);
 
-    match make_c2c_call_raw(group_index_canister_id, method_name, &payload, cycles, None).await {
+    match make_c2c_call_raw_refunding_spare_cycles(group_index_canister_id, method_name, &payload).await {
         Ok(_) => Response::Success,
         Err(error) => Response::Error(error.into()),
     }

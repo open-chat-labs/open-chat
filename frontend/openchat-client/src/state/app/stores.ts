@@ -6,13 +6,14 @@ import {
     applyOptionUpdate,
     AuthProvider,
     chatIdentifiersEqual,
+    chatIdentifierToString,
     ChatListScopeMap,
     ChatMap,
     ChatSet,
     CommunityMap,
-    compareChats,
     DEFAULT_TOKENS,
     emptyChatMetrics,
+    getDisplayDate,
     Immutable,
     mergeListOfCombinedUnreadCounts,
     mergePairOfCombinedUnreadCounts,
@@ -66,13 +67,13 @@ import { createSetStore } from "../../stores/setStore";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
-    mergeEventsAndLocalUpdates,
+    mergeEventsAndLocalUpdatesWithRange,
     mergePermissions,
     mergeUnconfirmedIntoSummary,
 } from "../../utils/chat";
 import { configKeys } from "../../utils/config";
 import { enumFromStringValue } from "../../utils/enums";
-import { derived, writable, type Readable, type Subscriber } from "../../utils/stores";
+import { derived, writable, type Subscriber } from "../../utils/stores";
 import { nullProfile } from "../../utils/user";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import type { ChatDetailsState } from "../chat/serverDetails";
@@ -144,7 +145,9 @@ function createCryptoBalanceStore() {
         subscribe: (sub: Subscriber<Map<LedgerCanister, bigint>>, invalidate?: () => void) =>
             store.subscribe(sub, invalidate),
         setBalance(ledger: string, balance: bigint) {
-            store.update((s) => s.set(ledger, balance));
+            if (store.value.get(ledger) !== balance) {
+                store.update((s) => s.set(ledger, balance));
+            }
             cryptoBalancesLastUpdated.set(ledger, Date.now());
         },
         valueIfUpdatedRecently(ledger: string): bigint | undefined {
@@ -546,7 +549,8 @@ export const communitiesStore = derived(
                 updates?.rulesAccepted !== undefined;
 
             if (anyChanges) {
-                const clone = structuredClone(community);
+                // only membership is modified below so that is all we need to copy
+                const clone = { ...community, membership: { ...community.membership } };
                 const index = updates?.index;
                 if (index !== undefined) {
                     clone.membership.index = index;
@@ -904,11 +908,7 @@ export const userMetricsStore = derived(allServerChatsStore, (allServerChats) =>
 export const unreadFavouriteCountsStore = derived(
     [serverFavouritesStore, allServerChatsStore, messagesRead],
     ([serverFavourites, allServerChats, _]) => {
-        const chats = ChatMap.fromList(
-            [...serverFavourites.values()]
-                .map((id) => allServerChats.get(id))
-                .filter((chat) => chat !== undefined) as ChatSummary[],
-        );
+        const chats = [...serverFavourites.values()].map((id) => allServerChats.get(id));
         return messagesRead.combinedUnreadCountForChats(chats);
     },
 );
@@ -928,8 +928,15 @@ export const selectedServerChatSummaryStore = derived(
     },
 );
 
+// The updaters applied to chats in allChatsStore only ever assign top-level fields or fields
+// of membership (nested objects such as permissions are replaced, never mutated), so a shallow
+// copy plus a copy of membership is enough to keep the server chat untouched.
+function shallowCloneChat(chat: Readonly<ChatSummary>): ChatSummary {
+    return { ...chat, membership: { ...chat.membership } };
+}
+
 function applyLocalUpdatesToChat(chat: Immutable<ChatSummary>, updates?: ChatSummaryUpdates) {
-    if (updates === undefined) return;
+    if (updates === undefined || updates.isEmpty()) return;
 
     chat.update((c) => {
         c.membership.notificationsMuted =
@@ -984,6 +991,8 @@ export const selectedChatBlockedOrSuspendedUsersStore = derived(
             ...direct,
         ]);
     },
+    // this feeds allChatsStore and eventsStore so only publish when the membership changes
+    (a, b) => a?.size === b?.size && [...a].every((u) => b.has(u)),
 );
 
 // this is all server chats (which already include previews) + local updates applied.
@@ -1010,7 +1019,7 @@ export const allChatsStore = derived(
     ]) => {
         const withUpdates = localChats.apply(allServerChats);
         return [...withUpdates.entries()].reduce((result, [chatId, chat]) => {
-            const immutable = new Immutable(chat);
+            const immutable = new Immutable(chat, shallowCloneChat);
             applyLocalUpdatesToChat(immutable, localUpdates.get(chat.id));
             mergeUnconfirmedIntoSummary(
                 immutable,
@@ -1074,12 +1083,16 @@ export const chatSummariesListStore = derived(
             }
             return result;
         }, []);
-        const unpinned = [...chatSummaries.values()]
-            .filter(
-                (chat) => pinnedByScope.findIndex((p) => chatIdentifiersEqual(p, chat.id)) === -1,
-            )
-            .sort(compareChats);
-        return pinned.concat(unpinned);
+        const pinnedIds = new Set(pinnedByScope.map(chatIdentifierToString));
+        // compute the (bigint) display date once per chat rather than twice per comparison
+        const unpinned: [bigint, ChatSummary][] = [];
+        for (const chat of chatSummaries.values()) {
+            if (!pinnedIds.has(chatIdentifierToString(chat.id))) {
+                unpinned.push([getDisplayDate(chat), chat]);
+            }
+        }
+        unpinned.sort(([a], [b]) => (a === b ? 0 : a < b ? 1 : -1));
+        return pinned.concat(unpinned.map(([, chat]) => chat));
     },
 );
 
@@ -1209,7 +1222,9 @@ export const directAndGroupVideoCallCountsStore = derived(
     },
 );
 
-export const eventsStore = derived(
+// Merged events plus the DRange of loaded indexes computed by the same pass;
+// eventsStore / eventIndexesLoadedStore are projections of this.
+const mergedEventsStore = derived(
     [
         serverEventsStore,
         expiredServerEventRanges,
@@ -1234,13 +1249,17 @@ export const eventsStore = derived(
         recentlySentMessages,
         messageFilters,
     ]) => {
-        if (selectedChatId === undefined) return [];
+        if (selectedChatId === undefined) {
+            const range = new DRange();
+            range.add(expiredEventRanges);
+            return { events: [], range };
+        }
         const ctx = { chatId: selectedChatId };
         const failedState = failedMessages.get(ctx);
         const failed = failedState ? [...failedState.values()] : [];
         const unconfirmedState = unconfirmedMessages.get(ctx);
         const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
-        return mergeEventsAndLocalUpdates(
+        return mergeEventsAndLocalUpdatesWithRange(
             serverEvents,
             [...unconfirmed, ...failed],
             expiredEventRanges,
@@ -1253,18 +1272,19 @@ export const eventsStore = derived(
     },
 );
 
-function indexesLoadedStore(eventsStore: Readable<EventWrapper<ChatEvent>[]>) {
-    return derived([eventsStore, expiredServerEventRanges], ([events, expiredEventRanges]) => {
+export const eventsStore = derived(mergedEventsStore, (merged) => merged.events);
+
+export const confirmedEventIndexesLoadedStore = derived(
+    [serverEventsStore, expiredServerEventRanges],
+    ([events, expiredEventRanges]) => {
         const ranges = new DRange();
         events.forEach((e) => ranges.add(e.index));
         ranges.add(expiredEventRanges);
         return ranges;
-    });
-}
+    },
+);
 
-export const confirmedEventIndexesLoadedStore = indexesLoadedStore(serverEventsStore);
-
-export const eventIndexesLoadedStore = indexesLoadedStore(eventsStore);
+export const eventIndexesLoadedStore = derived(mergedEventsStore, (merged) => merged.range);
 
 export const messageActivitySummaryStore = derived(
     [serverMessageActivitySummaryStore, localUpdates.messageActivityFeedReadUpTo],
@@ -1289,14 +1309,14 @@ export const directChatBotsStore = derived(
 export const unreadGroupCountsStore = derived(
     [serverGroupChatsStore, messagesRead],
     ([serverGroupChats, _]) => {
-        return messagesRead.combinedUnreadCountForChats(serverGroupChats);
+        return messagesRead.combinedUnreadCountForChats(serverGroupChats.values());
     },
 );
 
 export const unreadDirectCountsStore = derived(
     [serverDirectChatsStore, messagesRead],
     ([serverDirectChats, _]) => {
-        return messagesRead.combinedUnreadCountForChats(serverDirectChats);
+        return messagesRead.combinedUnreadCountForChats(serverDirectChats.values());
     },
 );
 
@@ -1311,10 +1331,7 @@ export const unreadCommunityChannelCountsStore = derived(
     [serverCommunitiesStore, messagesRead],
     ([serverCommunities, _]) => {
         return serverCommunities.reduce((map, [id, community]) => {
-            map.set(
-                id,
-                messagesRead.combinedUnreadCountForChats(ChatMap.fromList(community.channels)),
-            );
+            map.set(id, messagesRead.combinedUnreadCountForChats(community.channels));
             return map;
         }, new CommunityMap<CombinedUnreadCounts>());
     },
@@ -1331,7 +1348,7 @@ export const globalUnreadCountStore = derived(
     },
 );
 
-export const threadEventsStore = derived(
+const mergedThreadEventsStore = derived(
     [
         serverThreadEventsStore,
         selectedThreadIdStore,
@@ -1354,13 +1371,13 @@ export const threadEventsStore = derived(
         recentlySentMessages,
         messageFilters,
     ]) => {
-        if (selectedThreadId === undefined) return [];
+        if (selectedThreadId === undefined) return { events: [], range: new DRange() };
         const ctx = selectedThreadId;
         const failedState = failedMessages.get(ctx);
         const failed = failedState ? [...failedState.values()] : [];
         const unconfirmedState = unconfirmedMessages.get(ctx);
         const unconfirmed = unconfirmedState ? [...unconfirmedState.values()] : [];
-        return mergeEventsAndLocalUpdates(
+        return mergeEventsAndLocalUpdatesWithRange(
             serverEvents,
             [...unconfirmed, ...failed],
             new DRange(),
@@ -1373,18 +1390,21 @@ export const threadEventsStore = derived(
     },
 );
 
-function threadEventsLoadedStore(eventsStore: Readable<EventWrapper<ChatEvent>[]>) {
-    return derived(eventsStore, (events) => {
+export const threadEventsStore = derived(mergedThreadEventsStore, (merged) => merged.events);
+
+export const confirmedThreadEventIndexesLoadedStore = derived(
+    serverThreadEventsStore,
+    (events) => {
         const ranges = new DRange();
         events.forEach((e) => ranges.add(e.index));
         return ranges;
-    });
-}
+    },
+);
 
-export const confirmedThreadEventIndexesLoadedStore =
-    threadEventsLoadedStore(serverThreadEventsStore);
-
-export const threadEventIndexesLoadedStore = threadEventsLoadedStore(threadEventsStore);
+export const threadEventIndexesLoadedStore = derived(
+    mergedThreadEventsStore,
+    (merged) => merged.range,
+);
 
 export const selectedThreadDraftMessageStore = derived(
     [selectedThreadIdStore, localUpdates.draftMessages],

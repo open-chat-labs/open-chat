@@ -1,4 +1,3 @@
-import { Principal } from "@icp-sdk/core/principal";
 import type {
     Achievement,
     ArchiveChatResponse,
@@ -56,7 +55,6 @@ import type {
 } from "@shared";
 import {
     CommonResponses,
-    encodeIcrcAccount,
     nullMembership,
     ROLE_OWNER,
     toBigInt32,
@@ -64,7 +62,6 @@ import {
     UnsupportedValueError,
 } from "@shared";
 import type {
-    AccountICRC1,
     StreakInsurance as ApiStreakInsurance,
     CompletedCryptoTransactionICRC1,
     CompletedCryptoTransactionNNS,
@@ -118,7 +115,6 @@ import type {
 import {
     bytesToBigint,
     bytesToHexString,
-    consolidateBytes,
     identity,
     mapOptional,
     optionUpdateV2,
@@ -128,6 +124,7 @@ import {
 import {
     chatMetrics,
     completedCryptoTransfer,
+    formatIcrcAccount,
     installedBotDetails,
     mapResult,
     messageEvent,
@@ -929,7 +926,7 @@ function completedIcrc1CryptoWithdrawal(
     return {
         kind: "completed",
         ledger: principalBytesToString(value.ledger),
-        to: value.to !== "Mint" ? formatIcrc1Account(value.to.Account) : "",
+        to: value.to !== "Mint" ? formatIcrcAccount(value.to.Account) : "",
         amountE8s: value.amount,
         feeE8s: value.fee,
         memo: mapOptional(value.memo, bytesToBigint) ?? BigInt(0),
@@ -951,13 +948,6 @@ export function withdrawCryptoResponse(
     }
 
     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
-}
-
-function formatIcrc1Account(value: AccountICRC1): string {
-    return encodeIcrcAccount({
-        owner: Principal.fromText(principalBytesToString(value.owner)),
-        subaccount: mapOptional(value?.subaccount, consolidateBytes),
-    });
 }
 
 export function swapTokensSuccess(value: UserSwapTokensSuccessResult): SwapTokensResponse {

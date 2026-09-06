@@ -163,6 +163,21 @@
         "notAvailable": "Dieser Inhalt ist in dieser Version der App nicht verfügbar. Sie können ihn weiterhin über die Web-App unter [oc.app](https://oc.app) aufrufen.",
         "notAvailableTitle": "Inhalt nicht verfügbar"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "Einen Moment! Aktualisierung ...",
+        "downloadingMessage": "Wir laden gerade eine kleine Aktualisierung herunter, dann kann es weitergehen ...",
+        "reload": "Neu laden und fortfahren",
+        "requiredTitle": "Aktualisierung erforderlich",
+        "requiredMessage": "Version {version} ist verfügbar, benötigt aber eine neuere Version der App als die installierte. Diese App kann sich nicht selbst so weit aktualisieren.",
+        "availableTitle": "Aktualisierung verfügbar",
+        "availableMessage": "Version {version} ist verfügbar. Diese Version funktioniert in der Zwischenzeit weiter.",
+        "fromPlayStore": "Über den Play Store aktualisieren",
+        "downloadLatest": "Neueste Version herunterladen",
+        "reinstallTitle": "Bitte installieren Sie OpenChat neu",
+        "reinstallMessage": "Diese Kopie von OpenChat kann nicht mehr aktualisiert werden und wird irgendwann nicht mehr funktionieren. Laden Sie die aktuelle Version herunter, um weiterhin Updates zu erhalten.",
+        "reinstallUninstallOld": "Deinstallieren Sie diese Version, sobald Sie die neue installiert haben. Wenn beide laufen, kommt jede Benachrichtigung doppelt an.",
+        "reinstallDownload": "Aktuelle Version herunterladen"
+    },
     "appWallet": {
         "header": {
             "asset": "Vermögenswert",
@@ -1111,6 +1126,7 @@
     "maxImageSize": "Maximale Bildgröße von 1 MB überschritten",
     "maxStorage": "Sie können auf maximal 1 GB Speicherplatz aufrüsten",
     "maxVideoSize": "Maximale Videogröße von 5 MB überschritten",
+    "videoProcessing": "Video wird optimiert…",
     "member": "Mitglied",
     "memberCount": "{count} Mitglied(er)",
     "memberIsTyping": "{username} tippt",
@@ -1916,9 +1932,9 @@
     "termsUpdated": {
         "agree": "Ich stimme zu",
         "failed": "Beim Erfassen Ihrer Zustimmung ist etwas schiefgelaufen. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-        "info": "Wir haben die Nutzungsbedingungen von OpenChat aktualisiert, einschließlich neuer Regeln zu verbotenen Inhalten und zur Funktionsweise der Moderation. Bitte lesen Sie die aktualisierten Bedingungen. Mit der Auswahl von \"Ich stimme zu\" akzeptieren Sie die aktualisierten Bedingungen.",
         "link": "Aktualisierte Bedingungen lesen",
-        "title": "Unsere Bedingungen haben sich geändert"
+        "title": "Unsere Bedingungen haben sich geändert",
+        "info": "Wir haben die OpenChat-Nutzungsbedingungen und die Datenschutzerklärung aktualisiert, um zu beschreiben, wie in öffentlichen Gruppen und Kanälen gepostete Medien mit Datenbanken bekannten Materials über sexuellen Kindesmissbrauch abgeglichen werden: OpenChat verwendet die von Microsoft lizenzierte PhotoDNA-Technologie, es wird nur ein nicht umkehrbarer digitaler Fingerabdruck der Medien an den Abgleichdienst übermittelt, bei fehlender Übereinstimmung wird nichts gespeichert, und Inhalte, die für die Moderationsprüfung oder gesetzliche Meldepflichten aufbewahrt werden, können nicht gelöscht werden, solange diese Pflichten bestehen. Bitte lesen Sie die aktualisierten Bedingungen. Mit \"Ich stimme zu\" akzeptieren Sie die aktualisierten Bedingungen."
     },
     "theInternetComputer": "Der Internet-Computer",
     "theme": {

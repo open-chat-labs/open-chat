@@ -30,7 +30,7 @@
         Row,
         Switch,
     } from "component-lib";
-    import type { MessageContext, PrizeContentInitial } from "@client";
+    import type { MessageContext, PrizeContentInitial, SignerWallet } from "@client";
     import {
         bigIntMax,
         chitBands,
@@ -57,6 +57,7 @@
     import SelectChitEarned from "./SelectChitEarned.svelte";
     import SelectMinStreak from "./SelectMinStreak.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
@@ -97,6 +98,11 @@
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let requiresAuth = $state($prizeConfig.requiresAuth);
+    // The external wallet the prize fund will come from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails));
@@ -105,7 +111,11 @@
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
     let totalFees = $derived(transferFee + prizeFees);
     let minAmount = $derived(100n * BigInt(numberOfWinners ?? 0) * transferFee);
-    let maxAmount = $derived(bigIntMax(cryptoBalance - totalFees, BigInt(0)));
+    // What the user is able to spend, or undefined when that is the external wallet's business
+    // rather than ours
+    let maxAmount = $derived(
+        payFromWallet ? undefined : bigIntMax(cryptoBalance - totalFees, BigInt(0)),
+    );
     let valid = $derived(numberOfWinnersValid && tokenInputState === "ok");
     let selectMinChitEarned = $state(false);
     let selectMinStreak = $state(false);
@@ -164,7 +174,11 @@
         return BigInt(BigInt(Date.now()) + selectedDuration);
     }
 
-    function send() {
+    // This only attaches a draft - the prize fund is taken when the user sends the message. An
+    // external wallet's approval is not asked for here: it would spend a tap on an allowance the
+    // user may abandon without sending. Instead the draft carries the chosen wallet as
+    // `fromWallet`, and the send itself asks for the approval, from the tap which consumes it.
+    function attach() {
         const prizes = generatePrizes();
         const amountE8s = prizes.reduce((total, p) => total + p) + prizeFees;
 
@@ -185,6 +199,7 @@
                 amountE8s,
                 feeE8s: transferFee,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                fromWallet: sourceWallet?.id,
             },
             amount: draftAmount,
             fees: totalFees,
@@ -326,7 +341,10 @@
         <!-- Token select -->
         <Column gap={"md"}>
             {@render sectionTitle("Select the prize token")}
-            <CryptoSelector {draftAmount} showRefresh bind:ledger />
+            <!-- An external wallet's balance is its own business, so while one is selected the
+                 OpenChat balance is hidden -->
+            <CryptoSelector {draftAmount} showRefresh hideBalance={payFromWallet} bind:ledger />
+            <SourceWalletSelector bind:wallet={sourceWallet} />
         </Column>
 
         <!-- Withdrawal amount -->
@@ -472,7 +490,11 @@
             <CommonButton2 variant="primary" mode="text" onClick={onClose}>
                 <Translatable resourceKey={i18nKey("cancel")} />
             </CommonButton2>
-            <CommonButton2 variant="primary" mode="regular" disabled={!valid} onClick={send}>
+            <CommonButton2
+                variant="primary"
+                mode="regular"
+                disabled={!valid}
+                onClick={attach}>
                 {#snippet icon(color, size)}
                     <Gift {color} {size} />
                 {/snippet}

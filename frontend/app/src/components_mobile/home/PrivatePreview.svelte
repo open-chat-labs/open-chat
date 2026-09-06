@@ -35,11 +35,11 @@
         height: toRem(48);
         width: toRem(48);
         border-radius: 50%;
-        background-color: var(--text-tertiary);
+        background-color: var(--text-on-disabled-surface);
     }
     .fake-message {
         border-radius: $sp3;
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
         padding: toRem(8) toRem(12) toRem(8) toRem(12);
         max-width: 80%;
         min-width: 90px;
@@ -54,7 +54,7 @@
         .line {
             height: 8px;
             background-color: rgba(255, 255, 255, 0.05);
-            background-color: var(--text-tertiary);
+            background-color: var(--text-on-disabled-surface);
             margin-bottom: $sp3;
             border-radius: var(--rd);
             &:last-child {

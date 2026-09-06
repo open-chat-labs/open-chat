@@ -40,6 +40,11 @@
                     <Translatable resourceKey={i18nKey("termsUpdated.link")} />
                 </a>
             </p>
+            <p>
+                <a href="/privacy" target="_blank" rel="noreferrer noopener">
+                    <Translatable resourceKey={i18nKey("termsUpdated.privacyLink")} />
+                </a>
+            </p>
             {#if failed}
                 <p class="failed"><Translatable resourceKey={i18nKey("termsUpdated.failed")} /></p>
             {/if}

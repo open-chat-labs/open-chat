@@ -33,7 +33,7 @@
 
     interface Props {
         chatSummary: ChatSummary;
-        rootEvent: EventWrapper<Message>;
+        rootEvent: EventWrapper<Message> | undefined;
         threadRootMessageIndex: number;
         onCloseThread: (id: ChatIdentifier) => void;
     }
@@ -41,7 +41,7 @@
     let { chatSummary, rootEvent, threadRootMessageIndex, onCloseThread }: Props = $props();
 
     function close() {
-        onCloseThread(chatSummary.id);
+        if (chatSummary !== undefined) onCloseThread(chatSummary.id);
     }
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {

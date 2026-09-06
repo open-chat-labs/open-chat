@@ -15,9 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # A frontend-only PR skips the benchmarks job, so there is nothing to download
       - uses: dawidd6/action-download-artifact@v7
         with:
           run_id: ${{ github.event.workflow_run.id }}
+          if_no_artifact_found: ignore
 
       - id: set-benchmarks
         run: bash ./scripts/ci-download-canbench-artifacts.sh
@@ -25,6 +27,7 @@ jobs:
   post-comment:
     runs-on: ubuntu-latest
     needs: [download-results]
+    if: needs.download-results.outputs.pr_number != ''
     strategy:
       matrix: ${{fromJSON(needs.download-results.outputs.matrix)}}
     steps:

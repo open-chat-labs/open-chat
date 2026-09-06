@@ -26,7 +26,7 @@
         <Row
             width="hug"
             maxWidth="80vw"
-            backgroundColor={ColourVars.background1}
+            backgroundColor={ColourVars.surface1}
             supplementalClass={`message_bubble_menu ${me ? "me" : ""}`}>
             <!-- Reactons -->
             <Row
@@ -62,7 +62,7 @@
     <Row
         width="hug"
         maxWidth="70vw"
-        backgroundColor={ColourVars.background1}
+        backgroundColor={ColourVars.surface1}
         supplementalClass={`message_bubble_menu second ${me ? "me" : ""}`}>
         <!-- Message options -->
         <Row

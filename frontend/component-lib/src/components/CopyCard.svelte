@@ -23,7 +23,7 @@
     gap={"md"}
     direction={"vertical"}
     padding={"lg"}
-    background={ColourVars.background1}>
+    background={ColourVars.surface1}>
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         <Container direction={"vertical"}>
             <Body colour={"secondary"} fontWeight={"bold"}>{title}</Body>

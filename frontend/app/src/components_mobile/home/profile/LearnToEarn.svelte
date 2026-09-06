@@ -215,7 +215,7 @@
                 <Column gap={"sm"} maxHeight={"25rem"}>
                     {#each achieved as achievement}
                         <Row crossAxisAlignment={"center"} gap={"sm"}>
-                            <CheckCircle size={"1.3rem"} color={ColourVars.success} />
+                            <CheckCircle size={"1.3rem"} color={ColourVars.validationSuccess} />
                             <Body>
                                 <Translatable resourceKey={i18nKey(achievement)} />
                             </Body>

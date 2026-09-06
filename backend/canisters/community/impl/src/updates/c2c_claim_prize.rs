@@ -10,7 +10,7 @@ use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use tracing::error;
 use types::{
-    CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction,
+    CompletedCryptoTransaction, OCResult, PendingCryptoTransaction,
     PrizeClaimResponse::{self, *},
     UserId,
 };
@@ -31,7 +31,7 @@ async fn c2c_claim_prize_impl(args: Args) -> PrizeClaimResponse {
     let prize_amount = prepare_result.transaction.units();
 
     // Transfer the prize to the winner
-    let result = process_transaction(prepare_result.transaction, prepare_result.this_canister_id, true).await;
+    let result = process_transaction(prepare_result.transaction, None, true).await;
 
     match result {
         Ok(Ok(completed_transaction)) => {
@@ -44,7 +44,7 @@ async fn c2c_claim_prize_impl(args: Args) -> PrizeClaimResponse {
                 Success
             }
         }
-        Ok(Err(failed_transaction)) => {
+        Ok(Err((failed_transaction, _))) => {
             error!(?failed_transaction, "Prize claim failed with ledger error");
             // Rollback the prize reservation
             let error_message = mutate_state(|state| rollback(args, prepare_result.user_id, prize_amount, true, state));
@@ -59,14 +59,13 @@ async fn c2c_claim_prize_impl(args: Args) -> PrizeClaimResponse {
 
 struct PrepareResult {
     pub transaction: PendingCryptoTransaction,
-    pub this_canister_id: CanisterId,
     pub user_id: UserId,
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_member(true, *args.user_id)?;
+    let member = state.get_member(true, args.user_id.as_principal())?;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
@@ -97,11 +96,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         transaction_time,
     );
 
-    Ok(PrepareResult {
-        this_canister_id: state.env.canister_id(),
-        transaction,
-        user_id,
-    })
+    Ok(PrepareResult { transaction, user_id })
 }
 
 fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, state: &mut RuntimeState) -> Option<String> {

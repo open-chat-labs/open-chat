@@ -1,3 +1,5 @@
+import type { OCError } from "./error";
+import type { Success } from "./response";
 import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type { ModelCatalog } from "./onDeviceModel";
@@ -72,6 +74,8 @@ import type {
     ResetInviteCodeResponse,
     SendMessageResponse,
     ModerationVerdict,
+    NcaPriority,
+    NcaReporterContact,
     SetCommunityModerationFlagsResponse,
     SetGroupModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
@@ -139,6 +143,7 @@ import type {
 import type { ModerationConfig } from "./user/user";
 import type {
     VaultFileChunkResponse,
+    VaultFileInfoResponse,
     VaultLogResponse,
     BlobReference,
     StorageStatus,
@@ -235,6 +240,7 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
+    ProposedProtectedAction,
 } from "./user";
 import type { Verification } from "./wallet";
 
@@ -388,22 +394,31 @@ export type WorkerRequest =
     | ConvertGroupToCommunity
     | ImportGroupToCommunity
     | SetModerationFlags
-    | SetOpenAIApiKey
+    | ProposeSetOpenAIApiKey
+    | ConfirmProtectedAction
+    | CancelProtectedAction
+    | ProtectedActions
     | SetModerationReferralConfig
-    | SetVaultReviewers
+    | ProposeSetVaultReviewers
+    | ProposeSetMediaScanConfig
+    | ProposeSetAuthorityReporter
+    | ProposeSetVaultLegalHold
     | SetVaultLegalHold
-    | DestroyVaultEvidence
+    | ProposeDestroyVaultEvidence
     | VaultLog
     | VaultBuckets
     | AuthorityReports
     | GetModerationConfig
     | RecordAuthorityReportFiled
+    | ClearAuthorityReportAttempt
+    | AuthorityReportToken
     | AcceptTerms
-    | SetInternalModerationChannel
+    | ProposeSetInternalModerationChannel
     | ResolveModerationReport
     | ContestModerationSanction
     | VaultFileChunk
     | DownloadPublicBlob
+    | VaultFileInfo
     | ChangeCommunityRole
     | SetCommunityIndexes
     | UpdateRegistry
@@ -833,9 +848,23 @@ type SetModerationFlags = {
     flags: number;
 };
 
-type SetOpenAIApiKey = {
-    kind: "setOpenAIApiKey";
+type ProposeSetOpenAIApiKey = {
+    kind: "proposeSetOpenAIApiKey";
     apiKey: string | undefined;
+};
+
+type ConfirmProtectedAction = {
+    kind: "confirmProtectedAction";
+    actionId: bigint;
+};
+
+type CancelProtectedAction = {
+    kind: "cancelProtectedAction";
+    actionId: bigint;
+};
+
+type ProtectedActions = {
+    kind: "protectedActions";
 };
 
 type AcceptTerms = {
@@ -871,9 +900,49 @@ type RecordAuthorityReportFiled = {
     unverified: boolean;
 };
 
-type SetVaultReviewers = {
-    kind: "setVaultReviewers";
+// A platform operator reconciling an orphaned automated-filing attempt marker (service
+// crashed mid-flight) after confirming on the portal that nothing was filed
+type ClearAuthorityReportAttempt = {
+    kind: "clearAuthorityReportAttempt";
+    reportIndex: bigint;
+};
+
+export type AuthorityReportTokenResponse =
+    | { kind: "success"; vaultToken: string; submitterToken: string }
+    | { kind: "error"; message: string };
+
+// Mints the pair of signed tokens which open a filing window for the automated NCA
+// reporting service. The reporter's contact details go straight into the submitter token
+// and are never persisted.
+type AuthorityReportToken = {
+    kind: "authorityReportToken";
+    reportIndex: bigint;
+    priority: NcaPriority;
+    reporter: NcaReporterContact;
+    oohCallAcknowledged: boolean;
+};
+
+type ProposeSetVaultLegalHold = {
+    kind: "proposeSetVaultLegalHold";
+    reportIndex: bigint;
+    legalHold: boolean;
+    reference: string;
+};
+
+type ProposeSetVaultReviewers = {
+    kind: "proposeSetVaultReviewers";
     userIds: string[];
+};
+
+type ProposeSetMediaScanConfig = {
+    kind: "proposeSetMediaScanConfig";
+    enabled: boolean;
+    scanners: string[];
+};
+
+type ProposeSetAuthorityReporter = {
+    kind: "proposeSetAuthorityReporter";
+    principal: string | undefined;
 };
 
 type SetVaultLegalHold = {
@@ -883,8 +952,8 @@ type SetVaultLegalHold = {
     reference: string;
 };
 
-type DestroyVaultEvidence = {
-    kind: "destroyVaultEvidence";
+type ProposeDestroyVaultEvidence = {
+    kind: "proposeDestroyVaultEvidence";
     reportIndex: bigint;
     leRequestRef: string;
 };
@@ -894,8 +963,8 @@ type SetModerationReferralConfig = {
     config: { categories: { category: number; scoreThreshold: number }[] } | undefined;
 };
 
-type SetInternalModerationChannel = {
-    kind: "setInternalModerationChannel";
+type ProposeSetInternalModerationChannel = {
+    kind: "proposeSetInternalModerationChannel";
     channel: { communityId: string; channelId: number } | undefined;
 };
 
@@ -924,6 +993,12 @@ type DownloadPublicBlob = {
     ref: BlobReference;
     maxBytes: number;
     mediaKind?: PublicBlobMediaKind;
+};
+
+type VaultFileInfo = {
+    kind: "vaultFileInfo";
+    bucketCanisterId: string;
+    fileId: bigint;
 };
 
 type ImportGroupToCommunity = {
@@ -1861,7 +1936,11 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | Success
+    | OCError
+    | ProposedProtectedAction
     | VaultFileChunkResponse
+    | VaultFileInfoResponse
     | void
     | bigint
     | boolean
@@ -2088,6 +2167,7 @@ type PayForDiamondMembership = {
     duration: DiamondMembershipDuration;
     recurring: boolean;
     expectedPriceE8s: bigint;
+    fromAccount: string | undefined;
     kind: "payForDiamondMembership";
 };
 
@@ -2254,6 +2334,7 @@ type AcceptP2PSwap = {
     messageId: bigint;
     pin: string | undefined;
     newAchievement: boolean;
+    fromAccount: string | undefined;
     kind: "acceptP2PSwap";
 };
 
@@ -2594,16 +2675,28 @@ export type WorkerResult<T> = T extends Init
     ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
     ? boolean
-    : T extends SetOpenAIApiKey
-    ? boolean
+    : T extends ProposeSetOpenAIApiKey
+    ? ProposedProtectedAction | undefined
+    : T extends ConfirmProtectedAction
+    ? Success | OCError
+    : T extends CancelProtectedAction
+    ? Success | OCError
+    : T extends ProtectedActions
+    ? string | undefined
     : T extends SetModerationReferralConfig
     ? boolean
-    : T extends SetVaultReviewers
-    ? boolean
+    : T extends ProposeSetVaultReviewers
+    ? ProposedProtectedAction | undefined
+    : T extends ProposeSetMediaScanConfig
+    ? ProposedProtectedAction | undefined
+    : T extends ProposeSetAuthorityReporter
+    ? ProposedProtectedAction | undefined
+    : T extends ProposeSetVaultLegalHold
+    ? ProposedProtectedAction | undefined
     : T extends SetVaultLegalHold
     ? boolean
-    : T extends DestroyVaultEvidence
-    ? boolean
+    : T extends ProposeDestroyVaultEvidence
+    ? ProposedProtectedAction | undefined
     : T extends VaultLog
     ? VaultLogResponse
     : T extends VaultBuckets
@@ -2612,20 +2705,26 @@ export type WorkerResult<T> = T extends Init
     ? string | undefined
     : T extends GetModerationConfig
     ? ModerationConfig | undefined
+    : T extends ClearAuthorityReportAttempt
+    ? boolean
     : T extends RecordAuthorityReportFiled
     ? boolean
+    : T extends AuthorityReportToken
+    ? AuthorityReportTokenResponse
     : T extends AcceptTerms
     ? boolean
-    : T extends SetInternalModerationChannel
-    ? boolean
+    : T extends ProposeSetInternalModerationChannel
+    ? ProposedProtectedAction | undefined
     : T extends ResolveModerationReport
-    ? boolean
+    ? Success | OCError
     : T extends ContestModerationSanction
     ? boolean
     : T extends VaultFileChunk
     ? VaultFileChunkResponse
     : T extends DownloadPublicBlob
     ? Uint8Array | undefined
+    : T extends VaultFileInfo
+    ? VaultFileInfoResponse
     : T extends CreateUserGroup
     ? CreateUserGroupResponse
     : T extends UpdateUserGroup

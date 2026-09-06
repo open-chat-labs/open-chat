@@ -44,7 +44,10 @@
         if (searchTerm.length > 0) {
             performSearch();
         }
-        return () => clearMatches();
+        return () => {
+            window.clearTimeout(timer);
+            clearMatches();
+        };
     });
 
     function onNext() {
@@ -253,7 +256,7 @@
         crossAxisAlignment={"center"}
         padding={["sm", "md"]}
         borderRadius={"circle"}
-        backgroundColor={ColourVars.textTertiary}>
+        backgroundColor={ColourVars.inputBackground}>
         <input
             bind:this={inputElement}
             oninput={onInput}
@@ -296,7 +299,7 @@
         line-height: var(--typo-body-lh);
 
         &::placeholder {
-            color: var(--text-placeholder);
+            color: var(--input-placeholder);
         }
     }
 

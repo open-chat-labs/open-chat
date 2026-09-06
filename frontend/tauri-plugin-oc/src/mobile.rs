@@ -92,6 +92,12 @@ impl<R: Runtime> Oc<R> {
         res.map_err(Into::into)
     }
 
+    pub fn export_media(&self, payload: ExportMediaRequest) -> crate::Result<ExportMediaResponse> {
+        self.0
+            .run_mobile_plugin("exportMedia", payload)
+            .map_err(Into::into)
+    }
+
     pub fn update_chat_shortcuts(
         &self,
         payload: UpdateChatShortcutsRequest,

@@ -27,7 +27,7 @@ const MIN_GROUPS_AND_CHANNELS = 1;
 // category minimums first, then fills the remaining slots by overall recency
 // across both pools. Falls back gracefully when one category is empty or
 // short (e.g. a user with no DMs yet gets 4 group/channel tiles instead).
-function selectShortcutChats(sortedSendable: ChatSummary[]): ChatSummary[] {
+export function selectShortcutChats(sortedSendable: ChatSummary[]): ChatSummary[] {
     const directs: ChatSummary[] = [];
     const groupsAndChannels: ChatSummary[] = [];
     for (const chat of sortedSendable) {
@@ -76,8 +76,8 @@ export function startChatShortcutPusher(client: OpenChat): () => void {
             // read-only groups) BEFORE handing to the selector — otherwise
             // they'd consume tile slots that the floors are trying to reserve.
             const sortedSendable: ChatSummary[] = [...chats.values()]
-                .sort(compareChats)
-                .filter((chat) => client.canSendMessage(chat.id, "message"));
+                .filter((chat) => client.canSendMessage(chat.id, "message"))
+                .sort(compareChats);
             return selectShortcutChats(sortedSendable).map<ChatShortcut>((chat) => {
                 if (chat.kind === "direct_chat") {
                     const them = users.get(chat.them.userId);

@@ -49,7 +49,7 @@ async fn process_swap(
             if balance < balance_required {
                 if balance > token_info.fee {
                     state.data.pending_payments_queue.push(PendingPayment {
-                        principal,
+                        user_id: principal.into(),
                         timestamp: state.env.now(),
                         amount: balance - token_info.fee,
                         token_info,
@@ -74,20 +74,20 @@ async fn process_swap(
                 if complete {
                     let accepted_by = swap.accepted_by.unwrap().0;
                     state.data.pending_payments_queue.push(PendingPayment {
-                        principal: swap.offered_by,
+                        user_id: swap.offered_by.into(),
                         timestamp: now,
                         token_info: swap.token1.clone(),
                         amount: swap.amount1,
                         swap_id: swap.id,
-                        reason: PendingPaymentReason::Swap(accepted_by),
+                        reason: PendingPaymentReason::Swap(accepted_by.into()),
                     });
                     state.data.pending_payments_queue.push(PendingPayment {
-                        principal: accepted_by,
+                        user_id: accepted_by.into(),
                         timestamp: now,
                         token_info: swap.token0.clone(),
                         amount: swap.amount0,
                         swap_id: swap.id,
-                        reason: PendingPaymentReason::Swap(swap.offered_by),
+                        reason: PendingPaymentReason::Swap(swap.offered_by.into()),
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
@@ -107,7 +107,7 @@ async fn check_for_refund(swap_id: u32, principal: Principal, token_info: TokenI
             if balance > token_info.fee {
                 mutate_state(|state| {
                     state.data.pending_payments_queue.push(PendingPayment {
-                        principal,
+                        user_id: principal.into(),
                         timestamp: state.env.now(),
                         amount: balance - token_info.fee,
                         token_info,

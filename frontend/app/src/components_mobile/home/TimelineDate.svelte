@@ -23,7 +23,7 @@
     .date-label {
         text-align: center;
         padding: var(--sp-xs) var(--sp-md);
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
         box-shadow: var(--menu-sh);
         color: var(--text-secondary);
         width: fit-content;

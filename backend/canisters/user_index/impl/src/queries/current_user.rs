@@ -1,6 +1,5 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
-use ledger_utils::default_ledger_account;
 use user_index_canister::current_user::{Response::*, *};
 
 #[query(candid = true, msgpack = true)]
@@ -22,10 +21,12 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             date_created: u.date_created,
             display_name: u.display_name.clone(),
             avatar_id: u.avatar_id,
-            icp_account: default_ledger_account(u.user_id.into()),
+            icp_account: u.user_id.into(),
             referrals: state.data.users.referrals(&u.user_id),
-            is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
-            is_platform_operator: state.data.platform_operators.contains(&u.user_id),
+            // Role flags read false while suspended: a suspended account holds no authority,
+            // and the client must not offer surfaces the canisters will refuse
+            is_platform_moderator: state.data.is_platform_moderator_active(&u.user_id),
+            is_platform_operator: state.data.is_platform_operator_active(&u.user_id),
             suspension_details,
             is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
             diamond_membership_details: u.diamond_membership_details.hydrate(now),

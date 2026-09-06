@@ -37,7 +37,7 @@
         borderRadius={"md"}
         padding={"lg"}
         gap={"lg"}
-        background={ColourVars.background1}>
+        background={ColourVars.surface1}>
         {@render permHeader("Chat permissions", ForumOutline)}
         {#if requested.chatPermissions.length === 0}
             {@render noperm()}
@@ -60,7 +60,7 @@
         borderRadius={"md"}
         padding={"lg"}
         gap={"lg"}
-        background={ColourVars.background1}>
+        background={ColourVars.surface1}>
         {@render permHeader("Community permissions", AccountGroup)}
         {#if requested.communityPermissions.length === 0}
             {@render noperm()}
@@ -83,7 +83,7 @@
         borderRadius={"md"}
         padding={"lg"}
         gap={"lg"}
-        background={ColourVars.background1}>
+        background={ColourVars.surface1}>
         {@render permHeader("Message permissions", ChatOutline)}
         {#if requested.messagePermissions.length === 0}
             {@render noperm()}

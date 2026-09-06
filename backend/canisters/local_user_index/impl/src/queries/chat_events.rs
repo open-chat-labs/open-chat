@@ -31,7 +31,8 @@ pub(crate) async fn make_c2c_call_to_get_events(
 ) -> EventsResponse {
     match events_args.context {
         EventsContext::Direct(them) => {
-            let (user_id, canister_id) = if bot_initiator.is_some() { (user_id, them.into()) } else { (them, user_id.into()) };
+            let (user_id, canister_id) =
+                if bot_initiator.is_some() { (user_id, them.canister_id()) } else { (them, user_id.canister_id()) };
 
             match events_args.args {
                 EventsSelectionCriteria::Page(args) => map_response(

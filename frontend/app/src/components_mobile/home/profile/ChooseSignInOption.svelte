@@ -49,7 +49,7 @@
             if (mode === "signin") {
                 options.push(AuthProvider.NFID);
             }
-        } else if (client.isNativeAndroid()) {
+        } else if (client.isNativeApp()) {
             options.push(AuthProvider.II);
         }
 

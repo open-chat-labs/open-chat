@@ -32,7 +32,7 @@
     supplementalClass={"section_header"}
     {padding}
     {height}
-    background={ColourVars.background0}
+    background={ColourVars.surface0}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"spaceBetween"}
     gap={"sm"}>
@@ -84,6 +84,6 @@
 
 <style lang="scss">
     :global(.container.section_header) {
-        border-bottom: var(--bw-thick) solid var(--background-1);
+        border-bottom: var(--bw-thick) solid var(--surface-1);
     }
 </style>

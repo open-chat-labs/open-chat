@@ -27,9 +27,11 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                 prev_hash: hex::encode(e.prev_hash),
                 user_id: match &e.event {
                     VaultLogEvent::ViewedBy(_, _, user_id) => *user_id,
+                    VaultLogEvent::ExportedForAuthorityReport(_, _, moderator) => *moderator,
                     VaultLogEvent::UnquarantinedBy(_, moderator) => *moderator,
                     VaultLogEvent::VerdictAppliedBy(_, _, moderator) => *moderator,
                     VaultLogEvent::RetentionReanchoredBy(_, _, operator) => *operator,
+                    VaultLogEvent::DestroyedBy(_, _, _, confirmed_by) => *confirmed_by,
                     _ => None,
                 },
                 event: match &e.event {
@@ -45,8 +47,21 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                     }
                     VaultLogEvent::LegalHoldSet(file_id) => format!("Legal hold set on file {file_id}"),
                     VaultLogEvent::LegalHoldCleared(file_id) => format!("Legal hold cleared on file {file_id}"),
+                    VaultLogEvent::LegalHoldSetUnder(file_id, reference) => {
+                        format!("Legal hold set on file {file_id} under reference {reference}")
+                    }
+                    VaultLogEvent::LegalHoldClearedUnder(file_id, reference) => {
+                        format!("Legal hold cleared on file {file_id} under reference {reference}")
+                    }
                     VaultLogEvent::Destroyed(file_id, le_ref) => {
                         format!("Destroyed file {file_id} (law enforcement request {le_ref})")
+                    }
+                    VaultLogEvent::DestroyedBy(file_id, le_ref, proposed_by, confirmed_by) => {
+                        let by = match (proposed_by, confirmed_by) {
+                            (Some(p), Some(c)) => format!(", proposed by user {p}, confirmed by user {c}"),
+                            _ => String::new(),
+                        };
+                        format!("Destroyed file {file_id} (law enforcement request {le_ref}{by})")
                     }
                     VaultLogEvent::RetentionExpired(file_id) => {
                         format!("Retention expired for file {file_id}, deleted")
@@ -71,6 +86,14 @@ fn vault_log_impl(args: Args, state: &RuntimeState) -> Response {
                             None => format!("Verdict applied to file {file_id}, retained until {until}"),
                         }
                     }
+                    VaultLogEvent::ExportedForAuthorityReport(file_id, report_index, moderator) => match moderator {
+                        Some(moderator) => format!(
+                            "File {file_id} exported to the authority reporting service for report {report_index}, authorized by user {moderator}"
+                        ),
+                        None => format!(
+                            "File {file_id} exported to the authority reporting service for report {report_index}"
+                        ),
+                    },
                     VaultLogEvent::RetentionReanchoredBy(file_id, retention_until, operator) => {
                         let until = format_ts(*retention_until);
                         match operator {

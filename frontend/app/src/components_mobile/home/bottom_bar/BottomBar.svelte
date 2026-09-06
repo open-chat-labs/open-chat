@@ -191,9 +191,9 @@
     borderWidth={"thick"}
     minWidth={"100%"}
     {onSwipe}
-    borderColour={"var(--background-0)"}
+    borderColour={"var(--surface-0)"}
     borderRadius={["md", "md", "zero", "zero"]}
-    background={"var(--background-1)"}
+    background={"var(--main-nav-background)"}
     mainAxisAlignment={"spaceAround"}>
     <div style={`--num: ${numIcons}; --index: ${selectionIndex}`} class="selection"></div>
     {@render item("chats", { kind: "icon" }, chatIndicator)}

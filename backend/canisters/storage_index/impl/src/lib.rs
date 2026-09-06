@@ -79,7 +79,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             user_controllers: self.data.user_controllers.iter().copied().collect(),
             user_count: self.data.users.len() as u64,
@@ -90,6 +90,7 @@ impl RuntimeState {
             active_buckets: self.data.buckets.iter_active_buckets().map(|b| b.into()).collect(),
             full_buckets: self.data.buckets.iter_full_buckets().map(|b| b.into()).collect(),
             csam_hashes_denylisted: self.data.csam_hashes.len() as u64,
+            derived_csam_hashes_denylisted: self.data.derived_csam_hashes.len() as u64,
             bucket_upgrades_pending: bucket_upgrade_metrics.pending,
             bucket_upgrades_in_progress: bucket_upgrade_metrics.in_progress,
             bucket_upgrades_failed: bucket_upgrade_metrics.failed,
@@ -116,13 +117,21 @@ struct Data {
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
     #[serde(default = "default_vault_event_sync_queue")]
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
-    #[serde(default, deserialize_with = "deserialize_vault_reviewers")]
+    #[serde(default)]
     pub vault_reviewers: Vec<VaultReviewer>,
+    // The NCA reporting service's principal + the OC public key, held so each new bucket is
+    // seeded with them (a bucket cannot verify a vault-export token without the key)
+    #[serde(default)]
+    pub authority_reporter: Option<storage_index_canister::c2c_vault_ops::SetAuthorityReporterOp>,
     // Every hash upheld as CSAM, learned from the bucket which applied the verdict. Held here
     // so the denylist survives as platform-wide state: it is pushed to all other buckets when
     // it changes, and to each new bucket when it is created.
     #[serde(default)]
     pub csam_hashes: BTreeMap<Hash, u64>,
+    // Hashes clients declared as the source of upheld content (see storage_bucket
+    // c2c_vault_sync::DenylistHashOp::derived): refused everywhere, never sanctioned
+    #[serde(default)]
+    pub derived_csam_hashes: BTreeMap<Hash, u64>,
     // Learned from the caller of c2c_vault_ops (only ever the user_index); used to report
     // bucket-detected CSAM re-uploads back to it
     #[serde(default)]
@@ -172,7 +181,9 @@ impl Data {
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             vault_event_sync_queue: default_vault_event_sync_queue(),
             vault_reviewers: Vec::new(),
+            authority_reporter: None,
             csam_hashes: BTreeMap::new(),
+            derived_csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
@@ -266,15 +277,29 @@ impl Data {
                 ),
             );
         }
+        if let Some(op) = &self.authority_reporter {
+            self.vault_event_sync_queue.push(
+                bucket.canister_id,
+                storage_bucket_canister::c2c_vault_sync::VaultOp::SetAuthorityReporter(
+                    storage_bucket_canister::c2c_vault_sync::SetAuthorityReporterOp {
+                        principal: op.principal,
+                        oc_public_key_pem: op.oc_public_key_pem.clone(),
+                    },
+                ),
+            );
+        }
         // A new bucket starts with the full CSAM denylist, otherwise upheld content could be
         // uploaded to it and served
-        for (hash, report_index) in self.csam_hashes.iter() {
+        let verified = self.csam_hashes.iter().map(|(h, r)| (*h, *r, false));
+        let derived = self.derived_csam_hashes.iter().map(|(h, r)| (*h, *r, true));
+        for (hash, report_index, derived) in verified.chain(derived) {
             self.vault_event_sync_queue.push(
                 bucket.canister_id,
                 storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
                     storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
-                        hash: *hash,
-                        report_index: *report_index,
+                        hash,
+                        report_index,
+                        derived: Some(derived),
                     },
                 ),
             );
@@ -286,9 +311,20 @@ impl Data {
     // other bucket. The denylist is keyed by content hash and has to hold platform-wide: the
     // verdict only ever reaches the bucket holding the evidence copy, so without this a
     // re-upload to any other bucket is stored and served publicly.
-    pub fn denylist_csam_hash(&mut self, source_bucket: CanisterId, hash: Hash, report_index: u64) {
-        if self.csam_hashes.insert(hash, report_index).is_some() {
-            return;
+    // A verified entry replaces a derived one for the same hash; a derived one never downgrades
+    // a verified one (mirrors storage_bucket Vault::denylist_hash).
+    pub fn denylist_csam_hash(&mut self, source_bucket: CanisterId, hash: Hash, report_index: u64, derived: bool) {
+        if derived {
+            if self.csam_hashes.contains_key(&hash) || self.derived_csam_hashes.contains_key(&hash) {
+                return;
+            }
+            self.derived_csam_hashes.insert(hash, report_index);
+        } else {
+            if self.csam_hashes.contains_key(&hash) {
+                return;
+            }
+            self.csam_hashes.insert(hash, report_index);
+            self.derived_csam_hashes.remove(&hash);
         }
         let buckets: Vec<_> = self
             .buckets
@@ -297,15 +333,19 @@ impl Data {
             .filter(|c| *c != source_bucket)
             .collect();
         for bucket in buckets {
-            self.push_denylisted_hash_to_bucket(bucket, hash, report_index);
+            self.push_denylisted_hash_to_bucket(bucket, hash, report_index, derived);
         }
     }
 
-    pub fn push_denylisted_hash_to_bucket(&mut self, bucket: CanisterId, hash: Hash, report_index: u64) {
+    pub fn push_denylisted_hash_to_bucket(&mut self, bucket: CanisterId, hash: Hash, report_index: u64, derived: bool) {
         self.vault_event_sync_queue.push(
             bucket,
             storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
-                storage_bucket_canister::c2c_vault_sync::DenylistHashOp { hash, report_index },
+                storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
+                    hash,
+                    report_index,
+                    derived: Some(derived),
+                },
             ),
         );
     }
@@ -338,6 +378,8 @@ pub struct Metrics {
     pub full_buckets: Vec<BucketMetrics>,
     // Hashes upheld as CSAM and denylisted platform-wide
     pub csam_hashes_denylisted: u64,
+    // Declared sources of upheld content, refused but never sanctioned
+    pub derived_csam_hashes_denylisted: u64,
     pub bucket_upgrades_pending: u64,
     pub bucket_upgrades_in_progress: u64,
     pub bucket_upgrades_failed: Vec<FailedUpgradeCount>,
@@ -365,25 +407,4 @@ pub struct CanisterIds {
     cycles_dispenser: CanisterId,
     icp_ledger: CanisterId,
     cmc: CanisterId,
-}
-
-// The reviewer set briefly shipped (to test envs only) as a bare principal set; accept that
-// shape on upgrade as an empty list (the set is re-synced whenever the operator applies it).
-// Inert everywhere else - production never held the old shape.
-fn deserialize_vault_reviewers<'de, D>(d: D) -> Result<Vec<VaultReviewer>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Compat {
-        New(Vec<VaultReviewer>),
-        #[allow(dead_code)]
-        Old(Vec<Principal>),
-    }
-
-    Ok(match Compat::deserialize(d)? {
-        Compat::New(reviewers) => reviewers,
-        Compat::Old(_) => Vec::new(),
-    })
 }

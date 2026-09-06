@@ -1,5 +1,6 @@
 use candid::Principal;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Subaccount};
+use oc_error_codes::{OCError, OCErrorCode};
 use sha2::{Digest, Sha256};
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
@@ -23,7 +24,7 @@ pub fn create_pending_transaction(
         fee,
         token_symbol: token_symbol.clone(),
         amount,
-        to: user_id.into(),
+        to: types::icrc1::Account::for_user(user_id),
         memo: memo.map(|bytes| bytes.to_vec().into()),
         created: now_nanos,
     })
@@ -31,21 +32,49 @@ pub fn create_pending_transaction(
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: CanisterId,
+    sender: Option<UserId>,
     retry_if_bad_fee: bool,
-) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
+) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     match transaction {
-        PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
+        PendingCryptoTransaction::NNS(t) => match nns::process_transaction(t, sender).await {
+            Ok(Ok(c)) => Ok(Ok(c)),
+            Ok(Err(c)) => {
+                let error = OCErrorCode::TransferFailed.with_message(c.error_message());
+                Ok(Err((c, error)))
+            }
+            Err(e) => Err(e),
+        },
         PendingCryptoTransaction::ICRC1(t) => match icrc1::process_transaction(t, sender, retry_if_bad_fee).await {
             Ok(Ok(c)) => Ok(Ok(c.into())),
-            Ok(Err(c)) => Ok(Err(c.into())),
+            Ok(Err(c)) => {
+                let error = OCErrorCode::TransferFailed.with_message(&c.error_message);
+                Ok(Err((c.into(), error)))
+            }
             Err(e) => Err(e),
         },
         PendingCryptoTransaction::ICRC2(t) => match icrc2::process_transaction(t, sender).await {
             Ok(Ok(c)) => Ok(Ok(c.into())),
-            Ok(Err(c)) => Ok(Err(c.into())),
+            Ok(Err((c, error))) => Ok(Err((c.into(), error))),
             Err(e) => Err(e),
         },
+    }
+}
+
+// The user this canister is transferring on behalf of, defaulting to the canister itself where
+// there isn't one. The owner is always this canister because the ledger takes it from the caller, so
+// resolving it here rather than accepting it as an argument means the recorded `from` cannot
+// disagree with where the funds actually moved.
+pub(crate) fn resolve_sender(sender: Option<UserId>) -> UserId {
+    let canister_id = ic_cdk::api::canister_self();
+
+    match sender {
+        // Transferring for a user held elsewhere would debit whichever of our own users shares their
+        // index, so refuse rather than move somebody else's funds.
+        Some(user_id) => {
+            assert_eq!(user_id.canister_id(), canister_id, "{user_id} is not held by this canister");
+            user_id
+        }
+        None => UserId::from(canister_id),
     }
 }
 

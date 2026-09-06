@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
@@ -38,8 +39,9 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MessageContentInitial, Milliseconds, ModerationReferralConfig, Notification, NotificationEnvelope,
-    ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds, ModerationReferralConfig, Notification,
+    NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
+    VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -181,6 +183,11 @@ impl RuntimeState {
     pub fn is_caller_notification_pusher(&self) -> bool {
         let caller = self.env.caller();
         self.data.notification_pushers.contains(&caller)
+    }
+
+    pub fn is_caller_media_scanner(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.media_scan_config.scanners.contains(&caller)
     }
 
     pub fn is_caller_openchat_user(&self) -> bool {
@@ -449,7 +456,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
             local_user_count: self.data.local_users.len() as u64,
@@ -503,6 +510,7 @@ impl RuntimeState {
             recent_group_upgrades: group_upgrades_metrics.recently_competed,
             recent_community_upgrades: community_upgrades_metrics.recently_competed,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            user_events_queue_in_progress: self.data.user_event_sync_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
@@ -516,6 +524,11 @@ impl RuntimeState {
             openai_api_key_set: self.data.openai_api_key.is_some(),
             moderation_referral_config: self.data.moderation_referral_config.clone(),
             message_moderation_queue_len: self.data.message_moderation_queue.len() as u32,
+            media_scanning_enabled: self.data.media_scan_config.enabled,
+            media_scan_job_log_len: self.data.media_scan_job_log.len() as u32,
+            media_scan_latest_job_index: self.data.media_scan_job_log.latest_job_index(),
+            media_scan_last_verdict_at: self.data.media_scan_job_log.last_verdict_at(),
+            media_scan_jobs_dropped: self.data.media_scan_job_log.dropped(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
             bots: self
                 .data
@@ -599,10 +612,14 @@ struct Data {
     pub premium_items: PremiumItems,
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_moderation_referral_config")]
+    #[serde(default)]
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     #[serde(default)]
     pub message_moderation_queue: ModerationQueue,
+    #[serde(default)]
+    pub media_scan_config: MediaScanConfig,
+    #[serde(default)]
+    pub media_scan_job_log: MediaScanJobLog,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -639,6 +656,7 @@ impl Data {
         oc_secret_key_der: Vec<u8>,
         openai_api_key: Option<String>,
         moderation_referral_config: Option<ModerationReferralConfig>,
+        media_scan_config: MediaScanConfig,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -698,6 +716,8 @@ impl Data {
             openai_api_key,
             moderation_referral_config,
             message_moderation_queue: ModerationQueue::default(),
+            media_scan_config,
+            media_scan_job_log: MediaScanJobLog::default(),
         }
     }
 }
@@ -740,6 +760,9 @@ pub struct Metrics {
     pub community_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub user_events_queue_length: usize,
+    // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
+    // whose last batch is still awaiting its reply
+    pub user_events_queue_in_progress: usize,
     pub users_to_delete_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
@@ -762,6 +785,11 @@ pub struct Metrics {
     pub openai_api_key_set: bool,
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub message_moderation_queue_len: u32,
+    pub media_scanning_enabled: bool,
+    pub media_scan_job_log_len: u32,
+    pub media_scan_latest_job_index: u64,
+    pub media_scan_last_verdict_at: TimestampMillis,
+    pub media_scan_jobs_dropped: u64,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
     pub blocked_username_patterns: Vec<String>,
@@ -788,38 +816,4 @@ pub struct BotMetrics {
     pub user_id: UserId,
     pub name: String,
     pub commands: Vec<String>,
-}
-
-// The referral config briefly shipped (to test envs only) as a single shared threshold;
-// accept that shape on upgrade and convert it so those envs upgrade cleanly. Inert
-// everywhere else - production never held the old shape.
-fn deserialize_moderation_referral_config<'de, D>(d: D) -> Result<Option<ModerationReferralConfig>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Compat {
-        New(ModerationReferralConfig),
-        Old { categories: u32, score_threshold: f64 },
-    }
-
-    Ok(match Option::<Compat>::deserialize(d)? {
-        Some(Compat::New(config)) => Some(config),
-        Some(Compat::Old {
-            categories,
-            score_threshold,
-        }) => {
-            let categories = (0..32)
-                .map(|i| 1u32 << i)
-                .filter(|bit| categories & bit != 0)
-                .map(|category| types::ModerationReferralCategory {
-                    category,
-                    score_threshold,
-                })
-                .collect::<Vec<_>>();
-            (!categories.is_empty()).then_some(ModerationReferralConfig { categories })
-        }
-        None => None,
-    })
 }

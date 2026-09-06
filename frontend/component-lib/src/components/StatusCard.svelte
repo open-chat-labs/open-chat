@@ -24,10 +24,10 @@
         confirmed = $bindable(false),
         icon,
         borderColour,
-        background = ColourVars.background1,
+        background = ColourVars.surface1,
     }: Props = $props();
 
-    let iconColour = $derived(mode === "information" ? ColourVars.secondary : ColourVars.warning);
+    let iconColour = $derived(mode === "information" ? ColourVars.secondary : ColourVars.validationWarning);
 </script>
 
 <Container
@@ -46,7 +46,7 @@
         {:else}
             <Warning size={"1.5rem"} color={iconColour} />
         {/if}
-        <Body colour={mode === "information" ? "secondary" : "warning"} fontWeight={"bold"}>
+        <Body colour={mode === "information" ? "secondary" : "validationWarning"} fontWeight={"bold"}>
             {title}
         </Body>
     </Container>

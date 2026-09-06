@@ -61,19 +61,65 @@ impl<R: Runtime> UpdateManager<R> {
         None
     }
 
-    pub fn get_bundled_version(&self) -> Option<Version> {
+    /// Delete the OTA cache when it is no longer newer than the shell.
+    ///
+    /// A Play or APK update replaces the binary but Android keeps app data, so
+    /// a cache written before the update survives it and can be OLDER than the
+    /// assets the new shell ships with. The scheme handler serves the cache
+    /// whenever version.json exists, without comparing, which pins the webview
+    /// to the stale bundle permanently:
+    ///
+    ///   shell 2.1.0 installed -> OTA to 2.1.1 -> website goes to 2.2.0 -> user
+    ///   updates from Play to shell 2.2.0 -> webview still serves 2.1.1.
+    ///
+    /// check_for_updates compares max(shell, cached) against the server and
+    /// sees nothing to do, while the running JS reports 2.1.1 and asks the user
+    /// to update again, forever. Across a major bump it is worse: the shell is
+    /// new enough but the JS believes it is not, so the blocking "update
+    /// required" sheet appears on a device that has already done everything
+    /// asked of it, and only clearing app data recovers.
+    ///
+    /// Equal counts as stale: the shell's own copy is authoritative, and
+    /// keeping a redundant cache only risks this again later.
+    pub fn discard_cache_if_stale(&self) {
+        // No shell version means no basis for comparison - keep the cache
+        // rather than discard something that might be the newer of the two.
+        let (Some(cached), Some(shell)) = (self.get_cached_version(), self.get_shell_version())
+        else {
+            return;
+        };
+
+        if cached > shell {
+            return;
+        }
+
+        if let Some(dir) = self.get_cache_dir()
+            && dir.exists()
+        {
+            match fs::remove_dir_all(&dir) {
+                Ok(()) => println!("Discarded OTA cache {cached} superseded by shell {shell}"),
+                // Failing to delete is survivable: the next launch tries again,
+                // and load_cache_into_memory is only reached through this call.
+                Err(e) => eprintln!("Failed to discard stale OTA cache: {e}"),
+            }
+        }
+    }
+
+    /// The version of the web assets compiled into the installed binary, which
+    /// is what identifies the shell itself. It never changes without a
+    /// reinstall. Distinct from `get_cached_version`, which is the most recent
+    /// bundle downloaded over the air.
+    pub fn get_shell_version(&self) -> Option<Version> {
         if let Some(asset) = self.app_handle.asset_resolver().get("version".to_string())
             && let Ok(info) = serde_json::from_slice::<ServerVersion>(&asset.bytes)
         {
             return Version::parse(info.version.trim_start_matches('v')).ok();
         }
-        // Fallback to package info
-        self.app_handle
-            .package_info()
-            .version
-            .to_string()
-            .parse()
-            .ok()
+        // No fallback to package_info(): that reads tauri.conf.json's version,
+        // a stale "0.1.0" placeholder unrelated to the shipped web assets. This
+        // value exists to tell a crash report which shell is running, and a
+        // confident wrong answer is worse than none.
+        None
     }
 
     pub async fn get_server_version(&self) -> Result<Version, Box<dyn std::error::Error>> {
@@ -87,17 +133,17 @@ impl<R: Runtime> UpdateManager<R> {
     pub async fn check_for_updates(&self) -> Result<bool, Box<dyn std::error::Error>> {
         let server_version = self.get_server_version().await?;
 
-        let bundled_version = self
-            .get_bundled_version()
+        let shell_version = self
+            .get_shell_version()
             .unwrap_or_else(|| Version::parse("0.0.0").unwrap());
         let cached_version = self
             .get_cached_version()
             .unwrap_or_else(|| Version::parse("0.0.0").unwrap());
 
-        let current_version = if cached_version > bundled_version {
+        let current_version = if cached_version > shell_version {
             cached_version.clone()
         } else {
-            bundled_version.clone()
+            shell_version.clone()
         };
 
         if server_version > current_version {

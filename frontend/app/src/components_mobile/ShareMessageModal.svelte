@@ -49,7 +49,7 @@
         const firstFile = share.files[0];
         if (firstFile) {
             client
-                .messageContentFromFile(firstFile)
+                .messageContentFromFile(firstFile, { chatId })
                 .then((content) => localUpdates.draftMessages.setAttachment({ chatId }, content))
                 .catch((err) => toastStore.showFailureToast(i18nKey(err)));
         }

@@ -20,7 +20,7 @@ async fn withdraw_crypto_impl(mut args: Args) -> Response {
 
     match process_transaction(args.withdrawal.set_memo(&MEMO_SEND)).await {
         Ok(Ok(completed_withdrawal)) => Success(Box::new(completed_withdrawal)),
-        Ok(Err(failed_withdrawal)) => Error(OCErrorCode::TransferFailed.with_json(&failed_withdrawal)),
+        Ok(Err((failed_withdrawal, _))) => Error(OCErrorCode::TransferFailed.with_json(&failed_withdrawal)),
         Err(error) => Error(error.into()),
     }
 }

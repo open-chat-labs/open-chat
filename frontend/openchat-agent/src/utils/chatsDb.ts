@@ -4,6 +4,7 @@ import {
     type DBSchema,
     type IDBPCursorWithValue,
     type IDBPDatabase,
+    type IDBPObjectStore,
     type IDBPTransaction,
     type StoreNames,
     type StoreValue,
@@ -150,6 +151,15 @@ interface ChatSchema extends DBSchema {
         value: MessageActivityEvent[];
     };
 }
+
+type EventsStoreName = "chat_events" | "thread_events";
+
+type EventsStore = IDBPObjectStore<
+    ChatSchema,
+    ArrayLike<StoreNames<ChatSchema>>,
+    EventsStoreName,
+    "readonly"
+>;
 
 // async function createBotsStore(
 //     db: IDBPDatabase<ChatSchema>,
@@ -541,28 +551,32 @@ export class ChatsDb {
         const dirty = new Set<number>();
         const resolvedDb = await this.getDb();
         const now = Date.now();
-        await Promise.all(
-            eventIndexes.map(async (idx) => {
-                const evt = await getCachedEventByIndex(
-                    resolvedDb,
-                    idx,
-                    context,
-                    now,
-                    allowDirty,
-                    () => this.tryStartExpiredEventSweeper(),
-                );
-                if (evt === undefined) {
-                    missing.add(idx);
-                } else if (evt.kind === "event") {
-                    events.push(convertCachedEvent(evt));
-                    if (evt.dirty) {
-                        dirty.add(evt.index);
-                    }
-                } else {
-                    expiredEventRanges.push(evt);
-                }
-            }),
+        const storeName =
+            context.threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
+        // one transaction for the whole batch - db.get would open one per event index
+        const tx = resolvedDb.transaction(storeName, "readonly");
+        const store = tx.store;
+        const fromCache = await Promise.all(
+            eventIndexes.map((idx) =>
+                getCachedEventByIndex(store, idx, context, now, allowDirty, () =>
+                    this.tryStartExpiredEventSweeper(),
+                ),
+            ),
         );
+        await tx.done;
+        for (let i = 0; i < eventIndexes.length; i++) {
+            const evt = fromCache[i];
+            if (evt === undefined) {
+                missing.add(eventIndexes[i]);
+            } else if (evt.kind === "event") {
+                events.push(convertCachedEvent(evt));
+                if (evt.dirty) {
+                    dirty.add(evt.index);
+                }
+            } else {
+                expiredEventRanges.push(evt);
+            }
+        }
         return [
             {
                 events,
@@ -855,29 +869,34 @@ export class ChatsDb {
         missing: Set<number>;
         dirty: Set<number>;
     }> {
-        const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
+        const storeName = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
         const resolvedDb = await this.getDb();
 
         const messages: EventWrapper<Message>[] = [];
         const missing: Set<number> = new Set();
         const dirty: Set<number> = new Set();
 
-        await Promise.all<Message | undefined>(
-            messagesIndexes.map(async (msgIdx) => {
-                const cacheKey = createCacheKey({ chatId, threadRootMessageIndex }, msgIdx);
-
-                const evt = await resolvedDb.getFromIndex(store, "messageIdx", cacheKey);
-                if (evt?.kind === "event" && evt.event.kind === "message") {
-                    messages.push(convertCachedEvent(evt as EnhancedWrapper<Message>));
-                    if (evt.dirty) {
-                        dirty.add(evt.index);
-                    }
-                    return evt.event;
-                }
-                missing.add(msgIdx);
-                return undefined;
-            }),
+        // one transaction for the whole batch - getFromIndex would open one per message index
+        const tx = resolvedDb.transaction(storeName, "readonly");
+        const index = tx.store.index("messageIdx");
+        const fromCache = await Promise.all(
+            messagesIndexes.map((msgIdx) =>
+                index.get(createCacheKey({ chatId, threadRootMessageIndex }, msgIdx)),
+            ),
         );
+        await tx.done;
+
+        for (let i = 0; i < messagesIndexes.length; i++) {
+            const evt = fromCache[i];
+            if (evt?.kind === "event" && evt.event.kind === "message") {
+                messages.push(convertCachedEvent(evt as EnhancedWrapper<Message>));
+                if (evt.dirty) {
+                    dirty.add(evt.index);
+                }
+            } else {
+                missing.add(messagesIndexes[i]);
+            }
+        }
 
         return {
             messageEvents: messages,
@@ -1207,15 +1226,11 @@ async function readAll<Name extends StoreNames<ChatSchema>>(
 ): Promise<Record<string, StoreValue<ChatSchema, Name>>> {
     const transaction = (await db).transaction([storeName]);
     const store = transaction.objectStore(storeName);
-    const cursor = await store.openCursor();
+    const [keys, vals] = await Promise.all([store.getAllKeys(), store.getAll()]);
+    await transaction.done;
     const values: Record<string, StoreValue<ChatSchema, Name>> = {};
-    while (cursor?.key !== undefined) {
-        values[cursor.key as string] = cursor.value;
-        try {
-            await cursor.continue();
-        } catch {
-            break;
-        }
+    for (let i = 0; i < keys.length; i++) {
+        values[keys[i] as string] = vals[i];
     }
     return values;
 }
@@ -1230,20 +1245,18 @@ function convertCachedEvent<T extends ChatEvent>(event: EnhancedWrapper<T>): Eve
 }
 
 async function getCachedEventByIndex(
-    db: IDBPDatabase<ChatSchema>,
+    store: EventsStore,
     eventIndex: number,
     context: MessageContext,
     now: number,
     allowDirty: boolean,
     onExpiry: () => void,
 ): Promise<EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined> {
-    const storeName =
-        context.threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
     const key = createCacheKey(context, eventIndex);
     const upperBound = createCacheKey(context, MAX_INDEX);
 
     const event = processEventExpiry(
-        await db.get(storeName, IDBKeyRange.bound(key, upperBound)),
+        await store.get(IDBKeyRange.bound(key, upperBound)),
         now,
         onExpiry,
     );

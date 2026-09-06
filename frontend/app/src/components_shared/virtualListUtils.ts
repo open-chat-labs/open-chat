@@ -10,6 +10,12 @@ export function getHeight(heightMap: number[], averageHeight: number, i: number)
 // Position with gap: startPos(i) = prefix[i] + i * gap.
 // endPos(i) = prefix[i+1] + i * gap.
 // Both are monotonically increasing, enabling binary search.
+//
+// `prev` is the array returned by the previous call; when its backing buffer
+// is large enough it is reused (no allocation) and only entries from `from`
+// onwards are recomputed — entries 0..from are carried over unchanged.
+// Callers must pass the lowest index whose height/estimate changed since
+// `prev` was built. Result length is always itemCount + 1.
 export function buildPrefixSums(
     itemCount: number,
     heightMap: number[],
@@ -17,10 +23,22 @@ export function buildPrefixSums(
     // optional frozen per-index estimates (per-class averages); falls back to
     // averageHeight where absent
     estimates?: number[],
-): number[] {
-    const prefix = new Array<number>(itemCount + 1);
+    prev?: Float64Array,
+    from: number = 0,
+): Float64Array {
+    const len = itemCount + 1;
+    let prefix: Float64Array;
+    if (prev !== undefined && prev.buffer.byteLength >= len * Float64Array.BYTES_PER_ELEMENT) {
+        prefix = prev.length === len ? prev : new Float64Array(prev.buffer, 0, len);
+    } else {
+        const capacity = Math.max(len, prev === undefined ? 0 : prev.length * 2);
+        prefix = new Float64Array(new ArrayBuffer(capacity * Float64Array.BYTES_PER_ELEMENT), 0, len);
+        if (prev !== undefined) prefix.set(prev.subarray(0, Math.min(prev.length, len)));
+    }
     prefix[0] = 0;
-    for (let i = 0; i < itemCount; i++) {
+    // prev only has valid entries up to its old length
+    const start = Math.max(0, Math.min(from, prev === undefined ? 0 : prev.length - 1, itemCount));
+    for (let i = start; i < itemCount; i++) {
         const h = heightMap[i];
         prefix[i + 1] = prefix[i] + (h > 0 ? h : (estimates?.[i] ?? averageHeight));
     }
@@ -52,7 +70,7 @@ function lowerBound(lo: number, hi: number, pred: (i: number) => boolean): numbe
  */
 export function computeWindow(
     itemCount: number,
-    prefix: number[],
+    prefix: ArrayLike<number>,
     fromBottom: number,
     viewportHeight: number,
     overscan: number = OVERSCAN_PX,
@@ -88,7 +106,7 @@ export function computeWindow(
  */
 export function computeSpacers(
     itemCount: number,
-    prefix: number[],
+    prefix: ArrayLike<number>,
     s: number,
     e: number,
     gap: number = 0,
@@ -106,4 +124,25 @@ export function computeSpacers(
  */
 export function rowByKey(root: HTMLElement, key: string): HTMLElement | null {
     return root.querySelector<HTMLElement>(`.vcl-row[data-key="${CSS.escape(key)}"]`);
+}
+
+// ── Shared ResizeObserver ──────────────────────────────────────────────
+// One observer for every virtual-list row (across all list instances) rather
+// than one per row. Per-row semantics are unchanged: observe() still delivers
+// the initial notification, and each row's callback runs once per delivery.
+const resizeCallbacks = new WeakMap<Element, () => void>();
+let sharedResizeObserver: ResizeObserver | undefined;
+
+export function observeResize(el: Element, callback: () => void): () => void {
+    sharedResizeObserver ??= new ResizeObserver((entries) => {
+        for (const entry of entries) {
+            resizeCallbacks.get(entry.target)?.();
+        }
+    });
+    resizeCallbacks.set(el, callback);
+    sharedResizeObserver.observe(el);
+    return () => {
+        resizeCallbacks.delete(el);
+        sharedResizeObserver?.unobserve(el);
+    };
 }

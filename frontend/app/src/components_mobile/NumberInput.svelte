@@ -73,7 +73,7 @@
 
 <Container direction={"vertical"} gap={"xs"}>
     <Container
-        background={ColourVars.textTertiary}
+        background={ColourVars.inputBackground}
         height={{ size: "3rem" }}
         padding={["xs", "xl"]}
         borderRadius={"circle"}
@@ -97,7 +97,7 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <Caption colour={error ? "error" : "textSecondary"}>
+            <Caption colour={error ? "validationError" : "textSecondary"}>
                 {@render subtext()}
             </Caption>
         </div>

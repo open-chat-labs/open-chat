@@ -64,6 +64,7 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     bucket_vault::VaultOp::SetLegalHold(bucket_vault::SetLegalHoldOp {
                         file_id: l.blob_reference.blob_id,
                         legal_hold: l.legal_hold,
+                        reference: l.reference,
                     }),
                 );
             }
@@ -74,6 +75,8 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                     bucket_vault::VaultOp::Destroy(bucket_vault::DestroyOp {
                         file_id: d.blob_reference.blob_id,
                         le_request_ref: d.le_request_ref,
+                        proposed_by: d.proposed_by,
+                        confirmed_by: d.confirmed_by,
                     }),
                 );
             }
@@ -89,6 +92,21 @@ fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
                 let buckets: Vec<_> = state.data.buckets.iter().map(|b| b.canister_id).collect();
                 for bucket in buckets {
                     push(state, bucket, bucket_vault::VaultOp::SetReviewers(bucket_reviewers.clone()));
+                }
+            }
+            VaultOp::SetAuthorityReporter(op) => {
+                // Kept in index state so each NEW bucket is seeded with it too (add_bucket)
+                state.data.authority_reporter = Some(op.clone());
+                let buckets: Vec<_> = state.data.buckets.iter().map(|b| b.canister_id).collect();
+                for bucket in buckets {
+                    push(
+                        state,
+                        bucket,
+                        bucket_vault::VaultOp::SetAuthorityReporter(bucket_vault::SetAuthorityReporterOp {
+                            principal: op.principal,
+                            oc_public_key_pem: op.oc_public_key_pem.clone(),
+                        }),
+                    );
                 }
             }
         }

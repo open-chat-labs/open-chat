@@ -54,9 +54,17 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         )
         && message.deleted_by.is_none()
     {
+        // Sent even when there is nothing classifiable: an empty request makes the local index
+        // dequeue the earlier content and reply with an empty classification, clearing any
+        // stale flags left by text this edit removed
         let input = message.content.moderation_input();
-        if !input.is_empty() {
-            state.queue_message_for_moderation(args.thread_root_message_index, args.message_id, input);
+        // Unlike classification there is no empty-request "clear" for media: verdicts only
+        // ever act on a match, and a match escalates regardless of later edits (the matched
+        // content was posted publicly; editing it away does not void the report)
+        let blobs = message.content.scannable_blobs();
+        state.queue_message_for_moderation(args.thread_root_message_index, args.message_id, input);
+        if !blobs.is_empty() {
+            state.queue_media_for_scanning(args.thread_root_message_index, args.message_id, blobs);
         }
     }
 

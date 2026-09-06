@@ -6,6 +6,7 @@ export OC_INTERNET_IDENTITY_URL=https://id.ai/?feature_flag_guided_upgrade=true
 export OC_NFID_URL=https://nfid.one/authenticate/?applicationName=OpenChat
 export OC_DFX_NETWORK=ic
 export OC_VIDEO_BRIDGE_URL=https://d7ufu5rwdb6eb.cloudfront.net
+export OC_NCA_REPORTER_URL=https://d368tfz0uea1ks.cloudfront.net
 export OC_IC_URL=https://icp-api.io
 export OC_II_DERIVATION_ORIGIN=https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app
 export OC_CUSTOM_DOMAINS=oc.app,webtest.oc.app,6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app,6hsbt-vqaaa-aaaaf-aaafq-cai.icp0.io

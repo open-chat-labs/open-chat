@@ -161,7 +161,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
     let response = client::user::send_message_v2(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,

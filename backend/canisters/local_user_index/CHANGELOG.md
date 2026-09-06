@@ -8,6 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Expose the user-event sync queue's in-flight batch count in metrics, alongside the existing queued length ([#9177](https://github.com/open-chat-labs/open-chat/pull/9177))
+
+### Changed
+
+- Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+- Harden the message-classification job against API throttling: rate-limit and outage rejections no longer count towards the drop-after-3-attempts limit (queue residency is bounded at 24h instead), the API's Retry-After is honoured, error bodies are logged so throttle and quota failures are distinguishable, and batches are token-capped and paced to stay under the moderation model's tokens-per-minute limit while a deep queue drains ([#9176](https://github.com/open-chat-labs/open-chat/pull/9176))
+
+## [[2.0.2033](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2033-local_user_index)] - 2026-08-20
+
+### Added
+
+- Add the media scan job log plus worker-facing `media_scan_jobs` and `submit_media_scan_verdicts` endpoints, gated on the media scan config set by the user_index ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+- Detect a stalled media scan pipeline (jobs queued but no verdicts arriving) and raise it in the internal moderation channel via the user_index, with an all-clear on recovery ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+
+### Changed
+
+- Never send message media to the OpenAI moderation API - classification is text-only ([#9149](https://github.com/open-chat-labs/open-chat/issues/9149))
+
+### Fixed
+
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+
+## [[2.0.2008](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2008-local_user_index)] - 2026-08-06
+
+### Added
+
 - Moderation-referral config: categories scoring above the configured threshold are referred for human review via the owning chat canister ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ## [[2.0.2000](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2000-local_user_index)] - 2026-07-22

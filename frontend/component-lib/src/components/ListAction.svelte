@@ -45,7 +45,7 @@
         {@render icon(iconColour)}
         {#if smallIcon !== undefined}
             <div class="plus">
-                {@render smallIcon(ColourVars.background1)}
+                {@render smallIcon(ColourVars.surface1)}
             </div>
         {/if}
     </button>
@@ -63,14 +63,14 @@
 
     .plus {
         position: absolute;
-        background-color: var(--success);
+        background-color: var(--success-surface);
         width: 1rem;
         height: 1rem;
         display: flex;
         justify-content: center;
         align-items: center;
         border-radius: var(--rad-sm);
-        border: var(--bw-thick) solid var(--background-1);
+        border: var(--bw-thick) solid var(--surface-1);
         bottom: 0;
         right: 0;
         transform: translateX(50%);
@@ -94,15 +94,15 @@
         }
 
         &.primary {
-            background: var(--primary-muted);
+            background: var(--primary-surface);
         }
 
         &.secondary {
-            background: var(--secondary-muted);
+            background: var(--secondary-surface);
         }
 
         &.tertiary {
-            background: var(--tertiary-muted);
+            background: var(--tertiary-surface);
         }
     }
 </style>

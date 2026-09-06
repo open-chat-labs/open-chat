@@ -1,5 +1,5 @@
 import type { WebRtcMessage } from "@shared";
-import Peer, { type DataConnection } from "peerjs";
+import type { DataConnection, default as Peer } from "peerjs";
 
 export class RtcConnectionsManager {
     private connections: Map<string, DataConnection> = new Map<string, DataConnection>();
@@ -61,12 +61,16 @@ export class RtcConnectionsManager {
             return Promise.resolve(this._peer);
         }
 
-        const iceServers = await this.getIceServers(meteredApiKey);
+        // peerjs (and its webrtc-adapter dependency) is only loaded once a peer is needed
+        const [iceServers, { default: PeerCtor }] = await Promise.all([
+            this.getIceServers(meteredApiKey),
+            import("peerjs"),
+        ]);
 
         return new Promise((resolve) => {
             const connectionId = this.getMyConnectionId(me);
 
-            this._peer = new Peer(connectionId, {
+            this._peer = new PeerCtor(connectionId, {
                 // host: "localhost",
                 // port: 4000,
                 // secure: false,
@@ -89,8 +93,14 @@ export class RtcConnectionsManager {
             this._peer.on("disconnected", () => {
                 console.debug("RTC: peer lost connection will try to reconnect");
 
-                if (this._peer && !this._peer.destroyed) {
-                    this._peer.reconnect();
+                // reconnect() throws if the peer has already re-established the connection
+                // by the time this handler runs
+                if (this._peer && !this._peer.destroyed && this._peer.disconnected) {
+                    try {
+                        this._peer.reconnect();
+                    } catch (err) {
+                        console.debug("RTC: peer reconnect failed: ", err);
+                    }
                 }
             });
 

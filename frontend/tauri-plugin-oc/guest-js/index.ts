@@ -1,6 +1,7 @@
 export { clearAllNotifications } from "./commands/clearAllNotifications";
 export { deleteFcmToken } from "./commands/deleteFcmToken";
 export { getFcmToken } from "./commands/getFcmToken";
+export { getShellVersion } from "./commands/getShellVersion";
 export { minimizeApp } from "./commands/minimizeApp";
 export { openUrl } from "./commands/openUrl";
 export { releaseNotifications } from "./commands/releaseNotifications";
@@ -15,6 +16,7 @@ export {
     type RecentMediaResponse,
 } from "./commands/loadRecentMedia";
 export { saveMediaToDevice, type SaveMediaRequest } from "./commands/saveMedia";
+export { exportMedia } from "./commands/exportMedia";
 export { enableViewportResize } from "./commands/enableViewportResize";
 export { disableViewportResize } from "./commands/disableViewportResize";
 export {

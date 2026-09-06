@@ -37,7 +37,7 @@
         mode?: "thread" | "message";
         externalContent?: boolean;
         messageContext: MessageContext;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         onCancelReply: () => void;
         onSetTextContent: (txt?: string) => void;
         onStartTyping: () => void;
@@ -104,12 +104,14 @@
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
         const file = fileFromDataTransferItems(items);
         if (file) {
+            // Captured now: preparing a video can take a while and the chat may change under it
+            const context = messageContext;
             client
-                .messageContentFromFile(file)
+                .messageContentFromFile(file, context)
                 .then((content) => {
                     let permission = client.contentTypeToPermission(content.kind);
-                    if (client.canSendMessage(chat.id, mode, permission)) {
-                        onFileSelected(content);
+                    if (client.canSendMessage(context.chatId, mode, permission)) {
+                        onFileSelected(content, context);
                     } else {
                         const errorMessage = i18nKey("permissions.notPermitted", {
                             permission: $_(`permissions.threadPermissions.${permission}`),

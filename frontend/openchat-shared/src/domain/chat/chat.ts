@@ -156,6 +156,14 @@ export interface P2PSwapContentInitial {
     token1Amount: bigint;
     caption?: string;
     expiresIn: bigint;
+    // An ICRC-1 textual account to take the funds from, for spending from a wallet OpenChat does
+    // not control. Left undefined to spend from the user's own canister.
+    fromAccount?: string;
+    // The external wallet a draft of this offer intends to fund it from, by its `SignerWallet`
+    // id. Purely the UI's note to itself: a draft carries the intent until the moment the message
+    // is sent, which is when the wallet is asked to approve the transfer and `fromAccount` takes
+    // over. Never mapped into the content sent to the backend.
+    fromWallet?: string;
 }
 
 export interface TokenInfo {
@@ -336,6 +344,14 @@ export type PendingCryptocurrencyTransfer = {
     feeE8s?: bigint;
     memo?: bigint;
     createdAtNanos: bigint;
+    // An ICRC-1 textual account to take the funds from, for spending from a wallet OpenChat does
+    // not control. Left undefined to spend from the user's own canister.
+    fromAccount?: string;
+    // The external wallet a draft of this transfer intends to spend from, by its `SignerWallet`
+    // id. Purely the UI's note to itself: a draft carries the intent until the moment the message
+    // is sent, which is when the wallet is asked to approve the transfer and `fromAccount` takes
+    // over. Never mapped into the transaction sent to the backend.
+    fromWallet?: string;
 };
 
 export type FailedCryptocurrencyTransfer = {
@@ -618,6 +634,9 @@ export const VideoContentSchema = Type.Object({
     mimeType: Type.String(),
     imageData: DataContentSchema,
     videoData: DataContentSchema,
+    // Draft only: SHA3-256 of the file the user picked when videoData is a client-side
+    // transcode of it, sent with the upload so CSAM checks also cover the original bytes
+    sourceHash: Type.Optional(Type.Uint8Array()),
 });
 export type VideoContent = Static<typeof VideoContentSchema>;
 
@@ -656,15 +675,30 @@ export type ModerationReportContent = {
     reporters: string[];
     flaggedCategories: number;
     classificationFailed: boolean;
-    authorityReport:
-        | { kind: "due"; urgent: boolean }
-        | { kind: "filed"; portalReference: string }
-        | undefined;
+    authorityReport: AuthorityReportState | undefined;
     autoSanctioned: boolean;
     contentExcerpt: string | undefined;
     blobReferences: BlobReference[];
+    // Present when the detection was a media hash match rather than the text classifier.
+    // Optional because report content restored from the IndexedDB cache can pre-date the field.
+    mediaMatches?: MediaScanMatch[];
+    // True for a blocked re-post attempt report: it resolves with its original report and
+    // must not offer verdict actions. Optional for cached pre-upgrade content.
+    isBlockedAttempt?: boolean;
     reportedAt: bigint;
     status: ModerationReportStatus;
+};
+
+export type MediaScanMatch = {
+    provider: string;
+    blobId: bigint;
+    source: string;
+    violations: string[];
+    matchDistance: bigint;
+    matchId: string | undefined;
+    // The perceptual hash the scanner matched on; absent for matches recorded before the
+    // field existed
+    hash: string | undefined;
 };
 
 export type ModerationReportStatus =
@@ -675,6 +709,27 @@ export type ModerationReportStatus =
     | { kind: "dismissed"; moderator: string; timestamp: bigint };
 
 export type ModerationVerdict = "upheld" | "upheld_as_csam" | "dismissed";
+
+// The NCA (CSEA-IRP) filing state shown on the report card. "attempting" means an automated
+// filing is in flight; one much older than a filing takes means the service crashed
+// mid-flight and a human must check the portal before anything re-files.
+export type AuthorityReportState =
+    | { kind: "due"; urgent: boolean }
+    | { kind: "filed"; portalReference: string }
+    | { kind: "attempting"; startedAt: bigint }
+    | { kind: "contingency_required"; error: string; urgent: boolean }
+    | { kind: "validation_failed"; error: string; urgent: boolean };
+
+// The moderator's priority assessment for an NCA filing; the NCA's own definitions
+export type NcaPriority = "P1" | "P2" | "P3";
+
+export type NcaReporterContact = {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    countryCallingCode: string;
+    email: string;
+};
 
 // Mirrors the category bits of `ModerationCategories` in the rust backend
 export const MODERATION_CATEGORY_NAMES: [number, string][] = [

@@ -40,7 +40,7 @@
     });
 </script>
 
-<Container {onSwipe} background={ColourVars.background0} height={"fill"} direction={"vertical"}>
+<Container {onSwipe} background={ColourVars.surface0} height={"fill"} direction={"vertical"}>
     <Container direction={"vertical"} closeMenuOnScroll height={"fill"}>
         <Column gap={"xl"} padding={["xxl", "xxl", "xxxl", "xxl"]} supplementalClass={"starfield"}>
             <Column width={{ size: "80%" }} gap={"sm"}>
@@ -134,6 +134,6 @@
         flex: 0 0 3rem;
         width: 100%;
         pointer-events: none;
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--background-1));
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--surface-1));
     }
 </style>

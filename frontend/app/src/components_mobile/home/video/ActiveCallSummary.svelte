@@ -129,7 +129,7 @@
         gap={"lg"}
         padding={"lg"}
         onClick={goToCall}
-        background={ColourVars.success}>
+        background={ColourVars.validationSuccess}>
         {#if $activeVideoCall.status === "joining"}
             <FancyLoader size={"3rem"} loop />
         {:else}

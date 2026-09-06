@@ -70,7 +70,7 @@
         padding: var(--sp-xs);
         height: 30px;
         width: 100%;
-        background-color: var(--text-tertiary);
-        color: var(--text-placeholder);
+        background-color: var(--input-background);
+        color: var(--input-placeholder);
     }
 </style>

@@ -7,6 +7,7 @@ use crate::{
 };
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::cmp::max;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use std::iter::Peekable;
@@ -140,7 +141,12 @@ impl ChatEventsList {
         let (min, max) = if let Some(start) = start {
             if let Some(index) = self.event_index(start) {
                 if ascending {
-                    (index, self.latest_event_index.unwrap_or_default())
+                    // A start below the caller's min visible index (stale client summary, explicit
+                    // link into hidden history) must not expose events they cannot see
+                    (
+                        max(index, min_visible_event_index),
+                        self.latest_event_index.unwrap_or_default(),
+                    )
                 } else {
                     (min_visible_event_index, index)
                 }
@@ -150,6 +156,10 @@ impl ChatEventsList {
         } else {
             (min_visible_event_index, self.latest_event_index.unwrap_or_default())
         };
+
+        if min > max {
+            return Box::new(std::iter::empty());
+        }
 
         let iter = self.events_map.range(min..=max);
 
@@ -603,7 +613,7 @@ mod tests {
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
     use std::mem::size_of;
-    use types::Milliseconds;
+    use types::{Milliseconds, MultiUserChat};
 
     #[test]
     fn enum_size() {
@@ -749,6 +759,53 @@ mod tests {
         assert_eq!(event_indexes, (0..=first.index.into()).rev().collect_vec());
     }
 
+    // A caller whose min visible index is above the requested start (stale client summary,
+    // role change, lapsed membership) must get nothing back rather than a trap
+    #[test]
+    fn scan_descending_below_min_visible_returns_empty() {
+        let events = setup_group_events();
+        let events_reader = events.visible_main_events_reader(50.into());
+
+        let results = events_reader.scan(Some(EventKey::EventIndex(30.into())), false, usize::MAX, usize::MAX, None);
+
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn scan_ascending_below_min_visible_starts_at_min_visible() {
+        let events = setup_group_events();
+        let events_reader = events.visible_main_events_reader(50.into());
+
+        let results = events_reader.scan(Some(EventKey::EventIndex(30.into())), true, usize::MAX, usize::MAX, None);
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
+        assert_eq!(event_indexes[0], 50);
+    }
+
+    #[test]
+    fn window_below_min_visible_returns_only_visible_events() {
+        let events = setup_group_events();
+        let events_reader = events.visible_main_events_reader(50.into());
+
+        let results = events_reader.window(EventKey::EventIndex(30.into()), usize::MAX, usize::MAX, None);
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
+        assert!(!event_indexes.is_empty());
+        assert!(event_indexes.iter().all(|i| *i >= 50));
+    }
+
+    #[test]
+    fn window_at_min_visible_does_not_panic() {
+        let events = setup_group_events();
+        let events_reader = events.visible_main_events_reader(50.into());
+
+        let results = events_reader.window(EventKey::EventIndex(50.into()), usize::MAX, usize::MAX, None);
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
+        assert!(!event_indexes.is_empty());
+        assert!(event_indexes.iter().all(|i| *i >= 50));
+    }
+
     #[test]
     fn window_message_limit() {
         let events = setup_events(None);
@@ -793,6 +850,27 @@ mod tests {
         let event_indexes: Vec<_> = results.into_iter().map(|e| e.as_event().unwrap().index).sorted().collect();
 
         assert_eq!(event_indexes, (46..=70).map(|i| i.into()).collect_vec());
+    }
+
+    // Group chats keep recent events in the in-memory fast map, whose range() traps on an
+    // inverted range, unlike the stable memory map direct chats use
+    fn setup_group_events() -> ChatEvents {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let mut events = ChatEvents::new_group_chat(
+            MultiUserChat::Group(Principal::from_slice(&[1]).into()),
+            "name".to_string(),
+            "description".to_string(),
+            Principal::from_slice(&[2]).into(),
+            None,
+            random(),
+            1,
+        );
+
+        push_events(&mut events, 2);
+
+        events
     }
 
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {

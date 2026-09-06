@@ -15,7 +15,7 @@ async fn add_platform_moderator(args: Args) -> Response {
     }
 
     let c2c_args = c2c_grant_super_admin::Args {};
-    match user_canister_c2c_client::c2c_grant_super_admin(args.user_id.into(), &c2c_args).await {
+    match user_canister_c2c_client::c2c_grant_super_admin(args.user_id.canister_id(), &c2c_args).await {
         Ok(_) => {
             mutate_state(|state| commit(args.user_id, state));
             Success
@@ -30,10 +30,17 @@ fn is_already_platform_moderator(user_id: &UserId, state: &RuntimeState) -> bool
 
 fn commit(user_id: UserId, state: &mut RuntimeState) {
     state.data.platform_moderators.insert(user_id);
+    // A suspended appointee joins the set but the live flag stays off until the suspension
+    // lifts (sync_suspended_privileges restores it)
+    let suspended = state
+        .data
+        .users
+        .get_by_user_id(&user_id)
+        .is_some_and(|u| u.suspension_details.is_some());
     state.push_event_to_all_local_user_indexes(
         UserIndexEvent::PlatformModeratorStatusChanged(PlatformModeratorStatusChanged {
             user_id,
-            is_platform_moderator: true,
+            is_platform_moderator: !suspended,
         }),
         None,
     );

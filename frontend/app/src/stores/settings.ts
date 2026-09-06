@@ -32,7 +32,7 @@ export const verificationSectionOpen = new LocalStorageBoolStore(
     false,
 );
 export const accountsSectionOpen = new LocalStorageBoolStore(
-    configKeys.verificationSectionOpen,
+    configKeys.accountsSectionOpen,
     false,
 );
 export const statsSectionOpen = new LocalStorageBoolStore(configKeys.userStatsSection, false);
@@ -63,7 +63,7 @@ export const exploreGroupsDismissed = new LocalStorageBoolStore(
     false,
 );
 export const browseChannels = new LocalStorageBoolStore(configKeys.browseChannels, true);
-export const hideTokenBalances = new LocalStorageBoolStore(configKeys.hideChitIcon, false);
+export const hideTokenBalances = new LocalStorageBoolStore(configKeys.hideTokenBalances, false);
 
 export const communityVisibilityOpen = new LocalStorageBoolStore(
     configKeys.communityVisibilitySection,

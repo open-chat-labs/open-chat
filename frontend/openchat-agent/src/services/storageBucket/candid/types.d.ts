@@ -1707,6 +1707,7 @@ export interface UploadChunkArgs {
     expiry: [] | [TimestampMillis];
     chunk_size: number;
     file_id: FileId;
+    source_hash: [] | [Hash];
 }
 export type UploadChunkResponse =
     | { ChunkAlreadyExists: null }
@@ -1868,9 +1869,23 @@ export type VaultLogResponse =
           };
       }
     | { NotAuthorized: null };
+export interface VaultFileInfoArgs {
+    file_id: FileId;
+}
+export type VaultFileInfoResponse =
+    | {
+          Success: {
+              hash: string;
+              mime_type: string;
+              size: bigint;
+          };
+      }
+    | { NotAuthorized: null }
+    | { NotFound: null };
 export interface VaultFileChunkArgs {
     file_id: FileId;
     chunk_index: number;
+    vault_token: [] | [string];
 }
 export type VaultFileChunkResponse =
     | {
@@ -1887,6 +1902,7 @@ export type VaultFileChunkResponse =
     | { SessionRequired: null };
 export interface _SERVICE {
     vault_file_chunk: ActorMethod<[VaultFileChunkArgs], VaultFileChunkResponse>;
+    vault_file_info: ActorMethod<[VaultFileInfoArgs], VaultFileInfoResponse>;
     vault_log: ActorMethod<[VaultLogArgs], VaultLogResponse>;
     delete_file: ActorMethod<[DeleteFileArgs], DeleteFileResponse>;
     delete_files: ActorMethod<[DeleteFilesArgs], DeleteFilesResponse>;

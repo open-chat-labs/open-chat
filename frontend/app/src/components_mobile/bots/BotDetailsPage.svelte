@@ -154,7 +154,7 @@
 
 <Container
     closeMenuOnScroll
-    background={ColourVars.background0}
+    background={ColourVars.surface0}
     padding={"lg"}
     gap={"xxl"}
     height={"fill"}
@@ -356,7 +356,7 @@
             {#each requested as perm, i}
                 {@const isGranted = granted === undefined || granted.includes(perm)}
                 {@const last = i === requested.length - 1}
-                <Body colour={isGranted ? "textPrimary" : "textTertiary"} width={hug}>
+                <Body colour={isGranted ? "textPrimary" : "textOnDisabledSurface"} width={hug}>
                     <Translatable resourceKey={i18nKey(`permissions.${labelPrefix}${perm}`)} />
                     {#if !last}
                         {","}
@@ -405,7 +405,7 @@
     .separator {
         height: 2rem;
         width: toRem(4);
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
     }
 
     .img {

@@ -17,7 +17,7 @@
 </script>
 
 <Container
-    background={ColourVars.background0}
+    background={ColourVars.surface0}
     height={"fill"}
     direction={"vertical"}
     overflow="hidden">

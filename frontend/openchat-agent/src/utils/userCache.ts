@@ -34,8 +34,13 @@ export class UserDb {
     }
 
     async getCachedUsers(userIds: string[]): Promise<UserSummary[]> {
+        if (userIds.length === 0) return [];
         const db = await this.connectionManager.getDb();
-        const fromCache = await Promise.all(userIds.map((u) => db.get("users", u)));
+        // one transaction for the whole batch - db.get would open one per user id
+        const tx = db.transaction("users", "readonly");
+        const store = tx.objectStore("users");
+        const fromCache = await Promise.all(userIds.map((u) => store.get(u)));
+        await tx.done;
         return fromCache.reduce((users, next) => {
             if (next !== undefined) users.push(next);
             return users;

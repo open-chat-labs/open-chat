@@ -6,16 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support leaving tips from external wallets using ICRC2 ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))
+- Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
+- Return a distinct `InsufficientAllowance` error when an ICRC-2 transfer exceeds the approval ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
+- Support paying for Diamond membership from external wallets using ICRC2 ([#9265](https://github.com/open-chat-labs/open-chat/pull/9265))
+
+### Changed
+
+- Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+- Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
+- Support P2P swaps for users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
+
+### Fixed
+
+- Validate the whole recipient account rather than only its owner when sending crypto ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+- Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
+
+## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-13
+
 ### Changed
 
 - Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-
 - Suspension notice from the OC bot points appeals at safety@openchatlabs.org instead of a Twitter DM ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ### Fixed
 
 - Only push reaction activity in direct chats if the reaction is on one of your messages ([#9126](https://github.com/open-chat-labs/open-chat/pull/9126))
-- Enforce Diamond membership server-side when initiating a P2P swap
+- Enforce Diamond membership server-side when initiating a P2P swap ([#9098](https://github.com/open-chat-labs/open-chat/pull/9098))
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 
 ## [[2.0.1990-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1990-user)] - 2026-07-07
 

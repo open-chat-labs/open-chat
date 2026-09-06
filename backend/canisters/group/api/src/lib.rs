@@ -8,7 +8,7 @@ mod updates;
 pub use lifecycle::*;
 use oc_error_codes::OCError;
 pub use queries::*;
-use types::{BotDefinitionUpdate, MessageClassified, UserId};
+use types::{BotDefinitionUpdate, MediaScanMatched, MessageClassified, UserId};
 pub use updates::*;
 
 #[ts_export(group)]
@@ -24,6 +24,7 @@ pub enum LocalIndexEvent {
     VerifiedChanged(VerifiedChanged),
     ModerationFlagsChanged(ModerationFlagsChanged),
     MessageClassified(MessageClassified),
+    MediaScanMatched(MediaScanMatched),
     UserDeleted(UserId),
     BotUpdated(BotDefinitionUpdate),
     BotRemoved(UserId),

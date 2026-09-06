@@ -1,4 +1,6 @@
 import {
+    chatIdentifierFromKey,
+    chatIdentifierToKey,
     SafeMap,
     type ChatIdentifier,
     type CommunityIdentifier,
@@ -59,11 +61,16 @@ export class LocalMap<K, V> {
     apply(original: ReadonlyMap<K, V>): ReadonlyMap<K, V> {
         if (this.#queue.length === 0) return original;
 
+        // only the last modification for each key has any effect
+        const last = new SafeMap<K, Modification<K, V>>(this.serialiser, this.deserialiser);
+        for (const mod of this.#queue) {
+            last.set(mod.key, mod);
+        }
         const merged = new SafeMap<K, V>(this.serialiser, this.deserialiser);
         for (const [k, v] of original) {
             merged.set(k, v);
         }
-        for (const mod of this.#queue) {
+        for (const [, mod] of last) {
             if (mod.kind === "remove") {
                 merged.delete(mod.key);
             }
@@ -87,8 +94,8 @@ export class LocalCommunityMap<V> extends LocalMap<CommunityIdentifier, V> {
 export class LocalChatMap<V> extends LocalMap<ChatIdentifier, V> {
     constructor() {
         super(
-            (id) => JSON.stringify(id),
-            (k) => JSON.parse(String(k)) as ChatIdentifier,
+            (id) => chatIdentifierToKey(id),
+            (k) => chatIdentifierFromKey(String(k)),
         );
     }
 }

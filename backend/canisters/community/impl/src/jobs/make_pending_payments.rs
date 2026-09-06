@@ -4,7 +4,6 @@ use constants::{
 };
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use ic_cdk_timers::TimerId;
-use ic_principal::Principal;
 use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
 use ledger_utils::icrc1::make_transfer;
 use std::cell::Cell;
@@ -43,7 +42,7 @@ async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNa
         // Note in the case of CHAT this will cause the tokens to be burned
         PaymentRecipient::SnsTreasury => SNS_GOVERNANCE_CANISTER_ID.into(),
         PaymentRecipient::TreasuryCanister => OPENCHAT_TREASURY_CANISTER_ID.into(),
-        PaymentRecipient::Member(user_id) => Principal::from(user_id).into(),
+        PaymentRecipient::Member(user_id) => user_id.into(),
         PaymentRecipient::Account(account) => account,
     };
 

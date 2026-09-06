@@ -215,7 +215,7 @@ impl CommunityMembers {
         now: TimestampMillis,
     ) -> OCResult<ChangeRoleSuccess> {
         // Is the caller authorized to change the user to this role
-        let initiator = self.get_verified_member(user_id.into())?;
+        let initiator = self.get_verified_member(user_id.as_principal())?;
 
         if !initiator.role.can_change_roles(new_role, permissions) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());

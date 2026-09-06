@@ -20,7 +20,7 @@
 </script>
 
 {#if bots.length === 0}
-    <StatusCard borderColour={ColourVars.warning} mode={"warning"} title={"No bots available"}>
+    <StatusCard borderColour={ColourVars.validationWarning} mode={"warning"} title={"No bots available"}>
         {#snippet body()}
             <Translatable resourceKey={i18nKey("bots.update_bot.nobots")}></Translatable>
         {/snippet}

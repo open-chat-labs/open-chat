@@ -77,7 +77,7 @@
     }
 
     .tooltip-popup {
-        background-color: var(--background-1);
+        background-color: var(--surface-1);
         color: var(--text-primary);
         $chevron: 0.5rem;
         $offset: 0.75rem;

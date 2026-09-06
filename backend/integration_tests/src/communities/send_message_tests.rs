@@ -76,7 +76,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     let send_message_result = client::user::send_message_with_transfer_to_channel(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_channel::Args {
             community_id,
             channel_id,

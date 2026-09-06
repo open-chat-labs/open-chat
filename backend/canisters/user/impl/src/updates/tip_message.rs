@@ -1,16 +1,15 @@
-use crate::crypto::process_transaction;
+use crate::crypto::{process_transaction, validate_from_account};
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
-use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
     Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, OCResult, PendingCryptoTransaction, TimestampNanos, UserId,
-    icrc1,
+    icrc1, icrc2,
 };
 use user_canister::UserCanisterEvent;
 use user_canister::tip_message::{Response::*, *};
@@ -27,19 +26,33 @@ async fn tip_message_impl(mut args: Args) -> Response {
         Err(response) => return Error(response),
     };
 
-    let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-        ledger: args.ledger,
-        token_symbol: args.token_symbol.clone(),
-        amount: args.amount,
-        to: Principal::from(args.recipient).into(),
-        fee: args.fee,
-        memo: Some(MEMO_TIP.to_vec().into()),
-        created: now_nanos,
-    });
+    let pending_transfer = match args.from_account {
+        // The allowance is what authorises this - the ledger only lets us pull from an account which
+        // has approved this canister as spender - so there is nothing for us to check here.
+        Some(from) => PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+            ledger: args.ledger,
+            token_symbol: args.token_symbol.clone(),
+            amount: args.amount,
+            from,
+            to: icrc1::Account::for_user(args.recipient),
+            fee: args.fee,
+            memo: Some(MEMO_TIP.to_vec().into()),
+            created: now_nanos,
+        }),
+        None => PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+            ledger: args.ledger,
+            token_symbol: args.token_symbol.clone(),
+            amount: args.amount,
+            to: icrc1::Account::for_user(args.recipient),
+            fee: args.fee,
+            memo: Some(MEMO_TIP.to_vec().into()),
+            created: now_nanos,
+        }),
+    };
     // Make the crypto transfer
     match process_transaction(pending_transfer).await {
         Ok(Ok(_)) => {}
-        Ok(Err(failed)) => return Error(OCErrorCode::TransferFailed.with_message(failed.error_message())),
+        Ok(Err((_, error))) => return Error(error),
         Err(error) => return Error(error.into()),
     }
 
@@ -89,6 +102,8 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
     } else if my_user_id == args.recipient {
         Err(OCErrorCode::CannotTipSelf.into())
     } else {
+        validate_from_account(args.from_account, my_user_id)?;
+
         let now = state.env.now();
         let now_nanos = now * NANOS_PER_MILLISECOND;
         state.data.pin_number.verify(args.pin.as_mut(), now)?;
@@ -163,7 +178,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
             let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
             state.push_user_canister_event(
-                args.recipient.into(),
+                args.recipient.canister_id(),
                 UserCanisterEvent::TipMessage(Box::new(user_canister::TipMessageArgs {
                     thread_root_message_id,
                     message_id: args.message_id,

@@ -57,6 +57,7 @@ const scrollingRoutes: RouteType[] = [
     "privacy_route",
     "faq_route",
     "diamond_route",
+    "csea_reporting_route",
 ];
 const landingPageRoutes: RouteType[] = ["home_landing_route", ...scrollingRoutes];
 

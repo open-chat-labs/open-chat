@@ -18,7 +18,7 @@
 <Container onClick={disabled ? undefined : toggle} gap={"sm"} direction={"vertical"}>
     {@render children()}
     {#each paras as para}
-        <Body width={"fill"} colour={disabled ? "textTertiary" : "textSecondary"}>
+        <Body width={"fill"} colour={disabled ? "textOnDisabledSurface" : "textSecondary"}>
             <Translatable resourceKey={i18nKey(para)}></Translatable>
         </Body>
     {/each}

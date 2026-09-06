@@ -1,7 +1,13 @@
 <script lang="ts">
-    import RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import type RichTextEditor from "@shared_components/RichTextEditor.svelte";
+    import {
+        loadRichTextEditor,
+        richTextEditorIfLoaded,
+    } from "@shared_components/richTextEditorLoader";
     import { keyboard } from "@src/stores/keyboard.svelte";
+    import { isIosTauriApp } from "@shared";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { detectMarkdown } from "@src/utils/detectMarkdown";
     import {
         popHistoryStateWithAction,
         pushDummyHistoryState,
@@ -35,9 +41,11 @@
         selectedChatMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
+        SIGNER_WALLETS,
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
+        videoProcessingProgress,
         type CreatedUser,
     } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
@@ -63,11 +71,13 @@
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
     import Send from "../icons/Send.svelte";
+    import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import ExternalWalletApproval from "./ExternalWalletApproval.svelte";
     import EmojiOrGif from "./EmojiOrGif.svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import MentionPicker from "./MentionPicker.svelte";
@@ -97,7 +107,7 @@
         messageContext: MessageContext;
         user: CreatedUser;
         inputTrayVisible: boolean;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
         onStartTyping: () => void;
@@ -145,13 +155,29 @@
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
     let editor = $state<RichTextEditor>();
+    // The editor is its own chunk (see richTextEditorLoader). Normally already
+    // warm; the placeholder is only visible on direct-to-chat entry while the
+    // chunk is in flight. A tap on the placeholder focuses the editor once it
+    // arrives.
+    const alreadyLoaded = richTextEditorIfLoaded();
+    let EditorComponent = $state(alreadyLoaded);
+    let focusWhenReady = false;
+    if (alreadyLoaded === undefined) {
+        loadRichTextEditor().then(
+            (c) => {
+                EditorComponent = c;
+                if (focusWhenReady) tick().then(() => editor?.focus());
+            },
+            (err) => console.error("Failed to load the rich text editor", err),
+        );
+    }
     let editorEmpty = $state(true);
 
     let messageEntryElement = $state<HTMLElement>();
     let messageEntryHeight = $state<number>(0);
 
     $effect(() => {
-        if (messageEntryElement === undefined) return;
+        if (messageEntryElement == null) return;
         const el = messageEntryElement;
         const observer = new ResizeObserver(() => {
             messageEntryHeight = el.clientHeight;
@@ -199,8 +225,26 @@
     // Cases in which we show extended options, even when keyboard is visible,
     // since the extened options provide bottom padding for the input to rise
     // above the keyboard.
+    //
+    // iOS caveat: the "keyboard_only" tray exists purely to reserve the space
+    // the keyboard is about to cover, but unlike Android, iOS will not show
+    // the keyboard for a programmatic focus (e.g. the refocus after sending),
+    // and a hardware keyboard suppresses it entirely — either way the reserved
+    // space would sit empty. So on iOS only show it while the keyboard is
+    // genuinely visible (the native inset event arrives before the keyboard
+    // animates in, so there is no flicker).
+    const iosNative = isIosTauriApp();
+
+    // Whether the tray should really occupy space: on iOS a "keyboard_only"
+    // tray with no keyboard on screen must collapse, or it reserves a dead
+    // band where the keyboard would have been.
+    let trayOpen = $derived(
+        inputTrayMode !== "closed" &&
+            !(iosNative && inputTrayMode === "keyboard_only" && !keyboard.visible),
+    );
+
     $effect(() => {
-        inputTrayVisible = keyboard.visible || inputTrayMode !== "closed";
+        inputTrayVisible = keyboard.visible || trayOpen;
     });
 
     $effect(() => {
@@ -335,6 +379,7 @@
         // keyboard overlaps some of the UI content.
         keyboard.disableViewportResize();
         return () => {
+            window.clearTimeout(typingTimer);
             // Enable kb resizing again if it was enabled.
             if (wasViewportResizeEnabled) keyboard.enableViewportResize();
         };
@@ -348,8 +393,13 @@
         document.execCommand("delete");
     }
 
+    // The markdown the editor last reported (or was last set to), so the effect below can compare
+    // against it without re-serialising the whole document on every keystroke
+    let lastMarkdown = "";
+
     function onInput() {
         const inputContent = editor?.getMarkdown() ?? "";
+        lastMarkdown = inputContent;
         onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         triggerCommandSelector(inputContent);
         triggerTypingTimer();
@@ -501,9 +551,95 @@
         return false;
     }
 
-    function sendMessage() {
-        if (messageIsEmpty) return;
+    // A crypto, prize or swap-offer draft paying from an external wallet carries the intended
+    // wallet as `fromWallet`. The wallet has not yet approved anything - the approval waits for
+    // the send, whose tap is the one that consumes it. Each kind knows what the ledger will
+    // charge against the allowance (`amount` + `fees`) and how to absorb the approved account
+    // into the content once it is granted.
+    let externalWalletDraft = $derived.by(() => {
+        const draft = attachment;
+        if (draft === undefined) return undefined;
 
+        let details;
+        switch (draft.kind) {
+            case "crypto_content":
+            case "prize_content_initial": {
+                const transfer = draft.transfer;
+                if (transfer.kind !== "pending" || transfer.fromAccount !== undefined)
+                    return undefined;
+                details = {
+                    fromWallet: transfer.fromWallet,
+                    ledger: transfer.ledger,
+                    amount: transfer.amountE8s,
+                    fees: transfer.feeE8s,
+                    approved: (fromAccount: string): AttachmentContent => ({
+                        ...draft,
+                        transfer: { ...transfer, fromWallet: undefined, fromAccount },
+                    }),
+                };
+                break;
+            }
+            case "p2p_swap_content_initial": {
+                if (draft.fromAccount !== undefined) return undefined;
+                details = {
+                    fromWallet: draft.fromWallet,
+                    ledger: draft.token0.ledger,
+                    amount: draft.token0Amount,
+                    // The escrowed amount funds the swap's outbound transfer as well, so the
+                    // ledger charges the offer's amount plus two fees against the allowance
+                    fees: draft.token0.fee * 2n,
+                    approved: (fromAccount: string): AttachmentContent => ({
+                        ...draft,
+                        fromWallet: undefined,
+                        fromAccount,
+                    }),
+                };
+                break;
+            }
+            default:
+                return undefined;
+        }
+
+        const wallet = SIGNER_WALLETS.find((w) => w.id === details.fromWallet);
+        if (wallet === undefined) return undefined;
+        return { ...details, wallet };
+    });
+    let walletApproval = $state<ExternalWalletApproval | undefined>();
+    let approvingTransfer = $state(false);
+
+    function sendMessage() {
+        if (showCommandSelector || messageIsEmpty || approvingTransfer) return;
+
+        const draft = externalWalletDraft;
+        if (draft !== undefined) {
+            // Never fall through: a send without the approval would silently take the funds from
+            // the user's OpenChat account instead of the wallet they chose
+            if (walletApproval == null) return;
+            // The draft spends from an external wallet, which has to approve us taking the
+            // transfer before the message carrying it is sent. Nothing may be awaited before
+            // this call - the wallet opens in a popup, which the browser only allows while it is
+            // still handling the tap. If the user backs out, or the approval fails, nothing is
+            // sent and the draft stays put, so sending again just asks again.
+            approvingTransfer = true;
+            walletApproval
+                .approve()
+                .then((fromAccount) => {
+                    if (fromAccount !== undefined) {
+                        // The account the wallet approved is now the one to take the funds from
+                        localUpdates.draftMessages.setAttachment(
+                            messageContext,
+                            draft.approved(fromAccount),
+                        );
+                        completeSend();
+                    }
+                })
+                .finally(() => (approvingTransfer = false));
+        } else {
+            completeSend();
+        }
+    }
+
+    function completeSend() {
         const txt = editor?.getMarkdown() ?? "";
 
         // "/ai <prompt>" runs the on-device model locally instead of sending a message. Only outside
@@ -574,36 +710,16 @@
 
     function afterSendMessage() {
         editor?.clear();
+        lastMarkdown = "";
         onSetTextContent();
 
         onStopTyping();
 
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
+        // The {#key} only wraps the editor itself so the rest of the entry UI is not rebuilt.
         textboxId = Symbol();
         tick().then(() => editor?.focus());
-    }
-
-    function detectMarkdown(text: string | null) {
-        if (!text) return false;
-
-        // a few regexes to detect various block level markdown elements (possibly incomplete)
-        const headerRegex = /^(?:\#{1,6}\s+)/m;
-        const tableRegex = /(?:\|(?:[^\r\n\|\\]|\\.)*\|)+/;
-        const bulletedListRegex = /^(?:\s*[-\*+]\s+)/m;
-        const numberedListRegex = /^(?:\s*\d+\.\s+)/m;
-        const blockquoteRegex = /^(?:\s*>)/m;
-        const codeBlockRegex = /(?:^```[\s\S]*?^```)/m;
-        const regexList = [
-            headerRegex,
-            tableRegex,
-            bulletedListRegex,
-            numberedListRegex,
-            blockquoteRegex,
-            codeBlockRegex,
-        ];
-        const result = regexList.some((regex) => regex.test(text));
-        return result;
     }
 
     let directChatBotId = $derived(client.directChatWithBot(chat));
@@ -639,13 +755,15 @@
                     editor.setContent(editingEvent.event.content.caption ?? "");
                 }
                 previousEditingEvent = editingEvent;
-                containsMarkdown = detectMarkdown(editor.getMarkdown());
+                lastMarkdown = editor.getMarkdown();
+                containsMarkdown = detectMarkdown(lastMarkdown);
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
-                if (editor.getMarkdown() !== text) {
+                if (lastMarkdown !== text) {
                     editor.setContent(text);
+                    lastMarkdown = editor.getMarkdown();
                     containsMarkdown = detectMarkdown(text);
                 }
             }
@@ -715,7 +833,7 @@
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={activeStream !== undefined ? "center" : "end"}
-        background={ColourVars.background0}
+        background={ColourVars.chatBackground}
         padding={["zero", "md", inputTrayMode !== "closed" ? "sm" : "zero"]}
     >
         {#if frozen}
@@ -730,7 +848,7 @@
             <PreviewFooter {lapsed} {chat} />
         {:else if externalContent}
             <Row crossAxisAlignment={"center"} gap={"md"}>
-                <Alert size={"1.5rem"} color={"var(--warning)"} />
+                <Alert size={"1.5rem"} color={"var(--validation-warning)"} />
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
                 </BodySmall>
@@ -747,142 +865,173 @@
             {#if activeStream !== undefined}
                 <RecordingWaveform stream={activeStream} />
             {:else if canEnterText}
-                {#key textboxId}
-                    <div
-                        class="message_entry_wrapper"
-                        class:has_reply={!!replyingTo}
-                        class:has_attachment={!!attachment}
-                        class:is_editing={editingEvent !== undefined}
-                    >
-                        {#if replyingTo}
-                            <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
-                        {/if}
-                        {#if !editingEvent && attachment !== undefined}
-                            <DraftMediaMessage {onRemoveAttachment} content={attachment} />
-                        {/if}
-                        {#if editingEvent !== undefined}
-                            <Row
-                                height={{ size: "1rem" }}
-                                crossAxisAlignment="center"
-                                supplementalClass="editing-title"
+                <div
+                    class="message_entry_wrapper"
+                    class:has_reply={!!replyingTo}
+                    class:has_attachment={!!attachment}
+                    class:is_editing={editingEvent !== undefined}
+                >
+                    {#if replyingTo}
+                        <ReplyingTo readonly {replyingTo} {user} {onCancelReply} />
+                    {/if}
+                    {#if !editingEvent && attachment !== undefined}
+                        <DraftMediaMessage {onRemoveAttachment} content={attachment} />
+                    {/if}
+                    {#if externalWalletDraft !== undefined}
+                        <!-- Renders nothing until the send asks the wallet for its approval,
+                             then shows where that has got to -->
+                        <div class="wallet_approval">
+                            <ExternalWalletApproval
+                                bind:this={walletApproval}
+                                wallet={externalWalletDraft.wallet}
+                                ledger={externalWalletDraft.ledger}
+                                amount={externalWalletDraft.amount}
+                                fees={externalWalletDraft.fees}
+                            />
+                        </div>
+                    {/if}
+                    {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}
+                        <Row padding="md">
+                            <Progress
+                                colour={ColourVars.primarySurface}
+                                percent={Math.round($videoProcessingProgress.progress * 100)}
                             >
-                                <BodySmall colour="textSecondary">
-                                    <Translatable resourceKey={i18nKey("Editing...")} />
-                                </BodySmall>
-                                <IconButton size={"sm"} padding={"md"} onclick={onCancelEdit}>
-                                    {#snippet icon()}
-                                        <Close color={ColourVars.textSecondary} />
-                                    {/snippet}
-                                </IconButton>
-                            </Row>
-                        {/if}
-                        <Container
-                            bind:ref={messageEntryElement}
-                            gap="sm"
-                            minHeight="3.5rem"
-                            maxHeight="calc(var(--vh, 1vh) * 50)"
-                            padding="xs"
-                            overflow="visible"
+                                <Translatable resourceKey={i18nKey("videoProcessing")} />
+                            </Progress>
+                        </Row>
+                    {/if}
+                    {#if editingEvent !== undefined}
+                        <Row
+                            height={{ size: "1rem" }}
                             crossAxisAlignment="center"
-                            mainAxisAlignment="spaceBetween"
-                            supplementalClass="message_entry_text_box"
+                            supplementalClass="editing-title"
                         >
-                            {#if inputTrayMode !== "emoji_gif_selection"}
-                                <IconButton
-                                    onclick={toggleEmojiPicker}
-                                    padding={["sm", "zero", "md", "sm"]}
-                                    size={"md"}
-                                >
-                                    {#snippet icon()}
-                                        <StickerEmoji color={ColourVars.textPlaceholder} />
-                                    {/snippet}
-                                </IconButton>
-                            {:else}
-                                <IconButton
-                                    onclick={showKeyboard}
-                                    padding={["sm", "zero", "md", "sm"]}
-                                    size={"md"}
-                                >
-                                    {#snippet icon()}
-                                        <Keyboard color={ColourVars.textPlaceholder} />
-                                    {/snippet}
-                                </IconButton>
-                            {/if}
+                            <BodySmall colour="textSecondary">
+                                <Translatable resourceKey={i18nKey("Editing...")} />
+                            </BodySmall>
+                            <IconButton size={"sm"} padding={"md"} onclick={onCancelEdit}>
+                                {#snippet icon()}
+                                    <Close color={ColourVars.textSecondary} />
+                                {/snippet}
+                            </IconButton>
+                        </Row>
+                    {/if}
+                    <Container
+                        bind:ref={messageEntryElement}
+                        gap="sm"
+                        minHeight="3.5rem"
+                        maxHeight="calc(var(--vh, 1vh) * 50)"
+                        padding="xs"
+                        overflow="visible"
+                        crossAxisAlignment="center"
+                        mainAxisAlignment="spaceBetween"
+                        supplementalClass="message_entry_text_box"
+                    >
+                        {#if inputTrayMode !== "emoji_gif_selection"}
+                            <IconButton
+                                onclick={toggleEmojiPicker}
+                                padding={["sm", "zero", "md", "sm"]}
+                                size={"md"}
+                            >
+                                {#snippet icon()}
+                                    <StickerEmoji color={ColourVars.inputPlaceholder} />
+                                {/snippet}
+                            </IconButton>
+                        {:else}
+                            <IconButton
+                                onclick={showKeyboard}
+                                padding={["sm", "zero", "md", "sm"]}
+                                size={"md"}
+                            >
+                                {#snippet icon()}
+                                    <Keyboard color={ColourVars.inputPlaceholder} />
+                                {/snippet}
+                            </IconButton>
+                        {/if}
 
+                        {#key textboxId}
                             <div class="textbox">
-                                <RichTextEditor
-                                    bind:this={editor}
-                                    bind:empty={editorEmpty}
-                                    placeholder={interpolate($_, placeholder)}
-                                    members={$selectedChatMembersStore}
-                                    {onPaste}
-                                    onfocus={keyboardFocus}
-                                    onKeydown={keyDown}
-                                    oninput={onInput}
-                                >
-                                    {#snippet mentionPicker(args)}
-                                        <MentionPicker
-                                            supportsUserGroups
-                                            offset={messageEntryHeight}
-                                            onMention={args.onMention}
-                                            prefix={args.query}
-                                        />
-                                    {/snippet}
-                                    {#snippet emojiPicker(args)}
-                                        <EmojiAutocompleter
-                                            offset={messageEntryHeight}
-                                            onClose={args.onClose}
-                                            onSelect={args.onSelect}
-                                            query={args.query}
-                                        />
-                                    {/snippet}
-                                </RichTextEditor>
-                            </div>
-
-                            {#if editingEvent === undefined}
-                                <Container
-                                    padding={["zero", "sm", "zero", "zero"]}
-                                    width={"hug"}
-                                    gap={"md"}
-                                >
-                                    <IconButton
-                                        onclick={toggleAttachments}
-                                        padding={["sm", "zero", "md", "zero"]}
-                                        size={"md"}
+                                {#if EditorComponent}
+                                    <EditorComponent
+                                        bind:this={editor}
+                                        bind:empty={editorEmpty}
+                                        placeholder={interpolate($_, placeholder)}
+                                        members={$selectedChatMembersStore}
+                                        {onPaste}
+                                        onfocus={keyboardFocus}
+                                        onKeydown={keyDown}
+                                        oninput={onInput}
                                     >
-                                        {#snippet icon()}
-                                            <div
-                                                class:open={inputTrayMode === "attachments" &&
-                                                    !keyboard.visible}
-                                                class="drawer_trigger"
-                                            >
-                                                <PlusCircle color={ColourVars.textPlaceholder} />
-                                            </div>
+                                        {#snippet mentionPicker(args)}
+                                            <MentionPicker
+                                                supportsUserGroups
+                                                offset={messageEntryHeight}
+                                                onMention={args.onMention}
+                                                prefix={args.query}
+                                            />
                                         {/snippet}
-                                    </IconButton>
+                                        {#snippet emojiPicker(args)}
+                                            <EmojiAutocompleter
+                                                offset={messageEntryHeight}
+                                                onClose={args.onClose}
+                                                onSelect={args.onSelect}
+                                                query={args.query}
+                                            />
+                                        {/snippet}
+                                    </EditorComponent>
+                                {:else}
+                                    <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                    <div
+                                        class="editor-placeholder"
+                                        onpointerdown={() => (focusWhenReady = true)}
+                                    >
+                                        {interpolate($_, placeholder)}
+                                    </div>
+                                {/if}
+                            </div>
+                        {/key}
 
-                                    {#if messageIsEmpty && canAddImageOrVideo}
-                                        <FileAttacher {onFileSelected}>
-                                            {#snippet children(onClick)}
-                                                <IconButton
-                                                    onclick={onClick}
-                                                    padding={["sm", "zero", "md", "zero"]}
-                                                    size={"md"}
-                                                >
-                                                    {#snippet icon()}
-                                                        <Camera
-                                                            color={ColourVars.textPlaceholder}
-                                                        />
-                                                    {/snippet}
-                                                </IconButton>
-                                            {/snippet}
-                                        </FileAttacher>
-                                    {/if}
-                                </Container>
-                            {/if}
-                        </Container>
-                    </div>
-                {/key}
+                        {#if editingEvent === undefined}
+                            <Container
+                                padding={["zero", "sm", "zero", "zero"]}
+                                width={"hug"}
+                                gap={"md"}
+                            >
+                                <IconButton
+                                    onclick={toggleAttachments}
+                                    padding={["sm", "zero", "md", "zero"]}
+                                    size={"md"}
+                                >
+                                    {#snippet icon()}
+                                        <div
+                                            class:open={inputTrayMode === "attachments" &&
+                                                !keyboard.visible}
+                                            class="drawer_trigger"
+                                        >
+                                            <PlusCircle color={ColourVars.inputPlaceholder} />
+                                        </div>
+                                    {/snippet}
+                                </IconButton>
+
+                                {#if messageIsEmpty && canAddImageOrVideo}
+                                    <FileAttacher {messageContext} {onFileSelected}>
+                                        {#snippet children(onClick)}
+                                            <IconButton
+                                                onclick={onClick}
+                                                padding={["sm", "zero", "md", "zero"]}
+                                                size={"md"}
+                                            >
+                                                {#snippet icon()}
+                                                    <Camera color={ColourVars.inputPlaceholder} />
+                                                {/snippet}
+                                            </IconButton>
+                                        {/snippet}
+                                    </FileAttacher>
+                                {/if}
+                            </Container>
+                        {/if}
+                    </Container>
+                </div>
             {:else}
                 <div class="textbox">
                     <Translatable resourceKey={placeholder} />
@@ -897,7 +1046,8 @@
                                 mimeType={audioMimeType}
                                 bind:activeStream
                                 bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected}
+                                onAudioCaptured={(content) =>
+                                    onFileSelected(content, messageContext)}
                             />
                         {:else if canEnterText}
                             <IconButton
@@ -935,11 +1085,9 @@
         onmousedown={inputTrayFocusIn}
         onfocusout={inputTrayFocusOut}
         style:height={`${
-            inputTrayMode !== "closed"
-                ? keyboard.height + (inputTrayMode === "emoji_gif_search" ? 200 : 0)
-                : 0
+            trayOpen ? keyboard.height + (inputTrayMode === "emoji_gif_search" ? 200 : 0) : 0
         }px`}
-        style:visibility={inputTrayMode !== "closed" ? "visible" : "hidden"}
+        style:visibility={trayOpen ? "visible" : "hidden"}
     >
         {#if inputTrayMode === "emoji_gif_selection" || inputTrayMode === "emoji_gif_search"}
             <EmojiOrGif
@@ -971,7 +1119,7 @@
         width: 100%;
         // overflow: auto;
         border-radius: var(--rad-huge);
-        background-color: var(--text-tertiary);
+        background-color: var(--chat-input-background);
         transition: border-radius 200ms ease-out;
 
         &.has_reply,
@@ -981,6 +1129,15 @@
 
         &.is_editing {
             border-radius: var(--rad-xl);
+        }
+    }
+
+    .wallet_approval {
+        padding: var(--sp-md);
+
+        // The approval renders nothing while idle - collapse the padding with it
+        &:empty {
+            display: none;
         }
     }
 
@@ -994,6 +1151,16 @@
             transform: rotate(135deg);
         }
     }
+    // mirrors :global(.ProseMirror) + its empty-editor placeholder
+    .editor-placeholder {
+        width: 100%;
+        min-width: 0;
+        font-size: 1rem;
+        line-height: 1.3;
+        color: var(--txt-light, var(--chat-input-placeholder));
+        cursor: text;
+    }
+
     .textbox {
         outline: none;
         border: 0;
@@ -1010,6 +1177,14 @@
 
         &.recording {
             display: none;
+        }
+
+        :global(.ProseMirror) {
+            scrollbar-width: none;
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
         }
     }
 
@@ -1029,7 +1204,7 @@
         width: 100%;
         padding-bottom: 0;
         overflow: hidden;
-        background: var(--background-1);
+        background: var(--surface-1);
         border-radius: var(--rad-lg) var(--rad-lg) 0 0;
         transition:
             height 0.2s cubic-bezier(0.4, 0, 0.2, 1),

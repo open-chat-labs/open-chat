@@ -68,7 +68,7 @@
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
         height={"fill"}
-        background={ColourVars.background2}
+        background={ColourVars.surface2}
         width={{ share: 1 }}>
         <Caption colour={"primary"} width={"hug"} align={"center"}>
             {@render diamond?.(ColourVars.primary)}

@@ -25,7 +25,7 @@
 {#snippet check(label: ResourceKey, requested: boolean)}
     <Row crossAxisAlignment={"center"} gap={"sm"}>
         {#if requested}
-            <Check size={"1em"} color={"var(--success)"} />
+            <Check size={"1em"} color={"var(--validation-success)"} />
         {:else}
             <Minus size={"1em"} color={"var(--txt-light)"} />
         {/if}

@@ -8,7 +8,7 @@ use types::UnitResult;
 // requested meanwhile is deferred until the hold is cleared. Used for preservation requests
 // from law enforcement, which routinely outlast the ordinary retention period.
 #[ts_export(user_index, set_vault_legal_hold)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct Args {
     pub report_index: u64,
     pub legal_hold: bool,

@@ -34,7 +34,7 @@
 
 <Container direction={"vertical"} gap={"xs"}>
     <Container
-        background={ColourVars.textTertiary}
+        background={ColourVars.inputBackground}
         padding={["md", "xl", "xs", "xl"]}
         borderRadius={"xxl"}
         gap={"sm"}
@@ -61,7 +61,7 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <BodySmall colour={error ? "error" : "textSecondary"}>
+            <BodySmall colour={error ? "validationError" : "textSecondary"}>
                 {@render subtext()}
             </BodySmall>
         </div>
@@ -77,7 +77,7 @@
         line-height: var(--typo-body-lh);
 
         &::placeholder {
-            color: var(--text-placeholder);
+            color: var(--input-placeholder);
         }
     }
 
@@ -91,7 +91,7 @@
         right: var(--sp-xl);
         color: var(--text-secondary);
         &.warn {
-            color: var(--warning);
+            color: var(--validation-warning);
         }
     }
 </style>

@@ -257,7 +257,7 @@ pub mod happy_path {
         let response = user::send_message_with_transfer_to_channel(
             env,
             sender.principal,
-            sender.user_id.into(),
+            sender.user_id.canister_id(),
             &user_canister::send_message_with_transfer_to_channel::Args {
                 channel_id,
                 thread_root_message_index: None,
@@ -690,6 +690,7 @@ pub mod happy_path {
                 channel_id,
                 thread_root_message_index: None,
                 message_id,
+                from_account: None,
                 pin: None,
                 new_achievement: false,
             },

@@ -75,7 +75,7 @@
     onMount(() => {
         // Release any active notifications for the current chat when the component mounts
         // TODO include thread index
-        if (client.isNativeAndroid()) {
+        if (client.isNativeApp()) {
             switch (chat.id.kind) {
                 case "direct_chat":
                     releaseNotifications({
@@ -99,10 +99,6 @@
         }
 
         const unsubs = [
-            messagesRead.subscribe(() => {
-                unreadMessages = getUnreadMessageCount(chat);
-                firstUnreadMention = client.getFirstUnreadMention(chat);
-            }),
             subscribe("tokenTransfer", onTokenTransfer),
             subscribe("createTestMessages", onCreateTestMessages),
             subscribe("searchChat", onSearchChat),
@@ -123,6 +119,12 @@
             createTestMessages(num);
         }
     }
+
+    $effect(() => {
+        void $messagesRead;
+        unreadMessages = getUnreadMessageCount(chat);
+        firstUnreadMention = client.getFirstUnreadMention(chat);
+    });
 
     function getUnreadMessageCount(chat: ChatSummary): number {
         if (client.isPreviewing(chat.id) || client.isLapsed(chat.id)) return 0;
@@ -153,8 +155,8 @@
         });
     }
 
-    function onFileSelected(content: AttachmentContent) {
-        localUpdates.draftMessages.setAttachment({ chatId: chat.id }, content);
+    function onFileSelected(content: AttachmentContent, context: MessageContext) {
+        localUpdates.draftMessages.setAttachment(context, content);
     }
 
     function makeMeme() {
@@ -346,7 +348,7 @@
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
-<Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
+<Container background={ColourVars.chatBackground} height={"fill"} direction={"vertical"}>
     {#if showSearchHeader}
         <CurrentChatSearchHeader
             {chat}

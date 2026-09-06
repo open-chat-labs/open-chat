@@ -23,6 +23,7 @@ fn accept_if_valid(state: &RuntimeState) {
         "reinstate_missed_daily_claims" | "withdraw_from_icpswap" => state.is_caller_platform_operator(),
         "register_user" => true,
         "remove_notifications" => state.is_caller_notification_pusher(),
+        "submit_media_scan_verdicts" => state.is_caller_media_scanner(),
         _ => false,
     } || method_name.starts_with("bot_");
 

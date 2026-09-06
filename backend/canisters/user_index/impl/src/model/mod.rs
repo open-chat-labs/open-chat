@@ -8,6 +8,7 @@ pub mod local_user_index_map;
 pub mod moderation;
 pub mod pending_payments_queue;
 pub mod premium_items;
+pub mod protected_actions;
 pub mod reported_messages;
 pub mod storage_index_user_config_batch;
 pub mod storage_index_users_to_remove_batch;

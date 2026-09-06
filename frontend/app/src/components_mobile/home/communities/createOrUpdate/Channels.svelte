@@ -84,7 +84,7 @@
                         <Container
                             supplementalClass={"channel_list_item"}
                             crossAxisAlignment={"center"}
-                            borderColour={ColourVars.background2}
+                            borderColour={ColourVars.surface2}
                             borderWidth={"thick"}
                             gap={"md"}
                             padding={"md"}
