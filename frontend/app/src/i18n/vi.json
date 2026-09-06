@@ -163,6 +163,21 @@
         "notAvailable": "Nội dung này không khả dụng trong phiên bản ứng dụng này. Bạn vẫn có thể truy cập nó từ ứng dụng web tại [oc.app](https://oc.app).",
         "notAvailableTitle": "Nội dung không khả dụng"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "Chờ một chút! Đang cập nhật ...",
+        "downloadingMessage": "Chúng tôi đang tải một bản cập nhật nhanh và bạn sẽ có thể tiếp tục ngay ...",
+        "reload": "Tải lại và tiếp tục",
+        "requiredTitle": "Cần cập nhật",
+        "requiredMessage": "Đã có phiên bản {version}, nhưng nó cần một phiên bản ứng dụng mới hơn phiên bản bạn đã cài. Ứng dụng này không thể tự cập nhật lên đến đó.",
+        "availableTitle": "Đã có bản cập nhật",
+        "availableMessage": "Đã có phiên bản {version}. Trong lúc chờ, phiên bản này vẫn hoạt động bình thường.",
+        "fromPlayStore": "Cập nhật từ Play Store",
+        "downloadLatest": "Tải phiên bản mới nhất",
+        "reinstallTitle": "Vui lòng cài đặt lại OpenChat",
+        "reinstallMessage": "Bản OpenChat này không thể cập nhật được nữa và sẽ ngừng hoạt động vào một lúc nào đó. Hãy tải phiên bản hiện tại để tiếp tục nhận cập nhật.",
+        "reinstallUninstallOld": "Sau khi cài bản mới, hãy gỡ bản này. Nếu giữ cả hai, mỗi thông báo sẽ đến hai lần.",
+        "reinstallDownload": "Tải phiên bản hiện tại"
+    },
     "appWallet": {
         "header": {
             "asset": "Tài sản",

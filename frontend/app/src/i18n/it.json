@@ -163,6 +163,21 @@
         "notAvailable": "Questo contenuto non è disponibile in questa versione dell'app. Puoi comunque accedervi dalla web app su [oc.app](https://oc.app).",
         "notAvailableTitle": "Contenuto non disponibile"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "Un attimo! Aggiornamento ...",
+        "downloadingMessage": "Stiamo scaricando un rapido aggiornamento e poi potrai continuare ...",
+        "reload": "Ricarica e continua",
+        "requiredTitle": "Aggiornamento necessario",
+        "requiredMessage": "La versione {version} è disponibile, ma richiede una versione dell'app più recente di quella che hai installato. Questa non può aggiornarsi da sola fino a quel punto.",
+        "availableTitle": "Aggiornamento disponibile",
+        "availableMessage": "La versione {version} è disponibile. Nel frattempo questa continua a funzionare.",
+        "fromPlayStore": "Aggiorna dal Play Store",
+        "downloadLatest": "Scarica l'ultima versione",
+        "reinstallTitle": "Reinstalla OpenChat",
+        "reinstallMessage": "Questa copia di OpenChat non può più essere aggiornata e a un certo punto smetterà di funzionare. Scarica la versione attuale per continuare a ricevere gli aggiornamenti.",
+        "reinstallUninstallOld": "Dopo aver installato quella nuova, disinstalla questa. Se restano entrambe, ogni notifica arriva due volte.",
+        "reinstallDownload": "Scarica la versione attuale"
+    },
     "appWallet": {
         "header": {
             "asset": "Risorsa",
