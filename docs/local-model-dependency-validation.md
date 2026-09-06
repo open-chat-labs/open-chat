@@ -53,11 +53,13 @@ preserves the previous key; only a validated response replaces it atomically.
 The focused helper/build tests pass (19 tests), including mismatched versions,
 quoted executable paths and failure preservation.
 
-The actual default production frontend build passed on 2026-09-06 using the
-pinned `dfx` binary and a real anonymous public-key query. The output contains no
-optional Transformers WebGPU worker or JSPI WASM. Separate opt-in WebGPU build
-and distribution checks are still required; this is not a production deployment
-or an APK installation. Existing optional wallet-import/build warnings remain.
+Both actual production frontend builds passed on 2026-09-06 using the pinned
+`dfx` binary and real anonymous public-key queries. The default output contains
+no optional Transformers WebGPU worker or JSPI WASM. The explicitly enabled
+WebGPU candidate passes all 26 distribution asset checks, including 21 notices;
+this verifies packaged identities, not inference. Build-only executable settings
+are absent from emitted client files and archive entries. No production deployment
+or APK installation occurred. Existing optional wallet-import/build warnings remain.
 
 Portable dependency hashing, shell-free formatting and offline SBOM lock-identity
 helpers now have CI coverage: 49 generic policy/packaging tests and 12 historical
@@ -81,8 +83,8 @@ not a fresh-audit count or a claim that all advisories are resolved.
 `npm ls --all` is not clean: seven inherited peer issues remain, along with two
 Windows optional-orphan entries from Sharp's new cross-platform closure. The
 actual native Sharp checks pass; optional lock records were not pruned to hide
-that diagnostic. Opt-in production packaging, upstream reconciliation, hosted
-checks and final device acceptance remain separate gates. APK preparation is for
+that diagnostic. Upstream reconciliation, hosted checks and final device
+acceptance remain separate gates. APK preparation is for
 local testing only: publisher signing and store submission are outside this task;
 the existing local package, signing certificate, account and model cache must be
 preserved.
