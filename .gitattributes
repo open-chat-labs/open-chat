@@ -1,0 +1,5 @@
+# Preserve upstream license/model-card whitespace, including Markdown hard breaks.
+# Their normalized text identities are verified by model_asset_notices.test.mjs.
+# App-authored metadata and all source files retain normal whitespace checking.
+frontend/app/model-asset-notices/*.txt whitespace=-blank-at-eol,-blank-at-eof
+frontend/app/model-asset-notices/*-MODEL_CARD.md whitespace=-blank-at-eol,-blank-at-eof
