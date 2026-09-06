@@ -44,6 +44,8 @@ on:
       - "frontend/app/build*"
       - "frontend/app/rollup*"
       - "frontend/app/modelAssetNotices.mjs"
+      - "frontend/app/publicKeyBuild*"
+      - "frontend/app/src/publicKeyBuild*"
       - "frontend/app/model-asset-notices/**"
       - "frontend/app/model-overrides/**"
       - "frontend/openchat-shared/src/domain/onDeviceModel*"
@@ -57,6 +59,9 @@ on:
       - "frontend/src-tauri/**"
       - "frontend/tauri-plugin-oc/**"
       - "scripts/check_openchat_pr1_security.mjs"
+      - "scripts/security_dependency_hash*"
+      - "scripts/sbom_lock_identity*"
+      - "scripts/frontend_format_check*"
       - "scripts/model_ci_coverage*"
       - "scripts/model_asset_notices*"
       - "scripts/verify_webgpu_distribution*"
@@ -95,6 +100,8 @@ jobs:
       - name: Install exact frontend lockfile
         working-directory: frontend
         run: npm ci
+      - name: Verify historical reviewed dependency hash portability
+        run: node --test scripts/security_dependency_hash.test.mjs
       - name: Check candidate source and config formatting
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -174,6 +181,7 @@ jobs:
         run: >-
           npm test --
           app/rollup-plugin-wasm-url
+          app/src/publicKeyBuild
           app/src/stores/customModels
           app/src/stores/onDeviceModels
           app/src/stores/transformersWebGpu

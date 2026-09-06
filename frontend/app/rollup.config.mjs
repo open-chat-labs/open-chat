@@ -23,6 +23,7 @@ import { sourcemapNewline } from "../sourcemapNewline.mjs";
 import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
 import { wasmUrlAsset } from "./rollup-plugin-wasm-url.mjs";
 import { modelAssetNoticesPlugin } from "./modelAssetNotices.mjs";
+import { publicKeyBuildPlugin } from "./publicKeyBuild.mjs";
 import { transformersWebGpuFeatureEnabled } from "./transformersWebGpuFeatureFlag.mjs";
 import {
     TRANSFORMERS_QWEN_ARTIFACTS,
@@ -41,6 +42,13 @@ import {
     maybeStringify,
     resetManualChunksCache,
 } from "./rollup.extras.mjs";
+
+const dfxBuildVersion = JSON.parse(
+    fs.readFileSync(new URL("../../dfx.json", import.meta.url), "utf8"),
+).dfx;
+if (typeof dfxBuildVersion !== "string" || dfxBuildVersion.trim() === "") {
+    throw new Error("dfx.json must declare the dfx build version");
+}
 
 // this is a bit ridiculous but there we are ...
 function clean() {
@@ -543,9 +551,14 @@ export default {
             hook: "generateBundle",
         }),
         sourcemapNewline(),
+        publicKeyBuildPlugin({
+            network: process.env.OC_DFX_NETWORK ?? "local",
+            canister: process.env.OC_USER_INDEX_CANISTER,
+            dfxExecutable: process.env.OC_DFX_EXECUTABLE,
+            expectedDfxVersion: dfxBuildVersion,
+        }),
         execute({
             commands: [
-                `../../scripts/get-public-key.sh ${process.env.OC_DFX_NETWORK} > ./public/public-key`,
                 // Build the worker + service worker from source into their lib/
                 // dirs before the copy step above pulls them into build/.
                 `node ./build-workers.mjs`,

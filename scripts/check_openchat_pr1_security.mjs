@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -19,9 +18,11 @@ import {
   sep,
 } from "node:path";
 import { tmpdir } from "node:os";
-import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { reviewedDependencyDigest } from "./security_dependency_hash.mjs";
+import { checkFrontendFormatting } from "./frontend_format_check.mjs";
+import { assertSbomLockIdentity } from "./sbom_lock_identity.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const policyPath = resolve(
@@ -45,9 +46,11 @@ for (const [path, expected] of Object.entries(policy.reviewedDependencyFiles)) {
     failures.push("Reviewed dependency file is missing: " + path);
     continue;
   }
-  const actual = createHash("sha256")
-    .update(readFileSync(absolutePath))
-    .digest("hex");
+  const actual = reviewedDependencyDigest(
+    readFileSync(absolutePath),
+    policy,
+    path,
+  );
   if (actual !== expected) {
     failures.push(
       "Reviewed dependency file changed: " +
@@ -71,12 +74,17 @@ function executable(name) {
   return process.platform === "win32" ? `${name}.exe` : name;
 }
 
-function run(command, args, cwd = root) {
+function run(command, args, cwd = root, environmentOverrides = {}) {
   const result = spawnSync(command, args, {
     cwd,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, CARGO_TERM_COLOR: "never", NO_COLOR: "1" },
+    env: {
+      ...process.env,
+      CARGO_TERM_COLOR: "never",
+      NO_COLOR: "1",
+      ...environmentOverrides,
+    },
   });
   if (result.error) throw result.error;
   return result;
@@ -201,26 +209,11 @@ if (modes.has("format")) {
         .split(String.fromCharCode(92))
         .join("/"),
     );
-    const args = [
-      "exec",
-      "prettier",
-      "--",
-      "--plugin=prettier-plugin-svelte",
-      "--check",
-      ...prettierPaths,
-    ];
-    const result =
-      process.platform === "win32"
-        ? run(
-            process.env.ComSpec ?? "cmd.exe",
-            ["/d", "/s", "/c", "npm", ...args],
-            frontendRoot,
-          )
-        : run("npm", args, frontendRoot);
-    if (result.status !== 0) {
-      failures.push(
-        `Candidate source/config formatting failed:\n${result.stdout}${result.stderr}`,
-      );
+    for (const failure of checkFrontendFormatting(
+      frontendRoot,
+      prettierPaths,
+    )) {
+      failures.push(`Candidate source/config formatting failed:\n${failure}`);
     }
   }
   console.log(
@@ -347,6 +340,7 @@ if (modes.has("rust")) {
 if (modes.has("licenses")) {
   const metadataResult = run(executable("cargo"), [
     "metadata",
+    "--locked",
     "--format-version",
     "1",
     "--features",
@@ -425,6 +419,8 @@ if (modes.has("sbom")) {
     throw new Error(`SBOM_OUTPUT must end in .json: ${output}`);
   }
 
+  const sourceLockPath = resolve(root, "Cargo.lock");
+  const sourceLock = readFileSync(sourceLockPath);
   const scratch = mkdtempSync(join(tmpdir(), "openchat-pr1-sbom-"));
   try {
     const pluginPath = resolve(root, "frontend/tauri-plugin-oc");
@@ -444,7 +440,7 @@ if (modes.has("sbom")) {
     );
     mkdirSync(resolve(scratch, "src"));
     writeFileSync(resolve(scratch, "src/main.rs"), "fn main() {}\n");
-    copyFileSync(resolve(root, "Cargo.lock"), resolve(scratch, "Cargo.lock"));
+    writeFileSync(resolve(scratch, "Cargo.lock"), sourceLock);
 
     const configured = process.env.CARGO_CYCLONEDX_BIN;
     const command = configured ?? executable("cargo");
@@ -456,6 +452,7 @@ if (modes.has("sbom")) {
         resolve(scratch, "Cargo.toml"),
         "--format",
         "json",
+        "--all",
         "--spec-version",
         "1.5",
         "--target",
@@ -465,7 +462,13 @@ if (modes.has("sbom")) {
         "bom",
       ],
       scratch,
+      // cargo-cyclonedx 0.5.9 has no --locked option. Resolve only cached sources
+      // and verify every resulting identity/checksum against the source lock.
+      { CARGO_NET_OFFLINE: "true" },
     );
+    if (!readFileSync(sourceLockPath).equals(sourceLock)) {
+      throw new Error("SBOM generation changed the source Cargo.lock");
+    }
     if (result.status !== 0) {
       throw new Error(
         `cargo cyclonedx failed (${result.status}):\n${result.stdout}\n${result.stderr}`,
@@ -479,6 +482,30 @@ if (modes.has("sbom")) {
       );
     }
     const bom = JSON.parse(readFileSync(generated, "utf8"));
+    const lockProof = assertSbomLockIdentity(
+      sourceLock,
+      readFileSync(resolve(scratch, "Cargo.lock")),
+    );
+    bom.metadata ??= {};
+    bom.metadata.properties = [
+      ...(bom.metadata.properties ?? []),
+      {
+        name: "openchat:source-cargo-lock-sha256",
+        value: lockProof.sourceLockSha256,
+      },
+      {
+        name: "openchat:isolated-cargo-lock-sha256",
+        value: lockProof.isolatedLockSha256,
+      },
+      {
+        name: "openchat:locked-external-packages",
+        value: String(lockProof.externalPackages),
+      },
+      {
+        name: "openchat:sbom-scope",
+        value: "native-model-plugin;features=inference;target=all",
+      },
+    ];
     const sourcePaths = [
       [scratch, "openchat-sbom-source"],
       [root, "openchat-workspace"],

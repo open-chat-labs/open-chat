@@ -85,7 +85,7 @@ function sourceFiles(path) {
 // Discover current and future tests by model-owned naming families, not a frozen
 // list of today's filenames. App-authored action/OCR suites remain in full CI.
 const modelFamily =
-  /\/(?:customModels|onDeviceModels|model|onDeviceInference|nativeInferenceRuntimeBridge|webInference|transformersWebGpu|gemma4WebGpu|WebInferenceRuntimeSettings|localAi|localAudioInput|configuredLocalBlobUrl|localImageInput|publicBlob|rollup-plugin-wasm-url|bootstrapSecurity)[^/]*\.(?:spec|test)\.[cm]?[jt]sx?$/u;
+  /\/(?:customModels|onDeviceModels|model|onDeviceInference|nativeInferenceRuntimeBridge|webInference|transformersWebGpu|gemma4WebGpu|WebInferenceRuntimeSettings|localAi|localAudioInput|configuredLocalBlobUrl|localImageInput|publicBlob|publicKeyBuild|rollup-plugin-wasm-url|bootstrapSecurity)[^/]*\.(?:spec|test)\.[cm]?[jt]sx?$/u;
 const candidateFiles = [
   ...sourceFiles("app"),
   ...sourceFiles("openchat-agent/src/services/storageBucket"),
@@ -218,6 +218,14 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "frontend/app/vitest.config.ts",
     "frontend/tauri-plugin-oc/src/model_manager.rs",
     "scripts/check_openchat_pr1_security.mjs",
+    "scripts/security_dependency_hash.mjs",
+    "scripts/security_dependency_hash.test.mjs",
+    "scripts/sbom_lock_identity.mjs",
+    "scripts/sbom_lock_identity.test.mjs",
+    "scripts/frontend_format_check.mjs",
+    "scripts/frontend_format_check.test.mjs",
+    "frontend/app/publicKeyBuild.mjs",
+    "frontend/app/src/publicKeyBuild.spec.ts",
     "scripts/model_ci_coverage.test.mjs",
     "scripts/model_asset_notices.test.mjs",
     "scripts/verify_webgpu_distribution.mjs",
@@ -344,8 +352,28 @@ test("frontend policy invokes only generic regression scripts present in this ch
     "scripts/model_asset_notices.test.mjs",
     "scripts/verify_webgpu_distribution.test.mjs",
     "scripts/model_ci_coverage.test.mjs",
+    "scripts/sbom_lock_identity.test.mjs",
+    "scripts/frontend_format_check.test.mjs",
   ]);
   for (const path of files) assert.ok(existsSync(join(root, path)), path);
+});
+
+test("historical dependency hash proofs run in the full-history security checkout", () => {
+  const jobs = mappingBlock(workflow, "jobs", 0);
+  const policy = mappingBlock(jobs, "dependency-policy", 2);
+  assert.match(policy, /fetch-depth: 0/u);
+  assert.match(
+    policy,
+    /run: node --test scripts\/security_dependency_hash\.test\.mjs/u,
+  );
+  assert.doesNotMatch(
+    mappingBlock(jobs, "frontend-contracts", 2),
+    /security_dependency_hash\.test\.mjs/u,
+  );
+  assert.doesNotMatch(
+    read(".github/workflows/frontend.yaml"),
+    /security_dependency_hash\.test\.mjs/u,
+  );
 });
 
 const compatibilityScripts = [

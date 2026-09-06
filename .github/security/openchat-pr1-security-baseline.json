@@ -5,12 +5,27 @@
   "reviewedOn": "2026-08-05",
   "expiresOn": "2026-08-31",
   "trackingIssue": "https://github.com/ktimam/open-chat/issues/23",
+  "reviewedDependencyDigestFormat": "sha256-utf8-lf-v1",
+  "dependencyDigestMigration": {
+    "sourceCommit": "f7825b347b5f8449053778450b934110e0ee3537",
+    "sourceDefaultLineEndings": "crlf",
+    "sourceLfFiles": [
+      "Cargo.lock",
+      "frontend/package.json",
+      "frontend/package-lock.json"
+    ],
+    "sourceMixedLfLineRanges": {
+      "frontend/tauri-plugin-oc/Cargo.toml": [[14, 18]]
+    },
+    "legacyRawFiles": [],
+    "note": "Only digest representation changed. Historical Git content, with these one-based inclusive line-ending ranges, reproduces every original raw SHA-256. No current dependency content was approved."
+  },
   "reviewedDependencyFiles": {
     "Cargo.lock": "7f3e3dbbd273ad65246024e1e75eacf95b3e4d633a86fba995130afd4c95b56a",
-    "Cargo.toml": "816621dc1d5b52dba36e706c74699464c829080a2b935c93a83460edaa1c26f3",
+    "Cargo.toml": "99b66fa3615f36452c257b9a381314c3cc2b0333a090119ed3f4fdefeaa043cb",
     "frontend/package.json": "2164df0aa30e2958e77d227044c0984a62d3eb3c59a54e3bf91bbf0861ff3180",
     "frontend/package-lock.json": "ff7a4e521e6984761d15e8b8cc4a12139118c4e5e08caa54ae969209bb00a68a",
-    "frontend/tauri-plugin-oc/Cargo.toml": "1fe35dcebb63b4ffb7b562f1a3057442c54028001e2f15015ab8d2be3d84ae3f"
+    "frontend/tauri-plugin-oc/Cargo.toml": "6a37ba9dca89fe42b93fa3593e370d73014424abc300ede16c28894481314a0d"
   },
   "ciRuntime": {
     "nodeVersion": "24.18.1",
