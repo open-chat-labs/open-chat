@@ -8,7 +8,8 @@
             "namespace": "android_app",
             "package_name": "com.oclabs.openchat",
             "sha256_cert_fingerprints": [
-                "00:F4:D0:31:0A:9F:DC:36:0C:12:5A:1B:BF:F1:70:45:CF:11:A2:BA:44:0E:F8:C8:54:ED:70:9D:2D:44:51:7E"
+                "00:F4:D0:31:0A:9F:DC:36:0C:12:5A:1B:BF:F1:70:45:CF:11:A2:BA:44:0E:F8:C8:54:ED:70:9D:2D:44:51:7E",
+                "9E:58:CB:EF:52:0F:9C:00:1C:7B:87:AE:2E:0B:D4:99:A6:4A:8B:B1:85:FA:13:D0:78:09:70:7A:E0:48:AE:D0"
             ]
         }
     },
