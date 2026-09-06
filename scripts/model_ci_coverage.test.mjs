@@ -230,6 +230,9 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "scripts/model_asset_notices.test.mjs",
     "scripts/verify_webgpu_distribution.mjs",
     "scripts/android_bundle.test.mjs",
+    "scripts/android_build_prerequisites.test.mjs",
+    "dfx.json",
+    ".github/workflows/android_release.yaml",
     ".github/security/openchat-pr1-security-baseline.json",
     ".github/workflows/frontend.yaml",
   ]) {
@@ -349,6 +352,7 @@ test("frontend policy invokes only generic regression scripts present in this ch
   const files = command[1].trim().split(/\s+/u);
   assert.deepEqual(files, [
     "scripts/android_bundle.test.mjs",
+    "scripts/android_build_prerequisites.test.mjs",
     "scripts/model_asset_notices.test.mjs",
     "scripts/verify_webgpu_distribution.test.mjs",
     "scripts/model_ci_coverage.test.mjs",
