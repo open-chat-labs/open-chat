@@ -39,9 +39,34 @@ uses Node `24.18.1`; local evidence is not a substitute for that hosted run.
   their workflow/manifest changes, then passed.
 - Actual development/local explicit-WebGPU worker emission passes.
 
-Lifecycle scripts were skipped during the install. These results do not prove a
-complete normal postinstall, a production Rollup bundle, model accuracy, or
-physical-device image/audio inference.
+Lifecycle scripts were skipped during the install. These install and unit-test
+results do not prove a complete normal postinstall, model accuracy, or
+physical-device image/audio inference. Subsequent build evidence is listed below.
+
+## Build-tool and security-check follow-up
+
+The public-key build helper now accepts an optional `OC_DFX_EXECUTABLE` and checks
+that the selected executable matches the repository's `dfx.json` pin before the
+anonymous query. `OC_WSL_DISTRO` selects the Windows build's WSL distribution.
+Neither input changes the installed default tool. A failed version check or query
+preserves the previous key; only a validated response replaces it atomically.
+The focused helper/build tests pass (19 tests), including mismatched versions,
+quoted executable paths and failure preservation.
+
+Both actual production frontend builds passed on 2026-09-06 using the pinned
+`dfx` binary and real anonymous public-key queries. The default output contains
+no optional Transformers WebGPU worker or JSPI WASM. The explicitly enabled
+WebGPU candidate passes all 26 distribution asset checks, including 21 notices;
+this verifies packaged identities, not inference. Build-only executable settings
+are absent from emitted client files and archive entries. No production deployment
+or APK installation occurred. Existing optional wallet-import/build warnings remain.
+
+Portable dependency hashing, shell-free formatting and offline SBOM lock-identity
+helpers now have CI coverage: 49 generic policy/packaging tests and 12 historical
+hash tests pass. Historical proofs run in the full-history security checkout.
+Only digest representation was migrated; reviewed dependency content, advisory
+allowances and expiry were not updated. The security gate still fails for changed
+frontend dependencies and the expired review, as intended.
 
 ## Remaining checks and findings
 
@@ -58,5 +83,8 @@ not a fresh-audit count or a claim that all advisories are resolved.
 `npm ls --all` is not clean: seven inherited peer issues remain, along with two
 Windows optional-orphan entries from Sharp's new cross-platform closure. The
 actual native Sharp checks pass; optional lock records were not pruned to hide
-that diagnostic. Full production packaging, upstream reconciliation, hosted
-checks and final device acceptance remain separate gates.
+that diagnostic. Upstream reconciliation, hosted checks and final device
+acceptance remain separate gates. APK preparation is for
+local testing only: publisher signing and store submission are outside this task;
+the existing local package, signing certificate, account and model cache must be
+preserved.
