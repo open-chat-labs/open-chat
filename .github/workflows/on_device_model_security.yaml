@@ -61,6 +61,10 @@ on:
       - "scripts/model_asset_notices*"
       - "scripts/verify_webgpu_distribution*"
       - "scripts/android_bundle*"
+      - "scripts/cdp_axios_compatibility.mjs"
+      - "scripts/decoder_compatibility.mjs"
+      - "scripts/onnx_adm_zip_compatibility.mjs"
+      - "scripts/transformers_sharp_compatibility.mjs"
   push:
     branches: [codex/pr1-local-models]
   workflow_dispatch:

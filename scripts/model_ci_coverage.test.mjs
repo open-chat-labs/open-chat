@@ -30,7 +30,7 @@ function pullRequestPaths(text) {
     .split(/\r?\n/u)
     .filter((line) => line.trim())
     .map((line) => {
-      const match = /^      - ("[^"]+")$/u.exec(line);
+      const match = /^ {6}- ("[^"]+")$/u.exec(line);
       assert.ok(match, `unsupported PR path entry: ${line}`);
       return JSON.parse(match[1]);
     });
@@ -60,9 +60,7 @@ function pathPattern(pattern) {
 function modelTestFilters(text) {
   const jobs = mappingBlock(text, "jobs", 0);
   const job = mappingBlock(jobs, "frontend-contracts", 2);
-  const command = /\n        run: >-\r?\n((?:          [^\r\n]+\r?\n?)+)/u.exec(
-    job,
-  );
+  const command = /\n {8}run: >-\r?\n((?: {10}[^\r\n]+\r?\n?)+)/u.exec(job);
   assert.ok(command, "missing folded model test command");
   const words = command[1].trim().split(/\s+/u);
   assert.deepEqual(words.splice(0, 3), ["npm", "test", "--"]);
@@ -279,7 +277,7 @@ test("normal frontend CI runs this coverage regression as a policy test", () => 
   const frontend = read(".github/workflows/frontend.yaml");
   const policyStep = frontend
     .split("- name: Check model and packaging policy regressions")[1]
-    ?.split(/\n      - /u)[0];
+    ?.split(/\n {6}- /u)[0];
   assert.ok(policyStep, "missing frontend policy test step");
   assert.match(
     policyStep,
@@ -336,7 +334,7 @@ test("the frontend build runs a read-only lint check", () => {
 test("frontend policy invokes only generic regression scripts present in this checkout", () => {
   const step = read(".github/workflows/frontend.yaml")
     .split("- name: Check model and packaging policy regressions")[1]
-    ?.split(/\n      - /u)[0];
+    ?.split(/\n {6}- /u)[0];
   assert.ok(step);
   const command = /run: node --test ([^\r\n]+)/u.exec(step);
   assert.ok(command);
@@ -348,4 +346,62 @@ test("frontend policy invokes only generic regression scripts present in this ch
     "scripts/model_ci_coverage.test.mjs",
   ]);
   for (const path of files) assert.ok(existsSync(join(root, path)), path);
+});
+
+const compatibilityScripts = [
+  "scripts/cdp_axios_compatibility.mjs",
+  "scripts/decoder_compatibility.mjs",
+  "scripts/onnx_adm_zip_compatibility.mjs",
+  "scripts/transformers_sharp_compatibility.mjs",
+];
+
+test("frontend CI runs every scoped dependency contract against the frozen install", () => {
+  const frontend = read(".github/workflows/frontend.yaml");
+  const jobs = mappingBlock(frontend, "jobs", 0);
+  const job = mappingBlock(jobs, "install-and-test", 2);
+  const stepName = "- name: Verify narrowly scoped dependency compatibility";
+  const step = job.split(stepName)[1]?.split(/\n {6}- /u)[0];
+  assert.ok(step, "missing installed-parent compatibility step");
+  assert.match(step, /working-directory: \./u);
+  const commands = [
+    ...step.matchAll(/^ +node (scripts\/[^\s]+\.mjs)\r?$/gmu),
+  ].map((match) => match[1]);
+  assert.deepEqual(commands, compatibilityScripts);
+  const install = job.indexOf("run: npm ci");
+  const compatibility = job.indexOf(stepName);
+  const build = job.indexOf("run: npm run build:ci");
+  assert.ok(install > 0 && compatibility > install && build > compatibility);
+  assert.doesNotMatch(step, /continue-on-error|\|\|\s*true|--ignore-scripts/u);
+  assert.doesNotMatch(job, /run: npm (?:install|update|audit fix)\b/u);
+  assert.match(job, /node-version: "24\.18\.1"/u);
+});
+
+test("every scoped dependency contract exists and triggers the model PR workflow", () => {
+  for (const path of compatibilityScripts) {
+    assert.ok(
+      existsSync(join(root, path)),
+      `missing compatibility script: ${path}`,
+    );
+    assert.ok(
+      triggers(path),
+      `compatibility script does not trigger CI: ${path}`,
+    );
+  }
+});
+
+test("Node image and installer fixes stay scoped to their reviewed model parents", () => {
+  const manifest = JSON.parse(read("frontend/package.json"));
+  const overrides = manifest.overrides;
+  assert.equal(manifest.dependencies["@huggingface/transformers"], "4.2.0");
+  for (const [parent, dependency, version] of [
+    ["@huggingface/transformers@4.2.0", "sharp", "0.35.3"],
+    ["onnxruntime-node@1.24.3", "adm-zip", "0.6.0"],
+  ]) {
+    assert.deepEqual(overrides[parent], { [dependency]: version });
+    assert.equal(Object.hasOwn(overrides, dependency), false);
+    assert.equal(
+      Object.hasOwn(overrides, parent.slice(0, parent.lastIndexOf("@"))),
+      false,
+    );
+  }
 });

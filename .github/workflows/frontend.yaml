@@ -44,6 +44,14 @@ jobs:
         working-directory: .
         run: node --test scripts/android_bundle.test.mjs scripts/model_asset_notices.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_ci_coverage.test.mjs
 
+      - name: Verify narrowly scoped dependency compatibility
+        working-directory: .
+        run: |
+          node scripts/cdp_axios_compatibility.mjs
+          node scripts/decoder_compatibility.mjs
+          node scripts/onnx_adm_zip_compatibility.mjs
+          node scripts/transformers_sharp_compatibility.mjs
+
       - name: Install the repository-pinned dfx build prerequisite
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365
         with:
