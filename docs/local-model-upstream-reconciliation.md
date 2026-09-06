@@ -22,19 +22,33 @@ business schema or automatic inference-provider fallback was introduced.
   dispatch was not restored.
 - The exact merged frontend lock installs 1,401 packages. It preserves all local
   dependency records and adds nine upstream records; no model runtime pin changed.
-- Windows Node 24.14.1: 119 suites / 1,367 frontend tests pass with `CI=true`.
+- After merging the build-tool/security helpers: Windows Node 24.14.1,
+  120 suites / 1,378 frontend tests pass with `CI=true`.
   Cold-import timeout failures were retained as evidence and corrected with
   narrow test isolation and a genuine type-only video import; no timeout increase
   or skipped test was used.
+- Typechecks report zero errors (558 existing Svelte warnings); read-only lint
+  reports zero errors / 30 warnings. All 67 packaging/policy-helper tests pass.
+- Rust formatting passes. A fresh locked, offline native plugin compilation on
+  Windows/Rust 1.95 passes 18/18 default-feature unit tests. This is not Android
+  or actual model-inference evidence.
 - The actual Android shell script has a failure-path regression: failed bundling
   cannot fall through to copying over an existing build. Its CI Node pin matches
   the model build's reviewed Node 24.18.1 prerequisite.
+- Both actual merged-source production builds pass: default and explicit immutable
+  WebGPU. Both contain the freshly compiled ordinary and video workers; only the
+  opt-in candidate contains the model worker and JSPI runtime. All 26 WebGPU assets
+  (including 21 notices) pass verification in the preserved build and both archive
+  variants. Build-only settings are absent from client artifacts; the lock is
+  unchanged. CI now separately runs default and opt-in production packaging checks.
 
 ## Remaining boundaries
 
-Production build evidence from before this upstream merge must not be attributed
-to the merged tree. The merged native builds, updated source's hosted checks,
+Pre-merge evidence is kept separate from these actual merged-source checks. The
+updated source's hosted checks, PR-stack refresh, Android build/update compatibility,
 fresh dependency review and physical-device inference acceptance remain required.
+The security gate still correctly rejects the changed dependency manifests/locks
+and expired review; no advisory allowance or expiry was waived.
 
 APK work is for local testing only, not store publishing. Upstream changed the
 default Android package identity. Do not install it as an update to an existing
