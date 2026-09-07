@@ -40,7 +40,7 @@ unchanged. The exception permits inspection but does not itself resolve or verif
 | Full frontend Vitest                             | 190 files / 2,550 tests passed; none skipped                   |
 | Svelte / agent TypeScript                        | Svelte: 0 errors / 562 warnings; agent `tsc`: passed           |
 | Read-only ESLint                                 | 0 errors / 31 warnings                                         |
-| Offline build/CI/security-helper regressions     | PR1: 96 / PR2: 338 at CI-count repair; not a dependency audit   |
+| Offline build/CI/security-helper regressions     | PR1: 104 / PR2: 340 after launcher CI routing repair          |
 | Focused Candid source contracts                  | 38 passed; includes method-name sets for all 25 interfaces     |
 | Full generated Rust/Candid parity                | 25 generated interfaces / 50 strict comparisons passed         |
 | Full backend unit workspace                      | 957 passed / 0 failed / 1 existing ignored test                |
@@ -730,6 +730,24 @@ digest approval or advisory waiver was added. Evidence:
 `ci-setup-count-20260907-auth-display/green-summary.json` and `preservation-proof.json`.
 The repair was committed locally as PR1 `9686bfaac6fa8d994bca88656e77315f1ab09df7`
 and PR2 `bdb5c00ff1c9c4c5ee2f805affed94f2f29b8750`; neither was pushed.
+
+PR1 subsequently received the selective generic dependency backport in
+`d0fed022537c325b52458cff6df3184510063eb0`: h2 0.4.16, event-listener 5.4.2,
+removal of the unused legacy DynamoDB TLS connector, and optional debug telemetry with
+the existing development opt-in preserved. Unrelated PR1 dependencies were not copied
+from PR2. Locked/offline metadata and Android feature graphs, exact Rust formatting and
+102 Node helpers passed. All three actual DynamoDB compatibility tests also passed, with
+2,580 recorded source inputs unchanged; these use synthetic credentials and loopback HTTP,
+not live AWS or a TLS handshake. Evidence: `pr1-remediation-review-20260907-39d104c9/validation.json`
+and `pr1-dynamodb-runs/launch-d649cf2d8354452cb620a5fb038f5bdf/summary.json`.
+This backport is not a fresh advisory audit or native model acceptance on PR1.
+
+The following CI regression reproduced PR1's omission of the six launcher tests from
+its actual frontend helper command. Adding that selection fixes the failure; both branches
+now reject absent, commented, wrongly placed or non-enforcing test steps and filtered events.
+The final offline helper suites pass 104/104 for PR1 and 340/340 for PR2, with no skips;
+these are local source checks, not hosted execution or an advisory audit. Evidence:
+`android-dev-ci-routing-20260907-9393afd3214e4924a3099c9f738601bc/green-summary.json`.
 
 Fresh npm advisory results on 2026-09-06 for published `e02bd70d4`, after the scoped overrides:
 
