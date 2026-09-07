@@ -184,8 +184,13 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
 
     // Firebase
+    //
+    // Analytics is deliberately absent. Nothing in the app ever called it, but declaring the
+    // dependency merged AD_ID, ACCESS_ADSERVICES_AD_ID, ACCESS_ADSERVICES_ATTRIBUTION and
+    // BIND_GET_INSTALL_REFERRER_SERVICE into the manifest, which Play reads as the app
+    // declaring use of the advertising ID. Do not add it back without deciding what that
+    // means for the data safety declaration. Messaging does not depend on it.
     implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
-    implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-common") 
     
