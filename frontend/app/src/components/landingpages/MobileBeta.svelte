@@ -3,6 +3,7 @@
 
     const GROUP_URL = "https://groups.google.com/g/openchatbeta";
     const PLAY_TEST_URL = "https://play.google.com/apps/testing/com.oclabs.openchat";
+    const APK_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
 </script>
 
 <Section id={"beta"}>
@@ -90,6 +91,24 @@
                     from the share menu.
                 </p>
             </article>
+        </div>
+
+        <div class="direct">
+            <h3>Or install it yourself</h3>
+            <p>
+                Every release is published as an APK you can install directly. It is the same app
+                without the restrictions Google requires of a store build, so it keeps the wallet
+                and the token features. You will need to allow installs from unknown sources, and
+                it updates itself rather than through the Play Store.
+            </p>
+            <p class="warn">
+                <strong>Pick one or the other.</strong> Android identifies an app by its signature
+                as well as its name, and the Play version is signed by Google while this one is
+                signed by us. Swapping between them means uninstalling first, so choose the route
+                you want and stay on it.
+            </p>
+            <a class="btn ghost" href={APK_URL} target="_blank" rel="noreferrer"
+                >Download the latest APK →</a>
         </div>
     </div>
 </Section>
@@ -221,6 +240,36 @@
     .note {
         @include font(book, normal, fs-70, 22);
         opacity: 0.85;
+    }
+
+    .direct {
+        margin-top: $sp4;
+        padding: toRem(32);
+        background-color: #242834;
+        color: #ffffff;
+
+        h3 {
+            @include font(bold, normal, fs-120, 28);
+            margin: 0 0 $sp3 0;
+        }
+
+        p {
+            @include font(book, normal, fs-80, 24);
+            margin-bottom: $sp3;
+            max-width: toRem(720);
+        }
+
+        .warn {
+            opacity: 0.85;
+        }
+    }
+
+    .btn.ghost {
+        display: inline-block;
+        background-color: transparent;
+        color: #ffffff;
+        border: toRem(1) solid rgba(255, 255, 255, 0.5);
+        margin-bottom: 0;
     }
 
     aside {
