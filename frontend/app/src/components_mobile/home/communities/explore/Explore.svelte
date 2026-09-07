@@ -1,5 +1,6 @@
 <script lang="ts">
     import { disableRestrictedContent } from "@src/utils/features";
+    import { communityPreviewState } from "@src/utils/preview.svelte";
     import {
         Body,
         Button,
@@ -30,7 +31,7 @@
         type OpenChat,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
@@ -229,25 +230,29 @@
             onScroll();
         });
 
-        const unsub = exploreCommunitiesFiltersStore.subscribe((filters) => {
+        return () => {
+            scrollableElement?.removeEventListener("scroll", onScroll);
+        };
+    });
+
+    $effect(() => {
+        const filters = $exploreCommunitiesFiltersStore;
+        untrack(() => {
             if (initialised || communitySearchState.results.length === 0) {
                 searchCommunities(filters, true);
             }
             initialised = true;
         });
+    });
 
-        const unsubBot = showUnpublishedBots.subscribe((show) => {
+    $effect(() => {
+        const show = $showUnpublishedBots;
+        untrack(() => {
             if (initialised || botSearchState.results.length === 0) {
                 searchBots(show);
             }
             initialised = true;
-        }, undefined);
-
-        return () => {
-            scrollableElement?.removeEventListener("scroll", onScroll);
-            unsub();
-            unsubBot();
-        };
+        });
     });
 
     function setView(v: View) {
@@ -273,6 +278,7 @@
     let loading = $derived(searching && searchState.results.length === 0);
 
     function goToCommunity(community: CommunityMatch) {
+        communityPreviewState.setOrigin(community.id.communityId, "/communities");
         navigate(`/community/${community.id.communityId}`);
     }
 
@@ -371,7 +377,7 @@
         direction={"vertical"}
         padding={["zero", "zero", "lg", "zero"]}
         gap={"lg"}
-        background={ColourVars.background0}
+        background={ColourVars.surface0}
     >
         <Container padding={["zero", "lg"]}>
             <Search
@@ -627,7 +633,7 @@
     }
 
     .robot {
-        border: 4px solid var(--background-0);
+        border: 4px solid var(--surface-0);
         background-color: var(--primary);
         border-radius: var(--rad-circle);
         width: 2rem;

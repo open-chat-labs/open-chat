@@ -9,7 +9,7 @@
         type UserGroupDetails,
         type UserSummary,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import { i18nKey, interpolate } from "../../../../i18n/i18n";
@@ -26,16 +26,14 @@
         userGroup: UserGroupDetails;
     }
 
-    onMount(() => {
-        return selectedCommunityUserGroupsStore.subscribe((groups) => {
-            const ug = groups.get(userGroup.id);
-            if (ug !== undefined) {
-                userGroup = ug;
-            }
-        });
-    });
-
     let { community, userGroup }: Props = $props();
+
+    $effect(() => {
+        const ug = $selectedCommunityUserGroupsStore.get(untrack(() => userGroup.id));
+        if (ug !== undefined) {
+            userGroup = ug;
+        }
+    });
 
     let communityState = new CommunityState(client, community);
     let searchTermEntered = $state("");

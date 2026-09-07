@@ -25,7 +25,7 @@ fn populate_canisters() {
             state
                 .data
                 .cycles_balance_check_queue
-                .extend(state.data.local_users.iter().map(|(u, _)| CanisterId::from(*u)));
+                .extend(state.data.local_users.iter().map(|(u, _)| u.canister_id()));
             state
                 .data
                 .cycles_balance_check_queue

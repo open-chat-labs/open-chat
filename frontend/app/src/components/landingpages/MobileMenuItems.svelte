@@ -16,6 +16,7 @@
     import Note from "svelte-material-icons/NoteTextOutline.svelte";
     import Blog from "svelte-material-icons/PostOutline.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
+    import Security from "svelte-material-icons/Security.svelte";
     import Shopping from "svelte-material-icons/ShoppingOutline.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
@@ -47,7 +48,8 @@
                 class="link"
                 href={"https://openchat.myspreadshop.com"}
                 target="_blank"
-                rel="noreferrer">
+                rel="noreferrer"
+            >
                 Shop
             </a>
         {/snippet}
@@ -76,7 +78,10 @@
             {"Whitepaper"}
         {/snippet}
     </MenuItem>
-    <MenuItem selected={$locationStore === "/architecture"} onclick={() => navigate("/architecture")}>
+    <MenuItem
+        selected={$locationStore === "/architecture"}
+        onclick={() => navigate("/architecture")}
+    >
         {#snippet icon()}
             <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} />
         {/snippet}
@@ -100,6 +105,22 @@
         {/snippet}
         {#snippet text()}
             {"FAQs"}
+        {/snippet}
+    </MenuItem>
+    <MenuItem selected={$locationStore.startsWith("/terms")} onclick={() => navigate("/terms")}>
+        {#snippet icon()}
+            <Security size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            {"Terms"}
+        {/snippet}
+    </MenuItem>
+    <MenuItem selected={$locationStore.startsWith("/privacy")} onclick={() => navigate("/privacy")}>
+        {#snippet icon()}
+            <Security size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        {#snippet text()}
+            {"Privacy"}
         {/snippet}
     </MenuItem>
     <MenuItem onclick={launch}>

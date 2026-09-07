@@ -1,6 +1,7 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { VersionChecker } from "@src/utils/version.svelte";
+    import { nativeAuthErrorKey } from "@src/utils/nativeAuthErrorKey";
     import {
         Body,
         BodySmall,
@@ -54,11 +55,12 @@
 
     function signIn() {
         const nativeAndroid = client.isNativeAndroid();
-        (nativeAndroid ? client.signInWithAndroidWebAuthn() : client.signInWithWebAuthn()).catch(
+        const nativeApp = client.isNativeApp();
+        (nativeApp ? client.signInWithAndroidWebAuthn() : client.signInWithWebAuthn()).catch(
             async (e) => {
                 if (!nativeAndroid) {
                     if ("AUTH_FAILED" === e) {
-                        error = "default";
+                        error = nativeApp ? "native.auth.error" : "default";
                         console.error("Auth error: ", e);
                     } else {
                         step = "one-time-password";
@@ -264,7 +266,7 @@
                 )}
             />
         </Subtitle>
-        <BodySmall colour={"textTertiary"}>
+        <BodySmall colour={"textOnDisabledSurface"}>
             <Translatable
                 resourceKey={i18nKey(
                     "If you expected to use an existing passkey, it may not be available on this device at the moment.",
@@ -326,7 +328,7 @@
     {#if error !== undefined}
         <Container gap={"md"} padding={["zero", "xxl"]} direction={"vertical"}>
             <ErrorMessage>
-                <Translatable resourceKey={i18nKey(`native.auth.errors.${error}`)} />
+                <Translatable resourceKey={i18nKey(nativeAuthErrorKey(error))} />
             </ErrorMessage>
         </Container>
     {/if}
@@ -346,7 +348,7 @@
         height: 6px;
         width: 100%;
         border-radius: var(--rad-xl);
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
     }
 
     .alc-container {

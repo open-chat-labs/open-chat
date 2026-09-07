@@ -128,7 +128,21 @@ export function assertIncreasingVersion(
   previousVersionCode,
 ) {
   const next = nativeVersion(version, versionCode);
-  const previous = nativeVersion("0.0.0", previousVersionCode).versionCode;
+  // Historical installations can predate the current derived-code formula.
+  // Validate the actual distributed code independently, never invent a version
+  // name for it or allow it to override the next artifact's derived identity.
+  const previous = Number(previousVersionCode);
+  if (
+    typeof previousVersionCode !== "string" ||
+    !/^[1-9]\d*$/u.test(previousVersionCode) ||
+    previousVersionCode !== previousVersionCode.trim() ||
+    !Number.isSafeInteger(previous) ||
+    previous > 2_100_000_000
+  ) {
+    throw new Error(
+      "The last distributed versionCode must be a positive store-compatible integer.",
+    );
+  }
   if (next.versionCode <= previous) {
     throw new Error(
       "Proposed versionCode must exceed the last distributed versionCode.",
@@ -466,12 +480,15 @@ export function collectPreflight(options = {}) {
     ...attribution,
     requestedRuntime: "all-webgpu",
     productionWebGpuEnabled,
-    productionAssetContractAvailable: transformersWebGpuProductionAssetsEnabled({
-      OC_BUILD_ENV: "production",
-      OC_DFX_NETWORK: "ic",
-      OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE: "true",
-      OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY: TRANSFORMERS_WEBGPU_IMMUTABLE_DELIVERY,
-    }),
+    productionAssetContractAvailable: transformersWebGpuProductionAssetsEnabled(
+      {
+        OC_BUILD_ENV: "production",
+        OC_DFX_NETWORK: "ic",
+        OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE: "true",
+        OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY:
+          TRANSFORMERS_WEBGPU_IMMUTABLE_DELIVERY,
+      },
+    ),
     proposedVersion,
     findings,
     sourceAssets,

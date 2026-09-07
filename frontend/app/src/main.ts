@@ -12,10 +12,9 @@ import { mobileWidth } from "@client";
 import { prepareServiceWorkerBeforeApplicationStart } from "@client/utils/updateSw";
 import "svelte";
 import { mount } from "svelte";
-import App from "./components/App.svelte";
-import AppV2 from "./components_mobile/App.svelte";
 import StartupFailure from "./components_shared/StartupFailure.svelte";
 import { setNativeTheme, writeNativeCssVariables } from "./theme/themes";
+import { selectLayout } from "./utils/layout";
 import { isNativeClient, usesWebInferenceRuntime } from "./utils/onDeviceInference";
 import { ensureWebModelRestored } from "./utils/webInference";
 
@@ -32,6 +31,8 @@ async function startApplication() {
                 error instanceof Error
                     ? error.message
                     : "A stale background worker still controls this page. Open OpenChat in a fresh tab, then close this tab.";
+            // Recovery must already be in the bootstrap graph: a stale controller may also
+            // prevent an additional component chunk from loading at exactly this point.
             return mount(StartupFailure, {
                 target: document.body,
                 props: { message, recovery: "new-tab" },
@@ -51,15 +52,20 @@ async function startApplication() {
     // Router.svelte, and the listeners-before-svelteReady sequencing. The v1 App
     // (components) only renders on >=768px viewports (desktop web, large tablets)
     // and intentionally does not implement that native cold-start routing.
-    const v2 = import.meta.env.OC_MOBILE_LAYOUT === "v2" && mobileWidth.value;
+    const layout = selectLayout(import.meta.env.OC_MOBILE_LAYOUT, mobileWidth.value);
 
-    if (v2) {
+    if (layout === "v2") {
         setNativeTheme();
     } else {
         writeNativeCssVariables();
     }
 
-    return v2 ? mount(AppV2, { target: document.body }) : mount(App, { target: document.body });
+    // Load only the selected tree after browser worker preparation. Native cold-start events
+    // remain queued until the mounted mobile app signals svelteReady.
+    const { default: App } = await (layout === "v2"
+        ? import("./components_mobile/App.svelte")
+        : import("./components/App.svelte"));
+    return mount(App, { target: document.body });
 }
 
 const app = startApplication();

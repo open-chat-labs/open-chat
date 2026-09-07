@@ -1,16 +1,18 @@
 <script lang="ts">
     import "highlight.js/styles/base16/helios.css";
-    import { marked } from "marked";
-    import type { OpenChat, ReadonlyMap, UserGroupSummary } from "@client";
-    import {
-        allUsersStore,
-        userGroupMentionRegex,
-        userGroupSummariesStore,
-        userIdMentionRegex,
-    } from "@client";
+    import type { OpenChat } from "@client";
+    import { allUsersStore, userGroupSummariesStore } from "@client";
     import { getContext } from "svelte";
-    import { DOMPurifyDefault, sanitizeOneLine } from "../utils/domPurify";
     import { isSingleEmoji } from "../utils/emojis";
+    import {
+        extractMentionedUserGroupIds,
+        extractMentionedUserIds,
+        renderMarkdown,
+        sameMentionedUserGroups,
+        sameMentionedUsers,
+        type MentionedUser,
+        type MentionedUserGroup,
+    } from "./markdownRender";
 
     const client = getContext<OpenChat>("client");
 
@@ -32,89 +34,55 @@
         suppressLinks = false,
     }: Props = $props();
 
+    const noUsers: MentionedUser[] = [];
+    const noUserGroups: MentionedUserGroup[] = [];
+
     let singleEmoji = $derived(isSingleEmoji(text));
-    let options = $derived({
-        breaks: !oneLine,
+
+    // Only messages that actually contain a mention subscribe to the user /
+    // user-group stores, and they only re-render when a mentioned name
+    // changes: returning the previous array reference when nothing changed
+    // stops Svelte propagating to the parse+sanitise derived below.
+    let mentionedUserIds = $derived(extractMentionedUserIds(text));
+    let mentionedUserGroupIds = $derived(extractMentionedUserGroupIds(text));
+
+    let lastUsers = noUsers;
+    let users = $derived.by(() => {
+        if (mentionedUserIds.length === 0) return noUsers;
+        const next: MentionedUser[] = [];
+        for (const id of mentionedUserIds) {
+            const u = $allUsersStore.get(id);
+            if (u !== undefined) next.push({ id, userId: u.userId, username: u.username });
+        }
+        return sameMentionedUsers(next, lastUsers) ? lastUsers : (lastUsers = next);
     });
 
-    let sanitized = $derived.by(() => {
-        let parsed = replaceEveryone(
-            replaceUserGroupIds(
-                // Don't replace UserIds yet - just mark them
-                replaceDatetimes(client.stripLinkDisabledMarker(text)),
-                $userGroupSummariesStore,
-            ),
-        );
-        try {
-            if (inline) {
-                parsed = marked.parseInline(parsed, options) as string;
-            } else {
-                parsed = marked.parse(parsed, options) as string;
-            }
-
-            // replace userIds & emojis *after* markdown parsing so that we can fully disallow html in the markdown source
-            parsed = replaceUserIds(parsed);
-            parsed = replaceCustomEmojis(parsed);
-            parsed = replaceSpoilers(parsed);
-        } catch (err: any) {
-            client.logError("Error parsing markdown: ", err);
+    let lastUserGroups = noUserGroups;
+    let userGroups = $derived.by(() => {
+        if (mentionedUserGroupIds.length === 0) return noUserGroups;
+        const next: MentionedUserGroup[] = [];
+        for (const id of mentionedUserGroupIds) {
+            const g = $userGroupSummariesStore.get(id);
+            if (g !== undefined) next.push({ id, groupId: g.id, name: g.name });
         }
-
-        try {
-            return oneLine ? sanitizeOneLine(parsed) : DOMPurifyDefault.sanitize(parsed);
-        } catch (err: any) {
-            client.logError("Error sanitizing message content: ", err);
-            return "unsafe";
-        }
+        return sameMentionedUserGroups(next, lastUserGroups)
+            ? lastUserGroups
+            : (lastUserGroups = next);
     });
 
-    function replaceSpoilers(input: string): string {
-        return input.replace(/\|\|([^|]+?)\|\|/g, "<spoiler-span>$1</spoiler-span>");
-    }
-
-    function replaceCustomEmojis(text: string): string {
-        return text.replace(/!emoji\(([^)]+)\)/g, (_, code) => {
-            return `<custom-emoji data-id="${code}"></custom-emoji>`;
-        });
-    }
-
-    function replaceUserIds(text: string): string {
-        return text.replace(userIdMentionRegex, (match, p1) => {
-            const u = $allUsersStore.get(p1);
-            if (u !== undefined) {
-                return `<profile-link text="${escapeHtml(u.username)}" user-id="${
-                    u.userId
-                }" suppress-links="${suppressLinks}"></profile-link>`;
-            }
-            return match;
-        });
-    }
-
-    function escapeHtml(text: string): string {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function replaceUserGroupIds(
-        text: string,
-        userGroups: ReadonlyMap<number, UserGroupSummary>,
-    ): string {
-        return text.replace(userGroupMentionRegex, (match, p1) => {
-            const u = userGroups.get(Number(p1));
-            if (u !== undefined) {
-                return `**[@${escapeHtml(u.name)}](?usergroup=${u.id})**`;
-            } else {
-                console.warn("Unable to find user group: ", match);
-                return `**@unknown_user_group**`;
-            }
-        });
-    }
-
-    function replaceEveryone(text: string): string {
-        if (!text.includes("@everyone")) return text;
-        return text.replace(/(^|\W)(@everyone)($|\W)/gm, "$1**[$2](?everyone)**$3");
-    }
+    let sanitized = $derived(
+        renderMarkdown(
+            {
+                text: replaceDatetimes(client.stripLinkDisabledMarker(text)),
+                inline,
+                oneLine,
+                suppressLinks,
+                users,
+                userGroups,
+            },
+            (msg, err) => client.logError(msg, err),
+        ),
+    );
 
     function replaceDatetimes(text: string): string {
         return text.replace(/@DateTime\((\d+)\)/g, (_, p1) => {

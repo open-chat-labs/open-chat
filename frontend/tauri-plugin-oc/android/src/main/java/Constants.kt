@@ -9,7 +9,7 @@ const val OC_TAG_NOT = "OC_TAG_NOT"
 // Category that links dynamic ShortcutInfoCompat instances to the
 // <share-target> declared in res/xml/shortcuts.xml. Shortcuts tagged
 // with this category appear in the Direct Share row of the share sheet.
-const val SHARE_TARGET_CATEGORY = "com.oc.app.category.SHARE_TARGET"
+const val SHARE_TARGET_CATEGORY = "com.oclabs.openchat.category.SHARE_TARGET"
 
 // All share-target shortcuts use this prefix on their ID, so we can
 // distinguish them from other dynamic shortcuts (e.g. notification
@@ -20,4 +20,4 @@ const val SHARE_SHORTCUT_ID_PREFIX = "share_"
 // via a Direct Share shortcut. We use a custom key (rather than
 // Intent.EXTRA_SHORTCUT_ID) because Android sets that to the shortcut's
 // own id (e.g. "share_<chatId>"), and we want the bare chat id.
-const val EXTRA_CHAT_ID = "com.oc.app.extra.CHAT_ID"
+const val EXTRA_CHAT_ID = "com.oclabs.openchat.extra.CHAT_ID"

@@ -26,7 +26,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
     let group_id = match client::user::create_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
@@ -106,7 +106,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
     let group_id = match client::user::create_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
@@ -187,7 +187,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
     let group_id = match client::user::create_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
@@ -268,7 +268,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
-    let original_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user1.user_id));
+    let original_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
     let group_name = random_string();
     let amount = 1_0000_0000;
@@ -295,7 +295,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
     let group_id = match client::user::create_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
@@ -316,7 +316,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.into(),
+        user2.user_id.canister_id(),
         canister_ids.icp_ledger,
         Principal::from(group_id),
         amount - fee,
@@ -325,7 +325,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
 
     tick_many(env, 3);
 
-    let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user1.user_id));
+    let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
     assert_eq!(balance - original_balance, (amount * 98) / 100);
 }
@@ -347,7 +347,7 @@ fn only_selected_composite_gate_checked_if_index_provided() {
     let group_id = match client::user::create_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
@@ -390,14 +390,14 @@ fn only_selected_composite_gate_checked_if_index_provided() {
 
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.into(),
+        user2.user_id.canister_id(),
         canister_ids.icp_ledger,
         Principal::from(group_id),
         initial_balance,
     );
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.into(),
+        user2.user_id.canister_id(),
         canister_ids.chat_ledger,
         Principal::from(group_id),
         initial_balance,

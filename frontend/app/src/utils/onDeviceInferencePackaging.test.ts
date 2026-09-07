@@ -11,28 +11,36 @@ function source(path: string): string {
 function workflowStep(workflow: string, name: string): string {
     const start = workflow.indexOf(`- name: ${name}`);
     expect(start, `workflow step ${name}`).toBeGreaterThanOrEqual(0);
-    const next = workflow.indexOf("\n            - name:", start + 1);
-    return workflow.slice(start, next === -1 ? undefined : next);
+    const next = /\r?\n[ \t]+- name:/.exec(workflow.slice(start + 1));
+    return workflow.slice(start, next === null ? undefined : start + 1 + next.index);
 }
 
 describe("on-device inference packaging", () => {
     it("builds both Android release variants with the inference runtime", () => {
         const workflow = source(".github/workflows/android_release.yaml");
         const full = workflowStep(workflow, "Build Android APK (Full)");
-        const store = workflowStep(workflow, "Build Android APK (Store)");
+        const store = workflowStep(workflow, "Build Android AAB (Store)");
 
+        expect(full).toMatch(/cargo tauri android build[^\n]*--apk(?:\s|$)/);
         expect(full).toMatch(/cargo tauri android build[^\n]*--features inference(?:\s|$)/);
+        expect(full).not.toMatch(/--aab|--features[^\n]*\bstore\b/);
+        expect(full).toContain('"./openchat_${VERSION}_full.apk"');
+        expect(full).toContain('OC_APP_STORE: "false"');
+        expect(store).toMatch(/cargo tauri android build[^\n]*--aab(?:\s|$)/);
         expect(store).toMatch(
             /cargo tauri android build[^\n]*--features (?:inference,store|store,inference)(?:\s|$)/,
         );
+        expect(store).not.toMatch(/--apk/);
+        expect(store).toContain('"./openchat_${VERSION}_store.aab"');
+        expect(store).toContain('OC_APP_STORE: "true"');
     });
 
     it("compiles the actual app crate with both shipping feature sets in CI", () => {
         const workflow = source(".github/workflows/on_device_model_security.yaml");
 
-        expect(workflow).toMatch(/cargo check -p open-chat --features inference(?:\s|$)/);
+        expect(workflow).toMatch(/cargo check --locked -p open-chat --features inference(?:\s|$)/);
         expect(workflow).toMatch(
-            /cargo check -p open-chat --features (?:inference,store|store,inference)(?:\s|$)/,
+            /cargo check --locked -p open-chat --features (?:inference,store|store,inference)(?:\s|$)/,
         );
     });
 

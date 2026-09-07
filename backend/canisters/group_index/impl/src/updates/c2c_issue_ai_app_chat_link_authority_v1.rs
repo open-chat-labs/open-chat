@@ -56,7 +56,7 @@ fn issue(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 pub(crate) fn validate_binding_shape(binding: &AiAppChatLinkAuthorityBindingV1) -> Result<(), String> {
-    if candid::Principal::from(binding.user_id) == candid::Principal::anonymous() {
+    if binding.user_id.as_principal() == candid::Principal::anonymous() {
         return Err("viewer must be a non-anonymous OpenChat user".to_string());
     }
     if matches!(binding.chat, Chat::Direct(_)) {

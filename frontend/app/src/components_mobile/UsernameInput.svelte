@@ -34,6 +34,7 @@
     onMount(() => {
         username = originalUsername;
         usernameValid = originalUsername?.length > 0;
+        return () => window.clearTimeout(timer);
     });
 
     function checkUsername(value: string) {
@@ -99,7 +100,7 @@
         {#if checking}
             <Spinner
                 size={"1.4rem"}
-                backgroundColour={"var(--text-tertiary)"}
+                backgroundColour={"var(--text-on-disabled-surface)"}
                 foregroundColour={color} />
         {/if}
     {/snippet}

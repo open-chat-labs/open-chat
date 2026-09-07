@@ -1,7 +1,8 @@
 <script lang="ts">
-    import jsQR from "jsqr-es6";
     import type { Point } from "jsqr-es6/dist/locator";
     import { onMount } from "svelte";
+
+    let jsQR: typeof import("jsqr-es6").default | undefined;
 
     interface Props {
         autoscan?: boolean;
@@ -37,6 +38,10 @@
         navigator.mediaDevices
             .getUserMedia({ video: { facingMode: "environment" } })
             .then((s) => {
+                if (destroyed) {
+                    s.getTracks().forEach((t) => t.stop());
+                    return;
+                }
                 console.debug("QR: camera stream obtained");
                 stream = new MediaStream(s.getVideoTracks());
                 const video = document.createElement("video");
@@ -48,10 +53,14 @@
                     .play()
                     .then(() => {
                         console.debug("QR: video play promise resolved");
+                        return import("jsqr-es6");
+                    })
+                    .then((m) => {
+                        jsQR = m.default;
                         requestAnimationFrame(() => checkResult(video));
                     })
                     .catch((err) => {
-                        console.debug("QR: error playing video", err);
+                        console.debug("QR: error playing video or loading decoder", err);
                     });
             })
             .catch((err) => {
@@ -84,7 +93,7 @@
                     canvasElement.width,
                     canvasElement.height,
                 );
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                const code = jsQR?.(imageData.data, imageData.width, imageData.height, {
                     inversionAttempts: "dontInvert",
                 });
                 if (code) {

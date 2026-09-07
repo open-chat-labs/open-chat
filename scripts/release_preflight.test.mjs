@@ -21,17 +21,34 @@ import {
   releaseBuildToolsDirectory,
 } from "./android_release_policy.mjs";
 
-test("native version progression permits high patch versions but requires a strictly increasing explicit code", () => {
-  assert.deepEqual(assertIncreasingVersion("2.0.1234", "50001", "50000"), {
+test("native version progression derives the next code and independently validates historical codes", () => {
+  assert.deepEqual(assertIncreasingVersion("2.0.1234", "2001234", "50000"), {
     version: "2.0.1234",
-    versionCode: 50001,
+    versionCode: 2001234,
     previousVersionCode: 50000,
   });
-  for (const code of ["50000", "49999", "0", "01", "2100000001", undefined]) {
+  for (const code of ["50000", "49999", "0", "01", "2100000001"]) {
     assert.throws(() => assertIncreasingVersion("2.0.1234", code, "50000"));
   }
-  assert.throws(() => assertIncreasingVersion("v2.0.1", "50001", "50000"));
-  assert.throws(() => assertIncreasingVersion("2.0.1", "50001", undefined));
+  assert.equal(
+    assertIncreasingVersion("2.0.1234", undefined, "50000").versionCode,
+    2001234,
+  );
+  for (const previous of [
+    "2001234",
+    "2001235",
+    "2100000000",
+    "0",
+    "01",
+    "2100000001",
+    "50000\n",
+    undefined,
+  ]) {
+    assert.throws(() =>
+      assertIncreasingVersion("2.0.1234", "2001234", previous),
+    );
+  }
+  assert.throws(() => assertIncreasingVersion("v2.0.1", "2000001", "50000"));
 });
 
 test("same-length corrupt artifact bytes and malformed identity metadata are rejected", () => {

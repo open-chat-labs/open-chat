@@ -67,9 +67,11 @@ export function longpress(node: HTMLElement, onlongpress: (e: TouchEvent) => voi
             node.setAttribute(ANDROID_DRAG_FIX_ATTR, "");
         }
 
-        node.addEventListener("touchend", clearLongPressTimer);
-        node.addEventListener("touchmove", onTouchMove);
-        node.addEventListener("touchstart", onTouchStart);
+        // None of the touch handlers call preventDefault, so let the browser
+        // start scrolling without waiting for them.
+        node.addEventListener("touchend", clearLongPressTimer, { passive: true });
+        node.addEventListener("touchmove", onTouchMove, { passive: true });
+        node.addEventListener("touchstart", onTouchStart, { passive: true });
         node.addEventListener("contextmenu", onContextMenu);
         return {
             destroy() {

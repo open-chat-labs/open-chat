@@ -85,7 +85,7 @@ fn validate_child_context(args: &Args, caller: candid::Principal, kind: Authorit
             Err("caller is not the asserted local community canister".to_string())
         }
         Chat::Direct(other) => {
-            if kind != AuthoritativeChildKind::User || candid::Principal::from(args.user_id) != caller {
+            if kind != AuthoritativeChildKind::User || args.user_id.canister_id() != caller {
                 return Err("caller is not the viewer's exact local user canister".to_string());
             }
             let other_user_id: types::UserId = other.into();
@@ -116,6 +116,27 @@ fn validate_child_context(args: &Args, caller: candid::Principal, kind: Authorit
 mod tests {
     use super::*;
     use serde_bytes::ByteBuf;
+
+    #[test]
+    fn indexed_direct_chat_link_keeps_the_pair_and_checks_the_hosting_child() {
+        let host = candid::Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let viewer = types::UserId::new_indexed(host, 1);
+        let peer = types::UserId::new_indexed(host, 2);
+        let mut args = Args {
+            user_id: viewer,
+            chat: Chat::Direct(peer.into()),
+            chat_name: "Chat".to_string(),
+            app_id: 1,
+            app_revision: 2,
+            member_user_ids: vec![viewer, peer],
+            authority: ByteBuf::new(),
+        };
+        assert!(validate_child_context(&args, host, AuthoritativeChildKind::User).is_ok());
+        assert!(validate_child_context(&args, viewer.as_principal(), AuthoritativeChildKind::User).is_err());
+        assert!(validate_child_context(&args, host, AuthoritativeChildKind::Group).is_err());
+        args.member_user_ids = vec![types::UserId::new_indexed(host, 3), peer];
+        assert!(validate_child_context(&args, host, AuthoritativeChildKind::User).is_err());
+    }
 
     #[test]
     fn direct_requires_the_exact_user_child_and_canonical_pair() {

@@ -4,7 +4,7 @@ use crate::model::identity_link_requests::IdentityLinkRequests;
 use crate::model::identity_link_via_qr_code_requests::IdentityLinkViaQrCodeRequests;
 use crate::model::salt::Salt;
 use crate::model::user_principals::{AuthPrincipal, UserPrincipals};
-use crate::model::webauthn_keys::WebAuthnKeys;
+use crate::model::webauthn_keys::{WebAuthnKeys, validate_der_cose_key};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use ic_canister_sig_creation::CanisterSigPublicKey;
@@ -105,6 +105,9 @@ impl RuntimeState {
 
         let (auth_principal, originating_canister) = if let Some(webauthn_key) = args.webauthn_key.as_ref() {
             self.assert_key_not_generated_by_this_canister(&webauthn_key.public_key);
+            if let Err(error) = validate_der_cose_key(&webauthn_key.public_key) {
+                return Err(PublicKeyInvalid(format!("Invalid WebAuthn key: {error}")));
+            }
 
             (
                 Principal::self_authenticating(&webauthn_key.public_key),
@@ -182,7 +185,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             user_principals: self.data.user_principals.user_principals_count(),
             auth_principals: self.data.user_principals.auth_principals_count(),
             originating_canisters: self.data.user_principals.originating_canisters().clone(),

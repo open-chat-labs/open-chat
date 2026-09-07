@@ -1,16 +1,11 @@
-use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::{LocalUserIndexEvent, read_state};
-use crate::{RuntimeState, mutate_state};
-use constants::{CHAT_LEDGER_CANISTER_ID, SNS_ROOT_CANISTER_ID};
+use crate::model::pending_payments_queue::PendingPayment;
+use crate::{RuntimeState, mutate_state, read_state};
 use ic_cdk_timers::TimerId;
-use ic_ledger_types::{BlockIndex, Tokens};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
-use local_user_index_canister::OpenChatBotMessageV2;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{MessageContentInitial, TextContent};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -37,7 +32,6 @@ pub fn run() {
 }
 
 async fn process_payment(pending_payment: PendingPayment) {
-    let reason = pending_payment.reason.clone();
     let args = TransferArg {
         from_subaccount: None,
         to: pending_payment.recipient_account,
@@ -50,46 +44,9 @@ async fn process_payment(pending_payment: PendingPayment) {
     let result = make_transfer(pending_payment.ledger, &args, true).await;
 
     mutate_state(|state| {
-        match result {
-            Ok(Ok(block_index)) => {
-                if matches!(reason, PendingPaymentReason::ReferralReward) {
-                    inform_referrer(&pending_payment, block_index, state);
-                }
-            }
-            Ok(Err(_)) => {}
-            Err(_) => {
-                state.data.pending_payments_queue.push(pending_payment);
-            }
+        if result.is_err() {
+            state.data.pending_payments_queue.push(pending_payment);
         }
         start_job_if_required(state);
     });
-}
-
-fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, state: &mut RuntimeState) {
-    let user_id = pending_payment.recipient_account.owner.into();
-    let amount = Tokens::from_e8s(pending_payment.amount);
-    let amount_formatted = amount.to_string().trim_end_matches('0').to_string();
-    let symbol = pending_payment.token_symbol.clone();
-    let mut amount_text = format!("{amount_formatted} {symbol}");
-
-    if pending_payment.ledger == CHAT_LEDGER_CANISTER_ID {
-        let link = format!("https://dashboard.internetcomputer.org/sns/{SNS_ROOT_CANISTER_ID}/transaction/{block_index}");
-        amount_text = format!("[{amount_text}]({link})");
-    }
-
-    let content = MessageContentInitial::Text(TextContent {
-        text: format!(
-            "You have received a referral reward of {amount_text}. This is because one of the users you referred has made a Diamond membership payment."
-        ),
-    });
-
-    state.push_event_to_local_user_index(
-        user_id,
-        LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
-            user_id,
-            thread_root_message_id: None,
-            content,
-            mentioned: Vec::new(),
-        })),
-    );
 }

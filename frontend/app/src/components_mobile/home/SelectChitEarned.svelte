@@ -17,7 +17,7 @@
 
 {#snippet option(label: string, n: number)}
     <Row
-        borderColour={n === min ? ColourVars.primary : ColourVars.background2}
+        borderColour={n === min ? ColourVars.primary : ColourVars.surface2}
         onClick={() => onSelect(n)}
         borderWidth={"thin"}
         borderRadius={"md"}

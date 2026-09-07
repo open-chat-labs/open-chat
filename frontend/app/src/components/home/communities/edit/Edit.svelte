@@ -77,14 +77,7 @@
     }
 
     onMount(() => {
-        candidate = {
-            ...original,
-            permissions: { ...original.permissions },
-            gateConfig: {
-                gate: { ...original.gateConfig.gate },
-                expiry: original.gateConfig.expiry,
-            },
-        };
+        candidate = $state.snapshot(original);
         candidateRules = { ...originalRules, newVersion: false };
     });
 

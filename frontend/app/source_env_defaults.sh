@@ -1,5 +1,14 @@
 source_env_defaults() {
     local env_file="$1"
+    # A fresh checkout may rely entirely on the caller's exported configuration.
+    # Only absence is optional: do not hide a broken link or an unreadable file.
+    if ! test -e "$env_file" && ! test -L "$env_file"; then
+        return 0
+    fi
+    if ! test -f "$env_file" || ! test -r "$env_file"; then
+        printf 'Environment defaults must be a readable regular file: %s\n' "$env_file" >&2
+        return 1
+    fi
     local line
     local key
     local -a keys=()

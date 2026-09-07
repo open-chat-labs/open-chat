@@ -12,6 +12,7 @@ import { selectedModelId } from "../stores/onDeviceModels";
 import {
     inferOnDevice,
     isNativeClient,
+    NATIVE_INFERENCE_UPDATE_REQUIRED,
     NATIVE_MODEL_UPDATE_REQUIRED,
     onDeviceInferenceCapability,
     onDeviceInferenceReadiness,
@@ -125,11 +126,14 @@ function localModel(overrides: Partial<LocalModel> = {}): LocalModel {
     };
 }
 
-beforeEach(() => {
+beforeEach(async () => {
     mockInfer.mockReset();
-    mockInferenceRuntimeAvailable.mockReset();
     mockListLocalModels.mockReset();
-    mockInferenceRuntimeAvailable.mockResolvedValue(true);
+    // Reset the facade's measured native capability through the actual probe boundary.
+    setNative(true);
+    mockInferenceRuntimeAvailable.mockReset().mockResolvedValue(false);
+    await onDeviceInferenceReadiness();
+    mockInferenceRuntimeAvailable.mockReset().mockResolvedValue(true);
     // Default: no model downloaded and none selected — each test opts into what it needs.
     mockListLocalModels.mockResolvedValue([]);
     selectedModelId.set("");
@@ -523,11 +527,11 @@ describe("inferOnDevice — error path (thrown -> error, NOT unavailable)", () =
 });
 
 describe("onDeviceInferenceCapability", () => {
-    it("is available when the native runtime probe passes AND a model is selected", async () => {
+    it("is available after probing the native runtime and verified selected install", async () => {
         setNative(true);
         selectedModelId.set(MODEL_ID);
         mockListLocalModels.mockResolvedValue([localModel()]);
-        await onDeviceInferenceReadiness();
+        await expect(onDeviceInferenceReadiness()).resolves.toEqual({ available: true });
 
         const cap = onDeviceInferenceCapability();
 
@@ -640,6 +644,66 @@ describe("onDeviceInferenceCapability", () => {
         mockListLocalModels.mockResolvedValue([localModel({ sizeBytes: 1 })]);
 
         await expect(inferOnDevice({ prompt: "hi" })).resolves.toEqual({
+            kind: "unavailable",
+            reason: NATIVE_MODEL_UPDATE_REQUIRED,
+        });
+        expect(mockInfer).not.toHaveBeenCalled();
+    });
+});
+
+describe("native runtime availability", () => {
+    it.each(["not compiled", "old binary"])(
+        "fails closed for a runtime %s before reading models",
+        async (scenario) => {
+            setNative(true);
+            selectedModelId.set(MODEL_ID);
+            if (scenario === "old binary") {
+                mockInferenceRuntimeAvailable.mockRejectedValue(new Error("unknown command"));
+            } else {
+                mockInferenceRuntimeAvailable.mockResolvedValue(false);
+            }
+            await expect(onDeviceInferenceReadiness()).resolves.toEqual({
+                available: false,
+                reason: NATIVE_INFERENCE_UPDATE_REQUIRED,
+            });
+            await expect(inferOnDevice({ prompt: "Read this" })).resolves.toEqual({
+                kind: "unavailable",
+                reason: NATIVE_INFERENCE_UPDATE_REQUIRED,
+            });
+            expect(onDeviceInferenceCapability().available).toBe(false);
+            expect(mockListLocalModels).not.toHaveBeenCalled();
+            expect(mockInfer).not.toHaveBeenCalled();
+        },
+    );
+
+    it("does not advertise the bridge before measuring runtime and selected artifact readiness", async () => {
+        setNative(true);
+        selectedModelId.set(MODEL_ID);
+        mockListLocalModels.mockResolvedValue([localModel()]);
+        expect(onDeviceInferenceCapability().available).toBe(false);
+        await expect(onDeviceInferenceReadiness()).resolves.toEqual({ available: true });
+        expect(onDeviceInferenceCapability().available).toBe(true);
+        selectedModelId.set("qwen3-vl-2b-instruct-q4");
+        expect(onDeviceInferenceCapability().available).toBe(false);
+    });
+
+    it("requires an update for a stale installed file identity even when sizes still match", async () => {
+        setNative(true);
+        selectedModelId.set(MODEL_ID);
+        const installed = localModel();
+        mockListLocalModels.mockResolvedValue([
+            {
+                ...installed,
+                files: installed.files.map((file, index) =>
+                    index === 0 ? { ...file, sha256: "0".repeat(64) } : file,
+                ),
+            },
+        ]);
+        await expect(onDeviceInferenceReadiness()).resolves.toEqual({
+            available: false,
+            reason: NATIVE_MODEL_UPDATE_REQUIRED,
+        });
+        await expect(inferOnDevice({ prompt: "Read this" })).resolves.toEqual({
             kind: "unavailable",
             reason: NATIVE_MODEL_UPDATE_REQUIRED,
         });

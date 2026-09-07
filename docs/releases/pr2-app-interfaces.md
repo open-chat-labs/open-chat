@@ -31,10 +31,100 @@ Protocol reference: [Local app processing](../local-app-processing.md).
 
 ## Verification and readiness
 
-The combined integration follow-up passed 1,862 frontend tests, both typechecks and read-only
-lint. App-host boundary checks found no findings. Recorded-response
+The latest isolated upstream-reconciled working tree passed 190 frontend files / 2,550 tests,
+both typechecks, read-only lint and 296 offline build-policy/helper tests (September 7).
+The full backend unit workspace also passed 957 tests with one existing ignored test;
+full strict backend Clippy now passes the locked/offline workspace with test targets and
+warnings treated as errors, excluding only the two native-shell packages. This includes integration-test
+compilation, not execution. Candid parity and integration acceptance remain unverified.
+These resolutions are
+not committed or on this PR's published head yet. Earlier full app-host boundary checks found
+no findings. Recorded-response
 replay, real model inference and fully verified app-card flows remain distinct evidence.
 A complete physical-phone partner-card run is still outstanding.
+
+The prerequisite PR1 tree was independently rerun: all 123 frontend files / 1,488 tests and
+94 offline helper tests pass without skips, both typechecks pass, and read-only lint has
+0 errors / 30 warnings. Its 37 reviewed follow-up files plus nine lock/configuration inputs
+retained their hashes and dirty status throughout the run. Evidence is recorded in
+`pr1-frontend-validation-20260907-auth-display/summary.json`; see
+[current readiness](model-app-readiness.md#september-7-verification-hardening) for the
+separate Clippy receipt and remaining acceptance boundaries.
+
+The current helper aggregate includes 48 real-shell action-inbox wiring tests. Structured
+DFX JSON validation replaces prefix matching that falsely accepted app ID 12 when 1 was
+expected and signing version 40 when 4 was expected. Hosted frontend policy now invokes
+this suite explicitly, with coverage regressions. Shared native CI also executes pinned
+component-contract tools and requires `--locked` on all six Cargo test/check commands.
+These checks do not prove live canister wiring, consumer key trust or hosted acceptance.
+
+The current frontend also separates anonymous-home welcome readiness from registry-backed
+chat readiness in both UIs. Mounted regressions preserve authenticated/public-route gates,
+landing-page precedence, Home-owned query actions, active form input and stopped-propagation
+button events. Native error-display tests exercise the production template expression with
+the real translation component and English/Arabic catalogs; handler routing is unchanged.
+The September 6 APK below predates these source fixes. The newer September 7 welcome APK
+passed three cold starts with installed-asset verification, but still predates the final
+worker-logging and mobile-theme fixes. It must be rebuilt and retested before representing
+current source. See [the latest APK evidence](model-app-readiness.md#latest-tested-local-apk-september-7-welcome-final-source-rebuild-required)
+for its exact identity and acceptance limits; no physical-device inference or authenticated
+app-card acceptance is implied.
+
+Earlier post-startup-fix production bundles also passed from the dirty merged working tree
+combining `6be70333` and `2a95a68`, not either parent commit alone or this PR's published head.
+Fourteen recorded source fingerprints remained unchanged during and across both builds.
+Default production contains 933 files / 118,043,376 bytes; the explicit immutable-WebGPU
+candidate contains 949 / 169,102,826. Fresh worker bytes match, all four generated ZIPs retain
+their expected workers, and the candidate passes 26 exact asset checks (including 21 notices)
+both in its directory and in both ZIPs. Recovery is now included in the main bundle rather
+than loaded through a separate recovery chunk.
+
+This is packaging evidence, not a refreshed APK or device/model/card acceptance result.
+Default Rollup logged 581 TS6054 unsupported `.svelte` extension diagnostics; they did not recur
+in the candidate after parallel typechecks ended, without an established causal explanation.
+Other build warnings remain. No production feature gate was activated, fresh dependency audit
+authorized, inventory uploaded or publisher artifact produced by these checks. The requested
+local-test APK remains separate and does not require new publisher signing credentials or
+publishing version/upload approval.
+
+After those bundle checks, a fresh-checkout Android build-only defaults-loader fix added five
+real-shell regressions: a missing optional `.env` is accepted, existing malformed/nonregular/
+unreadable files fail, and outer values retain precedence. This raised the policy aggregate
+from 193 to 198, without changing the 2,450-test frontend result. These helper checks do not
+establish artifact or device acceptance.
+
+### Historical September 6 artifact evidence
+
+The earlier merged-source local APK was built and binary-verified: 78,596,874 bytes,
+SHA-256 `c63fead2d577892bb4ff4e71da373c33f54cc39510d9e04eb9873e8a74f9ac56`, using
+the dirty `6be70333` + `2a95a68` source. It preserves installed ID `com.oc.app`, code `1000`
+and the existing local certificate while retaining code namespace `com.oclabs.openchat`.
+Frontend version is `2.0.0-local-webgpu-merged-20260906`, OTA policy `none`. Install-over
+succeeded and activity launch reported `Status: ok` in 11,789 ms. The strict readiness probe
+then failed at its attach-stage body snapshot. A corrected full-budget 30-second cold retry
+also failed: activity launch took 6,804 ms, no main UI or buttons were visible at 29,933 ms,
+and observation timed out at 30,012 ms with the spinner still visible. Neither cold probe
+reached its asset checks.
+
+Separately, read-only inspection of the already-running APK passed all 26 installed-asset
+hash checks, exact version/OTA checks, ORT import, WASM compilation and worker disposal;
+the expected v2 welcome screen was visually checked. Its `inspectionPassed:true` is explicitly
+not startup acceptance (`passed:false`, `coldStartAccepted:false`). Eventual welcome rendering
+at 194,417 ms of navigation time also does not meet the cold-start deadline. Requests from
+that September 6 APK showed the configured private backend was unresolved in the emulator,
+without isolating DNS as the entire startup cause. Its WebView 151.0.7922.199 exposed WebGPU
+but returned no default or high-performance GPU adapter. These are historical observations,
+not a current network or GPU capability check. No model inference, physical-phone, account/model-retention
+or authenticated app-card pass is claimed. Network settings were not changed.
+Both this artifact and the older `551265bbe` APK are historical, not the current source candidate.
+
+The build required a scoped 29.8 MiB Tauri package-cache refresh so vendor code generation
+emitted the new namespace's activity and ProGuard files, plus process-only
+`kotlin.incremental=false` for a cross-drive cache exception. No generated app code was copied,
+and the old APK/native artifact was preserved. This local build does not need publisher
+credentials or publication approval; it does not waive the release/security gates below.
+
+### Remaining publication gates
 
 The existing PR is 16 commits behind the integration checkpoint and includes no reported
 hosted checks. Refresh and independently validate its app-only scope after PR1 is refreshed.

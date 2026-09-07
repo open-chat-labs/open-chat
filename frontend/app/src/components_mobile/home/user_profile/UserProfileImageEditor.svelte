@@ -42,7 +42,7 @@
     );
 
     const gradient =
-        "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
+        "linear-gradient(90deg, var(--validation-warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
 
     function userAvatarSelected(detail: { url: string; data: Uint8Array }): void {
         client.setUserAvatar(detail.data, detail.url).then((blobId) => {

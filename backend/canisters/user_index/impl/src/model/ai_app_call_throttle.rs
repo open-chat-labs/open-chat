@@ -548,6 +548,26 @@ mod tests {
     }
 
     #[test]
+    fn indexed_user_quota_keys_do_not_share_the_host_canisters_allowance() {
+        let host = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let first = types::UserId::new_indexed(host, 1);
+        let second = types::UserId::new_indexed(host, 2);
+        assert_eq!(first.canister_id(), second.canister_id());
+        let mut throttle = AiAppCallThrottle::default();
+        let now = 100_000;
+        for _ in 0..MAX_CARD_ATTESTATION_IN_FLIGHT_PER_CALLER {
+            assert!(throttle.admit_card_attestation(first.as_principal(), 7, now).is_ok());
+        }
+        assert!(throttle.admit_card_attestation(first.as_principal(), 7, now).is_err());
+        assert!(throttle.admit_card_attestation(second.as_principal(), 7, now).is_ok());
+        for _ in 0..MAX_RECIPIENT_ROUTE_IN_FLIGHT_PER_CALLER_APP {
+            assert!(throttle.admit_recipient_route(first.as_principal(), 7, now).is_ok());
+        }
+        assert!(throttle.admit_recipient_route(first.as_principal(), 7, now).is_err());
+        assert!(throttle.admit_recipient_route(second.as_principal(), 7, now).is_ok());
+    }
+
+    #[test]
     fn claim_and_revoke_buckets_are_independent() {
         let mut throttle = AiAppCallThrottle::default();
         let caller = principal(1);

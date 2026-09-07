@@ -1,6 +1,6 @@
 # Model and app integration: PR and release readiness
 
-Assessment: 2026-09-06. **Prepared for continued draft review; not ready for a production release.**
+Assessment: 2026-09-07. **Prepared for continued draft review; not ready for a production release.**
 No PR, release, PR branch base, production switch, signing key, or deployed service was changed
 by this preparation. Preparation commits belong on the integration branch, not either stale PR head.
 
@@ -15,23 +15,404 @@ Local APK acceptance still requires checking bundled assets, application/account
 startup and the model flows. Neither local signing nor successful unit tests proves production
 deployment or physical-device GPU acceptance.
 
-## Source and submission state
+## Latest local upstream reconciliation
+
+The isolated `codex/pr2-upstream-reconciliation` working tree combines integration HEAD
+`6be70333c1cea2da6986de48afd77f55ecabe1ba` with the refreshed PR1 source at
+`2a95a68ca93be77a8e5cff92220fba0f54684d4a`, which includes pinned upstream
+`df9d9ed52db00e87fbb7309280a325902c9bb2cc`. Conflict resolutions and follow-up tests are
+still uncommitted. Neither existing PR head has changed. A new local-test APK from this dirty
+merge is built and installed, but predates the final worker-logging and mobile-theme fixes;
+it requires a rebuild before it can represent current source. Its separate startup acceptance
+is summarized below.
+These results describe the working tree, not either parent commit in isolation.
+The September 6 APK and production bundles do not contain the later September 7
+welcome-readiness and authentication-error-display fixes described here.
+PR1's mixed-owner Git protection required an explicit developer-approved, per-command
+trust exception for the exact PR1 checkout before owner-context Git inspection could resume.
+That scoped exception is now approved; ownership, ACLs and global Git settings remain
+unchanged. The exception permits inspection but does not itself resolve or verify the index.
+
+| Current merged-tree check                        | Result                                                        |
+| ------------------------------------------------ | ------------------------------------------------------------- |
+| Full frontend Vitest                             | 190 files / 2,550 tests passed; none skipped                  |
+| Svelte / agent TypeScript                        | Svelte: 0 errors / 562 warnings; agent `tsc`: passed          |
+| Read-only ESLint                                 | 0 errors / 31 warnings                                        |
+| Offline build/CI/security-helper regressions     | 296 passed on September 7; not a fresh dependency audit       |
+| Full backend unit workspace                      | 957 passed / 0 failed / 1 existing ignored test               |
+| Full backend strict Clippy                       | Passed, including integration-test compilation                |
+| Targeted user action-card tests                  | 12 passed                                                     |
+| Native default-feature OTA tests / strict Clippy | 27 passed / passed                                            |
+| Android component registration                   | 12 host tests, 7 SDK checks and Android 36 compilation passed |
+
+The component fix registers actual app classes independently of the installed application ID.
+It preserves notification payloads and supports the local identity profile without changing
+the upstream namespace. Host tests do not prove Android runtime behavior or account retention.
+The opt-in local identity profile has produced a binary-verified APK. Runtime acceptance
+remains partial; physical-device inference and account/model retention are not established
+by an install-over operation or host component tests.
+
+Independent review also caught a recovery-screen chunk dependency: when the stale-worker
+recovery chunk could not load, startup mounted nothing. The lightweight recovery component
+is now eager while selected app layouts remain lazy; an actual-entry regression failed before
+the fix and passes afterward. The optional Android credential-cache read now has one bounded
+deadline across enumeration/open/read, aborts its owned readonly transaction on timeout, and
+closes late connections. It never clears account data or substitutes cache hints for native
+authentication. The full test/type/lint results above include both startup fixes and the
+subsequent worker-logging and mobile-theme corrections.
+
+The merged frozen install used Node 24.14.1 / npm 11.11.0, with lifecycle scripts and npm audit
+disabled. CI remains pinned to Node 24.18.1. Fresh current-lock dependency review has not been
+approved or completed; expired baselines and historical advisory evidence below are not waived.
+
+### September 7 verification hardening
+
+The complete current PR2 Node helper aggregate
+(`node --test --test-reporter=spec 'scripts/*.test.mjs'`) passes 296 tests with none skipped
+and native exit 0. The independent PR1 aggregate remains 94 tests with none skipped.
+These counts supersede the earlier PR2 280-test and older 198/72 helper snapshots; they
+are not additional frontend Vitest results, dependency-audit acceptance or hosted CI
+results. The current 296-test result was locally observed in terminal output, not saved
+as a separate aggregate log.
+
+The store-AAB verifier now checks the base-manifest package, version name and version code
+independently of its existing signature checks. Its standalone bundletool 1.18.1 is pinned
+to 32,505,571 bytes and SHA-256
+`675786493983787ffa11550bdb7c0715679a44e1643f3ff980a529e9c822595c` before execution.
+That hash is locally measured official-download evidence, not an upstream-published checksum.
+The offline release selection passes 103 tests
+(`node --test scripts/android_release_policy.test.mjs scripts/android_release_checks.test.mjs scripts/release_preflight.test.mjs`;
+locally observed terminal output). Separately, the actual pinned tool passes 11 synthetic
+aapt2-compiled manifest cases, including wrong/missing/padded identity attributes,
+namespace/duplicate lookalikes, malformed bundles and a modified tool. Evidence:
+`aab-manifest-real-tool-tfZsvO/summary.json`. These fixtures do not accept a production
+bundle, publisher signing, installation or upload.
+
+Both frontend entries now render anonymous-home onboarding without waiting for chat
+registry discovery, while leaving authenticated, public-route and chat/card readiness
+requirements intact. Query-driven Home navigation retains ownership of its modal state.
+Mounted regressions exercise both actual entry components, including late readiness and
+authentication buttons that stop event propagation; capture-phase activity tracking preserves
+an in-progress v1 form. A fresh independent PR1 run passes all 123 files / 1,488 tests,
+Svelte with 0 errors / 558 warnings, agent TypeScript, read-only ESLint with 0 errors /
+30 warnings and all 94 Node helper tests; no tests were skipped. Its 37 dirty files matched
+the independent review inventory before execution. All 46 recorded source/lock/configuration
+inputs and the dirty path/status set were unchanged afterward. This refresh confirms the
+same counts, not an additional test population. Evidence:
+`pr1-frontend-validation-20260907-auth-display/summary.json` with its stage logs and
+`vitest-results.json`; before/after snapshot SHA-256 is
+`97da970c1a964d64b693b99658c006aacdacc7a03a7c4587c0132a8d8e7acb69`.
+
+PR2's earlier
+188-file / 2,535-test startup rerun included the final test-only loader mocks. Nineteen selected
+startup/authentication/configuration source hashes were unchanged during those runs. That
+frontend count is superseded by the post-review 190-file / 2,550-test run below.
+
+Post-review regression tests caught two more merge interactions. The worker now preserves
+the shared logger's primary-error and expected-error-filtering contract while passing only a
+new bounded, redacted error to telemetry. It does not log request payloads, original messages,
+stacks, causes or arbitrary error names, and correlated errors returned to callers are unchanged.
+Six of seven real-worker/shared-logger cases failed before the correction; all seven then
+passed within a 33-test worker/error selection. No live telemetry was used.
+
+Mobile AI status and spinner surfaces also retained theme variables removed upstream.
+Only generic theme-token references were corrected, including the companion suggestion chip;
+inference, routing and app interpretation are unchanged. Eight dark/light regressions failed
+before the fix and pass afterward: they compile the actual component styles and mount the
+real shared spinner with prop values read from its callers. Together with existing composer,
+card-layout and selected-message flow tests, the focused selection passes 29 tests. This is
+not a full chat mount or a device visual/inference acceptance run. PR1's corresponding
+components have no affected token references, and the PR2-only chip was not copied into PR1.
+
+The final sequential PR2 validation passes 190 frontend files / 2,550 tests, Svelte with
+0 errors / 562 warnings, agent TypeScript and read-only ESLint with 0 errors / 31 warnings.
+Targeted formatting also passes. All 62 recorded source/lock inputs retained their hashes
+through the run; this is a bounded working-tree snapshot, not a commit-wide artifact attestation.
+Evidence: `pr2-frontend-validation-20260907-cf114059659944cf8bd4db45b0016619/summary.json`
+with its `vitest-results.json` and stage logs; `pr2-resolution-review-SKfjgo/worker-logging-red-behavior.json`
+and `worker-logging-green.json`; and `pr2-mobile-ai-theme-red-20260907.log` /
+`pr2-mobile-ai-theme-green-20260907.log`. These fixes postdate the welcome APK below.
+
+Native onboarding error rendering now maps known raw authentication codes to existing
+translations and uses the generic translation for legacy/unknown codes. Authentication
+handlers and recovery routing are unchanged. Regression tests execute the actual template's
+display expression and mount the real translation component with English and Arabic
+catalogs; they do not mount the complete authentication modal or exercise device providers.
+These source tests alone do not establish APK startup or sign-in acceptance. Separate
+September 7 installed-APK startup evidence is recorded below; sign-in remains unverified.
+
+Both model workflows now have a separate Android component-contract job with nine
+byte-size/SHA-256-pinned Kotlin/JUnit tool artifacts. The actual cached artifacts were
+checked against that manifest, then used separately on both trees for 12 host tests,
+7 real-SDK constant checks and production-source compilation against Android 36.
+The resolver/CI-coverage subset passes 40 tests per tree. All six native Cargo test/check
+commands retain their platform, feature and real-fixture selections and now require
+`--locked`; a regression rejects either an unlocked or unaccounted-for native command.
+None of these host checks proves Android authentication, cache retention or GPU inference.
+
+The backend PR change-detection job now explicitly requests only `contents: read` and
+`pull-requests: read`, as required by its PR-files filter. The permission regression failed
+before the fix. The rollout wiring validator also previously accepted numeric prefixes:
+expected app ID 1 matched 12, and signature version 4 matched 40. It now validates the
+structured output of `dfx --query --output json`, including exact IDs, relay/route,
+authorized depositor and signing-key metadata. Its 48 real-shell regressions run in the
+hosted frontend policy step; separate coverage tests reject a suite mentioned only in a
+comment or another step. No live canister response or independently pinned consumer key
+was verified by those fixtures. Official DFX JSON mappings and repository types were
+reviewed, but exact pinned-version response serialization was not dynamically reproduced.
+
+The actual unchanged Candid syntax script passed all 25 interfaces with exact CI `didc`
+0.3.2 in explicit Ubuntu, after an earlier cached-0.4.0 run. The script and all 25 inputs
+retained their hashes. The legacy official release provides no publisher checksum;
+the download's official release URL/size, executable version and local SHA-256 are recorded,
+not described as independently signed provenance. This is exact-tool local syntax evidence,
+not hosted CI or Rust/Candid parity. The parity checker has real-shell failure-propagation
+and temporary-file-cleanup tests; its actual generated-interface comparison remains
+outstanding. Matching Rust 1.95 Linux
+offline metadata resolution stops before compilation because locked `h2` 0.4.16 is absent
+from that cache. The earlier full Windows backend gate stopped in OpenSSL configuration
+because Cygwin Perl does not satisfy the MSVC target. The project-local native Perl retry
+successfully compiled OpenSSL's MSVC libraries and progressed through notification
+dependencies. That exact workspace run was then terminated for disk safety before any
+unit test ran; it is an aborted gate, not a passing result or a source-test failure.
+That first disk-aborted run changed no profile, package exclusion or lockfile.
+A subsequent exact-scope retry exposed a real reconciliation compile error: ActionInbox
+still called the removed `utils::git` API. It now uses the existing workspace-local
+`git_commit_id` crate, as the upstream canisters do. The manifest and lock change add
+only that local dependency edge; no external package version, source or checksum changes.
+Locked offline metadata, workspace formatting and the helper regressions pass. The next
+monitored retry compiled ActionInbox successfully but again stopped at the disk-safety
+threshold before any unit test ran. This remains an aborted full gate, not a pass.
+The current Cargo lock SHA-256 is
+`dd165eddd49d39daebdbbe80aa78199845b8cb3d3ca42d4ce89d131e3b97116b`.
+Generated-artifact compression preserves file contents; no backend profile or package
+exclusion has been relaxed to make the gate fit.
+
+The subsequent full-scope retry reached a verifier test-compilation error: a fixture
+converted `UserId` back into `Principal` through a removed upstream API. The fixture now
+supplies the identical principal directly, with no production encoding change. All five
+`ai_app_verifier_canister` tests pass, including the fixed canonical commitment hash and
+recipient-scope compatibility assertions. That full workspace attempt failed before tests;
+the focused five-test result did not replace it. Evidence:
+`run-7dfa9edc63cc48fe9df287a10668f5c0/completion.json` and
+`pr2-verifier-fixture-green-20260907.log`.
+
+A later exact-scope retry exposed a stale source assertion for the upstream typed C2C
+error accessor. The test now accepts formatting changes but retains an exact redacted-log
+field allowlist. After that test correction, the complete backend unit command passed:
+`cargo test --locked --offline --workspace --exclude integration_tests --exclude open-chat --exclude tauri-plugin-oc`.
+The result is 957 passed, 0 failed and 1 existing ignored `print_interop_vector` test; the
+monitored process exited 0 and the Cargo lock hash above was unchanged. This supersedes
+the earlier aborted/failed unit attempts without relaxing their package scope or profile.
+Evidence: `backend-unit-runs/run-f4b0d6a9c33747b4b6ee2e23b49858f7/completion.json` and
+its `stdout.log` / `stderr.log`. Full backend unit success does not establish integration-test,
+Candid parity, hosted CI, backend rollout or device acceptance; those remain separate gates.
+
+Full backend strict Clippy now also passes the exact local command
+`cargo clippy --locked --offline --keep-going --workspace --exclude open-chat --exclude tauri-plugin-oc --tests -- -D warnings`.
+This includes compilation of `integration_tests` targets, not their execution. The monitored
+run exited 0 with warnings treated as errors; the recorded manifest, lock, backend-workflow and
+monitor hashes were unchanged. Minimum observed free space was 8,358,588,416 bytes, with
+the existing disk thresholds unchanged. Evidence:
+`backend-clippy-runs/launch-1b806ddff30e473fae987a5241dda4bb/run-fbbac4b6573940f5a52a03b5fde0f67e/completion.json`,
+its logs and the launch directory's `preflight.json` / `source-after.json`.
+Only process-local native-tooling setup was corrected: the MSVC environment and canonical
+`Path` key restore nested compiler lookup. A controlled native probe reproduced the uppercase
+`PATH` failure and `Path` success (`clippy-path-casing-probe-20260907-7495c9d2/controls.json`
+and `wrapper-regression.json`). No source gate, package scope, profile or warning policy was
+weakened. Actual generated-interface Candid parity remains unaccepted; hosted CI, integration
+execution, refreshed APK and physical-device acceptance remain separate gates.
+
+The backend integration wrapper now also requires `cargo test --locked`, preserving its
+existing package, filter, thread-count and failure behavior. Its source-command regression
+failed before the change and passes afterward in the hosted policy suite. This is a
+reproducibility check, not an actual integration run: the wrapper's download/setup and
+canister lifecycle tests have not been accepted from these fixtures.
+
+Local evidence: `openchat-pr2-offline-policy-final-20260907.log`,
+`openchat-pr1-offline-policy-current-20260907.log`,
+`pr1-real-cached-contracts-20260907-005553.log`,
+`pr2-real-cached-contracts-20260907-005553.log`,
+`openchat-pr2-ubuntu-candid-syntax-20260907.log` and
+`openchat-pr2-ubuntu-offline-metadata-20260907.log`. The exact-tool syntax rerun is
+`pr2-didc-0.3.2-syntax-20260907-015942-021.log`; the aborted Windows run is
+`openchat-pr2-native-perl-backend-workspace-unit-20260907.log`.
+
+### Latest tested local APK: September 7 welcome; final-source rebuild required
+
+**This APK predates the final worker-logging and mobile-theme fixes above.** Its three
+cold-start passes remain valid for this exact artifact, but it is not the final current-source
+APK. Rebuild and repeat bundled-asset and startup verification before handing it off as such.
+
+The monitored local build completed with exit 0 using the unchanged locked dependencies,
+the configured existing local signer, application ID `com.oc.app`, version code `1000`
+and upstream code namespace `com.oclabs.openchat`. Binary checks verified the signer,
+manifest/DEX component classes, FileProvider authority and embedded ARM64 native library.
+The 78,596,874-byte handoff APK has SHA-256
+`de78547f9f7dd3612a5178423547561814544401d0feacf4f5a79d49750f5659`.
+It contains frontend version `2.0.0-local-webgpu-welcome-20260907` with OTA strategy `none`.
+Attribution remains the uncommitted merge plus follow-up source changes above, not a
+published PR head or either merge parent alone. The September 6 rollback APK is preserved.
+
+An install-over on the existing emulator package succeeded without uninstalling or clearing
+app data. Three separately timed cold launches then passed the strict 30-second startup
+gate. The v2 onboarding controls were first observed ready at 3.462, 2.255 and 2.473 seconds
+from the respective host launch timestamps, and remained ready for at least 300 ms and
+through the final observation. The latter two launches did not reinstall the APK. Every
+run verified all 26 installed asset hashes/sizes, exact frontend version, disabled OTA,
+ORT factory import, WASM compilation and a disposable worker roundtrip. The rendered
+welcome screenshot was visually checked. No navigation/reload or late existing-state
+inspection was substituted for cold-start acceptance.
+
+These results establish this artifact's local packaging and anonymous welcome startup only.
+They do not establish signed-in account/model retention, passkey provider behavior,
+authenticated app-card flows or physical-device GPU inference. No model was downloaded
+or executed by these smoke tests, and prior emulator DNS/GPU findings are historical,
+not a fresh capability check of this APK.
+
+The build launcher required process-local host corrections: canonical Windows `Path`
+key casing, the already-cached repository-pinned DFX version, and excluding only its WSL
+executable variable from Git Bash environment-path conversion. Controlled probes reproduced
+the launcher failures before correction. No system default, public-key/version guard,
+dependency lock or application feature was relaxed to obtain the build.
+
+Local evidence: build run `run-d7ca54f6c78c4b96a2eadaa4afe58a20/completion.json`,
+`apk-welcome-smoke-0a23c1ed0e07455b84b9b91ef5906bc8/summary.json` and `smoke.json`,
+and repeated cold-start reports under `apk-welcome-cold-repeat-5f1b1bb109b44f24ae31d9d1f40e6be5`
+and `apk-welcome-cold-repeat-d780748aa06c4f90bf5187aad5a3894a`.
+
+### Historical September 6 local-test APK: merged source
+
+**Artifact predates the latest source fixes.** Its identity/assets remain recorded evidence,
+but it must be rebuilt and retested before claiming the September 7 behavior on Android.
+
+The configured local builder completed with exit 0 and produced a 78,596,874-byte APK,
+SHA-256 `c63fead2d577892bb4ff4e71da373c33f54cc39510d9e04eb9873e8a74f9ac56`.
+Binary verification passed for installed application ID `com.oc.app`, version code `1000`,
+and the existing configured local certificate. The code namespace remains
+`com.oclabs.openchat`; the local profile does not rename upstream classes or change the
+publisher's identity. The frontend version is `2.0.0-local-webgpu-merged-20260906`, with
+OTA policy `none`. Source attribution is the dirty `6be70333` + `2a95a68` merge above,
+not a published PR head or either parent commit alone.
+
+This was the local artifact at that time, replacing the earlier `551265bbe` APK as the test
+candidate. Its identity report was captured before installation. The subsequent install-over
+on the existing emulator package succeeded without uninstalling or clearing app data, and
+the activity launch reported `Status: ok` in 11,789 ms. Neither result proves account reuse,
+model-cache retention or UI readiness. The initial strict 30-second readiness probe failed
+at its attach-stage body snapshot (4,000 ms timeout, 24,972 ms elapsed from launch); its 26
+installed-asset checks were **not run**. Mobile startup is not accepted from this result;
+the corrected probe subsequently gave UI observation the full remaining 30-second budget
+and **also failed**. Its activity launch took 6,804 ms; at 29,933 ms from launch there was
+no visible main UI, no button and no error pane. Observation timed out at 30,012 ms, and
+the inspected screenshot still showed the spinner. This retry did not run asset checks.
+
+A separate read-only `inspect-existing` run passed all 26 installed-asset hash checks,
+confirmed the exact new frontend version and OTA policy, imported the ORT factory, compiled
+its WASM and disposed its disposable worker. The expected v2 welcome screen was also
+observed and visually checked. That report deliberately records `inspectionPassed:true`
+but `passed:false` and `coldStartAccepted:false`: inspecting an already-running app cannot
+accept cold startup. An earlier post-start observation showed eventual welcome rendering
+at 194,417 ms of navigation time; eventual rendering does not repair the failed deadline.
+
+That APK's diagnostics independently showed that its configured private backend failed with
+`net::ERR_NAME_NOT_RESOLVED`; no network configuration was changed. This proves backend
+unreachability in the emulator, not that DNS alone explains the startup delay. Its WebView
+151.0.7922.199 exposes `navigator.gpu`, but both default and high-performance adapter requests
+return null. No model was loaded or inference performed. No fatal native/Java failure was
+observed in the inspected logs, which did contain emulator graphics warnings. The current
+emulator at that time provided neither startup acceptance nor all-WebGPU inference evidence;
+physical-phone, account/model-retention and authenticated app-card checks remain outstanding.
+
+Two build-environment repairs preceded the successful build. A shared Tauri package cache
+from the prior namespace omitted the generated activity and ProGuard output. Only that
+scoped package cache was refreshed (29.8 MiB); the vendor generator then emitted both files,
+without copying generated app code from another checkout or namespace. The previous APK
+and native library were preserved. Process-only `kotlin.incremental=false` avoided the
+cross-drive incremental-cache exception; no global compiler default was changed.
+
+Local evidence is recorded in `openchat-local-apk-merged-identity-20260906.json`,
+`openchat-local-apk-upstream-build-generated-cache-fixed-20260906.log`, and
+`openchat-local-apk-merged-readiness-20260906.json`. The final strict retry is
+`openchat-local-apk-merged-cold-retry1-20260906.json`; separate inspection, backend and GPU
+records are `openchat-local-apk-merged-existing-inspection-20260906.json`,
+`openchat-local-apk-merged-backend-probe-20260906.json` and
+`openchat-local-apk-merged-webgpu-capability-20260906.log`. Binary checks, install/launch,
+strict startup, existing-state asset inspection, physical GPU inference and authenticated
+app-card flows remain separate results. This artifact is not published or publisher-signed;
+publisher-only signing, version and upload requirements do not block the requested local test.
+Security-policy failures and
+the outstanding fresh-audit consent are unchanged.
+
+### Final post-startup-fix production bundles
+
+Both production frontend variants were rebuilt after the two startup fixes above, using the
+same dirty merged working tree and existing frozen dependencies. Fourteen recorded source
+fingerprints, including both startup-fix files, were unchanged during each build and identical
+between builds. The results include uncommitted merge bytes, not just either parent commit.
+The frontend lock SHA-256 remained
+`8315c6237eac3758e25e6c3428e11c917fbfb1da56ecab57f8fd93eb59f92507`.
+
+| Final frontend configuration        | Build result     | Preserved files / bytes | Model worker and ORT JSPI |
+| ----------------------------------- | ---------------- | ----------------------- | ------------------------- |
+| Default production                  | Exit 0; 2m 35.7s | 933 / 118,043,376       | Absent as expected        |
+| Explicit immutable WebGPU candidate | Exit 0; 2m 35.3s | 949 / 169,102,826       | Present and verified      |
+
+The ordinary worker (1,337,869 bytes), video worker (625,789 bytes), and candidate-only model
+worker (894,466 bytes) match their freshly compiled outputs exactly. Both default ZIPs contain
+574 files and both candidate ZIPs contain 596; all four preserve their expected worker bytes.
+The [distribution verifier](../../scripts/verify_webgpu_distribution.mjs) passed all 26 assets,
+including 21 notices/sidecars, in the candidate directory and independently in both candidate
+ZIP entry streams. Neither final output has a separate `StartupFailure` chunk or dynamic
+recovery-component import; the recovery component is included in the main bundle.
+
+The Windows build used Node 24.14.1 and the explicitly selected cached dfx 0.31.0-beta.1,
+retaining the exact version guard and real anonymous public-key query. Build-only tool values
+did not leak into artifacts. The candidate used only process-local
+`OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE=true` and
+`OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY=immutable-hub-v1`; production defaults and app-card
+capability gates remain unchanged. No dependency installation, fresh audit or inventory upload
+was part of this validation.
+
+These builds were **not warning-free**. Default production logged 581 TS6054 unsupported
+`.svelte` extension diagnostics; the candidate, run after parallel typechecks ended, logged
+none. Causation is unproven and no compiler workaround was applied. Svelte, Sass, CSS URL,
+source-map, circular-dependency and optional-wallet warnings remain. Separate passing
+typecheck results above are not a claim that Rollup emitted no diagnostics.
+
+Local validation records are `openchat-pr2-merged-production-final-summary-20260906.json`
+and `openchat-pr2-merged-production-build-review-20260906.md`; final per-mode artifacts and
+reports carry the `post-startup-fix-20260906` suffix. Earlier outputs without that suffix are
+pre-fix evidence only. These are frontend packaging results with `inferenceVerified:false`,
+not a refreshed APK, Android component execution, account reuse, passkey, app-card or
+physical-device all-WebGPU acceptance result. Separate local-test APK evidence appears above
+and does not require the publisher-only signing/version/upload prerequisites below.
+
+After these frontend bundle runs, Android's build-only optional-defaults loader was corrected
+for fresh checkouts. A missing optional `.env` file is accepted; an existing malformed,
+nonregular or unreadable file fails. Caller-supplied outer values retain precedence over file
+defaults. Five real-shell regressions increased the offline policy/helper aggregate from 193
+to 198 passing tests; the 2,450-test frontend result is unchanged. The actual local-test APK
+result is recorded above, not inferred from these shell tests or frontend bundle results.
+
+## Published source and submission state before reconciliation
 
 The published integration checkpoint is `2029f00d726ca7c33de22c53c24cf1ada173d3fb`
 on `codex/pr2-clean-integration`, tagged `model-integration-checkpoint-2026-09-05`.
 The lint cleanup, compatible dependency updates, portable security hashes, CI coverage,
 Android release safeguards and this preparation package follow that immutable checkpoint.
 Use the preparation commit SHA for further validation; never move the checkpoint tag.
-The current local-test APK source is `551265bbeff8191ed36d0446bc8ef1d54edf74f8`.
-It includes the generic voice, runtime-settings and worker-rebuild follow-ups. It replaces the
-earlier `e02bd70d4` artifact as the current build candidate. Emulator private-network DNS is
-not configured for its backend, so cold startup is not fully accepted for mobile use.
+The earlier local-test APK source was `551265bbeff8191ed36d0446bc8ef1d54edf74f8`.
+It included the generic voice, runtime-settings and worker-rebuild follow-ups and superseded
+the `e02bd70d4` artifact at that time. It is now historical, not the current merged-source
+candidate. Its cold startup was not accepted because emulator private-network DNS was not
+configured for its backend; that historical result is retained below.
 
 | Submission                                                                 | Observed head                                | Base                           | State                         |
 | -------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------ | ----------------------------- |
 | [Upstream PR #9132](https://github.com/open-chat-labs/open-chat/pull/9132) | `codex/pr1-local-models`, `045f7132e`        | upstream `master`              | Draft; no reported check runs |
 | [Fork PR #73](https://github.com/ktimam/open-chat/pull/73)                 | `codex/pr2-app-chat-interfaces`, `c7299aa11` | `codex/pr1-local-models`       | Draft; no reported check runs |
-| APK preparation source                                                     | `codex/pr2-clean-integration`, `551265bbe`   | descends from both heads above | Not either PR's current head  |
+| Historical APK preparation source                                          | `codex/pr2-clean-integration`, `551265bbe`   | descends from both heads above | Not either PR's current head  |
 
 The integration checkpoint is 16 commits / 115 changed files beyond PR #73's head.
 Those commits mix later model-runtime fixes and app-interface fixes. It is 60 commits beyond
@@ -41,9 +422,23 @@ the checkpoint and upstream have 98 and 126 unique commits respectively. Since t
 assessment, upstream added Play signing-key association and legacy-install migration notices.
 Its Android package-identity migration must be reviewed explicitly when reconciling the stack;
 do not uninstall or change the existing local-test package/account identity as a merge side effect.
-Conflict resolution against current upstream is not verified.
+The checkpoint itself does not contain the newly validated local conflict resolutions above.
 
 ## Preserve the two-PR structure
+
+The latest bounded source-boundary review checked 5,336 tracked PR2 text files and
+4,936 tracked PR1 text files, plus 18 additional PR1 source files. It found no prohibited
+app contracts, field-role assumptions or private machine identifiers; the existing PR2
+boundary audit also passed across its separate 5,276-file scope. Manual inspection of
+candidate matches confirmed that financial/image-label fixtures exercise caller-supplied
+schema, caption and keyword inputs rather than host-owned business rules. This is a
+bounded scan and surface review, not proof of semantic absence in every repository path.
+
+The Android build-generated source review found no machine/cache paths in 65 tracked
+Android and plugin-permission text files. The apparent manifest/Gradle/permission drift
+was line-ending or regeneration metadata; schema coverage matches the incoming PR1
+source for all 31 commands. Only the local Kotlin build cache was newly ignored, without
+deleting diagnostics or ignoring application source.
 
 1. Refresh PR1 with generic model catalog/runtime, installation/cache, optional audio,
    native bridge, model settings and their tests. Keep third-party app structures out.
@@ -65,17 +460,17 @@ published PR head has changed.
 This is a proposed publishing sequence, not an executed history rewrite. Keep the checkpoint
 tag available for comparison; do not move it to a rebased or lint-cleaned head.
 
-## Verification actually completed
+## Historical integration verification (before upstream reconciliation)
 
 Results below use isolated integration source plus the current fixes and exact updated
 frontend lockfile, not refreshed PR1/PR2 heads. The production web build was run; no signed
 shipping APK was built or accepted.
 
-The refreshed local-test ARM64 APK was built and installed over the emulator's existing
+The historical `551265bbe` local-test ARM64 APK was built and installed over the emulator's existing
 package without uninstalling or clearing data. It is 84,773,670 bytes, SHA-256
 `04c1579baf8f3d5012388863bc7280b455cbaf31af6746993937ede5e44c4bf5`, with the existing
 local Android debug certificate and `com.oc.app` identity (native version `0.1.0`, code `1000`).
-The running APK serves frontend version `2.0.0-local-webgpu-551265bbe-20260906` and OTA policy
+That APK served frontend version `2.0.0-local-webgpu-551265bbe-20260906` and OTA policy
 `none`. Its 26 served runtime/graph/notice assets match the built hashes; the actual WebView
 imports ORT, compiles the pinned WASM and receives acknowledgement from its packaged worker.
 The v2 welcome screen eventually renders. The initial startup-only probe captured the spinner;
@@ -148,9 +543,10 @@ inbox cleanup preserves cursor iteration and replaces test-only temporary vector
 tests pass, bringing the first focused total to 206. Subsequent user-index, group-index and
 local-user-index repairs bring the combined nine-target total to 590 passing tests and strict
 Clippy. These changes retain stored structures and public wire payloads; only transient lookup
-results are boxed, with value, persistence and expiry-boundary regressions. The full Windows
-workspace Clippy attempt still stops at the local Cygwin-Perl/MSVC OpenSSL build incompatibility;
-that is not a source pass or a substitute for full Linux CI. Card-authorization requirements
+results are boxed, with value, persistence and expiry-boundary regressions. The historical full
+Windows workspace Clippy attempt stopped at the local Cygwin-Perl/MSVC OpenSSL incompatibility.
+The September 7 full locked/offline pass above supersedes that local blocker, not the need
+for full hosted Linux CI. Card-authorization requirements
 are unchanged by these repair batches.
 
 The development model-worker watcher now includes its full generic helper list. A helper edit
@@ -342,8 +738,9 @@ still exits nonzero for the expired baseline and reviewed dependency drift; no w
 
 Frontend, backend and model/app security workflows now include the stacked PR base and
 integration pushes, with regression tests for that routing. These changes are not on the
-two older PR heads yet. Candid and broader integration workflows still need coordinated
-validation on the final stack; private/custom-runner jobs were not enabled blindly.
+two older PR heads yet. Candid event routing and fail-closed checker regressions are now
+covered locally; actual parity and broader integration workflows still need coordinated
+validation on the final stack. Private/custom-runner jobs were not enabled blindly.
 Absence of hosted check runs must not be reported as success.
 
 ## Publisher-only shipping guidance: not a local APK prerequisite
@@ -363,7 +760,7 @@ Source/PR review and physical-device testing remain separate from APK publicatio
   app-card features in production/testnet. Keep these security brakes until backend rollout
   and authorization acceptance are complete; frontend flags are not backend authority.
 - [Android release workflow](../../.github/workflows/android_release.yaml) now accepts only
-  exact `vX.Y.Z-android` tags or explicit manual version/code inputs. It requires successful
+  exact `vX.Y.Z-android` tags or an explicit manual version input. It requires successful
   frontend, backend and both security workflows for the exact checked-out SHA before building
   and again before uploading. Missing, failed, queued, skipped, truncated, wrong-source or
   PR synthetic-merge evidence is rejected; workflow paths and individual jobs are checked.
@@ -375,10 +772,11 @@ Source/PR review and physical-device testing remain separate from APK publicatio
 - CI now requires configured release signing and a pinned certificate for manual and published
   artifacts; no temporary/debug-key fallback. Local developer signing is unchanged. Actual
   release key configuration and application-link identity still require verification.
-- Explicit native version/code overrides are supplied to both Tauri builds and inspected in
-  the APK alongside application ID and certificate. Patch versions above 999 are supported.
-  Configure `ANDROID_RELEASE_VERSION_CODE` for published releases and verify monotonicity
-  against the last distributed artifact; no code is inferred from a guessed semver formula.
+- The reviewed upstream formula derives the native version code as
+  `major * 1,000,000 + minor * 10,000 + patch`, with validated bounds and matching Tauri/Gradle
+  inputs. Full APK and store AAB identity/signatures are checked separately. Verify progression
+  against the actual last distributed version code; supplying an inconsistent code is rejected.
+  Local testing still uses its existing native version policy, not a fabricated publishing version.
 - Android CI and Gradle now pin NDK `26.1.10909125` and build-tools `35.0.0`, matching
   the inspected local APK's native build note and Gradle execution history. APK verification
   requires that exact build-tools version. The existing Gradle `8.14.4` distribution has its
@@ -409,14 +807,13 @@ Do not reuse the running development server's checkout for a production build.
 
 ```sh
 cd frontend
-npm ci
+npm ci --no-audit
 npm test -- --reporter=dot
 npm run typecheck
 npm run typecheck:agent
 npm run lint:check
 cd ..
-node --test scripts/pr-ci-policy.test.mjs scripts/security_dependency_hash.test.mjs scripts/android_release_policy.test.mjs scripts/android_release_checks.test.mjs
-node --test scripts/release_preflight.test.mjs scripts/android_bundle.test.mjs scripts/frontend_format_check.test.mjs
+node --test 'scripts/*.test.mjs'
 node scripts/cdp_axios_compatibility.mjs
 node scripts/decoder_compatibility.mjs
 node scripts/release_preflight.mjs
@@ -427,6 +824,8 @@ git diff --check
 
 The security commands are currently expected to fail; preserve their findings. Run Rust,
 license, formatting and SBOM gates with the documented pinned tools after dependency review.
+Commands that contact advisory services or upload dependency inventory require separate
+explicit consent; fresh current-lock audit consent remains outstanding for this merged tree.
 Then run the coordinated backend integration tests and a clean shipping build. Do not update
 PR readiness, publish a GitHub Release, upload APKs, enable production features or deploy until
 the corresponding gates pass and those actions are explicitly authorized.

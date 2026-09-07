@@ -93,7 +93,7 @@
                 gap={"md"}
                 direction={"vertical"}
                 padding={"lg"}
-                background={ColourVars.background1}>
+                background={ColourVars.surface1}>
                 {#if state === "converting"}
                     <Container
                         minHeight={"24rem"}

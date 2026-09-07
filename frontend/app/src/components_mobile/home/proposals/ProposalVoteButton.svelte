@@ -36,15 +36,15 @@
     let textColour = $derived<ColourVarKeys>(
         voteActive
             ? mode === "yes"
-                ? "success"
-                : "error"
+                ? "validationSuccess"
+                : "validationError"
             : voted
               ? "textPrimary"
               : "textSecondary",
     );
 
     let buttonBg = $derived(
-        voted ? (mode === "yes" ? ColourVars.success : ColourVars.error) : undefined,
+        voted ? (mode === "yes" ? ColourVars.validationSuccess : ColourVars.validationError) : undefined,
     );
 </script>
 
@@ -64,10 +64,10 @@
     borderStyle="solid"
     borderWidth="thick"
     borderColour={disabled && !voted
-        ? ColourVars.disabledButton
+        ? ColourVars.surfaceDisabled
         : mode === "yes"
-          ? ColourVars.success
-          : ColourVars.error}>
+          ? ColourVars.validationSuccess
+          : ColourVars.validationError}>
     <!-- Label & Pct -->
     <Column width="hug" gap="zero">
         <Body fontWeight="bold" width="hug" colour={textColour}>
@@ -84,7 +84,7 @@
             <Spinner
                 size="1.25rem"
                 backgroundColour={ColourVars.textPrimary}
-                foregroundColour={ColourVars.background2} />
+                foregroundColour={ColourVars.surface2} />
         {:else if mode === "yes"}
             <ThumbUp size={$iconSize} />
         {:else}
@@ -103,11 +103,11 @@
         height: 2.25rem;
         cursor: pointer;
         padding: var(--sp-sm);
-        background-color: var(--background-0);
+        background-color: var(--surface-0);
 
         &.voted.yes,
         &.voted.no {
-            background-color: var(--background-2);
+            background-color: var(--surface-2);
         }
     }
 </style>

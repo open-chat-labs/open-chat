@@ -1,7 +1,6 @@
+use crate::Data;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::timer_job_types::{ProcessReportClassification, TimerJob};
-use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -65,27 +64,6 @@ fn post_upgrade(args: Args) {
     // Heap state is authoritative after restore. Scrub the disposable raw snapshot in fixed-size
     // timer messages; this overwrites stale trailing bytes as well as the current serialized state.
     crate::jobs::scrub_upgrade_snapshot::start_after_restore();
-
-    // Resume any report classifications which were in-flight when the canister was upgraded,
-    // cancelling any queued retry jobs so that each pending classification has exactly one job
-    mutate_state(|state| {
-        let pending = state.data.reported_messages.pending_classification_report_indexes();
-        if !pending.is_empty() {
-            state
-                .data
-                .timer_jobs
-                .cancel_jobs(|job| matches!(job, TimerJob::ProcessReportClassification(_)));
-
-            let now = state.env.now();
-            for report_index in pending {
-                state.data.timer_jobs.enqueue_job(
-                    TimerJob::ProcessReportClassification(ProcessReportClassification { report_index }),
-                    now,
-                    now,
-                );
-            }
-        }
-    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, purged_pr2_history, "Post-upgrade complete");

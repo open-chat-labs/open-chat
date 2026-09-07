@@ -195,7 +195,7 @@
                     supplementalClass={"connecting_arrow"}
                     padding={"sm"}
                     width={"hug"}
-                    background={ColourVars.background1}
+                    background={ColourVars.surface1}
                     borderRadius={"circle"}>
                     <ArrowDown size={"1.2rem"} color={ColourVars.primary} />
                 </Container>

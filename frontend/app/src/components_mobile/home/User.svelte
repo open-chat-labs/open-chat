@@ -84,7 +84,7 @@
             case ROLE_ADMIN:
                 return ColourVars.secondary;
             case ROLE_MODERATOR:
-                return ColourVars.warning;
+                return ColourVars.validationWarning;
             default:
                 return ColourVars.primary;
         }

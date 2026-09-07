@@ -52,7 +52,7 @@ jobs:
 
       - name: Check PR and release policy regressions
         working-directory: .
-        run: node --test scripts/pr-ci-policy.test.mjs scripts/android_release_policy.test.mjs scripts/android_release_checks.test.mjs scripts/release_preflight.test.mjs scripts/android_bundle.test.mjs scripts/frontend_format_check.test.mjs scripts/android_dev.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_asset_notices.test.mjs scripts/sbom_lock_identity.test.mjs scripts/model_ci_coverage.test.mjs
+        run: node --test scripts/pr-ci-policy.test.mjs scripts/validate_action_inbox_wiring.test.mjs scripts/android_release_policy.test.mjs scripts/android_release_checks.test.mjs scripts/release_preflight.test.mjs scripts/android_bundle.test.mjs scripts/android_build_prerequisites.test.mjs scripts/frontend_format_check.test.mjs scripts/android_dev.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_asset_notices.test.mjs scripts/sbom_lock_identity.test.mjs scripts/model_ci_coverage.test.mjs
 
       - name: Verify narrowly scoped dependency compatibility
         working-directory: .

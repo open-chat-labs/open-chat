@@ -36,7 +36,7 @@
 <style lang="scss">
     .nested_avatar {
         padding: 4px;
-        background-color: var(--background-1);
+        background-color: var(--surface-1);
         border-radius: var(--rad-circle);
         position: absolute;
         bottom: -0.5rem;

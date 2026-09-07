@@ -36,6 +36,16 @@ export class MessageLocalUpdates {
     proposalTally?: Tally;
     lastUpdated: number = 0;
     ogPreviews?: OgPreview[];
+
+    isEmpty(): boolean {
+        return Object.entries(this).every(
+            ([key, value]) =>
+                key === "lastUpdated" ||
+                value === undefined ||
+                (Array.isArray(value) && value.length === 0) ||
+                (value instanceof Map && value.size === 0),
+        );
+    }
 }
 
 export const messageLocalUpdates = writable<MessageMap<MessageLocalUpdates>>(

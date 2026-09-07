@@ -59,6 +59,7 @@ pub enum UserIndexEvent {
     UpdateBlockedUsernamePatterns(UpdateBlockedUsernamePatterns),
     SetOpenAIApiKey(SetOpenAIApiKey),
     SetModerationReferralConfig(SetModerationReferralConfig),
+    SetMediaScanConfig(types::MediaScanConfig),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -80,6 +81,7 @@ pub enum GroupOrCommunityEvent<T = UserNotificationPayload> {
     EventStoreEvent(Event),
     Notification(Box<Notification<T>>),
     MessageClassifyRequest(Box<ClassifyMessageRequest>),
+    MediaScanRequest(Box<types::MediaScanRequest>),
 }
 
 pub type GroupEvent = GroupOrCommunityEvent<GroupChatUserNotificationPayload>;

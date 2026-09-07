@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { sanitizeOneLine } from "./domPurify";
+import { DOMPurifyDefault, sanitizeOneLine } from "./domPurify";
 
 describe("sanitizeOneLine", () => {
     test("replaces <br> variants with a space", () => {
@@ -63,5 +63,47 @@ describe("sanitizeOneLine", () => {
 
     test.each(equivalence)("sanitises %s to exact expected output", (payload, expected) => {
         expect(sanitizeOneLine(payload)).toBe(expected);
+    });
+});
+
+// Mention markup as produced by Markdown.svelte. These pin how the
+// <profile-link> attributes survive sanitisation, including when the text
+// attribute carries escaped / unescaped quotes.
+describe("DOMPurifyDefault with mention markup", () => {
+    const cases: [string, string][] = [
+        [
+            `<profile-link text="alice" user-id="u-1" suppress-links="false"></profile-link>`,
+            `<profile-link text="alice" user-id="u-1" suppress-links="false"></profile-link>`,
+        ],
+        // entity-escaped quotes survive as entities; angle brackets are legal
+        // inside an attribute value so the serialiser emits them literally
+        [
+            `<profile-link text="bob &quot;the&quot; &lt;b&gt; &amp; &#39;c&#39;" user-id="u-2" suppress-links="true"></profile-link>`,
+            `<profile-link text="bob &quot;the&quot; <b> &amp; 'c'" user-id="u-2" suppress-links="true"></profile-link>`,
+        ],
+        // a raw quote terminates the attribute; the remainder is dropped
+        [
+            `<profile-link text="bob "the" onclick="alert(1)" user-id="u-2" suppress-links="false"></profile-link>`,
+            `<profile-link text="bob" user-id="u-2" suppress-links="false"></profile-link>`,
+        ],
+        // disallowed attributes on custom elements are stripped
+        [
+            `<profile-link text="x" user-id="u" onclick="alert(1)" style="color:red"></profile-link>`,
+            `<profile-link text="x" user-id="u"></profile-link>`,
+        ],
+        [
+            `<custom-emoji data-id="abc" onload="alert(1)"></custom-emoji>`,
+            `<custom-emoji data-id="abc"></custom-emoji>`,
+        ],
+        [`<spoiler-span onclick="alert(1)">x</spoiler-span>`, `<spoiler-span>x</spoiler-span>`],
+        [
+            `<strong><a href="?usergroup=7">@admins &lt;b&gt;"x" &amp; 'y'</a></strong>`,
+            `<strong><a href="?usergroup=7">@admins &lt;b&gt;"x" &amp; 'y'</a></strong>`,
+        ],
+    ];
+
+    test.each(cases)("sanitises %s", (input, expected) => {
+        expect(DOMPurifyDefault.sanitize(input)).toBe(expected);
+        expect(sanitizeOneLine(input)).toBe(expected);
     });
 });

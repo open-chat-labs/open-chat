@@ -77,7 +77,7 @@
         borderRadius={"md"}
         minHeight={"4rem"}
         gap={"md"}
-        background={ColourVars.background2}
+        background={ColourVars.surface2}
         padding={["md", "lg"]}>
         <Column width={"fill"}>
             <Subtitle fontWeight={"bold"}>
@@ -103,7 +103,7 @@
             borderRadius={"md"}
             minHeight={"4rem"}
             gap={"md"}
-            background={ColourVars.background2}
+            background={ColourVars.surface2}
             padding={["md", "lg"]}>
             <Avatar url={tokenState.logo} />
             <Column width={"fill"}>
@@ -122,7 +122,7 @@
                 width={{ size: "4rem" }}
                 height={"fill"}
                 borderRadius={"lg"}
-                background={ColourVars.background2}
+                background={ColourVars.surface2}
                 padding={["sm", "md"]}>
                 <QrCode size={"2rem"} color={ColourVars.textSecondary} />
             </Column>
@@ -171,7 +171,7 @@
                 "secondary",
                 currentDaysMissed,
             )}
-            {@render metric("remaining", "Remaining insured streak days", "warning", remaining)}
+            {@render metric("remaining", "Remaining insured streak days", "validationWarning", remaining)}
         </Column>
 
         <Row crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>

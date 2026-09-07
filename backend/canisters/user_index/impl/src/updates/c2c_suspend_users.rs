@@ -22,6 +22,8 @@ fn c2c_suspend_users_impl(args: Args, state: &mut RuntimeState) -> Response {
                     reason: args.reason.clone(),
                     suspended_by: args.suspended_by,
                     attempt: 0,
+                    downgrade: false,
+                    caused_by_report: None,
                 }),
                 now,
                 now,

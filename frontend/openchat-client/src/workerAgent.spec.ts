@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenChatConfig } from "./config";
 import { WorkerAgent, WORKER_STARTUP_REQUEST_TIMEOUT_MS } from "./workerAgent";
 
@@ -50,6 +51,29 @@ describe("WorkerAgent startup failure handling", () => {
     afterEach(() => {
         vi.unstubAllGlobals();
         vi.useRealTimers();
+    });
+
+    it("rejects an in-flight worker_error without treating it as a fatal worker crash", async () => {
+        const agent = new WorkerAgent(config());
+        worker.respond("init", 0);
+        const request = agent.send({ kind: "getUser" } as never);
+        const sent = worker.postMessage.mock.calls.at(-1)?.[0] as { correlationId: number };
+        const error = new Error("Worker has no agent to handle request: getUser");
+        worker.onmessage?.({
+            data: {
+                kind: "worker_error",
+                requestKind: "getUser",
+                correlationId: sent.correlationId,
+                error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+            },
+        } as MessageEvent);
+        await expect(request).rejects.toMatchObject({ message: error.message });
+        expect(worker.terminate).not.toHaveBeenCalled();
+
+        const later = agent.send({ kind: "setMinLogLevel", minLogLevel: "warn" });
+        const laterSent = worker.postMessage.mock.calls.at(-1)?.[0] as { correlationId: number };
+        worker.respond("setMinLogLevel", laterSent.correlationId);
+        await expect(later).resolves.toBeUndefined();
     });
 
     it("rejects pending and future requests when the worker script errors", async () => {

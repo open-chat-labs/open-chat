@@ -10,10 +10,12 @@ fn authority_reports(_args: Args) -> Response {
         #[derive(Serialize)]
         struct Register<'a> {
             due: &'a [crate::model::authority_reports::AuthorityReportDue],
+            attempts: &'a [crate::model::authority_reports::AuthorityReportAttempt],
             filed: &'a [crate::model::authority_reports::AuthorityReportFiled],
         }
         let register = Register {
             due: state.data.authority_reports.due(),
+            attempts: state.data.authority_reports.attempts(),
             filed: state.data.authority_reports.filed(),
         };
         Success(SuccessResult {

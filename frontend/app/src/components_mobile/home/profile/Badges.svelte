@@ -32,7 +32,7 @@
 </script>
 
 {#snippet fingerprint()}
-    <BadgeContainer {borderColor} {size} backgroundColor={ColourVars.background2}>
+    <BadgeContainer {borderColor} {size} backgroundColor={ColourVars.surface2}>
         <Fingerprint size={size === "large" ? "1.25rem" : "0.85rem"} />
     </BadgeContainer>
 {/snippet}

@@ -59,7 +59,7 @@
                 direction={"vertical"}
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}
-                background={ColourVars.background1}>
+                background={ColourVars.surface1}>
                 <Container
                     padding={["lg", "lg", "zero", "lg"]}
                     mainAxisAlignment={"center"}

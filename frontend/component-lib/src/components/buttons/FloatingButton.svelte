@@ -35,7 +35,7 @@
     {#if loading}
         <span class="button_icon">
             <Spinner
-                backgroundColour={ColourVars.textTertiary}
+                backgroundColour={ColourVars.textOnDisabledSurface}
                 foregroundColour={ColourVars.textOnPrimary} />
         </span>
     {:else}
@@ -70,7 +70,7 @@
         &.secondary {
             width: 2rem;
             height: 2rem;
-            background: var(--background-2);
+            background: var(--surface-2);
             border-radius: var(--rad-circle);
         }
 

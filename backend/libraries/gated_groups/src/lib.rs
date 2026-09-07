@@ -312,7 +312,7 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
     let args = sns_governance_canister::list_neurons::Args {
         limit: 10,
         start_page_at: None,
-        of_principal: Some(Principal::from(user_id)),
+        of_principal: Some(user_id.as_principal()),
     };
 
     match sns_governance_canister_c2c_client::list_neurons(gate.governance_canister_id, &args).await {
@@ -353,11 +353,10 @@ async fn try_transfer_from(
     this_canister_id: CanisterId,
     now: TimestampMillis,
 ) -> CheckIfPassesGateResult {
-    let from: Principal = user_id.into();
     let amount = gate.amount - 2 * gate.fee;
     let transfer_args = TransferFromArgs {
         spender_subaccount: None,
-        from: from.into(),
+        from: user_id.into(),
         to: this_canister_id.into(),
         // The amount the gate amount less the approval fee and the transfer_from fee
         amount: amount.into(),

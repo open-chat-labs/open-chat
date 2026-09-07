@@ -4,6 +4,7 @@ use user_index_canister::*;
 // Queries
 generate_msgpack_query_call!(check_username);
 generate_msgpack_query_call!(moderation_config);
+generate_msgpack_query_call!(protected_actions);
 generate_msgpack_query_call!(current_user);
 generate_msgpack_query_call!(search);
 generate_msgpack_query_call!(platform_moderators);
@@ -25,13 +26,17 @@ generate_update_call!(assign_platform_moderators_group);
 generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_msgpack_update_call!(remove_bot);
 generate_msgpack_update_call!(contest_moderation_sanction);
+generate_msgpack_update_call!(authority_report_token);
+generate_msgpack_update_call!(record_authority_report_attempt);
+generate_msgpack_update_call!(clear_authority_report_attempt);
 generate_msgpack_update_call!(record_authority_report_filed);
+generate_msgpack_update_call!(set_vault_legal_hold);
 generate_msgpack_update_call!(resolve_moderation_report);
-generate_msgpack_update_call!(set_internal_moderation_channel);
+generate_msgpack_update_call!(propose_protected_action);
+generate_msgpack_update_call!(confirm_protected_action);
+generate_msgpack_update_call!(cancel_protected_action);
 generate_msgpack_update_call!(accept_terms);
 generate_msgpack_update_call!(set_moderation_referral_config);
-generate_msgpack_update_call!(set_vault_reviewers);
-generate_msgpack_update_call!(set_openai_api_key);
 generate_update_call!(remove_ai_app);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_display_name);
@@ -79,6 +84,40 @@ pub mod happy_path {
             user_index_canister::register_ai_app::Response::Success(registration) => registration.id,
             response => panic!("'register_ai_app' error: {response:?}"),
         }
+    }
+
+    // Dual-authorized operator actions (#9136): propose with one operator, confirm with a
+    // different one. Both principals must be platform operators.
+    pub fn execute_protected_action(
+        env: &mut PocketIc,
+        proposer: Principal,
+        confirmer: Principal,
+        canister_id: CanisterId,
+        action: user_index_canister::propose_protected_action::ProtectedAction,
+    ) {
+        let response = super::propose_protected_action(
+            env,
+            proposer,
+            canister_id,
+            &user_index_canister::propose_protected_action::Args { action },
+        );
+        let user_index_canister::propose_protected_action::Response::Success(result) = response else {
+            panic!("'propose_protected_action' error: {response:?}");
+        };
+        assert!(!result.already_pending, "expected a new proposal, not an existing one");
+
+        let response = super::confirm_protected_action(
+            env,
+            confirmer,
+            canister_id,
+            &user_index_canister::confirm_protected_action::Args {
+                action_id: result.action_id,
+            },
+        );
+        assert!(
+            matches!(response, user_index_canister::confirm_protected_action::Response::Success),
+            "'confirm_protected_action' error: {response:?}"
+        );
     }
 
     pub fn current_user(
@@ -139,6 +178,7 @@ pub mod happy_path {
                 ledger: if pay_in_chat { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
                 expected_price_e8s: if pay_in_chat { fees.chat_price_e8s(duration) } else { fees.icp_price_e8s(duration) },
                 recurring,
+                from_account: None,
             },
         );
 

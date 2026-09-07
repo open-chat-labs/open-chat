@@ -10,6 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+git_commit_id = { path = "../../../libraries/git_commit_id" }
 hex = { workspace = true }
 time = { workspace = true, features = ["formatting"] }
 candid = { workspace = true }
@@ -23,6 +24,7 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 json = { path = "../../../libraries/json" }
+jwt = { path = "../../../libraries/jwt" }
 msgpack = { path = "../../../libraries/msgpack" }
 num-traits = { workspace = true }
 rand = { workspace = true }

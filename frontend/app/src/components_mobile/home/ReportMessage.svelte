@@ -78,7 +78,7 @@
 <Sheet>
     <Column gap={"xl"} padding={"xl"}>
         <Row crossAxisAlignment={"center"} gap={"sm"}>
-            <Flag size={$iconSize} color={"var(--error)"} />
+            <Flag size={$iconSize} color={"var(--validation-error)"} />
             <Subtitle fontWeight={"bold"}
                 ><Translatable resourceKey={i18nKey("report.title")} /></Subtitle
             >
@@ -118,7 +118,7 @@
                 {/snippet}
             </Select>
             {#if csam}
-                <BodySmall colour={"error"}>
+                <BodySmall colour={"validationError"}>
                     <Translatable resourceKey={i18nKey("report.csamWarning")} />
                 </BodySmall>
             {/if}

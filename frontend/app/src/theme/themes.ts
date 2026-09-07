@@ -1,11 +1,12 @@
 import { theme as neon } from "component-lib";
+import { activeThemeV2Id, initThemeV2 } from "./themeV2";
 import { derived, readable, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 import { getTheme as getBarbieTheme } from "./community/barbie";
 import { getTheme as getBlueTheme } from "./community/blue";
 import { getTheme as getHalloweenTheme } from "./community/halloween";
 import { getTheme as getMatteBlackGoldTheme } from "./community/matteblackgold";
-import { getTheme as getNeonTheme } from "./community/neon";
+import { getLightTheme as getNeonLightTheme, getTheme as getNeonTheme } from "./community/neon";
 import { getTheme as getNightvisionTheme } from "./community/nightvision";
 import { getTheme as getSignalsTheme } from "./community/signals";
 import { getTheme as getSolarizedDarkTheme } from "./community/solarizeddark";
@@ -37,6 +38,7 @@ export const communityThemes = [
 
 if (import.meta.env.OC_MOBILE_LAYOUT === "v2") {
     communityThemes.push(getNeonTheme(cloneTheme(defaultDark)));
+    communityThemes.push(getNeonLightTheme(cloneTheme(defaultLight)));
 }
 
 export const themes: Themes = {
@@ -91,8 +93,12 @@ export function writeNativeCssVariables() {
 }
 
 export function setNativeTheme() {
-    writeNativeCssVariables();
-    themeOverride.set("neon_dark");
+    initThemeV2();
+    // Keep the v1-derived css variables (still used in places by the v2
+    // layout) in step with the selected v2 mode.
+    activeThemeV2Id.subscribe((id) => {
+        themeOverride.set(id.endsWith("-light") ? "neon_light" : "neon_dark");
+    });
 }
 
 export const themeOverride = writable<string>(undefined);

@@ -19,7 +19,7 @@
         supplementalClass,
         backgroundColor = ColourVars.primary,
         backgroundImage,
-        borderColor = ColourVars.background0,
+        borderColor = ColourVars.surface0,
     }: Props = $props();
 
     let remSize = size === "large" ? "2rem" : "1.375rem";

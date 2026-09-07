@@ -1080,8 +1080,8 @@ export function transformersWebGpuClientEnabled(): boolean {
     if (!transformersWebGpuSpikeEnabled() || !mobileBrowser()) return false;
     const nativeWebView = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
     // Browser builds remain eligible on supported mobile browsers. Native packaging intentionally
-    // ships the all-WebGPU/OCR payload only for Android; a flagged iOS WebView must stay on its
-    // native route because its bundle contains neither runtime.
+    // ships the all-WebGPU payload only for Android; a flagged iOS WebView must stay on its
+    // native route because its bundle does not contain the accelerated browser runtime.
     return (
         !nativeWebView || (typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent))
     );

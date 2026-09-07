@@ -711,7 +711,7 @@ mod tests {
     fn different_chat_kinds_yield_different_ids() {
         let shared = UserId::from(Principal::from_slice(&[9, 9, 9]));
         let other = UserId::from(Principal::from_slice(&[8, 8, 8]));
-        let shared_principal = Principal::from(shared);
+        let shared_principal = shared.as_principal();
         let message_id = MessageId::from(7u64);
         let group = card_identity_digest(&Chat::Group(shared_principal.into()), None, message_id, &[]).unwrap();
         let direct = card_identity_digest(&Chat::Direct(shared.into()), None, message_id, &[other, shared]).unwrap();
@@ -932,6 +932,7 @@ mod tests {
                 recipient_key_pair.secret_key_der().to_vec(),
                 None,
                 None,
+                types::MediaScanConfig::default(),
                 true,
             )
         };

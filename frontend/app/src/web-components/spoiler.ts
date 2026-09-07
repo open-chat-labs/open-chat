@@ -1,21 +1,6 @@
-class SpoilerSpan extends HTMLElement {
-    private isRevealed: boolean = false;
-    private contentWrapper: HTMLSpanElement;
+import { sharedStyles } from "./sharedStyles";
 
-    constructor() {
-        super();
-        this.attachShadow({ mode: "open" });
-        this.contentWrapper = document.createElement("span");
-    }
-
-    connectedCallback() {
-        this.render();
-        this.setupEventListeners();
-    }
-
-    private render() {
-        const style = document.createElement("style");
-        style.textContent = `
+const applyStyles = sharedStyles(`
       :host {
         display: inline;
       }
@@ -33,12 +18,32 @@ class SpoilerSpan extends HTMLElement {
         cursor: default;
         user-select: text;
       }
-    `;
+    `);
 
+class SpoilerSpan extends HTMLElement {
+    private isRevealed: boolean = false;
+    private rendered: boolean = false;
+    private contentWrapper: HTMLSpanElement;
+
+    constructor() {
+        super();
+        this.attachShadow({ mode: "open" });
+        this.contentWrapper = document.createElement("span");
+    }
+
+    connectedCallback() {
+        // Virtual-list recycling re-connects the same element; render once.
+        if (this.rendered) return;
+        this.rendered = true;
+        this.render();
+        this.setupEventListeners();
+    }
+
+    private render() {
         this.contentWrapper.className = "spoiler-content";
         this.contentWrapper.innerHTML = this.innerHTML;
 
-        this.shadowRoot!.appendChild(style);
+        applyStyles(this.shadowRoot!);
         this.shadowRoot!.appendChild(this.contentWrapper);
     }
 

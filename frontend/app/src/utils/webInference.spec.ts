@@ -905,6 +905,51 @@ describe("pinned all-WebGPU model integration", () => {
         expect(wl.loadCount).toBe(0);
     });
 
+    it.each(["qwen3-vl-2b-instruct-q4", "gemma-4-e2b-it-q4"])(
+        "routes ordinary text through selected all-WebGPU model %s without a projector-free option",
+        async (modelId) => {
+            const model =
+                modelId === entry.id
+                    ? entry
+                    : {
+                          id: modelId,
+                          name: "Gemma 4 E2B (multimodal)",
+                          files: [],
+                          sizeBytes: 0,
+                          modalities: ["text", "image", "audio"] as ModelModality[],
+                      };
+            await useWebModelFromUrl(model);
+
+            await expect(webInfer({ modelId, prompt: "read this text" })).resolves.toEqual({
+                kind: "ok",
+                text: "all-webgpu result",
+            });
+            expect(transformers.requests).toEqual([
+                expect.objectContaining({ modelId, prompt: "read this text" }),
+            ]);
+            expect(transformers.requests[0].image).toBeUndefined();
+            expect(wl.loadCount).toBe(0);
+        },
+    );
+
+    it("rejects ordinary text inference when the pinned model selection changed", async () => {
+        await useWebModelFromUrl({
+            id: "gemma-4-e2b-it-q4",
+            name: "Gemma 4 E2B (multimodal)",
+            files: [],
+            sizeBytes: 0,
+            modalities: ["text", "image", "audio"] as ModelModality[],
+        });
+
+        await expect(
+            webInfer({ modelId: entry.id, prompt: "must reject a changed selection" }),
+        ).resolves.toEqual({
+            kind: "error",
+            error: "the selected browser model changed before inference",
+        });
+        expect(transformers.requests).toEqual([]);
+    });
+
     it("routes projector-absent verification through all-WebGPU with no caller image bytes", async () => {
         await useWebModelFromUrl(entry);
 

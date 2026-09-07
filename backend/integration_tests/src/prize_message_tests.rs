@@ -9,7 +9,7 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, MultiUserChat, OptionUpdate,
+    CanisterId, ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, MultiUserChat, OptionUpdate,
     PendingCryptoTransaction, PrizeContentInitial, icrc1,
 };
 
@@ -40,7 +40,7 @@ fn prize_messages_can_be_claimed_successfully() {
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
@@ -51,7 +51,7 @@ fn prize_messages_can_be_claimed_successfully() {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
                     amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
-                    to: group_id.into(),
+                    to: CanisterId::from(group_id).into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
@@ -149,7 +149,7 @@ fn prize_message_requiring_reauthentication() {
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
@@ -160,7 +160,7 @@ fn prize_message_requiring_reauthentication() {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
                     amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
-                    to: group_id.into(),
+                    to: CanisterId::from(group_id).into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
@@ -267,7 +267,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
@@ -278,7 +278,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
                     amount,
-                    to: group_id.into(),
+                    to: CanisterId::from(group_id).into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),
@@ -364,7 +364,7 @@ fn old_transactions_fixed_by_updating_created_date() {
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
         user.principal,
-        user.user_id.into(),
+        user.user_id.canister_id(),
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
@@ -375,7 +375,7 @@ fn old_transactions_fixed_by_updating_created_date() {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
                     amount,
-                    to: group_id.into(),
+                    to: CanisterId::from(group_id).into(),
                     fee,
                     memo: None,
                     created: now_nanos(env),

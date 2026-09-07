@@ -20,6 +20,7 @@
         type CommunitySummary,
         type OpenChat,
     } from "@client";
+    import { communityPreviewState } from "@src/utils/preview.svelte";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -60,6 +61,7 @@
         });
     }
     function goToCommunity(id: CommunityIdentifier) {
+        communityPreviewState.setOrigin(id.communityId, "/welcome");
         navigate(`/community/${id.communityId}`);
     }
 </script>
@@ -74,9 +76,9 @@
                 gap={"xs"}
                 borderRadius={"md"}
                 padding={["xs", "md"]}
-                background={ColourVars.background0}>
-                <Translate color={ColourVars.primaryLight} />
-                <BodySmall colour={"primaryLight"}>
+                background={ColourVars.surface0}>
+                <Translate color={ColourVars.primaryAccent} />
+                <BodySmall colour={"primaryAccent"}>
                     {supportedLanguagesByCode[community.primaryLanguage]?.name}
                 </BodySmall>
             </Container>
@@ -189,7 +191,7 @@
                             },
                             {
                                 text: i18nKey("directly!"),
-                                colour: "warning",
+                                colour: "validationWarning",
                             },
                         ]}>
                     </MulticolourText>
@@ -262,6 +264,6 @@
         height: 6px;
         width: 100%;
         border-radius: var(--rad-xl);
-        background-color: var(--background-2);
+        background-color: var(--surface-2);
     }
 </style>

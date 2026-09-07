@@ -53,7 +53,7 @@ async fn c2c_create_ai_app_card_confirmation_grant(args: Args) -> Response {
     {
         return InvalidRequest("invalid or stale card authority".to_string());
     }
-    let quota_principal = candid::Principal::from(args.context.user_id);
+    let quota_principal = args.context.user_id.as_principal();
     let app_id = args.context.app_id;
     let (prepared, admitted_at) = match mutate_state(|state| {
         let now = state.env.now();

@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, UserId};
@@ -31,7 +31,7 @@ impl ToHumanReadable for Args {
                 .users
                 .iter()
                 .copied()
-                .map(|u| HumanReadablePrincipal::from(Principal::from(u)))
+                .map(|u| HumanReadablePrincipal::from(u.as_principal()))
                 .collect(),
         }
     }

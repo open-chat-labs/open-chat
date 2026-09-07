@@ -57,10 +57,10 @@
     <!-- Percentages -->
     <Row width="fill" mainAxisAlignment="spaceBetween">
         <Column width="hug" padding="sm">
-            <Body width="hug" fontWeight="semi-bold" colour="success">{adoptPercent}%</Body>
+            <Body width="hug" fontWeight="semi-bold" colour="validationSuccess">{adoptPercent}%</Body>
         </Column>
         <Column width="hug" padding="sm">
-            <Body width="hug" fontWeight="semi-bold" colour="error">{rejectPercent}%</Body>
+            <Body width="hug" fontWeight="semi-bold" colour="validationError">{rejectPercent}%</Body>
         </Column>
     </Row>
 
@@ -112,7 +112,7 @@
         height: 0.3rem;
         position: relative;
         border-radius: var(--rad-md);
-        background: var(--background-2);
+        background: var(--surface-2);
 
         .adopt,
         .reject {

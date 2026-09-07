@@ -288,7 +288,7 @@ fn register_per_user_app_with_scope(
         wasms::AI_APP_VERIFIER_TEST.clone(),
         NeutralVerifierInit {
             name: draft.manifest.name.clone(),
-            owner: owner.user_id.into(),
+            owner: owner.user_id.as_principal(),
             vouched: true,
             expected_v2: Some(verification_binding(user_index, &draft)),
             accepted_card_content: Some(card_content_fixture()),
@@ -340,7 +340,7 @@ fn verification_binding(user_index: CanisterId, app: &AiAppRegistration) -> Veri
         user_index_canister_id: user_index,
         app_id: app.id,
         app_revision: app.updated,
-        owner: app.owner.into(),
+        owner: app.owner.as_principal(),
         canonical_name: canonical_name.clone(),
         manifest: app.manifest.clone(),
     };
@@ -348,7 +348,7 @@ fn verification_binding(user_index: CanisterId, app: &AiAppRegistration) -> Veri
         user_index_canister_id: user_index,
         app_id: app.id,
         app_revision: app.updated,
-        owner: app.owner.into(),
+        owner: app.owner.as_principal(),
         canonical_name,
         app_canister_id: app.manifest.app_canister_id.unwrap(),
         inbox_canister_id: app.manifest.inbox_canister_id,

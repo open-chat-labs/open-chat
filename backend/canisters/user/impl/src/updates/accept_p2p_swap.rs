@@ -1,13 +1,10 @@
+use crate::crypto::{deposit_to_accept_p2p_swap, validate_from_account};
 use crate::guards::caller_is_owner;
 use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
-use escrow_canister::deposit_subaccount;
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use oc_error_codes::OCErrorCode;
 use types::{
     AcceptSwapSuccess, Achievement, CanisterId, Chat, EventIndex, OCResult, P2PSwapLocation, P2PSwapStatus,
@@ -34,33 +31,16 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
     };
 
     let content = reserve_success.content;
-    let transfer_result = match icrc_ledger_canister_c2c_client::icrc1_transfer(
-        content.token1.ledger,
-        &TransferArg {
-            from_subaccount: None,
-            to: Account {
-                owner: escrow_canister_id,
-                subaccount: Some(deposit_subaccount(my_user_id.into(), content.swap_id)),
-            },
-            fee: Some(content.token1.fee.into()),
-            created_at_time: Some(now * NANOS_PER_MILLISECOND),
-            memo: Some(MEMO_P2P_SWAP_ACCEPT.to_vec().into()),
-            amount: (content.token1_amount + content.token1.fee).into(),
-        },
+    let transfer_result = deposit_to_accept_p2p_swap(
+        escrow_canister_id,
+        my_user_id,
+        content.swap_id,
+        &content.token1,
+        content.token1_amount,
+        now,
+        args.from_account,
     )
-    .await
-    {
-        Ok(Ok(index_nat)) => {
-            let index: u64 = index_nat.0.try_into().unwrap();
-            Ok(index)
-        }
-        Ok(Err(error)) => Err(if matches!(error, TransferError::InsufficientFunds { .. }) {
-            OCErrorCode::InsufficientFunds.into()
-        } else {
-            OCErrorCode::TransferFailed.with_json(&error)
-        }),
-        Err(error) => Err(error.into()),
-    };
+    .await;
 
     match transfer_result {
         Ok(index) => {
@@ -81,7 +61,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                     if let Ok(result) = chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now) {
                         let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
                         state.push_user_canister_event(
-                            args.user_id.into(),
+                            args.user_id.canister_id(),
                             UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
                                 thread_root_message_id,
                                 message_id: args.message_id,
@@ -92,7 +72,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                     }
                 }
             });
-            NotifyEscrowCanisterOfDepositJob::run(content.swap_id);
+            NotifyEscrowCanisterOfDepositJob::run(content.swap_id, my_user_id);
             Success(AcceptSwapSuccess { token1_txn_in: index })
         }
         Err(error) => {
@@ -117,6 +97,7 @@ struct PrepareResult {
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_suspended()?;
     state.data.pin_number.verify(args.pin.as_mut(), state.env.now())?;
+    validate_from_account(args.from_account, state.env.canister_id().into())?;
 
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();

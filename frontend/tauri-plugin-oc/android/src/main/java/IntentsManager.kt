@@ -1,6 +1,8 @@
 package com.ocplugin.app
 
+import android.app.Activity
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -8,6 +10,30 @@ import com.ocplugin.app.data.Notification
 import com.ocplugin.app.data.NotificationCompanion
 
 object IntentsManager {
+
+    private data class ComponentClasses(
+        val mainActivity: Class<out Activity>,
+        val dismissReceiver: Class<out BroadcastReceiver>,
+    )
+
+    @Volatile
+    private var componentClasses: ComponentClasses? = null
+
+    // Register actual component classes from Application.onCreate, before any
+    // background notification service starts. The installed applicationId may
+    // differ from the classes' namespace; no Activity instance is required.
+    fun registerComponents(
+        mainActivity: Class<out Activity>,
+        dismissReceiver: Class<out BroadcastReceiver>,
+    ) {
+        componentClasses = ComponentClasses(mainActivity, dismissReceiver)
+    }
+
+    private fun requireComponents(): ComponentClasses =
+        checkNotNull(componentClasses) {
+            "Notification components are not registered. Call IntentsManager.registerComponents " +
+                "from Application.onCreate before creating notification intents."
+        }
 
     // Request code for the summary notification's delete intent. Per-notification delete
     // intents use the notification's DB row id (a positive, auto-incremented Long) as the
@@ -21,8 +47,7 @@ object IntentsManager {
     // intents. This intent lets the dismiss receiver reconcile the DB by releasing ALL
     // active notifications, so the summary can't reappear with stale counts.
     fun buildDeleteIntentForSummary(context: Context): PendingIntent {
-        val packageName = context.packageName
-        val dismissReceiverClass = Class.forName("$packageName.NotificationDismissReceiver")
+        val dismissReceiverClass = requireComponents().dismissReceiver
         val intent = Intent(context, dismissReceiverClass).apply {
             putExtra("summaryDismiss", true)
         }
@@ -45,8 +70,7 @@ object IntentsManager {
         context: Context,
         notification: Notification
     ): PendingIntent {
-        val packageName = context.packageName
-        val mainActivityClass = Class.forName("$packageName.MainActivity")
+        val mainActivityClass = requireComponents().mainActivity
         val payload = NotificationCompanion.toJSObject(notification).toString()
         val intent =
             Intent(context, mainActivityClass).apply {
@@ -77,8 +101,7 @@ object IntentsManager {
     }
 
     fun buildDeleteIntentNotification(context: Context, notification: Notification): PendingIntent {
-        val packageName = context.packageName
-        val dismissReceiverClass = Class.forName("$packageName.NotificationDismissReceiver")
+        val dismissReceiverClass = requireComponents().dismissReceiver
         val payload = NotificationCompanion.toJSObject(notification).toString()
         val intent = Intent(context, dismissReceiverClass).apply {
             putExtra("notificationPayload", payload)
@@ -98,8 +121,7 @@ object IntentsManager {
     //
     //
     fun buildNotificationShortcutIntent(context: Context, notification: Notification): Intent {
-        val packageName = context.packageName
-        val mainActivityClass = Class.forName("$packageName.MainActivity")
+        val mainActivityClass = requireComponents().mainActivity
         val payload = NotificationCompanion.toJSObject(notification).toString()
 
         return Intent(context, mainActivityClass).apply {

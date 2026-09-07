@@ -47,7 +47,7 @@ fn validate_child_context(args: &Args, caller: candid::Principal, kind: Authorit
         {
             Ok(())
         }
-        Chat::Direct(_) if kind == AuthoritativeChildKind::User && candid::Principal::from(args.user_id) == caller => Ok(()),
+        Chat::Direct(_) if kind == AuthoritativeChildKind::User && args.user_id.canister_id() == caller => Ok(()),
         _ => Err("caller is not the asserted local chat canister".to_string()),
     }
 }
@@ -55,6 +55,23 @@ fn validate_child_context(args: &Args, caller: candid::Principal, kind: Authorit
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn indexed_user_cleanup_requires_the_hosting_user_child() {
+        let host = candid::Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let viewer = types::UserId::new_indexed(host, 1);
+        let peer = types::UserId::new_indexed(host, 2);
+        let args = Args {
+            user_id: viewer,
+            chat: Chat::Direct(peer.into()),
+            app_id: 1,
+            app_revision: 2,
+            token: vec![3; 32].into(),
+        };
+        assert!(validate_child_context(&args, host, AuthoritativeChildKind::User).is_ok());
+        assert!(validate_child_context(&args, viewer.as_principal(), AuthoritativeChildKind::User).is_err());
+        assert!(validate_child_context(&args, host, AuthoritativeChildKind::Group).is_err());
+    }
 
     #[test]
     fn cleanup_requires_the_exact_authoritative_child_route() {

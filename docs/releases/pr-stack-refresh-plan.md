@@ -1,7 +1,83 @@
 # Refreshing the existing two-PR stack
 
-Assessment: 2026-09-06. This is a scope map and work log, not a completed split or a ready-for-review claim.
+Assessment: 2026-09-07. This is a scope map and work log, not a completed split or a ready-for-review claim.
 Keep both existing PRs in draft while the dependency and runtime gates are unresolved.
+
+## Current reconciliation snapshot
+
+The sections below retain the earlier refresh history. Current PR1 is based on
+`2a95a68ca93be77a8e5cff92220fba0f54684d4a`, with uncommitted generic Android component,
+optional build-defaults and sign-in cancellation/error-routing follow-ups. Its latest full
+frontend rerun passes all 123 files / 1,488 tests and 94 offline helper tests, with no skips;
+Svelte reports 0 errors / 558 warnings, agent TypeScript passes, and read-only ESLint reports
+0 errors / 30 warnings. The run matched the independent 37-file follow-up review inventory
+and preserved all 46 recorded source/lock/configuration inputs and the dirty path/status set.
+Startup recovery and credential-cache hints
+were not blindly copied into PR1: those behaviors require prerequisite features absent
+from that branch and remain an explicit scope difference, not a missing PR1 timeout fix.
+PR1's mixed-owner protection required an explicit developer-approved trust exception for
+owner-context Git inspection. The exact-checkout, per-command exception is now approved;
+ownership, ACLs and global Git settings remain unchanged. This permits inspection, not
+automatic acceptance or resolution of the index.
+
+PR2's working tree merges that committed PR1 base into `6be70333c1cea2da6986de48afd77f55ecabe1ba`.
+Its 77 conflicted paths have source resolutions but still have unmerged index entries;
+the merge is not committed or pushed. The combined source passes 190 frontend files / 2,550
+tests, Svelte with 0 errors / 562 warnings, agent TypeScript, and read-only ESLint with 0 errors /
+31 warnings. The current September 7 offline build/policy aggregate passes 296 regressions
+with none skipped (`node --test --test-reporter=spec 'scripts/*.test.mjs'`, native exit 0;
+locally observed terminal output, not a saved aggregate log).
+The complete locked/offline backend unit workspace now passes 957 tests with 0 failures and
+1 existing ignored test, retaining the original exclusions for integration tests and the two
+native-shell packages. Full strict backend Clippy also passes the locked/offline workspace
+with `--keep-going --tests -- -D warnings`, excluding only the two native-shell packages.
+Its scope includes integration-test compilation, not execution. Recorded manifest, lock,
+workflow and monitor hashes were unchanged; process-local MSVC/`Path` setup corrected the
+launcher failure without weakening a source gate. Actual Candid parity, integration execution,
+hosted CI and rollout acceptance remain unverified.
+The combined source has also produced a locally signed test APK.
+The September 7 APK includes the welcome and auth-display fixes. Three actual emulator
+cold starts passed in 2.25–3.46 seconds to first observed readiness; all 26 installed assets
+matched on each run. **That APK predates the final worker-logging and mobile-theme fixes;
+it must be rebuilt and retested before representing current source.** Its cold-start passes
+accept only the recorded welcome artifact. No model was downloaded or executed, and signed-in
+account/model retention, passkey providers, app-card flows and physical-device inference
+remain unverified.
+These are local artifact results, not acceptance of either final PR head. Publisher signing, store
+versions and uploads are outside this local-test
+request. See [current readiness evidence](model-app-readiness.md) before using any of the
+historical results below as an acceptance claim.
+
+The latest shared CI follow-ups pin the nine component-contract tool artifacts, execute
+the actual Kotlin/Android SDK component checks, and lock all six native Cargo commands.
+PR2 additionally fixes backend PR-filter permissions and the action-inbox validator's
+numeric-prefix false positives; its 48 shell regressions are now included in hosted policy
+coverage. These are local source/test results, not successful hosted runs or backend rollout.
+
+The AAB release verifier also checks base-manifest package/version identity using the
+size/SHA-256-pinned standalone bundletool 1.18.1 before its existing signature checks.
+Its pin records locally measured official-download bytes, not a publisher checksum.
+The offline release selection passes 103 tests in locally observed terminal output;
+11 additional actual-tool cases accept/reject synthetic aapt2-compiled manifests as expected
+(`aab-manifest-real-tool-tfZsvO/summary.json`). No production bundle, publisher signing,
+installation or upload was accepted by those fixtures.
+
+The final merge review retained upstream error filtering and primary-error grouping while
+preserving PR2's worker telemetry redaction. Seven real-worker/shared-logger regressions pass
+after six failed before the fix; the adjacent worker/error selection passes 33 tests. Generic
+mobile status/spinner tokens were also migrated to actual emitted theme variables, with eight
+dark/light compiled-style/render regressions passing after an eight-test red run. No model,
+app interpretation or authentication behavior was changed, and no PR2 app controls were copied
+into PR1. Both fixes are included in the final 2,550-test frontend validation; 62 recorded
+source/lock inputs were unchanged throughout that run.
+
+Current receipts: `pr2-frontend-validation-20260907-cf114059659944cf8bd4db45b0016619/summary.json`,
+`pr1-frontend-validation-20260907-auth-display/summary.json`,
+`backend-unit-runs/run-f4b0d6a9c33747b4b6ee2e23b49858f7/completion.json`,
+`backend-clippy-runs/launch-1b806ddff30e473fae987a5241dda4bb/run-fbbac4b6573940f5a52a03b5fde0f67e/completion.json`,
+`pr2-resolution-review-SKfjgo/worker-logging-green.json` and
+`pr2-mobile-ai-theme-green-20260907.log`. The readiness document links these source results
+to the separate exact-artifact startup evidence and remaining release gates.
 
 ## First isolated refresh slice
 

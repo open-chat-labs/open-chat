@@ -53,7 +53,7 @@
         </span>
     </label>
     {#if children}
-        <Body fontWeight={"bold"} colour={disabled ? "textTertiary" : "textPrimary"}>
+        <Body fontWeight={"bold"} colour={disabled ? "textOnDisabledSurface" : "textPrimary"}>
             {@render children()}
         </Body>
     {/if}
@@ -149,11 +149,11 @@
     }
 
     .toggle-input:disabled + .toggle-track .toggle-knob {
-        background: var(--text-tertiary);
-        color: var(--text-tertiary);
+        background: var(--text-on-disabled-surface);
+        color: var(--text-on-disabled-surface);
     }
 
     .toggle-input:disabled + .toggle-track {
-        border-color: var(--text-tertiary);
+        border-color: var(--text-on-disabled-surface);
     }
 </style>

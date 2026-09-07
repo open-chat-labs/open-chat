@@ -130,7 +130,7 @@ pub(crate) fn get_sender_status(state: &RuntimeState) -> SenderStatus {
 
 pub(crate) async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> Option<UserType> {
     let args = local_user_index_canister::c2c_lookup_user::Args {
-        user_id_or_principal: user_id.into(),
+        user_id_or_principal: user_id.as_principal(),
     };
     if let Ok(response) = local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
         if let local_user_index_canister::c2c_lookup_user::Response::Success(r) = response {

@@ -7,6 +7,8 @@ export type PublicKeyBuildOptions = {
     outputPath?: string | URL;
     platform?: NodeJS.Platform;
     wslDistro?: string;
+    dfxExecutable?: string;
+    expectedDfxVersion?: string;
     runCommand?: RunCommand;
 };
 
@@ -15,6 +17,7 @@ export declare function resolveDfxInvocation(
     platform?: NodeJS.Platform,
     wslDistro?: string,
     canister?: string,
+    dfxExecutable?: string,
 ): DfxInvocation;
 export declare function extractPublicKey(result: string): string;
 export declare function writePublicKeyFile(options?: PublicKeyBuildOptions): Promise<void>;

@@ -57,7 +57,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                         return Promise.resolve(
                             mapper(
                                 MsgpackCanisterAgent.deserializeResponse(
-                                    resp.reply.arg.slice().buffer,
+                                    resp.reply.arg,
                                     responseValidator,
                                 ),
                                 timestampMs,
@@ -139,7 +139,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                             return Promise.resolve(
                                 mapper(
                                     MsgpackCanisterAgent.deserializeResponse(
-                                        reply.slice().buffer,
+                                        reply,
                                         responseValidator,
                                         options,
                                     ),
@@ -212,11 +212,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                 );
                 return Promise.resolve(
                     mapper(
-                        MsgpackCanisterAgent.deserializeResponse(
-                            reply.slice().buffer,
-                            responseValidator,
-                            options,
-                        ),
+                        MsgpackCanisterAgent.deserializeResponse(reply, responseValidator, options),
                     ),
                 );
             } else {
@@ -251,11 +247,13 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
     }
 
     private static deserializeResponse<Resp extends TSchema>(
-        responseBytes: ArrayBuffer,
+        responseBytes: Uint8Array,
         validator: Resp,
         options?: MsgpackCallOptions,
     ): Static<Resp> {
-        const response = deserializeFromMsgPack(new Uint8Array(responseBytes));
+        // Passed through without copying: @dfinity/cbor hands us an exact-length `.slice()`
+        // copy of the reply, so re-check this if a cbor upgrade switches to subarray views.
+        const response = deserializeFromMsgPack(responseBytes);
         return typeboxValidate(response, validator, options);
     }
 }

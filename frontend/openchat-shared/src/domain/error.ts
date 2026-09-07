@@ -273,6 +273,7 @@ export enum ErrorCode {
     ProfileBackgroundTooBig = 346,
     LedgerNotFound = 347,
     PrizeUserNotElligible = 348,
+    InsufficientAllowance = 350,
 
     // InternalError
     C2CError = 500,

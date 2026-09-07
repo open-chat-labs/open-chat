@@ -1,0 +1,9 @@
+{
+    "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+    "identifier": "com.oclabs.openchat.dev",
+    "build": {
+        "beforeDevCommand": "npm run dev:mobile:ios",
+        "devUrl": "http://localhost:5002",
+        "beforeBuildCommand": "echo 'BUILDING IOS APP' && npm run ios:release"
+    }
+}

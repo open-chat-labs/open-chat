@@ -136,7 +136,7 @@ pub(crate) fn validate_authoritative_child_context(
     }
     match chat {
         Chat::Direct(other) => {
-            if caller_kind != AuthoritativeChildKind::User || candid::Principal::from(user_id) != caller {
+            if caller_kind != AuthoritativeChildKind::User || user_id.canister_id() != caller {
                 return Err("caller is not the viewer's exact local user canister".to_string());
             }
             let other_user_id: types::UserId = other.into();
@@ -278,10 +278,38 @@ mod tests {
     }
 
     #[test]
+    fn indexed_direct_card_relay_uses_the_host_but_preserves_exact_members() {
+        let host = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let viewer = UserId::new_indexed(host, 1);
+        let peer = UserId::new_indexed(host, 2);
+        let other = UserId::new_indexed(host, 3);
+        let chat = Chat::Direct(peer.into());
+        assert!(
+            validate_authoritative_child_context(viewer, chat, &[viewer, peer], host, AuthoritativeChildKind::User).is_ok()
+        );
+        assert!(
+            validate_authoritative_child_context(viewer, chat, &[other, peer], host, AuthoritativeChildKind::User).is_err()
+        );
+        assert!(
+            validate_authoritative_child_context(
+                viewer,
+                chat,
+                &[viewer, peer],
+                viewer.as_principal(),
+                AuthoritativeChildKind::User
+            )
+            .is_err()
+        );
+        assert!(
+            validate_authoritative_child_context(viewer, chat, &[viewer, peer], host, AuthoritativeChildKind::Group).is_err()
+        );
+    }
+
+    #[test]
     fn direct_card_relay_accepts_only_the_exact_user_child_and_canonical_pair() {
         let viewer = user(7);
         let peer = user(8);
-        let caller = Principal::from(viewer);
+        let caller = viewer.canister_id();
 
         assert!(
             validate_authoritative_child_context(
@@ -315,14 +343,8 @@ mod tests {
             "another User canister must not relay the viewer's direct card"
         );
         assert!(
-            validate_authoritative_child_context(
-                viewer,
-                chat,
-                &members,
-                Principal::from(viewer),
-                AuthoritativeChildKind::Group,
-            )
-            .is_err(),
+            validate_authoritative_child_context(viewer, chat, &members, viewer.canister_id(), AuthoritativeChildKind::Group,)
+                .is_err(),
             "a reclassified child must lose direct-card authority"
         );
         assert!(
@@ -330,7 +352,7 @@ mod tests {
                 viewer,
                 chat,
                 &members,
-                Principal::from(viewer),
+                viewer.canister_id(),
                 AuthoritativeChildKind::Unknown,
             )
             .is_err(),
@@ -343,7 +365,7 @@ mod tests {
         let viewer = user(7);
         let peer = user(8);
         let mallory = user(9);
-        let caller = Principal::from(viewer);
+        let caller = viewer.canister_id();
 
         for (chat, members) in [
             (Chat::Direct(viewer.into()), vec![viewer, viewer]),

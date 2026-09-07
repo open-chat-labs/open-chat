@@ -63,6 +63,7 @@ export class SheetBehavior {
     }
 
     init(instantShow = false): () => void {
+        let resizeObserver: ResizeObserver | undefined;
         this._calcSheetHeight();
         this._switch({
             transient: () => {
@@ -74,12 +75,24 @@ export class SheetBehavior {
                 // By default anchored sheet is collapsed
                 // TODO make the default height configurable
                 // TODO plugin instantShow
-                this._collapsedHeight = this.sheet?.offsetHeight ?? 100;
+                const height = this.sheet?.offsetHeight ?? 100;
 
-                // Setting the initial height, important for css height
-                // animation to run correctly when sheet is expanded initially
-                // with the expand function and not dragged.
-                this._setSheetHeight(this._collapsedHeight);
+                if (height > 0) {
+                    this._setCollapsedHeight(height);
+                } else if (this.sheet && typeof ResizeObserver !== "undefined") {
+                    // The sheet mounted inside a hidden (display: none) subtree so it
+                    // has no layout yet. Pinning 0px here would leave the sheet
+                    // permanently invisible, so wait for the first non-zero size.
+                    resizeObserver = new ResizeObserver(() => {
+                        const measured = this.sheet?.offsetHeight ?? 0;
+                        if (measured > 0) {
+                            resizeObserver?.disconnect();
+                            resizeObserver = undefined;
+                            this._setCollapsedHeight(measured);
+                        }
+                    });
+                    resizeObserver.observe(this.sheet);
+                }
             },
         });
 
@@ -90,10 +103,20 @@ export class SheetBehavior {
 
         // Return unmount fn
         return () => {
+            resizeObserver?.disconnect();
             if (window.visualViewport) {
                 window.visualViewport.removeEventListener("resize", this._handleViewportChange);
             }
         };
+    }
+
+    // Remember the natural (collapsed) height of an anchored sheet and pin it.
+    // Setting the initial height is important for the css height animation to
+    // run correctly when the sheet is expanded initially with the expand
+    // function and not dragged.
+    private _setCollapsedHeight(height: number) {
+        this._collapsedHeight = height;
+        this._setSheetHeight(height);
     }
 
     collapse(instant?: boolean): Promise<void> {

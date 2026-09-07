@@ -6,7 +6,7 @@ function hideMenu() {
 
 export function menuCloser(node: HTMLElement, enabled: boolean = true) {
     if (enabled) {
-        node.addEventListener("scroll", hideMenu);
+        node.addEventListener("scroll", hideMenu, { passive: true });
 
         return {
             destroy() {

@@ -83,7 +83,7 @@
 
             <path
                 d="M28.5918 37.6904C24.9134 43.3723 17.7038 46.0225 11.0342 43.6807C3.21787 40.9361 -0.893882 32.374 1.85059 24.5576C3.11503 20.9567 5.6173 18.1425 8.70898 16.4229L33.0752 1.15332L34.4375 2.55664L27.6289 12.7432L43.0439 1.33301L44.4912 2.65918L35.0693 18.0195L39.6631 15.8779L42.6602 14.4814L40.9395 17.3057L31.4727 32.835L28.6123 37.6572L28.6025 37.6738L28.5918 37.6904Z"
-                fill={disabled ? ColourVars.disabledButton : ColourVars.primary}
+                fill={disabled ? ColourVars.surfaceDisabled : ColourVars.primary}
                 stroke="#13151D"
                 style={"filter: url('#drop-shadow-filter-0');"}
                 stroke-width="2" />

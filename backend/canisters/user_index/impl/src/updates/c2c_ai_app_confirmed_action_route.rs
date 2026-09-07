@@ -60,7 +60,7 @@ async fn c2c_ai_app_confirmed_action_route(args: Args) -> Response {
         Err(response) => return response,
     };
     let authorization = if let Some((app_canister_id, callback_args)) = callback {
-        let quota_principal = candid::Principal::from(validated.context.user_id);
+        let quota_principal = validated.context.user_id.as_principal();
         if mutate_state(|state| {
             state.data.ai_app_call_throttle.admit_recipient_route(
                 quota_principal,

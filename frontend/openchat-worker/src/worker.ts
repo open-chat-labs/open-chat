@@ -21,6 +21,7 @@ import {
     inititaliseLogger,
     MessagesReadFromServer,
     setMinLogLevel,
+    shouldReportError,
     shouldReportWorkerError,
     StorageUpdated,
     Stream,
@@ -150,16 +151,26 @@ function handleAgentEvent(ev: Event): void {
     }
 }
 
-function coarseErrorClass(error: unknown): string {
-    return error instanceof Error ? error.name : typeof error;
+function redactedWorkerError(error: unknown): Error {
+    // Preserve the logger's Error-as-second-argument contract without forwarding private
+    // messages, stacks, causes, custom properties or attacker-controlled error names.
+    const redacted = new Error("Worker failure details redacted");
+    if (error instanceof TypeError) redacted.name = "TypeError";
+    else if (error instanceof RangeError) redacted.name = "RangeError";
+    else if (error instanceof SyntaxError) redacted.name = "SyntaxError";
+    else if (error instanceof ReferenceError) redacted.name = "ReferenceError";
+    else if (error instanceof URIError) redacted.name = "URIError";
+    else if (error instanceof EvalError) redacted.name = "EvalError";
+    delete redacted.stack;
+    return redacted;
 }
 
 const sendError = (kind: string, correlationId: number) => {
     return (error: unknown) => {
         if (shouldReportWorkerError(kind, error)) {
-            logger.error("WORKER: request failed", kind, coarseErrorClass(error));
+            logger.error("WORKER: request failed", redactedWorkerError(error), kind);
         } else {
-            logger.debug("WORKER: expected request failure", kind, coarseErrorClass(error));
+            logger.debug("WORKER: expected request failure", kind, redactedWorkerError(error).name);
         }
         postMessage({
             kind: "worker_error",
@@ -220,11 +231,17 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
 }
 
 self.addEventListener("error", (err: ErrorEvent) => {
-    logger.error("WORKER: unhandled error", coarseErrorClass(err.error));
+    const error = err.error ?? err.message;
+    if (shouldReportError(error)) {
+        logger.error("WORKER: unhandled error", redactedWorkerError(error));
+    }
 });
 
 self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
-    logger.error("WORKER: unhandled promise rejection", coarseErrorClass(err.reason));
+    const error = err.reason ?? err;
+    if (shouldReportError(error)) {
+        logger.error("WORKER: unhandled promise rejection", redactedWorkerError(error));
+    }
 });
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
@@ -274,6 +291,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     console.debug("anon: init worker", principal, response.kind !== "success");
 
                     logger.debug("WORKER: constructing agent instance");
+                    agent?.dispose();
                     agent = new OpenChatAgent(id, authPrincipalString ?? "", config);
                     agent.addEventListener("openchat_event", handleAgentEvent);
                     return response;
@@ -288,6 +306,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 correlationId,
                 createOpenChatIdentity(payload.webAuthnCredentialId).then((resp) => {
                     const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
+                    agent?.dispose();
                     agent = new OpenChatAgent(id, authPrincipalString ?? "", config);
                     agent.addEventListener("openchat_event", handleAgentEvent);
                     return typeof resp !== "string"
@@ -306,7 +325,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 kind,
                 correlationId,
-                ocIdentityStorage.remove().then((_) => (agent = undefined)),
+                ocIdentityStorage.remove().then((_) => {
+                    agent?.dispose();
+                    agent = undefined;
+                }),
             );
             return;
         }
@@ -319,6 +341,15 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
         if (!agent) {
             logger.debug("WORKER: agent does not exist", kind, correlationId);
+            // Reject rather than drop the request, otherwise the caller's promise would never settle.
+            // Not routed via sendError since this is expected around login/logout and should not be reported.
+            const error = new Error(`Worker has no agent to handle request: ${kind}`);
+            postMessage({
+                kind: "worker_error",
+                requestKind: kind,
+                correlationId,
+                error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+            });
             return;
         }
 
@@ -864,6 +895,7 @@ function getAction(
                 payload.duration,
                 payload.recurring,
                 payload.expectedPriceE8s,
+                payload.fromAccount,
             );
 
         case "updateMarketMakerConfig":
@@ -1007,20 +1039,36 @@ function getAction(
         case "setModerationFlags":
             return agent.setModerationFlags(payload.flags);
 
-        case "setOpenAIApiKey":
-            return agent.setOpenAIApiKey(payload.apiKey);
+        case "proposeSetOpenAIApiKey":
+            return agent.proposeSetOpenAIApiKey(payload.apiKey);
+        case "confirmProtectedAction":
+            return agent.confirmProtectedAction(payload.actionId);
+        case "cancelProtectedAction":
+            return agent.cancelProtectedAction(payload.actionId);
+        case "protectedActions":
+            return agent.protectedActions();
         case "setModerationReferralConfig":
             return agent.setModerationReferralConfig(payload.config);
-        case "setVaultReviewers":
-            return agent.setVaultReviewers(payload.userIds);
+        case "proposeSetVaultLegalHold":
+            return agent.proposeSetVaultLegalHold(
+                payload.reportIndex,
+                payload.legalHold,
+                payload.reference,
+            );
+        case "proposeSetVaultReviewers":
+            return agent.proposeSetVaultReviewers(payload.userIds);
+        case "proposeSetMediaScanConfig":
+            return agent.proposeSetMediaScanConfig(payload.enabled, payload.scanners);
+        case "proposeSetAuthorityReporter":
+            return agent.proposeSetAuthorityReporter(payload.principal);
         case "setVaultLegalHold":
             return agent.setVaultLegalHold(
                 payload.reportIndex,
                 payload.legalHold,
                 payload.reference,
             );
-        case "destroyVaultEvidence":
-            return agent.destroyVaultEvidence(payload.reportIndex, payload.leRequestRef);
+        case "proposeDestroyVaultEvidence":
+            return agent.proposeDestroyVaultEvidence(payload.reportIndex, payload.leRequestRef);
         case "vaultBuckets":
             return agent.vaultBuckets();
         case "vaultLog":
@@ -1041,11 +1089,20 @@ function getAction(
                 payload.urgent,
                 payload.unverified,
             );
+        case "clearAuthorityReportAttempt":
+            return agent.clearAuthorityReportAttempt(payload.reportIndex);
+        case "authorityReportToken":
+            return agent.authorityReportToken(
+                payload.reportIndex,
+                payload.priority,
+                payload.reporter,
+                payload.oohCallAcknowledged,
+            );
         case "acceptTerms":
             return agent.acceptTerms(payload.version);
 
-        case "setInternalModerationChannel":
-            return agent.setInternalModerationChannel(payload.channel);
+        case "proposeSetInternalModerationChannel":
+            return agent.proposeSetInternalModerationChannel(payload.channel);
         case "resolveModerationReport":
             return agent.resolveModerationReport(
                 payload.reportIndex,
@@ -1065,6 +1122,8 @@ function getAction(
 
         case "downloadPublicBlob":
             return agent.downloadPublicBlob(payload.ref, payload.maxBytes, payload.mediaKind);
+        case "vaultFileInfo":
+            return agent.vaultFileInfo(payload.bucketCanisterId, payload.fileId);
 
         case "updateRegistry":
             return agent.getRegistry();
@@ -1278,6 +1337,7 @@ function getAction(
                 payload.messageId,
                 payload.pin,
                 payload.newAchievement,
+                payload.fromAccount,
             );
 
         case "cancelP2PSwap":

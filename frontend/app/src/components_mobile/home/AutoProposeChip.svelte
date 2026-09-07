@@ -82,19 +82,19 @@
         width={"hug"}
         height={"hug"}
         padding={["xxs", "sm"]}
-        background={ColourVars.background2}
+        background={ColourVars.surface2}
         crossAxisAlignment={"center"}
         mainAxisAlignment={"center"}
         gap={"xs"}
         borderRadius={"circle"}
         borderWidth={"thick"}
-        borderColour={ColourVars.background0}
+        borderColour={ColourVars.surface0}
     >
         {#if busy}
             <Spinner
                 size={"1rem"}
                 foregroundColour={"var(--primary)"}
-                backgroundColour={"var(--text-tertiary)"}
+                backgroundColour={"var(--text-on-disabled-surface)"}
             />
         {:else}
             <Robot size={"1rem"} color={"var(--primary)"} />

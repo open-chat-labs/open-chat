@@ -576,7 +576,11 @@
                     {#if checkFresh}
                         <Container gap={"sm"} direction={"vertical"}>
                             {#each warnings as w (w.code)}
-                                <Caption colour={w.level === "blocker" ? "error" : "textSecondary"}>
+                                <Caption
+                                    colour={w.level === "blocker"
+                                        ? "validationError"
+                                        : "textSecondary"}
+                                >
                                     {w.level === "blocker" ? "⛔" : "⚠️"}
                                     {w.message}
                                 </Caption>
@@ -586,7 +590,7 @@
                             <Translatable resourceKey={i18nKey("Add & Download")}></Translatable>
                         </Button>
                         {#if hasBlocker(warnings)}
-                            <Caption colour={"error"}>
+                            <Caption colour={"validationError"}>
                                 <Translatable
                                     resourceKey={i18nKey(
                                         "Resolve the items marked ⛔ above before this model can be added.",
@@ -597,7 +601,7 @@
                     {/if}
 
                     {#if addError}
-                        <Caption colour={"error"}>{addError}</Caption>
+                        <Caption colour={"validationError"}>{addError}</Caption>
                     {/if}
                 </Container>
             {/if}
@@ -626,7 +630,7 @@
                         <Caption colour={"textSecondary"}>{entry.sourceUrl}</Caption>
                     {/if}
                     {#if install === "update_required"}
-                        <Caption colour={"error"}>
+                        <Caption colour={"validationError"}>
                             <Translatable
                                 resourceKey={i18nKey(
                                     "Update required — this downloaded model does not match the version trusted by this OpenChat build.",
@@ -709,7 +713,7 @@
                             {/if}
                         </Container>
                         {#if errors[entry.id]}
-                            <Caption colour={"error"}>{errors[entry.id]}</Caption>
+                            <Caption colour={"validationError"}>{errors[entry.id]}</Caption>
                         {/if}
                     {/if}
                 </Container>

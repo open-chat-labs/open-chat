@@ -18,6 +18,47 @@ fn set_vault_legal_hold(args: Args) -> Response {
 }
 
 fn set_vault_legal_hold_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    let caller = state.data.users.get_by_principal(&state.env.caller()).map(|u| u.user_id);
+    let report = state
+        .data
+        .reported_messages
+        .get(args.report_index)
+        .ok_or(OCErrorCode::MessageNotFound)?;
+
+    // Vault operations never accept an attempt report index (I8): it aliases the ORIGINAL
+    // report's blob references while carrying the attempter's sender and its own (virgin)
+    // release_pending, so every guard below would be evaluated against the wrong report -
+    // including the dual-authorization gate on release-performing hold clears
+    if matches!(
+        report.detection,
+        crate::model::reported_messages::DetectionSource::BlockedAttempt { .. }
+    ) {
+        return Err(OCErrorCode::InvalidRequest
+            .with_message("Legal holds are managed on the original report, not a blocked-attempt report"));
+    }
+
+    // Never on a report against your own message: clearing a hold restarts the retention clock
+    // towards deletion, so the subject of the report could steer the evidence about themselves
+    // towards expiry
+    if caller.is_some_and(|c| c == report.sender) {
+        return Err(OCErrorCode::InitiatorNotAuthorized
+            .with_message("Cannot change the legal hold on a report against your own message"));
+    }
+
+    // Clearing a hold on evidence whose release is already pending PERFORMS that release, so
+    // this one case destroys evidence just as surely as destroy_vault_evidence does, and goes
+    // through the same dual authorization (#9136). Ordinary holds stay single-actor: they are
+    // reversible and destroy nothing.
+    if !args.legal_hold && report.release_pending {
+        return Err(OCErrorCode::InvalidRequest.with_message(
+            "Clearing this hold would immediately release the evidence - propose it as a protected action instead",
+        ));
+    }
+
+    execute(args, state)
+}
+
+pub(crate) fn execute(args: Args, state: &mut RuntimeState) -> OCResult {
     let caller = state.env.caller();
     let operator = state
         .data
@@ -41,12 +82,21 @@ fn set_vault_legal_hold_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InvalidRequest.with_message("The report holds no vaulted evidence"));
     }
 
-    moderation::set_vault_legal_hold(&report.blob_references, args.legal_hold, state);
+    moderation::set_vault_legal_hold(&report.blob_references, args.legal_hold, args.reference.clone(), state);
+    state
+        .data
+        .reported_messages
+        .set_legal_hold(args.report_index, args.legal_hold);
 
     let action = if args.legal_hold { "set" } else { "cleared" };
-    moderation::post_moderation_notice(
+    let released = if !args.legal_hold && report.release_pending {
+        " — the deferred release of the evidence has now been performed"
+    } else {
+        ""
+    };
+    moderation::notify_other_platform_operators(
         format!(
-            "🔒 Legal hold {action} on the evidence for report #{}\n\nBy {operator}, under reference: {}",
+            "🔒 Legal hold {action} on the evidence for report #{}{released}\n\nBy @UserId({operator}), under reference: {}",
             args.report_index, args.reference
         ),
         state,

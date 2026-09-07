@@ -5,7 +5,6 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CREATE_CANISTER_CYCLES_FEE, USER_LIMIT, min_cycles_balance};
 use email_address::EmailAddress;
-use ledger_utils::default_ledger_account;
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::register_user::{Response::*, *};
 use rand::RngExt;
@@ -63,7 +62,7 @@ async fn register_user(args: Args) -> Response {
             });
             Success(SuccessResult {
                 user_id,
-                icp_account: default_ledger_account(user_id.into()),
+                icp_account: user_id.into(),
             })
         }
         Err((canister_id, error)) => {

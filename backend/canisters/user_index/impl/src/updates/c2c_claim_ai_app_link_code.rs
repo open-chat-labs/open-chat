@@ -295,7 +295,7 @@ mod tests {
         ));
         assert_ne!(
             expected_subject.as_slice(),
-            candid::Principal::from(user_id).as_slice(),
+            user_id.as_slice(),
             "the app must not receive the global OpenChat user id"
         );
         assert!(matches!(

@@ -427,7 +427,7 @@ fn commit_response(args: &Args, state: &mut RuntimeState) -> OCResult<ActionCard
         .thread_root_message_index
         .map(|index| chat.main_message_index_to_id(index));
     state.push_user_canister_event(
-        args.user_id.into(),
+        args.user_id.canister_id(),
         UserCanisterEvent::ActionCardStatusChange(Box::new(ActionCardStatusChange {
             thread_root_message_id,
             message_id: args.message_id,
@@ -466,7 +466,7 @@ fn complete_response(deposit: &DepositInstruction, state: &mut RuntimeState) -> 
         .thread_root_message_index
         .map(|index| chat.main_message_index_to_id(index));
     state.push_user_canister_event(
-        other_user_id.into(),
+        other_user_id.canister_id(),
         UserCanisterEvent::ActionCardStatusChange(Box::new(ActionCardStatusChange {
             thread_root_message_id,
             message_id: deposit.context.message_id,
@@ -533,6 +533,21 @@ mod tests {
         assert_eq!(deposit.local_user_index_canister_id, canister_id);
         assert_eq!(deposit.ingress_owner, canister_id);
         assert_eq!(candid::encode_one(&deposit.context).unwrap(), expected_context);
+    }
+
+    #[test]
+    fn status_events_address_the_host_canister_without_replacing_user_identity() {
+        let source = include_str!("respond_to_action_card.rs").replace("\r\n", "\n");
+        let production = source.split("#[cfg(test)]").next().unwrap();
+        assert_eq!(production.matches("state.push_user_canister_event(").count(), 2);
+        for user in ["args.user_id", "other_user_id"] {
+            assert!(production.contains(&format!("state.push_user_canister_event(\n        {user}.canister_id(),")));
+        }
+        let host = candid::Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let first = types::UserId::new_indexed(host, 1);
+        let second = types::UserId::new_indexed(host, 2);
+        assert_eq!(first.canister_id(), second.canister_id());
+        assert_ne!(first, second);
     }
 
     #[test]

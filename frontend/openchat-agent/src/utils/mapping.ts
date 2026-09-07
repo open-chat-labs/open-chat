@@ -1,9 +1,5 @@
-import {
-    type ApiOptionUpdate,
-    type ApiOptionUpdateV2,
-    type OptionUpdate,
-    UnsupportedValueError,
-} from "@shared";
+import type { ApiOptionUpdate, ApiOptionUpdateV2, OptionUpdate } from "@shared";
+import { UnsupportedValueError } from "@shared/domain/error";
 import { Principal } from "@icp-sdk/core/principal";
 import type { ApiPrincipal } from "../services";
 

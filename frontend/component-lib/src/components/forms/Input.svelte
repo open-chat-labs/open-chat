@@ -52,7 +52,7 @@
 <Container direction={"vertical"} gap={"xs"}>
     <Container mainAxisAlignment={"spaceBetween"} gap={"xs"} crossAxisAlignment="center">
         <Container
-            background={ColourVars.textTertiary}
+            background={ColourVars.inputBackground}
             height={{ size: "3.5rem" }}
             {padding}
             borderRadius={"circle"}
@@ -96,11 +96,11 @@
     </Container>
     {#if subtext}
         <Row width={"hug"} gap={"xs"} padding={["zero", "xl"]}>
-            <BodySmall width={required ? "hug" : "fill"} colour={error ? "error" : "textSecondary"}>
+            <BodySmall width={required ? "hug" : "fill"} colour={error ? "validationError" : "textSecondary"}>
                 {@render subtext()}
             </BodySmall>
             {#if required}
-                <BodySmall width={"hug"} colour={"error"}>*</BodySmall>
+                <BodySmall width={"hug"} colour={"validationError"}>*</BodySmall>
             {/if}
         </Row>
     {/if}
@@ -125,14 +125,14 @@
         line-height: var(--typo-body-lh);
 
         &::placeholder {
-            color: var(--text-placeholder);
+            color: var(--input-placeholder);
         }
     }
 
     .countdown {
         color: var(--text-secondary);
         &.warn {
-            color: var(--warning);
+            color: var(--validation-warning);
         }
     }
 </style>

@@ -78,7 +78,7 @@ describe("Android bundled frontend OTA policy", () => {
             "utf8",
         );
 
-        expect(workflow).toContain('OC_ANDROID_OTA_UPDATES: "major"');
+        expect(workflow).toContain('OC_ANDROID_OTA_UPDATES: "minor"');
         expect(workflow).toContain('OC_ANDROID_OTA_UPDATES: "patch"');
         expect(workflow).not.toMatch(/^\s+OC_OTA_UPDATES:/m);
     });

@@ -56,7 +56,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             airdrops: self.data.airdrops.metrics(),
             pending_actions: self.data.pending_actions_queue.len(),
             channels_joined: self.data.channels_joined.iter().cloned().collect(),

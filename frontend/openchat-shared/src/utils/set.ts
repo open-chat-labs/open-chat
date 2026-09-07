@@ -4,6 +4,7 @@ import {
     type ChatIdentifier,
     type Primitive,
 } from "../domain";
+import { chatIdentifierFromKey, chatIdentifierToKey } from "./map";
 
 export interface ReadonlySet<V> extends Iterable<V> {
     has(item: V): boolean;
@@ -149,8 +150,8 @@ export class SafeSet<V> {
 export class ChatSet extends SafeSet<ChatIdentifier> {
     constructor(values?: ChatIdentifier[]) {
         super(
-            (k) => JSON.stringify(k),
-            (k) => JSON.parse(String(k)) as ChatIdentifier,
+            (k) => chatIdentifierToKey(k),
+            (k) => chatIdentifierFromKey(String(k)),
         );
         values?.forEach((v) => this.add(v));
     }

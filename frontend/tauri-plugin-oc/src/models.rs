@@ -127,6 +127,14 @@ pub struct ModelFileSpec {
     pub filename: Option<String>,
 }
 
+// iOS only: photo-library assets have no readable file path, so a picked item
+// is exported to a temp file first (see RecentMedia.swift).
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportMediaRequest {
+    pub uri: String,
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DownloadModelRequest {
@@ -215,4 +223,10 @@ pub struct InferRequest {
 #[serde(rename_all = "camelCase")]
 pub struct InferResponse {
     pub text: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportMediaResponse {
+    pub file_path: String,
 }

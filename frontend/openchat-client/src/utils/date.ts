@@ -1,5 +1,20 @@
+// Memoised for the current day. `startOfTodayMillis` is only reused while
+// `now` is still within [start of today, start of tomorrow), so it survives DST
+// transitions and is recomputed as soon as the day rolls over.
+let startOfTodayMillis = 0;
+let startOfTomorrowMillis = 0;
+
 export function getStartOfToday(): Date {
-    return getStartOfDay(new Date());
+    const now = Date.now();
+    if (now < startOfTodayMillis || now >= startOfTomorrowMillis) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const day = today.getDate();
+        startOfTodayMillis = new Date(year, month, day).getTime();
+        startOfTomorrowMillis = new Date(year, month, day + 1).getTime();
+    }
+    return new Date(startOfTodayMillis);
 }
 
 export function getStartOfDay(date: Date): Date {
@@ -55,43 +70,61 @@ export function getDaysSince(date: Date): number {
     return diffSeconds / 60 / 60 / 24;
 }
 
+// These formatters are used per message / per list row, so one instance is
+// cached per locale for each distinct set of options rather than constructing
+// a new `Intl.DateTimeFormat` on every call.
+function memoisedFormatter(
+    cache: Record<string, Intl.DateTimeFormat>,
+    locale: string,
+    options?: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+    let formatter = cache[locale];
+    if (formatter === undefined) {
+        formatter = new Intl.DateTimeFormat(locale, options);
+        cache[locale] = formatter;
+    }
+    return formatter;
+}
+
+const longMonthFormatters: Record<string, Intl.DateTimeFormat> = {};
+const shortMonthFormatters: Record<string, Intl.DateTimeFormat> = {};
+const dayOfWeekFormatters: Record<string, Intl.DateTimeFormat> = {};
+const dateFormatters: Record<string, Intl.DateTimeFormat> = {};
+const longDateFormatters: Record<string, Intl.DateTimeFormat> = {};
+const shortTimeFormatters: Record<string, Intl.DateTimeFormat> = {};
+
 export function toMonthString(date: Date, locale: string): string {
-    return date.toLocaleDateString(locale, { month: "long" });
+    return memoisedFormatter(longMonthFormatters, locale, { month: "long" }).format(date);
 }
 
 export function toDayOfWeekString(date: Date, locale: string): string {
-    return date.toLocaleDateString(locale, { weekday: "long" });
+    return memoisedFormatter(dayOfWeekFormatters, locale, { weekday: "long" }).format(date);
 }
 
 export function toDateString(date: Date, locale: string): string {
-    return date.toLocaleDateString(locale);
+    return memoisedFormatter(dateFormatters, locale).format(date);
 }
 
 export function toDatetimeString(date: Date, locale: string): string {
-    return `${date.toLocaleDateString(locale)} ${toShortTimeString(date, locale)}`;
+    return `${toDateString(date, locale)} ${toShortTimeString(date, locale)}`;
 }
 
 export function toLongDateString(date: Date, locale: string): string {
-    const weekday = date.toLocaleDateString(locale, { weekday: "long" });
+    const weekday = toDayOfWeekString(date, locale);
     const dayOfMonth = date.getDate();
-    const month = date.toLocaleDateString(locale, { month: "short" });
+    const month = memoisedFormatter(shortMonthFormatters, locale, { month: "short" }).format(date);
     const ordinal = getOrdinal(dayOfMonth);
     const year = date.getFullYear();
 
     return `${weekday} ${dayOfMonth}${ordinal} ${month} ${year}`;
 }
 
-const shortTimeFormatters: Record<string, Intl.DateTimeFormat> = {};
-
 export function toShortTimeString(date: Date, locale: string): string {
-    if (shortTimeFormatters[locale] === undefined) {
-        shortTimeFormatters[locale] = new Intl.DateTimeFormat(locale, {
-            hour: "2-digit",
-            minute: "2-digit",
-            hourCycle: "h23",
-        });
-    }
-    return shortTimeFormatters[locale].format(date);
+    return memoisedFormatter(shortTimeFormatters, locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+    }).format(date);
 }
 
 function getOrdinal(n: number): string {
@@ -167,7 +200,7 @@ export function toRelativeTime(
 // Handles i18n via Intl date formatter!
 export function formatDateLong(input: bigint | number | Date, locale = "en-GB"): string {
     const date = inputToDate(input);
-    const formatter = new Intl.DateTimeFormat(locale, {
+    const formatter = memoisedFormatter(longDateFormatters, locale, {
         weekday: "long",
         day: "numeric",
         month: "short",
@@ -194,7 +227,7 @@ export function getSmartDateHeader(
 
     const daysSince = getDaysSince(date);
     if (daysSince > 1 && daysSince <= 4) {
-        return new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
+        return toDayOfWeekString(date, locale);
     }
 
     return formatDateLong(date, locale);

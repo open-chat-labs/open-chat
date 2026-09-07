@@ -7,10 +7,42 @@ export type Logger = {
 import Rollbar, { type LogArgument } from "rollbar";
 import { offline } from "./network";
 import { NOOP } from "../constants";
-import { AnonymousOperationError } from "../domain";
 import type { LogLevel } from "../domain/logging";
+import { shouldReportError, shouldReportMessage } from "./error";
 
 let rollbar: Rollbar | undefined;
+
+// Pull the strings Rollbar would fingerprint on out of a payload: the exception class/message of
+// the primary error for trace items, the body for plain message items. Only the primary error is
+// inspected - `trace_chain[0]`, with any causes following it - because a real failure wrapped
+// around an expected cause is still a real failure and must be reported.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rollbarPayloadError(payload: any): { name: string; message: string } {
+    const body = payload?.body;
+    const exception = (body?.trace_chain?.[0] ?? body?.trace)?.exception;
+    if (exception != null) {
+        return {
+            name: typeof exception.class === "string" ? exception.class : "",
+            message: typeof exception.message === "string" ? exception.message : "",
+        };
+    }
+    return {
+        name: "",
+        message: typeof body?.message?.body === "string" ? body.message.body : "",
+    };
+}
+
+// True when the innermost frame of the primary error is browser-extension code: the error was
+// thrown by an extension (CSP violations from injected wasm, wallet inpage scripts, ...), not us.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function thrownByExtension(payload: any): boolean {
+    const body = payload?.body;
+    const frames = (body?.trace_chain?.[0] ?? body?.trace)?.frames;
+    if (!Array.isArray(frames) || frames.length === 0) return false;
+    // Rollbar frames are ordered outermost first, so the throw site is last
+    const filename = frames[frames.length - 1]?.filename;
+    return typeof filename === "string" && /^(chrome|moz|safari-web)-extension:\/\//.test(filename);
+}
 
 export function inititaliseLogger(apikey: string, version: string, env: string): Logger {
     if (env === "production") {
@@ -22,6 +54,21 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             environment: env,
             enabled: env === "production",
             captureUnhandledRejections: true,
+            // Noise with no fix on our side: opaque cross-origin "Script error." (injected
+            // scripts, extensions), and Chrome extension messaging failures
+            ignoredMessages: [
+                "Script error.",
+                "Could not establish connection. Receiving end does not exist.",
+            ],
+            // captureUncaught / captureUnhandledRejections bypass our logger, so uncaught
+            // items get the same noise filtering at the transport layer. Logger-reported items
+            // (isUncaught false) already passed shouldReportError and are not re-filtered here.
+            checkIgnore: (isUncaught, _args, payload) => {
+                if (!isUncaught) return false;
+                if (thrownByExtension(payload)) return true;
+                const { name, message } = rollbarPayloadError(payload);
+                return !shouldReportMessage(name, message);
+            },
             payload: {
                 environment: env,
                 client: {
@@ -36,7 +83,10 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
     }
     return {
         error(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
-            if (error instanceof AnonymousOperationError) return;
+            if (!shouldReportError(error)) {
+                console.debug("Expected failure (not reported): ", message, error);
+                return;
+            }
 
             console.error(message as string, error, optionalParams);
             if (!offline()) {

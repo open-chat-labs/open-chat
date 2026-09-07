@@ -357,6 +357,48 @@ impl MessageContentInternal {
         self.text().map(|t| t.len() as u32).unwrap_or_default()
     }
 
+    // The media which the scanning pipeline hashes: still images only. Image content always;
+    // File content regardless of its declared mime type (the declaration is client-supplied
+    // and must not gate the scan - the worker's decoder decides what is actually an image,
+    // reporting everything else Unscannable); the Video inline thumbnail, which is itself a
+    // still image rendered in the chat (keyframes of the video stream await extraction in v2).
+    // Giphy variants are third-party URLs, not OpenChat blobs.
+    pub fn scannable_blobs(&self) -> Vec<types::MediaScanBlob> {
+        match self {
+            MessageContentInternal::Image(i) => i
+                .blob_reference
+                .clone()
+                .map(|br| types::MediaScanBlob {
+                    blob_reference: br.into(),
+                    mime_type: i.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContentInternal::File(f) => f
+                .blob_reference
+                .clone()
+                .map(|br| types::MediaScanBlob {
+                    blob_reference: br.into(),
+                    mime_type: f.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContentInternal::Video(v) => v
+                .image_blob_reference
+                .clone()
+                .map(|br| types::MediaScanBlob {
+                    blob_reference: br.into(),
+                    mime_type: "image/*".to_string(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            _ => Vec::new(),
+        }
+    }
+
     pub fn blob_references(&self) -> Vec<BlobReference> {
         let mut references = Vec::new();
 
@@ -1760,11 +1802,13 @@ impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
                     subaccount: None,
                 }
                 .into(),
-                to: types::icrc1::Account {
-                    owner: my_user_id.map(|u| u.into()).unwrap_or(Principal::anonymous()),
-                    subaccount: None,
-                }
-                .into(),
+                to: my_user_id
+                    .map(types::icrc1::Account::for_user)
+                    .unwrap_or(types::icrc1::Account {
+                        owner: Principal::anonymous(),
+                        subaccount: None,
+                    })
+                    .into(),
                 fee: self.fee,
                 memo: None,
                 created: 0,

@@ -15,33 +15,42 @@
         { name: "Primary", key: "primary" },
         { name: "Secondary", key: "secondary" },
         { name: "Tertiary", key: "tertiary" },
-        { name: "Success", key: "success" },
-        { name: "Warning", key: "warning" },
-        { name: "Error", key: "error" },
     ];
 
     const modifiedColours: ColourCard[] = [
-        { name: "Primary Muted", key: "primaryMuted" },
-        { name: "Secondary Muted", key: "secondaryMuted" },
-        { name: "Tertiary Muted", key: "tertiaryMuted" },
-        { name: "Primary Light", key: "primaryLight" },
-        { name: "Secondary Light", key: "secondaryLight" },
-        { name: "Tertiary Light", key: "tertiaryLight" },
+        { name: "Primary Accent", key: "primaryAccent" },
+        { name: "Secondary Accent", key: "secondaryAccent" },
+        { name: "Tertiary Accent", key: "tertiaryAccent" },
+        { name: "Primary Surface", key: "primarySurface" },
+        { name: "Secondary Surface", key: "secondarySurface" },
+        { name: "Tertiary Surface", key: "tertiarySurface" },
+    ];
+
+    const feedbackColours: ColourCard[] = [
+        { name: "Validation Success", key: "validationSuccess" },
+        { name: "Validation Warning", key: "validationWarning" },
+        { name: "Validation Error", key: "validationError" },
+        { name: "Success Surface", key: "successSurface" },
+        { name: "Warning Surface", key: "warningSurface" },
+        { name: "Error Surface", key: "errorSurface" },
+        { name: "On Feedback Surface", key: "textOnFeedbackSurface" },
     ];
 
     const typographyColours: ColourCard[] = [
         { name: "Primary", key: "textPrimary" },
         { name: "Secondary", key: "textSecondary" },
-        { name: "Tertiary", key: "textTertiary" },
-        { name: "Placeholder", key: "textPlaceholder" },
         { name: "On Primary", key: "textOnPrimary" },
+        { name: "On Disabled Surface", key: "textOnDisabledSurface" },
+        { name: "Input Placeholder", key: "inputPlaceholder" },
     ];
 
     const backgroundColours: ColourCard[] = [
-        { name: "Level 0", key: "background0" },
-        { name: "Level 1", key: "background1" },
-        { name: "Level 2", key: "background2" },
-        { name: "Disabled Button", key: "disabledButton" },
+        { name: "Surface 0", key: "surface0" },
+        { name: "Surface 1", key: "surface1" },
+        { name: "Surface 2", key: "surface2" },
+        { name: "Surface Disabled", key: "surfaceDisabled" },
+        { name: "Input Background", key: "inputBackground" },
+        { name: "Main Nav Background", key: "mainNavBackground" },
     ];
 
     const allColours: Section[] = [
@@ -50,6 +59,7 @@
             colours: mainColours,
         },
         { name: "Modified", colours: modifiedColours },
+        { name: "Feedback", colours: feedbackColours },
         { name: "Backgrounds", colours: backgroundColours },
         { name: "Typography", colours: typographyColours },
     ];

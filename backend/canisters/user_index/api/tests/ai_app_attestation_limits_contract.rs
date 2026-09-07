@@ -13,6 +13,18 @@ fn read_repo_file(relative_path: &str) -> String {
     fs::read_to_string(&path).unwrap_or_else(|error| panic!("read {}: {error}", path.display()))
 }
 
+fn shared_rejection_log_is_redacted(source: &str) -> bool {
+    // The upstream typed C2CError accessor replaces the old local error_code binding.
+    // Permit formatting changes, but keep an exact allowlist for the shared error log.
+    let compact: String = source.split_whitespace().collect();
+    let logs: Vec<_> = compact
+        .split("tracing::error!(")
+        .skip(1)
+        .map(|body| body.split(");").next().expect("macro body"))
+        .collect();
+    logs == ["method_name,%canister_id,error_code=?error.reject_code(),\"Errorcallingc2c\""]
+}
+
 #[test]
 fn every_app_controlled_verifier_and_attestation_wait_is_bounded() {
     let verifier_client = read_repo_file("backend/external_canisters/ai_app_verifier/c2c_client/src/lib.rs");
@@ -33,11 +45,25 @@ fn every_app_controlled_verifier_and_attestation_wait_is_bounded() {
     assert!(inbox_client.contains("generate_c2c_call!(c2c_notify_actions, 10)"));
 
     let common_client = read_repo_file("backend/libraries/canister_client/src/lib.rs");
-    assert!(common_client.contains("tracing::error!(method_name, %canister_id, ?error_code, \"Error calling c2c\")"));
     assert!(
-        !common_client.contains("tracing::error!(?error"),
-        "remote app reject text must not enter shared logs"
+        shared_rejection_log_is_redacted(&common_client),
+        "shared rejection logs must contain only the method, canister and typed reject code"
     );
+}
+
+#[test]
+fn shared_rejection_log_contract_rejects_remote_text_and_extra_fields() {
+    let source = read_repo_file("backend/libraries/canister_client/src/lib.rs");
+    assert!(shared_rejection_log_is_redacted(&source));
+    for unsafe_fields in ["?error", "error_code = ?error", "error_code = ?error.reject_code(), ?error"] {
+        let changed = source.replace("error_code = ?error.reject_code()", unsafe_fields);
+        assert_ne!(changed, source, "mutation must exercise the actual log fields");
+        assert!(!shared_rejection_log_is_redacted(&changed), "must reject {unsafe_fields}");
+    }
+    assert!(!shared_rejection_log_is_redacted(&format!(
+        "{source}\ntracing::error!(?error, \"private reply\");"
+    )));
+    assert!(!shared_rejection_log_is_redacted(""));
 }
 
 #[test]

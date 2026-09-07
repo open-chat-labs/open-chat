@@ -8,6 +8,7 @@ import {
     forwardFileResponse,
     uploadChunkResponse,
     vaultFileChunkResponse,
+    vaultFileInfoResponse,
     vaultLogResponse,
 } from "./mappers";
 import type {
@@ -18,6 +19,7 @@ import type {
     UploadChunkResponse,
     VaultFileChunkResponse,
     PublicBlobMediaKind,
+    VaultFileInfoResponse,
 } from "@shared";
 import {
     createAnonymousPublicBlobAgent,
@@ -51,12 +53,26 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
         );
     }
 
+    // Metadata (hash, mime, size) of a quarantined file, readable by designated vault
+    // reviewers without opening a logged viewing session
+    vaultFileInfo(fileId: bigint): Promise<VaultFileInfoResponse> {
+        return this.handleQueryResponse(
+            () => this.service.vault_file_info({ file_id: fileId }),
+            vaultFileInfoResponse,
+        );
+    }
+
     // Fetches one chunk of a quarantined blob for an allowlisted vault reviewer. An update
     // call by design: every fetch session is recorded in the vault's access log, and chunks
     // after the first are served only in session order.
     vaultFileChunk(fileId: bigint, chunkIndex: number): Promise<VaultFileChunkResponse> {
         return this.handleResponse(
-            this.service.vault_file_chunk({ file_id: fileId, chunk_index: chunkIndex }),
+            this.service.vault_file_chunk({
+                file_id: fileId,
+                chunk_index: chunkIndex,
+                // Reviewers never send a token; only the off-chain reporting service does
+                vault_token: [],
+            }),
             vaultFileChunkResponse,
         );
     }
@@ -71,6 +87,7 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
         chunkIndex: number,
         bytes: Uint8Array,
         expiryTimestampMillis: bigint | undefined,
+        sourceHash: Uint8Array | undefined,
     ): Promise<UploadChunkResponse> {
         return this.handleResponse(
             this.service.upload_chunk_v2({
@@ -83,6 +100,7 @@ export class StorageBucketClient extends CandidCanisterAgent<StorageBucketServic
                 bytes,
                 chunk_size: chunkSize,
                 expiry: expiryTimestampMillis !== undefined ? [expiryTimestampMillis] : [],
+                source_hash: sourceHash !== undefined ? [sourceHash] : [],
             }),
             uploadChunkResponse,
         );

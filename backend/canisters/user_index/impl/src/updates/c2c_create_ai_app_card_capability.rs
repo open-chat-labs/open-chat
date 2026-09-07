@@ -379,7 +379,7 @@ mod tests {
         assert!(state.data.users.delete_user(viewer, 20).is_some());
         state.delete_ai_app_user_state(viewer, 20);
         state.data.users.add_test_user(User {
-            principal: candid::Principal::from(viewer),
+            principal: viewer.as_principal(),
             user_id: viewer,
             username: "recreated-viewer".to_string(),
             date_created: 30,

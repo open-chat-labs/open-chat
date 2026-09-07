@@ -9,7 +9,6 @@
         OpenChat,
         publish,
         userMetricsStore,
-        type PublicProfile,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -21,16 +20,13 @@
     const client = getContext<OpenChat>("client");
 
     let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
-    let profile: PublicProfile | undefined = $state();
+    let profile = $derived($currentUserProfileStore);
 
     onMount(() => {
         client.getUser($currentUserIdStore).then((u) => {
             if (u) {
                 user = u;
             }
-        });
-        return currentUserProfileStore.subscribe((p) => {
-            profile = p;
         });
     });
 

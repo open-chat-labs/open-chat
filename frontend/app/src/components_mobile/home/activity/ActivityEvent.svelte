@@ -270,10 +270,10 @@
                 height: 2.25rem;
                 align-items: center;
                 justify-content: center;
-                background-color: var(--background-2);
+                background-color: var(--surface-2);
 
                 border-radius: var(--rad-circle);
-                border: var(--bw-thick) solid var(--background-0);
+                border: var(--bw-thick) solid var(--surface-0);
             }
         }
     }

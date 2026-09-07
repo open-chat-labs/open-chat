@@ -27,27 +27,33 @@ const mobileHomeRoute = readFileSync(
 describe("browser startup service-worker maintenance", () => {
     it("finishes bounded development cleanup before mounting either application tree", () => {
         const preparation = main.indexOf("await prepareServiceWorkerBeforeApplicationStart()");
-        const mobileMount = main.indexOf("mount(AppV2");
-        const desktopMount = main.indexOf("mount(App,");
+        const mobileImport = main.indexOf('import("./components_mobile/App.svelte")');
+        const desktopImport = main.indexOf('import("./components/App.svelte")');
+        const appMount = main.indexOf("mount(App,");
 
         expect(preparation).toBeGreaterThan(-1);
-        expect(mobileMount).toBeGreaterThan(preparation);
-        expect(desktopMount).toBeGreaterThan(preparation);
+        expect(mobileImport).toBeGreaterThan(preparation);
+        expect(desktopImport).toBeGreaterThan(preparation);
+        expect(appMount).toBeGreaterThan(mobileImport);
+        expect(appMount).toBeGreaterThan(desktopImport);
     });
 
     it("renders actionable recovery without booting either app when controller release fails", () => {
         const preparation = main.indexOf("await prepareServiceWorkerBeforeApplicationStart()");
         const failureMount = main.indexOf("mount(StartupFailure");
         const restore = main.indexOf("ensureWebModelRestored()");
-        const mobileMount = main.indexOf("mount(AppV2");
-        const desktopMount = main.indexOf("mount(App,");
+        const mobileImport = main.indexOf('import("./components_mobile/App.svelte")');
+        const desktopImport = main.indexOf('import("./components/App.svelte")');
+        const appMount = main.indexOf("mount(App,");
 
         expect(main).toContain('recovery: "new-tab"');
         expect(main).toContain("fresh tab");
         expect(failureMount).toBeGreaterThan(preparation);
         expect(restore).toBeGreaterThan(failureMount);
-        expect(mobileMount).toBeGreaterThan(failureMount);
-        expect(desktopMount).toBeGreaterThan(failureMount);
+        expect(mobileImport).toBeGreaterThan(failureMount);
+        expect(desktopImport).toBeGreaterThan(failureMount);
+        expect(appMount).toBeGreaterThan(mobileImport);
+        expect(appMount).toBeGreaterThan(desktopImport);
     });
 
     it("restores the web model for browser and feature-flagged Android WebGPU clients", () => {

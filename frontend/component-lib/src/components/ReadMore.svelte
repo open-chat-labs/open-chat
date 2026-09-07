@@ -66,6 +66,6 @@
         inset: auto 0 0 0;
         height: 3rem;
         pointer-events: none;
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--background-1));
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--surface-1));
     }
 </style>

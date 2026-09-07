@@ -338,7 +338,7 @@ mod tests {
         let now = env.now;
         let mut data = Data::default();
         data.users.add_test_user(User {
-            principal: viewer.into(),
+            principal: viewer.as_principal(),
             user_id: viewer,
             username: "capability-viewer".to_string(),
             ..Default::default()
@@ -463,7 +463,7 @@ mod tests {
         let mut data = Data::default();
         assert!(!capability_user_exists(&data, user_id));
         data.users.add_test_user(User {
-            principal: user_id.into(),
+            principal: user_id.as_principal(),
             user_id,
             username: "live-capability-user".to_string(),
             ..Default::default()

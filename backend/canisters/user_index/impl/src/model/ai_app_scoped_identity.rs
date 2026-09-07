@@ -44,7 +44,7 @@ impl AiAppScopedIdentityKey {
         user_id: UserId,
     ) -> Result<[u8; 32], String> {
         let mut preimage = app_scope_preimage(SUBJECT_DOMAIN_V1, user_index_canister_id, app_id, app_canister_id)?;
-        put_principal(&mut preimage, user_id.into())?;
+        put_principal(&mut preimage, user_id.as_principal())?;
         self.mac(&preimage)
     }
 
@@ -74,7 +74,7 @@ impl AiAppScopedIdentityKey {
         if first_user_id == second_user_id {
             return Err("direct chat participants must be distinct".to_string());
         }
-        let mut participants = [Principal::from(first_user_id), Principal::from(second_user_id)];
+        let mut participants = [first_user_id.as_principal(), second_user_id.as_principal()];
         participants.sort_unstable_by(|a, b| a.as_slice().cmp(b.as_slice()));
         let mut preimage = app_scope_preimage(DIRECT_CHAT_HANDLE_DOMAIN_V1, user_index_canister_id, app_id, app_canister_id)?;
         put_principal(&mut preimage, participants[0])?;
@@ -121,7 +121,7 @@ impl AiAppScopedIdentityKey {
         if first_user_id == second_user_id {
             return Err("direct chat participants must be distinct".to_string());
         }
-        let mut participants = [Principal::from(first_user_id), Principal::from(second_user_id)];
+        let mut participants = [first_user_id.as_principal(), second_user_id.as_principal()];
         participants.sort_unstable_by(|a, b| a.as_slice().cmp(b.as_slice()));
         let mut preimage = app_scope_preimage(
             DIRECT_MESSAGE_HANDLE_DOMAIN_V1,
@@ -250,6 +250,45 @@ mod tests {
 
     fn user(value: u8) -> UserId {
         Principal::from_slice(&[value]).into()
+    }
+
+    #[test]
+    fn legacy_subject_keeps_the_frozen_identity_bytes() {
+        let key = AiAppScopedIdentityKey(vec![0x5a; SECRET_BYTES]);
+        let subject = key
+            .app_subject(Principal::from_slice(&[1]), 7, Principal::from_slice(&[8]), user(9))
+            .unwrap();
+        // Independently calculated with Node's HMAC-SHA256 from the original length-prefixed wire bytes.
+        assert_eq!(
+            hex::encode(subject),
+            "16a5e0f490b898ee0672fce641b45b06875fcc3176416bb2f4e16d508e531f39"
+        );
+    }
+
+    #[test]
+    fn indexed_users_keep_distinct_subjects_and_direct_handles() {
+        let key = AiAppScopedIdentityKey(vec![0x5a; SECRET_BYTES]);
+        let registry = Principal::from_slice(&[1]);
+        let app = Principal::from_slice(&[8]);
+        let host = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let [a, b, c] = [1, 2, 3].map(|index| UserId::new_indexed(host, index));
+        assert_eq!(a.canister_id(), b.canister_id());
+        assert_ne!(
+            key.app_subject(registry, 7, app, a).unwrap(),
+            key.app_subject(registry, 7, app, b).unwrap()
+        );
+        let ab = key.direct_chat_handle(registry, 7, app, a, b).unwrap();
+        assert_eq!(ab, key.direct_chat_handle(registry, 7, app, b, a).unwrap());
+        assert_ne!(ab, key.direct_chat_handle(registry, 7, app, a, c).unwrap());
+        let message = key.direct_message_handle(registry, 7, app, a, b, None, 1u64.into()).unwrap();
+        assert_eq!(
+            message,
+            key.direct_message_handle(registry, 7, app, b, a, None, 1u64.into()).unwrap()
+        );
+        assert_ne!(
+            message,
+            key.direct_message_handle(registry, 7, app, a, c, None, 1u64.into()).unwrap()
+        );
     }
 
     #[test]

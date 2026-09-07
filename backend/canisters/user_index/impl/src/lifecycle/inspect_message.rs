@@ -14,6 +14,7 @@ fn accept_if_valid(state: &RuntimeState) {
         test_mode: state.data.test_mode,
         platform_moderator: state.is_caller_platform_moderator(),
         platform_operator: state.is_caller_platform_operator(),
+        authority_reporter: state.is_caller_authority_reporter(),
         can_upload_wasm_chunks: state.can_caller_upload_wasm_chunks(),
         governance_principal: state.is_caller_governance_principal(),
     };
@@ -28,6 +29,7 @@ struct CallerPermissions {
     test_mode: bool,
     platform_moderator: bool,
     platform_operator: bool,
+    authority_reporter: bool,
     can_upload_wasm_chunks: bool,
     governance_principal: bool,
 }
@@ -64,17 +66,25 @@ fn method_is_valid(method_name: &str, permissions: CallerPermissions) -> bool {
         "register_ai_app" => permissions.openchat_user || permissions.test_mode,
         "create_ai_app_card_provenance" => permissions.openchat_user,
         "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => permissions.platform_moderator,
-        "record_authority_report_filed"
-        | "destroy_vault_evidence"
+        // The filing window can only be opened by a vault reviewer, which is a subset of the
+        // platform moderators; the tighter check runs in the endpoint itself
+        "authority_report_token" => permissions.platform_moderator,
+        // Service path (authority reporter) or operator reconciliation
+        "record_authority_report_attempt" => permissions.authority_reporter,
+        "clear_authority_report_attempt" => permissions.authority_reporter || permissions.platform_operator,
+        // The dual-authorized actions (destroy_vault_evidence, set_vault_reviewers,
+        // set_openai_api_key, set_internal_moderation_channel) are no longer callable
+        // directly - they are reachable only through this propose/confirm pair
+        "propose_protected_action"
+        | "confirm_protected_action"
+        | "cancel_protected_action"
         | "set_vault_legal_hold"
         | "set_diamond_membership_fees"
-        | "set_internal_moderation_channel"
-        | "set_vault_reviewers"
         | "set_moderation_referral_config"
-        | "set_openai_api_key"
         | "set_premium_item_cost"
         | "set_user_upgrade_concurrency"
         | "update_blocked_username_patterns" => permissions.platform_operator,
+        "record_authority_report_filed" => permissions.platform_operator || permissions.authority_reporter,
         "upload_wasm_chunk" => permissions.can_upload_wasm_chunks,
         "add_platform_moderator"
         | "add_platform_operator"
@@ -105,6 +115,109 @@ fn method_is_valid(method_name: &str, permissions: CallerPermissions) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn protected_actions_cannot_regain_direct_ingress_after_app_integration() {
+        let all_permissions = CallerPermissions {
+            openchat_user: true,
+            test_mode: true,
+            platform_moderator: true,
+            platform_operator: true,
+            authority_reporter: true,
+            can_upload_wasm_chunks: true,
+            governance_principal: true,
+        };
+        for method in [
+            "destroy_vault_evidence",
+            "set_vault_reviewers",
+            "set_openai_api_key",
+            "set_internal_moderation_channel",
+            "set_authority_reporter",
+            "set_media_scan_config",
+        ] {
+            for name in [method.to_string(), format!("{method}_msgpack")] {
+                assert!(
+                    !method_is_valid(name.trim_end_matches("_msgpack"), all_permissions),
+                    "{name} must remain reachable only through a confirmed protected action"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn protected_action_ingress_remains_operator_only() {
+        let operator = CallerPermissions {
+            platform_operator: true,
+            ..Default::default()
+        };
+        let other_roles = CallerPermissions {
+            openchat_user: true,
+            test_mode: true,
+            platform_moderator: true,
+            authority_reporter: true,
+            can_upload_wasm_chunks: true,
+            governance_principal: true,
+            ..Default::default()
+        };
+        for method in [
+            "propose_protected_action",
+            "confirm_protected_action",
+            "cancel_protected_action",
+        ] {
+            for name in [method.to_string(), format!("{method}_msgpack")] {
+                let normalized = name.trim_end_matches("_msgpack");
+                assert!(method_is_valid(normalized, operator), "{name}");
+                assert!(!method_is_valid(normalized, other_roles), "{name}");
+                assert!(!method_is_valid(normalized, CallerPermissions::default()), "{name}");
+            }
+        }
+    }
+
+    #[test]
+    fn authority_reporting_preserves_distinct_service_and_operator_permissions() {
+        for (permissions, expected) in [
+            (CallerPermissions::default(), [false, false, false, false]),
+            (
+                CallerPermissions {
+                    authority_reporter: true,
+                    ..Default::default()
+                },
+                [false, true, true, true],
+            ),
+            (
+                CallerPermissions {
+                    platform_operator: true,
+                    ..Default::default()
+                },
+                [false, false, true, true],
+            ),
+            (
+                CallerPermissions {
+                    platform_moderator: true,
+                    ..Default::default()
+                },
+                [true, false, false, false],
+            ),
+        ] {
+            for (method, allowed) in [
+                "authority_report_token",
+                "record_authority_report_attempt",
+                "clear_authority_report_attempt",
+                "record_authority_report_filed",
+            ]
+            .into_iter()
+            .zip(expected)
+            {
+                for name in [method.to_string(), format!("{method}_msgpack")] {
+                    assert_eq!(
+                        method_is_valid(name.trim_end_matches("_msgpack"), permissions),
+                        allowed,
+                        "{name}"
+                    );
+                }
+            }
+        }
+    }
 
     #[test]
     fn action_signing_key_lifecycle_ingress_is_governance_only() {

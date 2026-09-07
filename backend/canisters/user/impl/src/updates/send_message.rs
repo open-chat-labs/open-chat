@@ -1,9 +1,10 @@
 use super::c2c_send_messages::{HandleMessageArgs, handle_message_impl};
-use crate::crypto::process_transaction_without_caller_check;
+use crate::crypto::{process_transaction_without_caller_check, validate_from_account};
 use crate::guards::{caller_is_local_user_index, caller_is_owner};
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{Data, RuntimeState, TimerJob, UserEventPusher, execute_update, execute_update_async, mutate_state, read_state};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
@@ -11,7 +12,6 @@ use chat_events::{
     TextContentInternal, ValidateNewMessageContentResult, ai_app_card_content_hash_from_initial,
 };
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
-use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use std::ops::Not;
@@ -47,7 +47,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         recipient_type
     } else {
         let c2c_args = local_user_index_canister::c2c_lookup_user::Args {
-            user_id_or_principal: args.recipient.into(),
+            user_id_or_principal: args.recipient.as_principal(),
         };
         match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
             Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) => RecipientType::Other(result.user_type),
@@ -114,7 +114,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                 // When transferring to bot users, each user transfers to their own subaccount, this way it
                 // is trivial for the bots to keep track of each user's funds
                 if recipient_type.user_type().is_bot() {
-                    pending_transfer.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
+                    pending_transfer.set_recipient(args.recipient.as_principal(), my_user_id.as_principal().into());
                 }
 
                 // We have to use `process_transaction_without_caller_check` because we may be within a
@@ -129,41 +129,45 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                         );
                         (content, Some(completed))
                     }),
-                    Ok(Err(failed)) => return Error(OCErrorCode::TransferFailed.with_message(failed.error_message())),
+                    Ok(Err((_, error))) => return Error(error),
                     Err(error) => return Error(error.into()),
                 }
             }
             ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
             ValidateNewMessageContentResult::SuccessP2PSwap(content) => {
-                let (escrow_canister_id, now, is_diamond) = read_state(|state| {
+                let (escrow_canister_id, now, is_diamond, my_user_id) = read_state(|state| {
                     let now = state.env.now();
                     (
                         state.data.escrow_canister_id,
                         now,
                         state.data.membership(now).is_diamond_member(),
+                        UserId::from(state.env.canister_id()),
                     )
                 });
                 if !is_diamond {
                     return Error(OCErrorCode::NotDiamondMember.into());
                 }
+                if let Err(error) = validate_from_account(content.from_account, my_user_id) {
+                    return Error(error);
+                }
                 let create_swap_args = escrow_canister::create_swap::Args {
                     location: P2PSwapLocation::from_message(Chat::Direct(args.recipient.into()), None, args.message_id),
                     token0: content.token0.clone(),
                     token0_amount: content.token0_amount,
-                    token0_principal: None,
+                    token0_principal: Some(my_user_id.as_principal()),
                     token1: content.token1.clone(),
                     token1_amount: content.token1_amount,
                     token1_principal: None,
                     expires_at: now + content.expires_in,
                     additional_admins: Vec::new(),
-                    canister_to_notify: Some(args.recipient.into()),
+                    canister_to_notify: Some(args.recipient.canister_id()),
                     is_public: false,
                 };
-                match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
+                match set_up_p2p_swap(escrow_canister_id, create_swap_args, content.from_account).await {
                     Ok((swap_id, pending_transaction)) => {
                         match process_transaction_without_caller_check(pending_transaction).await {
                             Ok(Ok(completed)) => {
-                                NotifyEscrowCanisterOfDepositJob::run(swap_id);
+                                NotifyEscrowCanisterOfDepositJob::run(swap_id, my_user_id);
                                 let content = MessageContentInternal::new_with_transfer(
                                     MessageContentInitial::P2PSwap(content),
                                     completed.clone().into(),
@@ -172,9 +176,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                                 );
                                 (content, Some(completed))
                             }
-                            Ok(Err(failed)) => {
-                                return Error(OCErrorCode::TransferFailed.with_message(failed.error_message()));
-                            }
+                            Ok(Err((_, error))) => return Error(error),
                             Err(error) => return Error(error.into()),
                         }
                     }
@@ -748,7 +750,7 @@ fn send_message_impl(
             ));
         } else {
             state.push_user_canister_event(
-                recipient.into(),
+                recipient.canister_id(),
                 UserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
                     messages: vec![send_message_args],
                     sender_name,
@@ -803,7 +805,7 @@ async fn send_to_bot_canister(
     message_index: MessageIndex,
     args: legacy_bot_api::handle_direct_message::Args,
 ) {
-    match legacy_bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
+    match legacy_bot_c2c_client::handle_direct_message(recipient.canister_id(), &args).await {
         Ok(legacy_bot_api::handle_direct_message::Response::Success(result)) => {
             mutate_state(|state| {
                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {

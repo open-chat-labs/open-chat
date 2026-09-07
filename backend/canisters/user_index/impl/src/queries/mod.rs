@@ -22,6 +22,7 @@ pub mod my_ai_apps;
 pub mod platform_moderators;
 pub mod platform_moderators_group;
 pub mod platform_operators;
+mod protected_actions;
 pub mod public_key;
 pub mod referral_metrics;
 pub mod reported_messages;

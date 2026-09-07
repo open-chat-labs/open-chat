@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get-shell-version"
+description = "Enables the get_shell_version command without any pre-configured scope."
+commands.allow = ["get_shell_version"]
+
+[[permission]]
+identifier = "deny-get-shell-version"
+description = "Denies the get_shell_version command without any pre-configured scope."
+commands.deny = ["get_shell_version"]

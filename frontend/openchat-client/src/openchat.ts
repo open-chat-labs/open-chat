@@ -47,6 +47,7 @@ import {
     buildDelegationChain,
     canRetryMessage,
     chatIdentifierToString,
+    latestMessageExpired,
     chatIdentifiersEqual,
     communityIdentifiersEqual,
     communityRoles,
@@ -236,7 +237,11 @@ import {
     type MessageContent,
     type MessageContext,
     type ModerationVerdict,
+    type NcaPriority,
+    type NcaReporterContact,
+    type AuthorityReportTokenResponse,
     type VaultFileChunkResponse,
+    type VaultFileInfoResponse,
     type MessageFilter,
     type MessageFormatter,
     type MessagePermission,
@@ -339,14 +344,18 @@ import {
     type WhitepaperRoute,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
+    type OCError,
+    type ProposedProtectedAction,
     isAndroidTauriApp,
     isIosTauriApp,
+    userIdToIcrcAccount,
 } from "@shared";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
-import { get } from "svelte/store";
+import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
+import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import {
     FilteredProposals,
     achievementsStore,
@@ -397,6 +406,7 @@ import {
     notFoundStore,
     notificationStatus,
     notificationsSupported,
+    videoProcessingProgress,
     oneSecAddress,
     pathContextStore,
     pinNumberFailureStore,
@@ -587,7 +597,7 @@ import {
     toRelativeTime,
     toShortTimeString,
 } from "./utils/date";
-import { getErc20TokenBalances } from "./utils/evm";
+import { getErc20TokenBalances, type Erc20TokenBalance } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
@@ -665,6 +675,12 @@ export class OpenChat {
     #webAuthnKey: WebAuthnKey | undefined = undefined;
     #userLocation: string | undefined;
     #logger: Logger;
+    // Diagnostics for the "selected chat renders empty" report. Every path that can leave a
+    // chat empty does so without an error, so record which one fired. One chat selection is
+    // one incident, and at most three incidents are reported per session so a widespread
+    // cause cannot flood Rollbar.
+    #chatSelectionSeq = 0;
+    #emptyChatIncidents = new Set<number>();
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     #membershipCheck: number | undefined;
@@ -673,6 +689,10 @@ export class OpenChat {
     #chatsPoller: Poller | undefined = undefined;
     #botsPoller: Poller | undefined = undefined;
     #registryPoller: Poller | undefined = undefined;
+    #onlinePoller: Poller | undefined = undefined;
+    #btcBalancePoller: Poller | undefined = undefined;
+    #btcAddressUnsub: Unsubscriber | undefined = undefined;
+    #oneSecAddressUnsub: Unsubscriber | undefined = undefined;
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
@@ -917,6 +937,62 @@ export class OpenChat {
         }
 
         this.onCreatedUser(createdUser ?? anonymousUser());
+    }
+
+    #reportEmptyChat(reason: string, context: Record<string, unknown>): void {
+        // The logger only sends when online, so an offline report would spend the budget
+        // for nothing
+        if (get(offlineStore)) return;
+        const incident = this.#chatSelectionSeq;
+        if (this.#emptyChatIncidents.size >= 3 && !this.#emptyChatIncidents.has(incident)) {
+            return;
+        }
+        this.#emptyChatIncidents.add(incident);
+        const message = `EmptyChatDiagnostic: ${reason}`;
+        this.#logger.error(message, new Error(message), context);
+    }
+
+    // Runs once the initial load of a selected chat has settled: if it is still the selected
+    // chat and nothing reached the event store, report it along with what the selection did.
+    #checkForEmptyChat(chatId: ChatIdentifier, path: string): void {
+        const chat = chatSummariesStore.value.get(chatId);
+        if (
+            chat === undefined ||
+            chat.latestEventIndex <= 0 ||
+            !chatIdentifiersEqual(chatId, selectedChatIdStore.value) ||
+            this.maskChatMessages(chat) ||
+            serverEventsStore.value.length > 0 ||
+            expiredServerEventRanges.value.length > 0
+        ) {
+            return;
+        }
+        this.#reportEmptyChat("still_empty_after_load", {
+            chatId: chatIdentifierToString(chatId),
+            chatKind: chat.kind,
+            path,
+            latestEventIndex: chat.latestEventIndex,
+            minVisibleEventIndex: this.earliestAvailableEventIndex(chat),
+        });
+    }
+
+    // The initial load is the only thing that loads a freshly selected chat or thread: if it
+    // fails nothing publishes loadedMessageWindow, the event list never initialises, and
+    // scroll-driven loading stays gated off. Load the latest history instead, from a clean
+    // store, since a partially cached window may already have been applied to it.
+    async #fallBackToPreviousMessages(
+        chatId: ChatIdentifier,
+        threadRootEvent?: EventWrapper<Message>,
+    ): Promise<void> {
+        if (threadRootEvent === undefined) {
+            if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) return;
+            serverEventsStore.set([]);
+            expiredServerEventRanges.set(new DRange());
+        } else {
+            const context = { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex };
+            if (!messageContextsEqual(context, selectedThreadIdStore.value)) return;
+            serverThreadEventsStore.set([]);
+        }
+        await this.loadPreviousMessages(chatId, threadRootEvent, true);
     }
 
     logError(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
@@ -1192,7 +1268,8 @@ export class OpenChat {
 
     #startOnlinePoller() {
         if (!anonUserStore.value) {
-            new Poller(
+            this.#onlinePoller?.stop();
+            this.#onlinePoller = new Poller(
                 () =>
                     (this.#worker.send({ kind: "markAsOnline" }) ?? Promise.resolve()).then(
                         (minutesOnline) => minutesOnlineStore.set(minutesOnline),
@@ -1317,6 +1394,18 @@ export class OpenChat {
             };
             this.#sendRtcMessage([selectedChat.id.userId], rtc);
         }
+    }
+
+    // Marks several messages read with a single publish of the messagesRead store
+    markMessagesRead(
+        context: MessageContext,
+        messages: { messageIndex: number; messageId: bigint | undefined }[],
+    ): void {
+        withPausedStores(() => {
+            for (const { messageIndex, messageId } of messages) {
+                this.markMessageRead(context, messageIndex, messageId);
+            }
+        });
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
@@ -2704,6 +2793,9 @@ export class OpenChat {
             .catch(CommonResponses.failure);
 
         if (!isSuccessfulEventsResponse(eventsResponse)) {
+            if (initialLoad) {
+                await this.#fallBackToPreviousMessages(chatId, threadRootEvent);
+            }
             return undefined;
         }
 
@@ -2759,9 +2851,21 @@ export class OpenChat {
                     this.#handleEventsResponse(clientChat, undefined, resp, index > 0),
                 )
                 .toPromise()
-                .catch(CommonResponses.failure);
+                .catch((err) => {
+                    if (initialLoad && !this.maskChatMessages(clientChat)) {
+                        this.#reportEmptyChat("window_load_failed", {
+                            chatId: chatIdentifierToString(chatId),
+                            messageIndex,
+                            error: (err as { message?: string })?.message ?? String(err),
+                        });
+                    }
+                    return CommonResponses.failure();
+                });
 
             if (!isSuccessfulEventsResponse(eventsResponse)) {
+                if (initialLoad) {
+                    await this.#fallBackToPreviousMessages(chatId);
+                }
                 return undefined;
             }
 
@@ -2786,6 +2890,12 @@ export class OpenChat {
     ): Promise<EventsResponse<ChatEvent>> {
         if (!isSuccessfulEventsResponse(resp)) return resp;
 
+        // NB. the clear and the add must not be separated by an await, otherwise the UI
+        // renders against an empty event store for the duration of the gap, and anything
+        // derived from it (e.g. the thread panel's root event) transiently disappears.
+        // Equally the clear must not be deferred until after an await, or events written
+        // by anything else during that await (later chunks of this same stream, rtc /
+        // confirmed messages) get wiped by it.
         if (!keepCurrentEvents) {
             serverEventsStore.set([]);
             // The expired ranges are part of the contiguity baseline
@@ -2796,14 +2906,14 @@ export class OpenChat {
             expiredServerEventRanges.set(new DRange());
         }
 
-        await this.#updateUserStoreFromEvents(resp.events);
-
         this.#addServerEventsToStores(
             chat.id,
             resp.events,
             threadRootMessageIndex,
             resp.expiredEventRanges,
         );
+
+        await this.#updateUserStoreFromEvents(resp.events);
 
         if (!get(offlineStore)) {
             makeRtcConnections(
@@ -2852,14 +2962,15 @@ export class OpenChat {
             allUserIds.add(u);
         }
         userStore.addWebhookIds([...webhooks]);
-        selectedChatUserIdsStore.update((set) => {
-            [...allUserIds].forEach((u) => {
-                if (u !== userId) {
-                    set.add(u);
-                }
+        const newChatUserIds = [...allUserIds].filter(
+            (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
+        );
+        if (newChatUserIds.length > 0) {
+            selectedChatUserIdsStore.update((set) => {
+                newChatUserIds.forEach((u) => set.add(u));
+                return set;
             });
-            return set;
-        });
+        }
         await this.getMissingUsers(allUserIds);
     }
 
@@ -3100,6 +3211,11 @@ export class OpenChat {
                 }
             }
             chat = chatSummariesStore.value.get(chatId);
+
+            // The user may have moved on while the preview was in flight
+            if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
+                return;
+            }
         }
 
         if (chat !== undefined) {
@@ -3128,6 +3244,8 @@ export class OpenChat {
             return;
         }
 
+        this.#chatSelectionSeq++;
+
         if (messageIndex === undefined) {
             messageIndex = isPreviewing(clientChat)
                 ? undefined
@@ -3136,34 +3254,69 @@ export class OpenChat {
                       clientChat.latestMessage?.event.messageIndex,
                   );
 
-            if (messageIndex !== undefined) {
-                const latestServerMessageIndex = serverChat?.latestMessage?.event.messageIndex ?? 0;
-
-                if (messageIndex > latestServerMessageIndex) {
+            const latestMessageIndex = clientChat.latestMessage?.event.messageIndex;
+            if (messageIndex !== undefined && latestMessageIndex !== undefined) {
+                if (latestMessageExpired(clientChat)) {
+                    // Every unread message has disappeared: nothing to anchor a window on, and
+                    // nothing that could ever be read to clear the unread count. Mark the chat
+                    // read and load the latest events instead.
+                    messagesRead.markReadUpTo({ chatId }, latestMessageIndex);
                     messageIndex = undefined;
+                } else {
+                    const latestServerMessageIndex =
+                        serverChat?.latestMessage?.event.messageIndex ?? 0;
+
+                    if (messageIndex > latestServerMessageIndex) {
+                        messageIndex = undefined;
+                    }
                 }
             }
+        }
+
+        // A message below the caller's min visible index cannot anchor a window: a member who
+        // has never read anything gets message 0 as their first unread even when the chat's
+        // history is hidden from them, and a link can point into that history. Anchor on the
+        // first visible message instead, if there is one.
+        if (
+            messageIndex !== undefined &&
+            clientChat.kind !== "direct_chat" &&
+            messageIndex < clientChat.minVisibleMessageIndex
+        ) {
+            const latestMessageIndex = clientChat.latestMessage?.event.messageIndex ?? -1;
+            messageIndex =
+                clientChat.minVisibleMessageIndex <= latestMessageIndex
+                    ? clientChat.minVisibleMessageIndex
+                    : undefined;
         }
 
         // TODO - this might belong as a derivation in the selected chat state
         this.#userLookupForMentions = undefined;
 
         const selectedChat = selectedChatSummaryStore.value;
+        if (selectedChat === undefined) {
+            this.#reportEmptyChat("no_selected_chat_summary", {
+                chatId: chatIdentifierToString(chatId),
+                selectedChatId:
+                    selectedChatIdStore.value === undefined
+                        ? undefined
+                        : chatIdentifierToString(selectedChatIdStore.value),
+                summaryStoreDirty: selectedChatSummaryStore.dirty,
+                hasServerChat: serverChat !== undefined,
+            });
+        }
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
-                if (messageIndex !== undefined) {
-                    this.loadEventWindow(chatId, messageIndex, undefined, true).then(() => {
-                        if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat);
-                        }
-                    });
-                } else {
-                    this.loadPreviousMessages(chatId, undefined, true).then(() => {
-                        if (serverChat !== undefined) {
-                            this.#loadChatDetails(serverChat);
-                        }
-                    });
-                }
+                const path = messageIndex !== undefined ? "window" : "previous";
+                const load =
+                    messageIndex !== undefined
+                        ? this.loadEventWindow(chatId, messageIndex, undefined, true)
+                        : this.loadPreviousMessages(chatId, undefined, true);
+                load.then(() => {
+                    this.#checkForEmptyChat(chatId, path);
+                    if (serverChat !== undefined) {
+                        this.#loadChatDetails(serverChat);
+                    }
+                });
             }
             if (selectedChat.kind === "direct_chat") {
                 const them = userStore.get(selectedChat.them.userId);
@@ -3309,10 +3462,27 @@ export class OpenChat {
         localUpdates.removeCommunity(id);
     }
 
+    // Called when the selected community changes. If we were only previewing the
+    // community we just left, drop the preview (and any of its channels we were
+    // previewing) so that leaving by any route behaves the same as cancelling.
+    removeCommunityIfPreviewing(id: CommunityIdentifier): void {
+        const preview = localUpdates.getPreviewingCommunity(id);
+        if (preview === undefined) return;
+        preview.channels.forEach((c) => localUpdates.removeGroupPreview(c.id));
+        localUpdates.removeCommunityPreview(id);
+    }
+
     diffGroupPermissions = diffGroupPermissions;
 
-    messageContentFromFile(file: File | LazyFile): Promise<AttachmentContent> {
-        return messageContentFromFile(file, isDiamondStore.value);
+    messageContentFromFile(
+        file: File | LazyFile,
+        context: MessageContext,
+    ): Promise<AttachmentContent> {
+        return messageContentFromFile(file, isDiamondStore.value, {
+            websiteVersion: this.config.websiteVersion,
+            onProgress: (p) =>
+                videoProcessingProgress.set(p === undefined ? undefined : { context, progress: p }),
+        });
     }
 
     formatFileSize = formatFileSize;
@@ -3394,10 +3564,16 @@ export class OpenChat {
         return threadEventsStore.value.length === 0 ? undefined : threadEventsStore.value[0].index;
     }
 
-    previousThreadMessagesCriteria(thread: ThreadSummary): [number, boolean] {
+    previousThreadMessagesCriteria(thread: ThreadSummary): [number, boolean] | undefined {
         const minLoadedEventIndex = this.earliestLoadedThreadIndex();
         if (minLoadedEventIndex === undefined) {
             return [thread.latestEventIndex, false];
+        }
+        // Thread events start at index 0. Once it is loaded there is nothing
+        // earlier to ask for; a start index of -1 makes the cache iterator
+        // throw ("Start index exceeds bound") and the whole load fails.
+        if (minLoadedEventIndex <= 0) {
+            return undefined;
         }
         return [minLoadedEventIndex - 1, false];
     }
@@ -3415,7 +3591,11 @@ export class OpenChat {
 
         if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
             const thread = threadRootEvent.event.thread;
-            const [index, ascending] = this.previousThreadMessagesCriteria(thread);
+            const threadCriteria = this.previousThreadMessagesCriteria(thread);
+            if (threadCriteria === undefined) {
+                return;
+            }
+            const [index, ascending] = threadCriteria;
             return this.loadThreadMessages(
                 chatId,
                 [0, thread.latestEventIndex],
@@ -3429,7 +3609,7 @@ export class OpenChat {
         const criteria = this.#previousMessagesCriteria(serverChat);
 
         const eventsResponse = criteria
-            ? await this.#loadEvents(serverChat, criteria[0], criteria[1])
+            ? await this.#loadEvents(serverChat, criteria[0], criteria[1], initialLoad)
             : undefined;
 
         if (criteria && isSuccessfulEventsResponse(eventsResponse)) {
@@ -3502,6 +3682,7 @@ export class OpenChat {
         serverChat: ChatSummary,
         startIndex: number,
         ascending: boolean,
+        initialLoad = false,
     ): Promise<EventsResponse<ChatEvent>> {
         return this.#worker
             .stream({
@@ -3517,7 +3698,16 @@ export class OpenChat {
             .aggregate(mergeEventStreamResponses, emptyEventsResponse())
             .mapAsync((resp) => this.#handleEventsResponse(serverChat, undefined, resp))
             .toPromise()
-            .catch(CommonResponses.failure);
+            .catch((err) => {
+                if (initialLoad && !this.maskChatMessages(serverChat)) {
+                    this.#reportEmptyChat("previous_load_failed", {
+                        chatId: chatIdentifierToString(serverChat.id),
+                        startIndex,
+                        error: (err as { message?: string })?.message ?? String(err),
+                    });
+                }
+                return CommonResponses.failure();
+            });
     }
 
     #previousMessagesCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
@@ -4110,6 +4300,20 @@ export class OpenChat {
                             };
                         }
                     }
+                } else if (
+                    serverEventsStore.value.length === 0 &&
+                    chatIdentifiersEqual(chatId, selectedChatIdStore.value)
+                ) {
+                    // Dropping new events while scrolled up is routine; dropping them into an
+                    // empty store means the expired ranges are stale and the chat stays empty
+                    const loaded = eventIndexesLoaded(chatId);
+                    this.#reportEmptyChat("non_contiguous_dropped", {
+                        chatId: chatIdentifierToString(chatId),
+                        newFrom: newEvents[0]?.index,
+                        newTo: newEvents[newEvents.length - 1]?.index,
+                        loadedFrom: loaded.length > 0 ? loaded.index(0) : undefined,
+                        loadedTo: loaded.length > 0 ? loaded.index(loaded.length - 1) : undefined,
+                    });
                 }
             } else if (isContiguousInThread({ chatId, threadRootMessageIndex }, newEvents)) {
                 this.#updateServerThreadEventsStore({ chatId, threadRootMessageIndex }, (events) =>
@@ -4945,10 +5149,10 @@ export class OpenChat {
     }
 
     expandDeletedMessages(messageIndexes: Set<number>): void {
-        selectedChatExpandedDeletedMessageStore.update((set) => {
-            messageIndexes.forEach((i) => set.add(i));
-            return set;
-        });
+        // A new set each time: consumers (TimelineGrouper) memoise by identity
+        selectedChatExpandedDeletedMessageStore.update(
+            (set) => new Set([...set, ...messageIndexes]),
+        );
     }
 
     remoteUserToggledReaction(
@@ -5417,7 +5621,7 @@ export class OpenChat {
             .then((res) => {
                 console.log("register user response: ", res);
                 if (res.kind === "success") {
-                    gaTrack("registered_user", "registration", res.userId);
+                    gaTrack("registered_user", "registration");
                     if (this.#referralCode !== undefined) {
                         gaTrack("registered_user_with_referral_code", "registration");
                     }
@@ -5772,6 +5976,11 @@ export class OpenChat {
         location: BotInstallationLocation | undefined,
         excludeInstalled: boolean,
     ): Promise<ExploreBotsResponse> {
+        // Callers use their own direct chat as the location to mean "bots available for direct
+        // chat", but the anonymous user id is not a principal and cannot be encoded as one
+        if (location?.kind === "direct_chat" && anonUserStore.value) {
+            location = undefined;
+        }
         return this.#worker.send({
             kind: "exploreBots",
             searchTerm,
@@ -6436,10 +6645,10 @@ export class OpenChat {
         reportIndex: bigint,
         verdict: ModerationVerdict,
         urgent: boolean | undefined,
-    ): Promise<boolean> {
+    ): Promise<Success | OCError> {
         return this.#worker
             .send({ kind: "resolveModerationReport", reportIndex, verdict, urgent })
-            .catch(() => false);
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
     }
 
     contestModerationSanction(): Promise<boolean> {
@@ -6465,6 +6674,10 @@ export class OpenChat {
         mediaKind?: PublicBlobMediaKind,
     ): Promise<Uint8Array | undefined> {
         return this.#worker.send({ kind: "downloadPublicBlob", ref, maxBytes, mediaKind });
+    }
+
+    vaultFileInfo(bucketCanisterId: string, fileId: bigint): Promise<VaultFileInfoResponse> {
+        return this.#worker.send({ kind: "vaultFileInfo", bucketCanisterId, fileId });
     }
 
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
@@ -6581,7 +6794,7 @@ export class OpenChat {
         chats.forEach((chat) => {
             if (chat.kind === "direct_chat") {
                 userIds.add(chat.them.userId);
-            } else if (chat.latestMessage !== undefined) {
+            } else if (chat.latestMessage?.event !== undefined) {
                 const sender = chat.latestMessage.event.sender;
                 if (chat.latestMessage.event.senderContext?.kind === "webhook") {
                     webhooks.add(sender);
@@ -7126,6 +7339,7 @@ export class OpenChat {
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        fromAccount?: string,
     ): Promise<AcceptP2PSwapResponse> {
         let pin: string | undefined = undefined;
 
@@ -7148,6 +7362,7 @@ export class OpenChat {
                 messageId,
                 pin,
                 newAchievement,
+                fromAccount,
             })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -7592,11 +7807,43 @@ export class OpenChat {
         });
     }
 
+    // Opens the given wallet and asks it to approve OpenChat spending `amount` of `ledger`, so that
+    // the payment which follows can be pulled straight from it. Returns the account to pass as that
+    // payment's `fromAccount`, or undefined if the user backed out.
+    //
+    // `amount` must include the transfer fee, which the ledger charges against the allowance on top
+    // of the amount moved.
+    //
+    // Call this directly from a click handler and await nothing first: the wallet opens in a popup,
+    // which browsers only allow while the click which asked for it is still being handled.
+    approveExternalWalletSpending(
+        wallet: SignerWallet,
+        ledger: string,
+        amount: bigint,
+        chooseAccount: (accounts: WalletAccount[]) => Promise<WalletAccount | undefined>,
+        onApproving?: () => void,
+    ): Promise<string | undefined> {
+        return approveFromExternalWallet(
+            {
+                wallet,
+                ledger,
+                amount,
+                // The user's canister pulls the funds, spending as the same account which holds the
+                // user's own OpenChat balance, so that is what the wallet has to name as spender
+                spender: userIdToIcrcAccount(currentUserIdStore.value),
+            },
+            this.config.icUrl ?? window.location.origin,
+            chooseAccount,
+            onApproving,
+        );
+    }
+
     payForDiamondMembership(
         ledger: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
+        fromAccount?: string,
     ): Promise<PayForDiamondMembershipResponse> {
         return this.#worker
             .send({
@@ -7606,6 +7853,7 @@ export class OpenChat {
                 duration,
                 recurring,
                 expectedPriceE8s,
+                fromAccount,
             })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -7702,8 +7950,10 @@ export class OpenChat {
         return hasFlag(flags, flag);
     }
 
-    setOpenAIApiKey(apiKey: string | undefined): Promise<boolean> {
-        return this.#worker.send({ kind: "setOpenAIApiKey", apiKey }).catch(() => false);
+    proposeSetOpenAIApiKey(
+        apiKey: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker.send({ kind: "proposeSetOpenAIApiKey", apiKey }).catch(() => undefined);
     }
 
     vaultBuckets(): Promise<string[]> {
@@ -7744,8 +7994,76 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    setVaultReviewers(userIds: string[]): Promise<boolean> {
-        return this.#worker.send({ kind: "setVaultReviewers", userIds }).catch(() => false);
+    clearAuthorityReportAttempt(reportIndex: bigint): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "clearAuthorityReportAttempt", reportIndex })
+            .catch(() => false);
+    }
+
+    authorityReportToken(
+        reportIndex: bigint,
+        priority: NcaPriority,
+        reporter: NcaReporterContact,
+        oohCallAcknowledged: boolean,
+    ): Promise<AuthorityReportTokenResponse> {
+        return this.#worker
+            .send({
+                kind: "authorityReportToken",
+                reportIndex,
+                priority,
+                reporter,
+                oohCallAcknowledged,
+            })
+            .catch((err) => ({ kind: "error", message: String(err) }) as const);
+    }
+
+    proposeSetVaultLegalHold(
+        reportIndex: bigint,
+        legalHold: boolean,
+        reference: string,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetVaultLegalHold", reportIndex, legalHold, reference })
+            .catch(() => undefined);
+    }
+
+    proposeSetVaultReviewers(userIds: string[]): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetVaultReviewers", userIds })
+            .catch(() => undefined);
+    }
+
+    proposeSetMediaScanConfig(
+        enabled: boolean,
+        scanners: string[],
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetMediaScanConfig", enabled, scanners })
+            .catch(() => undefined);
+    }
+
+    proposeSetAuthorityReporter(
+        principal: string | undefined,
+    ): Promise<ProposedProtectedAction | undefined> {
+        return this.#worker
+            .send({ kind: "proposeSetAuthorityReporter", principal })
+            .catch(() => undefined);
+    }
+
+    confirmProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "confirmProtectedAction", actionId })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
+    }
+
+    cancelProtectedAction(actionId: bigint): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "cancelProtectedAction", actionId })
+            .catch(() => ({ kind: "error", code: -1, message: undefined }) as OCError);
+    }
+
+    protectedActions(): Promise<string | undefined> {
+        return this.#worker.send({ kind: "protectedActions" }).catch(() => undefined);
     }
 
     setVaultLegalHold(
@@ -7758,10 +8076,13 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    destroyVaultEvidence(reportIndex: bigint, leRequestRef: string): Promise<boolean> {
+    proposeDestroyVaultEvidence(
+        reportIndex: bigint,
+        leRequestRef: string,
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
-            .send({ kind: "destroyVaultEvidence", reportIndex, leRequestRef })
-            .catch(() => false);
+            .send({ kind: "proposeDestroyVaultEvidence", reportIndex, leRequestRef })
+            .catch(() => undefined);
     }
 
     setModerationReferralConfig(
@@ -7772,12 +8093,12 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    setInternalModerationChannel(
+    proposeSetInternalModerationChannel(
         channel: { communityId: string; channelId: number } | undefined,
-    ): Promise<boolean> {
+    ): Promise<ProposedProtectedAction | undefined> {
         return this.#worker
-            .send({ kind: "setInternalModerationChannel", channel })
-            .catch(() => false);
+            .send({ kind: "proposeSetInternalModerationChannel", channel })
+            .catch(() => undefined);
     }
 
     setModerationFlags(flags: number): Promise<number> {
@@ -8502,27 +8823,33 @@ export class OpenChat {
     }
 
     #startBtcBalanceUpdateJob() {
-        bitcoinAddress.subscribe((addr) => {
+        this.#btcAddressUnsub?.();
+        this.#btcAddressUnsub = bitcoinAddress.subscribe((addr) => {
+            // store subscribers cannot return a cleanup, so stop the previous poller explicitly
+            this.#btcBalancePoller?.stop();
+            this.#btcBalancePoller = undefined;
             if (addr !== undefined) {
-                const poller = new Poller(
+                this.#btcBalancePoller = new Poller(
                     () => this.#updateBtcBalance(addr),
                     ONE_MINUTE_MILLIS,
                     5 * ONE_MINUTE_MILLIS,
                     true,
                 );
-                return () => poller.stop();
             }
         });
     }
 
     #startOneSecBalanceUpdateJob() {
-        oneSecAddress.subscribe((addr) => {
+        this.#oneSecAddressUnsub?.();
+        this.#oneSecAddressUnsub = oneSecAddress.subscribe((addr) => {
             if (addr !== undefined) {
-                this.#oneSecEnableForwarding(currentUserIdStore.value, addr).then(() => {
-                    // Check balances in case a deposit was made before the OneSecForwarder
-                    // canister started tracking the address
-                    this.#checkOneSecBalances(addr);
-                });
+                this.#oneSecEnableForwarding(currentUserIdStore.value, addr)
+                    .then(() => {
+                        // Check balances in case a deposit was made before the OneSecForwarder
+                        // canister started tracking the address
+                        this.#checkOneSecBalances(addr);
+                    })
+                    .catch((err) => this.logError("Failed to enable OneSec forwarding", err));
             }
         });
     }
@@ -8536,7 +8863,13 @@ export class OpenChat {
     }
 
     async #checkOneSecBalances(address: string) {
-        const balances = await getErc20TokenBalances(address, this.#evmContractAddresses);
+        let balances: Erc20TokenBalance[];
+        try {
+            balances = await getErc20TokenBalances(address, this.#evmContractAddresses);
+        } catch (err) {
+            this.logError("Failed to check OneSec balances", err);
+            return;
+        }
         if (balances.length > 0) {
             // Notify the OneSec minter of any tokens with non-zero balances
             for (const balance of balances) {
@@ -8835,7 +9168,7 @@ export class OpenChat {
             }));
         if (webAuthnKey === undefined) throw new Error("WebAuthnKey not set");
 
-        if (this.isNativeAndroid()) {
+        if (this.isNativeApp()) {
             // Not 100% sure that this is right
             const webAuthnIdentity = new AndroidWebAuthnPasskeyIdentity(
                 (credentialId) => this.lookupWebAuthnPubKey(credentialId),

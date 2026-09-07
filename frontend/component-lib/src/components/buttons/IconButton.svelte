@@ -28,11 +28,11 @@
             case "secondary":
                 return ColourVars.textPrimary;
             case "transparent":
-                return disabled ? ColourVars.disabledButton : ColourVars.textPrimary;
+                return disabled ? ColourVars.surfaceDisabled : ColourVars.textPrimary;
             case "dark":
                 return ColourVars.primary;
             case "primary":
-                return ColourVars.background0;
+                return ColourVars.surface0;
         }
     });
 </script>
@@ -84,7 +84,7 @@
         }
 
         &.dark {
-            background-color: var(--background-0);
+            background-color: var(--surface-0);
         }
 
         &.primary {
@@ -92,7 +92,7 @@
         }
 
         &.secondary {
-            background-color: var(--text-tertiary);
+            background-color: var(--text-on-disabled-surface);
         }
     }
 </style>

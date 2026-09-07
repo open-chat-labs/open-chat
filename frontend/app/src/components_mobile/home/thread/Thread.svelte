@@ -31,6 +31,7 @@
         subscribe,
         threadEventsStore,
         threadsFollowedByMeStore,
+        TimelineGrouper,
         unconfirmedStore,
     } from "@client";
     import { getContext, onMount } from "svelte";
@@ -39,7 +40,7 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import AreYouSure from "../../AreYouSure.svelte";
     import Loading from "@shared_components/Loading.svelte";
-    import { flattenTimeline } from "@shared_components/flatChatItems";
+    import { TimelineFlattener } from "@shared_components/flatChatItems";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
@@ -83,16 +84,20 @@
     let canReact = $derived(client.canReactToMessages(chat.id));
     let atRoot = $derived($threadEventsStore.length === 0 || $threadEventsStore[0]?.index === 0);
     let events = $derived(atRoot ? [rootEvent, ...$threadEventsStore] : $threadEventsStore);
+    const grouper = new TimelineGrouper();
+    const flattener = new TimelineFlattener<Message>();
     let timeline = $derived(
-        client.groupEvents(
-            [...events].reverse(),
+        grouper.group(
+            events,
             $currentUserIdStore,
             chat.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
+            undefined,
+            true,
         ) as TimelineItem<Message>[],
     );
     let items = $derived(
-        flattenTimeline(
+        flattener.flatten(
             timeline,
             (event) =>
                 `${$currentUserIdStore}:${chatIdentifierToString(chat.id)}:${event === rootEvent ? "thread_root" : `thread_reply:${threadRootMessageIndex}`}`,
@@ -212,8 +217,8 @@
         }
     }
 
-    function onFileSelected(content: AttachmentContent) {
-        localUpdates.draftMessages.setAttachment(messageContext, content);
+    function onFileSelected(content: AttachmentContent, context: MessageContext) {
+        localUpdates.draftMessages.setAttachment(context, content);
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
@@ -308,7 +313,7 @@
     />
 {/if}
 
-<Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
+<Container background={ColourVars.surface0} height={"fill"} direction={"vertical"}>
     <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
     {#if loading}
         <Loading />

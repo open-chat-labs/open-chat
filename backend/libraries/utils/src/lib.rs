@@ -9,7 +9,6 @@ pub mod event_stream;
 pub mod fcm_token_store;
 pub mod file_id;
 pub mod format;
-pub mod git;
 pub mod hasher;
 pub mod idempotency_checker;
 pub mod iterator_extensions;

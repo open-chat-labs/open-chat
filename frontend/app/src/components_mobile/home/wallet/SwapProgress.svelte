@@ -186,7 +186,7 @@
                             <Body
                                 align={"center"}
                                 colour={inerror
-                                    ? "error"
+                                    ? "validationError"
                                     : active
                                       ? "textPrimary"
                                       : "textSecondary"}
@@ -195,7 +195,7 @@
                                     resourceKey={i18nKey(`${labelPrefix}${stage}`, labelValues)} />
                             </Body>
                             {#if inerror}
-                                <Close color={ColourVars.error} />
+                                <Close color={ColourVars.validationError} />
                             {:else if active}
                                 <Check color={ColourVars.primary} />
                             {/if}
@@ -289,8 +289,8 @@
                 @include pulse();
 
                 &.inerror {
-                    background-color: var(--background-1);
-                    border-color: var(--error);
+                    background-color: var(--surface-1);
+                    border-color: var(--validation-error);
                 }
             }
         }

@@ -30,7 +30,7 @@ function pullRequestPaths(text) {
     .split(/\r?\n/u)
     .filter((line) => line.trim())
     .map((line) => {
-      const match = /^      - ("[^"]+")$/u.exec(line);
+      const match = /^ {6}- ("[^"]+")$/u.exec(line);
       assert.ok(match, `unsupported PR path entry: ${line}`);
       return JSON.parse(match[1]);
     });
@@ -60,9 +60,7 @@ function pathPattern(pattern) {
 function modelTestFilters(text) {
   const jobs = mappingBlock(text, "jobs", 0);
   const job = mappingBlock(jobs, "frontend-contracts", 2);
-  const command = /\n        run: >-\r?\n((?:          [^\r\n]+\r?\n?)+)/u.exec(
-    job,
-  );
+  const command = /\n {8}run: >-\r?\n((?: {10}[^\r\n]+\r?\n?)+)/u.exec(job);
   assert.ok(command, "missing folded model test command");
   const words = command[1].trim().split(/\s+/u);
   assert.deepEqual(words.splice(0, 3), ["npm", "test", "--"]);
@@ -87,7 +85,7 @@ function sourceFiles(path) {
 // Discover current and future tests by model-owned naming families, not a frozen
 // list of today's filenames. App-authored action/OCR suites remain in full CI.
 const modelFamily =
-  /\/(?:customModels|onDeviceModels|model|onDeviceInference|nativeInferenceRuntimeBridge|webInference|transformersWebGpu|gemma4WebGpu|WebInferenceRuntimeSettings|localAi|localAudioInput|configuredLocalBlobUrl|localImageInput|imageDimensions|inferenceImage|publicBlob|rollup-plugin-wasm-url|bootstrapSecurity)[^/]*\.(?:spec|test)\.[cm]?[jt]sx?$/u;
+  /\/(?:customModels|onDeviceModels|model|onDeviceInference|nativeInferenceRuntimeBridge|webInference|transformersWebGpu|gemma4WebGpu|WebInferenceRuntimeSettings|localAi|localAudioInput|configuredLocalBlobUrl|localImageInput|imageDimensions|inferenceImage|publicBlob|publicKeyBuild|rollup-plugin-wasm-url|bootstrapSecurity)[^/]*\.(?:spec|test)\.[cm]?[jt]sx?$/u;
 const candidateFiles = [
   ...sourceFiles("app"),
   ...sourceFiles("openchat-agent/src/services/storageBucket"),
@@ -99,6 +97,9 @@ const triggers = (path) => patterns.some((pattern) => pattern.test(path));
 
 test("the model CI selects every discovered local-model frontend test", () => {
   assert.ok(inventory.length, "model test inventory is empty");
+  assert.ok(
+    inventory.includes("app/src/utils/nativeInferenceRuntimeBridge.spec.ts"),
+  );
   const missed = inventory.filter(
     (path) => !filters.some((filter) => path.includes(filter)),
   );
@@ -177,6 +178,7 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "frontend/app/src/utils/webInference.ts",
     "frontend/app/src/utils/nativeInferenceRuntimeBridge.spec.ts",
     "frontend/app/src/utils/imageDimensions.ts",
+    "frontend/app/src/utils/inferenceImage.ts",
     "frontend/app/.ic-assets.json5",
     "frontend/vite-env.d.ts",
     "frontend/global.d.ts",
@@ -210,21 +212,31 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "frontend/app/rollup.extras.mjs",
     "frontend/app/rollup-plugin-wasm-url.mjs",
     "frontend/app/modelAssetNotices.mjs",
+    ".gitattributes",
     "frontend/app/model-asset-notices/sources.json",
     "frontend/app/model-asset-notices/MODEL_MODIFICATIONS.md",
     "frontend/vitest.config.ts",
     "frontend/app/vitest.config.ts",
     "frontend/tauri-plugin-oc/src/model_manager.rs",
     "scripts/check_openchat_pr1_security.mjs",
+    "scripts/security_dependency_hash.mjs",
+    "scripts/security_dependency_hash.test.mjs",
     "scripts/sbom_lock_identity.mjs",
     "scripts/sbom_lock_identity.test.mjs",
+    "scripts/frontend_format_check.mjs",
+    "scripts/frontend_format_check.test.mjs",
+    "frontend/app/publicKeyBuild.mjs",
+    "frontend/app/src/publicKeyBuild.spec.ts",
     "scripts/model_ci_coverage.test.mjs",
     "scripts/model_asset_notices.test.mjs",
     "scripts/verify_webgpu_distribution.mjs",
-    "scripts/frontend_format_check.mjs",
     "scripts/android_dev.mjs",
     "scripts/android_bundle.test.mjs",
+    "scripts/android_build_prerequisites.test.mjs",
+    "dfx.json",
+    ".github/workflows/android_release.yaml",
     ".github/security/openchat-pr1-security-baseline.json",
+    ".github/security/openchat-pr2-security-baseline.json",
     ".github/workflows/frontend.yaml",
   ]) {
     assert.ok(existsSync(join(root, path)), `stale coverage fixture: ${path}`);
@@ -279,10 +291,318 @@ test("normal frontend CI runs this coverage regression as a policy test", () => 
   const frontend = read(".github/workflows/frontend.yaml");
   const policyStep = frontend
     .split("- name: Check PR and release policy regressions")[1]
-    ?.split(/\n      - /u)[0];
+    ?.split(/\n {6}- /u)[0];
   assert.ok(policyStep, "missing frontend policy test step");
   assert.match(
     policyStep,
     /run: node --test [^\r\n]*\bscripts\/model_ci_coverage\.test\.mjs(?:\s|$)/u,
   );
+});
+
+test("legacy workspace commands and fixed filenames cannot replace prefix discovery", () => {
+  const legacy =
+    "jobs:\n  frontend-contracts:\n    steps:\n      - name: Run model tests\n        run: >-\n          npm --workspace app test --\n          src/utils/modelCatalog.spec.ts\n";
+  assert.throws(() => modelTestFilters(legacy));
+  assert.doesNotMatch(workflow, /npm --workspace app/u);
+});
+
+test("native CI compiles both app feature sets on both supported runner platforms", () => {
+  const jobs = mappingBlock(workflow, "jobs", 0);
+  const native = mappingBlock(jobs, "native-hermetic", 2);
+  assert.match(native, /os: \[ubuntu-24\.04, windows-2022\]/u);
+  assert.equal(
+    [
+      ...native.matchAll(
+        /^ +cargo check --locked -p open-chat --features inference\r?$/gmu,
+      ),
+    ].length,
+    2,
+  );
+  assert.equal(
+    [
+      ...native.matchAll(
+        /^ +cargo check --locked -p open-chat --features inference,store\r?$/gmu,
+      ),
+    ].length,
+    2,
+  );
+  assert.doesNotMatch(native, /cargo check (?:--locked )?-p tauri-plugin-oc/u);
+  assert.match(native, /cargo test --locked -p tauri-plugin-oc --lib/u);
+});
+
+test("all six native source-compiling CI commands enforce the committed Cargo lockfile", () => {
+  const commands = [
+    ...workflow.matchAll(/^ +(?:run: )?(cargo (?:test|check) [^\r\n]+)\r?$/gmu),
+  ].map((match) => match[1]);
+  assert.equal(
+    commands.length,
+    6,
+    "review every added or removed native Cargo invocation",
+  );
+  assert.deepEqual(commands, [
+    "cargo test --locked -p tauri-plugin-oc --lib",
+    "cargo check --locked -p open-chat --features inference",
+    "cargo check --locked -p open-chat --features inference,store",
+    "cargo check --locked -p open-chat --features inference",
+    "cargo check --locked -p open-chat --features inference,store",
+    "cargo test --locked -p tauri-plugin-oc --features inference",
+  ]);
+  const jobs = mappingBlock(workflow, "jobs", 0);
+  const fixture = mappingBlock(jobs, "real-text-inference", 2);
+  const native = mappingBlock(jobs, "native-hermetic", 2);
+  assert.equal(
+    [...(native + fixture).matchAll(/\bcargo\b/gu)].length,
+    commands.length,
+    "review native Cargo calls outside the supported command-line shape",
+  );
+  assert.match(
+    fixture,
+    /cargo test --locked -p tauri-plugin-oc --features inference/u,
+  );
+  assert.match(
+    fixture,
+    /inference::tests::text_inference_smoke --\s+--ignored --exact --nocapture/u,
+  );
+  // This fixture downloads an immutable model; it compiles the repository, not
+  // a temporary Cargo project whose lockfile intentionally needs generating.
+  assert.doesNotMatch(fixture, /cargo (?:generate-lockfile|update)\b/u);
+});
+
+test("the frontend build runs a read-only lint check", () => {
+  const manifest = JSON.parse(read("frontend/package.json"));
+  assert.equal(manifest.scripts["lint:check"], "eslint .");
+  assert.match(
+    manifest.scripts["build:ci"],
+    /(?:^|&&)\s*npm run lint:check(?:\s*&&|$)/u,
+  );
+  assert.doesNotMatch(manifest.scripts["build:ci"], /\bnpm run lint(?:\s|$)/u);
+  assert.doesNotMatch(manifest.scripts["lint:check"], /--fix/u);
+  assert.match(
+    read(".github/workflows/frontend.yaml"),
+    /run: npm run build:ci/u,
+  );
+});
+
+test("frontend policy invokes the exact combined PR and release regressions present in this checkout", () => {
+  const step = read(".github/workflows/frontend.yaml")
+    .split("- name: Check PR and release policy regressions")[1]
+    ?.split(/\n {6}- /u)[0];
+  assert.ok(step);
+  const command = /run: node --test ([^\r\n]+)/u.exec(step);
+  assert.ok(command);
+  const files = command[1].trim().split(/\s+/u);
+  assert.deepEqual(files, [
+    "scripts/pr-ci-policy.test.mjs",
+    "scripts/validate_action_inbox_wiring.test.mjs",
+    "scripts/android_release_policy.test.mjs",
+    "scripts/android_release_checks.test.mjs",
+    "scripts/release_preflight.test.mjs",
+    "scripts/android_bundle.test.mjs",
+    "scripts/android_build_prerequisites.test.mjs",
+    "scripts/frontend_format_check.test.mjs",
+    "scripts/android_dev.test.mjs",
+    "scripts/verify_webgpu_distribution.test.mjs",
+    "scripts/model_asset_notices.test.mjs",
+    "scripts/sbom_lock_identity.test.mjs",
+    "scripts/model_ci_coverage.test.mjs",
+  ]);
+  for (const path of files) assert.ok(existsSync(join(root, path)), path);
+});
+
+test("historical dependency hash proofs run in the full-history security checkout", () => {
+  const jobs = mappingBlock(workflow, "jobs", 0);
+  const policy = mappingBlock(jobs, "dependency-policy", 2);
+  assert.match(policy, /fetch-depth: 0/u);
+  assert.match(
+    policy,
+    /run: node --test scripts\/security_dependency_hash\.test\.mjs/u,
+  );
+  assert.doesNotMatch(
+    mappingBlock(jobs, "frontend-contracts", 2),
+    /security_dependency_hash\.test\.mjs/u,
+  );
+  assert.doesNotMatch(
+    read(".github/workflows/frontend.yaml"),
+    /security_dependency_hash\.test\.mjs/u,
+  );
+});
+
+const compatibilityScripts = [
+  "scripts/cdp_axios_compatibility.mjs",
+  "scripts/decoder_compatibility.mjs",
+  "scripts/onnx_adm_zip_compatibility.mjs",
+  "scripts/transformers_sharp_compatibility.mjs",
+];
+
+test("CI separately builds and verifies the opt-in WebGPU production candidate", () => {
+  const frontend = read(".github/workflows/frontend.yaml");
+  const name =
+    "- name: Build and verify the opt-in production WebGPU candidate";
+  const candidate = frontend.split(name)[1]?.split(/\n {6}- /u)[0];
+  assert.ok(candidate, "missing real production WebGPU packaging gate");
+  assert.match(candidate, /npm run build:prod/u);
+  assert.match(
+    candidate,
+    /node \.\.\/scripts\/verify_webgpu_distribution\.mjs app\/build/u,
+  );
+  assert.match(candidate, /OC_TRANSFORMERS_WEBGPU_IMAGE_SPIKE: "true"/u);
+  assert.match(
+    candidate,
+    /OC_TRANSFORMERS_WEBGPU_ASSET_DELIVERY: immutable-hub-v1/u,
+  );
+  assert.doesNotMatch(
+    candidate,
+    /continue-on-error|\|\|\s*true|npm (?:install|update)|deploy/u,
+  );
+  const standard = frontend
+    .split("- name: Build frontend")[1]
+    ?.split(/\n {6}- /u)[0];
+  assert.ok(standard);
+  assert.match(standard, /npm run build:ci/u);
+  assert.doesNotMatch(standard, /OC_TRANSFORMERS_WEBGPU_/u);
+  assert.ok(frontend.indexOf("run: npm run build:ci") < frontend.indexOf(name));
+});
+
+test("frontend checks cover both model and app-interface branches with read-only repository permissions", () => {
+  const frontend = read(".github/workflows/frontend.yaml");
+  const events = mappingBlock(frontend, "on", 0);
+  const push = mappingBlock(events, "push", 2);
+  for (const branch of [
+    "codex/pr1-local-models",
+    "codex/pr2-app-chat-interfaces",
+    "codex/pr2-clean-integration",
+  ]) {
+    assert.match(push, new RegExp(`^ +- ${branch}\\r?$`, "mu"));
+  }
+  assert.match(
+    mappingBlock(frontend, "permissions", 0),
+    /^ +contents: read\r?$/mu,
+  );
+  assert.doesNotMatch(frontend, /contents: write/u);
+});
+
+test("frontend CI runs every scoped dependency contract against the frozen install", () => {
+  const frontend = read(".github/workflows/frontend.yaml");
+  const jobs = mappingBlock(frontend, "jobs", 0);
+  const job = mappingBlock(jobs, "install-and-test", 2);
+  const stepName = "- name: Verify narrowly scoped dependency compatibility";
+  const step = job.split(stepName)[1]?.split(/\n {6}- /u)[0];
+  assert.ok(step, "missing installed-parent compatibility step");
+  assert.match(step, /working-directory: \./u);
+  const commands = [
+    ...step.matchAll(/^ +node (scripts\/[^\s]+\.mjs)\r?$/gmu),
+  ].map((match) => match[1]);
+  assert.deepEqual(commands, compatibilityScripts);
+  const install = job.indexOf("run: npm ci");
+  const compatibility = job.indexOf(stepName);
+  const build = job.indexOf("run: npm run build:ci");
+  assert.ok(install > 0 && compatibility > install && build > compatibility);
+  assert.doesNotMatch(step, /continue-on-error|\|\|\s*true|--ignore-scripts/u);
+  assert.doesNotMatch(job, /run: npm (?:install|update|audit fix)\b/u);
+  assert.match(job, /node-version: "24\.18\.1"/u);
+});
+
+test("every scoped dependency contract exists and triggers the model PR workflow", () => {
+  for (const path of compatibilityScripts) {
+    assert.ok(
+      existsSync(join(root, path)),
+      `missing compatibility script: ${path}`,
+    );
+    assert.ok(
+      triggers(path),
+      `compatibility script does not trigger CI: ${path}`,
+    );
+  }
+});
+
+test("Node image and installer fixes stay scoped to their reviewed model parents", () => {
+  const manifest = JSON.parse(read("frontend/package.json"));
+  const overrides = manifest.overrides;
+  assert.equal(manifest.dependencies["@huggingface/transformers"], "4.2.0");
+  for (const [parent, dependency, version] of [
+    ["@huggingface/transformers@4.2.0", "sharp", "0.35.3"],
+    ["onnxruntime-node@1.24.3", "adm-zip", "0.6.0"],
+  ]) {
+    assert.deepEqual(overrides[parent], { [dependency]: version });
+    assert.equal(Object.hasOwn(overrides, dependency), false);
+    assert.equal(
+      Object.hasOwn(overrides, parent.slice(0, parent.lastIndexOf("@"))),
+      false,
+    );
+  }
+});
+
+test("Android component identity compiles actual sources against host fixtures and SDK 36 in PR CI", () => {
+  const job = mappingBlock(
+    mappingBlock(workflow, "jobs", 0),
+    "android-component-contracts",
+    2,
+  );
+  assert.match(job, /runs-on: ubuntu-24\.04/u);
+  assert.match(job, /timeout-minutes: 15/u);
+  assert.match(job, /java-version: "21"/u);
+  assert.match(job, /node-version: "24\.18\.1"/u);
+  assert.match(job, /sdkmanager "platforms;android-36"/u);
+  assert.match(job, /shell: pwsh/u);
+  assert.match(
+    job,
+    /run: node --test scripts\/android_component_identity_tools\.test\.mjs scripts\/model_ci_coverage\.test\.mjs/u,
+  );
+  assert.match(
+    job,
+    /node scripts\/android_component_identity_tools\.mjs --output-directory "\$env:RUNNER_TEMP\/openchat-component-tools"/u,
+  );
+  assert.match(
+    job,
+    /& \.\/frontend\/tauri-plugin-oc\/android\/component-identity-tests\/run\.ps1/u,
+  );
+  for (const argument of [
+    "-JavaHome $env:JAVA_HOME",
+    "-KotlinCompilerClasspath $tools.compilerClasspath",
+    "-KotlinRuntimeClasspath $tools.runtimeClasspath",
+    "-JUnitClasspath $tools.junitClasspath",
+    '-AndroidJar "$env:ANDROID_HOME/platforms/android-36/android.jar"',
+    '-OutputDirectory "$env:RUNNER_TEMP/openchat-component-classes"',
+  ])
+    assert.ok(
+      job.includes(argument),
+      `missing actual runner input: ${argument}`,
+    );
+  assert.equal(
+    [...job.matchAll(/if \(\$LASTEXITCODE -ne 0\) \{ throw /gu)].length,
+    2,
+  );
+  assert.match(job, /\$ErrorActionPreference = 'Stop'/u);
+  assert.doesNotMatch(
+    job,
+    /continue-on-error|\|\|\s*true|needs:|secrets\.|tauri android|gradlew|npm ci/u,
+  );
+  const runner = read(
+    "frontend/tauri-plugin-oc/android/component-identity-tests/run.ps1",
+  );
+  assert.match(runner, /src\/main\/java\/IntentsManager\.kt/u);
+  assert.match(runner, /com\/oclabs\/openchat\/MyApplication\.kt/u);
+  assert.match(
+    runner,
+    /org\.junit\.runner\.JUnitCore fixtures\.ComponentIdentityTest/u,
+  );
+  assert.match(
+    runner,
+    /-classpath "\$KotlinRuntimeClasspath\$separator\$AndroidJar"/u,
+  );
+  assert.match(runner, /fixtures\.AndroidConstantCheck/u);
+  assert.match(runner, /if \(Test-Path -LiteralPath \$output\) \{ throw/u);
+  for (const path of [
+    "scripts/android_component_identity_tools.json",
+    "scripts/android_component_identity_tools.mjs",
+    "scripts/android_component_identity_tools.test.mjs",
+    "frontend/tauri-plugin-oc/android/component-identity-tests/run.ps1",
+    "frontend/tauri-plugin-oc/android/component-identity-tests/src/fixtures/ComponentIdentityTest.kt",
+    "frontend/tauri-plugin-oc/android/component-identity-tests/src/fixtures/AndroidConstantCheck.kt",
+    "frontend/tauri-plugin-oc/android/src/main/java/IntentsManager.kt",
+    "frontend/src-tauri/gen/android/app/src/main/java/com/oclabs/openchat/MyApplication.kt",
+  ]) {
+    assert.ok(existsSync(join(root, path)), path);
+    assert.ok(triggers(path), `component CI not triggered by ${path}`);
+  }
 });

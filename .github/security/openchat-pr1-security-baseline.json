@@ -9,7 +9,11 @@
   "dependencyDigestMigration": {
     "sourceCommit": "f7825b347b5f8449053778450b934110e0ee3537",
     "sourceDefaultLineEndings": "crlf",
-    "sourceLfFiles": ["Cargo.lock", "frontend/package.json", "frontend/package-lock.json"],
+    "sourceLfFiles": [
+      "Cargo.lock",
+      "frontend/package.json",
+      "frontend/package-lock.json"
+    ],
     "sourceMixedLfLineRanges": {
       "frontend/tauri-plugin-oc/Cargo.toml": [[14, 18]]
     },

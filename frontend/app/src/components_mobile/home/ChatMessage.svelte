@@ -252,21 +252,19 @@
                 }
             });
         }
+    });
 
-        if (expiresAt !== undefined) {
-            return now.subscribe((t) => {
-                const ttl = expiresAt ? expiresAt - Number(timestamp) : 0;
-                const age = t - Number(timestamp);
-                const expired = age > ttl;
-                percentageExpired = expired ? 100 : (age / ttl) * 100;
-                // if this message is the root of a thread, make sure that we close that thread when the message expires
-                if (percentageExpired >= 100 && msg.thread) {
-                    client.filterRightPanelHistory(
-                        (panel) => panel.kind !== "message_thread_panel",
-                    );
-                    navigate(removeQueryStringParam("open"));
-                }
-            });
+    $effect(() => {
+        if (expiresAt === undefined) return;
+        const ttl = expiresAt - Number(timestamp);
+        const age = $now - Number(timestamp);
+        const expired = age > ttl;
+        const percentage = expired ? 100 : (age / ttl) * 100;
+        percentageExpired = percentage;
+        // if this message is the root of a thread, make sure that we close that thread when the message expires
+        if (percentage >= 100 && msg.thread) {
+            client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+            navigate(removeQueryStringParam("open"));
         }
     });
 
@@ -935,6 +933,17 @@
         panDirection = direction;
         panFactor = factor;
     }
+
+    // Memoised so the action's update() only runs when a field actually changes
+    let pan = $derived(
+        msg.deleted || disablePan || msg.content.kind === "proposal_content"
+            ? undefined
+            : {
+                  oncommit: onPanCommit,
+                  onmove: onPanMove,
+                  isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
+              },
+    );
 </script>
 
 {#if botProfile !== undefined}
@@ -1116,13 +1125,7 @@
                 gap={"sm"}
                 overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}
-                pan={msg.deleted || disablePan || msg.content.kind === "proposal_content"
-                    ? undefined
-                    : {
-                          oncommit: onPanCommit,
-                          onmove: onPanMove,
-                          isScrolling: scrollStatus.isScrolling || scrollStatus.isCooldown,
-                      }}
+                {pan}
             >
                 {#if showAvatar && !isActionCard}
                     <div class:first class="avatar">
@@ -1150,7 +1153,7 @@
                     minWidth={isActionCard ? "0" : "6rem"}
                     direction={"vertical"}
                 >
-                    {#if panDirection}
+                    {#if panDirection && panFactor > 0}
                         <div
                             class={`pan-action ${panDirection}`}
                             class:active={panFactor >= 1}
@@ -1364,7 +1367,7 @@
                                     <Spinner
                                         size="1rem"
                                         foregroundColour="var(--primary)"
-                                        backgroundColour="var(--text-tertiary)"
+                                        backgroundColour="var(--text-on-disabled-surface)"
                                     />
                                 {/if}
                                 {localAiMessageStatus.message}
@@ -1377,18 +1380,18 @@
                             width={"hug"}
                             height={"hug"}
                             padding={["xxs", "sm"]}
-                            background={ColourVars.background2}
+                            background={ColourVars.surface2}
                             crossAxisAlignment={"center"}
                             mainAxisAlignment={"center"}
                             gap={"xs"}
                             borderRadius={"circle"}
                             borderWidth={"thick"}
-                            borderColour={ColourVars.background0}
+                            borderColour={ColourVars.surface0}
                         >
                             <Spinner
                                 size={"1rem"}
                                 foregroundColour={"var(--primary)"}
-                                backgroundColour={"var(--text-tertiary)"}
+                                backgroundColour={"var(--text-on-disabled-surface)"}
                             />
                             <ChatFootnote>
                                 <Translatable resourceKey={autoProposeBusyResourceKey} />
@@ -1429,18 +1432,18 @@
             gap: var(--sp-xs);
             padding: 2px 10px;
             border-radius: 999px;
-            background-color: var(--background-2);
-            border: var(--border-width-thick) solid var(--background-0);
+            background-color: var(--surface-2);
+            border: var(--bw-thick) solid var(--surface-0);
             color: var(--text-secondary);
             font-size: 0.75rem;
         }
 
         &.error .pill {
-            color: var(--error);
+            color: var(--validation-error);
         }
 
         &.success .pill {
-            color: var(--success);
+            color: var(--validation-success);
         }
     }
 
@@ -1489,7 +1492,7 @@
     }
 
     :global(.pan-action.active path) {
-        fill: var(--primary-light);
+        fill: var(--primary-accent);
     }
 
     .pan-action {

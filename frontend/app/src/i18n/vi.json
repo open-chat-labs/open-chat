@@ -163,6 +163,21 @@
         "notAvailable": "Nội dung này không khả dụng trong phiên bản ứng dụng này. Bạn vẫn có thể truy cập nó từ ứng dụng web tại [oc.app](https://oc.app).",
         "notAvailableTitle": "Nội dung không khả dụng"
     },
+    "nativeUpdate": {
+        "downloadingTitle": "Chờ một chút! Đang cập nhật ...",
+        "downloadingMessage": "Chúng tôi đang tải một bản cập nhật nhanh và bạn sẽ có thể tiếp tục ngay ...",
+        "reload": "Tải lại và tiếp tục",
+        "requiredTitle": "Cần cập nhật",
+        "requiredMessage": "Đã có phiên bản {version}, nhưng nó cần một phiên bản ứng dụng mới hơn phiên bản bạn đã cài. Ứng dụng này không thể tự cập nhật lên đến đó.",
+        "availableTitle": "Đã có bản cập nhật",
+        "availableMessage": "Đã có phiên bản {version}. Trong lúc chờ, phiên bản này vẫn hoạt động bình thường.",
+        "fromPlayStore": "Cập nhật từ Play Store",
+        "downloadLatest": "Tải phiên bản mới nhất",
+        "reinstallTitle": "Vui lòng cài đặt lại OpenChat",
+        "reinstallMessage": "Bản OpenChat này không thể cập nhật được nữa và sẽ ngừng hoạt động vào một lúc nào đó. Hãy tải phiên bản hiện tại để tiếp tục nhận cập nhật.",
+        "reinstallUninstallOld": "Sau khi cài bản mới, hãy gỡ bản này. Nếu giữ cả hai, mỗi thông báo sẽ đến hai lần.",
+        "reinstallDownload": "Tải phiên bản hiện tại"
+    },
     "appWallet": {
         "header": {
             "asset": "Tài sản",
@@ -1111,6 +1126,7 @@
     "maxImageSize": "Đã vượt quá kích thước hình tối đa 1MB",
     "maxStorage": "Bạn có thể nâng cấp tối đa 1GB cho dung lượng lưu trữ",
     "maxVideoSize": "Đã vượt quá kích thước video tối đa 5MB",
+    "videoProcessing": "Đang tối ưu hoá video…",
     "member": "hội viên",
     "memberCount": "{count} thành viên",
     "memberIsTyping": "{username} đang nhập",
@@ -1916,9 +1932,9 @@
     "termsUpdated": {
         "agree": "Tôi đồng ý",
         "failed": "Đã xảy ra lỗi khi ghi nhận sự chấp thuận của bạn. Vui lòng kiểm tra kết nối và thử lại.",
-        "info": "Chúng tôi đã cập nhật điều khoản dịch vụ của OpenChat, bao gồm các quy tắc mới về nội dung bị cấm và cách thức kiểm duyệt hoạt động. Vui lòng xem lại các điều khoản đã cập nhật. Khi chọn \"Tôi đồng ý\", bạn chấp nhận các điều khoản đã cập nhật.",
         "link": "Đọc các điều khoản đã cập nhật",
-        "title": "Điều khoản của chúng tôi đã thay đổi"
+        "title": "Điều khoản của chúng tôi đã thay đổi",
+        "info": "Chúng tôi đã cập nhật điều khoản dịch vụ và thông báo quyền riêng tư của OpenChat để mô tả cách các tệp phương tiện đăng trong các nhóm và kênh công khai được đối chiếu với cơ sở dữ liệu về tài liệu xâm hại tình dục trẻ em đã biết: OpenChat sử dụng công nghệ PhotoDNA được Microsoft cấp phép, chỉ một dấu vân tay kỹ thuật số không thể đảo ngược của tệp phương tiện được chia sẻ với dịch vụ đối chiếu, không có gì được lưu giữ khi không trùng khớp, và nội dung được giữ lại để xem xét kiểm duyệt hoặc theo nghĩa vụ báo cáo pháp lý không thể bị xóa trong thời gian các nghĩa vụ đó còn hiệu lực. Vui lòng xem lại các điều khoản đã cập nhật. Khi chọn \"Tôi đồng ý\", bạn chấp nhận các điều khoản đã cập nhật."
     },
     "theInternetComputer": "Internet Computer",
     "theme": {

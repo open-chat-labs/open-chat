@@ -75,7 +75,7 @@
     fill
     enable={showVotes}>
     <Row onClick={click}>
-        <Progress colour={ColourVars.primaryMuted} {percent}>
+        <Progress colour={ColourVars.primarySurface} {percent}>
             <Row gap={"md"} crossAxisAlignment={"center"}>
                 <Body width={"hug"}>
                     {answer}

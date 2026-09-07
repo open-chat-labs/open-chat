@@ -9,8 +9,8 @@ use timer_job_queues::TimerJobItem;
 use tracing::{error, info, trace};
 use types::icrc1::{self, Account};
 use types::{
-    BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
-    MessageContentInitial, Milliseconds, UserId,
+    BotMessage, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, MessageContentInitial,
+    Milliseconds, UserId,
 };
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 use utils::time::{MONTHS, MonthKey};
@@ -77,7 +77,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
         Err(error) => {
-            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
             return Err(delay_if_should_retry);
         }
     };
@@ -132,7 +132,7 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), Option<Mi
         )
     });
 
-    let to = Account::from(action.recipient);
+    let to = Account::for_user(action.recipient);
     let memo = match action.airdrop_type {
         AirdropType::Main(_) => MEMO_CHIT_FOR_CHAT_AIRDROP,
         AirdropType::Lottery(_) => MEMO_CHIT_FOR_CHAT_LOTTERY,
@@ -228,14 +228,14 @@ async fn handle_main_message_action(action: AirdropMessage) -> Result<(), Option
         }],
     };
 
-    match user_canister_c2c_client::c2c_handle_bot_messages(CanisterId::from(action.recipient), &args).await {
+    match user_canister_c2c_client::c2c_handle_bot_messages(action.recipient.canister_id(), &args).await {
         Ok(user_canister::c2c_handle_bot_messages::Response::Success) => Ok(()),
         Ok(resp) => {
             error!(?args, ?resp, "Failed to send DM");
             Err(None)
         }
         Err(error) => {
-            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
             error!(?args, ?error, "Failed to send DM");
             Err(delay_if_should_retry)
         }
@@ -301,7 +301,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), Opt
         }
         Err(error) => {
             error!(?args, ?error, "Failed to send lottery message");
-            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message());
+            let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
             Err(delay_if_should_retry)
         }
     }

@@ -88,12 +88,19 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
     let startY = 0;
     let menuShown = false;
 
-    const originalScale = window.getComputedStyle(node).scale ?? "1.0";
+    // Computed style reads force a style recalc, so defer them until the
+    // first touch rather than paying for them on every mount.
+    let originalScale: string | undefined;
 
-    if (scaleAnimationEnabled) {
-        // We divide delay by 4, since scale down will start after half of delay
-        // has passed already, so we have two quarts left to scale down then up.
-        setTransitions(node, delay / 4);
+    function prepareScale() {
+        if (originalScale !== undefined) return;
+        originalScale = window.getComputedStyle(node).scale ?? "1.0";
+
+        if (scaleAnimationEnabled) {
+            // We divide delay by 4, since scale down will start after half of delay
+            // has passed already, so we have two quarts left to scale down then up.
+            setTransitions(node, delay / 4);
+        }
     }
 
     function processArgs(args: LongpressArg) {
@@ -116,7 +123,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
             node.style.scale = SCALE_EFFECT_TARGET;
             // Timeout kicks the CSS defined scale transition.
             requestAnimationFrame(() => {
-                node.style.scale = originalScale;
+                node.style.scale = originalScale ?? "1.0";
             });
         }
     }
@@ -130,6 +137,7 @@ export function longpress(node: HTMLElement, args?: LongpressArg) {
         startX = t.screenX;
         startY = t.screenY;
         clearLongPressTimer();
+        prepareScale();
 
         // Scale down starts when half of the longpress delay has passed. Animation
         // start does not mean the menu will open.

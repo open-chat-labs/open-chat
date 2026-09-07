@@ -52,7 +52,7 @@ fn verification_binding(user_index: CanisterId, app: &AiAppRegistration) -> Veri
         user_index_canister_id: user_index,
         app_id: app.id,
         app_revision: app.updated,
-        owner: app.owner.into(),
+        owner: app.owner.as_principal(),
         canonical_name: canonical_name.clone(),
         manifest: app.manifest.clone(),
     };
@@ -60,7 +60,7 @@ fn verification_binding(user_index: CanisterId, app: &AiAppRegistration) -> Veri
         user_index_canister_id: user_index,
         app_id: app.id,
         app_revision: app.updated,
-        owner: app.owner.into(),
+        owner: app.owner.as_principal(),
         canonical_name,
         app_canister_id: app.manifest.app_canister_id.unwrap(),
         inbox_canister_id: app.manifest.inbox_canister_id,
@@ -747,7 +747,7 @@ fn publish_rejects_a_legacy_v1_only_vouch() {
         wasms::AI_APP_VERIFIER_TEST.clone(),
         NeutralVerifierInit {
             name: name.clone(),
-            owner: owner.user_id.into(),
+            owner: owner.user_id.as_principal(),
             vouched: true,
             expected_v2: None,
         },
@@ -760,7 +760,7 @@ fn publish_rejects_a_legacy_v1_only_vouch() {
         "c2c_verify_ai_app",
         &c2c_verify_ai_app::Args {
             name: name.clone(),
-            owner: owner.user_id.into(),
+            owner: owner.user_id.as_principal(),
         },
     );
     assert!(legacy.vouched, "fixture must genuinely vouch over V1");
@@ -861,7 +861,7 @@ fn publish_succeeds_when_app_canister_vouches() {
         wasms::AI_APP_VERIFIER_TEST.clone(),
         NeutralVerifierInit {
             name: draft.manifest.name.clone(),
-            owner: owner.user_id.into(),
+            owner: owner.user_id.as_principal(),
             vouched: true,
             expected_v2: Some(verification_binding(user_index, &draft)),
         },

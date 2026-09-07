@@ -119,6 +119,16 @@ export type VaultFileChunkResponse =
     | { kind: "not_found" }
     | { kind: "session_required" };
 
+export type VaultFileInfoResponse =
+    | {
+          kind: "success";
+          hash: string;
+          mimeType: string;
+          size: bigint;
+      }
+    | { kind: "not_authorized" }
+    | { kind: "not_found" };
+
 export type VaultLogEntry = {
     index: bigint;
     timestamp: bigint;

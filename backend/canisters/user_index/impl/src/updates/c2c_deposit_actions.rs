@@ -457,7 +457,7 @@ fn action_delivery_attempt_identity(
         }
     }
     canonical.extend_from_slice(&context.message_id.as_u64().to_be_bytes());
-    append_principal(&mut canonical, context.user_id.into())?;
+    append_principal(&mut canonical, context.user_id.as_principal())?;
     canonical.extend_from_slice(&context.app_id.to_be_bytes());
     canonical.extend_from_slice(&context.app_revision.to_be_bytes());
     let action_len = u32::try_from(context.action_id.len()).map_err(|_| "action id is too long".to_string())?;
@@ -525,7 +525,7 @@ fn direct_action_delivery_identity(binding: &AiAppCardAuthorityBindingV1) -> Res
     let mut attempt = Vec::with_capacity(ATTEMPT_DOMAIN.len() + 256 + binding.context.action_id.len());
     attempt.extend_from_slice(ATTEMPT_DOMAIN);
     attempt.extend_from_slice(&slot_id);
-    append_principal(&mut attempt, binding.context.user_id.into())?;
+    append_principal(&mut attempt, binding.context.user_id.as_principal())?;
     attempt.extend_from_slice(&binding.context.app_revision.to_be_bytes());
     let action_len = u32::try_from(binding.context.action_id.len()).map_err(|_| "action id is too long".to_string())?;
     attempt.extend_from_slice(&action_len.to_be_bytes());
@@ -1306,6 +1306,29 @@ mod tests {
                 created_at: 1,
             } if confirm_payload_hash == [7; 32]
         ));
+    }
+
+    #[test]
+    fn indexed_confirmers_in_one_canister_have_distinct_delivery_attempts() {
+        let host = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let first = UserId::new_indexed(host, 1);
+        let second = UserId::new_indexed(host, 2);
+        let caller = Principal::from_slice(&[77]);
+        let first_args = relay_args(first, 1, 2, Vec::new(), vec![deposit(vec![1; 32])]);
+        let first_binding = authoritative_binding(&first_args, caller).unwrap();
+        let mut second_binding = first_binding.clone();
+        second_binding.context.user_id = second;
+        assert_ne!(
+            action_delivery_attempt_identity(&first_binding).unwrap(),
+            action_delivery_attempt_identity(&second_binding).unwrap()
+        );
+
+        let first_direct = direct_relay_args(first, second, ByteBuf::new());
+        let second_direct = direct_relay_args(second, first, ByteBuf::new());
+        let first_identity = action_delivery_identity(&authoritative_binding(&first_direct, caller).unwrap()).unwrap();
+        let second_identity = action_delivery_identity(&authoritative_binding(&second_direct, caller).unwrap()).unwrap();
+        assert_eq!(first_identity.slot_id, second_identity.slot_id);
+        assert_ne!(first_identity.attempt_id, second_identity.attempt_id);
     }
 
     #[test]

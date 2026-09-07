@@ -1,0 +1,6 @@
+[package]
+name = "git_commit_id"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]

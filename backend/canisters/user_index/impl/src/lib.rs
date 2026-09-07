@@ -1,6 +1,7 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
+use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
 use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
@@ -32,8 +33,8 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles, DiamondMembershipFees, Milliseconds,
-    ModerationReferralConfig, TimestampMillis, Timestamped, UserId, UserType,
+    BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles, DiamondMembershipFees,
+    MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -113,27 +114,34 @@ impl RuntimeState {
         caller == self.data.storage_index_canister_id
     }
 
+    pub fn is_caller_authority_reporter(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.authority_reporter == Some(caller)
+    }
+
     pub fn is_caller_translations_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.translations_canister_id
     }
 
+    // A suspended account holds NO authority while the sanction stands: the role membership
+    // survives (it comes back when the suspension lifts) but confers nothing meanwhile. These
+    // two are the single choke points for every moderator/operator-gated endpoint and for
+    // inspect_message, so the rule cannot be forgotten at a call site.
     pub fn is_caller_platform_moderator(&self) -> bool {
         let caller = self.env.caller();
-        if let Some(user) = self.data.users.get_by_principal(&caller) {
-            self.data.platform_moderators.contains(&user.user_id)
-        } else {
-            false
-        }
+        self.data
+            .users
+            .get_by_principal(&caller)
+            .is_some_and(|user| self.data.is_platform_moderator_active(&user.user_id))
     }
 
     pub fn is_caller_platform_operator(&self) -> bool {
         let caller = self.env.caller();
-        if let Some(user) = self.data.users.get_by_principal(&caller) {
-            self.data.platform_operators.contains(&user.user_id)
-        } else {
-            false
-        }
+        self.data
+            .users
+            .get_by_principal(&caller)
+            .is_some_and(|user| self.data.is_platform_operator_active(&user.user_id))
     }
 
     pub fn can_caller_upload_wasm_chunks(&self) -> bool {
@@ -267,7 +275,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             users_created: self.data.users.len() as u64,
             diamond_members: DiamondMembershipMetrics {
@@ -298,6 +306,7 @@ impl RuntimeState {
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
             authority_report_metrics: self.data.authority_reports.metrics(),
+            protected_action_metrics: self.data.protected_actions.metrics(),
             vault_reviewers: self.data.vault_reviewers.len() as u32,
             openai_api_key_set: self.data.openai_api_key.is_some(),
             internal_moderation_channel_set: self.data.internal_moderation_channel.is_some(),
@@ -305,6 +314,8 @@ impl RuntimeState {
             // thresholds must not be readable by people tuning content to sit under them.
             // Operators read the full config via the guarded moderation_config query.
             moderation_referral_config_set: self.data.moderation_referral_config.is_some(),
+            media_scanning_enabled: self.data.media_scan_config.enabled,
+            media_scanners: self.data.media_scan_config.scanners.len() as u32,
             moderation_referral_categories: self
                 .data
                 .moderation_referral_config
@@ -425,6 +436,12 @@ struct Data {
     pub authority_reports: AuthorityReports,
     #[serde(default)]
     pub vault_reviewers: HashSet<UserId>,
+    // The principal of the off-chain NCA reporting service; set only via the dual-authorized
+    // set_authority_reporter protected action
+    #[serde(default)]
+    pub authority_reporter: Option<Principal>,
+    #[serde(default)]
+    pub protected_actions: ProtectedActions,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
@@ -447,8 +464,10 @@ struct Data {
     #[serde(default)]
     pub blocked_username_patterns: Vec<String>,
     pub openai_api_key: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_moderation_referral_config")]
+    #[serde(default)]
     pub moderation_referral_config: Option<ModerationReferralConfig>,
+    #[serde(default)]
+    pub media_scan_config: MediaScanConfig,
     #[serde(default)]
     pub internal_moderation_channel: Option<(CommunityId, ChannelId)>,
     // Retained for stable-state compatibility while AI actions move into the app directory.
@@ -479,9 +498,24 @@ struct Data {
     pub pr2_entropy: types::Pr2EntropyGate,
     #[serde(default)]
     pub pr2_bearer_canister_version: Option<u64>,
+    // Per-(report, uploader) notice throttle for blocked re-post attempts:
+    // (last posted, suppressed count)
+    #[serde(default)]
+    pub blocked_attempt_notice_throttle: HashMap<(u64, Principal), (TimestampMillis, u32)>,
 }
 
 impl Data {
+    // Role membership masked by suspension: every surface which reports or syncs a user's
+    // moderator/operator status must go through these so a suspended account never shows (or
+    // is seeded elsewhere) as holding authority it cannot currently exercise
+    pub fn is_platform_moderator_active(&self, user_id: &UserId) -> bool {
+        self.platform_moderators.contains(user_id) && self.users.is_user_suspended(user_id) == Some(false)
+    }
+
+    pub fn is_platform_operator_active(&self, user_id: &UserId) -> bool {
+        self.platform_operators.contains(user_id) && self.users.is_user_suspended(user_id) == Some(false)
+    }
+
     #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
@@ -546,6 +580,8 @@ impl Data {
             reported_messages: ReportedMessages::default(),
             authority_reports: AuthorityReports::default(),
             vault_reviewers: HashSet::new(),
+            authority_reporter: None,
+            protected_actions: ProtectedActions::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
@@ -566,6 +602,7 @@ impl Data {
             blocked_username_patterns: Vec::new(),
             openai_api_key: None,
             moderation_referral_config: None,
+            media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
             ai_actions: crate::model::ai_action_registry::AiActionRegistry::default(),
             ai_apps: crate::model::ai_app_registry::AiAppRegistry::default(),
@@ -580,6 +617,7 @@ impl Data {
             action_delivery_outbox: crate::model::action_delivery_outbox::ActionDeliveryOutbox::default(),
             pr2_entropy: types::Pr2EntropyGate::default(),
             pr2_bearer_canister_version: None,
+            blocked_attempt_notice_throttle: HashMap::new(),
         };
 
         // Register the ProposalsBot
@@ -690,6 +728,8 @@ impl Default for Data {
             reported_messages: ReportedMessages::default(),
             authority_reports: AuthorityReports::default(),
             vault_reviewers: HashSet::new(),
+            authority_reporter: None,
+            protected_actions: ProtectedActions::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
@@ -711,6 +751,7 @@ impl Default for Data {
             blocked_username_patterns: Vec::new(),
             openai_api_key: None,
             moderation_referral_config: None,
+            media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
             ai_actions: crate::model::ai_action_registry::AiActionRegistry::default(),
             ai_apps: crate::model::ai_app_registry::AiAppRegistry::default(),
@@ -725,6 +766,7 @@ impl Default for Data {
             action_delivery_outbox: crate::model::action_delivery_outbox::ActionDeliveryOutbox::default(),
             pr2_entropy,
             pr2_bearer_canister_version: Some(crate::pr2_entropy::TEST_CANISTER_VERSION),
+            blocked_attempt_notice_throttle: HashMap::new(),
         }
     }
 }
@@ -761,6 +803,7 @@ pub struct Metrics {
     pub reporting_metrics: ReportingMetrics,
     pub authority_report_metrics: AuthorityReportMetrics,
     pub vault_reviewers: u32,
+    pub protected_action_metrics: ProtectedActionMetrics,
     pub openai_api_key_set: bool,
     pub internal_moderation_channel_set: bool,
     pub moderation_referral_config_set: bool,
@@ -768,6 +811,8 @@ pub struct Metrics {
     pub ai_app_user_key_metrics: crate::model::ai_app_user_keys::AiAppUserKeyMetrics,
     pub ai_app_card_attestation_metrics: crate::model::ai_app_call_throttle::AiAppCardAttestationMetrics,
     pub action_delivery_outbox_metrics: crate::model::action_delivery_outbox::ActionDeliveryOutboxMetrics,
+    pub media_scanning_enabled: bool,
+    pub media_scanners: u32,
     pub oc_public_key: String,
     pub empty_users: usize,
     pub deleted_users: usize,
@@ -876,99 +921,6 @@ pub struct CanisterIds {
     pub registry: CanisterId,
     pub internet_identity: CanisterId,
     pub website: CanisterId,
-}
-
-// The referral config briefly shipped (to test envs only) as a single shared threshold;
-// accept that shape on upgrade and convert it so those envs upgrade cleanly. Inert
-// everywhere else - production never held the old shape.
-fn deserialize_moderation_referral_config<'de, D>(d: D) -> Result<Option<ModerationReferralConfig>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Compat {
-        New(ModerationReferralConfig),
-        Old { categories: u32, score_threshold: f64 },
-    }
-
-    Ok(match Option::<Compat>::deserialize(d)? {
-        Some(Compat::New(config)) => Some(config),
-        Some(Compat::Old {
-            categories,
-            score_threshold,
-        }) => {
-            let categories = (0..32)
-                .map(|i| 1u32 << i)
-                .filter(|bit| categories & bit != 0)
-                .map(|category| types::ModerationReferralCategory {
-                    category,
-                    score_threshold,
-                })
-                .collect::<Vec<_>>();
-            (!categories.is_empty()).then_some(ModerationReferralConfig { categories })
-        }
-        None => None,
-    })
-}
-
-#[cfg(test)]
-mod moderation_referral_config_compat_tests {
-    use super::*;
-
-    #[derive(Serialize, Deserialize)]
-    struct OldShape {
-        categories: u32,
-        score_threshold: f64,
-    }
-
-    #[derive(Serialize, Deserialize)]
-    struct Holder {
-        #[serde(default, deserialize_with = "deserialize_moderation_referral_config")]
-        config: Option<ModerationReferralConfig>,
-    }
-
-    #[derive(Serialize)]
-    struct OldHolder {
-        config: Option<OldShape>,
-    }
-
-    #[test]
-    fn old_shape_converts() {
-        let bytes = msgpack::serialize_then_unwrap(OldHolder {
-            config: Some(OldShape {
-                categories: 1 | 16,
-                score_threshold: 0.9,
-            }),
-        });
-        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
-        let config = holder.config.unwrap();
-        assert_eq!(config.categories.len(), 2);
-        assert!(config.categories.iter().all(|c| c.score_threshold == 0.9));
-        assert_eq!(config.categories[0].category, 1);
-        assert_eq!(config.categories[1].category, 16);
-    }
-
-    #[test]
-    fn new_shape_roundtrips() {
-        let bytes = msgpack::serialize_then_unwrap(Holder {
-            config: Some(ModerationReferralConfig {
-                categories: vec![types::ModerationReferralCategory {
-                    category: 4,
-                    score_threshold: 0.8,
-                }],
-            }),
-        });
-        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
-        assert_eq!(holder.config.unwrap().categories[0].category, 4);
-    }
-
-    #[test]
-    fn none_roundtrips() {
-        let bytes = msgpack::serialize_then_unwrap(OldHolder { config: None });
-        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
-        assert!(holder.config.is_none());
-    }
 }
 
 #[cfg(test)]

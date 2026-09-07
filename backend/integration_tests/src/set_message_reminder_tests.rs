@@ -29,7 +29,7 @@ fn set_message_reminder_succeeds() {
     client::user::set_message_reminder_v2(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::set_message_reminder_v2::Args {
             chat: Chat::Direct(user2.user_id.into()),
             thread_root_message_index: None,
@@ -97,7 +97,7 @@ fn cancel_message_reminder_succeeds() {
     let set_message_reminder_response = client::user::set_message_reminder_v2(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::set_message_reminder_v2::Args {
             chat: Chat::Direct(user2.user_id.into()),
             thread_root_message_index: None,
@@ -115,7 +115,7 @@ fn cancel_message_reminder_succeeds() {
     client::user::cancel_message_reminder(
         env,
         user1.principal,
-        user1.user_id.into(),
+        user1.user_id.canister_id(),
         &user_canister::cancel_message_reminder::Args { reminder_id },
     );
 

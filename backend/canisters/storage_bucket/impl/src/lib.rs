@@ -59,7 +59,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             user_count: self.data.users.len() as u64,
             file_count: file_metrics.file_count,
             blob_count: file_metrics.blob_count,
@@ -67,12 +67,14 @@ impl RuntimeState {
             total_file_bytes: file_metrics.total_file_bytes,
             index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
             expiration_queue_length: file_metrics.expiration_queue_len,
+            source_hashes: file_metrics.source_hashes,
             vault_quarantined: vault_metrics.quarantined,
             vault_legal_holds: vault_metrics.legal_holds,
             vault_reviewers: vault_metrics.reviewers,
             vault_log_length: vault_metrics.log_length,
             vault_quarantine_failures: vault_metrics.quarantine_failures,
             vault_csam_hashes: vault_metrics.csam_hashes,
+            vault_derived_csam_hashes: vault_metrics.derived_csam_hashes,
             vault_unresolved_quarantines: vault_metrics.unresolved_quarantines,
             vault_oldest_unresolved_quarantined_at: vault_metrics.oldest_unresolved_quarantined_at,
             stable_memory_sizes: memory::memory_sizes(),
@@ -139,12 +141,14 @@ pub struct Metrics {
     pub total_file_bytes: u64,
     pub index_sync_queue_length: u32,
     pub expiration_queue_length: u64,
+    pub source_hashes: u64,
     pub vault_quarantined: u64,
     pub vault_legal_holds: u64,
     pub vault_reviewers: u64,
     pub vault_log_length: u64,
     pub vault_quarantine_failures: u64,
     pub vault_csam_hashes: u64,
+    pub vault_derived_csam_hashes: u64,
     pub vault_unresolved_quarantines: u64,
     pub vault_oldest_unresolved_quarantined_at: Option<TimestampMillis>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
@@ -152,6 +156,21 @@ pub struct Metrics {
 
 pub fn calc_chunk_count(chunk_size: u32, total_size: u64) -> u32 {
     (((total_size - 1) / (chunk_size as u64)) + 1) as u32
+}
+
+// The byte range [start, end) covered by chunk `chunk_index` of a blob of `total_size` bytes split
+// into `chunk_size` chunks, plus the total chunk count. None if the index is past the end.
+pub fn chunk_bounds(chunk_size: u32, total_size: u64, chunk_index: u32) -> Option<(std::ops::Range<usize>, u32)> {
+    if total_size == 0 {
+        return None;
+    }
+    let chunk_count = calc_chunk_count(chunk_size, total_size);
+    if chunk_index >= chunk_count {
+        return None;
+    }
+    let start = chunk_index as usize * chunk_size as usize;
+    let end = std::cmp::min(start + chunk_size as usize, total_size as usize);
+    Some((start..end, chunk_count))
 }
 
 fn check_cycles_balance() {

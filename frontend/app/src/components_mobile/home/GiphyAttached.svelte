@@ -22,7 +22,7 @@
         padding={"xs"}
         borderRadius={"lg"}
         crossAxisAlignment={"center"}
-        backgroundColor={ColourVars.background0}>
+        backgroundColor={ColourVars.surface0}>
         <div class="gif_preview" class:rtl={$rtlStore}>
             <img class={"gif"} src={content.mobile.url} alt={content.caption ?? content.title} />
             <div class="attribution">
@@ -33,7 +33,7 @@
             width="hug"
             padding={["sm", "md"]}
             borderRadius="circle"
-            background={ColourVars.background2}>
+            background={ColourVars.surface2}>
             <BodySmall colour={"textSecondary"}>
                 {content.title}
             </BodySmall>

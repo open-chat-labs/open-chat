@@ -16,8 +16,12 @@
     let countdown = $state(30);
     let showBanner = $state(false);
     let errorCount = 0;
+    let countdownInterval: number | undefined = undefined;
 
-    onDestroy(() => poller.stop());
+    onDestroy(() => {
+        poller.stop();
+        window.clearInterval(countdownInterval);
+    });
 
     function checkVersion(): Promise<void> {
         if (import.meta.env.OC_NODE_ENV !== "production" || $activeVideoCall !== undefined)
@@ -28,10 +32,10 @@
                 poller.stop();
                 countdown = 30;
                 showBanner = true;
-                const interval = window.setInterval(() => {
+                countdownInterval = window.setInterval(() => {
                     countdown = countdown - 1;
                     if (countdown === 0) {
-                        window.clearInterval(interval);
+                        window.clearInterval(countdownInterval);
                         window.location.reload();
                     }
                 }, 1000);
@@ -54,7 +58,13 @@
             })
             .catch((err) => {
                 errorCount += 1;
-                client.logError(`Unable to load server version ${errorCount} times`, err);
+                // Individual failures are network weather; only a sustained streak is worth a
+                // report, and only one per streak
+                if (errorCount === 10) {
+                    client.logError(`Unable to load server version ${errorCount} times`, err);
+                } else {
+                    client.logMessage(`Unable to load server version ${errorCount} times`, err);
+                }
                 return clientVersion;
             });
     }
@@ -69,7 +79,7 @@
     <Column
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
-        backgroundColor={ColourVars.warning}
+        backgroundColor={ColourVars.validationWarning}
         padding={"lg"}
         supplementalClass={"upgrade_banner"}>
         <Row wrap>

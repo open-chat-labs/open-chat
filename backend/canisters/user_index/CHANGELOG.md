@@ -8,6 +8,79 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Support paying for Diamond membership from external wallets using ICRC2 ([#9265](https://github.com/open-chat-labs/open-chat/pull/9265))
+
+### Changed
+
+- Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+
+### Removed
+
+- Remove the one-off `post_upgrade` privilege re-sync now that it has run on prod in the 2.0.2046 release ([#9255](https://github.com/open-chat-labs/open-chat/pull/9255))
+- Remove the referral reward payment handling, which has been unreachable since referrals were rewarded in CHIT ([#9289](https://github.com/open-chat-labs/open-chat/pull/9289))
+
+## [[2.0.2046](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2046-user_index)] - 2026-08-26
+
+### Added
+
+- Automated NCA (CSEA-IRP) filing path for the off-chain reporting service: `authority_report_token` mints a vault-export + submitter token pair, `record_authority_report_attempt` opens a crash-safe attempt marker and returns the certified report data, and `clear_authority_report_attempt` / `record_authority_report_filed` complete the loop, classifying failures into the new `Attempting`, `ContingencyRequired` and `ValidationFailed` report states ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- `SetAuthorityReporter` protected action registers the reporting service's principal and delivers the OC public key to every storage bucket via the storage_index ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- Expose the registered authority reporter in `moderation_config` ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- Persist a content excerpt on reports ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+
+### Changed
+
+- Suspension freezes every privilege: suspended platform moderators and operators fail the role guards (including `inspect_message`), their role flags on the local user indexes and the bucket vault-reviewer allowlist are resynced on suspend/unsuspend, and lookups mask their role flags while suspended ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- One-off `post_upgrade` re-sync of privileges for accounts already suspended at deploy time ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+- When a report is dismissed, tell the reporter the message may still break the rules of its group or community and suggest raising it with the owners ([#9175](https://github.com/open-chat-labs/open-chat/pull/9175))
+- Bump the current terms version to 2 so users are asked to accept the updated terms naming the PhotoDNA/Microsoft media-matching processor ([#9174](https://github.com/open-chat-labs/open-chat/pull/9174))
+
+## [[2.0.2030](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2030-user_index)] - 2026-08-20
+
+### Added
+
+- Create a first-class resolvable moderation report, with an authority-report register entry, for every blocked attempt to re-post CSAM content: immediately due for adjudicated content, mirroring the original report's verdict for content pending review ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
+
+- Add the `SetMediaScanConfig` protected action (dual-authorized) to register media scanner principals and enable media scanning across local user indexes ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+- Record media hash-match provenance (provider, source, match distance, match id) on CSAM reports and moderation alerts ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+- Post a notice to the internal moderation channel when a local index reports the media scan pipeline stalled, and when it recovers ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+- Refuse to enable media scanning while the internal moderation channel is unconfigured - detections would sanction and record reports but every alert surface would be dark ([#9161](https://github.com/open-chat-labs/open-chat/pull/9161))
+
+### Changed
+
+- Automated moderation never lifts, downgrades or laterally replaces a manual moderator suspension; it may only escalate a timed one to indefinite. Enforced in the suspension primitives and re-checked when the suspension is written ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
+- A human verdict supersedes an in-flight detection suspension: automated suspension jobs record the report which caused them and refuse to commit once it is resolved ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
+- Never send message media to the OpenAI moderation API - classification is text-only ([#9149](https://github.com/open-chat-labs/open-chat/issues/9149))
+
+### Fixed
+
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+
+## [[2.0.2011](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2011-user_index)] - 2026-08-10
+
+### Added
+
+- Dual authorization for the irreversible platform-operator actions: destroying vaulted evidence, designating vault reviewers, setting the OpenAI API key and setting the internal moderation channel are now proposed by one operator and confirmed by a different one, with proposals expiring after 14 days and every proposal, confirmation, cancellation and expiry recorded in an append-only hash-chained log whose chain head is published in metrics ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- Protected actions are validated when proposed as well as when confirmed, so an action which could never be applied is never queued, and a proposal which becomes invalid while pending is refused rather than executed ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- At most one proposal per protected action kind is pending at a time: an identical re-proposal is idempotent, and a different payload supersedes the pending one under a new id, so a stale screen cannot confirm a payload which was replaced ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+### Changed
+
+- A moderator can resolve a report carrying their own CSAM assertion only by upholding it as CSAM - the maximum-scrutiny outcome, under which the evidence is retained and an authority report becomes due. Barring every verdict deadlocked a reviewer who is the only one available: obliged to act on what they found, but able neither to close the case nor reach the authority-report step. Dismissal remains barred because it is the judgment which records a false report against the asserter, and that judgment must be independent; downgrading to an ordinary violation is barred because it would close the case, release the evidence and skip every escalation - burying the question of whether the assertion was false ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- Operator functions alert the other platform operators directly rather than posting to the internal moderation channel: the channel is itself configured by a protected action, so alerts would otherwise be invisible until it was set up, and an operator whose key is compromised cannot redirect them away from their colleagues ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- Clearing a legal hold on evidence whose release is already pending performs that release, so this case now requires dual authorization too - it was a route around the two-operator rule on destruction. Setting a hold, and clearing one with no release pending, remain single-actor ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- Destroying vaulted evidence is refused while a legal hold stands, rather than the destruction being reported and then silently refused by the storage bucket ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- Legal holds are honoured across reports sharing a blob: a hold placed via one report blocks destruction proposed via a sibling report holding the same blob, and a deferred release requested via a sibling marks the held report so that clearing its hold requires dual authorization ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+### Fixed
+
+- The subject of a report can no longer act on it through any surface other than the verdict. Recording the authority report as filed, changing the legal hold, and proposing or confirming the destruction of the evidence are all refused for a report against the actor's own message. Dual authorization is a two-person rule, not a conflict-of-interest rule: a second operator's confirmation was never a substitute for the acting operator not being the party ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+- A moderator can no longer unsuspend themselves. Suspension does not strip moderator status, so the subject of an upheld report could reverse the sanction it imposed one call after the verdict landed - the resolve-time party check stopped them returning the verdict, but not undoing its effect ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+## [[2.0.2007](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2007-user_index)] - 2026-08-06
+
+### Added
+
 - `set_vault_legal_hold` and `destroy_vault_evidence` (platform operator) - apply or lift a preservation hold on a report's vaulted evidence, and destroy it on a law enforcement request ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Hash-match upload suspensions are recorded against the user, making them contestable (Article 22) and visible to the dismissal-safety check, and the uploader is told why they were suspended ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))

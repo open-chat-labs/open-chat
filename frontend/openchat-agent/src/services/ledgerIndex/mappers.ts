@@ -9,6 +9,8 @@ import {
     CommonResponses,
     type AccountTransactionResult,
     type AccountTransaction,
+    encodeIcrcAccount,
+    icrcAccountToUserId,
     UnsupportedValueError,
 } from "@shared";
 
@@ -103,6 +105,16 @@ export function memoBytesToString(candid: Uint8Array | number[]): string {
     return [...candid].map((n) => String.fromCharCode(n)).join("");
 }
 
-function account(candid: ApiAccount): string {
-    return candid.owner.toString();
+// The counterparty as the rest of the app names it: a userId where the account is a user's wallet,
+// which is what lets the UI resolve it to that user. Anything else - an exchange's subaccount, say -
+// keeps its full textual encoding rather than being flattened to its owner, since two subaccounts of
+// one owner are different counterparties.
+function account({ owner, subaccount }: ApiAccount): string {
+    const account = {
+        owner,
+        subaccount: optional(subaccount, (bytes) => Uint8Array.from(bytes)),
+    };
+    const userId = icrcAccountToUserId(account);
+
+    return userId ?? encodeIcrcAccount(account);
 }

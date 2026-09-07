@@ -184,6 +184,27 @@ impl RuntimeState {
         });
     }
 
+    // Asks the local_user_index to have the message's media scanned against known-CSAM hash
+    // lists; a match arrives back as a `MediaScanMatched` event. Only ever called for
+    // messages in public chats.
+    pub fn queue_media_for_scanning(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        blobs: Vec<types::MediaScanBlob>,
+    ) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: local_user_index_canister::GroupEvent::MediaScanRequest(Box::new(types::MediaScanRequest {
+                channel_id: None,
+                thread_root_message_index,
+                message_id,
+                blobs,
+            })),
+        });
+    }
+
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
         for payment in calculate_gate_payments(payment, self.data.chat.members.owners()) {
             self.data.pending_payments_queue.push(payment);
@@ -469,7 +490,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
-            git_commit_id: utils::git::git_commit_id().to_string(),
+            git_commit_id: git_commit_id::git_commit_id().to_string(),
             public: group_chat_core.is_public.value,
             date_created: group_chat_core.date_created,
             members: group_chat_core.members.len(),
@@ -504,7 +525,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
-                proposals_bot: self.data.proposals_bot_user_id.into(),
+                proposals_bot: self.data.proposals_bot_user_id.canister_id(),
                 escrow_canister_id: self.data.escrow_canister_id,
                 icp_ledger: ICP_LEDGER_CANISTER_ID,
             },

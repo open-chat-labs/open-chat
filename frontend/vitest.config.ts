@@ -17,6 +17,7 @@ const pkgAliases = [
 ]);
 
 export default defineConfig({
+    // Use the app's svelte config so .svelte specs get the scss preprocessor.
     plugins: [svelte({ configFile: src("./app/svelte.config.js") })],
     resolve: {
         alias: [
@@ -34,6 +35,10 @@ export default defineConfig({
                 replacement: src("./tauri-plugin-oc/guest-js/index.ts"),
             },
             { find: "usergeek-ic-js", replacement: src("./app/test-stubs/usergeek-ic-js.ts") },
+            { find: "@src", replacement: src("./app/src") },
+            { find: "@shared_components", replacement: src("./app/src/components_shared") },
+            { find: "@stores", replacement: src("./app/src/stores") },
+            { find: "@utils", replacement: src("./app/src/utils") },
         ],
         conditions: process.env.VITEST ? ["browser"] : undefined,
         // Prefer ESM (`module`) entry points. Otherwise svelte-i18n + its
@@ -50,6 +55,7 @@ export default defineConfig({
         include: [
             "app/src/**/*.{test,spec}.ts",
             "app/rollup-plugin-wasm-url*.{test,spec}.ts",
+            "component-lib/src/**/*.{test,spec}.ts",
             "openchat-shared/src/**/*.{test,spec}.ts",
             "openchat-client/src/**/*.{test,spec}.ts",
             "openchat-agent/src/**/*.{test,spec}.ts",

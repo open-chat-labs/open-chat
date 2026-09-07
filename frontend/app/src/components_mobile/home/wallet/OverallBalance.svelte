@@ -71,7 +71,7 @@
                     <Container width={{ size: "2.5rem" }} mainAxisAlignment="center">
                         <Spinner
                             size="1.25rem"
-                            backgroundColour={ColourVars.textTertiary}
+                            backgroundColour={ColourVars.textOnDisabledSurface}
                             foregroundColour={ColourVars.textSecondary} />
                     </Container>
                 {:else}

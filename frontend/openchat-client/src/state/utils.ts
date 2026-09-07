@@ -80,6 +80,7 @@ export function modifyWritableMap<K, V>(
     notFound: () => V,
     dedupeId?: string,
     timeout?: UndoTimeout,
+    isEmpty?: (val: V) => boolean,
 ) {
     return modifyWritable(
         (d) => {
@@ -90,7 +91,14 @@ export function modifyWritableMap<K, V>(
             }
             const undo = fn(state);
             return () => {
-                d.set(key, undo(state));
+                const restored = undo(state);
+                // drop entries that no longer carry any update so that consumers don't keep
+                // paying to apply them
+                if (isEmpty?.(restored)) {
+                    d.delete(key);
+                } else {
+                    d.set(key, restored);
+                }
             };
         },
         store,

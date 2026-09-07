@@ -30,6 +30,7 @@
         subscribe,
         threadEventsStore,
         threadsFollowedByMeStore,
+        TimelineGrouper,
         unconfirmedStore,
     } from "@client";
     import { getContext, onMount } from "svelte";
@@ -38,7 +39,7 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import AreYouSure from "../../AreYouSure.svelte";
     import Loading from "@shared_components/Loading.svelte";
-    import { flattenTimeline } from "@shared_components/flatChatItems";
+    import { TimelineFlattener } from "@shared_components/flatChatItems";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
@@ -54,7 +55,9 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        rootEvent: EventWrapper<Message>;
+        // this can transiently become undefined if the event window is replaced
+        // while the thread panel is mounted
+        rootEvent: EventWrapper<Message> | undefined;
         chat: ChatSummary;
         onCloseThread: (id: ChatIdentifier) => void;
     }
@@ -81,7 +84,7 @@
 
     let threadRootMessageIndex = $derived(rootEvent?.event?.messageIndex ?? 0);
     let messageContext = $derived({ chatId: chat.id, threadRootMessageIndex });
-    let threadRootMessage = $derived(rootEvent.event);
+    let threadRootMessage = $derived(rootEvent?.event);
     let blocked = $derived(
         chat.kind === "direct_chat" && $selectedChatBlockedUsersStore.has(chat.them.userId),
     );
@@ -92,24 +95,30 @@
     let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
     let atRoot = $derived($threadEventsStore.length === 0 || $threadEventsStore[0]?.index === 0);
-    let events = $derived(atRoot ? [rootEvent, ...$threadEventsStore] : $threadEventsStore);
+    let events = $derived(
+        atRoot && rootEvent !== undefined ? [rootEvent, ...$threadEventsStore] : $threadEventsStore,
+    );
+    const grouper = new TimelineGrouper();
+    const flattener = new TimelineFlattener<Message>();
     let timeline = $derived(
-        client.groupEvents(
-            [...events].reverse(),
+        grouper.group(
+            events,
             $currentUserIdStore,
             chat.kind === "channel" && chat.public,
             $selectedChatExpandedDeletedMessageStore,
+            undefined,
+            true,
         ) as TimelineItem<Message>[],
     );
     let items = $derived(
-        flattenTimeline(
+        flattener.flatten(
             timeline,
             (event) =>
                 `${$currentUserIdStore}:${chatIdentifierToString(chat.id)}:${event === rootEvent ? "thread_root" : `thread_reply:${threadRootMessageIndex}`}`,
         ),
     );
     let readonly = $derived(client.isChatReadOnly(chat.id));
-    let thread = $derived(rootEvent.event.thread);
+    let thread = $derived(rootEvent?.event.thread);
     let loading = $derived(!initialised && $threadEventsStore.length === 0 && thread !== undefined);
     let isFollowedByMe = $derived(
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
@@ -232,8 +241,8 @@
         }
     }
 
-    function onFileSelected(content: AttachmentContent) {
-        localUpdates.draftMessages.setAttachment(messageContext, content);
+    function onFileSelected(content: AttachmentContent, context: MessageContext) {
+        localUpdates.draftMessages.setAttachment(context, content);
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
@@ -352,10 +361,10 @@
     />
 {/if}
 
-<DropTarget {chat} mode={"thread"} {onFileSelected}>
+<DropTarget {messageContext} mode={"thread"} {onFileSelected}>
     <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
 
-    {#if loading}
+    {#if loading || rootEvent === undefined}
         <Loading />
     {:else}
         <ChatEventList
@@ -427,7 +436,7 @@
         </ChatEventList>
     {/if}
 
-    {#if !readonly}
+    {#if !readonly && rootEvent !== undefined}
         <Footer
             {chat}
             {attachment}

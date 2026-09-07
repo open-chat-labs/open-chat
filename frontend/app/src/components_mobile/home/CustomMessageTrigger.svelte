@@ -17,6 +17,7 @@
         type OpenChat,
     } from "@client";
     import {
+        exportMedia,
         loadRecentMedia,
         type MediaPermissionStatus,
         type RecentMedia,
@@ -45,7 +46,7 @@
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onMakeMeme: () => void;
-        onFileSelected: (content: AttachmentContent) => void;
+        onFileSelected: (content: AttachmentContent, context: MessageContext) => void;
         messageContext: MessageContext;
     }
 
@@ -64,7 +65,7 @@
     let media = $state<RecentMedia[]>([]);
 
     $effect(() => {
-        if (open && client.isNativeAndroid()) {
+        if (open && client.isNativeApp()) {
             loadRecentMedia().then((res: any) => {
                 mediaPermission = res.permission;
                 media = res.media;
@@ -80,17 +81,22 @@
 
     // Construct dummy file object, and provide blobUrl that will allow Tauri to
     // access the binary data associated with the file.
-    function onMediaSelected(media: RecentMedia) {
+    async function onMediaSelected(media: RecentMedia) {
         console.log(media);
         const { filename, mimeType, size } = media;
-        const assetUrl = convertFileSrc(media.filePath);
-        const lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
-        client
-            .messageContentFromFile(lazyFile)
-            .then(onFileSelected)
-            .catch((err) => {
-                toastStore.showFailureToast(i18nKey(err));
-            });
+        // Captured now: preparing a video can take a while and the chat may change under it
+        const context = messageContext;
+        try {
+            // iOS photo-library items have no file path until the asset is
+            // exported to a temp file (media.uri is the PHAsset identifier).
+            const filePath = media.filePath || (await exportMedia(media.uri));
+            const assetUrl = convertFileSrc(filePath);
+            const lazyFile = LazyFile.fromUrl(assetUrl, filename, mimeType, size);
+            const content = await client.messageContentFromFile(lazyFile, context);
+            onFileSelected(content, context);
+        } catch (err) {
+            toastStore.showFailureToast(i18nKey(err as string));
+        }
     }
 </script>
 
@@ -119,12 +125,12 @@
                 borderRadius="md"
                 mainAxisAlignment="center"
                 crossAxisAlignment="center"
-                backgroundColor={ColourVars.background0}>
+                backgroundColor={ColourVars.surface0}>
                 {#if mediaPermission === "denied"}
                     <!-- TODO wire this in, open settings for user to allow permissions -->
-                    <ShieldAlertOutline size="1.75rem" color={ColourVars.warning} />
+                    <ShieldAlertOutline size="1.75rem" color={ColourVars.validationWarning} />
                     <Column gap="xxs">
-                        <Subtitle colour="warning">
+                        <Subtitle colour="validationWarning">
                             <Translatable resourceKey={i18nKey("Media permission not granted")} />
                         </Subtitle>
                         <Body colour="textSecondary">
@@ -133,7 +139,7 @@
                     </Column>
                     <ChevronRight size="1.25rem" color={ColourVars.textSecondary} />
                 {:else}
-                    <Subtitle colour="textTertiary" width="hug">
+                    <Subtitle colour="textOnDisabledSurface" width="hug">
                         <Translatable resourceKey={i18nKey("No media available")} />
                     </Subtitle>
                 {/if}
@@ -173,7 +179,7 @@
         <div class="attach-buttons">
             <!-- Open Gallery -->
             {#if mediaPermitted}
-                <FileAttacher accept="image/*,video/*" {onFileSelected}>
+                <FileAttacher accept="image/*,video/*" {messageContext} {onFileSelected}>
                     {#snippet children(onClick)}
                         {@render attachOption(
                             "Open Gallery",
@@ -187,7 +193,7 @@
 
             <!-- Send File -->
             {#if permittedMessages.get("file")}
-                <FileAttacher {onFileSelected}>
+                <FileAttacher {messageContext} {onFileSelected}>
                     {#snippet children(onClick)}
                         {@render attachOption(
                             "Send File",
@@ -261,7 +267,7 @@
             height: 8rem;
             border: none;
             border-radius: 0 0 var(--rad-md) var(--rad-md);
-            background-color: var(--background-0);
+            background-color: var(--surface-0);
         }
 
         .media-preview {

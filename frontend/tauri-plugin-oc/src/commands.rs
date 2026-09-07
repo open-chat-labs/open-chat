@@ -72,6 +72,14 @@ pub(crate) async fn load_recent_media<R: Runtime>(
 }
 
 #[command]
+pub(crate) async fn get_shell_version<R: Runtime>(
+    app: AppHandle<R>,
+) -> std::result::Result<Option<String>, String> {
+    let manager = update_manager::UpdateManager::new(app);
+    Ok(manager.get_shell_version().map(|v| v.to_string()))
+}
+
+#[command]
 pub(crate) async fn get_server_version<R: Runtime>(
     app: AppHandle<R>,
 ) -> std::result::Result<String, String> {
@@ -105,6 +113,14 @@ pub(crate) async fn enable_viewport_resize<R: Runtime>(app: AppHandle<R>) -> Res
 #[command]
 pub(crate) async fn disable_viewport_resize<R: Runtime>(app: AppHandle<R>) -> Result<()> {
     app.oc().toggle_viewport_resize(false)
+}
+
+#[command]
+pub(crate) async fn export_media<R: Runtime>(
+    app: AppHandle<R>,
+    payload: ExportMediaRequest,
+) -> Result<ExportMediaResponse> {
+    app.oc().export_media(payload)
 }
 
 #[command]
@@ -165,7 +181,12 @@ pub(crate) async fn save_media<R: Runtime>(
     #[cfg(target_os = "ios")]
     {
         use std::path::Path;
+        use tauri::Manager;
         use tokio::fs;
+
+        // The Photos-framework save path (which would use the mime type) is
+        // not implemented yet — files land in the app's Documents sandbox.
+        let _ = &mime_type;
 
         let safe_filename = Path::new(&filename)
             .file_name()
@@ -248,4 +269,15 @@ pub(crate) async fn infer<R: Runtime>(
     crate::model_manager::ModelManager::new(app)
         .infer(payload)
         .await
+}
+
+#[cfg(test)]
+mod inference_capability_tests {
+    #[test]
+    fn reports_the_compiled_native_runtime_feature() {
+        assert_eq!(
+            super::inference_runtime_available(),
+            cfg!(feature = "inference")
+        );
+    }
 }

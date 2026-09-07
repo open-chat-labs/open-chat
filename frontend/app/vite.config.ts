@@ -59,6 +59,7 @@ const devAllowedHost = resolveLocalDevAllowedHost(
     process.env.OC_DEV_ALLOWED_HOST,
 );
 const devHmr = resolveDevHmrConfig(port, devAllowedHost);
+const localAndroidAssetLinks = resolveLocalAndroidAssetLinksConfig(process.env);
 
 // The former workspace sub-packages (@shared/@client/@agent/@worker) resolve
 // directly from their TypeScript source via `ocPackageAliases` — see
@@ -77,9 +78,13 @@ const transformersWebGpuOrtJspiAlias = {
     replacement: "onnxruntime-web/jspi",
 };
 const transformersWebGpuSpikeEnabled = transformersWebGpuFeatureEnabled(process.env);
-const localAndroidAssetLinks = resolveLocalAndroidAssetLinksConfig(process.env);
 const workerTargets = [
     { entry: workerEntry, fileName: "worker.js", sequentialWebGpuSessions: false },
+    {
+        entry: path.resolve(__dirname, "../openchat-worker/src/transcodeWorker.ts"),
+        fileName: "transcode_worker.js",
+        sequentialWebGpuSessions: false,
+    },
     ...(transformersWebGpuSpikeEnabled
         ? [
               {
@@ -573,8 +578,8 @@ function ocWorkerPlugin(): Plugin {
         async configureServer(server) {
             await buildWorker();
 
-            // Serve the built worker (and its sourcemap) regardless of the ?v=
-            // cache-busting query string the client appends.
+            // Serve the built workers (and their sourcemaps) regardless of the
+            // ?v= cache-busting query string the client appends.
             server.middlewares.use((req, res, next) => {
                 const fileName = path.basename((req.url ?? "").split("?")[0]);
                 const filePath = path.join(workerBuildDir, fileName);
@@ -785,6 +790,11 @@ export default defineConfig({
             },
             { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
             { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
+            // Keep dev in step with the prod build (see rollup.config.mjs).
+            {
+                find: "@formatjs/intl-getcanonicallocales",
+                replacement: path.resolve(__dirname, "./src/utils/intlGetCanonicalLocales.ts"),
+            },
             { find: "@src", replacement: path.resolve(__dirname, "./src") },
             { find: "@actions", replacement: path.resolve(__dirname, "./src/actions") },
             { find: "@i18n", replacement: path.resolve(__dirname, "./src/i18n") },

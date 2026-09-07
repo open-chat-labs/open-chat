@@ -32,7 +32,7 @@
         searching = $bindable(false),
         debounceDuration = 300,
         padding = "lg",
-        background = ColourVars.textTertiary,
+        background = ColourVars.inputBackground,
         borderColour,
         borderWidth,
     }: Props = $props();
@@ -63,7 +63,7 @@
     gap={"lg"}
     crossAxisAlignment={"center"}>
     <div class="search_icon">
-        <Magnify color={ColourVars.textPlaceholder} />
+        <Magnify color={ColourVars.inputPlaceholder} />
     </div>
     <input
         autocomplete="off"
@@ -79,13 +79,13 @@
     {#if searching}
         <Spinner
             size={"1.4rem"}
-            backgroundColour={ColourVars.textTertiary}
+            backgroundColour={ColourVars.inputBackground}
             foregroundColour={ColourVars.textSecondary} />
     {:else if value !== undefined && value !== ""}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div class="close" onclick={onClear}>
-            <Close color={ColourVars.textPlaceholder} />
+            <Close color={ColourVars.inputPlaceholder} />
         </div>
     {/if}
 </Container>
@@ -109,7 +109,7 @@
         line-height: var(--typo-body-lh);
 
         &::placeholder {
-            color: var(--text-placeholder);
+            color: var(--input-placeholder);
         }
     }
 </style>

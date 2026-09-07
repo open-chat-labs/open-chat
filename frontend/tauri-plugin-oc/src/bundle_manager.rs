@@ -41,6 +41,8 @@ where
     // Lazily load cached assets into memory on first request
     let cache = memory_cache.get_or_init(|| {
         let um = update_manager::UpdateManager::new(handle.clone());
+        // Preserved caches are optional: policy/version rejection must select
+        // bundled assets even if an old cache cannot be deleted from disk.
         if !um.cached_update_allowed() {
             return HashMap::new();
         }
@@ -112,8 +114,9 @@ fn load_cache_into_memory(cache_dir: &std::path::Path) -> HashMap<String, Cached
             }
         }
     }
-    // Never mix a partial OTA payload with bundled files. index.html is the minimum complete-cache
-    // marker in addition to version.json; without it, fail back to the APK as a single unit.
+    // index.html is the minimum admission marker in addition to version.json;
+    // without it, fall back to the APK. This is not full nested-asset completeness
+    // validation: see the separate OTA loader limitation in OTA_UPDATES.md.
     if !cache.contains_key("index.html") {
         return HashMap::new();
     }

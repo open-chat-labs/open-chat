@@ -66,7 +66,7 @@
     padding={["zero", "zero", "sm", "zero"]}
     width={"fill"}
     borderRadius={["md", "md", "zero", "zero"]}
-    background={ColourVars.background1}>
+    background={ColourVars.surface1}>
     <button
         bind:this={sheetBehavior.handle}
         onpointerdown={(e) => sheetBehavior.onDragStart(e)}
@@ -140,7 +140,7 @@
         .inner {
             height: 0.25rem;
             border-radius: var(--rad-circle);
-            background-color: var(--text-tertiary);
+            background-color: var(--text-on-disabled-surface);
             transition:
                 background-color 0.2s ease,
                 box-shadow 0.2s ease;
@@ -148,7 +148,7 @@
 
         &.dragged .inner {
             background-color: var(--primary);
-            box-shadow: 0 0 0.5rem 0.125rem var(--primary-muted);
+            box-shadow: 0 0 0.5rem 0.125rem var(--primary-surface);
         }
     }
 </style>

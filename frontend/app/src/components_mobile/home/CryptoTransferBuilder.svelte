@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, Column, CommonButton, Container, IconButton, Row, Sheet } from "component-lib";
-    import type { ChatSummary, UserSummary } from "@client";
+    import type { ChatSummary, SignerWallet, UserSummary } from "@client";
     import {
         allUsersStore,
         enhancedCryptoLookup as cryptoLookup,
@@ -17,6 +17,7 @@
     import Translatable from "../Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import SingleUserSelector from "./SingleUserSelector.svelte";
+    import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
@@ -34,6 +35,11 @@
     let error: string | undefined = $state(undefined);
     let receiver: UserSummary | undefined = $state(undefined);
     let validAmount: boolean = $state(false);
+    // The external wallet the transfer will come from, or undefined for the user's own OpenChat
+    // account. Paying from an external wallet spends that wallet's balance rather than the user's
+    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
+    let sourceWallet = $state<SignerWallet | undefined>();
+    let payFromWallet = $derived(sourceWallet !== undefined);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
@@ -50,18 +56,27 @@
     });
 
     function send() {
-        if (receiver === undefined) return;
+        const to = receiver;
+        if (to === undefined) return;
+        attach(to);
+    }
 
+    // This only attaches a draft - the transfer is made when the user sends the message. An
+    // external wallet's approval is not asked for here: it would spend a tap on an allowance the
+    // user may abandon without sending. Instead the draft carries the chosen wallet as
+    // `fromWallet`, and the send itself asks for the approval, from the tap which consumes it.
+    function attach(to: UserSummary) {
         const content: CryptocurrencyContent = {
             kind: "crypto_content",
             transfer: {
                 kind: "pending",
                 ledger,
                 token: tokenState.symbol,
-                recipient: receiver.userId,
+                recipient: to.userId,
                 amountE8s: tokenState.draftAmount,
                 feeE8s: tokenState.transferFees,
                 createdAtNanos: nowNanos(),
+                fromWallet: sourceWallet?.id,
             },
         };
 
@@ -86,11 +101,16 @@
 
         <!-- TODO "fix" the double sheet! -->
         <!-- Perhaps we just get the content of the crypto selector and replace current sheet (?) -->
+        <!-- An external wallet's balance is its own business, so while one is selected the
+             OpenChat balance is hidden and tokens the user holds none of stay available -->
         <CryptoSelector
             showRefresh
+            hideBalance={payFromWallet}
             draftAmount={tokenState.draftAmount}
-            filter={(t) => t.balance > 0}
+            filter={payFromWallet ? undefined : (t) => t.balance > 0}
             bind:ledger />
+
+        <SourceWalletSelector bind:wallet={sourceWallet} />
 
         <Column gap={"md"}>
             {#if multiUserChat}
@@ -106,7 +126,7 @@
                 error={!validAmount}
                 balance={tokenState.cryptoBalance}
                 minAmount={tokenState.minAmount}
-                maxAmount={tokenState.maxAmount}
+                maxAmount={payFromWallet ? undefined : tokenState.maxAmount}
                 bind:valid={validAmount}
                 bind:amount={tokenState.draftAmount}>
                 {#snippet subtext()}

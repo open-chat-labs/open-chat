@@ -15,11 +15,32 @@ function quoteForPosixShell(value) {
     return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
 
+function resolveDfxCommand(dfxArgs, platform, wslDistro, dfxExecutable) {
+    if (typeof dfxExecutable !== "string" || dfxExecutable.trim() === "") {
+        throw new Error("The dfx build executable must be a non-empty path or command");
+    }
+    if (platform !== "win32") {
+        return { command: dfxExecutable, args: dfxArgs };
+    }
+    return {
+        command: "wsl.exe",
+        args: [
+            ...(wslDistro ? ["--distribution", wslDistro] : []),
+            "--",
+            "bash",
+            "--login",
+            "-c",
+            `exec -- ${[dfxExecutable, ...dfxArgs].map(quoteForPosixShell).join(" ")}`,
+        ],
+    };
+}
+
 export function resolveDfxInvocation(
     network,
     platform = process.platform,
     wslDistro,
     canister = "user_index",
+    dfxExecutable = "dfx",
 ) {
     const dfxArgs = [
         "--identity",
@@ -35,21 +56,7 @@ export function resolveDfxInvocation(
         "--query",
     ];
 
-    if (platform !== "win32") {
-        return { command: "dfx", args: dfxArgs };
-    }
-
-    return {
-        command: "wsl.exe",
-        args: [
-            ...(wslDistro ? ["--distribution", wslDistro] : []),
-            "--",
-            "bash",
-            "--login",
-            "-c",
-            `exec dfx ${dfxArgs.map(quoteForPosixShell).join(" ")}`,
-        ],
-    };
+    return resolveDfxCommand(dfxArgs, platform, wslDistro, dfxExecutable);
 }
 
 export function extractPublicKey(result) {
@@ -88,9 +95,35 @@ export async function writePublicKeyFile({
     outputPath = publicKeyPath,
     platform = process.platform,
     wslDistro = process.env.OC_WSL_DISTRO,
+    dfxExecutable = process.env.OC_DFX_EXECUTABLE ?? "dfx",
+    expectedDfxVersion,
     runCommand = runDfx,
 } = {}) {
-    const { command, args } = resolveDfxInvocation(network, platform, wslDistro, canister);
+    if (expectedDfxVersion !== undefined) {
+        if (typeof expectedDfxVersion !== "string" || expectedDfxVersion.trim() === "") {
+            throw new Error("The expected dfx build version must be a non-empty string");
+        }
+        const versionInvocation = resolveDfxCommand(
+            ["--version"],
+            platform,
+            wslDistro,
+            dfxExecutable,
+        );
+        const versionOutput = await runCommand(versionInvocation.command, versionInvocation.args);
+        const actualDfxVersion = /^dfx (\S+)$/.exec(versionOutput.trim())?.[1];
+        if (actualDfxVersion !== expectedDfxVersion) {
+            throw new Error(
+                `Cannot build public key: expected dfx ${expectedDfxVersion}, received ${actualDfxVersion ?? "unrecognized --version output"}`,
+            );
+        }
+    }
+    const { command, args } = resolveDfxInvocation(
+        network,
+        platform,
+        wslDistro,
+        canister,
+        dfxExecutable,
+    );
     const result = await runCommand(command, args);
     const publicKey = extractPublicKey(result);
     const destination = outputPath instanceof URL ? outputPath : path.resolve(outputPath);

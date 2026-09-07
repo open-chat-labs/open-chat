@@ -1,8 +1,22 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { Script } from "node:vm";
 import { compileString } from "sass";
-import { describe, expect, test } from "vitest";
+import {
+    factory,
+    isMetaProperty,
+    ModuleKind,
+    ScriptTarget,
+    SyntaxKind,
+    transpileModule,
+    visitEachChild,
+    visitNode,
+    type SourceFile,
+    type Visitor,
+} from "typescript";
+import { describe, expect, test, vi } from "vitest";
+import { selectLayout } from "./utils/layout";
 import { resolveDevAllowedHost, resolveLocalDevAllowedHost } from "../devAllowedHost.mjs";
 import { resolveDevHmrConfig } from "../devHmr";
 import { resolveDevPort } from "../devPort";
@@ -17,6 +31,109 @@ const globalStyles = readAppFile("src/styles/global.scss");
 const rollupExtras = readAppFile("rollup.extras.mjs");
 const svelteConfig = readAppFile("svelte.config.js");
 const viteConfig = readAppFile("vite.config.ts");
+
+// Execute the real entry point without importing either large Svelte tree. CJS
+// transpilation preserves import()'s asynchronous branch selection; only
+// import.meta is replaced so this isolated VM receives a controlled build flag.
+const bootstrap = transpileModule(main, {
+    fileName: "main.ts",
+    compilerOptions: { module: ModuleKind.CommonJS, target: ScriptTarget.ES2022 },
+    transformers: {
+        before: [
+            (context) => {
+                const visit: Visitor = (node) =>
+                    isMetaProperty(node) && node.keywordToken === SyntaxKind.ImportKeyword
+                        ? factory.createIdentifier("__bootstrapImportMeta")
+                        : visitEachChild(node, visit, context);
+                return (source) => visitNode(source, visit) as SourceFile;
+            },
+        ],
+    },
+}).outputText;
+
+function startBootstrap(
+    flag: string | undefined,
+    narrow: boolean,
+    webRuntime: boolean,
+    options: {
+        nativeClient?: boolean;
+        prepare?: () => Promise<boolean>;
+        failDeferredComponentImports?: boolean;
+    } = {},
+) {
+    const desktopApp = { layout: "v1" };
+    const mobileApp = { layout: "v2" };
+    const mountedApp = {};
+    const startupFailure = { layout: "startup-failure" };
+    const body = {};
+    const mount = vi.fn(() => mountedApp);
+    const chooseLayout = vi.fn(selectLayout);
+    const setNativeTheme = vi.fn();
+    const writeNativeCssVariables = vi.fn();
+    const usesWebInferenceRuntime = vi.fn(() => webRuntime);
+    const isNativeClient = vi.fn(() => options.nativeClient ?? true);
+    const prepareServiceWorkerBeforeApplicationStart = vi.fn(
+        options.prepare ?? (() => Promise.resolve(true)),
+    );
+    // Deliberately never settles: startup must mount while the shared restore is
+    // still in flight, without launching a separate model-selection path.
+    const ensureWebModelRestored = vi.fn(() => new Promise<void>(() => {}));
+    const imports: Record<string, unknown> = {
+        "./web-components/customEmoji": {},
+        "./web-components/profileLink": {},
+        "./web-components/spoiler": {},
+        "@client": { mobileWidth: { value: narrow } },
+        svelte: { mount },
+        "./theme/themes": { setNativeTheme, writeNativeCssVariables },
+        "./utils/layout": { selectLayout: chooseLayout },
+        "./utils/onDeviceInference": { usesWebInferenceRuntime, isNativeClient },
+        "@client/utils/updateSw": { prepareServiceWorkerBeforeApplicationStart },
+        "./components_shared/StartupFailure.svelte": { default: startupFailure },
+        "./utils/webInference": { ensureWebModelRestored },
+        "./components/App.svelte": { default: desktopApp },
+        "./components_mobile/App.svelte": { default: mobileApp },
+    };
+    let bootstrapEvaluated = false;
+    const loadModule = vi.fn((name: string) => {
+        if (
+            bootstrapEvaluated &&
+            options.failDeferredComponentImports &&
+            name.endsWith(".svelte")
+        ) {
+            throw new Error("Deferred component chunk is unavailable under the stale controller");
+        }
+        if (!Object.hasOwn(imports, name)) throw new Error(`Unexpected bootstrap import: ${name}`);
+        return imports[name];
+    });
+    const exported: { default?: Promise<unknown> } = {};
+    // VM intrinsics also isolate main's BigInt.prototype.toJSON setup from tests.
+    new Script(bootstrap, { filename: "main.ts" }).runInNewContext({
+        exports: exported,
+        require: loadModule,
+        __bootstrapImportMeta: { env: { OC_MOBILE_LAYOUT: flag } },
+        document: { body },
+        // Mocked browser APIs reject with this realm's Error objects.
+        Error,
+    });
+    bootstrapEvaluated = true;
+    return {
+        app: exported.default,
+        body,
+        desktopApp,
+        mobileApp,
+        mountedApp,
+        startupFailure,
+        prepareServiceWorkerBeforeApplicationStart,
+        isNativeClient,
+        mount,
+        chooseLayout,
+        setNativeTheme,
+        writeNativeCssVariables,
+        usesWebInferenceRuntime,
+        ensureWebModelRestored,
+        loadModule,
+    };
+}
 
 describe("application bootstrap security", () => {
     test("the production compiler includes the same shared ambient declarations as typecheck", () => {
@@ -35,11 +152,138 @@ describe("application bootstrap security", () => {
         expect(indexHtml).not.toContain("/src/main.ts");
     });
 
-    test("selects desktop or mobile root without debug instrumentation", () => {
-        expect(main).toContain("./components/App.svelte");
-        expect(main).toContain("./components_mobile/App.svelte");
-        expect(main).toContain("v2 ? mount(AppV2");
-        expect(main).toContain(": mount(App");
+    test.each(
+        [
+            { flag: "v2", narrow: true, layout: "v2" },
+            { flag: "v2", narrow: false, layout: "v1" },
+            { flag: "v1", narrow: true, layout: "v1" },
+            { flag: undefined, narrow: true, layout: "v1" },
+        ].flatMap((layout) =>
+            [false, true].flatMap((webRuntime) =>
+                [false, true].map((nativeClient) => ({ ...layout, webRuntime, nativeClient })),
+            ),
+        ),
+    )(
+        "lazily mounts $layout for flag=$flag narrow=$narrow with web runtime=$webRuntime native=$nativeClient",
+        async ({ flag, narrow, layout, webRuntime, nativeClient }) => {
+            const result = startBootstrap(flag, narrow, webRuntime, { nativeClient });
+            expect(result.mount).not.toHaveBeenCalled();
+            // Restoration deliberately never settles: neither browser preparation nor lazy imports
+            // may accidentally make the application await the model runtime.
+            await expect(result.app).resolves.toBe(result.mountedApp);
+            expect(result.prepareServiceWorkerBeforeApplicationStart).toHaveBeenCalledTimes(
+                nativeClient ? 0 : 1,
+            );
+            expect(result.chooseLayout).toHaveBeenCalledExactlyOnceWith(flag, narrow);
+            expect(result.usesWebInferenceRuntime).toHaveBeenCalledExactlyOnceWith();
+            expect(result.ensureWebModelRestored).toHaveBeenCalledTimes(webRuntime ? 1 : 0);
+            if (webRuntime) expect(result.ensureWebModelRestored).toHaveBeenCalledWith();
+            expect(result.setNativeTheme).toHaveBeenCalledTimes(layout === "v2" ? 1 : 0);
+            expect(result.writeNativeCssVariables).toHaveBeenCalledTimes(layout === "v1" ? 1 : 0);
+            const chosenImport =
+                layout === "v2" ? "./components_mobile/App.svelte" : "./components/App.svelte";
+            const appImports = result.loadModule.mock.calls
+                .map(([name]) => name)
+                .filter((name) => name.endsWith("/App.svelte"));
+            expect(appImports).toEqual([chosenImport]);
+            expect(result.mount).toHaveBeenCalledExactlyOnceWith(
+                layout === "v2" ? result.mobileApp : result.desktopApp,
+                { target: result.body },
+            );
+            expect(result.ensureWebModelRestored).toHaveBeenCalledTimes(webRuntime ? 1 : 0);
+        },
+    );
+
+    test("browser startup waits for worker preparation before loading either app tree", async () => {
+        let finishPreparation!: (ready: boolean) => void;
+        const preparation = new Promise<boolean>((resolve) => {
+            finishPreparation = resolve;
+        });
+        const result = startBootstrap("v2", true, true, {
+            nativeClient: false,
+            prepare: () => preparation,
+        });
+        expect(result.prepareServiceWorkerBeforeApplicationStart).toHaveBeenCalledOnce();
+        expect(result.chooseLayout).not.toHaveBeenCalled();
+        expect(result.ensureWebModelRestored).not.toHaveBeenCalled();
+        expect(result.mount).not.toHaveBeenCalled();
+        expect(result.loadModule.mock.calls.some(([name]) => name.endsWith("/App.svelte"))).toBe(
+            false,
+        );
+        finishPreparation(true);
+        await expect(result.app).resolves.toBe(result.mountedApp);
+        expect(result.chooseLayout).toHaveBeenCalledExactlyOnceWith("v2", true);
+        expect(result.ensureWebModelRestored).toHaveBeenCalledOnce();
+    });
+
+    test("a browser worker navigation stops this startup without mounting or restoring a model", async () => {
+        const result = startBootstrap("v2", true, true, {
+            nativeClient: false,
+            prepare: () => Promise.resolve(false),
+        });
+        await expect(result.app).resolves.toBeUndefined();
+        expect(result.mount).not.toHaveBeenCalled();
+        expect(result.chooseLayout).not.toHaveBeenCalled();
+        expect(result.ensureWebModelRestored).not.toHaveBeenCalled();
+    });
+
+    test("worker preparation failure mounts recovery instead of either application", async () => {
+        const result = startBootstrap("v2", true, true, {
+            nativeClient: false,
+            prepare: () => Promise.reject(new Error("worker preparation failed")),
+        });
+        await expect(result.app).resolves.toBe(result.mountedApp);
+        expect(result.mount).toHaveBeenCalledExactlyOnceWith(result.startupFailure, {
+            target: result.body,
+            props: { message: "worker preparation failed", recovery: "new-tab" },
+        });
+        expect(result.chooseLayout).not.toHaveBeenCalled();
+        expect(result.ensureWebModelRestored).not.toHaveBeenCalled();
+        expect(result.loadModule.mock.calls.some(([name]) => name.endsWith("/App.svelte"))).toBe(
+            false,
+        );
+    });
+
+    test("recovery remains available when the stale controller cannot load deferred component chunks", async () => {
+        const result = startBootstrap("v2", true, true, {
+            nativeClient: false,
+            prepare: () => Promise.reject(new Error("worker preparation failed")),
+            failDeferredComponentImports: true,
+        });
+        await expect(result.app).resolves.toBe(result.mountedApp);
+        expect(result.mount).toHaveBeenCalledExactlyOnceWith(result.startupFailure, {
+            target: result.body,
+            props: { message: "worker preparation failed", recovery: "new-tab" },
+        });
+        expect(result.chooseLayout).not.toHaveBeenCalled();
+        expect(result.ensureWebModelRestored).not.toHaveBeenCalled();
+        const recoveryImport = result.loadModule.mock.calls.findIndex(
+            ([name]) => name === "./components_shared/StartupFailure.svelte",
+        );
+        expect(recoveryImport).toBeGreaterThanOrEqual(0);
+        expect(result.loadModule.mock.invocationCallOrder[recoveryImport]).toBeLessThan(
+            result.prepareServiceWorkerBeforeApplicationStart.mock.invocationCallOrder[0],
+        );
+        expect(result.loadModule.mock.calls.some(([name]) => name.endsWith("/App.svelte"))).toBe(
+            false,
+        );
+    });
+
+    test("native startup never invokes browser service-worker maintenance", async () => {
+        const result = startBootstrap("v2", true, true, {
+            nativeClient: true,
+            prepare: () => {
+                throw new Error("browser-only API");
+            },
+        });
+        await expect(result.app).resolves.toBe(result.mountedApp);
+        expect(result.prepareServiceWorkerBeforeApplicationStart).not.toHaveBeenCalled();
+        expect(result.mount).toHaveBeenCalledExactlyOnceWith(result.mobileApp, {
+            target: result.body,
+        });
+    });
+
+    test("keeps debug instrumentation out of the entry point", () => {
         expect(main).not.toContain("__ocsend");
         expect(main).not.toContain("OC-DEBUG");
     });

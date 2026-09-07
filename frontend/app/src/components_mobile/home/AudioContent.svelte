@@ -65,7 +65,7 @@
         content.caption ? { kind: "text_content", text: content.caption ?? "" } : undefined,
     );
     let hasContent = $derived(!!textContent?.text);
-    let textHighlightColour = $derived<ColourVarKeys>(me ? "secondaryLight" : "primaryLight");
+    let textHighlightColour = $derived<ColourVarKeys>(me ? "secondaryAccent" : "primaryAccent");
 
     let currentTime = $state<string>();
     let waveformDiv: HTMLDivElement | undefined;
@@ -116,8 +116,9 @@
     }
 
     const textPrimaryColor = getColor("--text-primary");
-    const primaryLightColor = getColor("--primary-light");
     const secondaryColor = getColor("--secondary");
+    const chatTextSentColor = getColor("--chat-text-sent");
+    const chatMetadataSentColor = getColor("--chat-metadata-sent");
 
     onMount(() => {
         if (waveformDiv !== undefined) {
@@ -126,8 +127,8 @@
                 barHeight: 0.65,
                 width: "100%",
                 container: waveformDiv,
-                waveColor: draft || !me ? textPrimaryColor : primaryLightColor,
-                progressColor: draft || !me ? secondaryColor : textPrimaryColor,
+                waveColor: draft || !me ? textPrimaryColor : chatMetadataSentColor,
+                progressColor: draft || !me ? secondaryColor : chatTextSentColor,
                 barWidth: 3,
                 barRadius: 6,
                 dragToSeek: true,
@@ -166,7 +167,7 @@
 </script>
 
 {#snippet togglePlayButton()}
-    {@const color = me && !draft ? ColourVars.textPrimary : ColourVars.textSecondary}
+    {@const color = me && !draft ? ColourVars.chatTextSent : ColourVars.textSecondary}
     <IconButton padding="xs" size={"lg"} onclick={togglePlay} mode={"transparent"}>
         {#snippet icon()}
             {#if playing}
@@ -179,8 +180,8 @@
 {/snippet}
 
 {#snippet remainingTime()}
-    {@const currentColor = me && !draft ? "textPrimary" : "secondary"}
-    {@const durationColor = me && !draft ? "primaryLight" : "textSecondary"}
+    {@const currentColor = me && !draft ? "chatTextSent" : "secondary"}
+    {@const durationColor = me && !draft ? "chatMetadataSent" : "textSecondary"}
     <Container gap={"xxs"} padding={["zero", "sm"]}>
         <ChatFootnote colour={currentColor} width={"hug"}>
             {currentTime ?? "0:00"}
@@ -208,8 +209,8 @@
 {#snippet waveformView()}
     {@const bgColor = hasContent
         ? me
-            ? ColourVars.primaryMuted
-            : ColourVars.background1
+            ? "rgba(0, 0, 0, 0.25)"
+            : ColourVars.surface1
         : "transparent"}
     <Row
         minWidth={"18rem"}
@@ -234,7 +235,7 @@
         </Row>
         <Row width="hug" padding={["xs", "zero"]}>
             <Container
-                backgroundColor={me && !draft ? ColourVars.primaryLight : ColourVars.textTertiary}
+                backgroundColor={me && !draft ? ColourVars.chatMetadataSent : ColourVars.inputBackground}
                 borderRadius={"xl"}
                 mainAxisAlignment={"center"}
                 onClick={cycleSpeed}
@@ -246,7 +247,7 @@
                 <Body
                     width={"hug"}
                     fontWeight={"bold"}
-                    colour={me && !draft ? "myChatBubble" : "textPrimary"}>
+                    colour={me && !draft ? "chatBubbleSent" : "textPrimary"}>
                     x{speed}
                 </Body>
             </Container>
@@ -261,7 +262,7 @@
         <Row gap="xs" crossAxisAlignment="center">
             <MicrophoneOutline
                 size="1rem"
-                color={me ? ColourVars.secondaryLight : ColourVars.primaryLight} />
+                color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent} />
             <BodySmall colour={textHighlightColour}>
                 <!-- TODO i18n -->
                 <Translatable resourceKey={i18nKey("Audio message")} /> ({formatTime(duration)})
@@ -275,7 +276,7 @@
             supplementalClass="audio_draft_contents"
             padding={["md", "sm", "sm", "sm"]}
             borderRadius="lg"
-            background={ColourVars.background1}>
+            background={ColourVars.surface1}>
             {@render waveformView()}
             <div class="close" class:rtl={$rtlStore}>
                 <IconButton size="sm" onclick={onRemove}>
@@ -327,7 +328,7 @@
                 background-color: var(--secondary);
                 border-width: var(--bw-thick);
                 border-style: solid;
-                border-color: var(--background-1);
+                border-color: var(--surface-1);
             }
 
             ::part(region) {
@@ -337,15 +338,8 @@
 
             &.me:not(.draft) {
                 ::part(cursor):before {
-                    background-color: var(--text-primary);
-                }
-
-                &.has_content ::part(cursor):before {
-                    border-color: var(--primary-muted);
-                }
-
-                &:not(.has_content) ::part(cursor):before {
-                    border-color: var(--my-chat-bubble);
+                    background-color: var(--chat-text-sent);
+                    border-color: var(--chat-bubble-sent);
                 }
             }
         }

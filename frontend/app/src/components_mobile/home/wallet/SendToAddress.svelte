@@ -26,7 +26,7 @@
         type ResourceKey,
     } from "@client";
     import { isAccountIdentifierValid, isICRCAddressValid, publish } from "@shared";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountBoxOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -148,6 +148,8 @@
             getCkbtcMinterWithdrawalInfo(0n);
         }
     });
+
+    onDestroy(() => ckbtcMinterInfoDebouncer.cancel());
 
     // Whenever the networks list changes, autoselect the first one
     $effect(() => {
@@ -324,7 +326,7 @@
                 gap={"md"}
                 direction={"vertical"}
                 borderRadius={["lg", "lg", "zero", "zero"]}
-                background={ColourVars.background2}>
+                background={ColourVars.surface2}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("Recipient")} />
                     {#if account}
@@ -337,7 +339,7 @@
             </Container>
             <Container
                 gap={"lg"}
-                background={ColourVars.background2}
+                background={ColourVars.surface2}
                 padding={["md", "lg", "md", "lg"]}
                 borderRadius={["zero", "zero", "lg", "lg"]}
                 direction={"vertical"}>

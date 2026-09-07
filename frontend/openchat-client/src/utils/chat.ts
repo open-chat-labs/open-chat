@@ -552,14 +552,193 @@ export function groupEvents(
     isPublicChannel: boolean,
     expandedDeletedMessages: ReadonlySet<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
+    // When true, `events` is processed from last to first, equivalent to
+    // passing `[...events].reverse()` without the extra copy.
+    iterateBackwards = false,
 ): TimelineItem<ChatEvent>[] {
+    const visible: EventWrapper<ChatEvent>[] = [];
+    if (iterateBackwards) {
+        for (let i = events.length - 1; i >= 0; i--) {
+            const e = events[i];
+            if (!isEventKindHidden(e.event.kind, isPublicChannel)) visible.push(e);
+        }
+    } else {
+        for (const e of events) {
+            if (!isEventKindHidden(e.event.kind, isPublicChannel)) visible.push(e);
+        }
+    }
     return flattenTimeline(
-        groupWhile(
-            sameDate,
-            events.filter((e) => !isEventKindHidden(e.event.kind, isPublicChannel)),
-        )
+        groupWhile(sameDate, visible)
             .map((e) => reduceJoinedOrLeft(e, myUserId, isPublicChannel, expandedDeletedMessages))
             .map(groupInner ?? groupBySender),
+    );
+}
+
+type GroupEventsInner = (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][];
+
+// Memoising wrapper around `groupEvents`. One instance per timeline consumer.
+//
+// Most publishes of the events store are cosmetic: a reaction, read receipt,
+// edit or translation replaces ONE message's wrapper and leaves every other
+// wrapper identical (see the fast path in mergeEventsAndLocalUpdates). None
+// of that affects grouping, so instead of re-running filter → sameDate →
+// reduceJoinedOrLeft → groupBySender over the whole list, the previous
+// timeline is patched: replaced wrappers are swapped in, and every untouched
+// group / timeline item keeps its identity (which lets the flattened rows
+// keep theirs too, so unchanged rows are not re-rendered).
+//
+// A full regroup happens whenever anything structural changes: a different
+// number of events, any non-message event replaced, or a message whose
+// grouping inputs (index, timestamp, sender, hidden-ness, proposal content)
+// differ. All other arguments are compared by identity, so callers must pass
+// a NEW `expandedDeletedMessages` set / `groupInner` function when their
+// contents change.
+export class TimelineGrouper {
+    #prev:
+        | {
+              events: EventWrapper<ChatEvent>[];
+              myUserId: string;
+              isPublicChannel: boolean;
+              expandedDeletedMessages: ReadonlySet<number>;
+              groupInner: GroupEventsInner | undefined;
+              iterateBackwards: boolean;
+              timeline: TimelineItem<ChatEvent>[];
+          }
+        | undefined;
+
+    group(
+        events: EventWrapper<ChatEvent>[],
+        myUserId: string,
+        isPublicChannel: boolean,
+        expandedDeletedMessages: ReadonlySet<number>,
+        groupInner?: GroupEventsInner,
+        iterateBackwards = false,
+    ): TimelineItem<ChatEvent>[] {
+        const prev = this.#prev;
+        let timeline: TimelineItem<ChatEvent>[] | undefined;
+        if (
+            prev !== undefined &&
+            prev.myUserId === myUserId &&
+            prev.isPublicChannel === isPublicChannel &&
+            prev.expandedDeletedMessages === expandedDeletedMessages &&
+            prev.groupInner === groupInner &&
+            prev.iterateBackwards === iterateBackwards
+        ) {
+            timeline =
+                prev.events === events
+                    ? prev.timeline
+                    : patchTimeline(
+                          prev.events,
+                          events,
+                          prev.timeline,
+                          myUserId,
+                          expandedDeletedMessages,
+                      );
+        }
+        timeline ??= groupEvents(
+            events,
+            myUserId,
+            isPublicChannel,
+            expandedDeletedMessages,
+            groupInner,
+            iterateBackwards,
+        );
+        this.#prev = {
+            events,
+            myUserId,
+            isPublicChannel,
+            expandedDeletedMessages,
+            groupInner,
+            iterateBackwards,
+            timeline,
+        };
+        return timeline;
+    }
+}
+
+// Returns `prevTimeline` with replaced wrappers swapped in, or undefined if
+// the new events cannot share the previous grouping structure.
+function patchTimeline(
+    prevEvents: EventWrapper<ChatEvent>[],
+    events: EventWrapper<ChatEvent>[],
+    prevTimeline: TimelineItem<ChatEvent>[],
+    myUserId: string,
+    expandedDeletedMessages: ReadonlySet<number>,
+): TimelineItem<ChatEvent>[] | undefined {
+    if (prevEvents.length !== events.length) return undefined;
+    let replaced: Map<EventWrapper<ChatEvent>, EventWrapper<ChatEvent>> | undefined;
+    for (let i = 0; i < events.length; i++) {
+        const a = prevEvents[i];
+        const b = events[i];
+        if (a === b) continue;
+        if (!groupingEquivalent(a, b, myUserId, expandedDeletedMessages)) return undefined;
+        (replaced ??= new Map()).set(a, b);
+    }
+    if (replaced === undefined) return prevTimeline;
+
+    // Hidden (aggregated) messages never appear in the timeline as themselves,
+    // so their replacements simply never match and the aggregate is kept.
+    let timeline: TimelineItem<ChatEvent>[] | undefined;
+    for (let t = 0; t < prevTimeline.length; t++) {
+        const item = prevTimeline[t];
+        if (item.kind !== "timeline_event_group") continue;
+        let groups: EventWrapper<ChatEvent>[][] | undefined;
+        for (let g = 0; g < item.group.length; g++) {
+            const group = item.group[g];
+            let copy: EventWrapper<ChatEvent>[] | undefined;
+            for (let i = 0; i < group.length; i++) {
+                const r = replaced.get(group[i]);
+                if (r !== undefined) {
+                    copy ??= [...group];
+                    copy[i] = r;
+                }
+            }
+            if (copy !== undefined) {
+                groups ??= [...item.group];
+                groups[g] = copy;
+            }
+        }
+        if (groups !== undefined) {
+            timeline ??= [...prevTimeline];
+            timeline[t] = { kind: "timeline_event_group", group: groups };
+        }
+    }
+    return timeline ?? prevTimeline;
+}
+
+// Two different wrappers at the same position may share grouping structure
+// only if every input to isEventKindHidden / sameDate / reduceJoinedOrLeft /
+// groupBySender is unchanged. Only messages are ever replaced in place by
+// local updates; any other kind of change forces a full regroup. Proposal
+// messages are grouped by their collapse state (CurrentChatMessages'
+// groupInner), which depends on the proposal itself, so those require
+// identical content.
+function groupingEquivalent(
+    a: EventWrapper<ChatEvent>,
+    b: EventWrapper<ChatEvent>,
+    myUserId: string,
+    expandedDeletedMessages: ReadonlySet<number>,
+): boolean {
+    if (a.index !== b.index || a.timestamp !== b.timestamp) return false;
+    if (a.event.kind !== "message" || b.event.kind !== "message") return false;
+    const am = a.event;
+    const bm = b.event;
+    if (
+        am.messageId !== bm.messageId ||
+        am.messageIndex !== bm.messageIndex ||
+        am.sender !== bm.sender
+    ) {
+        return false;
+    }
+    if (
+        (am.content.kind === "proposal_content" || bm.content.kind === "proposal_content") &&
+        am.content !== bm.content
+    ) {
+        return false;
+    }
+    return (
+        messageIsHidden(am, myUserId, expandedDeletedMessages) ===
+        messageIsHidden(bm, myUserId, expandedDeletedMessages)
     );
 }
 
@@ -1398,9 +1577,37 @@ export function mergeEventsAndLocalUpdates(
     recentlySentMessages: MessageMap<bigint>,
     messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
+    return mergeEventsAndLocalUpdatesWithRange(
+        events,
+        unconfirmed,
+        expiredEventRanges,
+        translations,
+        selectedChatBlockedOrSuspendedUsers,
+        messageLocalUpdates,
+        recentlySentMessages,
+        messageFilters,
+    ).events;
+}
+
+// As mergeEventsAndLocalUpdates, but also returns the DRange of loaded event
+// indexes (expired ranges + every event in the result) that the merge has to
+// compute anyway, so callers don't need to rebuild it.
+export function mergeEventsAndLocalUpdatesWithRange(
+    events: EventWrapper<ChatEvent>[],
+    unconfirmed: EventWrapper<Message>[],
+    expiredEventRanges: DRange,
+    translations: MessageMap<string>,
+    selectedChatBlockedOrSuspendedUsers: Set<string>,
+    messageLocalUpdates: MessageMap<MessageLocalUpdates>,
+    recentlySentMessages: MessageMap<bigint>,
+    messageFilters: MessageFilter[],
+): { events: EventWrapper<ChatEvent>[]; range: DRange } {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
     const confirmedMessageIds = new Set<bigint>();
+
+    const noBlockedOrFilters =
+        selectedChatBlockedOrSuspendedUsers.size === 0 && messageFilters.length === 0;
 
     function processEvent(e: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> {
         eventIndexes.add(e.index);
@@ -1420,6 +1627,27 @@ export function mergeEventsAndLocalUpdates(
                     ? [messageLocalUpdates.get(repliesTo), translations.get(repliesTo)]
                     : [undefined, undefined];
 
+            const restricted = messageRestricted(e.event);
+            const repliesToRestricted =
+                e.event.repliesTo?.kind === "rehydrated_reply_context" &&
+                messageFlagsRestricted(e.event.repliesTo.moderationFlags);
+
+            // Fast path: nothing local applies to this message (or its reply
+            // context) and there are no blocked users / filters, so skip the
+            // remaining per-message checks. Output is identical to falling
+            // through, which would return `e` anyway.
+            if (
+                noBlockedOrFilters &&
+                updates === undefined &&
+                translation === undefined &&
+                replyContextUpdates === undefined &&
+                replyTranslation === undefined &&
+                !restricted &&
+                !repliesToRestricted
+            ) {
+                return e;
+            }
+
             const tallyUpdate =
                 e.event.content.kind === "proposal_content" ? updates?.proposalTally : undefined;
 
@@ -1427,10 +1655,6 @@ export function mergeEventsAndLocalUpdates(
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 selectedChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
-            const restricted = messageRestricted(e.event);
-            const repliesToRestricted =
-                e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                messageFlagsRestricted(e.event.repliesTo.moderationFlags);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
@@ -1494,7 +1718,7 @@ export function mergeEventsAndLocalUpdates(
         }
     }
 
-    return merged;
+    return { events: merged, range: eventIndexes };
 }
 
 export function doesMessageFailFilter(
@@ -2036,6 +2260,19 @@ function diffMessagePermissions(
     diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
+}
+
+// True when every index in [low, high] is contained in the given subranges
+// (as returned by DRange.subranges(), which merges adjacent ranges). Same
+// answer as `range.clone().intersect(low, high).length === high - low + 1`
+// without the clone.
+export function subrangesCover(
+    subranges: { low: number; high: number }[],
+    low: number,
+    high: number,
+): boolean {
+    if (high < low) return true;
+    return subranges.some((s) => s.low <= low && high <= s.high);
 }
 
 export function eventIndexesLoaded(chatId: ChatIdentifier): DRange {

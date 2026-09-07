@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_bucket_canister::c2c_vault_sync::VaultReviewer;
 use types::{FileId, Hash, TimestampMillis, UserId};
@@ -13,7 +13,7 @@ use utils::hasher::hash_bytes;
 pub struct Vault {
     records: BTreeMap<Hash, VaultRecord>,
     file_id_to_hash: BTreeMap<FileId, Hash>,
-    #[serde(default, deserialize_with = "deserialize_reviewers")]
+    #[serde(default)]
     reviewers: HashMap<Principal, UserId>,
     log: Vec<VaultLogEntry>,
     #[serde(default)]
@@ -24,21 +24,50 @@ pub struct Vault {
     // and reported. Maps to the report whose verdict denylisted the hash.
     #[serde(default)]
     csam_hashes: BTreeMap<Hash, u64>,
+    // Hashes a client DECLARED as the source of content later upheld as CSAM (a video
+    // transcoded at upload, see upload_chunk_v2::Args::source_hash). No moderator ever saw
+    // these bytes - the bucket cannot verify the claim - so they get the narrowest half of the
+    // denylist only: uploads and forwards refused, but never a sanction or a report against
+    // whoever uploads them, and copies already stored keep being served (an unverified claim
+    // must not be able to take down arbitrary existing content platform-wide). Separate from
+    // `csam_hashes` so a lie about a source can never get an innocent uploader of that source
+    // reported. Maps to the report of the upheld content.
+    #[serde(default)]
+    derived_csam_hashes: BTreeMap<Hash, u64>,
     // (uploader, file id) pairs whose upload/forward was refused because of a denylisted
     // hash: dedupes the report to the user_index, which would otherwise fire once per chunk
     // (chunks upload in parallel and each one is refused) and once per retry of the same
     // attempt. Keyed per uploader so one user's refused forward never silences another's.
+    // Best-effort and BOUNDED: refused uploads use client-chosen file ids which are never
+    // stored, so without a cap a scripted uploader grows this forever. Oldest sightings are
+    // evicted first; an evicted sighting re-reports, which downstream tolerates (I18).
     #[serde(default)]
     blocked_attempts: BTreeSet<(Principal, FileId)>,
+    // The hash each sighting was refused for: clearing on a hash's adjudication transition
+    // must find sightings whose file ids exist NOWHERE else (a refused upload's id is neither
+    // quarantined nor stored). Parallel to the set (whose serialized type predates this and
+    // cannot change); legacy entries without a hash are post-verdict denylist sightings whose
+    // transitions are final, so never needing the clear.
+    #[serde(default)]
+    blocked_attempt_hashes: BTreeMap<(Principal, FileId), Hash>,
+    #[serde(default)]
+    blocked_attempts_order: std::collections::VecDeque<(Principal, FileId)>,
     // Ephemeral read sessions: (reviewer, file_id) -> next expected chunk. Not serialized:
     // an upgrade resets sessions and reviewers restart from chunk 0 (an extra logged act,
     // never an unlogged one).
     #[serde(skip)]
     sessions: BTreeMap<(Principal, FileId), u32>,
+    // The off-chain NCA reporting service: may export quarantined bytes, but only inside a
+    // report-scoped window a moderator opened (a signed vault-export token naming the file)
+    #[serde(default)]
+    authority_reporter: Option<Principal>,
+    // The OC public key the export tokens are verified against; without it the export path
+    // simply refuses
+    #[serde(default)]
+    oc_public_key_pem: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "VaultRecordCompat")]
 pub struct VaultRecord {
     pub hash: Hash,
     pub original_file_id: FileId,
@@ -61,46 +90,11 @@ pub struct VaultRecord {
     pub verdicted_report_indexes: BTreeSet<u64>,
     // A release was refused because of a legal hold; clearing the hold performs it
     pub release_pending: bool,
-}
-
-// Records serialized before verdict_applied existed only ever had retention_until set by a
-// verdict, so infer the flag from it on deserialization
-#[derive(Deserialize)]
-struct VaultRecordCompat {
-    hash: Hash,
-    original_file_id: FileId,
+    // Claim ARRIVAL order (report indexes are creation order, not claim order: an assertion
+    // on an old report can claim a blob which a newer machine detection pinned first). The
+    // first entry anchors blocked attempts. Legacy records fall back to the lowest index.
     #[serde(default)]
-    mime_type: String,
-    metadata: VaultCaptureMetadata,
-    quarantined_at: TimestampMillis,
-    retention_until: Option<TimestampMillis>,
-    #[serde(default)]
-    verdict_applied: Option<bool>,
-    legal_hold: bool,
-    #[serde(default)]
-    report_indexes: BTreeSet<u64>,
-    #[serde(default)]
-    verdicted_report_indexes: BTreeSet<u64>,
-    #[serde(default)]
-    release_pending: bool,
-}
-
-impl From<VaultRecordCompat> for VaultRecord {
-    fn from(c: VaultRecordCompat) -> Self {
-        VaultRecord {
-            hash: c.hash,
-            original_file_id: c.original_file_id,
-            mime_type: c.mime_type,
-            metadata: c.metadata,
-            quarantined_at: c.quarantined_at,
-            verdict_applied: c.verdict_applied.unwrap_or(c.retention_until.is_some()),
-            retention_until: c.retention_until,
-            legal_hold: c.legal_hold,
-            report_indexes: c.report_indexes,
-            verdicted_report_indexes: c.verdicted_report_indexes,
-            release_pending: c.release_pending,
-        }
-    }
+    pub claim_order: Vec<u64>,
 }
 
 impl VaultRecord {
@@ -142,6 +136,18 @@ pub enum VaultLogEvent {
     VerdictAppliedBy(FileId, TimestampMillis, Option<UserId>),
     // Retention clock re-anchored (eg. at filing time) without a verdict being recorded
     RetentionReanchoredBy(FileId, TimestampMillis, Option<UserId>),
+    // Dual-authorized destruction (#9136): request reference plus the proposing and
+    // confirming operators. The entry survives the record it describes.
+    DestroyedBy(FileId, String, Option<UserId>, Option<UserId>),
+    // Legal hold set or cleared, carrying the preservation request it was applied under, so
+    // the chain of custody shows why the evidence was held rather than only that it was
+    LegalHoldSetUnder(FileId, String),
+    LegalHoldClearedUnder(FileId, String),
+    // The bytes were exported to the NCA reporting service for an authority filing,
+    // attributed to the moderator whose token authorized it. Distinct from ViewedBy because
+    // "exported to law enforcement" and "a human looked at it" are different acts in a chain
+    // of custody.
+    ExportedForAuthorityReport(FileId, u64 /* report_index */, Option<UserId> /* moderator */),
 }
 
 impl VaultLogEvent {
@@ -158,7 +164,11 @@ impl VaultLogEvent {
             | VaultLogEvent::ViewedBy(file_id, _, _)
             | VaultLogEvent::UnquarantinedBy(file_id, _)
             | VaultLogEvent::VerdictAppliedBy(file_id, _, _)
-            | VaultLogEvent::RetentionReanchoredBy(file_id, _, _) => *file_id,
+            | VaultLogEvent::RetentionReanchoredBy(file_id, _, _)
+            | VaultLogEvent::DestroyedBy(file_id, _, _, _)
+            | VaultLogEvent::LegalHoldSetUnder(file_id, _)
+            | VaultLogEvent::LegalHoldClearedUnder(file_id, _)
+            | VaultLogEvent::ExportedForAuthorityReport(file_id, _, _) => *file_id,
         }
     }
 }
@@ -178,6 +188,16 @@ pub enum VaultOpOutcome {
     NotFound,
 }
 
+// Records serialized before claim_order existed have claims with no recorded order: seeded
+// from index order (the best available approximation - machine detections usually pinned
+// first and have lower indexes) BEFORE any new claim is pushed, or the first post-upgrade
+// claim would become the anchor and a fresh assertion could displace a machine anchor (I13)
+fn seed_legacy_claim_order(record: &mut VaultRecord) {
+    if record.claim_order.is_empty() && !record.report_indexes.is_empty() {
+        record.claim_order = record.report_indexes.iter().copied().collect();
+    }
+}
+
 impl Vault {
     pub fn set_reviewers(&mut self, reviewers: Vec<VaultReviewer>) {
         self.reviewers = reviewers.into_iter().map(|r| (r.principal, r.user_id)).collect();
@@ -185,6 +205,63 @@ impl Vault {
 
     pub fn is_reviewer(&self, principal: &Principal) -> bool {
         self.reviewers.contains_key(principal)
+    }
+
+    pub fn set_authority_reporter(&mut self, principal: Option<Principal>, oc_public_key_pem: String) {
+        self.authority_reporter = principal;
+        self.oc_public_key_pem = Some(oc_public_key_pem);
+    }
+
+    pub fn is_authority_reporter(&self, principal: &Principal) -> bool {
+        self.authority_reporter.as_ref() == Some(principal)
+    }
+
+    pub fn oc_public_key_pem(&self) -> Option<&str> {
+        self.oc_public_key_pem.as_deref()
+    }
+
+    // Authorizes serving a chunk to the NCA reporting service. Same sequential-session
+    // machinery as authorize_view (sessions are keyed per principal, so a service export and
+    // a human review never interfere), but chunk 0 logs ExportedForAuthorityReport - a copy
+    // leaving the platform for law enforcement, attributed to the moderator whose token
+    // authorized it - not ViewedBy.
+    #[expect(clippy::too_many_arguments)]
+    pub fn authorize_export(
+        &mut self,
+        file_id: FileId,
+        exporter: Principal,
+        chunk_index: u32,
+        chunk_count: u32,
+        report_index: u64,
+        moderator: Option<UserId>,
+        now: TimestampMillis,
+    ) -> bool {
+        let key = (exporter, file_id);
+        if chunk_index == 0 {
+            self.append_log(
+                VaultLogEvent::ExportedForAuthorityReport(file_id, report_index, moderator),
+                now,
+            );
+            if chunk_count > 1 {
+                self.sessions.insert(key, 1);
+            } else {
+                self.sessions.remove(&key);
+            }
+            true
+        } else if self.sessions.get(&key) == Some(&chunk_index) {
+            if chunk_index + 1 < chunk_count {
+                self.sessions.insert(key, chunk_index + 1);
+            } else {
+                self.sessions.remove(&key);
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn hash_for_file(&self, file_id: &FileId) -> Option<Hash> {
+        self.file_id_to_hash.get(file_id).copied()
     }
 
     pub fn record_for_file(&self, file_id: &FileId) -> Option<&VaultRecord> {
@@ -217,8 +294,12 @@ impl Vault {
             report_indexes: BTreeSet::new(),
             verdicted_report_indexes: BTreeSet::new(),
             release_pending: false,
+            claim_order: Vec::new(),
         });
-        record.report_indexes.insert(report_index);
+        seed_legacy_claim_order(record);
+        if record.report_indexes.insert(report_index) {
+            record.claim_order.push(report_index);
+        }
     }
 
     // Registers a report's evidence claim on a blob which is already vaulted, returning false
@@ -233,7 +314,9 @@ impl Vault {
         let Some(record) = self.records.get_mut(&hash) else {
             return false;
         };
+        seed_legacy_claim_order(record);
         if record.report_indexes.insert(report_index) {
+            record.claim_order.push(report_index);
             // Log only a genuinely new claim, so this report's linkage to the blob is preserved
             self.append_log(VaultLogEvent::Quarantined(file_id, report_index), now);
         }
@@ -244,35 +327,92 @@ impl Vault {
         self.quarantine_failures += 1;
     }
 
+    // Gates serving: verified only - a derived entry is a claim, and refuses uploads only
     pub fn is_csam_hash(&self, hash: &Hash) -> bool {
         self.csam_hashes.contains_key(hash)
     }
 
+    // The report which upheld these exact bytes: a match sanctions the uploader
     pub fn known_csam_report_index(&self, hash: &Hash) -> Option<u64> {
         self.csam_hashes.get(hash).copied()
     }
 
-    // True the first time this (uploader, file id) pair is blocked: the caller only reports
-    // the attempt to the user_index on the first sighting
-    pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId) -> bool {
-        self.blocked_attempts.insert((uploader, file_id))
+    // The report whose upheld content a client declared these bytes the source of: a match
+    // only refuses the upload (see `derived_csam_hashes`)
+    pub fn derived_csam_report_index(&self, hash: &Hash) -> Option<u64> {
+        self.derived_csam_hashes.get(hash).copied()
     }
 
-    // One-time backfill for records verdicted before the denylist existed. Idempotent, so
-    // safe to run on every upgrade.
-    pub fn backfill_csam_hashes(&mut self) {
-        let entries: Vec<(Hash, u64)> = self
-            .records
-            .values()
-            .filter(|r| r.verdict_applied)
-            .map(|r| {
-                let report_index = r.verdicted_report_indexes.first().copied().unwrap_or(r.metadata.report_index);
-                (r.hash, report_index)
-            })
-            .collect();
-        for (hash, report_index) in entries {
-            self.csam_hashes.entry(hash).or_insert(report_index);
+    // The report holding this hash quarantined while its verdict is pending, if any:
+    // pre-verdict re-posts are blocked and reported against that report, mirroring the
+    // post-verdict denylist above. Only an ACTIVE claim anchors an attempt report - a record
+    // whose claims were all released but whose pin survives under a legal hold is already
+    // adjudicated, so the caller still refuses the upload (the pin gates serving) but must
+    // not sanction anyone against a resolved report. The FIRST-ARRIVED claim is the anchor:
+    // the first quarantiner is the strongest claim (machine detections pin at send time), and
+    // report indexes are creation order not claim order, so the explicit claim_order decides -
+    // a later frivolous assertion on the same blob must not dilute the attempt's disposition
+    // (I13). Legacy records without claim_order fall back to the lowest index.
+    pub fn pinned_report_index(&self, hash: &Hash) -> Option<u64> {
+        self.records.get(hash).and_then(|r| {
+            r.claim_order
+                .first()
+                .copied()
+                .or_else(|| r.report_indexes.iter().next().copied())
+        })
+    }
+
+    // True the first time this (uploader, file id) pair is blocked: the caller only reports
+    // the attempt to the user_index on the first sighting
+    pub fn record_blocked_attempt(&mut self, uploader: Principal, file_id: FileId, hash: Hash) -> bool {
+        const MAX_BLOCKED_ATTEMPT_SIGHTINGS: usize = 10_000;
+        if self.blocked_attempts.insert((uploader, file_id)) {
+            self.blocked_attempt_hashes.insert((uploader, file_id), hash);
+            self.blocked_attempts_order.push_back((uploader, file_id));
+            while self.blocked_attempts_order.len() > MAX_BLOCKED_ATTEMPT_SIGHTINGS {
+                if let Some(evicted) = self.blocked_attempts_order.pop_front() {
+                    self.blocked_attempts.remove(&evicted);
+                    self.blocked_attempt_hashes.remove(&evicted);
+                }
+            }
+            true
+        } else {
+            false
         }
+    }
+
+    // Forgets the blocked-attempt sightings for a hash's file ids. Called when the hash
+    // changes adjudication state (denylisted, or released): a forward's file id is stable, so
+    // without this a pre-verdict blocked forward would consume the only sighting and the
+    // deliberate POST-verdict forward of the same file would go unreported (I14/I16).
+    // Pre-bound state (or any divergence) has sightings in the set with no order queue, which
+    // the eviction can never touch: rebuilt on upgrade so the bound applies to legacy entries
+    pub fn rebuild_blocked_attempt_order(&mut self) {
+        if self.blocked_attempts_order.len() != self.blocked_attempts.len() {
+            self.blocked_attempts_order = self.blocked_attempts.iter().cloned().collect();
+        }
+    }
+
+    pub fn clear_blocked_attempts_for_hash(&mut self, hash: &Hash) {
+        // Sightings self-describe their hash, so the clear finds every one - including
+        // refused-upload file ids which exist in no other structure (I14). Legacy entries
+        // without a recorded hash are post-verdict denylist sightings; their transitions are
+        // final and never need clearing.
+        // A set, not a Vec: both this and the order queue are bounded at
+        // MAX_BLOCKED_ATTEMPT_SIGHTINGS, and every sighting can share one hash (refused
+        // uploads pick a fresh file id each time, so they are cheap to generate), which would
+        // make a linear `contains` inside the retain quadratic in a single message.
+        let keys: BTreeSet<(Principal, FileId)> = self
+            .blocked_attempt_hashes
+            .iter()
+            .filter(|(_, h)| *h == hash)
+            .map(|(k, _)| *k)
+            .collect();
+        for key in &keys {
+            self.blocked_attempts.remove(key);
+            self.blocked_attempt_hashes.remove(key);
+        }
+        self.blocked_attempts_order.retain(|k| !keys.contains(k));
     }
 
     pub fn unquarantine(
@@ -297,6 +437,7 @@ impl Vault {
         if let Some(record) = self.records.get_mut(&hash) {
             if let Some(report_index) = report_index {
                 record.report_indexes.remove(&report_index);
+                record.claim_order.retain(|i| *i != report_index);
                 record.verdicted_report_indexes.remove(&report_index);
                 if !record.report_indexes.is_empty() {
                     return VaultOpOutcome::Retained;
@@ -342,6 +483,13 @@ impl Vault {
             let denylist_report_index = report_index.unwrap_or(record.metadata.report_index);
             let newly_denylisted = !self.csam_hashes.contains_key(&hash);
             self.csam_hashes.entry(hash).or_insert(denylist_report_index);
+            if newly_denylisted {
+                // Verified always replaces derived (see denylist_hash)
+                self.derived_csam_hashes.remove(&hash);
+                // The hash's adjudication state changed: pre-verdict blocked-attempt
+                // sightings must not suppress reporting of post-verdict attempts (I14)
+                self.clear_blocked_attempts_for_hash(&hash);
+            }
             self.append_log(VaultLogEvent::VerdictAppliedBy(file_id, retention_until, moderator), now);
             if newly_denylisted {
                 return VaultOpOutcome::AppliedDenylisted(hash, denylist_report_index);
@@ -350,26 +498,47 @@ impl Vault {
         VaultOpOutcome::Applied
     }
 
-    // Records a hash denylisted by a verdict applied in ANOTHER bucket, so that content upheld
-    // as CSAM can never be uploaded to (or served from) this bucket either. Returns true if the
-    // hash was not already known, so the caller can avoid re-propagating it.
-    pub fn denylist_hash(&mut self, hash: Hash, report_index: u64) -> bool {
+    // Records a hash denylisted by a verdict applied in ANOTHER bucket (or, when `derived`, a
+    // hash declared as the source of upheld content), so that the content can never be uploaded
+    // to (or, when verified, served from) this bucket either. A verified entry always wins: it replaces a derived
+    // one for the same hash, and a derived one never downgrades a verified one. Returns true if
+    // the entry is new at that tier, so the caller can avoid re-propagating it.
+    pub fn denylist_hash(&mut self, hash: Hash, report_index: u64, derived: bool) -> bool {
+        if derived {
+            if self.csam_hashes.contains_key(&hash) || self.derived_csam_hashes.contains_key(&hash) {
+                return false;
+            }
+            self.derived_csam_hashes.insert(hash, report_index);
+            return true;
+        }
         let newly_denylisted = !self.csam_hashes.contains_key(&hash);
         self.csam_hashes.entry(hash).or_insert(report_index);
+        if newly_denylisted {
+            self.derived_csam_hashes.remove(&hash);
+            self.clear_blocked_attempts_for_hash(&hash);
+        }
         newly_denylisted
     }
 
-    pub fn set_legal_hold(&mut self, file_id: FileId, legal_hold: bool, now: TimestampMillis) -> VaultOpOutcome {
+    pub fn set_legal_hold(
+        &mut self,
+        file_id: FileId,
+        legal_hold: bool,
+        reference: Option<String>,
+        now: TimestampMillis,
+    ) -> VaultOpOutcome {
         let Some(record) = self.file_id_to_hash.get(&file_id).and_then(|h| self.records.get_mut(h)) else {
             return VaultOpOutcome::NotFound;
         };
         record.legal_hold = legal_hold;
         let hash = record.hash;
         let release = !legal_hold && record.release_pending;
-        let event = if legal_hold {
-            VaultLogEvent::LegalHoldSet(file_id)
-        } else {
-            VaultLogEvent::LegalHoldCleared(file_id)
+        let event = match (legal_hold, reference) {
+            (true, Some(reference)) => VaultLogEvent::LegalHoldSetUnder(file_id, reference),
+            (false, Some(reference)) => VaultLogEvent::LegalHoldClearedUnder(file_id, reference),
+            // Only ops from an older user_index arrive without a reference
+            (true, None) => VaultLogEvent::LegalHoldSet(file_id),
+            (false, None) => VaultLogEvent::LegalHoldCleared(file_id),
         };
         self.append_log(event, now);
         // A release refused because of the hold is performed now that the hold is cleared
@@ -382,14 +551,29 @@ impl Vault {
         VaultOpOutcome::Applied
     }
 
-    // Permanent destruction on law enforcement request, overriding the retention clock and any
-    // legal hold. The log entry (including the request reference) survives the record.
-    pub fn destroy(&mut self, file_id: FileId, le_request_ref: String, now: TimestampMillis) -> VaultOpOutcome {
+    // Permanent destruction on law enforcement request, overriding the retention clock. A
+    // standing legal hold REFUSES destruction (#9136): clearing the hold is a separate,
+    // separately-logged act, so hold-clear + destroy is always two visible steps. The log
+    // entry (including the request reference and both operators) survives the record.
+    pub fn destroy(
+        &mut self,
+        file_id: FileId,
+        le_request_ref: String,
+        proposed_by: Option<UserId>,
+        confirmed_by: Option<UserId>,
+        now: TimestampMillis,
+    ) -> VaultOpOutcome {
         let Some(hash) = self.file_id_to_hash.get(&file_id).copied() else {
             return VaultOpOutcome::NotFound;
         };
+        if self.records.get(&hash).is_some_and(|r| r.legal_hold) {
+            return VaultOpOutcome::Blocked;
+        }
         for alias in self.remove_all_references(&hash) {
-            self.append_log(VaultLogEvent::Destroyed(alias, le_request_ref.clone()), now);
+            self.append_log(
+                VaultLogEvent::DestroyedBy(alias, le_request_ref.clone(), proposed_by, confirmed_by),
+                now,
+            );
         }
         VaultOpOutcome::ReleasePin(hash)
     }
@@ -489,6 +673,7 @@ impl Vault {
             log_length: self.log.len() as u64,
             quarantine_failures: self.quarantine_failures,
             csam_hashes: self.csam_hashes.len() as u64,
+            derived_csam_hashes: self.derived_csam_hashes.len() as u64,
             unresolved_quarantines: self.records.values().filter(|r| r.has_unresolved_claims()).count() as u64,
             oldest_unresolved_quarantined_at: self
                 .records
@@ -503,6 +688,9 @@ impl Vault {
     // is released for all sibling files referencing the same blob at once
     fn remove_all_references(&mut self, hash: &Hash) -> Vec<FileId> {
         self.records.remove(hash);
+        // Sightings recorded against the released quarantine must not suppress reporting if
+        // this hash is ever quarantined again
+        self.clear_blocked_attempts_for_hash(hash);
         let aliases: Vec<FileId> = self
             .file_id_to_hash
             .iter()
@@ -537,29 +725,9 @@ pub struct VaultMetrics {
     pub log_length: u64,
     pub quarantine_failures: u64,
     pub csam_hashes: u64,
+    pub derived_csam_hashes: u64,
     pub unresolved_quarantines: u64,
     pub oldest_unresolved_quarantined_at: Option<TimestampMillis>,
-}
-
-// The reviewer set briefly shipped (to test envs only) as a bare principal set; accept that
-// shape on upgrade as an empty map (the set is re-synced whenever the operator applies it).
-// Inert everywhere else - production never held the old shape.
-fn deserialize_reviewers<'de, D>(d: D) -> Result<HashMap<Principal, UserId>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    #[derive(Deserialize)]
-    #[serde(untagged)]
-    enum Compat {
-        New(HashMap<Principal, UserId>),
-        #[allow(dead_code)]
-        Old(HashSet<Principal>),
-    }
-
-    Ok(match Compat::deserialize(d)? {
-        Compat::New(reviewers) => reviewers,
-        Compat::Old(_) => HashMap::new(),
-    })
 }
 
 #[cfg(test)]
@@ -591,6 +759,27 @@ mod tests {
             user_id: Principal::from_slice(&[9; 8]).into(),
         }]);
         vault
+    }
+
+    #[test]
+    fn legal_hold_records_its_preservation_reference_in_the_log() {
+        let mut vault = vault_with_reviewer();
+        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
+
+        vault.set_legal_hold(1, true, Some("POLICE-REF-99".to_string()), 200);
+        vault.set_legal_hold(1, false, Some("POLICE-REF-99".to_string()), 300);
+
+        // The reference is the audit-relevant part: a hold exists because something external
+        // demanded preservation, and the log must show what
+        let (_, entries) = vault.log_page(0, 100, None);
+        let set = entries
+            .iter()
+            .any(|e| matches!(&e.event, VaultLogEvent::LegalHoldSetUnder(_, r) if r == "POLICE-REF-99"));
+        let cleared = entries
+            .iter()
+            .any(|e| matches!(&e.event, VaultLogEvent::LegalHoldClearedUnder(_, r) if r == "POLICE-REF-99"));
+        assert!(set, "the hold reference is missing from the log");
+        assert!(cleared, "the release reference is missing from the log");
     }
 
     #[test]
@@ -657,12 +846,15 @@ mod tests {
     fn legal_hold_blocks_release() {
         let mut vault = vault_with_reviewer();
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(0), 100);
-        vault.set_legal_hold(1, true, 200);
+        vault.set_legal_hold(1, true, Some("REF-1".to_string()), 200);
         assert!(matches!(vault.unquarantine(1, None, Some(0), 300), VaultOpOutcome::Blocked));
         assert!(vault.record_for_file(&1).is_some());
         // The refused release is performed when the hold is cleared (the sender never
         // re-sends the unquarantine op)
-        assert!(matches!(vault.set_legal_hold(1, false, 400), VaultOpOutcome::ReleasePin(_)));
+        assert!(matches!(
+            vault.set_legal_hold(1, false, Some("REF-1".to_string()), 400),
+            VaultOpOutcome::ReleasePin(_)
+        ));
         assert!(vault.record_for_file(&1).is_none());
     }
 
@@ -749,7 +941,7 @@ mod tests {
         let mut vault = vault_with_reviewer();
         vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
         vault.quarantine(2, [1u8; 32], "image/png".to_string(), metadata(8), 101);
-        vault.set_legal_hold(1, true, 150);
+        vault.set_legal_hold(1, true, Some("REF-1".to_string()), 150);
 
         // Claim bookkeeping proceeds under the hold; only the physical release is blocked
         assert!(matches!(vault.unquarantine(1, None, Some(7), 200), VaultOpOutcome::Retained));
@@ -758,7 +950,10 @@ mod tests {
 
         // Clearing the hold performs the pending release - without this, the claims are gone,
         // nothing ever re-sends the release, and the record leaks forever
-        assert!(matches!(vault.set_legal_hold(1, false, 300), VaultOpOutcome::ReleasePin(_)));
+        assert!(matches!(
+            vault.set_legal_hold(1, false, Some("REF-1".to_string()), 300),
+            VaultOpOutcome::ReleasePin(_)
+        ));
         assert!(vault.record_for_file(&1).is_none());
         assert!(vault.record_for_file(&2).is_none());
     }
@@ -830,9 +1025,33 @@ mod tests {
 
         // A hash denylisted elsewhere blocks uploads (and serving) here too, once only
         let elsewhere = [9u8; 32];
-        assert!(vault.denylist_hash(elsewhere, 11));
-        assert!(!vault.denylist_hash(elsewhere, 12));
+        assert!(vault.denylist_hash(elsewhere, 11, false));
+        assert!(!vault.denylist_hash(elsewhere, 12, false));
         assert_eq!(vault.known_csam_report_index(&elsewhere), Some(11));
+    }
+
+    #[test]
+    fn derived_hash_blocks_but_never_sanctions_and_a_verified_entry_replaces_it() {
+        let mut vault = vault_with_reviewer();
+        let source = [3u8; 32];
+
+        assert!(vault.denylist_hash(source, 5, true));
+        assert!(!vault.denylist_hash(source, 6, true));
+        // Refuses uploads, but never stops serving existing copies of an unverified claim
+        assert!(!vault.is_csam_hash(&source));
+        assert_eq!(vault.derived_csam_report_index(&source), Some(5));
+        assert_eq!(vault.known_csam_report_index(&source), None);
+        assert_eq!(vault.metrics().derived_csam_hashes, 1);
+
+        // The bytes themselves later upheld: verified from now on, and worth propagating
+        assert!(vault.denylist_hash(source, 7, false));
+        assert!(vault.is_csam_hash(&source));
+        assert_eq!(vault.known_csam_report_index(&source), Some(7));
+        assert_eq!(vault.derived_csam_report_index(&source), None);
+
+        // A later derived claim never downgrades a verified entry
+        assert!(!vault.denylist_hash(source, 8, true));
+        assert_eq!(vault.known_csam_report_index(&source), Some(7));
     }
 
     #[test]
@@ -881,86 +1100,30 @@ mod tests {
     #[test]
     fn blocked_attempts_report_once_per_uploader_and_file() {
         let mut vault = vault_with_reviewer();
+        let hash = [5u8; 32];
         // First sighting reports; the parallel/retried chunks of the same attempt do not
-        assert!(vault.record_blocked_attempt(reviewer(1), 42));
-        assert!(!vault.record_blocked_attempt(reviewer(1), 42));
+        assert!(vault.record_blocked_attempt(reviewer(1), 42, hash));
+        assert!(!vault.record_blocked_attempt(reviewer(1), 42, hash));
         // A different user attempting the same file is a fresh attempt
-        assert!(vault.record_blocked_attempt(reviewer(2), 42));
+        assert!(vault.record_blocked_attempt(reviewer(2), 42, hash));
+        // A hash transition clears every sighting for it - including file ids which exist in
+        // no other structure (refused uploads) - so post-verdict attempts re-report (I14)
+        vault.clear_blocked_attempts_for_hash(&hash);
+        assert!(vault.record_blocked_attempt(reviewer(1), 42, hash));
     }
 
     #[test]
-    fn backfill_denylists_previously_verdicted_records() {
+    fn attempt_anchor_is_first_arrived_claim() {
         let mut vault = vault_with_reviewer();
-        vault.quarantine(1, [1u8; 32], "image/png".to_string(), metadata(7), 100);
-        vault.apply_verdict(1, 999, None, false, Some(7), 200);
-
-        // Simulate a record verdicted before the denylist existed
-        vault.csam_hashes.clear();
-        assert!(!vault.is_csam_hash(&[1u8; 32]));
-
-        vault.backfill_csam_hashes();
-        assert_eq!(vault.known_csam_report_index(&[1u8; 32]), Some(7));
-    }
-
-    #[test]
-    fn record_compat_infers_verdict_applied_from_retention() {
-        // The record shape from before verdict_applied existed
-        #[derive(Serialize)]
-        struct OldRecord {
-            hash: Hash,
-            original_file_id: FileId,
-            mime_type: String,
-            metadata: VaultCaptureMetadata,
-            quarantined_at: TimestampMillis,
-            retention_until: Option<TimestampMillis>,
-            legal_hold: bool,
-        }
-        let old = |retention_until| OldRecord {
-            hash: [1u8; 32],
-            original_file_id: 1,
-            mime_type: "image/png".to_string(),
-            metadata: metadata(0),
-            quarantined_at: 100,
-            retention_until,
-            legal_hold: false,
-        };
-
-        // Old records only ever had retention set by a verdict, so infer resolution from it
-        let bytes = msgpack::serialize_then_unwrap(old(Some(999)));
-        let record: VaultRecord = msgpack::deserialize_then_unwrap(&bytes);
-        assert!(record.verdict_applied);
-
-        let bytes = msgpack::serialize_then_unwrap(old(None));
-        let record: VaultRecord = msgpack::deserialize_then_unwrap(&bytes);
-        assert!(!record.verdict_applied);
-    }
-
-    #[test]
-    fn reviewer_compat_accepts_old_principal_set() {
-        #[derive(Serialize)]
-        struct OldHolder {
-            reviewers: HashSet<Principal>,
-        }
-        #[derive(Deserialize)]
-        struct Holder {
-            #[serde(default, deserialize_with = "deserialize_reviewers")]
-            reviewers: HashMap<Principal, UserId>,
-        }
-        let bytes = msgpack::serialize_then_unwrap(OldHolder {
-            reviewers: [reviewer(1)].into_iter().collect(),
-        });
-        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
-        assert!(holder.reviewers.is_empty());
-
-        #[derive(Serialize)]
-        struct NewHolder {
-            reviewers: HashMap<Principal, UserId>,
-        }
-        let user_id: UserId = Principal::from_slice(&[9; 8]).into();
-        let bytes = msgpack::serialize_then_unwrap(NewHolder {
-            reviewers: [(reviewer(1), user_id)].into_iter().collect(),
-        });
-        let holder: Holder = msgpack::deserialize(bytes.as_slice()).unwrap();
-        assert_eq!(holder.reviewers.get(&reviewer(1)), Some(&user_id));
+        let hash = [1u8; 32];
+        // The machine detection (report #7) pins the hash first; an assertion made later on an
+        // OLDER report (#3, lower index) claims it afterwards. The anchor must stay #7 (I13):
+        // report indexes are creation order, not claim order.
+        vault.quarantine(1, hash, "image/png".to_string(), metadata(7), 100);
+        assert!(vault.claim_if_quarantined(1, 3, 200));
+        assert_eq!(vault.pinned_report_index(&hash), Some(7));
+        // Releasing the machine claim promotes the next-arrived claim
+        vault.unquarantine(1, None, Some(7), 300);
+        assert_eq!(vault.pinned_report_index(&hash), Some(3));
     }
 }

@@ -17,7 +17,7 @@ pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{AccessorId, CanisterId, FileId, TimestampMillis};
+    use types::{AccessorId, CanisterId, FileId, Hash, TimestampMillis};
     use utils::hasher::hash_bytes;
 
     const DEFAULT_MIME_TYPE: &str = "test_mime_type";
@@ -30,6 +30,21 @@ pub mod happy_path {
         file: Vec<u8>,
         accessors: Vec<AccessorId>,
         expiry: Option<TimestampMillis>,
+    ) {
+        upload_file_with_source_hash(env, sender, canister_id, file_id, file, accessors, expiry, None);
+    }
+
+    // As `upload_file`, additionally declaring the hash of the bytes `file` was transcoded from
+    #[allow(clippy::too_many_arguments)]
+    pub fn upload_file_with_source_hash(
+        env: &mut PocketIc,
+        sender: Principal,
+        canister_id: CanisterId,
+        file_id: FileId,
+        file: Vec<u8>,
+        accessors: Vec<AccessorId>,
+        expiry: Option<TimestampMillis>,
+        source_hash: Option<Hash>,
     ) {
         let hash = hash_bytes(&file);
         let chunk_size = 1000;
@@ -50,6 +65,7 @@ pub mod happy_path {
                     total_size,
                     bytes: chunk.to_vec(),
                     expiry,
+                    source_hash,
                 },
             );
 

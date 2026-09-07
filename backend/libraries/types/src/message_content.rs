@@ -2,7 +2,7 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, AiAppId, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails,
     EncryptionKey, MessageId, MessageIndex, MessagePermission, Milliseconds, ModerationInput, P2PSwapStatus,
-    PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
+    PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType, icrc1,
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -247,6 +247,48 @@ impl MessageContent {
         }
 
         input
+    }
+
+    // The media which the scanning pipeline hashes: still images only. Image content always;
+    // File content regardless of its declared mime type (the declaration is client-supplied
+    // and must not gate the scan - the worker's decoder decides what is actually an image,
+    // reporting everything else Unscannable); the Video inline thumbnail, which is itself a
+    // still image rendered in the chat (keyframes of the video stream await extraction in v2).
+    // Giphy variants are third-party URLs, not OpenChat blobs.
+    pub fn scannable_blobs(&self) -> Vec<crate::MediaScanBlob> {
+        match self {
+            MessageContent::Image(i) => i
+                .blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: i.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContent::File(f) => f
+                .blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: f.mime_type.clone(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            MessageContent::Video(v) => v
+                .image_blob_reference
+                .clone()
+                .map(|blob_reference| crate::MediaScanBlob {
+                    blob_reference,
+                    mime_type: "image/*".to_string(),
+                    frame_index: None,
+                })
+                .into_iter()
+                .collect(),
+            _ => Vec::new(),
+        }
     }
 
     pub fn notification_text(&self, mentioned: &[User], user_groups_mentioned: &[(u32, String)]) -> Option<String> {
@@ -817,6 +859,16 @@ pub struct ModerationReportContent {
     // vault reviewers via the explicit Review affordance (no media is ever embedded in alerts)
     #[serde(default)]
     pub blob_references: Vec<BlobReference>,
+    // Present when the detection was a media hash match rather than the text classifier: the
+    // provider's record details, retained as the audit trail and for the authority report
+    #[serde(default)]
+    pub media_matches: Vec<crate::MediaScanMatch>,
+    // True for a report of a blocked re-post attempt: no message of its own exists and it is
+    // never resolved directly (it mirrors its original report), so the card must not offer
+    // verdict actions
+    #[serde(default)]
+    #[ts(as = "Option<bool>", optional)]
+    pub is_blocked_attempt: bool,
     pub reported_at: TimestampMillis,
     pub status: ModerationReportStatus,
     // Present on UpheldAsCsam reports: whether the authority (NCA) report is still due or has
@@ -829,8 +881,34 @@ pub struct ModerationReportContent {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum AuthorityReportState {
-    Due { urgent: bool },
-    Filed { portal_reference: String },
+    Due {
+        urgent: bool,
+    },
+    Filed {
+        portal_reference: String,
+    },
+    // An automated filing is in flight (an attempt marker is open). A marker much older than
+    // a filing takes means the service crashed mid-flight and a human must reconcile (check
+    // the portal's "Previously submitted reports") before anything re-files.
+    Attempting {
+        started_at: TimestampMillis,
+    },
+    // The automated filing failed against a portal outage (5xx/timeout after retries): for
+    // P1/P2 the contingency path (email + phone) is required, P3 waits for the portal
+    ContingencyRequired {
+        error: String,
+        // Carried from the due entry so a retry (automated or manual) keeps the priority
+        #[serde(default)]
+        #[ts(as = "Option<bool>", optional)]
+        urgent: bool,
+    },
+    // The NCA rejected the payload (400) - our defect; file via the web form and raise a bug
+    ValidationFailed {
+        error: String,
+        #[serde(default)]
+        #[ts(as = "Option<bool>", optional)]
+        urgent: bool,
+    },
 }
 
 #[ts_export]
@@ -869,6 +947,9 @@ pub struct P2PSwapContentInitial {
     pub token1_amount: u128,
     pub expires_in: Milliseconds,
     pub caption: Option<String>,
+    // The account token0 is deposited from, defaulting to this canister's own. Any other account
+    // must have approved this canister as spender, since the deposit is then pulled via ICRC-2.
+    pub from_account: Option<icrc1::Account>,
 }
 
 #[ts_export]

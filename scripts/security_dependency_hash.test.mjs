@@ -140,6 +140,7 @@ function originalCheckoutBytes(source, path, migration) {
   );
 }
 
+// Both security baselines share this full-history migration proof.
 for (const pr of ["pr1", "pr2"]) {
   const policyPath = `.github/security/openchat-${pr}-security-baseline.json`;
   const policy = JSON.parse(readFileSync(resolve(root, policyPath), "utf8"));

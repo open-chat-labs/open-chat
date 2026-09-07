@@ -6,7 +6,12 @@ import {
     INVALID_DELEGATION_ERROR_NAME,
     SESSION_EXPIRY_ERROR_NAME,
 } from "../domain";
-import { requiresLogout, shouldReportWorkerError } from "./error";
+import {
+    requiresLogout,
+    shouldReportError,
+    shouldReportMessage,
+    shouldReportWorkerError,
+} from "./error";
 
 // `toCanisterResponseError` copies the IC error code of the rejection onto the mapped error
 function rejection(rejectErrorCode: string): HttpError {
@@ -28,8 +33,7 @@ describe("shouldReportWorkerError", () => {
     });
 
     test("still reports non-dead-ledger failures for a tolerated kind", () => {
-        // a boundary/other error on balance refresh is a real signal, not an expected dead ledger
-        expect(shouldReportWorkerError("refreshAccountBalance", boundary)).toBe(true);
+        // a replica rejection with an unexpected code is a real signal, not an expected dead ledger
         expect(shouldReportWorkerError("refreshAccountBalance", rejection("IC0503"))).toBe(true);
         expect(shouldReportWorkerError("refreshAccountBalance", new TypeError("boom"))).toBe(true);
     });
@@ -51,9 +55,90 @@ describe("shouldReportWorkerError", () => {
         expect(shouldReportWorkerError("refreshAccountBalance", unavailable)).toBe(false);
     });
 
-    test("reports everything for kinds that are not tolerated", () => {
+    test("reports dead-ledger errors for kinds that are not tolerated", () => {
         expect(shouldReportWorkerError("getUpdates", frozen)).toBe(true);
         expect(shouldReportWorkerError("sendMessage", noWasm)).toBe(true);
+    });
+
+    // The session ending underneath in-flight requests is expected (logout / delegation expiry):
+    // every racing request fails and none of them is a signal. Matched by name, since these
+    // often arrive with their prototype stripped.
+    test("silences expected session errors for every kind", () => {
+        expect(shouldReportWorkerError("chatEvents", { name: "AnonymousOperationError" })).toBe(
+            false,
+        );
+        expect(shouldReportWorkerError("getUsers", { name: SESSION_EXPIRY_ERROR_NAME })).toBe(
+            false,
+        );
+        expect(shouldReportWorkerError("getBots", { name: INVALID_DELEGATION_ERROR_NAME })).toBe(
+            false,
+        );
+    });
+
+    test("silences gateway errors and failed fetches for every kind", () => {
+        expect(shouldReportWorkerError("chatEvents", boundary)).toBe(false);
+        expect(
+            shouldReportWorkerError("getUsers", new HttpError(504, new Error("Gateway timeout"))),
+        ).toBe(false);
+        expect(shouldReportWorkerError("getBots", new TypeError("Failed to fetch"))).toBe(false);
+        expect(shouldReportWorkerError("getBots", new TypeError("Load failed"))).toBe(false);
+    });
+
+    // A replica rejection maps to HttpError 500 here - canister traps included - and must
+    // still be reported: only genuine gateway codes count as network weather
+    test("still reports replica-rejection 500s", () => {
+        expect(shouldReportWorkerError("sendMessage", rejection("IC0503"))).toBe(true);
+        expect(
+            shouldReportWorkerError("chatEvents", new HttpError(500, new Error("canister trap"))),
+        ).toBe(true);
+    });
+});
+
+describe("shouldReportError", () => {
+    test("silences IndexedDB backing-store failures", () => {
+        const noTx = new Error(
+            "Attempt to get a record from database without an in-progress transaction",
+        );
+        noTx.name = "UnknownError";
+        const lost = new Error(
+            "Connection to Indexed Database server lost. Refresh the page to try again",
+        );
+        lost.name = "UnknownError";
+
+        expect(shouldReportError(noTx)).toBe(false);
+        expect(shouldReportError(lost)).toBe(false);
+    });
+
+    test("silences the IC agent giving up after its fetch retries", () => {
+        expect(
+            shouldReportError(
+                new HttpError(500, new Error("Retry strategy exhausted after 1 attempts.")),
+            ),
+        ).toBe(false);
+        // the same words from anything other than the agent's HttpError are still a signal
+        expect(shouldReportError(new Error("Retry strategy exhausted after 1 attempts."))).toBe(
+            true,
+        );
+    });
+
+    test("silences errors thrown from browser-extension code", () => {
+        const v8 = new Error("func sseError not found");
+        v8.stack =
+            "Error: func sseError not found\n" +
+            "    at Object.<anonymous> (chrome-extension://cadiboklkpojfamcoggejbbdjcoiljjk/inpage.js:252:19758)\n" +
+            "    at S (chrome-extension://cadiboklkpojfamcoggejbbdjcoiljjk/inpage.js:219:37976)";
+        const gecko = new Error("boom");
+        gecko.stack = "inject@moz-extension://abc/inject.js:25:10\nrun@https://oc.app/main.js:1:2";
+        // an extension frame further up the stack does not make it the extension's error
+        const ours = new Error("boom");
+        ours.stack =
+            "Error: boom\n" +
+            "    at fn (https://oc.app/main.js:1:2)\n" +
+            "    at hook (chrome-extension://abc/inject.js:1:2)";
+
+        expect(shouldReportError(v8)).toBe(false);
+        expect(shouldReportError(gecko)).toBe(false);
+        expect(shouldReportError(ours)).toBe(true);
     });
 });
 
@@ -70,5 +155,54 @@ describe("requiresLogout", () => {
         expect(requiresLogout(undefined)).toBe(false);
         expect(requiresLogout(null)).toBe(false);
         expect(requiresLogout("SessionExpiryError")).toBe(false);
+    });
+});
+
+// Rollbar's checkIgnore path only has the exception class and message, so this must agree with
+// the object-based filter rule for rule
+describe("shouldReportMessage", () => {
+    test("silences session teardown and environment noise by name", () => {
+        expect(shouldReportMessage(SESSION_EXPIRY_ERROR_NAME, "")).toBe(false);
+        expect(shouldReportMessage(INVALID_DELEGATION_ERROR_NAME, "")).toBe(false);
+        expect(shouldReportMessage("AnonymousOperationError", "")).toBe(false);
+        expect(shouldReportMessage("AbortError", "The operation was aborted")).toBe(false);
+        expect(shouldReportMessage("QuotaExceededError", "")).toBe(false);
+    });
+
+    test("silences gateway 502-504 but keeps 500 for an HttpError", () => {
+        const http = (status: number) =>
+            `HTTP request failed:\n  Status: ${status} (Service Unavailable)`;
+        expect(shouldReportMessage("HttpError", http(502))).toBe(false);
+        expect(shouldReportMessage("HttpError", http(503))).toBe(false);
+        expect(shouldReportMessage("HttpError", http(504))).toBe(false);
+        expect(shouldReportMessage("HttpError", http(500))).toBe(true);
+        // the status is only meaningful on an HttpError
+        expect(shouldReportMessage("Error", http(503))).toBe(true);
+    });
+
+    test("silences browser network failures only for the browser's own TypeError", () => {
+        expect(shouldReportMessage("TypeError", "Failed to fetch")).toBe(false);
+        expect(shouldReportMessage("TypeError", "Load failed")).toBe(false);
+        expect(shouldReportMessage("Error", "Failed to fetch the thing")).toBe(true);
+        // Tauri's reqwest failure is not a TypeError
+        expect(shouldReportMessage("Error", "error decoding response body")).toBe(false);
+    });
+
+    test("silences environment noise and expected access races by message", () => {
+        expect(
+            shouldReportMessage("", "ResizeObserver loop completed with undelivered notifications"),
+        ).toBe(false);
+        expect(
+            shouldReportMessage(
+                "Error",
+                'Events response error: {"kind":"error","code":103,"message":null}',
+            ),
+        ).toBe(false);
+    });
+
+    test("reports everything else", () => {
+        expect(shouldReportMessage("TypeError", "Cannot read properties of undefined")).toBe(true);
+        expect(shouldReportMessage("", "something unexpected")).toBe(true);
+        expect(shouldReportMessage("Error", 'Events response error: {"code":999}')).toBe(true);
     });
 });

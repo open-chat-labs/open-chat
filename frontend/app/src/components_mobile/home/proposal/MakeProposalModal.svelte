@@ -552,7 +552,7 @@
                     <Column>
                         {#if summaryPreview}
                             <Row
-                                background={ColourVars.textTertiary}
+                                background={ColourVars.inputBackground}
                                 padding={["md", "xl", "xs", "xl"]}
                                 borderRadius={"xxl"}
                                 height={{ size: "12rem" }}
@@ -786,7 +786,7 @@
         <!-- Footer -->
         <Column gap={"lg"} padding={["zero", "md"]}>
             {#if (selectedProposalType === "register_external_achievement" || selectedProposalType === "add_token") && step === 2}
-                <Body colour={insufficientFundsForPayment ? "error" : "textSecondary"}>
+                <Body colour={insufficientFundsForPayment ? "validationError" : "textSecondary"}>
                     <Translatable
                         resourceKey={i18nKey(
                             "proposal.maker." +
@@ -806,7 +806,7 @@
                 </Body>
             {/if}
             {#if depositMessage !== undefined}
-                <Body colour={depositError ? "error" : "textSecondary"}>
+                <Body colour={depositError ? "validationError" : "textSecondary"}>
                     <Translatable resourceKey={depositMessage} />
                 </Body>
             {/if}

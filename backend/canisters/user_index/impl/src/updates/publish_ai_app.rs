@@ -78,7 +78,7 @@ async fn publish_ai_app_impl(args: Args) -> Response {
         user_index_canister_id: expected_user_index,
         app_id: app.id,
         app_revision: verified_revision,
-        owner: app.owner.into(),
+        owner: app.owner.as_principal(),
         canonical_name: canonical_name.clone(),
         manifest: app.manifest.clone(),
     };
@@ -93,7 +93,7 @@ async fn publish_ai_app_impl(args: Args) -> Response {
         user_index_canister_id: expected_user_index,
         app_id: app.id,
         app_revision: verified_revision,
-        owner: app.owner.into(),
+        owner: app.owner.as_principal(),
         canonical_name,
         app_canister_id,
         inbox_canister_id,
@@ -204,6 +204,23 @@ mod tests {
         let mut denied = response(expected.clone());
         denied.vouched = false;
         assert!(!response_vouches_for(&expected, &denied));
+    }
+
+    #[test]
+    fn indexed_owner_cannot_be_replaced_by_another_user_in_the_same_canister() {
+        let host = candid::Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let owner = types::UserId::new_indexed(host, 1);
+        let other = types::UserId::new_indexed(host, 2);
+        let mut expected = expected_binding();
+        expected.owner = owner.as_principal();
+        assert!(response_vouches_for(&expected, &response(expected.clone())));
+        for substitute in [other.as_principal(), host] {
+            let mut changed = expected.clone();
+            changed.owner = substitute;
+            assert!(!response_vouches_for(&expected, &response(changed)));
+        }
+        assert!(can_publish_test_mode_app(true, false, Some(owner), owner));
+        assert!(!can_publish_test_mode_app(true, false, Some(other), owner));
     }
 
     #[test]

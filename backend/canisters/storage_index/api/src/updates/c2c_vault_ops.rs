@@ -16,6 +16,15 @@ pub enum VaultOp {
     SetLegalHold(SetLegalHoldOp),
     Destroy(DestroyOp),
     SetReviewers(Vec<VaultReviewer>),
+    // The off-chain NCA reporting service's principal, broadcast to every bucket together
+    // with the OC public key the buckets need to verify vault-export tokens
+    SetAuthorityReporter(SetAuthorityReporterOp),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct SetAuthorityReporterOp {
+    pub principal: Option<Principal>,
+    pub oc_public_key_pem: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -55,12 +64,23 @@ pub struct ApplyVerdictOp {
 pub struct SetLegalHoldOp {
     pub blob_reference: BlobReference,
     pub legal_hold: bool,
+    // The preservation request the hold was applied under; recorded in the bucket's vault log
+    // so the chain of custody shows WHY the evidence was held, not merely that it was.
+    // Option so an op from an older user_index still decodes.
+    #[serde(default)]
+    pub reference: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DestroyOp {
     pub blob_reference: BlobReference,
     pub le_request_ref: String,
+    // The two operators behind the dual-authorized destruction (#9136); Option so an op from
+    // an older user_index still decodes
+    #[serde(default)]
+    pub proposed_by: Option<UserId>,
+    #[serde(default)]
+    pub confirmed_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

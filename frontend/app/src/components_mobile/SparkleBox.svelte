@@ -18,12 +18,12 @@
 
 <SparkleBoxOutline>
     <Column gap="xs">
-        <Subtitle fontWeight={"bold"} colour={"primaryLight"}>
+        <Subtitle fontWeight={"bold"} colour={"primaryAccent"}>
             {@render title()}
         </Subtitle>
 
         {#if body}
-            <BodySmall colour={"primaryLight"}>
+            <BodySmall colour={"primaryAccent"}>
                 {@render body()}
             </BodySmall>
         {/if}

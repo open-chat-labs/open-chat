@@ -61,9 +61,9 @@
             padding="md"
             borderRadius="md"
             crossAxisAlignment="center"
-            background={ColourVars.background0}>
+            background={ColourVars.surface0}>
             <Column>
-                <Subtitle fontWeight="bold">
+                <Subtitle fontWeight="bold" colour="textPrimary">
                     {#if me}
                         <Markdown text={`@UserId(${participantUserId})`} inline={true} />
                     {:else}
@@ -86,17 +86,17 @@
         gap="lg"
         borderRadius="md"
         padding="md"
-        background={ColourVars.background0}
+        background={ColourVars.surface0}
         crossAxisAlignment="center">
         <Avatar size={"md"} url={tokenState.logo} />
         <Column width="fill">
-            <Subtitle fontWeight="bold">{tokenState.symbol}</Subtitle>
+            <Subtitle fontWeight="bold" colour="textPrimary">{tokenState.symbol}</Subtitle>
             <Body colour="textSecondary" fontWeight="bold" maxLines={1}>
                 {tokenState.token.name}
             </Body>
         </Column>
         <Column width="hug">
-            <Subtitle fontWeight="bold" align="end">
+            <Subtitle fontWeight="bold" align="end" colour="textPrimary">
                 {tokenState.formatTokens(content.transfer.amountE8s)}
             </Subtitle>
             <Body colour="primary" fontWeight="bold" align="end">
@@ -122,7 +122,7 @@
 
 {#snippet draftView()}
     <Column supplementalClass="send_tx_draft" padding="xs">
-        <Column padding="xs" gap="xs" borderRadius="lg" background={ColourVars.background2}>
+        <Column padding="xs" gap="xs" borderRadius="lg" background={ColourVars.surface2}>
             <Row
                 supplementalClass="tx_header"
                 gap={"xs"}
@@ -140,9 +140,9 @@
                 borderRadius={["md", "md", "lg", "lg"]}
                 crossAxisAlignment={"center"}
                 padding={["sm", "lg", "sm", "sm"]}
-                background={ColourVars.background0}>
-                <Alert size={"1.5rem"} color={ColourVars.warning} />
-                <BodySmall colour={"warning"}>
+                background={ColourVars.surface0}>
+                <Alert size={"1.5rem"} color={ColourVars.validationWarning} />
+                <BodySmall colour={"validationWarning"}>
                     <Translatable
                         resourceKey={i18nKey("tokenTransfer.warning", {
                             token: tokenState.symbol,
@@ -159,7 +159,7 @@
             gap={"xs"}
             padding={me ? "xs" : "zero"}
             borderRadius={me ? ["lg", "md", "md", "md"] : "zero"}
-            background={me ? ColourVars.background2 : undefined}>
+            background={me ? ColourVars.surface2 : undefined}>
             <Row width="fill" mainAxisAlignment="end" padding={["xs", "xs", "xxs"]}>
                 <BodySmall colour="primary" fontWeight="bold" align="end">
                     <Translatable

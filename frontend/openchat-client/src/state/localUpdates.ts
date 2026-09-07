@@ -696,6 +696,7 @@ export class GlobalLocalState {
             () => new MessageLocalUpdates(),
             `${functionName}_${messageId}`,
             timeout,
+            (upd) => upd.isEmpty(),
         );
     }
 
@@ -714,6 +715,7 @@ export class GlobalLocalState {
             () => new CommunitySummaryUpdates(),
             `${functionName}_${id.communityId}`,
             timeout,
+            (upd) => upd.isEmpty(),
         );
     }
 
@@ -728,6 +730,8 @@ export class GlobalLocalState {
             chatSummaryLocalUpdates,
             () => new ChatSummaryUpdates(),
             `${functionName}_${chatIdentifierToString(id)}`,
+            undefined,
+            (upd) => upd.isEmpty(),
         );
     }
 

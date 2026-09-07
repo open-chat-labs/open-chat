@@ -19,6 +19,7 @@ import {
     CommunityMap,
     mapOptionUpdate,
 } from "@shared";
+import { mergeMentions } from "./chat";
 import { toRecord } from "./list";
 
 export function mergeCommunities(
@@ -236,7 +237,7 @@ function mergeChannelUpdates(
                 mentions:
                     c === undefined
                         ? channel.membership.mentions
-                        : [...(c.membership?.mentions ?? []), ...channel.membership.mentions],
+                        : mergeMentions(c.membership?.mentions ?? [], channel.membership.mentions),
                 role: c?.membership?.myRole ?? channel.membership.role,
                 latestThreads: mergeThreads(
                     channel.membership.latestThreads,
@@ -271,7 +272,8 @@ function mergeThreads(
     unfollowedThreads: number[],
     readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
-    const initial = current.filter((t) => !unfollowedThreads.includes(t.threadRootMessageIndex));
+    const unfollowed = new Set(unfollowedThreads);
+    const initial = current.filter((t) => !unfollowed.has(t.threadRootMessageIndex));
     const threadsRecord = toRecord(initial, (t) => t.threadRootMessageIndex);
 
     for (const groupUpdate of communityCanisterUpdates) {

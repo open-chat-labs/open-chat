@@ -149,14 +149,14 @@
                 public: chat.public,
                 frozen: chat.frozen,
                 members: [],
-                permissions: { ...chat.permissions },
+                permissions: structuredClone(chat.permissions),
                 rules: { ...rules, newVersion: false },
                 avatar: {
                     blobReference: chat.blobReference,
                     blobUrl: chat.blobUrl,
                     blobData: chat.blobData,
                 },
-                gateConfig: { ...chat.gateConfig },
+                gateConfig: structuredClone(chat.gateConfig),
                 level: chat.level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,
@@ -204,7 +204,7 @@
 
 <Container
     closeMenuOnScroll
-    background={ColourVars.background0}
+    background={ColourVars.surface0}
     height={"fill"}
     direction={"vertical"}
 >

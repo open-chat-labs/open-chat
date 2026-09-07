@@ -184,7 +184,7 @@
         {isPreview}
     />
 {:else if content.kind === "prize_winner_content"}
-    <PrizeWinnerContent {content} />
+    <PrizeWinnerContent {content} {intersecting} />
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {senderId} {reply} {edited} {onRegisterVote} />
 {:else if content.kind === "action_card_content"}

@@ -80,7 +80,7 @@
             rules.push(".search-row { padding-left: 6rem; }");
         }
         rules.push(
-            "#skintone-list { background-color: var(--background-2); border-radius: var(--rad-circle); box-shadow: var(--menu-sh); }",
+            "#skintone-list { background-color: var(--surface-2); border-radius: var(--rad-circle); box-shadow: var(--menu-sh); }",
         );
 
         return rules.join("\n");
@@ -184,7 +184,7 @@
         --input-font-color: var(--text-primary);
         --input-font-size: var(--typo-body-sz);
         --input-line-height: var(--typo-body-lh);
-        --input-border-color: var(--text-tertiary);
+        --input-border-color: var(--text-on-disabled-surface);
         --input-border-radius: var(--rad-circle);
         --input-padding: var(--sp-sm) var(--sp-lg);
         --indicator-color: var(--primary);

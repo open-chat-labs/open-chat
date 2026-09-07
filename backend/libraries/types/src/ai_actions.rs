@@ -158,7 +158,8 @@ pub fn canonical_ai_app_card_content_commitment_bytes_v1(value: &AiAppCardConten
 
     let mut out = Vec::new();
     out.extend_from_slice(CARD_CONTENT_CANONICAL_PREFIX_V1);
-    put_principal(&mut out, value.user_id.into())?;
+    // Commit the user's wire identity, not the holding canister shared by indexed users.
+    put_principal(&mut out, value.user_id.as_principal())?;
     match value.chat {
         Chat::Direct(chat_id) => {
             out.push(0);
@@ -657,6 +658,34 @@ mod card_content_commitment_tests {
             hex::decode(BYTES_HEX).unwrap()
         );
         assert_eq!(hash(&fixture()).as_slice(), hex::decode(HASH_HEX).unwrap());
+    }
+
+    #[test]
+    fn indexed_users_in_the_same_canister_have_distinct_exact_commitments() {
+        let canister_id = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 42, 1, 1]);
+        let mut commitments = std::collections::HashSet::new();
+        let mut users = vec![UserId::new(canister_id)];
+        users.extend([1, 2, crate::user::MAX_USER_INDEX].map(|index| UserId::new_indexed(canister_id, index)));
+
+        for user_id in users {
+            assert_eq!(user_id.canister_id(), canister_id);
+            let mut value = fixture();
+            value.user_id = user_id;
+            let canonical = canonical_ai_app_card_content_commitment_bytes_v1(&value).unwrap();
+            let length_offset = CARD_CONTENT_CANONICAL_PREFIX_V1.len();
+            let identity_offset = length_offset + 4;
+            let identity_length = u32::from_be_bytes(canonical[length_offset..identity_offset].try_into().unwrap()) as usize;
+            assert_eq!(identity_length, user_id.as_slice().len());
+            assert_eq!(
+                &canonical[identity_offset..identity_offset + identity_length],
+                user_id.as_slice(),
+                "the canonical identity must retain the exact user index"
+            );
+            assert!(
+                commitments.insert(hash(&value)),
+                "a different user must not reuse a card commitment"
+            );
+        }
     }
 
     #[test]

@@ -58,7 +58,7 @@
         width: 1.5rem;
         height: 1.5rem;
         border-radius: var(--rad-circle);
-        border: var(--bw-thick) solid var(--disabled-button);
+        border: var(--bw-thick) solid var(--surface-disabled);
         display: flex;
         align-items: center;
         justify-content: center;

@@ -674,7 +674,7 @@
             onclick={() => menuItemOnClickHandler(title)}
         >
             {#snippet icon(color)}
-                {@render chooseIcon(title, danger ? ColourVars.error : color)}
+                {@render chooseIcon(title, danger ? ColourVars.validationError : color)}
             {/snippet}
         </IconButton>
     {:else}
@@ -682,7 +682,7 @@
         {@const size = $iconSize}
         <MenuItem {danger} onclick={() => menuItemOnClickHandler(title)}>
             {#snippet icon()}
-                {@render chooseIcon(title, danger ? ColourVars.error : color, size)}
+                {@render chooseIcon(title, danger ? ColourVars.validationError : color, size)}
             {/snippet}
             <Translatable resourceKey={i18nKey(menuItemTitleToKey(title))} />
         </MenuItem>

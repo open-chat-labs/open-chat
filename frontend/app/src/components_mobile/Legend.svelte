@@ -33,6 +33,6 @@
 
 <style lang="scss">
     .required {
-        color: var(--error);
+        color: var(--validation-error);
     }
 </style>

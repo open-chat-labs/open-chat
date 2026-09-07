@@ -6,6 +6,10 @@ export class CommunitySummaryUpdates {
     displayName: OptionUpdate<string> = undefined;
     rulesAccepted?: boolean;
     index?: number;
+
+    isEmpty(): boolean {
+        return Object.values(this).every((v) => v === undefined);
+    }
 }
 
 export const communitySummaryLocalUpdates = writable<CommunityMap<CommunitySummaryUpdates>>(

@@ -3,6 +3,7 @@ use crate::model::reported_messages::ReportedMessage;
 use crate::timer_job_types::{SetUserSuspended, TimerJob, UnsuspendUser};
 use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
 use fire_and_forget_handler::FireAndForgetHandler;
+use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use rand::RngExt;
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_index_canister::c2c_vault_ops::{
@@ -11,8 +12,8 @@ use storage_index_canister::c2c_vault_ops::{
 use tracing::error;
 use types::{BlobReference, Milliseconds};
 use types::{
-    CanisterId, ChannelId, Chat, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
-    ModerationReportStatus, SuspensionDuration, TimestampMillis, UserId,
+    CanisterId, ChannelId, Chat, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
+    ModerationReportStatus, SuspensionDuration, TextContent, TimestampMillis, UserId,
 };
 
 const MAX_EXCERPT_LENGTH: usize = 500;
@@ -33,6 +34,16 @@ pub struct ModerationAlert {
     pub auto_sanctioned: bool,
     pub content_excerpt: Option<String>,
     pub blob_references: Vec<BlobReference>,
+    // Present when the detection was a media hash match rather than the text classifier
+    pub media_matches: Vec<types::MediaScanMatch>,
+    // Set when the report is born already owing an authority report (a blocked attempt on
+    // adjudicated content) - the card shows it without waiting for a status update
+    pub authority_report: Option<types::AuthorityReportState>,
+    // True for blocked-attempt reports: the card must not offer verdict actions (I8)
+    pub is_blocked_attempt: bool,
+    // Pending for ordinary reports; a blocked attempt on adjudicated content is born resolved
+    // and its card must not invite a verdict
+    pub status: ModerationReportStatus,
     pub timestamp: TimestampMillis,
 }
 
@@ -62,9 +73,11 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
             .filter(|e| !e.trim().is_empty())
             .map(|e| e.chars().take(MAX_EXCERPT_LENGTH).collect()),
         blob_references: alert.blob_references,
+        media_matches: alert.media_matches,
+        is_blocked_attempt: alert.is_blocked_attempt,
         reported_at: alert.timestamp,
-        status: ModerationReportStatus::Pending,
-        authority_report: None,
+        status: alert.status,
+        authority_report: alert.authority_report,
     };
 
     if let Some(report_index) = alert.report_index {
@@ -88,6 +101,99 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
 
 // Posts a plain-text OC-bot notice into the internal moderation channel: for alarms which
 // have no reported message to anchor a report card to (eg. a re-upload of known CSAM content)
+// Operator functions alert the OTHER platform operators directly, rather than posting to the
+// internal moderation channel. Four reasons: they are peer oversight, so the audience is the
+// operators rather than the moderators; the channel is itself configured by an operator
+// function, so relying on it means the alerts are invisible until (and unless) it has been
+// set up; delivery is via the retried event queue rather than fire-and-forget; and the
+// operator set is DAO-governed (add_platform_operator is proposal-only), so an operator whose
+// key is compromised cannot redirect these messages away from their colleagues.
+//
+// The acting operator is skipped - they know what they just did, and excluding them keeps the
+// message unambiguously "one of your colleagues did this".
+pub fn notify_other_platform_operators(text: String, state: &mut RuntimeState) {
+    let caller = state.env.caller();
+    let acting = state.data.users.get_by_principal(&caller).map(|u| u.user_id);
+    let operators: Vec<UserId> = state
+        .data
+        .platform_operators
+        .iter()
+        .copied()
+        .filter(|u| Some(*u) != acting)
+        .collect();
+    for user_id in operators {
+        state.push_event_to_local_user_index(
+            user_id,
+            UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                user_id,
+                thread_root_message_id: None,
+                content: MessageContentInitial::Text(TextContent { text: text.clone() }),
+                mentioned: Vec::new(),
+            })),
+        );
+    }
+}
+
+// Rate-limits blocked-attempt notices per anchor report. Unsanctioned attempts are free to
+// generate (an assertion-pinned hash can be "attempted" endlessly with fresh file ids), so
+// per-attempt notices would let anyone flood the moderation channel. The attempts stay
+// counted (I14): the next posted notice carries the suppressed tally.
+pub fn post_throttled_blocked_attempt_notice(
+    report_index: u64,
+    uploader: candid::Principal,
+    text: String,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
+    const NOTICE_THROTTLE: types::Milliseconds = constants::HOUR_IN_MS;
+    const MAX_THROTTLE_ENTRIES: usize = 10_000;
+    // Bounded HARD: dropping inert (out-of-window) entries first is free, but 10k distinct
+    // in-window keys are possible, so the oldest are evicted until under the cap - an evicted
+    // key's next notice posts immediately, which only errs towards visibility
+    if state.data.blocked_attempt_notice_throttle.len() > MAX_THROTTLE_ENTRIES {
+        state
+            .data
+            .blocked_attempt_notice_throttle
+            .retain(|_, (last, _)| now.saturating_sub(*last) < NOTICE_THROTTLE);
+        let excess = state
+            .data
+            .blocked_attempt_notice_throttle
+            .len()
+            .saturating_sub(MAX_THROTTLE_ENTRIES);
+        if excess > 0 {
+            let mut by_age: Vec<((u64, candid::Principal), TimestampMillis)> = state
+                .data
+                .blocked_attempt_notice_throttle
+                .iter()
+                .map(|(k, (last, _))| (*k, *last))
+                .collect();
+            by_age.sort_by_key(|(_, last)| *last);
+            for (key, _) in by_age.into_iter().take(excess) {
+                state.data.blocked_attempt_notice_throttle.remove(&key);
+            }
+        }
+    }
+    // Keyed per (report, uploader): one offender's flood must not consume another offender's
+    // only notice - I14 requires a trace naming each offender
+    let entry = state
+        .data
+        .blocked_attempt_notice_throttle
+        .entry((report_index, uploader))
+        .or_default();
+    if now.saturating_sub(entry.0) >= NOTICE_THROTTLE {
+        let suppressed = entry.1;
+        *entry = (now, 0);
+        let text = if suppressed > 0 {
+            format!("{text}\n\n({suppressed} further attempts were tallied since the previous notice.)")
+        } else {
+            text
+        };
+        post_moderation_notice(text, state);
+    } else {
+        entry.1 = entry.1.saturating_add(1);
+    }
+}
+
 pub fn post_moderation_notice(text: String, state: &mut RuntimeState) {
     let Some((community_id, channel_id)) = state.data.internal_moderation_channel else {
         error!("Moderation notice raised but no internal moderation channel is configured");
@@ -149,8 +255,10 @@ pub fn update_moderation_alert_authority_report(
         return;
     };
 
-    // The current status is always included (never None): a not-yet-upgraded community can
-    // then still decode the update, merely dropping the unknown authority_report field
+    // The current status is always included (never None). NB: a community which pre-dates a
+    // given AuthorityReportState variant traps on decoding it (msgpack rejects an unknown enum
+    // variant - it is not an unknown field which would simply be dropped), so the community
+    // canister must be released before the user_index whenever a variant is added
     let args = community_canister::c2c_update_moderation_report_status::Args {
         channel_id,
         message_id,
@@ -341,41 +449,73 @@ fn delete_group_message(
     );
 }
 
-// Suspends the sender of CSAM indefinitely
-pub fn suspend_sender(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+// Suspends the sender of CSAM indefinitely. `caused_by_report` = the report whose DETECTION
+// caused this (the sanction then evaporates if the report is resolved before the suspension
+// commits, I1b); None when the sanction is verdict-backed and must survive resolution.
+pub fn suspend_sender(sender: UserId, caused_by_report: Option<u64>, now: TimestampMillis, state: &mut RuntimeState) -> bool {
     suspend(
         sender,
         None,
         "The message depicts, promotes or attempts to normalize child sexual abuse".to_string(),
+        caused_by_report,
         now,
         state,
-    );
+    )
+}
+
+// The provisional suspension for a PRE-VERDICT blocked attempt: the reason the user sees on
+// the suspension notice must not assert confirmed CSAM about content still under review (I21)
+pub fn suspend_attempter_pending_review(
+    user_id: UserId,
+    attempt_report_index: u64,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) -> bool {
+    suspend(
+        user_id,
+        None,
+        "Content you attempted to post matches content under review as suspected child sexual abuse material".to_string(),
+        Some(attempt_report_index),
+        now,
+        state,
+    )
 }
 
 // Suspends the sender of a message which a platform moderator has judged to break the platform
 // rules: for a day, or indefinitely for repeat offenders
-pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) {
+pub fn suspend_sender_for_upheld_violation(sender: UserId, now: TimestampMillis, state: &mut RuntimeState) -> bool {
     let (duration, reason) = if in_breach_count(sender, state) > 2 {
         (None, "Multiple violations of the platform rules".to_string())
     } else {
         (Some(DAY_IN_MS), "Violation of platform rules".to_string())
     };
 
-    suspend(sender, duration, reason, now, state);
+    // Verdict-backed: survives its report being resolved (it IS the resolution's sanction)
+    suspend(sender, duration, reason, None, now, state)
 }
 
-fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: TimestampMillis, state: &mut RuntimeState) {
-    let Some(user) = state.data.users.get_by_user_id(&sender) else {
+// I1a lives HERE, in the primitive, not at call sites: automation may only STRICTLY ESCALATE
+// an existing suspension - an indefinite one over a timed one - and never lifts, matches, or
+// downgrades one (a timed manual suspension must not shield a user from the indefinite CSAM
+// sanction, but nothing automated ever weakens what a human imposed; the only path that later
+// lifts the escalated suspension is itself a human moderator's dismissal). Returns whether
+// the suspension was enqueued, so callers never claim a sanction which was not applied
+// (I5/I21).
+fn suspend(
+    sender: UserId,
+    duration: Option<u64>,
+    reason: String,
+    caused_by_report: Option<u64>,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) -> bool {
+    if state.data.users.get_by_user_id(&sender).is_none() {
         error!(%sender, "Cannot suspend message sender, user not found");
-        return;
+        return false;
     };
 
-    if user
-        .suspension_details
-        .as_ref()
-        .is_some_and(|d| matches!(d.duration, SuspensionDuration::Indefinitely))
-    {
-        return;
+    if !automated_suspension_applies(sender, duration, state) {
+        return false;
     }
 
     state.data.timer_jobs.enqueue_job(
@@ -385,10 +525,35 @@ fn suspend(sender: UserId, duration: Option<u64>, reason: String, now: Timestamp
             reason,
             suspended_by: OPENCHAT_BOT_USER_ID,
             attempt: 0,
+            downgrade: false,
+            caused_by_report,
         }),
         now,
         now,
     );
+    true
+}
+
+// The I1a escalation rule as a predicate: an automated suspension may be applied over one
+// already in force ONLY when it strictly escalates it (indefinite over timed), never
+// laterally or downwards, whoever imposed the existing one.
+//
+// Evaluated TWICE: once when the job is enqueued (`suspend`, so the caller's messaging can
+// track what was applied - I5) and again when it commits (`suspend_user::commit`). The write
+// lands after an inter-canister call to the user canister, so an enqueue-time check on its
+// own is a check-then-act across an await: a manual suspension applied in the gap would be
+// silently overwritten by the automated one, taking its reason and its attribution with it,
+// and leaving it liftable by a later dismissal - exactly the I1a failure, through the one
+// door the primitive cannot close by itself.
+pub fn automated_suspension_applies(user_id: UserId, duration: Option<u64>, state: &RuntimeState) -> bool {
+    let Some(user) = state.data.users.get_by_user_id(&user_id) else {
+        return false;
+    };
+
+    match user.suspension_details.as_ref() {
+        None => true,
+        Some(details) => duration.is_none() && !matches!(details.duration, SuspensionDuration::Indefinitely),
+    }
 }
 
 // Restores a message after a Dismissed verdict on an automated sanction (receiver implemented
@@ -533,6 +698,16 @@ fn quarantine_ops(report_index: u64, report: &ReportedMessage, flags: u32, now: 
 }
 
 pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, report_index: u64, state: &mut RuntimeState) {
+    // The bucket refuses a release while a legal hold stands and remembers it as pending, so
+    // that clearing the hold performs it. Mirror that here on EVERY held report sharing one of
+    // these blobs, not just the report being released: the bucket's hold is per blob record,
+    // so when a blob is evidence in two reports, clearing a hold placed via the OTHER report
+    // is what would perform this deferred release and destroy the evidence. Marking that
+    // report release_pending is what forces its hold-clear through dual authorization (#9136)
+    for held in state.data.reported_messages.reports_with_hold_intersecting(blob_references) {
+        state.data.reported_messages.set_release_pending(held, true);
+    }
+
     let ops = blob_references
         .iter()
         .cloned()
@@ -549,7 +724,7 @@ pub fn unquarantine_blobs(blob_references: &[BlobReference], moderator: UserId, 
 
 // Sets or clears a legal hold on a report's vaulted blobs. While held, retention expiry never
 // deletes them and a release is deferred rather than performed.
-pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool, state: &mut RuntimeState) {
+pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool, reference: String, state: &mut RuntimeState) {
     let ops = blob_references
         .iter()
         .cloned()
@@ -557,6 +732,7 @@ pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool,
             VaultOp::SetLegalHold(SetLegalHoldOp {
                 blob_reference,
                 legal_hold,
+                reference: Some(reference.clone()),
             })
         })
         .collect();
@@ -564,8 +740,15 @@ pub fn set_vault_legal_hold(blob_references: &[BlobReference], legal_hold: bool,
 }
 
 // Destroys a report's vaulted blobs on a law enforcement request, overriding the retention
-// clock and any legal hold. The vault log entry survives the record.
-pub fn destroy_vault_evidence(blob_references: &[BlobReference], le_request_ref: String, state: &mut RuntimeState) {
+// clock. The bucket refuses destruction while a legal hold stands; the callers check first so
+// a refused destruction is never reported as done. The vault log entry survives the record.
+pub fn destroy_vault_evidence(
+    blob_references: &[BlobReference],
+    le_request_ref: String,
+    proposed_by: UserId,
+    confirmed_by: UserId,
+    state: &mut RuntimeState,
+) {
     let ops = blob_references
         .iter()
         .cloned()
@@ -573,6 +756,8 @@ pub fn destroy_vault_evidence(blob_references: &[BlobReference], le_request_ref:
             VaultOp::Destroy(DestroyOp {
                 blob_reference,
                 le_request_ref: le_request_ref.clone(),
+                proposed_by: Some(proposed_by),
+                confirmed_by: Some(confirmed_by),
             })
         })
         .collect();
@@ -611,27 +796,80 @@ fn verdict_ops(
         .collect()
 }
 
+// Pushes the authority-reporter principal (the off-chain NCA reporting service), together
+// with the OC public key the buckets need to verify vault-export tokens, to every storage
+// bucket via the storage index
+pub fn sync_authority_reporter(state: &mut RuntimeState) {
+    let op = VaultOp::SetAuthorityReporter(storage_index_canister::c2c_vault_ops::SetAuthorityReporterOp {
+        principal: state.data.authority_reporter,
+        oc_public_key_pem: state.data.oc_key_pair.public_key_pem().to_string(),
+    });
+    send_vault_ops(vec![op], state);
+}
+
 // Pushes the current vault-reviewer principal set to the storage buckets (via the storage
-// index). Called on any change to the reviewer set, and on moderator-revocation cascade.
+// index). Called on any change to the reviewer set, on moderator-revocation cascade, and on
+// any suspension change touching a reviewer. A suspended reviewer is excluded: the
+// designation survives the suspension, but access to quarantined material does not.
 pub fn sync_vault_reviewers(state: &mut RuntimeState) {
     let reviewers = state
         .data
         .vault_reviewers
         .iter()
         .filter_map(|user_id| {
-            state.data.users.get_by_user_id(user_id).map(|u| VaultReviewer {
-                principal: u.principal,
-                user_id: *user_id,
-            })
+            state
+                .data
+                .users
+                .get_by_user_id(user_id)
+                .filter(|u| u.suspension_details.is_none())
+                .map(|u| VaultReviewer {
+                    principal: u.principal,
+                    user_id: *user_id,
+                })
         })
         .collect();
     send_vault_ops(vec![VaultOp::SetReviewers(reviewers)], state);
 }
 
+// A suspension must freeze EVERY privilege the account holds, not only its ordinary-user
+// abilities: without this, a suspended platform moderator kept chat-canister moderator powers
+// (deletes, joins), a suspended operator kept the dual-authorized action surfaces, and a
+// suspended vault reviewer could still export quarantined material. The role memberships
+// themselves are untouched - unsuspension restores exactly what the account still holds.
+// Called from both suspension commit paths (manual and automated) and from unsuspension.
+pub fn sync_suspended_privileges(user_id: UserId, suspended: bool, state: &mut RuntimeState) {
+    if state.data.platform_moderators.contains(&user_id) {
+        state.push_event_to_all_local_user_indexes(
+            UserIndexEvent::PlatformModeratorStatusChanged(local_user_index_canister::PlatformModeratorStatusChanged {
+                user_id,
+                is_platform_moderator: !suspended,
+            }),
+            None,
+        );
+    }
+    if state.data.platform_operators.contains(&user_id) {
+        state.push_event_to_all_local_user_indexes(
+            UserIndexEvent::PlatformOperatorStatusChanged(local_user_index_canister::PlatformOperatorStatusChanged {
+                user_id,
+                is_platform_operator: !suspended,
+            }),
+            None,
+        );
+    }
+    if state.data.vault_reviewers.contains(&user_id) {
+        sync_vault_reviewers(state);
+    }
+}
+
 // Lifts a suspension after a Dismissed verdict on an automated sanction. The sender is told
 // once the unsuspend has actually landed (the job owns the notification), so that a failed
 // reversal never produces a message claiming an unsuspension which did not happen.
-pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis, state: &mut RuntimeState) {
+// I1a in the primitive: automation only lifts what automation applied. Returns whether the
+// unsuspend was enqueued, so callers' messaging tracks reality (I5).
+pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis, state: &mut RuntimeState) -> bool {
+    if !suspension_is_automated(sender, state) {
+        return false;
+    }
     state.data.timer_jobs.enqueue_job(
         TimerJob::UnsuspendUser(UnsuspendUser {
             user_id: sender,
@@ -642,20 +880,28 @@ pub fn unsuspend_sender(sender: UserId, report_index: u64, now: TimestampMillis,
         now,
         now,
     );
+    true
 }
 
 // Replaces an indefinite CSAM suspension with the standard severity for an upheld (non-CSAM)
 // violation. Enqueues directly, bypassing the already-indefinitely-suspended guard in suspend()
 // since a downgrade is exactly what is intended here - but only when no OTHER report is still
 // keeping the sender sanctioned, since this verdict may only reverse its own report's severity.
+// Returns true if the downgrade was applied; false when another indefinite sanction stands
+// (callers must not then tell the user a temporary suspension was applied - I5/I21)
 pub fn downgrade_suspension_to_upheld_violation(
     sender: UserId,
     report_index: u64,
     now: TimestampMillis,
     state: &mut RuntimeState,
-) {
+) -> bool {
     if has_other_indefinite_sanction(sender, report_index, state) {
-        return;
+        return false;
+    }
+    // I1a in the primitive: a manual moderator suspension is never downgraded to the bot's
+    // standard severity, whichever call site asks
+    if has_manual_suspension(sender, state) {
+        return false;
     }
 
     let (duration, reason) = if in_breach_count(sender, state) > 2 {
@@ -671,10 +917,16 @@ pub fn downgrade_suspension_to_upheld_violation(
             reason,
             suspended_by: OPENCHAT_BOT_USER_ID,
             attempt: 0,
+            // This IS the deliberate replacement of an indefinite suspension with a lesser
+            // one, so the commit-time re-check applies the manual-suspension rule only.
+            // Verdict-backed, so it survives its report being resolved (I1b)
+            downgrade: true,
+            caused_by_report: None,
         }),
         now,
         now,
     );
+    true
 }
 
 fn in_breach_count(sender: UserId, state: &RuntimeState) -> usize {
@@ -718,6 +970,37 @@ pub fn has_other_indefinite_sanction(sender: UserId, except_report_index: u64, s
                 .any(|r| r.requires_indefinite_suspension())
         })
         .unwrap_or_default()
+}
+
+// True when the suspension currently in force was applied by the automated pipeline. The
+// reversal paths may only lift what automation applied: has_other_active_sanction cannot see
+// manual moderator suspensions, so without this check a dismissal could lift one (I1/I2)
+// True when a suspension is in force which automation did NOT apply: the automated paths
+// must neither replace nor downgrade it (I1a)
+pub fn has_manual_suspension(user_id: UserId, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .get_by_user_id(&user_id)
+        .and_then(|u| u.suspension_details.as_ref())
+        .is_some_and(|d| d.suspended_by != OPENCHAT_BOT_USER_ID)
+}
+
+pub fn is_suspended(user_id: UserId, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .get_by_user_id(&user_id)
+        .is_some_and(|u| u.suspension_details.is_some())
+}
+
+pub fn suspension_is_automated(user_id: UserId, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .get_by_user_id(&user_id)
+        .and_then(|u| u.suspension_details.as_ref())
+        .is_some_and(|d| d.suspended_by == OPENCHAT_BOT_USER_ID)
 }
 
 pub fn has_other_active_sanction(sender: UserId, except_report_index: u64, now: TimestampMillis, state: &RuntimeState) -> bool {

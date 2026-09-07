@@ -1,0 +1,186 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`groupEvents > aggregates joined/left events into a single aggregate event 1`] = `
+[
+  {
+    "group": [
+      [
+        {
+          "event": {
+            "blockLevelMarkdown": false,
+            "content": {
+              "kind": "text_content",
+              "text": "msg 1",
+            },
+            "deleted": false,
+            "edited": false,
+            "forwarded": false,
+            "kind": "message",
+            "messageId": 1n,
+            "messageIndex": 1,
+            "messagePreviews": [],
+            "ogPreviews": [],
+            "reactions": [],
+            "sender": "u1",
+            "tips": {},
+          },
+          "index": 1,
+          "timestamp": 1700000000000n,
+        },
+      ],
+      [
+        {
+          "event": {
+            "kind": "aggregate_common_events",
+            "messagesDeleted": [],
+            "rolesChanged": Map {},
+            "usersJoined": Set {
+              "a",
+              "b",
+            },
+            "usersLeft": Set {},
+          },
+          "index": 3,
+          "timestamp": 1700000000002n,
+        },
+      ],
+      [
+        {
+          "event": {
+            "blockLevelMarkdown": false,
+            "content": {
+              "kind": "text_content",
+              "text": "msg 5",
+            },
+            "deleted": false,
+            "edited": false,
+            "forwarded": false,
+            "kind": "message",
+            "messageId": 5n,
+            "messageIndex": 5,
+            "messagePreviews": [],
+            "ogPreviews": [],
+            "reactions": [],
+            "sender": "u1",
+            "tips": {},
+          },
+          "index": 5,
+          "timestamp": 1700000000004n,
+        },
+      ],
+    ],
+    "kind": "timeline_event_group",
+  },
+  {
+    "kind": "timeline_date",
+    "timestamp": 1700000000000n,
+  },
+]
+`;
+
+exports[`mergeEventsAndLocalUpdates > snapshot of a mixed merge 1`] = `
+[
+  {
+    "event": {
+      "blockLevelMarkdown": false,
+      "content": {
+        "kind": "text_content",
+        "text": "msg 1",
+      },
+      "deleted": false,
+      "edited": false,
+      "forwarded": false,
+      "kind": "message",
+      "messageId": 1n,
+      "messageIndex": 1,
+      "messagePreviews": [],
+      "ogPreviews": [],
+      "reactions": [],
+      "sender": "u1",
+      "tips": {},
+    },
+    "index": 1,
+    "timestamp": 1700000001000n,
+  },
+  {
+    "event": {
+      "kind": "member_joined",
+      "userId": "u2",
+    },
+    "index": 2,
+    "timestamp": 1700000002000n,
+  },
+  {
+    "event": {
+      "blockLevelMarkdown": false,
+      "content": {
+        "kind": "text_content",
+        "text": "msg 3",
+      },
+      "deleted": false,
+      "edited": false,
+      "forwarded": false,
+      "kind": "message",
+      "messageId": 3n,
+      "messageIndex": 3,
+      "messagePreviews": [],
+      "ogPreviews": [],
+      "reactions": [
+        {
+          "reaction": "👍",
+          "userIds": Set {
+            "me",
+          },
+        },
+      ],
+      "sender": "u2",
+      "tips": {},
+    },
+    "index": 3,
+    "timestamp": 1700000003000n,
+  },
+  {
+    "event": {
+      "blockLevelMarkdown": false,
+      "content": {
+        "kind": "blocked_content",
+      },
+      "deleted": false,
+      "edited": false,
+      "forwarded": false,
+      "kind": "message",
+      "messageId": 4n,
+      "messageIndex": 4,
+      "messagePreviews": [],
+      "ogPreviews": [],
+      "reactions": [],
+      "sender": "bad",
+      "tips": {},
+    },
+    "index": 4,
+    "timestamp": 1700000004000n,
+  },
+  {
+    "event": {
+      "blockLevelMarkdown": false,
+      "content": {
+        "kind": "text_content",
+        "text": "msg 5",
+      },
+      "deleted": false,
+      "edited": false,
+      "forwarded": false,
+      "kind": "message",
+      "messageId": 5n,
+      "messageIndex": 5,
+      "messagePreviews": [],
+      "ogPreviews": [],
+      "reactions": [],
+      "sender": "me",
+      "tips": {},
+    },
+    "index": 5,
+    "timestamp": 1700000005000n,
+  },
+]
+`;

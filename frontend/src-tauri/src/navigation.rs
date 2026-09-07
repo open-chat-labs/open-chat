@@ -12,7 +12,7 @@ pub fn mobile_on_navigation_handler(app_handle: &AppHandle, url: &Url) -> bool {
     let url_str = url.to_string();
 
     // Check if the nav url is local tauri domain!
-    if is_allowed_url(&url_str) {
+    if is_allowed_url(app_handle, &url_str) {
         return true;
     }
 
@@ -36,16 +36,35 @@ pub fn mobile_on_navigation_handler(app_handle: &AppHandle, url: &Url) -> bool {
 //
 // Only allow URLs that should be handled by the webview. If not, then either
 // an external app or a browser should be used.
-fn is_allowed_url(url_str: &str) -> bool {
+fn is_allowed_url(app_handle: &AppHandle, url_str: &str) -> bool {
     let Ok(url) = Url::parse(url_str) else {
         // URL is invalid!
         return false;
     };
 
+    // iOS serves the bundled app from the custom scheme itself
+    // (tauri://localhost), where Android uses http://tauri.localhost.
+    if url.scheme() == "tauri" {
+        return true;
+    }
+
     let host = match url.host_str() {
         Some(h) => h.to_lowercase(),
         None => return false,
     };
+
+    // In debug the webview loads the vite dev server (and iOS invokes this
+    // handler for the initial load too), so its host must be navigable.
+    #[cfg(debug_assertions)]
+    if let Some(dev_url) = &app_handle.config().build.dev_url
+        && dev_url
+            .host_str()
+            .is_some_and(|dev_host| dev_host.eq_ignore_ascii_case(&host))
+    {
+        return true;
+    }
+    #[cfg(not(debug_assertions))]
+    let _ = app_handle;
 
     // We only allow local webview navigation, everything else must open an
     // external app or a browser.

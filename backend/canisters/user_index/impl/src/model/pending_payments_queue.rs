@@ -43,5 +43,4 @@ pub enum PendingPaymentReason {
     Treasury,
     TopUpNeuron,
     Burn,
-    ReferralReward,
 }

@@ -36,7 +36,7 @@
                 candidateGroup.eventsTTL === undefined
                     ? "disabled"
                     : client.formatDuration(Number(candidateGroup.eventsTTL)),
-            colour: "warning",
+            colour: "validationWarning",
         });
         parts.push({ text: " // ", colour: "textPrimary" });
         parts.push({ text: "Rules", colour: "textSecondary" });
@@ -51,7 +51,7 @@
 <Container
     crossAxisAlignment={"center"}
     gap={"lg"}
-    background={ColourVars.background1}
+    background={ColourVars.surface1}
     borderRadius={"lg"}
     padding={"lg"}>
     <Avatar

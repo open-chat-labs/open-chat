@@ -111,9 +111,9 @@
             {@render title?.()}
             <Row gap="xs" crossAxisAlignment="center">
                 <Video
-                    color={me ? ColourVars.secondaryLight : ColourVars.primaryLight}
+                    color={me ? ColourVars.secondaryAccent : ColourVars.primaryAccent}
                     size="1.25rem" />
-                <ChatCaption colour={me ? "secondaryLight" : "primaryLight"}>
+                <ChatCaption colour={me ? "secondaryAccent" : "primaryAccent"}>
                     <Translatable
                         resourceKey={i18nKey(
                             `videoCall.${content.callType === "broadcast" ? "broadcastType" : "defaultType"}`,
@@ -129,7 +129,7 @@
         <Column
             padding={me ? "xs" : "zero"}
             borderRadius={["lg", "lg", "md", "md"]}
-            backgroundColor={ColourVars.background2}>
+            backgroundColor={ColourVars.surface2}>
             <!-- Details -->
             <Column gap="xs">
                 <!-- Title -->
@@ -166,7 +166,7 @@
                     padding={["sm", "md"]}
                     borderRadius="md"
                     crossAxisAlignment="center"
-                    backgroundColor={ColourVars.background0}>
+                    backgroundColor={ColourVars.surface0}>
                     {#each [...content.participants].slice(0, DISPLAYED_PARTICIPANTS) as participantId}
                         <Avatar
                             url={client.userAvatarUrl($allUsersStore.get(participantId.userId))}
@@ -221,7 +221,7 @@
 <style lang="scss">
     :global {
         .vc_participants > * {
-            border: var(--bw-thick) solid var(--background-0);
+            border: var(--bw-thick) solid var(--surface-0);
 
             &:not(:first-child) {
                 margin-left: -1rem;
@@ -236,7 +236,7 @@
             align-items: center;
             justify-content: center;
             border-radius: var(--rad-circle);
-            background-color: var(--background-2);
+            background-color: var(--surface-2);
         }
     }
 </style>

@@ -17,7 +17,7 @@
 <Sheet onDismiss={onClose}>
     <Column gap={"xl"} padding={"xl"}>
         <StatusCard
-            background={ColourVars.background0}
+            background={ColourVars.surface0}
             mode="warning"
             title={interpolate($_, title)}>
             {#snippet body()}

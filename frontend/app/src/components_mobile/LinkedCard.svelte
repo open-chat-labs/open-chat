@@ -24,17 +24,17 @@
     direction={"vertical"}
     gap={"sm"}
     onClick={disabled ? undefined : onClick}
-    background={ColourVars.background1}
+    background={ColourVars.surface1}
     padding={"lg"}>
     <Container direction={"vertical"} gap={"md"} padding={"md"}>
         <Container crossAxisAlignment={"center"} gap={"sm"}>
-            <Icon color={disabled ? ColourVars.primaryMuted : ColourVars.primary} />
-            <BodySmall colour={disabled ? "primaryMuted" : "primary"}>
+            <Icon color={disabled ? ColourVars.primarySurface : ColourVars.primary} />
+            <BodySmall colour={disabled ? "primarySurface" : "primary"}>
                 <Translatable resourceKey={title}></Translatable>
             </BodySmall>
             <ChevronRight color={ColourVars.primary} />
         </Container>
-        <Body colour={disabled ? "textTertiary" : "textPrimary"}>
+        <Body colour={disabled ? "textOnDisabledSurface" : "textPrimary"}>
             <Translatable resourceKey={info}></Translatable>
         </Body>
         {@render children?.()}

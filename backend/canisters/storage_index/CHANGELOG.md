@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2049](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2049-storage_index)] - 2026-08-31
+
+### Added
+
+- Hold and fan out *derived* CSAM hashes (declared sources of upheld transcodes) alongside verified ones, seeding new buckets with both ([#9254](https://github.com/open-chat-labs/open-chat/pull/9254))
+
+## [[2.0.2044](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2044-storage_index)] - 2026-08-26
+
+### Added
+
+- Relay `SetAuthorityReporter` to every bucket and seed each new bucket with it ([#9245](https://github.com/open-chat-labs/open-chat/pull/9245))
+
+## [[2.0.2031](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2031-storage_index)] - 2026-08-20
+
+### Added
+
+- Relay pending-quarantine blocked-attempt matches to the user_index ([#9162](https://github.com/open-chat-labs/open-chat/pull/9162))
+
+### Fixed
+
+- Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+
+## [[2.0.2010](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2010-storage_index)] - 2026-08-10
+
+### Changed
+
+- Legal hold ops carry the preservation request reference through to the owning bucket ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+### Changed
+
+- Vault destruction ops carry the proposing and confirming operators so the bucket can record both in its access log ([#9136](https://github.com/open-chat-labs/open-chat/issues/9136))
+
+## [[2.0.2005](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2005-storage_index)] - 2026-08-06
+
 ### Added
 
 - The CSAM hash denylist is held platform-wide and pushed to every bucket, including newly created ones, so content upheld as CSAM cannot be re-uploaded to another bucket ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))

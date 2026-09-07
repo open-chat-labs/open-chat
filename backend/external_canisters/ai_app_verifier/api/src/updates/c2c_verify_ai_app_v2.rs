@@ -295,8 +295,7 @@ pub struct Response {
 mod tests {
     use super::*;
     use types::{
-        AiActionCardRowTemplate, AiActionCardTemplate, AiActionDefinition, AiActionRecipientScope, AiAppSurface,
-        SurfaceDisplay, UserId,
+        AiActionCardRowTemplate, AiActionCardTemplate, AiActionDefinition, AiActionRecipientScope, AiAppSurface, SurfaceDisplay,
     };
 
     fn principal(value: u8) -> Principal {
@@ -308,7 +307,7 @@ mod tests {
             user_index_canister_id: principal(1),
             app_id: 7,
             app_revision: 99,
-            owner: UserId::from(principal(2)).into(),
+            owner: principal(2),
             canonical_name: "sampleapp".to_string(),
             manifest: AiAppManifest {
                 name: "Sample App".to_string(),

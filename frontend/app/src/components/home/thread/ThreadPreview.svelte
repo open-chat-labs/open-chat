@@ -18,7 +18,7 @@
         type ThreadPreview,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import EyeOffIcon from "svelte-material-icons/EyeOffOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -64,16 +64,15 @@
         avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
     });
 
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            if (syncDetails !== undefined) {
-                unreadCount = client.unreadThreadMessageCount(
-                    thread.chatId,
-                    threadRootMessageIndex,
-                    syncDetails.latestMessageIndex,
-                );
-            }
-        });
+    $effect(() => {
+        void $messagesRead;
+        if (syncDetails !== undefined) {
+            unreadCount = client.unreadThreadMessageCount(
+                thread.chatId,
+                threadRootMessageIndex,
+                syncDetails.latestMessageIndex,
+            );
+        }
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));

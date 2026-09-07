@@ -1,3 +1,18 @@
+<script module lang="ts">
+    import bash from "highlight.js/lib/languages/bash";
+    import css from "highlight.js/lib/languages/css";
+    import rust from "highlight.js/lib/languages/rust";
+    import typescript from "highlight.js/lib/languages/typescript";
+    import { createLowlight } from "lowlight";
+
+    // Register the same grammars as utils/markdown.ts rather than `common` (37 grammars)
+    const lowlight = createLowlight();
+    lowlight.register("typescript", typescript);
+    lowlight.register("rust", rust);
+    lowlight.register("bash", bash);
+    lowlight.register("css", css);
+</script>
+
 <script lang="ts">
     import { rtlStore } from "@src/stores/rtl";
     import { Editor, type Content, type JSONContent } from "@tiptap/core";
@@ -7,7 +22,6 @@
     import StarterKit from "@tiptap/starter-kit";
     import { isTouchOnlyDevice } from "component-lib";
     import "highlight.js/styles/base16/helios.css";
-    import { common, createLowlight } from "lowlight";
     import {
         allUsersStore,
         userGroupSummariesStore,
@@ -23,8 +37,6 @@
     import { markdownToDoc, nodeToMarkdown } from "./markdownConversion";
     import { GroupMentionExtension, UserMentionExtension } from "./mentionExtension";
     import { transformPastedHTML } from "./pasteTransform";
-
-    const lowlight = createLowlight(common);
 
     const client = getContext<OpenChat>("client");
 

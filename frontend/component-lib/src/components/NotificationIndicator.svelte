@@ -34,15 +34,15 @@
             transform-origin: 50%;
 
             &.border-primary {
-                box-shadow: 0 0 0 var(--border-width) var(--background-0);
+                box-shadow: 0 0 0 var(--border-width) var(--surface-0);
             }
 
             &.border-secondary {
-                box-shadow: 0 0 0 var(--border-width) var(--background-1);
+                box-shadow: 0 0 0 var(--border-width) var(--surface-1);
             }
 
             &.muted {
-                background: var(--disabled-button);
+                background: var(--surface-disabled);
             }
         }
     }

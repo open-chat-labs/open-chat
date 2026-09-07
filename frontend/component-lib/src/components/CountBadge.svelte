@@ -39,7 +39,7 @@
 
         &.muted {
             border: var(--bw-thin) solid transparent;
-            background: var(--text-tertiary);
+            background: var(--text-on-disabled-surface);
             color: var(--text-primary);
         }
 
@@ -57,7 +57,7 @@
         }
 
         &.additive_mode {
-            background: var(--text-tertiary);
+            background: var(--text-on-disabled-surface);
             color: var(--text-primary);
         }
     }

@@ -17,7 +17,7 @@
     padding={["sm", "zero"]}
     gap={"lg"}>
     <div class="lock">🔒</div>
-    <BodySmall colour={"textTertiary"} italic={true}>
+    <BodySmall colour={"textOnDisabledSurface"} italic={true}>
         <Translatable resourceKey={i18nKey(textKey)} />
     </BodySmall>
 </Container>
@@ -30,7 +30,7 @@
         width: toRem(48);
         height: toRem(48);
         border-radius: toRem(12);
-        background-color: var(--background-0);
+        background-color: var(--surface-0);
         font-size: toRem(20);
         flex-shrink: 0;
     }

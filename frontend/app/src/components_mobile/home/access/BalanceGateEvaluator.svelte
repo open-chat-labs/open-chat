@@ -51,7 +51,7 @@
             borderRadius={"md"}
             minHeight={"4rem"}
             gap={"md"}
-            background={ColourVars.background2}
+            background={ColourVars.surface2}
             padding={["md", "lg"]}>
             <Avatar url={tokenState.logo} />
             <Column width={"fill"}>
@@ -69,7 +69,7 @@
             width={{ size: "4rem" }}
             height={"fill"}
             borderRadius={"lg"}
-            background={ColourVars.background2}
+            background={ColourVars.surface2}
             padding={["sm", "md"]}>
             <QrCode size={"2rem"} color={ColourVars.textSecondary} />
         </Column>
@@ -99,8 +99,8 @@
 
         <Column gap={"sm"}>
             <StatusCard
-                borderColour={ColourVars.background2}
-                background={ColourVars.background0}
+                borderColour={ColourVars.surface2}
+                background={ColourVars.surface0}
                 mode={"warning"}
                 body={interpolate(
                     $_,
@@ -112,7 +112,7 @@
             </StatusCard>
             {#if gate.expiry !== undefined}
                 <StatusCard
-                    background={ColourVars.background2}
+                    background={ColourVars.surface2}
                     mode={"information"}
                     title={interpolate($_, i18nKey("This is a recurring check"))}>
                     {#snippet body()}

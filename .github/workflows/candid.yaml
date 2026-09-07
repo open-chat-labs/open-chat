@@ -2,17 +2,57 @@ on:
   pull_request:
     branches:
       - master
+      - codex/pr1-local-models
+  push:
+    branches:
+      - codex/pr1-local-models
+      - codex/pr2-app-chat-interfaces
+      - codex/pr2-clean-integration
+  workflow_dispatch:
 
-# If two events are triggered within a short time in the same PR, cancel the run of the oldest event
+permissions:
+  contents: read
+  pull-requests: read
+
+# Keep independent branches separate while cancelling obsolete runs of the same PR/ref.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 name: Validate candid files
 
 jobs:
+  # Frontend-only PRs have nothing here to check. The jobs below are required status checks, so
+  # they must still run on every PR (a workflow-level `paths:` filter would leave the checks
+  # pending and the PR unmergeable); instead they skip themselves when nothing they depend on
+  # changed. A skipped job satisfies branch protection.
+  #
+  # The filter must name every input of these jobs, not just Rust sources. The same block lives
+  # in backend.yaml, candid.yaml and benchmarks.yaml; keep the three identical.
+  changes:
+    name: detect backend changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - "**.rs"
+              - "**.toml"
+              - "**.did"
+              - "**/Cargo.lock"
+              - "canbench*.yml"
+              - "scripts/**"
+              - ".github/workflows/**"
+
   candid_syntax:
     name: validate candid syntax
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,6 +68,8 @@ jobs:
 
   candid_matches_rust:
     name: validate candid matches rust
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

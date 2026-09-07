@@ -90,7 +90,7 @@
 
 {#if frozen}
     <div class="error">
-        <Cancel size={"2em"} color={"var(--error)"} />
+        <Cancel size={"2em"} color={"var(--validation-error)"} />
         <Translatable resourceKey={i18nKey("externalContent.frozen")} />
     </div>
 {:else if privateChatPreview}
@@ -99,7 +99,7 @@
     </div>
 {:else if error}
     <div class="error">
-        <AlertCircleOutline size={"2em"} color={"var(--error)"} />
+        <AlertCircleOutline size={"2em"} color={"var(--validation-error)"} />
         <Translatable resourceKey={i18nKey("externalContent.error")} />
     </div>
 {/if}

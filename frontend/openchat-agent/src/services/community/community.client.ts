@@ -207,6 +207,7 @@ import { createAiAppChatLinkTokenResponse } from "../common/aiAppChatLinkToken";
 import { createAiAppCardConfirmationGrantResponse } from "../common/aiAppCardConfirmationGrant";
 import {
     acceptP2PSwapSuccess,
+    addressToIcrcAccount,
     apiAccessGateConfig,
     apiExternalBotPermissions,
     apiGroupPermissions,
@@ -226,6 +227,7 @@ import {
     inviteCodeSuccess,
     isSuccess,
     mapResult,
+    throwIfReplicaNotUpToDate,
     proposalTallies,
     pushEventSuccess,
     searchGroupChatResponse,
@@ -547,7 +549,11 @@ export class CommunityClient
             chatId.communityId,
             "events",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             CommunityEventsArgs,
             CommunityEventsResponse,
         );
@@ -570,7 +576,11 @@ export class CommunityClient
             chatId.communityId,
             "events_by_index",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             CommunityEventsByIndexArgs,
             CommunityEventsResponse,
         );
@@ -596,7 +606,11 @@ export class CommunityClient
             chatId.communityId,
             "events_window",
             args,
-            (resp) => mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getEventsSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             CommunityEventsWindowArgs,
             CommunityEventsResponse,
         );
@@ -620,7 +634,11 @@ export class CommunityClient
             chatId.communityId,
             "messages_by_message_index",
             args,
-            (resp) => mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+            (resp) =>
+                throwIfReplicaNotUpToDate(
+                    mapResult(resp, (value) => getMessagesSuccess(value, chatId, this.chatsDb)),
+                    latestKnownUpdate,
+                ),
             CommunityMessagesByMessageIndexArgs,
             CommunityMessagesByMessageIndexResponse,
         );
@@ -1594,6 +1612,7 @@ export class CommunityClient
         messageId: bigint,
         pin: string | undefined,
         newAchievement: boolean,
+        fromAccount: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         return this.update(
             chatId.communityId,
@@ -1602,6 +1621,7 @@ export class CommunityClient
                 channel_id: toBigInt32(chatId.channelId),
                 thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
+                from_account: mapOptional(fromAccount, addressToIcrcAccount),
                 pin,
                 new_achievement: newAchievement,
             },

@@ -125,6 +125,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 ic_root_key: ic_cdk::api::root_key(),
                 openai_api_key: state.data.openai_api_key.clone(),
                 moderation_referral_config: state.data.moderation_referral_config.clone(),
+                media_scan_config: state.data.media_scan_config.clone(),
                 test_mode: state.data.test_mode,
             },
         })
@@ -145,8 +146,8 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     username: user.username.clone(),
                     user_type: user.user_type,
                     referred_by: user.referred_by,
-                    is_platform_moderator: state.data.platform_moderators.contains(&user.user_id),
-                    is_platform_operator: state.data.platform_operators.contains(&user.user_id),
+                    is_platform_moderator: state.data.is_platform_moderator_active(&user.user_id),
+                    is_platform_operator: state.data.is_platform_operator_active(&user.user_id),
                     diamond_membership_expires_at: user.diamond_membership_details.expires_at(),
                     unique_person_proof: user.unique_person_proof.clone(),
                 }),

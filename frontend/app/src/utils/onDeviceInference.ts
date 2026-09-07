@@ -91,7 +91,7 @@ export type OnDeviceInferenceReadiness = {
 };
 
 // Unlike the old synchronous bridge check, this asks the exact native binary whether its optional
-// runtime exists. Proposal entry points await it, so an old/dev shell cannot advertise inference
+// runtime exists. Model callers await it, so an old/dev shell cannot advertise inference
 // during the gap before the actual infer command runs.
 export async function onDeviceInferenceReadiness(): Promise<OnDeviceInferenceReadiness> {
     if (usesWebInferenceRuntime()) {

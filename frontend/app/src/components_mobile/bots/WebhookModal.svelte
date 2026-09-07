@@ -154,7 +154,7 @@
                 crossAxisAlignment={"center"}
                 borderRadius={"lg"}
                 padding={"lg"}
-                background={ColourVars.background1}
+                background={ColourVars.surface1}
                 gap={"lg"}>
                 <Webhook color={ColourVars.textSecondary} size={"4rem"} />
                 <Container direction={"vertical"}>
@@ -177,13 +177,13 @@
                 <Container
                     padding={["md", "lg"]}
                     borderRadius={"lg"}
-                    background={ColourVars.background1}>
+                    background={ColourVars.surface1}>
                     <WebhookMember showMenu={false} {chat} {webhook} />
                 </Container>
                 <Container
                     padding={["md", "lg"]}
                     borderRadius={"lg"}
-                    background={ColourVars.background1}>
+                    background={ColourVars.surface1}>
                     <BodySmall>
                         <Translatable
                             resourceKey={i18nKey(

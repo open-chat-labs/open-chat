@@ -152,7 +152,7 @@
 {:else if content.kind === "p2p_swap_content"}
     <P2PSwapContent {senderId} {messageContext} {messageId} {content} {me} {reply} {pinned} />
 {:else if content.kind === "prize_winner_content"}
-    <PrizeWinnerContent {content} />
+    <PrizeWinnerContent {content} {intersecting} />
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {senderId} {onRegisterVote} />
 {:else if content.kind === "action_card_content"}

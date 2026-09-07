@@ -72,7 +72,7 @@
     <!-- <div class="backspace-wrapper">
         <IconButton disabled={empty} onclick={onBackspace}>
             {#snippet icon()}
-                <Backspace color={empty ? ColourVars.textTertiary : ColourVars.textSecondary} />
+                <Backspace color={empty ? ColourVars.textOnDisabledSurface : ColourVars.textSecondary} />
             {/snippet}
         </IconButton>
     </div> -->
@@ -104,7 +104,7 @@
                 // 2.75 depends on the size of the emoji, if it changes, this
                 // may not be accurate height calculation.
                 height: calc(2.75rem + var(--device-nav-height));
-                background-color: var(--background-2);
+                background-color: var(--surface-2);
                 border-radius: var(--rad-lg) var(--rad-lg) 0 0;
             }
 
@@ -113,7 +113,7 @@
                 top: 0;
                 z-index: 1;
                 position: absolute;
-                background-color: var(--background-1);
+                background-color: var(--surface-1);
             }
 
             .backspace-wrapper {

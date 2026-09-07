@@ -278,7 +278,7 @@
 {#snippet selectedToken(onClick: () => void, token?: EnhancedTokenDetails)}
     <Container
         {onClick}
-        background={ColourVars.textTertiary}
+        background={ColourVars.inputBackground}
         height={{ size: "3.5rem" }}
         padding={["xs", "md"]}
         borderRadius={"circle"}
@@ -294,18 +294,18 @@
             </Container>
         {:else}
             <Container padding={["zero", "zero", "zero", "sm"]}>
-                <Body colour="textPlaceholder">
+                <Body colour="inputPlaceholder">
                     <Translatable resourceKey={i18nKey("Choose token...")} />
                 </Body>
             </Container>
         {/if}
-        <ChevronDown color={"var(--text-placeholder)"} size="1.5rem" />
+        <ChevronDown color={"var(--input-placeholder)"} size="1.5rem" />
     </Container>
 {/snippet}
 
 {#snippet quoteView()}
     <Container
-        background={ColourVars.background1}
+        background={ColourVars.surface1}
         gap={"xl"}
         direction={"vertical"}
         borderRadius={"lg"}
@@ -316,7 +316,7 @@
                 supplementalClass={"swap_down_arrow"}
                 width={{ size: "2.5rem" }}
                 borderRadius={"circle"}
-                background={ColourVars.background1}
+                background={ColourVars.surface1}
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}>
                 <ArrowDown size={"1.5rem"} />
@@ -344,7 +344,7 @@
         <TokenCard tokenState={outToken} />
         <Container
             gap={"lg"}
-            background={ColourVars.background1}
+            background={ColourVars.surface1}
             padding={"lg"}
             borderRadius={"lg"}
             direction={"vertical"}>
@@ -403,13 +403,13 @@
         {#if warnValueDropped || warnValueUnknown}
             <Container
                 gap={"md"}
-                background={ColourVars.background1}
+                background={ColourVars.surface1}
                 padding={"lg"}
                 borderRadius={"lg"}
                 direction={"vertical"}>
                 <Container crossAxisAlignment={"center"} gap={"sm"}>
-                    <Alert color={ColourVars.warning} />
-                    <Body fontWeight={"bold"} colour={"warning"}>
+                    <Alert color={ColourVars.validationWarning} />
+                    <Body fontWeight={"bold"} colour={"validationWarning"}>
                         <Translatable resourceKey={i18nKey("Low value warning")} />
                     </Body>
                 </Container>
@@ -436,7 +436,7 @@
 
         <Container
             gap={"md"}
-            background={ColourVars.background1}
+            background={ColourVars.surface1}
             padding={"lg"}
             borderRadius={"lg"}
             direction={"vertical"}>

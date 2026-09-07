@@ -129,6 +129,11 @@ impl<'a, MSlow: EventsMap> Iter<'a, MSlow> {
         if next_back > map.latest_event_index {
             next_back = map.latest_event_index;
         }
+        // An inverted range (eg. a caller whose min visible index is above the requested start)
+        // is empty; the std BTreeMap backing the fast map traps on it
+        if next > next_back {
+            return Iter::empty(map);
+        }
         Iter {
             map,
             fast_start: if map.fast_enabled() {
