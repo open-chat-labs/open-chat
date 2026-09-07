@@ -22,6 +22,8 @@
 <div class="content">
     <Intro />
 
+    <MobileBeta />
+
     <div class="headline">
         <h2>OpenChat users can send messages to each other containing tokens like BTC and ICP.</h2>
         <p>
@@ -34,8 +36,6 @@
             <ArrowLink url={"/features"} color={"#23A2EE"}>View Features</ArrowLink>
         </div>
     </div>
-
-    <MobileBeta />
 
     <SellingPoints />
 
