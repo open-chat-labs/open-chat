@@ -59,6 +59,13 @@ Its scope includes integration-test compilation, not execution. Recorded manifes
 workflow and monitor hashes were unchanged; process-local MSVC/`Path` setup corrected the
 launcher failure without weakening a source gate. The separate Candid parity pass is recorded
 above; integration execution, hosted CI and rollout acceptance remain unverified.
+
+Separate Windows native checks pass both shipping feature combinations and the 27/41
+library-test selections. The explicitly selected real-text fixture test also passes on CPU;
+it checks non-empty generation, not answer quality or phone WebGPU. The CI-count repair
+passes 96 PR1 / 338 PR2 offline helpers while dependency-policy failures remain. See
+[current readiness](model-app-readiness.md) for source boundaries and receipts.
+
 The earlier combined source also produced a locally signed test APK.
 That historical September 7 welcome APK includes the welcome and auth-display fixes. Three actual emulator
 cold starts passed in 2.25–3.46 seconds to first observed readiness; all 26 installed assets

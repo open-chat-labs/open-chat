@@ -61,6 +61,12 @@ installed runtime assets passed. See the exact-artifact record in
 [current readiness](model-app-readiness.md#reviewed-local-test-apk-september-7).
 No hosted, physical GPU or authenticated app-card acceptance is claimed by these checks.
 
+Separate Windows native checks pass both shipping feature combinations and the 27/41
+library-test selections. The explicitly selected real-text fixture test also passes on CPU;
+it checks non-empty generation, not answer quality or phone WebGPU. The CI-count repair
+passes 96 PR1 / 338 PR2 offline helpers while dependency-policy failures remain. See
+[current readiness](model-app-readiness.md) for source boundaries and receipts.
+
 Earlier full app-host boundary checks found no findings. Recorded-response
 replay, real model inference and fully verified app-card flows remain distinct evidence.
 A complete physical-phone partner-card run is still outstanding.

@@ -40,7 +40,7 @@ unchanged. The exception permits inspection but does not itself resolve or verif
 | Full frontend Vitest                             | 190 files / 2,550 tests passed; none skipped                   |
 | Svelte / agent TypeScript                        | Svelte: 0 errors / 562 warnings; agent `tsc`: passed           |
 | Read-only ESLint                                 | 0 errors / 31 warnings                                         |
-| Offline build/CI/security-helper regressions     | 336 passed on current follow-up source; not a dependency audit |
+| Offline build/CI/security-helper regressions     | PR1: 96 / PR2: 338 at CI-count repair; not a dependency audit   |
 | Focused Candid source contracts                  | 38 passed; includes method-name sets for all 25 interfaces     |
 | Full generated Rust/Candid parity                | 25 generated interfaces / 50 strict comparisons passed         |
 | Full backend unit workspace                      | 957 passed / 0 failed / 1 existing ignored test                |
@@ -48,6 +48,25 @@ unchanged. The exception permits inspection but does not itself resolve or verif
 | Targeted user action-card tests                  | 12 passed                                                      |
 | Native default-feature OTA tests / strict Clippy | 27 passed / passed                                             |
 | Android component registration                   | 12 host tests, 7 SDK checks and Android 36 compilation passed  |
+
+Windows native validation on PR2 `4f9acad2b26b61623836b7652831f2df78702716`
+passed locked/offline `open-chat` checks with `inference` and `inference,store`.
+Plugin library tests passed 27 default-feature tests and 41 inference-feature tests;
+four fixture-dependent tests were ignored in the latter selection. All 279 recorded
+native inputs and Cargo.lock were unchanged. Receipts:
+`native-feature-runs/launch-0a709def843a40d0850ca5ff4d94d969/summary.json` and
+`native-feature-runs/launch-f22a4fbf6640401c90f8a7a170442111/summary.json`.
+
+After the CI-only commit `bdb5c00ff1c9c4c5ee2f805affed94f2f29b8750`, the exact
+`inference::tests::text_inference_smoke -- --ignored --exact --nocapture` Cargo selection
+also passed with `--locked --offline`: one test executed, none ignored, 44 filtered out.
+The workflow's immutable TinyLlama fixture matched its 13,893,600-byte size and SHA-256
+`a439d0bbdce924ff1a32f68b7b2dd7fa0b98687f7eb6e7e55206527b446362af`.
+The same 279 native inputs and lock remained unchanged. This executed real Windows CPU
+generation, but asserts only non-empty text; the output was repetitive and the runtime
+warned that its context exceeded this tiny fixture's training context. It does not establish
+answer quality, structured output, vision, Linux, phone WebGPU or app-card acceptance.
+Receipt: `native-feature-runs/text-68a57f415c22446d9820ccca4b274f34/summary.json`.
 
 The component fix registers actual app classes independently of the installed application ID.
 It preserves notification payloads and supports the local identity profile without changing
@@ -701,8 +720,16 @@ unreviewed native Cargo manifests. These failures were observed, not waived.
 The cross-platform hash defect is corrected without approving new dependencies: 23 historical
 records now hash UTF-8 with CRLF normalized to LF, backed by exact reconstruction of their
 original reviewed bytes. The unproven PR2 root Cargo manifest remains byte-exact and fails.
-Tests preserve every non-digest policy field, expiry and reviewed file set. Actual content
-changes still fail. No expiry extension or advisory waiver was added.
+Expiry, advisory allowances, reviewed file set and other policy fields remain unchanged.
+The sole subsequent policy correction changes PR1's expected Node setup count from two
+to three, matching the dependency, Android-component and frontend jobs. Actual-workflow
+regressions reject missing, extra, relocated or wrongly pinned steps. Both checkouts pass
+their offline helper suites (PR1 96; PR2 338); the real policy check still fails expiry and
+dependency drift. Only the stale Node-count diagnostic disappeared. No expiry extension,
+digest approval or advisory waiver was added. Evidence:
+`ci-setup-count-20260907-auth-display/green-summary.json` and `preservation-proof.json`.
+The repair was committed locally as PR1 `9686bfaac6fa8d994bca88656e77315f1ab09df7`
+and PR2 `bdb5c00ff1c9c4c5ee2f805affed94f2f29b8750`; neither was pushed.
 
 Fresh npm advisory results on 2026-09-06 for published `e02bd70d4`, after the scoped overrides:
 
