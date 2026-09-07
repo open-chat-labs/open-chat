@@ -149,7 +149,7 @@ for (const pr of ["pr1", "pr2"]) {
     historicalBytes(migration.sourceCommit, policyPath),
   );
 
-  test(`${pr}: migration preserves the reviewed file set and every non-digest policy field`, () => {
+  test(`${pr}: migration preserves reviewed fields except the explicit Node-job count repair`, () => {
     const {
       reviewedDependencyFiles,
       reviewedDependencyDigestFormat,
@@ -158,6 +158,14 @@ for (const pr of ["pr1", "pr2"]) {
     } = policy;
     const { reviewedDependencyFiles: originalFiles, ...originalUnchanged } =
       original;
+    if (pr === "pr1") {
+      // The independently covered Android component job adds one Node setup.
+      // Preserve the historical comparison for every other field, not a broad
+      // ciRuntime exception or an advisory/dependency baseline refresh.
+      assert.equal(originalUnchanged.ciRuntime.setupNodeOccurrences, 2);
+      assert.equal(unchanged.ciRuntime.setupNodeOccurrences, 3);
+      unchanged.ciRuntime = { ...unchanged.ciRuntime, setupNodeOccurrences: 2 };
+    }
     assert.deepEqual(unchanged, originalUnchanged);
     assert.deepEqual(
       Object.keys(reviewedDependencyFiles),

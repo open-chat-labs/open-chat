@@ -8,6 +8,99 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (path) => readFileSync(join(root, path), "utf8");
 const workflow = read(".github/workflows/on_device_model_security.yaml");
 
+// These are the three reviewed jobs that actually execute Node. Do not derive
+// the expected count from the workflow: that would also accept dropped jobs.
+function assertModelNodeSetup(text, policy) {
+  assert.equal(policy.ciRuntime.setupNodeOccurrences, 3);
+  assert.equal(policy.ciRuntime.nodeVersion, "24.18.1");
+  const jobs = mappingBlock(text, "jobs", 0);
+  const observed = [];
+  for (const [, name] of jobs.matchAll(/^ {2}([a-z0-9-]+):[ \t]*\r?$/gmu)) {
+    const steps = mappingBlock(mappingBlock(jobs, name, 2), "steps", 4);
+    const setup = steps
+      .split(/^ {6}- /mu)
+      .slice(1)
+      .filter((step) =>
+        /^(?:uses:| {8}uses:) actions\/setup-node@/mu.test(step),
+      );
+    for (const step of setup) {
+      const withBlock = mappingBlock(step, "with", 8);
+      const versions = [
+        ...withBlock.matchAll(/^ {10}node-version: "([^"]+)"[ \t]*\r?$/gmu),
+      ];
+      assert.deepEqual(
+        versions.map((match) => match[1]),
+        [policy.ciRuntime.nodeVersion],
+        name,
+      );
+      observed.push(name);
+    }
+  }
+  assert.deepEqual(observed.sort(), [
+    "android-component-contracts",
+    "dependency-policy",
+    "frontend-contracts",
+  ]);
+  assert.equal(
+    [...text.matchAll(/node-version:\s*["']?([0-9]+\.[0-9]+\.[0-9]+)["']?/gu)]
+      .length,
+    policy.ciRuntime.setupNodeOccurrences,
+    "policy scanner and actual setup steps must count the same pins",
+  );
+}
+
+test("model security baseline covers exactly the three reviewed Node jobs", () => {
+  assertModelNodeSetup(
+    workflow,
+    JSON.parse(read(".github/security/openchat-pr1-security-baseline.json")),
+  );
+});
+
+test("Node setup coverage rejects missing, extra, relocated and wrongly pinned steps", () => {
+  const policy = JSON.parse(
+    read(".github/security/openchat-pr1-security-baseline.json"),
+  );
+  policy.ciRuntime.setupNodeOccurrences = 3; // Positive control is independent of the stale baseline.
+  assertModelNodeSetup(workflow, policy);
+  const version = '          node-version: "24.18.1"';
+  const extraStep = [
+    "      - uses: actions/setup-node@v4",
+    "        with:",
+    version,
+    "",
+  ].join("\n");
+  const mutants = [
+    workflow.replace(
+      "uses: actions/setup-node@",
+      "uses: actions/not-setup-node@",
+    ),
+    workflow.replace(/    steps:\r?\n/u, "    steps:\n" + extraStep),
+    workflow + "\n  unexpected-node-job:\n    steps:\n" + extraStep,
+    workflow.replace(
+      "  android-component-contracts:",
+      "  unexpected-component-job:",
+    ),
+    workflow.replace(version, '          node-version: "24.14.1"'),
+    workflow.replace(version, ""),
+    workflow.replace(version, version + "\n" + version),
+  ];
+  for (const [index, mutant] of mutants.entries()) {
+    assert.notEqual(mutant, workflow, "mutation must alter workflow " + index);
+    assert.throws(
+      () => assertModelNodeSetup(mutant, policy),
+      "mutation " + index,
+    );
+  }
+  for (const count of [2, 4]) {
+    assert.throws(() =>
+      assertModelNodeSetup(workflow, {
+        ...policy,
+        ciRuntime: { ...policy.ciRuntime, setupNodeOccurrences: count },
+      }),
+    );
+  }
+});
+
 // Parse only the workflow's simple block mappings, rejecting missing/ambiguous
 // blocks. Event coverage must come from on.pull_request, never push or job text.
 function mappingBlock(text, key, indentation) {
