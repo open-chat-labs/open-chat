@@ -30,7 +30,7 @@
   "ciRuntime": {
     "nodeVersion": "24.18.1",
     "minimumSupportedMajor": 24,
-    "setupNodeOccurrences": 2
+    "setupNodeOccurrences": 3
   },
   "format": {
     "sourceRoot": "frontend/",
