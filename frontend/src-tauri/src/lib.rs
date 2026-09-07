@@ -12,21 +12,24 @@ pub fn run() {
     builder = builder.setup(|app: &mut App| setup_app(app));
     // }
 
-    // CrabNebula DevTools telemetry — opt-in at build time (OC_DEVTOOLS=1).
+    // CrabNebula DevTools telemetry — opt-in at build time: the `devtools`
+    // Cargo feature plus OC_DEVTOOLS=1. The development launcher supplies the
+    // feature when this environment flag is set; release builds do not.
     //
     // The collector instruments and buffers every IPC / network / log / span
     // event. A dev full-reload re-fetches thousands of ES modules through the
     // Tauri protocol, flooding the collector far faster than it can flush; its
     // buffer realloc-grows into the gigabytes and the Android WebView process is
     // OOM-killed by scudo. Confirmed with heapprofd: ~89% of the retained native
-    // memory during the crash flowed through tauri_plugin_devtools. Never built
-    // into release, and off by default in dev so a plain reload no longer
-    // crashes.
+    // memory during the crash flowed through tauri_plugin_devtools. The optional
+    // dependency is excluded from ordinary builds and the collector can only run
+    // in debug builds, so a plain reload no longer starts it accidentally.
     //
     // `option_env!` is read at compile time (not runtime): an Android app can't
     // pick up a shell env var at launch, so gate on the build environment and
-    // rebuild with OC_DEVTOOLS=1 when you actually need the inspector.
-    #[cfg(debug_assertions)]
+    // rebuild with `--features devtools` and OC_DEVTOOLS=1 when you actually need
+    // the inspector (or use the development launcher with OC_DEVTOOLS=1).
+    #[cfg(all(debug_assertions, feature = "devtools"))]
     if matches!(option_env!("OC_DEVTOOLS"), Some("1" | "true")) {
         builder = builder.plugin(tauri_plugin_devtools::init());
     }

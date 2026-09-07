@@ -182,7 +182,12 @@ edition = "2024"
 async-channel = "2"
 async-trait = "0.1"
 aws-config = "1"
-aws-sdk-dynamodb = "1"
+# The modern HTTPS client already supplies rustls. The legacy `rustls` feature
+# additionally enables hyper 0.14 / rustls 0.21, including unpatched dependencies.
+aws-sdk-dynamodb = { version = "1", default-features = false, features = [
+    "default-https-client",
+    "rt-tokio",
+] }
 aws-sign-v4 = "0.3"
 aws-types = "1"
 base64 = "0.23"

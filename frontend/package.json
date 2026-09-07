@@ -26,7 +26,7 @@
         "build:ci": "npm run typecheck && npm run typecheck:agent && npm run lint:check && npm run test && npm run build:prod",
         "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
         "tauri": "tauri",
-        "mobile": "cargo tauri android dev --no-watch"
+        "mobile": "node ../scripts/android_dev.mjs"
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {

@@ -19,12 +19,15 @@ serde_json = { workspace = true }
 tauri = { workspace = true, features = ["protocol-asset"] }
 tauri-plugin-android-fs = { workspace = true }
 tauri-plugin-deep-link = { workspace = true }
-tauri-plugin-devtools = { workspace = true }
+tauri-plugin-devtools = { workspace = true, optional = true }
 tauri-plugin-notification = { workspace = true }
 tauri-plugin-oc = { path = "../tauri-plugin-oc" }
 url = { workspace = true }
 
 [features]
+# Debug telemetry is a separate dependency graph, never part of a default build.
+# The development launcher selects this feature for OC_DEVTOOLS=1/true.
+devtools = ["dep:tauri-plugin-devtools"]
 store = ["tauri-plugin-oc/store"]
 # Enables the on-device inference runtime in the bundled app (llama.cpp via the plugin). Off by default so
 # normal/dev builds stay fast; the shipping build turns it on (e.g. `cargo tauri build --features inference`).
