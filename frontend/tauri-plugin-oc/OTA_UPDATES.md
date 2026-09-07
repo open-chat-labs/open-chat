@@ -45,6 +45,15 @@ components carry fixed meanings. Note that `major` does NOT mean "big". It means
 So the store build ships with `OC_OTA_UPDATES=patch` and the sideloaded build
 with `minor`.
 
+**Where that value actually comes from.** `override` in `rollup.config.mjs` compiles
+`import.meta.env.OC_OTA_UPDATES` to `(window.OC_CONFIG?.OC_OTA_UPDATES ?? "<build-time value>")`,
+and `rollup-plugin-android-bundle.mjs` injects `window.OC_CONFIG` into the `index.html`
+inside each OTA zip. So the build-time value only governs a shell's own bundled assets,
+i.e. a fresh install; from a client's first over-the-air update onwards the zip's value
+wins. The two must agree, and the zip is the one that matters. The plugin skips this
+injection entirely when `OC_APP_TYPE` is `android` or `ios`, which is why an APK build
+keeps its compiled value.
+
 Two consequences worth being explicit about.
 
 A shell change on its own bumps nothing. What forces a major bump is the web

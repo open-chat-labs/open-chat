@@ -97,7 +97,17 @@ async function writeBundleZip(
     version,
     store,
 ) {
-    const ota = store ? "patch" : "major";
+    // This is the authoritative OTA strategy for anything delivered over the air.
+    // The value compiled into a shell is only a default: `override` in
+    // rollup.config.mjs emits `(window.OC_CONFIG?.KEY ?? <compiled>)`, and this
+    // injection sets window.OC_CONFIG, so the zip wins from the first update
+    // onwards. Changing OC_OTA_UPDATES in the Android workflow alone has no
+    // effect past a client's first OTA.
+    //
+    // "minor" for the sideloaded channel, not "major": major marks a bundle an
+    // installed shell cannot run, and taking one over the air is exactly the
+    // failure this gate exists to prevent. See tauri-plugin-oc/OTA_UPDATES.md.
+    const ota = store ? "patch" : "minor";
     const zipFile = store
         ? path.join(downloadDir, `store-${version}.zip`)
         : path.join(downloadDir, `full-${version}.zip`);
