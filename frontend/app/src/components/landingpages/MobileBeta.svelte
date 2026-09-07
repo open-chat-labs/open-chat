@@ -153,6 +153,13 @@
 </Section>
 
 <style lang="scss">
+    // The landing header is position:fixed and 80px tall, so scrollIntoView would
+    // put the top of this section underneath it. Lives here rather than at the call
+    // site so anything scrolling to #beta gets the offset. 80 plus a little air.
+    :global(section#beta) {
+        scroll-margin-top: toRem(96);
+    }
+
     .beta {
         margin-bottom: $sp5;
     }
