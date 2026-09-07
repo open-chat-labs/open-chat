@@ -64,6 +64,36 @@ A one-line shell dependency is still a major bump, however small the diff. The
 size of the change is irrelevant; the question is only whether an installed
 shell can run the new bundle.
 
+### Shell-only releases
+
+A release that changes only native code — a dependency removed, a permission
+dropped, a Kotlin fix nothing calls yet — is a **patch**. There is no
+compatibility signal to send, because no web code behaves differently.
+
+That leaves a practical problem: `versionCode` is derived from the version name,
+which is the website's version, so a shell-only release has no number of its own.
+It cannot reuse the last one, since Play requires `versionCode` to increase, and
+there is no reason to cut a website release just to move a number.
+
+**Take the next number in the sequence and let the website skip it.** Tag
+`v2.0.NNNN-android` with no matching `-website` tag; the website's next release
+takes NNNN+1. Website versions are their own line and do not have to be
+contiguous, exactly like the canister sequence.
+
+The app then bundles assets labelled NNNN while the server still serves NNNN-1.
+`isGreaterThan` is false, so `VersionChecker` reports up to date and does nothing
+until the website passes it.
+
+> **Never let a website release reuse a number an Android build has claimed.**
+> Every app bundling that version would see `server == client` and silently
+> refuse a genuine update, permanently. An Android release consumes a number from
+> the shared sequence whether or not a website release accompanies it.
+
+One consequence worth knowing: tagging master head means the APK bundles whatever
+frontend code has landed since the last website release, so a shell-only build can
+ship web code the website has not served yet. That is normal and resolves at the
+next website deploy.
+
 Getting this wrong in the permissive direction means shipping a feature to store
 users without Play ever seeing it. Getting it wrong in the other direction means
 users sitting on a stale build waiting for a store update they don't need. The
