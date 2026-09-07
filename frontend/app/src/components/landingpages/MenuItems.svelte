@@ -16,11 +16,6 @@
 <div class="menu-items">
     <div class="nav">
         <div class="menu-item">
-            <a href={"https://openchat.myspreadshop.com"} target="_blank" rel="noreferrer">
-                Shop
-            </a>
-        </div>
-        <div class="menu-item">
             <Link selected={$locationStore === "/features"} mode={"menu"} path="features"
                 >Features</Link
             >
