@@ -393,6 +393,7 @@ test("frontend policy invokes the exact combined PR and release regressions pres
   const files = command[1].trim().split(/\s+/u);
   assert.deepEqual(files, [
     "scripts/pr-ci-policy.test.mjs",
+    "scripts/message_content_candid_contract.test.mjs",
     "scripts/validate_action_inbox_wiring.test.mjs",
     "scripts/android_release_policy.test.mjs",
     "scripts/android_release_checks.test.mjs",

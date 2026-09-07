@@ -31,15 +31,34 @@ Protocol reference: [Local app processing](../local-app-processing.md).
 
 ## Verification and readiness
 
-The latest isolated upstream-reconciled working tree passed 190 frontend files / 2,550 tests,
-both typechecks, read-only lint and 296 offline build-policy/helper tests (September 7).
+The pre-commit upstream-reconciled source passed 190 frontend files / 2,550 tests,
+both typechecks and read-only lint on September 7.
 The full backend unit workspace also passed 957 tests with one existing ignored test;
 full strict backend Clippy now passes the locked/offline workspace with test targets and
 warnings treated as errors, excluding only the two native-shell packages. This includes integration-test
-compilation, not execution. Candid parity and integration acceptance remain unverified.
-These resolutions are
-not committed or on this PR's published head yet. Earlier full app-host boundary checks found
-no findings. Recorded-response
+compilation, not execution. The separate Candid parity result is recorded below; integration
+execution remains unverified.
+The reconciliation is committed locally at PR2 `cdceb9d127a329b49a82795662fadba77ab2f18f`,
+whose ancestry includes PR1 `b461c4b7a3b59daa1d1a4aace002e1d3ffa55d57`; it is not on this
+PR's published head. The preceding frontend/backend results were recorded before these commits
+and retain their documented source-snapshot boundaries. Both committed heads subsequently
+passed their complete offline Node helper suites, 94/94 and 296/296, with clean, unchanged
+before/after state; see the saved post-commit receipt in current readiness.
+
+The follow-ups, validated before commit as changes atop PR2, restore missing shared ActionCard
+declarations and the user-index private-match method/recipient scope to match existing Rust; runtime Rust is
+unchanged. All 38 focused source contracts and 336 complete offline helpers pass, with
+207 recorded inputs unchanged and formatting clean. This includes all 25 API method-name
+sets and CI-routing regressions, not arbitrary signature/mode equivalence. Evidence:
+`candid-contracts-all-apis-final-20260907-c8d69fd637234e51816036356c7a0852/summary.json`.
+The full actual parity rerun after these repairs also passes: 25 generated interfaces / 50
+strict bidirectional comparisons, with native exit 0 and all 2,879 recorded inputs and the
+Cargo lock unchanged. Evidence: `backend-candid-parity-runs/launch-fce066b6cd434a5d81dd22583dec9c56/summary.json`
+and its nested completion receipt. This covers the working declaration fixes atop the PR2
+commit, not the commit alone. A newly built, tested reviewed APK remains pending. No hosted,
+physical-device or authenticated app-card acceptance is claimed by these checks.
+
+Earlier full app-host boundary checks found no findings. Recorded-response
 replay, real model inference and fully verified app-card flows remain distinct evidence.
 A complete physical-phone partner-card run is still outstanding.
 

@@ -1,13 +1,13 @@
 # Refreshing the existing two-PR stack
 
-Assessment: 2026-09-07. This is a scope map and work log, not a completed split or a ready-for-review claim.
+Assessment: 2026-09-07. This records the locally committed reconciliation and remaining publication/runtime gates.
 Keep both existing PRs in draft while the dependency and runtime gates are unresolved.
 
 ## Current reconciliation snapshot
 
-The sections below retain the earlier refresh history. Current PR1 is based on
-`2a95a68ca93be77a8e5cff92220fba0f54684d4a`, with uncommitted generic Android component,
-optional build-defaults and sign-in cancellation/error-routing follow-ups. Its latest full
+The sections below retain the earlier refresh history. PR1 reconciliation was committed at
+`b461c4b7a3b59daa1d1a4aace002e1d3ffa55d57`, including the reviewed generic Android component,
+optional build-defaults and sign-in cancellation/error-routing follow-ups. Its pre-commit full
 frontend rerun passes all 123 files / 1,488 tests and 94 offline helper tests, with no skips;
 Svelte reports 0 errors / 558 warnings, agent TypeScript passes, and read-only ESLint reports
 0 errors / 30 warnings. The run matched the independent 37-file follow-up review inventory
@@ -20,21 +20,42 @@ owner-context Git inspection. The exact-checkout, per-command exception is now a
 ownership, ACLs and global Git settings remain unchanged. This permits inspection, not
 automatic acceptance or resolution of the index.
 
-PR2's working tree merges that committed PR1 base into `6be70333c1cea2da6986de48afd77f55ecabe1ba`.
-Its 77 conflicted paths have source resolutions but still have unmerged index entries;
-the merge is not committed or pushed. The combined source passes 190 frontend files / 2,550
+PR2 reconciliation was committed at `cdceb9d127a329b49a82795662fadba77ab2f18f`, tree
+`1e3386eb094d12707953cb670c9a38520a663208`; its ancestry includes the reviewed PR1 head above.
+Both checkouts were clean afterward, with no unmerged index entries. Nothing was pushed.
+The pre-commit combined-source validation passes 190 frontend files / 2,550
 tests, Svelte with 0 errors / 562 warnings, agent TypeScript, and read-only ESLint with 0 errors /
-31 warnings. The current September 7 offline build/policy aggregate passes 296 regressions
-with none skipped (`node --test --test-reporter=spec 'scripts/*.test.mjs'`, native exit 0;
-locally observed terminal output, not a saved aggregate log).
+31 warnings. Subsequent sequential offline Node helper runs on the exact committed heads
+passed 94/94 for PR1 and 296/296 for PR2, with no failures, skips or cancellations and native
+exit 0. HEAD, tree and clean status were unchanged. Saved summary and logs:
+`postcommit-node-helpers-20260907-8d38a451833749408c13f7c72e5b76a2/summary.json`.
+Those post-commit runs cover Node helpers only; earlier frontend/backend results retain their
+recorded source-snapshot scope.
+
+The follow-ups, validated before commit as changes atop PR2, restore shared ActionCard
+declarations and the user-index private-match redemption method/recipient scope to match existing Rust, without runtime Rust
+changes. Their source-contract suite passes 38 tests, including exact method-name sets for
+all 25 interfaces and omission/duplicate/renamed-state controls. Frontend policy now explicitly
+executes that suite for Rust/Candid-only changes. The full follow-up helper aggregate passes
+336/336 with no skips; scoped formatting passes. All 207 recorded inputs and HEAD/dirty status
+remain unchanged during the run. Evidence:
+`candid-contracts-all-apis-final-20260907-c8d69fd637234e51816036356c7a0852/summary.json`.
+These are changed-source checks, not post-commit or semantic parity acceptance. Separately,
+the complete actual parity rerun after all fixes passes: 25 generated interfaces and 50 strict
+bidirectional comparisons, native exit 0, with all 2,879 recorded inputs and the Cargo lock
+unchanged. Evidence: `backend-candid-parity-runs/launch-fce066b6cd434a5d81dd22583dec9c56/summary.json`
+and its nested `run-475e62309c1b4d729e248875e99ba0bf/completion.json`. This result covers the
+working declaration fixes atop the PR2 commit, not the commit alone. The new reviewed APK
+remains pending; interface parity is not integration, hosted or device acceptance.
+
 The complete locked/offline backend unit workspace now passes 957 tests with 0 failures and
 1 existing ignored test, retaining the original exclusions for integration tests and the two
 native-shell packages. Full strict backend Clippy also passes the locked/offline workspace
 with `--keep-going --tests -- -D warnings`, excluding only the two native-shell packages.
 Its scope includes integration-test compilation, not execution. Recorded manifest, lock,
 workflow and monitor hashes were unchanged; process-local MSVC/`Path` setup corrected the
-launcher failure without weakening a source gate. Actual Candid parity, integration execution,
-hosted CI and rollout acceptance remain unverified.
+launcher failure without weakening a source gate. The separate Candid parity pass is recorded
+above; integration execution, hosted CI and rollout acceptance remain unverified.
 The combined source has also produced a locally signed test APK.
 The September 7 APK includes the welcome and auth-display fixes. Three actual emulator
 cold starts passed in 2.25–3.46 seconds to first observed readiness; all 26 installed assets
@@ -79,7 +100,7 @@ Current receipts: `pr2-frontend-validation-20260907-cf114059659944cf8bd4db45b001
 `pr2-mobile-ai-theme-green-20260907.log`. The readiness document links these source results
 to the separate exact-artifact startup evidence and remaining release gates.
 
-## First isolated refresh slice
+## Historical first isolated refresh slice
 
 An isolated `codex/pr1-refresh-local-build` worktree now starts at the exact published PR1
 head below. The first slice transfers only portable OTA ZIP packaging: literal `execFile`
@@ -95,7 +116,7 @@ and hosted CI have not run; this isolated branch is not pushed.
 This starts the append-only refresh; it does not establish whole-PR acceptance, change either
 published PR head or reconcile upstream.
 
-## Model-only refresh: local validation complete
+## Historical model-only refresh: local validation complete
 
 The next isolated slice carries the all-WebGPU Qwen/Gemma runtime, optional audio, model-cache
 identity and lifecycle, both model-manager UIs, generic build delivery and matching notices.
@@ -134,7 +155,7 @@ already repaired in current upstream. These findings require actual remediation,
 review-baseline waiver. Current-upstream reconciliation, production build validation and
 the append-only stack refresh below remain outstanding.
 
-## Pinned comparison points
+## Historical pinned comparison points
 
 - PR1 model head: `045f7132e502ba01c56343800217070aa2ce4ea0`.
 - PR2 app-interface head: `c7299aa11b87fbfd56029fc90e05e423654f54f1`.
@@ -173,6 +194,9 @@ Reconnect viewport commit `b2c3e6f6b` and app-boundary checkpoint `2029f00d7` be
 app review. The remaining commits touch shared runtime/UI concerns and must be split by hunk.
 
 ## Append-only refresh sequence
+
+This is the original scope plan. Local reconciliation and reviewed PR1 inheritance are now
+committed as summarized above; publication and remaining acceptance gates are not complete.
 
 1. Use isolated worktrees from the exact existing PR heads. Preserve the combined integration
    branch and immutable checkpoint as reference, not as a new PR2-only head.

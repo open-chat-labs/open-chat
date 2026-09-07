@@ -1,6 +1,7 @@
 import "../../external_canisters/icrc_ledger/api/can.did";
 
 type AccessorId = principal;
+type AiAppId = nat32;
 type AccountIdentifier = blob;
 type BlockIndex = nat64;
 type CanisterId = principal;
@@ -585,6 +586,7 @@ type MessageContentInitial = variant {
     MessageReminder : MessageReminder;
     Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
+    ActionCard : ActionCardContentInitial;
 };
 
 type MessageContent = variant {
@@ -608,6 +610,53 @@ type MessageContent = variant {
     Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
     ReportedMessage : ReportedMessage;
+    ActionCard : ActionCardContent;
+};
+
+type ActionCardRow = record {
+    label : text;
+    value : text;
+};
+
+type ActionCardState = variant {
+    Pending;
+    Confirmed;
+    Cancelled;
+    Expired;
+};
+
+type ActionCardContentInitial = record {
+    title : text;
+    rows : vec ActionCardRow;
+    confirm_label : text;
+    cancel_label : text;
+    action_id : text;
+    app_id : opt AiAppId;
+    app_revision : opt TimestampMillis;
+    app_provenance : opt blob;
+    disclosure : opt text;
+    expires_at : opt TimestampMillis;
+    recipient_public_key : opt text;
+    recipient_public_keys : vec text;
+    confirm_payload : opt blob;
+    inbox_canister_id : opt CanisterId;
+};
+
+type ActionCardContent = record {
+    title : text;
+    rows : vec ActionCardRow;
+    confirm_label : text;
+    cancel_label : text;
+    action_id : text;
+    app_id : opt AiAppId;
+    app_revision : opt TimestampMillis;
+    app_verified : bool;
+    app_content_verified : bool;
+    disclosure : opt text;
+    state : ActionCardState;
+    responded_by : opt UserId;
+    responded_at : opt TimestampMillis;
+    expires_at : opt TimestampMillis;
 };
 
 type MessageMatch = record {

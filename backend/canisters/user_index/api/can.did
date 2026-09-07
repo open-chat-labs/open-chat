@@ -35,6 +35,8 @@ type AiActionDefinition = record {
   // Stable, human-readable identifier (e.g. "expense.import"), unique per owner.
   name : text;
   description : text;
+  // Absent retains the legacy confirmer-only recipient scope.
+  recipient_scope : opt AiActionRecipientScope;
   // Optional public key (PEM) the consumer advertises so the payload can be verified end-to-end.
   consumer_public_key : opt text;
   // Prompt the on-device model is run with; the client substitutes the user's input before inference.
@@ -45,6 +47,7 @@ type AiActionDefinition = record {
   // output on the client. Absent means no rules.
   rules : vec AiActionRule;
 };
+type AiActionRecipientScope = variant { app_authorized; confirmer };
 // A single, generic extraction rule. Rules are declared by whoever registers the action and are
 // interpreted entirely on the client: some contribute guidance lines to the prompt, others run as a
 // deterministic post-pass over the model's structured output.
@@ -129,6 +132,22 @@ type AppScopedCardContext = record {
   app_id : nat32;
   app_subject : blob;
   chat_handle : blob;
+};
+type RedeemAiAppPrivateMatchCapabilitySuccess = record {
+  context : AppScopedCardContext;
+  source_binding : blob;
+  app_canister_id : principal;
+  recipient_key_scheme : text;
+  recipient_public_key : blob;
+  expires_at : nat64;
+};
+type RedeemAiAppPrivateMatchCapabilityResponse = variant {
+  Success : RedeemAiAppPrivateMatchCapabilitySuccess;
+  NotFound;
+  Expired;
+  NotAuthorized;
+  AppUnavailable;
+  InvalidRequest : text;
 };
 type Args = record { key_id : blob };
 type Args_1 = record { lookups : vec AiAppLookup };
@@ -839,6 +858,7 @@ service : {
   c2c_get_ai_app_action_inbox_selector : (Args_5) -> (Response_7);
   c2c_redeem_ai_app_card_capability : (Args_6) -> (Response_8);
   c2c_redeem_ai_app_chat_link_token : (Args_7) -> (Response_9);
+  c2c_redeem_ai_app_private_match_capability : (Args_6) -> (RedeemAiAppPrivateMatchCapabilityResponse);
   check_username : (Args_8) -> (Response_10) query;
   chit_leaderboard : (record {}) -> (Response_11) query;
   claim_ai_app_link_code : (Args_9) -> (Response_12);

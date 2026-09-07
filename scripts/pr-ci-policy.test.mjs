@@ -369,7 +369,7 @@ test("frontend CI uses the reviewed runtime and never rewrites dependency or sou
   );
 });
 
-function requireHostedWiringRegression(workflow) {
+function requireHostedPolicyRegression(workflow, filename) {
   const heading = /^ {6}- name: Check PR and release policy regressions\r?$/gmu;
   const matches = [...workflow.matchAll(heading)];
   assert.equal(matches.length, 1, "expected one hosted policy step");
@@ -382,16 +382,17 @@ function requireHostedWiringRegression(workflow) {
   for (const file of files)
     assert.match(file, /^scripts\/[a-zA-Z0-9_.-]+\.test\.mjs$/u);
   assert.equal(
-    files.filter(
-      (file) => file === "scripts/validate_action_inbox_wiring.test.mjs",
-    ).length,
+    files.filter((file) => file === filename).length,
     1,
-    "hosted policy must execute the actual wiring regression suite exactly once",
+    `hosted policy must execute ${filename} exactly once`,
   );
 }
 
 test("hosted frontend policy executes the action-inbox wiring regression suite", () => {
-  requireHostedWiringRegression(read("../.github/workflows/frontend.yaml"));
+  requireHostedPolicyRegression(
+    read("../.github/workflows/frontend.yaml"),
+    "scripts/validate_action_inbox_wiring.test.mjs",
+  );
 });
 
 test("wiring policy coverage cannot be satisfied by a comment or another step", () => {
@@ -401,9 +402,60 @@ test("wiring policy coverage cannot be satisfied by a comment or another step", 
   );
   const misleading = `${workflow}\n      # scripts/validate_action_inbox_wiring.test.mjs\n      - name: Unrelated example\n        run: node --test scripts/validate_action_inbox_wiring.test.mjs\n`;
   assert.throws(
-    () => requireHostedWiringRegression(misleading),
+    () =>
+      requireHostedPolicyRegression(
+        misleading,
+        "scripts/validate_action_inbox_wiring.test.mjs",
+      ),
     /hosted policy must execute/u,
   );
+});
+
+function requireSharedMessageContract(workflow) {
+  for (const event of ["pull_request", "push"]) {
+    assert.doesNotMatch(
+      eventBlock(workflow, event),
+      /^ {4}(?:paths|paths-ignore):/mu,
+      "shared Rust/Candid-only changes must reach frontend policy",
+    );
+  }
+  const jobs = [...workflow.matchAll(/^ {2}install-and-test:\r?$/gmu)];
+  assert.equal(jobs.length, 1, "expected the actual frontend policy job");
+  const job = workflow.slice(jobs[0].index).split(/\r?\n(?= {2}[a-z_-]+:)/u)[0];
+  assert.doesNotMatch(job, /^ {4}(?:if|needs|continue-on-error):/mu);
+  requireHostedPolicyRegression(
+    job,
+    "scripts/message_content_candid_contract.test.mjs",
+  );
+}
+
+test("frontend policy executes the shared message contract for Rust/Candid-only changes", () => {
+  requireSharedMessageContract(read("../.github/workflows/frontend.yaml"));
+});
+
+test("shared message contract coverage rejects misleading mentions and skipped routes", () => {
+  const workflow = read("../.github/workflows/frontend.yaml");
+  const filename = "scripts/message_content_candid_contract.test.mjs";
+  const misleading = `${workflow.replaceAll(filename, "")}\n      # ${filename}\n      - name: Unrelated example\n        run: node --test ${filename}\n`;
+  assert.throws(
+    () => requireSharedMessageContract(misleading),
+    /hosted policy must execute/u,
+  );
+  for (const event of ["pull_request", "push"]) {
+    const filtered = workflow.replace(
+      `  ${event}:`,
+      `  ${event}:\n    paths: ["frontend/**"]`,
+    );
+    assert.throws(
+      () => requireSharedMessageContract(filtered),
+      /shared Rust\/Candid-only/u,
+    );
+  }
+  const skipped = workflow.replace(
+    "  install-and-test:",
+    "  install-and-test:\n    if: false",
+  );
+  assert.throws(() => requireSharedMessageContract(skipped));
 });
 
 test("event extraction cannot satisfy branch coverage from an unrelated job", () => {

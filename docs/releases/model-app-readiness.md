@@ -2,7 +2,7 @@
 
 Assessment: 2026-09-07. **Prepared for continued draft review; not ready for a production release.**
 No PR, release, PR branch base, production switch, signing key, or deployed service was changed
-by this preparation. Preparation commits belong on the integration branch, not either stale PR head.
+by this preparation. The locally reconciled stack has not been pushed or published.
 
 ## Current delivery scope: source preparation and local-test APK
 
@@ -17,15 +17,17 @@ deployment or physical-device GPU acceptance.
 
 ## Latest local upstream reconciliation
 
-The isolated `codex/pr2-upstream-reconciliation` working tree combines integration HEAD
-`6be70333c1cea2da6986de48afd77f55ecabe1ba` with the refreshed PR1 source at
-`2a95a68ca93be77a8e5cff92220fba0f54684d4a`, which includes pinned upstream
-`df9d9ed52db00e87fbb7309280a325902c9bb2cc`. Conflict resolutions and follow-up tests are
-still uncommitted. Neither existing PR head has changed. A new local-test APK from this dirty
-merge is built and installed, but predates the final worker-logging and mobile-theme fixes;
-it requires a rebuild before it can represent current source. Its separate startup acceptance
-is summarized below.
-These results describe the working tree, not either parent commit in isolation.
+Local reconciliation was committed as PR1 `b461c4b7a3b59daa1d1a4aace002e1d3ffa55d57`
+and PR2 `cdceb9d127a329b49a82795662fadba77ab2f18f`, tree
+`1e3386eb094d12707953cb670c9a38520a663208`. PR2 includes that PR1 head through a reviewed
+tree-preserving ancestry merge; both checkouts were clean afterward, with no unmerged index
+entries. Neither published PR head has changed. The frontend/backend source validation below
+was recorded before these commits and retains its original source-snapshot boundaries.
+Subsequent declaration-only Candid and regression/CI follow-ups were validated before commit
+as changes atop that PR2 head; their separate source-contract validation is recorded below.
+The installed welcome APK predates the final worker-logging and mobile-theme fixes and
+requires rebuilding before it can represent the reconciled source. Its historical startup
+acceptance is summarized below.
 The September 6 APK and production bundles do not contain the later September 7
 welcome-readiness and authentication-error-display fixes described here.
 PR1's mixed-owner Git protection required an explicit developer-approved, per-command
@@ -33,17 +35,19 @@ trust exception for the exact PR1 checkout before owner-context Git inspection c
 That scoped exception is now approved; ownership, ACLs and global Git settings remain
 unchanged. The exception permits inspection but does not itself resolve or verify the index.
 
-| Current merged-tree check                        | Result                                                        |
-| ------------------------------------------------ | ------------------------------------------------------------- |
-| Full frontend Vitest                             | 190 files / 2,550 tests passed; none skipped                  |
-| Svelte / agent TypeScript                        | Svelte: 0 errors / 562 warnings; agent `tsc`: passed          |
-| Read-only ESLint                                 | 0 errors / 31 warnings                                        |
-| Offline build/CI/security-helper regressions     | 296 passed on September 7; not a fresh dependency audit       |
-| Full backend unit workspace                      | 957 passed / 0 failed / 1 existing ignored test               |
-| Full backend strict Clippy                       | Passed, including integration-test compilation                |
-| Targeted user action-card tests                  | 12 passed                                                     |
-| Native default-feature OTA tests / strict Clippy | 27 passed / passed                                            |
-| Android component registration                   | 12 host tests, 7 SDK checks and Android 36 compilation passed |
+| Local validation (scope described below)         | Result                                                         |
+| ------------------------------------------------ | -------------------------------------------------------------- |
+| Full frontend Vitest                             | 190 files / 2,550 tests passed; none skipped                   |
+| Svelte / agent TypeScript                        | Svelte: 0 errors / 562 warnings; agent `tsc`: passed           |
+| Read-only ESLint                                 | 0 errors / 31 warnings                                         |
+| Offline build/CI/security-helper regressions     | 336 passed on current follow-up source; not a dependency audit |
+| Focused Candid source contracts                  | 38 passed; includes method-name sets for all 25 interfaces     |
+| Full generated Rust/Candid parity                | 25 generated interfaces / 50 strict comparisons passed         |
+| Full backend unit workspace                      | 957 passed / 0 failed / 1 existing ignored test                |
+| Full backend strict Clippy                       | Passed, including integration-test compilation                 |
+| Targeted user action-card tests                  | 12 passed                                                      |
+| Native default-feature OTA tests / strict Clippy | 27 passed / passed                                             |
+| Android component registration                   | 12 host tests, 7 SDK checks and Android 36 compilation passed  |
 
 The component fix registers actual app classes independently of the installed application ID.
 It preserves notification payloads and supports the local identity profile without changing
@@ -67,13 +71,46 @@ approved or completed; expired baselines and historical advisory evidence below 
 
 ### September 7 verification hardening
 
-The complete current PR2 Node helper aggregate
-(`node --test --test-reporter=spec 'scripts/*.test.mjs'`) passes 296 tests with none skipped
-and native exit 0. The independent PR1 aggregate remains 94 tests with none skipped.
-These counts supersede the earlier PR2 280-test and older 198/72 helper snapshots; they
-are not additional frontend Vitest results, dependency-audit acceptance or hosted CI
-results. The current 296-test result was locally observed in terminal output, not saved
-as a separate aggregate log.
+Both exact reconciliation commits were subsequently tested sequentially with
+`node --test --test-concurrency=1 --test-reporter=spec 'scripts/*.test.mjs'`:
+PR1 passed 94/94 and PR2 passed 296/296, with no failures, skips or cancellations and native
+exit 0. HEAD, tree and clean status were unchanged afterward. Saved summary and individual
+logs: `postcommit-node-helpers-20260907-8d38a451833749408c13f7c72e5b76a2/summary.json`.
+This post-commit rerun covers Node helpers only, not frontend Vitest, dependency audits,
+hosted CI or later Candid follow-ups.
+
+Actual generated-interface comparison then exposed declaration drift: shared Candid omitted
+the existing Rust `ActionCard` message variants and records, while user-index Candid omitted
+the private-match capability redemption method and the optional action recipient scope.
+The corrections change only those two Candid files, not runtime Rust implementations.
+The recipient variant preserves the actual serde wire labels, `confirmer` and `app_authorized`.
+
+The new offline source-contract suite passes 38 tests: complete message-variant sets,
+selected record fields/types and renamed states, plus method-name sets discovered from all
+25 actual API directories. Controls reject duplicates, unsupported export forms, misleading
+comments and an in-memory recreation of the missing user-index method. The initial shared
+schema regression failed before its repair. Frontend CI used an explicit helper list; a
+separate red-to-green routing regression now requires this suite in its executable policy
+step, including for Rust/Candid-only changes. These checks are bounded source readers, not
+full Rust/Candid parsers or proof of method signature/mode equivalence.
+
+The final follow-up run passes all 336 offline Node helpers with no failures, skips or
+cancellations; focused tests, the aggregate and scoped formatting each exit 0. All 207
+recorded inputs, including the 25 Candid/Rust-main pairs, retain their hashes; HEAD and
+dirty status are unchanged during the run. Evidence:
+`candid-contracts-all-apis-final-20260907-c8d69fd637234e51816036356c7a0852/summary.json`
+and its focused, aggregate and formatting logs. This is pre-commit follow-up source
+validation, not a post-commit 336-test claim.
+
+The subsequent complete generated-interface rerun also passes: all 25 interfaces regenerated
+and all 50 strict comparisons succeeded, in both directions, with native exit 0 and a terminal
+monitored child. All 2,879 recorded source inputs and the Cargo lock were unchanged. This
+accepts the recorded working declaration fixes atop `cdceb9d127a329b49a82795662fadba77ab2f18f`,
+not that earlier commit alone. Evidence:
+`backend-candid-parity-runs/launch-fce066b6cd434a5d81dd22583dec9c56/summary.json`
+and `run-475e62309c1b4d729e248875e99ba0bf/completion.json` beneath that launch directory.
+The fresh reviewed APK remains pending. Interface parity does not establish integration
+execution, hosted CI, physical-device or authenticated app-flow acceptance.
 
 The store-AAB verifier now checks the base-manifest package, version name and version code
 independently of its existing signature checks. Its standalone bundletool 1.18.1 is pinned
@@ -167,8 +204,8 @@ retained their hashes. The legacy official release provides no publisher checksu
 the download's official release URL/size, executable version and local SHA-256 are recorded,
 not described as independently signed provenance. This is exact-tool local syntax evidence,
 not hosted CI or Rust/Candid parity. The parity checker has real-shell failure-propagation
-and temporary-file-cleanup tests; its actual generated-interface comparison remains
-outstanding. Matching Rust 1.95 Linux
+and temporary-file-cleanup tests. At that earlier stage, its actual generated-interface
+comparison was outstanding; the completed full rerun is recorded above. Matching Rust 1.95 Linux
 offline metadata resolution stops before compilation because locked `h2` 0.4.16 is absent
 from that cache. The earlier full Windows backend gate stopped in OpenSSL configuration
 because Cygwin Perl does not satisfy the MSVC target. The project-local native Perl retry
@@ -220,8 +257,8 @@ Only process-local native-tooling setup was corrected: the MSVC environment and 
 `Path` key restore nested compiler lookup. A controlled native probe reproduced the uppercase
 `PATH` failure and `Path` success (`clippy-path-casing-probe-20260907-7495c9d2/controls.json`
 and `wrapper-regression.json`). No source gate, package scope, profile or warning policy was
-weakened. Actual generated-interface Candid parity remains unaccepted; hosted CI, integration
-execution, refreshed APK and physical-device acceptance remain separate gates.
+weakened. Full generated-interface Candid parity subsequently passed as recorded above;
+hosted CI, integration execution, refreshed APK and physical-device acceptance remain separate gates.
 
 The backend integration wrapper now also requires `cargo test --locked`, preserving its
 existing package, filter, thread-count and failure behavior. Its source-command regression
@@ -251,8 +288,9 @@ manifest/DEX component classes, FileProvider authority and embedded ARM64 native
 The 78,596,874-byte handoff APK has SHA-256
 `de78547f9f7dd3612a5178423547561814544401d0feacf4f5a79d49750f5659`.
 It contains frontend version `2.0.0-local-webgpu-welcome-20260907` with OTA strategy `none`.
-Attribution remains the uncommitted merge plus follow-up source changes above, not a
-published PR head or either merge parent alone. The September 6 rollback APK is preserved.
+At build time, this artifact used the then-uncommitted merge and follow-up changes, not a
+published PR head or either merge parent alone. It is not current-source acceptance.
+The September 6 rollback APK is preserved.
 
 An install-over on the existing emulator package succeeded without uninstalling or clearing
 app data. Three separately timed cold launches then passed the strict 30-second startup
@@ -344,7 +382,7 @@ publisher-only signing, version and upload requirements do not block the request
 Security-policy failures and
 the outstanding fresh-audit consent are unchanged.
 
-### Final post-startup-fix production bundles
+### Historical post-startup-fix production bundles
 
 Both production frontend variants were rebuilt after the two startup fixes above, using the
 same dirty merged working tree and existing frozen dependencies. Fourteen recorded source
@@ -451,11 +489,11 @@ deleting diagnostics or ignoring application source.
 5. Update existing PR descriptions rather than create duplicate submissions. Prepared bodies:
    [PR1](pr1-local-models.md) and [PR2](pr2-app-interfaces.md).
 
-The [stack refresh plan](pr-stack-refresh-plan.md) identifies mixed areas and an append-only
-refresh sequence. An isolated PR1 refresh has committed generic ZIP packaging and the later
-model-only runtime/build/UI slice locally, with exact-lock validation. Its fresh dependency
-audit still requires remediation. The full model/app scope split is not complete and neither
-published PR head has changed.
+The [stack refresh plan](pr-stack-refresh-plan.md) identifies the reviewed scope split and
+append-only inheritance. PR1's generic follow-ups and PR2's reconciliation are committed
+locally; the declaration/contract follow-ups were validated before commit as changes atop PR2.
+Neither published PR head has changed. Dependency remediation, final-head hosted checks and runtime acceptance
+remain separate gates.
 
 This is a proposed publishing sequence, not an executed history rewrite. Keep the checkpoint
 tag available for comparison; do not move it to a rebased or lint-cleaned head.
@@ -739,8 +777,9 @@ still exits nonzero for the expired baseline and reviewed dependency drift; no w
 Frontend, backend and model/app security workflows now include the stacked PR base and
 integration pushes, with regression tests for that routing. These changes are not on the
 two older PR heads yet. Candid event routing and fail-closed checker regressions are now
-covered locally; actual parity and broader integration workflows still need coordinated
-validation on the final stack. Private/custom-runner jobs were not enabled blindly.
+covered locally, and the complete local parity run now passes as recorded above. Hosted
+and broader integration workflows still need coordinated validation on the final stack.
+Private/custom-runner jobs were not enabled blindly.
 Absence of hosted check runs must not be reported as success.
 
 ## Publisher-only shipping guidance: not a local APK prerequisite
