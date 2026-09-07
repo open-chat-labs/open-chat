@@ -37,6 +37,13 @@ description: OpenChat release train runbook — tagging components, prod-test (i
 
    Full detail in `frontend/tauri-plugin-oc/OTA_UPDATES.md`.
 
+3b. **Android and website versions share one sequence, but not one release.** The Android `versionName` is the version of the web assets the shell bundles, and `versionCode` is derived from it (`major*1000000 + minor*10000 + patch`), so an Android build always consumes a number.
+
+   A **shell-only release** — native dependency removed, permission dropped, Kotlin fix nothing calls yet — is a **patch**, because no web code behaves differently and there is no compatibility signal to send. Tag `v2.0.NNNN-android` with no matching `-website` tag, and the website's next release takes NNNN+1. Website versions do not have to be contiguous.
+
+   **The trap:** never let a website release reuse a number an Android build has claimed. Apps bundling that version see `server == client` and silently refuse a genuine update, permanently. Before picking a website number, check the android tags too:
+   `git tag --list "v2.0.*-android" | sort -t. -k3 -n | tail -3`
+
 4. Release order is dependency-driven, decided per train. Rule of thumb: a canister must accept a new candid field before anything starts sending it (e.g. video transcode train: storage_bucket → storage_index → website). Website last.
 5. Pushing a tag triggers CI to build and upload wasms to S3 keyed by COMMIT id (`https://openchat-canister-wasms.s3.amazonaws.com/<commit>/<canister>.wasm.gz`). The prod proposal route downloads from there — confirm the CI run finished before prod release.
 
