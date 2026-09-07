@@ -164,6 +164,7 @@
 
     .sub {
         @include font(book, normal, fs-100, 28);
+        color: var(--txt-light);
         margin-bottom: $sp5;
         max-width: toRem(620);
     }
