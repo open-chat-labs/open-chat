@@ -6,6 +6,13 @@
     import OnChain from "./OnChain.svelte";
     import OnChainAlt from "./OnChainAlt.svelte";
 
+    // The beta section sits below the fold on a phone, which is exactly where a
+    // native app matters most. Scroll rather than link: the landing page router
+    // would treat a hash href as a route change.
+    function scrollToBeta() {
+        document.getElementById("beta")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
     let chatImg = $derived(`/assets/screenshots/intro/${$currentTheme.mode}_chat.png`);
     let videoImg = $derived(
         $mobileWidth ? chatImg : `/assets/screenshots/intro/${$currentTheme.mode}_video.png`,
@@ -32,6 +39,7 @@
                 <div class="launch">
                     <Launch />
                 </div>
+                <button class="try-native" onclick={scrollToBeta}>or try the native app →</button>
             </div>
             {#if !$mobileWidth}
                 <div>
@@ -176,6 +184,33 @@
         align-items: center;
         @include mobile() {
             margin-bottom: toRem(16);
+        }
+    }
+
+    .try-native {
+        display: block;
+        background: none;
+        border: none;
+        padding: 0;
+        margin-top: toRem(16);
+        cursor: pointer;
+        text-align: left;
+        color: var(--landing-txt-light);
+        text-decoration: underline;
+        text-underline-offset: toRem(3);
+        @include font(bold, normal, fs-90);
+
+        &:hover {
+            opacity: 0.8;
+        }
+
+        // On a phone the launch button is full width, so match it rather than
+        // hanging a left-aligned link off the side of a centred block.
+        @include mobile() {
+            width: 100%;
+            margin-top: 0;
+            margin-bottom: toRem(16);
+            text-align: center;
         }
     }
 

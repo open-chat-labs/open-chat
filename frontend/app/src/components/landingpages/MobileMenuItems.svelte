@@ -17,7 +17,6 @@
     import Blog from "svelte-material-icons/PostOutline.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Security from "svelte-material-icons/Security.svelte";
-    import Shopping from "svelte-material-icons/ShoppingOutline.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
 
@@ -39,21 +38,6 @@
 </script>
 
 <Menu>
-    <MenuItem>
-        {#snippet icon()}
-            <Shopping size={$iconSize} color={"var(--icon-inverted-txt)"} />
-        {/snippet}
-        {#snippet text()}
-            <a
-                class="link"
-                href={"https://openchat.myspreadshop.com"}
-                target="_blank"
-                rel="noreferrer"
-            >
-                Shop
-            </a>
-        {/snippet}
-    </MenuItem>
     <MenuItem selected={$locationStore === "/features"} onclick={() => navigate("/features")}>
         {#snippet icon()}
             <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />

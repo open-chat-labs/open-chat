@@ -6,6 +6,7 @@
     import SignInWithMagicLink from "../SignInWithMagicLink.svelte";
     import BragBox from "./BragBox.svelte";
     import Intro from "./Intro.svelte";
+    import MobileBeta from "./MobileBeta.svelte";
     import Roadmap from "./RoadmapOverview.svelte";
     import SellingPoints from "./SellingPoints.svelte";
 
@@ -20,6 +21,8 @@
 
 <div class="content">
     <Intro />
+
+    <MobileBeta />
 
     <div class="headline">
         <h2>OpenChat users can send messages to each other containing tokens like BTC and ICP.</h2>
