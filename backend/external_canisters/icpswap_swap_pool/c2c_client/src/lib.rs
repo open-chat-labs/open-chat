@@ -8,3 +8,4 @@ generate_candid_c2c_call!(quote);
 generate_candid_c2c_call!(deposit);
 generate_candid_c2c_call!(swap);
 generate_candid_c2c_call!(withdraw);
+generate_candid_c2c_call!(withdraw_to_subaccount, withdrawToSubaccount);
