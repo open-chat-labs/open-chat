@@ -17,6 +17,10 @@ const androidScript = readFileSync(
   new URL("frontend/app/build_android.sh", root),
   "utf8",
 ).replaceAll("\r\n", "\n");
+const sourceEnvDefaults = readFileSync(
+  new URL("frontend/app/source_env_defaults.sh", root),
+  "utf8",
+).replaceAll("\r\n", "\n");
 
 function bashExecutable() {
   if (process.env.OC_TEST_BASH) return process.env.OC_TEST_BASH;
@@ -32,7 +36,7 @@ function bashExecutable() {
   return executable;
 }
 
-function runBuildFixture(source, rollupExitCode) {
+function runBuildFixture(source, rollupExitCode, options = {}) {
   const fixture = mkdtempSync(
     path.join(tmpdir(), "openchat-android-build-test-"),
   );
@@ -42,10 +46,15 @@ function runBuildFixture(source, rollupExitCode) {
     mkdirSync(path.join(app, "build"), { recursive: true });
     mkdirSync(path.join(app, "public"));
     writeFileSync(path.join(app, "build_android.sh"), source);
-    writeFileSync(
-      path.join(frontend, ".env"),
-      "OC_APP_KLIPY_APIKEY=fixture-only\n",
-    );
+    writeFileSync(path.join(app, "source_env_defaults.sh"), sourceEnvDefaults);
+    if (options.defaults === "directory") {
+      mkdirSync(path.join(frontend, ".env"));
+    } else if (options.defaults !== null) {
+      writeFileSync(
+        path.join(frontend, ".env"),
+        options.defaults ?? "OC_APP_KLIPY_APIKEY=fixture-only\n",
+      );
+    }
     writeFileSync(path.join(app, "build/index.html"), "previous candidate");
     writeFileSync(path.join(app, "public/asset.txt"), "public asset");
 
@@ -56,6 +65,7 @@ function runBuildFixture(source, rollupExitCode) {
 npx() {
   printf '%s\\n' "$*" > ../rollup-arguments
   printf '%s\\n' rollup >> ../steps
+  printf '%s\\n' "$OC_WEBSITE_VERSION" "\${OC_FIXTURE_DEFAULT-unset}" "\${OC_FIXTURE_EMPTY-unset}" > ../effective-defaults
   return "$OC_TEST_ROLLUP_EXIT_CODE"
 }
 cp() {
@@ -63,6 +73,14 @@ cp() {
   printf '%s\\n' "$*" > ../copy-arguments
   printf '%s' overwritten > ./build/index.html
 }
+# Windows ACLs and privileged Unix runners do not reliably honor chmod 000.
+# Inject only the readability predicate; execute the actual helper and source path.
+if [[ "$OC_TEST_DENY_ENV_READ" == 1 ]]; then
+  test() {
+    if [[ "$1" == -r && "$2" == */.env ]]; then return 1; fi
+    builtin test "$@"
+  }
+fi
 source "$1"
 `;
     const result = spawnSync(
@@ -86,20 +104,29 @@ source "$1"
           TMP: tmpdir(),
           OC_APP_STORE: "false",
           OC_TEST_ROLLUP_EXIT_CODE: String(rollupExitCode),
+          OC_TEST_DENY_ENV_READ: options.denyDefaultsRead ? "1" : "0",
+          ...options.environment,
         },
       },
     );
     assert.ifError(result.error);
-    assert.equal(
-      readFileSync(path.join(frontend, "rollup-arguments"), "utf8").trim(),
-      "rollup -c",
-    );
+    if (existsSync(path.join(frontend, "rollup-arguments"))) {
+      assert.equal(
+        readFileSync(path.join(frontend, "rollup-arguments"), "utf8").trim(),
+        "rollup -c",
+      );
+    }
     return {
       status: result.status,
       stderr: result.stderr,
-      steps: readFileSync(path.join(frontend, "steps"), "utf8")
-        .trim()
-        .split(/\r?\n/u),
+      steps: existsSync(path.join(frontend, "steps"))
+        ? readFileSync(path.join(frontend, "steps"), "utf8")
+            .trim()
+            .split(/\r?\n/u)
+        : [],
+      defaults: existsSync(path.join(frontend, "effective-defaults"))
+        ? readFileSync(path.join(frontend, "effective-defaults"), "utf8")
+        : undefined,
       copied: existsSync(path.join(frontend, "copy-arguments")),
       artifact: readFileSync(path.join(app, "build/index.html"), "utf8"),
     };
@@ -140,6 +167,46 @@ test("successful Rollup still permits the normal asset-copy stage", () => {
   assert.equal(result.copied, true);
   assert.equal(result.artifact, "overwritten");
 });
+
+test("a fresh checkout without optional .env reaches Rollup with caller values intact", () => {
+  const result = runBuildFixture(androidScript, 0, {
+    defaults: null,
+    environment: { OC_WEBSITE_VERSION: "caller-version" },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(result.steps, ["rollup", "copy"]);
+  assert.equal(result.defaults, "caller-version\nunset\nunset\n");
+});
+
+test("existing defaults fill absent values but preserve explicit caller values including empty", () => {
+  const result = runBuildFixture(androidScript, 0, {
+    defaults:
+      "OC_WEBSITE_VERSION=file-version\n" +
+      "export OC_FIXTURE_DEFAULT='file value with spaces'\n" +
+      "OC_FIXTURE_EMPTY=file-must-not-win\n",
+    environment: {
+      OC_WEBSITE_VERSION: "caller-version",
+      OC_FIXTURE_EMPTY: "",
+    },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.defaults, "caller-version\nfile value with spaces\n\n");
+});
+
+for (const [description, options] of [
+  ["malformed", { defaults: 'OC_WEBSITE_VERSION="unterminated\n' }],
+  ["non-file", { defaults: "directory" }],
+  ["unreadable", { denyDefaultsRead: true }],
+]) {
+  test(`an existing ${description} defaults file fails before Rollup or copying assets`, () => {
+    const result = runBuildFixture(androidScript, 0, options);
+    assert.notEqual(result.status, 0, result.stderr);
+    assert.deepEqual(result.steps, []);
+    assert.equal(result.copied, false);
+    assert.equal(result.artifact, "previous candidate");
+    assert.match(result.stderr, /\.env/u);
+  });
+}
 
 test("regression fixture exposes the previous fail-open script behavior", () => {
   assert.match(androidScript, /^set -e\n/u);

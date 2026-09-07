@@ -1137,12 +1137,23 @@
             "createAccount": "Create new account",
             "errors": {
                 "alreadyRegistered": "Auth method has already been linked. Try signing in!",
+                "authEmptyResponse": "Android returned an empty passkey response. Please try again.",
                 "codeInvalid": "Your account linking code seems to be invalid!",
+                "credentialError": "Android's credential provider could not use this passkey. Check your credential provider and try again.",
                 "createPasskeyFail": "Creating passkey failed, please try again.",
                 "default": "Authentication failed. Please try again.",
+                "deviceNotSupported": "This device does not support Android Credential Manager passkeys.",
+                "domPasskeyError": "Android could not complete the passkey request. Please try again.",
+                "interrupted": "Passkey sign-in was interrupted. Please try again.",
                 "linkingCodeNotFound": "Please check your linking code is correct!",
                 "maxLinkedIdentitiesLimitReached": "You've reached the limit for the max number of linked identities.",
-                "noProviders": "There are no available credentials managers on your phone! You will need to enable or install at least one."
+                "noLockScreen": "Set a secure screen lock before using a passkey.",
+                "noPasskey": "No matching passkey was found. You can reconnect this account with a linking code.",
+                "noProviders": "There are no available credentials managers on your phone! You will need to enable or install at least one.",
+                "passkeyFetchFailed": "Android could not fetch the saved passkey. Please try again.",
+                "securityDenied": "Android rejected this app's passkey association.",
+                "systemNotReady": "Android's credential provider is not ready. Check your screen lock and credential provider settings.",
+                "transientSystemError": "Android's credential provider is temporarily unavailable. Please try again."
             },
             "existingAccount": "I'm an existing user",
             "linkAccount": {

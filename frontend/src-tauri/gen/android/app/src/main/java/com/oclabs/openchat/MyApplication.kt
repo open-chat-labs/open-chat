@@ -8,6 +8,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import com.ocplugin.app.data.AppDb
 import com.google.firebase.FirebaseApp
 import com.ocplugin.app.LOG_TAG
+import com.ocplugin.app.IntentsManager
 
 class MyApplication: Application() {
     
@@ -20,6 +21,13 @@ class MyApplication: Application() {
     
     override fun onCreate() {
         super.onCreate()
+
+        // Application startup also runs for background services/receivers, before
+        // an Activity exists. Keep actual component classes separate from app ID.
+        IntentsManager.registerComponents(
+            MainActivity::class.java,
+            NotificationDismissReceiver::class.java,
+        )
 
         // Manually init Firebase, allows us to make sure init was fine!
         FirebaseApp.initializeApp(this)?.let {

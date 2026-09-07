@@ -1,6 +1,7 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { VersionChecker } from "@src/utils/version.svelte";
+    import { nativeAuthErrorKey } from "@src/utils/nativeAuthErrorKey";
     import {
         Body,
         BodySmall,
@@ -17,6 +18,7 @@
     } from "component-lib";
     import { OpenChat, type CreatedUser } from "@client";
     import { ErrorCode } from "@shared";
+    import { classifyAndroidWebAuthnSignInFailure } from "@src/utils/androidWebAuthnError";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -52,18 +54,32 @@
     });
 
     function signIn() {
-        (client.isNativeApp()
-            ? client.signInWithAndroidWebAuthn()
-            : client.signInWithWebAuthn()
-        ).catch(async (e) => {
-            if ("AUTH_FAILED" === e) {
-                error = "native.auth.error";
-                console.error("Auth error: ", e);
-            } else {
-                // Passkey either not found, or user cancelled auth request
-                step = "one-time-password";
-            }
-        });
+        const nativeAndroid = client.isNativeAndroid();
+        const nativeApp = client.isNativeApp();
+        (nativeApp ? client.signInWithAndroidWebAuthn() : client.signInWithWebAuthn()).catch(
+            async (e) => {
+                if (!nativeAndroid) {
+                    if ("AUTH_FAILED" === e) {
+                        error = nativeApp ? "native.auth.error" : "default";
+                        console.error("Auth error: ", e);
+                    } else {
+                        step = "one-time-password";
+                    }
+                    return;
+                }
+
+                const failure = classifyAndroidWebAuthnSignInFailure(e);
+                if (failure.kind === "cancelled") {
+                    return;
+                }
+                error = failure.errorCode;
+                if (failure.kind === "link_account") {
+                    step = "one-time-password";
+                } else {
+                    console.error("Android passkey sign-in error: ", e);
+                }
+            },
+        );
     }
 
     function signUp() {
@@ -297,7 +313,7 @@
     {#if error !== undefined}
         <Container gap={"md"} padding={["zero", "xxl"]} direction={"vertical"}>
             <ErrorMessage>
-                <Translatable resourceKey={i18nKey(error)} />
+                <Translatable resourceKey={i18nKey(nativeAuthErrorKey(error))} />
             </ErrorMessage>
         </Container>
     {/if}

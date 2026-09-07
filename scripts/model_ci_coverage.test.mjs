@@ -310,7 +310,7 @@ test("native CI compiles both app feature sets on both supported runner platform
   assert.equal(
     [
       ...native.matchAll(
-        /^ +cargo check -p open-chat --features inference\r?$/gmu,
+        /^ +cargo check --locked -p open-chat --features inference\r?$/gmu,
       ),
     ].length,
     2,
@@ -318,13 +318,51 @@ test("native CI compiles both app feature sets on both supported runner platform
   assert.equal(
     [
       ...native.matchAll(
-        /^ +cargo check -p open-chat --features inference,store\r?$/gmu,
+        /^ +cargo check --locked -p open-chat --features inference,store\r?$/gmu,
       ),
     ].length,
     2,
   );
-  assert.doesNotMatch(native, /cargo check -p tauri-plugin-oc/u);
-  assert.match(native, /cargo test -p tauri-plugin-oc --lib/u);
+  assert.doesNotMatch(native, /cargo check (?:--locked )?-p tauri-plugin-oc/u);
+  assert.match(native, /cargo test --locked -p tauri-plugin-oc --lib/u);
+});
+
+test("all six native source-compiling CI commands enforce the committed Cargo lockfile", () => {
+  const commands = [
+    ...workflow.matchAll(/^ +(?:run: )?(cargo (?:test|check) [^\r\n]+)\r?$/gmu),
+  ].map((match) => match[1]);
+  assert.equal(
+    commands.length,
+    6,
+    "review every added or removed native Cargo invocation",
+  );
+  assert.deepEqual(commands, [
+    "cargo test --locked -p tauri-plugin-oc --lib",
+    "cargo check --locked -p open-chat --features inference",
+    "cargo check --locked -p open-chat --features inference,store",
+    "cargo check --locked -p open-chat --features inference",
+    "cargo check --locked -p open-chat --features inference,store",
+    "cargo test --locked -p tauri-plugin-oc --features inference",
+  ]);
+  const jobs = mappingBlock(workflow, "jobs", 0);
+  const fixture = mappingBlock(jobs, "real-text-inference", 2);
+  const native = mappingBlock(jobs, "native-hermetic", 2);
+  assert.equal(
+    [...(native + fixture).matchAll(/\bcargo\b/gu)].length,
+    commands.length,
+    "review native Cargo calls outside the supported command-line shape",
+  );
+  assert.match(
+    fixture,
+    /cargo test --locked -p tauri-plugin-oc --features inference/u,
+  );
+  assert.match(
+    fixture,
+    /inference::tests::text_inference_smoke --\s+--ignored --exact --nocapture/u,
+  );
+  // This fixture downloads an immutable model; it compiles the repository, not
+  // a temporary Cargo project whose lockfile intentionally needs generating.
+  assert.doesNotMatch(fixture, /cargo (?:generate-lockfile|update)\b/u);
 });
 
 test("the frontend build runs a read-only lint check", () => {
@@ -378,6 +416,81 @@ test("historical dependency hash proofs run in the full-history security checkou
     read(".github/workflows/frontend.yaml"),
     /security_dependency_hash\.test\.mjs/u,
   );
+});
+
+test("Android component identity compiles actual sources against host fixtures and SDK 36 in PR CI", () => {
+  const job = mappingBlock(
+    mappingBlock(workflow, "jobs", 0),
+    "android-component-contracts",
+    2,
+  );
+  assert.match(job, /runs-on: ubuntu-24\.04/u);
+  assert.match(job, /timeout-minutes: 15/u);
+  assert.match(job, /java-version: "21"/u);
+  assert.match(job, /node-version: "24\.18\.1"/u);
+  assert.match(job, /sdkmanager "platforms;android-36"/u);
+  assert.match(job, /shell: pwsh/u);
+  assert.match(
+    job,
+    /run: node --test scripts\/android_component_identity_tools\.test\.mjs scripts\/model_ci_coverage\.test\.mjs/u,
+  );
+  assert.match(
+    job,
+    /node scripts\/android_component_identity_tools\.mjs --output-directory "\$env:RUNNER_TEMP\/openchat-component-tools"/u,
+  );
+  assert.match(
+    job,
+    /& \.\/frontend\/tauri-plugin-oc\/android\/component-identity-tests\/run\.ps1/u,
+  );
+  for (const argument of [
+    "-JavaHome $env:JAVA_HOME",
+    "-KotlinCompilerClasspath $tools.compilerClasspath",
+    "-KotlinRuntimeClasspath $tools.runtimeClasspath",
+    "-JUnitClasspath $tools.junitClasspath",
+    '-AndroidJar "$env:ANDROID_HOME/platforms/android-36/android.jar"',
+    '-OutputDirectory "$env:RUNNER_TEMP/openchat-component-classes"',
+  ])
+    assert.ok(
+      job.includes(argument),
+      `missing actual runner input: ${argument}`,
+    );
+  assert.equal(
+    [...job.matchAll(/if \(\$LASTEXITCODE -ne 0\) \{ throw /gu)].length,
+    2,
+  );
+  assert.match(job, /\$ErrorActionPreference = 'Stop'/u);
+  assert.doesNotMatch(
+    job,
+    /continue-on-error|\|\|\s*true|needs:|secrets\.|tauri android|gradlew|npm ci/u,
+  );
+  const runner = read(
+    "frontend/tauri-plugin-oc/android/component-identity-tests/run.ps1",
+  );
+  assert.match(runner, /src\/main\/java\/IntentsManager\.kt/u);
+  assert.match(runner, /com\/oclabs\/openchat\/MyApplication\.kt/u);
+  assert.match(
+    runner,
+    /org\.junit\.runner\.JUnitCore fixtures\.ComponentIdentityTest/u,
+  );
+  assert.match(
+    runner,
+    /-classpath "\$KotlinRuntimeClasspath\$separator\$AndroidJar"/u,
+  );
+  assert.match(runner, /fixtures\.AndroidConstantCheck/u);
+  assert.match(runner, /if \(Test-Path -LiteralPath \$output\) \{ throw/u);
+  for (const path of [
+    "scripts/android_component_identity_tools.json",
+    "scripts/android_component_identity_tools.mjs",
+    "scripts/android_component_identity_tools.test.mjs",
+    "frontend/tauri-plugin-oc/android/component-identity-tests/run.ps1",
+    "frontend/tauri-plugin-oc/android/component-identity-tests/src/fixtures/ComponentIdentityTest.kt",
+    "frontend/tauri-plugin-oc/android/component-identity-tests/src/fixtures/AndroidConstantCheck.kt",
+    "frontend/tauri-plugin-oc/android/src/main/java/IntentsManager.kt",
+    "frontend/src-tauri/gen/android/app/src/main/java/com/oclabs/openchat/MyApplication.kt",
+  ]) {
+    assert.ok(existsSync(join(root, path)), path);
+    assert.ok(triggers(path), `component CI not triggered by ${path}`);
+  }
 });
 
 const compatibilityScripts = [

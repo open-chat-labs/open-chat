@@ -69,6 +69,7 @@ on:
       - "scripts/verify_webgpu_distribution*"
       - "scripts/android_bundle*"
       - "scripts/android_build_prerequisites*"
+      - "scripts/android_component_identity_tools*"
       - "scripts/cdp_axios_compatibility.mjs"
       - "scripts/decoder_compatibility.mjs"
       - "scripts/onnx_adm_zip_compatibility.mjs"
@@ -130,6 +131,46 @@ jobs:
           path: ${{ runner.temp }}/openchat-pr1-model.cdx.json
           if-no-files-found: error
 
+  android-component-contracts:
+    name: Android component identity host contracts and SDK compilation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24.18.1"
+      - name: Test the pinned tool resolver and CI coverage offline
+        run: node --test scripts/android_component_identity_tools.test.mjs scripts/model_ci_coverage.test.mjs
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install the Android API used by the component contracts
+        run: sdkmanager "platforms;android-36"
+      - name: Compile actual component sources and run host and SDK contracts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $toolsJson = & node scripts/android_component_identity_tools.mjs --output-directory "$env:RUNNER_TEMP/openchat-component-tools"
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned component test tool resolution failed.' }
+          $tools = $toolsJson | ConvertFrom-Json
+          & ./frontend/tauri-plugin-oc/android/component-identity-tests/run.ps1 `
+            -JavaHome $env:JAVA_HOME `
+            -KotlinCompilerClasspath $tools.compilerClasspath `
+            -KotlinRuntimeClasspath $tools.runtimeClasspath `
+            -JUnitClasspath $tools.junitClasspath `
+            -AndroidJar "$env:ANDROID_HOME/platforms/android-36/android.jar" `
+            -OutputDirectory "$env:RUNNER_TEMP/openchat-component-classes"
+          if ($LASTEXITCODE -ne 0) { throw 'Component identity contracts failed.' }
+        # Host recording doubles plus real Android API compilation, not device
+        # notification/authentication or APK/signing evidence. No Tauri init.
+
   native-hermetic:
     name: Native hermetic tests (${{ matrix.os }})
     strategy:
@@ -147,19 +188,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes build-essential libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev patchelf libclang-dev cmake
       - name: Run downloader, store and boundary unit tests
-        run: cargo test -p tauri-plugin-oc --lib
+        run: cargo test --locked -p tauri-plugin-oc --lib
       - name: Compile both shipping app feature sets (Linux)
         if: runner.os == 'Linux'
         run: |
-          cargo check -p open-chat --features inference
-          cargo check -p open-chat --features inference,store
+          cargo check --locked -p open-chat --features inference
+          cargo check --locked -p open-chat --features inference,store
       - name: Compile both shipping app feature sets (Windows)
         if: runner.os == 'Windows'
         env:
           CMAKE_GENERATOR: Visual Studio 17 2022
         run: |
-          cargo check -p open-chat --features inference
-          cargo check -p open-chat --features inference,store
+          cargo check --locked -p open-chat --features inference
+          cargo check --locked -p open-chat --features inference,store
 
   frontend-contracts:
     name: Frontend model contracts
@@ -227,6 +268,6 @@ jobs:
           echo "OC_TEST_MODEL_GGUF=$model_path" >> "$GITHUB_ENV"
       - name: Run an actual inference (ignored tests must be selected explicitly)
         run: >-
-          cargo test -p tauri-plugin-oc --features inference
+          cargo test --locked -p tauri-plugin-oc --features inference
           inference::tests::text_inference_smoke --
           --ignored --exact --nocapture

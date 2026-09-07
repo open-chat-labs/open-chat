@@ -2,13 +2,12 @@ set -e
 
 export NODE_ENV=production
 
-# pull in the .env file first
+# Pull in optional .env defaults without replacing explicitly exported caller values.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/../.env"
 
-set -a
-source "$ENV_FILE"
-set +a
+source "$SCRIPT_DIR/source_env_defaults.sh"
+source_env_defaults "$ENV_FILE"
 
 export OC_APP_TYPE=android
 export OC_MOBILE_LAYOUT=v2
