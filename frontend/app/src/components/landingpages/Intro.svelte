@@ -39,11 +39,7 @@
                 <div class="launch">
                     <Launch />
                 </div>
-                {#if $mobileWidth}
-                    <button class="try-native" onclick={scrollToBeta}
-                        >or try the native app →</button
-                    >
-                {/if}
+                <button class="try-native" onclick={scrollToBeta}>or try the native app →</button>
             </div>
             {#if !$mobileWidth}
                 <div>
@@ -193,17 +189,29 @@
 
     .try-native {
         display: block;
-        width: 100%;
         background: none;
         border: none;
         padding: 0;
-        margin-bottom: toRem(16);
+        margin-top: toRem(16);
         cursor: pointer;
-        text-align: center;
+        text-align: left;
         color: var(--landing-txt-light);
         text-decoration: underline;
         text-underline-offset: toRem(3);
         @include font(bold, normal, fs-90);
+
+        &:hover {
+            opacity: 0.8;
+        }
+
+        // On a phone the launch button is full width, so match it rather than
+        // hanging a left-aligned link off the side of a centred block.
+        @include mobile() {
+            width: 100%;
+            margin-top: 0;
+            margin-bottom: toRem(16);
+            text-align: center;
+        }
     }
 
     @keyframes float {
