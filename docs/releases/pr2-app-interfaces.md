@@ -55,8 +55,11 @@ The full actual parity rerun after these repairs also passes: 25 generated inter
 strict bidirectional comparisons, with native exit 0 and all 2,879 recorded inputs and the
 Cargo lock unchanged. Evidence: `backend-candid-parity-runs/launch-fce066b6cd434a5d81dd22583dec9c56/summary.json`
 and its nested completion receipt. This covers the working declaration fixes atop the PR2
-commit, not the commit alone. A newly built, tested reviewed APK remains pending. No hosted,
-physical-device or authenticated app-card acceptance is claimed by these checks.
+commit, not the commit alone. The reviewed local APK was subsequently built from clean
+follow-up commit `e3d2cb91a426c67c6bcef0c5f664999e1676fb16`; emulator startup and all 26
+installed runtime assets passed. See the exact-artifact record in
+[current readiness](model-app-readiness.md#reviewed-local-test-apk-september-7).
+No hosted, physical GPU or authenticated app-card acceptance is claimed by these checks.
 
 Earlier full app-host boundary checks found no findings. Recorded-response
 replay, real model inference and fully verified app-card flows remain distinct evidence.

@@ -25,9 +25,9 @@ entries. Neither published PR head has changed. The frontend/backend source vali
 was recorded before these commits and retains its original source-snapshot boundaries.
 Subsequent declaration-only Candid and regression/CI follow-ups were validated before commit
 as changes atop that PR2 head; their separate source-contract validation is recorded below.
-The installed welcome APK predates the final worker-logging and mobile-theme fixes and
-requires rebuilding before it can represent the reconciled source. Its historical startup
-acceptance is summarized below.
+The historical welcome APK predates the final worker-logging and mobile-theme fixes and
+cannot represent the reconciled source. Its historical startup acceptance is summarized
+below, separately from the newly built reviewed APK.
 The September 6 APK and production bundles do not contain the later September 7
 welcome-readiness and authentication-error-display fixes described here.
 PR1's mixed-owner Git protection required an explicit developer-approved, per-command
@@ -109,8 +109,38 @@ accepts the recorded working declaration fixes atop `cdceb9d127a329b49a82795662f
 not that earlier commit alone. Evidence:
 `backend-candid-parity-runs/launch-fce066b6cd434a5d81dd22583dec9c56/summary.json`
 and `run-475e62309c1b4d729e248875e99ba0bf/completion.json` beneath that launch directory.
-The fresh reviewed APK remains pending. Interface parity does not establish integration
-execution, hosted CI, physical-device or authenticated app-flow acceptance.
+The fresh reviewed APK's separate startup/asset acceptance follows. Interface parity does
+not establish integration execution, hosted CI, physical-device or authenticated app-flow acceptance.
+
+### Reviewed local-test APK: September 7
+
+`OpenChat-local-test-reviewed-20260907.apk` was built from clean PR2 commit
+`e3d2cb91a426c67c6bcef0c5f664999e1676fb16`, with frontend version
+`2.0.0-local-webgpu-reviewed-20260907`, the configured local signing identity,
+all-WebGPU support and OTA strategy `none`. The 78,596,874-byte artifact has SHA-256
+`2c1db086278e5e8308a5bb925d3de751464c63961caedcbaa01fffe81c31a55e`.
+The monitored build exited 0; all 5,934 recorded regular source files, four unfollowed Git-link
+identities and 11 builder/configuration/lock inputs were unchanged. Evidence:
+`apk-reviewed-source-identity-c0c8876178b449aa8289fd4ddb6628d0/summary.json` and
+`local-apk-welcome-runs/run-76e65b7fd74c4b5ba45a64531ff9a7a2/completion.json`.
+
+The APK was installed over the existing app on `emulator-5554` without uninstalling or
+clearing app data. Onboarding was first observed ready
+3.37 seconds after the cold launch and remained ready through the asset checks. All 26
+installed runtime assets matched their distribution hashes; the pinned ORT module imported,
+its WASM compiled and the actual worker acknowledged disposal. The packaged origin was
+`http://tauri.localhost`, with the expected version and OTA-none policy. The screenshot
+showed the expected onboarding controls. Evidence:
+`apk-welcome-smoke-485363da6bd74e7b9df0fa348ce23657/summary.json`, `smoke.json` and
+`onboarding.png`. This does not prove retained authentication/model caches, wallet sign-in,
+physical-device GPU inference or complete app-authored card flows; no model inference ran.
+
+The build retains Sass, SDK and Gradle warnings. Its Porto/Tempo unresolved-dependency
+warnings were traced to unused connector code: a read-only parse of all 186 top-level emitted
+JavaScript files found no static or literal dynamic bare imports. That review is not wallet
+authentication acceptance or a new automated bundle regression. No release was published.
+
+### Other verification hardening
 
 The store-AAB verifier now checks the base-manifest package, version name and version code
 independently of its existing signature checks. Its standalone bundletool 1.18.1 is pinned

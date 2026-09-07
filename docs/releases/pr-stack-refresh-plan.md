@@ -45,8 +45,11 @@ the complete actual parity rerun after all fixes passes: 25 generated interfaces
 bidirectional comparisons, native exit 0, with all 2,879 recorded inputs and the Cargo lock
 unchanged. Evidence: `backend-candid-parity-runs/launch-fce066b6cd434a5d81dd22583dec9c56/summary.json`
 and its nested `run-475e62309c1b4d729e248875e99ba0bf/completion.json`. This result covers the
-working declaration fixes atop the PR2 commit, not the commit alone. The new reviewed APK
-remains pending; interface parity is not integration, hosted or device acceptance.
+working declaration fixes atop the PR2 commit, not the commit alone. The reviewed local APK
+was subsequently built from clean follow-up commit `e3d2cb91a426c67c6bcef0c5f664999e1676fb16`;
+emulator startup and all 26 installed runtime assets passed. See the exact-artifact record
+in [current readiness](model-app-readiness.md#reviewed-local-test-apk-september-7).
+Interface parity and this smoke test are not integration, hosted or physical GPU acceptance.
 
 The complete locked/offline backend unit workspace now passes 957 tests with 0 failures and
 1 existing ignored test, retaining the original exclusions for integration tests and the two
@@ -56,8 +59,8 @@ Its scope includes integration-test compilation, not execution. Recorded manifes
 workflow and monitor hashes were unchanged; process-local MSVC/`Path` setup corrected the
 launcher failure without weakening a source gate. The separate Candid parity pass is recorded
 above; integration execution, hosted CI and rollout acceptance remain unverified.
-The combined source has also produced a locally signed test APK.
-The September 7 APK includes the welcome and auth-display fixes. Three actual emulator
+The earlier combined source also produced a locally signed test APK.
+That historical September 7 welcome APK includes the welcome and auth-display fixes. Three actual emulator
 cold starts passed in 2.25–3.46 seconds to first observed readiness; all 26 installed assets
 matched on each run. **That APK predates the final worker-logging and mobile-theme fixes;
 it must be rebuilt and retested before representing current source.** Its cold-start passes
