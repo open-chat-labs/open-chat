@@ -49,7 +49,7 @@ jobs:
 
       - name: Check model and packaging policy regressions
         working-directory: .
-        run: node --test scripts/android_bundle.test.mjs scripts/android_build_prerequisites.test.mjs scripts/model_asset_notices.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_ci_coverage.test.mjs scripts/sbom_lock_identity.test.mjs scripts/frontend_format_check.test.mjs
+        run: node --test scripts/android_bundle.test.mjs scripts/android_build_prerequisites.test.mjs scripts/android_dev.test.mjs scripts/model_asset_notices.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_ci_coverage.test.mjs scripts/sbom_lock_identity.test.mjs scripts/frontend_format_check.test.mjs
 
       - name: Verify narrowly scoped dependency compatibility
         working-directory: .

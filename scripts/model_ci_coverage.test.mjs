@@ -115,6 +115,151 @@ function mappingBlock(text, key, indentation) {
   return end === -1 ? rest : rest.slice(0, end);
 }
 
+// This deliberately supports only the existing literal frontend job shape.
+// A comment, filtered event, conditional step or ignored exit is not coverage.
+function assertAndroidDevFrontendGate(text) {
+  text = text.replaceAll("\r\n", "\n");
+  const events = mappingBlock(text, "on", 0);
+  for (const [event, branch] of [
+    ["pull_request", "master"],
+    ["push", "codex/pr1-local-models"],
+  ]) {
+    const trigger = mappingBlock(events, event, 2);
+    assert.deepEqual(
+      [...trigger.matchAll(/^ {4}([a-z_-]+):/gmu)].map((match) => match[1]),
+      ["branches"],
+      event + " must not filter changed paths or event types",
+    );
+    const branches = mappingBlock(trigger, "branches", 4)
+      .split(/\r?\n/u)
+      .filter((line) => line.trim() && !line.trimStart().startsWith("#"))
+      .map((line) => {
+        const match = /^ {6}- ([a-z0-9/_-]+)[ \t]*$/u.exec(line);
+        assert.ok(match, "unsupported branch selector: " + line);
+        return match[1];
+      });
+    assert.ok(branches.includes(branch), event + " must cover " + branch);
+  }
+  const job = mappingBlock(
+    mappingBlock(text, "jobs", 0),
+    "install-and-test",
+    2,
+  );
+  assert.doesNotMatch(job, /^ {4}(?:if|continue-on-error):/mu);
+  const defaults = mappingBlock(mappingBlock(job, "defaults", 4), "run", 6);
+  assert.match(defaults, /^ {8}working-directory: frontend[ \t]*\r?$/mu);
+  assert.doesNotMatch(defaults, /^ {8}shell:/mu);
+  const steps = mappingBlock(job, "steps", 4)
+    .split(/^ {6}- /mu)
+    .slice(1);
+  const select = (name) => {
+    const selected = steps.filter((step) => name.test(step));
+    assert.equal(selected.length, 1, "expected exactly one matching step");
+    const step = selected[0];
+    assert.doesNotMatch(step, /^ {8}(?:if|continue-on-error|shell):/mu);
+    return step;
+  };
+  const install = select(/^name: Install dependencies[ \t]*\r?$/mu);
+  const policy = select(
+    /^name: Check (?:model and packaging|PR and release) policy regressions[ \t]*\r?$/mu,
+  );
+  const run = (step) => {
+    const commands = [...step.matchAll(/^ {8}run: ([^\r\n]+)$/gmu)];
+    assert.equal(commands.length, 1, "expected one executable run command");
+    return commands[0][1];
+  };
+  assert.equal(run(install), "npm ci");
+  assert.doesNotMatch(install, /^ {8}working-directory:/mu);
+  assert.ok(
+    steps.indexOf(install) < steps.indexOf(policy),
+    "install before tests",
+  );
+  assert.deepEqual(
+    [...policy.matchAll(/^ {8}working-directory: ([^\r\n]+)$/gmu)].map(
+      (match) => match[1],
+    ),
+    ["."],
+    "helper tests must run from the repository root",
+  );
+  const command = run(policy);
+  assert.match(
+    command,
+    /^node --test(?: scripts\/[a-z0-9_./-]+\.test\.mjs)+$/u,
+  );
+  const files = command.split(" ").slice(2);
+  for (const required of [
+    "scripts/android_dev.test.mjs",
+    "scripts/model_ci_coverage.test.mjs",
+  ]) {
+    assert.equal(files.filter((file) => file === required).length, 1, required);
+  }
+  return { install, policy };
+}
+
+test("frontend CI executes Android launcher regressions after installation on unfiltered PR and published-branch events", () => {
+  assertAndroidDevFrontendGate(read(".github/workflows/frontend.yaml"));
+});
+
+test("Android launcher CI coverage rejects missing, commented, misplaced and non-enforcing steps", () => {
+  const current = read(".github/workflows/frontend.yaml").replaceAll(
+    "\r\n",
+    "\n",
+  );
+  // Seed the positive fixture even before a missing shipped selection is fixed.
+  const positive = current.includes(" scripts/android_dev.test.mjs")
+    ? current
+    : current.replace(
+        "run: node --test ",
+        "run: node --test scripts/android_dev.test.mjs ",
+      );
+  const { install, policy } = assertAndroidDevFrontendGate(positive);
+  const mutants = [
+    positive.replace(" scripts/android_dev.test.mjs", ""),
+    positive.replace("run: node --test ", "# run: node --test "),
+    positive.replace(
+      policy,
+      policy.replace("working-directory: .", "working-directory: frontend"),
+    ),
+    positive.replace(
+      policy,
+      policy.replace("        working-directory: .\n", ""),
+    ),
+    positive
+      .replace(install, "__INSTALL__")
+      .replace(policy, install)
+      .replace("__INSTALL__", policy),
+    positive.replace(policy, policy + "        continue-on-error: true\n"),
+    positive.replace(policy, policy + "        if: false\n"),
+    positive.replace(
+      policy,
+      policy.replace(/(run: node --test[^\n]+)/u, "$1 || true"),
+    ),
+    positive.replace(policy, policy + "        shell: bash {0}\n"),
+    positive.replace(
+      "    runs-on:",
+      "    continue-on-error: true\n    runs-on:",
+    ),
+    positive.replace(
+      "  pull_request:\n",
+      '  pull_request:\n    paths: ["frontend/**"]\n',
+    ),
+    positive.replace(
+      "  push:\n",
+      '  push:\n    paths-ignore: ["scripts/**"]\n',
+    ),
+    positive.replace("      - master\n", "      - other-branch\n"),
+    positive.replaceAll("      - codex/pr1-local-models\n", ""),
+    positive.replace("        run: npm ci", "        # run: npm ci"),
+  ];
+  for (const [index, mutant] of mutants.entries()) {
+    assert.notEqual(mutant, positive, "mutation must alter workflow " + index);
+    assert.throws(
+      () => assertAndroidDevFrontendGate(mutant),
+      "mutation " + index,
+    );
+  }
+});
+
 function pullRequestPaths(text) {
   const events = mappingBlock(text, "on", 0);
   const pullRequest = mappingBlock(events, "pull_request", 2);
@@ -484,6 +629,7 @@ test("frontend policy invokes only generic regression scripts present in this ch
   assert.deepEqual(files, [
     "scripts/android_bundle.test.mjs",
     "scripts/android_build_prerequisites.test.mjs",
+    "scripts/android_dev.test.mjs",
     "scripts/model_asset_notices.test.mjs",
     "scripts/verify_webgpu_distribution.test.mjs",
     "scripts/model_ci_coverage.test.mjs",
