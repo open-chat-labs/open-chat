@@ -6,6 +6,7 @@
     import SignInWithMagicLink from "../SignInWithMagicLink.svelte";
     import BragBox from "./BragBox.svelte";
     import Intro from "./Intro.svelte";
+    import MobileBeta from "./MobileBeta.svelte";
     import Roadmap from "./RoadmapOverview.svelte";
     import SellingPoints from "./SellingPoints.svelte";
 
@@ -33,6 +34,8 @@
             <ArrowLink url={"/features"} color={"#23A2EE"}>View Features</ArrowLink>
         </div>
     </div>
+
+    <MobileBeta />
 
     <SellingPoints />
 
