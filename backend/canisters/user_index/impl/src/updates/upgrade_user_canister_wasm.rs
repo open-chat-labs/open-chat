@@ -62,7 +62,12 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
 
     let local_user_index_canisters = build_filter_map(local_user_index_canister_ids, args.filter.unwrap_or_default(), |c| {
         state.data.local_index_map.get_index_canister(&c.into())
-    });
+    })
+    .map_err(|unresolved| {
+        InternalError(format!(
+            "Upgrade filter names canisters which are not known to this canister: {unresolved:?}"
+        ))
+    })?;
 
     Ok(PrepareResult {
         wasm: CanisterWasm {

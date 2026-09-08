@@ -26,8 +26,16 @@ impl LocalMultiUserMap {
         );
     }
 
+    pub fn get(&self, canister_id: &CanisterId) -> Option<&LocalMultiUser> {
+        self.canisters.get(canister_id)
+    }
+
     pub fn get_mut(&mut self, canister_id: &CanisterId) -> Option<&mut LocalMultiUser> {
         self.canisters.get_mut(canister_id)
+    }
+
+    pub fn contains(&self, canister_id: &CanisterId) -> bool {
+        self.canisters.contains_key(canister_id)
     }
 
     pub fn mark_cycles_top_up(&mut self, canister_id: &CanisterId, top_up: CyclesTopUp) -> bool {

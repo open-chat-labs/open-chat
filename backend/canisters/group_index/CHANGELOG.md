@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 
+### Fixed
+
+- Reject upgrade filters which name canisters the index has no mapping for, rather than silently dropping them and reporting success ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
+
 ## [[2.0.2034](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2034-group_index)] - 2026-08-20
 
 ### Added

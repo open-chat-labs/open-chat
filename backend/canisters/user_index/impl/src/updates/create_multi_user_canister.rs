@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state};
+use crate::read_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use tracing::{error, info};
@@ -21,12 +21,9 @@ async fn create_multi_user_canister(args: Args) -> Response {
     .await
     {
         Ok(local_user_index_canister::c2c_create_multi_user_canister::Response::Success(canister_id)) => {
-            mutate_state(|state| {
-                state
-                    .data
-                    .multi_user_canisters
-                    .insert(canister_id, local_user_index_canister_id)
-            });
+            // The canister id -> LocalUserIndex mapping is recorded when the
+            // `MultiUserCanisterCreated` event arrives, not here, so that it still lands if this
+            // reply is dropped
             info!(%canister_id, %local_user_index_canister_id, "MultiUser canister created");
             Success(canister_id)
         }

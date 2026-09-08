@@ -61,5 +61,7 @@ fn commit(canister_id: CanisterId, top_up: CyclesTopUp, state: &mut RuntimeState
         state.data.local_groups.mark_cycles_top_up(&canister_id.into(), top_up);
     } else if state.data.local_communities.contains(&canister_id.into()) {
         state.data.local_communities.mark_cycles_top_up(&canister_id.into(), top_up);
+    } else if state.data.local_multi_users.contains(&canister_id) {
+        state.data.local_multi_users.mark_cycles_top_up(&canister_id, top_up);
     }
 }

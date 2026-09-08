@@ -180,6 +180,7 @@ impl RuntimeState {
         self.data.local_users.contains(&caller.into())
             || self.data.local_groups.contains(&caller.into())
             || self.data.local_communities.contains(&caller.into())
+            || self.data.local_multi_users.contains(&caller)
     }
 
     pub fn is_caller_notification_pusher(&self) -> bool {

@@ -63,7 +63,7 @@ pub mod happy_path {
     use testing::rng::random_principal;
     use types::{
         BotDefinition, BotInstallationLocation, CanisterId, CanisterWasm, Chit, DiamondMembershipFees,
-        DiamondMembershipPlanDuration, Empty, OptionUpdate, TimestampMillis, UserId, UserSummary,
+        DiamondMembershipPlanDuration, Empty, OptionUpdate, TimestampMillis, UpgradesFilter, UserId, UserSummary,
     };
     use user_index_canister::ChildCanisterType;
     use user_index_canister::users::UserGroup;
@@ -289,6 +289,21 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        let response = upgrade_multi_user_canister_wasm_with_filter(env, sender, user_index_canister_id, wasm, None);
+
+        assert!(matches!(
+            response,
+            user_index_canister::upgrade_multi_user_canister_wasm::Response::Success
+        ));
+    }
+
+    pub fn upgrade_multi_user_canister_wasm_with_filter(
+        env: &mut PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        wasm: CanisterWasm,
+        filter: Option<UpgradesFilter>,
+    ) -> user_index_canister::upgrade_multi_user_canister_wasm::Response {
         upload_wasm_in_chunks(
             env,
             sender,
@@ -297,21 +312,16 @@ pub mod happy_path {
             ChildCanisterType::MultiUser,
         );
 
-        let response = super::upgrade_multi_user_canister_wasm(
+        super::upgrade_multi_user_canister_wasm(
             env,
             sender,
             user_index_canister_id,
             &user_index_canister::upgrade_multi_user_canister_wasm::Args {
                 version: wasm.version,
                 wasm_hash: sha256(&wasm.module),
-                filter: None,
+                filter,
             },
-        );
-
-        assert!(matches!(
-            response,
-            user_index_canister::upgrade_multi_user_canister_wasm::Response::Success
-        ));
+        )
     }
 
     pub fn public_key(env: &mut PocketIc, user_index_canister_id: CanisterId) -> String {

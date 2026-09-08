@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, mutate_state};
+use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserIndexEvent, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
@@ -87,6 +87,12 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
 
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) {
     state.data.local_multi_users.add(canister_id, wasm_version);
+
+    // Tell the UserIndex via the event queue rather than relying on the reply to this call. The
+    // queue retries until acked, so the mapping still lands if the reply is dropped, eg. because
+    // the UserIndex is upgraded while the call is in flight
+    let now = state.env.now();
+    state.push_event_to_user_index(UserIndexEvent::MultiUserCanisterCreated(canister_id), now);
 }
 
 fn rollback(canister_id: Option<CanisterId>, error: &C2CError, state: &mut RuntimeState) {

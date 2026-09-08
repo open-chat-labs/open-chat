@@ -34,6 +34,7 @@ pub enum LocalUserIndexEvent {
     NotifyOfUserDeleted(CanisterId, UserId),
     MediaScanStalled(Box<MediaScanStalled>),
     MediaScanRecovered,
+    MultiUserCanisterCreated(CanisterId),
 }
 
 // Raised by a local index when media scan jobs are queued but no verdicts are arriving: the
