@@ -60,6 +60,7 @@ pub enum UserIndexEvent {
     SetOpenAIApiKey(SetOpenAIApiKey),
     SetModerationReferralConfig(SetModerationReferralConfig),
     SetMediaScanConfig(types::MediaScanConfig),
+    SetMultiUserCanistersEnabled(bool),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

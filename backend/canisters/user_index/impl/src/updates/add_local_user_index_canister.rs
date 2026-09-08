@@ -147,6 +147,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 openai_api_key: state.data.openai_api_key.clone(),
                 moderation_referral_config: state.data.moderation_referral_config.clone(),
                 media_scan_config: state.data.media_scan_config.clone(),
+                multi_user_canisters_enabled: state.data.multi_user_canisters_enabled,
                 test_mode: state.data.test_mode,
             },
         })
