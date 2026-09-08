@@ -25,18 +25,15 @@ const DYNAMIC_HOST = "http://dynamichost";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const buildDir = path.join(repoRoot, "frontend/app/build");
 
-function readDotEnv(key) {
-    try {
-        const lines = readFileSync(path.join(repoRoot, "frontend/.env"), "utf8").split("\n");
-        const line = lines.find((l) => l.startsWith(`${key}=`));
-        return line?.slice(key.length + 1).trim().replace(/^(["'])(.*)\1$/, "$2");
-    } catch {
-        return undefined;
-    }
+// Same as the build's dotenv.config(): fills in what the shell has not set, never overrides.
+try {
+    process.loadEnvFile(path.join(repoRoot, "frontend/.env"));
+} catch {
+    // No .env file; the token may still be in the environment.
 }
 
 const version = process.argv[2] ?? process.env.OC_WEBSITE_VERSION;
-const token = process.env.OC_ROLLBAR_SERVER_TOKEN || readDotEnv("OC_ROLLBAR_SERVER_TOKEN");
+const token = process.env.OC_ROLLBAR_SERVER_TOKEN;
 
 if (!version) {
     console.error("upload-source-maps: no version given (argv[2] or OC_WEBSITE_VERSION)");
