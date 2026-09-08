@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { normaliseSourceMapUrls } from "./logging";
+import { normaliseSourceMapUrls, uncaughtReason } from "./logging";
 
 // These expectations are the other half of a contract: `scripts/upload-source-maps.mjs` registers
 // each map as `http://dynamichost/<path relative to frontend/app/build>`. If a frame's filename
@@ -77,5 +77,30 @@ describe("normaliseSourceMapUrls", () => {
     test("ignores payloads with no trace at all", () => {
         expect(() => normaliseSourceMapUrls({ body: { message: { body: "hello" } } })).not.toThrow();
         expect(() => normaliseSourceMapUrls({})).not.toThrow();
+    });
+});
+
+// Rollbar passes `[message, reason, context, promise]` as the args for an unhandled rejection.
+// Anything thrown in the worker arrives as a plain object rather than an Error, so Rollbar files
+// it with no exception class and the payload alone cannot be filtered on name or code.
+describe("uncaughtReason", () => {
+    test("finds a worker error that lost its prototype", () => {
+        const reason = { name: "SessionExpiryError", message: "HTTP request failed", code: 400 };
+        expect(uncaughtReason(["HTTP request failed", reason, undefined, {}])).toBe(reason);
+    });
+
+    test("finds a real Error", () => {
+        const err = new TypeError("boom");
+        expect(uncaughtReason(["boom", err, undefined, {}])).toBe(err);
+    });
+
+    test("skips the message string and the promise", () => {
+        expect(uncaughtReason(["just a message", undefined, undefined, {}])).toBeUndefined();
+    });
+
+    test("tolerates a missing or malformed args list", () => {
+        expect(uncaughtReason(undefined)).toBeUndefined();
+        expect(uncaughtReason([])).toBeUndefined();
+        expect(uncaughtReason("not an array")).toBeUndefined();
     });
 });

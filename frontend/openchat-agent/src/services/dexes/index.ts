@@ -66,15 +66,12 @@ export class DexesAgent {
                 ),
             ),
         );
-        const succeeded = quotes.flatMap((q) => (q.status === "fulfilled" ? [q.value] : []));
-
-        // Every pool failing is not the same thing as every pool declining. A candid change or a
-        // DEX outage takes them all out at once, and swallowing that would show the user "no
-        // quotes" while nothing reached the error tracker. Rethrow so it stays visible.
-        if (succeeded.length === 0 && quotes.length > 0) {
-            throw (quotes[0] as PromiseRejectedResult).reason;
-        }
-        return succeeded;
+        // No rethrow when they all fail. A DEX declines by throwing - ICPSwap's mapper throws on
+        // any non-ok variant, "amount of input token is too small" included - and a pair usually
+        // has a single pool, so "every pool failed" is the ordinary dust-amount case, not an
+        // outage. Rethrowing there just reinstated the noise this change exists to remove.
+        // `getAllSwapPools` above already swallows a DEX being unreachable for the same reason.
+        return quotes.flatMap((q) => (q.status === "fulfilled" ? [q.value] : []));
     }
 
     private getAllSwapPools(swapProviders: DexId[]): Promise<TokenSwapPool[]> {

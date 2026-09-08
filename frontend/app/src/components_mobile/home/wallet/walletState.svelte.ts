@@ -172,25 +172,23 @@ export class TokenState {
     // of `#token.ledger`. The null token stops the crash, but its zero decimals and empty symbol
     // would render an amount that is wrong rather than obviously missing, so callers must consult
     // `unknown` and refuse to show a figure or offer an action for a token we cannot identify.
-    #unknown = $state(false);
-
     constructor(t: EnhancedTokenDetails | undefined, c: ConversionToken = "usd") {
         this.#token = t ?? nullToken;
-        this.#unknown = t === undefined;
         this.#selectedConversion = c;
     }
 
     // True when the ledger is not in the registry: nothing about this token can be trusted,
-    // including any amount formatted with it.
+    // including any amount formatted with it. Derived from the token itself rather than latched
+    // in the constructor, so it stays correct through the `token` setter below.
     get unknown() {
-        return this.#unknown;
+        return this.#token === nullToken;
     }
 
     // The null token's zero decimals would turn e8s into a number that is wrong rather than
     // obviously missing, and every consumer of this class formats through here, so one guard
     // covers message content, gates and the wallet alike.
     formatTokens(amount: bigint) {
-        if (this.#unknown) return "?????";
+        if (this.unknown) return "?????";
         return formatTokens(amount, this.#decimals);
     }
 
@@ -306,6 +304,9 @@ export class TokenState {
     }
 
     refreshBalance(client: OpenChat) {
+        // The null token's ledger is "", and refreshing that reaches the worker as
+        // Principal.fromText("") - one unhandled rejection per tap. Nothing to refresh anyway.
+        if (this.unknown) return Promise.resolve();
         this.#refreshingBalance = true;
         return client
             .refreshAccountBalance(this.ledger, false)

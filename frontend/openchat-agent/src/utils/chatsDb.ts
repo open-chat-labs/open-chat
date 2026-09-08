@@ -1239,7 +1239,17 @@ function makeCommunitySerializable(community: CommunitySummary): CommunitySummar
 // unusable instead and let `getUpdates` fall through to `getInitialState`, which is what the
 // staleness check above already does.
 function cachedChatsAreUsable(chats: ChatStateFull): boolean {
-    if (!Array.isArray(chats.directChats)) return false;
+    // `getUpdates` iterates all three of these inside the Stream initialiser, where a throw
+    // wedges the load rather than surfacing. No record missing groupChats or communities has
+    // been seen - the write is atomic - but the shape of the failure is the same, and checking
+    // is cheaper than the launch loop it would cause.
+    if (
+        !Array.isArray(chats.directChats) ||
+        !Array.isArray(chats.groupChats) ||
+        !Array.isArray(chats.communities)
+    ) {
+        return false;
+    }
     return chats.directChats.every((c) => c?.them !== undefined && c?.membership !== undefined);
 }
 

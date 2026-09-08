@@ -188,8 +188,8 @@
             "payment gate",
             tokenState.formatTokens(gate.amount),
             tokenState.formatTokens(balance),
-            () => onClick(gate),
-            () => tokenState.refreshBalance(client),
+            tokenState.unknown ? undefined : () => onClick(gate),
+            tokenState.unknown ? undefined : () => tokenState.refreshBalance(client),
         )}
     {:else if gate.kind === "token_balance_gate" && tokenState}
         {@const balance = accessApprovalState.balanceAfterCurrentCommitments(
@@ -204,8 +204,8 @@
             "minimum balance gate",
             tokenState.formatTokens(gate.minBalance),
             tokenState.formatTokens(balance),
-            () => onClick(gate),
-            () => tokenState.refreshBalance(client),
+            tokenState.unknown ? undefined : () => onClick(gate),
+            tokenState.unknown ? undefined : () => tokenState.refreshBalance(client),
         )}
     {:else if gate.kind === "neuron_gate" && token}
         {@render neuronGate(gate, token)}

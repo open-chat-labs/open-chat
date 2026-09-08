@@ -32,6 +32,25 @@ function rollbarPayloadError(payload: any): { name: string; message: string } {
     };
 }
 
+// Rollbar hands `checkIgnore` the original arguments alongside the payload, and for an unhandled
+// rejection those include the rejection reason itself. That matters for anything thrown in the
+// worker: it crosses the boundary as JSON, so the reason arrives as a plain object rather than an
+// Error, Rollbar cannot read an exception class off it and files the item as "(unknown): message"
+// with no class at all. `name` and `code` are exactly what most of `shouldReportError`'s rules
+// are keyed on - session expiry, the 502-504 range, retry-exhausted - so reading them off the
+// payload alone silently loses every one of those. Recover the reason and filter on that.
+// Exported for testing.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function uncaughtReason(args: any): unknown {
+    if (!Array.isArray(args)) return undefined;
+    return args.find(
+        (arg) =>
+            arg != null &&
+            typeof arg === "object" &&
+            (typeof arg.name === "string" || typeof arg.message === "string"),
+    );
+}
+
 // True when the innermost frame of the primary error is browser-extension code: the error was
 // thrown by an extension (CSP violations from injected wasm, wallet inpage scripts, ...), not us.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,9 +122,13 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             // captureUncaught / captureUnhandledRejections bypass our logger, so uncaught
             // items get the same noise filtering at the transport layer. Logger-reported items
             // (isUncaught false) already passed shouldReportError and are not re-filtered here.
-            checkIgnore: (isUncaught, _args, payload) => {
+            checkIgnore: (isUncaught, args, payload) => {
                 if (!isUncaught) return false;
                 if (thrownByExtension(payload)) return true;
+                // Prefer the reason itself: it still carries name and code, which the payload
+                // does not for anything that crossed the worker boundary
+                const reason = uncaughtReason(args);
+                if (reason !== undefined) return !shouldReportError(reason);
                 const { name, message } = rollbarPayloadError(payload);
                 return !shouldReportMessage(name, message);
             },
