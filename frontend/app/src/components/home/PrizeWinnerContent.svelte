@@ -36,10 +36,17 @@
         ev.stopPropagation();
     }
     let logo = $derived($cryptoLookup.get(content.transaction.ledger)?.logo ?? "");
-    let tokenDetails = $derived($cryptoLookup.get(content.transaction.ledger)!);
-    let symbol = $derived(tokenDetails.symbol);
+    // The registry does not always carry the prize's ledger - it can predate the token being
+    // added, or outlive it being dropped - and asserting it does crashed the message list.
+    // Without decimals the amount cannot be stated, so say so rather than invent a scale: the
+    // same transfer must never render as two different numbers depending on which component
+    // drew it.
+    let tokenDetails = $derived($cryptoLookup.get(content.transaction.ledger));
+    let symbol = $derived(tokenDetails?.symbol ?? "");
     let amount = $derived(
-        client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals),
+        tokenDetails === undefined
+            ? "?????"
+            : client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals),
     );
     let winner = $derived(`${username(content.transaction.recipient)}`);
     let me = $derived($currentUserIdStore === content.transaction.recipient);
