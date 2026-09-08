@@ -18,7 +18,7 @@ export class IcpSwapPoolClient
         super(identity, agent, canisterId, idlFactory, "IcpSwapPool");
     }
 
-    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint> {
+    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint | undefined> {
         const zeroForOne = this.zeroForOne(inputToken, outputToken);
         const args = {
             amountIn: amountIn.toString(),

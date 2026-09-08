@@ -109,6 +109,28 @@ describe("shouldReportError", () => {
         expect(shouldReportError(lost)).toBe(false);
     });
 
+    test("silences a wrong client clock in both directions", () => {
+        // the client's clock is ahead, so the certificate the replica signed looks like the future
+        expect(
+            shouldReportError(
+                new Error("Certificate is signed more than 5 minutes in the future."),
+            ),
+        ).toBe(false);
+        // the client's clock is behind, so the expiry it computed is outside the replica's window
+        expect(
+            shouldReportError(
+                new HttpError(
+                    400,
+                    new Error(
+                        "Invalid request expiry: Minimum allowed expiry: 2026-09-08 01:43:31 UTC, " +
+                            "Maximum allowed expiry: 2026-09-08 01:49:01 UTC, " +
+                            "Provided expiry: 2026-08-26 04:23:00 UTC.",
+                    ),
+                ),
+            ),
+        ).toBe(false);
+    });
+
     test("silences the IC agent giving up after its fetch retries", () => {
         expect(
             shouldReportError(
