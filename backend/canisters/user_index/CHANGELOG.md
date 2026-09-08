@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add `upgrade_multi_user_canister_wasm` and `create_multi_user_canister` so MultiUser canisters can be installed and upgraded via the LocalUserIndexes ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Support paying for Diamond membership from external wallets using ICRC2 ([#9265](https://github.com/open-chat-labs/open-chat/pull/9265))
 
 ### Changed
@@ -18,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off `post_upgrade` privilege re-sync now that it has run on prod in the 2.0.2046 release ([#9255](https://github.com/open-chat-labs/open-chat/pull/9255))
 - Remove the referral reward payment handling, which has been unreachable since referrals were rewarded in CHIT ([#9289](https://github.com/open-chat-labs/open-chat/pull/9289))
+
+### Fixed
+
+- Reject upgrade filters which name canisters the index has no mapping for, rather than silently dropping them and reporting success ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 
 ## [[2.0.2046](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2046-user_index)] - 2026-08-26
 

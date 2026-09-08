@@ -14,6 +14,7 @@ generate_candid_query_call!(user);
 
 // Updates
 generate_candid_update_call!(add_local_user_index_canister);
+generate_candid_update_call!(create_multi_user_canister);
 generate_candid_update_call!(add_platform_moderator);
 generate_candid_update_call!(add_platform_operator);
 generate_candid_update_call!(remove_sms_messages);
@@ -21,6 +22,7 @@ generate_candid_update_call!(remove_platform_moderator);
 generate_candid_update_call!(remove_platform_operator);
 generate_candid_update_call!(set_username);
 generate_candid_update_call!(upgrade_local_user_index_canister_wasm);
+generate_candid_update_call!(upgrade_multi_user_canister_wasm);
 generate_candid_update_call!(upgrade_user_canister_wasm);
 generate_candid_update_call!(upload_wasm_chunk);
 

@@ -21,6 +21,7 @@ async fn main() {
         CanisterName::LocalUserIndex => {
             upload_local_user_index_canister_wasm(identity, opts.url, opts.user_index, opts.version).await
         }
+        CanisterName::MultiUser => upload_multi_user_canister_wasm(identity, opts.url, opts.user_index, opts.version).await,
         CanisterName::NotificationsIndex => {
             upload_notifications_index_canister_wasm(identity, opts.url, opts.openchat_installer, opts.version).await
         }

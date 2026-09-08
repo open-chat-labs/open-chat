@@ -34,6 +34,10 @@ fn populate_canisters() {
                 .data
                 .cycles_balance_check_queue
                 .extend(state.data.local_communities.iter().map(|(u, _)| CanisterId::from(*u)));
+            state
+                .data
+                .cycles_balance_check_queue
+                .extend(state.data.local_multi_users.iter().map(|(c, _)| *c));
         }
     });
 
@@ -62,8 +66,18 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
     let mut count = 0;
     let now = state.env.now();
     while let Some(canister_id) = state.data.cycles_balance_check_queue.pop_front() {
-        if let Some(user) = state.data.local_users.get(&canister_id.into()) {
-            let most_recent_top_up = user.cycle_top_ups.last().map(|c| c.date).unwrap_or_default();
+        // Note: local groups and communities are queued up above but are not matched here, so they
+        // are never balance checked by this job. That is pre-existing behaviour, they rely on
+        // their own `check_cycles_balance` regular job calling `c2c_notify_low_balance` instead
+        let cycle_top_ups = state
+            .data
+            .local_users
+            .get(&canister_id.into())
+            .map(|u| &u.cycle_top_ups)
+            .or_else(|| state.data.local_multi_users.get(&canister_id).map(|c| &c.cycle_top_ups));
+
+        if let Some(cycle_top_ups) = cycle_top_ups {
+            let most_recent_top_up = cycle_top_ups.last().map(|c| c.date).unwrap_or_default();
 
             // Only check the balance if the most recent top up was more than 10 days ago
             if now.saturating_sub(most_recent_top_up) > 10 * DAY_IN_MS {

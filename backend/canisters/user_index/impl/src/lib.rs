@@ -265,11 +265,13 @@ impl RuntimeState {
                 .get(ChildCanisterType::LocalUserIndex)
                 .wasm
                 .version,
+            multi_user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
+            multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, i)| (*c, *i)).collect(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
@@ -442,6 +444,9 @@ struct Data {
     // (last posted, suppressed count)
     #[serde(default)]
     pub blocked_attempt_notice_throttle: HashMap<(u64, Principal), (TimestampMillis, u32)>,
+    // MultiUser canister id -> the LocalUserIndex which controls it
+    #[serde(default)]
+    pub multi_user_canisters: HashMap<CanisterId, CanisterId>,
 }
 
 impl Data {
@@ -545,6 +550,7 @@ impl Data {
             media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
             blocked_attempt_notice_throttle: HashMap::new(),
+            multi_user_canisters: HashMap::new(),
         };
 
         // Register the ProposalsBot
@@ -667,6 +673,7 @@ impl Default for Data {
             media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
             blocked_attempt_notice_throttle: HashMap::new(),
+            multi_user_canisters: HashMap::new(),
         }
     }
 }
@@ -690,11 +697,13 @@ pub struct Metrics {
     pub governance_principals: Vec<Principal>,
     pub user_wasm_version: BuildVersion,
     pub local_user_index_wasm_version: BuildVersion,
+    pub multi_user_wasm_version: BuildVersion,
     pub max_concurrent_canister_upgrades: usize,
     pub platform_moderators: u8,
     pub platform_operators: u8,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
+    pub multi_user_canisters: Vec<(CanisterId, CanisterId)>,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,

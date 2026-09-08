@@ -42,6 +42,7 @@ jwt = { path = "../../../libraries/jwt" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+multi_user_canister = { path = "../../multi_user/api" }
 notifications_index_canister = { path = "../../notifications_index/api" }
 oc_error_codes = { path = "../../../libraries/error_codes" }
 online_users_canister = { path = "../../online_users/api" }

@@ -336,6 +336,7 @@ pub enum ChildCanisterType {
     User,
     Group,
     Community,
+    MultiUser,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

@@ -8,12 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add `c2c_create_multi_user_canister` and `c2c_upgrade_multi_user_canister_wasm` plus a rolling upgrade job for MultiUser canisters ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Expose the user-event sync queue's in-flight batch count in metrics, alongside the existing queued length ([#9177](https://github.com/open-chat-labs/open-chat/pull/9177))
 
 ### Changed
 
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Harden the message-classification job against API throttling: rate-limit and outage rejections no longer count towards the drop-after-3-attempts limit (queue residency is bounded at 24h instead), the API's Retry-After is honoured, error bodies are logged so throttle and quota failures are distinguishable, and batches are token-capped and paced to stay under the moderation model's tokens-per-minute limit while a deep queue drains ([#9176](https://github.com/open-chat-labs/open-chat/pull/9176))
+
+### Fixed
+
+- Include MultiUser canisters in the cycles top up paths, so they can report a low balance and are picked up by the weekly balance sweep ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 
 ## [[2.0.2033](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2033-local_user_index)] - 2026-08-20
 

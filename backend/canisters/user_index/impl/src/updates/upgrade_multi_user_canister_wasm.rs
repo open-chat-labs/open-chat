@@ -6,12 +6,12 @@ use ic_cdk::call::RejectCode;
 use tracing::{error, info};
 use types::{C2CError, CanisterId, CanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*, UpgradesFilter};
 use user_index_canister::ChildCanisterType;
-use user_index_canister::upgrade_user_canister_wasm::*;
+use user_index_canister::upgrade_multi_user_canister_wasm::*;
 use utils::canister::build_filter_map;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
-async fn upgrade_user_canister_wasm(args: Args) -> Response {
+async fn upgrade_multi_user_canister_wasm(args: Args) -> Response {
     let PrepareResult {
         wasm,
         wasm_hash,
@@ -19,7 +19,7 @@ async fn upgrade_user_canister_wasm(args: Args) -> Response {
     } = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
         Err(response) => {
-            error!(?response, "Failed to upgrade User canister wasm");
+            error!(?response, "Failed to upgrade MultiUser canister wasm");
             return response;
         }
     };
@@ -28,18 +28,18 @@ async fn upgrade_user_canister_wasm(args: Args) -> Response {
 
     let futures: Vec<_> = local_user_index_canisters
         .into_iter()
-        .map(|(canister_id, filter)| upgrade_user_wasm_in_local_user_index(canister_id, &wasm, wasm_hash, Some(filter)))
+        .map(|(canister_id, filter)| upgrade_multi_user_wasm_in_local_user_index(canister_id, &wasm, wasm_hash, Some(filter)))
         .collect();
 
     if let Err(error) = futures::future::try_join_all(futures).await {
-        error!(?error, "Failed to upgrade User canisters");
+        error!(?error, "Failed to upgrade MultiUser canisters");
         InternalError(format!("{error:?}"))
     } else {
         mutate_state(|state| {
-            state.data.child_canister_wasms.set(ChildCanisterType::User, wasm);
+            state.data.child_canister_wasms.set(ChildCanisterType::MultiUser, wasm);
         });
 
-        info!(%version, "User canister wasm upgraded");
+        info!(%version, "MultiUser canister wasm upgraded");
         Success
     }
 }
@@ -51,17 +51,17 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let chunks_hash = state.data.child_canister_wasms.chunks_hash(ChildCanisterType::User);
+    let chunks_hash = state.data.child_canister_wasms.chunks_hash(ChildCanisterType::MultiUser);
     if chunks_hash != args.wasm_hash {
         return Err(HashMismatch(chunks_hash));
     }
 
-    let wasm = state.data.child_canister_wasms.wasm_from_chunks(ChildCanisterType::User);
+    let wasm = state.data.child_canister_wasms.wasm_from_chunks(ChildCanisterType::MultiUser);
 
     let local_user_index_canister_ids: Vec<_> = state.data.local_index_map.canisters().copied().collect();
 
     let local_user_index_canisters = build_filter_map(local_user_index_canister_ids, args.filter.unwrap_or_default(), |c| {
-        state.data.local_index_map.get_index_canister(&c.into())
+        state.data.multi_user_canisters.get(&c).copied()
     })
     .map_err(|unresolved| {
         InternalError(format!(
@@ -79,7 +79,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
     })
 }
 
-pub(crate) async fn upgrade_user_wasm_in_local_user_index(
+pub(crate) async fn upgrade_multi_user_wasm_in_local_user_index(
     canister_id: CanisterId,
     canister_wasm: &CanisterWasm,
     wasm_hash: Hash,
@@ -87,7 +87,7 @@ pub(crate) async fn upgrade_user_wasm_in_local_user_index(
 ) -> Result<(), C2CError> {
     let push_wasm_response = local_user_index_canister_c2c_client::push_wasm_in_chunks(
         canister_id,
-        local_user_index_canister::ChildCanisterType::User,
+        local_user_index_canister::ChildCanisterType::MultiUser,
         &canister_wasm.module,
     )
     .await?;
@@ -104,9 +104,9 @@ pub(crate) async fn upgrade_user_wasm_in_local_user_index(
         ));
     }
 
-    let upgrade_response = local_user_index_canister_c2c_client::c2c_upgrade_user_canister_wasm(
+    let upgrade_response = local_user_index_canister_c2c_client::c2c_upgrade_multi_user_canister_wasm(
         canister_id,
-        &local_user_index_canister::c2c_upgrade_user_canister_wasm::Args {
+        &local_user_index_canister::c2c_upgrade_multi_user_canister_wasm::Args {
             version: canister_wasm.version,
             wasm_hash,
             filter,
@@ -117,7 +117,7 @@ pub(crate) async fn upgrade_user_wasm_in_local_user_index(
     if !matches!(upgrade_response, Success) {
         return Err(C2CError::new(
             canister_id,
-            "c2c_upgrade_user_canister_wasm",
+            "c2c_upgrade_multi_user_canister_wasm",
             RejectCode::CanisterError,
             format!("{upgrade_response:?}"),
         ));

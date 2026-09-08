@@ -15,6 +15,7 @@ use rand::Rng;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
+use tracing::info;
 use types::{CanisterId, IdempotentEnvelope, MessageContentInitial, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::LocalUserIndexEvent;
 use user_index_canister::c2c_local_user_index::*;
@@ -170,6 +171,14 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 format!("\u{2705} Media scan pipeline recovered on local index {caller}: verdicts are flowing again."),
                 state,
             );
+        }
+        LocalUserIndexEvent::MultiUserCanisterCreated(canister_id) => {
+            // Recorded here rather than in the `create_multi_user_canister` proposal handler so
+            // that the mapping survives a dropped reply - the local index keeps retrying this
+            // event until it is acked, and re-inserting is a no-op
+            if state.data.multi_user_canisters.insert(canister_id, caller).is_none() {
+                info!(%canister_id, local_user_index_canister_id = %caller, "MultiUser canister registered");
+            }
         }
         LocalUserIndexEvent::NotifyOfUserDeleted(c, u) => state.data.group_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: **now,

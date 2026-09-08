@@ -5,12 +5,18 @@ use types::{CanisterId, UpgradesFilter};
 // Essentially, user canisters (UserIndex -> LocalUserIndex -> User) and group canisters.
 // The return value is the list of child canisters to forward the upgrade request onto along with
 // the corresponding filter for each canister.
+//
+// Any canister named in the filter's `include` or `exclude` set which is neither an index canister
+// nor mapped to one is returned as an error rather than being dropped. Dropping them silently
+// turns "upgrade only X" into a no-op which still reports success, and "upgrade everything except
+// X" into "upgrade everything", both of which are worse than rejecting the request.
 pub fn build_filter_map<F: Fn(CanisterId) -> Option<CanisterId>>(
     index_canisters: Vec<CanisterId>,
     filter: UpgradesFilter,
     get_index_canister: F,
-) -> Vec<(CanisterId, UpgradesFilter)> {
+) -> Result<Vec<(CanisterId, UpgradesFilter)>, Vec<CanisterId>> {
     let mut map: HashMap<CanisterId, UpgradesFilter> = HashMap::new();
+    let mut unresolved: Vec<CanisterId> = Vec::new();
 
     let default = UpgradesFilter {
         versions: filter.versions.clone(),
@@ -29,6 +35,8 @@ pub fn build_filter_map<F: Fn(CanisterId) -> Option<CanisterId>>(
             map.entry(canister_id).or_insert(default.clone());
         } else if let Some(index) = get_index_canister(canister_id) {
             map.entry(index).or_insert(default.clone()).include.insert(canister_id);
+        } else {
+            unresolved.push(canister_id);
         }
     }
 
@@ -40,11 +48,20 @@ pub fn build_filter_map<F: Fn(CanisterId) -> Option<CanisterId>>(
                 map.entry(index).and_modify(|e| {
                     e.exclude.insert(canister_id);
                 });
+            } else if !index_canisters.contains(&canister_id) {
+                // An index canister which has already been filtered out of the map is fine to
+                // exclude, anything else we can't resolve is not
+                unresolved.push(canister_id);
             }
         }
     }
 
-    map.into_iter().collect()
+    if unresolved.is_empty() {
+        Ok(map.into_iter().collect())
+    } else {
+        unresolved.sort_unstable();
+        Err(unresolved)
+    }
 }
 
 #[cfg(test)]
@@ -141,14 +158,53 @@ mod tests {
         run_test(filter1, expected1);
     }
 
+    #[test]
+    fn unknown_canister_in_include_is_rejected() {
+        let filter = UpgradesFilter {
+            include: [child_canister_id(0, 1), unknown_canister_id()].into_iter().collect(),
+            ..Default::default()
+        };
+
+        assert_eq!(run_test_expecting_error(filter), vec![unknown_canister_id()]);
+    }
+
+    #[test]
+    fn unknown_canister_in_exclude_is_rejected() {
+        let filter = UpgradesFilter {
+            exclude: [unknown_canister_id()].into_iter().collect(),
+            ..Default::default()
+        };
+
+        assert_eq!(run_test_expecting_error(filter), vec![unknown_canister_id()]);
+    }
+
+    #[test]
+    fn excluding_an_index_canister_already_filtered_out_is_not_an_error() {
+        // index 1 is included, so index 2 is not in the map by the time it is excluded
+        let filter = UpgradesFilter {
+            include: [index_canister_id(1)].into_iter().collect(),
+            exclude: [index_canister_id(2)].into_iter().collect(),
+            ..Default::default()
+        };
+
+        run_test(filter, vec![(index_canister_id(1), UpgradesFilter::default())]);
+    }
+
     fn run_test(filter: UpgradesFilter, expected: Vec<(CanisterId, UpgradesFilter)>) {
         let map = setup_map();
         let index_canister_ids: Vec<_> = map.values().unique().copied().collect();
 
-        let mut result = build_filter_map(index_canister_ids, filter, |c| map.get(&c).copied());
+        let mut result = build_filter_map(index_canister_ids, filter, |c| map.get(&c).copied()).unwrap();
         result.sort_unstable_by_key(|(c, _)| *c);
 
         assert_eq!(result, expected);
+    }
+
+    fn run_test_expecting_error(filter: UpgradesFilter) -> Vec<CanisterId> {
+        let map = setup_map();
+        let index_canister_ids: Vec<_> = map.values().unique().copied().collect();
+
+        build_filter_map(index_canister_ids, filter, |c| map.get(&c).copied()).unwrap_err()
     }
 
     fn setup_map() -> HashMap<CanisterId, CanisterId> {
@@ -167,5 +223,9 @@ mod tests {
 
     fn child_canister_id(i: u8, j: u8) -> CanisterId {
         CanisterId::from_slice(&[i, j])
+    }
+
+    fn unknown_canister_id() -> CanisterId {
+        CanisterId::from_slice(&[9, 9, 9])
     }
 }
