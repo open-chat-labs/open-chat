@@ -66,14 +66,19 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
     let mut count = 0;
     let now = state.env.now();
     while let Some(canister_id) = state.data.cycles_balance_check_queue.pop_front() {
-        // Note: local groups and communities are queued up above but are not matched here, so they
-        // are never balance checked by this job. That is pre-existing behaviour, they rely on
-        // their own `check_cycles_balance` regular job calling `c2c_notify_low_balance` instead
         let cycle_top_ups = state
             .data
             .local_users
             .get(&canister_id.into())
             .map(|u| &u.cycle_top_ups)
+            .or_else(|| state.data.local_groups.get(&canister_id.into()).map(|g| &g.cycle_top_ups))
+            .or_else(|| {
+                state
+                    .data
+                    .local_communities
+                    .get(&canister_id.into())
+                    .map(|c| &c.cycle_top_ups)
+            })
             .or_else(|| state.data.local_multi_users.get(&canister_id).map(|c| &c.cycle_top_ups));
 
         if let Some(cycle_top_ups) = cycle_top_ups {
