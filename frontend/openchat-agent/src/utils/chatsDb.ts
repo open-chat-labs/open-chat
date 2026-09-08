@@ -22,7 +22,6 @@ import type {
     CurrentUserSummary,
     DataContent,
     DiamondMembershipStatus,
-    DirectChatSummary,
     EventWrapper,
     EventsResponse,
     EventsSuccessResult,
@@ -55,7 +54,6 @@ import {
     chatIdentifiersEqual,
     emptyEventsResponse,
     isSuccessfulEventsResponse,
-    nullMembership,
     updateCreatedUser,
 } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
@@ -338,9 +336,11 @@ export class ChatsDb {
             }
             return undefined;
         }
-        if (chats === undefined) return undefined;
-
-        return { ...chats, directChats: chats.directChats.map(repairCachedDirectChat) };
+        if (chats !== undefined && !cachedChatsAreUsable(chats)) {
+            await resolvedDb.clear("chats");
+            return undefined;
+        }
+        return chats;
     }
 
     async setCachedChats(
@@ -1218,17 +1218,16 @@ function makeCommunitySerializable(community: CommunitySummary): CommunitySummar
 // The cache is the one place a chat summary enters the agent without a mapper having built it:
 // every other route comes from candid. A record written by an older build (or a partial write)
 // can therefore be missing fields the type says are always there, and the app then dies reading
-// `them.userId` or `membership.readByMeUpTo` seconds after load. Both are recoverable without
-// the server - a direct chat's `them` is the same identifier as its `id` - so repair rather than
-// drop, which would hide the chat until the next server update mentioned it.
-function repairCachedDirectChat(chat: DirectChatSummary): DirectChatSummary {
-    if (chat.them !== undefined && chat.membership !== undefined) return chat;
-
-    return {
-        ...chat,
-        them: chat.them ?? chat.id,
-        membership: chat.membership ?? nullMembership(),
-    };
+// `them.userId` or `membership.readByMeUpTo` seconds after load.
+//
+// There is no safe local repair. `membership` cannot be invented - the role, read-up-to and mute
+// state are the server's to say. Dropping just the bad record is worse than it looks: the cached
+// list is the base `mergeDirectChatUpdates` applies deltas to, so a chat removed from it stays
+// gone until the server happens to send an update mentioning it. Treat the whole cache as
+// unusable instead and let `getUpdates` fall through to `getInitialState`, which is what the
+// staleness check above already does.
+function cachedChatsAreUsable(chats: ChatStateFull): boolean {
+    return chats.directChats.every((c) => c.them !== undefined && c.membership !== undefined);
 }
 
 function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
