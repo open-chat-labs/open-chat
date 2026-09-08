@@ -213,6 +213,7 @@ import {
     type JoinVideoCallResponse,
     type Level,
     type LinkIdentitiesResponse,
+    type LinkedAuthenticationPrincipal,
     type LogLevel,
     type Logger,
     type MarkReadRequest,
@@ -606,6 +607,7 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
+import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
@@ -10469,21 +10471,22 @@ export class OpenChat {
         });
     }
 
-    getAuthenticationPrincipals(): Promise<
-        (AuthenticationPrincipal & { provider: AuthProvider })[]
-    > {
+    getAuthenticationPrincipals(): Promise<LinkedAuthenticationPrincipal[]> {
         return this.#worker
             .send({
                 kind: "getAuthenticationPrincipals",
             })
-            .then((principals) => {
-                return principals.map((p) => {
-                    return {
+            .then((principals) =>
+                Promise.all(
+                    principals.map(async (p) => ({
                         ...p,
                         provider: this.#authProviderFromAuthPrincipal(p),
-                    };
-                });
-            });
+                        passkeyProvider: p.webAuthnKey
+                            ? await passkeyProviderName(p.webAuthnKey.aaguid)
+                            : undefined,
+                    })),
+                ),
+            );
     }
 
     getLinkedIIPrincipal(): Promise<string | undefined> {

@@ -1,9 +1,8 @@
 <script lang="ts">
     import {
-        AuthProvider,
         iconSize,
         OpenChat,
-        type AuthenticationPrincipal,
+        type LinkedAuthenticationPrincipal,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import Account from "svelte-material-icons/Account.svelte";
@@ -22,11 +21,9 @@
 
     const client = getContext<OpenChat>("client");
 
-    type AccountType = AuthenticationPrincipal & { provider: AuthProvider };
-
-    let accounts: AccountType[] = $state([]);
+    let accounts: LinkedAuthenticationPrincipal[] = $state([]);
     let linking = $state(false);
-    let unlinking: AccountType | null = $state(null);
+    let unlinking: LinkedAuthenticationPrincipal | null = $state(null);
 
     onMount(() => refresh());
 
@@ -63,6 +60,11 @@
         <TruncatedAccount account={account.principal} disableCopy={true}>
             <AuthProviderLogo square provider={account.provider} />
         </TruncatedAccount>
+        {#if account.passkeyProvider !== undefined}
+            <div class="provider-name" title={account.passkeyProvider}>
+                {account.passkeyProvider}
+            </div>
+        {/if}
         {#if account.isCurrentIdentity}
             <div class="current">
                 <Tooltip position="top" align="end">
@@ -98,8 +100,22 @@
         display: flex;
         align-items: center;
 
+        > :global(.wrapper) {
+            flex: none;
+        }
+
+        .provider-name {
+            @include font(book, normal, fs-80);
+            @include ellipsis();
+            flex: 0 1 auto;
+            min-width: 0;
+            color: var(--txt-light);
+            margin-inline-start: $sp3;
+        }
+
         .current,
         .unlink {
+            flex: none;
             margin-inline-start: auto;
         }
     }

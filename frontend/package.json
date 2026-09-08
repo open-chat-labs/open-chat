@@ -22,6 +22,7 @@
         "typebox": "ts2typebox --input ../tsBindings/types.d.ts --output ./openchat-agent/src/typebox.ts",
         "lint": "eslint . --fix",
         "test": "vitest --run",
+        "update:passkey-providers": "node openchat-client/scripts/update-passkey-providers.mjs",
         "build:ci": "npm run typecheck && npm run typecheck:agent && npm run lint && npm run test && npm run build:prod",
         "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
         "tauri": "tauri",
