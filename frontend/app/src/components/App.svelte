@@ -639,7 +639,14 @@
             return;
         }
         recordError("window", err);
-        logger?.error("Unhandled error: ", err);
+        // Deliberately not reported here. Rollbar's own captureUncaught /
+        // captureUnhandledRejections already reports every event this handler sees, and
+        // installs earlier than this listener, so logging again produced two Rollbar items
+        // per rejection - one titled "Unhandled error: X" and one titled "X" - splitting
+        // every defect in two and doubling the volume. Its `checkIgnore` reads the rejection
+        // reason out of the original arguments, so worker errors - which arrive as plain
+        // objects, not Errors - are still filtered on name and code. This handler keeps the
+        // crash-log record and the logout, which Rollbar's capture does not do.
         if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
             client.logout();
             ev.preventDefault();

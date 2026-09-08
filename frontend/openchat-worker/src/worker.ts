@@ -225,15 +225,11 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
     });
 }
 
-self.addEventListener("error", (err: ErrorEvent) => {
-    // The underlying error, not the event: the event serialises to nothing useful and dodges
-    // the logger's filtering
-    logger.error("WORKER: unhandled error: ", err.error ?? err.message);
-});
-
-self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
-    logger.error("WORKER: unhandled promise rejection: ", err.reason ?? err);
-});
+// No error / unhandledrejection listeners here, deliberately. inititaliseLogger's Rollbar.init
+// runs in this worker too, and its captureUncaught / captureUnhandledRejections attach to `self`
+// (rollbar falls back to `self` where there is no `window`), so listeners that also called
+// logger.error reported every worker failure twice under two different titles - the same
+// duplication App.svelte had. Rollbar's checkIgnore filters on the rejection reason itself.
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
     logger.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
