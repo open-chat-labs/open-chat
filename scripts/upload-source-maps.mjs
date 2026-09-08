@@ -12,7 +12,8 @@
 // Usage: node scripts/upload-source-maps.mjs <version>
 // Requires OC_ROLLBAR_SERVER_TOKEN - a post_server_item token from Rollbar's
 // Settings -> Project Access Tokens. The client token in OC_ROLLBAR_ACCESS_TOKEN is a
-// post_client_item token and the endpoint rejects it.
+// post_client_item token and the endpoint rejects it. Read from the environment, falling back
+// to frontend/.env, which the build loads via dotenv but the deploy shell scripts never export.
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
@@ -24,6 +25,13 @@ const DYNAMIC_HOST = "http://dynamichost";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const buildDir = path.join(repoRoot, "frontend/app/build");
 
+// Same as the build's dotenv.config(): fills in what the shell has not set, never overrides.
+try {
+    process.loadEnvFile(path.join(repoRoot, "frontend/.env"));
+} catch {
+    // No .env file; the token may still be in the environment.
+}
+
 const version = process.argv[2] ?? process.env.OC_WEBSITE_VERSION;
 const token = process.env.OC_ROLLBAR_SERVER_TOKEN;
 
@@ -32,16 +40,13 @@ if (!version) {
     process.exit(1);
 }
 
-// Not fatal. A missing token should not sink a deploy that is otherwise fine, but it must be
-// loud, because the failure mode is silent: traces simply stay minified.
+// Fatal. This once warned and exited 0, and the warning scrolled past unread on the first real
+// deploy, leaving 2.0.2054 minified. The deploy scripts stop on a non-zero exit here.
 if (!token) {
-    console.warn("");
-    console.warn("  ****************************************************************");
-    console.warn("  OC_ROLLBAR_SERVER_TOKEN is not set - SKIPPING source map upload.");
-    console.warn(`  Stack traces for ${version} will stay minified in Rollbar.`);
-    console.warn("  ****************************************************************");
-    console.warn("");
-    process.exit(0);
+    console.error(
+        "upload-source-maps: OC_ROLLBAR_SERVER_TOKEN is not set in the environment or in frontend/.env",
+    );
+    process.exit(1);
 }
 
 function findMaps(dir) {
