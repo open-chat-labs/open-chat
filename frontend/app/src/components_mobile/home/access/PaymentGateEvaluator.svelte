@@ -211,14 +211,14 @@
     </CommonButton>
 {:else if insufficientFunds}
     {@render refreshBalance()}
-{:else}
+{:else if token}
     <Button
         width={"fill"}
         onClick={() =>
             onApprovePayment({
-                ledger: token!.ledger,
+                ledger: token.ledger,
                 amount: gate.amount,
-                approvalFee: token!.transferFee,
+                approvalFee: token.transferFee,
             })}>
         {#snippet icon(color)}
             <Wallet {color} />

@@ -1368,7 +1368,20 @@ export class OpenChat {
         );
     }
 
-    async logout(): Promise<void> {
+    #logoutPromise: Promise<void> | undefined;
+
+    // Idempotent. An expired session now reaches this twice, deterministically: the worker agent
+    // publishes sessionExpired and then rejects the request, and if nothing catches that the
+    // window's unhandledrejection handler calls logout again. A second run sent a second worker
+    // logout, cleared the agent and navigated within milliseconds - while the first was still in
+    // its pre-logout window removing the push token, which then failed with "Worker has no agent"
+    // and left the Android token registered to a signed-out user.
+    logout(): Promise<void> {
+        this.#logoutPromise ??= this.#doLogout();
+        return this.#logoutPromise;
+    }
+
+    async #doLogout(): Promise<void> {
         // Run any registered pre-logout tasks (e.g. push-token cleanup) while
         // the identity is still valid. Best-effort: Promise.resolve().then wraps
         // each task so a synchronous throw becomes a rejection that allSettled
@@ -1386,8 +1399,11 @@ export class OpenChat {
         // whatever the teardown does. `finally` alone is not enough: the worker's logout awaits
         // three sequential IndexedDB deletes with no timeout, so a wedged IndexedDB - the very
         // case this path exists for - leaves the Promise pending and `finally` never runs. Cap
-        // it the same way the pre-logout tasks are capped. Reloading re-evaluates auth anyway,
-        // and a stuck tab on a dead session has no way forward at all.
+        // it the same way the pre-logout tasks are capped.
+        // Known edge: if IndexedDB is blocked for longer than the cap, navigating can cut the
+        // auth client's delegation delete short, and startup may sign the user back in from the
+        // surviving delegation. Narrow, and no worse than the manual reload it replaces, but
+        // it is a consequence of choosing "always navigate" over "sometimes never".
         try {
             await this.#withTimeout(
                 Promise.allSettled([

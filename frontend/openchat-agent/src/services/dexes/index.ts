@@ -67,13 +67,15 @@ export class DexesAgent {
             ),
         );
         // A pool that declines resolves to undefined and is dropped; a pool that fails rejects.
-        // The two now mean different things, so when every pool rejected it is an outage or a
-        // candid change, not a dust amount, and must surface rather than read as "no quotes".
+        // The two mean different things: with no quote in hand, a failure anywhere is what stopped
+        // the user getting one, and must surface rather than read as "no quotes". (Requiring every
+        // pool to have rejected let one decline plus one failure through as silence.)
         const succeeded = quotes.flatMap((q) =>
             q.status === "fulfilled" && q.value !== undefined ? [q.value] : [],
         );
-        if (succeeded.length === 0 && quotes.length > 0 && quotes.every((q) => q.status === "rejected")) {
-            throw (quotes[0] as PromiseRejectedResult).reason;
+        const failed = quotes.find((q): q is PromiseRejectedResult => q.status === "rejected");
+        if (succeeded.length === 0 && failed !== undefined) {
+            throw failed.reason;
         }
         return succeeded;
     }

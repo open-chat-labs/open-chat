@@ -1,5 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
-import { bigEndianCrc32, decodeIcrcAccount } from "./icrcAccount";
+import { bigEndianCrc32, decodeIcrcAccount, hexStringToUint8Array } from "./icrcAccount";
 
 export const HEX_REGEX = new RegExp("^[A-Fa-f0-9]+$");
 
@@ -29,10 +29,7 @@ export function isSubAccountValid(text: string): boolean {
 // already been told the address was fine.
 export function isAccountIdentifierValid(text: string): boolean {
     if (text.length !== 64 || !isHexString(text)) return false;
-    const bytes = new Uint8Array(32);
-    for (let i = 0; i < 32; i++) {
-        bytes[i] = parseInt(text.slice(i * 2, i * 2 + 2), 16);
-    }
+    const bytes = hexStringToUint8Array(text);
     const checksum = bigEndianCrc32(bytes.subarray(4));
     return checksum.every((b, i) => b === bytes[i]);
 }

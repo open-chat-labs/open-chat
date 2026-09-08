@@ -1246,11 +1246,16 @@ function cachedChatsAreUsable(chats: ChatStateFull): boolean {
     if (
         !Array.isArray(chats.directChats) ||
         !Array.isArray(chats.groupChats) ||
-        !Array.isArray(chats.communities)
+        !Array.isArray(chats.communities) ||
+        // the staleness check above compares this with `<`; against undefined that is simply
+        // false, so a record with no timestamp would sail through as fresh
+        typeof chats.latestUserCanisterUpdates !== "bigint"
     ) {
         return false;
     }
-    return chats.directChats.every((c) => c?.them !== undefined && c?.membership !== undefined);
+    return chats.directChats.every(
+        (c) => c?.id?.userId !== undefined && c?.them !== undefined && c?.membership !== undefined,
+    );
 }
 
 function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {

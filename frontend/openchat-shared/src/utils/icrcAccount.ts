@@ -109,7 +109,7 @@ function uint8ArrayToHexString(bytes: Uint8Array): string {
     return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-function hexStringToUint8Array(hex: string): Uint8Array {
+export function hexStringToUint8Array(hex: string): Uint8Array {
     if (hex.length % 2 !== 0 || /[^0-9a-f]/i.test(hex)) {
         throw new Error("Invalid account. Invalid subaccount.");
     }
