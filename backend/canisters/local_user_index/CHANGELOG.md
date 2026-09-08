@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Include MultiUser canisters in the cycles top up paths, so they can report a low balance and are picked up by the weekly balance sweep ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
+- Include Group and Community canisters in the weekly cycles balance sweep - they were queued up but never selected, so the sweep silently skipped them ([#9313](https://github.com/open-chat-labs/open-chat/pull/9313))
 
 ## [[2.0.2033](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2033-local_user_index)] - 2026-08-20
 
