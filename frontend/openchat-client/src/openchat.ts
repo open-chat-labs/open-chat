@@ -213,6 +213,7 @@ import {
     type JoinVideoCallResponse,
     type Level,
     type LinkIdentitiesResponse,
+    type LinkedAuthenticationPrincipal,
     type LogLevel,
     type Logger,
     type MarkReadRequest,
@@ -10425,23 +10426,22 @@ export class OpenChat {
         });
     }
 
-    getAuthenticationPrincipals(): Promise<
-        (AuthenticationPrincipal & { provider: AuthProvider; passkeyProvider?: string })[]
-    > {
+    getAuthenticationPrincipals(): Promise<LinkedAuthenticationPrincipal[]> {
         return this.#worker
             .send({
                 kind: "getAuthenticationPrincipals",
             })
-            .then((principals) => {
-                return principals.map((p) => {
-                    const provider = this.#authProviderFromAuthPrincipal(p);
-                    const passkeyProvider =
-                        provider === AuthProvider.PASSKEY && p.webAuthnKey !== undefined
-                            ? passkeyProviderName(p.webAuthnKey.aaguid)
-                            : undefined;
-                    return { ...p, provider, passkeyProvider };
-                });
-            });
+            .then((principals) =>
+                Promise.all(
+                    principals.map(async (p) => ({
+                        ...p,
+                        provider: this.#authProviderFromAuthPrincipal(p),
+                        passkeyProvider: p.webAuthnKey
+                            ? await passkeyProviderName(p.webAuthnKey.aaguid)
+                            : undefined,
+                    })),
+                ),
+            );
     }
 
     getLinkedIIPrincipal(): Promise<string | undefined> {

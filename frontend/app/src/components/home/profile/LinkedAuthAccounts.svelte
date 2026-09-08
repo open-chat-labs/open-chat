@@ -1,9 +1,8 @@
 <script lang="ts">
     import {
-        AuthProvider,
         iconSize,
         OpenChat,
-        type AuthenticationPrincipal,
+        type LinkedAuthenticationPrincipal,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import Account from "svelte-material-icons/Account.svelte";
@@ -22,14 +21,9 @@
 
     const client = getContext<OpenChat>("client");
 
-    type AccountType = AuthenticationPrincipal & {
-        provider: AuthProvider;
-        passkeyProvider?: string;
-    };
-
-    let accounts: AccountType[] = $state([]);
+    let accounts: LinkedAuthenticationPrincipal[] = $state([]);
     let linking = $state(false);
-    let unlinking: AccountType | null = $state(null);
+    let unlinking: LinkedAuthenticationPrincipal | null = $state(null);
 
     onMount(() => refresh());
 
@@ -122,10 +116,6 @@
         .current,
         .unlink {
             flex: none;
-        }
-
-        .current,
-        .unlink {
             margin-inline-start: auto;
         }
     }

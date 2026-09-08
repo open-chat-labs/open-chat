@@ -7,7 +7,7 @@
         InMemoryAuthClientStorage,
         iconSize,
         selectedAuthProviderStore,
-        type AuthenticationPrincipal,
+        type LinkedAuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
         type WebAuthnKey,
@@ -85,7 +85,7 @@
     let linking = $state(false);
     let loggingInInitiator = false;
     let verificationCode: string | undefined = $state(undefined);
-    let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = $state([]);
+    let accounts: LinkedAuthenticationPrincipal[] = $state([]);
 
     let currentIdentity = $derived(accounts.find((a) => a.isCurrentIdentity));
     let currentProvider = $derived(currentIdentity?.provider ?? $selectedAuthProviderStore);

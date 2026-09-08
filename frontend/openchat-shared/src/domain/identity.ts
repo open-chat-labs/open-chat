@@ -6,6 +6,7 @@ import {
 } from "@icp-sdk/core/identity";
 import type { Signature, SignIdentity } from "@icp-sdk/core/agent";
 import type { Address } from "@agent/services/signInWithSolana/candid/types";
+import type { AuthProvider } from "./auth";
 import type { OCError } from "./error";
 import type { Success } from "./response";
 import type { GetOpenChatIdentitySuccess } from "./worker";
@@ -124,6 +125,11 @@ export type AuthenticationPrincipal = {
 };
 
 export type AuthenticationPrincipalsResponse = AuthenticationPrincipal[];
+
+export type LinkedAuthenticationPrincipal = AuthenticationPrincipal & {
+    provider: AuthProvider;
+    passkeyProvider?: string;
+};
 
 export type RemoveIdentityLinkResponse =
     | "success"
