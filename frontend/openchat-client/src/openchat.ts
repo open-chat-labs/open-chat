@@ -6791,7 +6791,7 @@ export class OpenChat {
         const webhooks = new Set<string>();
         chats.forEach((chat) => {
             if (chat.kind === "direct_chat") {
-                userIds.add(chat.them.userId);
+                userIds.add(chat.them?.userId ?? chat.id.userId);
             } else if (chat.latestMessage?.event !== undefined) {
                 const sender = chat.latestMessage.event.sender;
                 if (chat.latestMessage.event.senderContext?.kind === "webhook") {
@@ -7284,7 +7284,7 @@ export class OpenChat {
                 } else {
                     messagesRead.syncWithServer(
                         chat.id,
-                        chat.membership.readByMeUpTo,
+                        chat.membership?.readByMeUpTo,
                         [],
                         undefined,
                     );
