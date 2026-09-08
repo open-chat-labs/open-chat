@@ -2,8 +2,8 @@ use candid::Principal;
 use identity_canister::remove_identity_link::Response as RemovePrincipalResponse;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
+use std::collections::{HashMap, HashSet};
 use types::{CanisterId, PushIfNotContains, TimestampMillis, UserId, is_default};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -191,25 +191,73 @@ impl UserPrincipals {
         true
     }
 
-    pub fn remove_auth_principal(&mut self, caller: Principal, linked_principal: Principal) -> RemovePrincipalResponse {
+    /// Unlinks `linked_principal` from the caller's user. On success returns the WebAuthn credential
+    /// id of the removed principal, if it had one, so that the caller can remove the stored key too.
+    pub fn remove_auth_principal(
+        &mut self,
+        caller: Principal,
+        linked_principal: Principal,
+    ) -> Result<Option<ByteBuf>, RemovePrincipalResponse> {
         if caller == linked_principal {
-            RemovePrincipalResponse::CannotUnlinkActivePrincipal
-        } else {
-            if let Some(user) = self.user_principal_mut(&caller) {
-                // This condition may be redundant, but in combination with the
-                // responses can provide additional context in case of an error.
-                if user.auth_principals.contains(&linked_principal) {
-                    user.auth_principals.retain(|&ap| ap != linked_principal);
-                    self.auth_principals.remove(&linked_principal);
-
-                    return RemovePrincipalResponse::Success;
-                }
-
-                return RemovePrincipalResponse::IdentityLinkNotFound;
-            }
-
-            RemovePrincipalResponse::UserNotFound
+            return Err(RemovePrincipalResponse::CannotUnlinkActivePrincipal);
         }
+        let Some(index) = self.auth_principals.get(&caller).map(|a| a.user_principal_index) else {
+            return Err(RemovePrincipalResponse::UserNotFound);
+        };
+        let Some(user) = self.user_principals.get_mut(index as usize) else {
+            return Err(RemovePrincipalResponse::UserNotFound);
+        };
+        // This condition may be redundant, but in combination with the
+        // responses can provide additional context in case of an error.
+        if !user.auth_principals.contains(&linked_principal) {
+            return Err(RemovePrincipalResponse::IdentityLinkNotFound);
+        }
+        user.auth_principals.retain(|&ap| ap != linked_principal);
+        Ok(self
+            .remove_auth_principal_internal(&linked_principal, index)
+            .and_then(|a| a.webauthn_credential_id))
+    }
+
+    /// Unlinks every auth principal from the user at `index` and clears its user id, returning the
+    /// WebAuthn credential ids of the unlinked principals so that the caller can remove their keys
+    /// too. Does nothing and returns `None` unless the user at `index` still has `user_id`, so a stale
+    /// index can never wipe a different user.
+    pub fn delete_user(&mut self, index: u32, user_id: UserId) -> Option<Vec<ByteBuf>> {
+        let user = self
+            .user_principals
+            .get_mut(index as usize)
+            .filter(|u| u.user_id == Some(user_id))?;
+        user.user_id = None;
+        let auth_principals = std::mem::take(&mut user.auth_principals);
+        Some(
+            auth_principals
+                .iter()
+                .filter_map(|p| self.remove_auth_principal_internal(p, index))
+                .filter_map(|a| a.webauthn_credential_id)
+                .collect(),
+        )
+    }
+
+    /// Removes `auth_principal` from the lookup, provided it belongs to the user at `index`, along
+    /// with any temp keys standing in for it.
+    fn remove_auth_principal_internal(&mut self, auth_principal: &Principal, index: u32) -> Option<AuthPrincipalInternal> {
+        let Occupied(e) = self.auth_principals.entry(*auth_principal) else {
+            return None;
+        };
+        if e.get().user_principal_index != index {
+            return None;
+        }
+        let removed = e.remove();
+        self.temp_keys.retain(|_, k| k.auth_principal != *auth_principal);
+        Some(removed)
+    }
+
+    /// The credential id of every WebAuthn key an auth principal refers to
+    pub fn webauthn_credential_ids(&self) -> HashSet<&ByteBuf> {
+        self.auth_principals
+            .values()
+            .filter_map(|a| a.webauthn_credential_id.as_ref())
+            .collect()
     }
 
     pub fn next_index(&self) -> u32 {
@@ -418,6 +466,81 @@ mod tests {
             user_principals.get_by_auth_principal(&old).unwrap().auth_principals,
             vec![old]
         );
+    }
+
+    #[test]
+    fn remove_auth_principal_returns_credential_id_and_drops_temp_keys() {
+        let mut user_principals = UserPrincipals::default();
+        let (user, active, passkey, temp_key, canister) =
+            (principal(1), principal(2), principal(3), principal(4), principal(5));
+        user_principals.push(0, user, active, canister, None, false, 100);
+        assert!(user_principals.link_auth_principal_with_existing_user(passkey, canister, Some(vec![7].into()), false, 0, 100));
+        user_principals.add_temp_key(temp_key, passkey, 100, 200);
+
+        assert!(matches!(
+            user_principals.remove_auth_principal(passkey, passkey),
+            Err(RemovePrincipalResponse::CannotUnlinkActivePrincipal)
+        ));
+        assert!(matches!(
+            user_principals.remove_auth_principal(principal(9), passkey),
+            Err(RemovePrincipalResponse::UserNotFound)
+        ));
+        assert!(matches!(
+            user_principals.remove_auth_principal(active, principal(9)),
+            Err(RemovePrincipalResponse::IdentityLinkNotFound)
+        ));
+
+        assert!(matches!(
+            user_principals.remove_auth_principal(active, passkey),
+            Ok(Some(id)) if id.as_ref() == [7]
+        ));
+
+        assert!(!user_principals.auth_principal_exists(&passkey));
+        assert!(user_principals.auth_principal_exists(&active));
+        assert_eq!(
+            user_principals.get_by_auth_principal(&active).unwrap().auth_principals,
+            vec![active]
+        );
+        assert!(!user_principals.temp_keys.contains_key(&temp_key));
+        assert!(user_principals.webauthn_credential_ids().is_empty());
+        assert!(matches!(
+            user_principals.remove_auth_principal(active, passkey),
+            Err(RemovePrincipalResponse::IdentityLinkNotFound)
+        ));
+    }
+
+    #[test]
+    fn delete_user_unlinks_every_auth_principal_of_that_user_only() {
+        let mut user_principals = UserPrincipals::default();
+        let (user, auth1, auth2, other_user, other_auth, canister) = (
+            principal(1),
+            principal(2),
+            principal(3),
+            principal(4),
+            principal(5),
+            principal(6),
+        );
+        let user_id = UserId::from(principal(7));
+        user_principals.push(0, user, auth1, canister, Some(vec![1].into()), false, 100);
+        assert!(user_principals.link_auth_principal_with_existing_user(auth2, canister, None, false, 0, 100));
+        user_principals.push(1, other_user, other_auth, canister, Some(vec![2].into()), false, 100);
+        assert!(user_principals.set_user_id(user, Some(user_id)));
+
+        // Refuses to touch anything if the user at the index doesn't carry the expected user id
+        assert!(user_principals.delete_user(1, user_id).is_none());
+        assert!(user_principals.delete_user(5, user_id).is_none());
+        assert!(user_principals.auth_principal_exists(&other_auth));
+
+        assert_eq!(user_principals.delete_user(0, user_id), Some(vec![vec![1].into()]));
+
+        assert!(!user_principals.auth_principal_exists(&auth1));
+        assert!(!user_principals.auth_principal_exists(&auth2));
+        assert!(user_principals.auth_principal_exists(&other_auth));
+        assert!(user_principals.find_user_principal_by_user_id(user_id).is_none());
+        let deleted = user_principals.user_principal_by_index(0).unwrap();
+        assert!(deleted.auth_principals.is_empty());
+        assert!(deleted.user_id.is_none());
+        assert_eq!(user_principals.delete_user(0, user_id), None);
     }
 
     #[test]

@@ -51,6 +51,17 @@ fn post_upgrade(args: Args) {
         }
     });
 
+    // One-off: WebAuthn keys were never removed when the auth principal using them was unlinked or its
+    // user deleted (#9309), so drop every key no auth principal can sign in with. A key is only removed
+    // if both the auth principal derived from its public key is gone and no auth principal refers to
+    // its credential id, so nothing anyone can still sign in with is touched.
+    // TODO remove after the release containing this has been deployed
+    mutate_state(|state| {
+        let removed = state.data.webauthn_keys.remove_orphaned_keys(&state.data.user_principals);
+        let remaining = state.data.webauthn_keys.len();
+        info!(removed = removed.len(), remaining, "Removed orphaned WebAuthn keys");
+    });
+
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 }
