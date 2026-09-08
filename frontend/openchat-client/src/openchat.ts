@@ -606,6 +606,7 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
+import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
@@ -10425,7 +10426,7 @@ export class OpenChat {
     }
 
     getAuthenticationPrincipals(): Promise<
-        (AuthenticationPrincipal & { provider: AuthProvider })[]
+        (AuthenticationPrincipal & { provider: AuthProvider; passkeyProvider?: string })[]
     > {
         return this.#worker
             .send({
@@ -10433,10 +10434,12 @@ export class OpenChat {
             })
             .then((principals) => {
                 return principals.map((p) => {
-                    return {
-                        ...p,
-                        provider: this.#authProviderFromAuthPrincipal(p),
-                    };
+                    const provider = this.#authProviderFromAuthPrincipal(p);
+                    const passkeyProvider =
+                        provider === AuthProvider.PASSKEY && p.webAuthnKey !== undefined
+                            ? passkeyProviderName(p.webAuthnKey.aaguid)
+                            : undefined;
+                    return { ...p, provider, passkeyProvider };
                 });
             });
     }

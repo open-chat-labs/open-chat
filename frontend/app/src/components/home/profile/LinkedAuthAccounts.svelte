@@ -22,7 +22,10 @@
 
     const client = getContext<OpenChat>("client");
 
-    type AccountType = AuthenticationPrincipal & { provider: AuthProvider };
+    type AccountType = AuthenticationPrincipal & {
+        provider: AuthProvider;
+        passkeyProvider?: string;
+    };
 
     let accounts: AccountType[] = $state([]);
     let linking = $state(false);
@@ -63,6 +66,11 @@
         <TruncatedAccount account={account.principal} disableCopy={true}>
             <AuthProviderLogo square provider={account.provider} />
         </TruncatedAccount>
+        {#if account.passkeyProvider !== undefined}
+            <div class="provider-name" title={account.passkeyProvider}>
+                {account.passkeyProvider}
+            </div>
+        {/if}
         {#if account.isCurrentIdentity}
             <div class="current">
                 <Tooltip position="top" align="end">
@@ -97,6 +105,24 @@
         margin-bottom: $sp3;
         display: flex;
         align-items: center;
+
+        > :global(.wrapper) {
+            flex: none;
+        }
+
+        .provider-name {
+            @include font(book, normal, fs-80);
+            @include ellipsis();
+            flex: 0 1 auto;
+            min-width: 0;
+            color: var(--txt-light);
+            margin-inline-start: $sp3;
+        }
+
+        .current,
+        .unlink {
+            flex: none;
+        }
 
         .current,
         .unlink {

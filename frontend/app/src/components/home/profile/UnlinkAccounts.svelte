@@ -17,9 +17,18 @@
     const client = getContext<OpenChat>("client");
 
     // TODO reduce duplication, this is repeated from LinkedAuthAccounts
-    type Account = AuthenticationPrincipal & { provider: AuthProvider };
+    type Account = AuthenticationPrincipal & {
+        provider: AuthProvider;
+        passkeyProvider?: string;
+    };
 
     let { account, onClose }: { account: Account; onClose: () => void } = $props();
+
+    let providerLabel = $derived(
+        account.passkeyProvider !== undefined
+            ? `${account.provider} (${account.passkeyProvider})`
+            : account.provider,
+    );
 
     let error: string | undefined = $state();
     let step: "unlink" | "error" | "done" = $state("unlink");
@@ -70,7 +79,7 @@
             <p class="info">
                 <Translatable
                     resourceKey={i18nKey("identity.linkedAccounts.unlinkAdvice", {
-                        provider: account.provider,
+                        provider: providerLabel,
                     })} />
             </p>
         </AlertBox>
@@ -90,7 +99,7 @@
             <div class="info">
                 <Translatable
                     resourceKey={i18nKey("identity.linkedAccounts.unlinkingDone", {
-                        provider: account.provider,
+                        provider: providerLabel,
                     })} />
             </div>
         </AlertBox>
