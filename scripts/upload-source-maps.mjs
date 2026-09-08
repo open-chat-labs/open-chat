@@ -73,6 +73,12 @@ const CONCURRENCY = 8;
 // 403 a hundred and seventy times.
 class FatalUploadError extends Error {}
 
+// Rollbar echoes the rejected token back in its 403 body, which would otherwise put the secret
+// into terminal scrollback and CI logs.
+function redact(text) {
+    return text.split(token).join("<OC_ROLLBAR_SERVER_TOKEN>");
+}
+
 async function upload(mapPath) {
     // "build/main-D_Idsc5v.js.map" -> "http://dynamichost/main-D_Idsc5v.js"
     const relative = path.relative(buildDir, mapPath).split(path.sep).join("/");
@@ -88,13 +94,13 @@ async function upload(mapPath) {
     try {
         response = await fetch(ENDPOINT, { method: "POST", body: form });
     } catch (err) {
-        console.error(`  FAIL  ${minifiedUrl} - ${err}`);
+        console.error(`  FAIL  ${minifiedUrl} - ${redact(String(err))}`);
         return false;
     }
 
     if (response.ok) return true;
 
-    const body = (await response.text()).replace(/\s+/g, " ").trim();
+    const body = redact((await response.text()).replace(/\s+/g, " ").trim());
     if (response.status === 401 || response.status === 403) {
         throw new FatalUploadError(
             `Rollbar rejected the token (${response.status}): ${body}\n` +
