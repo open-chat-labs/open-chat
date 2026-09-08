@@ -43,12 +43,20 @@
 
     let { gate, level, onApprovePayment, onClose }: Props = $props();
 
-    let token = $derived($enhancedCryptoLookup.get(gate.ledgerCanister)!);
+    // A gate can name a ledger the registry does not carry. `token.ledger` below then threw and
+    // took the app down; and with no decimals or fee we can neither state the amount nor build a
+    // valid approval, so the payment must not be offered at all.
+    let token = $derived($enhancedCryptoLookup.get(gate.ledgerCanister));
     let tokenState = $derived(new TokenState(token));
     let refreshingBalance = $state(false);
     let totalAmount = $derived(tokenState.formatTokens(gate.amount));
-    let toOwner = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.98)));
-    let toOC = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.02)));
+    // Integer arithmetic: BigInt(Number(amount) * 0.98) throws a RangeError for any amount that
+    // is not a multiple of 50, because the product is not an integer (12345678n throws;
+    // 100000000n only happens to pass). The remainder goes to the treasury so the two sum to
+    // the amount, matching how the canister splits it.
+    let ownerShare = $derived((gate.amount * 98n) / 100n);
+    let toOwner = $derived(tokenState.formatTokens(ownerShare));
+    let toOC = $derived(tokenState.formatTokens(gate.amount - ownerShare));
 
     let cryptoBalance = $derived(
         accessApprovalState.balanceAfterCurrentCommitments(
@@ -65,7 +73,7 @@
                 "access.paymentApprovalMessage",
                 {
                     amount: tokenState.formatTokens(gate.amount),
-                    token: token.symbol,
+                    token: tokenState.symbol,
                 },
                 level,
                 true,
@@ -93,7 +101,7 @@
                 </Caption>
             </Column>
         </Row>
-        {#if insufficientFunds}
+        {#if insufficientFunds && !tokenState.unknown}
             <Column
                 onClick={() => publish("receiveToken", tokenState)}
                 mainAxisAlignment={"center"}
@@ -112,22 +120,36 @@
 <Column gap={"lg"}>
     <Wallet size={"4.5rem"} color={ColourVars.primary} />
     <H2 fontWeight={"bold"}>
-        <MulticolourText
-            parts={[
-                {
-                    text: i18nKey(tokenState.symbol),
-                    colour: "primary",
-                },
-                {
-                    text: i18nKey(" payment gate"),
-                    colour: "textPrimary",
-                },
-            ]} />
+        {#if tokenState.unknown}
+            <Translatable resourceKey={i18nKey("Unrecognised token")} />
+        {:else}
+            <MulticolourText
+                parts={[
+                    {
+                        text: i18nKey(tokenState.symbol),
+                        colour: "primary",
+                    },
+                    {
+                        text: i18nKey(" payment gate"),
+                        colour: "textPrimary",
+                    },
+                ]} />
+        {/if}
     </H2>
     <Body colour={"textSecondary"}>
-        <Markdown text={approvalMessage} />
+        {#if tokenState.unknown}
+            <Translatable
+                resourceKey={i18nKey(
+                    "This gate is priced in a token OpenChat does not recognise, so the payment cannot be made here.",
+                )} />
+        {:else}
+            <Markdown text={approvalMessage} />
+        {/if}
     </Body>
 
+    <!-- Nothing below is meaningful for a token we cannot identify: the balance card would show
+         a blank symbol, and the breakdown amounts would all be "?????" -->
+    {#if !tokenState.unknown}
     <Column gap={"sm"}>
         {@render tokenBalance()}
         {#if insufficientFunds}
@@ -185,11 +207,16 @@
             </Row>
         </Column>
     </Column>
+    {/if}
 </Column>
 
-{#if insufficientFunds}
+{#if tokenState.unknown}
+    <CommonButton width={"fill"} size={"small_text"} onClick={onClose}>
+        <Translatable resourceKey={i18nKey("cancel")} />
+    </CommonButton>
+{:else if insufficientFunds}
     {@render refreshBalance()}
-{:else}
+{:else if token}
     <Button
         width={"fill"}
         onClick={() =>

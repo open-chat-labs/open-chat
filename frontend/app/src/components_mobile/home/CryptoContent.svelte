@@ -42,7 +42,7 @@
         $currentUserIdStore === senderId ? content.transfer.recipient : senderId,
     );
 
-    let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(content.transfer.ledger)!));
+    let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(content.transfer.ledger)));
     let transactionUrl = $derived(
         content.transfer.kind === "completed"
             ? client.buildTransactionUrl(content.transfer.blockIndex, content.transfer.ledger)

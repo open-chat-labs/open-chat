@@ -140,7 +140,7 @@ export class TokenState {
             this.#symbol,
         ),
     );
-    #formattedTokenBalance = $derived(formatTokens(this.#remainingBalance, this.#decimals));
+    #formattedTokenBalance = $derived(this.formatTokens(this.#remainingBalance));
     #convertedValue = $derived(
         getConvertedTokenValue(this.#selectedConversion, this.#convertedBalances),
     );
@@ -166,12 +166,34 @@ export class TokenState {
         }
     });
 
-    constructor(t: EnhancedTokenDetails, c: ConversionToken = "usd") {
-        this.#token = t;
+    // Every caller looks the token up in the registry and asserts the result is there. It is not
+    // always: a message or an access gate can name a ledger the registry has never carried or has
+    // since dropped, and an undefined token here took the whole app down on the first derived read
+    // of `#token.ledger`. The null token stops the crash, but its zero decimals and empty symbol
+    // would render an amount that is wrong rather than obviously missing, so callers must consult
+    // `unknown` and refuse to show a figure or offer an action for a token we cannot identify.
+    // A plain boolean, deliberately. `#token` is `$state`, and Svelte proxies whatever is assigned
+    // to it, so `this.#token === nullToken` compares a proxy with the raw object and is always
+    // false - which made every guard keyed on it inert. Set wherever `#token` is.
+    #unknown = false;
+
+    constructor(t: EnhancedTokenDetails | undefined, c: ConversionToken = "usd") {
+        this.#token = t ?? nullToken;
+        this.#unknown = t === undefined;
         this.#selectedConversion = c;
     }
 
+    // True when the ledger is not in the registry: nothing about this token can be trusted,
+    // including any amount formatted with it.
+    get unknown() {
+        return this.#unknown;
+    }
+
+    // The null token's zero decimals would turn e8s into a number that is wrong rather than
+    // obviously missing, and every consumer of this class formats through here, so one guard
+    // covers message content, gates and the wallet alike.
     formatTokens(amount: bigint) {
+        if (this.#unknown) return "?????";
         return formatTokens(amount, this.#decimals);
     }
 
@@ -276,6 +298,7 @@ export class TokenState {
 
     set token(val: EnhancedTokenDetails) {
         this.#token = val;
+        this.#unknown = false;
     }
 
     get refreshingBalance() {
@@ -287,6 +310,9 @@ export class TokenState {
     }
 
     refreshBalance(client: OpenChat) {
+        // The null token's ledger is "", and refreshing that reaches the worker as
+        // Principal.fromText("") - one unhandled rejection per tap. Nothing to refresh anyway.
+        if (this.#unknown) return Promise.resolve();
         this.#refreshingBalance = true;
         return client
             .refreshAccountBalance(this.ledger, false)
