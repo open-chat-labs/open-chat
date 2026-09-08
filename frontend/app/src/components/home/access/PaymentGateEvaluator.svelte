@@ -62,7 +62,7 @@
     function onClickPrimary() {
         if (insufficientFunds) {
             balanceWithRefresh?.refresh();
-        } else {
+        } else if (token !== undefined) {
             onApprovePayment({
                 ledger: token.ledger,
                 amount: gate.amount,
@@ -70,25 +70,35 @@
             });
         }
     }
-    let token = $derived(client.getTokenDetailsForAccessGate(gate)!);
-    let originalBalance = $derived($cryptoBalanceStore.get(token.ledger) ?? 0n);
+    // A gate can name a ledger the registry does not carry. Asserting it did threw on the first
+    // derived read of `token.ledger` - the s($).ledger boundary crash - and this is the copy every
+    // desktop-width viewport renders.
+    let token = $derived(client.getTokenDetailsForAccessGate(gate));
+    let originalBalance = $derived($cryptoBalanceStore.get(gate.ledgerCanister) ?? 0n);
     let cryptoBalance = $derived(
-        balanceAfterCurrentCommitments(token.ledger, paymentApprovals, originalBalance),
+        balanceAfterCurrentCommitments(gate.ledgerCanister, paymentApprovals, originalBalance),
     );
     let insufficientFunds = $derived(cryptoBalance < gate.amount);
     let approvalMessage = $derived(
-        interpolate(
-            $_,
-            i18nKey(
-                "access.paymentApprovalMessage",
-                {
-                    amount: client.formatTokens(gate.amount, token.decimals),
-                    token: token.symbol,
-                },
-                level,
-                true,
-            ),
-        ),
+        token === undefined
+            ? interpolate(
+                  $_,
+                  i18nKey(
+                      "This gate is priced in a token OpenChat does not recognise, so the payment cannot be made here.",
+                  ),
+              )
+            : interpolate(
+                  $_,
+                  i18nKey(
+                      "access.paymentApprovalMessage",
+                      {
+                          amount: client.formatTokens(gate.amount, token.decimals),
+                          token: token.symbol,
+                      },
+                      level,
+                      true,
+                  ),
+              ),
     );
     let distributionMessage = $derived(
         interpolate($_, i18nKey("access.paymentDistributionMessage", undefined, level, true)),
@@ -115,7 +125,7 @@
 </div>
 <div>
     <p>
-        <Markdown text={approvalMessage + " " + distributionMessage} />
+        <Markdown text={token === undefined ? approvalMessage : approvalMessage + " " + distributionMessage} />
     </p>
     {#if gate.expiry !== undefined}
         <AlertBox>
@@ -127,7 +137,7 @@
             <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
         </div>
     {/if}
-    {#if insufficientFunds}
+    {#if insufficientFunds && token !== undefined}
         <AccountInfo ledger={gate.ledgerCanister} />
         <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
     {/if}
@@ -135,9 +145,11 @@
 <div>
     <ButtonGroup>
         <Button secondary onClick={onClose}>{$_("cancel")}</Button>
-        <Button loading={refreshingBalance} onClick={onClickPrimary}
-            ><Translatable
-                resourceKey={i18nKey(insufficientFunds ? "Refresh" : "Approve payment")} /></Button>
+        {#if token !== undefined}
+            <Button loading={refreshingBalance} onClick={onClickPrimary}
+                ><Translatable
+                    resourceKey={i18nKey(insufficientFunds ? "Refresh" : "Approve payment")} /></Button>
+        {/if}
     </ButtonGroup>
 </div>
 

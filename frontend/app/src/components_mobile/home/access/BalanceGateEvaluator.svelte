@@ -29,7 +29,7 @@
 
     let { gate, onClose }: Props = $props();
 
-    let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(gate.ledgerCanister)!));
+    let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(gate.ledgerCanister)));
     let cryptoBalance = $derived(
         accessApprovalState.balanceAfterCurrentCommitments(
             tokenState.ledger,
@@ -62,17 +62,21 @@
                 </Caption>
             </Column>
         </Row>
-        <Column
-            onClick={topup}
-            mainAxisAlignment={"center"}
-            crossAxisAlignment={"center"}
-            width={{ size: "4rem" }}
-            height={"fill"}
-            borderRadius={"lg"}
-            background={ColourVars.surface2}
-            padding={["sm", "md"]}>
-            <QrCode size={"2rem"} color={ColourVars.textSecondary} />
-        </Column>
+        <!-- No top-up for a ledger the registry does not carry: ReceiveCrypto would open on a
+             nameless token with no receiving address worth showing -->
+        {#if !tokenState.unknown}
+            <Column
+                onClick={topup}
+                mainAxisAlignment={"center"}
+                crossAxisAlignment={"center"}
+                width={{ size: "4rem" }}
+                height={"fill"}
+                borderRadius={"lg"}
+                background={ColourVars.surface2}
+                padding={["sm", "md"]}>
+                <QrCode size={"2rem"} color={ColourVars.textSecondary} />
+            </Column>
+        {/if}
     </Row>
 {/snippet}
 
