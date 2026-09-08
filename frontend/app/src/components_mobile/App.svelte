@@ -142,7 +142,14 @@
             subscribe("hangup", hangup),
             subscribe("askToSpeak", askToSpeak),
             subscribe("userLoggedIn", onUserLoggedIn),
+            subscribe("sessionExpired", () => client.logout()),
         ];
+        // Registered rather than called at each logout site: an expired session logs out from
+        // the worker agent now, not just from the handler below, and the previous user's
+        // shortcuts must not survive on the device either way.
+        client.onLogout(async () => {
+            if (client.isNativeApp()) clearChatShortcuts();
+        });
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         // visualViewport.resize fires when the iOS virtual keyboard appears/disappears
@@ -325,7 +332,6 @@
         recordError("window", err);
         logger?.error("Unhandled error: ", err);
         if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
-            if (client.isNativeApp()) clearChatShortcuts();
             client.logout();
             ev.preventDefault();
         }
