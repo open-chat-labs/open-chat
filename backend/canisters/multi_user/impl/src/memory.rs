@@ -10,7 +10,7 @@ pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
     static MEMORY_MANAGER: MemoryManager<DefaultMemoryImpl>
-        = MemoryManager::init_with_bucket_size(DefaultMemoryImpl::default(), 2);
+        = MemoryManager::init_with_bucket_size(DefaultMemoryImpl::default(), 8);
 }
 
 pub fn get_upgrades_memory() -> Memory {
