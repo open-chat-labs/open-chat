@@ -18,7 +18,7 @@ pub fn get_upgrades_memory() -> Memory {
 }
 
 pub fn memory_sizes() -> BTreeMap<u8, u64> {
-    (0u8..=1).map(|id| (id, get_memory(MemoryId::new(id)).size())).collect()
+    (0u8..=0).map(|id| (id, get_memory(MemoryId::new(id)).size())).collect()
 }
 
 fn get_memory(id: MemoryId) -> Memory {
