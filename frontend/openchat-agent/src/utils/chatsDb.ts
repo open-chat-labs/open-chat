@@ -325,18 +325,34 @@ export class ChatsDb {
         this.getDb().then((db) => db.put("bots", bots, this.principalString));
     }
 
+    // Never throws. `getUpdates` calls this from inside a `Stream` initialiser, which does not
+    // catch a rejected async initialiser: neither onResult nor onError would fire and the caller
+    // would await a load that never completes, on every launch. Returning undefined costs a full
+    // initial load; wedging the app costs everything.
     async getCachedChats(): Promise<ChatStateFull | undefined> {
-        const resolvedDb = await this.getDb();
-        const chats = await resolvedDb.get("chats", this.principalString);
+        try {
+            const resolvedDb = await this.getDb();
+            const chats = await resolvedDb.get("chats", this.principalString);
 
-        if (chats && chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
-            const storeNames = resolvedDb.objectStoreNames;
-            for (let i = 0; i < storeNames.length; i++) {
-                await resolvedDb.clear(storeNames[i]);
+            // `== null`: a corrupt IndexedDB has been seen returning null rather than undefined
+            if (chats == null) return undefined;
+
+            if (chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
+                const storeNames = resolvedDb.objectStoreNames;
+                for (let i = 0; i < storeNames.length; i++) {
+                    await resolvedDb.clear(storeNames[i]);
+                }
+                return undefined;
             }
+            if (!cachedChatsAreUsable(chats)) {
+                await resolvedDb.clear("chats");
+                return undefined;
+            }
+            return chats;
+        } catch (err) {
+            console.error("CACHE: unable to read cached chats, falling back to a full load", err);
             return undefined;
         }
-        return chats;
     }
 
     async setCachedChats(
@@ -1209,6 +1225,37 @@ function makeCommunitySerializable(community: CommunitySummary): CommunitySummar
         avatar,
         banner,
     };
+}
+
+// The cache is the one place a chat summary enters the agent without a mapper having built it:
+// every other route comes from candid. A record written by an older build (or a partial write)
+// can therefore be missing fields the type says are always there, and the app then dies reading
+// `them.userId` or `membership.readByMeUpTo` seconds after load.
+//
+// There is no safe local repair. `membership` cannot be invented - the role, read-up-to and mute
+// state are the server's to say. Dropping just the bad record is worse than it looks: the cached
+// list is the base `mergeDirectChatUpdates` applies deltas to, so a chat removed from it stays
+// gone until the server happens to send an update mentioning it. Treat the whole cache as
+// unusable instead and let `getUpdates` fall through to `getInitialState`, which is what the
+// staleness check above already does.
+function cachedChatsAreUsable(chats: ChatStateFull): boolean {
+    // `getUpdates` iterates all three of these inside the Stream initialiser, where a throw
+    // wedges the load rather than surfacing. No record missing groupChats or communities has
+    // been seen - the write is atomic - but the shape of the failure is the same, and checking
+    // is cheaper than the launch loop it would cause.
+    if (
+        !Array.isArray(chats.directChats) ||
+        !Array.isArray(chats.groupChats) ||
+        !Array.isArray(chats.communities) ||
+        // the staleness check above compares this with `<`; against undefined that is simply
+        // false, so a record with no timestamp would sail through as fresh
+        typeof chats.latestUserCanisterUpdates !== "bigint"
+    ) {
+        return false;
+    }
+    return chats.directChats.every(
+        (c) => c?.id?.userId !== undefined && c?.them !== undefined && c?.membership !== undefined,
+    );
 }
 
 function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
