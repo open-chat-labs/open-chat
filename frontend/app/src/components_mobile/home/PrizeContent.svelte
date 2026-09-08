@@ -180,7 +180,7 @@
 
     let initialTokenState = $derived(
         content.kind === "prize_content_initial"
-            ? new TokenState($enhancedCryptoLookup.get(content.transfer.ledger)!)
+            ? new TokenState($enhancedCryptoLookup.get(content.transfer.ledger))
             : undefined,
     );
 
@@ -242,12 +242,18 @@
                     height={{ size: "0.25rem" }}
                     background={ColourVars.surface1}
                     borderRadius="circle">.</Row>
-                <Row padding="sm">
-                    <TransferFeesMessage
-                        symbol={initialTokenState.symbol}
-                        tokenDecimals={initialTokenState.decimals}
-                        transferFees={content.fees} />
-                </Row>
+                <!-- tokenDecimals goes straight to the formatter, bypassing formatTokens and
+                     its unknown-token guard, so an unrecognised ledger would print the fee in
+                     raw base units next to an amount rendered as "?????" - two numbers for one
+                     token. Say nothing about fees instead. -->
+                {#if !initialTokenState.unknown}
+                    <Row padding="sm">
+                        <TransferFeesMessage
+                            symbol={initialTokenState.symbol}
+                            tokenDecimals={initialTokenState.decimals}
+                            transferFees={content.fees} />
+                    </Row>
+                {/if}
             </Column>
         </Column>
     {/if}

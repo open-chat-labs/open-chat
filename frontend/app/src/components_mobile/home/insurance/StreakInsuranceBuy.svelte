@@ -40,7 +40,7 @@
     const MAX_DAYS = 30;
     const ledger = LEDGER_CANISTER_CHAT;
     const token = $derived($enhancedCryptoLookup.get(ledger));
-    const tokenState = $derived(new TokenState(token!));
+    const tokenState = $derived(new TokenState(token));
     const currentDaysInsured = $streakInsuranceStore.daysInsured;
     const currentDaysMissed = $streakInsuranceStore.daysMissed;
     let { onClose }: Props = $props();

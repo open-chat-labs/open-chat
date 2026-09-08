@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, Container } from "component-lib";
-    import type { OpenChat } from "@client";
+    import type { EnhancedTokenDetails, OpenChat } from "@client";
     import { enhancedCryptoLookup as cryptoLookup } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -62,7 +62,7 @@
         toppingUp = !toppingUp;
     }
 
-    function convertValue(c: Exclude<typeof conversion, "none">, t: typeof tokenDetails): string {
+    function convertValue(c: Exclude<typeof conversion, "none">, t: EnhancedTokenDetails): string {
         switch (c) {
             case "usd":
                 return t.dollarBalance?.toFixed(2) ?? "???";
@@ -74,12 +74,16 @@
                 return t.ethBalance?.toFixed(6) ?? "???";
         }
     }
-    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let symbol = $derived(tokenDetails.symbol);
+    // An unrecognised ledger has no decimals we can trust, so a formatted figure would be
+    // wrong rather than missing. Show it as unknown instead.
+    let tokenDetails = $derived($cryptoLookup.get(ledger));
+    let symbol = $derived(tokenDetails?.symbol ?? "");
     let formattedValue = $derived(
-        conversion === "none"
-            ? client.formatTokens(value, tokenDetails.decimals)
-            : convertValue(conversion, tokenDetails),
+        tokenDetails === undefined
+            ? "?????"
+            : conversion === "none"
+              ? client.formatTokens(value, tokenDetails.decimals)
+              : convertValue(conversion, tokenDetails),
     );
     $effect(() => {
         if (ledger) {
