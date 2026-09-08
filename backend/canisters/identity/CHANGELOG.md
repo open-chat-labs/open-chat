@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Remove WebAuthn keys when a passkey is unlinked or its user deleted, and drop orphaned keys on upgrade ([#9324](https://github.com/open-chat-labs/open-chat/pull/9324))
+- Decrement the originating canister count when an auth principal is unlinked ([#9324](https://github.com/open-chat-labs/open-chat/pull/9324))
 
 ### Removed
 

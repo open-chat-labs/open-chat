@@ -39,24 +39,18 @@ impl WebAuthnKeys {
         self.keys.len()
     }
 
-    /// Removes every key which no auth principal can sign in with, returning their credential ids.
+    /// Removes every key which no auth principal can sign in with, returning how many were removed.
     /// A key is kept if the auth principal derived from its public key still exists, or if any auth
     /// principal still refers to its credential id, so a key is only dropped when both routes back
     /// to it are gone.
-    pub fn remove_orphaned_keys(&mut self, user_principals: &UserPrincipals) -> Vec<Vec<u8>> {
+    pub fn remove_orphaned_keys(&mut self, user_principals: &UserPrincipals) -> usize {
         let referenced = user_principals.webauthn_credential_ids();
-        let mut removed = Vec::new();
+        let before = self.keys.len();
         self.keys.retain(|credential_id, key| {
-            if referenced.contains(credential_id)
+            referenced.contains(credential_id)
                 || user_principals.auth_principal_exists(&Principal::self_authenticating(&key.public_key))
-            {
-                true
-            } else {
-                removed.push(credential_id.to_vec());
-                false
-            }
         });
-        removed
+        before - self.keys.len()
     }
 }
 
@@ -389,13 +383,13 @@ mod tests {
         let key4 = der_wrap_cose_key(&hex(&format!("a401010327200621{}{}", "5820", "66".repeat(32))));
         add(&mut keys, 4, key4);
 
-        assert_eq!(keys.remove_orphaned_keys(&user_principals), vec![vec![4]]);
+        assert_eq!(keys.remove_orphaned_keys(&user_principals), 1);
 
         assert!(keys.get(vec![1]).is_some());
         assert!(keys.get(vec![2]).is_some());
         assert!(keys.get(vec![3]).is_some());
         assert!(keys.get(vec![4]).is_none());
-        assert!(keys.remove_orphaned_keys(&user_principals).is_empty());
+        assert_eq!(keys.remove_orphaned_keys(&user_principals), 0);
 
         assert!(keys.remove(vec![1]));
         assert!(!keys.remove(vec![1]));

@@ -33,7 +33,7 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         let removed = state.data.webauthn_keys.remove_orphaned_keys(&state.data.user_principals);
         let remaining = state.data.webauthn_keys.len();
-        info!(removed = removed.len(), remaining, "Removed orphaned WebAuthn keys");
+        info!(removed, remaining, "Removed orphaned WebAuthn keys");
     });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();

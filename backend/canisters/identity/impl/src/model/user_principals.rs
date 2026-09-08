@@ -186,9 +186,9 @@ impl UserPrincipals {
             return Err(RemovePrincipalResponse::IdentityLinkNotFound);
         }
         user.auth_principals.retain(|&ap| ap != linked_principal);
-        Ok(self
-            .remove_auth_principal_internal(&linked_principal, index)
-            .and_then(|a| a.webauthn_credential_id))
+        let removed = self.remove_auth_principal_internal(&linked_principal, index);
+        self.temp_keys.retain(|_, k| k.auth_principal != linked_principal);
+        Ok(removed.and_then(|a| a.webauthn_credential_id))
     }
 
     /// Unlinks every auth principal from the user at `index` and clears its user id, returning the
@@ -202,17 +202,18 @@ impl UserPrincipals {
             .filter(|u| u.user_id == Some(user_id))?;
         user.user_id = None;
         let auth_principals = std::mem::take(&mut user.auth_principals);
-        Some(
-            auth_principals
-                .iter()
-                .filter_map(|p| self.remove_auth_principal_internal(p, index))
-                .filter_map(|a| a.webauthn_credential_id)
-                .collect(),
-        )
+        let credential_ids = auth_principals
+            .iter()
+            .filter_map(|p| self.remove_auth_principal_internal(p, index))
+            .filter_map(|a| a.webauthn_credential_id)
+            .collect();
+        self.temp_keys.retain(|_, k| !auth_principals.contains(&k.auth_principal));
+        Some(credential_ids)
     }
 
-    /// Removes `auth_principal` from the lookup, provided it belongs to the user at `index`, along
-    /// with any temp keys standing in for it.
+    /// Removes `auth_principal` from the lookup, provided it belongs to the user at `index`, and
+    /// decrements the count for its originating canister. Does not touch `temp_keys`, so that a
+    /// caller removing several principals can purge their temp keys in one pass.
     fn remove_auth_principal_internal(&mut self, auth_principal: &Principal, index: u32) -> Option<AuthPrincipalInternal> {
         let Occupied(e) = self.auth_principals.entry(*auth_principal) else {
             return None;
@@ -221,7 +222,7 @@ impl UserPrincipals {
             return None;
         }
         let removed = e.remove();
-        self.temp_keys.retain(|_, k| k.auth_principal != *auth_principal);
+        self.decr_originating_canister(removed.originating_canister);
         Some(removed)
     }
 
@@ -347,6 +348,17 @@ impl UserPrincipals {
     fn incr_originating_canister(&mut self, canister_id: CanisterId) {
         *self.originating_canisters.entry(canister_id).or_default() += 1;
     }
+
+    fn decr_originating_canister(&mut self, canister_id: CanisterId) {
+        if let Occupied(mut e) = self.originating_canisters.entry(canister_id) {
+            let count = e.get().saturating_sub(1);
+            if count == 0 {
+                e.remove();
+            } else {
+                *e.get_mut() = count;
+            }
+        }
+    }
 }
 
 pub struct AuthPrincipal {
@@ -410,6 +422,7 @@ mod tests {
         user_principals.push(0, user, active, canister, None, false, 100);
         assert!(user_principals.link_auth_principal_with_existing_user(passkey, canister, Some(vec![7].into()), false, 0, 100));
         user_principals.add_temp_key(temp_key, passkey, 100, 200);
+        assert_eq!(user_principals.originating_canisters().get(&canister), Some(&2));
 
         assert!(matches!(
             user_principals.remove_auth_principal(passkey, passkey),
@@ -437,6 +450,7 @@ mod tests {
         );
         assert!(!user_principals.temp_keys.contains_key(&temp_key));
         assert!(user_principals.webauthn_credential_ids().is_empty());
+        assert_eq!(user_principals.originating_canisters().get(&canister), Some(&1));
         assert!(matches!(
             user_principals.remove_auth_principal(active, passkey),
             Err(RemovePrincipalResponse::IdentityLinkNotFound)
@@ -459,6 +473,10 @@ mod tests {
         assert!(user_principals.link_auth_principal_with_existing_user(auth2, canister, None, false, 0, 100));
         user_principals.push(1, other_user, other_auth, canister, Some(vec![2].into()), false, 100);
         assert!(user_principals.set_user_id(user, Some(user_id)));
+        user_principals.add_temp_key(principal(8), auth1, 100, 200);
+        user_principals.add_temp_key(principal(9), auth2, 100, 200);
+        user_principals.add_temp_key(principal(10), other_auth, 100, 200);
+        assert_eq!(user_principals.originating_canisters().get(&canister), Some(&3));
 
         // Refuses to touch anything if the user at the index doesn't carry the expected user id
         assert!(user_principals.delete_user(1, user_id).is_none());
@@ -470,6 +488,10 @@ mod tests {
         assert!(!user_principals.auth_principal_exists(&auth1));
         assert!(!user_principals.auth_principal_exists(&auth2));
         assert!(user_principals.auth_principal_exists(&other_auth));
+        assert!(!user_principals.temp_keys.contains_key(&principal(8)));
+        assert!(!user_principals.temp_keys.contains_key(&principal(9)));
+        assert!(user_principals.temp_keys.contains_key(&principal(10)));
+        assert_eq!(user_principals.originating_canisters().get(&canister), Some(&1));
         assert!(user_principals.find_user_principal_by_user_id(user_id).is_none());
         let deleted = user_principals.user_principal_by_index(0).unwrap();
         assert!(deleted.auth_principals.is_empty());
