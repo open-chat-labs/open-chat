@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add `c2c_create_multi_user_canister` and `c2c_upgrade_multi_user_canister_wasm` plus a rolling upgrade job for MultiUser canisters ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Expose the user-event sync queue's in-flight batch count in metrics, alongside the existing queued length ([#9177](https://github.com/open-chat-labs/open-chat/pull/9177))
 
 ### Changed

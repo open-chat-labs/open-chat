@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::local_multi_user_map::LocalMultiUserMap;
 use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
@@ -67,6 +68,7 @@ mod updates;
 const CHILD_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + CHILD_CANISTER_TOP_UP_AMOUNT; // 0.5T cycles
 const CHILD_CANISTER_TOP_UP_AMOUNT: Cycles = 200_000_000_000; // 0.2T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
+const MULTI_USER_UPGRADE_CONCURRENCY: usize = 10;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -446,6 +448,7 @@ impl RuntimeState {
         let user_upgrades_metrics = self.data.users_requiring_upgrade.metrics();
         let group_upgrades_metrics = self.data.groups_requiring_upgrade.metrics();
         let community_upgrades_metrics = self.data.communities_requiring_upgrade.metrics();
+        let multi_user_upgrades_metrics = self.data.multi_users_requiring_upgrade.metrics();
         let event_store_client_info = self.data.event_store_client.info();
         let event_relay_canister_id = event_store_client_info.event_store_canister_id;
 
@@ -462,6 +465,7 @@ impl RuntimeState {
             local_user_count: self.data.local_users.len() as u64,
             local_group_count: self.data.local_groups.len() as u64,
             local_community_count: self.data.local_communities.len() as u64,
+            local_multi_user_count: self.data.local_multi_users.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
             bot_user_count: self.data.global_users.legacy_bots().len() as u64,
             oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
@@ -485,6 +489,10 @@ impl RuntimeState {
             community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.version,
             community_upgrade_concurrency: self.data.community_upgrade_concurrency,
             max_concurrent_community_upgrades: self.data.max_concurrent_community_upgrades,
+            multi_user_upgrades_completed: multi_user_upgrades_metrics.completed,
+            multi_user_upgrades_pending: multi_user_upgrades_metrics.pending,
+            multi_user_upgrades_in_progress: multi_user_upgrades_metrics.in_progress,
+            multi_user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.version,
             user_versions: self
                 .data
                 .local_users
@@ -503,12 +511,20 @@ impl RuntimeState {
                 .iter()
                 .map(|u| u.1.wasm_version.to_string())
                 .count_per_value(),
+            multi_user_versions: self
+                .data
+                .local_multi_users
+                .iter()
+                .map(|u| u.1.wasm_version.to_string())
+                .count_per_value(),
             user_upgrades_failed: user_upgrades_metrics.failed,
             group_upgrades_failed: group_upgrades_metrics.failed,
             community_upgrades_failed: community_upgrades_metrics.failed,
+            multi_user_upgrades_failed: multi_user_upgrades_metrics.failed,
             recent_user_upgrades: user_upgrades_metrics.recently_competed,
             recent_group_upgrades: group_upgrades_metrics.recently_competed,
             recent_community_upgrades: community_upgrades_metrics.recently_competed,
+            recent_multi_user_upgrades: multi_user_upgrades_metrics.recently_competed,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             user_events_queue_in_progress: self.data.user_event_sync_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
@@ -563,6 +579,8 @@ struct Data {
     pub local_users: LocalUserMap,
     pub local_groups: LocalGroupMap,
     pub local_communities: LocalCommunityMap,
+    #[serde(default)]
+    pub local_multi_users: LocalMultiUserMap,
     pub global_users: GlobalUserMap,
     pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
@@ -579,6 +597,8 @@ struct Data {
     pub users_requiring_upgrade: CanistersRequiringUpgrade,
     pub groups_requiring_upgrade: CanistersRequiringUpgrade,
     pub communities_requiring_upgrade: CanistersRequiringUpgrade,
+    #[serde(default)]
+    pub multi_users_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub user_index_event_sync_queue: BatchedTimerJobQueue<UserIndexEventBatch>,
@@ -663,6 +683,7 @@ impl Data {
             local_users: LocalUserMap::default(),
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
+            local_multi_users: LocalMultiUserMap::default(),
             global_users: GlobalUserMap::default(),
             child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
@@ -678,6 +699,7 @@ impl Data {
             users_requiring_upgrade: CanistersRequiringUpgrade::default(),
             groups_requiring_upgrade: CanistersRequiringUpgrade::default(),
             communities_requiring_upgrade: CanistersRequiringUpgrade::default(),
+            multi_users_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
             user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
@@ -735,6 +757,7 @@ pub struct Metrics {
     pub local_user_count: u64,
     pub local_group_count: u64,
     pub local_community_count: u64,
+    pub local_multi_user_count: u64,
     pub global_user_count: u64,
     pub bot_user_count: u64,
     pub oc_controlled_bots: Vec<UserId>,
@@ -759,6 +782,10 @@ pub struct Metrics {
     pub community_wasm_version: BuildVersion,
     pub community_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
+    pub multi_user_upgrades_completed: u64,
+    pub multi_user_upgrades_pending: u64,
+    pub multi_user_upgrades_in_progress: u64,
+    pub multi_user_wasm_version: BuildVersion,
     pub user_events_queue_length: usize,
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply
@@ -769,12 +796,15 @@ pub struct Metrics {
     pub user_versions: BTreeMap<String, u32>,
     pub group_versions: BTreeMap<String, u32>,
     pub community_versions: BTreeMap<String, u32>,
+    pub multi_user_versions: BTreeMap<String, u32>,
     pub user_upgrades_failed: Vec<FailedUpgradeCount>,
     pub group_upgrades_failed: Vec<FailedUpgradeCount>,
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
+    pub multi_user_upgrades_failed: Vec<FailedUpgradeCount>,
     pub recent_user_upgrades: Vec<CanisterId>,
     pub recent_group_upgrades: Vec<CanisterId>,
     pub recent_community_upgrades: Vec<CanisterId>,
+    pub recent_multi_user_upgrades: Vec<CanisterId>,
     pub notification_pushers: Vec<Principal>,
     pub queued_notifications: u32,
     pub latest_notification_index: u64,

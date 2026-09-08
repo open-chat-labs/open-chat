@@ -34,6 +34,10 @@ fn populate_canisters() {
                 .data
                 .cycles_balance_check_queue
                 .extend(state.data.local_communities.iter().map(|(u, _)| CanisterId::from(*u)));
+            state
+                .data
+                .cycles_balance_check_queue
+                .extend(state.data.local_multi_users.iter().map(|(c, _)| *c));
         }
     });
 

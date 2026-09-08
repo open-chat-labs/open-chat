@@ -22,6 +22,7 @@ generate_msgpack_query_call!(explore_bots);
 generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
+generate_update_call!(create_multi_user_canister);
 generate_update_call!(assign_platform_moderators_group);
 generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_msgpack_update_call!(remove_bot);
@@ -45,6 +46,7 @@ generate_msgpack_update_call!(suspend_user);
 generate_msgpack_update_call!(update_diamond_membership_subscription);
 generate_msgpack_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
+generate_update_call!(upgrade_multi_user_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
 generate_update_call!(upload_wasm_chunk);
 generate_msgpack_update_call!(register_bot);
@@ -257,6 +259,58 @@ pub mod happy_path {
         assert!(matches!(
             response,
             user_index_canister::upgrade_user_canister_wasm::Response::Success
+        ));
+    }
+
+    pub fn create_multi_user_canister(
+        env: &mut PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        local_user_index_canister_id: CanisterId,
+    ) -> CanisterId {
+        let response = super::create_multi_user_canister(
+            env,
+            sender,
+            user_index_canister_id,
+            &user_index_canister::create_multi_user_canister::Args {
+                local_user_index_canister_id,
+            },
+        );
+
+        match response {
+            user_index_canister::create_multi_user_canister::Response::Success(canister_id) => canister_id,
+            response => panic!("'create_multi_user_canister' error: {response:?}"),
+        }
+    }
+
+    pub fn upgrade_multi_user_canister_wasm(
+        env: &mut PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        wasm: CanisterWasm,
+    ) {
+        upload_wasm_in_chunks(
+            env,
+            sender,
+            user_index_canister_id,
+            &wasm.module,
+            ChildCanisterType::MultiUser,
+        );
+
+        let response = super::upgrade_multi_user_canister_wasm(
+            env,
+            sender,
+            user_index_canister_id,
+            &user_index_canister::upgrade_multi_user_canister_wasm::Args {
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
+                filter: None,
+            },
+        );
+
+        assert!(matches!(
+            response,
+            user_index_canister::upgrade_multi_user_canister_wasm::Response::Success
         ));
     }
 

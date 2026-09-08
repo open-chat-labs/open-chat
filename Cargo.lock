@@ -6823,6 +6823,7 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
+ "multi_user_canister",
  "notifications_index_canister",
  "oc_error_codes",
  "online_users_canister",

@@ -110,6 +110,7 @@ pub struct ExternalAchievementInitial {
 pub enum ChildCanisterType {
     LocalUserIndex,
     User,
+    MultiUser,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

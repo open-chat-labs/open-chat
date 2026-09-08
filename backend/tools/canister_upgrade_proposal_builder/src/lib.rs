@@ -66,7 +66,11 @@ fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
                 filter
             })
         }
-        CanisterName::LocalUserIndex | CanisterName::User | CanisterName::Group | CanisterName::Community => {
+        CanisterName::LocalUserIndex
+        | CanisterName::User
+        | CanisterName::MultiUser
+        | CanisterName::Group
+        | CanisterName::Community => {
             Encode!(&UpgradeChunkedCanisterWasmArgs {
                 version: config.version,
                 wasm_hash,
