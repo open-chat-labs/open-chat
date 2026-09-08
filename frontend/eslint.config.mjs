@@ -112,6 +112,7 @@ export default defineConfig([
         "**/rollup.extras.mjs",
         "**/rollup-plugin-*.mjs",
         "**/build-workers.mjs",
+        "**/scripts/*.mjs",
         "**/svelte.config.js",
         "**/.dependency-cruiser.js",
         "eslint.config.mjs",

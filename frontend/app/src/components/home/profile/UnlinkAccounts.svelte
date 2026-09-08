@@ -1,8 +1,7 @@
 <script lang="ts">
     import {
-        AuthProvider,
         iconSize,
-        type AuthenticationPrincipal,
+        type LinkedAuthenticationPrincipal,
         type OpenChat,
     } from "@client";
     import { getContext } from "svelte";
@@ -16,10 +15,10 @@
 
     const client = getContext<OpenChat>("client");
 
-    // TODO reduce duplication, this is repeated from LinkedAuthAccounts
-    type Account = AuthenticationPrincipal & { provider: AuthProvider };
+    let { account, onClose }: { account: LinkedAuthenticationPrincipal; onClose: () => void } =
+        $props();
 
-    let { account, onClose }: { account: Account; onClose: () => void } = $props();
+    let providerLabel = $derived(account.passkeyProvider ?? account.provider);
 
     let error: string | undefined = $state();
     let step: "unlink" | "error" | "done" = $state("unlink");
@@ -70,7 +69,7 @@
             <p class="info">
                 <Translatable
                     resourceKey={i18nKey("identity.linkedAccounts.unlinkAdvice", {
-                        provider: account.provider,
+                        provider: providerLabel,
                     })} />
             </p>
         </AlertBox>
@@ -90,7 +89,7 @@
             <div class="info">
                 <Translatable
                     resourceKey={i18nKey("identity.linkedAccounts.unlinkingDone", {
-                        provider: account.provider,
+                        provider: providerLabel,
                     })} />
             </div>
         </AlertBox>
