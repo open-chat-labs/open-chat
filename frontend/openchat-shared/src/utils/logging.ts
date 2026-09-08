@@ -32,6 +32,25 @@ function rollbarPayloadError(payload: any): { name: string; message: string } {
     };
 }
 
+// Rollbar hands `checkIgnore` the original arguments alongside the payload, and for an unhandled
+// rejection those include the rejection reason itself. That matters for anything thrown in the
+// worker: it crosses the boundary as JSON, so the reason arrives as a plain object rather than an
+// Error, Rollbar cannot read an exception class off it and files the item as "(unknown): message"
+// with no class at all. `name` and `code` are exactly what most of `shouldReportError`'s rules
+// are keyed on - session expiry, the 502-504 range, retry-exhausted - so reading them off the
+// payload alone silently loses every one of those. Recover the reason and filter on that.
+// Exported for testing.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function uncaughtReason(args: any): unknown {
+    if (!Array.isArray(args)) return undefined;
+    return args.find(
+        (arg) =>
+            arg != null &&
+            typeof arg === "object" &&
+            (typeof arg.name === "string" || typeof arg.message === "string"),
+    );
+}
+
 // True when the innermost frame of the primary error is browser-extension code: the error was
 // thrown by an extension (CSP violations from injected wasm, wallet inpage scripts, ...), not us.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,6 +61,48 @@ function thrownByExtension(payload: any): boolean {
     // Rollbar frames are ordered outermost first, so the throw site is last
     const filename = frames[frames.length - 1]?.filename;
     return typeof filename === "string" && /^(chrome|moz|safari-web)-extension:\/\//.test(filename);
+}
+
+// Rollbar matches an uploaded source map to a stack frame by exact minified URL. The same bundle
+// is served from four origins - oc.app, webtest.oc.app, the canister's own .icp0.io domain, and
+// http://tauri.localhost in the native app - and the workers are loaded with a `?v=` cache
+// buster, so a frame's filename is one of many strings for the same file. `dynamichost` is
+// Rollbar's placeholder host for exactly this: rewrite every frame to it and one uploaded map
+// covers all four. `scripts/upload-source-maps.mjs` registers the same URLs.
+// Frames that are not http(s) are left alone - `thrownByExtension` identifies extension code by
+// the `chrome-extension://` prefix, and rewriting those would break that check.
+const DYNAMIC_HOST = "http://dynamichost";
+
+function normaliseFrameFilename(filename: unknown): string | undefined {
+    // tauri: is iOS, which serves the bundle from tauri://localhost (see navigation.rs); Android
+    // uses http://tauri.localhost and is covered by https?
+    if (typeof filename !== "string" || !/^(https?|tauri):\/\//i.test(filename)) return undefined;
+    try {
+        // pathname only: drops the origin and the `?v=` query, keeping any directory prefix so
+        // the URL still matches the map's path relative to the build directory
+        return `${DYNAMIC_HOST}${new URL(filename).pathname}`;
+    } catch {
+        return undefined;
+    }
+}
+
+// Exported for testing: a mismatch between this and the URLs `upload-source-maps.mjs` registers
+// fails silently, with traces simply staying minified.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function normaliseSourceMapUrls(payload: any): void {
+    const body = payload?.body;
+    const traces = body?.trace_chain ?? (body?.trace != null ? [body.trace] : []);
+    if (!Array.isArray(traces)) return;
+    for (const trace of traces) {
+        const frames = trace?.frames;
+        if (!Array.isArray(frames)) continue;
+        for (const frame of frames) {
+            const normalised = normaliseFrameFilename(frame?.filename);
+            if (normalised !== undefined) {
+                frame.filename = normalised;
+            }
+        }
+    }
 }
 
 export function inititaliseLogger(apikey: string, version: string, env: string): Logger {
@@ -63,12 +124,17 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             // captureUncaught / captureUnhandledRejections bypass our logger, so uncaught
             // items get the same noise filtering at the transport layer. Logger-reported items
             // (isUncaught false) already passed shouldReportError and are not re-filtered here.
-            checkIgnore: (isUncaught, _args, payload) => {
+            checkIgnore: (isUncaught, args, payload) => {
                 if (!isUncaught) return false;
                 if (thrownByExtension(payload)) return true;
+                // Prefer the reason itself: it still carries name and code, which the payload
+                // does not for anything that crossed the worker boundary
+                const reason = uncaughtReason(args);
+                if (reason !== undefined) return !shouldReportError(reason);
                 const { name, message } = rollbarPayloadError(payload);
                 return !shouldReportMessage(name, message);
             },
+            transform: (payload) => normaliseSourceMapUrls(payload),
             payload: {
                 environment: env,
                 client: {

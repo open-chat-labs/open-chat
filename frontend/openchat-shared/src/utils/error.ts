@@ -58,11 +58,23 @@ const REQWEST_NOISE_PATTERN = /error decoding response body/i;
 
 const RETRY_EXHAUSTED_PATTERN = /retry strategy exhausted after \d+ attempts/i;
 
+// Every HttpError subclass overwrites `name` with its own, so a bare `name === "HttpError"` test
+// misses them. `code` only means an HTTP status on one of these.
+const HTTP_ERROR_NAMES = new Set<string>([
+    "HttpError",
+    "AuthError",
+    "DestinationInvalidError",
+    "CanisterUnavailableError",
+    "ResponseTooLargeError",
+]);
+
 function isTransientNetworkError(error: unknown): boolean {
     // Structural checks rather than instanceof: errors which crossed the worker boundary
     // arrive as plain objects where only name/message/code survive
     const name = errorName(error);
-    if (name === "HttpError") {
+    if (HTTP_ERROR_NAMES.has(name)) {
+        // 503 also covers CanisterUnavailableError: a frozen or uninstalled canister cannot
+        // recover inside one request, and server-side monitoring owns the incident.
         const code = Number((error as { code?: unknown }).code);
         if (code >= 502 && code <= 504) return true;
     }
@@ -102,6 +114,11 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /connection to indexed database server lost/i,
     // The client's clock is wrong, so the replica certificate looks like it is from the future
     /certificate is signed more than 5 minutes in the future/i,
+    // The same wrong clock seen from the other side: the ingress expiry the agent computed from
+    // Date.now() falls outside the window the replica will accept. Devices weeks or months out of
+    // date produce these in storms, and because the replica echoes the timestamps back in the
+    // message, every skewed device mints a new error item rather than joining an existing one.
+    /invalid request expiry/i,
     // Safari's built-in media controls script, no frame of ours involved
     /can't find variable: EmptyRanges/i,
     // Benign browser warning surfaced as an error event

@@ -1,4 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
+import { isIcpAccountIdentifier } from "@icp-sdk/canisters/ledger/icp";
 import { decodeIcrcAccount } from "./icrcAccount";
 
 export const HEX_REGEX = new RegExp("^[A-Fa-f0-9]+$");
@@ -23,8 +24,11 @@ export function isSubAccountValid(text: string): boolean {
     return text.length <= 64 && isHexString(text);
 }
 
+// Length, hex and the CRC32 in the first four bytes. Length and hex alone let a typo through to
+// the canister, whose AccountIdentifier::from_slice checks the checksum and rejects it - by which
+// point the user had already been told the address was fine.
 export function isAccountIdentifierValid(text: string): boolean {
-    return text.length === 64 && isHexString(text);
+    return isIcpAccountIdentifier(text);
 }
 
 export function isICRCAddressValid(text: string): boolean {
