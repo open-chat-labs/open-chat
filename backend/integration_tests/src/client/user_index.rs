@@ -23,6 +23,7 @@ generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(create_multi_user_canister);
+generate_update_call!(set_multi_user_canisters_enabled);
 generate_update_call!(assign_platform_moderators_group);
 generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_msgpack_update_call!(remove_bot);
@@ -281,6 +282,25 @@ pub mod happy_path {
             user_index_canister::create_multi_user_canister::Response::Success(canister_id) => canister_id,
             response => panic!("'create_multi_user_canister' error: {response:?}"),
         }
+    }
+
+    pub fn set_multi_user_canisters_enabled(
+        env: &mut PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        enabled: bool,
+    ) {
+        let response = super::set_multi_user_canisters_enabled(
+            env,
+            sender,
+            user_index_canister_id,
+            &user_index_canister::set_multi_user_canisters_enabled::Args { enabled },
+        );
+
+        assert!(matches!(
+            response,
+            user_index_canister::set_multi_user_canisters_enabled::Response::Success
+        ));
     }
 
     pub fn upgrade_multi_user_canister_wasm(

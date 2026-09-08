@@ -83,6 +83,38 @@ fn upgrade_filter_naming_unknown_canister_is_rejected() {
     );
 }
 
+#[test]
+fn multi_user_canisters_enabled_flag_fans_out_to_local_user_indexes() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+
+    assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));
+    assert!(!multi_user_canisters_enabled(env, local_user_index));
+
+    client::user_index::happy_path::set_multi_user_canisters_enabled(env, *controller, canister_ids.user_index, true);
+
+    // The UserIndex records it immediately, the LocalUserIndex receives it over the event queue
+    assert!(multi_user_canisters_enabled(env, canister_ids.user_index));
+    tick_many(env, 5);
+    assert!(multi_user_canisters_enabled(env, local_user_index));
+
+    client::user_index::happy_path::set_multi_user_canisters_enabled(env, *controller, canister_ids.user_index, false);
+    tick_many(env, 5);
+
+    assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));
+    assert!(!multi_user_canisters_enabled(env, local_user_index));
+}
+
+fn multi_user_canisters_enabled(env: &PocketIc, canister_id: CanisterId) -> bool {
+    serde_json::from_value(metrics(env, canister_id)["multi_user_canisters_enabled"].clone()).unwrap()
+}
+
 fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
     serde_json::from_value(metrics(env, canister_id)["wasm_version"].clone()).unwrap()
 }
