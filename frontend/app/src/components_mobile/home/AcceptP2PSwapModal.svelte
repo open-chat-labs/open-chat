@@ -59,19 +59,29 @@
     }
 
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger1) ?? 0n);
-    let tokenDetails0 = $derived($cryptoLookup.get(ledger0)!);
-    let tokenDetails1 = $derived($cryptoLookup.get(ledger1)!);
-    let symbol0 = $derived(tokenDetails0.symbol);
-    let symbol1 = $derived(tokenDetails1.symbol);
-    let transferFees = $derived(BigInt(2) * tokenDetails1.transferFee);
+    // Either side of the swap can name a ledger the registry does not carry. Asserting it did
+    // crashed this sheet open; without decimals and a fee we also cannot state the amounts or
+    // let the swap be accepted, so treat it as an unacceptable swap.
+    let tokenDetails0 = $derived($cryptoLookup.get(ledger0));
+    let tokenDetails1 = $derived($cryptoLookup.get(ledger1));
+    let unknownToken = $derived(tokenDetails0 === undefined || tokenDetails1 === undefined);
+    let symbol0 = $derived(tokenDetails0?.symbol ?? "");
+    let symbol1 = $derived(tokenDetails1?.symbol ?? "");
+    let transferFees = $derived(BigInt(2) * (tokenDetails1?.transferFee ?? 0n));
     // An OpenChat balance which cannot cover the swap is no obstacle when an external wallet is
     // paying instead
     let insufficient = $derived(
         sourceWallet === undefined && cryptoBalance <= amount1 + transferFees,
     );
-    let valid = $derived(error === undefined && !insufficient);
-    let amount0Text = $derived(client.formatTokens(amount0, tokenDetails0.decimals));
-    let amount1Text = $derived(client.formatTokens(amount1 + transferFees, tokenDetails1.decimals));
+    let valid = $derived(error === undefined && !insufficient && !unknownToken);
+    let amount0Text = $derived(
+        tokenDetails0 === undefined ? "?????" : client.formatTokens(amount0, tokenDetails0.decimals),
+    );
+    let amount1Text = $derived(
+        tokenDetails1 === undefined
+            ? "?????"
+            : client.formatTokens(amount1 + transferFees, tokenDetails1.decimals),
+    );
 </script>
 
 <Sheet onDismiss={onClose}>

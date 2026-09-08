@@ -2,7 +2,7 @@
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { Body, CommonButton2, Container, Form, Input } from "component-lib";
     import { namedAccountsStore, type NamedAccount, type OpenChat } from "@client";
-    import { isICRCAddressValid } from "@shared";
+    import { isAccountIdentifierValid, isICRCAddressValid } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
@@ -26,10 +26,13 @@
     let nameDirty = $derived(trimmedName !== account?.name);
     let addressDirty = $derived(trimmedAddress !== account?.account);
     let dirty = $derived(nameDirty || addressDirty);
-    // Matches what save_crypto_account accepts: a principal, or an ICRC-1 textual account.
-    // Saving anything else used to succeed here and then throw out of the worker, unhandled,
-    // when the withdrawal mapper tried to decode it.
-    let validAddress = $derived(isICRCAddressValid(trimmedAddress));
+    // Mirrors `is_valid_account` in save_crypto_account.rs: an ICRC-1 textual account, which
+    // covers a bare principal, or a hex ICP ledger account identifier. Saving anything else used
+    // to succeed here and then throw out of the worker, unhandled, when the withdrawal mapper
+    // tried to decode it.
+    let validAddress = $derived(
+        isICRCAddressValid(trimmedAddress) || isAccountIdentifierValid(trimmedAddress),
+    );
     let validName = $derived(
         trimmedName.length > 0 &&
             $namedAccountsStore.find((a) => a.name.toLowerCase() === trimmedName.toLowerCase()) ===

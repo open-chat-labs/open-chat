@@ -144,6 +144,12 @@
             subscribe("userLoggedIn", onUserLoggedIn),
             subscribe("sessionExpired", () => client.logout()),
         ];
+        // Registered rather than called at each logout site: an expired session logs out from
+        // the worker agent now, not just from the handler below, and the previous user's
+        // shortcuts must not survive on the device either way.
+        client.onLogout(async () => {
+            if (client.isNativeApp()) clearChatShortcuts();
+        });
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         // visualViewport.resize fires when the iOS virtual keyboard appears/disappears
@@ -331,7 +337,6 @@
         // every defect in two and doubling the volume. This handler keeps the crash-log
         // record and the logout, which Rollbar's capture does not do.
         if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
-            if (client.isNativeApp()) clearChatShortcuts();
             client.logout();
             ev.preventDefault();
         }

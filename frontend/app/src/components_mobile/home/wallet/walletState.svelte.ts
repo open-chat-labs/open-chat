@@ -169,13 +169,28 @@ export class TokenState {
     // Every caller looks the token up in the registry and asserts the result is there. It is not
     // always: a message or an access gate can name a ledger the registry has never carried or has
     // since dropped, and an undefined token here took the whole app down on the first derived read
-    // of `#token.ledger`. Falling back to the null token renders an empty, inert token instead.
+    // of `#token.ledger`. The null token stops the crash, but its zero decimals and empty symbol
+    // would render an amount that is wrong rather than obviously missing, so callers must consult
+    // `unknown` and refuse to show a figure or offer an action for a token we cannot identify.
+    #unknown = $state(false);
+
     constructor(t: EnhancedTokenDetails | undefined, c: ConversionToken = "usd") {
         this.#token = t ?? nullToken;
+        this.#unknown = t === undefined;
         this.#selectedConversion = c;
     }
 
+    // True when the ledger is not in the registry: nothing about this token can be trusted,
+    // including any amount formatted with it.
+    get unknown() {
+        return this.#unknown;
+    }
+
+    // The null token's zero decimals would turn e8s into a number that is wrong rather than
+    // obviously missing, and every consumer of this class formats through here, so one guard
+    // covers message content, gates and the wallet alike.
     formatTokens(amount: bigint) {
+        if (this.#unknown) return "?????";
         return formatTokens(amount, this.#decimals);
     }
 

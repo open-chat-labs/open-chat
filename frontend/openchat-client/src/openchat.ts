@@ -1382,10 +1382,19 @@ export class OpenChat {
             5000,
         );
 
-        await Promise.all([
-            this.#worker.send({ kind: "logout" }),
-            this.#authClient.then((c) => c.logout()),
-        ]).then(() => window.location.replace("/"));
+        // `finally`: the navigation is what actually ends the session for the user, so it must
+        // happen even if tearing down the worker or the auth client fails. Both are IndexedDB
+        // backed and do fail. Without this a rejected teardown left the tab sitting on a dead
+        // session with no way forward - and, since `sessionExpired` only fires once per page,
+        // no second attempt either. Reloading re-evaluates auth from scratch.
+        try {
+            await Promise.all([
+                this.#worker.send({ kind: "logout" }),
+                this.#authClient.then((c) => c.logout()),
+            ]);
+        } finally {
+            window.location.replace("/");
+        }
     }
 
     unreadThreadMessageCount(

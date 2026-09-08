@@ -43,7 +43,10 @@
 
     let { gate, level, onApprovePayment, onClose }: Props = $props();
 
-    let token = $derived($enhancedCryptoLookup.get(gate.ledgerCanister)!);
+    // A gate can name a ledger the registry does not carry. `token.ledger` below then threw and
+    // took the app down; and with no decimals or fee we can neither state the amount nor build a
+    // valid approval, so the payment must not be offered at all.
+    let token = $derived($enhancedCryptoLookup.get(gate.ledgerCanister));
     let tokenState = $derived(new TokenState(token));
     let refreshingBalance = $state(false);
     let totalAmount = $derived(tokenState.formatTokens(gate.amount));
@@ -65,7 +68,7 @@
                 "access.paymentApprovalMessage",
                 {
                     amount: tokenState.formatTokens(gate.amount),
-                    token: token.symbol,
+                    token: tokenState.symbol,
                 },
                 level,
                 true,
@@ -187,16 +190,24 @@
     </Column>
 </Column>
 
-{#if insufficientFunds}
+{#if tokenState.unknown}
+    <Translatable
+        resourceKey={i18nKey(
+            "This gate is priced in a token OpenChat does not recognise, so the payment cannot be made here.",
+        )} />
+    <CommonButton width={"fill"} size={"small_text"} onClick={onClose}>
+        <Translatable resourceKey={i18nKey("cancel")} />
+    </CommonButton>
+{:else if insufficientFunds}
     {@render refreshBalance()}
 {:else}
     <Button
         width={"fill"}
         onClick={() =>
             onApprovePayment({
-                ledger: token.ledger,
+                ledger: token!.ledger,
                 amount: gate.amount,
-                approvalFee: token.transferFee,
+                approvalFee: token!.transferFee,
             })}>
         {#snippet icon(color)}
             <Wallet {color} />

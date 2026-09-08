@@ -114,28 +114,14 @@ register("pl", () => import("./pl.json"));
 register("fa", () => import("./fa.json"));
 register("ar", () => import("./ar.json"));
 
-// svelte-i18n's init() passes initialLocale through Intl.getCanonicalLocales, which throws a
-// RangeError on a tag it cannot parse - an empty string, or the underscore form ("zh_CN") some
-// Android WebViews report as navigator.language. The throw escapes init(), so no locale is ever
-// set and the first message the app formats kills it with "Cannot format a message without first
-// setting the initial locale".
-function usableLocale(code: string): boolean {
-    try {
-        return Intl.getCanonicalLocales(code).length > 0;
-    } catch {
-        return false;
-    }
-}
-
 export function getStoredLocale(): string {
     const fromStorage = localStorage.getItem(configKeys.locale);
 
-    const code =
-        fromStorage === null
-            ? getLocaleFromNavigator() || "en"
-            : setDialectIfMatchesBrowserLocale(fromStorage);
+    if (fromStorage === null) {
+        return getLocaleFromNavigator() || "en";
+    }
 
-    return usableLocale(code) ? code : "en";
+    return setDialectIfMatchesBrowserLocale(fromStorage);
 }
 
 export async function setLocale(code: string): Promise<void> {

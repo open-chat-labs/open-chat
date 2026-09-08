@@ -325,22 +325,34 @@ export class ChatsDb {
         this.getDb().then((db) => db.put("bots", bots, this.principalString));
     }
 
+    // Never throws. `getUpdates` calls this from inside a `Stream` initialiser, which does not
+    // catch a rejected async initialiser: neither onResult nor onError would fire and the caller
+    // would await a load that never completes, on every launch. Returning undefined costs a full
+    // initial load; wedging the app costs everything.
     async getCachedChats(): Promise<ChatStateFull | undefined> {
-        const resolvedDb = await this.getDb();
-        const chats = await resolvedDb.get("chats", this.principalString);
+        try {
+            const resolvedDb = await this.getDb();
+            const chats = await resolvedDb.get("chats", this.principalString);
 
-        if (chats && chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
-            const storeNames = resolvedDb.objectStoreNames;
-            for (let i = 0; i < storeNames.length; i++) {
-                await resolvedDb.clear(storeNames[i]);
+            // `== null`: a corrupt IndexedDB has been seen returning null rather than undefined
+            if (chats == null) return undefined;
+
+            if (chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
+                const storeNames = resolvedDb.objectStoreNames;
+                for (let i = 0; i < storeNames.length; i++) {
+                    await resolvedDb.clear(storeNames[i]);
+                }
+                return undefined;
             }
+            if (!cachedChatsAreUsable(chats)) {
+                await resolvedDb.clear("chats");
+                return undefined;
+            }
+            return chats;
+        } catch (err) {
+            console.error("CACHE: unable to read cached chats, falling back to a full load", err);
             return undefined;
         }
-        if (chats !== undefined && !cachedChatsAreUsable(chats)) {
-            await resolvedDb.clear("chats");
-            return undefined;
-        }
-        return chats;
     }
 
     async setCachedChats(
@@ -1227,7 +1239,8 @@ function makeCommunitySerializable(community: CommunitySummary): CommunitySummar
 // unusable instead and let `getUpdates` fall through to `getInitialState`, which is what the
 // staleness check above already does.
 function cachedChatsAreUsable(chats: ChatStateFull): boolean {
-    return chats.directChats.every((c) => c.them !== undefined && c.membership !== undefined);
+    if (!Array.isArray(chats.directChats)) return false;
+    return chats.directChats.every((c) => c?.them !== undefined && c?.membership !== undefined);
 }
 
 function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
