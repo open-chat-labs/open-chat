@@ -44,6 +44,46 @@ function thrownByExtension(payload: any): boolean {
     return typeof filename === "string" && /^(chrome|moz|safari-web)-extension:\/\//.test(filename);
 }
 
+// Rollbar matches an uploaded source map to a stack frame by exact minified URL. The same bundle
+// is served from four origins - oc.app, webtest.oc.app, the canister's own .icp0.io domain, and
+// http://tauri.localhost in the native app - and the workers are loaded with a `?v=` cache
+// buster, so a frame's filename is one of many strings for the same file. `dynamichost` is
+// Rollbar's placeholder host for exactly this: rewrite every frame to it and one uploaded map
+// covers all four. `scripts/upload-source-maps.mjs` registers the same URLs.
+// Frames that are not http(s) are left alone - `thrownByExtension` identifies extension code by
+// the `chrome-extension://` prefix, and rewriting those would break that check.
+const DYNAMIC_HOST = "http://dynamichost";
+
+function normaliseFrameFilename(filename: unknown): string | undefined {
+    if (typeof filename !== "string" || !/^https?:\/\//i.test(filename)) return undefined;
+    try {
+        // pathname only: drops the origin and the `?v=` query, keeping any directory prefix so
+        // the URL still matches the map's path relative to the build directory
+        return `${DYNAMIC_HOST}${new URL(filename).pathname}`;
+    } catch {
+        return undefined;
+    }
+}
+
+// Exported for testing: a mismatch between this and the URLs `upload-source-maps.mjs` registers
+// fails silently, with traces simply staying minified.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function normaliseSourceMapUrls(payload: any): void {
+    const body = payload?.body;
+    const traces = body?.trace_chain ?? (body?.trace != null ? [body.trace] : []);
+    if (!Array.isArray(traces)) return;
+    for (const trace of traces) {
+        const frames = trace?.frames;
+        if (!Array.isArray(frames)) continue;
+        for (const frame of frames) {
+            const normalised = normaliseFrameFilename(frame?.filename);
+            if (normalised !== undefined) {
+                frame.filename = normalised;
+            }
+        }
+    }
+}
+
 export function inititaliseLogger(apikey: string, version: string, env: string): Logger {
     if (env === "production") {
         rollbar = Rollbar.init({
@@ -69,6 +109,7 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
                 const { name, message } = rollbarPayloadError(payload);
                 return !shouldReportMessage(name, message);
             },
+            transform: (payload) => normaliseSourceMapUrls(payload),
             payload: {
                 environment: env,
                 client: {

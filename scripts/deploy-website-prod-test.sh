@@ -14,6 +14,10 @@ npm run --prefix frontend deploy:prod_test
 
 if [ $? -eq 0 ]; then
     echo "npm deploy script succeeded - proceeding with dfx deploy"
+
+    # Register the built maps with Rollbar before the assets go live, so traces from this
+    # version demangle. Warns and skips without OC_ROLLBAR_SERVER_TOKEN; never blocks the deploy.
+    node ./scripts/upload-source-maps.mjs $OC_WEBSITE_VERSION
     dfx --identity $IDENTITY deploy --network ic_test --no-wallet website
 else
   echo "npm run --prefix frontend deploy:prod_test - failed"
