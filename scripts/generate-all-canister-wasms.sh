@@ -25,6 +25,7 @@ CANISTERS=(
   identity
   local_user_index
   market_maker
+  multi_user
   neuron_controller
   notifications_index
   online_users

@@ -7165,6 +7165,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "multi_user_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "multi_user_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "git_commit_id",
+ "http_request",
+ "ic-cdk 0.20.2",
+ "ic-stable-structures",
+ "msgpack",
+ "multi_user_canister",
+ "rand 0.10.2",
+ "serde",
+ "stable_memory",
+ "tracing",
+ "types",
+ "utils",
+]
+
+[[package]]
 name = "multibase"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

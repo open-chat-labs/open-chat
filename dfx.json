@@ -31,6 +31,12 @@
       "wasm": "wasms/local_user_index.wasm.gz",
       "build": "./scripts/generate-wasm.sh local_user_index"
     },
+    "multi_user": {
+      "type": "custom",
+      "candid": "backend/canisters/multi_user/api/can.did",
+      "wasm": "wasms/multi_user.wasm.gz",
+      "build": "./scripts/generate-wasm.sh multi_user"
+    },
     "neuron_controller": {
       "type": "custom",
       "candid": "backend/canisters/neuron_controller/api/can.did",
