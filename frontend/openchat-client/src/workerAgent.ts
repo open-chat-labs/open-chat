@@ -7,7 +7,7 @@ import type {
     WorkerResponse,
     WorkerResult,
 } from "@shared";
-import { ONE_MINUTE_MILLIS, Stream } from "@shared";
+import { ONE_MINUTE_MILLIS, Stream, publish, requiresLogout } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
 import { messagesRead, storageStore } from "./state";
@@ -19,6 +19,7 @@ export class WorkerAgent {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly #inflightRequests: Map<number, PromiseResolver<any>> = new Map();
     readonly #logger: Logger;
+    #sessionExpired = false;
     nextCorrelationId: number = 0;
 
     constructor(config: OpenChatConfig) {
@@ -164,9 +165,22 @@ export class WorkerAgent {
     }
 
     #resolveError(data: WorkerError): void {
+        const error = JSON.parse(data.error);
+
+        // A request rejected because the session is gone only logged the user out if nobody
+        // caught it and it reached the window's unhandledrejection handler. Background pollers
+        // catch their own failures, so an expired delegation left the client polling on a timer
+        // for as long as the tab stayed open - thousands of identical failures from one client.
+        // Only once: a burst of pollers all fail together when a delegation expires, and logout
+        // ends in a page navigation.
+        if (!this.#sessionExpired && requiresLogout(error)) {
+            this.#sessionExpired = true;
+            publish("sessionExpired");
+        }
+
         const promise = this.#inflightRequests.get(data.correlationId);
         if (promise !== undefined) {
-            promise.reject(JSON.parse(data.error));
+            promise.reject(error);
             this.#inflightRequests.delete(data.correlationId);
         } else {
             this.#logUnexpected(data.requestKind, data.correlationId);

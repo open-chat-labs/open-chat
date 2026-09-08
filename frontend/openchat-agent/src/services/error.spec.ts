@@ -12,7 +12,9 @@ import {
     DestinationInvalidError,
     HttpError,
     InvalidDelegationError,
+    SessionExpiryError,
 } from "@shared";
+import { Principal } from "@icp-sdk/core/principal";
 import { toCanisterResponseError } from "./error";
 
 // An expired session is the default - only the delegation tests need a live one
@@ -26,6 +28,19 @@ function reject(rejectCode: ReplicaRejectCode, message: string, errorCode?: stri
 }
 
 describe("toCanisterResponseError", () => {
+    // An anonymous identity has no delegation, so its "expiry" is 0 and every ProtocolError used
+    // to classify as an expired session. Now that a session-expiry error logs the user out, that
+    // would reload a logged-out visitor on every 503 or clock-skew 400 and loop.
+    test("a protocol error for an anonymous identity is not an expired session", () => {
+        const anonymous = { getPrincipal: () => Principal.anonymous() } as unknown as Identity;
+        const error = toCanisterResponseError(
+            ProtocolError.fromCode(new HttpErrorCode(503, "Service Unavailable", [], "")),
+            anonymous,
+        );
+        expect(error).not.toBeInstanceOf(SessionExpiryError);
+        expect(error).toBeInstanceOf(HttpError);
+    });
+
     // A query to a deleted group/community canister is rejected with `DestinationInvalid`. It must
     // be mapped to `DestinationInvalidError` so that the retry loop is short-circuited - retrying
     // can never succeed, and 7 retries with exponential backoff blocks the chat from loading.
