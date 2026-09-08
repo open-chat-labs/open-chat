@@ -10,7 +10,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Backend-only PRs have nothing here to check. `install-and-test` is a required status check,
+  # so it must still run on every PR (a workflow-level `paths:` filter would leave the check
+  # pending and the PR unmergeable); instead it skips itself when nothing it depends on changed.
+  # A skipped job satisfies branch protection. This mirrors the `changes` job in backend.yaml.
+  changes:
+    name: detect frontend changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - "frontend/**"
+              - ".prettierignore"
+              - ".github/workflows/**"
+
   install-and-test:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
