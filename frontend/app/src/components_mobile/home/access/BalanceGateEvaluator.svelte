@@ -29,7 +29,7 @@
 
     let { gate, onClose }: Props = $props();
 
-    let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(gate.ledgerCanister)!));
+    let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(gate.ledgerCanister)));
     let cryptoBalance = $derived(
         accessApprovalState.balanceAfterCurrentCommitments(
             tokenState.ledger,

@@ -36,10 +36,12 @@
         ev.stopPropagation();
     }
     let logo = $derived($cryptoLookup.get(content.transaction.ledger)?.logo ?? "");
-    let tokenDetails = $derived($cryptoLookup.get(content.transaction.ledger)!);
-    let symbol = $derived(tokenDetails.symbol);
+    // The registry does not always carry the prize's ledger - it can predate the token being
+    // added, or outlive it being dropped - and asserting it does crashed the message list
+    let tokenDetails = $derived($cryptoLookup.get(content.transaction.ledger));
+    let symbol = $derived(tokenDetails?.symbol ?? "");
     let amount = $derived(
-        client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals),
+        client.formatTokens(content.transaction.amountE8s, tokenDetails?.decimals ?? 8),
     );
     let winner = $derived(`${username(content.transaction.recipient)}`);
     let me = $derived($currentUserIdStore === content.transaction.recipient);

@@ -117,6 +117,7 @@ export type PubSubEvents = {
     userLoggedIn: string;
     reactionSelected: { messageId: bigint; kind: "add" | "remove" };
     userSuspensionChanged: undefined;
+    sessionExpired: undefined;
     selectedChatInvalid: undefined;
     chitEarned: ChitEvent[];
     sendMessageFailed: boolean;

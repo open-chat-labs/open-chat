@@ -142,6 +142,7 @@
             subscribe("hangup", hangup),
             subscribe("askToSpeak", askToSpeak),
             subscribe("userLoggedIn", onUserLoggedIn),
+            subscribe("sessionExpired", () => client.logout()),
         ];
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);

@@ -77,8 +77,8 @@
         onRemove,
     }: Props = $props();
 
-    let fromState = $derived(new TokenState($cryptoLookup.get(content.token0.ledger)!));
-    let toState = $derived(new TokenState($cryptoLookup.get(content.token1.ledger)!));
+    let fromState = $derived(new TokenState($cryptoLookup.get(content.token0.ledger)));
+    let toState = $derived(new TokenState($cryptoLookup.get(content.token1.ledger)));
     let confirming = $state(false);
     let showDetails = $state(false);
     let finished = $derived(

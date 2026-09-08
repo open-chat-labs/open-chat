@@ -166,8 +166,12 @@ export class TokenState {
         }
     });
 
-    constructor(t: EnhancedTokenDetails, c: ConversionToken = "usd") {
-        this.#token = t;
+    // Every caller looks the token up in the registry and asserts the result is there. It is not
+    // always: a message or an access gate can name a ledger the registry has never carried or has
+    // since dropped, and an undefined token here took the whole app down on the first derived read
+    // of `#token.ledger`. Falling back to the null token renders an empty, inert token instead.
+    constructor(t: EnhancedTokenDetails | undefined, c: ConversionToken = "usd") {
+        this.#token = t ?? nullToken;
         this.#selectedConversion = c;
     }
 

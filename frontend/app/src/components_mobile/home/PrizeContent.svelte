@@ -180,7 +180,7 @@
 
     let initialTokenState = $derived(
         content.kind === "prize_content_initial"
-            ? new TokenState($enhancedCryptoLookup.get(content.transfer.ledger)!)
+            ? new TokenState($enhancedCryptoLookup.get(content.transfer.ledger))
             : undefined,
     );
 

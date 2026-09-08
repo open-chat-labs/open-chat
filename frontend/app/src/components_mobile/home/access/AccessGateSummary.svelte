@@ -47,7 +47,7 @@
         switch (gate.kind) {
             case "token_balance_gate":
             case "payment_gate":
-                return new TokenState($enhancedCryptoLookup.get(gate.ledgerCanister)!, "usd");
+                return new TokenState($enhancedCryptoLookup.get(gate.ledgerCanister), "usd");
             default:
                 return undefined;
         }

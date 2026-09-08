@@ -55,13 +55,19 @@ export class DexesAgent {
     ): Promise<[DexId, bigint][]> {
         const pools = await this.getSwapPools(inputToken, new Set([outputToken]), swapProviders);
 
-        return await Promise.all(
+        // A pool that cannot quote is a normal answer, not a failure: the commonest case is an
+        // amount too small for that pool's fee, and pools also go dry or get retired. Dropping it
+        // lets the remaining pools still be quoted, and an empty result already means "no quotes"
+        // to the caller. Promise.all here failed the whole request on any one pool's rejection,
+        // and reported it.
+        const quotes = await Promise.allSettled(
             pools.map((p) =>
                 this.quoteSingle(p, inputToken, outputToken, amountIn).then(
                     (quote) => [p.dex, quote] as [DexId, bigint],
                 ),
             ),
         );
+        return quotes.flatMap((q) => (q.status === "fulfilled" ? [q.value] : []));
     }
 
     private getAllSwapPools(swapProviders: DexId[]): Promise<TokenSwapPool[]> {
