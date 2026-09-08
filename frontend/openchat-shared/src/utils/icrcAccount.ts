@@ -61,7 +61,7 @@ function encodeCrc({ owner, subaccount }: Required<IcrcAccount>): string {
     return encodeBase32(checksum);
 }
 
-export function bigEndianCrc32(bytes: Uint8Array): Uint8Array {
+function bigEndianCrc32(bytes: Uint8Array): Uint8Array {
     let crc = 0xffffffff;
 
     for (const byte of bytes) {
@@ -109,7 +109,7 @@ function uint8ArrayToHexString(bytes: Uint8Array): string {
     return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export function hexStringToUint8Array(hex: string): Uint8Array {
+function hexStringToUint8Array(hex: string): Uint8Array {
     if (hex.length % 2 !== 0 || /[^0-9a-f]/i.test(hex)) {
         throw new Error("Invalid account. Invalid subaccount.");
     }

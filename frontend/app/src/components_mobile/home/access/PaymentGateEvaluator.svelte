@@ -50,8 +50,13 @@
     let tokenState = $derived(new TokenState(token));
     let refreshingBalance = $state(false);
     let totalAmount = $derived(tokenState.formatTokens(gate.amount));
-    let toOwner = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.98)));
-    let toOC = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.02)));
+    // Integer arithmetic: BigInt(Number(amount) * 0.98) throws a RangeError for any amount that
+    // is not a multiple of 50, because the product is not an integer (12345678n throws;
+    // 100000000n only happens to pass). The remainder goes to the treasury so the two sum to
+    // the amount, matching how the canister splits it.
+    let ownerShare = $derived((gate.amount * 98n) / 100n);
+    let toOwner = $derived(tokenState.formatTokens(ownerShare));
+    let toOC = $derived(tokenState.formatTokens(gate.amount - ownerShare));
 
     let cryptoBalance = $derived(
         accessApprovalState.balanceAfterCurrentCommitments(

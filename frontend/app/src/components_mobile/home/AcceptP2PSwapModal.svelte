@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Body, Column, CommonButton, Row, Sheet, Subtitle } from "component-lib";
-    import type { OpenChat, SignerWallet } from "@client";
-    import { cryptoBalanceStore, enhancedCryptoLookup as cryptoLookup } from "@client";
+    import type { OpenChat, SignerWallet, TokenInfo } from "@client";
+    import { cryptoBalanceStore } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -13,8 +13,8 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        ledger0: string;
-        ledger1: string;
+        token0: TokenInfo;
+        token1: TokenInfo;
         amount0: bigint;
         amount1: bigint;
         onClose: () => void;
@@ -23,7 +23,8 @@
         onAccept: (fromAccount?: string) => void;
     }
 
-    let { ledger0, ledger1, amount0, amount1, onClose, onAccept }: Props = $props();
+    let { token0, token1, amount0, amount1, onClose, onAccept }: Props = $props();
+    let ledger1 = $derived(token1.ledger);
 
     let refreshing = false;
     let error: string | undefined = undefined;
@@ -59,29 +60,21 @@
     }
 
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger1) ?? 0n);
-    // Either side of the swap can name a ledger the registry does not carry. Asserting it did
-    // crashed this sheet open; without decimals and a fee we also cannot state the amounts or
-    // let the swap be accepted, so treat it as an unacceptable swap.
-    let tokenDetails0 = $derived($cryptoLookup.get(ledger0));
-    let tokenDetails1 = $derived($cryptoLookup.get(ledger1));
-    let unknownToken = $derived(tokenDetails0 === undefined || tokenDetails1 === undefined);
-    let symbol0 = $derived(tokenDetails0?.symbol ?? "");
-    let symbol1 = $derived(tokenDetails1?.symbol ?? "");
-    let transferFees = $derived(BigInt(2) * (tokenDetails1?.transferFee ?? 0n));
+    // Symbol, decimals and fee come from the swap message itself, not the registry: the
+    // message carries the TokenInfo the canister charges from (it debits token1.fee from the
+    // content), so this cannot drift from the real charge and cannot meet a ledger the registry
+    // has never heard of.
+    let symbol0 = $derived(token0.symbol);
+    let symbol1 = $derived(token1.symbol);
+    let transferFees = $derived(BigInt(2) * token1.fee);
     // An OpenChat balance which cannot cover the swap is no obstacle when an external wallet is
     // paying instead
     let insufficient = $derived(
         sourceWallet === undefined && cryptoBalance <= amount1 + transferFees,
     );
-    let valid = $derived(error === undefined && !insufficient && !unknownToken);
-    let amount0Text = $derived(
-        tokenDetails0 === undefined ? "?????" : client.formatTokens(amount0, tokenDetails0.decimals),
-    );
-    let amount1Text = $derived(
-        tokenDetails1 === undefined
-            ? "?????"
-            : client.formatTokens(amount1 + transferFees, tokenDetails1.decimals),
-    );
+    let valid = $derived(error === undefined && !insufficient);
+    let amount0Text = $derived(client.formatTokens(amount0, token0.decimals));
+    let amount1Text = $derived(client.formatTokens(amount1 + transferFees, token1.decimals));
 </script>
 
 <Sheet onDismiss={onClose}>

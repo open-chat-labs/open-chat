@@ -77,6 +77,14 @@ export class DexesAgent {
         if (succeeded.length === 0 && failed !== undefined) {
             throw failed.reason;
         }
+        // Some pool quoted, so the user gets a price - but a pool that failed after its retries
+        // while another answered is a DEX that is down, and the "best" quote shown may not be.
+        // Not worth failing the swap over; worth knowing about.
+        quotes.forEach((q, i) => {
+            if (q.status === "rejected") {
+                console.warn(`quoteSwap: ${pools[i].dex} pool failed, quoting without it`, q.reason);
+            }
+        });
         return succeeded;
     }
 

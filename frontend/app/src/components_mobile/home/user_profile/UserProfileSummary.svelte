@@ -1,6 +1,5 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { clearChatShortcuts } from "@stores/chatShortcuts";
     import { Body, Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
     import {
         allUsersStore,
@@ -75,10 +74,7 @@
                             </MenuItem>
                             <MenuItem
                                 danger
-                                onclick={() => {
-                                    if (client.isNativeApp()) clearChatShortcuts();
-                                    client.logout();
-                                }}>
+                                onclick={() => client.logout()}>
                                 <Translatable resourceKey={i18nKey("Logout")} />
                             </MenuItem>
                         {/snippet}

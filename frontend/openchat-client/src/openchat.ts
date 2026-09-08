@@ -1404,14 +1404,30 @@ export class OpenChat {
         // auth client's delegation delete short, and startup may sign the user back in from the
         // surviving delegation. Narrow, and no worse than the manual reload it replaces, but
         // it is a consequence of choosing "always navigate" over "sometimes never".
+        // allSettled so one step failing cannot stop the other, but never silently: a failed
+        // delegation delete means the user navigates away with the delegation still on disk, and
+        // that used to reach the error tracker as an unhandled rejection.
+        const teardown = Promise.allSettled([
+            this.#worker.send({ kind: "logout" }),
+            this.#authClient.then((c) => c.logout()),
+        ]).then((results) => {
+            const names = ["worker logout", "auth client logout"];
+            results.forEach((r, i) => {
+                if (r.status === "rejected") {
+                    this.#logger.error(`Logout: ${names[i]} failed`, r.reason);
+                }
+            });
+        });
         try {
-            await this.#withTimeout(
-                Promise.allSettled([
-                    this.#worker.send({ kind: "logout" }),
-                    this.#authClient.then((c) => c.logout()),
-                ]),
-                5000,
-            );
+            let settled = false;
+            teardown.finally(() => (settled = true));
+            await this.#withTimeout(teardown, 5000);
+            if (!settled) {
+                this.#logger.error(
+                    "Logout: teardown did not settle within 5s, navigating anyway",
+                    new Error("logout teardown timed out"),
+                );
+            }
         } finally {
             window.location.replace("/");
         }
