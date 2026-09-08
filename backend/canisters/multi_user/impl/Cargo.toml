@@ -1,0 +1,29 @@
+[package]
+name = "multi_user_canister_impl"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = { workspace = true }
+canister_api_macros = { path = "../../../libraries/canister_api_macros" }
+canister_logger = { path = "../../../libraries/canister_logger" }
+canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+git_commit_id = { path = "../../../libraries/git_commit_id" }
+http_request = { path = "../../../libraries/http_request" }
+ic-cdk = { workspace = true }
+ic-stable-structures = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
+multi_user_canister = { path = "../api" }
+rand = { workspace = true }
+serde = { workspace = true }
+stable_memory = { path = "../../../libraries/stable_memory" }
+tracing = { workspace = true }
+types = { path = "../../../libraries/types" }
+utils = { path = "../../../libraries/utils" }

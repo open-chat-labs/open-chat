@@ -53,7 +53,7 @@ async fn main() {
         CanisterName::SignInWithEmail => {
             upgrade_sign_in_with_email_canister(identity, opts.url, opts.sign_in_with_email, opts.version).await
         }
-        CanisterName::SignInWithEthereum | CanisterName::SignInWithSolana => unimplemented!(),
+        CanisterName::MultiUser | CanisterName::SignInWithEthereum | CanisterName::SignInWithSolana => unimplemented!(),
     };
 }
 
