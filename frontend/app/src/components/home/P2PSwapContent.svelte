@@ -251,8 +251,8 @@
             action={cancel} />
     {:else}
         <AcceptP2PSwapModal
-            ledger0={content.token0.ledger}
-            ledger1={content.token1.ledger}
+            token0={content.token0}
+            token1={content.token1}
             amount0={content.token0Amount}
             amount1={content.token1Amount}
             onAccept={accept}
