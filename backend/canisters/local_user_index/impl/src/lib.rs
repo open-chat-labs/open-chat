@@ -494,6 +494,7 @@ impl RuntimeState {
             multi_user_upgrades_pending: multi_user_upgrades_metrics.pending,
             multi_user_upgrades_in_progress: multi_user_upgrades_metrics.in_progress,
             multi_user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.version,
+            multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
             user_versions: self
                 .data
                 .local_users
@@ -641,6 +642,9 @@ struct Data {
     pub media_scan_config: MediaScanConfig,
     #[serde(default)]
     pub media_scan_job_log: MediaScanJobLog,
+    // Mirrors the flag on the UserIndex. Not acted on yet
+    #[serde(default)]
+    pub multi_user_canisters_enabled: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -678,6 +682,7 @@ impl Data {
         openai_api_key: Option<String>,
         moderation_referral_config: Option<ModerationReferralConfig>,
         media_scan_config: MediaScanConfig,
+        multi_user_canisters_enabled: bool,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -741,6 +746,7 @@ impl Data {
             message_moderation_queue: ModerationQueue::default(),
             media_scan_config,
             media_scan_job_log: MediaScanJobLog::default(),
+            multi_user_canisters_enabled,
         }
     }
 }
@@ -787,6 +793,7 @@ pub struct Metrics {
     pub multi_user_upgrades_pending: u64,
     pub multi_user_upgrades_in_progress: u64,
     pub multi_user_wasm_version: BuildVersion,
+    pub multi_user_canisters_enabled: bool,
     pub user_events_queue_length: usize,
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply
