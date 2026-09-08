@@ -61,7 +61,7 @@ function encodeCrc({ owner, subaccount }: Required<IcrcAccount>): string {
     return encodeBase32(checksum);
 }
 
-function bigEndianCrc32(bytes: Uint8Array): Uint8Array {
+export function bigEndianCrc32(bytes: Uint8Array): Uint8Array {
     let crc = 0xffffffff;
 
     for (const byte of bytes) {

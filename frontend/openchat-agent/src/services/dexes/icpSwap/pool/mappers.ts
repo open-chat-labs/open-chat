@@ -1,8 +1,14 @@
 import type { ApiQuoteResponse } from "./candid/idl";
 
-export function quoteResponse(candid: ApiQuoteResponse): bigint {
+// A decoded `err` variant is ICPSwap declining to quote - "amount of input token is too small"
+// is the usual reason - and is returned as undefined rather than thrown. Throwing here made a
+// decline indistinguishable from a transport failure: executeQuery retried it seven times with
+// backoff (roughly twelve seconds for a dust amount), quoteSwap could not tell "every pool
+// declined" from "every pool is down", and the error tracker filled with non-events.
+export function quoteResponse(candid: ApiQuoteResponse): bigint | undefined {
     if ("ok" in candid) {
         return candid.ok;
     }
-    throw new Error("Unable to get quote from ICPSwap: " + JSON.stringify(candid));
+    console.debug("ICPSwap declined to quote: ", candid);
+    return undefined;
 }

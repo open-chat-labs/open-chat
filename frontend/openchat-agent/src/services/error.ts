@@ -139,8 +139,13 @@ function classifyError(
         if (error.cause.code instanceof HttpErrorCode) {
             code = error.cause.code.status;
         }
-        const timeUntilSessionExpiryMs = getSessionExpiryMs(identity) - Date.now();
-        if (timeUntilSessionExpiryMs < 0) {
+        // An anonymous identity has no delegation, so getSessionExpiryMs returns 0 and every
+        // ProtocolError would look like an expired session. It is not one: nothing to log out
+        // of, and now that a session-expiry error triggers a logout, a 503 or a skewed clock on
+        // a logged-out visitor would reload the page, fail the same poll again, and loop.
+        const expiryMs = getSessionExpiryMs(identity);
+        const timeUntilSessionExpiryMs = expiryMs - Date.now();
+        if (expiryMs > 0 && timeUntilSessionExpiryMs < 0) {
             console.debug(
                 "SESSION: we received a 400 response and the session has timed out: ",
                 timeUntilSessionExpiryMs,

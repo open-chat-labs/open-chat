@@ -19,8 +19,10 @@ describe("normaliseSourceMapUrls", () => {
                 "https://webtest.oc.app/main-D_Idsc5v.js",
                 "https://6hsbt-vqaaa-aaaaf-aaafq-cai.icp0.io/main-D_Idsc5v.js",
                 "http://tauri.localhost/main-D_Idsc5v.js",
+                // iOS: a custom scheme, not http
+                "tauri://localhost/main-D_Idsc5v.js",
             ),
-        ).toEqual(Array(4).fill("http://dynamichost/main-D_Idsc5v.js"));
+        ).toEqual(Array(5).fill("http://dynamichost/main-D_Idsc5v.js"));
     });
 
     test("drops the worker's cache-busting query", () => {

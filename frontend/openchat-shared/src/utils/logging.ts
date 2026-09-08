@@ -74,7 +74,9 @@ function thrownByExtension(payload: any): boolean {
 const DYNAMIC_HOST = "http://dynamichost";
 
 function normaliseFrameFilename(filename: unknown): string | undefined {
-    if (typeof filename !== "string" || !/^https?:\/\//i.test(filename)) return undefined;
+    // tauri: is iOS, which serves the bundle from tauri://localhost (see navigation.rs); Android
+    // uses http://tauri.localhost and is covered by https?
+    if (typeof filename !== "string" || !/^(https?|tauri):\/\//i.test(filename)) return undefined;
     try {
         // pathname only: drops the origin and the `?v=` query, keeping any directory prefix so
         // the URL still matches the map's path relative to the build directory

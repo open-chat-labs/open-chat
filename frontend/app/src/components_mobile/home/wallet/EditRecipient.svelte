@@ -26,10 +26,10 @@
     let nameDirty = $derived(trimmedName !== account?.name);
     let addressDirty = $derived(trimmedAddress !== account?.account);
     let dirty = $derived(nameDirty || addressDirty);
-    // Mirrors `is_valid_account` in save_crypto_account.rs: an ICRC-1 textual account, which
-    // covers a bare principal, or a hex ICP ledger account identifier. Saving anything else used
-    // to succeed here and then throw out of the worker, unhandled, when the withdrawal mapper
-    // tried to decode it.
+    // The same two forms `is_valid_account` in save_crypto_account.rs accepts: an ICRC-1 textual
+    // account, which covers a bare principal, or an ICP ledger account identifier (checksum
+    // included, as the canister checks it). Saving anything else used to succeed here and then
+    // throw out of the worker, unhandled, when the withdrawal mapper tried to decode it.
     let validAddress = $derived(
         isICRCAddressValid(trimmedAddress) || isAccountIdentifierValid(trimmedAddress),
     );
@@ -59,9 +59,7 @@
         } else {
             loading = false;
             toastStore.showFailureToast(
-                i18nKey(
-                    "Could not save recipient. Make sure that the address is a valid principal.",
-                ),
+                i18nKey("Could not save recipient. Make sure that the address is valid."),
             );
         }
     }

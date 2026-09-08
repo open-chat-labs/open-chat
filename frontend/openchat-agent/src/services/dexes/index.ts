@@ -61,17 +61,21 @@ export class DexesAgent {
         // to the caller. Promise.all here failed the whole request on any one pool's rejection.
         const quotes = await Promise.allSettled(
             pools.map((p) =>
-                this.quoteSingle(p, inputToken, outputToken, amountIn).then(
-                    (quote) => [p.dex, quote] as [DexId, bigint],
+                this.quoteSingle(p, inputToken, outputToken, amountIn).then((quote) =>
+                    quote === undefined ? undefined : ([p.dex, quote] as [DexId, bigint]),
                 ),
             ),
         );
-        // No rethrow when they all fail. A DEX declines by throwing - ICPSwap's mapper throws on
-        // any non-ok variant, "amount of input token is too small" included - and a pair usually
-        // has a single pool, so "every pool failed" is the ordinary dust-amount case, not an
-        // outage. Rethrowing there just reinstated the noise this change exists to remove.
-        // `getAllSwapPools` above already swallows a DEX being unreachable for the same reason.
-        return quotes.flatMap((q) => (q.status === "fulfilled" ? [q.value] : []));
+        // A pool that declines resolves to undefined and is dropped; a pool that fails rejects.
+        // The two now mean different things, so when every pool rejected it is an outage or a
+        // candid change, not a dust amount, and must surface rather than read as "no quotes".
+        const succeeded = quotes.flatMap((q) =>
+            q.status === "fulfilled" && q.value !== undefined ? [q.value] : [],
+        );
+        if (succeeded.length === 0 && quotes.length > 0 && quotes.every((q) => q.status === "rejected")) {
+            throw (quotes[0] as PromiseRejectedResult).reason;
+        }
+        return succeeded;
     }
 
     private getAllSwapPools(swapProviders: DexId[]): Promise<TokenSwapPool[]> {
@@ -103,7 +107,7 @@ export class DexesAgent {
         inputToken: string,
         outputToken: string,
         amountIn: bigint,
-    ): Promise<bigint> {
+    ): Promise<bigint | undefined> {
         const indexClient = this._swapIndexClients[pool.dex];
         if (indexClient === undefined) {
             return Promise.resolve(BigInt(0));
@@ -129,5 +133,7 @@ export interface SwapIndexClient {
 }
 
 export interface SwapPoolClient {
-    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint>;
+    // undefined when the pool declines to quote (amount too small, no liquidity); reject only
+    // for a failure to ask
+    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint | undefined>;
 }

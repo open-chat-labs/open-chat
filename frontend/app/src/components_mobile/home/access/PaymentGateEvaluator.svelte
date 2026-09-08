@@ -86,13 +86,11 @@
             minHeight={"4rem"}
             gap={"md"}
             background={ColourVars.surface2}
-            padding={["md", "lg"]}
-        >
+            padding={["md", "lg"]}>
             <Avatar url={tokenState.logo} />
             <Column width={"fill"}>
                 <Body fontWeight={"bold"} colour={"textPrimary"} width={"hug"}
-                    >{tokenState.symbol}</Body
-                >
+                    >{tokenState.symbol}</Body>
                 <Caption colour={"textSecondary"} fontWeight={"bold"}>
                     {tokenState.formatTokens(cryptoBalance)}
                 </Caption>
@@ -107,32 +105,19 @@
                 height={"fill"}
                 borderRadius={"lg"}
                 background={ColourVars.surface2}
-                padding={["sm", "md"]}
-            >
+                padding={["sm", "md"]}>
                 <QrCode size={"2rem"} color={ColourVars.textSecondary} />
             </Column>
         {/if}
     </Row>
 {/snippet}
 
-{#if tokenState.unknown}
-    <Column gap={"lg"}>
-        <Wallet size={"4.5rem"} color={ColourVars.primary} />
-        <H2 fontWeight={"bold"}>
+<Column gap={"lg"}>
+    <Wallet size={"4.5rem"} color={ColourVars.primary} />
+    <H2 fontWeight={"bold"}>
+        {#if tokenState.unknown}
             <Translatable resourceKey={i18nKey("Unrecognised token")} />
-        </H2>
-        <Body colour={"textSecondary"}>
-            <Translatable
-                resourceKey={i18nKey(
-                    "This gate is priced in a token OpenChat does not recognise, so the payment cannot be made here.",
-                )}
-            />
-        </Body>
-    </Column>
-{:else}
-    <Column gap={"lg"}>
-        <Wallet size={"4.5rem"} color={ColourVars.primary} />
-        <H2 fontWeight={"bold"}>
+        {:else}
             <MulticolourText
                 parts={[
                     {
@@ -143,73 +128,82 @@
                         text: i18nKey(" payment gate"),
                         colour: "textPrimary",
                     },
-                ]}
-            />
-        </H2>
-        <Body colour={"textSecondary"}>
+                ]} />
+        {/if}
+    </H2>
+    <Body colour={"textSecondary"}>
+        {#if tokenState.unknown}
+            <Translatable
+                resourceKey={i18nKey(
+                    "This gate is priced in a token OpenChat does not recognise, so the payment cannot be made here.",
+                )} />
+        {:else}
             <Markdown text={approvalMessage} />
-        </Body>
+        {/if}
+    </Body>
 
-        <Column gap={"sm"}>
-            {@render tokenBalance()}
-            {#if insufficientFunds}
-                <StatusCard
-                    borderColour={ColourVars.surface2}
-                    background={ColourVars.surface0}
-                    mode={"warning"}
-                    body={interpolate(
-                        $_,
-                        i18nKey(
-                            `Top up your ${tokenState.symbol} token account. Tap the QR code button to get your receiving address.`,
-                        ),
-                    )}
-                    title={interpolate($_, i18nKey("Insufficient funds"))}
-                ></StatusCard>
-            {/if}
-            {#if gate.expiry !== undefined}
-                <StatusCard
-                    background={ColourVars.surface2}
-                    mode={"information"}
-                    title={interpolate($_, i18nKey("This is a recurring payment"))}
-                >
-                    {#snippet body()}
-                        <AccessGateExpiry expiry={gate.expiry} />
-                    {/snippet}
-                </StatusCard>
-            {/if}
+    <!-- Nothing below is meaningful for a token we cannot identify: the balance card would show
+         a blank symbol, and the breakdown amounts would all be "?????" -->
+    {#if !tokenState.unknown}
+    <Column gap={"sm"}>
+        {@render tokenBalance()}
+        {#if insufficientFunds}
+            <StatusCard
+                borderColour={ColourVars.surface2}
+                background={ColourVars.surface0}
+                mode={"warning"}
+                body={interpolate(
+                    $_,
+                    i18nKey(
+                        `Top up your ${tokenState.symbol} token account. Tap the QR code button to get your receiving address.`,
+                    ),
+                )}
+                title={interpolate($_, i18nKey("Insufficient funds"))}>
+            </StatusCard>
+        {/if}
+        {#if gate.expiry !== undefined}
+            <StatusCard
+                background={ColourVars.surface2}
+                mode={"information"}
+                title={interpolate($_, i18nKey("This is a recurring payment"))}>
+                {#snippet body()}
+                    <AccessGateExpiry expiry={gate.expiry} />
+                {/snippet}
+            </StatusCard>
+        {/if}
 
-            <Column borderRadius={"lg"} gap={"lg"} padding={"lg"} background={ColourVars.surface2}>
-                <Row mainAxisAlignment={"spaceBetween"}>
-                    <BodySmall colour={"textSecondary"}>
-                        <Translatable resourceKey={i18nKey("Payment amount")} />
-                    </BodySmall>
-                    <Body width={"hug"} colour={"primary"} fontWeight={"bold"}>
-                        {totalAmount}
-                        {tokenState.symbol}
-                    </Body>
-                </Row>
-                <Row mainAxisAlignment={"spaceBetween"}>
-                    <BodySmall colour={"textSecondary"}>
-                        <Translatable resourceKey={i18nKey("Owner receives (98%)")} />
-                    </BodySmall>
-                    <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
-                        {toOwner}
-                        {tokenState.symbol}
-                    </Body>
-                </Row>
-                <Row mainAxisAlignment={"spaceBetween"}>
-                    <BodySmall colour={"textSecondary"}>
-                        <Translatable resourceKey={i18nKey("OpenChat treasury receives (2%)")} />
-                    </BodySmall>
-                    <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
-                        {toOC}
-                        {tokenState.symbol}
-                    </Body>
-                </Row>
-            </Column>
+        <Column borderRadius={"lg"} gap={"lg"} padding={"lg"} background={ColourVars.surface2}>
+            <Row mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("Payment amount")} />
+                </BodySmall>
+                <Body width={"hug"} colour={"primary"} fontWeight={"bold"}>
+                    {totalAmount}
+                    {tokenState.symbol}
+                </Body>
+            </Row>
+            <Row mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("Owner receives (98%)")} />
+                </BodySmall>
+                <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
+                    {toOwner}
+                    {tokenState.symbol}
+                </Body>
+            </Row>
+            <Row mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("OpenChat treasury receives (2%)")} />
+                </BodySmall>
+                <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
+                    {toOC}
+                    {tokenState.symbol}
+                </Body>
+            </Row>
         </Column>
     </Column>
-{/if}
+    {/if}
+</Column>
 
 {#if tokenState.unknown}
     <CommonButton width={"fill"} size={"small_text"} onClick={onClose}>
@@ -225,8 +219,7 @@
                 ledger: token!.ledger,
                 amount: gate.amount,
                 approvalFee: token!.transferFee,
-            })}
-    >
+            })}>
         {#snippet icon(color)}
             <Wallet {color} />
         {/snippet}
@@ -243,8 +236,7 @@
         width={"fill"}
         mode={"active"}
         size={"small_text"}
-        onClick={() => tokenState.refreshBalance(client)}
-    >
+        onClick={() => tokenState.refreshBalance(client)}>
         {#snippet icon(color, size)}
             <Refresh {color} {size} />
         {/snippet}

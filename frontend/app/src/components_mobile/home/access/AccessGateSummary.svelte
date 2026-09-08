@@ -138,9 +138,11 @@
     {:else}
         <MenuTrigger maskUI align={"end"} position={"bottom"} fill mobileMode={"longpress"}>
             {#snippet menuItems()}
-                <MenuItem onclick={refresh}>
-                    <Translatable resourceKey={i18nKey("Refresh balance")} />
-                </MenuItem>
+                {#if refresh}
+                    <MenuItem onclick={refresh}>
+                        <Translatable resourceKey={i18nKey("Refresh balance")} />
+                    </MenuItem>
+                {/if}
             {/snippet}
             <AccessGateBox {satisfied} satisfiable={!insufficient} {onClick}>
                 <Avatar url={logo} />

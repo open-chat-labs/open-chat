@@ -1,5 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
-import { decodeIcrcAccount } from "./icrcAccount";
+import { bigEndianCrc32, decodeIcrcAccount } from "./icrcAccount";
 
 export const HEX_REGEX = new RegExp("^[A-Fa-f0-9]+$");
 
@@ -23,8 +23,18 @@ export function isSubAccountValid(text: string): boolean {
     return text.length <= 64 && isHexString(text);
 }
 
+// An ICP ledger account identifier is 32 bytes: a big-endian CRC32 of the 28-byte hash, then
+// the hash. Length and hex alone let a typo through to the canister, whose
+// AccountIdentifier::from_slice checks the checksum and rejects it - by which point the user has
+// already been told the address was fine.
 export function isAccountIdentifierValid(text: string): boolean {
-    return text.length === 64 && isHexString(text);
+    if (text.length !== 64 || !isHexString(text)) return false;
+    const bytes = new Uint8Array(32);
+    for (let i = 0; i < 32; i++) {
+        bytes[i] = parseInt(text.slice(i * 2, i * 2 + 2), 16);
+    }
+    const checksum = bigEndianCrc32(bytes.subarray(4));
+    return checksum.every((b, i) => b === bytes[i]);
 }
 
 export function isICRCAddressValid(text: string): boolean {
