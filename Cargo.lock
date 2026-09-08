@@ -5896,7 +5896,6 @@ dependencies = [
  "canister_tracing_macros",
  "constants",
  "git_commit_id",
- "hex",
  "http_request",
  "ic-canister-sig-creation",
  "ic-captcha",
