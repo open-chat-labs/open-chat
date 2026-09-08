@@ -340,6 +340,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::SetMediaScanConfig(config) => {
             state.data.media_scan_config = config;
         }
+        UserIndexEvent::SetMultiUserCanistersEnabled(enabled) => {
+            state.data.multi_user_canisters_enabled = enabled;
+        }
     }
 }
 

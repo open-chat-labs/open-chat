@@ -58,6 +58,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_max_concurrent_user_canister_upgrades"
         | "add_local_user_index_canister"
         | "create_multi_user_canister"
+        | "set_multi_user_canisters_enabled"
         | "upgrade_user_canister_wasm"
         | "upgrade_multi_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"

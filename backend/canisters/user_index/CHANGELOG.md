@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `upgrade_multi_user_canister_wasm` and `create_multi_user_canister` so MultiUser canisters can be installed and upgraded via the LocalUserIndexes ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
+- Add `set_multi_user_canisters_enabled` proposal, recorded on the UserIndex, fanned out to the LocalUserIndexes and surfaced in metrics ([#9314](https://github.com/open-chat-labs/open-chat/pull/9314))
 - Support paying for Diamond membership from external wallets using ICRC2 ([#9265](https://github.com/open-chat-labs/open-chat/pull/9265))
 
 ### Changed

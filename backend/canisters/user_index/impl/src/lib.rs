@@ -272,6 +272,7 @@ impl RuntimeState {
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, i)| (*c, *i)).collect(),
+            multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
@@ -447,6 +448,9 @@ struct Data {
     // MultiUser canister id -> the LocalUserIndex which controls it
     #[serde(default)]
     pub multi_user_canisters: HashMap<CanisterId, CanisterId>,
+    // Set by proposal and fanned out to the LocalUserIndexes. Not acted on yet
+    #[serde(default)]
+    pub multi_user_canisters_enabled: bool,
 }
 
 impl Data {
@@ -551,6 +555,7 @@ impl Data {
             internal_moderation_channel: None,
             blocked_attempt_notice_throttle: HashMap::new(),
             multi_user_canisters: HashMap::new(),
+            multi_user_canisters_enabled: false,
         };
 
         // Register the ProposalsBot
@@ -674,6 +679,7 @@ impl Default for Data {
             internal_moderation_channel: None,
             blocked_attempt_notice_throttle: HashMap::new(),
             multi_user_canisters: HashMap::new(),
+            multi_user_canisters_enabled: false,
         }
     }
 }
@@ -704,6 +710,7 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub multi_user_canisters: Vec<(CanisterId, CanisterId)>,
+    pub multi_user_canisters_enabled: bool,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,
