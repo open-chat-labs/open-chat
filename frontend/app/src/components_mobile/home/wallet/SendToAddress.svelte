@@ -392,7 +392,12 @@
             </Container>
         </Container>
         <Container gap={"sm"} direction={"vertical"} padding={["sm", "xl", "zero", "xl"]}>
-            {#if namedAccount === undefined}
+            <!-- Saved recipients are IC accounts only (principal, ICRC-1 account or ICP account
+                 identifier - what save_crypto_account accepts). A BTC or EVM address would open
+                 the recipient form with a save button that never enables and no way to see why.
+                 Keyed on the selected network, not the token: BTC sent over the ckBTC network
+                 goes to an IC principal, which can be saved. -->
+            {#if namedAccount === undefined && !isBtcNetwork && !isOneSecNetwork}
                 <Button secondary onClick={saveAddress}>
                     {#snippet icon(color)}
                         <Account {color} />

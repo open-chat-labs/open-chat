@@ -55,13 +55,37 @@ export class DexesAgent {
     ): Promise<[DexId, bigint][]> {
         const pools = await this.getSwapPools(inputToken, new Set([outputToken]), swapProviders);
 
-        return await Promise.all(
+        // A pool that cannot quote is a normal answer, not a failure: the commonest case is an
+        // amount too small for that pool's fee, and pools also go dry or get retired. Dropping it
+        // lets the remaining pools still be quoted, and an empty result already means "no quotes"
+        // to the caller. Promise.all here failed the whole request on any one pool's rejection.
+        const quotes = await Promise.allSettled(
             pools.map((p) =>
-                this.quoteSingle(p, inputToken, outputToken, amountIn).then(
-                    (quote) => [p.dex, quote] as [DexId, bigint],
+                this.quoteSingle(p, inputToken, outputToken, amountIn).then((quote) =>
+                    quote === undefined ? undefined : ([p.dex, quote] as [DexId, bigint]),
                 ),
             ),
         );
+        // A pool that declines resolves to undefined and is dropped; a pool that fails rejects.
+        // The two mean different things: with no quote in hand, a failure anywhere is what stopped
+        // the user getting one, and must surface rather than read as "no quotes". (Requiring every
+        // pool to have rejected let one decline plus one failure through as silence.)
+        const succeeded = quotes.flatMap((q) =>
+            q.status === "fulfilled" && q.value !== undefined ? [q.value] : [],
+        );
+        const failed = quotes.find((q): q is PromiseRejectedResult => q.status === "rejected");
+        if (succeeded.length === 0 && failed !== undefined) {
+            throw failed.reason;
+        }
+        // Some pool quoted, so the user gets a price - but a pool that failed after its retries
+        // while another answered is a DEX that is down, and the "best" quote shown may not be.
+        // Not worth failing the swap over; worth knowing about.
+        quotes.forEach((q, i) => {
+            if (q.status === "rejected") {
+                console.warn(`quoteSwap: ${pools[i].dex} pool failed, quoting without it`, q.reason);
+            }
+        });
+        return succeeded;
     }
 
     private getAllSwapPools(swapProviders: DexId[]): Promise<TokenSwapPool[]> {
@@ -93,7 +117,7 @@ export class DexesAgent {
         inputToken: string,
         outputToken: string,
         amountIn: bigint,
-    ): Promise<bigint> {
+    ): Promise<bigint | undefined> {
         const indexClient = this._swapIndexClients[pool.dex];
         if (indexClient === undefined) {
             return Promise.resolve(BigInt(0));
@@ -119,5 +143,7 @@ export interface SwapIndexClient {
 }
 
 export interface SwapPoolClient {
-    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint>;
+    // undefined when the pool declines to quote (amount too small, no liquidity); reject only
+    // for a failure to ask
+    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint | undefined>;
 }
