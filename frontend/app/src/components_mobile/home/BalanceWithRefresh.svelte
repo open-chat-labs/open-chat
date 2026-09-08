@@ -40,6 +40,9 @@
     }: Props = $props();
 
     export function refresh(allowCached: boolean = false) {
+        // Nothing to refresh for a ledger the registry does not carry, and a failure would be
+        // reported under a blank symbol. Mirrors TokenState.refreshBalance.
+        if (tokenDetails === undefined) return Promise.resolve();
         onClick?.();
         refreshing = true;
 
@@ -100,12 +103,12 @@
     <Body blur={hideBalance} width={"hug"} fontWeight={"bold"}>
         {formattedValue}
     </Body>
-    {#if showRefresh && !hideBalance}
+    {#if showRefresh && !hideBalance && tokenDetails !== undefined}
         <div class="refresh" class:refreshing onclick={() => refresh()}>
             <Refresh size={"1.5rem"} color={"var(--icon-txt)"} />
         </div>
     {/if}
-    {#if showTopUp}
+    {#if showTopUp && tokenDetails !== undefined}
         <div class="top-up" onclick={topUp} title={$_("cryptoAccount.topUp")}>
             <Plus size={"1.5rem"} color={toppingUp ? "var(--icon-selected)" : "var(--icon-txt)"} />
         </div>
