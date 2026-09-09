@@ -100,14 +100,7 @@
         border-radius: var(--rad-lg) var(--rad-lg) var(--rad-md) var(--rad-md);
         overflow: hidden;
         margin-bottom: $sp3;
-
-        &.me .card {
-            background-color: var(--primary-surface);
-        }
-
-        &:not(.me) .card {
-            background-color: var(--surface-1);
-        }
+        background-color: rgba(0, 0, 0, 0.1);
     }
 
     .preview_link {
@@ -120,7 +113,6 @@
     .row_layout {
         display: flex;
         align-items: flex-start;
-        background-color: var(--chatSummary-bg-selected);
 
         .thumbnail {
             flex: 0 0 auto;
@@ -147,7 +139,6 @@
     .col_layout {
         display: flex;
         flex-direction: column;
-        background-color: var(--chatSummary-bg-selected);
 
         .banner {
             width: 100%;
@@ -189,9 +180,5 @@
         text-transform: uppercase;
         font-weight: 300;
         @include font(book, normal, fs-80);
-    }
-
-    .card {
-        background-color: var(--chatSummary-bg-selected);
     }
 </style>
