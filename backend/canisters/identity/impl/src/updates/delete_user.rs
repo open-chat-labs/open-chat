@@ -1,10 +1,10 @@
 use crate::{RuntimeState, mutate_state, read_state};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MINUTE_IN_MS;
 use identity_canister::delete_user::*;
 use oc_error_codes::OCErrorCode;
+use tracing::error;
 use types::{CanisterId, OCResult, UserId};
 
 #[update(msgpack = true, candid = true)]
@@ -12,7 +12,7 @@ use types::{CanisterId, OCResult, UserId};
 async fn delete_user(args: Args) -> Response {
     let PrepareResult {
         user_index_canister_id,
-        principal,
+        user_principal_index,
         user_id,
     } = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
@@ -26,7 +26,15 @@ async fn delete_user(args: Args) -> Response {
     .await
     {
         Ok(user_index_canister::c2c_delete_user::Response::Success) => {
-            mutate_state(|state| state.data.user_principals.set_user_id(principal, None));
+            mutate_state(|state| {
+                if let Some(credential_ids) = state.data.user_principals.delete_user(user_principal_index, user_id) {
+                    for credential_id in credential_ids {
+                        state.data.webauthn_keys.remove(credential_id.into_vec());
+                    }
+                } else {
+                    error!(%user_id, user_principal_index, "Deleted user not found in identity canister");
+                }
+            });
             Response::Success
         }
         Ok(user_index_canister::c2c_delete_user::Response::Error(error)) => Response::Error(error),
@@ -36,7 +44,7 @@ async fn delete_user(args: Args) -> Response {
 
 struct PrepareResult {
     user_index_canister_id: CanisterId,
-    principal: Principal,
+    user_principal_index: u32,
     user_id: UserId,
 }
 
@@ -57,7 +65,7 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     {
         Ok(PrepareResult {
             user_index_canister_id: state.data.user_index_canister_id,
-            principal: caller,
+            user_principal_index: auth_principal.user_principal_index,
             user_id,
         })
     } else {

@@ -26,8 +26,8 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
         user_auth.auth_principal(),
         canister_ids.identity,
         &identity_canister::delete_user::Args {
-            public_key: user_auth.auth_public_key,
-            delegation: user_auth.auth_delegation,
+            public_key: user_auth.auth_public_key.clone(),
+            delegation: user_auth.auth_delegation.clone(),
         },
     );
 
@@ -61,6 +61,17 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
 
     let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
     assert_eq!(canister_status.module_hash.is_none(), should_delete_user);
+
+    // The identity canister should no longer know the auth principal of a deleted user
+    let check_auth_principal_response =
+        client::identity::check_auth_principal_v2(env, user_auth.auth_principal(), canister_ids.identity, &Empty {});
+    assert_eq!(
+        matches!(
+            check_auth_principal_response,
+            identity_canister::check_auth_principal_v2::Response::NotFound
+        ),
+        should_delete_user
+    );
 }
 
 #[test]

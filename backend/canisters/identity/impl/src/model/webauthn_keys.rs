@@ -1,4 +1,5 @@
-use candid::Deserialize;
+use crate::model::user_principals::UserPrincipals;
+use candid::{Deserialize, Principal};
 use identity_canister::WebAuthnKey;
 use serde::Serialize;
 use serde_bytes::ByteBuf;
@@ -28,6 +29,28 @@ impl WebAuthnKeys {
 
     pub fn get(&self, credential_id: Vec<u8>) -> Option<&WebAuthnKeyInternal> {
         self.keys.get(&ByteBuf::from(credential_id))
+    }
+
+    pub fn remove(&mut self, credential_id: Vec<u8>) -> bool {
+        self.keys.remove(&ByteBuf::from(credential_id)).is_some()
+    }
+
+    pub fn len(&self) -> usize {
+        self.keys.len()
+    }
+
+    /// Removes every key which no auth principal can sign in with, returning how many were removed.
+    /// A key is kept if the auth principal derived from its public key still exists, or if any auth
+    /// principal still refers to its credential id, so a key is only dropped when both routes back
+    /// to it are gone.
+    pub fn remove_orphaned_keys(&mut self, user_principals: &UserPrincipals) -> usize {
+        let referenced = user_principals.webauthn_credential_ids();
+        let before = self.keys.len();
+        self.keys.retain(|credential_id, key| {
+            referenced.contains(credential_id)
+                || user_principals.auth_principal_exists(&Principal::self_authenticating(&key.public_key))
+        });
+        before - self.keys.len()
     }
 }
 
@@ -303,6 +326,74 @@ mod tests {
             &format!("a3010303390100 2059{}{}", "0100", "33".repeat(256)).replace(' ', ""),
             "missing e",
         );
+    }
+
+    #[test]
+    fn remove_orphaned_keys_keeps_every_key_an_auth_principal_can_still_use() {
+        let mut keys = WebAuthnKeys::default();
+        let mut user_principals = UserPrincipals::default();
+        let canister = Principal::from_slice(&[9; 10]);
+        let add = |keys: &mut WebAuthnKeys, credential_id: u8, public_key: Vec<u8>| {
+            keys.add(
+                WebAuthnKey {
+                    public_key,
+                    credential_id: vec![credential_id],
+                    origin: "oc.app".to_string(),
+                    cross_platform: true,
+                    aaguid: [0; 16],
+                },
+                1,
+            );
+        };
+        // Key 1: auth principal derived from its public key exists and refers to it
+        add(&mut keys, 1, valid_key());
+        user_principals.push(
+            0,
+            Principal::from_slice(&[1; 10]),
+            Principal::self_authenticating(valid_key()),
+            canister,
+            Some(vec![1].into()),
+            false,
+            1,
+        );
+        // Key 2: only referred to by credential id, from a principal not derived from its public key
+        add(&mut keys, 2, malformed_key());
+        user_principals.push(
+            1,
+            Principal::from_slice(&[2; 10]),
+            Principal::from_slice(&[3; 10]),
+            canister,
+            Some(vec![2].into()),
+            false,
+            1,
+        );
+        // Key 3: its derived auth principal exists but the reference to it by credential id is missing
+        let key3 = der_wrap_cose_key(&hex(&format!("a401010327200621{}{}", "5820", "55".repeat(32))));
+        add(&mut keys, 3, key3.clone());
+        user_principals.push(
+            2,
+            Principal::from_slice(&[4; 10]),
+            Principal::self_authenticating(&key3),
+            canister,
+            None,
+            false,
+            1,
+        );
+        // Key 4: nothing refers to it
+        let key4 = der_wrap_cose_key(&hex(&format!("a401010327200621{}{}", "5820", "66".repeat(32))));
+        add(&mut keys, 4, key4);
+
+        assert_eq!(keys.remove_orphaned_keys(&user_principals), 1);
+
+        assert!(keys.get(vec![1]).is_some());
+        assert!(keys.get(vec![2]).is_some());
+        assert!(keys.get(vec![3]).is_some());
+        assert!(keys.get(vec![4]).is_none());
+        assert_eq!(keys.remove_orphaned_keys(&user_principals), 0);
+
+        assert!(keys.remove(vec![1]));
+        assert!(!keys.remove(vec![1]));
+        assert!(keys.get(vec![1]).is_none());
     }
 
     #[test]
