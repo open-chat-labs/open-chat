@@ -332,6 +332,7 @@ impl RuntimeState {
                 registry: self.data.registry_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
                 website: self.data.website_canister_id,
+                daily_puzzle: self.data.daily_puzzle_canister_id,
             },
         }
     }
@@ -451,6 +452,9 @@ struct Data {
     // Set by proposal and fanned out to the LocalUserIndexes. Not acted on yet
     #[serde(default)]
     pub multi_user_canisters_enabled: bool,
+    // Set by proposal and fanned out to the LocalUserIndexes, including any added later
+    #[serde(default)]
+    pub daily_puzzle_canister_id: Option<CanisterId>,
 }
 
 impl Data {
@@ -556,6 +560,7 @@ impl Data {
             blocked_attempt_notice_throttle: HashMap::new(),
             multi_user_canisters: HashMap::new(),
             multi_user_canisters_enabled: false,
+            daily_puzzle_canister_id: None,
         };
 
         // Register the ProposalsBot
@@ -680,6 +685,7 @@ impl Default for Data {
             blocked_attempt_notice_throttle: HashMap::new(),
             multi_user_canisters: HashMap::new(),
             multi_user_canisters_enabled: false,
+            daily_puzzle_canister_id: None,
         }
     }
 }
@@ -834,4 +840,5 @@ pub struct CanisterIds {
     pub registry: CanisterId,
     pub internet_identity: CanisterId,
     pub website: CanisterId,
+    pub daily_puzzle: Option<CanisterId>,
 }

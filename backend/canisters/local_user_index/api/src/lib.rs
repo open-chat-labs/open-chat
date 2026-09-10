@@ -61,6 +61,7 @@ pub enum UserIndexEvent {
     SetModerationReferralConfig(SetModerationReferralConfig),
     SetMediaScanConfig(types::MediaScanConfig),
     SetMultiUserCanistersEnabled(bool),
+    SetDailyPuzzleCanisterId(CanisterId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

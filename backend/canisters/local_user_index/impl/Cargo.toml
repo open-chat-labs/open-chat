@@ -23,6 +23,8 @@ community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 constants = { path = "../../../libraries/constants" }
 ct-codecs = { workspace = true }
+daily_puzzle_canister = { path = "../../daily_puzzle/api" }
+daily_puzzle_canister_c2c_client = { path = "../../daily_puzzle/c2c_client" }
 email_address = { workspace = true }
 event_store_producer = { workspace = true }
 event_store_producer_cdk_runtime = { workspace = true }

@@ -8,8 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add the daily puzzle game engine: `daily_puzzle_fetch`, `daily_puzzle_start`, `daily_puzzle_submit`, `daily_puzzle_hint` and `daily_puzzle_save_grid` for users, `c2c_daily_puzzle_push` for the daily_puzzle canister, `set_daily_puzzle_canister_id` for platform operators, with CHIT entry fees, hints and rewards settled via `c2c_game_chit` and solves relayed to the daily_puzzle canister
+- Hold the daily puzzles as a set keyed by game: `c2c_daily_puzzle_push` takes `puzzles`, `daily_puzzle_fetch` returns `puzzles` and `states`, streaks are series-level (a day counts once however many games were solved), CHIT keys are `{game_id}:{number}:...`, and today's set is pulled via `c2c_pull_puzzles`
+- Drop a user's daily puzzle record per game when a push for the same number replaces that game's puzzle (new description, or the game is no longer in the set), so a `regenerate_today` does not show the old puzzle's start or solve against the new one; solved days stay credited
 - Add `c2c_create_multi_user_canister` and `c2c_upgrade_multi_user_canister_wasm` plus a rolling upgrade job for MultiUser canisters ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Add the `multi_user_canisters_enabled` flag, set by the UserIndex and surfaced in metrics ([#9314](https://github.com/open-chat-labs/open-chat/pull/9314))
+- Handle the `SetDailyPuzzleCanisterId` event from the UserIndex, the same path as the platform-operator `set_daily_puzzle_canister_id` endpoint ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
 - Expose the user-event sync queue's in-flight batch count in metrics, alongside the existing queued length ([#9177](https://github.com/open-chat-labs/open-chat/pull/9177))
 
 ### Changed
@@ -21,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Include MultiUser canisters in the cycles top up paths, so they can report a low balance and are picked up by the weekly balance sweep ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Include Group and Community canisters in the weekly cycles balance sweep - they were queued up but never selected, so the sweep silently skipped them ([#9313](https://github.com/open-chat-labs/open-chat/pull/9313))
+- Put a fingerprint of the puzzle description in the daily puzzle CHIT keys (`{game_id}:{number}:{fp}:entry|solve|hint:{step}:{level}`, `fp` = FNV-1a 32-bit as 8 hex chars), so a `regenerate_today` puzzle is a distinct puzzle to the user canister: before this a user who had solved the morning puzzle got `AlreadyAdded` on the regenerated one, which the LUI treats as applied, and no CHIT was paid
+- Check `daily_puzzle_hint` mistakes against the puzzle's `solution_pairs` rather than indexing the solution bytes by hint key, which was wrong for games whose keys are edges (bridges, loopy); a filled key the puzzle does not have is a mistake, and a puzzle pushed without pairs still indexes the bytes
 
 ## [[2.0.2033](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2033-local_user_index)] - 2026-08-20
 

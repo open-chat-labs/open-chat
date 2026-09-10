@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `upgrade_multi_user_canister_wasm` and `create_multi_user_canister` so MultiUser canisters can be installed and upgraded via the LocalUserIndexes ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Add `set_multi_user_canisters_enabled` endpoint which fans out to the LocalUserIndexes ([#9314](https://github.com/open-chat-labs/open-chat/pull/9314))
+- Add `set_daily_puzzle_canister_id` proposal endpoint which fans out the daily_puzzle canister id to the LocalUserIndexes, replayed to any added later ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
 - Support paying for Diamond membership from external wallets using ICRC2 ([#9265](https://github.com/open-chat-labs/open-chat/pull/9265))
 
 ### Changed

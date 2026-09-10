@@ -1590,6 +1590,7 @@ dependencies = [
  "clap 4.6.3",
  "constants",
  "cycles_dispenser_canister",
+ "daily_puzzle_canister",
  "escrow_canister",
  "event_relay_canister",
  "event_store_canister",
@@ -1682,6 +1683,7 @@ dependencies = [
  "canister_agent_utils",
  "clap 4.6.3",
  "cycles_dispenser_canister",
+ "daily_puzzle_canister",
  "escrow_canister",
  "event_relay_canister",
  "group_index_canister",
@@ -2740,6 +2742,69 @@ dependencies = [
  "cycles_minting_canister",
  "ic-cdk 0.20.2",
  "types",
+]
+
+[[package]]
+name = "daily_puzzle_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "oc_error_codes",
+ "serde",
+ "serde_bytes",
+ "ts-rs",
+ "ts_export",
+ "types",
+]
+
+[[package]]
+name = "daily_puzzle_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "daily_puzzle_canister",
+ "ic-cdk 0.20.2",
+ "msgpack",
+ "tracing",
+ "types",
+]
+
+[[package]]
+name = "daily_puzzle_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "bridges",
+ "candid",
+ "canister_api_macros",
+ "canister_client",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "constants",
+ "daily_puzzle_canister",
+ "git_commit_id",
+ "http_request",
+ "ic-cdk 0.20.2",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "light_up",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
+ "loopy",
+ "msgpack",
+ "oc_error_codes",
+ "rand 0.10.2",
+ "registry_canister",
+ "serde",
+ "slant",
+ "stable_memory",
+ "tents",
+ "tracing",
+ "types",
+ "unruly",
+ "utils",
 ]
 
 [[package]]
@@ -6193,12 +6258,14 @@ name = "integration_tests"
 version = "0.1.0"
 dependencies = [
  "airdrop_bot_canister",
+ "bridges",
  "candid",
  "chat_events",
  "community_canister",
  "constants",
  "cycles_dispenser_canister",
  "cycles_minting_canister",
+ "daily_puzzle_canister",
  "escrow_canister",
  "event_relay_canister",
  "event_store_canister",
@@ -6213,7 +6280,9 @@ dependencies = [
  "jwt-simple",
  "lazy_static",
  "ledger_utils",
+ "light_up",
  "local_user_index_canister",
+ "loopy",
  "msgpack",
  "notifications_index_canister",
  "oc_error_codes",
@@ -6229,9 +6298,11 @@ dependencies = [
  "sha256",
  "sign_in_with_email_canister",
  "sign_in_with_email_test_utils",
+ "slant",
  "stable_memory_map",
  "storage_bucket_canister",
  "storage_index_canister",
+ "tents",
  "test-case",
  "testing",
  "translations_canister",
@@ -6809,6 +6880,8 @@ dependencies = [
  "community_canister_c2c_client",
  "constants",
  "ct-codecs",
+ "daily_puzzle_canister",
+ "daily_puzzle_canister_c2c_client",
  "email_address",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
