@@ -222,6 +222,8 @@ export function getContentAsFormattedText(
         text = "Reported message";
     } else if (content.kind === "meme_fighter_content") {
         text = "Meme Fighter message";
+    } else if (content.kind === "daily_result") {
+        text = captionedContent(`The Daily #${content.number}`, content.caption);
     } else if (content.kind === "video_call_content") {
         text = "Video call";
     } else if (content.kind === "encrypted_content") {
@@ -366,6 +368,8 @@ export function contentTypeToPermission(contentType: AttachmentContent["kind"]):
             return "p2pSwap";
         case "prize_content_initial":
             return "prize";
+        case "daily_result":
+            return "memeFighter";
         default:
             throw new UnsupportedValueError("Unknown attachment content type", contentType);
     }

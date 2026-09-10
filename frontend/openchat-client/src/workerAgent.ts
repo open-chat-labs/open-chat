@@ -77,6 +77,7 @@ export class WorkerAgent {
             notificationsCanister: config.notificationsCanister,
             identityCanister: config.identityCanister,
             onlineCanister: config.onlineCanister,
+            dailyPuzzleCanister: config.dailyPuzzleCanister,
             userIndexCanister: config.userIndexCanister,
             translationsCanister: config.translationsCanister,
             registryCanister: config.registryCanister,

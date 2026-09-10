@@ -8,6 +8,7 @@ export type AgentConfig = {
     groupIndexCanister: string;
     notificationsCanister: string;
     onlineCanister: string;
+    dailyPuzzleCanister: string;
     userIndexCanister: string;
     translationsCanister: string;
     registryCanister: string;

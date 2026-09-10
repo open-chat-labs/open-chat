@@ -1499,6 +1499,49 @@ function getAction(
         case "payForPremiumItem":
             return agent.payForPremiumItem(payload.userId, payload.item);
 
+        case "dailyPuzzleFetch":
+            return agent.dailyPuzzleFetch(payload.userId);
+
+        case "dailyPuzzleStart":
+            return agent.dailyPuzzleStart(
+                payload.userId,
+                payload.gameId,
+                payload.number,
+                payload.expectedEntryFee,
+            );
+
+        case "dailyPuzzleSubmit":
+            return agent.dailyPuzzleSubmit(
+                payload.userId,
+                payload.gameId,
+                payload.number,
+                payload.grid,
+            );
+
+        case "dailyPuzzleHint":
+            return agent.dailyPuzzleHint(
+                payload.userId,
+                payload.gameId,
+                payload.number,
+                payload.level,
+                payload.filled,
+                payload.expectedPrice,
+            );
+
+        case "dailyPuzzleSaveGrid":
+            return agent.dailyPuzzleSaveGrid(
+                payload.userId,
+                payload.gameId,
+                payload.number,
+                payload.grid,
+            );
+
+        case "dailyPuzzleCurrent":
+            return agent.dailyPuzzleCurrent();
+
+        case "dailyPuzzleResults":
+            return agent.dailyPuzzleResults(payload.gameId, payload.number, payload.userIds);
+
         case "setPremiumItemCost":
             return agent.setPremiumItemCost(payload.item, payload.chitCost);
 

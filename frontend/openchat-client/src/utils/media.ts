@@ -192,7 +192,12 @@ type MediaExtract = {
 };
 
 export function fillMessage(msg: Message): boolean {
-    if (msg.forwarded || msg.content.kind === "meme_fighter_content") return false;
+    if (
+        msg.forwarded ||
+        msg.content.kind === "meme_fighter_content" ||
+        msg.content.kind === "daily_result"
+    )
+        return false;
     if (msg.content.kind === "prize_content") return true;
     if (
         msg.content.kind === "image_content" ||

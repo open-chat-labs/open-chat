@@ -26,6 +26,7 @@
         RouteParams,
         Rules,
         UpdatedRules,
+        DailyResultContent,
     } from "@client";
     import {
         allUsersStore,
@@ -100,6 +101,7 @@
     import EditCommunity from "./communities/edit/Edit.svelte";
     import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
+    import DailyPuzzle from "./dailypuzzle/DailyPuzzle.svelte";
     import LeftPanel from "./LeftPanel.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
@@ -167,7 +169,7 @@
     type ModalType =
         | { kind: "none" }
         | { kind: "verify_humanity" }
-        | { kind: "select_chat" }
+        | { kind: "select_chat"; excludeCurrent?: boolean }
         | { kind: "register_bot" }
         | { kind: "update_bot" }
         | { kind: "remove_bot" }
@@ -186,6 +188,7 @@
         | { kind: "logging_in" }
         | { kind: "not_found" }
         | { kind: "claim_daily_chit" }
+        | { kind: "daily_puzzle"; gameId?: string }
         | { kind: "challenge" }
         | {
               kind: "evaluating_access_gates";
@@ -201,6 +204,7 @@
     let showUpgrade: boolean = $state(false);
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
+    let attachmentToShare: DailyResultContent | undefined = undefined;
 
     onMount(() => {
         const unsubEvents = [
@@ -222,6 +226,11 @@
             subscribe("wallet", showWallet),
             subscribe("profile", showProfile),
             subscribe("claimDailyChit", claimDailyChit),
+            subscribe("dailyPuzzle", ({ gameId }) => (modal = { kind: "daily_puzzle", gameId })),
+            subscribe("shareDailyResult", (content) => {
+                attachmentToShare = content;
+                modal = { kind: "select_chat", excludeCurrent: false };
+            }),
             subscribe("joinGroup", joinGroup),
             subscribe("createCommunity", createCommunity),
             subscribe("unarchiveChat", unarchiveChat),
@@ -738,6 +747,10 @@
         if (messageToForward !== undefined) {
             forwardToChat(chatId);
             messageToForward = undefined;
+        } else if (attachmentToShare !== undefined) {
+            navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+            localUpdates.draftMessages.setAttachment({ chatId }, attachmentToShare);
+            attachmentToShare = undefined;
         } else {
             shareWithChat(chatId);
         }
@@ -746,6 +759,7 @@
     function onCloseSelectChat() {
         closeModal();
         messageToForward = undefined;
+        attachmentToShare = undefined;
     }
 
     function forwardToChat(chatId: ChatIdentifier) {
@@ -1064,7 +1078,10 @@
         onClose={closeModal}
     >
         {#if modal.kind === "select_chat"}
-            <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
+            <SelectChatModal
+                onClose={onCloseSelectChat}
+                onSelect={onSelectChat}
+                excludeCurrent={modal.excludeCurrent ?? true} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}
@@ -1129,6 +1146,8 @@
             />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
+        {:else if modal.kind === "daily_puzzle"}
+            <DailyPuzzle gameId={modal.gameId} onClose={closeModal} />
         {:else if modal.kind === "verify_humanity"}
             <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
         {:else if modal.kind === "suspending"}

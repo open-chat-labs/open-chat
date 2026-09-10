@@ -1,0 +1,14 @@
+{
+    "name": "Unruly",
+    "rules": "Fill every cell with one of two colours. Never three of the same colour in a row or column, and every row and column ends up half of each.",
+    "technique.1": "These two neighbours are already the same colour, so the cell just past them must be the other one: three the same in a row is never allowed.",
+    "technique.2": "These two cells are the same colour with one gap between them, so the cell in the gap must be the other one: three the same in a row is never allowed.",
+    "technique.3": "This line has all the cells it is allowed of one colour and is one short of the other, so its last empty cell must be that other colour.",
+    "technique.4": "This line already has as many of this colour as it is allowed, so every cell still empty in it must be the other colour.",
+    "technique.5": "This line needs exactly one more of one colour, and putting it outside these three cells would leave three of the other colour in a row here, so every empty cell elsewhere in the line takes the other colour.",
+    "demo.1": "Fill every cell orange or purple. The ringed ones are given, so those you cannot change.",
+    "demo.2": "Never three of the same colour in a row, across or down. That is one orange too many.",
+    "demo.3": "Every row and column ends up three of each colour. This row has four purples.",
+    "demo.4": "Two oranges with a gap. Orange in between would make three, so it has to be purple.",
+    "demo.5": "Every cell filled, no run of three, and three of each colour in every row and column."
+}
