@@ -3622,6 +3622,21 @@ export class OpenChat {
         return threadEventsStore.value.length === 0 ? undefined : threadEventsStore.value[0].index;
     }
 
+    // Thread events start at index 0, so a thread whose latest event index is 0 holds one event
+    // at most. When that event is our own unconfirmed message, the send that creates the thread
+    // on the server is still in flight: the local summary written by `afterSendMessage` is what
+    // made the thread exist here, and asking the server for its events now gets ThreadNotFound.
+    // Once the send lands the event is confirmed and there is still nothing older to fetch.
+    #firstThreadReplyInFlight(
+        chatId: ChatIdentifier,
+        threadRootEvent: EventWrapper<Message>,
+    ): boolean {
+        const thread = threadRootEvent.event.thread;
+        if (thread === undefined || thread.latestEventIndex > 0) return false;
+        const context = { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex };
+        return localUpdates.unconfirmedMessages(context).length > 0;
+    }
+
     previousThreadMessagesCriteria(thread: ThreadSummary): [number, boolean] | undefined {
         const minLoadedEventIndex = this.earliestLoadedThreadIndex();
         if (minLoadedEventIndex === undefined) {
@@ -3648,6 +3663,7 @@ export class OpenChat {
         }
 
         if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+            if (this.#firstThreadReplyInFlight(chatId, threadRootEvent)) return;
             const thread = threadRootEvent.event.thread;
             const threadCriteria = this.previousThreadMessagesCriteria(thread);
             if (threadCriteria === undefined) {
@@ -3849,6 +3865,7 @@ export class OpenChat {
         threadRootEvent?: EventWrapper<Message>,
     ): boolean {
         if (threadRootEvent !== undefined) {
+            if (this.#firstThreadReplyInFlight(chatId, threadRootEvent)) return false;
             const earliestIndex = this.earliestLoadedThreadIndex();
             return earliestIndex === undefined || earliestIndex > 0;
         }
