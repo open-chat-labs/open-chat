@@ -266,6 +266,9 @@ describe("shouldReportMessage", () => {
                 'Events response error: {"kind":"error","code":103,"message":null}',
             ),
         ).toBe(false);
+        expect(
+            shouldReportMessage("Error", 'Events response error: {"kind":"error","code":203}'),
+        ).toBe(false);
     });
 
     test("reports everything else", () => {

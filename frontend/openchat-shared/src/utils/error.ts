@@ -178,7 +178,8 @@ function isEnvironmentNoise(error: unknown): boolean {
 // code (100-106) which `assertSuccessfulEventsResponse` turns into a thrown Error embedding the
 // response JSON. Expected client state, not a defect.
 // ChatNotFound is the same race for a chat that no longer exists on the server (a deleted
-// direct chat partner, say) while the local summary still does.
+// direct chat partner, say) while the local summary still does, and ThreadNotFound the same for
+// a thread whose root message was deleted, or whose first reply has not reached the server yet.
 // Deliberately scoped to that one message: a NotAuthorized code reaching us from anywhere else -
 // a mutation, say - means our local view of the user's permissions is wrong, which is a defect.
 const EVENTS_RESPONSE_ERROR_PREFIX = "Events response error:";
@@ -190,7 +191,8 @@ function isExpectedAccessError(error: unknown): boolean {
     const code = Number(match[1]);
     return (
         (code >= ErrorCode.InitiatorNotFound && code <= ErrorCode.InitiatorBlocked) ||
-        code === ErrorCode.ChatNotFound
+        code === ErrorCode.ChatNotFound ||
+        code === ErrorCode.ThreadNotFound
     );
 }
 
