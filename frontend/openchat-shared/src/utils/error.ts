@@ -58,6 +58,8 @@ const REQWEST_NOISE_PATTERN = /error decoding response body/i;
 
 const RETRY_EXHAUSTED_PATTERN = /retry strategy exhausted after \d+ attempts/i;
 
+const AGENT_FETCH_FAILED_PATTERN = /^failed to fetch http request/i;
+
 // Every HttpError subclass overwrites `name` with its own, so a bare `name === "HttpError"` test
 // misses them. `code` only means an HTTP status on one of these.
 const HTTP_ERROR_NAMES = new Set<string>([
@@ -85,6 +87,9 @@ function isTransientNetworkError(error: unknown): boolean {
     // The IC agent gave up after its fetch retries: every attempt failed at the transport
     // layer (a replica rejection is thrown immediately, without retrying)
     if (name === "HttpError" && RETRY_EXHAUSTED_PATTERN.test(message)) return true;
+    // The agent wraps a fetch that threw (no response at all) as an HttpError with this prefix
+    // and the browser's own text after it. Same network weather, different envelope.
+    if (HTTP_ERROR_NAMES.has(name) && AGENT_FETCH_FAILED_PATTERN.test(message)) return true;
     // Only for the browser's own TypeError: our code also throws Errors whose text happens to
     // start "Failed to fetch ...", and those must stay reportable. A bare string carries no
     // name, so it can never satisfy this and is reported like any other unrecognised failure.
@@ -112,6 +117,12 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /get a record from database without an in-progress transaction/i,
     // Safari / Firefox-on-iOS dropping the IndexedDB connection; only a reload recovers it
     /connection to indexed database server lost/i,
+    // Safari's IndexedDB failing internally, or the user (or the OS reclaiming space) wiping
+    // the site's storage from under an open connection
+    /internal error was encountered in the indexed database server/i,
+    /database deleted by request of the user/i,
+    // Safari's in-app browser bridge complaining about its own injected script
+    /wkwebview api client did not respond to this postmessage/i,
     // The client's clock is wrong, so the replica certificate looks like it is from the future
     /certificate is signed more than 5 minutes in the future/i,
     // The same wrong clock seen from the other side: the ingress expiry the agent computed from
@@ -145,8 +156,12 @@ function thrownByExtension(error: unknown): boolean {
     if (error == null || typeof error !== "object" || !("stack" in error)) return false;
     if (typeof error.stack !== "string") return false;
     // V8 puts "Name: message" on the first line and frames below ("    at fn (url)"); JSC and
-    // Gecko start with frames ("fn@url"). Either way the first frame line is the throw site.
-    const frame = error.stack.split("\n").find((line) => /^\s*at |@/.test(line));
+    // Gecko start with frames ("fn@url"). The throw site is the first frame that names a script:
+    // a builtin throwing on the extension's behalf (Object.defineProperty, JSON.parse, ...) shows
+    // up first as "(<anonymous>)" or "[native code]" and says nothing about whose code it was.
+    const frame = error.stack
+        .split("\n")
+        .find((line) => /^\s*at |@/.test(line) && /[a-z-]+:\/\//i.test(line));
     return frame !== undefined && EXTENSION_FRAME_PATTERN.test(frame);
 }
 

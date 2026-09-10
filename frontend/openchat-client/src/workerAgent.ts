@@ -145,10 +145,21 @@ export class WorkerAgent {
         return this.responseHandler(correlationId);
     }
 
+    // Reported once per crossing of the limit: a wedged worker sits above it for as long as the
+    // tab stays open, and a report every poll would be one item per minute saying the same thing
+    #pendingLimitReported = false;
+
     #monitorPendingRequests() {
         const pendingRequests = this.#inflightRequests.size;
         if (pendingRequests >= 100) {
-            this.#logger.error("Pending request count exceeded limit", { count: pendingRequests });
+            if (!this.#pendingLimitReported) {
+                this.#pendingLimitReported = true;
+                this.#logger.error("Pending request count exceeded limit", {
+                    count: pendingRequests,
+                });
+            }
+        } else {
+            this.#pendingLimitReported = false;
         }
     }
 
