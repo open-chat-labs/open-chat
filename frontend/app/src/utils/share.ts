@@ -123,6 +123,15 @@ export function shareMessage(
 }
 
 export function shareLink(url: string): void {
+    // The native Android app runs in the system WebView, which has no Web Share API. Copying
+    // the link is the nearest thing to sharing it there.
+    if (!canShare()) {
+        navigator.clipboard.writeText(url).then(
+            () => toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard")),
+            () => toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard")),
+        );
+        return;
+    }
     const share = {
         url,
         files: [],
