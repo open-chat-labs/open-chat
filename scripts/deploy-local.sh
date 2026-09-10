@@ -52,6 +52,7 @@ cargo run --package local_canister_creator -- \
   --canister airdrop_bot \
   --canister storage_index \
   --canister cycles_dispenser \
+  --canister daily_puzzle \
   --canister registry \
   --canister market_maker \
   --canister neuron_controller \

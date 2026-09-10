@@ -115,6 +115,12 @@
       "wasm": "wasms/market_maker.wasm.gz",
       "build": "./scripts/generate-wasm.sh market_maker"
     },
+    "daily_puzzle": {
+      "type": "custom",
+      "candid": "backend/canisters/daily_puzzle/api/can.did",
+      "wasm": "wasms/daily_puzzle.wasm.gz",
+      "build": "./scripts/generate-wasm.sh daily_puzzle"
+    },
     "escrow": {
       "type": "custom",
       "candid": "backend/canisters/escrow/api/can.did",

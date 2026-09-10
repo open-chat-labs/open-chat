@@ -1,0 +1,142 @@
+type CanisterId = principal;
+type UserId = CanisterId;
+type TimestampMillis = nat64;
+type PuzzleNumber = nat32;
+type GameId = text;
+
+type OCError = record { nat16; opt text; };
+
+type UnitResult = variant {
+    Success;
+    Error : OCError;
+};
+
+type DailyPuzzleConfig = record {
+    enabled : bool;
+    entry_fee : nat32;
+    first_play_free : bool;
+    reward_by_streak : vec nat32;
+    hint_penalty : nat32;
+    min_carded_solve_ms : nat64;
+    max_submits : nat16;
+};
+
+type GameConfig = record {
+    hint_prices : vec nat32;
+    max_hints : nat8;
+};
+
+type PublicDailyPuzzle = record {
+    game_id : GameId;
+    number : PuzzleNumber;
+    tier : nat8;
+    description : blob;
+    starts_at : TimestampMillis;
+    expires_at : TimestampMillis;
+    enabled : bool;
+    entry_fee : nat32;
+    first_play_free : bool;
+    hint_prices : vec nat32;
+    max_hints : nat8;
+    min_carded_solve_ms : nat64;
+};
+
+type DailyPuzzleResult = record {
+    game_id : GameId;
+    number : PuzzleNumber;
+    user_id : UserId;
+    solve_time_ms : nat64;
+    hints_used : nat8;
+    streak : nat32;
+    solved_at : TimestampMillis;
+};
+
+type PuzzleParams = record {
+    game_id : GameId;
+    width : nat8;
+    height : nat8;
+    tier : nat8;
+    black_pct : nat8;
+};
+
+type CandidateView = record {
+    game_id : GameId;
+    index : nat8;
+    description : blob;
+    tier : nat8;
+    vetoed : bool;
+    hint_count : nat32;
+};
+
+type CandidatesArgs = record {
+    number : PuzzleNumber;
+};
+
+type CandidatesResponse = variant {
+    Success : vec CandidateView;
+    Error : OCError;
+};
+
+type ConfigResponse = variant {
+    Success : DailyPuzzleConfig;
+    Error : OCError;
+};
+
+type CurrentPuzzlesResponse = variant {
+    Success : vec PublicDailyPuzzle;
+    Error : OCError;
+};
+
+type GameConfigsResponse = variant {
+    Success : vec record { GameId; GameConfig };
+    Error : OCError;
+};
+
+type RegenerateTodayArgs = record {
+    game_id : opt GameId;
+};
+
+type ResultsArgs = record {
+    game_id : GameId;
+    number : PuzzleNumber;
+    user_ids : vec UserId;
+};
+
+type ResultsResponse = variant {
+    Success : vec DailyPuzzleResult;
+    Error : OCError;
+};
+
+type SetConfigArgs = record {
+    config : DailyPuzzleConfig;
+};
+
+type SetGameConfigArgs = record {
+    game_id : GameId;
+    config : GameConfig;
+};
+
+type SetScheduleArgs = record {
+    schedule : vec PuzzleParams;
+};
+
+type VetoCandidateArgs = record {
+    number : PuzzleNumber;
+    game_id : GameId;
+    index : nat8;
+};
+
+service : {
+    candidates : (CandidatesArgs) -> (CandidatesResponse) query;
+    config : (record {}) -> (ConfigResponse) query;
+    current_puzzles : (record {}) -> (CurrentPuzzlesResponse) query;
+    game_configs : (record {}) -> (GameConfigsResponse) query;
+    results : (ResultsArgs) -> (ResultsResponse) query;
+
+    push_now : (record {}) -> (UnitResult);
+    regenerate_today : (RegenerateTodayArgs) -> (UnitResult);
+    set_config : (SetConfigArgs) -> (UnitResult);
+    set_game_config : (SetGameConfigArgs) -> (UnitResult);
+    set_schedule : (SetScheduleArgs) -> (UnitResult);
+    veto_candidate : (VetoCandidateArgs) -> (UnitResult);
+};

@@ -16,6 +16,7 @@ mod macros;
 pub mod airdrop_bot;
 pub mod community;
 pub mod cycles_dispenser;
+pub mod daily_puzzle;
 pub mod escrow;
 pub mod event_store;
 pub mod group;

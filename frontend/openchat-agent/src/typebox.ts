@@ -638,6 +638,12 @@ export const ChatMetrics = /* @__PURE__ */ Type.Object({
     last_active: Type.BigInt(),
 });
 
+export type GameConfig = Static<typeof GameConfig>;
+export const GameConfig = /* @__PURE__ */ Type.Object({
+    hint_prices: Type.Array(Type.Number()),
+    max_hints: Type.Number(),
+});
+
 export type ModerationReferralCategory = Static<typeof ModerationReferralCategory>;
 export const ModerationReferralCategory = /* @__PURE__ */ Type.Object({
     category: Type.Number(),
@@ -656,6 +662,14 @@ export const BotDataEncoding = /* @__PURE__ */ Type.Union([
     Type.Literal("Json"),
     Type.Literal("Candid"),
 ]);
+
+export type PuzzleHint = Static<typeof PuzzleHint>;
+export const PuzzleHint = /* @__PURE__ */ Type.Object({
+    technique: Type.Number(),
+    focus: Type.Array(Type.Number()),
+    target: Type.Array(Type.Number()),
+    conclusions: Type.Array(Type.Tuple([Type.Number(), Type.Number()])),
+});
 
 export type CommunityEventType = Static<typeof CommunityEventType>;
 export const CommunityEventType = /* @__PURE__ */ Type.Union([
@@ -754,6 +768,17 @@ export const OptionUpdateU64 = /* @__PURE__ */ Type.Union(
     ],
     { default: "NoChange" },
 );
+
+export type DailyPuzzleConfig = Static<typeof DailyPuzzleConfig>;
+export const DailyPuzzleConfig = /* @__PURE__ */ Type.Object({
+    enabled: Type.Boolean(),
+    entry_fee: Type.Number(),
+    first_play_free: Type.Boolean(),
+    reward_by_streak: Type.Array(Type.Number()),
+    hint_penalty: Type.Number(),
+    min_carded_solve_ms: Type.BigInt(),
+    max_submits: Type.Number(),
+});
 
 export type GroupCanisterThreadDetails = Static<typeof GroupCanisterThreadDetails>;
 export const GroupCanisterThreadDetails = /* @__PURE__ */ Type.Object({
@@ -1244,6 +1269,13 @@ export const VerifiedCredentialGateArgs = /* @__PURE__ */ Type.Object({
     ii_origin: Type.String(),
 });
 
+export type ServedHint = Static<typeof ServedHint>;
+export const ServedHint = /* @__PURE__ */ Type.Object({
+    hint: PuzzleHint,
+    level: Type.Number(),
+    mistake: Type.Boolean(),
+});
+
 export type GovernanceProposalsSubtype = Static<typeof GovernanceProposalsSubtype>;
 export const GovernanceProposalsSubtype = /* @__PURE__ */ Type.Object({
     is_nns: Type.Boolean(),
@@ -1276,6 +1308,17 @@ export const PrimaryLanguageChanged = /* @__PURE__ */ Type.Object({
     previous: Type.String(),
     new: Type.String(),
     changed_by: UserId,
+});
+
+export type DailyPuzzleSolved = Static<typeof DailyPuzzleSolved>;
+export const DailyPuzzleSolved = /* @__PURE__ */ Type.Object({
+    solved_at: Type.BigInt(),
+    solve_time_ms: Type.BigInt(),
+    reward: Type.Number(),
+    hints_used: Type.Number(),
+    streak: Type.Number(),
+    chit_balance: Type.Optional(Type.Number()),
+    total_chit_earned: Type.Optional(Type.Number()),
 });
 
 export type CommunityMembership = Static<typeof CommunityMembership>;
@@ -2010,6 +2053,33 @@ export const RegistrySetTokenEnabledArgs = /* @__PURE__ */ Type.Object({
     enabled: Type.Boolean(),
 });
 
+export type DailyPuzzleConfigResponse = Static<typeof DailyPuzzleConfigResponse>;
+export const DailyPuzzleConfigResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: DailyPuzzleConfig,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type DailyPuzzleGameConfigsResponse = Static<typeof DailyPuzzleGameConfigsResponse>;
+export const DailyPuzzleGameConfigsResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: Type.Array(Type.Tuple([Type.String(), GameConfig])),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type DailyPuzzleResultsArgs = Static<typeof DailyPuzzleResultsArgs>;
+export const DailyPuzzleResultsArgs = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    number: Type.Number(),
+    user_ids: Type.Array(UserId),
+});
+
 export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
     typeof UserIndexDiamondMembershipFeesDiamondMembershipFees
 >;
@@ -2653,6 +2723,36 @@ export const LocalUserIndexInviteUsersToCommunityResponse = /* @__PURE__ */ Type
     }),
 ]);
 
+export type LocalUserIndexDailyPuzzleSubmitResponse = Static<
+    typeof LocalUserIndexDailyPuzzleSubmitResponse
+>;
+export const LocalUserIndexDailyPuzzleSubmitResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: DailyPuzzleSolved,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type LocalUserIndexDailyPuzzleSubmitArgs = Static<
+    typeof LocalUserIndexDailyPuzzleSubmitArgs
+>;
+export const LocalUserIndexDailyPuzzleSubmitArgs = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    number: Type.Number(),
+    grid: TSBytes,
+});
+
+export type LocalUserIndexDailyPuzzleHintArgs = Static<typeof LocalUserIndexDailyPuzzleHintArgs>;
+export const LocalUserIndexDailyPuzzleHintArgs = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    number: Type.Number(),
+    level: Type.Number(),
+    filled: Type.Array(Type.Tuple([Type.Number(), Type.Number()])),
+    expected_price: Type.Number(),
+});
+
 export type LocalUserIndexBotCommunitySummaryArgs = Static<
     typeof LocalUserIndexBotCommunitySummaryArgs
 >;
@@ -2729,6 +2829,15 @@ export const LocalUserIndexBotChangeRoleResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type LocalUserIndexDailyPuzzleSaveGridArgs = Static<
+    typeof LocalUserIndexDailyPuzzleSaveGridArgs
+>;
+export const LocalUserIndexDailyPuzzleSaveGridArgs = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    number: Type.Number(),
+    grid: TSBytes,
+});
+
 export type LocalUserIndexRegisterUserArgs = Static<typeof LocalUserIndexRegisterUserArgs>;
 export const LocalUserIndexRegisterUserArgs = /* @__PURE__ */ Type.Object({
     username: Type.String(),
@@ -2787,6 +2896,13 @@ export const LocalUserIndexWithdrawFromIcpswapArgs = /* @__PURE__ */ Type.Object
     input_token: Type.Boolean(),
     amount: Type.Optional(Type.BigInt()),
     fee: Type.Optional(Type.BigInt()),
+});
+
+export type LocalUserIndexDailyPuzzleStartArgs = Static<typeof LocalUserIndexDailyPuzzleStartArgs>;
+export const LocalUserIndexDailyPuzzleStartArgs = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    number: Type.Number(),
+    expected_entry_fee: Type.Number(),
 });
 
 export type LocalUserIndexChatEventsEventsByIndexArgs = Static<
@@ -5144,6 +5260,17 @@ export const EvmContractAddress = /* @__PURE__ */ Type.Object({
     address: Type.String(),
 });
 
+export type DailyPuzzleResult = Static<typeof DailyPuzzleResult>;
+export const DailyPuzzleResult = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    number: Type.Number(),
+    user_id: UserId,
+    solve_time_ms: Type.BigInt(),
+    hints_used: Type.Number(),
+    streak: Type.Number(),
+    solved_at: Type.BigInt(),
+});
+
 export type ChitEventType = Static<typeof ChitEventType>;
 export const ChitEventType = /* @__PURE__ */ Type.Union([
     Type.Literal("DailyClaim"),
@@ -5161,6 +5288,12 @@ export const ChitEventType = /* @__PURE__ */ Type.Union([
     Type.Literal("StreakInsuranceClaim"),
     Type.Object({
         PurchasedPremiumItem: Type.Number(),
+    }),
+    Type.Object({
+        Game: Type.Object({
+            game_id: Type.String(),
+            key: Type.String(),
+        }),
     }),
 ]);
 
@@ -5776,6 +5909,20 @@ export const BannerChanged = /* @__PURE__ */ Type.Object({
     changed_by: UserId,
 });
 
+export type DailyPuzzleUserState = Static<typeof DailyPuzzleUserState>;
+export const DailyPuzzleUserState = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    number: Type.Number(),
+    started_at: Type.Optional(Type.BigInt()),
+    hints: Type.Array(ServedHint),
+    grid: TSBytes,
+    grid_saved_at: Type.Optional(Type.BigInt()),
+    solved: Type.Optional(DailyPuzzleSolved),
+    submits: Type.Number(),
+    streak: Type.Number(),
+    has_solved_before: Type.Boolean(),
+});
+
 export type OptionUpdateVideoCall = Static<typeof OptionUpdateVideoCall>;
 export const OptionUpdateVideoCall = /* @__PURE__ */ Type.Union(
     [
@@ -5802,6 +5949,22 @@ export const VideoCallParticipants = /* @__PURE__ */ Type.Object({
     participants: Type.Array(CallParticipant),
     hidden: Type.Array(CallParticipant),
     last_updated: Type.BigInt(),
+});
+
+export type PublicDailyPuzzle = Static<typeof PublicDailyPuzzle>;
+export const PublicDailyPuzzle = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    number: Type.Number(),
+    tier: Type.Number(),
+    description: TSBytes,
+    starts_at: Type.BigInt(),
+    expires_at: Type.BigInt(),
+    enabled: Type.Boolean(),
+    entry_fee: Type.Number(),
+    first_play_free: Type.Boolean(),
+    hint_prices: Type.Array(Type.Number()),
+    max_hints: Type.Number(),
+    min_carded_solve_ms: Type.BigInt(),
 });
 
 export type AirdropConfig = Static<typeof AirdropConfig>;
@@ -6412,6 +6575,26 @@ export const RegistryTokenDetails = /* @__PURE__ */ Type.Object({
     evm_contract_addresses: Type.Array(EvmContractAddress),
 });
 
+export type DailyPuzzleResultsResponse = Static<typeof DailyPuzzleResultsResponse>;
+export const DailyPuzzleResultsResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: Type.Array(DailyPuzzleResult),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type DailyPuzzleCurrentPuzzlesResponse = Static<typeof DailyPuzzleCurrentPuzzlesResponse>;
+export const DailyPuzzleCurrentPuzzlesResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: Type.Array(PublicDailyPuzzle),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserIndexDiamondMembershipFeesResponse = Static<
     typeof UserIndexDiamondMembershipFeesResponse
 >;
@@ -6642,6 +6825,29 @@ export const LocalUserIndexInstallBotArgs = /* @__PURE__ */ Type.Object({
     granted_autonomous_permissions: Type.Optional(BotPermissions),
 });
 
+export type LocalUserIndexDailyPuzzleHintHintResult = Static<
+    typeof LocalUserIndexDailyPuzzleHintHintResult
+>;
+export const LocalUserIndexDailyPuzzleHintHintResult = /* @__PURE__ */ Type.Object({
+    hint: ServedHint,
+    hints_used: Type.Number(),
+    state: DailyPuzzleUserState,
+    chit_balance: Type.Optional(Type.Number()),
+    total_chit_earned: Type.Optional(Type.Number()),
+});
+
+export type LocalUserIndexDailyPuzzleHintResponse = Static<
+    typeof LocalUserIndexDailyPuzzleHintResponse
+>;
+export const LocalUserIndexDailyPuzzleHintResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: LocalUserIndexDailyPuzzleHintHintResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type LocalUserIndexInviteUsersToGroupArgs = Static<
     typeof LocalUserIndexInviteUsersToGroupArgs
 >;
@@ -6664,6 +6870,21 @@ export const LocalUserIndexJoinGroupArgs = /* @__PURE__ */ Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     verified_credential_args: Type.Optional(VerifiedCredentialGateArgs),
     composite_gate_index: Type.Optional(Type.Number()),
+});
+
+export type LocalUserIndexDailyPuzzleFetchFetchResult = Static<
+    typeof LocalUserIndexDailyPuzzleFetchFetchResult
+>;
+export const LocalUserIndexDailyPuzzleFetchFetchResult = /* @__PURE__ */ Type.Object({
+    puzzles: Type.Array(PublicDailyPuzzle),
+    states: Type.Array(DailyPuzzleUserState),
+});
+
+export type LocalUserIndexDailyPuzzleFetchResponse = Static<
+    typeof LocalUserIndexDailyPuzzleFetchResponse
+>;
+export const LocalUserIndexDailyPuzzleFetchResponse = /* @__PURE__ */ Type.Object({
+    Success: LocalUserIndexDailyPuzzleFetchFetchResult,
 });
 
 export type LocalUserIndexUninstallBotArgs = Static<typeof LocalUserIndexUninstallBotArgs>;
@@ -6698,6 +6919,28 @@ export const LocalUserIndexRegisterUserResponse = /* @__PURE__ */ Type.Union([
     Type.Literal("ReferralCodeInvalid"),
     Type.Literal("ReferralCodeAlreadyClaimed"),
     Type.Literal("ReferralCodeExpired"),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type LocalUserIndexDailyPuzzleStartStartResult = Static<
+    typeof LocalUserIndexDailyPuzzleStartStartResult
+>;
+export const LocalUserIndexDailyPuzzleStartStartResult = /* @__PURE__ */ Type.Object({
+    started_at: Type.BigInt(),
+    state: DailyPuzzleUserState,
+    chit_balance: Type.Optional(Type.Number()),
+    total_chit_earned: Type.Optional(Type.Number()),
+});
+
+export type LocalUserIndexDailyPuzzleStartResponse = Static<
+    typeof LocalUserIndexDailyPuzzleStartResponse
+>;
+export const LocalUserIndexDailyPuzzleStartResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: LocalUserIndexDailyPuzzleStartStartResult,
+    }),
     Type.Object({
         Error: OCError,
     }),

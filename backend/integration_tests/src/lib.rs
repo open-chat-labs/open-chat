@@ -16,6 +16,9 @@ mod chit_tests;
 mod client;
 mod communities;
 mod cycles_dispenser_tests;
+mod daily_puzzle_engine_tests;
+mod daily_puzzle_flow_tests;
+mod daily_puzzle_tests;
 mod delete_direct_chat_tests;
 mod delete_group_tests;
 mod delete_history_tests;
@@ -28,6 +31,7 @@ mod env;
 mod escrow_tests;
 mod fire_and_forget_handler_tests;
 mod freeze_group_tests;
+mod game_chit_tests;
 mod gated_group_tests;
 mod group_and_community_verification_tests;
 mod identity_tests;
@@ -126,6 +130,7 @@ pub struct CanisterIds {
     pub airdrop_bot: CanisterId,
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub daily_puzzle: CanisterId,
     pub registry: CanisterId,
     pub escrow: CanisterId,
     pub translations: CanisterId,
@@ -161,6 +166,7 @@ impl Debug for CanisterIds {
         w.field("airdrop_bot", &self.airdrop_bot.to_string());
         w.field("storage_index", &self.storage_index.to_string());
         w.field("cycles_dispenser", &self.cycles_dispenser.to_string());
+        w.field("daily_puzzle", &self.daily_puzzle.to_string());
         w.field("registry", &self.registry.to_string());
         w.field("escrow", &self.escrow.to_string());
         w.field("translations", &self.translations.to_string());

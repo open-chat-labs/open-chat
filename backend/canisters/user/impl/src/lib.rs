@@ -2,6 +2,7 @@ use crate::model::chit_events::ChitEvents;
 use crate::model::communities::Communities;
 use crate::model::community::Community;
 use crate::model::direct_chats::DirectChats;
+use crate::model::game_chit_keys::GameChitKeys;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
@@ -496,6 +497,8 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
     pub premium_items: PremiumItems,
+    #[serde(default)]
+    pub game_chit_keys: GameChitKeys,
 }
 
 impl Data {
@@ -566,6 +569,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
             premium_items: PremiumItems::default(),
+            game_chit_keys: GameChitKeys::default(),
         }
     }
 

@@ -1,14 +1,24 @@
 <script lang="ts">
     import InfoIcon from "@src/components/InfoIcon.svelte";
-    import { chitStateStore, iconSize, type OpenChat } from "@client";
+    import {
+        chitStateStore,
+        dailyPuzzleStore,
+        iconSize,
+        publish,
+        stateFor,
+        type DailyPuzzleUserState,
+        type OpenChat,
+    } from "@client";
     import { getContext, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
+    import PuzzleOutline from "svelte-material-icons/PuzzleOutline.svelte";
     import { fade } from "svelte/transition";
     import { i18nKey } from "../../i18n/i18n";
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
+    import { gameNameKey } from "../../utils/dailyPuzzle.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -93,6 +103,26 @@
         tick().then(onLeaderboard);
     }
 
+    function openPuzzle(gameId: string) {
+        onClose?.();
+        tick().then(() => publish("dailyPuzzle", { gameId }));
+    }
+
+    // one row per puzzle on today's rota (one with the weekday rotation)
+    let puzzles = $derived(
+        $dailyPuzzleStore.puzzles
+            .filter((p) => p.enabled)
+            .map((p) => ({ puzzle: p, state: stateFor($dailyPuzzleStore, p.gameId) })),
+    );
+
+    function puzzleStatusKey(state: DailyPuzzleUserState | undefined): string {
+        return state?.solved !== undefined
+            ? "dailyPuzzle.solved"
+            : state?.startedAt !== undefined
+              ? "dailyPuzzle.continue"
+              : "dailyPuzzle.play";
+    }
+
     function earnMore(e: Event) {
         e.preventDefault();
         e.stopPropagation();
@@ -166,6 +196,27 @@
             <p class="info">
                 <Translatable resourceKey={i18nKey("dailyChit.info")} />
             </p>
+
+            {#each puzzles as { puzzle, state } (puzzle.gameId)}
+                <div class="puzzle">
+                    <PuzzleOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    <div class="puzzle-text">
+                        <div>
+                            <Translatable resourceKey={i18nKey("dailyPuzzle.todaysPuzzle")} />
+                            · <Translatable resourceKey={i18nKey(gameNameKey(puzzle.gameId))} />
+                        </div>
+                        <div class="puzzle-streak">
+                            <Translatable
+                                resourceKey={i18nKey("dailyPuzzle.streakDays", {
+                                    streak: state?.streak ?? 0,
+                                })} />
+                        </div>
+                    </div>
+                    <Button tiny onClick={() => openPuzzle(puzzle.gameId)}>
+                        <Translatable resourceKey={i18nKey(puzzleStatusKey(state))} />
+                    </Button>
+                </div>
+            {/each}
 
             <div class="progress-wrapper">
                 <div class="progress">
@@ -367,5 +418,25 @@
         gap: $sp2;
         align-items: center;
         margin-bottom: $sp3;
+    }
+
+    .puzzle {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+        width: 100%;
+        padding: $sp3 $sp4;
+        border: 1px solid var(--bd);
+        border-radius: $sp3;
+        text-align: left;
+
+        .puzzle-text {
+            flex: 1;
+        }
+
+        .puzzle-streak {
+            color: var(--txt-light);
+            @include font(book, normal, fs-80);
+        }
     }
 </style>

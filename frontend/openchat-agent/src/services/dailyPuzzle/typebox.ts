@@ -1,0 +1,28 @@
+// Re-exports of the generated daily puzzle schemas so callers can import them from here.
+// Args/Response aliases of `Empty` / `UnitResult` are not generated; use those directly.
+export {
+    DailyPuzzleConfig,
+    DailyPuzzleConfigResponse,
+    DailyPuzzleCurrentPuzzlesResponse,
+    DailyPuzzleGameConfigsResponse,
+    DailyPuzzleResult,
+    DailyPuzzleResultsArgs,
+    DailyPuzzleResultsResponse,
+    DailyPuzzleSolved,
+    DailyPuzzleUserState,
+    GameConfig,
+    LocalUserIndexDailyPuzzleFetchFetchResult,
+    LocalUserIndexDailyPuzzleFetchResponse,
+    LocalUserIndexDailyPuzzleHintArgs,
+    LocalUserIndexDailyPuzzleHintHintResult,
+    LocalUserIndexDailyPuzzleHintResponse,
+    LocalUserIndexDailyPuzzleSaveGridArgs,
+    LocalUserIndexDailyPuzzleStartArgs,
+    LocalUserIndexDailyPuzzleStartResponse,
+    LocalUserIndexDailyPuzzleStartStartResult,
+    LocalUserIndexDailyPuzzleSubmitArgs,
+    LocalUserIndexDailyPuzzleSubmitResponse,
+    PublicDailyPuzzle,
+    PuzzleHint,
+    ServedHint,
+} from "../../typebox";
