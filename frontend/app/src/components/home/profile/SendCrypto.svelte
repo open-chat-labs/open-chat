@@ -236,7 +236,7 @@
             .then((resp) => {
                 if (resp.kind === "completed" || resp.kind === "success") {
                     amountToSend = BigInt(0);
-                    balanceWithRefresh.refresh();
+                    balanceWithRefresh?.refresh();
                     toastStore.showSuccessToast(
                         i18nKey("cryptoAccount.sendSucceeded", {
                             symbol,

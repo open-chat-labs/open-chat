@@ -162,7 +162,7 @@
     });
 
     function reset() {
-        balanceWithRefresh.refresh();
+        balanceWithRefresh?.refresh();
     }
 
     function onDiamondChanged() {
