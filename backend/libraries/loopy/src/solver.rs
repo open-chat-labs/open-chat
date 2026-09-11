@@ -1,6 +1,6 @@
-use crate::dsf::Dsf;
 use crate::state::{Line, State};
 use crate::{Hint, Technique, Tier};
+use puzzle_core::Dsf;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -494,7 +494,7 @@ fn loop_deductions(st: &mut State, cx: &mut Ctx) -> Diff {
 
     let mut shortest_chain = grid.dots();
     for d in 0..grid.dots() {
-        let size = dsf.size(d);
+        let size = dsf.class_size(d);
         if size > 1 {
             shortest_chain = shortest_chain.min(size);
         }
@@ -516,7 +516,7 @@ fn loop_deductions(st: &mut State, cx: &mut Ctx) -> Diff {
             continue;
         }
         let mut val = Line::No;
-        if dsf.size(root) == edgecount + 1 {
+        if dsf.class_size(root) == edgecount + 1 {
             // This edge would close a loop through every line drawn so
             // far. It is the solution if every clue is satisfied or one
             // short, and the short ones are exactly the cells beside it.

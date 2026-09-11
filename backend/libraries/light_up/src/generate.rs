@@ -1,9 +1,10 @@
-use crate::rng::Rng;
 use crate::solver::{Outcome, solve};
 use crate::state::State;
-use crate::{Generated, Params, Symmetry, Tier, encode_description, solution_pairs, solve_with_trace};
+use crate::{Generated, MAX_ATTEMPTS, Params, Symmetry, Tier, encode_description, solution_pairs, solve_with_trace};
+use puzzle_core::{Budget, GenerateError, Rng};
 
-const MAX_GRIDGEN_TRIES: usize = 20;
+/// Tries at one black-square density before Tatham raises it.
+const MAX_GRIDGEN_TRIES: u32 = 20;
 
 /// Port of `set_blacks`: randomise a fundamental region, then copy it out
 /// under the requested symmetry.
@@ -134,11 +135,36 @@ fn strip_unused_nums(st: &mut State) {
     }
 }
 
-/// Port of `new_game_desc`.
-pub(crate) fn generate(seed: u64, params: Params) -> Generated {
+/// Reject parameters this game has no puzzle for, before any searching.
+fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
     let (w, h) = (params.width as usize, params.height as usize);
-    assert!(w >= 2 && h >= 2, "width and height must be at least 2");
-    assert!((5..=100).contains(&params.black_pct), "black_pct must be between 5 and 100");
+    if w < 2 || h < 2 {
+        return Err(GenerateError::invalid(format!(
+            "width and height must be at least 2, got {w}x{h}"
+        )));
+    }
+    if w * h > u16::MAX as usize {
+        return Err(GenerateError::invalid(format!(
+            "{w}x{h} has more cells than a u16 hint key can address"
+        )));
+    }
+    // 100 blacks out every cell, leaving a board with nothing to light
+    // and no hints. It used to pass validation and produce exactly that.
+    if !(5..=95).contains(&params.black_pct) {
+        return Err(GenerateError::invalid(format!(
+            "black_pct must be between 5 and 95, got {}",
+            params.black_pct
+        )));
+    }
+    Ok((w, h))
+}
+
+/// Port of `new_game_desc`. Tatham raises the black-square density every
+/// `MAX_GRIDGEN_TRIES` failures and otherwise retries forever; here the
+/// retries come out of one budget, so parameters with no puzzle end in a
+/// `GenerateError` instead of spinning until the canister traps.
+pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+    let (w, h) = validate(params)?;
     let symmetry = match params.symmetry {
         Symmetry::Rot4 if w != h => Symmetry::Rot2,
         s => s,
@@ -146,55 +172,75 @@ pub(crate) fn generate(seed: u64, params: Params) -> Generated {
     let tier = params.tier;
     let mut black_pct = params.black_pct;
     let mut rng = Rng::new(seed);
+    let mut budget = Budget::new(MAX_ATTEMPTS);
+    let mut tries_at_this_density = 0;
 
     let mut order: Vec<usize> = (0..w * h).collect();
     rng.shuffle(&mut order);
 
     loop {
-        for _ in 0..MAX_GRIDGEN_TRIES {
-            let mut st = set_blacks(w, h, symmetry, black_pct, &mut rng);
-            if !place_lights(&mut st, &mut rng) {
+        budget.spend()?;
+        tries_at_this_density += 1;
+        if tries_at_this_density > MAX_GRIDGEN_TRIES {
+            tries_at_this_density = 1;
+            if black_pct < 90 {
+                black_pct += 5;
+            }
+        }
+
+        let mut st = set_blacks(w, h, symmetry, black_pct, &mut rng);
+        // A board with no white cells is lit before the player starts and
+        // carries no hints, so it is not a puzzle.
+        if st.black.iter().all(|&b| b) {
+            continue;
+        }
+        if !place_lights(&mut st, &mut rng) {
+            continue;
+        }
+        let solution: Vec<u8> = st.light.iter().map(|&b| b as u8).collect();
+        place_numbers(&mut st);
+        if !puzzle_is_good(&mut st, tier) {
+            continue;
+        }
+
+        let mut stripped = st.clone();
+        strip_unused_nums(&mut stripped);
+        if puzzle_is_good(&mut stripped, tier) {
+            st = stripped;
+        }
+
+        for &i in &order {
+            let Some(clue) = st.clue[i] else {
                 continue;
-            }
-            let solution: Vec<u8> = st.light.iter().map(|&b| b as u8).collect();
-            place_numbers(&mut st);
-            if !puzzle_is_good(&mut st, tier) {
-                continue;
-            }
-
-            let mut stripped = st.clone();
-            strip_unused_nums(&mut stripped);
-            if puzzle_is_good(&mut stripped, tier) {
-                st = stripped;
-            }
-
-            for &i in &order {
-                let Some(clue) = st.clue[i] else {
-                    continue;
-                };
-                st.clue[i] = None;
-                if !puzzle_is_good(&mut st, tier) {
-                    st.clue[i] = Some(clue);
-                }
-            }
-
-            if tier == Tier::Tricky && puzzle_is_good(&mut st, Tier::Easy) {
-                continue;
-            }
-
-            let description = encode_description(&st);
-            let (hints, _) = solve_with_trace(&description, tier);
-            let pairs = solution_pairs(&description, &solution);
-            return Generated {
-                description,
-                solution,
-                hints,
-                pairs,
-                tier,
             };
+            st.clue[i] = None;
+            if !puzzle_is_good(&mut st, tier) {
+                st.clue[i] = Some(clue);
+            }
         }
-        if black_pct < 90 {
-            black_pct += 5;
+
+        if tier == Tier::Tricky && puzzle_is_good(&mut st, Tier::Easy) {
+            continue;
         }
+
+        let description = encode_description(&st);
+        let Ok((hints, solved)) = solve_with_trace(&description, tier) else {
+            continue;
+        };
+        // A puzzle whose hints lead somewhere other than its stored
+        // solution, or which needs no deductions at all, is not served.
+        if solved.as_deref() != Some(solution.as_slice()) || hints.is_empty() {
+            continue;
+        }
+        let Ok(pairs) = solution_pairs(&description, &solution) else {
+            continue;
+        };
+        return Ok(Generated {
+            description,
+            solution,
+            hints,
+            pairs,
+            tier,
+        });
     }
 }

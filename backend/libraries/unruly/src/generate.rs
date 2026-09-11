@@ -1,7 +1,9 @@
-use crate::rng::Rng;
 use crate::solver::{Outcome, solve};
 use crate::state::State;
-use crate::{EMPTY, Generated, Params, Tier, VALUE_A, VALUE_B, encode_description, solution_pairs, solve_with_trace};
+use crate::{
+    EMPTY, Generated, MAX_ATTEMPTS, Params, Tier, VALUE_A, VALUE_B, encode_description, solution_pairs, solve_with_trace,
+};
+use puzzle_core::{Budget, GenerateError, Rng};
 
 /// Port of `unruly_fill_game`: pick empty cells in random order, guess one
 /// at random, and let the full-strength technique solver propagate. Unlike
@@ -20,19 +22,41 @@ fn fill_game(st: &mut State, rng: &mut Rng) -> bool {
     st.filled() && st.sound()
 }
 
-/// Port of `new_game_desc`.
-pub(crate) fn generate(seed: u64, params: Params) -> Generated {
+/// Reject sizes this game has no puzzle for, before any searching.
+fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
     let (w, h) = (params.width as usize, params.height as usize);
-    assert!(w >= 6 && h >= 6, "width and height must be at least 6");
-    assert!(w % 2 == 0 && h % 2 == 0, "width and height must both be even");
-    debug_assert!(w * h <= u16::MAX as usize);
+    if w < 6 || h < 6 {
+        return Err(GenerateError::invalid(format!(
+            "width and height must be at least 6, got {w}x{h}"
+        )));
+    }
+    if w % 2 != 0 || h % 2 != 0 {
+        return Err(GenerateError::invalid(format!(
+            "width and height must both be even, got {w}x{h}"
+        )));
+    }
+    if w * h > u16::MAX as usize {
+        return Err(GenerateError::invalid(format!(
+            "{w}x{h} has more cells than a u16 hint key can address"
+        )));
+    }
+    Ok((w, h))
+}
+
+/// Port of `new_game_desc`.
+pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+    let (w, h) = validate(params)?;
     let tier = params.tier;
     let mut rng = Rng::new(seed);
+    let mut budget = Budget::new(MAX_ATTEMPTS);
 
     loop {
+        budget.spend()?;
         // A random valid full grid. Retries draw from the same stream, so
-        // every attempt uses fresh derived randomness.
+        // every attempt uses fresh derived randomness. Tatham's fill can
+        // paint itself into a corner, so it too has to be able to give up.
         let mut st = loop {
+            budget.spend()?;
             let mut st = State::new(w, h);
             if fill_game(&mut st, &mut rng) {
                 break st;
@@ -62,17 +86,27 @@ pub(crate) fn generate(seed: u64, params: Params) -> Generated {
         }
 
         let description = encode_description(&st);
-        let (hints, solved) = solve_with_trace(&description, tier);
-        debug_assert_eq!(solved.as_deref(), Some(solution.as_slice()));
-        debug_assert!(solution.iter().all(|&v| v == VALUE_A || v == VALUE_B));
-        debug_assert_eq!(crate::count_solutions(&description, 2), 1);
-        let pairs = solution_pairs(&description, &solution);
-        return Generated {
+        // Checked at runtime, not with debug_assert: these are compiled
+        // out of the wasm build, and a puzzle whose hints lead somewhere
+        // other than its stored solution must never reach a player.
+        let Ok((hints, solved)) = solve_with_trace(&description, tier) else {
+            continue;
+        };
+        if solved.as_deref() != Some(solution.as_slice()) {
+            continue;
+        }
+        if !solution.iter().all(|&v| v == VALUE_A || v == VALUE_B) {
+            continue;
+        }
+        let Ok(pairs) = solution_pairs(&description, &solution) else {
+            continue;
+        };
+        return Ok(Generated {
             description,
             solution,
             hints,
             pairs,
             tier,
-        };
+        });
     }
 }

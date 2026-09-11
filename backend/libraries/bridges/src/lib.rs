@@ -66,24 +66,25 @@
 //! that only raises a lower bound (one bridge "at least") records nothing
 //! for that edge; the later step that fixes it does.
 
-mod dsf;
 mod generate;
-mod rng;
 mod solver;
 mod state;
 
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid};
 use state::State;
+
+pub use puzzle_core::Tier;
+
+/// This game, as the [`Puzzle`] trait sees it.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Bridges;
 
 pub const GAME_ID: &str = "bridges";
 
 const FORMAT_VERSION: u8 = 1;
 const MAX_ISLAND: u8 = 8;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Tier {
-    Easy = 0,
-    Tricky = 1,
-}
+/// Grid bytes run 0 = water, 1..=2 horizontal bridges, 3..=4 vertical.
+const MAX_BRIDGE_BYTE: u8 = 4;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Params {
@@ -117,28 +118,16 @@ pub enum Technique {
     NeedsNeighbour = 3,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Hint {
-    pub technique: Technique,
-    /// Cell indices (y*width+x) to highlight.
-    pub focus: Vec<u16>,
-    /// The keys the technique sentence points at ("this cell", "this number"): a subset of
-    /// `focus`, painted strongly by the client while the rest of `focus` is context.
-    pub target: Vec<u16>,
-    /// (edge key, bridge count) for every edge this step made final.
-    pub conclusions: Vec<(u16, u8)>,
+impl From<Technique> for u8 {
+    fn from(technique: Technique) -> u8 {
+        technique as u8
+    }
 }
 
-#[derive(Clone, Debug)]
-pub struct Generated {
-    pub description: Vec<u8>,
-    pub solution: Vec<u8>,
-    /// The solver's deduction trace from the empty grid, in order.
-    pub hints: Vec<Hint>,
-    /// The solution in hint-key space: see [`solution_pairs`].
-    pub pairs: Vec<(u16, u8)>,
-    pub tier: Tier,
-}
+/// Conclusion keys are edge keys with a bridge count of 0..=2; focus keys
+/// are cell indices (y*width+x).
+pub type Hint = puzzle_core::Hint<Technique>;
+pub type Generated = puzzle_core::Generated<Technique>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Description {
@@ -150,8 +139,8 @@ pub struct Description {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Violation {
-    /// Byte above 4, or a non-zero byte on an island.
-    BadByte {
+    /// A bridge byte on a cell that holds an island.
+    BridgeOnIsland {
         cell: u16,
     },
     /// A bridge byte on a cell that is not between two islands in that
@@ -167,6 +156,9 @@ pub enum Violation {
         horizontal: u16,
         vertical: u16,
     },
+    /// This island already has more bridges than its number allows. An
+    /// island short of its number is not a violation: the grid is merely
+    /// unfinished.
     IslandCount {
         cell: u16,
         expected: u8,
@@ -180,26 +172,29 @@ pub enum Violation {
 }
 
 /// Deterministic: the same seed and params always give the same bytes.
-/// Panics if width or height is below 3, island_pct is outside 1..=30 or
-/// expansion_pct is above 100.
-pub fn generate(seed: u64, params: Params) -> Generated {
+pub fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
     generate::generate(seed, params)
 }
 
-/// Rule check used by tests and mirrored by the client. `grid` is w*h
-/// bytes in the solution encoding. A grid of the wrong length is treated
-/// as empty. Panics on a malformed description.
-pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
-    let d = parse_description(description).expect("malformed description");
+/// What one pass over a player's grid finds.
+struct Scan {
+    violations: Vec<Violation>,
+    /// Every island has exactly the bridges its number asks for.
+    all_full: bool,
+    /// Every island is reachable from the first one.
+    connected: bool,
+}
+
+/// `grid` is w*h bytes in the solution encoding. A byte outside it is a
+/// caller bug and is reported rather than read as water.
+fn scan(description: &[u8], grid: &[u8]) -> Result<(State, Scan), PuzzleError> {
+    let d = parse_description(description)?;
     let st = State::from_description(&d);
     let n = st.size();
-    let empty;
-    let grid = if grid.len() == n {
-        grid
-    } else {
-        empty = vec![0u8; n];
-        &empty
-    };
+    let grid = checked_grid(grid, n)?;
+    if let Some((i, &byte)) = grid.iter().enumerate().find(|&(_, &b)| b > MAX_BRIDGE_BYTE) {
+        return Err(PuzzleError::GridValue { cell: i as u16, byte });
+    }
     let mut out = Vec::new();
 
     let mut on_h = vec![false; n];
@@ -212,17 +207,13 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
     }
     for (i, &b) in grid.iter().enumerate() {
         let stray = match b {
-            0 => false,
             1 | 2 => !on_h[i],
             3 | 4 => !on_v[i],
-            _ => {
-                out.push(Violation::BadByte { cell: i as u16 });
-                continue;
-            }
+            _ => false,
         };
         if st.cell_island[i].is_some() {
             if b != 0 {
-                out.push(Violation::BadByte { cell: i as u16 });
+                out.push(Violation::BridgeOnIsland { cell: i as u16 });
             }
         } else if stray {
             out.push(Violation::Stray { cell: i as u16 });
@@ -282,10 +273,14 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
     }
 
     let mut all_full = true;
+    // An island short of its number means the grid is unfinished, not
+    // wrong; only an island over its number is a rule broken.
     for (i, island) in st.islands.iter().enumerate() {
         let actual: u8 = st.island_edges(i).map(|e| bridges[e]).sum();
         if actual != island.count {
             all_full = false;
+        }
+        if actual > island.count {
             out.push(Violation::IslandCount {
                 cell: island.cell as u16,
                 expected: island.count,
@@ -294,8 +289,9 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
         }
     }
 
+    let mut connected = true;
     if layout_ok && all_full && !st.islands.is_empty() {
-        let mut dsf = dsf::Dsf::new(st.islands.len());
+        let mut dsf = Dsf::new(st.islands.len());
         for (e, edge) in st.edges.iter().enumerate() {
             if bridges[e] > 0 {
                 dsf.merge(edge.a, edge.b);
@@ -313,11 +309,34 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
                 None => groups.push((r, vec![st.islands[i].cell as u16])),
             }
         }
+        connected = groups.is_empty();
         for (_, islands) in groups {
             out.push(Violation::Disconnected { islands });
         }
     }
-    out
+    Ok((
+        st,
+        Scan {
+            violations: out,
+            all_full,
+            connected,
+        },
+    ))
+}
+
+/// Rule check used by tests and mirrored by the client. Reports only what
+/// is definitely wrong: a half-built layout is unfinished, not broken.
+/// See [`is_complete`] for whether the grid is finished.
+pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
+    Ok(scan(description, grid)?.1.violations)
+}
+
+/// Whether every island has exactly its number of bridges and they all
+/// hang together in one group. Says nothing about whether the layout is
+/// *right*: pair it with [`check_rules`], or use [`Puzzle::is_solved`].
+pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+    let (st, scan) = scan(description, grid)?;
+    Ok(scan.all_full && scan.connected && !st.islands.is_empty())
 }
 
 /// The solution in hint-key space: `(edge key, bridge count 0..=2)` for
@@ -325,15 +344,16 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
 /// enumeration the hints use), sorted by key. The count is read from the
 /// edge's first water cell; a solution of the wrong length counts as
 /// having no bridges. Panics on a malformed description.
-pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Vec<(u16, u8)> {
-    let d = parse_description(description).expect("malformed description");
+pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
+    let d = parse_description(description)?;
     let st = State::from_description(&d);
     let n = st.size();
+    let solution = checked_grid(solution, n)?;
     let mut out: Vec<(u16, u8)> = st
         .edges
         .iter()
         .map(|edge| {
-            let b = if solution.len() == n { solution[edge.cells[0]] } else { 0 };
+            let b = solution[edge.cells[0]];
             let count = match (edge.horizontal, b) {
                 (true, 1 | 2) => b,
                 (false, 3 | 4) => b - 2,
@@ -343,55 +363,53 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Vec<(u16, u8)> {
         })
         .collect();
     out.sort_unstable_by_key(|&(k, _)| k);
-    out
+    Ok(out)
 }
 
-/// Number of solutions, capped at `cap`, via backtracking. Returns 0 for a
-/// malformed description.
-pub fn count_solutions(description: &[u8], cap: u32) -> u32 {
-    let Ok(d) = parse_description(description) else {
-        return 0;
-    };
+/// Number of solutions, capped at `cap`, via backtracking.
+pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
+    let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    solver::count_solutions(&mut st, cap)
+    Ok(solver::count_solutions(&mut st, cap))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
 /// solution if it was reached without guessing.
-pub fn solve_with_trace(description: &[u8], tier: Tier) -> (Vec<Hint>, Option<Vec<u8>>) {
-    let Ok(d) = parse_description(description) else {
-        return (Vec::new(), None);
-    };
+pub fn solve_with_trace(description: &[u8], tier: Tier) -> Result<(Vec<Hint>, Option<Vec<u8>>), PuzzleError> {
+    let d = parse_description(description)?;
     let mut st = State::from_description(&d);
     let mut hints = Vec::new();
     let solution = match solver::solve(&mut st, tier, Some(&mut hints)) {
         solver::Outcome::Solved => Some(st.to_grid()),
         _ => None,
     };
-    (hints, solution)
+    Ok((hints, solution))
 }
 
-pub fn parse_description(bytes: &[u8]) -> Result<Description, String> {
+pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     if bytes.len() < 3 {
-        return Err("description too short".to_string());
+        return Err(PuzzleError::description("description too short"));
     }
     if bytes[0] != FORMAT_VERSION {
-        return Err(format!("unsupported format version {}", bytes[0]));
+        return Err(PuzzleError::description(format!("unsupported format version {}", bytes[0])));
     }
     let (width, height) = (bytes[1], bytes[2]);
     let (w, h) = (width as usize, height as usize);
     if w * h > 32767 {
-        return Err("grid too large".to_string());
+        return Err(PuzzleError::description("grid too large"));
     }
     let expected = 3 + w * h;
     if bytes.len() != expected {
-        return Err(format!("expected {expected} bytes, got {}", bytes.len()));
+        return Err(PuzzleError::description(format!(
+            "expected {expected} bytes, got {}",
+            bytes.len()
+        )));
     }
     let cells = bytes[3..].to_vec();
     let mut islands = 0;
     for (i, &b) in cells.iter().enumerate() {
         if b > MAX_ISLAND {
-            return Err(format!("bad cell byte 0x{b:02x}"));
+            return Err(PuzzleError::description(format!("bad cell byte 0x{b:02x}")));
         }
         if b == 0 {
             continue;
@@ -399,11 +417,11 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, String> {
         islands += 1;
         let (x, y) = (i % w, i / w);
         if (x > 0 && cells[i - 1] != 0) || (y > 0 && cells[i - w] != 0) {
-            return Err(format!("islands touch at cell {i}"));
+            return Err(PuzzleError::description(format!("islands touch at cell {i}")));
         }
     }
     if islands < 2 {
-        return Err("too few islands".to_string());
+        return Err(PuzzleError::description("too few islands"));
     }
     Ok(Description { width, height, cells })
 }
@@ -419,16 +437,15 @@ pub(crate) fn encode_description(d: &Description) -> Vec<u8> {
 
 /// One line per row, Tatham's text format: digit = island, `.` water,
 /// `-` / `=` one / two horizontal bridges, `|` / `"` one / two vertical.
-pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> String {
-    let Ok(d) = parse_description(description) else {
-        return String::new();
-    };
+pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
+    let d = parse_description(description)?;
     let (w, h) = (d.width as usize, d.height as usize);
+    let grid = grid.map(|g| checked_grid(g, w * h)).transpose()?;
     let mut out = String::with_capacity((w + 1) * h);
     for y in 0..h {
         for x in 0..w {
             let i = y * w + x;
-            let b = grid.and_then(|g| g.get(i)).copied().unwrap_or(0);
+            let b = grid.map_or(0, |g| g[i]);
             out.push(match (d.cells[i], b) {
                 (n, _) if n > 0 => (b'0' + n) as char,
                 (_, 1) => '-',
@@ -441,5 +458,46 @@ pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> String {
         }
         out.push('\n');
     }
-    out
+    Ok(out)
+}
+
+impl Puzzle for Bridges {
+    type Params = Params;
+    type Technique = Technique;
+    type Description = Description;
+    type Violation = Violation;
+
+    const GAME_ID: &'static str = GAME_ID;
+
+    fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+        generate(seed, params)
+    }
+
+    fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
+        parse_description(bytes)
+    }
+
+    fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
+        check_rules(description, grid)
+    }
+
+    fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        is_complete(description, grid)
+    }
+
+    fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
+        solution_pairs(description, solution)
+    }
+
+    fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
+        count_solutions(description, cap)
+    }
+
+    fn solve_with_trace(description: &[u8], tier: Tier) -> Result<(Vec<Hint>, Option<Vec<u8>>), PuzzleError> {
+        solve_with_trace(description, tier)
+    }
+
+    fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
+        render_ascii(description, grid)
+    }
 }

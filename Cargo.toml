@@ -147,6 +147,7 @@ members = [
     "backend/libraries/per_round_timer",
     "backend/libraries/principal_to_user_id_map",
     "backend/libraries/proof_of_unique_personhood",
+    "backend/libraries/puzzle_core",
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
     "backend/libraries/sha256",

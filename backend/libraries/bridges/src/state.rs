@@ -1,5 +1,5 @@
 use crate::Description;
-use crate::dsf::Dsf;
+use puzzle_core::Dsf;
 
 /// Tatham's `maxb`; the wire format only encodes 0..=2 bridges per pair.
 pub(crate) const MAX_BRIDGES: u8 = 2;

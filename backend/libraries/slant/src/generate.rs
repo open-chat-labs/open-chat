@@ -1,8 +1,7 @@
-use crate::dsf::Dsf;
-use crate::rng::Rng;
 use crate::solver::{Outcome, solve};
 use crate::state::State;
-use crate::{Generated, Params, Tier, encode_description, encode_slash, solution_pairs, solve_with_trace};
+use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, encode_slash, solution_pairs, solve_with_trace};
+use puzzle_core::{Budget, Dsf, GenerateError, Rng};
 
 /// Port of `slant_generate`: fill the cells in random order, choosing at
 /// random unless one slash would close a loop. Never has to backtrack
@@ -49,20 +48,41 @@ fn solves(st: &State, tier: Tier) -> Outcome {
     solve(&mut work, tier, None)
 }
 
-/// Port of `new_game_desc`.
-pub(crate) fn generate(seed: u64, params: Params) -> Generated {
+/// Reject sizes this game has no puzzle for, before any searching.
+fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
     let (w, h) = (params.width as usize, params.height as usize);
-    assert!(w >= 2 && h >= 2, "width and height must be at least 2");
-    debug_assert!(w * h + (w + 1) * (h + 1) <= u16::MAX as usize);
+    if w < 2 || h < 2 {
+        return Err(GenerateError::invalid(format!(
+            "width and height must be at least 2, got {w}x{h}"
+        )));
+    }
+    if w * h + (w + 1) * (h + 1) > u16::MAX as usize {
+        return Err(GenerateError::invalid(format!(
+            "{w}x{h} has more cells and vertices than a u16 hint key can address"
+        )));
+    }
+    Ok((w, h))
+}
+
+/// Port of `new_game_desc`.
+pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+    let (w, h) = validate(params)?;
     let tier = params.tier;
     let mut rng = Rng::new(seed);
+    let mut budget = Budget::new(MAX_ATTEMPTS);
     let (vw, nv) = (w + 1, (w + 1) * (h + 1));
 
     loop {
+        budget.spend()?;
         let mut st = slant_generate(w, h, &mut rng);
         let solution: Vec<u8> = st.soln.iter().map(|&v| encode_slash(v)).collect();
         full_clues(&mut st);
-        debug_assert_eq!(solves(&st, Tier::Easy), Outcome::Solved);
+        // Checked at runtime rather than with debug_assert, which the
+        // wasm build compiles out: a fully clued grid the solver cannot
+        // finish would mean the clues and the solution disagree.
+        if solves(&st, Tier::Easy) != Outcome::Solved {
+            continue;
+        }
 
         // Strip clues while the puzzle stays solvable at this tier. On
         // Tricky, obvious starting points (4s, 0s, border 2s, corner 1s)
@@ -94,16 +114,23 @@ pub(crate) fn generate(seed: u64, params: Params) -> Generated {
         }
 
         let description = encode_description(&st);
-        let (hints, solved) = solve_with_trace(&description, tier);
-        debug_assert_eq!(solved.as_deref(), Some(solution.as_slice()));
-        debug_assert_eq!(crate::count_solutions(&description, 2), 1);
-        let pairs = solution_pairs(&description, &solution);
-        return Generated {
+        // Also a runtime check: a puzzle whose hints lead somewhere other
+        // than its stored solution must never reach a player.
+        let Ok((hints, solved)) = solve_with_trace(&description, tier) else {
+            continue;
+        };
+        if solved.as_deref() != Some(solution.as_slice()) {
+            continue;
+        }
+        let Ok(pairs) = solution_pairs(&description, &solution) else {
+            continue;
+        };
+        return Ok(Generated {
             description,
             solution,
             hints,
             pairs,
             tier,
-        };
+        });
     }
 }

@@ -1,4 +1,5 @@
-use light_up::{Params, Symmetry, Tier, generate, render_ascii};
+use light_up::{LightUp, Params, Symmetry, Tier, generate};
+use puzzle_core::cli;
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -9,11 +10,7 @@ fn main() {
     let seed: u64 = args[0].parse().expect("seed");
     let width: u8 = args[1].parse().expect("width");
     let height: u8 = args[2].parse().expect("height");
-    let tier = match args[3].as_str() {
-        "easy" => Tier::Easy,
-        "tricky" => Tier::Tricky,
-        other => panic!("unknown tier {other}"),
-    };
+    let tier: Tier = cli::tier(&args[3]);
     let black_pct: u8 = args.get(4).map_or(20, |s| s.parse().expect("black_pct"));
     let symmetry = match args.get(5).map(String::as_str) {
         None | Some("rot2") => Symmetry::Rot2,
@@ -24,7 +21,7 @@ fn main() {
         Some(other) => panic!("unknown symmetry {other}"),
     };
 
-    let g = generate(
+    cli::print::<LightUp>(generate(
         seed,
         Params {
             width,
@@ -33,14 +30,5 @@ fn main() {
             symmetry,
             tier,
         },
-    );
-    print!("{}", render_ascii(&g.description, None));
-    println!();
-    print!("{}", render_ascii(&g.description, Some(&g.solution)));
-    println!();
-    for h in &g.hints {
-        println!("{:?} focus={:?} conclusions={:?}", h.technique, h.focus, h.conclusions);
-    }
-    println!();
-    println!("{}", g.description.iter().map(|b| format!("{b:02x}")).collect::<String>());
+    ));
 }

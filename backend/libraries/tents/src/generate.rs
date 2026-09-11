@@ -1,7 +1,7 @@
-use crate::rng::Rng;
 use crate::solver::{Outcome, solve};
 use crate::state::{Square, State};
-use crate::{Generated, Params, Tier, encode_description, solution_pairs, solve_with_trace};
+use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, solution_pairs, solve_with_trace};
+use puzzle_core::{Budget, GenerateError, Rng};
 
 const NONE: usize = usize::MAX;
 
@@ -140,22 +140,61 @@ fn matching(nl: usize, nr: usize, adj: &mut [Vec<usize>], mut rng: Option<&mut R
     (size, r_to_l)
 }
 
+/// Reject parameters this game has no puzzle for, before any searching.
+///
+/// The density check is the one that matters. `tree_pct` is a percentage
+/// of the cells, so a low one on a small grid rounds down to a handful of
+/// trees or to none at all, and every row and column has to contain a
+/// tree or a tent. Fewer tents than the longer side of the grid and no
+/// layout can ever pass, which used to mean an unbounded retry loop for
+/// parameters that had passed validation.
+fn validate(params: Params) -> Result<(usize, usize, usize), GenerateError> {
+    let (w, h) = (params.width as usize, params.height as usize);
+    if w < 4 || h < 4 {
+        return Err(GenerateError::invalid(format!(
+            "width and height must be at least 4, got {w}x{h}"
+        )));
+    }
+    if w * h > u16::MAX as usize {
+        return Err(GenerateError::invalid(format!(
+            "{w}x{h} has more cells than a u16 hint key can address"
+        )));
+    }
+    if !(1..=25).contains(&params.tree_pct) {
+        return Err(GenerateError::invalid(format!(
+            "tree_pct must be between 1 and 25, got {}",
+            params.tree_pct
+        )));
+    }
+    let n = w * h;
+    let ntrees = n * params.tree_pct as usize / 100;
+    let needed = w.max(h);
+    if ntrees < needed {
+        let min_pct = (needed * 100).div_ceil(n);
+        return Err(GenerateError::invalid(format!(
+            "tree_pct {} gives {ntrees} trees on a {w}x{h} grid, but every one of the {needed} \
+             rows and columns needs one, so tree_pct must be at least {min_pct}",
+            params.tree_pct
+        )));
+    }
+    Ok((w, h, ntrees))
+}
+
 /// Port of `new_game_desc`: place the tents at random without any two
 /// touching, place a tree beside each one via a random maximum matching,
 /// then keep the layout only if the solver at the requested tier finishes
 /// and (for Tricky) the tier below does not. Tents has no clue stripping:
 /// the trees are the solution and every line count is always given.
-pub(crate) fn generate(seed: u64, params: Params) -> Generated {
-    let (w, h) = (params.width as usize, params.height as usize);
-    assert!(w >= 4 && h >= 4, "width and height must be at least 4");
-    assert!((1..=25).contains(&params.tree_pct), "tree_pct must be between 1 and 25");
+pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+    let (w, h, ntrees) = validate(params)?;
     let n = w * h;
-    let ntrees = n * params.tree_pct as usize / 100;
     // Tatham downgrades to Easy on tiny grids to avoid a tight loop.
     let tier = if params.tier == Tier::Tricky && w <= 4 && h <= 4 { Tier::Easy } else { params.tier };
     let mut rng = Rng::new(seed);
+    let mut budget = Budget::new(MAX_ATTEMPTS);
 
     loop {
+        budget.spend()?;
         let mut order: Vec<usize> = (0..n).collect();
         let mut treemap = vec![NONE; n];
         let mut grid = vec![Square::Blank; n];
@@ -226,17 +265,29 @@ pub(crate) fn generate(seed: u64, params: Params) -> Generated {
             continue;
         }
         let solution: Vec<u8> = grid.iter().map(|&s| (s == Square::Tent) as u8).collect();
-        debug_assert_eq!(solved.tents(), solution);
+        // Checked at runtime, not with debug_assert: these are compiled
+        // out of the wasm build, and a puzzle whose hints lead somewhere
+        // other than its stored solution must never reach a player.
+        if solved.tents() != solution {
+            continue;
+        }
 
         let description = encode_description(&st);
-        let (hints, _) = solve_with_trace(&description, tier);
-        let pairs = solution_pairs(&description, &solution);
-        return Generated {
+        let Ok((hints, traced)) = solve_with_trace(&description, tier) else {
+            continue;
+        };
+        if traced.as_deref() != Some(solution.as_slice()) || hints.is_empty() {
+            continue;
+        }
+        let Ok(pairs) = solution_pairs(&description, &solution) else {
+            continue;
+        };
+        return Ok(Generated {
             description,
             solution,
             hints,
             pairs,
             tier,
-        };
+        });
     }
 }

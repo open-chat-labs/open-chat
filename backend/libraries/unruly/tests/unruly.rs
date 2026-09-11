@@ -1,7 +1,8 @@
-use std::collections::BTreeMap;
+use puzzle_core::testing::{must_generate, must_reject, must_terminate, must_work_through_dyn};
+use puzzle_core::{Puzzle, PuzzleError, Tier};
 use unruly::{
-    EMPTY, Generated, Params, Tier, VALUE_A, VALUE_B, Violation, check_rules, count_solutions, generate, parse_description,
-    render_ascii, solution_pairs, solve_with_trace,
+    EMPTY, Params, Unruly, VALUE_A, VALUE_B, Violation, check_rules, count_solutions, generate, is_complete, parse_description,
+    render_ascii, solve_with_trace,
 };
 
 const SEEDS_PER_CONFIG: u64 = 100;
@@ -14,133 +15,81 @@ fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-/// Start from the givens (unlike the other games, Unruly's description is
-/// itself a partly filled grid) and apply every hint conclusion in order.
-fn replay_hints(g: &Generated) -> Vec<u8> {
-    let d = parse_description(&g.description).unwrap();
-    let mut grid = d.givens.clone();
-    for hint in &g.hints {
-        for &(cell, value) in &hint.conclusions {
-            let cell = cell as usize;
-            assert!(value == VALUE_A || value == VALUE_B, "bad conclusion value {value}");
-            assert_eq!(grid[cell], EMPTY, "hint fixes cell {cell} twice, or a given");
-            grid[cell] = value;
+/// The sizes The Daily can serve. Both tiers of each, so a size that
+/// cannot carry Tricky fails here and not in the canister.
+fn playable() -> Vec<Params> {
+    let mut out = Vec::new();
+    for (w, h) in [(6, 6), (6, 8), (8, 6), (8, 8), (10, 8), (10, 10), (12, 12), (14, 14)] {
+        for tier in Tier::ALL {
+            out.push(params(w, h, tier));
         }
     }
-    grid
+    out
 }
 
-/// `pairs` is the solution over every cell, and the givens plus every hint
-/// conclusion make it up exactly.
-fn check_pairs(g: &Generated, ctx: &str) {
-    assert_eq!(g.pairs, solution_pairs(&g.description, &g.solution), "{ctx}: pairs");
-    let keys: Vec<u16> = g.pairs.iter().map(|&(k, _)| k).collect();
-    let cells: Vec<u16> = (0..g.solution.len() as u16).collect();
-    assert_eq!(keys, cells, "{ctx}: pairs keys are not every cell");
-
-    let pairs: BTreeMap<u16, u8> = g.pairs.iter().copied().collect();
-    let d = parse_description(&g.description).unwrap();
-    let mut replayed: BTreeMap<u16, u8> = d
-        .givens
-        .iter()
-        .enumerate()
-        .filter(|&(_, &v)| v != EMPTY)
-        .map(|(i, &v)| (i as u16, v))
-        .collect();
-    for hint in &g.hints {
-        for &(k, v) in &hint.conclusions {
-            replayed.insert(k, v);
-        }
+#[test]
+fn generated_8x8() {
+    for tier in Tier::ALL {
+        must_generate::<Unruly>(params(8, 8, tier), 0..SEEDS_PER_CONFIG);
     }
-    assert_eq!(replayed, pairs, "{ctx}: givens plus replayed hints differ from pairs");
 }
 
-fn check_generated(seed: u64, p: Params) {
-    let g = generate(seed, p);
-    let ctx = format!("seed {seed} {}x{} {:?}", p.width, p.height, p.tier);
-
-    assert_eq!(g.tier, p.tier, "{ctx}");
-    assert_eq!(count_solutions(&g.description, 2), 1, "{ctx}: not unique");
-    assert!(
-        check_rules(&g.description, &g.solution).is_empty(),
-        "{ctx}: solution breaks rules"
-    );
-    assert!(
-        g.solution.iter().all(|&b| b == VALUE_A || b == VALUE_B),
-        "{ctx}: bad solution byte"
-    );
-
-    let d = parse_description(&g.description).unwrap();
-    let cells = d.width as usize * d.height as usize;
-    assert_eq!(g.solution.len(), cells, "{ctx}: solution length");
-    for (i, &v) in d.givens.iter().enumerate() {
-        assert!(v == EMPTY || v == g.solution[i], "{ctx}: given {i} disagrees with solution");
+#[test]
+fn generated_10x10() {
+    for tier in Tier::ALL {
+        must_generate::<Unruly>(params(10, 10, tier), 0..SEEDS_PER_CONFIG);
     }
+}
 
-    let (hints, solved) = solve_with_trace(&g.description, p.tier);
-    assert_eq!(
-        solved.as_deref(),
-        Some(g.solution.as_slice()),
-        "{ctx}: solver disagrees with solution"
-    );
-    assert_eq!(hints, g.hints, "{ctx}: trace differs from stored hints");
-    assert!(!g.hints.is_empty(), "{ctx}: no hints");
+/// Every size and tier this game accepts produces a puzzle. The point is
+/// the parameter coverage: a combination that could never generate used
+/// to spin forever instead of failing a test.
+#[test]
+fn every_playable_size_generates() {
+    for p in playable() {
+        must_generate::<Unruly>(p, 0..25);
+    }
+}
 
-    for hint in &g.hints {
-        assert!(!hint.focus.is_empty(), "{ctx}: empty focus");
-        assert!(!hint.target.is_empty(), "{ctx}: empty target");
-        for t in &hint.target {
-            assert!(hint.focus.contains(t), "{ctx}: target {t} not in focus");
-        }
-        for &k in &hint.focus {
-            assert!((k as usize) < cells, "{ctx}: focus key {k} is not a cell");
-        }
-        assert!(!hint.conclusions.is_empty(), "{ctx}: empty conclusions");
-        for &(cell, value) in &hint.conclusions {
-            assert!((cell as usize) < cells, "{ctx}: conclusion key {cell} is not a cell");
-            assert_eq!(g.solution[cell as usize], value, "{ctx}: conclusion disagrees with solution");
+/// Sizes with no puzzle are turned away up front rather than searched for.
+#[test]
+fn impossible_sizes_are_rejected() {
+    for (w, h) in [(0, 0), (2, 2), (4, 4), (4, 8), (8, 4), (7, 8), (8, 7), (7, 7)] {
+        for tier in Tier::ALL {
+            must_reject::<Unruly>(params(w, h, tier), 0..3);
         }
     }
-    assert_eq!(
-        replay_hints(&g),
-        g.solution,
-        "{ctx}: replaying hints does not reach the solution"
-    );
-    check_pairs(&g, &ctx);
+}
 
-    if p.tier == Tier::Tricky {
+/// Sizes at the edge of what is playable still have to return.
+#[test]
+fn odd_sizes_terminate() {
+    for (w, h) in [(6, 20), (20, 6), (16, 16)] {
+        for tier in Tier::ALL {
+            must_terminate::<Unruly>(params(w, h, tier), 0..2);
+        }
+    }
+}
+
+#[test]
+fn tricky_puzzles_defeat_the_easy_solver() {
+    for seed in 0..20 {
+        let g = generate(seed, params(8, 8, Tier::Tricky)).unwrap();
         assert!(
-            solve_with_trace(&g.description, Tier::Easy).1.is_none(),
-            "{ctx}: easy solver finished a tricky puzzle"
+            solve_with_trace(&g.description, Tier::Easy).unwrap().1.is_none(),
+            "seed {seed}: easy solver finished a tricky puzzle"
         );
     }
 }
 
 #[test]
-fn generated_8x8_easy() {
-    for seed in 0..SEEDS_PER_CONFIG {
-        check_generated(seed, params(8, 8, Tier::Easy));
-    }
-}
-
-#[test]
-fn generated_8x8_tricky() {
-    for seed in 0..SEEDS_PER_CONFIG {
-        check_generated(seed, params(8, 8, Tier::Tricky));
-    }
-}
-
-#[test]
-fn generated_10x10_easy() {
-    for seed in 0..SEEDS_PER_CONFIG {
-        check_generated(seed, params(10, 10, Tier::Easy));
-    }
-}
-
-#[test]
-fn generated_10x10_tricky() {
-    for seed in 0..SEEDS_PER_CONFIG {
-        check_generated(seed, params(10, 10, Tier::Tricky));
+fn givens_agree_with_the_solution() {
+    for seed in 0..20 {
+        let g = generate(seed, params(8, 8, Tier::Easy)).unwrap();
+        let d = parse_description(&g.description).unwrap();
+        for (i, &v) in d.givens.iter().enumerate() {
+            assert!(v == EMPTY || v == g.solution[i], "seed {seed}: given {i} disagrees");
+        }
     }
 }
 
@@ -148,27 +97,41 @@ fn generated_10x10_tricky() {
 fn single_cell_perturbation_is_caught() {
     for seed in 0..20 {
         let p = params(8, 8, if seed % 2 == 0 { Tier::Easy } else { Tier::Tricky });
-        let g = generate(seed, p);
+        let g = generate(seed, p).unwrap();
         for i in 0..g.solution.len() {
             let mut grid = g.solution.clone();
             grid[i] = if grid[i] == VALUE_A { VALUE_B } else { VALUE_A };
             assert!(
-                !check_rules(&g.description, &grid).is_empty(),
+                !check_rules(&g.description, &grid).unwrap().is_empty(),
                 "seed {seed}: flipping cell {i} went unnoticed"
+            );
+            assert!(
+                !Unruly::is_solved(&g.description, &grid).unwrap(),
+                "seed {seed}: flipping cell {i} still counts as solved"
             );
         }
     }
 }
 
+/// A full grid that obeys every rule but overwrites a given is not this
+/// puzzle's solution, and must not pass as one.
 #[test]
-fn generation_is_deterministic() {
-    for (w, h, tier) in [(8, 8, Tier::Easy), (10, 10, Tier::Tricky)] {
-        let a = generate(7, params(w, h, tier));
-        let b = generate(7, params(w, h, tier));
-        assert_eq!(a.description, b.description);
-        assert_eq!(a.solution, b.solution);
-        assert_eq!(a.hints, b.hints);
-    }
+fn overwriting_a_given_is_a_violation() {
+    let g = generate(5, params(8, 8, Tier::Easy)).unwrap();
+    let d = parse_description(&g.description).unwrap();
+    let cell = d.givens.iter().position(|&v| v != EMPTY).unwrap();
+    let mut grid = g.solution.clone();
+    let other = if grid[cell] == VALUE_A { VALUE_B } else { VALUE_A };
+    grid[cell] = other;
+    assert!(
+        check_rules(&g.description, &grid)
+            .unwrap()
+            .contains(&Violation::ContradictsGiven {
+                cell: cell as u16,
+                given: d.givens[cell],
+                actual: other,
+            })
+    );
 }
 
 #[test]
@@ -177,20 +140,20 @@ fn fixed_seed_snapshot() {
     // or the generator's RNG stream drifted.
     const EASY_DESCRIPTION_HEX: &str = "01080802000200010100000200000000000002000000000000000000020002000000010000010000000000000200000202000000000000000001000000020001000002";
     const EASY_SOLUTION_HEX: &str = "02010202010102010202010102010102010102010202010201020102010202010201010201010202010202010202010102020101020201010101020201010202";
-    let g = generate(42, params(8, 8, Tier::Easy));
+    let g = generate(42, params(8, 8, Tier::Easy)).unwrap();
     assert_eq!(hex(&g.description), EASY_DESCRIPTION_HEX);
     assert_eq!(hex(&g.solution), EASY_SOLUTION_HEX);
 
     const TRICKY_DESCRIPTION_HEX: &str = "010a0a01000001000000000000000200000000000000000002000200000000000201000000010000000000000000000000020001000100000000000000000000000000000202000100000200000000000000020100000000000200020001000001000000020002";
     const TRICKY_SOLUTION_HEX: &str = "01010201020201020201020201010201020102010202010201010201010201010202010201020201020201010201020101020101020201020102020102010102010202010102020201010201010201020101020201020201020101020201020101020102";
-    let g = generate(42, params(10, 10, Tier::Tricky));
+    let g = generate(42, params(10, 10, Tier::Tricky)).unwrap();
     assert_eq!(hex(&g.description), TRICKY_DESCRIPTION_HEX);
     assert_eq!(hex(&g.solution), TRICKY_SOLUTION_HEX);
 }
 
 #[test]
 fn parse_rejects_bad_input() {
-    let good = generate(1, params(8, 8, Tier::Easy)).description;
+    let good = generate(1, params(8, 8, Tier::Easy)).unwrap().description;
     assert!(parse_description(&good).is_ok());
 
     let mut wrong_version = good.clone();
@@ -226,22 +189,30 @@ fn parse_rejects_bad_input() {
     assert!(d.givens.contains(&EMPTY));
 }
 
+/// Every entry point that takes a description reports a malformed one the
+/// same way, instead of one panicking and the next returning a default.
+#[test]
+fn malformed_descriptions_are_reported_not_guessed() {
+    let bad: &[u8] = &[1, 7, 8];
+    assert!(matches!(check_rules(bad, &[]), Err(PuzzleError::Description(_))));
+    assert!(matches!(is_complete(bad, &[]), Err(PuzzleError::Description(_))));
+    assert!(matches!(count_solutions(bad, 2), Err(PuzzleError::Description(_))));
+    assert!(matches!(solve_with_trace(bad, Tier::Easy), Err(PuzzleError::Description(_))));
+    assert!(matches!(render_ascii(bad, None), Err(PuzzleError::Description(_))));
+    assert!(matches!(unruly::solution_pairs(bad, &[]), Err(PuzzleError::Description(_))));
+}
+
 #[test]
 fn render_ascii_has_tathams_shape() {
-    let g = generate(3, params(10, 8, Tier::Easy));
-    let puzzle = render_ascii(&g.description, None);
-    let solved = render_ascii(&g.description, Some(&g.solution));
+    let g = generate(3, params(10, 8, Tier::Easy)).unwrap();
+    let puzzle = render_ascii(&g.description, None).unwrap();
+    let solved = render_ascii(&g.description, Some(&g.solution)).unwrap();
     assert_eq!(puzzle.lines().count(), 8);
     assert_eq!(solved.lines().count(), 8);
     assert!(puzzle.lines().all(|l| l.chars().count() == 20));
     assert!(puzzle.contains('.'), "puzzle should have blanks");
     assert!(solved.contains('0') && solved.contains('1'));
     assert!(!solved.contains('.'), "solved grid should have no blanks");
-    assert_eq!(
-        render_ascii(&[1, 3, 4], None),
-        "",
-        "malformed description should render nothing"
-    );
 }
 
 /// Description with no givens at all.
@@ -255,14 +226,17 @@ fn blank(w: u8, h: u8) -> Vec<u8> {
 fn check_rules_reports_runs() {
     let d = blank(4, 4);
     let mut grid = vec![EMPTY; 16];
-    assert!(check_rules(&d, &grid).is_empty(), "empty grid is incomplete, not wrong");
+    assert!(
+        check_rules(&d, &grid).unwrap().is_empty(),
+        "empty grid is incomplete, not wrong"
+    );
 
     // Three in a row across the top, which also overfills the row.
     grid[0] = VALUE_A;
     grid[1] = VALUE_A;
     grid[2] = VALUE_A;
     assert_eq!(
-        check_rules(&d, &grid),
+        check_rules(&d, &grid).unwrap(),
         vec![
             Violation::Run {
                 cells: vec![0, 1, 2],
@@ -282,7 +256,7 @@ fn check_rules_reports_runs() {
     grid[4] = VALUE_B;
     grid[8] = VALUE_B;
     assert_eq!(
-        check_rules(&d, &grid),
+        check_rules(&d, &grid).unwrap(),
         vec![
             Violation::Run {
                 cells: vec![0, 4, 8],
@@ -307,7 +281,7 @@ fn check_rules_reports_counts() {
     grid[2] = VALUE_B;
     grid[3] = VALUE_A;
     assert_eq!(
-        check_rules(&d, &grid),
+        check_rules(&d, &grid).unwrap(),
         vec![Violation::RowCount {
             row: 0,
             value: VALUE_A,
@@ -316,23 +290,66 @@ fn check_rules_reports_counts() {
     );
     // Two of each is fine.
     grid[3] = VALUE_B;
-    assert!(check_rules(&d, &grid).is_empty());
+    assert!(check_rules(&d, &grid).unwrap().is_empty());
 }
 
 #[test]
 fn partial_solution_is_incomplete_not_wrong() {
-    let g = generate(9, params(8, 8, Tier::Tricky));
+    let g = generate(9, params(8, 8, Tier::Tricky)).unwrap();
     let mut grid = g.solution.clone();
     for b in grid.iter_mut().step_by(2) {
         *b = EMPTY;
     }
-    assert!(check_rules(&g.description, &grid).is_empty());
-    assert!(check_rules(&g.description, &[]).is_empty(), "wrong length reads as empty");
+    assert!(check_rules(&g.description, &grid).unwrap().is_empty());
+    assert!(!is_complete(&g.description, &grid).unwrap());
+    assert!(!Unruly::is_solved(&g.description, &grid).unwrap());
+}
+
+/// A wrong-length grid is a caller bug. It used to read as an empty
+/// board, which made a broken client look like an untouched puzzle.
+#[test]
+fn wrong_length_grids_are_rejected() {
+    let g = generate(9, params(8, 8, Tier::Easy)).unwrap();
+    let expected = g.solution.len();
+    for grid in [vec![], vec![0u8; expected - 1], vec![0u8; expected + 1]] {
+        let actual = grid.len();
+        assert_eq!(
+            check_rules(&g.description, &grid),
+            Err(PuzzleError::GridLength { expected, actual })
+        );
+        assert_eq!(
+            is_complete(&g.description, &grid),
+            Err(PuzzleError::GridLength { expected, actual })
+        );
+    }
+}
+
+/// A byte this game gives no meaning to is reported, not read as empty.
+#[test]
+fn unknown_grid_bytes_are_rejected() {
+    let g = generate(9, params(8, 8, Tier::Easy)).unwrap();
+    for byte in [3u8, 0x80, 0xff] {
+        let mut grid = g.solution.clone();
+        grid[5] = byte;
+        assert_eq!(
+            check_rules(&g.description, &grid),
+            Err(PuzzleError::GridValue { cell: 5, byte })
+        );
+    }
 }
 
 #[test]
-fn count_solutions_handles_bad_and_ambiguous_input() {
-    assert_eq!(count_solutions(&[1, 7, 8], 2), 0, "malformed description");
+fn count_solutions_finds_ambiguity() {
     // A 6x6 grid with nothing given has many solutions.
-    assert_eq!(count_solutions(&blank(6, 6), 2), 2);
+    assert_eq!(count_solutions(&blank(6, 6), 2).unwrap(), 2);
+}
+
+/// The game can be held as `&dyn PuzzleCheck`, so part 2's rota can be a
+/// table of games rather than a match arm per game.
+#[test]
+fn works_through_a_dyn_reference() {
+    let g = generate(1, params(8, 8, Tier::Easy)).unwrap();
+    must_work_through_dyn::<Unruly>(&g.description, &g.solution);
+    let blank = vec![0u8; g.solution.len()];
+    must_work_through_dyn::<Unruly>(&g.description, &blank);
 }

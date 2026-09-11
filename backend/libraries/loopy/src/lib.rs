@@ -64,27 +64,31 @@
 //! Easy uses 1-6, 9 and 10 (Tatham's DIFF_EASY: trivial_deductions and
 //! loop_deductions). Tricky adds 7 and 8 (DIFF_NORMAL: dline_deductions).
 
-mod dsf;
 mod generate;
 mod grid;
-mod rng;
 mod solver;
 mod state;
 
-use dsf::Dsf;
 use grid::Grid;
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid};
 use state::State;
+
+pub use puzzle_core::Tier;
+
+/// This game, as the [`Puzzle`] trait sees it.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Loopy;
+
+/// One attempt draws a random loop, clues every cell and strips the clues
+/// back down, each step running a full technique solve, so attempts are
+/// the most expensive of the six. Measured 2026-09-11: every playable
+/// size succeeds within a handful of attempts.
+const MAX_ATTEMPTS: u32 = 100;
 
 pub const GAME_ID: &str = "loopy";
 
 const FORMAT_VERSION: u8 = 1;
 const CLUE_NONE: u8 = 0xFF;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Tier {
-    Easy = 0,
-    Tricky = 1,
-}
 
 #[derive(Clone, Copy, Debug)]
 pub struct Params {
@@ -119,31 +123,17 @@ pub enum Technique {
     LoopClosed = 10,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Hint {
-    pub technique: Technique,
-    /// Edge indices the deduction looked at, plus `edge_count + cell` for
-    /// the clue cell it is about and `edge_count + cells + dot` for the
-    /// dot it is about, if any.
-    pub focus: Vec<u16>,
-    /// The keys the technique sentence points at ("this number", "this dot",
-    /// "this segment"): a non-empty subset of `focus`, painted strongly by the
-    /// client while the rest of `focus` is context.
-    pub target: Vec<u16>,
-    /// (edge index, value) where value 1 = line, 0 = no line.
-    pub conclusions: Vec<(u16, u8)>,
+impl From<Technique> for u8 {
+    fn from(technique: Technique) -> u8 {
+        technique as u8
+    }
 }
 
-#[derive(Clone, Debug)]
-pub struct Generated {
-    pub description: Vec<u8>,
-    pub solution: Vec<u8>,
-    /// The solver's deduction trace from the empty grid, in order.
-    pub hints: Vec<Hint>,
-    /// The solution in hint-key space: see [`solution_pairs`].
-    pub pairs: Vec<(u16, u8)>,
-    pub tier: Tier,
-}
+/// Conclusion keys are edge indices, values 1 = line, 0 = no line. Focus
+/// also carries `edge_count + cell` for a clue cell and
+/// `edge_count + cells + dot` for a dot: see [`Description::dot_key_offset`].
+pub type Hint = puzzle_core::Hint<Technique>;
+pub type Generated = puzzle_core::Generated<Technique>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Description {
@@ -175,9 +165,13 @@ impl Description {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Violation {
-    /// The clue cell has `actual` lines around it instead of `expected`.
+    /// The clue cell already has more lines around it than it allows. A
+    /// clue with too few is not a violation: the grid is merely
+    /// unfinished.
     ClueCount { cell: u16, expected: u8, actual: u8 },
-    /// A dot (index y*(width+1)+x) with one line, or three or more.
+    /// A dot (index y*(width+1)+x) with three or more lines, which no
+    /// single loop can pass through. A dot with one line is the end of a
+    /// path the player has not closed yet, not a rule broken.
     DotDegree { dot: u16, degree: u8 },
     /// Every dot has zero or two lines but they form more than one loop;
     /// one of these per loop other than the largest, listing its edges.
@@ -185,25 +179,36 @@ pub enum Violation {
 }
 
 /// Deterministic: the same seed and params always give the same bytes.
-/// Panics if width or height is below 3, Tatham's minimum for the square
-/// grid.
-pub fn generate(seed: u64, params: Params) -> Generated {
+pub fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
     generate::generate(seed, params)
 }
 
-/// Rule check used by tests and mirrored by the client. `grid` is one
-/// byte per edge, nonzero = line. A grid of the wrong length is treated
-/// as having no lines at all. An open path whose dots all have at most
-/// two lines is reported only through its two ends. Panics on a
-/// malformed description.
-pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
-    let d = parse_description(description).expect("malformed description");
+/// What one pass over a player's grid finds.
+struct Scan {
+    violations: Vec<Violation>,
+    /// Every clue has exactly the lines it asks for.
+    clues_exact: bool,
+    /// Every dot has no lines or two, so the lines form closed loops.
+    closed: bool,
+    /// Exactly one loop, with at least one edge in it.
+    single_loop: bool,
+}
+
+/// `grid` is one byte per edge: 1 = line, 0 = no line. Anything else is a
+/// caller bug and is reported rather than read as no line.
+fn scan(description: &[u8], grid: &[u8]) -> Result<(Description, Grid, Scan), PuzzleError> {
+    let d = parse_description(description)?;
     let g = Grid {
         w: d.width as usize,
         h: d.height as usize,
     };
-    let line = |e: usize| grid.len() == g.edges() && grid[e] != 0;
+    let grid = checked_grid(grid, g.edges())?;
+    if let Some((e, &byte)) = grid.iter().enumerate().find(|&(_, &b)| b > 1) {
+        return Err(PuzzleError::GridValue { cell: e as u16, byte });
+    }
+    let line = |e: usize| grid[e] != 0;
     let mut out = Vec::new();
+    let mut clues_exact = true;
 
     for (f, clue) in d.clues.iter().enumerate() {
         let Some(expected) = *clue else {
@@ -211,6 +216,11 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
         };
         let actual = g.cell_edges(f).into_iter().filter(|&e| line(e)).count() as u8;
         if actual != expected {
+            clues_exact = false;
+        }
+        // Too few lines round a clue means the grid is unfinished, not
+        // wrong; only too many is a rule broken.
+        if actual > expected {
             out.push(Violation::ClueCount {
                 cell: f as u16,
                 expected,
@@ -219,16 +229,29 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
         }
     }
 
+    // A dot with one line is the loose end of a path the player is still
+    // drawing. Three or more can never be part of a single loop.
     let mut closed = true;
     for dot in 0..g.dots() {
         let degree = g.dot_edges(dot).iter().filter(|&&e| line(e)).count() as u8;
-        if degree == 1 || degree >= 3 {
+        if degree != 0 && degree != 2 {
             closed = false;
+        }
+        if degree >= 3 {
             out.push(Violation::DotDegree { dot: dot as u16, degree });
         }
     }
     if !closed {
-        return out;
+        return Ok((
+            d,
+            g,
+            Scan {
+                violations: out,
+                clues_exact,
+                closed,
+                single_loop: false,
+            },
+        ));
     }
 
     let mut dsf = Dsf::new(g.dots());
@@ -245,6 +268,7 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
             None => loops.push((root, vec![e as u16])),
         }
     }
+    let single_loop = loops.len() == 1;
     if loops.len() > 1 {
         let largest = (0..loops.len()).max_by_key(|&i| (loops[i].1.len(), usize::MAX - i)).unwrap();
         for (i, (_, edges)) in loops.into_iter().enumerate() {
@@ -253,74 +277,97 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
             }
         }
     }
-    out
+    Ok((
+        d,
+        g,
+        Scan {
+            violations: out,
+            clues_exact,
+            closed,
+            single_loop,
+        },
+    ))
+}
+
+/// Rule check used by tests and mirrored by the client. Reports only what
+/// is definitely wrong: a half-drawn loop is unfinished, not broken. See
+/// [`is_complete`] for whether the grid is finished.
+pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
+    Ok(scan(description, grid)?.2.violations)
+}
+
+/// Whether the lines form one closed loop that satisfies every clue
+/// exactly. Says nothing about whether it is the *right* loop: pair it
+/// with [`check_rules`], or use [`Puzzle::is_solved`].
+pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+    let (_, _, scan) = scan(description, grid)?;
+    Ok(scan.clues_exact && scan.closed && scan.single_loop)
 }
 
 /// The solution in hint-key space: `(edge index, 1 = line / 0 = no
 /// line)` for every edge, sorted by edge. Same keys and values as hint
 /// conclusions. A solution of the wrong length counts as having no
 /// lines. Panics on a malformed description.
-pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Vec<(u16, u8)> {
-    let d = parse_description(description).expect("malformed description");
+pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
+    let d = parse_description(description)?;
     let n = d.edge_count();
-    (0..n)
-        .map(|e| (e as u16, (solution.len() == n && solution[e] != 0) as u8))
-        .collect()
+    let solution = checked_grid(solution, n)?;
+    Ok((0..n).map(|e| (e as u16, (solution[e] != 0) as u8)).collect())
 }
 
-/// Number of solutions, capped at `cap`, via backtracking. Returns 0 for a
-/// malformed description.
-pub fn count_solutions(description: &[u8], cap: u32) -> u32 {
-    let Ok(d) = parse_description(description) else {
-        return 0;
-    };
+/// Number of solutions, capped at `cap`, via backtracking.
+pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
+    let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    solver::count_solutions(&mut st, cap)
+    Ok(solver::count_solutions(&mut st, cap))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
 /// solution if it was reached without guessing.
-pub fn solve_with_trace(description: &[u8], tier: Tier) -> (Vec<Hint>, Option<Vec<u8>>) {
-    let Ok(d) = parse_description(description) else {
-        return (Vec::new(), None);
-    };
+pub fn solve_with_trace(description: &[u8], tier: Tier) -> Result<(Vec<Hint>, Option<Vec<u8>>), PuzzleError> {
+    let d = parse_description(description)?;
     let mut st = State::from_description(&d);
     let mut hints = Vec::new();
     let solution = match solver::solve(&mut st, tier, Some(&mut hints)) {
         solver::Outcome::Solved => Some(st.line_bytes()),
         _ => None,
     };
-    (hints, solution)
+    Ok((hints, solution))
 }
 
-pub fn parse_description(bytes: &[u8]) -> Result<Description, String> {
+pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     if bytes.len() < 3 {
-        return Err("description too short".to_string());
+        return Err(PuzzleError::description("description too short"));
     }
     if bytes[0] != FORMAT_VERSION {
-        return Err(format!("unsupported format version {}", bytes[0]));
+        return Err(PuzzleError::description(format!("unsupported format version {}", bytes[0])));
     }
     let (width, height) = (bytes[1], bytes[2]);
     if width == 0 || height == 0 {
-        return Err("width and height must be at least 1".to_string());
+        return Err(PuzzleError::description("width and height must be at least 1"));
     }
     let g = Grid {
         w: width as usize,
         h: height as usize,
     };
     if g.edges() + g.cells() + g.dots() > u16::MAX as usize {
-        return Err(format!("{width}x{height} has too many edges for 16-bit keys"));
+        return Err(PuzzleError::description(format!(
+            "{width}x{height} has too many edges for 16-bit keys"
+        )));
     }
     let expected = 3 + g.cells();
     if bytes.len() != expected {
-        return Err(format!("expected {expected} bytes, got {}", bytes.len()));
+        return Err(PuzzleError::description(format!(
+            "expected {expected} bytes, got {}",
+            bytes.len()
+        )));
     }
     let clues = bytes[3..]
         .iter()
         .map(|&b| match b {
             CLUE_NONE => Ok(None),
             0..=3 => Ok(Some(b)),
-            _ => Err(format!("bad clue byte 0x{b:02x}")),
+            _ => Err(PuzzleError::description(format!("bad clue byte 0x{b:02x}"))),
         })
         .collect::<Result<Vec<_>, _>>()?;
     Ok(Description { width, height, clues })
@@ -337,15 +384,14 @@ pub(crate) fn encode_description(st: &State) -> Vec<u8> {
 
 /// Tatham's text layout: 2*height+1 rows of 2*width+1 characters, dots
 /// as `+`, clues as digits, and with a grid `-` / `|` for lines.
-pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> String {
-    let Ok(d) = parse_description(description) else {
-        return String::new();
-    };
+pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
+    let d = parse_description(description)?;
     let g = Grid {
         w: d.width as usize,
         h: d.height as usize,
     };
-    let line = |e: usize| grid.is_some_and(|b| b.len() == g.edges() && b[e] != 0);
+    let grid = grid.map(|b| checked_grid(b, g.edges())).transpose()?;
+    let line = |e: usize| grid.is_some_and(|b| b[e] != 0);
     let mut out = String::with_capacity((2 * g.w + 2) * (2 * g.h + 1));
     for y in 0..=g.h {
         for x in 0..g.w {
@@ -367,5 +413,46 @@ pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> String {
         }
         out.push('\n');
     }
-    out
+    Ok(out)
+}
+
+impl Puzzle for Loopy {
+    type Params = Params;
+    type Technique = Technique;
+    type Description = Description;
+    type Violation = Violation;
+
+    const GAME_ID: &'static str = GAME_ID;
+
+    fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+        generate(seed, params)
+    }
+
+    fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
+        parse_description(bytes)
+    }
+
+    fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
+        check_rules(description, grid)
+    }
+
+    fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        is_complete(description, grid)
+    }
+
+    fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
+        solution_pairs(description, solution)
+    }
+
+    fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
+        count_solutions(description, cap)
+    }
+
+    fn solve_with_trace(description: &[u8], tier: Tier) -> Result<(Vec<Hint>, Option<Vec<u8>>), PuzzleError> {
+        solve_with_trace(description, tier)
+    }
+
+    fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
+        render_ascii(description, grid)
+    }
 }

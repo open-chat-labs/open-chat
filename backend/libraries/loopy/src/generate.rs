@@ -1,8 +1,8 @@
 use crate::grid::Grid;
-use crate::rng::Rng;
 use crate::solver::{Outcome, solve};
 use crate::state::State;
-use crate::{Generated, Params, Tier, encode_description, solution_pairs, solve_with_trace};
+use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, solution_pairs, solve_with_trace};
+use puzzle_core::{Budget, GenerateError, Rng};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Colour {
@@ -79,10 +79,23 @@ fn generate_loop(grid: Grid, rng: &mut Rng) -> Vec<Colour> {
         if light.is_none() && dark.is_none() {
             break;
         }
-        let colour = if rng.below(2) == 1 { Colour::White } else { Colour::Black };
-        let chosen = if colour == Colour::White { light } else { dark };
-        // Tatham asserts both lists are non-empty while any grey remains.
-        board[chosen.expect("a grey cell can always take either colour")] = colour;
+        // The draw comes after that break, as Tatham's does, so the RNG
+        // stream is unchanged. Tatham then asserts that both colours have
+        // a candidate and takes the one drawn. Here the drawn colour is
+        // taken when it has a candidate and the other colour otherwise:
+        // the line above already contemplates a list being empty, and a
+        // failed assertion in a canister is a trap.
+        let wants_white = rng.below(2) == 1;
+        let (colour, chosen) = match (wants_white, light, dark) {
+            (true, Some(f), _) => (Colour::White, f),
+            (false, _, Some(f)) => (Colour::Black, f),
+            (true, None, Some(f)) => (Colour::Black, f),
+            (false, Some(f), None) => (Colour::White, f),
+            // Unreachable after the check above, and a break rather than
+            // a panic so that it stays unreachable if that ever changes.
+            (_, None, None) => break,
+        };
+        board[chosen] = colour;
     }
     debug_assert!(board.iter().all(|&c| c != Colour::Grey));
 
@@ -155,18 +168,40 @@ fn remove_clues(st: &mut State, rng: &mut Rng, tier: Tier) {
     }
 }
 
-/// Port of `new_game_desc`.
-pub(crate) fn generate(seed: u64, params: Params) -> Generated {
+/// Reject sizes this game has no puzzle for, before any searching.
+fn validate(params: Params) -> Result<Grid, GenerateError> {
     let grid = Grid {
         w: params.width as usize,
         h: params.height as usize,
     };
-    assert!(grid.w >= 3 && grid.h >= 3, "width and height must be at least 3");
+    if grid.w < 3 || grid.h < 3 {
+        return Err(GenerateError::invalid(format!(
+            "width and height must be at least 3, got {}x{}",
+            grid.w, grid.h
+        )));
+    }
+    if grid.edges() + grid.cells() + grid.dots() > u16::MAX as usize {
+        return Err(GenerateError::invalid(format!(
+            "{}x{} has more edges, cells and dots than a u16 hint key can address",
+            grid.w, grid.h
+        )));
+    }
+    Ok(grid)
+}
+
+/// Port of `new_game_desc`. Both of Tatham's loops retry without bound;
+/// here they share one budget, so parameters with no puzzle end in a
+/// `GenerateError` instead of spinning until the canister traps.
+pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+    let grid = validate(params)?;
     let tier = params.tier;
     let mut rng = Rng::new(seed);
+    let mut budget = Budget::new(MAX_ATTEMPTS);
 
     loop {
+        budget.spend()?;
         let (mut st, solution) = loop {
+            budget.spend()?;
             let (st, solution) = add_full_clues(grid, &mut rng);
             if has_unique_soln(&st, tier) {
                 break (st, solution);
@@ -177,14 +212,24 @@ pub(crate) fn generate(seed: u64, params: Params) -> Generated {
             continue;
         }
         let description = encode_description(&st);
-        let (hints, _) = solve_with_trace(&description, tier);
-        let pairs = solution_pairs(&description, &solution);
-        return Generated {
+        // Checked at runtime, not with debug_assert: a puzzle whose hints
+        // lead somewhere other than its stored solution, or which needs no
+        // deductions at all, must never reach a player.
+        let Ok((hints, solved)) = solve_with_trace(&description, tier) else {
+            continue;
+        };
+        if solved.as_deref() != Some(solution.as_slice()) || hints.is_empty() {
+            continue;
+        }
+        let Ok(pairs) = solution_pairs(&description, &solution) else {
+            continue;
+        };
+        return Ok(Generated {
             description,
             solution,
             hints,
             pairs,
             tier,
-        };
+        });
     }
 }

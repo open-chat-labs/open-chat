@@ -1,12 +1,17 @@
-use crate::rng::Rng;
 use crate::solver::{Outcome, solve};
 use crate::state::{MAX_BRIDGES, State};
 use crate::{Description, Generated, Params, Tier, encode_description, solution_pairs, solve_with_trace};
+use puzzle_core::{Budget, GenerateError, Rng};
 
 const MAX_NEWISLAND_TRIES: usize = 50;
 const MIN_SENSIBLE_ISLANDS: usize = 3;
-/// Tatham loops forever; a canister must not, so give up eventually.
-const MAX_ATTEMPTS: usize = 100_000;
+/// Tatham loops forever; a canister must not. The old cap was 100,000,
+/// which protected the test binary rather than the canister: at a size
+/// where each attempt runs a full solve it far exceeds one message's
+/// instruction budget. Measured 2026-09-11: every playable size succeeds
+/// well inside this, and a size with no puzzle spends the whole budget in
+/// a few milliseconds.
+const MAX_ATTEMPTS: u32 = 2_000;
 
 const WATER: u8 = 0;
 const ISLAND: u8 = 1;
@@ -237,17 +242,43 @@ fn solvable(st: &State, tier: Tier) -> Option<Vec<u8>> {
 
 /// Port of `new_game_desc`. Bridges has no clues to strip: every island
 /// carries its number, so a layout is kept or rejected as a whole.
-pub(crate) fn generate(seed: u64, params: Params) -> Generated {
+/// Reject parameters this game has no puzzle for, before any searching.
+fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
     let (w, h) = (params.width as usize, params.height as usize);
-    assert!(w >= 3 && h >= 3, "width and height must be at least 3");
-    assert!(w * h <= 32767, "grid too large for u16 edge keys");
-    assert!((1..=30).contains(&params.island_pct), "island_pct must be between 1 and 30");
-    assert!(params.expansion_pct <= 100, "expansion_pct must be at most 100");
+    if w < 3 || h < 3 {
+        return Err(GenerateError::invalid(format!(
+            "width and height must be at least 3, got {w}x{h}"
+        )));
+    }
+    if w * h > 32767 {
+        return Err(GenerateError::invalid(format!(
+            "{w}x{h} has more cells than a u16 edge key can address"
+        )));
+    }
+    if !(1..=30).contains(&params.island_pct) {
+        return Err(GenerateError::invalid(format!(
+            "island_pct must be between 1 and 30, got {}",
+            params.island_pct
+        )));
+    }
+    if params.expansion_pct > 100 {
+        return Err(GenerateError::invalid(format!(
+            "expansion_pct must be at most 100, got {}",
+            params.expansion_pct
+        )));
+    }
+    Ok((w, h))
+}
+
+pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+    let (w, h) = validate(params)?;
     let tier = params.tier;
     let ni_req = (params.island_pct as usize * w * h / 100).max(MIN_SENSIBLE_ISLANDS);
     let mut rng = Rng::new(seed);
+    let mut budget = Budget::new(MAX_ATTEMPTS);
 
-    for _ in 0..MAX_ATTEMPTS {
+    loop {
+        budget.spend()?;
         let layout = build(&mut rng, w, h, ni_req, params.expansion_pct);
         if layout.islands.len() == 1 || !layout.touches_all_sides() {
             continue;
@@ -267,15 +298,23 @@ pub(crate) fn generate(seed: u64, params: Params) -> Generated {
             continue;
         }
         let description = encode_description(&d);
-        let (hints, _) = solve_with_trace(&description, tier);
-        let pairs = solution_pairs(&description, &solution);
-        return Generated {
+        let Ok((hints, traced)) = solve_with_trace(&description, tier) else {
+            continue;
+        };
+        // A puzzle whose hints lead somewhere other than its stored
+        // solution, or which needs no deductions at all, is not served.
+        if traced.as_deref() != Some(solution.as_slice()) || hints.is_empty() {
+            continue;
+        }
+        let Ok(pairs) = solution_pairs(&description, &solution) else {
+            continue;
+        };
+        return Ok(Generated {
             description,
             solution,
             hints,
             pairs,
             tier,
-        };
+        });
     }
-    panic!("no {tier:?} bridges puzzle of {w}x{h} found for seed {seed}");
 }

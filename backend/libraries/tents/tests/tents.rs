@@ -1,6 +1,7 @@
-use std::collections::BTreeMap;
+use puzzle_core::testing::{must_generate, must_reject, must_terminate, must_work_through_dyn};
+use puzzle_core::{Puzzle, PuzzleError, Tier};
 use tents::{
-    Cell, Generated, Params, Tier, Violation, check_rules, count_solutions, generate, parse_description, render_ascii,
+    Cell, Params, Tents, Violation, check_rules, count_solutions, generate, is_complete, parse_description, render_ascii,
     solution_pairs, solve_with_trace,
 };
 
@@ -14,144 +15,140 @@ fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-fn replay_hints(g: &Generated) -> Vec<u8> {
-    let d = parse_description(&g.description).unwrap();
-    let mut grid = vec![0u8; d.width as usize * d.height as usize];
-    let mut grass = vec![false; grid.len()];
-    for hint in &g.hints {
-        for &(cell, value) in &hint.conclusions {
-            let cell = cell as usize;
-            assert_eq!(d.cells[cell], Cell::Empty, "hint concludes about a tree cell");
-            assert!(grid[cell] == 0 && !grass[cell], "hint fixes a cell that is already fixed");
-            if value == 1 {
-                grid[cell] = 1;
-            } else {
-                grass[cell] = true;
+/// The sizes The Daily can serve, both tiers of each.
+fn playable() -> Vec<Params> {
+    let mut out = Vec::new();
+    for (w, h) in [(5, 5), (6, 6), (8, 8), (8, 10), (10, 8), (10, 10), (12, 12), (14, 14)] {
+        for tier in Tier::ALL {
+            out.push(params(w, h, tier));
+        }
+    }
+    out
+}
+
+#[test]
+fn generated_8x8() {
+    for tier in Tier::ALL {
+        must_generate::<Tents>(params(8, 8, tier), 0..SEEDS_PER_CONFIG);
+    }
+}
+
+#[test]
+fn generated_10x10() {
+    for tier in Tier::ALL {
+        must_generate::<Tents>(params(10, 10, tier), 0..SEEDS_PER_CONFIG);
+    }
+}
+
+/// Every size and tier this game accepts produces a puzzle. The point is
+/// the parameter coverage: a combination that could never generate used
+/// to spin forever instead of failing a test.
+#[test]
+fn every_playable_size_generates() {
+    for p in playable() {
+        must_generate::<Tents>(p, 0..25);
+    }
+}
+
+/// Every tree density that leaves enough tents to reach every row and
+/// column.
+#[test]
+fn every_workable_density_generates() {
+    for tree_pct in [13, 15, 18, 20] {
+        for tier in Tier::ALL {
+            let mut p = params(10, 10, tier);
+            p.tree_pct = tree_pct;
+            must_generate::<Tents>(p, 0..25);
+        }
+    }
+}
+
+/// The top of the density range is legal but thin. At 25% on a grid of
+/// 10x10 or more, most seeds have no layout that leaves a solvable
+/// puzzle, so generation ends in `Exhausted` and the caller moves to the
+/// next seed. It used to spin instead.
+#[test]
+fn the_densest_legal_setting_terminates() {
+    for (w, h) in [(10, 10), (12, 12), (16, 16)] {
+        for tier in Tier::ALL {
+            let mut p = params(w, h, tier);
+            p.tree_pct = 25;
+            must_terminate::<Tents>(p, 0..3);
+        }
+    }
+}
+
+/// A density that rounds down to fewer trees than the grid has rows used
+/// to spin forever: no layout can fill every row and column, so every
+/// attempt was rejected and retried. It is now turned away up front.
+#[test]
+fn impossible_densities_are_rejected() {
+    for (w, h, tree_pct) in [
+        (8, 8, 1),
+        (8, 8, 5),
+        (8, 8, 12),
+        (4, 4, 1),
+        (4, 4, 24),
+        (10, 10, 9),
+        (8, 8, 0),
+        (8, 8, 26),
+        (8, 8, 100),
+    ] {
+        for tier in Tier::ALL {
+            let mut p = params(w, h, tier);
+            p.tree_pct = tree_pct;
+            must_reject::<Tents>(p, 0..3);
+        }
+    }
+}
+
+#[test]
+fn impossible_sizes_are_rejected() {
+    for (w, h) in [(0, 0), (3, 3), (3, 8), (8, 3)] {
+        for tier in Tier::ALL {
+            must_reject::<Tents>(params(w, h, tier), 0..3);
+        }
+    }
+}
+
+/// Grids at the edge of what is playable still have to return.
+#[test]
+fn extreme_sizes_terminate() {
+    for (w, h) in [(4, 4), (4, 20), (20, 4), (16, 16)] {
+        for tier in Tier::ALL {
+            for tree_pct in [20, 25] {
+                let mut p = params(w, h, tier);
+                p.tree_pct = tree_pct;
+                must_terminate::<Tents>(p, 0..3);
             }
         }
     }
-    grid
 }
 
-/// `pairs` is the solution over exactly the non-tree cells, and every
-/// hint conclusion agrees with it.
-fn check_pairs(g: &Generated, ctx: &str) {
-    let d = parse_description(&g.description).unwrap();
-    assert_eq!(g.pairs, solution_pairs(&g.description, &g.solution), "{ctx}: pairs");
-    let keys: Vec<u16> = g.pairs.iter().map(|&(k, _)| k).collect();
-    let empty: Vec<u16> = (0..d.cells.len() as u16)
-        .filter(|&i| d.cells[i as usize] == Cell::Empty)
-        .collect();
-    assert_eq!(keys, empty, "{ctx}: pairs keys are not the non-tree cells");
-    let pairs: BTreeMap<u16, u8> = g.pairs.iter().copied().collect();
-    let mut replayed = BTreeMap::new();
-    for hint in &g.hints {
-        for &(k, v) in &hint.conclusions {
-            replayed.insert(k, v);
-        }
-    }
-    assert_eq!(replayed, pairs, "{ctx}: replayed hints differ from pairs");
-}
-
-fn check_generated(seed: u64, p: Params) {
-    let g = generate(seed, p);
-    let ctx = format!("seed {seed} {}x{} {:?}", p.width, p.height, p.tier);
-
-    assert_eq!(g.tier, p.tier, "{ctx}");
-    assert_eq!(count_solutions(&g.description, 2), 1, "{ctx}: not unique");
-    assert!(
-        check_rules(&g.description, &g.solution).is_empty(),
-        "{ctx}: solution breaks rules"
-    );
-
-    let (hints, solved) = solve_with_trace(&g.description, p.tier);
-    assert_eq!(
-        solved.as_deref(),
-        Some(g.solution.as_slice()),
-        "{ctx}: solver disagrees with solution"
-    );
-    assert_eq!(hints, g.hints, "{ctx}: trace differs from stored hints");
-    assert!(!g.hints.is_empty(), "{ctx}: no hints");
-
-    for hint in &g.hints {
-        assert!(!hint.focus.is_empty(), "{ctx}: empty focus");
-        assert!(!hint.target.is_empty(), "{ctx}: empty target");
-        assert!(
-            hint.target.iter().all(|t| hint.focus.contains(t)),
-            "{ctx}: target not a subset of focus"
-        );
-        assert!(!hint.conclusions.is_empty(), "{ctx}: empty conclusions");
-        for &(cell, value) in &hint.conclusions {
-            assert_eq!(g.solution[cell as usize], value, "{ctx}: conclusion disagrees with solution");
-        }
-    }
-    assert_eq!(
-        replay_hints(&g),
-        g.solution,
-        "{ctx}: replaying hints does not reach the solution"
-    );
-    check_pairs(&g, &ctx);
-
-    if p.tier == Tier::Tricky {
-        assert!(
-            solve_with_trace(&g.description, Tier::Easy).1.is_none(),
-            "{ctx}: easy solver finished a tricky puzzle"
-        );
-    }
-}
-
+/// Tatham downgrades Tricky to Easy on a grid no bigger than 4x4, and the
+/// puzzle reports the tier it actually used. A 4x4 needs the top density
+/// to give each of its four rows a tree.
 #[test]
-fn generated_8x8_easy() {
-    for seed in 0..SEEDS_PER_CONFIG {
-        check_generated(seed, params(8, 8, Tier::Easy));
-    }
-}
-
-#[test]
-fn generated_8x8_tricky() {
-    for seed in 0..SEEDS_PER_CONFIG {
-        check_generated(seed, params(8, 8, Tier::Tricky));
-    }
-}
-
-#[test]
-fn generated_10x10_easy() {
-    for seed in 0..SEEDS_PER_CONFIG {
-        check_generated(seed, params(10, 10, Tier::Easy));
-    }
-}
-
-#[test]
-fn generated_10x10_tricky() {
-    for seed in 0..SEEDS_PER_CONFIG {
-        check_generated(seed, params(10, 10, Tier::Tricky));
-    }
+fn tiny_grids_report_the_tier_they_used() {
+    let mut p = params(4, 4, Tier::Tricky);
+    p.tree_pct = 25;
+    let g = generate(1, p).unwrap();
+    assert_eq!(g.tier, Tier::Easy);
 }
 
 #[test]
 fn single_cell_perturbation_is_caught() {
     for seed in 0..50 {
         let p = params(8, 8, if seed % 2 == 0 { Tier::Easy } else { Tier::Tricky });
-        let g = generate(seed, p);
+        let g = generate(seed, p).unwrap();
         for i in 0..g.solution.len() {
             let mut grid = g.solution.clone();
             grid[i] ^= 1;
             assert!(
-                !check_rules(&g.description, &grid).is_empty(),
-                "seed {seed}: flipping cell {i} went unnoticed"
+                !Tents::is_solved(&g.description, &grid).unwrap(),
+                "seed {seed}: flipping cell {i} still counts as solved"
             );
         }
-    }
-}
-
-#[test]
-fn generation_is_deterministic() {
-    for (w, h, tier) in [(8, 8, Tier::Easy), (10, 10, Tier::Tricky)] {
-        let a = generate(7, params(w, h, tier));
-        let b = generate(7, params(w, h, tier));
-        assert_eq!(a.description, b.description);
-        assert_eq!(a.solution, b.solution);
-        assert_eq!(a.hints, b.hints);
     }
 }
 
@@ -161,14 +158,14 @@ fn fixed_seed_snapshot() {
     // means the wire encoding or the generator's RNG stream drifted.
     const DESCRIPTION_HEX: &str = "0108080000000001000000000100000000000000010000000000000000000000010001000000000100000100000000000100000100010000000100000000000000010002000201020102020102000200040003";
     const SOLUTION_HEX: &str = "00010000000100000000000000000000000000000001000100010000000000000000000100010000000000000000000100000001000100000100000000000001";
-    let g = generate(42, params(8, 8, Tier::Easy));
+    let g = generate(42, params(8, 8, Tier::Easy)).unwrap();
     assert_eq!(hex(&g.description), DESCRIPTION_HEX);
     assert_eq!(hex(&g.solution), SOLUTION_HEX);
 }
 
 #[test]
 fn parse_rejects_bad_input() {
-    let good = generate(1, params(8, 8, Tier::Easy)).description;
+    let good = generate(1, params(8, 8, Tier::Easy)).unwrap().description;
     assert!(parse_description(&good).is_ok());
 
     let mut wrong_version = good.clone();
@@ -208,9 +205,9 @@ fn parse_rejects_bad_input() {
 
 #[test]
 fn render_ascii_has_one_line_per_row_plus_column_counts() {
-    let g = generate(3, params(10, 7, Tier::Easy));
-    let puzzle = render_ascii(&g.description, None);
-    let solved = render_ascii(&g.description, Some(&g.solution));
+    let g = generate(3, params(10, 7, Tier::Easy)).unwrap();
+    let puzzle = render_ascii(&g.description, None).unwrap();
+    let solved = render_ascii(&g.description, Some(&g.solution)).unwrap();
     assert_eq!(puzzle.lines().count(), 8);
     assert_eq!(solved.lines().count(), 8);
     assert!(puzzle.lines().take(7).all(|l| l.len() == 12));
@@ -222,32 +219,17 @@ fn render_ascii_has_one_line_per_row_plus_column_counts() {
 
 #[test]
 fn check_rules_reports_each_violation_kind() {
-    let g = generate(5, params(8, 8, Tier::Easy));
+    let g = generate(5, params(8, 8, Tier::Easy)).unwrap();
     let d = parse_description(&g.description).unwrap();
     let w = d.width as usize;
 
     let tree = d.cells.iter().position(|&c| c == Cell::Tree).unwrap();
     let mut on_tree = g.solution.clone();
     on_tree[tree] = 1;
-    assert!(check_rules(&g.description, &on_tree).contains(&Violation::TentOnTree { cell: tree as u16 }));
-
-    let empty = vec![0u8; g.solution.len()];
-    let violations = check_rules(&g.description, &empty);
-    assert!(violations.iter().any(|v| matches!(v, Violation::RowCount { actual: 0, .. })));
     assert!(
-        violations
-            .iter()
-            .any(|v| matches!(v, Violation::ColumnCount { actual: 0, .. }))
-    );
-    assert!(
-        violations
-            .iter()
-            .any(|v| matches!(v, Violation::Unmatched { tents, .. } if tents.is_empty()))
-    );
-    assert!(
-        !violations
-            .iter()
-            .any(|v| matches!(v, Violation::TentsTouch { .. } | Violation::TentOnTree { .. }))
+        check_rules(&g.description, &on_tree)
+            .unwrap()
+            .contains(&Violation::TentOnTree { cell: tree as u16 })
     );
 
     // A tent placed diagonally below-right of an existing tent touches it.
@@ -256,13 +238,18 @@ fn check_rules_reports_each_violation_kind() {
     if tent % w + 1 < w && diag < g.solution.len() && d.cells[diag] == Cell::Empty {
         let mut touching = g.solution.clone();
         touching[diag] = 1;
-        assert!(check_rules(&g.description, &touching).contains(&Violation::TentsTouch {
-            a: tent as u16,
-            b: diag as u16
-        }));
+        assert!(
+            check_rules(&g.description, &touching)
+                .unwrap()
+                .contains(&Violation::TentsTouch {
+                    a: tent as u16,
+                    b: diag as u16
+                })
+        );
     }
 
     // A tent with no tree beside it.
+    let empty = vec![0u8; g.solution.len()];
     let lonely = (0..g.solution.len())
         .find(|&i| {
             d.cells[i] == Cell::Empty
@@ -279,15 +266,117 @@ fn check_rules_reports_each_violation_kind() {
         .unwrap();
     let mut alone = empty.clone();
     alone[lonely] = 1;
-    assert!(check_rules(&g.description, &alone).contains(&Violation::TentWithoutTree { cell: lonely as u16 }));
+    assert!(
+        check_rules(&g.description, &alone)
+            .unwrap()
+            .contains(&Violation::TentWithoutTree { cell: lonely as u16 })
+    );
+}
+
+/// A row short of its tents means the grid is unfinished, not broken.
+/// This used to report every row, every column and every tree group on an
+/// untouched board, so a client asking "am I going wrong?" was told yes
+/// before the first move.
+#[test]
+fn an_untouched_board_is_incomplete_not_wrong() {
+    let g = generate(5, params(8, 8, Tier::Easy)).unwrap();
+    let empty = vec![0u8; g.solution.len()];
+    assert!(check_rules(&g.description, &empty).unwrap().is_empty());
+    assert!(!is_complete(&g.description, &empty).unwrap());
+    assert!(!Tents::is_solved(&g.description, &empty).unwrap());
+}
+
+/// A row with more tents than its count can never come right, however the
+/// rest of the grid is filled.
+#[test]
+fn a_row_over_its_count_is_a_violation() {
+    let g = generate(5, params(8, 8, Tier::Easy)).unwrap();
+    let d = parse_description(&g.description).unwrap();
+    let w = d.width as usize;
+    let row = (0..d.height as usize)
+        .find(|&y| d.row_counts[y] == 0 && (0..w).any(|x| d.cells[y * w + x] == Cell::Empty))
+        .or_else(|| (0..d.height as usize).find(|&y| d.row_counts[y] < 2))
+        .expect("a row with room to overfill");
+    let mut grid = vec![0u8; g.solution.len()];
+    let cells: Vec<usize> = (0..w)
+        .map(|x| row * w + x)
+        .filter(|&i| d.cells[i] == Cell::Empty)
+        .step_by(2)
+        .take(d.row_counts[row] as usize + 1)
+        .collect();
+    for &i in &cells {
+        grid[i] = 1;
+    }
+    let actual = cells.len() as u8;
+    assert!(check_rules(&g.description, &grid).unwrap().contains(&Violation::RowCount {
+        row: row as u8,
+        expected: d.row_counts[row],
+        actual
+    }));
+}
+
+/// A wrong-length grid is a caller bug. It used to read as a board with
+/// no tents, which made a broken client look like an untouched puzzle.
+#[test]
+fn wrong_length_grids_are_rejected() {
+    let g = generate(9, params(8, 8, Tier::Easy)).unwrap();
+    let expected = g.solution.len();
+    for grid in [vec![], vec![0u8; expected - 1], vec![0u8; expected + 1]] {
+        let actual = grid.len();
+        assert_eq!(
+            check_rules(&g.description, &grid),
+            Err(PuzzleError::GridLength { expected, actual })
+        );
+        assert_eq!(
+            is_complete(&g.description, &grid),
+            Err(PuzzleError::GridLength { expected, actual })
+        );
+    }
+}
+
+/// A byte this game gives no meaning to is reported, not read as no tent.
+#[test]
+fn unknown_grid_bytes_are_rejected() {
+    let g = generate(9, params(8, 8, Tier::Easy)).unwrap();
+    for byte in [2u8, 0x80, 0xff] {
+        let mut grid = g.solution.clone();
+        grid[5] = byte;
+        assert_eq!(
+            check_rules(&g.description, &grid),
+            Err(PuzzleError::GridValue { cell: 5, byte })
+        );
+    }
+}
+
+/// Every entry point that takes a description reports a malformed one the
+/// same way, instead of one panicking and the next returning a default.
+#[test]
+fn malformed_descriptions_are_reported_not_guessed() {
+    let bad: &[u8] = &[1, 8, 8];
+    assert!(matches!(check_rules(bad, &[]), Err(PuzzleError::Description(_))));
+    assert!(matches!(is_complete(bad, &[]), Err(PuzzleError::Description(_))));
+    assert!(matches!(count_solutions(bad, 2), Err(PuzzleError::Description(_))));
+    assert!(matches!(solve_with_trace(bad, Tier::Easy), Err(PuzzleError::Description(_))));
+    assert!(matches!(render_ascii(bad, None), Err(PuzzleError::Description(_))));
+    assert!(matches!(solution_pairs(bad, &[]), Err(PuzzleError::Description(_))));
 }
 
 #[test]
 fn tricky_uses_a_tricky_technique() {
-    let g = generate(0, params(10, 10, Tier::Tricky));
+    let g = generate(0, params(10, 10, Tier::Tricky)).unwrap();
     assert!(
         g.hints
             .iter()
             .any(|h| matches!(h.technique, tents::Technique::TreeCorner | tents::Technique::LineNeighbour))
     );
+}
+
+/// The game can be held as `&dyn PuzzleCheck`, so part 2's rota can be a
+/// table of games rather than a match arm per game.
+#[test]
+fn works_through_a_dyn_reference() {
+    let g = generate(1, params(8, 8, Tier::Easy)).unwrap();
+    must_work_through_dyn::<Tents>(&g.description, &g.solution);
+    let blank = vec![0u8; g.solution.len()];
+    must_work_through_dyn::<Tents>(&g.description, &blank);
 }

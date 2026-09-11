@@ -34,11 +34,24 @@
 //! Solution / grid: width*height bytes row-major, 0 = no bulb, 1 = bulb.
 
 mod generate;
-mod rng;
 mod solver;
 mod state;
 
+use puzzle_core::{GenerateError, Puzzle, PuzzleError, checked_grid};
 use state::State;
+
+pub use puzzle_core::Tier;
+
+/// This game, as the [`Puzzle`] trait sees it.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct LightUp;
+
+/// One attempt is a fresh black-square layout plus a full technique
+/// solve, so attempts are not cheap. Measured 2026-09-11: the sizes and
+/// densities this game accepts succeed well inside this, and the
+/// parameter combinations that never succeed exhaust it in under a
+/// second rather than hanging.
+const MAX_ATTEMPTS: u32 = 400;
 
 pub const GAME_ID: &str = "light_up";
 
@@ -46,12 +59,6 @@ const FORMAT_VERSION: u8 = 1;
 const CELL_WHITE: u8 = 0x00;
 const CELL_BLACK: u8 = 0x10;
 const CELL_CLUE_BASE: u8 = 0x11;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Tier {
-    Easy = 0,
-    Tricky = 1,
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Symmetry {
@@ -71,6 +78,19 @@ pub struct Params {
     pub tier: Tier,
 }
 
+impl Params {
+    /// Tatham's default density and symmetry for a grid of this size.
+    pub fn default_for(width: u8, height: u8, tier: Tier) -> Params {
+        Params {
+            width,
+            height,
+            black_pct: 20,
+            symmetry: Symmetry::Rot2,
+            tier,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Technique {
@@ -80,29 +100,16 @@ pub enum Technique {
     SetExclusion = 4,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Hint {
-    pub technique: Technique,
-    /// Cell indices (y*width+x) to highlight: the clue and/or the cells the
-    /// deduction looked at.
-    pub focus: Vec<u16>,
-    /// The keys the technique sentence points at ("this cell", "this number"): a subset of
-    /// `focus`, painted strongly by the client while the rest of `focus` is context.
-    pub target: Vec<u16>,
-    /// (cell index, value) where value 1 = bulb, 0 = no bulb.
-    pub conclusions: Vec<(u16, u8)>,
+impl From<Technique> for u8 {
+    fn from(technique: Technique) -> u8 {
+        technique as u8
+    }
 }
 
-#[derive(Clone, Debug)]
-pub struct Generated {
-    pub description: Vec<u8>,
-    pub solution: Vec<u8>,
-    /// The solver's deduction trace from the empty grid, in order.
-    pub hints: Vec<Hint>,
-    /// The solution in hint-key space: see [`solution_pairs`].
-    pub pairs: Vec<(u16, u8)>,
-    pub tier: Tier,
-}
+/// Keys are cell indices (y*width+x); conclusion values are 1 = bulb,
+/// 0 = no bulb.
+pub type Hint = puzzle_core::Hint<Technique>;
+pub type Generated = puzzle_core::Generated<Technique>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Cell {
@@ -119,27 +126,49 @@ pub struct Description {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Violation {
-    BulbSeesBulb { a: u16, b: u16 },
-    ClueCount { clue: u16, expected: u8, actual: u8 },
-    Unlit { cell: u16 },
-    BulbOnBlack { cell: u16 },
+    BulbSeesBulb {
+        a: u16,
+        b: u16,
+    },
+    /// This clue already has more bulbs beside it than it allows. A clue
+    /// with too few is not a violation: the grid is merely unfinished.
+    ClueCount {
+        clue: u16,
+        expected: u8,
+        actual: u8,
+    },
+    BulbOnBlack {
+        cell: u16,
+    },
 }
 
 /// Deterministic: the same seed and params always give the same bytes.
-/// Panics if width or height is below 2 or black_pct is outside 5..=100.
 /// Rot4 on a non-square grid falls back to Rot2, as Tatham does.
-pub fn generate(seed: u64, params: Params) -> Generated {
+pub fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
     generate::generate(seed, params)
 }
 
-/// Rule check used by tests and mirrored by the client. `grid` is w*h
-/// bytes, 1 = bulb, 0 = no bulb. A grid of the wrong length is treated as
-/// having no bulbs at all. Panics on a malformed description.
-pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
-    let d = parse_description(description).expect("malformed description");
+/// What one pass over a player's grid finds: which cells the bulbs light,
+/// and everything that is definitely wrong.
+struct Scan {
+    violations: Vec<Violation>,
+    /// Every white cell is lit by some bulb.
+    all_lit: bool,
+    /// Every clue has exactly the bulbs it asks for.
+    clues_exact: bool,
+}
+
+/// `grid` is w*h bytes: 1 = bulb, 0 = no bulb. Anything else is a caller
+/// bug and is reported rather than read as no bulb.
+fn scan(description: &[u8], grid: &[u8]) -> Result<(Description, Scan), PuzzleError> {
+    let d = parse_description(description)?;
     let (w, h) = (d.width as usize, d.height as usize);
     let n = w * h;
-    let bulb = |i: usize| grid.len() == n && grid[i] != 0;
+    let grid = checked_grid(grid, n)?;
+    if let Some((i, &byte)) = grid.iter().enumerate().find(|&(_, &b)| b > 1) {
+        return Err(PuzzleError::GridValue { cell: i as u16, byte });
+    }
+    let bulb = |i: usize| grid[i] != 0;
     let black = |i: usize| matches!(d.cells[i], Cell::Black(_));
     let mut out = Vec::new();
     let mut lit = vec![false; n];
@@ -184,16 +213,23 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
         }
     }
 
+    let mut all_lit = true;
+    let mut clues_exact = true;
     for (i, cell) in d.cells.iter().enumerate() {
         match *cell {
             Cell::White => {
                 if !lit[i] {
-                    out.push(Violation::Unlit { cell: i as u16 });
+                    all_lit = false;
                 }
             }
             Cell::Black(Some(expected)) => {
                 let actual = neighbours(w, h, i).filter(|&j| bulb(j)).count() as u8;
                 if actual != expected {
+                    clues_exact = false;
+                }
+                // Too few bulbs beside a clue means the grid is
+                // unfinished, not wrong; only too many is a rule broken.
+                if actual > expected {
                     out.push(Violation::ClueCount {
                         clue: i as u16,
                         expected,
@@ -204,7 +240,29 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Vec<Violation> {
             Cell::Black(None) => {}
         }
     }
-    out
+    Ok((
+        d,
+        Scan {
+            violations: out,
+            all_lit,
+            clues_exact,
+        },
+    ))
+}
+
+/// Rule check used by tests and mirrored by the client. Reports only what
+/// is definitely wrong: a half-lit board is unfinished, not broken. See
+/// [`is_complete`] for whether the grid is finished.
+pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
+    Ok(scan(description, grid)?.1.violations)
+}
+
+/// Whether every white cell is lit and every clue has exactly the bulbs
+/// it asks for. Says nothing about whether the grid is *right*: pair it
+/// with [`check_rules`], or use [`Puzzle::is_solved`].
+pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+    let (_, scan) = scan(description, grid)?;
+    Ok(scan.all_lit && scan.clues_exact)
 }
 
 fn neighbours(w: usize, h: usize, i: usize) -> impl Iterator<Item = usize> {
@@ -223,53 +281,55 @@ fn neighbours(w: usize, h: usize, i: usize) -> impl Iterator<Item = usize> {
 /// for every white cell, sorted by cell. Same keys and values as hint
 /// conclusions. A solution of the wrong length counts as having no
 /// bulbs. Panics on a malformed description.
-pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Vec<(u16, u8)> {
-    let d = parse_description(description).expect("malformed description");
+pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
+    let d = parse_description(description)?;
     let n = d.cells.len();
-    d.cells
+    let solution = checked_grid(solution, n)?;
+    Ok(d.cells
         .iter()
         .enumerate()
         .filter(|(_, c)| **c == Cell::White)
-        .map(|(i, _)| (i as u16, (solution.len() == n && solution[i] != 0) as u8))
-        .collect()
+        .map(|(i, _)| (i as u16, (solution[i] != 0) as u8))
+        .collect())
 }
 
-/// Number of solutions, capped at `cap`, via backtracking. Returns 0 for a
-/// malformed description.
-pub fn count_solutions(description: &[u8], cap: u32) -> u32 {
-    let Ok(d) = parse_description(description) else {
-        return 0;
-    };
+/// Number of solutions, capped at `cap`, via backtracking.
+pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
+    let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    solver::count_solutions(&mut st, cap)
+    Ok(solver::count_solutions(&mut st, cap))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
 /// solution if it was reached without guessing.
-pub fn solve_with_trace(description: &[u8], tier: Tier) -> (Vec<Hint>, Option<Vec<u8>>) {
-    let Ok(d) = parse_description(description) else {
-        return (Vec::new(), None);
-    };
+pub fn solve_with_trace(description: &[u8], tier: Tier) -> Result<(Vec<Hint>, Option<Vec<u8>>), PuzzleError> {
+    let d = parse_description(description)?;
     let mut st = State::from_description(&d);
     let mut hints = Vec::new();
     let solution = match solver::solve(&mut st, tier, Some(&mut hints)) {
         solver::Outcome::Solved => Some(st.light.iter().map(|&b| b as u8).collect()),
         _ => None,
     };
-    (hints, solution)
+    Ok((hints, solution))
 }
 
-pub fn parse_description(bytes: &[u8]) -> Result<Description, String> {
+pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     if bytes.len() < 3 {
-        return Err("description too short".to_string());
+        return Err(PuzzleError::description("description too short"));
     }
     if bytes[0] != FORMAT_VERSION {
-        return Err(format!("unsupported format version {}", bytes[0]));
+        return Err(PuzzleError::description(format!("unsupported format version {}", bytes[0])));
     }
     let (width, height) = (bytes[1], bytes[2]);
+    if width < 2 || height < 2 {
+        return Err(PuzzleError::description("width and height must be at least 2"));
+    }
     let expected = 3 + width as usize * height as usize;
     if bytes.len() != expected {
-        return Err(format!("expected {expected} bytes, got {}", bytes.len()));
+        return Err(PuzzleError::description(format!(
+            "expected {expected} bytes, got {}",
+            bytes.len()
+        )));
     }
     let cells = bytes[3..]
         .iter()
@@ -277,7 +337,7 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, String> {
             CELL_WHITE => Ok(Cell::White),
             CELL_BLACK => Ok(Cell::Black(None)),
             CELL_CLUE_BASE..=0x15 => Ok(Cell::Black(Some(b - CELL_CLUE_BASE))),
-            _ => Err(format!("bad cell byte 0x{b:02x}")),
+            _ => Err(PuzzleError::description(format!("bad cell byte 0x{b:02x}"))),
         })
         .collect::<Result<Vec<_>, _>>()?;
     Ok(Description { width, height, cells })
@@ -300,14 +360,13 @@ pub(crate) fn encode_description(st: &State) -> Vec<u8> {
 
 /// One line per row: `#` black, digit = clue, `.` white. With a grid,
 /// `O` = bulb and `+` = lit white cell.
-pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> String {
-    let Ok(d) = parse_description(description) else {
-        return String::new();
-    };
+pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
+    let d = parse_description(description)?;
     let (w, h) = (d.width as usize, d.height as usize);
     let mut st = State::from_description(&d);
     if let Some(g) = grid {
-        for (i, &b) in g.iter().enumerate().take(st.size()) {
+        let g = checked_grid(g, st.size())?;
+        for (i, &b) in g.iter().enumerate() {
             if b != 0 && !st.black[i] {
                 st.set_light(i, true);
             }
@@ -327,5 +386,46 @@ pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> String {
         }
         out.push('\n');
     }
-    out
+    Ok(out)
+}
+
+impl Puzzle for LightUp {
+    type Params = Params;
+    type Technique = Technique;
+    type Description = Description;
+    type Violation = Violation;
+
+    const GAME_ID: &'static str = GAME_ID;
+
+    fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
+        generate(seed, params)
+    }
+
+    fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
+        parse_description(bytes)
+    }
+
+    fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
+        check_rules(description, grid)
+    }
+
+    fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        is_complete(description, grid)
+    }
+
+    fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
+        solution_pairs(description, solution)
+    }
+
+    fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
+        count_solutions(description, cap)
+    }
+
+    fn solve_with_trace(description: &[u8], tier: Tier) -> Result<(Vec<Hint>, Option<Vec<u8>>), PuzzleError> {
+        solve_with_trace(description, tier)
+    }
+
+    fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
+        render_ascii(description, grid)
+    }
 }
