@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use types::{ChatMetrics, TimestampMillis};
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct ChatMetricsInternal {
     #[serde(rename = "m")]
     metrics: Vec<MetricCounter>,
@@ -10,7 +10,7 @@ pub struct ChatMetricsInternal {
     pub last_active: TimestampMillis,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct MetricCounter([u8; 4]);
 
 impl MetricCounter {
@@ -160,6 +160,29 @@ impl ChatMetricsInternal {
     fn get(&self, key: MetricKey) -> u32 {
         self.metrics.iter().find(|m| m.key() == key).map_or(0, |m| m.count())
     }
+
+    // The compact encoding used when storing metrics in stable memory:
+    // Last active      8 bytes
+    // Counters         4 bytes each
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(8 + 4 * self.metrics.len());
+        bytes.extend_from_slice(&self.last_active.to_be_bytes());
+        for metric in self.metrics.iter() {
+            bytes.extend_from_slice(&metric.0);
+        }
+        bytes
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> ChatMetricsInternal {
+        let (last_active, counters) = bytes.split_at(8);
+        ChatMetricsInternal {
+            metrics: counters
+                .chunks_exact(4)
+                .map(|c| MetricCounter(c.try_into().unwrap()))
+                .collect(),
+            last_active: TimestampMillis::from_be_bytes(last_active.try_into().unwrap()),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -219,6 +242,28 @@ mod tests {
             assert_eq!(metric.key(), key);
             assert_eq!(metric.count(), MetricCounter::MAX_COUNT);
         }
+    }
+
+    #[test]
+    fn bytes_roundtrip() {
+        let mut metrics = ChatMetricsInternal {
+            last_active: 1_700_000_000_000,
+            ..Default::default()
+        };
+        assert_eq!(ChatMetricsInternal::from_bytes(&metrics.to_bytes()), metrics);
+
+        metrics.incr(MetricKey::TextMessages, 5);
+        metrics.incr(MetricKey::Reactions, 3);
+        metrics.incr(MetricKey::CustomTypeMessages, MetricCounter::MAX_COUNT);
+
+        let bytes = metrics.to_bytes();
+        assert_eq!(bytes.len(), 8 + 3 * 4);
+
+        let decoded = ChatMetricsInternal::from_bytes(&bytes);
+        assert_eq!(decoded, metrics);
+        assert_eq!(decoded.get(MetricKey::TextMessages), 5);
+        assert_eq!(decoded.get(MetricKey::Reactions), 3);
+        assert_eq!(decoded.get(MetricKey::CustomTypeMessages), MetricCounter::MAX_COUNT);
     }
 
     #[test]

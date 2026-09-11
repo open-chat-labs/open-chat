@@ -302,6 +302,9 @@ impl RuntimeState {
             Err(OCErrorCode::ChatFrozen.into())
         } else {
             let transfers_required = self.prepare_transfers_for_import_into_community();
+            // The community only receives what is serialized here plus the events, so the metrics
+            // in stable memory must be copied onto the heap to be carried over
+            self.data.chat.events.copy_user_metrics_to_heap_for_export();
             let serialized = serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
 
