@@ -4,6 +4,7 @@ use crate::{TestEnv, client, wasms};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use sha256::sha256;
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use types::{BuildVersion, CanisterId, CanisterWasm, HttpRequest, UpgradesFilter};
 
@@ -24,6 +25,7 @@ fn create_then_upgrade_multi_user_canister() {
     let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
     assert_eq!(status.module_hash, Some(sha256(&wasms::MULTI_USER.module).to_vec()));
     assert_eq!(wasm_version(env, canister_id), BuildVersion::min());
+    assert_stable_memory_maps_initialised(env, canister_id);
 
     // The canister id -> LocalUserIndex mapping reaches the UserIndex over the idempotent event
     // queue rather than in the reply, so it takes a few rounds to arrive
@@ -47,6 +49,7 @@ fn create_then_upgrade_multi_user_canister() {
     tick_many(env, 20);
 
     assert_eq!(wasm_version(env, canister_id), new_version);
+    assert_stable_memory_maps_initialised(env, canister_id);
 }
 
 #[test]
@@ -113,6 +116,19 @@ fn multi_user_canisters_enabled_flag_fans_out_to_local_user_indexes() {
 
 fn multi_user_canisters_enabled(env: &PocketIc, canister_id: CanisterId) -> bool {
     serde_json::from_value(metrics(env, canister_id)["multi_user_canisters_enabled"].clone()).unwrap()
+}
+
+// Creating a map writes its header, so each map's memory is non-empty once it has been initialised
+fn assert_stable_memory_maps_initialised(env: &PocketIc, canister_id: CanisterId) {
+    let stable_memory_sizes: BTreeMap<u8, u64> =
+        serde_json::from_value(metrics(env, canister_id)["stable_memory_sizes"].clone()).unwrap();
+
+    for memory_id in [1, 2] {
+        assert!(
+            stable_memory_sizes.get(&memory_id).is_some_and(|size| *size > 0),
+            "Stable memory map {memory_id} not initialised: {stable_memory_sizes:?}"
+        );
+    }
 }
 
 fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
