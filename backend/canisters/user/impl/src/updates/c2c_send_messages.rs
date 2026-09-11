@@ -154,9 +154,9 @@ pub(crate) fn handle_message_impl(
     let files = args.content.blob_references();
 
     let chat = state.data.direct_chats.get_or_create(
+        state.env.canister_id().into(),
         args.sender,
         args.sender_user_type,
-        state.env.canister_id().into(),
         || state.env.rng().random(),
         args.now,
     );

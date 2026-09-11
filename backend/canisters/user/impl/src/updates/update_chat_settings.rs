@@ -23,9 +23,9 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
         mutate_state(|state| {
             let now = state.env.now();
             state.data.direct_chats.get_or_create(
+                state.env.canister_id().into(),
                 args.user_id,
                 user.user_type,
-                state.env.canister_id().into(),
                 || state.env.rng().random(),
                 now,
             );

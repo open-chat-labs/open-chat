@@ -295,7 +295,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
         let chat = state
             .data
             .direct_chats
-            .get_or_create(bot_id, UserType::BotV2, my_user_id, || state.env.rng().random(), now);
+            .get_or_create(my_user_id, bot_id, UserType::BotV2, || state.env.rng().random(), now);
 
         chat.push_message::<UserEventPusher>(
             PushMessageArgs {
@@ -465,7 +465,7 @@ fn send_message_impl(
         state
             .data
             .direct_chats
-            .get_or_create(recipient, recipient_type.into(), my_user_id, || state.env.rng().random(), now);
+            .get_or_create(my_user_id, recipient, recipient_type.into(), || state.env.rng().random(), now);
 
     let message_event = chat.push_message(
         push_message_args,

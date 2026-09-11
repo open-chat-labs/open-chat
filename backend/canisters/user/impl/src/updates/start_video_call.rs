@@ -109,9 +109,9 @@ pub fn handle_start_video_call(
     };
 
     let chat = state.data.direct_chats.get_or_create(
+        state.env.canister_id().into(),
         other,
         UserType::User,
-        state.env.canister_id().into(),
         || state.env.rng().random(),
         now,
     );

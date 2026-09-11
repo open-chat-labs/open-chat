@@ -152,9 +152,9 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         UserCanisterEvent::SetEventsTtl(args) => {
             let is_new_chat = !state.data.direct_chats.exists(&caller_user_id.into());
             let chat = state.data.direct_chats.get_or_create(
+                state.env.canister_id().into(),
                 caller_user_id,
                 UserType::User,
-                state.env.canister_id().into(),
                 || state.env.rng().random(),
                 now,
             );

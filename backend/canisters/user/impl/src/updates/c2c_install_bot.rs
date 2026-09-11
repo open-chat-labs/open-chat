@@ -36,9 +36,9 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     // If there isn't already a direct chat with the bot, create one now
     let chat = state.data.direct_chats.get_or_create(
+        state.env.canister_id().into(),
         args.bot_id,
         UserType::BotV2,
-        state.env.canister_id().into(),
         || state.env.rng().random(),
         now,
     );

@@ -22,8 +22,8 @@ pub struct DirectChat {
 
 impl DirectChat {
     pub fn new(
-        them: UserId,
         my_user_id: UserId,
+        them: UserId,
         user_type: UserType,
         events_ttl: Option<Milliseconds>,
         anonymized_chat_id: u128,
