@@ -1216,6 +1216,8 @@
         await scrollToMessageIndex(context, messageIndex, false);
         if (messageContextsEqual(context, messageContext)) {
             await scrollBottom();
+            // the user may have navigated away while the loads were in flight
+            if (chat === undefined) return;
             // Release the go-to-latest pin once it has completed with nothing
             // left to catch up on; it must not linger and snap a later load.
             if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent)) {

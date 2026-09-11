@@ -398,9 +398,9 @@ fn solve(game_id: &str, description: &[u8], tier: u8) -> (Vec<Vec<(u16, u8)>>, V
                 1 => $game::Tier::Tricky,
                 other => panic!("unknown tier {other}"),
             };
-            let (trace, solution) = $game::solve_with_trace(description, tier);
+            let (trace, solution) = $game::solve_with_trace(description, tier).expect("valid description");
             let solution = solution.expect("the solver should solve the puzzle it generated");
-            assert!($game::check_rules(description, &solution).is_empty());
+            assert!($game::check_rules(description, &solution).expect("valid grid").is_empty());
             (trace.into_iter().map(|h| h.conclusions).collect(), solution)
         }};
     }
@@ -420,12 +420,12 @@ fn solve(game_id: &str, description: &[u8], tier: u8) -> (Vec<Vec<(u16, u8)>>, V
 fn wrong_pair(game_id: &str, description: &[u8], solution: &[u8]) -> (u16, u8) {
     #[expect(clippy::type_complexity)]
     let (pairs, flip): (Vec<(u16, u8)>, fn(u8) -> u8) = match game_id {
-        light_up::GAME_ID => (light_up::solution_pairs(description, solution), |v| v ^ 1),
-        tents::GAME_ID => (tents::solution_pairs(description, solution), |v| v ^ 1),
-        loopy::GAME_ID => (loopy::solution_pairs(description, solution), |v| v ^ 1),
-        unruly::GAME_ID => (unruly::solution_pairs(description, solution), |v| if v == 1 { 2 } else { 1 }),
-        slant::GAME_ID => (slant::solution_pairs(description, solution), |v| if v == 1 { 2 } else { 1 }),
-        bridges::GAME_ID => (bridges::solution_pairs(description, solution), |v| (v + 1) % 3),
+        light_up::GAME_ID => (light_up::solution_pairs(description, solution).expect("valid description"), |v| v ^ 1),
+        tents::GAME_ID => (tents::solution_pairs(description, solution).expect("valid description"), |v| v ^ 1),
+        loopy::GAME_ID => (loopy::solution_pairs(description, solution).expect("valid description"), |v| v ^ 1),
+        unruly::GAME_ID => (unruly::solution_pairs(description, solution).expect("valid description"), |v| if v == 1 { 2 } else { 1 }),
+        slant::GAME_ID => (slant::solution_pairs(description, solution).expect("valid description"), |v| if v == 1 { 2 } else { 1 }),
+        bridges::GAME_ID => (bridges::solution_pairs(description, solution).expect("valid description"), |v| (v + 1) % 3),
         other => panic!("no solution pairs for game {other}"),
     };
     let (key, value) = *pairs.first().expect("the generator should emit solution pairs");

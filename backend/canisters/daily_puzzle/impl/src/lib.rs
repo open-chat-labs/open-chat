@@ -11,6 +11,7 @@ use types::{
     BuildVersion, CanisterId, Cycles, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleResult, GameConfig, GameId, PuzzleHint,
     PuzzleNumber, TimestampMillis, Timestamped, UserId,
 };
+use tracing::error;
 use utils::env::Environment;
 
 mod guards;
@@ -455,9 +456,21 @@ struct Generated {
 
 /// Every generator crate has the same `Generated` and `Hint` shape but its own types, so this
 /// converts any of them to the wire format.
+///
+/// Generation is fallible. `InvalidParams` means no puzzle of this game can exist for these
+/// parameters whatever the seed, so the schedule entry is wrong; `Exhausted` means this seed found
+/// nothing and another might. Nothing here advances the seed on its own (`attempt_for` only moves
+/// when an operator calls `regenerate_today`), so either way the day stops here and the error is
+/// logged rather than reported as a missing generator.
 macro_rules! into_generated {
-    ($generated:expr) => {{
-        let generated = $generated;
+    ($game_id:expr, $generated:expr) => {{
+        let generated = match $generated {
+            Ok(generated) => generated,
+            Err(error) => {
+                error!(game_id = $game_id, ?error, "Puzzle generation failed");
+                return None;
+            }
+        };
         Generated {
             tier: generated.tier as u8,
             description: generated.description,
@@ -483,7 +496,7 @@ fn generate(params: &PuzzleParams, seed: u64) -> Option<Generated> {
     let easy = params.tier == 0;
     let (w, h) = (params.width, params.height);
     let generated = match params.game_id.as_str() {
-        light_up::GAME_ID => into_generated!(light_up::generate(
+        light_up::GAME_ID => into_generated!(light_up::GAME_ID, light_up::generate(
             seed,
             light_up::Params {
                 width: w,
@@ -493,23 +506,23 @@ fn generate(params: &PuzzleParams, seed: u64) -> Option<Generated> {
                 tier: if easy { light_up::Tier::Easy } else { light_up::Tier::Tricky },
             },
         )),
-        tents::GAME_ID => into_generated!(tents::generate(
+        tents::GAME_ID => into_generated!(tents::GAME_ID, tents::generate(
             seed,
             tents::Params::default_for(w, h, if easy { tents::Tier::Easy } else { tents::Tier::Tricky }),
         )),
-        slant::GAME_ID => into_generated!(slant::generate(
+        slant::GAME_ID => into_generated!(slant::GAME_ID, slant::generate(
             seed,
             slant::Params::default_for(w, h, if easy { slant::Tier::Easy } else { slant::Tier::Tricky }),
         )),
-        bridges::GAME_ID => into_generated!(bridges::generate(
+        bridges::GAME_ID => into_generated!(bridges::GAME_ID, bridges::generate(
             seed,
             bridges::Params::default_for(w, h, if easy { bridges::Tier::Easy } else { bridges::Tier::Tricky }),
         )),
-        loopy::GAME_ID => into_generated!(loopy::generate(
+        loopy::GAME_ID => into_generated!(loopy::GAME_ID, loopy::generate(
             seed,
             loopy::Params::default_for(w, h, if easy { loopy::Tier::Easy } else { loopy::Tier::Tricky }),
         )),
-        unruly::GAME_ID => into_generated!(unruly::generate(
+        unruly::GAME_ID => into_generated!(unruly::GAME_ID, unruly::generate(
             seed,
             unruly::Params::default_for(w, h, if easy { unruly::Tier::Easy } else { unruly::Tier::Tricky }),
         )),

@@ -1,6 +1,6 @@
-use crate::dsf::Dsf;
 use crate::state::State;
 use crate::{Hint, Technique, Tier, encode_slash, vertex_key};
+use puzzle_core::{Dsf, MAX_SEARCH_DEPTH, SearchBudget};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -54,12 +54,12 @@ impl Scratch {
 
     /// Port of `merge_vertices`: union plus exit/border bookkeeping.
     fn merge_vertices(&mut self, a: usize, b: usize) {
-        let i = self.connected.canonify(a);
-        let j = self.connected.canonify(b);
+        let i = self.connected.find(a);
+        let j = self.connected.find(b);
         let exits = self.exits[i] + self.exits[j] - 2;
         let border = self.border[i] || self.border[j];
         self.connected.merge(i, j);
-        let r = self.connected.canonify(i);
+        let r = self.connected.find(i);
         self.exits[r] = exits;
         self.border[r] = border;
     }
@@ -67,7 +67,7 @@ impl Scratch {
     /// Port of `decr_exits`: one way out of a non-clue vertex was blocked.
     fn decr_exits(&mut self, st: &State, v: usize) {
         if st.clues[v].is_none() {
-            let r = self.connected.canonify(v);
+            let r = self.connected.find(v);
             self.exits[r] -= 1;
         }
     }
@@ -84,8 +84,8 @@ impl Scratch {
     /// class regardless of which root the union picks. Err if the two
     /// classes already hold different slash values.
     fn merge_equiv(&mut self, a: usize, b: usize) -> Result<bool, ()> {
-        let ra = self.equiv.canonify(a);
-        let rb = self.equiv.canonify(b);
+        let ra = self.equiv.find(a);
+        let rb = self.equiv.find(b);
         if ra == rb {
             return Ok(false);
         }
@@ -94,7 +94,7 @@ impl Scratch {
             return Err(());
         }
         self.equiv.merge(ra, rb);
-        let r = self.equiv.canonify(ra);
+        let r = self.equiv.find(ra);
         self.slashval[r] = if sa != 0 { sa } else { sb };
         Ok(true)
     }
@@ -121,7 +121,7 @@ fn fill_square(st: &mut State, sc: &mut Scratch, i: usize, v: i8) -> bool {
     if sc.connected.equivalent(c1, c2) {
         return false;
     }
-    let e = sc.equiv.canonify(i);
+    let e = sc.equiv.find(i);
     if sc.slashval[e] != 0 && sc.slashval[e] != v {
         return false;
     }
@@ -206,14 +206,14 @@ fn clue_point(
     let mut nu = 0i32;
     let mut nl = c as i32;
     let mut last = nb[n - 1].0;
-    let mut eq = if st.soln[last] == 0 { Some(sc.equiv.canonify(last)) } else { None };
+    let mut eq = if st.soln[last] == 0 { Some(sc.equiv.find(last)) } else { None };
     let mut meq = None;
     let (mut mj1, mut mj2) = (usize::MAX, usize::MAX);
     for &(j, s) in nb {
         if st.soln[j] == 0 {
             nu += 1;
             if meq.is_none() && tricky {
-                let eq2 = sc.equiv.canonify(j);
+                let eq2 = sc.equiv.find(j);
                 if eq == Some(eq2) && last != j {
                     meq = Some(eq2);
                     mj1 = last;
@@ -304,8 +304,8 @@ fn clue_point(
 /// dead-end groups (Tricky).
 fn forced(st: &State, sc: &mut Scratch, i: usize, v: i8, class_val: i8, tricky: bool) -> Option<Technique> {
     let (a, b) = st.endpoints(i, -v);
-    let c1 = sc.connected.canonify(a);
-    let c2 = sc.connected.canonify(b);
+    let c1 = sc.connected.find(a);
+    let c2 = sc.connected.find(b);
     if c1 == c2 {
         return Some(Technique::LoopAvoidance);
     }
@@ -321,6 +321,27 @@ fn forced(st: &State, sc: &mut Scratch, i: usize, v: i8, class_val: i8, tricky: 
     None
 }
 
+/// How many members of the two sealed groups a `DeadEndAvoidance` hint
+/// highlights around the cell it is about. The groups themselves have no
+/// useful bound: by the end of a solve each is most of the grid.
+const MAX_DEAD_END_FOCUS: usize = 24;
+
+/// Cells and vertices share one coordinate system at twice the scale: a
+/// cell sits at the centre of its square, a vertex on the corners, so the
+/// two can be ordered by distance from the same point.
+fn cell_at(st: &State, i: usize) -> (usize, usize) {
+    (2 * (i % st.w) + 1, 2 * (i / st.w) + 1)
+}
+
+fn vertex_at(st: &State, vtx: usize) -> (usize, usize) {
+    let vw = st.vw();
+    (2 * (vtx % vw), 2 * (vtx / vw))
+}
+
+fn distance(a: (usize, usize), b: (usize, usize)) -> usize {
+    a.0.abs_diff(b.0).max(a.1.abs_diff(b.1))
+}
+
 fn focus_for(st: &State, sc: &mut Scratch, i: usize, v: i8, technique: Technique) -> Vec<u16> {
     let mut focus = vec![i as u16];
     match technique {
@@ -329,32 +350,41 @@ fn focus_for(st: &State, sc: &mut Scratch, i: usize, v: i8, technique: Technique
             focus.extend(st.path_cells(a, b).into_iter().map(|c| c as u16));
         }
         Technique::Equivalence => {
-            let class = sc.equiv.canonify(i);
+            let class = sc.equiv.find(i);
             for j in 0..st.size() {
-                if j != i && st.soln[j] != 0 && sc.equiv.canonify(j) == class {
+                if j != i && st.soln[j] != 0 && sc.equiv.find(j) == class {
                     focus.push(j as u16);
                 }
             }
         }
         Technique::DeadEndAvoidance => {
             let (a, b) = st.endpoints(i, -v);
-            let c1 = sc.connected.canonify(a);
-            let c2 = sc.connected.canonify(b);
+            let c1 = sc.connected.find(a);
+            let c2 = sc.connected.find(b);
+            // Late in a solve the two sealed groups are most of the board
+            // between them, and a focus that highlights most of the board
+            // says nothing. Keep the members nearest the cell the hint is
+            // about, which is where the join it rules out is visible.
+            let here = cell_at(st, i);
+            let mut near: Vec<(usize, u16)> = Vec::new();
             for j in 0..st.size() {
                 if st.soln[j] != 0 {
                     let (e, _) = st.endpoints(j, st.soln[j]);
-                    let r = sc.connected.canonify(e);
+                    let r = sc.connected.find(e);
                     if r == c1 || r == c2 {
-                        focus.push(j as u16);
+                        near.push((distance(here, cell_at(st, j)), j as u16));
                     }
                 }
             }
             for vtx in 0..st.vertices() {
-                let r = sc.connected.canonify(vtx);
+                let r = sc.connected.find(vtx);
                 if r == c1 || r == c2 {
-                    focus.push(vertex_key(st.w, st.h, vtx));
+                    near.push((distance(here, vertex_at(st, vtx)), vertex_key(st.w, st.h, vtx)));
                 }
             }
+            near.sort_unstable();
+            near.truncate(MAX_DEAD_END_FOCUS);
+            focus.extend(near.into_iter().map(|(_, key)| key));
         }
         _ => {}
     }
@@ -366,7 +396,7 @@ fn square(st: &mut State, sc: &mut Scratch, i: usize, tricky: bool, rec: &mut Op
     if st.soln[i] != 0 {
         return Ok(false);
     }
-    let class_val = if tricky { sc.slashval[sc.equiv.canonify(i)] } else { 0 };
+    let class_val = if tricky { sc.slashval[sc.equiv.find(i)] } else { 0 };
     let fs = forced(st, sc, i, 1, class_val, tricky);
     let bs = forced(st, sc, i, -1, class_val, tricky);
     let (v, technique) = match (fs, bs) {
@@ -497,13 +527,20 @@ fn feasible(st: &State, soln: &[i8], dsf: &mut Dsf, i: usize, v: i8) -> bool {
 /// solver: generic constraint propagation (a cell with one feasible slash
 /// takes it; a cell with none kills the branch) plus branching on the
 /// first cell with two feasible slashes.
-pub(crate) fn count_solutions(st: &State, cap: u32) -> u32 {
+pub(crate) fn count_solutions(st: &State, cap: u32, budget: &mut SearchBudget) -> u32 {
     let soln = vec![0i8; st.size()];
     let dsf = Dsf::new(st.vertices());
-    count_rec(st, soln, dsf, cap)
+    count_rec(st, soln, dsf, cap, 0, budget)
 }
 
-fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32) -> u32 {
+/// `budget` bounds the nodes as `depth` bounds one branch: a description
+/// from outside can make the tree wide rather than deep, and the depth cap
+/// never fires on one of those. Both stop by claiming the cap, which reads
+/// as "more than one solution".
+fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32, depth: u32, budget: &mut SearchBudget) -> u32 {
+    if depth >= MAX_SEARCH_DEPTH || !budget.take() {
+        return cap;
+    }
     let branch = loop {
         let mut changed = false;
         let mut branch = None;
@@ -543,7 +580,7 @@ fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32) -> u32 {
         s[i] = v;
         let (a, b) = st.endpoints(i, v);
         d.merge(a, b);
-        total += count_rec(st, s, d, cap - total);
+        total += count_rec(st, s, d, cap - total, depth + 1, budget);
         if total >= cap {
             return cap;
         }

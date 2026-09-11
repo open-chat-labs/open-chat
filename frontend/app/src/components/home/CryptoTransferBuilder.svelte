@@ -99,7 +99,7 @@
 
     function reset() {
         confirming = false;
-        balanceWithRefresh.refresh();
+        balanceWithRefresh?.refresh();
     }
 
     function maxAmount(balance: bigint): bigint {

@@ -41,9 +41,9 @@ fn run() {
         let params = state.data.params_for(number).clone();
         let start = ic_cdk::api::performance_counter(0);
         let Some(index) = state.data.generate_candidate(number) else {
-            // Validation keeps unknown games out of the schedule, so this shouldn't happen; don't
-            // re-arm, or the job would spin
-            error!(number, game_id = params.game_id, "No generator for scheduled game");
+            // Either the game has no generator, which validation keeps out of the schedule, or
+            // generation failed and logged why. Don't re-arm, or the job would spin.
+            error!(number, game_id = params.game_id, "No candidate generated for scheduled game");
             return;
         };
         let instructions = ic_cdk::api::performance_counter(0) - start;

@@ -1,5 +1,6 @@
 use crate::state::State;
 use crate::{Hint, Technique, Tier};
+use puzzle_core::{MAX_SEARCH_DEPTH, SearchBudget};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -291,7 +292,15 @@ fn contradiction(st: &State) -> bool {
 /// Exhaustive solution count, capped. Branches on the unlit cell with the
 /// fewest candidates; branch k places a bulb at candidate k and forbids
 /// candidates 0..k, so the branches partition the solution space.
-pub(crate) fn count_solutions(st: &mut State, cap: u32) -> u32 {
+///
+/// `budget` bounds the nodes as `depth` bounds one branch: the depth cap
+/// alone leaves a description from outside free to explore a tree that is
+/// wide rather than deep. Both stop by claiming the cap, which reads as
+/// "more than one solution".
+pub(crate) fn count_solutions(st: &mut State, cap: u32, depth: u32, budget: &mut SearchBudget) -> u32 {
+    if depth >= MAX_SEARCH_DEPTH || !budget.take() {
+        return cap;
+    }
     match solve(st, Tier::Easy, None) {
         Outcome::Solved => return 1,
         Outcome::NoSolution => return 0,
@@ -320,7 +329,7 @@ pub(crate) fn count_solutions(st: &mut State, cap: u32) -> u32 {
             branch.impossible[p] = true;
         }
         branch.set_light(c, true);
-        total += count_solutions(&mut branch, cap - total);
+        total += count_solutions(&mut branch, cap - total, depth + 1, budget);
         if total >= cap {
             return cap;
         }

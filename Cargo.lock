@@ -1343,6 +1343,9 @@ dependencies = [
 [[package]]
 name = "bridges"
 version = "0.1.0"
+dependencies = [
+ "puzzle_core",
+]
 
 [[package]]
 name = "brotli"
@@ -5565,8 +5568,7 @@ dependencies = [
 [[package]]
 name = "ic-stable-structures"
 version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ee3372ddc0cf2a747fc26ce2d075a240ed6bfab151e63bc70109e8967f7ce6f"
+source = "git+https://github.com/hpeebles/stable-structures?rev=b88706bd6dd4f7463e75886ec10c58fddb810c37#b88706bd6dd4f7463e75886ec10c58fddb810c37"
 dependencies = [
  "ic_principal",
 ]
@@ -6778,6 +6780,9 @@ dependencies = [
 [[package]]
 name = "light_up"
 version = "0.1.0"
+dependencies = [
+ "puzzle_core",
+]
 
 [[package]]
 name = "linux-raw-sys"
@@ -6950,6 +6955,9 @@ checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 [[package]]
 name = "loopy"
 version = "0.1.0"
+dependencies = [
+ "puzzle_core",
+]
 
 [[package]]
 name = "lru-slab"
@@ -7277,6 +7285,7 @@ dependencies = [
  "rand 0.10.2",
  "serde",
  "stable_memory",
+ "stable_memory_map",
  "tracing",
  "types",
  "utils",
@@ -9032,6 +9041,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "puzzle_core"
+version = "0.1.0"
+
+[[package]]
 name = "querystring"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10544,6 +10557,9 @@ checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 [[package]]
 name = "slant"
 version = "0.1.0"
+dependencies = [
+ "puzzle_core",
+]
 
 [[package]]
 name = "slog"
@@ -11784,6 +11800,9 @@ dependencies = [
 [[package]]
 name = "tents"
 version = "0.1.0"
+dependencies = [
+ "puzzle_core",
+]
 
 [[package]]
 name = "termcolor"
@@ -12752,6 +12771,9 @@ dependencies = [
 [[package]]
 name = "unruly"
 version = "0.1.0"
+dependencies = [
+ "puzzle_core",
+]
 
 [[package]]
 name = "untrusted"

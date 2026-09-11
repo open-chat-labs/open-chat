@@ -1,5 +1,6 @@
 use crate::state::{Counts, State, other};
 use crate::{EMPTY, Hint, Technique, Tier, VALUE_A, VALUE_B};
+use puzzle_core::{MAX_SEARCH_DEPTH, SearchBudget};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -282,13 +283,13 @@ fn feasible(st: &State, grid: &[u8], counts: &Counts, i: usize, v: u8) -> bool {
 /// Exhaustive solution count, capped. Independent of the technique solver:
 /// a cell with one feasible value takes it, a cell with none kills the
 /// branch, and otherwise it branches on the first undecided cell.
-pub(crate) fn count_solutions(st: &State, cap: u32) -> u32 {
+pub(crate) fn count_solutions(st: &State, cap: u32, budget: &mut SearchBudget) -> u32 {
     if !st.sound() {
         return 0;
     }
     let grid = st.grid.clone();
     let counts = st.counts();
-    count_rec(st, grid, counts, cap)
+    count_rec(st, grid, counts, cap, 0, budget)
 }
 
 fn set(st: &State, grid: &mut [u8], counts: &mut Counts, i: usize, v: u8) {
@@ -297,9 +298,16 @@ fn set(st: &State, grid: &mut [u8], counts: &mut Counts, i: usize, v: u8) {
     counts.cols[v as usize - 1][i % st.w] += 1;
 }
 
-fn count_rec(st: &State, mut grid: Vec<u8>, mut counts: Counts, cap: u32) -> u32 {
+/// `budget` bounds the nodes as `depth` bounds one branch: a description
+/// from outside can make the tree wide rather than deep, and the depth cap
+/// never fires on one of those. Both stop by claiming the cap, which reads
+/// as "more than one solution".
+fn count_rec(st: &State, mut grid: Vec<u8>, mut counts: Counts, cap: u32, depth: u32, budget: &mut SearchBudget) -> u32 {
     if cap == 0 {
         return 0;
+    }
+    if depth >= MAX_SEARCH_DEPTH || !budget.take() {
+        return cap;
     }
     let branch = loop {
         let mut changed = false;
@@ -335,7 +343,7 @@ fn count_rec(st: &State, mut grid: Vec<u8>, mut counts: Counts, cap: u32) -> u32
         let mut g = grid.clone();
         let mut c = counts.clone();
         set(st, &mut g, &mut c, i, v);
-        total += count_rec(st, g, c, cap - total);
+        total += count_rec(st, g, c, cap - total, depth + 1, budget);
         if total >= cap {
             return cap;
         }
