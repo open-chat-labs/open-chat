@@ -174,6 +174,16 @@ impl ChatEvents {
         moved
     }
 
+    // When a group is imported into a community, `import_events` writes the message id of every
+    // message which still exists into stable memory, so any ids left on the heap are either
+    // duplicates of those or belong to events which were removed before the import
+    pub fn discard_message_ids_on_heap(&mut self) {
+        self.main.discard_message_ids_on_heap();
+        for thread in self.threads.values_mut() {
+            thread.discard_message_ids_on_heap();
+        }
+    }
+
     pub fn message_ids_on_heap_count(&self) -> usize {
         self.main.message_ids_on_heap_count() + self.threads.values().map(|t| t.message_ids_on_heap_count()).sum::<usize>()
     }

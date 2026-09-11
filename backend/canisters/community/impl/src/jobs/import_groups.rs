@@ -192,6 +192,8 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             let mut chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
             chat.events.set_chat(Chat::Channel(community_id, channel_id));
             chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
+            // The message ids were written to stable memory as the events were imported
+            chat.events.discard_message_ids_on_heap();
 
             let blocked: Vec<_> = chat.members.blocked();
             if !blocked.is_empty() {
@@ -222,9 +224,6 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 chat,
                 date_imported: None, // This is only set once everything is complete
             });
-
-            // The imported group may not have finished moving its message ids into stable memory
-            crate::jobs::migrate_message_ids_to_stable_memory::start_job_if_required(state);
 
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {

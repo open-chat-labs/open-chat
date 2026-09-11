@@ -292,6 +292,9 @@ impl ChatEventsList {
         let mut message_ids = self.message_ids();
         for (message_id, event_index) in batch.iter().copied() {
             self.message_ids_on_heap.remove(&message_id);
+            // `push_event` checks both stores and an imported group's heap ids are discarded, so
+            // there can't already be a stable entry for this id. If there were, overwriting it
+            // would leave lookups unchanged, since they check the heap first.
             message_ids.insert(message_id, event_index);
         }
 
@@ -301,6 +304,10 @@ impl ChatEventsList {
         }
 
         batch.len()
+    }
+
+    pub(crate) fn discard_message_ids_on_heap(&mut self) {
+        self.message_ids_on_heap = HashMap::new();
     }
 
     pub(crate) fn message_ids_on_heap_count(&self) -> usize {
@@ -659,6 +666,7 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
+    use serde_bytes::ByteBuf;
     use stable_memory_map::ChatEventKeyPrefix;
     use std::mem::size_of;
     use types::{ChannelId, EventContext, Milliseconds, MultiUserChat};
@@ -983,15 +991,7 @@ mod tests {
         let expected = expected_message_id_event_indexes(&events);
         let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
 
-        let mut exported = Vec::new();
-        loop {
-            let batch =
-                events.read_events_as_bytes_from_stable_memory(exported.last().map(|(c, _): &(EventContext, _)| c.clone()));
-            if batch.is_empty() {
-                break;
-            }
-            exported.extend(batch);
-        }
+        let exported = export_events(&events);
         assert!(!exported.is_empty());
 
         let imported_message_ids = MessageIdsStableStorage::new(&ChatEventKeyPrefix::new_from_chat(channel, None));
@@ -1008,6 +1008,48 @@ mod tests {
             }
         }
         assert!(imported_count > 0);
+    }
+
+    #[test]
+    fn importing_group_discards_message_ids_on_heap() {
+        let mut events = setup_group_events();
+        // The group hasn't yet moved its message ids into stable memory
+        move_message_ids_to_heap(&mut events);
+        let expected = expected_message_id_event_indexes(&events);
+        let (removed, remaining) = expected.split_at(10);
+        for (_, event_index) in removed {
+            events.remove_event(*event_index, 1000).unwrap();
+        }
+
+        let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
+        ChatEvents::import_events(channel, export_events(&events));
+
+        let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
+        imported.set_chat(channel);
+        imported.discard_message_ids_on_heap();
+
+        assert_eq!(imported.message_ids_on_heap_count(), 0);
+        assert_message_id_lookups(&imported, remaining);
+        for (message_id, _) in removed {
+            assert!(
+                imported
+                    .main_events_list()
+                    .event_index(EventKey::MessageId(*message_id))
+                    .is_none()
+            );
+        }
+    }
+
+    fn export_events(events: &ChatEvents) -> Vec<(EventContext, ByteBuf)> {
+        let mut exported = Vec::new();
+        loop {
+            let batch =
+                events.read_events_as_bytes_from_stable_memory(exported.last().map(|(c, _): &(EventContext, _)| c.clone()));
+            if batch.is_empty() {
+                return exported;
+            }
+            exported.extend(batch);
+        }
     }
 
     fn pushed_message_ids(now: TimestampMillis) -> Vec<MessageId> {
