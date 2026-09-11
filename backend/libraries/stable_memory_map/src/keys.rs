@@ -6,6 +6,7 @@ use std::borrow::Cow;
 mod chat_event;
 mod community_event;
 mod expiring_event;
+mod last_updated;
 mod macros;
 mod message_id;
 mod principal;
@@ -15,6 +16,7 @@ mod user_id;
 pub use chat_event::*;
 pub use community_event::*;
 pub use expiring_event::*;
+pub use last_updated::*;
 pub use message_id::*;
 pub use principal::*;
 pub use storage::*;
@@ -115,6 +117,12 @@ pub enum KeyType {
     DirectChatExpiringEvent = 23,
     GroupChatExpiringEvent = 24,
     ChannelExpiringEvent = 25,
+    DirectChatEventLastUpdated = 26,
+    GroupChatEventLastUpdated = 27,
+    ChannelEventLastUpdated = 28,
+    DirectChatEventsByLastUpdated = 29,
+    GroupChatEventsByLastUpdated = 30,
+    ChannelEventsByLastUpdated = 31,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -161,7 +169,13 @@ impl KeyType {
             | KeyType::ChannelThreadMessageId
             | KeyType::DirectChatExpiringEvent
             | KeyType::GroupChatExpiringEvent
-            | KeyType::ChannelExpiringEvent => MapClass::SmallEntries,
+            | KeyType::ChannelExpiringEvent
+            | KeyType::DirectChatEventLastUpdated
+            | KeyType::GroupChatEventLastUpdated
+            | KeyType::ChannelEventLastUpdated
+            | KeyType::DirectChatEventsByLastUpdated
+            | KeyType::GroupChatEventsByLastUpdated
+            | KeyType::ChannelEventsByLastUpdated => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -217,6 +231,12 @@ impl TryFrom<u8> for KeyType {
             23 => Ok(KeyType::DirectChatExpiringEvent),
             24 => Ok(KeyType::GroupChatExpiringEvent),
             25 => Ok(KeyType::ChannelExpiringEvent),
+            26 => Ok(KeyType::DirectChatEventLastUpdated),
+            27 => Ok(KeyType::GroupChatEventLastUpdated),
+            28 => Ok(KeyType::ChannelEventLastUpdated),
+            29 => Ok(KeyType::DirectChatEventsByLastUpdated),
+            30 => Ok(KeyType::GroupChatEventsByLastUpdated),
+            31 => Ok(KeyType::ChannelEventsByLastUpdated),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

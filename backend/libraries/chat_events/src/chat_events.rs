@@ -10,7 +10,10 @@ use oc_error_codes::{OCError, OCErrorCode};
 use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, ExpiringEventKeyPrefix, MessageIdKeyPrefix};
+use stable_memory_map::{
+    BaseKeyPrefix, ChatEventKeyPrefix, EventLastUpdatedKeyPrefix, EventsByLastUpdatedKeyPrefix, ExpiringEventKeyPrefix,
+    MessageIdKeyPrefix,
+};
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -67,10 +70,15 @@ impl ChatEvents {
     // main events list or a thread), so that they can all be garbage collected once it is deleted
     pub fn stable_memory_key_prefixes(events_prefix: ChatEventKeyPrefix) -> Vec<BaseKeyPrefix> {
         let message_ids_prefix = MessageIdKeyPrefix::from(&events_prefix);
-        // Only the main events list has expiring events
+        // Only the main events list has expiring events and last updated timestamps (the last
+        // updated timestamps of events in threads are stored under the main events list's prefixes)
         let expiring_events_prefix = ExpiringEventKeyPrefix::try_from(&events_prefix).ok();
+        let last_updated_prefix = EventLastUpdatedKeyPrefix::try_from(&events_prefix).ok();
+        let by_last_updated_prefix = EventsByLastUpdatedKeyPrefix::try_from(&events_prefix).ok();
         let mut prefixes = vec![events_prefix.into(), message_ids_prefix.into()];
         prefixes.extend(expiring_events_prefix.map(BaseKeyPrefix::from));
+        prefixes.extend(last_updated_prefix.map(BaseKeyPrefix::from));
+        prefixes.extend(by_last_updated_prefix.map(BaseKeyPrefix::from));
         prefixes
     }
 
@@ -160,16 +168,25 @@ impl ChatEvents {
         stable_memory::read_events_as_bytes(self.chat, after, ONE_MB as usize)
     }
 
-    pub fn iter_recently_updated_events(
+    // The events which were last updated after `since`, most recently updated first
+    pub fn recently_updated_events(
         &self,
-    ) -> impl Iterator<Item = (Option<MessageIndex>, EventIndex, TimestampMillis)> + '_ {
-        self.last_updated_timestamps.iter()
+        since: TimestampMillis,
+        max_count: usize,
+    ) -> Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)> {
+        self.last_updated_timestamps
+            .recently_updated_events(self.chat, since, max_count)
     }
 
     // Moves up to `max_count` entries from the heap into stable memory, returning how many were
     // moved
     pub fn migrate_to_stable_memory(&mut self, max_count: usize) -> usize {
         let mut moved = self.expiring_events.migrate_to_stable_memory(self.chat, max_count);
+        if moved < max_count {
+            moved += self
+                .last_updated_timestamps
+                .migrate_to_stable_memory(self.chat, max_count - moved);
+        }
         if moved < max_count {
             moved += self.main.migrate_message_ids_to_stable_memory(max_count - moved);
         }
@@ -201,6 +218,7 @@ impl ChatEvents {
     // The number of entries on the heap which are yet to be moved into stable memory
     pub fn heap_entries_to_migrate_count(&self) -> usize {
         self.expiring_events.on_heap_count()
+            + self.last_updated_timestamps.on_heap_count()
             + self.main.message_ids_on_heap_count()
             + self.threads.values().map(|t| t.message_ids_on_heap_count()).sum::<usize>()
     }
@@ -455,7 +473,7 @@ impl ChatEvents {
     pub fn last_updated(&self) -> Option<TimestampMillis> {
         max(
             self.main.latest_event_timestamp(),
-            self.iter_recently_updated_events().next().map(|(_, _, ts)| ts),
+            self.last_updated_timestamps.latest_update(),
         )
     }
 
@@ -2204,11 +2222,12 @@ impl ChatEvents {
     }
 
     pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {
-        ChatEventsListReader::new(&self.main, &self.last_updated_timestamps)
+        ChatEventsListReader::new(self.chat, &self.main, &self.last_updated_timestamps)
     }
 
     pub fn visible_main_events_reader(&self, min_visible_event_index: EventIndex) -> ChatEventsListReader<'_> {
         ChatEventsListReader::with_min_visible_event_index(
+            self.chat,
             &self.main,
             &self.last_updated_timestamps,
             min_visible_event_index,
@@ -2225,9 +2244,14 @@ impl ChatEvents {
         let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
 
         if thread_root_message_index.is_some() {
-            Some(ChatEventsListReader::new(events_list, &self.last_updated_timestamps))
+            Some(ChatEventsListReader::new(
+                self.chat,
+                events_list,
+                &self.last_updated_timestamps,
+            ))
         } else {
             Some(ChatEventsListReader::with_min_visible_event_index(
+                self.chat,
                 events_list,
                 &self.last_updated_timestamps,
                 min_visible_event_index,
@@ -2598,7 +2622,7 @@ impl ChatEvents {
             && let Ok(success) = &result
         {
             self.last_updated_timestamps
-                .mark_updated(thread_root_message_index, success.event_index, now);
+                .mark_updated(self.chat, thread_root_message_index, success.event_index, now);
         }
 
         result.map(|success| UpdateEventSuccess {

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Route stable memory map entries by key type to either the main map or a map with 256 byte pages for small entries ([#9348](https://github.com/open-chat-labs/open-chat/pull/9348))
 - Move each chat's `MessageId` to `EventIndex` map from the heap into the stable memory map for small entries ([#9349](https://github.com/open-chat-labs/open-chat/pull/9349))
 - Move each chat's expiring events from the heap into the stable memory map for small entries ([#9350](https://github.com/open-chat-labs/open-chat/pull/9350))
+- Move the timestamps of when each chat's events were last updated from the heap into the stable memory map for small entries ([#9351](https://github.com/open-chat-labs/open-chat/pull/9351))
 
 ### Fixed
 

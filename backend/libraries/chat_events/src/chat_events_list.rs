@@ -334,6 +334,7 @@ impl ChatEventsList {
 }
 
 pub struct ChatEventsListReader<'r> {
+    chat: Chat,
     events_list: &'r ChatEventsList,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
@@ -350,19 +351,22 @@ impl Deref for ChatEventsListReader<'_> {
 
 impl<'r> ChatEventsListReader<'r> {
     pub(crate) fn new(
+        chat: Chat,
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
     ) -> ChatEventsListReader<'r> {
-        Self::with_min_visible_event_index(events_list, last_updated_timestamps, EventIndex::default(), None)
+        Self::with_min_visible_event_index(chat, events_list, last_updated_timestamps, EventIndex::default(), None)
     }
 
     pub(crate) fn with_min_visible_event_index(
+        chat: Chat,
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
         bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
     ) -> ChatEventsListReader<'r> {
         ChatEventsListReader {
+            chat,
             events_list,
             last_updated_timestamps,
             min_visible_event_index,
@@ -574,7 +578,12 @@ impl Reader for ChatEventsListReader<'_> {
         my_user_id: Option<UserId>,
     ) -> Option<EventWrapper<Message>> {
         self.latest_message_event(my_user_id).filter(|m| {
-            m.timestamp > since || self.last_updated_timestamps.last_updated(None, m.index).unwrap_or_default() > since
+            m.timestamp > since
+                || (self.last_updated_timestamps.latest_update().is_some_and(|ts| ts > since)
+                    && self
+                        .last_updated_timestamps
+                        .last_updated(self.chat, None, m.index)
+                        .is_some_and(|ts| ts > since))
         })
     }
 }
