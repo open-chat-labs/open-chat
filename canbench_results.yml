@@ -16,7 +16,7 @@ benches:
   migrate_imported_user_metrics:
     total:
       calls: 1
-      instructions: 10248395
+      instructions: 10469263
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}

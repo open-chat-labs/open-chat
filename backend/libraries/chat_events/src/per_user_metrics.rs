@@ -2,7 +2,7 @@ use crate::metrics::ChatMetricsInternal;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{Key, KeyPrefix, UserMetricsKeyPrefix, with_map, with_map_mut};
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::collections::BTreeMap;
 use types::{Chat, TimestampMillis, UserId};
 
@@ -70,17 +70,16 @@ impl PerUserMetrics {
     // (see `copy_to_heap`), so it can simply be overwritten.
     pub fn migrate_to_stable_memory(&mut self, chat: Chat, max_count: usize) -> usize {
         let prefix = UserMetricsKeyPrefix::new_from_chat(chat);
-        let mut count = 0;
+        let count = min(max_count, self.on_heap.len());
+        let mut entries = Vec::with_capacity(count);
+        for (user_id, metrics) in std::iter::from_fn(|| self.on_heap.pop_first()).take(count) {
+            entries.push((prefix.create_key(&user_id), metrics.to_bytes()));
+        }
 
-        // Entries are popped in user id order, which matches key order for user ids of the same length
-        with_map_mut(|m| {
-            m.insert_many(
-                std::iter::from_fn(|| self.on_heap.pop_first())
-                    .take(max_count)
-                    .inspect(|_| count += 1)
-                    .map(|(user_id, metrics)| (prefix.create_key(&user_id), metrics.to_bytes())),
-            )
-        });
+        // User ids are ordered by length before their bytes, whereas keys are ordered by their bytes
+        // alone, so sort the entries into key order to minimise the number of nodes written
+        entries.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        with_map_mut(|m| m.insert_many(entries));
         count
     }
 
