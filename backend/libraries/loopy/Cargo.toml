@@ -1,0 +1,22 @@
+[package]
+name = "loopy"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+# The `loopy_cli` development binary, and with it puzzle_core's stdio
+# helpers. Off by default so a canister build carries neither.
+cli = ["puzzle_core/cli"]
+
+[[bin]]
+name = "loopy_cli"
+path = "src/bin/loopy_cli.rs"
+required-features = ["cli"]
+
+[dependencies]
+puzzle_core = { path = "../puzzle_core" }
+
+[dev-dependencies]
+puzzle_core = { path = "../puzzle_core", features = ["testing"] }

@@ -1,0 +1,22 @@
+[package]
+name = "unruly"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+# The `unruly_cli` development binary, and with it puzzle_core's stdio
+# helpers. Off by default so a canister build carries neither.
+cli = ["puzzle_core/cli"]
+
+[[bin]]
+name = "unruly_cli"
+path = "src/bin/unruly_cli.rs"
+required-features = ["cli"]
+
+[dependencies]
+puzzle_core = { path = "../puzzle_core" }
+
+[dev-dependencies]
+puzzle_core = { path = "../puzzle_core", features = ["testing"] }
