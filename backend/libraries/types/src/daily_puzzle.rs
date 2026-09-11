@@ -44,7 +44,8 @@ pub struct DailyPuzzleConfig {
     /// CHIT credited on solve, indexed by the number of consecutive days solved BEFORE this one,
     /// clamped to the last entry. So [250, 300, 350, 400, 450, 500, 500] pays 250 on a fresh streak.
     pub reward_by_streak: Vec<u32>,
-    /// CHIT deducted from the reward per hint served (levels 2 and 3 only), floored at zero.
+    /// CHIT deducted from the reward per hint step served, floored at zero. Every step counts:
+    /// a hint is a hint, whichever level it was bought at.
     pub hint_penalty: u32,
     /// Solves faster than this are recorded but the client does not offer a card.
     pub min_carded_solve_ms: u64,
@@ -71,6 +72,10 @@ impl Default for DailyPuzzleConfig {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct GameConfig {
     /// CHIT per hint level, index 0 = level 1 (highlight), 1 = level 2 (explain), 2 = level 3 (fill).
+    /// Every level costs something: a free tier makes the whole ladder skippable and leaves the
+    /// paid tiers unreachable, because a free level 1 on each of `max_hints` steps exhausts the
+    /// same budget the paid ones draw on. Upgrading a step already served costs the difference
+    /// between the two levels, so working up the ladder is never dearer than jumping to the top.
     pub hint_prices: Vec<u32>,
     /// Maximum hint steps per user per puzzle.
     pub max_hints: u8,
@@ -79,7 +84,7 @@ pub struct GameConfig {
 impl Default for GameConfig {
     fn default() -> Self {
         GameConfig {
-            hint_prices: vec![0, 100, 200],
+            hint_prices: vec![25, 75, 200],
             max_hints: 3,
         }
     }

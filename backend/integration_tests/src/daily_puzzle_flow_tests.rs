@@ -79,9 +79,12 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(started.chit_balance, None);
     assert_eq!(started.total_chit_earned, None);
 
-    // Level 1 hint: free, and it highlights the first step of the solver's own trace. It carries
-    // neither the technique nor the conclusions, which are what levels 2 and 3 are sold for.
-    let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), 0);
+    // Level 1 hint: highlights the first step of the solver's own trace, and carries neither the
+    // technique nor the conclusions, which are what levels 2 and 3 are sold for. Every level
+    // costs, so this one is debited like any other.
+    let level_1_price = puzzle.hint_prices[0];
+    assert!(level_1_price > 0, "no hint level is free");
+    let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), level_1_price);
     assert!(!first.hint.mistake);
     assert_eq!(first.hint.level, 1);
     assert_eq!(first.hint.hint.technique, 0);
@@ -89,16 +92,17 @@ fn daily_puzzle_end_to_end() {
     assert!(first.hint.hint.conclusions.is_empty());
     assert!(!first.hint.hint.focus.is_empty());
     assert_eq!(first.hints_used, 1);
-    assert_eq!(chit_balance(env, &user), DAILY_CHIT);
-    assert_eq!(first.chit_balance, None);
+    let balance_after_first = DAILY_CHIT - level_1_price as i32;
+    assert_eq!(chit_balance(env, &user), balance_after_first);
+    assert_eq!(first.chit_balance, Some(balance_after_first));
 
     // Upgrading the same step to level 3: the only tier that hands over the conclusions, and the
-    // step is still the one step used. Hint keys are not grid indices in every game (bridges keys
-    // edges), so compare against the solver's trace rather than the solution bytes. Level 2's
-    // payload is covered by the engine's own tests; the balance here only stretches to one
-    // purchase, and level 3 is the tier that must not be reachable for free.
-    let level_3_price = puzzle.hint_prices[2];
-    let upgraded = hint(env, &user, local_user_index, game_id, number, 3, Vec::new(), level_3_price);
+    // step is still the one step used. The upgrade is priced at the difference, so climbing costs
+    // the same as jumping straight here. Hint keys are not grid indices in every game (bridges
+    // keys edges), so compare against the solver's trace rather than the solution bytes. Level 2's
+    // payload is covered by the engine's own tests.
+    let upgrade_price = puzzle.hint_prices[2] - level_1_price;
+    let upgraded = hint(env, &user, local_user_index, game_id, number, 3, Vec::new(), upgrade_price);
     assert!(!upgraded.hint.mistake);
     assert_eq!(upgraded.hint.level, 3);
     assert_ne!(upgraded.hint.hint.technique, 0);
@@ -106,7 +110,8 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(upgraded.hint.hint.conclusions, trace[0]);
     assert_eq!(upgraded.hints_used, 1);
     assert_eq!(upgraded.state.hints.len(), 1);
-    let balance_after_hint = DAILY_CHIT - level_3_price as i32;
+    let balance_after_hint = balance_after_first - upgrade_price as i32;
+    assert_eq!(balance_after_hint, DAILY_CHIT - puzzle.hint_prices[2] as i32);
     assert_eq!(chit_balance(env, &user), balance_after_hint);
     // The debit landed in this call, so the response reports the user canister's balances
     assert_eq!(upgraded.chit_balance, Some(balance_after_hint));
@@ -174,7 +179,7 @@ fn daily_puzzle_end_to_end() {
             &e.reason,
             ChitEventType::Game { game_id: g, key }
                 if g == game_id && key.starts_with(&hint_prefix) && key.ends_with(":3")
-        ) && e.amount == -(level_3_price as i32)),
+        ) && e.amount == -(upgrade_price as i32)),
         "no hint debit event: {events:?}"
     );
     assert!(

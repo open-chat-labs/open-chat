@@ -347,7 +347,7 @@ impl DailyPuzzleEngine {
         // Series-level: another game solved today does not change the run ending yesterday
         let prev_streak = self.streak_ending_at_for(user_id, number.checked_sub(1));
         let base_reward = reward_for_streak(&puzzle.config.reward_by_streak, prev_streak);
-        let penalty = puzzle.config.hint_penalty.saturating_mul(record.paid_hint_steps());
+        let penalty = puzzle.config.hint_penalty.saturating_mul(record.hint_steps_used as u32);
         let reward = base_reward.saturating_sub(penalty);
 
         let record = self.user_games.get_mut(&user_id).and_then(|m| m.get_mut(&game_id)).unwrap();
@@ -479,11 +479,15 @@ impl DailyPuzzleEngine {
             .ok_or(OCErrorCode::ItemNotFound)?;
         let step = step as u16;
 
-        let price = *puzzle
-            .game_config
-            .hint_prices
-            .get(level as usize - 1)
-            .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("level"))?;
+        let price_at = |level: u8| {
+            puzzle
+                .game_config
+                .hint_prices
+                .get(level as usize - 1)
+                .copied()
+                .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("level"))
+        };
+        let mut price = price_at(level)?;
 
         let restore = match record.hints.iter().find(|(s, _)| *s == step) {
             Some((_, served)) if level <= served.level => {
@@ -495,8 +499,13 @@ impl DailyPuzzleEngine {
                     total_chit_earned: None,
                 }));
             }
-            // Upgrading a step already served: pay for the new level only, no new step counted
-            Some((_, served)) => Some(served.clone()),
+            // Upgrading a step already served: pay the difference, and count no new step. Charging
+            // the new level in full would make climbing the ladder dearer than jumping to the top,
+            // which punishes exactly the player the cheap tiers are there for.
+            Some((_, served)) => {
+                price = price.saturating_sub(price_at(served.level)?);
+                Some(served.clone())
+            }
             None => {
                 if record.hint_steps_used >= puzzle.game_config.max_hints {
                     return Err(OCErrorCode::Throttled.with_message("max_hints"));
@@ -706,13 +715,6 @@ impl DailyPuzzleEngine {
     }
 }
 
-impl UserGame {
-    // Steps revealed beyond level 1 count against the reward
-    fn paid_hint_steps(&self) -> u32 {
-        self.hints.iter().filter(|(_, h)| h.level > 1).count() as u32
-    }
-}
-
 fn reward_for_streak(table: &[u32], prev_streak: u32) -> u32 {
     if table.is_empty() {
         return 0;
@@ -787,7 +789,7 @@ mod tests {
                 max_submits: 3,
             },
             game_config: GameConfig {
-                hint_prices: vec![0, 100, 200],
+                hint_prices: vec![25, 75, 200],
                 max_hints: 2,
             },
         }
@@ -1142,18 +1144,18 @@ mod tests {
     }
 
     #[test]
-    fn hint_penalty_applies_to_paid_steps_only() {
+    fn hint_penalty_applies_to_every_step_served() {
         let mut engine = new_engine();
         let u = user(1);
         started(&mut engine, u, START);
         let solution = engine.puzzle(GAME).unwrap().solution.clone();
 
-        // Step 0 at level 1 (free), step 1 at level 2 (paid)
-        serve(&mut engine, u, 1, &[], 0);
-        serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 100);
+        // Two steps, bought at different levels: the penalty does not care which
+        serve(&mut engine, u, 1, &[], 25);
+        serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 75);
 
         let outcome = engine.submit(u, GAME, NUMBER, &solution, START + 10_000).unwrap();
-        assert_eq!(outcome.solved.reward, 200);
+        assert_eq!(outcome.solved.reward, 150);
         assert_eq!(outcome.solved.hints_used, 2);
         assert_eq!(outcome.result.as_ref().unwrap().hints_used, 2);
     }
@@ -1201,7 +1203,7 @@ mod tests {
     // Step selection only: reserve then put the step straight back, so repeated probes neither
     // consume the hint budget nor turn into re-serves
     fn probe(engine: &mut DailyPuzzleEngine, u: UserId, filled: &[(u16, u8)]) -> u16 {
-        let (step, restore) = match engine.reserve_hint(u, GAME, NUMBER, 1, filled, 0, START) {
+        let (step, restore) = match engine.reserve_hint(u, GAME, NUMBER, 1, filled, 25, START) {
             Ok(HintPrepared::Serve { step, restore, .. }) => (step, restore),
             Ok(_) => panic!("expected a serve"),
             Err(e) => panic!("{e:?}"),
@@ -1327,21 +1329,21 @@ mod tests {
     }
 
     #[test]
-    fn hint_upgrade_charges_new_level_only_and_keeps_step_count() {
+    fn hint_upgrade_charges_the_difference_and_keeps_step_count() {
         let mut engine = new_engine();
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (step, r) = serve(&mut engine, u, 1, &[], 0);
+        let (step, r) = serve(&mut engine, u, 1, &[], 25);
         assert_eq!(r.hints_used, 1);
         assert_eq!(r.hint.level, 1);
 
-        // Upgrading the same step to level 3 is priced at hint_prices[2], and counts no new step
+        // Upgrading that step to level 3 costs 200 - 25, not 200, and counts no new step
         assert_err(
-            engine.reserve_hint(u, GAME, NUMBER, 3, &[], 100, START),
+            engine.reserve_hint(u, GAME, NUMBER, 3, &[], 200, START),
             OCErrorCode::PriceMismatch,
         );
-        let (upgraded, r) = serve(&mut engine, u, 3, &[], 200);
+        let (upgraded, r) = serve(&mut engine, u, 3, &[], 175);
         assert_eq!(upgraded, step);
         assert_eq!(r.hints_used, 1);
         assert_eq!(r.hint.level, 3);
@@ -1357,20 +1359,20 @@ mod tests {
     }
 
     #[test]
-    fn hint_new_step_after_cap_errors_and_level_one_is_free() {
+    fn hint_new_step_after_cap_errors_but_upgrades_still_work() {
         let mut engine = new_engine();
         let u = user(1);
         started(&mut engine, u, START);
 
-        serve(&mut engine, u, 1, &[], 0);
-        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 0);
+        serve(&mut engine, u, 1, &[], 25);
+        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
 
         // max_hints = 2: a third step is refused, an upgrade of a served step still works
         assert_err(
-            engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 25, START),
             OCErrorCode::Throttled,
         );
-        let (step, _) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 100);
+        let (step, _) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 50);
         assert_eq!(step, 1);
 
         assert_err(
@@ -1417,26 +1419,26 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (_, r) = serve(&mut engine, u, 1, &[], 0);
+        let (_, r) = serve(&mut engine, u, 1, &[], 25);
         assert_eq!(r.hint.hint.technique, 0);
         assert!(r.hint.hint.target.is_empty());
         assert!(r.hint.hint.conclusions.is_empty());
         assert_eq!(r.hint.hint.focus, vec![4]);
 
         // Level 2 buys the technique, but not a target that names what the step concludes
-        let (_, r) = serve(&mut engine, u, 2, &[], 100);
+        let (_, r) = serve(&mut engine, u, 2, &[], 50);
         assert_eq!(r.hint.hint.technique, 1);
         assert!(r.hint.hint.target.is_empty());
         assert!(r.hint.hint.conclusions.is_empty());
 
         // Level 3 is the whole thing
-        let (_, r) = serve(&mut engine, u, 3, &[], 200);
+        let (_, r) = serve(&mut engine, u, 3, &[], 125);
         assert_eq!(r.hint.hint.technique, 1);
         assert_eq!(r.hint.hint.target, vec![0]);
         assert_eq!(r.hint.hint.conclusions, vec![(0, 1), (2, 0)]);
 
         // A target that names something other than the conclusion survives at level 2
-        let (_, r) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 100);
+        let (_, r) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 75);
         assert_eq!(r.hint.hint.technique, 2);
         assert_eq!(r.hint.hint.target, vec![1]);
         assert!(r.hint.hint.conclusions.is_empty());
@@ -1469,7 +1471,7 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let restore = match engine.reserve_hint(u, GAME, NUMBER, 2, &[], 100, START).unwrap() {
+        let restore = match engine.reserve_hint(u, GAME, NUMBER, 2, &[], 75, START).unwrap() {
             HintPrepared::Serve { step, restore, .. } => {
                 assert_eq!(state(&engine, u, START).hints.len(), 1);
                 (step, restore)
@@ -1478,16 +1480,16 @@ mod tests {
         };
 
         // max_hints is 2 and one is now taken, so a second new step is the last one allowed
-        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 0);
+        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
         assert_err(
-            engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 25, START),
             OCErrorCode::Throttled,
         );
 
         // A failed debit puts the step back, budget included
         engine.release_hint(u, GAME, NUMBER, restore.0, restore.1);
         assert_eq!(state(&engine, u, START).hints.len(), 1);
-        let (step, _) = serve(&mut engine, u, 1, &[(0, 1), (2, 0), (6, 1)], 0);
+        let (step, _) = serve(&mut engine, u, 1, &[(0, 1), (2, 0), (6, 1)], 25);
         assert_eq!(step, 2);
     }
 
@@ -1497,9 +1499,9 @@ mod tests {
         let mut engine = new_engine();
         let u = user(1);
         started(&mut engine, u, START);
-        serve(&mut engine, u, 1, &[], 0);
+        serve(&mut engine, u, 1, &[], 25);
 
-        let (step, restore) = match engine.reserve_hint(u, GAME, NUMBER, 3, &[], 200, START).unwrap() {
+        let (step, restore) = match engine.reserve_hint(u, GAME, NUMBER, 3, &[], 175, START).unwrap() {
             HintPrepared::Serve { step, restore, .. } => (step, restore),
             _ => panic!("expected an upgrade"),
         };
