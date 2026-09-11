@@ -930,15 +930,15 @@ mod tests {
         move_message_ids_to_heap(&mut events);
         let expected = expected_message_id_event_indexes(&events);
 
-        assert_eq!(events.message_ids_on_heap_count(), 100);
+        assert_eq!(events.heap_entries_to_migrate_count(), 100);
         assert_message_id_lookups(&events, &expected);
 
-        assert_eq!(events.migrate_message_ids_to_stable_memory(30), 30);
-        assert_eq!(events.message_ids_on_heap_count(), 70);
+        assert_eq!(events.migrate_to_stable_memory(30), 30);
+        assert_eq!(events.heap_entries_to_migrate_count(), 70);
         assert_message_id_lookups(&events, &expected);
 
-        assert_eq!(events.migrate_message_ids_to_stable_memory(1000), 70);
-        assert_eq!(events.message_ids_on_heap_count(), 0);
+        assert_eq!(events.migrate_to_stable_memory(1000), 70);
+        assert_eq!(events.heap_entries_to_migrate_count(), 0);
         assert_message_id_lookups(&events, &expected);
 
         let events_list = events.main_events_list();
@@ -946,7 +946,7 @@ mod tests {
             assert_eq!(events_list.message_ids().get(&message_id), Some(event_index));
         }
 
-        assert_eq!(events.migrate_message_ids_to_stable_memory(1000), 0);
+        assert_eq!(events.migrate_to_stable_memory(1000), 0);
     }
 
     #[test]
@@ -1028,7 +1028,7 @@ mod tests {
         imported.set_chat(channel);
         imported.discard_message_ids_on_heap();
 
-        assert_eq!(imported.message_ids_on_heap_count(), 0);
+        assert_eq!(imported.heap_entries_to_migrate_count(), 0);
         assert_message_id_lookups(&imported, remaining);
         for (message_id, _) in removed {
             assert!(
@@ -1037,6 +1037,52 @@ mod tests {
                     .event_index(EventKey::MessageId(*message_id))
                     .is_none()
             );
+        }
+    }
+
+    #[test]
+    fn expired_events_are_removed() {
+        let mut events = setup_events(Some(1000));
+        assert_eq!(events.heap_entries_to_migrate_count(), 0);
+
+        // The messages were pushed at 2..102, so expire at 1002..1102
+        assert_eq!(events.next_event_expiry(), Some(1002));
+        assert_eq!(events.remove_expired_events(1001).events.len(), 0);
+
+        let result = events.remove_expired_events(1051);
+        assert_eq!(result.events.len(), 50);
+        assert_eq!(events.next_event_expiry(), Some(1052));
+
+        let events_list = events.main_events_list();
+        for i in 1..=100u32 {
+            let event = events_list.get_event(EventKey::EventIndex(i.into()), EventIndex::default(), None);
+            assert_eq!(event.is_some(), i > 50);
+        }
+
+        assert_eq!(events.remove_expired_events(2000).events.len(), 50);
+        assert_eq!(events.next_event_expiry(), None);
+    }
+
+    #[test]
+    fn import_events_writes_expiring_events() {
+        let events = setup_events(Some(1000));
+        let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
+        ChatEvents::import_events(channel, export_events(&events));
+
+        let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
+        imported.set_chat(channel);
+        imported.discard_message_ids_on_heap();
+        imported.discard_expiring_events_on_heap();
+        assert_eq!(imported.heap_entries_to_migrate_count(), 0);
+        assert_eq!(imported.next_event_expiry(), Some(1002));
+
+        // Every message expires, but the `DirectChatCreated` event doesn't
+        assert_eq!(imported.remove_expired_events(u64::MAX).events.len(), 100);
+        assert_eq!(imported.next_event_expiry(), None);
+        let events_list = imported.main_events_list();
+        for i in 0..=100u32 {
+            let event = events_list.get_event(EventKey::EventIndex(i.into()), EventIndex::default(), None);
+            assert_eq!(event.is_some(), i == 0);
         }
     }
 

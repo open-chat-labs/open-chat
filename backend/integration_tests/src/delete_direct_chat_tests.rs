@@ -2,11 +2,12 @@ use crate::env::ENV;
 use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable_memory_map};
 use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, client};
+use constants::DAY_IN_MS;
 use ic_stable_structures::memory_manager::MemoryId;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::{ChatId, MessageContentInitial, TextContent};
+use types::{ChatId, MessageContentInitial, OptionUpdate, TextContent};
 
 #[test]
 fn delete_direct_chat_succeeds() {
@@ -77,6 +78,18 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     let initial_small_entries_keys =
         get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
 
+    // Make the messages expire (though not within this test), so that the chat has expiring events
+    client::user::happy_path::update_chat_settings(
+        env,
+        &user1,
+        &user_canister::update_chat_settings::Args {
+            user_id: user2.user_id,
+            events_ttl: OptionUpdate::SetToSome(DAY_IN_MS),
+        },
+    );
+    let small_entries_keys_before_messages =
+        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
+
     let result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     for _ in 0..3 {
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
@@ -95,9 +108,10 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     tick_many(env, 3);
 
     assert!(get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len() > initial_stable_memory_map_keys);
+    // A message id for each message, plus an expiring event for each message in the main events list
     assert_eq!(
         get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
-        initial_small_entries_keys + 6
+        small_entries_keys_before_messages + 10
     );
 
     let delete_direct_chat_response = client::user::delete_direct_chat(

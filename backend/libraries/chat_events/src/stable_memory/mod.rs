@@ -3,7 +3,8 @@ use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{
-    ChatEventKey, ChatEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix, StableMemoryMap, with_map, with_map_mut,
+    ChatEventKey, ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix, StableMemoryMap, with_map,
+    with_map_mut,
 };
 use std::cmp::min;
 use std::collections::VecDeque;
@@ -55,6 +56,12 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
             if let ChatEventInternal::Message(message) = &event.event {
                 let message_id_key = MessageIdKeyPrefix::from(&prefix).create_key(&message.message_id);
                 m.insert(message_id_key, MessageIdsStableStorage::value_to_bytes(context.event_index));
+            }
+            if let Some(expires_at) = event.expires_at
+                && let Ok(expiring_events_prefix) = ExpiringEventKeyPrefix::try_from(&prefix)
+            {
+                let expiring_event_key = expiring_events_prefix.create_key(&(expires_at, context.event_index));
+                m.insert(expiring_event_key, Vec::new());
             }
             m.insert(key, value);
         }

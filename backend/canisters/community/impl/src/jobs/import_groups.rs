@@ -192,8 +192,10 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             let mut chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
             chat.events.set_chat(Chat::Channel(community_id, channel_id));
             chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
-            // The message ids were written to stable memory as the events were imported
+            // The message ids and expiring events were written to stable memory as the events were
+            // imported
             chat.events.discard_message_ids_on_heap();
+            chat.events.discard_expiring_events_on_heap();
 
             let blocked: Vec<_> = chat.members.blocked();
             if !blocked.is_empty() {
