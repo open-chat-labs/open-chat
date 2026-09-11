@@ -1,5 +1,6 @@
 use crate::state::{MAX_BRIDGES, State};
 use crate::{Hint, Technique, Tier};
+use puzzle_core::MAX_SEARCH_DEPTH;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -205,7 +206,10 @@ fn contradiction(st: &State) -> bool {
 /// Exhaustive solution count, capped. Runs the Easy techniques, then
 /// branches on the open edge with the fewest remaining values; branch v
 /// fixes that edge at exactly v, so the branches partition the space.
-pub(crate) fn count_solutions(st: &mut State, cap: u32) -> u32 {
+pub(crate) fn count_solutions(st: &mut State, cap: u32, depth: u32) -> u32 {
+    if depth >= MAX_SEARCH_DEPTH {
+        return cap;
+    }
     match solve(st, Tier::Easy, None) {
         Outcome::Solved => return 1,
         Outcome::NoSolution => return 0,
@@ -232,7 +236,7 @@ pub(crate) fn count_solutions(st: &mut State, cap: u32) -> u32 {
         let mut branch = st.clone();
         branch.lines[e] = v;
         branch.max[e] = v;
-        total += count_solutions(&mut branch, cap - total);
+        total += count_solutions(&mut branch, cap - total, depth + 1);
         if total >= cap {
             return cap;
         }

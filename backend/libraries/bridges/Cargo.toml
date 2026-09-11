@@ -5,6 +5,16 @@ edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+# The `bridges_cli` development binary, and with it puzzle_core's stdio
+# helpers. Off by default so a canister build carries neither.
+cli = ["puzzle_core/cli"]
+
+[[bin]]
+name = "bridges_cli"
+path = "src/bin/bridges_cli.rs"
+required-features = ["cli"]
+
 [dependencies]
 puzzle_core = { path = "../puzzle_core" }
 

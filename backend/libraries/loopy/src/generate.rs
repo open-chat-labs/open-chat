@@ -2,7 +2,7 @@ use crate::grid::Grid;
 use crate::solver::{Outcome, solve};
 use crate::state::State;
 use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, solution_pairs, solve_with_trace};
-use puzzle_core::{Budget, GenerateError, Rng};
+use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Colour {
@@ -180,11 +180,8 @@ fn validate(params: Params) -> Result<Grid, GenerateError> {
             grid.w, grid.h
         )));
     }
-    if grid.edges() + grid.cells() + grid.dots() > u16::MAX as usize {
-        return Err(GenerateError::invalid(format!(
-            "{}x{} has more edges, cells and dots than a u16 hint key can address",
-            grid.w, grid.h
-        )));
+    if !side_ok(grid.w, grid.h) {
+        return Err(GenerateError::invalid(side_too_big(grid.w, grid.h)));
     }
     Ok(grid)
 }

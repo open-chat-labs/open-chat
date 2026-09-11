@@ -53,7 +53,7 @@
 //! | 1 | ClueSatisfied | the clue vertex | This clue already has all {n} of its lines, so every other cell around it must slant away from it. |
 //! | 2 | ClueForced | the clue vertex | This clue still needs {n} more lines and has exactly {n} undecided cells around it, so they must all slant towards it. |
 //! | 3 | LoopAvoidance | the cell being decided | The two corners this slant would join are already connected by a path of diagonals, so joining them would close a loop; the cell must slant the other way. |
-//! | 4 | DeadEndAvoidance | the cell being decided | This slant would join two groups of points that never reach the border and have no other way out, sealing them inside a loop; the cell must slant the other way. |
+//! | 4 | DeadEndAvoidance | the cell being decided | This slant would join two groups of points that never reach the border and have no other way out, sealing them inside a loop; the cell must slant the other way. Its `focus` is the part of those two groups nearest the cell, not all of them: by the end of a solve they cover most of the board. |
 //! | 5 | Equivalence | the cell being decided | This cell must slant the same way as the highlighted cell it is tied to, which is already filled. |
 //! | 6 | PairedClue | the clue vertex | Two adjacent undecided cells around this clue must slant the same way, so between them they supply exactly one line; that fixes the remaining cells. |
 
@@ -61,7 +61,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid};
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -168,7 +168,10 @@ pub fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
 /// Load a player's grid into a state. `grid` is w*h bytes: 0 =
 /// undecided, 1 = backslash, 2 = slash. Anything else is a caller bug and
 /// is reported rather than read as undecided.
-fn load(description: &[u8], grid: &[u8]) -> Result<State, PuzzleError> {
+///
+/// The parsed description comes back with the state so that a caller
+/// needing both parses the bytes once.
+fn load(description: &[u8], grid: &[u8]) -> Result<(Description, State), PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
     let grid = checked_grid(grid, st.size())?;
@@ -178,7 +181,7 @@ fn load(description: &[u8], grid: &[u8]) -> Result<State, PuzzleError> {
         }
         st.soln[i] = decode_slash(b);
     }
-    Ok(st)
+    Ok((d, st))
 }
 
 /// Rule check used by tests and mirrored by the client. Reports only what
@@ -187,8 +190,7 @@ fn load(description: &[u8], grid: &[u8]) -> Result<State, PuzzleError> {
 /// longer come out right. See [`is_complete`] for whether the grid is
 /// finished.
 pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
-    let d = parse_description(description)?;
-    let st = load(description, grid)?;
+    let (d, st) = load(description, grid)?;
     let mut out = Vec::new();
 
     let vw = st.vw();
@@ -246,14 +248,13 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, Pu
 /// is already a violation while it is unmet, so pair this with
 /// [`check_rules`], or use [`Puzzle::is_solved`].
 pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
-    let st = load(description, grid)?;
+    let (_, st) = load(description, grid)?;
     Ok(st.soln.iter().all(|&v| v != 0))
 }
 
 /// The solution in hint-key space: `(cell index, 1 = backslash / 2 =
 /// slash)` for every cell, sorted by cell. Same keys and values as hint
-/// conclusions. A solution of the wrong length gives 0 (undecided) for
-/// every cell. Panics on a malformed description.
+/// conclusions.
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.width as usize * d.height as usize;
@@ -292,6 +293,9 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     if width < 2 || height < 2 {
         return Err(PuzzleError::description("width and height must be at least 2"));
     }
+    if !side_ok(width as usize, height as usize) {
+        return Err(PuzzleError::description(side_too_big(width as usize, height as usize)));
+    }
     let expected = 3 + (width as usize + 1) * (height as usize + 1);
     if bytes.len() != expected {
         return Err(PuzzleError::description(format!(
@@ -324,7 +328,7 @@ pub(crate) fn encode_description(st: &State) -> Vec<u8> {
 /// holding `\`, `/` or a space.
 pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
     let st = match grid {
-        Some(g) => load(description, g)?,
+        Some(g) => load(description, g)?.1,
         None => State::from_description(&parse_description(description)?),
     };
     let (w, h, vw) = (st.w, st.h, st.vw());

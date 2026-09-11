@@ -37,7 +37,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{GenerateError, Puzzle, PuzzleError, checked_grid};
+use puzzle_core::{GenerateError, Puzzle, PuzzleError, checked_grid, checked_grid_values, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -164,10 +164,7 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(Description, Scan), PuzzleEr
     let d = parse_description(description)?;
     let (w, h) = (d.width as usize, d.height as usize);
     let n = w * h;
-    let grid = checked_grid(grid, n)?;
-    if let Some((i, &byte)) = grid.iter().enumerate().find(|&(_, &b)| b > 1) {
-        return Err(PuzzleError::GridValue { cell: i as u16, byte });
-    }
+    let grid = checked_grid_values(grid, n, 1)?;
     let bulb = |i: usize| grid[i] != 0;
     let black = |i: usize| matches!(d.cells[i], Cell::Black(_));
     let mut out = Vec::new();
@@ -279,8 +276,7 @@ fn neighbours(w: usize, h: usize, i: usize) -> impl Iterator<Item = usize> {
 
 /// The solution in hint-key space: `(cell index, 1 = bulb / 0 = no bulb)`
 /// for every white cell, sorted by cell. Same keys and values as hint
-/// conclusions. A solution of the wrong length counts as having no
-/// bulbs. Panics on a malformed description.
+/// conclusions.
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.cells.len();
@@ -297,7 +293,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    Ok(solver::count_solutions(&mut st, cap))
+    Ok(solver::count_solutions(&mut st, cap, 0))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
@@ -323,6 +319,9 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     let (width, height) = (bytes[1], bytes[2]);
     if width < 2 || height < 2 {
         return Err(PuzzleError::description("width and height must be at least 2"));
+    }
+    if !side_ok(width as usize, height as usize) {
+        return Err(PuzzleError::description(side_too_big(width as usize, height as usize)));
     }
     let expected = 3 + width as usize * height as usize;
     if bytes.len() != expected {
@@ -365,7 +364,7 @@ pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, P
     let (w, h) = (d.width as usize, d.height as usize);
     let mut st = State::from_description(&d);
     if let Some(g) = grid {
-        let g = checked_grid(g, st.size())?;
+        let g = checked_grid_values(g, st.size(), 1)?;
         for (i, &b) in g.iter().enumerate() {
             if b != 0 && !st.black[i] {
                 st.set_light(i, true);

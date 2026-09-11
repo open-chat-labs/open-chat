@@ -31,7 +31,7 @@
 //!
 //! Description: byte 0 = format version (1), byte 1 = width, byte 2 =
 //! height, then width*height clue bytes in row-major order: 0xFF = no
-//! clue, else 0..=3.
+//! clue, else 0..=4.
 //!
 //! Solution / grid: one byte per edge, 1 = line, 0 = no line. Edges are
 //! ordered with every horizontal edge first — (height+1) rows of width,
@@ -70,7 +70,7 @@ mod solver;
 mod state;
 
 use grid::Grid;
-use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid};
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid, checked_grid_values, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -202,10 +202,7 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(Description, Grid, Scan), Pu
         w: d.width as usize,
         h: d.height as usize,
     };
-    let grid = checked_grid(grid, g.edges())?;
-    if let Some((e, &byte)) = grid.iter().enumerate().find(|&(_, &b)| b > 1) {
-        return Err(PuzzleError::GridValue { cell: e as u16, byte });
-    }
+    let grid = checked_grid_values(grid, g.edges(), 1)?;
     let line = |e: usize| grid[e] != 0;
     let mut out = Vec::new();
     let mut clues_exact = true;
@@ -306,8 +303,7 @@ pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError>
 
 /// The solution in hint-key space: `(edge index, 1 = line / 0 = no
 /// line)` for every edge, sorted by edge. Same keys and values as hint
-/// conclusions. A solution of the wrong length counts as having no
-/// lines. Panics on a malformed description.
+/// conclusions.
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.edge_count();
@@ -319,7 +315,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    Ok(solver::count_solutions(&mut st, cap))
+    Ok(solver::count_solutions(&mut st, cap, 0))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
@@ -346,6 +342,9 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     if width == 0 || height == 0 {
         return Err(PuzzleError::description("width and height must be at least 1"));
     }
+    if !side_ok(width as usize, height as usize) {
+        return Err(PuzzleError::description(side_too_big(width as usize, height as usize)));
+    }
     let g = Grid {
         w: width as usize,
         h: height as usize,
@@ -366,7 +365,9 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
         .iter()
         .map(|&b| match b {
             CLUE_NONE => Ok(None),
-            0..=3 => Ok(Some(b)),
+            // 4 is a legal clue, and the generator produces one whenever
+            // the loop encircles a single cell.
+            0..=4 => Ok(Some(b)),
             _ => Err(PuzzleError::description(format!("bad clue byte 0x{b:02x}"))),
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -390,7 +391,7 @@ pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, P
         w: d.width as usize,
         h: d.height as usize,
     };
-    let grid = grid.map(|b| checked_grid(b, g.edges())).transpose()?;
+    let grid = grid.map(|b| checked_grid_values(b, g.edges(), 1)).transpose()?;
     let line = |e: usize| grid.is_some_and(|b| b[e] != 0);
     let mut out = String::with_capacity((2 * g.w + 2) * (2 * g.h + 1));
     for y in 0..=g.h {

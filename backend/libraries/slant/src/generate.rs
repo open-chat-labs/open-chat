@@ -1,7 +1,7 @@
 use crate::solver::{Outcome, solve};
 use crate::state::State;
 use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, encode_slash, solution_pairs, solve_with_trace};
-use puzzle_core::{Budget, Dsf, GenerateError, Rng};
+use puzzle_core::{Budget, Dsf, GenerateError, Rng, side_ok, side_too_big};
 
 /// Port of `slant_generate`: fill the cells in random order, choosing at
 /// random unless one slash would close a loop. Never has to backtrack
@@ -56,10 +56,8 @@ fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
             "width and height must be at least 2, got {w}x{h}"
         )));
     }
-    if w * h + (w + 1) * (h + 1) > u16::MAX as usize {
-        return Err(GenerateError::invalid(format!(
-            "{w}x{h} has more cells and vertices than a u16 hint key can address"
-        )));
+    if !side_ok(w, h) {
+        return Err(GenerateError::invalid(side_too_big(w, h)));
     }
     Ok((w, h))
 }
@@ -119,7 +117,9 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
         let Ok((hints, solved)) = solve_with_trace(&description, tier) else {
             continue;
         };
-        if solved.as_deref() != Some(solution.as_slice()) {
+        // ... and one that needs no deductions at all has nothing to
+        // show a player who asks for a hint.
+        if solved.as_deref() != Some(solution.as_slice()) || hints.is_empty() {
             continue;
         }
         let Ok(pairs) = solution_pairs(&description, &solution) else {

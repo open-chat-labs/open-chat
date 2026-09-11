@@ -67,7 +67,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{GenerateError, Puzzle, PuzzleError, checked_grid};
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid, checked_grid_values, side_ok, side_too_big};
 use state::{Square, State};
 
 pub use puzzle_core::Tier;
@@ -213,10 +213,7 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(Description, Scan), PuzzleEr
     let d = parse_description(description)?;
     let (w, h) = (d.width as usize, d.height as usize);
     let n = w * h;
-    let grid = checked_grid(grid, n)?;
-    if let Some((i, &byte)) = grid.iter().enumerate().find(|&(_, &b)| b > 1) {
-        return Err(PuzzleError::GridValue { cell: i as u16, byte });
-    }
+    let grid = checked_grid_values(grid, n, 1)?;
     let tent = |i: usize| grid[i] != 0;
     let tree = |i: usize| d.cells[i] == Cell::Tree;
     let mut out = Vec::new();
@@ -279,30 +276,22 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(Description, Scan), PuzzleEr
     }
 
     // Components of the bipartite tree/tent adjacency graph.
-    let mut parent: Vec<usize> = (0..n).collect();
-    fn find(parent: &mut [usize], mut i: usize) -> usize {
-        while parent[i] != i {
-            parent[i] = parent[parent[i]];
-            i = parent[i];
-        }
-        i
-    }
+    let mut dsf = Dsf::new(n);
     for i in 0..n {
         let (x, y) = (i % w, i / w);
         for j in [(x + 1 < w).then(|| i + 1), (y + 1 < h).then(|| i + w)].into_iter().flatten() {
             let joined = (tree(i) && tent(j) && !tree(j)) || (tent(i) && !tree(i) && tree(j));
             if joined {
-                let (a, b) = (find(&mut parent, i), find(&mut parent, j));
-                parent[a] = b;
+                dsf.merge(i, j);
             }
         }
     }
     let mut members: Vec<(Vec<u16>, Vec<u16>)> = vec![(Vec::new(), Vec::new()); n];
     for i in 0..n {
         if tree(i) {
-            members[find(&mut parent, i)].0.push(i as u16);
+            members[dsf.find(i)].0.push(i as u16);
         } else if tent(i) {
-            members[find(&mut parent, i)].1.push(i as u16);
+            members[dsf.find(i)].1.push(i as u16);
         }
     }
     for (trees, tents) in members {
@@ -355,8 +344,7 @@ fn neighbours(w: usize, h: usize, i: usize) -> impl Iterator<Item = usize> {
 
 /// The solution in hint-key space: `(cell index, 1 = tent / 0 = grass)`
 /// for every non-tree cell, sorted by cell. Same keys and values as hint
-/// conclusions. A solution of the wrong length counts as having no
-/// tents. Panics on a malformed description.
+/// conclusions.
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.cells.len();
@@ -371,7 +359,6 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 
 /// Number of distinct tent layouts satisfying every rule, capped at
 /// `cap`, via backtracking that shares nothing with the technique solver.
-/// Returns 0 for a malformed description.
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     Ok(solver::count_solutions(&d, cap))
@@ -402,6 +389,9 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     let (width, height) = (bytes[1], bytes[2]);
     if width == 0 || height == 0 {
         return Err(PuzzleError::description("width and height must be non-zero"));
+    }
+    if !side_ok(width as usize, height as usize) {
+        return Err(PuzzleError::description(side_too_big(width as usize, height as usize)));
     }
     let (w, h) = (width as usize, height as usize);
     let expected = 3 + w * h + h + w;
@@ -456,7 +446,7 @@ pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, P
     let d = parse_description(description)?;
     let (w, h) = (d.width as usize, d.height as usize);
     let n = w * h;
-    let grid = grid.map(|g| checked_grid(g, n)).transpose()?;
+    let grid = grid.map(|g| checked_grid_values(g, n, 1)).transpose()?;
     let tent = |i: usize| grid.is_some_and(|g| g[i] != 0);
     let digit = |c: u8| if c < 10 { (b'0' + c) as char } else { '+' };
     let mut out = String::with_capacity((w + 3) * (h + 1));

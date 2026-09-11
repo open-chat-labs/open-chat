@@ -1,5 +1,6 @@
 use crate::state::{Counts, State, other};
 use crate::{EMPTY, Hint, Technique, Tier, VALUE_A, VALUE_B};
+use puzzle_core::MAX_SEARCH_DEPTH;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -288,7 +289,7 @@ pub(crate) fn count_solutions(st: &State, cap: u32) -> u32 {
     }
     let grid = st.grid.clone();
     let counts = st.counts();
-    count_rec(st, grid, counts, cap)
+    count_rec(st, grid, counts, cap, 0)
 }
 
 fn set(st: &State, grid: &mut [u8], counts: &mut Counts, i: usize, v: u8) {
@@ -297,9 +298,12 @@ fn set(st: &State, grid: &mut [u8], counts: &mut Counts, i: usize, v: u8) {
     counts.cols[v as usize - 1][i % st.w] += 1;
 }
 
-fn count_rec(st: &State, mut grid: Vec<u8>, mut counts: Counts, cap: u32) -> u32 {
+fn count_rec(st: &State, mut grid: Vec<u8>, mut counts: Counts, cap: u32, depth: u32) -> u32 {
     if cap == 0 {
         return 0;
+    }
+    if depth >= MAX_SEARCH_DEPTH {
+        return cap;
     }
     let branch = loop {
         let mut changed = false;
@@ -335,7 +339,7 @@ fn count_rec(st: &State, mut grid: Vec<u8>, mut counts: Counts, cap: u32) -> u32
         let mut g = grid.clone();
         let mut c = counts.clone();
         set(st, &mut g, &mut c, i, v);
-        total += count_rec(st, g, c, cap - total);
+        total += count_rec(st, g, c, cap - total, depth + 1);
         if total >= cap {
             return cap;
         }

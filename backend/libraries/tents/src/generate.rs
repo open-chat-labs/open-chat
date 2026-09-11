@@ -1,7 +1,7 @@
 use crate::solver::{Outcome, solve};
 use crate::state::{Square, State};
 use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, solution_pairs, solve_with_trace};
-use puzzle_core::{Budget, GenerateError, Rng};
+use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 const NONE: usize = usize::MAX;
 
@@ -155,10 +155,8 @@ fn validate(params: Params) -> Result<(usize, usize, usize), GenerateError> {
             "width and height must be at least 4, got {w}x{h}"
         )));
     }
-    if w * h > u16::MAX as usize {
-        return Err(GenerateError::invalid(format!(
-            "{w}x{h} has more cells than a u16 hint key can address"
-        )));
+    if !side_ok(w, h) {
+        return Err(GenerateError::invalid(side_too_big(w, h)));
     }
     if !(1..=25).contains(&params.tree_pct) {
         return Err(GenerateError::invalid(format!(

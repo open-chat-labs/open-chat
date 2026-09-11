@@ -70,7 +70,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid};
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid, checked_grid_values, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -191,10 +191,7 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(State, Scan), PuzzleError> {
     let d = parse_description(description)?;
     let st = State::from_description(&d);
     let n = st.size();
-    let grid = checked_grid(grid, n)?;
-    if let Some((i, &byte)) = grid.iter().enumerate().find(|&(_, &b)| b > MAX_BRIDGE_BYTE) {
-        return Err(PuzzleError::GridValue { cell: i as u16, byte });
-    }
+    let grid = checked_grid_values(grid, n, MAX_BRIDGE_BYTE)?;
     let mut out = Vec::new();
 
     let mut on_h = vec![false; n];
@@ -289,8 +286,13 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(State, Scan), PuzzleError> {
         }
     }
 
+    // Connectivity is read from the bridge counts, which stand whether or
+    // not something else about the layout is wrong. Deciding it only for a
+    // clean layout used to leave `connected` at its initial true, so a
+    // disconnected board with a stray bridge byte reported itself
+    // finished.
     let mut connected = true;
-    if layout_ok && all_full && !st.islands.is_empty() {
+    if all_full && !st.islands.is_empty() {
         let mut dsf = Dsf::new(st.islands.len());
         for (e, edge) in st.edges.iter().enumerate() {
             if bridges[e] > 0 {
@@ -310,8 +312,13 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(State, Scan), PuzzleError> {
             }
         }
         connected = groups.is_empty();
-        for (_, islands) in groups {
-            out.push(Violation::Disconnected { islands });
+        // A layout that already breaks a rule elsewhere is not also told
+        // its islands are in separate groups: the groups it has are not
+        // the ones it will end up with.
+        if layout_ok {
+            for (_, islands) in groups {
+                out.push(Violation::Disconnected { islands });
+            }
         }
     }
     Ok((
@@ -342,8 +349,7 @@ pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError>
 /// The solution in hint-key space: `(edge key, bridge count 0..=2)` for
 /// every edge (pair of islands with only water between them, the same
 /// enumeration the hints use), sorted by key. The count is read from the
-/// edge's first water cell; a solution of the wrong length counts as
-/// having no bridges. Panics on a malformed description.
+/// edge's first water cell.
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let st = State::from_description(&d);
@@ -370,7 +376,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    Ok(solver::count_solutions(&mut st, cap))
+    Ok(solver::count_solutions(&mut st, cap, 0))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
@@ -395,8 +401,8 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     }
     let (width, height) = (bytes[1], bytes[2]);
     let (w, h) = (width as usize, height as usize);
-    if w * h > 32767 {
-        return Err(PuzzleError::description("grid too large"));
+    if !side_ok(w, h) {
+        return Err(PuzzleError::description(side_too_big(w, h)));
     }
     let expected = 3 + w * h;
     if bytes.len() != expected {
@@ -440,7 +446,7 @@ pub(crate) fn encode_description(d: &Description) -> Vec<u8> {
 pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
     let d = parse_description(description)?;
     let (w, h) = (d.width as usize, d.height as usize);
-    let grid = grid.map(|g| checked_grid(g, w * h)).transpose()?;
+    let grid = grid.map(|g| checked_grid_values(g, w * h, MAX_BRIDGE_BYTE)).transpose()?;
     let mut out = String::with_capacity((w + 1) * h);
     for y in 0..h {
         for x in 0..w {

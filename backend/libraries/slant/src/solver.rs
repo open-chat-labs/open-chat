@@ -1,6 +1,6 @@
 use crate::state::State;
 use crate::{Hint, Technique, Tier, encode_slash, vertex_key};
-use puzzle_core::Dsf;
+use puzzle_core::{Dsf, MAX_SEARCH_DEPTH};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -321,6 +321,27 @@ fn forced(st: &State, sc: &mut Scratch, i: usize, v: i8, class_val: i8, tricky: 
     None
 }
 
+/// How many members of the two sealed groups a `DeadEndAvoidance` hint
+/// highlights around the cell it is about. The groups themselves have no
+/// useful bound: by the end of a solve each is most of the grid.
+const MAX_DEAD_END_FOCUS: usize = 24;
+
+/// Cells and vertices share one coordinate system at twice the scale: a
+/// cell sits at the centre of its square, a vertex on the corners, so the
+/// two can be ordered by distance from the same point.
+fn cell_at(st: &State, i: usize) -> (usize, usize) {
+    (2 * (i % st.w) + 1, 2 * (i / st.w) + 1)
+}
+
+fn vertex_at(st: &State, vtx: usize) -> (usize, usize) {
+    let vw = st.vw();
+    (2 * (vtx % vw), 2 * (vtx / vw))
+}
+
+fn distance(a: (usize, usize), b: (usize, usize)) -> usize {
+    a.0.abs_diff(b.0).max(a.1.abs_diff(b.1))
+}
+
 fn focus_for(st: &State, sc: &mut Scratch, i: usize, v: i8, technique: Technique) -> Vec<u16> {
     let mut focus = vec![i as u16];
     match technique {
@@ -340,21 +361,30 @@ fn focus_for(st: &State, sc: &mut Scratch, i: usize, v: i8, technique: Technique
             let (a, b) = st.endpoints(i, -v);
             let c1 = sc.connected.find(a);
             let c2 = sc.connected.find(b);
+            // Late in a solve the two sealed groups are most of the board
+            // between them, and a focus that highlights most of the board
+            // says nothing. Keep the members nearest the cell the hint is
+            // about, which is where the join it rules out is visible.
+            let here = cell_at(st, i);
+            let mut near: Vec<(usize, u16)> = Vec::new();
             for j in 0..st.size() {
                 if st.soln[j] != 0 {
                     let (e, _) = st.endpoints(j, st.soln[j]);
                     let r = sc.connected.find(e);
                     if r == c1 || r == c2 {
-                        focus.push(j as u16);
+                        near.push((distance(here, cell_at(st, j)), j as u16));
                     }
                 }
             }
             for vtx in 0..st.vertices() {
                 let r = sc.connected.find(vtx);
                 if r == c1 || r == c2 {
-                    focus.push(vertex_key(st.w, st.h, vtx));
+                    near.push((distance(here, vertex_at(st, vtx)), vertex_key(st.w, st.h, vtx)));
                 }
             }
+            near.sort_unstable();
+            near.truncate(MAX_DEAD_END_FOCUS);
+            focus.extend(near.into_iter().map(|(_, key)| key));
         }
         _ => {}
     }
@@ -500,10 +530,13 @@ fn feasible(st: &State, soln: &[i8], dsf: &mut Dsf, i: usize, v: i8) -> bool {
 pub(crate) fn count_solutions(st: &State, cap: u32) -> u32 {
     let soln = vec![0i8; st.size()];
     let dsf = Dsf::new(st.vertices());
-    count_rec(st, soln, dsf, cap)
+    count_rec(st, soln, dsf, cap, 0)
 }
 
-fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32) -> u32 {
+fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32, depth: u32) -> u32 {
+    if depth >= MAX_SEARCH_DEPTH {
+        return cap;
+    }
     let branch = loop {
         let mut changed = false;
         let mut branch = None;
@@ -543,7 +576,7 @@ fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32) -> u32 {
         s[i] = v;
         let (a, b) = st.endpoints(i, v);
         d.merge(a, b);
-        total += count_rec(st, s, d, cap - total);
+        total += count_rec(st, s, d, cap - total, depth + 1);
         if total >= cap {
             return cap;
         }

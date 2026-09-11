@@ -1,6 +1,6 @@
 use crate::state::{Line, State};
 use crate::{Hint, Technique, Tier};
-use puzzle_core::Dsf;
+use puzzle_core::{Dsf, MAX_SEARCH_DEPTH};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -557,9 +557,12 @@ fn loop_deductions(st: &mut State, cx: &mut Ctx) -> Diff {
 
 /// Exhaustive solution count, capped. Runs the Easy deductions, then
 /// branches on an undecided edge, preferring one that extends a chain.
-pub(crate) fn count_solutions(st: &mut State, cap: u32) -> u32 {
+pub(crate) fn count_solutions(st: &mut State, cap: u32, depth: u32) -> u32 {
     if cap == 0 {
         return 0;
+    }
+    if depth >= MAX_SEARCH_DEPTH {
+        return cap;
     }
     let mut probe = st.clone();
     match solve(&mut probe, Tier::Easy, None) {
@@ -567,9 +570,12 @@ pub(crate) fn count_solutions(st: &mut State, cap: u32) -> u32 {
         Outcome::NoSolution => return 0,
         Outcome::Ambiguous(e) => {
             // The closed loop is one solution; every other lies with this
-            // edge absent.
+            // edge absent. This branches from `st` rather than from the
+            // solved-out `probe` on purpose: `probe` already has `e` set
+            // to Yes, so the other branch has to start from a state where
+            // it is still open.
             st.set_line(e, Line::No);
-            return 1 + count_solutions(st, cap - 1);
+            return 1 + count_solutions(st, cap - 1, depth + 1);
         }
         Outcome::Stuck => {}
     }
@@ -589,11 +595,11 @@ pub(crate) fn count_solutions(st: &mut State, cap: u32) -> u32 {
 
     let mut with = probe.clone();
     with.set_line(e, Line::Yes);
-    let mut total = count_solutions(&mut with, cap);
+    let mut total = count_solutions(&mut with, cap, depth + 1);
     if total >= cap {
         return cap;
     }
     probe.set_line(e, Line::No);
-    total += count_solutions(&mut probe, cap - total);
+    total += count_solutions(&mut probe, cap - total, depth + 1);
     total.min(cap)
 }

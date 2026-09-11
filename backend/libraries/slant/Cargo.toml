@@ -5,6 +5,16 @@ edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+# The `slant_cli` development binary, and with it puzzle_core's stdio
+# helpers. Off by default so a canister build carries neither.
+cli = ["puzzle_core/cli"]
+
+[[bin]]
+name = "slant_cli"
+path = "src/bin/slant_cli.rs"
+required-features = ["cli"]
+
 [dependencies]
 puzzle_core = { path = "../puzzle_core" }
 

@@ -3,7 +3,7 @@ use crate::state::State;
 use crate::{
     EMPTY, Generated, MAX_ATTEMPTS, Params, Tier, VALUE_A, VALUE_B, encode_description, solution_pairs, solve_with_trace,
 };
-use puzzle_core::{Budget, GenerateError, Rng};
+use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 /// Port of `unruly_fill_game`: pick empty cells in random order, guess one
 /// at random, and let the full-strength technique solver propagate. Unlike
@@ -35,10 +35,8 @@ fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
             "width and height must both be even, got {w}x{h}"
         )));
     }
-    if w * h > u16::MAX as usize {
-        return Err(GenerateError::invalid(format!(
-            "{w}x{h} has more cells than a u16 hint key can address"
-        )));
+    if !side_ok(w, h) {
+        return Err(GenerateError::invalid(side_too_big(w, h)));
     }
     Ok((w, h))
 }
@@ -92,7 +90,9 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
         let Ok((hints, solved)) = solve_with_trace(&description, tier) else {
             continue;
         };
-        if solved.as_deref() != Some(solution.as_slice()) {
+        // A puzzle that needs no deductions at all has nothing to show a
+        // player who asks for a hint, either.
+        if solved.as_deref() != Some(solution.as_slice()) || hints.is_empty() {
             continue;
         }
         if !solution.iter().all(|&v| v == VALUE_A || v == VALUE_B) {

@@ -22,12 +22,16 @@
 //!   when they can but no puzzle turned up within the attempt budget.
 //! * Every entry point that takes description bytes returns a
 //!   [`PuzzleError`] for malformed input rather than panicking, because
-//!   these are reachable from an ingress message.
+//!   these are reachable from an ingress message. That includes a
+//!   description bigger than [`MAX_SIDE`]: the work a solver does grows
+//!   faster than the grid, so the size bound belongs at the door and not
+//!   only in `generate`.
 //! * [`Puzzle::check_rules`] reports only what is *definitely* wrong: a
 //!   half-filled grid is incomplete, not broken, and must come back
 //!   clean. Whether the grid is finished is [`Puzzle::is_complete`], and
 //!   the two together are [`Puzzle::is_solved`].
 
+#[cfg(feature = "cli")]
 pub mod cli;
 mod dsf;
 mod rng;
@@ -65,18 +69,27 @@ impl From<Tier> for u8 {
     }
 }
 
-/// One step of the solver's reasoning, in the key space the game's
-/// `solution_pairs` uses.
+/// One step of the solver's reasoning.
+///
+/// A hint carries two kinds of key and they are not always the same kind.
+/// `conclusions` is always in the key space the game's `solution_pairs`
+/// uses, because it fixes part of the solution. `focus` and `target` are
+/// in whatever space the game draws in, which for most games is the same
+/// one, but in Bridges is cell indices while conclusions are edge keys.
+/// Each game's module doc says which; a client rendering hints needs that
+/// per game rather than one rule for all six.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Hint<T> {
     pub technique: T,
-    /// Keys to highlight: what the deduction looked at.
+    /// Keys to highlight: what the deduction looked at, in the game's
+    /// display key space.
     pub focus: Vec<u16>,
     /// The keys the technique sentence points at ("this cell", "this
     /// number"): a subset of `focus`, painted strongly by the client
     /// while the rest of `focus` is context.
     pub target: Vec<u16>,
-    /// The keys this step fixes, with the values it fixes them to.
+    /// The keys this step fixes, with the values it fixes them to, in the
+    /// `solution_pairs` key space.
     pub conclusions: Vec<(u16, u8)>,
 }
 
@@ -200,6 +213,42 @@ impl Budget {
     }
 }
 
+/// How deep a solution counter may recurse before it gives up and
+/// reports the cap.
+///
+/// Every game counts solutions by branching, one frame per key it has to
+/// guess, and a description arriving from outside decides how many keys
+/// there are. A wasm stack is small, and running off it traps the message
+/// instead of returning a [`PuzzleError`]. Stopping short and claiming
+/// the cap errs the safe way round: a count at the cap reads as "more
+/// than one solution", so a puzzle is dropped rather than served with a
+/// second solution nobody looked for.
+pub const MAX_SEARCH_DEPTH: u32 = 256;
+
+/// The largest side any game accepts, in cells.
+///
+/// The u16 key space would allow far more, but a solver, a solution
+/// counter and a rule check all do work that grows with the grid, and
+/// some of that work grows faster than the grid does. A description is
+/// ingress-reachable, so the size it can ask for has to be one the work
+/// is bounded on, not one the keys happen to fit. Every game enforces
+/// this in both `validate` and `parse_description`, which keeps the two
+/// in step: bytes no generator can produce are bytes no entry point
+/// accepts.
+pub const MAX_SIDE: usize = 32;
+
+/// The message every game uses when a grid is bigger than [`MAX_SIDE`],
+/// so `validate` and `parse_description` cannot drift apart in wording
+/// either.
+pub fn side_too_big(w: usize, h: usize) -> String {
+    format!("width and height must be at most {MAX_SIDE}, got {w}x{h}")
+}
+
+/// Whether `w` and `h` are within [`MAX_SIDE`].
+pub fn side_ok(w: usize, h: usize) -> bool {
+    w <= MAX_SIDE && h <= MAX_SIDE
+}
+
 /// Check a player's grid against the length this description needs, and
 /// return it. Games call this instead of silently treating a wrong-length
 /// grid as empty, which used to hide a client bug as a clean board.
@@ -209,6 +258,18 @@ pub fn checked_grid(grid: &[u8], expected: usize) -> Result<&[u8], PuzzleError> 
             expected,
             actual: grid.len(),
         });
+    }
+    Ok(grid)
+}
+
+/// As [`checked_grid`], and also rejects any byte above `max`. A byte the
+/// game gives no meaning to is a client bug, and reading it as an empty
+/// cell hides one; every entry point that takes a player's grid rejects
+/// it, rendering included.
+pub fn checked_grid_values(grid: &[u8], expected: usize, max: u8) -> Result<&[u8], PuzzleError> {
+    let grid = checked_grid(grid, expected)?;
+    if let Some((i, &byte)) = grid.iter().enumerate().find(|&(_, &b)| b > max) {
+        return Err(PuzzleError::GridValue { cell: i as u16, byte });
     }
     Ok(grid)
 }
@@ -252,6 +313,9 @@ pub trait Puzzle {
     fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError>;
 
     /// Number of solutions, counted by backtracking and capped at `cap`.
+    /// A result equal to `cap` means "at least `cap`", which includes the
+    /// case where the search stopped at [`MAX_SEARCH_DEPTH`] rather than
+    /// finishing.
     fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError>;
 
     /// Run the technique solver and return its trace, plus the solution

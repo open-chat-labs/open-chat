@@ -1,7 +1,7 @@
 use crate::solver::{Outcome, solve};
 use crate::state::{MAX_BRIDGES, State};
 use crate::{Description, Generated, Params, Tier, encode_description, solution_pairs, solve_with_trace};
-use puzzle_core::{Budget, GenerateError, Rng};
+use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 const MAX_NEWISLAND_TRIES: usize = 50;
 const MIN_SENSIBLE_ISLANDS: usize = 3;
@@ -250,10 +250,8 @@ fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
             "width and height must be at least 3, got {w}x{h}"
         )));
     }
-    if w * h > 32767 {
-        return Err(GenerateError::invalid(format!(
-            "{w}x{h} has more cells than a u16 edge key can address"
-        )));
+    if !side_ok(w, h) {
+        return Err(GenerateError::invalid(side_too_big(w, h)));
     }
     if !(1..=30).contains(&params.island_pct) {
         return Err(GenerateError::invalid(format!(

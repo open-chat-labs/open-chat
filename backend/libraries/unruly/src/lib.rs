@@ -69,7 +69,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{GenerateError, Puzzle, PuzzleError, checked_grid};
+use puzzle_core::{GenerateError, Puzzle, PuzzleError, checked_grid, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -277,6 +277,9 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     }
     if width % 2 != 0 || height % 2 != 0 {
         return Err(PuzzleError::description("width and height must both be even"));
+    }
+    if !side_ok(width as usize, height as usize) {
+        return Err(PuzzleError::description(side_too_big(width as usize, height as usize)));
     }
     let expected = 3 + width as usize * height as usize;
     if bytes.len() != expected {

@@ -1,7 +1,7 @@
 use crate::solver::{Outcome, solve};
 use crate::state::State;
 use crate::{Generated, MAX_ATTEMPTS, Params, Symmetry, Tier, encode_description, solution_pairs, solve_with_trace};
-use puzzle_core::{Budget, GenerateError, Rng};
+use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 /// Tries at one black-square density before Tatham raises it.
 const MAX_GRIDGEN_TRIES: u32 = 20;
@@ -77,7 +77,6 @@ fn place_lights(st: &mut State, rng: &mut Rng) -> bool {
     let n = st.size();
     let mut order: Vec<usize> = (0..n).collect();
     rng.shuffle(&mut order);
-    let mut hub = vec![false; n];
 
     for x in 0..st.w {
         for y in 0..st.h {
@@ -89,7 +88,9 @@ fn place_lights(st: &mut State, rng: &mut Rng) -> bool {
     }
 
     for i in order {
-        if !st.light[i] || hub[i] {
+        // Cells whose bulb an earlier hub removed are skipped: `order` is
+        // a permutation, so this is the only way a cell is reached twice.
+        if !st.light[i] {
             continue;
         }
         let seen: Vec<usize> = st.los(i, false).cells().filter(|&c| st.light[c]).collect();
@@ -100,7 +101,6 @@ fn place_lights(st: &mut State, rng: &mut Rng) -> bool {
             for c in seen {
                 st.set_light(c, false);
             }
-            hub[i] = true;
         }
         if !st.grid_overlap() {
             return true;
@@ -143,10 +143,8 @@ fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
             "width and height must be at least 2, got {w}x{h}"
         )));
     }
-    if w * h > u16::MAX as usize {
-        return Err(GenerateError::invalid(format!(
-            "{w}x{h} has more cells than a u16 hint key can address"
-        )));
+    if !side_ok(w, h) {
+        return Err(GenerateError::invalid(side_too_big(w, h)));
     }
     // 100 blacks out every cell, leaving a board with nothing to light
     // and no hints. It used to pass validation and produce exactly that.

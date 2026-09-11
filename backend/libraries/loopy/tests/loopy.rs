@@ -140,12 +140,13 @@ fn parse_rejects_bad_input() {
     assert!(parse_description(&[]).is_err());
     assert!(parse_description(&[1, 0, 6]).is_err());
 
-    for bad in [0x04, 0x10, 0x7f, 0xfe] {
+    for bad in [0x05, 0x10, 0x7f, 0xfe] {
         let mut bytes = good.clone();
         bytes[3] = bad;
         assert!(parse_description(&bytes).is_err(), "clue byte {bad:#04x} accepted");
     }
-    for ok in [0x00, 0x03, 0xff] {
+    // 4 is a legal clue: a loop can encircle a single cell.
+    for ok in [0x00, 0x03, 0x04, 0xff] {
         let mut bytes = good.clone();
         bytes[3] = ok;
         assert!(parse_description(&bytes).is_ok(), "clue byte {ok:#04x} rejected");
