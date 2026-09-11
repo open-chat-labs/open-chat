@@ -27,6 +27,13 @@ mod updates;
 /// starts; the first non-vetoed one ships.
 pub const CANDIDATE_POOL_SIZE: usize = 3;
 
+/// Hard ceiling on a pool, because every veto asks for one more candidate and nothing else stops
+/// that. Candidate indices are `u8`, so past 255 they would wrap and a veto would address the
+/// wrong puzzle. Well below that: a pool this deep means governance is rejecting everything the
+/// generator produces, and the answer to that is `regenerate_today` or a schedule change, not
+/// another candidate.
+pub const MAX_CANDIDATE_POOL: usize = 32;
+
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
@@ -232,14 +239,19 @@ impl Data {
     pub fn generation_needed(&self, now: TimestampMillis) -> Option<PuzzleNumber> {
         let current = Self::number_for(now);
         let game_id = &self.params_for(current).game_id;
-        if !self.has_puzzle(current, game_id) && !self.has_unvetoed_candidate(current, game_id) {
+        if !self.has_puzzle(current, game_id)
+            && !self.has_unvetoed_candidate(current, game_id)
+            && self.candidate_pool(current, game_id).map_or(0, |p| p.len()) < MAX_CANDIDATE_POOL
+        {
             return Some(current);
         }
         let next = current + 1;
         let game_id = &self.params_for(next).game_id;
         if !self.has_puzzle(next, game_id) {
             let pool_size = self.candidate_pool(next, game_id).map_or(0, |p| p.len());
-            if pool_size < CANDIDATE_POOL_SIZE || !self.has_unvetoed_candidate(next, game_id) {
+            if pool_size < CANDIDATE_POOL_SIZE
+                || (!self.has_unvetoed_candidate(next, game_id) && pool_size < MAX_CANDIDATE_POOL)
+            {
                 return Some(next);
             }
         }
@@ -252,6 +264,10 @@ impl Data {
     pub fn generate_candidate(&mut self, number: PuzzleNumber) -> Option<u8> {
         let params = self.params_for(number).clone();
         let index = self.candidate_pool(number, &params.game_id).map_or(0, |p| p.len());
+        // Keeps the `u8` index below honest whatever the caller asked for
+        if index >= MAX_CANDIDATE_POOL {
+            return None;
+        }
         let seed = candidate_seed(
             self.master_seed,
             number,
@@ -826,6 +842,30 @@ mod tests {
         assert_eq!(views.iter().filter(|v| v.vetoed).count(), 3);
     }
 
+    // Every veto asks for one more candidate, so without a ceiling a pool grows without bound and
+    // the `u8` index wraps past 255 onto a different puzzle
+    #[test]
+    fn candidate_pool_has_a_ceiling() {
+        let mut d = data();
+        let now = 100 * DAY_IN_MS + 1;
+        for i in 0..MAX_CANDIDATE_POOL {
+            assert_eq!(d.generation_needed(now), Some(100));
+            assert_eq!(d.generate_candidate(100).unwrap(), i as u8);
+            assert!(d.veto_candidate(100, LU, i as u8));
+        }
+        // Today is given up on rather than generated forever; tomorrow still gets its pool
+        assert_eq!(d.generation_needed(now), Some(101));
+        assert!(d.generate_candidate(100).is_none());
+        assert_eq!(pool(&d, 100).len(), MAX_CANDIDATE_POOL);
+
+        // And the same ceiling on a future day, once its pool is full and all of it vetoed
+        while d.generation_needed(now) == Some(101) {
+            let index = d.generate_candidate(101).unwrap();
+            assert!(d.veto_candidate(101, LU, index));
+        }
+        assert_eq!(pool(&d, 101).len(), MAX_CANDIDATE_POOL);
+    }
+
     #[test]
     fn two_game_schedule_generates_per_weekday() {
         let mut d = data();
@@ -1019,6 +1059,20 @@ mod tests {
             ..Default::default()
         };
         assert!(validate_game_config(&game_config).is_err());
+        // Upgrades are priced at the difference, so a flat or descending table hands over the
+        // conclusions for nothing
+        for prices in [vec![200, 75, 25], vec![100, 100, 100], vec![25, 75, 75]] {
+            let game_config = GameConfig {
+                hint_prices: prices,
+                ..Default::default()
+            };
+            assert!(validate_game_config(&game_config).is_err());
+        }
+        let game_config = GameConfig {
+            hint_prices: vec![0, 1, 2],
+            ..Default::default()
+        };
+        assert!(validate_game_config(&game_config).is_ok());
         let game_config = GameConfig {
             max_hints: 0,
             ..Default::default()

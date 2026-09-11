@@ -67,11 +67,26 @@ async fn push(refresh: bool) {
     let number = puzzles[0].number;
     let games = puzzles.len();
 
-    for canister_id in targets {
-        let args = c2c_daily_puzzle_push::Args {
-            puzzles: puzzles.clone(),
-        };
-        match local_user_index_canister_c2c_client::c2c_daily_puzzle_push(canister_id, &args).await {
+    // All at once, not one after another: the calls are independent, and awaiting each in turn
+    // puts the day's puzzle on the last subnet several seconds' worth of round trips after the
+    // first, with one stopped index holding up every index behind it.
+    let futures: Vec<_> = targets
+        .into_iter()
+        .map(|canister_id| {
+            let args = c2c_daily_puzzle_push::Args {
+                puzzles: puzzles.clone(),
+            };
+            async move {
+                (
+                    canister_id,
+                    local_user_index_canister_c2c_client::c2c_daily_puzzle_push(canister_id, &args).await,
+                )
+            }
+        })
+        .collect();
+
+    for (canister_id, response) in futures::future::join_all(futures).await {
+        match response {
             Ok(UnitResult::Success) => {
                 mutate_state(|state| state.data.pending_pushes.remove(&canister_id));
                 info!(%canister_id, number, games, "Pushed puzzles");

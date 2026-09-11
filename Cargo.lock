@@ -2787,6 +2787,7 @@ dependencies = [
  "canister_tracing_macros",
  "constants",
  "daily_puzzle_canister",
+ "futures",
  "git_commit_id",
  "http_request",
  "ic-cdk 0.20.2",

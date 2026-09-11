@@ -221,7 +221,7 @@ impl RuntimeState {
             None => self.data.daily_puzzle_results_queue = Some(BatchedTimerJobQueue::new(canister_id, true)),
         }
         info!(canister_id = %canister_id, "Daily puzzle canister id set");
-        jobs::pull_daily_puzzle::start_job();
+        jobs::pull_daily_puzzle::pull_now();
     }
 
     pub fn push_daily_puzzle_result(&mut self, result: DailyPuzzleResult) {

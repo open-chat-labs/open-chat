@@ -8,6 +8,7 @@ use utils::env::Environment;
 use utils::env::canister::CanisterEnv;
 
 mod init;
+mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 

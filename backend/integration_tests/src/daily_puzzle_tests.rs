@@ -161,31 +161,37 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_governance_calls() {
     );
     assert!(results.is_empty());
 
-    // Only local user indexes may report results
-    let response = client::daily_puzzle::c2c_report_results(
-        env,
-        Principal::from_slice(&[4, 5, 6]),
+    // Only local user indexes may pull puzzles or report results, and both verify the caller with
+    // an outbound registry call, so neither is reachable as ingress at all: `inspect_message`
+    // refuses them before the guard runs. A genuine caller is a canister, which never goes through
+    // the ingress filter.
+    let stranger = Principal::from_slice(&[4, 5, 6]);
+    let report_args = daily_puzzle_canister::c2c_report_results::Args {
+        results: vec![DailyPuzzleResult {
+            game_id: LIGHT_UP_GAME_ID.to_string(),
+            number: today,
+            user_id: UserId::from(Principal::from_slice(&[1, 2, 3])),
+            solve_time_ms: 1000,
+            hints_used: 0,
+            streak: 1,
+            solved_at: now,
+        }],
+    };
+    let result = env.update_call(
         canister_ids.daily_puzzle,
-        &daily_puzzle_canister::c2c_report_results::Args {
-            results: vec![DailyPuzzleResult {
-                game_id: LIGHT_UP_GAME_ID.to_string(),
-                number: today,
-                user_id: UserId::from(Principal::from_slice(&[1, 2, 3])),
-                solve_time_ms: 1000,
-                hints_used: 0,
-                streak: 1,
-                solved_at: now,
-            }],
-        },
+        stranger,
+        "c2c_report_results_msgpack",
+        msgpack::serialize_then_unwrap(&report_args),
     );
-    assert!(matches!(response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)));
+    assert!(result.is_err(), "c2c_report_results should not be reachable as ingress");
 
-    let response =
-        client::daily_puzzle::c2c_pull_puzzles(env, Principal::from_slice(&[4, 5, 6]), canister_ids.daily_puzzle, &Empty {});
-    assert!(matches!(
-        response,
-        daily_puzzle_canister::c2c_pull_puzzles::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)
-    ));
+    let result = env.update_call(
+        canister_ids.daily_puzzle,
+        stranger,
+        "c2c_pull_puzzles_msgpack",
+        msgpack::serialize_then_unwrap(&Empty {}),
+    );
+    assert!(result.is_err(), "c2c_pull_puzzles should not be reachable as ingress");
 
     // This test flipped `enabled`, so don't hand the env back to the pool
     wrapper.discard();

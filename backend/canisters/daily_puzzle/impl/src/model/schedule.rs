@@ -153,6 +153,11 @@ pub fn validate_game_config(config: &GameConfig) -> Result<(), String> {
     }
     for (i, price) in config.hint_prices.iter().enumerate() {
         validate_chit_amount(&format!("hint_prices[{i}]"), *price)?;
+        // An upgrade is priced at the difference between the two levels, so a flat or descending
+        // entry costs nothing: buy level 1, then take the conclusions - the answer - for free.
+        if i > 0 && *price <= config.hint_prices[i - 1] {
+            return Err(format!("hint_prices[{i}] must be greater than hint_prices[{}]", i - 1));
+        }
     }
     Ok(())
 }

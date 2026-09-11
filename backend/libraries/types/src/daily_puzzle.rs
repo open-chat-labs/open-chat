@@ -39,7 +39,8 @@ pub struct DailyPuzzleConfig {
     pub enabled: bool,
     /// CHIT debited on start.
     pub entry_fee: u32,
-    /// Waive the entry fee for a user who has never solved any daily puzzle.
+    /// Waive the entry fee for a user who has never started any daily puzzle. Gated on starting
+    /// rather than solving: a player who never solves would otherwise play free forever.
     pub first_play_free: bool,
     /// CHIT credited on solve, indexed by the number of consecutive days solved BEFORE this one,
     /// clamped to the last entry. So [250, 300, 350, 400, 450, 500, 500] pays 250 on a fresh streak.
@@ -77,7 +78,9 @@ pub struct GameConfig {
     /// Every level costs something: a free tier makes the whole ladder skippable and leaves the
     /// paid tiers unreachable, because a free level 1 on each of `max_hints` steps exhausts the
     /// same budget the paid ones draw on. Upgrading a step already served costs the difference
-    /// between the two levels, so working up the ladder is never dearer than jumping to the top.
+    /// between the two levels, so working up the ladder is never dearer than jumping to the top,
+    /// which is also why the prices must strictly increase: a flat or descending entry prices an
+    /// upgrade to the answer at nothing.
     pub hint_prices: Vec<u32>,
     /// Maximum hint steps per user per puzzle.
     pub max_hints: u8,
@@ -203,7 +206,7 @@ pub struct DailyPuzzleUserState {
     /// Consecutive days with a solve, ending yesterday (or today if solved). Series-level, the same
     /// value on every state of the same day. What the card shows.
     pub streak: u32,
-    /// Whether this user has ever solved any daily puzzle (drives first_play_free).
+    /// Whether this user has ever solved any daily puzzle.
     pub has_solved_before: bool,
 }
 
@@ -212,12 +215,14 @@ pub struct DailyPuzzleUserState {
 pub struct DailyPuzzleSolved {
     pub solved_at: TimestampMillis,
     pub solve_time_ms: u64,
+    /// Zero once the user canister has refused the credit outright, so this never claims CHIT
+    /// that was not paid.
     pub reward: u32,
     pub hints_used: u8,
     pub streak: u32,
     /// The user's CHIT balance after the reward was credited, as reported by the user canister.
     /// Only set on the submit response, and only when the credit was applied in the same call;
-    /// None when it was queued for retry. Stored copies are always None.
+    /// None when it was queued for retry or refused. Stored copies are always None.
     #[serde(default)]
     pub chit_balance: Option<i32>,
     #[serde(default)]

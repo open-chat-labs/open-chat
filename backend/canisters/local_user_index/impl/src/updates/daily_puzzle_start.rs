@@ -3,13 +3,13 @@ use crate::model::daily_puzzle_engine::StartPrepared;
 use crate::model::game_chit_credit::{GameChitCredit, GameChitOutcome, apply};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
-use canister_tracing_macros::trace;
 use local_user_index_canister::daily_puzzle_start::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserId};
 
+// No `#[trace]`: the result carries the hints served so far, and the trace buffer is served
+// unguarded wherever `test_mode` is on.
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
-#[trace]
 async fn daily_puzzle_start(args: Args) -> Response {
     // The record is created here, before the debit, so the clock runs from this call and a failed
     // debit is the only thing that can undo it
@@ -26,7 +26,15 @@ async fn daily_puzzle_start(args: Args) -> Response {
 
     if fee > 0 {
         let Ok(amount) = i32::try_from(fee) else {
-            return Error(OCErrorCode::InvalidRequest.with_message("fee"));
+            // Every error return past the reservation has to undo it, or the record survives
+            // unpaid and every later start answers `AlreadyStarted`: a free game for the day
+            return mutate_state(|state| {
+                state
+                    .data
+                    .daily_puzzle_engine
+                    .release_start(user_id, &args.game_id, args.number);
+                Error(OCErrorCode::InvalidRequest.with_message("fee"))
+            });
         };
         let debit = GameChitCredit {
             user_id,
