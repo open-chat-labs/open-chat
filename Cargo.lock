@@ -5496,8 +5496,7 @@ dependencies = [
 [[package]]
 name = "ic-stable-structures"
 version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ee3372ddc0cf2a747fc26ce2d075a240ed6bfab151e63bc70109e8967f7ce6f"
+source = "git+https://github.com/hpeebles/stable-structures?rev=b88706bd6dd4f7463e75886ec10c58fddb810c37#b88706bd6dd4f7463e75886ec10c58fddb810c37"
 dependencies = [
  "ic_principal",
 ]
@@ -7191,6 +7190,7 @@ dependencies = [
  "rand 0.10.2",
  "serde",
  "stable_memory",
+ "stable_memory_map",
  "tracing",
  "types",
  "utils",
