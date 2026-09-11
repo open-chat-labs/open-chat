@@ -7,7 +7,7 @@
 //! whole range a game accepts and a combination that cannot produce a
 //! puzzle fails the build instead of the canister.
 
-use crate::{GenerateError, Generated, Puzzle, PuzzleCheck, PuzzleError};
+use crate::{GenerateError, Generated, Puzzle, PuzzleCheck, PuzzleError, Tier};
 use std::collections::BTreeMap;
 
 /// Generate at every seed and check everything that is true of every
@@ -159,6 +159,42 @@ fn check_hints<P: Puzzle>(g: &Generated<P::Technique>, keys: usize, ctx: &str) {
             assert!(decided.insert(key, value).is_none(), "{where_}: decides {key} a second time");
         }
     }
+}
+
+/// A solver is allowed to give up. It is not allowed to claim it has
+/// finished on a grid its own rule check calls broken.
+///
+/// Feed this descriptions built to be unsatisfiable while still adding
+/// up: a layout that breaks a rule, with the clues derived from it, so
+/// the counts are consistent and the solver gets a long way in before
+/// anything contradicts it. Generated puzzles cannot reach that state,
+/// which is why the rest of the harness never found the Tents solver
+/// reporting `Solved` on a grid with two tents touching. Byte-level
+/// mutation of a good description does not reach it either: 148,800
+/// mutants found nothing, and the first hand-built illegal layout found
+/// it in seconds.
+///
+/// Returns how many descriptions the solver actually claimed to solve,
+/// so a test can fail a corpus that never reached the solver at all
+/// rather than passing on vacuum.
+pub fn must_only_claim_sound_solutions<P: Puzzle>(descriptions: impl IntoIterator<Item = Vec<u8>>) -> usize {
+    let mut claimed = 0;
+    for description in descriptions {
+        for tier in Tier::ALL {
+            let Ok((_, Some(solution))) = P::solve_with_trace(&description, tier) else {
+                continue;
+            };
+            claimed += 1;
+            let ctx = format!("{} {tier:?}: solved {description:?} as {solution:?}", P::GAME_ID);
+            let violations = P::check_rules(&description, &solution).unwrap_or_else(|e| panic!("{ctx}, but check_rules: {e}"));
+            assert!(violations.is_empty(), "{ctx}, but that breaks the rules: {violations:?}");
+            assert!(
+                P::is_complete(&description, &solution).unwrap_or_else(|e| panic!("{ctx}, but is_complete: {e}")),
+                "{ctx}, which is not complete"
+            );
+        }
+    }
+    claimed
 }
 
 /// The game can be held as `&dyn PuzzleCheck`, which is what lets a

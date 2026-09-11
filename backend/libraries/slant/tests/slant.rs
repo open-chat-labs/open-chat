@@ -1,4 +1,6 @@
-use puzzle_core::testing::{must_generate, must_reject, must_terminate, must_work_through_dyn};
+use puzzle_core::testing::{
+    must_generate, must_only_claim_sound_solutions, must_reject, must_terminate, must_work_through_dyn,
+};
 use puzzle_core::{Puzzle, PuzzleError, Tier};
 use slant::{
     BACKSLASH, Params, SLASH, Slant, Violation, check_rules, count_solutions, generate, is_complete, parse_description,
@@ -315,4 +317,38 @@ fn works_through_a_dyn_reference() {
     must_work_through_dyn::<Slant>(&g.description, &g.solution);
     let blank = vec![0u8; g.solution.len()];
     must_work_through_dyn::<Slant>(&g.description, &blank);
+}
+
+/// Diagonal layouts that are allowed to close a loop, with every vertex
+/// clue taken from them. The clues add up, so the solver gets a long way
+/// in, and no legal grid satisfies them.
+fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
+    let mut rng = puzzle_core::Rng::new(20260911);
+    let mut out = Vec::new();
+    for (w, h) in [(3usize, 3usize), (4, 4), (5, 5)] {
+        let (n, vw, nv) = (w * h, w + 1, (w + 1) * (h + 1));
+        for _ in 0..4_000 {
+            // 1 = backslash (top-left to bottom-right), 2 = slash.
+            let cells: Vec<u8> = (0..n).map(|_| 1 + rng.below(2) as u8).collect();
+            let mut clues = vec![0u8; nv];
+            for (i, &v) in cells.iter().enumerate() {
+                let (x, y) = (i % w, i / w);
+                let (a, b) = if v == 1 { (y * vw + x, (y + 1) * vw + x + 1) } else { (y * vw + x + 1, (y + 1) * vw + x) };
+                clues[a] += 1;
+                clues[b] += 1;
+            }
+            let mut d = vec![1, w as u8, h as u8];
+            // Keep a random subset of the clues; a fully clued board is
+            // easier for the solver to reject early.
+            d.extend(clues.iter().map(|&c| if rng.below(4) == 0 { 0xFF } else { c }));
+            out.push(d);
+        }
+    }
+    out
+}
+
+#[test]
+fn the_solver_never_claims_an_unsound_grid() {
+    let claimed = must_only_claim_sound_solutions::<Slant>(unsatisfiable_descriptions());
+    assert!(claimed > 1_000, "only {claimed} of the corpus reached the solver");
 }

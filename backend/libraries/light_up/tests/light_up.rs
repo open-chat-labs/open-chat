@@ -2,7 +2,9 @@ use light_up::{
     Cell, LightUp, Params, Symmetry, Tier, Violation, check_rules, count_solutions, generate, is_complete, parse_description,
     render_ascii, solution_pairs, solve_with_trace,
 };
-use puzzle_core::testing::{must_generate, must_reject, must_terminate, must_work_through_dyn};
+use puzzle_core::testing::{
+    must_generate, must_only_claim_sound_solutions, must_reject, must_terminate, must_work_through_dyn,
+};
 use puzzle_core::{Puzzle, PuzzleError};
 
 const SEEDS_PER_CONFIG: u64 = 200;
@@ -352,4 +354,45 @@ fn works_through_a_dyn_reference() {
     must_work_through_dyn::<LightUp>(&g.description, &g.solution);
     let blank = vec![0u8; g.solution.len()];
     must_work_through_dyn::<LightUp>(&g.description, &blank);
+}
+
+/// Bulb layouts that are allowed to break the "no bulb sees another"
+/// rule, with every black square's clue taken from them. The clues add
+/// up, so the solver gets a long way in, and no legal grid satisfies
+/// them.
+fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
+    let mut rng = puzzle_core::Rng::new(20260911);
+    let mut out = Vec::new();
+    for (w, h) in [(4usize, 4usize), (5, 5), (6, 6)] {
+        let n = w * h;
+        for _ in 0..4_000 {
+            let mut black = vec![false; n];
+            for _ in 0..rng.below(n / 3 + 1) {
+                black[rng.below(n)] = true;
+            }
+            let mut bulb = vec![false; n];
+            for _ in 0..1 + rng.below(n / 3) {
+                let c = rng.below(n);
+                if !black[c] {
+                    bulb[c] = true;
+                }
+            }
+            let mut d = vec![1, w as u8, h as u8];
+            for (i, &is_black) in black.iter().enumerate() {
+                d.push(if is_black {
+                    0x11 + puzzle_core::neighbours(w, h, i).filter(|&j| bulb[j]).count() as u8
+                } else {
+                    0x00
+                });
+            }
+            out.push(d);
+        }
+    }
+    out
+}
+
+#[test]
+fn the_solver_never_claims_an_unsound_grid() {
+    let claimed = must_only_claim_sound_solutions::<LightUp>(unsatisfiable_descriptions());
+    assert!(claimed > 1_000, "only {claimed} of the corpus reached the solver");
 }

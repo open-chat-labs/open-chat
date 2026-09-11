@@ -2,7 +2,9 @@ use bridges::{
     Bridges, Description, Params, Violation, check_rules, count_solutions, generate, is_complete, parse_description,
     render_ascii, solution_pairs, solve_with_trace,
 };
-use puzzle_core::testing::{must_generate, must_reject, must_terminate, must_work_through_dyn};
+use puzzle_core::testing::{
+    must_generate, must_only_claim_sound_solutions, must_reject, must_terminate, must_work_through_dyn,
+};
 use puzzle_core::{Puzzle, PuzzleError, Tier};
 
 const SEEDS_PER_CONFIG: u64 = 100;
@@ -402,4 +404,41 @@ fn works_through_a_dyn_reference() {
     must_work_through_dyn::<Bridges>(&g.description, &g.solution);
     let blank = vec![0u8; g.solution.len()];
     must_work_through_dyn::<Bridges>(&g.description, &blank);
+}
+
+/// Island numbers drawn at random rather than from a bridge layout, on
+/// boards small enough that the solver can often finish. Nothing
+/// guarantees the numbers can be satisfied, let alone connected.
+fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
+    let mut rng = puzzle_core::Rng::new(20260911);
+    let mut out = Vec::new();
+    for (w, h) in [(3usize, 3usize), (4, 4), (5, 5)] {
+        let n = w * h;
+        for _ in 0..4_000 {
+            let mut cells = vec![0u8; n];
+            let mut islands = 0;
+            for i in 0..n {
+                let (x, y) = (i % w, i / w);
+                let touches = (x > 0 && cells[i - 1] != 0) || (y > 0 && cells[i - w] != 0);
+                if touches || rng.below(3) != 0 {
+                    continue;
+                }
+                cells[i] = 1 + rng.below(4) as u8;
+                islands += 1;
+            }
+            if islands < 2 {
+                continue;
+            }
+            let mut d = vec![1, w as u8, h as u8];
+            d.extend(cells);
+            out.push(d);
+        }
+    }
+    out
+}
+
+#[test]
+fn the_solver_never_claims_an_unsound_grid() {
+    let claimed = must_only_claim_sound_solutions::<Bridges>(unsatisfiable_descriptions());
+    assert!(claimed > 100, "only {claimed} of the corpus reached the solver");
 }

@@ -1,4 +1,6 @@
-use puzzle_core::testing::{must_generate, must_reject, must_terminate, must_work_through_dyn};
+use puzzle_core::testing::{
+    must_generate, must_only_claim_sound_solutions, must_reject, must_terminate, must_work_through_dyn,
+};
 use puzzle_core::{Puzzle, PuzzleError, Tier};
 use unruly::{
     EMPTY, Params, Unruly, VALUE_A, VALUE_B, Violation, check_rules, count_solutions, generate, is_complete, parse_description,
@@ -375,4 +377,42 @@ fn works_through_a_dyn_reference() {
     must_work_through_dyn::<Unruly>(&g.description, &g.solution);
     let blank = vec![0u8; g.solution.len()];
     must_work_through_dyn::<Unruly>(&g.description, &blank);
+}
+
+/// Boards the generator would never emit: a legal full grid with a
+/// random part of it blanked, and half the time one surviving given
+/// flipped to the other value so that nothing satisfies it. Unlike the
+/// other five games, dense nonsense is rejected on the first pass here,
+/// because this solver checks runs and line counts before it does
+/// anything; what is worth pushing on is whether `Solved` can come back
+/// on a board its own rule check calls broken.
+fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
+    let mut rng = puzzle_core::Rng::new(20260911);
+    let mut out = Vec::new();
+    for (w, h) in [(6u8, 6u8), (8, 8)] {
+        for tier in Tier::ALL {
+            let Ok(g) = generate(0, params(w, h, tier)) else {
+                continue;
+            };
+            for _ in 0..3_000 {
+                let mut d = vec![1, w, h];
+                d.extend(g.solution.iter().map(|&v| if rng.below(10) < 3 { EMPTY } else { v }));
+                if rng.below(2) == 0 {
+                    let given: Vec<usize> = (3..d.len()).filter(|&i| d[i] != EMPTY).collect();
+                    if !given.is_empty() {
+                        let i = given[rng.below(given.len())];
+                        d[i] = if d[i] == VALUE_A { VALUE_B } else { VALUE_A };
+                    }
+                }
+                out.push(d);
+            }
+        }
+    }
+    out
+}
+
+#[test]
+fn the_solver_never_claims_an_unsound_grid() {
+    let claimed = must_only_claim_sound_solutions::<Unruly>(unsatisfiable_descriptions());
+    assert!(claimed > 100, "only {claimed} of the corpus reached the solver");
 }

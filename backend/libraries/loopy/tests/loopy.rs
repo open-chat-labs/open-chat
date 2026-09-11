@@ -2,7 +2,9 @@ use loopy::{
     Loopy, Params, Technique, Tier, Violation, check_rules, count_solutions, generate, is_complete, parse_description,
     render_ascii, solution_pairs, solve_with_trace,
 };
-use puzzle_core::testing::{must_generate, must_reject, must_terminate, must_work_through_dyn};
+use puzzle_core::testing::{
+    must_generate, must_only_claim_sound_solutions, must_reject, must_terminate, must_work_through_dyn,
+};
 use puzzle_core::{Puzzle, PuzzleError};
 
 const SEEDS_PER_CONFIG: u64 = 200;
@@ -325,4 +327,46 @@ fn works_through_a_dyn_reference() {
     must_work_through_dyn::<Loopy>(&g.description, &g.solution);
     let blank = vec![0u8; g.solution.len()];
     must_work_through_dyn::<Loopy>(&g.description, &blank);
+}
+
+/// Clues taken from the boundary of a random two-colouring of the cells
+/// rather than from a single loop. Every dot on such a boundary has an
+/// even number of lines, so the clues add up and the local rules hold,
+/// and what fails is the one rule that is not local: the lines form
+/// several loops, not one.
+fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
+    let mut rng = puzzle_core::Rng::new(20260911);
+    let mut out = Vec::new();
+    for (w, h) in [(3usize, 3usize), (4, 4), (5, 5)] {
+        let n = w * h;
+        for _ in 0..4_000 {
+            // The outside of the grid counts as the other colour, so the
+            // border is part of the boundary.
+            let inside: Vec<bool> = (0..n).map(|_| rng.below(3) == 0).collect();
+            let at = |x: i32, y: i32| {
+                (x >= 0 && y >= 0 && (x as usize) < w && (y as usize) < h) && inside[y as usize * w + x as usize]
+            };
+            let mut d = vec![1, w as u8, h as u8];
+            for y in 0..h as i32 {
+                for x in 0..w as i32 {
+                    let me = at(x, y);
+                    let clue = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+                        .into_iter()
+                        .filter(|&(dx, dy)| at(x + dx, y + dy) != me)
+                        .count() as u8;
+                    // A board with every cell clued is easy to reject
+                    // early; leaving gaps makes the solver work.
+                    d.push(if rng.below(4) == 0 { 0xFF } else { clue });
+                }
+            }
+            out.push(d);
+        }
+    }
+    out
+}
+
+#[test]
+fn the_solver_never_claims_an_unsound_grid() {
+    let claimed = must_only_claim_sound_solutions::<Loopy>(unsatisfiable_descriptions());
+    assert!(claimed > 100, "only {claimed} of the corpus reached the solver");
 }

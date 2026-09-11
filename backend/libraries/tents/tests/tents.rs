@@ -1,4 +1,6 @@
-use puzzle_core::testing::{must_generate, must_reject, must_terminate, must_work_through_dyn};
+use puzzle_core::testing::{
+    must_generate, must_only_claim_sound_solutions, must_reject, must_terminate, must_work_through_dyn,
+};
 use puzzle_core::{Puzzle, PuzzleError, Tier};
 use tents::{
     Cell, Params, Tents, Violation, check_rules, count_solutions, generate, is_complete, parse_description, render_ascii,
@@ -405,4 +407,48 @@ fn a_line_the_counts_fill_with_touching_tents_has_no_solution() {
         let (_, solved) = solve_with_trace(&description, tier).unwrap();
         assert_eq!(solved, None, "{tier:?}: the solver claimed a grid with two tents touching");
     }
+}
+
+/// Tent layouts that are allowed to break the touching rule, with the row
+/// and column counts taken from them. The counts add up, so the solver
+/// gets a long way in, and no legal grid satisfies them. This is the
+/// corpus that found the missing soundness check.
+fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
+    let mut rng = puzzle_core::Rng::new(20260911);
+    let mut out = Vec::new();
+    for (w, h) in [(4usize, 4usize), (5, 5), (6, 6)] {
+        let n = w * h;
+        for _ in 0..4_000 {
+            let mut tent = vec![false; n];
+            let mut tree = vec![false; n];
+            for _ in 0..1 + rng.below(n / 3) {
+                let c = rng.below(n);
+                if tent[c] || tree[c] {
+                    continue;
+                }
+                let free: Vec<usize> = puzzle_core::neighbours(w, h, c).filter(|&j| !tent[j] && !tree[j]).collect();
+                if free.is_empty() {
+                    continue;
+                }
+                tent[c] = true;
+                tree[free[rng.below(free.len())]] = true;
+            }
+            let mut d = vec![1, w as u8, h as u8];
+            d.extend((0..n).map(|i| tree[i] as u8));
+            for y in 0..h {
+                d.push((0..w).filter(|&x| tent[y * w + x]).count() as u8);
+            }
+            for x in 0..w {
+                d.push((0..h).filter(|&y| tent[y * w + x]).count() as u8);
+            }
+            out.push(d);
+        }
+    }
+    out
+}
+
+#[test]
+fn the_solver_never_claims_an_unsound_grid() {
+    let claimed = must_only_claim_sound_solutions::<Tents>(unsatisfiable_descriptions());
+    assert!(claimed > 1_000, "only {claimed} of the corpus reached the solver");
 }
