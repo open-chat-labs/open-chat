@@ -90,8 +90,8 @@ impl ChatEvents {
     }
 
     pub fn new_direct_chat(
-        them: UserId,
         my_user_id: UserId,
+        them: UserId,
         events_ttl: Option<Milliseconds>,
         anonymized_id: u128,
         now: TimestampMillis,

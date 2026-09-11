@@ -1173,8 +1173,8 @@ mod tests {
         stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
 
         let mut events = ChatEvents::new_direct_chat(
-            Principal::from_slice(&[1]).into(),
             Principal::from_slice(&[2]).into(),
+            Principal::from_slice(&[1]).into(),
             events_ttl,
             random(),
             1,
