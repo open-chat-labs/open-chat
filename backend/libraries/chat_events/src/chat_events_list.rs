@@ -1,5 +1,6 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
+use crate::message_ids::MessageIdsStableStorage;
 use crate::stable_memory::ChatEventsStableStorage;
 use crate::{
     ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal, UpdateEventError,
@@ -7,8 +8,8 @@ use crate::{
 };
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::StableMemoryMap;
 use std::cmp::max;
-use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use std::iter::Peekable;
 use std::ops::Deref;
@@ -20,7 +21,12 @@ use types::{
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
     events_map: HybridMap<ChatEventsStableStorage>,
-    message_id_map: HashMap<MessageId, EventIndex>,
+    // Message ids which haven't yet been moved into stable memory. New message ids are always
+    // written to stable memory, and existing ones are moved across in batches by
+    // `migrate_message_ids_to_stable_memory`. This can be removed once every chat has been migrated.
+    // It is always serialized so that a canister can still be rolled back to a version expecting it.
+    #[serde(rename = "message_id_map", default)]
+    message_ids_on_heap: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
@@ -34,7 +40,7 @@ impl ChatEventsList {
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsList {
             events_map: HybridMap::new(chat, thread_root_message_index),
-            message_id_map: HashMap::new(),
+            message_ids_on_heap: HashMap::new(),
             message_event_indexes: Vec::new(),
             latest_event_index: None,
             latest_event_timestamp: None,
@@ -49,10 +55,11 @@ impl ChatEventsList {
     ) -> EventIndex {
         let event_index = self.next_event_index();
         if let ChatEventInternal::Message(m) = &event {
-            match self.message_id_map.entry(m.message_id) {
-                Vacant(e) => e.insert(event_index),
-                _ => panic!("MessageId already used: {:?}", m.message_id),
-            };
+            if self.message_ids_on_heap.contains_key(&m.message_id)
+                || self.message_ids().insert(m.message_id, event_index).is_some()
+            {
+                panic!("MessageId already used: {:?}", m.message_id);
+            }
             assert_eq!(self.message_event_indexes.len(), usize::from(m.message_index));
             self.message_event_indexes.push(event_index);
         }
@@ -260,8 +267,55 @@ impl ChatEventsList {
         match event_key {
             EventKey::EventIndex(e) => Some(e),
             EventKey::MessageIndex(m) => self.message_event_indexes.get(usize::from(m)).copied(),
-            EventKey::MessageId(m) => self.message_id_map.get(&m).copied(),
+            EventKey::MessageId(m) => self
+                .message_ids_on_heap
+                .get(&m)
+                .copied()
+                .or_else(|| self.message_ids().get(&m)),
         }
+    }
+
+    // Moves up to `max_count` message ids from the heap into stable memory, returning how many
+    // were moved
+    pub(crate) fn migrate_message_ids_to_stable_memory(&mut self, max_count: usize) -> usize {
+        if self.message_ids_on_heap.is_empty() {
+            return 0;
+        }
+
+        let batch: Vec<_> = self
+            .message_ids_on_heap
+            .iter()
+            .take(max_count)
+            .map(|(m, e)| (*m, *e))
+            .collect();
+
+        let mut message_ids = self.message_ids();
+        for (message_id, event_index) in batch.iter().copied() {
+            self.message_ids_on_heap.remove(&message_id);
+            // `push_event` checks both stores and an imported group's heap ids are discarded, so
+            // there can't already be a stable entry for this id. If there were, overwriting it
+            // would leave lookups unchanged, since they check the heap first.
+            message_ids.insert(message_id, event_index);
+        }
+
+        if self.message_ids_on_heap.is_empty() {
+            // Release the map's allocation
+            self.message_ids_on_heap = HashMap::new();
+        }
+
+        batch.len()
+    }
+
+    pub(crate) fn discard_message_ids_on_heap(&mut self) {
+        self.message_ids_on_heap = HashMap::new();
+    }
+
+    pub(crate) fn message_ids_on_heap_count(&self) -> usize {
+        self.message_ids_on_heap.len()
+    }
+
+    fn message_ids(&self) -> MessageIdsStableStorage {
+        MessageIdsStableStorage::new(self.events_map.stable_memory_prefix())
     }
 
     fn get_value_or_neighbours(
@@ -612,8 +666,10 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
+    use serde_bytes::ByteBuf;
+    use stable_memory_map::ChatEventKeyPrefix;
     use std::mem::size_of;
-    use types::{Milliseconds, MultiUserChat};
+    use types::{ChannelId, EventContext, Milliseconds, MultiUserChat};
 
     #[test]
     fn enum_size() {
@@ -852,11 +908,185 @@ mod tests {
         assert_eq!(event_indexes, (46..=70).map(|i| i.into()).collect_vec());
     }
 
+    #[test]
+    fn message_ids_are_stored_in_stable_memory() {
+        let events = setup_events(None);
+        let events_list = events.main_events_list();
+
+        assert_eq!(events_list.message_ids_on_heap_count(), 0);
+
+        for message_id in pushed_message_ids(2) {
+            let event_index = events_list.event_index(EventKey::MessageId(message_id)).unwrap();
+            assert_eq!(events_list.message_ids().get(&message_id), Some(event_index));
+            let event = events_list.get_event(EventKey::EventIndex(event_index), EventIndex::default(), None);
+            assert!(matches!(event.unwrap().event, ChatEventInternal::Message(m) if m.message_id == message_id));
+        }
+        assert!(events_list.event_index(EventKey::MessageId(1000u64.into())).is_none());
+    }
+
+    #[test]
+    fn message_ids_on_heap_are_migrated_to_stable_memory() {
+        let mut events = setup_events(None);
+        move_message_ids_to_heap(&mut events);
+        let expected = expected_message_id_event_indexes(&events);
+
+        assert_eq!(events.message_ids_on_heap_count(), 100);
+        assert_message_id_lookups(&events, &expected);
+
+        assert_eq!(events.migrate_message_ids_to_stable_memory(30), 30);
+        assert_eq!(events.message_ids_on_heap_count(), 70);
+        assert_message_id_lookups(&events, &expected);
+
+        assert_eq!(events.migrate_message_ids_to_stable_memory(1000), 70);
+        assert_eq!(events.message_ids_on_heap_count(), 0);
+        assert_message_id_lookups(&events, &expected);
+
+        let events_list = events.main_events_list();
+        for (message_id, event_index) in expected {
+            assert_eq!(events_list.message_ids().get(&message_id), Some(event_index));
+        }
+
+        assert_eq!(events.migrate_message_ids_to_stable_memory(1000), 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "MessageId already used")]
+    fn duplicate_message_id_in_stable_memory_panics() {
+        let mut events = setup_events(None);
+        push_events(&mut events, 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "MessageId already used")]
+    fn duplicate_message_id_on_heap_panics() {
+        let mut events = setup_events(None);
+        move_message_ids_to_heap(&mut events);
+        push_events(&mut events, 2);
+    }
+
+    #[test]
+    fn message_ids_on_heap_survive_serialization() {
+        let mut events = setup_events(None);
+        move_message_ids_to_heap(&mut events);
+        let expected = expected_message_id_event_indexes(&events);
+
+        let bytes = msgpack::serialize_then_unwrap(events.main_events_list());
+        // Must keep the field name used by the previous version so that upgrades and rollbacks both work
+        assert!(bytes.windows(14).any(|w| w == b"message_id_map"));
+
+        let deserialized: ChatEventsList = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(
+            deserialized.message_ids_on_heap,
+            events.main_events_list().message_ids_on_heap
+        );
+        assert_eq!(deserialized.message_ids_on_heap_count(), 100);
+        for (message_id, event_index) in expected {
+            assert_eq!(deserialized.event_index(EventKey::MessageId(message_id)), Some(event_index));
+        }
+    }
+
+    #[test]
+    fn import_events_writes_message_ids() {
+        let events = setup_group_events();
+        let expected = expected_message_id_event_indexes(&events);
+        let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
+
+        let exported = export_events(&events);
+        assert!(!exported.is_empty());
+
+        let imported_message_ids = MessageIdsStableStorage::new(&ChatEventKeyPrefix::new_from_chat(channel, None));
+        assert!(imported_message_ids.get(&expected[0].0).is_none());
+
+        ChatEvents::import_events(channel, exported.clone());
+
+        let exported_event_indexes: HashSet<_> = exported.iter().map(|(c, _)| c.event_index).collect();
+        let mut imported_count = 0;
+        for (message_id, event_index) in expected {
+            if exported_event_indexes.contains(&event_index) {
+                assert_eq!(imported_message_ids.get(&message_id), Some(event_index));
+                imported_count += 1;
+            }
+        }
+        assert!(imported_count > 0);
+    }
+
+    #[test]
+    fn importing_group_discards_message_ids_on_heap() {
+        let mut events = setup_group_events();
+        // The group hasn't yet moved its message ids into stable memory
+        move_message_ids_to_heap(&mut events);
+        let expected = expected_message_id_event_indexes(&events);
+        let (removed, remaining) = expected.split_at(10);
+        for (_, event_index) in removed {
+            events.remove_event(*event_index, 1000).unwrap();
+        }
+
+        let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
+        ChatEvents::import_events(channel, export_events(&events));
+
+        let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
+        imported.set_chat(channel);
+        imported.discard_message_ids_on_heap();
+
+        assert_eq!(imported.message_ids_on_heap_count(), 0);
+        assert_message_id_lookups(&imported, remaining);
+        for (message_id, _) in removed {
+            assert!(
+                imported
+                    .main_events_list()
+                    .event_index(EventKey::MessageId(*message_id))
+                    .is_none()
+            );
+        }
+    }
+
+    fn export_events(events: &ChatEvents) -> Vec<(EventContext, ByteBuf)> {
+        let mut exported = Vec::new();
+        loop {
+            let batch =
+                events.read_events_as_bytes_from_stable_memory(exported.last().map(|(c, _): &(EventContext, _)| c.clone()));
+            if batch.is_empty() {
+                return exported;
+            }
+            exported.extend(batch);
+        }
+    }
+
+    fn pushed_message_ids(now: TimestampMillis) -> Vec<MessageId> {
+        (0..100).map(|i| MessageId::from((now + i) as u128)).collect()
+    }
+
+    fn expected_message_id_event_indexes(events: &ChatEvents) -> Vec<(MessageId, EventIndex)> {
+        pushed_message_ids(2)
+            .into_iter()
+            .map(|m| (m, events.main_events_list().event_index(EventKey::MessageId(m)).unwrap()))
+            .collect()
+    }
+
+    fn assert_message_id_lookups(events: &ChatEvents, expected: &[(MessageId, EventIndex)]) {
+        for (message_id, event_index) in expected {
+            assert_eq!(
+                events.main_events_list().event_index(EventKey::MessageId(*message_id)),
+                Some(*event_index)
+            );
+        }
+    }
+
+    // Recreates the state of a chat from before message ids were stored in stable memory
+    fn move_message_ids_to_heap(events: &mut ChatEvents) {
+        let events_list = events.main_events_list_mut();
+        let mut message_ids = events_list.message_ids();
+        for message_id in pushed_message_ids(2) {
+            let event_index = *message_ids.remove(&message_id).unwrap().value();
+            events_list.message_ids_on_heap.insert(message_id, event_index);
+        }
+    }
+
     // Group chats keep recent events in the in-memory fast map, whose range() traps on an
     // inverted range, unlike the stable memory map direct chats use
     fn setup_group_events() -> ChatEvents {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init(memory.get(MemoryId::new(1)));
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
 
         let mut events = ChatEvents::new_group_chat(
             MultiUserChat::Group(Principal::from_slice(&[1]).into()),
@@ -875,7 +1105,7 @@ mod tests {
 
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init(memory.get(MemoryId::new(1)));
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
 
         let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[1]).into(), events_ttl, random(), 1);
 

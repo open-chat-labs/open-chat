@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support P2P swaps for users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Route stable memory map entries by key type to either the main map or a map with 256 byte pages for small entries ([#9348](https://github.com/open-chat-labs/open-chat/pull/9348))
+- Move each chat's `MessageId` to `EventIndex` map from the heap into the stable memory map for small entries ([#9349](https://github.com/open-chat-labs/open-chat/pull/9349))
 
 ### Fixed
 

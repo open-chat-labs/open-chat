@@ -10,6 +10,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, MessageIdKeyPrefix};
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -60,6 +61,13 @@ pub struct ChatEvents {
 impl ChatEvents {
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_memory::write_events_as_bytes(chat, events);
+    }
+
+    // The prefixes of all the stable memory entries belonging to a single events list (ie. the
+    // main events list or a thread), so that they can all be garbage collected once it is deleted
+    pub fn stable_memory_key_prefixes(events_prefix: ChatEventKeyPrefix) -> [BaseKeyPrefix; 2] {
+        let message_ids_prefix = MessageIdKeyPrefix::from(&events_prefix);
+        [events_prefix.into(), message_ids_prefix.into()]
     }
 
     pub fn new_direct_chat(
@@ -151,6 +159,33 @@ impl ChatEvents {
         &self,
     ) -> impl Iterator<Item = (Option<MessageIndex>, EventIndex, TimestampMillis)> + '_ {
         self.last_updated_timestamps.iter()
+    }
+
+    // Moves up to `max_count` message ids from the heap into stable memory, returning how many
+    // were moved
+    pub fn migrate_message_ids_to_stable_memory(&mut self, max_count: usize) -> usize {
+        let mut moved = self.main.migrate_message_ids_to_stable_memory(max_count);
+        for thread in self.threads.values_mut() {
+            if moved >= max_count {
+                break;
+            }
+            moved += thread.migrate_message_ids_to_stable_memory(max_count - moved);
+        }
+        moved
+    }
+
+    // When a group is imported into a community, `import_events` writes the message id of every
+    // message which still exists into stable memory, so any ids left on the heap are either
+    // duplicates of those or belong to events which were removed before the import
+    pub fn discard_message_ids_on_heap(&mut self) {
+        self.main.discard_message_ids_on_heap();
+        for thread in self.threads.values_mut() {
+            thread.discard_message_ids_on_heap();
+        }
+    }
+
+    pub fn message_ids_on_heap_count(&self) -> usize {
+        self.main.message_ids_on_heap_count() + self.threads.values().map(|t| t.message_ids_on_heap_count()).sum::<usize>()
     }
 
     pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {
@@ -2198,6 +2233,11 @@ impl ChatEvents {
 
     pub fn main_events_list(&self) -> &ChatEventsList {
         &self.main
+    }
+
+    #[cfg(test)]
+    pub(crate) fn main_events_list_mut(&mut self) -> &mut ChatEventsList {
+        &mut self.main
     }
 
     pub fn end_video_call<P: EventPusher>(
