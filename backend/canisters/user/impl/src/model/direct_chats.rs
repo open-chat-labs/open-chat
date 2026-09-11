@@ -37,12 +37,13 @@ impl DirectChats {
         &mut self,
         their_user_id: UserId,
         their_user_type: UserType,
+        my_user_id: UserId,
         anonymized_id: F,
         now: TimestampMillis,
     ) -> &mut DirectChat {
         self.direct_chats
             .entry(their_user_id.into())
-            .or_insert_with(|| DirectChat::new(their_user_id, their_user_type, None, anonymized_id(), now))
+            .or_insert_with(|| DirectChat::new(their_user_id, my_user_id, their_user_type, None, anonymized_id(), now))
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {

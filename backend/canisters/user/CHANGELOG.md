@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the timestamps of when each chat's events were last updated from the heap into the stable memory map for small entries ([#9351](https://github.com/open-chat-labs/open-chat/pull/9351))
 - Move each chat's per-user metrics from the heap into the stable memory map for small entries ([#9352](https://github.com/open-chat-labs/open-chat/pull/9352))
 - Use `insert_many` for bulk writes to the stable memory map, writing each modified node once rather than once per entry ([#9353](https://github.com/open-chat-labs/open-chat/pull/9353))
+- Stop storing the other user's metrics in direct chats (other than a user's chat with themselves), since only the user's own metrics are ever read ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
 
 ### Fixed
 
