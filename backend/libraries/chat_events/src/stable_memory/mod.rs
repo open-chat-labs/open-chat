@@ -1,7 +1,10 @@
+use crate::message_ids::MessageIdsStableStorage;
 use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{ChatEventKey, ChatEventKeyPrefix, KeyPrefix, StableMemoryMap, with_map, with_map_mut};
+use stable_memory_map::{
+    ChatEventKey, ChatEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix, StableMemoryMap, with_map, with_map_mut,
+};
 use std::cmp::min;
 use std::collections::VecDeque;
 use std::ops::RangeBounds;
@@ -47,8 +50,12 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
             let prefix = ChatEventKeyPrefix::new_from_chat(chat, context.thread_root_message_index);
             let key = prefix.create_key(&context.event_index);
             let value = bytes.into_vec();
-            // Check the event is valid. We could remove this once we're more confident
-            let _ = bytes_to_event(&value);
+            // Deserializing also checks the event is valid
+            let event = bytes_to_event(&value);
+            if let ChatEventInternal::Message(message) = &event.event {
+                let message_id_key = MessageIdKeyPrefix::from(&prefix).create_key(&message.message_id);
+                m.insert(message_id_key, MessageIdsStableStorage::value_to_bytes(context.event_index));
+            }
             m.insert(key, value);
         }
     });

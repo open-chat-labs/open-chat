@@ -6,12 +6,14 @@ use std::borrow::Cow;
 mod chat_event;
 mod community_event;
 mod macros;
+mod message_id;
 mod principal;
 mod storage;
 mod user_id;
 
 pub use chat_event::*;
 pub use community_event::*;
+pub use message_id::*;
 pub use principal::*;
 pub use storage::*;
 pub use user_id::*;
@@ -102,6 +104,12 @@ pub enum KeyType {
     FilesPerAccessor = 14,
     UserStorageRecord = 15,
     BlockedUsers = 16,
+    DirectChatMessageId = 17,
+    GroupChatMessageId = 18,
+    ChannelMessageId = 19,
+    DirectChatThreadMessageId = 20,
+    GroupChatThreadMessageId = 21,
+    ChannelThreadMessageId = 22,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -140,6 +148,12 @@ impl KeyType {
             | KeyType::FilesPerAccessor
             | KeyType::UserStorageRecord
             | KeyType::BlockedUsers => MapClass::Default,
+            KeyType::DirectChatMessageId
+            | KeyType::GroupChatMessageId
+            | KeyType::ChannelMessageId
+            | KeyType::DirectChatThreadMessageId
+            | KeyType::GroupChatThreadMessageId
+            | KeyType::ChannelThreadMessageId => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -186,6 +200,12 @@ impl TryFrom<u8> for KeyType {
             14 => Ok(KeyType::FilesPerAccessor),
             15 => Ok(KeyType::UserStorageRecord),
             16 => Ok(KeyType::BlockedUsers),
+            17 => Ok(KeyType::DirectChatMessageId),
+            18 => Ok(KeyType::GroupChatMessageId),
+            19 => Ok(KeyType::ChannelMessageId),
+            20 => Ok(KeyType::DirectChatThreadMessageId),
+            21 => Ok(KeyType::GroupChatThreadMessageId),
+            22 => Ok(KeyType::ChannelThreadMessageId),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

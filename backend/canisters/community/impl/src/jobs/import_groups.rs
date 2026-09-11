@@ -223,6 +223,9 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 date_imported: None, // This is only set once everything is complete
             });
 
+            // The imported group may not have finished moving its message ids into stable memory
+            crate::jobs::migrate_message_ids_to_stable_memory::start_job_if_required(state);
+
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {
                     group_id,

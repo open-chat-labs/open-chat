@@ -1,10 +1,12 @@
 use crate::env::ENV;
+use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable_memory_map};
 use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, client};
+use ic_stable_structures::memory_manager::MemoryId;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::ChatId;
+use types::{ChatId, MessageContentInitial, TextContent};
 
 #[test]
 fn delete_direct_chat_succeeds() {
@@ -58,5 +60,73 @@ fn delete_direct_chat_succeeds() {
             .summaries
             .iter()
             .any(|c| c.them == user2.user_id)
+    );
+}
+
+#[test]
+fn stable_memory_garbage_collected_after_direct_chat_deleted() {
+    const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    let initial_stable_memory_map_keys = get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len();
+    let initial_small_entries_keys =
+        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
+
+    let result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    for _ in 0..3 {
+        client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    }
+    for _ in 0..2 {
+        client::user::happy_path::send_message(
+            env,
+            &user1,
+            user2.user_id,
+            Some(result.message_index),
+            MessageContentInitial::Text(TextContent { text: random_string() }),
+            None,
+            None,
+        );
+    }
+    tick_many(env, 3);
+
+    assert!(get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len() > initial_stable_memory_map_keys);
+    assert_eq!(
+        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 6
+    );
+
+    let delete_direct_chat_response = client::user::delete_direct_chat(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::delete_direct_chat::Args {
+            user_id: user2.user_id,
+            block_user: false,
+        },
+    );
+    assert!(
+        matches!(
+            delete_direct_chat_response,
+            user_canister::delete_direct_chat::Response::Success
+        ),
+        "{delete_direct_chat_response:?}",
+    );
+
+    // Tick to garbage collect stable memory
+    env.advance_time(Duration::from_secs(60));
+    env.tick();
+
+    assert_eq!(
+        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len(),
+        initial_stable_memory_map_keys
+    );
+    assert_eq!(
+        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys
     );
 }

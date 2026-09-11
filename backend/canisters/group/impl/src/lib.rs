@@ -5,7 +5,7 @@ use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, EventPusher, Reader, RemoveEventsResult};
+use chat_events::{ChatEventInternal, ChatEvents, EventPusher, Reader, RemoveEventsResult};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -423,9 +423,9 @@ impl RuntimeState {
         for thread in result.threads {
             self.data
                 .stable_memory_keys_to_garbage_collect
-                .push(BaseKeyPrefix::from(ChatEventKeyPrefix::new_from_group_chat(Some(
-                    thread.root_message_index,
-                ))));
+                .extend(ChatEvents::stable_memory_key_prefixes(
+                    ChatEventKeyPrefix::new_from_group_chat(Some(thread.root_message_index)),
+                ));
         }
 
         jobs::garbage_collect_stable_memory::start_job_if_required(self);

@@ -1,6 +1,6 @@
 use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
-use crate::stable_memory::get_stable_memory_map;
+use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable_memory_map};
 use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
@@ -8,10 +8,10 @@ use chat_events::ChatEventInternal;
 use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
-use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix};
 use std::ops::Deref;
-use testing::rng::random_string;
-use types::{ChatId, EventIndex, EventWrapperInternal, Rules};
+use testing::rng::{random_from_u128, random_string};
+use types::{Chat, ChatId, EventIndex, EventWrapperInternal, MessageId, Rules};
 
 #[test]
 fn convert_into_community_succeeds() {
@@ -33,10 +33,13 @@ fn convert_into_community_succeeds() {
 
     client::group::happy_path::block_user(env, user1.principal, group_id, user3.user_id);
 
+    let mut messages_sent: Vec<(MessageId, EventIndex)> = Vec::new();
     for i in 1..10 {
         let text = i.to_string().as_str().repeat(500);
+        let message_id = random_from_u128();
 
-        client::group::happy_path::send_text_message(env, &user1, group_id, None, text, None);
+        let send_result = client::group::happy_path::send_text_message(env, &user1, group_id, None, text, Some(message_id));
+        messages_sent.push((message_id, send_result.event_index));
     }
 
     let convert_into_community_response = client::group::convert_into_community(
@@ -89,6 +92,27 @@ fn convert_into_community_succeeds() {
             assert!(!matches!(event.event, ChatEventInternal::ChatFrozen(_)),);
         }
         assert_eq!(latest_event_index, selected_channel_initial.latest_event_index);
+
+        // The message ids should have been written to stable memory as the events were imported
+        let small_entries_map = get_stable_memory_map(env, result.community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID);
+        let message_id_prefix = MessageIdKeyPrefix::new_from_chat(Chat::Channel(result.community_id, result.channel_id), None);
+        for (message_id, event_index) in messages_sent.iter() {
+            let key = message_id_prefix.create_key(message_id);
+            assert_eq!(
+                small_entries_map.get(&key.as_ref().to_vec()),
+                Some(u32::from(*event_index).to_be_bytes().to_vec())
+            );
+        }
+
+        // Looking up an imported message by its id should succeed
+        client::community::happy_path::add_reaction(
+            env,
+            &user2,
+            result.community_id,
+            result.channel_id,
+            "👍",
+            messages_sent[0].0,
+        );
     } else {
         panic!("'convert_into_community' error: {convert_into_community_response:?}");
     }

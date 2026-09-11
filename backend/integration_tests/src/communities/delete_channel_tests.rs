@@ -1,6 +1,6 @@
 use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
-use crate::stable_memory::get_stable_memory_map;
+use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable_memory_map};
 use crate::utils::now_millis;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
@@ -85,6 +85,7 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     } = init_test_data(env, canister_ids, *controller);
 
     let initial_stable_memory_map_keys = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len();
+    let initial_small_entries_keys = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
 
     for _ in 0..100 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id1, None, random_string(), None);
@@ -94,6 +95,10 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 100
     );
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 100
+    );
 
     for _ in 0..80 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id2, None, random_string(), None);
@@ -102,6 +107,10 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 180
+    );
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 180
     );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id1);
@@ -113,6 +122,10 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 77
     );
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 80
+    );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id2);
 
@@ -122,6 +135,10 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys - 6
+    );
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys
     );
 }
 

@@ -1,7 +1,7 @@
 use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::client::group::CHAT_EVENTS_MEMORY_ID;
 use crate::env::ENV;
-use crate::stable_memory::get_stable_memory_map;
+use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable_memory_map};
 use crate::utils::tick_many;
 use crate::{TestEnv, client};
 use std::ops::Deref;
@@ -387,6 +387,7 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
     );
 
     let initial_stable_memory_map_keys = get_stable_memory_map(env, group_id, STABLE_MEMORY_MAP_MEMORY_ID).len();
+    let initial_small_entries_keys = get_stable_memory_map(env, group_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
 
     for _ in 0..5 {
         let result = client::group::happy_path::send_text_message(env, &user, group_id, None, random_string(), None);
@@ -407,6 +408,10 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
         get_stable_memory_map(env, group_id, CHAT_EVENTS_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 30
     );
+    assert_eq!(
+        get_stable_memory_map(env, group_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 30
+    );
 
     // Tick once to expire the messages
     env.advance_time(Duration::from_secs(2));
@@ -419,5 +424,11 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
     assert_eq!(
         get_stable_memory_map(env, group_id, CHAT_EVENTS_MEMORY_ID).len(),
         initial_stable_memory_map_keys
+    );
+    // The message ids of the expired threads are garbage collected, but those of the expired
+    // messages in the main events list are retained
+    assert_eq!(
+        get_stable_memory_map(env, group_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 5
     );
 }
