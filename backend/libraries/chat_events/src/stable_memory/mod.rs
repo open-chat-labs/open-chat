@@ -46,25 +46,37 @@ pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: 
 
 // Used to efficiently write all events to stable memory when migrating a group into a community
 pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
-    with_map_mut(|m| {
-        for (context, bytes) in events {
-            let prefix = ChatEventKeyPrefix::new_from_chat(chat, context.thread_root_message_index);
-            let key = prefix.create_key(&context.event_index);
-            let value = bytes.into_vec();
-            // Deserializing also checks the event is valid
-            let event = bytes_to_event(&value);
-            if let ChatEventInternal::Message(message) = &event.event {
-                let message_id_key = MessageIdKeyPrefix::from(&prefix).create_key(&message.message_id);
-                m.insert(message_id_key, MessageIdsStableStorage::value_to_bytes(context.event_index));
-            }
-            if let Some(expires_at) = event.expires_at
-                && let Ok(expiring_events_prefix) = ExpiringEventKeyPrefix::try_from(&prefix)
-            {
-                let expiring_event_key = expiring_events_prefix.create_key(&(expires_at, context.event_index));
-                m.insert(expiring_event_key, Vec::new());
-            }
-            m.insert(key, value);
+    let mut event_entries = Vec::with_capacity(events.len());
+    let mut message_id_entries = Vec::new();
+    let mut expiring_event_entries = Vec::new();
+
+    for (context, bytes) in events {
+        let prefix = ChatEventKeyPrefix::new_from_chat(chat, context.thread_root_message_index);
+        let value = bytes.into_vec();
+        // Deserializing also checks the event is valid
+        let event = bytes_to_event(&value);
+        if let ChatEventInternal::Message(message) = &event.event {
+            let message_id_key = MessageIdKeyPrefix::from(&prefix).create_key(&message.message_id);
+            message_id_entries.push((message_id_key, MessageIdsStableStorage::value_to_bytes(context.event_index)));
         }
+        if let Some(expires_at) = event.expires_at
+            && let Ok(expiring_events_prefix) = ExpiringEventKeyPrefix::try_from(&prefix)
+        {
+            let expiring_event_key = expiring_events_prefix.create_key(&(expires_at, context.event_index));
+            expiring_event_entries.push((expiring_event_key, Vec::new()));
+        }
+        event_entries.push((prefix.create_key(&context.event_index), value));
+    }
+
+    // The events are exported in key order, but the other entries need sorting into key order so
+    // that each batch of inserts writes as few nodes as possible
+    message_id_entries.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+    expiring_event_entries.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+
+    with_map_mut(|m| {
+        m.insert_many(event_entries);
+        m.insert_many(message_id_entries);
+        m.insert_many(expiring_event_entries);
     });
 }
 
