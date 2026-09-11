@@ -312,5 +312,6 @@ ic-cbor = { git = "https://github.com/dfinity/response-verification", rev = "85d
 ic-certificate-verification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-certification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-http-certification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
+ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "b88706bd6dd4f7463e75886ec10c58fddb810c37" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "96e2b23ee8fb6131fefb504a0795af38fb2d01fb" }
