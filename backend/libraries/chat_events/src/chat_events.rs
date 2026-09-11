@@ -10,6 +10,10 @@ use oc_error_codes::{OCError, OCErrorCode};
 use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::{
+    BaseKeyPrefix, ChatEventKeyPrefix, EventLastUpdatedKeyPrefix, EventsByLastUpdatedKeyPrefix, ExpiringEventKeyPrefix,
+    MessageIdKeyPrefix,
+};
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -60,6 +64,22 @@ pub struct ChatEvents {
 impl ChatEvents {
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_memory::write_events_as_bytes(chat, events);
+    }
+
+    // The prefixes of all the stable memory entries belonging to a single events list (ie. the
+    // main events list or a thread), so that they can all be garbage collected once it is deleted
+    pub fn stable_memory_key_prefixes(events_prefix: ChatEventKeyPrefix) -> Vec<BaseKeyPrefix> {
+        let message_ids_prefix = MessageIdKeyPrefix::from(&events_prefix);
+        // Only the main events list has expiring events and last updated timestamps (the last
+        // updated timestamps of events in threads are stored under the main events list's prefixes)
+        let expiring_events_prefix = ExpiringEventKeyPrefix::try_from(&events_prefix).ok();
+        let last_updated_prefix = EventLastUpdatedKeyPrefix::try_from(&events_prefix).ok();
+        let by_last_updated_prefix = EventsByLastUpdatedKeyPrefix::try_from(&events_prefix).ok();
+        let mut prefixes = vec![events_prefix.into(), message_ids_prefix.into()];
+        prefixes.extend(expiring_events_prefix.map(BaseKeyPrefix::from));
+        prefixes.extend(last_updated_prefix.map(BaseKeyPrefix::from));
+        prefixes.extend(by_last_updated_prefix.map(BaseKeyPrefix::from));
+        prefixes
     }
 
     pub fn new_direct_chat(
@@ -141,16 +161,66 @@ impl ChatEvents {
         for (message_index, events_list) in self.threads.iter_mut() {
             events_list.set_stable_memory_prefix(chat, Some(*message_index));
         }
+        self.expiring_events.refresh_next_expiry(chat);
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
         stable_memory::read_events_as_bytes(self.chat, after, ONE_MB as usize)
     }
 
-    pub fn iter_recently_updated_events(
+    // The events which were last updated after `since`, most recently updated first
+    pub fn recently_updated_events(
         &self,
-    ) -> impl Iterator<Item = (Option<MessageIndex>, EventIndex, TimestampMillis)> + '_ {
-        self.last_updated_timestamps.iter()
+        since: TimestampMillis,
+        max_count: usize,
+    ) -> Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)> {
+        self.last_updated_timestamps
+            .recently_updated_events(self.chat, since, max_count)
+    }
+
+    // Moves up to `max_count` entries from the heap into stable memory, returning how many were
+    // moved
+    pub fn migrate_to_stable_memory(&mut self, max_count: usize) -> usize {
+        let mut moved = self.expiring_events.migrate_to_stable_memory(self.chat, max_count);
+        if moved < max_count {
+            moved += self
+                .last_updated_timestamps
+                .migrate_to_stable_memory(self.chat, max_count - moved);
+        }
+        if moved < max_count {
+            moved += self.main.migrate_message_ids_to_stable_memory(max_count - moved);
+        }
+        for thread in self.threads.values_mut() {
+            if moved >= max_count {
+                break;
+            }
+            moved += thread.migrate_message_ids_to_stable_memory(max_count - moved);
+        }
+        moved
+    }
+
+    // When a group is imported into a community, `import_events` writes the message id of every
+    // message which still exists into stable memory, so any ids left on the heap are either
+    // duplicates of those or belong to events which were removed before the import
+    pub fn discard_message_ids_on_heap(&mut self) {
+        self.main.discard_message_ids_on_heap();
+        for thread in self.threads.values_mut() {
+            thread.discard_message_ids_on_heap();
+        }
+    }
+
+    // Similarly, `import_events` writes an expiring event for every imported event which has an
+    // expiry date, so any expiring events left on the heap are duplicates of those
+    pub fn discard_expiring_events_on_heap(&mut self) {
+        self.expiring_events.discard_on_heap();
+    }
+
+    // The number of entries on the heap which are yet to be moved into stable memory
+    pub fn heap_entries_to_migrate_count(&self) -> usize {
+        self.expiring_events.on_heap_count()
+            + self.last_updated_timestamps.on_heap_count()
+            + self.main.message_ids_on_heap_count()
+            + self.threads.values().map(|t| t.message_ids_on_heap_count()).sum::<usize>()
     }
 
     pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {
@@ -403,7 +473,7 @@ impl ChatEvents {
     pub fn last_updated(&self) -> Option<TimestampMillis> {
         max(
             self.main.latest_event_timestamp(),
-            self.iter_recently_updated_events().next().map(|(_, _, ts)| ts),
+            self.last_updated_timestamps.latest_update(),
         )
     }
 
@@ -1856,7 +1926,7 @@ impl ChatEvents {
         let event_index = events_list.push_event(event.clone(), expires_at, now);
 
         if let Some(timestamp) = expires_at {
-            self.expiring_events.insert(event_index, timestamp);
+            self.expiring_events.insert(self.chat, event_index, timestamp);
         }
 
         let bots_to_notify = self.bots_to_notify(&event_type);
@@ -2084,7 +2154,7 @@ impl ChatEvents {
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
         let mut results = RemoveEventsResult::default();
 
-        while let Some(event_index) = self.expiring_events.take_next_expired_event(now) {
+        while let Some(event_index) = self.expiring_events.take_next_expired_event(self.chat, now) {
             if let Some(result) = self.remove_event(event_index, now) {
                 results.merge_result(event_index, result);
             }
@@ -2152,11 +2222,12 @@ impl ChatEvents {
     }
 
     pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {
-        ChatEventsListReader::new(&self.main, &self.last_updated_timestamps)
+        ChatEventsListReader::new(self.chat, &self.main, &self.last_updated_timestamps)
     }
 
     pub fn visible_main_events_reader(&self, min_visible_event_index: EventIndex) -> ChatEventsListReader<'_> {
         ChatEventsListReader::with_min_visible_event_index(
+            self.chat,
             &self.main,
             &self.last_updated_timestamps,
             min_visible_event_index,
@@ -2173,9 +2244,14 @@ impl ChatEvents {
         let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
 
         if thread_root_message_index.is_some() {
-            Some(ChatEventsListReader::new(events_list, &self.last_updated_timestamps))
+            Some(ChatEventsListReader::new(
+                self.chat,
+                events_list,
+                &self.last_updated_timestamps,
+            ))
         } else {
             Some(ChatEventsListReader::with_min_visible_event_index(
+                self.chat,
                 events_list,
                 &self.last_updated_timestamps,
                 min_visible_event_index,
@@ -2198,6 +2274,11 @@ impl ChatEvents {
 
     pub fn main_events_list(&self) -> &ChatEventsList {
         &self.main
+    }
+
+    #[cfg(test)]
+    pub(crate) fn main_events_list_mut(&mut self) -> &mut ChatEventsList {
+        &mut self.main
     }
 
     pub fn end_video_call<P: EventPusher>(
@@ -2541,7 +2622,7 @@ impl ChatEvents {
             && let Ok(success) = &result
         {
             self.last_updated_timestamps
-                .mark_updated(thread_root_message_index, success.event_index, now);
+                .mark_updated(self.chat, thread_root_message_index, success.event_index, now);
         }
 
         result.map(|success| UpdateEventSuccess {

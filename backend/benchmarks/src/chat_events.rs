@@ -10,7 +10,7 @@ use types::{EventIndex, MessageId, MultiUserChat, Reaction};
 #[bench(raw)]
 fn push_simple_text_messages() -> BenchResult {
     let memory = MemoryManager::init(DefaultMemoryImpl::default());
-    stable_memory_map::init(memory.get(MemoryId::new(1)));
+    stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
 
     let start = 1700000000000;
 
@@ -53,7 +53,7 @@ fn push_simple_text_messages() -> BenchResult {
 #[bench(raw)]
 fn add_reactions() -> BenchResult {
     let memory = MemoryManager::init(DefaultMemoryImpl::default());
-    stable_memory_map::init(memory.get(MemoryId::new(1)));
+    stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
 
     let start = 1700000000000;
 
