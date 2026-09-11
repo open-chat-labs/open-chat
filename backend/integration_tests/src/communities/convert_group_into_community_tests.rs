@@ -5,13 +5,18 @@ use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use chat_events::ChatEventInternal;
+use constants::DAY_IN_MS;
 use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
-use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix};
+use stable_memory_map::{ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix};
 use std::ops::Deref;
+use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{Chat, ChatId, EventIndex, EventWrapperInternal, MessageId, Rules};
+use types::{
+    ChannelId, Chat, ChatId, CommunityId, EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX, MessageId,
+    OptionUpdate, Rules,
+};
 
 #[test]
 fn convert_into_community_succeeds() {
@@ -119,6 +124,77 @@ fn convert_into_community_succeeds() {
 }
 
 #[test]
+fn disappearing_messages_still_expire_after_conversion() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller);
+
+    client::group::update_group_v2(
+        env,
+        user1.principal,
+        group_id.into(),
+        &group_canister::update_group_v2::Args {
+            events_ttl: OptionUpdate::SetToSome(DAY_IN_MS),
+            ..Default::default()
+        },
+    );
+
+    let event_indexes: Vec<_> = (0..5)
+        .map(|_| client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None).event_index)
+        .collect();
+
+    let convert_into_community_response = client::group::convert_into_community(
+        env,
+        user1.principal,
+        group_id.into(),
+        &group_canister::convert_into_community::Args {
+            rules: Rules::default(),
+            permissions: None,
+            primary_language: None,
+            history_visible_to_new_joiners: true,
+        },
+    );
+
+    let group_canister::convert_into_community::Response::Success(result) = convert_into_community_response else {
+        panic!("'convert_into_community' error: {convert_into_community_response:?}");
+    };
+    tick_many(env, 20);
+
+    // The expiring events should have been written to stable memory as the events were imported
+    assert_eq!(
+        expiring_event_indexes(env, result.community_id, result.channel_id),
+        event_indexes
+    );
+
+    // Nothing schedules the expiry job when a group is imported, so send a message to schedule it
+    client::community::happy_path::send_text_message(
+        env,
+        &user1,
+        result.community_id,
+        result.channel_id,
+        None,
+        random_string(),
+        None,
+    );
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    env.tick();
+
+    assert!(
+        client::community::happy_path::events_by_index(env, &user1, result.community_id, result.channel_id, event_indexes)
+            .events
+            .is_empty()
+    );
+    assert!(expiring_event_indexes(env, result.community_id, result.channel_id).is_empty());
+}
+
+#[test]
 fn not_group_owner_returns_unauthorized() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -146,6 +222,18 @@ fn not_group_owner_returns_unauthorized() {
         convert_into_community_response,
         group_canister::convert_into_community::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)
     ));
+}
+
+fn expiring_event_indexes(env: &PocketIc, community_id: CommunityId, channel_id: ChannelId) -> Vec<EventIndex> {
+    let small_entries_map = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID);
+    let prefix = ExpiringEventKeyPrefix::new_from_chat(Chat::Channel(community_id, channel_id));
+    let range_start = prefix.create_key(&(u64::MIN, MIN_EVENT_INDEX));
+    let range_end = prefix.create_key(&(u64::MAX, MAX_EVENT_INDEX));
+
+    small_entries_map
+        .keys_range(range_start.as_ref().to_vec()..=range_end.as_ref().to_vec())
+        .map(|key| u32::from_be_bytes(key[key.len() - 4..].try_into().unwrap()).into())
+        .collect()
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

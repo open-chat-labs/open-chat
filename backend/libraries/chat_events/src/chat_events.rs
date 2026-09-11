@@ -10,7 +10,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, MessageIdKeyPrefix};
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, ExpiringEventKeyPrefix, MessageIdKeyPrefix};
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -65,9 +65,13 @@ impl ChatEvents {
 
     // The prefixes of all the stable memory entries belonging to a single events list (ie. the
     // main events list or a thread), so that they can all be garbage collected once it is deleted
-    pub fn stable_memory_key_prefixes(events_prefix: ChatEventKeyPrefix) -> [BaseKeyPrefix; 2] {
+    pub fn stable_memory_key_prefixes(events_prefix: ChatEventKeyPrefix) -> Vec<BaseKeyPrefix> {
         let message_ids_prefix = MessageIdKeyPrefix::from(&events_prefix);
-        [events_prefix.into(), message_ids_prefix.into()]
+        // Only the main events list has expiring events
+        let expiring_events_prefix = ExpiringEventKeyPrefix::try_from(&events_prefix).ok();
+        let mut prefixes = vec![events_prefix.into(), message_ids_prefix.into()];
+        prefixes.extend(expiring_events_prefix.map(BaseKeyPrefix::from));
+        prefixes
     }
 
     pub fn new_direct_chat(
@@ -149,6 +153,7 @@ impl ChatEvents {
         for (message_index, events_list) in self.threads.iter_mut() {
             events_list.set_stable_memory_prefix(chat, Some(*message_index));
         }
+        self.expiring_events.refresh_next_expiry(chat);
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
@@ -161,10 +166,13 @@ impl ChatEvents {
         self.last_updated_timestamps.iter()
     }
 
-    // Moves up to `max_count` message ids from the heap into stable memory, returning how many
-    // were moved
-    pub fn migrate_message_ids_to_stable_memory(&mut self, max_count: usize) -> usize {
-        let mut moved = self.main.migrate_message_ids_to_stable_memory(max_count);
+    // Moves up to `max_count` entries from the heap into stable memory, returning how many were
+    // moved
+    pub fn migrate_to_stable_memory(&mut self, max_count: usize) -> usize {
+        let mut moved = self.expiring_events.migrate_to_stable_memory(self.chat, max_count);
+        if moved < max_count {
+            moved += self.main.migrate_message_ids_to_stable_memory(max_count - moved);
+        }
         for thread in self.threads.values_mut() {
             if moved >= max_count {
                 break;
@@ -184,8 +192,17 @@ impl ChatEvents {
         }
     }
 
-    pub fn message_ids_on_heap_count(&self) -> usize {
-        self.main.message_ids_on_heap_count() + self.threads.values().map(|t| t.message_ids_on_heap_count()).sum::<usize>()
+    // Similarly, `import_events` writes an expiring event for every imported event which has an
+    // expiry date, so any expiring events left on the heap are duplicates of those
+    pub fn discard_expiring_events_on_heap(&mut self) {
+        self.expiring_events.discard_on_heap();
+    }
+
+    // The number of entries on the heap which are yet to be moved into stable memory
+    pub fn heap_entries_to_migrate_count(&self) -> usize {
+        self.expiring_events.on_heap_count()
+            + self.main.message_ids_on_heap_count()
+            + self.threads.values().map(|t| t.message_ids_on_heap_count()).sum::<usize>()
     }
 
     pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {
@@ -1891,7 +1908,7 @@ impl ChatEvents {
         let event_index = events_list.push_event(event.clone(), expires_at, now);
 
         if let Some(timestamp) = expires_at {
-            self.expiring_events.insert(event_index, timestamp);
+            self.expiring_events.insert(self.chat, event_index, timestamp);
         }
 
         let bots_to_notify = self.bots_to_notify(&event_type);
@@ -2119,7 +2136,7 @@ impl ChatEvents {
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
         let mut results = RemoveEventsResult::default();
 
-        while let Some(event_index) = self.expiring_events.take_next_expired_event(now) {
+        while let Some(event_index) = self.expiring_events.take_next_expired_event(self.chat, now) {
             if let Some(result) = self.remove_event(event_index, now) {
                 results.merge_result(event_index, result);
             }

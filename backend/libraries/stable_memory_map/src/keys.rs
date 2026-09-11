@@ -5,6 +5,7 @@ use std::borrow::Cow;
 
 mod chat_event;
 mod community_event;
+mod expiring_event;
 mod macros;
 mod message_id;
 mod principal;
@@ -13,6 +14,7 @@ mod user_id;
 
 pub use chat_event::*;
 pub use community_event::*;
+pub use expiring_event::*;
 pub use message_id::*;
 pub use principal::*;
 pub use storage::*;
@@ -110,6 +112,9 @@ pub enum KeyType {
     DirectChatThreadMessageId = 20,
     GroupChatThreadMessageId = 21,
     ChannelThreadMessageId = 22,
+    DirectChatExpiringEvent = 23,
+    GroupChatExpiringEvent = 24,
+    ChannelExpiringEvent = 25,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -153,7 +158,10 @@ impl KeyType {
             | KeyType::ChannelMessageId
             | KeyType::DirectChatThreadMessageId
             | KeyType::GroupChatThreadMessageId
-            | KeyType::ChannelThreadMessageId => MapClass::SmallEntries,
+            | KeyType::ChannelThreadMessageId
+            | KeyType::DirectChatExpiringEvent
+            | KeyType::GroupChatExpiringEvent
+            | KeyType::ChannelExpiringEvent => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -206,6 +214,9 @@ impl TryFrom<u8> for KeyType {
             20 => Ok(KeyType::DirectChatThreadMessageId),
             21 => Ok(KeyType::GroupChatThreadMessageId),
             22 => Ok(KeyType::ChannelThreadMessageId),
+            23 => Ok(KeyType::DirectChatExpiringEvent),
+            24 => Ok(KeyType::GroupChatExpiringEvent),
+            25 => Ok(KeyType::ChannelExpiringEvent),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

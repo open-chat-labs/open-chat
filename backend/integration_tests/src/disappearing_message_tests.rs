@@ -408,9 +408,10 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
         get_stable_memory_map(env, group_id, CHAT_EVENTS_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 30
     );
+    // A message id for each message, plus an expiring event for each message in the main events list
     assert_eq!(
         get_stable_memory_map(env, group_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
-        initial_small_entries_keys + 30
+        initial_small_entries_keys + 35
     );
 
     // Tick once to expire the messages
@@ -425,8 +426,8 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
         get_stable_memory_map(env, group_id, CHAT_EVENTS_MEMORY_ID).len(),
         initial_stable_memory_map_keys
     );
-    // The message ids of the expired threads are garbage collected, but those of the expired
-    // messages in the main events list are retained
+    // The expiring events are removed and the message ids of the expired threads are garbage
+    // collected, but the message ids of the expired messages in the main events list are retained
     assert_eq!(
         get_stable_memory_map(env, group_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
         initial_small_entries_keys + 5
