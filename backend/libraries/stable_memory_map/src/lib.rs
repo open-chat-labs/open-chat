@@ -14,8 +14,16 @@ pub use keys::*;
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
+// The page size of the map for small entries. Keys and values are unbounded so the main map uses
+// the default of 1024 bytes, which suits chat events but wastes most of each page on small,
+// index-like entries (~30-60 bytes). Nodes hold 5-11 entries, so 256 byte pages fit those nodes in
+// 1-2 pages. This is fixed once the map is created.
+pub const SMALL_ENTRIES_MAP_PAGE_SIZE: u32 = 256;
+
 pub struct StableMemoryMapInner {
     map: StableBTreeMap<BaseKey, Vec<u8>, Memory>,
+    #[expect(dead_code, reason = "Nothing is stored in the small entries map yet")]
+    small_entries_map: Option<StableBTreeMap<BaseKey, Vec<u8>, Memory>>,
 }
 
 thread_local! {
@@ -25,6 +33,19 @@ thread_local! {
 pub fn init(memory: Memory) {
     MAP.set(Some(StableMemoryMapInner {
         map: StableBTreeMap::init(memory),
+        small_entries_map: None,
+    }));
+}
+
+// Only use this in canisters which will hold a lot of data, since the small entries map claims its
+// own memory, which is at least one bucket of the memory manager.
+pub fn init_with_small_entries_map(memory: Memory, small_entries_memory: Memory) {
+    MAP.set(Some(StableMemoryMapInner {
+        map: StableBTreeMap::init(memory),
+        small_entries_map: Some(StableBTreeMap::init_with_page_size(
+            small_entries_memory,
+            SMALL_ENTRIES_MAP_PAGE_SIZE,
+        )),
     }));
 }
 
@@ -190,4 +211,38 @@ impl<K: Key, I: DoubleEndedIterator<Item = (BaseKey, Vec<u8>)>> DoubleEndedItera
 
 fn try_map_key_value<K: Key>((key, value): (BaseKey, Vec<u8>)) -> Option<(K, Vec<u8>)> {
     K::try_from(key).ok().map(|k| (k, value))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ic_stable_structures::Memory as _;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    #[test]
+    fn small_entries_map_uses_small_page_size() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MemoryId::new(0)), memory_manager.get(MemoryId::new(1)));
+
+        assert_eq!(page_size(&memory_manager.get(MemoryId::new(0))), 1024);
+        assert_eq!(page_size(&memory_manager.get(MemoryId::new(1))), SMALL_ENTRIES_MAP_PAGE_SIZE);
+    }
+
+    #[test]
+    fn small_entries_map_can_be_reloaded() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MemoryId::new(0)), memory_manager.get(MemoryId::new(1)));
+        init_with_small_entries_map(memory_manager.get(MemoryId::new(0)), memory_manager.get(MemoryId::new(1)));
+
+        assert_eq!(page_size(&memory_manager.get(MemoryId::new(1))), SMALL_ENTRIES_MAP_PAGE_SIZE);
+    }
+
+    // A v2 map header is the magic "BTR", the layout version, then the page size as a
+    // little-endian u32
+    fn page_size(memory: &Memory) -> u32 {
+        let mut header = [0; 8];
+        memory.read(0, &mut header);
+        assert_eq!(&header[..4], b"BTR\x02");
+        u32::from_le_bytes(header[4..8].try_into().unwrap())
+    }
 }
