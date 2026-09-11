@@ -66,18 +66,20 @@ impl PerUserMetrics {
     }
 
     // Moves up to `max_count` entries from the heap into stable memory, returning how many were
-    // moved
+    // moved. Any existing entry in stable memory for one of these users is a copy of the heap entry
+    // (see `copy_to_heap`), so it can simply be overwritten.
     pub fn migrate_to_stable_memory(&mut self, chat: Chat, max_count: usize) -> usize {
         let prefix = UserMetricsKeyPrefix::new_from_chat(chat);
         let mut count = 0;
 
+        // Entries are popped in user id order, which matches key order for user ids of the same length
         with_map_mut(|m| {
-            while count < max_count
-                && let Some((user_id, metrics)) = self.on_heap.pop_first()
-            {
-                m.insert(prefix.create_key(&user_id), metrics.to_bytes());
-                count += 1;
-            }
+            m.insert_many(
+                std::iter::from_fn(|| self.on_heap.pop_first())
+                    .take(max_count)
+                    .inspect(|_| count += 1)
+                    .map(|(user_id, metrics)| (prefix.create_key(&user_id), metrics.to_bytes())),
+            )
         });
         count
     }

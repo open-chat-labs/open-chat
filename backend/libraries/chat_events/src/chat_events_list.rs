@@ -8,7 +8,7 @@ use crate::{
 };
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::StableMemoryMap;
+use stable_memory_map::{KeyPrefix, StableMemoryMap, with_map_mut};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::iter::Peekable;
@@ -289,14 +289,24 @@ impl ChatEventsList {
             .map(|(m, e)| (*m, *e))
             .collect();
 
-        let mut message_ids = self.message_ids();
-        for (message_id, event_index) in batch.iter().copied() {
-            self.message_ids_on_heap.remove(&message_id);
-            // `push_event` checks both stores and an imported group's heap ids are discarded, so
-            // there can't already be a stable entry for this id. If there were, overwriting it
-            // would leave lookups unchanged, since they check the heap first.
-            message_ids.insert(message_id, event_index);
-        }
+        // `push_event` checks both stores and an imported group's heap ids are discarded, so there
+        // can't already be a stable entry for any of these ids. If there were, overwriting it would
+        // leave lookups unchanged, since they check the heap first.
+        let message_ids = self.message_ids();
+        let mut entries: Vec<_> = batch
+            .iter()
+            .map(|(message_id, event_index)| {
+                self.message_ids_on_heap.remove(message_id);
+                (
+                    message_ids.prefix().create_key(message_id),
+                    MessageIdsStableStorage::value_to_bytes(*event_index),
+                )
+            })
+            .collect();
+        // The heap entries are unordered, so sort them into key order to minimise the number of
+        // nodes written
+        entries.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        with_map_mut(|m| m.insert_many(entries));
 
         if self.message_ids_on_heap.is_empty() {
             // Release the map's allocation

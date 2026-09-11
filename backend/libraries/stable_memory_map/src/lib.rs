@@ -160,6 +160,31 @@ impl StableMemoryMapInner {
         self.map_mut(map_class(key.as_slice())).insert(key, value)
     }
 
+    // Inserts many entries, writing each modified node to stable memory at most once rather than
+    // once per entry. Unlike `insert`, the previous values aren't returned. Nodes are only written
+    // once the input has moved past them, so this only helps when consecutive keys are close
+    // together, meaning the entries should be supplied in key order. Out of order entries are still
+    // inserted correctly, but cost no less than calling `insert` for each one.
+    pub fn insert_many<K: Key>(&mut self, entries: impl IntoIterator<Item = (K, Vec<u8>)>) {
+        let mut entries = entries
+            .into_iter()
+            .map(|(key, value)| -> (BaseKey, Vec<u8>) { (key.into(), value) })
+            .peekable();
+
+        let Some((first, _)) = entries.peek() else {
+            return;
+        };
+        let class = map_class(first.as_slice());
+
+        self.map_mut(class).insert_many(entries.inspect(move |(key, _)| {
+            assert_eq!(
+                map_class(key.as_slice()),
+                class,
+                "Entries inserted together must be in the same map"
+            );
+        }));
+    }
+
     pub fn remove<K: Key>(&mut self, key: K) -> Option<Vec<u8>> {
         let key = key.into();
         self.map_mut(map_class(key.as_slice())).remove(&key)
@@ -323,6 +348,41 @@ mod tests {
             assert_eq!(m.remove(small_key(7)), Some(7u32.to_be_bytes().to_vec()));
             assert!(m.get(small_key(7)).is_none());
             assert_eq!(m.small_entries_map.as_ref().unwrap().len(), 99);
+        });
+    }
+
+    #[test]
+    fn insert_many_matches_inserting_one_at_a_time() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        // Interleave existing keys with new ones, and include some out of order keys and an
+        // overwritten key
+        with_map_mut(|m| {
+            for i in (0..1000).step_by(2) {
+                m.insert(small_key(i), vec![0]);
+            }
+            m.insert_many(
+                (0..1000)
+                    .map(|i| (small_key(i), i.to_be_bytes().to_vec()))
+                    .chain([(small_key(5000), vec![1]), (small_key(10), vec![2])]),
+            );
+            m.insert_many(std::iter::once((default_key(), vec![3])));
+            m.insert_many(Vec::<(TestSmallEntriesKey, Vec<u8>)>::new());
+        });
+
+        with_map(|m| {
+            assert_eq!(m.map.len(), 1);
+            assert_eq!(m.small_entries_map.as_ref().unwrap().len(), 1001);
+            for i in (0..1000).filter(|i| *i != 10) {
+                assert_eq!(m.get(small_key(i)), Some(i.to_be_bytes().to_vec()));
+            }
+            assert_eq!(m.get(small_key(10)), Some(vec![2]));
+            assert_eq!(m.get(small_key(5000)), Some(vec![1]));
+            assert_eq!(m.get(default_key()), Some(vec![3]));
+
+            let keys: Vec<_> = m.range(small_key(0)..).map(|(k, _)| suffix(&k)).collect();
+            assert_eq!(keys, (0..1000).chain([5000]).collect::<Vec<_>>());
         });
     }
 
