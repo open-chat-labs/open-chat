@@ -11,24 +11,20 @@ fn main() {
     let width: u8 = args[1].parse().expect("width");
     let height: u8 = args[2].parse().expect("height");
     let tier: Tier = cli::tier(&args[3]);
-    let black_pct: u8 = args.get(4).map_or(20, |s| s.parse().expect("black_pct"));
-    let symmetry = match args.get(5).map(String::as_str) {
-        None | Some("rot2") => Symmetry::Rot2,
-        Some("none") => Symmetry::None,
-        Some("rot4") => Symmetry::Rot4,
-        Some("ref2") => Symmetry::Ref2,
-        Some("ref4") => Symmetry::Ref4,
-        Some(other) => panic!("unknown symmetry {other}"),
-    };
+    let mut params = Params::default_for(width, height, tier);
+    if let Some(pct) = args.get(4) {
+        params.black_pct = pct.parse().expect("black_pct");
+    }
+    if let Some(symmetry) = args.get(5) {
+        params.symmetry = match symmetry.as_str() {
+            "rot2" => Symmetry::Rot2,
+            "none" => Symmetry::None,
+            "rot4" => Symmetry::Rot4,
+            "ref2" => Symmetry::Ref2,
+            "ref4" => Symmetry::Ref4,
+            other => panic!("unknown symmetry {other}"),
+        };
+    }
 
-    cli::print::<LightUp>(generate(
-        seed,
-        Params {
-            width,
-            height,
-            black_pct,
-            symmetry,
-            tier,
-        },
-    ));
+    cli::print::<LightUp>(generate(seed, params));
 }

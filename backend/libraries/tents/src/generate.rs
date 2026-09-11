@@ -1,6 +1,6 @@
 use crate::solver::{Outcome, solve};
 use crate::state::{Square, State};
-use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, solution_pairs, solve_with_trace};
+use crate::{Generated, MAX_WORK, Params, Tier, encode_description, solution_pairs, solve_with_trace};
 use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 const NONE: usize = usize::MAX;
@@ -189,7 +189,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
     // Tatham downgrades to Easy on tiny grids to avoid a tight loop.
     let tier = if params.tier == Tier::Tricky && w <= 4 && h <= 4 { Tier::Easy } else { params.tier };
     let mut rng = Rng::new(seed);
-    let mut budget = Budget::new(MAX_ATTEMPTS);
+    let mut budget = Budget::new(MAX_WORK);
 
     loop {
         budget.spend()?;
@@ -255,9 +255,11 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
             *sq = if g == Square::Tree { Square::Tree } else { Square::Blank };
         }
 
+        budget.spend()?;
         if tier == Tier::Tricky && solve(&mut st.clone(), Tier::Easy, None) == Outcome::Solved {
             continue;
         }
+        budget.spend()?;
         let mut solved = st.clone();
         if solve(&mut solved, tier, None) != Outcome::Solved {
             continue;

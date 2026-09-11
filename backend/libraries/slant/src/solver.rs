@@ -1,6 +1,6 @@
 use crate::state::State;
 use crate::{Hint, Technique, Tier, encode_slash, vertex_key};
-use puzzle_core::{Dsf, MAX_SEARCH_DEPTH};
+use puzzle_core::{Dsf, MAX_SEARCH_DEPTH, SearchBudget};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -527,14 +527,18 @@ fn feasible(st: &State, soln: &[i8], dsf: &mut Dsf, i: usize, v: i8) -> bool {
 /// solver: generic constraint propagation (a cell with one feasible slash
 /// takes it; a cell with none kills the branch) plus branching on the
 /// first cell with two feasible slashes.
-pub(crate) fn count_solutions(st: &State, cap: u32) -> u32 {
+pub(crate) fn count_solutions(st: &State, cap: u32, budget: &mut SearchBudget) -> u32 {
     let soln = vec![0i8; st.size()];
     let dsf = Dsf::new(st.vertices());
-    count_rec(st, soln, dsf, cap, 0)
+    count_rec(st, soln, dsf, cap, 0, budget)
 }
 
-fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32, depth: u32) -> u32 {
-    if depth >= MAX_SEARCH_DEPTH {
+/// `budget` bounds the nodes as `depth` bounds one branch: a description
+/// from outside can make the tree wide rather than deep, and the depth cap
+/// never fires on one of those. Both stop by claiming the cap, which reads
+/// as "more than one solution".
+fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32, depth: u32, budget: &mut SearchBudget) -> u32 {
+    if depth >= MAX_SEARCH_DEPTH || !budget.take() {
         return cap;
     }
     let branch = loop {
@@ -576,7 +580,7 @@ fn count_rec(st: &State, mut soln: Vec<i8>, mut dsf: Dsf, cap: u32, depth: u32) 
         s[i] = v;
         let (a, b) = st.endpoints(i, v);
         d.merge(a, b);
-        total += count_rec(st, s, d, cap - total, depth + 1);
+        total += count_rec(st, s, d, cap - total, depth + 1, budget);
         if total >= cap {
             return cap;
         }

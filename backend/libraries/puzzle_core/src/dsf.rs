@@ -19,14 +19,6 @@ impl Dsf {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.parent.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.parent.is_empty()
-    }
-
     pub fn find(&mut self, i: usize) -> usize {
         let mut root = i;
         while self.parent[root] != root {

@@ -69,7 +69,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{GenerateError, Puzzle, PuzzleError, checked_grid, side_ok, side_too_big};
+use puzzle_core::{GenerateError, Puzzle, PuzzleError, SearchBudget, checked_grid_values, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -78,11 +78,13 @@ pub use puzzle_core::Tier;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Unruly;
 
-/// Every attempt draws a fresh random full grid and strips it, so an
-/// attempt is expensive. Measured 2026-09-11: the sizes this game accepts
-/// succeed on the first or second attempt, so this is a wide margin
-/// rather than a working budget.
-const MAX_ATTEMPTS: u32 = 200;
+/// Generator work budget, in solver runs (see [`puzzle_core::Budget`]).
+/// Every attempt draws a fresh random full grid and strips it, both a
+/// solve per cell, so an attempt on a large grid is thousands of units
+/// and counting attempts alone would bound nothing. Measured 2026-09-11:
+/// the sizes this game accepts succeed on the first or second attempt, so
+/// this is a wide margin rather than a working budget.
+const MAX_WORK: u32 = 12_000;
 
 pub const GAME_ID: &str = "unruly";
 
@@ -158,12 +160,9 @@ pub fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
 fn load(description: &[u8], grid: &[u8]) -> Result<(Description, State, Vec<Violation>), PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    let grid = checked_grid(grid, st.size())?;
+    let grid = checked_grid_values(grid, st.size(), VALUE_B)?;
     let mut out = Vec::new();
     for (i, &b) in grid.iter().enumerate() {
-        if !matches!(b, EMPTY | VALUE_A | VALUE_B) {
-            return Err(PuzzleError::GridValue { cell: i as u16, byte: b });
-        }
         let given = d.givens[i];
         if given != EMPTY && b != EMPTY && b != given {
             out.push(Violation::ContradictsGiven {
@@ -177,23 +176,23 @@ fn load(description: &[u8], grid: &[u8]) -> Result<(Description, State, Vec<Viol
     Ok((d, st, out))
 }
 
-/// Rule check used by tests and mirrored by the client. Reports only what
-/// is definitely wrong: empty cells are not violations (the grid is merely
-/// incomplete), and nor is a line that is short of a value. Only a line
-/// with too many of one is wrong. See [`is_complete`] for whether the
-/// grid is finished.
-pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
+/// What one pass over a player's grid finds.
+struct Scan {
+    violations: Vec<Violation>,
+    /// Every cell decided and every line holding exactly its share of
+    /// each value.
+    complete: bool,
+}
+
+/// The counts answer both "is anything wrong" and "is it finished", so
+/// one pass produces both and the public entry points share it.
+fn scan(description: &[u8], grid: &[u8]) -> Result<Scan, PuzzleError> {
     let (_, st, mut out) = load(description, grid)?;
 
-    out.extend::<Vec<Violation>>(
-        st.runs()
-            .into_iter()
-            .map(|(first, step, value)| Violation::Run {
-                cells: vec![first as u16, (first + step) as u16, (first + 2 * step) as u16],
-                value,
-            })
-            .collect(),
-    );
+    out.extend(st.runs().into_iter().map(|(first, step, value)| Violation::Run {
+        cells: vec![first as u16, (first + step) as u16, (first + 2 * step) as u16],
+        value,
+    }));
 
     let counts = st.counts();
     for value in [VALUE_A, VALUE_B] {
@@ -218,21 +217,30 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, Pu
             }
         }
     }
-    Ok(out)
+
+    let complete = st.filled()
+        && counts.rows[0].iter().all(|&c| c == st.row_target())
+        && counts.cols[0].iter().all(|&c| c == st.col_target());
+    Ok(Scan {
+        violations: out,
+        complete,
+    })
+}
+
+/// Rule check used by tests and mirrored by the client. Reports only what
+/// is definitely wrong: empty cells are not violations (the grid is merely
+/// incomplete), and nor is a line that is short of a value. Only a line
+/// with too many of one is wrong. See [`is_complete`] for whether the
+/// grid is finished.
+pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
+    Ok(scan(description, grid)?.violations)
 }
 
 /// Whether every cell is decided and every line holds exactly its share
 /// of each value. Says nothing about whether the grid is *right*: pair it
 /// with [`check_rules`], or use [`Puzzle::is_solved`].
 pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
-    let (_, st, _) = load(description, grid)?;
-    if !st.filled() {
-        return Ok(false);
-    }
-    let counts = st.counts();
-    let rows_ok = counts.rows[0].iter().all(|&c| c == st.row_target());
-    let cols_ok = counts.cols[0].iter().all(|&c| c == st.col_target());
-    Ok(rows_ok && cols_ok)
+    Ok(scan(description, grid)?.complete)
 }
 
 /// The solution in hint-key space: `(cell index, 1 or 2)` for every cell,
@@ -240,7 +248,7 @@ pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError>
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.width as usize * d.height as usize;
-    let solution = checked_grid(solution, n)?;
+    let solution = checked_grid_values(solution, n, VALUE_B)?;
     Ok((0..n).map(|i| (i as u16, solution[i])).collect())
 }
 
@@ -248,7 +256,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     let st = State::from_description(&d);
-    Ok(solver::count_solutions(&st, cap))
+    Ok(solver::count_solutions(&st, cap, &mut SearchBudget::default()))
 }
 
 /// Technique solver from the givens; returns the trace and the solution if
@@ -272,8 +280,10 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
         return Err(PuzzleError::description(format!("unsupported format version {}", bytes[0])));
     }
     let (width, height) = (bytes[1], bytes[2]);
-    if width < 2 || height < 2 {
-        return Err(PuzzleError::description("width and height must be at least 2"));
+    // The same floor `generate` validates against, so bytes no generator
+    // can produce are bytes no entry point accepts.
+    if width < 6 || height < 6 {
+        return Err(PuzzleError::description("width and height must be at least 6"));
     }
     if width % 2 != 0 || height % 2 != 0 {
         return Err(PuzzleError::description("width and height must both be even"));
@@ -314,7 +324,7 @@ pub fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, P
     let d = parse_description(description)?;
     let st = State::from_description(&d);
     let cells = match grid {
-        Some(g) => checked_grid(g, st.size())?,
+        Some(g) => checked_grid_values(g, st.size(), VALUE_B)?,
         None => &st.grid,
     };
     let mut out = String::with_capacity((2 * st.w + 1) * st.h);
@@ -370,5 +380,12 @@ impl Puzzle for Unruly {
 
     fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
         render_ascii(description, grid)
+    }
+
+    /// One `scan` answers both halves, so the default implementation's
+    /// second parse and second count pass are avoidable here.
+    fn is_solved(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        let scan = scan(description, grid)?;
+        Ok(scan.violations.is_empty() && scan.complete)
     }
 }

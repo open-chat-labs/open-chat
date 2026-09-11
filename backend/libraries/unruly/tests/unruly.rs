@@ -224,17 +224,29 @@ fn blank(w: u8, h: u8) -> Vec<u8> {
 
 #[test]
 fn check_rules_reports_runs() {
-    let d = blank(4, 4);
-    let mut grid = vec![EMPTY; 16];
+    // 6x6 is the smallest grid this game has, so each line takes three
+    // of each value and a fourth is what overfills it.
+    let d = blank(6, 6);
+    let mut grid = vec![EMPTY; 36];
     assert!(
         check_rules(&d, &grid).unwrap().is_empty(),
         "empty grid is incomplete, not wrong"
     );
 
-    // Three in a row across the top, which also overfills the row.
+    // Three in a row across the top, still within the row's allowance.
     grid[0] = VALUE_A;
     grid[1] = VALUE_A;
     grid[2] = VALUE_A;
+    assert_eq!(
+        check_rules(&d, &grid).unwrap(),
+        vec![Violation::Run {
+            cells: vec![0, 1, 2],
+            value: VALUE_A
+        }]
+    );
+
+    // A fourth makes two overlapping runs and overfills the row.
+    grid[3] = VALUE_A;
     assert_eq!(
         check_rules(&d, &grid).unwrap(),
         vec![
@@ -242,30 +254,39 @@ fn check_rules_reports_runs() {
                 cells: vec![0, 1, 2],
                 value: VALUE_A
             },
+            Violation::Run {
+                cells: vec![1, 2, 3],
+                value: VALUE_A
+            },
             Violation::RowCount {
                 row: 0,
                 value: VALUE_A,
-                count: 3
+                count: 4
             }
         ]
     );
 
-    // Three down the left, with the rest of the column blank.
-    let mut grid = vec![EMPTY; 16];
+    // The same down the left, with the rest of the column blank.
+    let mut grid = vec![EMPTY; 36];
     grid[0] = VALUE_B;
-    grid[4] = VALUE_B;
-    grid[8] = VALUE_B;
+    grid[6] = VALUE_B;
+    grid[12] = VALUE_B;
+    grid[18] = VALUE_B;
     assert_eq!(
         check_rules(&d, &grid).unwrap(),
         vec![
             Violation::Run {
-                cells: vec![0, 4, 8],
+                cells: vec![0, 6, 12],
+                value: VALUE_B
+            },
+            Violation::Run {
+                cells: vec![6, 12, 18],
                 value: VALUE_B
             },
             Violation::ColumnCount {
                 column: 0,
                 value: VALUE_B,
-                count: 3
+                count: 4
             }
         ]
     );
@@ -273,23 +294,25 @@ fn check_rules_reports_runs() {
 
 #[test]
 fn check_rules_reports_counts() {
-    let d = blank(4, 4);
-    let mut grid = vec![EMPTY; 16];
-    // Three of a value in one row without three in a row.
+    let d = blank(6, 6);
+    let mut grid = vec![EMPTY; 36];
+    // Four of a value in one row without three of them in a row.
     grid[0] = VALUE_A;
     grid[1] = VALUE_A;
     grid[2] = VALUE_B;
     grid[3] = VALUE_A;
+    grid[4] = VALUE_A;
+    grid[5] = VALUE_B;
     assert_eq!(
         check_rules(&d, &grid).unwrap(),
         vec![Violation::RowCount {
             row: 0,
             value: VALUE_A,
-            count: 3
+            count: 4
         }]
     );
-    // Two of each is fine.
-    grid[3] = VALUE_B;
+    // Three of each is fine.
+    grid[4] = VALUE_B;
     assert!(check_rules(&d, &grid).unwrap().is_empty());
 }
 

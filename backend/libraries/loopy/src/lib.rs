@@ -70,7 +70,7 @@ mod solver;
 mod state;
 
 use grid::Grid;
-use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid, checked_grid_values, side_ok, side_too_big};
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, SearchBudget, checked_grid_values, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -79,11 +79,13 @@ pub use puzzle_core::Tier;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Loopy;
 
+/// Generator work budget, in solver runs (see [`puzzle_core::Budget`]).
 /// One attempt draws a random loop, clues every cell and strips the clues
-/// back down, each step running a full technique solve, so attempts are
-/// the most expensive of the six. Measured 2026-09-11: every playable
-/// size succeeds within a handful of attempts.
-const MAX_ATTEMPTS: u32 = 100;
+/// back down, running a full technique solve per clue, so attempts are
+/// the most expensive of the six and counting them alone would bound
+/// nothing. Measured 2026-09-11: every playable size succeeds within a
+/// handful of attempts.
+const MAX_WORK: u32 = 4_000;
 
 pub const GAME_ID: &str = "loopy";
 
@@ -131,7 +133,7 @@ impl From<Technique> for u8 {
 
 /// Conclusion keys are edge indices, values 1 = line, 0 = no line. Focus
 /// also carries `edge_count + cell` for a clue cell and
-/// `edge_count + cells + dot` for a dot: see [`Description::dot_key_offset`].
+/// `edge_count + cells + dot` for a dot: see the module doc.
 pub type Hint = puzzle_core::Hint<Technique>;
 pub type Generated = puzzle_core::Generated<Technique>;
 
@@ -151,15 +153,6 @@ impl Description {
             h: self.height as usize,
         }
         .edges()
-    }
-
-    /// The offset of dot markers in hint focus: edges then cells then dots.
-    pub fn dot_key_offset(&self) -> usize {
-        let g = Grid {
-            w: self.width as usize,
-            h: self.height as usize,
-        };
-        g.edges() + g.cells()
     }
 }
 
@@ -307,7 +300,7 @@ pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError>
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.edge_count();
-    let solution = checked_grid(solution, n)?;
+    let solution = checked_grid_values(solution, n, 1)?;
     Ok((0..n).map(|e| (e as u16, (solution[e] != 0) as u8)).collect())
 }
 
@@ -315,7 +308,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    Ok(solver::count_solutions(&mut st, cap, 0))
+    Ok(solver::count_solutions(&mut st, cap, 0, &mut SearchBudget::default()))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
@@ -339,8 +332,10 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
         return Err(PuzzleError::description(format!("unsupported format version {}", bytes[0])));
     }
     let (width, height) = (bytes[1], bytes[2]);
-    if width == 0 || height == 0 {
-        return Err(PuzzleError::description("width and height must be at least 1"));
+    // The same floor `generate` validates against, so bytes no generator
+    // can produce are bytes no entry point accepts.
+    if width < 3 || height < 3 {
+        return Err(PuzzleError::description("width and height must be at least 3"));
     }
     if !side_ok(width as usize, height as usize) {
         return Err(PuzzleError::description(side_too_big(width as usize, height as usize)));
@@ -455,5 +450,12 @@ impl Puzzle for Loopy {
 
     fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
         render_ascii(description, grid)
+    }
+
+    /// One `scan` answers both halves, so the default implementation's
+    /// second parse, second sweep and second dsf build are avoidable here.
+    fn is_solved(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        let (_, _, scan) = scan(description, grid)?;
+        Ok(scan.violations.is_empty() && scan.clues_exact && scan.closed && scan.single_loop)
     }
 }

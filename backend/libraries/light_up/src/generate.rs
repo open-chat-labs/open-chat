@@ -1,6 +1,6 @@
 use crate::solver::{Outcome, solve};
 use crate::state::State;
-use crate::{Generated, MAX_ATTEMPTS, Params, Symmetry, Tier, encode_description, solution_pairs, solve_with_trace};
+use crate::{Generated, MAX_WORK, Params, Symmetry, Tier, encode_description, solution_pairs, solve_with_trace};
 use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 /// Tries at one black-square density before Tatham raises it.
@@ -42,7 +42,14 @@ fn set_blacks(w: usize, h: usize, symmetry: Symmetry, black_pct: u8, rng: &mut R
     }
     for x in 0..rw {
         for y in 0..rh {
-            let src = st.black[y * w + x];
+            // Tatham ORs a black square into its images and leaves a
+            // white one alone. Assigning instead loses squares: on an
+            // odd-height Rot2 grid the fundamental region covers the
+            // whole middle row, so a cell there is its own image's
+            // source and a white one wipes out the black it maps to.
+            if !st.black[y * w + x] {
+                continue;
+            }
             let images: [(usize, usize); 4] = if degree == 4 {
                 [
                     (x, y),
@@ -54,7 +61,7 @@ fn set_blacks(w: usize, h: usize, symmetry: Symmetry, black_pct: u8, rng: &mut R
                 [(x, y), (if rotate { w - 1 - x } else { x }, h - 1 - y), (x, y), (x, y)]
             };
             for &(ix, iy) in &images[1..degree] {
-                st.black[iy * w + ix] = src;
+                st.black[iy * w + ix] = true;
             }
         }
     }
@@ -121,9 +128,14 @@ fn place_numbers(st: &mut State) {
 /// Port of `puzzle_is_good`: the technique solver at this tier must reach
 /// a full solution with no guessing. Because every technique is sound,
 /// reaching one also proves uniqueness.
-fn puzzle_is_good(st: &mut State, tier: Tier) -> bool {
+///
+/// Charged to the budget, because the clue-stripping loop runs one of
+/// these per clue and that, not the attempt count, is where a generate
+/// call spends its instructions.
+fn puzzle_is_good(st: &mut State, tier: Tier, budget: &mut Budget) -> Result<bool, GenerateError> {
+    budget.spend()?;
     st.unplace_lights();
-    solve(st, tier, None) == Outcome::Solved
+    Ok(solve(st, tier, None) == Outcome::Solved)
 }
 
 /// Port of `strip_unused_nums`: drop clues no basic deduction touched.
@@ -159,8 +171,9 @@ fn validate(params: Params) -> Result<(usize, usize), GenerateError> {
 
 /// Port of `new_game_desc`. Tatham raises the black-square density every
 /// `MAX_GRIDGEN_TRIES` failures and otherwise retries forever; here the
-/// retries come out of one budget, so parameters with no puzzle end in a
-/// `GenerateError` instead of spinning until the canister traps.
+/// retries and every solve they run come out of one budget, so parameters
+/// with no puzzle end in a `GenerateError` instead of spinning until the
+/// canister traps.
 pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
     let (w, h) = validate(params)?;
     let symmetry = match params.symmetry {
@@ -170,7 +183,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
     let tier = params.tier;
     let mut black_pct = params.black_pct;
     let mut rng = Rng::new(seed);
-    let mut budget = Budget::new(MAX_ATTEMPTS);
+    let mut budget = Budget::new(MAX_WORK);
     let mut tries_at_this_density = 0;
 
     let mut order: Vec<usize> = (0..w * h).collect();
@@ -197,13 +210,13 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
         }
         let solution: Vec<u8> = st.light.iter().map(|&b| b as u8).collect();
         place_numbers(&mut st);
-        if !puzzle_is_good(&mut st, tier) {
+        if !puzzle_is_good(&mut st, tier, &mut budget)? {
             continue;
         }
 
         let mut stripped = st.clone();
         strip_unused_nums(&mut stripped);
-        if puzzle_is_good(&mut stripped, tier) {
+        if puzzle_is_good(&mut stripped, tier, &mut budget)? {
             st = stripped;
         }
 
@@ -212,12 +225,12 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
                 continue;
             };
             st.clue[i] = None;
-            if !puzzle_is_good(&mut st, tier) {
+            if !puzzle_is_good(&mut st, tier, &mut budget)? {
                 st.clue[i] = Some(clue);
             }
         }
 
-        if tier == Tier::Tricky && puzzle_is_good(&mut st, Tier::Easy) {
+        if tier == Tier::Tricky && puzzle_is_good(&mut st, Tier::Easy, &mut budget)? {
             continue;
         }
 

@@ -70,7 +70,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid, checked_grid_values, side_ok, side_too_big};
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, SearchBudget, checked_grid_values, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -233,11 +233,10 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(State, Scan), PuzzleError> {
                     zero = true;
                     None
                 }
-                (_, 1..=4) => None,
-                _ => {
-                    zero = true;
-                    None
-                }
+                // A byte of the other orientation, and nothing else:
+                // `checked_grid_values` has already rejected anything
+                // above MAX_BRIDGE_BYTE.
+                _ => None,
             };
             if let Some(v) = own {
                 match val {
@@ -342,8 +341,8 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, Pu
 /// hang together in one group. Says nothing about whether the layout is
 /// *right*: pair it with [`check_rules`], or use [`Puzzle::is_solved`].
 pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
-    let (st, scan) = scan(description, grid)?;
-    Ok(scan.all_full && scan.connected && !st.islands.is_empty())
+    let (_, scan) = scan(description, grid)?;
+    Ok(scan.all_full && scan.connected)
 }
 
 /// The solution in hint-key space: `(edge key, bridge count 0..=2)` for
@@ -354,7 +353,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
     let d = parse_description(description)?;
     let st = State::from_description(&d);
     let n = st.size();
-    let solution = checked_grid(solution, n)?;
+    let solution = checked_grid_values(solution, n, MAX_BRIDGE_BYTE)?;
     let mut out: Vec<(u16, u8)> = st
         .edges
         .iter()
@@ -376,7 +375,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    Ok(solver::count_solutions(&mut st, cap, 0))
+    Ok(solver::count_solutions(&mut st, cap, 0, &mut SearchBudget::default()))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
@@ -384,12 +383,12 @@ pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError>
 pub fn solve_with_trace(description: &[u8], tier: Tier) -> Result<(Vec<Hint>, Option<Vec<u8>>), PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    let mut hints = Vec::new();
-    let solution = match solver::solve(&mut st, tier, Some(&mut hints)) {
+    let mut rec = solver::Recorder::new(st.edges.len());
+    let solution = match solver::solve(&mut st, tier, Some(&mut rec)) {
         solver::Outcome::Solved => Some(st.to_grid()),
         _ => None,
     };
-    Ok((hints, solution))
+    Ok((rec.hints, solution))
 }
 
 pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
@@ -401,6 +400,11 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
     }
     let (width, height) = (bytes[1], bytes[2]);
     let (w, h) = (width as usize, height as usize);
+    // The same floor `generate` validates against, so bytes no generator
+    // can produce are bytes no entry point accepts.
+    if w < 3 || h < 3 {
+        return Err(PuzzleError::description("width and height must be at least 3"));
+    }
     if !side_ok(w, h) {
         return Err(PuzzleError::description(side_too_big(w, h)));
     }
@@ -505,5 +509,12 @@ impl Puzzle for Bridges {
 
     fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
         render_ascii(description, grid)
+    }
+
+    /// One `scan` answers both halves, so the default implementation's
+    /// second parse, second `State` build and second dsf are avoidable.
+    fn is_solved(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        let (_, scan) = scan(description, grid)?;
+        Ok(scan.violations.is_empty() && scan.all_full && scan.connected)
     }
 }

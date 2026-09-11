@@ -1,7 +1,7 @@
 use crate::grid::Grid;
 use crate::solver::{Outcome, solve};
 use crate::state::State;
-use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, solution_pairs, solve_with_trace};
+use crate::{Generated, MAX_WORK, Params, Tier, encode_description, solution_pairs, solve_with_trace};
 use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -67,7 +67,14 @@ fn pick(grid: Grid, board: &[Colour], random: &[u32], colour: Colour) -> Option<
 /// a black region from grey until the grid is full, keeping each region
 /// simply connected, then flip cells to grow tendrils into any clumps and
 /// finish with a pass of random flips.
-fn generate_loop(grid: Grid, rng: &mut Rng) -> Vec<Colour> {
+///
+/// `None` when the colouring stalled with grey cells left. Tatham asserts
+/// that cannot happen; the loop below exits on exactly that condition, so
+/// here it is a retry signal the budgeted caller consumes. Asserting
+/// would abort the process in a debug build and, with the assert compiled
+/// out, leave `add_full_clues` reading a grey boundary as a line and
+/// clueing a loop that does not exist.
+fn generate_loop(grid: Grid, rng: &mut Rng) -> Option<Vec<Colour>> {
     let n = grid.cells();
     let mut board = vec![Colour::Grey; n];
     let random: Vec<u32> = (0..n).map(|_| (rng.next_u64() >> 33) as u32).collect();
@@ -97,7 +104,9 @@ fn generate_loop(grid: Grid, rng: &mut Rng) -> Vec<Colour> {
         };
         board[chosen] = colour;
     }
-    debug_assert!(board.iter().all(|&c| c != Colour::Grey));
+    if board.contains(&Colour::Grey) {
+        return None;
+    }
 
     let mut order: Vec<usize> = (0..n).collect();
     rng.shuffle(&mut order);
@@ -125,13 +134,14 @@ fn generate_loop(grid: Grid, rng: &mut Rng) -> Vec<Colour> {
             random_pass = true;
         }
     }
-    board
+    Some(board)
 }
 
 /// Port of `add_full_clues`: a random loop, every cell clued. Returns the
-/// clued state and the loop as solution bytes.
-fn add_full_clues(grid: Grid, rng: &mut Rng) -> (State, Vec<u8>) {
-    let board = generate_loop(grid, rng);
+/// clued state and the loop as solution bytes, or `None` if the loop
+/// could not be drawn.
+fn add_full_clues(grid: Grid, rng: &mut Rng) -> Option<(State, Vec<u8>)> {
+    let board = generate_loop(grid, rng)?;
     let mut clues = vec![0u8; grid.cells()];
     let mut solution = vec![0u8; grid.edges()];
     for (e, byte) in solution.iter_mut().enumerate() {
@@ -143,29 +153,35 @@ fn add_full_clues(grid: Grid, rng: &mut Rng) -> (State, Vec<u8>) {
             }
         }
     }
-    (State::new(grid, clues.into_iter().map(Some).collect()), solution)
+    Some((State::new(grid, clues.into_iter().map(Some).collect()), solution))
 }
 
 /// Port of `game_has_unique_soln`: the technique solver at this tier must
 /// finish from the empty grid. Every technique is sound, so finishing
 /// also proves uniqueness.
-fn has_unique_soln(st: &State, tier: Tier) -> bool {
+///
+/// Charged to the budget, because `remove_clues` runs one of these per
+/// cell and that, not the attempt count, is where a generate call spends
+/// its instructions.
+fn has_unique_soln(st: &State, tier: Tier, budget: &mut Budget) -> Result<bool, GenerateError> {
+    budget.spend()?;
     let mut work = st.clone();
-    solve(&mut work, tier, None) == Outcome::Solved
+    Ok(solve(&mut work, tier, None) == Outcome::Solved)
 }
 
 /// Port of `remove_clues`: drop clues in random order while the solver
 /// still finishes.
-fn remove_clues(st: &mut State, rng: &mut Rng, tier: Tier) {
+fn remove_clues(st: &mut State, rng: &mut Rng, tier: Tier, budget: &mut Budget) -> Result<(), GenerateError> {
     let mut order: Vec<usize> = (0..st.grid.cells()).collect();
     rng.shuffle(&mut order);
     for f in order {
         let saved = st.clues[f];
         st.clues[f] = None;
-        if !has_unique_soln(st, tier) {
+        if !has_unique_soln(st, tier, budget)? {
             st.clues[f] = saved;
         }
     }
+    Ok(())
 }
 
 /// Reject sizes this game has no puzzle for, before any searching.
@@ -193,19 +209,21 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
     let grid = validate(params)?;
     let tier = params.tier;
     let mut rng = Rng::new(seed);
-    let mut budget = Budget::new(MAX_ATTEMPTS);
+    let mut budget = Budget::new(MAX_WORK);
 
     loop {
         budget.spend()?;
         let (mut st, solution) = loop {
             budget.spend()?;
-            let (st, solution) = add_full_clues(grid, &mut rng);
-            if has_unique_soln(&st, tier) {
+            let Some((st, solution)) = add_full_clues(grid, &mut rng) else {
+                continue;
+            };
+            if has_unique_soln(&st, tier, &mut budget)? {
                 break (st, solution);
             }
         };
-        remove_clues(&mut st, &mut rng, tier);
-        if tier == Tier::Tricky && has_unique_soln(&st, Tier::Easy) {
+        remove_clues(&mut st, &mut rng, tier, &mut budget)?;
+        if tier == Tier::Tricky && has_unique_soln(&st, Tier::Easy, &mut budget)? {
             continue;
         }
         let description = encode_description(&st);

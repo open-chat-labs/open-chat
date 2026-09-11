@@ -37,7 +37,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{GenerateError, Puzzle, PuzzleError, checked_grid, checked_grid_values, side_ok, side_too_big};
+use puzzle_core::{GenerateError, Puzzle, PuzzleError, SearchBudget, checked_grid_values, neighbours, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -46,12 +46,13 @@ pub use puzzle_core::Tier;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct LightUp;
 
-/// One attempt is a fresh black-square layout plus a full technique
-/// solve, so attempts are not cheap. Measured 2026-09-11: the sizes and
-/// densities this game accepts succeed well inside this, and the
-/// parameter combinations that never succeed exhaust it in under a
-/// second rather than hanging.
-const MAX_ATTEMPTS: u32 = 400;
+/// Generator work budget, in solver runs (see [`puzzle_core::Budget`]).
+/// A successful attempt runs one solve per clue on top of its own, so on
+/// the largest grid this game accepts an attempt is a couple of hundred
+/// units; the parameter combinations that never succeed fail before
+/// their first solve and exhaust the budget in under a second rather
+/// than hanging.
+const MAX_WORK: u32 = 4_000;
 
 pub const GAME_ID: &str = "light_up";
 
@@ -220,7 +221,11 @@ fn scan(description: &[u8], grid: &[u8]) -> Result<(Description, Scan), PuzzleEr
                 }
             }
             Cell::Black(Some(expected)) => {
-                let actual = neighbours(w, h, i).filter(|&j| bulb(j)).count() as u8;
+                // A bulb on a black square is already reported above and
+                // lights nothing; counting it here would let a board with
+                // one on it satisfy the clue and read as complete. The
+                // solver's `lit_neighbours` never counts one either.
+                let actual = neighbours(w, h, i).filter(|&j| !black(j) && bulb(j)).count() as u8;
                 if actual != expected {
                     clues_exact = false;
                 }
@@ -262,25 +267,13 @@ pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError>
     Ok(scan.all_lit && scan.clues_exact)
 }
 
-fn neighbours(w: usize, h: usize, i: usize) -> impl Iterator<Item = usize> {
-    let x = i % w;
-    [
-        (x > 0).then(|| i - 1),
-        (x + 1 < w).then(|| i + 1),
-        (i >= w).then(|| i - w),
-        (i + w < w * h).then(|| i + w),
-    ]
-    .into_iter()
-    .flatten()
-}
-
 /// The solution in hint-key space: `(cell index, 1 = bulb / 0 = no bulb)`
 /// for every white cell, sorted by cell. Same keys and values as hint
 /// conclusions.
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.cells.len();
-    let solution = checked_grid(solution, n)?;
+    let solution = checked_grid_values(solution, n, 1)?;
     Ok(d.cells
         .iter()
         .enumerate()
@@ -293,7 +286,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    Ok(solver::count_solutions(&mut st, cap, 0))
+    Ok(solver::count_solutions(&mut st, cap, 0, &mut SearchBudget::default()))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
@@ -426,5 +419,12 @@ impl Puzzle for LightUp {
 
     fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
         render_ascii(description, grid)
+    }
+
+    /// One `scan` answers both halves, so the default implementation's
+    /// second parse and second sweep are avoidable here.
+    fn is_solved(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        let (_, scan) = scan(description, grid)?;
+        Ok(scan.violations.is_empty() && scan.all_lit && scan.clues_exact)
     }
 }

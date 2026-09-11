@@ -1,25 +1,28 @@
 use crate::solver::{Outcome, solve};
 use crate::state::State;
-use crate::{
-    EMPTY, Generated, MAX_ATTEMPTS, Params, Tier, VALUE_A, VALUE_B, encode_description, solution_pairs, solve_with_trace,
-};
+use crate::{EMPTY, Generated, MAX_WORK, Params, Tier, VALUE_A, VALUE_B, encode_description, solution_pairs, solve_with_trace};
 use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 /// Port of `unruly_fill_game`: pick empty cells in random order, guess one
 /// at random, and let the full-strength technique solver propagate. Unlike
 /// the other games this can paint itself into a corner, so the caller
 /// retries when the result is not a valid full grid.
-fn fill_game(st: &mut State, rng: &mut Rng) -> bool {
+///
+/// One solve per guessed cell, all charged to the budget: this loop and
+/// the stripping loop, not the attempt count, are where a generate call
+/// spends its instructions.
+fn fill_game(st: &mut State, rng: &mut Rng, budget: &mut Budget) -> Result<bool, GenerateError> {
     let mut spaces: Vec<usize> = (0..st.size()).collect();
     rng.shuffle(&mut spaces);
     for i in spaces {
         if st.grid[i] != EMPTY {
             continue;
         }
+        budget.spend()?;
         st.grid[i] = if rng.below(2) != 0 { VALUE_A } else { VALUE_B };
         solve(st, Tier::Tricky, None);
     }
-    st.filled() && st.sound()
+    Ok(st.filled() && st.sound())
 }
 
 /// Reject sizes this game has no puzzle for, before any searching.
@@ -46,7 +49,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
     let (w, h) = validate(params)?;
     let tier = params.tier;
     let mut rng = Rng::new(seed);
-    let mut budget = Budget::new(MAX_ATTEMPTS);
+    let mut budget = Budget::new(MAX_WORK);
 
     loop {
         budget.spend()?;
@@ -56,7 +59,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
         let mut st = loop {
             budget.spend()?;
             let mut st = State::new(w, h);
-            if fill_game(&mut st, &mut rng) {
+            if fill_game(&mut st, &mut rng, &mut budget)? {
                 break st;
             }
         };
@@ -67,6 +70,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
         let mut spaces: Vec<usize> = (0..w * h).collect();
         rng.shuffle(&mut spaces);
         for i in spaces {
+            budget.spend()?;
             let given = st.grid[i];
             st.grid[i] = EMPTY;
             let mut work = st.clone();
@@ -77,6 +81,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
 
         // See if the game has accidentally come out too easy.
         if tier == Tier::Tricky {
+            budget.spend()?;
             let mut work = st.clone();
             if solve(&mut work, Tier::Easy, None) != Outcome::Stuck {
                 continue;

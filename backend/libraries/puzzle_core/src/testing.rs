@@ -7,7 +7,7 @@
 //! whole range a game accepts and a combination that cannot produce a
 //! puzzle fails the build instead of the canister.
 
-use crate::{GenerateError, Generated, Puzzle, PuzzleCheck, PuzzleError, Tier};
+use crate::{GenerateError, Generated, Puzzle, PuzzleCheck, PuzzleError};
 use std::collections::BTreeMap;
 
 /// Generate at every seed and check everything that is true of every
@@ -175,9 +175,4 @@ pub fn must_work_through_dyn<P: Puzzle + Default>(description: &[u8], grid: &[u8
     assert_eq!(game.is_complete(description, grid), P::is_complete(description, grid));
     assert_eq!(game.is_solved(description, grid), P::is_solved(description, grid));
     assert_eq!(game.count_solutions(description, 2), P::count_solutions(description, 2));
-}
-
-/// Every tier, for a game whose parameters are only a size.
-pub fn tiers() -> [Tier; 2] {
-    Tier::ALL
 }

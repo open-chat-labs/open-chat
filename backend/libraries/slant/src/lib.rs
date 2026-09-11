@@ -61,7 +61,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid, side_ok, side_too_big};
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, SearchBudget, checked_grid_values, side_ok, side_too_big};
 use state::State;
 
 pub use puzzle_core::Tier;
@@ -70,11 +70,14 @@ pub use puzzle_core::Tier;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Slant;
 
+/// Generator work budget, in solver runs (see [`puzzle_core::Budget`]).
 /// Slant's generator never backtracks (Gareth Taylor's chessboard
 /// argument in slant.c), so an attempt fails only when clue stripping
-/// leaves a puzzle the tier below can also solve. Measured 2026-09-11:
-/// the sizes this game accepts succeed within a handful of attempts.
-const MAX_ATTEMPTS: u32 = 200;
+/// leaves a puzzle the tier below can also solve — but that stripping is
+/// two passes of one solve per vertex, which is what the budget has to
+/// count. Measured 2026-09-11: the sizes this game accepts succeed within
+/// a handful of attempts.
+const MAX_WORK: u32 = 8_000;
 
 pub const GAME_ID: &str = "slant";
 
@@ -174,11 +177,8 @@ pub fn generate(seed: u64, params: Params) -> Result<Generated, GenerateError> {
 fn load(description: &[u8], grid: &[u8]) -> Result<(Description, State), PuzzleError> {
     let d = parse_description(description)?;
     let mut st = State::from_description(&d);
-    let grid = checked_grid(grid, st.size())?;
+    let grid = checked_grid_values(grid, st.size(), SLASH)?;
     for (i, &b) in grid.iter().enumerate() {
-        if !matches!(b, 0 | BACKSLASH | SLASH) {
-            return Err(PuzzleError::GridValue { cell: i as u16, byte: b });
-        }
         st.soln[i] = decode_slash(b);
     }
     Ok((d, st))
@@ -191,6 +191,12 @@ fn load(description: &[u8], grid: &[u8]) -> Result<(Description, State), PuzzleE
 /// finished.
 pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, PuzzleError> {
     let (d, st) = load(description, grid)?;
+    Ok(violations(&d, &st))
+}
+
+/// The rule check itself, on a grid already loaded, so that
+/// [`Puzzle::is_solved`] can ask both questions off one parse.
+fn violations(d: &Description, st: &State) -> Vec<Violation> {
     let mut out = Vec::new();
 
     let vw = st.vw();
@@ -224,7 +230,7 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, Pu
     // Build a spanning forest cell by cell; every diagonal that would
     // join two already-connected vertices closes a loop, reported with
     // the forest path it closes.
-    let mut forest = State::from_description(&d);
+    let mut forest = State::from_description(d);
     let mut dsf = Dsf::new(st.vertices());
     for i in 0..st.size() {
         let v = st.soln[i];
@@ -241,7 +247,7 @@ pub fn check_rules(description: &[u8], grid: &[u8]) -> Result<Vec<Violation>, Pu
             forest.soln[i] = v;
         }
     }
-    Ok(out)
+    out
 }
 
 /// Whether every cell holds a diagonal. Every other completion condition
@@ -258,7 +264,7 @@ pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError>
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.width as usize * d.height as usize;
-    let solution = checked_grid(solution, n)?;
+    let solution = checked_grid_values(solution, n, SLASH)?;
     Ok((0..n).map(|i| (i as u16, solution[i])).collect())
 }
 
@@ -266,7 +272,7 @@ pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u
 pub fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
     let d = parse_description(description)?;
     let st = State::from_description(&d);
-    Ok(solver::count_solutions(&st, cap))
+    Ok(solver::count_solutions(&st, cap, &mut SearchBudget::default()))
 }
 
 /// Technique solver from the empty grid; returns the trace and the
@@ -399,5 +405,12 @@ impl Puzzle for Slant {
 
     fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
         render_ascii(description, grid)
+    }
+
+    /// One `load` answers both halves, so the default implementation's
+    /// second parse and second grid build are avoidable here.
+    fn is_solved(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        let (d, st) = load(description, grid)?;
+        Ok(st.soln.iter().all(|&v| v != 0) && violations(&d, &st).is_empty())
     }
 }

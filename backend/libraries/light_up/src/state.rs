@@ -78,16 +78,7 @@ impl State {
     /// Orthogonal neighbours in Tatham's `get_surrounds` order:
     /// left, right, up, down.
     pub fn neighbours(&self, i: usize) -> impl Iterator<Item = usize> {
-        let (w, n) = (self.w, self.size());
-        let x = i % w;
-        [
-            (x > 0).then(|| i - 1),
-            (x + 1 < w).then(|| i + 1),
-            (i >= w).then(|| i - w),
-            (i + w < n).then(|| i + w),
-        ]
-        .into_iter()
-        .flatten()
+        puzzle_core::neighbours(self.w, self.h, i)
     }
 
     /// Port of `list_lights`.

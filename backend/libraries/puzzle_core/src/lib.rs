@@ -10,7 +10,8 @@
 //! * [`Rng`] and [`Dsf`], previously copied into each crate.
 //! * [`Tier`], [`Hint`] and [`Generated`], the wire-facing types.
 //! * [`PuzzleError`] and [`GenerateError`], the one error convention.
-//! * [`Budget`], which bounds generation so a canister traps on nothing.
+//! * [`Budget`] and [`SearchBudget`], which bound generating and
+//!   counting solutions so a canister traps on nothing.
 //! * The [`Puzzle`] trait, which every game implements and which the
 //!   caller can dispatch over.
 //!
@@ -19,7 +20,7 @@
 //! * [`Puzzle::generate`] never loops without bound and never panics. It
 //!   returns [`GenerateError::InvalidParams`] when the parameters cannot
 //!   describe a puzzle of this game, and [`GenerateError::Exhausted`]
-//!   when they can but no puzzle turned up within the attempt budget.
+//!   when they can but no puzzle turned up within the work budget.
 //! * Every entry point that takes description bytes returns a
 //!   [`PuzzleError`] for malformed input rather than panicking, because
 //!   these are reachable from an ingress message. That includes a
@@ -151,10 +152,11 @@ pub enum GenerateError {
     /// No puzzle of this game can exist for these parameters, whatever
     /// the seed. The message says which parameter, and what would fix it.
     InvalidParams(String),
-    /// The parameters are legal but this many attempts found nothing. A
+    /// The parameters are legal but this much work found nothing. A
     /// different seed may still work; parameters near a size or density
-    /// limit may not.
-    Exhausted { attempts: u32 },
+    /// limit may not. The unit is a [`Budget`] one: an attempt, or one
+    /// solver run inside an attempt.
+    Exhausted { work: u32 },
 }
 
 impl GenerateError {
@@ -167,8 +169,8 @@ impl fmt::Display for GenerateError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             GenerateError::InvalidParams(msg) => write!(f, "invalid parameters: {msg}"),
-            GenerateError::Exhausted { attempts } => {
-                write!(f, "no puzzle found in {attempts} attempts")
+            GenerateError::Exhausted { work } => {
+                write!(f, "no puzzle found in {work} units of generator work")
             }
         }
     }
@@ -176,13 +178,20 @@ impl fmt::Display for GenerateError {
 
 impl std::error::Error for GenerateError {}
 
-/// An attempt counter for a generate loop.
+/// A work counter for a generate loop.
 ///
 /// Tatham's generators retry until they succeed, which is fine in a
 /// desktop program and fatal in a canister: parameters with no puzzle
 /// spin until the instruction limit traps the message, and the retry
 /// traps again. Every loop that can retry spends from one of these, so
 /// the worst case is a `GenerateError` the caller can act on.
+///
+/// The unit is one solver run, and one more for each attempt. Counting
+/// attempts alone would not bound anything: the clue-stripping loops run
+/// a full solve per clue, so a single attempt on a [`MAX_SIDE`] grid is a
+/// thousand solves, and an attempt cap leaves that unbounded. Every
+/// generator therefore spends here around each `solve`, not only at the
+/// top of its retry loop.
 #[derive(Clone, Debug)]
 pub struct Budget {
     spent: u32,
@@ -194,11 +203,11 @@ impl Budget {
         Budget { spent: 0, max }
     }
 
-    /// Charge one attempt. `Err` once the budget is gone, which a
+    /// Charge one unit of work. `Err` once the budget is gone, which a
     /// generate loop should propagate with `?`.
     pub fn spend(&mut self) -> Result<(), GenerateError> {
         if self.spent >= self.max {
-            return Err(GenerateError::Exhausted { attempts: self.spent });
+            return Err(GenerateError::Exhausted { work: self.spent });
         }
         self.spent += 1;
         Ok(())
@@ -206,10 +215,6 @@ impl Budget {
 
     pub fn spent(&self) -> u32 {
         self.spent
-    }
-
-    pub fn remaining(&self) -> u32 {
-        self.max - self.spent
     }
 }
 
@@ -224,6 +229,56 @@ impl Budget {
 /// than one solution", so a puzzle is dropped rather than served with a
 /// second solution nobody looked for.
 pub const MAX_SEARCH_DEPTH: u32 = 256;
+
+/// How many nodes a solution counter may explore before it gives up and
+/// reports the cap.
+///
+/// [`MAX_SEARCH_DEPTH`] bounds one branch of the search, not the search:
+/// a description with 250 open keys never reaches the depth cap and can
+/// still explore 3^250 nodes, each of them cloning the working state. The
+/// depth cap protects the wasm stack; this one protects the instruction
+/// limit, which is what an ingress-reachable `count_solutions` runs into
+/// first.
+/// Measured 2026-09-11 over every size The Daily serves: the hungriest
+/// real puzzle was an Unruly 12x12 at 330k nodes, with Slant close
+/// behind and the other four games three orders of magnitude below. So
+/// this is roughly three times the worst case a generated puzzle needs,
+/// and a description built to be expensive stops here instead of running
+/// until the message traps.
+pub const MAX_SEARCH_NODES: u32 = 1_000_000;
+
+/// A node counter for a solution counter, spent once per search node.
+///
+/// Running out is reported the same safe way round as the depth cap: the
+/// count comes back at `cap`, which reads as "more than one solution", so
+/// a puzzle is dropped rather than served with a second solution nobody
+/// looked for.
+#[derive(Clone, Debug)]
+pub struct SearchBudget {
+    left: u32,
+}
+
+impl SearchBudget {
+    pub fn new(max: u32) -> Self {
+        SearchBudget { left: max }
+    }
+
+    /// Charge one node. `false` once the budget is gone, which a counter
+    /// reports as the cap.
+    pub fn take(&mut self) -> bool {
+        if self.left == 0 {
+            return false;
+        }
+        self.left -= 1;
+        true
+    }
+}
+
+impl Default for SearchBudget {
+    fn default() -> Self {
+        SearchBudget::new(MAX_SEARCH_NODES)
+    }
+}
 
 /// The largest side any game accepts, in cells.
 ///
@@ -247,6 +302,21 @@ pub fn side_too_big(w: usize, h: usize) -> String {
 /// Whether `w` and `h` are within [`MAX_SIDE`].
 pub fn side_ok(w: usize, h: usize) -> bool {
     w <= MAX_SIDE && h <= MAX_SIDE
+}
+
+/// The four orthogonal neighbours of cell `i` in a `w` x `h` grid, in
+/// Tatham's `get_surrounds` order: left, right, up, down. Three crates
+/// had a character-for-character copy of this.
+pub fn neighbours(w: usize, h: usize, i: usize) -> impl Iterator<Item = usize> {
+    let x = i % w;
+    [
+        (x > 0).then(|| i - 1),
+        (x + 1 < w).then(|| i + 1),
+        (i >= w).then(|| i - w),
+        (i + w < w * h).then(|| i + w),
+    ]
+    .into_iter()
+    .flatten()
 }
 
 /// Check a player's grid against the length this description needs, and

@@ -1,6 +1,6 @@
 use crate::solver::{Outcome, solve};
 use crate::state::State;
-use crate::{Generated, MAX_ATTEMPTS, Params, Tier, encode_description, encode_slash, solution_pairs, solve_with_trace};
+use crate::{Generated, MAX_WORK, Params, Tier, encode_description, encode_slash, solution_pairs, solve_with_trace};
 use puzzle_core::{Budget, Dsf, GenerateError, Rng, side_ok, side_too_big};
 
 /// Port of `slant_generate`: fill the cells in random order, choosing at
@@ -43,9 +43,13 @@ fn full_clues(st: &mut State) {
     }
 }
 
-fn solves(st: &State, tier: Tier) -> Outcome {
+/// Charged to the budget: the clue-stripping loop below runs one of
+/// these per vertex per pass, and that, not the attempt count, is where a
+/// generate call spends its instructions.
+fn solves(st: &State, tier: Tier, budget: &mut Budget) -> Result<Outcome, GenerateError> {
+    budget.spend()?;
     let mut work = st.clone();
-    solve(&mut work, tier, None)
+    Ok(solve(&mut work, tier, None))
 }
 
 /// Reject sizes this game has no puzzle for, before any searching.
@@ -67,7 +71,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
     let (w, h) = validate(params)?;
     let tier = params.tier;
     let mut rng = Rng::new(seed);
-    let mut budget = Budget::new(MAX_ATTEMPTS);
+    let mut budget = Budget::new(MAX_WORK);
     let (vw, nv) = (w + 1, (w + 1) * (h + 1));
 
     loop {
@@ -78,7 +82,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
         // Checked at runtime rather than with debug_assert, which the
         // wasm build compiles out: a fully clued grid the solver cannot
         // finish would mean the clues and the solution disagree.
-        if solves(&st, Tier::Easy) != Outcome::Solved {
+        if solves(&st, Tier::Easy, &mut budget)? != Outcome::Solved {
             continue;
         }
 
@@ -101,13 +105,13 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
                     continue;
                 }
                 st.clues[vertex] = None;
-                if solves(&st, tier) != Outcome::Solved {
+                if solves(&st, tier, &mut budget)? != Outcome::Solved {
                     st.clues[vertex] = Some(v);
                 }
             }
         }
 
-        if tier == Tier::Tricky && solves(&st, Tier::Easy) != Outcome::Stuck {
+        if tier == Tier::Tricky && solves(&st, Tier::Easy, &mut budget)? != Outcome::Stuck {
             continue;
         }
 

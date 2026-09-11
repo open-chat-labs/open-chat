@@ -380,3 +380,29 @@ fn works_through_a_dyn_reference() {
     let blank = vec![0u8; g.solution.len()];
     must_work_through_dyn::<Tents>(&g.description, &blank);
 }
+
+/// A description whose counts add up but whose only layouts put two
+/// tents side by side. `line_count_exact` fills a line with tents on a
+/// counting argument alone, and nothing downstream re-reads those
+/// squares, so without the solver's soundness check this came back
+/// `Solved` with a grid `check_rules` calls broken. Found by fuzzing
+/// 2026-09-11.
+#[test]
+fn a_line_the_counts_fill_with_touching_tents_has_no_solution() {
+    #[rustfmt::skip]
+    let description: Vec<u8> = vec![
+        1, 4, 4,
+        // trees
+        1, 0, 0, 0,
+        0, 0, 0, 0,
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        // row counts, then column counts
+        1, 0, 1, 1,
+        0, 2, 1, 0,
+    ];
+    for tier in Tier::ALL {
+        let (_, solved) = solve_with_trace(&description, tier).unwrap();
+        assert_eq!(solved, None, "{tier:?}: the solver claimed a grid with two tents touching");
+    }
+}

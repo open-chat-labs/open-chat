@@ -5,13 +5,15 @@ use puzzle_core::{Budget, GenerateError, Rng, side_ok, side_too_big};
 
 const MAX_NEWISLAND_TRIES: usize = 50;
 const MIN_SENSIBLE_ISLANDS: usize = 3;
+/// Generator work budget, in solver runs (see [`puzzle_core::Budget`]).
 /// Tatham loops forever; a canister must not. The old cap was 100,000,
 /// which protected the test binary rather than the canister: at a size
 /// where each attempt runs a full solve it far exceeds one message's
-/// instruction budget. Measured 2026-09-11: every playable size succeeds
-/// well inside this, and a size with no puzzle spends the whole budget in
-/// a few milliseconds.
-const MAX_ATTEMPTS: u32 = 2_000;
+/// instruction budget. Bridges has no clues to strip, so an attempt is a
+/// layout and at most three solves. Measured 2026-09-11: every playable
+/// size succeeds well inside this, and a size with no puzzle spends the
+/// whole budget in a few milliseconds.
+const MAX_WORK: u32 = 6_000;
 
 const WATER: u8 = 0;
 const ISLAND: u8 = 1;
@@ -234,10 +236,13 @@ fn build(rng: &mut Rng, w: usize, h: usize, ni_req: usize, expansion: u8) -> Lay
     l
 }
 
-fn solvable(st: &State, tier: Tier) -> Option<Vec<u8>> {
+/// Charged to the budget: a solve is where a generate attempt spends its
+/// instructions, so the bound has to count solves and not only attempts.
+fn solvable(st: &State, tier: Tier, budget: &mut Budget) -> Result<Option<Vec<u8>>, GenerateError> {
+    budget.spend()?;
     let mut st = st.clone();
     st.clear();
-    (solve(&mut st, tier, None) == Outcome::Solved).then(|| st.to_grid())
+    Ok((solve(&mut st, tier, None) == Outcome::Solved).then(|| st.to_grid()))
 }
 
 /// Port of `new_game_desc`. Bridges has no clues to strip: every island
@@ -273,7 +278,7 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
     let tier = params.tier;
     let ni_req = (params.island_pct as usize * w * h / 100).max(MIN_SENSIBLE_ISLANDS);
     let mut rng = Rng::new(seed);
-    let mut budget = Budget::new(MAX_ATTEMPTS);
+    let mut budget = Budget::new(MAX_WORK);
 
     loop {
         budget.spend()?;
@@ -283,10 +288,10 @@ pub(crate) fn generate(seed: u64, params: Params) -> Result<Generated, GenerateE
         }
         let d = layout.description();
         let st = State::from_description(&d);
-        if tier == Tier::Tricky && solvable(&st, Tier::Easy).is_some() {
+        if tier == Tier::Tricky && solvable(&st, Tier::Easy, &mut budget)?.is_some() {
             continue;
         }
-        let Some(solved) = solvable(&st, tier) else {
+        let Some(solved) = solvable(&st, tier, &mut budget)? else {
             continue;
         };
         let solution = layout.solution();

@@ -67,7 +67,7 @@ mod generate;
 mod solver;
 mod state;
 
-use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid, checked_grid_values, side_ok, side_too_big};
+use puzzle_core::{Dsf, GenerateError, Puzzle, PuzzleError, checked_grid_values, neighbours, side_ok, side_too_big};
 use state::{Square, State};
 
 pub use puzzle_core::Tier;
@@ -76,11 +76,13 @@ pub use puzzle_core::Tier;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Tents;
 
-/// One attempt lays out tents, matches trees to them and runs a full
-/// technique solve. Measured 2026-09-11 across 300 seeds of every
-/// playable size at both tiers: nothing failed, and a parameter set with
-/// no puzzle spends the whole budget in under 40ms on a 24x24 grid.
-const MAX_ATTEMPTS: u32 = 2_000;
+/// Generator work budget, in solver runs (see [`puzzle_core::Budget`]).
+/// Tents has no clue stripping, so an attempt is a tent layout, a
+/// tree/tent matching and at most three solves. Measured 2026-09-11
+/// across 300 seeds of every playable size at both tiers: nothing failed,
+/// and a parameter set with no puzzle spends the whole budget in under
+/// 40ms on a 24x24 grid.
+const MAX_WORK: u32 = 6_000;
 
 pub const GAME_ID: &str = "tents";
 
@@ -330,25 +332,13 @@ pub fn is_complete(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError>
     Ok(scan.counts_exact && scan.matched)
 }
 
-fn neighbours(w: usize, h: usize, i: usize) -> impl Iterator<Item = usize> {
-    let x = i % w;
-    [
-        (x > 0).then(|| i - 1),
-        (x + 1 < w).then(|| i + 1),
-        (i >= w).then(|| i - w),
-        (i + w < w * h).then(|| i + w),
-    ]
-    .into_iter()
-    .flatten()
-}
-
 /// The solution in hint-key space: `(cell index, 1 = tent / 0 = grass)`
 /// for every non-tree cell, sorted by cell. Same keys and values as hint
 /// conclusions.
 pub fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError> {
     let d = parse_description(description)?;
     let n = d.cells.len();
-    let solution = checked_grid(solution, n)?;
+    let solution = checked_grid_values(solution, n, 1)?;
     Ok(d.cells
         .iter()
         .enumerate()
@@ -387,8 +377,10 @@ pub fn parse_description(bytes: &[u8]) -> Result<Description, PuzzleError> {
         return Err(PuzzleError::description(format!("unsupported format version {}", bytes[0])));
     }
     let (width, height) = (bytes[1], bytes[2]);
-    if width == 0 || height == 0 {
-        return Err(PuzzleError::description("width and height must be non-zero"));
+    // The same floor `generate` validates against, so bytes no generator
+    // can produce are bytes no entry point accepts.
+    if width < 4 || height < 4 {
+        return Err(PuzzleError::description("width and height must be at least 4"));
     }
     if !side_ok(width as usize, height as usize) {
         return Err(PuzzleError::description(side_too_big(width as usize, height as usize)));
@@ -508,5 +500,12 @@ impl Puzzle for Tents {
 
     fn render_ascii(description: &[u8], grid: Option<&[u8]>) -> Result<String, PuzzleError> {
         render_ascii(description, grid)
+    }
+
+    /// One `scan` answers both halves, so the default implementation's
+    /// second parse and second sweep are avoidable here.
+    fn is_solved(description: &[u8], grid: &[u8]) -> Result<bool, PuzzleError> {
+        let (_, scan) = scan(description, grid)?;
+        Ok(scan.violations.is_empty() && scan.counts_exact && scan.matched)
     }
 }
