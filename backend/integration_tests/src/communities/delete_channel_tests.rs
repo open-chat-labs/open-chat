@@ -1,16 +1,17 @@
 use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
-use crate::stable_memory::get_stable_memory_map;
+use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable_memory_map};
 use crate::utils::now_millis;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use constants::DAY_IN_MS;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{ChannelId, CommunityId};
+use types::{ChannelId, CommunityId, OptionUpdate};
 
 #[test_case(true)]
 #[test_case(false)]
@@ -84,7 +85,29 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
         ..
     } = init_test_data(env, canister_ids, *controller);
 
+    // Make the messages in the first channel expire (though not within this test), so that the
+    // channel has expiring events
+    client::community::happy_path::update_channel(
+        env,
+        user1.principal,
+        community_id,
+        &community_canister::update_channel::Args {
+            channel_id: channel_id1,
+            name: None,
+            description: None,
+            rules: None,
+            avatar: OptionUpdate::NoChange,
+            permissions_v2: None,
+            events_ttl: OptionUpdate::SetToSome(DAY_IN_MS),
+            gate_config: OptionUpdate::NoChange,
+            public: None,
+            messages_visible_to_non_members: None,
+            external_url: OptionUpdate::NoChange,
+        },
+    );
+
     let initial_stable_memory_map_keys = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len();
+    let initial_small_entries_keys = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
 
     for _ in 0..100 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id1, None, random_string(), None);
@@ -93,6 +116,10 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 100
+    );
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 200
     );
 
     for _ in 0..80 {
@@ -103,6 +130,10 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 180
     );
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 280
+    );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id1);
 
@@ -111,7 +142,11 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
 
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
-        initial_stable_memory_map_keys + 77
+        initial_stable_memory_map_keys + 76
+    );
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 80
     );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id2);
@@ -121,7 +156,11 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
 
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
-        initial_stable_memory_map_keys - 6
+        initial_stable_memory_map_keys - 7
+    );
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys
     );
 }
 

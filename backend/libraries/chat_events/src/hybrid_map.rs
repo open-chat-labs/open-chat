@@ -1,6 +1,7 @@
 use crate::stable_memory::ChatEventsStableStorage;
 use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
+use stable_memory_map::{ChatEventKeyPrefix, StableMemoryMap};
 use std::collections::BTreeMap;
 use std::ops::RangeBounds;
 use types::{Chat, EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX, MessageIndex};
@@ -34,6 +35,10 @@ impl<MSlow: EventsMap> HybridMap<MSlow> {
 impl HybridMap<ChatEventsStableStorage> {
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
         self.slow = ChatEventsStableStorage::new(chat, thread_root_message_index);
+    }
+
+    pub fn stable_memory_prefix(&self) -> &ChatEventKeyPrefix {
+        self.slow.prefix()
     }
 }
 

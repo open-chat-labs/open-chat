@@ -4,6 +4,9 @@ use pocket_ic::PocketIc;
 use std::cell::RefCell;
 use types::CanisterId;
 
+// The memory holding the stable memory map for small entries (eg. each chat's MessageId -> EventIndex map)
+pub const STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID: MemoryId = MemoryId::new(4);
+
 pub fn get_stable_memory_map(
     env: &PocketIc,
     canister_id: impl Into<CanisterId>,

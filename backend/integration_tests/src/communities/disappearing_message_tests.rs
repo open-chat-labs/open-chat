@@ -1,6 +1,6 @@
 use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
-use crate::stable_memory::get_stable_memory_map;
+use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable_memory_map};
 use crate::{TestEnv, client};
 use std::ops::Deref;
 use std::time::Duration;
@@ -146,6 +146,7 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
     );
 
     let initial_stable_memory_map_keys = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len();
+    let initial_small_entries_keys = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
 
     for _ in 0..5 {
         let result =
@@ -168,6 +169,12 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 30
     );
+    // A message id for each message, an expiring event for each message in the main events list, plus
+    // two entries (keyed by event and by timestamp) recording when each thread root was last updated
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 45
+    );
 
     // Tick once to expire the messages
     env.advance_time(Duration::from_secs(2));
@@ -180,5 +187,12 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys
+    );
+    // The expiring events are removed and the message ids of the expired threads are garbage
+    // collected, but the message ids of the expired messages in the main events list are retained, as
+    // are the thread roots' last updated timestamps until they are pruned
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        initial_small_entries_keys + 15
     );
 }

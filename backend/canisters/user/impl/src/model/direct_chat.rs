@@ -129,8 +129,8 @@ impl DirectChat {
         let events_ttl = self.events.get_events_time_to_live();
         let updated_events: Vec<_> = self
             .events
-            .iter_recently_updated_events()
-            .take_while(|(_, _, ts)| *ts > updates_since)
+            .recently_updated_events(updates_since, usize::MAX)
+            .into_iter()
             .map(|(_, e, ts)| (e, ts))
             .collect();
 

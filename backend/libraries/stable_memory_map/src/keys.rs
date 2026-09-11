@@ -5,13 +5,19 @@ use std::borrow::Cow;
 
 mod chat_event;
 mod community_event;
+mod expiring_event;
+mod last_updated;
 mod macros;
+mod message_id;
 mod principal;
 mod storage;
 mod user_id;
 
 pub use chat_event::*;
 pub use community_event::*;
+pub use expiring_event::*;
+pub use last_updated::*;
+pub use message_id::*;
 pub use principal::*;
 pub use storage::*;
 pub use user_id::*;
@@ -102,6 +108,21 @@ pub enum KeyType {
     FilesPerAccessor = 14,
     UserStorageRecord = 15,
     BlockedUsers = 16,
+    DirectChatMessageId = 17,
+    GroupChatMessageId = 18,
+    ChannelMessageId = 19,
+    DirectChatThreadMessageId = 20,
+    GroupChatThreadMessageId = 21,
+    ChannelThreadMessageId = 22,
+    DirectChatExpiringEvent = 23,
+    GroupChatExpiringEvent = 24,
+    ChannelExpiringEvent = 25,
+    DirectChatEventLastUpdated = 26,
+    GroupChatEventLastUpdated = 27,
+    ChannelEventLastUpdated = 28,
+    DirectChatEventsByLastUpdated = 29,
+    GroupChatEventsByLastUpdated = 30,
+    ChannelEventsByLastUpdated = 31,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -140,6 +161,21 @@ impl KeyType {
             | KeyType::FilesPerAccessor
             | KeyType::UserStorageRecord
             | KeyType::BlockedUsers => MapClass::Default,
+            KeyType::DirectChatMessageId
+            | KeyType::GroupChatMessageId
+            | KeyType::ChannelMessageId
+            | KeyType::DirectChatThreadMessageId
+            | KeyType::GroupChatThreadMessageId
+            | KeyType::ChannelThreadMessageId
+            | KeyType::DirectChatExpiringEvent
+            | KeyType::GroupChatExpiringEvent
+            | KeyType::ChannelExpiringEvent
+            | KeyType::DirectChatEventLastUpdated
+            | KeyType::GroupChatEventLastUpdated
+            | KeyType::ChannelEventLastUpdated
+            | KeyType::DirectChatEventsByLastUpdated
+            | KeyType::GroupChatEventsByLastUpdated
+            | KeyType::ChannelEventsByLastUpdated => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -186,6 +222,21 @@ impl TryFrom<u8> for KeyType {
             14 => Ok(KeyType::FilesPerAccessor),
             15 => Ok(KeyType::UserStorageRecord),
             16 => Ok(KeyType::BlockedUsers),
+            17 => Ok(KeyType::DirectChatMessageId),
+            18 => Ok(KeyType::GroupChatMessageId),
+            19 => Ok(KeyType::ChannelMessageId),
+            20 => Ok(KeyType::DirectChatThreadMessageId),
+            21 => Ok(KeyType::GroupChatThreadMessageId),
+            22 => Ok(KeyType::ChannelThreadMessageId),
+            23 => Ok(KeyType::DirectChatExpiringEvent),
+            24 => Ok(KeyType::GroupChatExpiringEvent),
+            25 => Ok(KeyType::ChannelExpiringEvent),
+            26 => Ok(KeyType::DirectChatEventLastUpdated),
+            27 => Ok(KeyType::GroupChatEventLastUpdated),
+            28 => Ok(KeyType::ChannelEventLastUpdated),
+            29 => Ok(KeyType::DirectChatEventsByLastUpdated),
+            30 => Ok(KeyType::GroupChatEventsByLastUpdated),
+            31 => Ok(KeyType::ChannelEventsByLastUpdated),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
