@@ -4,11 +4,10 @@ use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, client};
 use constants::DAY_IN_MS;
 use ic_stable_structures::memory_manager::MemoryId;
-use stable_memory_map::{KeyPrefix, MessageIdKeyPrefix, UserMetricsKeyPrefix};
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::{random_from_u128, random_string};
-use types::{Chat, ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
+use testing::rng::random_string;
+use types::{ChatId, MessageContentInitial, OptionUpdate, TextContent};
 
 #[test]
 fn delete_direct_chat_succeeds() {
@@ -91,8 +90,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     let small_entries_keys_before_messages =
         get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
 
-    let message_id: MessageId = random_from_u128();
-    let result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), Some(message_id));
+    let result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     for _ in 0..3 {
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     }
@@ -117,18 +115,6 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
         get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
         small_entries_keys_before_messages + 13
     );
-
-    // Each canister only stores the metrics of its own user, since only those are ever read
-    let user1_small_entries = get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID);
-    let user1_metrics_key = UserMetricsKeyPrefix::new_from_chat(Chat::Direct(user2.user_id.into())).create_key(&user1.user_id);
-    assert!(user1_small_entries.contains_key(&user1_metrics_key.as_ref().to_vec()));
-
-    let user2_chat = Chat::Direct(user1.user_id.into());
-    let user2_small_entries = get_stable_memory_map(env, user2.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID);
-    let user2_message_id_key = MessageIdKeyPrefix::new_from_chat(user2_chat, None).create_key(&message_id);
-    assert!(user2_small_entries.contains_key(&user2_message_id_key.as_ref().to_vec()));
-    let user2_metrics_key = UserMetricsKeyPrefix::new_from_chat(user2_chat).create_key(&user1.user_id);
-    assert!(!user2_small_entries.contains_key(&user2_metrics_key.as_ref().to_vec()));
 
     let delete_direct_chat_response = client::user::delete_direct_chat(
         env,

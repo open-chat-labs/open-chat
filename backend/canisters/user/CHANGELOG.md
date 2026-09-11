@@ -24,7 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move each chat's expiring events from the heap into the stable memory map for small entries ([#9350](https://github.com/open-chat-labs/open-chat/pull/9350))
 - Move the timestamps of when each chat's events were last updated from the heap into the stable memory map for small entries ([#9351](https://github.com/open-chat-labs/open-chat/pull/9351))
 - Move each chat's per-user metrics from the heap into the stable memory map for small entries ([#9352](https://github.com/open-chat-labs/open-chat/pull/9352))
-- Stop storing the other user's metrics in direct chats, since only the canister's own user's metrics are ever read ([#9352](https://github.com/open-chat-labs/open-chat/pull/9352))
 
 ### Fixed
 
