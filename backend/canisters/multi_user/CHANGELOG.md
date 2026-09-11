@@ -14,3 +14,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
+- Route stable memory map entries by key type to either the main map or the map for small entries ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))

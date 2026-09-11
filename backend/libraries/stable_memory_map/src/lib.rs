@@ -20,10 +20,14 @@ pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 // 1-2 pages. This is fixed once the map is created.
 pub const SMALL_ENTRIES_MAP_PAGE_SIZE: u32 = 256;
 
+type Map = StableBTreeMap<BaseKey, Vec<u8>, Memory>;
+
+// Entries are split between two underlying maps based on their `KeyType`'s `MapClass`. Every
+// key type sharing a prefix has the same class, so every operation touches exactly one map.
 pub struct StableMemoryMapInner {
-    map: StableBTreeMap<BaseKey, Vec<u8>, Memory>,
-    #[expect(dead_code, reason = "Nothing is stored in the small entries map yet")]
-    small_entries_map: Option<StableBTreeMap<BaseKey, Vec<u8>, Memory>>,
+    map: Map,
+    // `None` if the canister was initialised without a memory for the small entries map
+    small_entries_map: Option<Map>,
 }
 
 thread_local! {
@@ -31,22 +35,35 @@ thread_local! {
 }
 
 pub fn init(memory: Memory) {
-    MAP.set(Some(StableMemoryMapInner {
-        map: StableBTreeMap::init(memory),
-        small_entries_map: None,
-    }));
+    init_inner(memory, None);
 }
 
-// Only use this in canisters which will hold a lot of data, since the small entries map claims its
-// own memory, which is at least one bucket of the memory manager.
 pub fn init_with_small_entries_map(memory: Memory, small_entries_memory: Memory) {
-    MAP.set(Some(StableMemoryMapInner {
-        map: StableBTreeMap::init(memory),
-        small_entries_map: Some(StableBTreeMap::init_with_page_size(
-            small_entries_memory,
-            SMALL_ENTRIES_MAP_PAGE_SIZE,
-        )),
-    }));
+    init_inner(
+        memory,
+        Some(Map::init_with_page_size(small_entries_memory, SMALL_ENTRIES_MAP_PAGE_SIZE)),
+    );
+}
+
+fn init_inner(memory: Memory, small_entries_map: Option<Map>) {
+    let map = Map::init(memory);
+
+    // Guards against a key type's class being changed after data has been stored under it, which
+    // would otherwise leave that data in a map where it would never be found
+    for key_type in KeyType::all().filter(|kt| kt.map_class() == MapClass::SmallEntries) {
+        let prefix = BaseKeyPrefix::from_key_type(key_type);
+        let found = map
+            .range(BaseKey::from(prefix.clone())..)
+            .next()
+            .is_some_and(|e| e.key().matches_prefix(&prefix));
+
+        assert!(
+            !found,
+            "Found entries for {key_type:?} in the main map, but it is in the small entries map"
+        );
+    }
+
+    MAP.set(Some(StableMemoryMapInner { map, small_entries_map }));
 }
 
 pub trait StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
@@ -129,39 +146,80 @@ pub fn with_map_mut<F: FnOnce(&mut StableMemoryMapInner) -> R, R>(f: F) -> R {
 
 impl StableMemoryMapInner {
     pub fn get<K: Key>(&self, key: K) -> Option<Vec<u8>> {
-        self.map.get(&key.into())
+        let key = key.into();
+        self.map(map_class(key.as_slice())).get(&key)
     }
 
     pub fn contains_key<K: Key>(&self, key: K) -> bool {
-        self.map.contains_key(&key.into())
+        let key = key.into();
+        self.map(map_class(key.as_slice())).contains_key(&key)
     }
 
     pub fn insert<K: Key>(&mut self, key: K, value: Vec<u8>) -> Option<Vec<u8>> {
-        self.map.insert(key.into(), value)
+        let key = key.into();
+        self.map_mut(map_class(key.as_slice())).insert(key, value)
     }
 
     pub fn remove<K: Key>(&mut self, key: K) -> Option<Vec<u8>> {
-        self.map.remove(&key.into())
+        let key = key.into();
+        self.map_mut(map_class(key.as_slice())).remove(&key)
     }
 
     pub fn range<'a, K: Key + 'a, R: RangeBounds<K>>(&'a self, range: R) -> impl DoubleEndedIterator<Item = (K, Vec<u8>)> + 'a {
         let start = map_bound(range.start_bound());
         let end = map_bound(range.end_bound());
+        let map = self.map(range_map_class(&start, &end));
 
         Iter {
-            inner: self.map.range((start, end)).map(|e| e.into_pair()),
+            inner: map.range((start, end)).map(|e| e.into_pair()),
             _phantom: PhantomData,
         }
+    }
+
+    fn map(&self, class: MapClass) -> &Map {
+        match class {
+            MapClass::Default => &self.map,
+            MapClass::SmallEntries => self.small_entries_map.as_ref().expect(SMALL_ENTRIES_MAP_UNAVAILABLE),
+        }
+    }
+
+    fn map_mut(&mut self, class: MapClass) -> &mut Map {
+        match class {
+            MapClass::Default => &mut self.map,
+            MapClass::SmallEntries => self.small_entries_map.as_mut().expect(SMALL_ENTRIES_MAP_UNAVAILABLE),
+        }
+    }
+}
+
+const SMALL_ENTRIES_MAP_UNAVAILABLE: &str =
+    "The small entries map is unavailable, initialise the stable memory map using `init_with_small_entries_map`";
+
+// Both bounds of a range must be of the same class, and at least one must be bounded, otherwise we
+// can't tell which map the range is over
+fn range_map_class(start: &Bound<BaseKey>, end: &Bound<BaseKey>) -> MapClass {
+    let class = |bound: &Bound<BaseKey>| match bound {
+        Bound::Included(k) | Bound::Excluded(k) => Some(map_class(k.as_slice())),
+        Bound::Unbounded => None,
+    };
+
+    match (class(start), class(end)) {
+        (Some(s), Some(e)) => {
+            assert_eq!(s, e, "Range bounds are in different maps");
+            s
+        }
+        (Some(c), None) | (None, Some(c)) => c,
+        (None, None) => panic!("Ranges over the stable memory map must be bounded on at least one side"),
     }
 }
 
 pub fn garbage_collect(prefix: BaseKeyPrefix) -> Result<u32, u32> {
     let mut total_count = 0;
     with_map_mut(|m| {
+        let map = m.map_mut(map_class(prefix.as_slice()));
+
         // If < 2B instructions have been used so far, delete another 100 keys, or exit if complete
         while ic_cdk::api::instruction_counter() < 2_000_000_000 {
-            let keys: Vec<_> = m
-                .map
+            let keys: Vec<_> = map
                 .range(BaseKey::from(prefix.clone())..)
                 .take_while(|e| e.key().matches_prefix(&prefix))
                 .take(100)
@@ -171,7 +229,7 @@ pub fn garbage_collect(prefix: BaseKeyPrefix) -> Result<u32, u32> {
             let batch_count = keys.len() as u32;
             total_count += batch_count;
             for key in keys {
-                m.map.remove(&key);
+                map.remove(&key);
             }
             // If batch count < 100 then we are finished
             if batch_count < 100 {
@@ -216,25 +274,116 @@ fn try_map_key_value<K: Key>((key, value): (BaseKey, Vec<u8>)) -> Option<(K, Vec
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::keys::test_small_entries::{TestSmallEntriesKey, TestSmallEntriesKeyPrefix};
+    use ic_principal::Principal;
     use ic_stable_structures::Memory as _;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    const MAIN: MemoryId = MemoryId::new(0);
+    const SMALL: MemoryId = MemoryId::new(1);
 
     #[test]
     fn small_entries_map_uses_small_page_size() {
         let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        init_with_small_entries_map(memory_manager.get(MemoryId::new(0)), memory_manager.get(MemoryId::new(1)));
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
 
-        assert_eq!(page_size(&memory_manager.get(MemoryId::new(0))), 1024);
-        assert_eq!(page_size(&memory_manager.get(MemoryId::new(1))), SMALL_ENTRIES_MAP_PAGE_SIZE);
+        assert_eq!(page_size(&memory_manager.get(MAIN)), 1024);
+        assert_eq!(page_size(&memory_manager.get(SMALL)), SMALL_ENTRIES_MAP_PAGE_SIZE);
+    }
+
+    #[test]
+    fn entries_are_routed_by_key_type() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        with_map_mut(|m| {
+            for i in 0..100 {
+                m.insert(small_key(i), i.to_be_bytes().to_vec());
+            }
+            m.insert(default_key(), vec![1]);
+        });
+
+        with_map(|m| {
+            assert_eq!(m.map.len(), 1);
+            assert_eq!(m.small_entries_map.as_ref().unwrap().len(), 100);
+
+            assert_eq!(m.get(small_key(7)), Some(7u32.to_be_bytes().to_vec()));
+            assert!(m.contains_key(small_key(99)));
+            assert!(!m.contains_key(small_key(100)));
+            assert_eq!(m.get(default_key()), Some(vec![1]));
+
+            let forward: Vec<_> = m.range(small_key(10)..small_key(15)).map(|(k, _)| suffix(&k)).collect();
+            assert_eq!(forward, vec![10, 11, 12, 13, 14]);
+
+            let backward: Vec<_> = m.range(..=small_key(3)).rev().map(|(k, _)| suffix(&k)).collect();
+            assert_eq!(backward, vec![3, 2, 1, 0]);
+        });
+
+        with_map_mut(|m| {
+            assert_eq!(m.remove(small_key(7)), Some(7u32.to_be_bytes().to_vec()));
+            assert!(m.get(small_key(7)).is_none());
+            assert_eq!(m.small_entries_map.as_ref().unwrap().len(), 99);
+        });
     }
 
     #[test]
     fn small_entries_map_can_be_reloaded() {
         let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        init_with_small_entries_map(memory_manager.get(MemoryId::new(0)), memory_manager.get(MemoryId::new(1)));
-        init_with_small_entries_map(memory_manager.get(MemoryId::new(0)), memory_manager.get(MemoryId::new(1)));
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+        with_map_mut(|m| m.insert(small_key(1), vec![1]));
 
-        assert_eq!(page_size(&memory_manager.get(MemoryId::new(1))), SMALL_ENTRIES_MAP_PAGE_SIZE);
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        assert_eq!(with_map(|m| m.get(small_key(1))), Some(vec![1]));
+        assert_eq!(page_size(&memory_manager.get(SMALL)), SMALL_ENTRIES_MAP_PAGE_SIZE);
+    }
+
+    #[test]
+    #[should_panic(expected = "The small entries map is unavailable")]
+    fn inserting_small_entry_without_small_entries_map_panics() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init(memory_manager.get(MAIN));
+
+        with_map_mut(|m| m.insert(small_key(1), vec![1]));
+    }
+
+    #[test]
+    #[should_panic(expected = "Found entries for TestSmallEntries in the main map")]
+    fn init_panics_if_main_map_contains_small_entries() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        let mut map = Map::init(memory_manager.get(MAIN));
+        map.insert(small_key(1).into(), vec![1]);
+        drop(map);
+
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+    }
+
+    #[test]
+    #[should_panic(expected = "Range bounds are in different maps")]
+    fn range_across_maps_panics() {
+        range_map_class(&Bound::Included(default_key().into()), &Bound::Excluded(small_key(1).into()));
+    }
+
+    // Moving a key type which already holds data to the other map would orphan that data, so the
+    // key types which existed before the small entries map was introduced must stay in the main map
+    #[test]
+    fn existing_key_types_stay_in_main_map() {
+        for key_type in KeyType::all().filter(|kt| (*kt as u8) <= KeyType::BlockedUsers as u8) {
+            assert_eq!(key_type.map_class(), MapClass::Default, "{key_type:?}");
+        }
+        assert_eq!(KeyType::all().filter(|kt| kt.map_class() == MapClass::Default).count(), 16);
+    }
+
+    fn small_key(i: u32) -> TestSmallEntriesKey {
+        TestSmallEntriesKeyPrefix::new().create_key(&i)
+    }
+
+    fn default_key() -> PrincipalKey {
+        PrincipalKeyPrefix::new_for_principal_to_user_id_map().create_key(&Principal::anonymous())
+    }
+
+    fn suffix(key: &TestSmallEntriesKey) -> u32 {
+        u32::from_be_bytes(BaseKey::from(key.clone()).as_slice()[1..].try_into().unwrap())
     }
 
     // A v2 map header is the magic "BTR", the layout version, then the page size as a

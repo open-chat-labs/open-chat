@@ -52,6 +52,7 @@ mod set_message_reminder_tests;
 mod setup;
 mod sign_in_with_email_tests;
 mod stable_memory;
+mod stable_memory_map_upgrade_tests;
 mod storage;
 mod storage_tests;
 mod suspend_user_tests;

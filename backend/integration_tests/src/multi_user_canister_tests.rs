@@ -1,12 +1,12 @@
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{metrics, tick_many};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use sha256::sha256;
 use std::collections::BTreeMap;
 use std::ops::Deref;
-use types::{BuildVersion, CanisterId, CanisterWasm, HttpRequest, UpgradesFilter};
+use types::{BuildVersion, CanisterId, CanisterWasm, UpgradesFilter};
 
 #[test]
 fn create_then_upgrade_multi_user_canister() {
@@ -137,21 +137,4 @@ fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
 
 fn multi_user_canisters(env: &PocketIc, user_index_canister_id: CanisterId) -> Vec<(CanisterId, CanisterId)> {
     serde_json::from_value(metrics(env, user_index_canister_id)["multi_user_canisters"].clone()).unwrap()
-}
-
-fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {
-    let response = client::http_request(
-        env,
-        Principal::anonymous(),
-        canister_id,
-        &HttpRequest {
-            method: "GET".to_string(),
-            url: "/metrics".to_string(),
-            headers: Vec::new(),
-            body: Vec::new(),
-        },
-    );
-    assert_eq!(response.status_code, 200);
-
-    serde_json::from_slice(&response.body).unwrap()
 }

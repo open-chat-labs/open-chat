@@ -83,7 +83,7 @@ fn validate_key<F: FnOnce(KeyType) -> bool>(key: &[u8], validator: F) -> Result<
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum KeyType {
     DirectChatEvent = 1,
@@ -102,6 +102,63 @@ pub enum KeyType {
     FilesPerAccessor = 14,
     UserStorageRecord = 15,
     BlockedUsers = 16,
+    #[cfg(test)]
+    TestSmallEntries = 255,
+}
+
+// Which of the two underlying maps a key type's entries are stored in
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum MapClass {
+    // The main map, which uses the default page size of 1024 bytes
+    Default,
+    // The map for small entries, which uses pages of `SMALL_ENTRIES_MAP_PAGE_SIZE` bytes
+    SmallEntries,
+}
+
+impl KeyType {
+    // Once a canister holds data under a key type, that key type's class must never change, since
+    // its existing entries would no longer be found. Every key type below already holds data in the
+    // main map in production, so they must all stay as `Default`.
+    //
+    // All key types sharing a `KeyPrefix` must have the same class, so that a range over a prefix
+    // stays within one map.
+    pub const fn map_class(self) -> MapClass {
+        match self {
+            KeyType::DirectChatEvent
+            | KeyType::GroupChatEvent
+            | KeyType::ChannelEvent
+            | KeyType::DirectChatThreadEvent
+            | KeyType::GroupChatThreadEvent
+            | KeyType::ChannelThreadEvent
+            | KeyType::GroupMember
+            | KeyType::ChannelMember
+            | KeyType::CommunityMember
+            | KeyType::CommunityEvent
+            | KeyType::PrincipalToUserId
+            | KeyType::FileIdToFile
+            | KeyType::FileReferenceCount
+            | KeyType::FilesPerAccessor
+            | KeyType::UserStorageRecord
+            | KeyType::BlockedUsers => MapClass::Default,
+            #[cfg(test)]
+            KeyType::TestSmallEntries => MapClass::SmallEntries,
+        }
+    }
+
+    pub(crate) fn all() -> impl Iterator<Item = KeyType> {
+        (0..=u8::MAX).filter_map(|b| KeyType::try_from(b).ok())
+    }
+}
+
+// Keys whose first byte isn't a known key type are routed to the main map
+pub(crate) fn map_class(key_bytes: &[u8]) -> MapClass {
+    extract_key_type(key_bytes).map_or(MapClass::Default, KeyType::map_class)
+}
+
+impl BaseKeyPrefix {
+    pub(crate) fn from_key_type(key_type: KeyType) -> Self {
+        BaseKeyPrefix(vec![key_type as u8])
+    }
 }
 
 fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
@@ -129,7 +186,34 @@ impl TryFrom<u8> for KeyType {
             14 => Ok(KeyType::FilesPerAccessor),
             15 => Ok(KeyType::UserStorageRecord),
             16 => Ok(KeyType::BlockedUsers),
+            #[cfg(test)]
+            255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
+        }
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod test_small_entries {
+    use crate::keys::macros::key;
+    use crate::{KeyPrefix, KeyType};
+
+    key!(TestSmallEntriesKey, TestSmallEntriesKeyPrefix, KeyType::TestSmallEntries);
+
+    impl TestSmallEntriesKeyPrefix {
+        pub fn new() -> Self {
+            TestSmallEntriesKeyPrefix(vec![KeyType::TestSmallEntries as u8])
+        }
+    }
+
+    impl KeyPrefix for TestSmallEntriesKeyPrefix {
+        type Key = TestSmallEntriesKey;
+        type Suffix = u32;
+
+        fn create_key(&self, value: &u32) -> Self::Key {
+            let mut bytes = self.0.clone();
+            bytes.extend_from_slice(&value.to_be_bytes());
+            TestSmallEntriesKey(bytes)
         }
     }
 }
