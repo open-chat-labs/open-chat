@@ -108,11 +108,12 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     tick_many(env, 3);
 
     assert!(get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len() > initial_stable_memory_map_keys);
-    // A message id for each message, an expiring event for each message in the main events list, plus
-    // two entries (keyed by event and by timestamp) recording when the thread root was last updated
+    // A message id for each message, an expiring event for each message in the main events list, two
+    // entries (keyed by event and by timestamp) recording when the thread root was last updated, plus
+    // the sender's metrics
     assert_eq!(
         get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
-        small_entries_keys_before_messages + 12
+        small_entries_keys_before_messages + 13
     );
 
     let delete_direct_chat_response = client::user::delete_direct_chat(
