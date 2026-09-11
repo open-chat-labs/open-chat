@@ -143,11 +143,7 @@ fn hint_at_level(hint: &PuzzleHint, level: u8) -> PuzzleHint {
     PuzzleHint {
         technique: if level >= 2 { hint.technique } else { 0 },
         focus: hint.focus.clone(),
-        target: if level >= 2 && !target.iter().any(|k| concluded.contains(k)) {
-            target
-        } else {
-            Vec::new()
-        },
+        target: if level >= 2 && !target.iter().any(|k| concluded.contains(k)) { target } else { Vec::new() },
         conclusions: Vec::new(),
     }
 }

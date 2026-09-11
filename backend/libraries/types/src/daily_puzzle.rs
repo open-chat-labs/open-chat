@@ -47,7 +47,9 @@ pub struct DailyPuzzleConfig {
     /// CHIT deducted from the reward per hint step served, floored at zero. Every step counts:
     /// a hint is a hint, whichever level it was bought at.
     pub hint_penalty: u32,
-    /// Solves faster than this are recorded but the client does not offer a card.
+    /// A solve faster than this is still recorded, paid and counted for the streak, but the local
+    /// user index does not push it to the results index, so it can back no card and move no
+    /// published aggregate. The client is told the floor so it can decline to offer the card too.
     pub min_carded_solve_ms: u64,
     /// Submissions per user per puzzle before the local user index refuses further ones.
     pub max_submits: u16,
@@ -174,9 +176,14 @@ pub struct DailyPuzzleResult {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ServedHint {
     pub hint: PuzzleHint,
-    /// 1 = focus only, 2 = focus + technique, 3 = focus + technique + conclusions applied.
+    /// 1 = focus only, `technique` withheld as 0; 2 = focus + technique + target; 3 = all of it
+    /// plus the conclusions, which are the answer. A `target` naming a key the step concludes is
+    /// withheld below level 3, so an empty `target` at level 2 means "paint the whole of `focus`".
     pub level: u8,
-    /// True when this is a "you have a mistake" hint: focus = the wrong cells, no conclusions.
+    /// True when this is a "you have a mistake" hint: `focus` is the single lowest key whose value
+    /// disagrees with the solution, and there are no conclusions. One key, never the set: `filled`
+    /// is client-supplied and can cover the board, so returning every disagreement would answer
+    /// the puzzle in one call.
     pub mistake: bool,
 }
 

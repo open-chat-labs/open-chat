@@ -7,11 +7,11 @@ use daily_puzzle_canister::{CandidateView, PuzzleParams};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
+use tracing::error;
 use types::{
     BuildVersion, CanisterId, Cycles, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleResult, GameConfig, GameId, PuzzleHint,
     PuzzleNumber, TimestampMillis, Timestamped, UserId,
 };
-use tracing::error;
 use utils::env::Environment;
 
 mod guards;
@@ -496,36 +496,54 @@ fn generate(params: &PuzzleParams, seed: u64) -> Option<Generated> {
     let easy = params.tier == 0;
     let (w, h) = (params.width, params.height);
     let generated = match params.game_id.as_str() {
-        light_up::GAME_ID => into_generated!(light_up::GAME_ID, light_up::generate(
-            seed,
-            light_up::Params {
-                width: w,
-                height: h,
-                black_pct: params.black_pct,
-                symmetry: light_up::Symmetry::Rot2,
-                tier: if easy { light_up::Tier::Easy } else { light_up::Tier::Tricky },
-            },
-        )),
-        tents::GAME_ID => into_generated!(tents::GAME_ID, tents::generate(
-            seed,
-            tents::Params::default_for(w, h, if easy { tents::Tier::Easy } else { tents::Tier::Tricky }),
-        )),
-        slant::GAME_ID => into_generated!(slant::GAME_ID, slant::generate(
-            seed,
-            slant::Params::default_for(w, h, if easy { slant::Tier::Easy } else { slant::Tier::Tricky }),
-        )),
-        bridges::GAME_ID => into_generated!(bridges::GAME_ID, bridges::generate(
-            seed,
-            bridges::Params::default_for(w, h, if easy { bridges::Tier::Easy } else { bridges::Tier::Tricky }),
-        )),
-        loopy::GAME_ID => into_generated!(loopy::GAME_ID, loopy::generate(
-            seed,
-            loopy::Params::default_for(w, h, if easy { loopy::Tier::Easy } else { loopy::Tier::Tricky }),
-        )),
-        unruly::GAME_ID => into_generated!(unruly::GAME_ID, unruly::generate(
-            seed,
-            unruly::Params::default_for(w, h, if easy { unruly::Tier::Easy } else { unruly::Tier::Tricky }),
-        )),
+        light_up::GAME_ID => into_generated!(
+            light_up::GAME_ID,
+            light_up::generate(
+                seed,
+                light_up::Params {
+                    width: w,
+                    height: h,
+                    black_pct: params.black_pct,
+                    symmetry: light_up::Symmetry::Rot2,
+                    tier: if easy { light_up::Tier::Easy } else { light_up::Tier::Tricky },
+                },
+            )
+        ),
+        tents::GAME_ID => into_generated!(
+            tents::GAME_ID,
+            tents::generate(
+                seed,
+                tents::Params::default_for(w, h, if easy { tents::Tier::Easy } else { tents::Tier::Tricky }),
+            )
+        ),
+        slant::GAME_ID => into_generated!(
+            slant::GAME_ID,
+            slant::generate(
+                seed,
+                slant::Params::default_for(w, h, if easy { slant::Tier::Easy } else { slant::Tier::Tricky }),
+            )
+        ),
+        bridges::GAME_ID => into_generated!(
+            bridges::GAME_ID,
+            bridges::generate(
+                seed,
+                bridges::Params::default_for(w, h, if easy { bridges::Tier::Easy } else { bridges::Tier::Tricky }),
+            )
+        ),
+        loopy::GAME_ID => into_generated!(
+            loopy::GAME_ID,
+            loopy::generate(
+                seed,
+                loopy::Params::default_for(w, h, if easy { loopy::Tier::Easy } else { loopy::Tier::Tricky }),
+            )
+        ),
+        unruly::GAME_ID => into_generated!(
+            unruly::GAME_ID,
+            unruly::generate(
+                seed,
+                unruly::Params::default_for(w, h, if easy { unruly::Tier::Easy } else { unruly::Tier::Tricky }),
+            )
+        ),
         _ => return None,
     };
     Some(generated)
