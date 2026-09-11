@@ -18,7 +18,7 @@ const TEST_SCHEDULE: [(&str, u8); 7] = [
     ("tents", 8),
     ("slant", 6),
     ("bridges", 7),
-    ("loopy", 6),
+    ("unruly", 6),
     ("slant", 6),
     ("bridges", 7),
 ];
@@ -47,7 +47,7 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_governance_calls() {
 
     // Every generator gets a default game config
     let game_configs = client::daily_puzzle::happy_path::game_configs(env, Principal::anonymous(), canister_ids.daily_puzzle);
-    let expected: Vec<_> = ["bridges", "light_up", "loopy", "slant", "tents"]
+    let expected: Vec<_> = ["bridges", "light_up", "loopy", "slant", "tents", "unruly"]
         .into_iter()
         .map(|g| (g.to_string(), GameConfig::default()))
         .collect();
@@ -144,7 +144,7 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_governance_calls() {
     assert_eq!(puzzles[0].hint_prices, game_config.hint_prices);
     assert_eq!(puzzles[0].max_hints, game_config.max_hints);
     let game_configs = client::daily_puzzle::happy_path::game_configs(env, Principal::anonymous(), canister_ids.daily_puzzle);
-    assert_eq!(game_configs.len(), 5);
+    assert_eq!(game_configs.len(), 6);
     assert_eq!(
         game_configs.iter().find(|(g, _)| g == todays_game).map(|(_, c)| c),
         Some(&game_config)
@@ -302,7 +302,7 @@ fn daily_puzzle_rotates_through_the_week() {
         assert_eq!(puzzle.description[2], size, "day {day} {game_id}");
         seen.push(game_id);
     }
-    for game_id in ["light_up", "tents", "slant", "bridges", "loopy"] {
+    for game_id in ["light_up", "tents", "slant", "bridges", "unruly"] {
         assert!(seen.contains(&game_id), "{game_id} never shipped: {seen:?}");
     }
 

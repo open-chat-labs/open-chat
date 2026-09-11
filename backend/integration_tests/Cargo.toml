@@ -31,6 +31,7 @@ lazy_static = { workspace = true }
 ledger_utils = { path = "../libraries/ledger_utils" }
 light_up = { path = "../libraries/light_up" }
 loopy = { path = "../libraries/loopy" }
+unruly = { path = "../libraries/unruly" }
 local_user_index_canister = { path = "../canisters/local_user_index/api" }
 msgpack = { path = "../libraries/msgpack" }
 notifications_index_canister = { path = "../canisters/notifications_index/api" }

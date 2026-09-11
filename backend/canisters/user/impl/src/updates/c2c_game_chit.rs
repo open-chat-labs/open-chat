@@ -2,11 +2,11 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::MAX_GAME_CHIT_ABS_AMOUNT;
 use oc_error_codes::OCErrorCode;
 use types::{ChitEvent, ChitEventType};
 use user_canister::c2c_game_chit::{Response::*, *};
 
-const MAX_ABS_AMOUNT: i32 = 100_000;
 const MAX_ID_LENGTH: usize = 64;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -20,7 +20,7 @@ fn c2c_game_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
         return Error(error.into());
     }
 
-    if args.amount == 0 || args.amount.abs() > MAX_ABS_AMOUNT {
+    if args.amount == 0 || args.amount.abs() > MAX_GAME_CHIT_ABS_AMOUNT {
         return Error(OCErrorCode::InvalidRequest.with_message("Invalid amount"));
     }
 

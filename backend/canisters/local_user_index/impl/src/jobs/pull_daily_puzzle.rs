@@ -27,6 +27,11 @@ async fn pull() {
     };
 
     match daily_puzzle_canister_c2c_client::c2c_pull_puzzles(canister_id, &Args {}).await {
+        // An empty success is "I have nothing for the current number", which the daily canister
+        // answers during the gap between `regenerate_today` dropping a puzzle and its replacement
+        // being generated. Feeding it to `set_puzzles` would read as a day change and clear every
+        // puzzle and every in-progress record, entry fees included.
+        Ok(Response::Success(puzzles)) if puzzles.is_empty() => info!("No daily puzzles to pull"),
         Ok(Response::Success(puzzles)) => mutate_state(|state| {
             let records_dropped = state.data.daily_puzzle_engine.set_puzzles(puzzles);
             let metrics = state.data.daily_puzzle_engine.metrics();

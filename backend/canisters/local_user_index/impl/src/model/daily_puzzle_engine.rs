@@ -17,12 +17,14 @@ pub const MAX_FILLED_ENTRIES: usize = 400;
 // endpoint files do the c2c calls between `prepare_*` and `commit_*`.
 //
 // CHIT idempotency keys, sent to the user canister with every debit or credit, are
-// `{game_id}:{number}:{fp}:entry`, `{game_id}:{number}:{fp}:solve` and
-// `{game_id}:{number}:{fp}:hint:{step}:{level}`, where `fp` is `puzzle_fingerprint` of the puzzle's
-// description. A `regenerate_today` replaces the puzzle under the same number, and without the
-// fingerprint a user who had already paid or been rewarded on the old one would get `AlreadyAdded`
-// on the new one, which the endpoints treat as applied. Longest key in practice is around 35 bytes,
-// well under the user canister's 64-byte limit.
+// `{game_id}:{number}:entry`, `{game_id}:{number}:solve` and
+// `{game_id}:{number}:hint:{step}:{level}`. They deliberately do not identify which puzzle was
+// held for that number. A `regenerate_today` replaces the day's puzzle and drops the records made
+// against the old one, so every call is made again: with the puzzle in the key, the replay would
+// charge a second entry fee and, worse, pay a second full reward to someone who had already
+// solved that day. Without it the user canister answers `AlreadyAdded`, which the endpoints treat
+// as applied, so a regenerated day is a free restart and pays out once. Longest key in practice is
+// around 26 bytes, well under the user canister's 64-byte limit.
 // Every field defaults so a blob written by an older shape deserialises to an empty engine and the
 // canister re-pulls. Fields whose shape changed were renamed rather than reused for that reason.
 #[derive(Serialize, Deserialize, Default)]
@@ -38,6 +40,13 @@ pub struct DailyPuzzleEngine {
     user_games: BTreeMap<UserId, BTreeMap<GameId, UserGame>>,
     // Every puzzle number each user has solved at least one game on. Streaks are derived from
     // this and are series-level: a day counts once however many games were solved.
+    //
+    // The one field here that is not re-pullable. Everything else above is scratch for the
+    // current day and comes back from the daily canister; this is the only record that a user
+    // ever solved anything, and no other canister holds it. So the rename-on-shape-change rule
+    // above must never be applied to it: renaming it, or changing its shape so an old blob
+    // defaults, resets every streak in the population and hands `first_play_free` back to
+    // everyone. Migrate it in place or move it out of this struct, never default it.
     #[serde(default)]
     solved_days: BTreeMap<UserId, BTreeSet<PuzzleNumber>>,
 }
@@ -58,12 +67,20 @@ pub struct UserGame {
 
 pub enum StartPrepared {
     AlreadyStarted(StartResult),
-    Start { fee: u32 },
+    // The record exists by the time this is returned: the clock runs from the call rather than
+    // from whenever the debit came back, and a puzzle swap during the debit cannot leave the user
+    // charged with no game to play. `release_start` undoes it if the debit fails.
+    Start { fee: u32, key: String, result: StartResult },
 }
 
 pub struct SubmitOutcome {
     pub solved: DailyPuzzleSolved,
-    pub result: DailyPuzzleResult,
+    // None when the solve came in faster than `min_carded_solve_ms`. The solve is still recorded
+    // and still paid: CHIT buys nothing, so a scripted solve only cheats itself. What it must not
+    // do is enter the results index, which is what a shared card is verified against and what the
+    // published median and mean are computed over. Those are the one part of this a cheat takes
+    // from other players, so an impossible time earns no card and moves no aggregate.
+    pub result: Option<DailyPuzzleResult>,
 }
 
 pub enum HintPrepared {
@@ -71,13 +88,18 @@ pub enum HintPrepared {
     Mistake(HintResult),
     // Already served at this level or higher: re-served free
     AlreadyServed(HintResult),
+    // The step is already recorded against the user by the time this is returned, so the cap
+    // cannot be walked past by calls that overlap on the debit's await. The debit still has to
+    // succeed: on failure the endpoint calls `release_hint` with `restore`.
     Serve {
         step: u16,
-        hint: PuzzleHint,
-        level: u8,
+        result: HintResult,
         price: u32,
         // The CHIT idempotency key for the debit
         key: String,
+        // What the step held before this call: `Some` when upgrading a step already served,
+        // `None` when it is a new one
+        restore: Option<ServedHint>,
     },
 }
 
@@ -90,17 +112,6 @@ pub struct DailyPuzzleEngineMetrics {
     pub solved_entries: u64,
 }
 
-// FNV-1a 32-bit over the description bytes as 8 lowercase hex chars. Same hash as the frontend's
-// `puzzleFingerprint`, though nothing depends on the two agreeing.
-pub fn puzzle_fingerprint(description: &[u8]) -> String {
-    let mut h: u32 = 0x811c9dc5;
-    for b in description {
-        h ^= *b as u32;
-        h = h.wrapping_mul(0x01000193);
-    }
-    format!("{h:08x}")
-}
-
 pub fn day_number(now: TimestampMillis) -> PuzzleNumber {
     (now / DAY_IN_MS) as PuzzleNumber
 }
@@ -109,14 +120,35 @@ fn not_available() -> OCError {
     OCErrorCode::NotInitialized.with_message("not available")
 }
 
-/// The hint as the client may see it at `level`: the conclusions are only revealed at level 3,
-/// so lower levels never carry them on the wire (or in the stored served copy).
+/// The hint as the client may see it at `level`, withholding everything the player has not paid
+/// for. Level 1 highlights the region the deduction looked at. Level 2 adds the technique, so the
+/// client can render the sentence, and the keys that sentence points at. Level 3 adds the
+/// conclusions, which are the answer.
+///
+/// `technique` 0 means withheld: no game's `Technique` enum uses 0, they all start at 1.
+///
+/// `target` is dropped below level 3 when it names a key the step concludes. In three of the six
+/// games it always does (slant's forced square, tents' line rules, loopy's premature loop all set
+/// `target` to the cells they fill), and sending it would hand over the level 3 answer at the
+/// level 2 price. An empty `target` already means "paint the whole of `focus`", so the client
+/// needs no new case. `focus` is never filtered: it is a region the player can usually
+/// reconstruct from the rules, so punching the answer out of it would point straight at the
+/// answer.
 fn hint_at_level(hint: &PuzzleHint, level: u8) -> PuzzleHint {
+    if level >= 3 {
+        return hint.clone();
+    }
+    let concluded: BTreeSet<u16> = hint.conclusions.iter().map(|(k, _)| *k).collect();
+    let target = hint.target.clone();
     PuzzleHint {
-        technique: hint.technique,
+        technique: if level >= 2 { hint.technique } else { 0 },
         focus: hint.focus.clone(),
-        target: hint.target.clone(),
-        conclusions: if level >= 3 { hint.conclusions.clone() } else { Vec::new() },
+        target: if level >= 2 && !target.iter().any(|k| concluded.contains(k)) {
+            target
+        } else {
+            Vec::new()
+        },
+        conclusions: Vec::new(),
     }
 }
 
@@ -175,23 +207,15 @@ impl DailyPuzzleEngine {
     }
 
     pub fn entry_key(&self, game_id: &str, number: PuzzleNumber) -> String {
-        format!("{game_id}:{number}:{}:entry", self.fingerprint(game_id))
+        format!("{game_id}:{number}:entry")
     }
 
     pub fn solve_key(&self, game_id: &str, number: PuzzleNumber) -> String {
-        format!("{game_id}:{number}:{}:solve", self.fingerprint(game_id))
+        format!("{game_id}:{number}:solve")
     }
 
     pub fn hint_key(&self, game_id: &str, number: PuzzleNumber, step: u16, level: u8) -> String {
-        format!("{game_id}:{number}:{}:hint:{step}:{level}", self.fingerprint(game_id))
-    }
-
-    // Callers build keys only after `available` has found the puzzle, so the fallback never fires
-    fn fingerprint(&self, game_id: &str) -> String {
-        self.puzzles
-            .get(game_id)
-            .map(|p| puzzle_fingerprint(&p.description))
-            .unwrap_or_default()
+        format!("{game_id}:{number}:hint:{step}:{level}")
     }
 
     // True when there is no puzzle for the current day number, so a pull is worthwhile
@@ -205,8 +229,10 @@ impl DailyPuzzleEngine {
         FetchResult { puzzles, states }
     }
 
-    pub fn prepare_start(
-        &self,
+    // Creates the record before the entry fee is debited. `release_start` removes it again if the
+    // debit fails, so the fee and the game are never separated in either direction.
+    pub fn reserve_start(
+        &mut self,
         user_id: UserId,
         game_id: &str,
         number: PuzzleNumber,
@@ -229,11 +255,14 @@ impl DailyPuzzleEngine {
             return Err(OCErrorCode::PriceMismatch.into());
         }
 
-        Ok(StartPrepared::Start { fee })
+        let key = self.entry_key(game_id, number);
+        // Nothing owed is nothing outstanding, so a free first play is paid up from the start
+        let result = self.create_record(user_id, game_id, number, now, fee == 0)?;
+
+        Ok(StartPrepared::Start { fee, key, result })
     }
 
-    // `started_at` is the `now` captured before the debit, so the clock is not reset by the await
-    pub fn commit_start(
+    fn create_record(
         &mut self,
         user_id: UserId,
         game_id: &str,
@@ -241,16 +270,9 @@ impl DailyPuzzleEngine {
         started_at: TimestampMillis,
         entry_paid: bool,
     ) -> OCResult<StartResult> {
-        let Some(puzzle) = self.puzzles.get(game_id).filter(|p| p.number == number) else {
-            return Err(OCErrorCode::Expired.into());
-        };
-
-        let record = self
-            .user_games
-            .entry(user_id)
-            .or_default()
-            .entry(game_id.to_string())
-            .or_insert_with(|| UserGame {
+        self.user_games.entry(user_id).or_default().insert(
+            game_id.to_string(),
+            UserGame {
                 number,
                 started_at,
                 entry_paid,
@@ -260,8 +282,10 @@ impl DailyPuzzleEngine {
                 grid_saved_at: None,
                 submits: 0,
                 solved: None,
-            });
-        let started_at = record.started_at;
+            },
+        );
+
+        let puzzle = self.puzzles.get(game_id).ok_or_else(not_available)?;
 
         Ok(StartResult {
             started_at,
@@ -269,6 +293,30 @@ impl DailyPuzzleEngine {
             chit_balance: None,
             total_chit_earned: None,
         })
+    }
+
+    pub fn confirm_start(&mut self, user_id: UserId, game_id: &str, number: PuzzleNumber) {
+        if let Some(record) = self
+            .user_games
+            .get_mut(&user_id)
+            .and_then(|m| m.get_mut(game_id))
+            .filter(|r| r.number == number)
+        {
+            record.entry_paid = true;
+        }
+    }
+
+    // Only ever removes a record whose fee never landed, so a retry that raced it is left alone
+    pub fn release_start(&mut self, user_id: UserId, game_id: &str, number: PuzzleNumber) {
+        let Some(games) = self.user_games.get_mut(&user_id) else {
+            return;
+        };
+        if games.get(game_id).is_some_and(|r| r.number == number && !r.entry_paid) {
+            games.remove(game_id);
+        }
+        if games.is_empty() {
+            self.user_games.remove(&user_id);
+        }
     }
 
     // Increments `submits` on every call. On a match the solve is recorded here, before any await.
@@ -295,6 +343,7 @@ impl DailyPuzzleEngine {
 
         let correct = grid == puzzle.solution.as_slice();
         let game_id = puzzle.game_id.clone();
+        let min_carded_solve_ms = puzzle.config.min_carded_solve_ms;
         // Series-level: another game solved today does not change the run ending yesterday
         let prev_streak = self.streak_ending_at_for(user_id, number.checked_sub(1));
         let base_reward = reward_for_streak(&puzzle.config.reward_by_streak, prev_streak);
@@ -326,7 +375,7 @@ impl DailyPuzzleEngine {
 
         Ok(SubmitOutcome {
             solved,
-            result: DailyPuzzleResult {
+            result: (solve_time_ms >= min_carded_solve_ms).then_some(DailyPuzzleResult {
                 game_id,
                 number,
                 user_id,
@@ -334,13 +383,16 @@ impl DailyPuzzleEngine {
                 hints_used,
                 streak,
                 solved_at: now,
-            },
+            }),
         })
     }
 
     #[expect(clippy::too_many_arguments)]
-    pub fn prepare_hint(
-        &self,
+    // Serves a hint and records it before returning, so requests that overlap on the debit's
+    // await cannot walk past `max_hints`: each one sees the step the last one took. The debit
+    // still has to succeed, and `release_hint` puts the step back as it was if it does not.
+    pub fn reserve_hint(
+        &mut self,
         user_id: UserId,
         game_id: &str,
         number: PuzzleNumber,
@@ -367,8 +419,15 @@ impl DailyPuzzleEngine {
         // (key, value) pairs are the lookup. A key it does not list is a mistake too: the client
         // claims a value for something the puzzle does not have. A puzzle pushed before the pairs
         // existed falls back to indexing the solution bytes, ignoring out-of-range keys.
+        //
+        // Only the lowest wrong key is returned, never the set. `filled` is client-supplied and
+        // capped at MAX_FILLED_ENTRIES, which is larger than any board, so returning every
+        // disagreement would answer "which cells are not 1?" in one free call: the whole solution,
+        // for nothing, bypassing the priced ladder entirely. One key per call keeps "check my
+        // work" useful and makes walking the board a deliberate key-by-key exercise rather than a
+        // single request.
         let pairs: BTreeMap<u16, u8> = puzzle.solution_pairs.iter().copied().collect();
-        let wrong: Vec<u16> = filled
+        let wrong: Option<u16> = filled
             .iter()
             .filter(|(k, v)| {
                 if pairs.is_empty() {
@@ -378,13 +437,13 @@ impl DailyPuzzleEngine {
                 }
             })
             .map(|(k, _)| *k)
-            .collect();
-        if !wrong.is_empty() {
+            .min();
+        if let Some(wrong) = wrong {
             return Ok(HintPrepared::Mistake(HintResult {
                 hint: ServedHint {
                     hint: PuzzleHint {
                         technique: 0,
-                        focus: wrong,
+                        focus: vec![wrong],
                         target: Vec::new(),
                         conclusions: Vec::new(),
                     },
@@ -426,7 +485,7 @@ impl DailyPuzzleEngine {
             .get(level as usize - 1)
             .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("level"))?;
 
-        match record.hints.iter().find(|(s, _)| *s == step) {
+        let restore = match record.hints.iter().find(|(s, _)| *s == step) {
             Some((_, served)) if level <= served.level => {
                 return Ok(HintPrepared::AlreadyServed(HintResult {
                     hint: served.clone(),
@@ -437,39 +496,44 @@ impl DailyPuzzleEngine {
                 }));
             }
             // Upgrading a step already served: pay for the new level only, no new step counted
-            Some(_) => {}
+            Some((_, served)) => Some(served.clone()),
             None => {
                 if record.hint_steps_used >= puzzle.game_config.max_hints {
                     return Err(OCErrorCode::Throttled.with_message("max_hints"));
                 }
+                None
             }
-        }
+        };
 
         if price != expected_price {
             return Err(OCErrorCode::PriceMismatch.into());
         }
 
-        Ok(HintPrepared::Serve {
-            step,
+        let served = ServedHint {
             hint: hint_at_level(hint, level),
             level,
+            mistake: false,
+        };
+        let key = self.hint_key(game_id, number, step, level);
+        let result = self.record_hint(user_id, game_id, number, step, served)?;
+
+        Ok(HintPrepared::Serve {
+            step,
+            result,
             price,
-            key: self.hint_key(game_id, number, step, level),
+            key,
+            restore,
         })
     }
 
-    pub fn commit_hint(
+    fn record_hint(
         &mut self,
         user_id: UserId,
         game_id: &str,
         number: PuzzleNumber,
         step: u16,
-        hint: PuzzleHint,
-        level: u8,
+        served: ServedHint,
     ) -> OCResult<HintResult> {
-        let Some(puzzle) = self.puzzles.get(game_id).filter(|p| p.number == number) else {
-            return Err(OCErrorCode::Expired.into());
-        };
         let record = self
             .user_games
             .get_mut(&user_id)
@@ -477,11 +541,6 @@ impl DailyPuzzleEngine {
             .filter(|r| r.number == number)
             .ok_or_else(not_started)?;
 
-        let served = ServedHint {
-            hint,
-            level,
-            mistake: false,
-        };
         if let Some(entry) = record.hints.iter_mut().find(|(s, _)| *s == step) {
             entry.1 = served.clone();
         } else {
@@ -490,6 +549,8 @@ impl DailyPuzzleEngine {
         }
         let hints_used = record.hint_steps_used;
 
+        let puzzle = self.puzzles.get(game_id).ok_or_else(not_available)?;
+
         Ok(HintResult {
             hint: served,
             hints_used,
@@ -497,6 +558,39 @@ impl DailyPuzzleEngine {
             chit_balance: None,
             total_chit_earned: None,
         })
+    }
+
+    // Undoes `reserve_hint` when the debit did not go through
+    pub fn release_hint(
+        &mut self,
+        user_id: UserId,
+        game_id: &str,
+        number: PuzzleNumber,
+        step: u16,
+        restore: Option<ServedHint>,
+    ) {
+        let Some(record) = self
+            .user_games
+            .get_mut(&user_id)
+            .and_then(|m| m.get_mut(game_id))
+            .filter(|r| r.number == number)
+        else {
+            return;
+        };
+
+        match restore {
+            Some(served) => {
+                if let Some(entry) = record.hints.iter_mut().find(|(s, _)| *s == step) {
+                    entry.1 = served;
+                }
+            }
+            None => {
+                if let Some(i) = record.hints.iter().position(|(s, _)| *s == step) {
+                    record.hints.remove(i);
+                    record.hint_steps_used = record.hint_steps_used.saturating_sub(1);
+                }
+            }
+        }
     }
 
     pub fn save_grid(
@@ -711,12 +805,12 @@ mod tests {
 
     fn started_game(engine: &mut DailyPuzzleEngine, user_id: UserId, game_id: &str, now: TimestampMillis) {
         let expected_fee = engine.entry_fee(user_id, engine.puzzle(game_id).unwrap());
-        let fee = match engine.prepare_start(user_id, game_id, NUMBER, expected_fee, now) {
-            Ok(StartPrepared::Start { fee }) => fee,
+        match engine.reserve_start(user_id, game_id, NUMBER, expected_fee, now) {
+            Ok(StartPrepared::Start { .. }) => {}
             Ok(StartPrepared::AlreadyStarted(_)) => panic!("already started"),
             Err(e) => panic!("{e:?}"),
         };
-        engine.commit_start(user_id, game_id, NUMBER, now, fee > 0).unwrap();
+        engine.confirm_start(user_id, game_id, NUMBER);
     }
 
     fn seed_solved(engine: &mut DailyPuzzleEngine, user_id: UserId, numbers: &[PuzzleNumber]) {
@@ -809,22 +903,18 @@ mod tests {
     fn start_is_idempotent_and_keeps_the_original_clock() {
         let mut engine = new_engine();
         let u = user(1);
-        assert!(matches!(
-            engine.prepare_start(u, GAME, NUMBER, 0, START),
-            Ok(StartPrepared::Start { fee: 0 })
-        ));
-        let first = engine.commit_start(u, GAME, NUMBER, START, false).unwrap();
+        let first = match engine.reserve_start(u, GAME, NUMBER, 0, START).unwrap() {
+            StartPrepared::Start { fee: 0, result, .. } => result,
+            _ => panic!("expected a free start"),
+        };
         assert_eq!(first.started_at, START);
         assert_eq!(first.state.started_at, Some(START));
         assert_eq!(first.state.game_id, GAME);
 
-        match engine.prepare_start(u, GAME, NUMBER, 999, START + 5_000).unwrap() {
+        match engine.reserve_start(u, GAME, NUMBER, 999, START + 5_000).unwrap() {
             StartPrepared::AlreadyStarted(r) => assert_eq!(r.started_at, START),
             StartPrepared::Start { .. } => panic!("second start should not debit"),
         }
-        // A second commit (racing starts) keeps the first record
-        let again = engine.commit_start(u, GAME, NUMBER, START + 5_000, false).unwrap();
-        assert_eq!(again.started_at, START);
     }
 
     #[test]
@@ -832,14 +922,14 @@ mod tests {
         let mut engine = new_engine();
         let u = user(1);
         assert!(matches!(
-            engine.prepare_start(u, GAME, NUMBER, 0, START),
-            Ok(StartPrepared::Start { fee: 0 })
+            engine.reserve_start(u, GAME, NUMBER, 0, START),
+            Ok(StartPrepared::Start { fee: 0, .. })
         ));
 
         seed_solved(&mut engine, user(2), &[NUMBER - 10]);
         assert!(matches!(
-            engine.prepare_start(user(2), GAME, NUMBER, 100, START),
-            Ok(StartPrepared::Start { fee: 100 })
+            engine.reserve_start(user(2), GAME, NUMBER, 100, START),
+            Ok(StartPrepared::Start { fee: 100, .. })
         ));
 
         let mut engine = DailyPuzzleEngine::default();
@@ -847,16 +937,16 @@ mod tests {
         p.config.first_play_free = false;
         engine.set_puzzles(vec![p]);
         assert!(matches!(
-            engine.prepare_start(u, GAME, NUMBER, 100, START),
-            Ok(StartPrepared::Start { fee: 100 })
+            engine.reserve_start(u, GAME, NUMBER, 100, START),
+            Ok(StartPrepared::Start { fee: 100, .. })
         ));
     }
 
     #[test]
     fn start_price_mismatch() {
-        let engine = new_engine();
+        let mut engine = new_engine();
         assert_err(
-            engine.prepare_start(user(1), GAME, NUMBER, 100, START),
+            engine.reserve_start(user(1), GAME, NUMBER, 100, START),
             OCErrorCode::PriceMismatch,
         );
     }
@@ -865,7 +955,7 @@ mod tests {
     fn not_available_when_disabled_wrong_number_expired_or_unknown_game() {
         let mut engine = DailyPuzzleEngine::default();
         assert_err(
-            engine.prepare_start(user(1), GAME, NUMBER, 0, START),
+            engine.reserve_start(user(1), GAME, NUMBER, 0, START),
             OCErrorCode::NotInitialized,
         );
         assert!(engine.fetch(user(1), START).puzzles.is_empty());
@@ -873,24 +963,24 @@ mod tests {
 
         engine.set_puzzles(vec![puzzle(NUMBER, false)]);
         assert_err(
-            engine.prepare_start(user(1), GAME, NUMBER, 0, START),
+            engine.reserve_start(user(1), GAME, NUMBER, 0, START),
             OCErrorCode::NotInitialized,
         );
         assert!(engine.fetch(user(1), START).puzzles.is_empty());
 
         engine.set_puzzles(vec![puzzle(NUMBER, true)]);
         assert_err(
-            engine.prepare_start(user(1), GAME, NUMBER + 1, 0, START),
+            engine.reserve_start(user(1), GAME, NUMBER + 1, 0, START),
             OCErrorCode::Expired,
         );
         assert_err(
-            engine.prepare_start(user(1), GAME, NUMBER, 0, START + DAY_IN_MS),
+            engine.reserve_start(user(1), GAME, NUMBER, 0, START + DAY_IN_MS),
             OCErrorCode::Expired,
         );
         assert!(engine.fetch(user(1), START + DAY_IN_MS).puzzles.is_empty());
         // Unknown game for today
         assert_err(
-            engine.prepare_start(user(1), OTHER, NUMBER, 0, START),
+            engine.reserve_start(user(1), OTHER, NUMBER, 0, START),
             OCErrorCode::NotInitialized,
         );
         assert_err(
@@ -958,11 +1048,11 @@ mod tests {
         assert_eq!(outcome.solved.streak, 3);
         assert_eq!(outcome.solved.hints_used, 0);
         assert_eq!(outcome.solved.solved_at, START + 42_000);
-        assert_eq!(outcome.result.user_id, u);
-        assert_eq!(outcome.result.game_id, GAME);
-        assert_eq!(outcome.result.number, NUMBER);
-        assert_eq!(outcome.result.streak, 3);
-        assert_eq!(outcome.result.solve_time_ms, 42_000);
+        assert_eq!(outcome.result.as_ref().unwrap().user_id, u);
+        assert_eq!(outcome.result.as_ref().unwrap().game_id, GAME);
+        assert_eq!(outcome.result.as_ref().unwrap().number, NUMBER);
+        assert_eq!(outcome.result.as_ref().unwrap().streak, 3);
+        assert_eq!(outcome.result.as_ref().unwrap().solve_time_ms, 42_000);
 
         let state = state(&engine, u, START);
         assert_eq!(state.streak, 3);
@@ -1019,7 +1109,7 @@ mod tests {
         let first = engine.submit(u, GAME, NUMBER, &solution, START + 10_000).unwrap();
         assert_eq!(first.solved.reward, 300);
         assert_eq!(first.solved.streak, 2);
-        assert_eq!(first.result.game_id, GAME);
+        assert_eq!(first.result.as_ref().unwrap().game_id, GAME);
         // Yesterday (seeded) plus today
         assert_eq!(engine.metrics().solved_entries, 2);
 
@@ -1027,7 +1117,7 @@ mod tests {
         assert_eq!(second.solved.reward, 300);
         assert_eq!(second.solved.streak, 2);
         assert_eq!(second.solved.solve_time_ms, 19_900);
-        assert_eq!(second.result.game_id, OTHER);
+        assert_eq!(second.result.as_ref().unwrap().game_id, OTHER);
         // The day counts once
         assert_eq!(engine.metrics().solved_entries, 2);
         assert_eq!(engine.metrics().users_with_records, 1);
@@ -1043,18 +1133,12 @@ mod tests {
         // has_solved_before flips after the first solve of a fresh user
         let v = user(2);
         assert!(!state_for(&engine, v, GAME, START).has_solved_before);
+        assert_eq!(engine.entry_fee(v, engine.puzzle(OTHER).unwrap()), 0);
         started_game(&mut engine, v, GAME, START);
-        assert!(matches!(
-            engine.prepare_start(v, OTHER, NUMBER, 0, START),
-            Ok(StartPrepared::Start { fee: 0 })
-        ));
         engine.submit(v, GAME, NUMBER, &solution, START).unwrap();
         assert!(state_for(&engine, v, GAME, START).has_solved_before);
         assert!(state_for(&engine, v, OTHER, START).has_solved_before);
-        assert!(matches!(
-            engine.prepare_start(v, OTHER, NUMBER, 100, START),
-            Ok(StartPrepared::Start { fee: 100 })
-        ));
+        assert_eq!(engine.entry_fee(v, engine.puzzle(OTHER).unwrap()), 100);
     }
 
     #[test]
@@ -1065,15 +1149,13 @@ mod tests {
         let solution = engine.puzzle(GAME).unwrap().solution.clone();
 
         // Step 0 at level 1 (free), step 1 at level 2 (paid)
-        let (step, hint) = serve(&mut engine, u, 1, &[], 0);
-        engine.commit_hint(u, GAME, NUMBER, step, hint, 1).unwrap();
-        let (step, hint) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 100);
-        engine.commit_hint(u, GAME, NUMBER, step, hint, 2).unwrap();
+        serve(&mut engine, u, 1, &[], 0);
+        serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 100);
 
-        let outcome = engine.submit(u, GAME, NUMBER, &solution, START).unwrap();
+        let outcome = engine.submit(u, GAME, NUMBER, &solution, START + 10_000).unwrap();
         assert_eq!(outcome.solved.reward, 200);
         assert_eq!(outcome.solved.hints_used, 2);
-        assert_eq!(outcome.result.hints_used, 2);
+        assert_eq!(outcome.result.as_ref().unwrap().hints_used, 2);
     }
 
     #[test]
@@ -1107,13 +1189,25 @@ mod tests {
         level: u8,
         filled: &[(u16, u8)],
         expected_price: u32,
-    ) -> (u16, PuzzleHint) {
-        match engine.prepare_hint(u, GAME, NUMBER, level, filled, expected_price, START) {
-            Ok(HintPrepared::Serve { step, hint, .. }) => (step, hint),
+    ) -> (u16, HintResult) {
+        match engine.reserve_hint(u, GAME, NUMBER, level, filled, expected_price, START) {
+            Ok(HintPrepared::Serve { step, result, .. }) => (step, result),
             Ok(HintPrepared::Mistake(_)) => panic!("unexpected mistake"),
             Ok(HintPrepared::AlreadyServed(_)) => panic!("unexpected re-serve"),
             Err(e) => panic!("{e:?}"),
         }
+    }
+
+    // Step selection only: reserve then put the step straight back, so repeated probes neither
+    // consume the hint budget nor turn into re-serves
+    fn probe(engine: &mut DailyPuzzleEngine, u: UserId, filled: &[(u16, u8)]) -> u16 {
+        let (step, restore) = match engine.reserve_hint(u, GAME, NUMBER, 1, filled, 0, START) {
+            Ok(HintPrepared::Serve { step, restore, .. }) => (step, restore),
+            Ok(_) => panic!("expected a serve"),
+            Err(e) => panic!("{e:?}"),
+        };
+        engine.release_hint(u, GAME, NUMBER, step, restore);
+        step
     }
 
     #[test]
@@ -1124,7 +1218,7 @@ mod tests {
 
         // Cell 1 is wrong, cell 0 is right, key 99 is out of range and ignored
         match engine
-            .prepare_hint(u, GAME, NUMBER, 3, &[(1, 1), (0, 1), (99, 1)], 0, START)
+            .reserve_hint(u, GAME, NUMBER, 3, &[(1, 1), (0, 1), (99, 1)], 0, START)
             .unwrap()
         {
             HintPrepared::Mistake(r) => {
@@ -1166,18 +1260,16 @@ mod tests {
         started(&mut engine, u, START);
 
         // Everything matches the pairs: no mistake, and step 0 is fully applied so step 1 is served
-        let (step, hint) = serve(&mut engine, u, 1, &[(1, 1), (100, 2), (102, 0)], 0);
-        assert_eq!(step, 1);
-        assert_eq!(hint.technique, 2);
+        assert_eq!(probe(&mut engine, u, &[(1, 1), (100, 2), (102, 0)]), 1);
 
         // Values differing from the pairs, and a key the puzzle does not have, are all mistakes
         match engine
-            .prepare_hint(u, GAME, NUMBER, 1, &[(100, 1), (102, 0), (104, 0), (0, 1)], 0, START)
+            .reserve_hint(u, GAME, NUMBER, 1, &[(100, 1), (102, 0), (104, 0), (0, 1)], 0, START)
             .unwrap()
         {
             HintPrepared::Mistake(r) => {
                 assert!(r.hint.mistake);
-                assert_eq!(r.hint.hint.focus, vec![100, 104, 0]);
+                assert_eq!(r.hint.hint.focus, vec![0]);
                 assert!(r.hint.hint.conclusions.is_empty());
                 assert_eq!(r.hints_used, 0);
             }
@@ -1186,7 +1278,7 @@ mod tests {
 
         // All pairs filled: nothing left to hint
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 1, &[(1, 1), (100, 2), (102, 0), (104, 1)], 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[(1, 1), (100, 2), (102, 0), (104, 1)], 0, START),
             OCErrorCode::ItemNotFound,
         );
 
@@ -1195,7 +1287,7 @@ mod tests {
         started(&mut engine, u, START);
         assert!(engine.puzzle(GAME).unwrap().solution_pairs.is_empty());
         match engine
-            .prepare_hint(u, GAME, NUMBER, 1, &[(1, 1), (100, 2)], 0, START)
+            .reserve_hint(u, GAME, NUMBER, 1, &[(1, 1), (100, 2)], 0, START)
             .unwrap()
         {
             HintPrepared::Mistake(r) => assert_eq!(r.hint.hint.focus, vec![1]),
@@ -1209,35 +1301,27 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (step, hint) = serve(&mut engine, u, 1, &[], 0);
-        assert_eq!(step, 0);
-        assert_eq!(hint.technique, 1);
+        assert_eq!(probe(&mut engine, u, &[]), 0);
 
         // Step 0 fully applied: move on to step 1
-        let (step, hint) = serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 0);
-        assert_eq!(step, 1);
-        assert_eq!(hint.technique, 2);
+        assert_eq!(probe(&mut engine, u, &[(0, 1), (2, 0)]), 1);
 
         // Step 0's bulb is placed but its "no bulb" is not: the player has made the move, so
         // move on rather than charging them to be told to tick off a square they ruled out.
-        let (step, _) = serve(&mut engine, u, 1, &[(0, 1)], 0);
-        assert_eq!(step, 1);
+        assert_eq!(probe(&mut engine, u, &[(0, 1)]), 1);
 
         // Every positive placed: only negatives are left anywhere, so the fallback kicks in and
         // serves the earliest step still carrying one (step 0's "no bulb" at index 2).
-        let (step, hint) = serve(&mut engine, u, 1, &[(0, 1), (6, 1), (8, 1)], 0);
-        assert_eq!(step, 0);
-        assert_eq!(hint.technique, 1);
+        assert_eq!(probe(&mut engine, u, &[(0, 1), (6, 1), (8, 1)]), 0);
 
         // Step 3 concludes nothing but a negative, so it is never chosen while a positive is
         // outstanding anywhere, even though the player has finished steps 0 to 2.
-        let (step, _) = serve(&mut engine, u, 1, &[(0, 1), (2, 0), (6, 1)], 0);
-        assert_eq!(step, 2);
+        assert_eq!(probe(&mut engine, u, &[(0, 1), (2, 0), (6, 1)]), 2);
 
         // Everything filled: nothing to hint
         let all = [(0, 1), (2, 0), (6, 1), (8, 1), (5, 0)];
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 1, &all, 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 1, &all, 0, START),
             OCErrorCode::ItemNotFound,
         );
     }
@@ -1248,25 +1332,17 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (step, hint) = serve(&mut engine, u, 1, &[], 0);
-        let r = engine.commit_hint(u, GAME, NUMBER, step, hint, 1).unwrap();
+        let (step, r) = serve(&mut engine, u, 1, &[], 0);
         assert_eq!(r.hints_used, 1);
         assert_eq!(r.hint.level, 1);
 
-        // Upgrade the same step to level 3: price is hint_prices[2], not a new step
-        match engine.prepare_hint(u, GAME, NUMBER, 3, &[], 200, START).unwrap() {
-            HintPrepared::Serve { step: s, price, .. } => {
-                assert_eq!(s, step);
-                assert_eq!(price, 200);
-            }
-            _ => panic!("expected an upgrade"),
-        }
+        // Upgrading the same step to level 3 is priced at hint_prices[2], and counts no new step
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 3, &[], 100, START),
+            engine.reserve_hint(u, GAME, NUMBER, 3, &[], 100, START),
             OCErrorCode::PriceMismatch,
         );
-        let (step, hint) = serve(&mut engine, u, 3, &[], 200);
-        let r = engine.commit_hint(u, GAME, NUMBER, step, hint, 3).unwrap();
+        let (upgraded, r) = serve(&mut engine, u, 3, &[], 200);
+        assert_eq!(upgraded, step);
         assert_eq!(r.hints_used, 1);
         assert_eq!(r.hint.level, 3);
         let state = state(&engine, u, START);
@@ -1274,7 +1350,7 @@ mod tests {
         assert_eq!(state.hints[0].level, 3);
 
         // Asking for a lower level of the same step re-serves it free, no price check
-        match engine.prepare_hint(u, GAME, NUMBER, 2, &[], 999, START).unwrap() {
+        match engine.reserve_hint(u, GAME, NUMBER, 2, &[], 999, START).unwrap() {
             HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.level, 3),
             _ => panic!("expected a re-serve"),
         }
@@ -1286,30 +1362,28 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (step, hint) = serve(&mut engine, u, 1, &[], 0);
-        engine.commit_hint(u, GAME, NUMBER, step, hint, 1).unwrap();
-        let (step, hint) = serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 0);
-        engine.commit_hint(u, GAME, NUMBER, step, hint, 1).unwrap();
+        serve(&mut engine, u, 1, &[], 0);
+        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 0);
 
         // max_hints = 2: a third step is refused, an upgrade of a served step still works
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 0, START),
             OCErrorCode::Throttled,
         );
         let (step, _) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 100);
         assert_eq!(step, 1);
 
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 0, &[], 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 0, &[], 0, START),
             OCErrorCode::InvalidRequest,
         );
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 4, &[], 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 4, &[], 0, START),
             OCErrorCode::InvalidRequest,
         );
         let too_many = vec![(0u16, 1u8); MAX_FILLED_ENTRIES + 1];
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 1, &too_many, 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 1, &too_many, 0, START),
             OCErrorCode::InvalidRequest,
         );
     }
@@ -1319,16 +1393,168 @@ mod tests {
         let mut engine = new_engine();
         let u = user(1);
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 1, &[], 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[], 0, START),
             OCErrorCode::InvalidRequest,
         );
         started(&mut engine, u, START);
         let solution = engine.puzzle(GAME).unwrap().solution.clone();
         engine.submit(u, GAME, NUMBER, &solution, START).unwrap();
         assert_err(
-            engine.prepare_hint(u, GAME, NUMBER, 1, &[], 0, START),
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[], 0, START),
             OCErrorCode::AlreadyAwarded,
         );
+    }
+
+    #[test]
+    fn hint_levels_withhold_what_has_not_been_paid_for() {
+        let mut engine = DailyPuzzleEngine::default();
+        let mut p = puzzle(NUMBER, true);
+        // Step 0's target points at its own conclusion, as slant, tents and loopy steps do; step
+        // 1's points elsewhere, as light_up's do
+        p.hints[0].target = vec![0];
+        p.hints[1].target = vec![1];
+        engine.set_puzzles(vec![p]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        let (_, r) = serve(&mut engine, u, 1, &[], 0);
+        assert_eq!(r.hint.hint.technique, 0);
+        assert!(r.hint.hint.target.is_empty());
+        assert!(r.hint.hint.conclusions.is_empty());
+        assert_eq!(r.hint.hint.focus, vec![4]);
+
+        // Level 2 buys the technique, but not a target that names what the step concludes
+        let (_, r) = serve(&mut engine, u, 2, &[], 100);
+        assert_eq!(r.hint.hint.technique, 1);
+        assert!(r.hint.hint.target.is_empty());
+        assert!(r.hint.hint.conclusions.is_empty());
+
+        // Level 3 is the whole thing
+        let (_, r) = serve(&mut engine, u, 3, &[], 200);
+        assert_eq!(r.hint.hint.technique, 1);
+        assert_eq!(r.hint.hint.target, vec![0]);
+        assert_eq!(r.hint.hint.conclusions, vec![(0, 1), (2, 0)]);
+
+        // A target that names something other than the conclusion survives at level 2
+        let (_, r) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 100);
+        assert_eq!(r.hint.hint.technique, 2);
+        assert_eq!(r.hint.hint.target, vec![1]);
+        assert!(r.hint.hint.conclusions.is_empty());
+    }
+
+    // One wrong key, never the set: `filled` is client-supplied and can cover the whole board, so
+    // returning every disagreement would answer the puzzle in a single free call
+    #[test]
+    fn hint_mistake_returns_only_the_lowest_wrong_key() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        let whole_board: Vec<(u16, u8)> = (0..9).map(|k| (k, 1)).collect();
+        match engine.reserve_hint(u, GAME, NUMBER, 1, &whole_board, 0, START).unwrap() {
+            HintPrepared::Mistake(r) => {
+                // Solution is [1, 0, 0, 0, 0, 0, 1, 0, 1], so every key but 0, 6 and 8 disagrees
+                assert_eq!(r.hint.hint.focus, vec![1]);
+                assert_eq!(r.hints_used, 0);
+            }
+            _ => panic!("expected a mistake hint"),
+        }
+    }
+
+    // The step is recorded by `reserve_hint` itself, so requests that overlap on the debit's await
+    // each see what the last one took rather than all reading the same pre-debit count
+    #[test]
+    fn reserved_hints_count_before_the_debit() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        let restore = match engine.reserve_hint(u, GAME, NUMBER, 2, &[], 100, START).unwrap() {
+            HintPrepared::Serve { step, restore, .. } => {
+                assert_eq!(state(&engine, u, START).hints.len(), 1);
+                (step, restore)
+            }
+            _ => panic!("expected a serve"),
+        };
+
+        // max_hints is 2 and one is now taken, so a second new step is the last one allowed
+        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 0);
+        assert_err(
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 0, START),
+            OCErrorCode::Throttled,
+        );
+
+        // A failed debit puts the step back, budget included
+        engine.release_hint(u, GAME, NUMBER, restore.0, restore.1);
+        assert_eq!(state(&engine, u, START).hints.len(), 1);
+        let (step, _) = serve(&mut engine, u, 1, &[(0, 1), (2, 0), (6, 1)], 0);
+        assert_eq!(step, 2);
+    }
+
+    // An upgrade that fails to pay leaves the level the player already had
+    #[test]
+    fn released_upgrade_restores_the_level_already_paid_for() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+        serve(&mut engine, u, 1, &[], 0);
+
+        let (step, restore) = match engine.reserve_hint(u, GAME, NUMBER, 3, &[], 200, START).unwrap() {
+            HintPrepared::Serve { step, restore, .. } => (step, restore),
+            _ => panic!("expected an upgrade"),
+        };
+        assert_eq!(state(&engine, u, START).hints[0].level, 3);
+
+        engine.release_hint(u, GAME, NUMBER, step, restore);
+        let hints = state(&engine, u, START).hints;
+        assert_eq!(hints.len(), 1);
+        assert_eq!(hints[0].level, 1);
+    }
+
+    #[test]
+    fn released_start_leaves_no_record() {
+        let mut engine = new_engine();
+        let u = user(2);
+        seed_solved(&mut engine, u, &[NUMBER - 10]);
+
+        assert!(matches!(
+            engine.reserve_start(u, GAME, NUMBER, 100, START),
+            Ok(StartPrepared::Start { fee: 100, .. })
+        ));
+        assert!(state(&engine, u, START).started_at.is_some());
+
+        engine.release_start(u, GAME, NUMBER);
+        assert!(state(&engine, u, START).started_at.is_none());
+
+        // A confirmed start is never released: a retry that raced the debit keeps its record
+        assert!(matches!(
+            engine.reserve_start(u, GAME, NUMBER, 100, START),
+            Ok(StartPrepared::Start { fee: 100, .. })
+        ));
+        engine.confirm_start(u, GAME, NUMBER);
+        engine.release_start(u, GAME, NUMBER);
+        assert!(state(&engine, u, START).started_at.is_some());
+    }
+
+    // A solve nobody could have played is still paid, because CHIT buys nothing and a cheat only
+    // cheats itself, but it never reaches the index that cards are verified against
+    #[test]
+    fn solves_under_the_carding_floor_pay_but_are_not_published() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+        let solution = engine.puzzle(GAME).unwrap().solution.clone();
+
+        let outcome = engine.submit(u, GAME, NUMBER, &solution, START + 200).unwrap();
+        assert_eq!(outcome.solved.reward, 250);
+        assert_eq!(outcome.solved.solve_time_ms, 200);
+        assert!(outcome.result.is_none());
+        assert_eq!(state(&engine, u, START).streak, 1);
+
+        let mut engine = new_engine();
+        started(&mut engine, u, START);
+        let outcome = engine.submit(u, GAME, NUMBER, &solution, START + 10_000).unwrap();
+        assert!(outcome.result.is_some());
     }
 
     #[test]
@@ -1385,10 +1611,7 @@ mod tests {
         assert_eq!(state.started_at, None);
         assert_eq!(state.streak, 1);
         assert!(state.has_solved_before);
-        assert!(matches!(
-            engine.prepare_start(u, GAME, NUMBER + 1, 100, tomorrow),
-            Ok(StartPrepared::Start { fee: 100 })
-        ));
+        assert_eq!(engine.entry_fee(u, engine.puzzle(GAME).unwrap()), 100);
         assert!(!engine.is_stale(tomorrow));
         assert!(engine.is_stale(tomorrow + DAY_IN_MS));
 
@@ -1400,42 +1623,37 @@ mod tests {
         assert!(engine.is_stale(tomorrow));
     }
 
-    // Same number, same game, new content: only that game's records go, solves stay credited
     #[test]
-    fn fingerprint_is_fnv1a_32_as_8_hex_chars() {
-        assert_eq!(puzzle_fingerprint(b"a"), "e40c292c");
-        assert_eq!(puzzle_fingerprint(&[]), "811c9dc5");
-        // Leading zeros are kept
-        assert_eq!(puzzle_fingerprint(&[0, 2]), "0f7694a7");
-    }
-
-    #[test]
-    fn chit_keys_carry_the_puzzle_fingerprint() {
+    fn chit_keys_do_not_identify_the_puzzle() {
         let engine = new_engine();
-        let fp = puzzle_fingerprint(&puzzle(NUMBER, true).description);
-        assert_eq!(fp.len(), 8);
-        assert_eq!(engine.entry_key(GAME, NUMBER), format!("{GAME}:{NUMBER}:{fp}:entry"));
-        assert_eq!(engine.solve_key(GAME, NUMBER), format!("{GAME}:{NUMBER}:{fp}:solve"));
-        assert_eq!(
-            engine.hint_key(GAME, NUMBER, 12, 3),
-            format!("{GAME}:{NUMBER}:{fp}:hint:12:3")
-        );
+        assert_eq!(engine.entry_key(GAME, NUMBER), format!("{GAME}:{NUMBER}:entry"));
+        assert_eq!(engine.solve_key(GAME, NUMBER), format!("{GAME}:{NUMBER}:solve"));
+        assert_eq!(engine.hint_key(GAME, NUMBER, 12, 3), format!("{GAME}:{NUMBER}:hint:12:3"));
         assert!(engine.hint_key(GAME, NUMBER, u16::MAX, 3).len() <= 64);
     }
 
+    // Regenerating a day drops the records made against the old puzzle, so every call is made
+    // again. The keys must not move with the puzzle, or the replay would charge a second entry
+    // fee and pay a second reward to someone who had already solved that day.
     #[test]
-    fn regenerated_puzzle_gets_different_chit_keys() {
+    fn regenerated_puzzle_keeps_the_same_chit_keys() {
         let mut engine = new_engine();
-        let before = (engine.entry_key(GAME, NUMBER), engine.solve_key(GAME, NUMBER));
+        let before = (
+            engine.entry_key(GAME, NUMBER),
+            engine.solve_key(GAME, NUMBER),
+            engine.hint_key(GAME, NUMBER, 1, 2),
+        );
 
         let mut regenerated = puzzle(NUMBER, true);
         regenerated.description[3] = 1;
         engine.set_puzzles(vec![regenerated]);
 
-        assert_ne!(engine.entry_key(GAME, NUMBER), before.0);
-        assert_ne!(engine.solve_key(GAME, NUMBER), before.1);
+        assert_eq!(engine.entry_key(GAME, NUMBER), before.0);
+        assert_eq!(engine.solve_key(GAME, NUMBER), before.1);
+        assert_eq!(engine.hint_key(GAME, NUMBER, 1, 2), before.2);
     }
 
+    // Same number, same game, new content: only that game's records go, solves stay credited
     #[test]
     fn regenerated_puzzle_drops_that_games_records_only() {
         let mut engine = new_engine();

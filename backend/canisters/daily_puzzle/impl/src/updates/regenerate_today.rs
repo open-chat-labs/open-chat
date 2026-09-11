@@ -16,11 +16,11 @@ use types::UnitResult;
 /// puzzle it replaces.
 ///
 /// Results already recorded here for today's old puzzle stay (keyed by number + game; harmless).
-/// Local user indexes only drop their user records when the pushed number changes, and today's
-/// number doesn't, so: when the game changes, users who started the old game keep a record for a
-/// game that is no longer in the set, which `daily_puzzle_fetch` simply doesn't list; when the
-/// game is the same, those records carry over to the new puzzle, so a user who had started or
-/// solved the old one is treated as having started or solved the new one.
+/// A local user index drops the user records for every game whose puzzle it is replacing, so
+/// anyone mid-game starts the replacement from scratch. Their CHIT is not charged again and their
+/// reward is not paid again: the idempotency keys are `{game}:{number}:...` and do not identify
+/// which puzzle was held, so the user canister answers `AlreadyAdded` to the replayed calls.
+/// Solved days, and so streaks, are never touched.
 #[update(guard = "caller_is_governance_principal", candid = true, msgpack = true)]
 #[trace]
 fn regenerate_today(args: Args) -> Response {

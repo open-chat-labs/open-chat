@@ -79,27 +79,34 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(started.chit_balance, None);
     assert_eq!(started.total_chit_earned, None);
 
-    // Level 1 hint: free, and it is the first step of the solver's own trace. Hint keys are
-    // not grid indices in every game (bridges keys edges), so compare against the trace
-    // rather than the solution bytes.
+    // Level 1 hint: free, and it highlights the first step of the solver's own trace. It carries
+    // neither the technique nor the conclusions, which are what levels 2 and 3 are sold for.
     let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), 0);
     assert!(!first.hint.mistake);
     assert_eq!(first.hint.level, 1);
-    assert!(!first.hint.hint.conclusions.is_empty());
-    assert_eq!(first.hint.hint.conclusions, trace[0]);
+    assert_eq!(first.hint.hint.technique, 0);
+    assert!(first.hint.hint.target.is_empty());
+    assert!(first.hint.hint.conclusions.is_empty());
+    assert!(!first.hint.hint.focus.is_empty());
     assert_eq!(first.hints_used, 1);
     assert_eq!(chit_balance(env, &user), DAILY_CHIT);
     assert_eq!(first.chit_balance, None);
 
-    // Level 2 on the same step: pay 100, still one step used
-    let level_2_price = puzzle.hint_prices[1];
-    let upgraded = hint(env, &user, local_user_index, game_id, number, 2, Vec::new(), level_2_price);
+    // Upgrading the same step to level 3: the only tier that hands over the conclusions, and the
+    // step is still the one step used. Hint keys are not grid indices in every game (bridges keys
+    // edges), so compare against the solver's trace rather than the solution bytes. Level 2's
+    // payload is covered by the engine's own tests; the balance here only stretches to one
+    // purchase, and level 3 is the tier that must not be reachable for free.
+    let level_3_price = puzzle.hint_prices[2];
+    let upgraded = hint(env, &user, local_user_index, game_id, number, 3, Vec::new(), level_3_price);
     assert!(!upgraded.hint.mistake);
-    assert_eq!(upgraded.hint.level, 2);
-    assert_eq!(upgraded.hint.hint, first.hint.hint);
+    assert_eq!(upgraded.hint.level, 3);
+    assert_ne!(upgraded.hint.hint.technique, 0);
+    assert_eq!(upgraded.hint.hint.focus, first.hint.hint.focus);
+    assert_eq!(upgraded.hint.hint.conclusions, trace[0]);
     assert_eq!(upgraded.hints_used, 1);
     assert_eq!(upgraded.state.hints.len(), 1);
-    let balance_after_hint = DAILY_CHIT - level_2_price as i32;
+    let balance_after_hint = DAILY_CHIT - level_3_price as i32;
     assert_eq!(chit_balance(env, &user), balance_after_hint);
     // The debit landed in this call, so the response reports the user canister's balances
     assert_eq!(upgraded.chit_balance, Some(balance_after_hint));
@@ -127,8 +134,8 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(chit_balance(env, &user), balance_after_hint);
     assert_eq!(mistake.chit_balance, None);
 
-    // Make the solve time measurable
-    env.advance_time(Duration::from_secs(5));
+    // Past `min_carded_solve_ms`, so the solve is published to the results index
+    env.advance_time(Duration::from_secs(30));
 
     // Wrong grid
     let mut wrong_grid = solution.clone();
@@ -160,15 +167,14 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(solved.total_chit_earned, Some(total_chit_earned(env, &user)));
 
     let events = client::user::happy_path::chit_events(env, &user, None, None, 50).events;
-    let fp = crate::daily_puzzle_engine_tests::fingerprint(&puzzle.description);
-    let hint_prefix = format!("{game_id}:{number}:{fp}:hint:");
-    let solve_key = format!("{game_id}:{number}:{fp}:solve");
+    let hint_prefix = format!("{game_id}:{number}:hint:");
+    let solve_key = format!("{game_id}:{number}:solve");
     assert!(
         events.iter().any(|e| matches!(
             &e.reason,
             ChitEventType::Game { game_id: g, key }
-                if g == game_id && key.starts_with(&hint_prefix) && key.ends_with(":2")
-        ) && e.amount == -(level_2_price as i32)),
+                if g == game_id && key.starts_with(&hint_prefix) && key.ends_with(":3")
+        ) && e.amount == -(level_3_price as i32)),
         "no hint debit event: {events:?}"
     );
     assert!(
@@ -404,6 +410,7 @@ fn solve(game_id: &str, description: &[u8], tier: u8) -> (Vec<Vec<(u16, u8)>>, V
         slant::GAME_ID => solve_with!(slant),
         bridges::GAME_ID => solve_with!(bridges),
         loopy::GAME_ID => solve_with!(loopy),
+        unruly::GAME_ID => solve_with!(unruly),
         other => panic!("no solver for game {other}"),
     }
 }
@@ -416,6 +423,7 @@ fn wrong_pair(game_id: &str, description: &[u8], solution: &[u8]) -> (u16, u8) {
         light_up::GAME_ID => (light_up::solution_pairs(description, solution), |v| v ^ 1),
         tents::GAME_ID => (tents::solution_pairs(description, solution), |v| v ^ 1),
         loopy::GAME_ID => (loopy::solution_pairs(description, solution), |v| v ^ 1),
+        unruly::GAME_ID => (unruly::solution_pairs(description, solution), |v| if v == 1 { 2 } else { 1 }),
         slant::GAME_ID => (slant::solution_pairs(description, solution), |v| if v == 1 { 2 } else { 1 }),
         bridges::GAME_ID => (bridges::solution_pairs(description, solution), |v| (v + 1) % 3),
         other => panic!("no solution pairs for game {other}"),

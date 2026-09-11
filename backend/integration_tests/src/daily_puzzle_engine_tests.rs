@@ -146,9 +146,8 @@ fn daily_puzzle_start_submit_and_streak() {
     assert_eq!(solved.total_chit_earned, Some(total_chit_earned(env, &user)));
 
     let events = client::user::happy_path::chit_events(env, &user, None, None, 20).events;
-    let fp = fingerprint(&puzzle.description);
-    let solve_key = format!("{GAME}:{number}:{fp}:solve");
-    let entry_key = format!("{GAME}:{number}:{fp}:entry");
+    let solve_key = format!("{GAME}:{number}:solve");
+    let entry_key = format!("{GAME}:{number}:entry");
     assert!(events.iter().any(|e| matches!(
         &e.reason,
         ChitEventType::Game { game_id, key } if game_id == GAME && key == &solve_key
@@ -200,7 +199,7 @@ fn daily_puzzle_start_submit_and_streak() {
     tick_many(env, 3);
     assert_eq!(chit_balance(env, &user), balance - ENTRY_FEE as i32 + REWARD as i32);
     let events = client::user::happy_path::chit_events(env, &user, None, None, 20).events;
-    let other_solve_key = format!("{OTHER}:{number}:{}:solve", fingerprint(&other.description));
+    let other_solve_key = format!("{OTHER}:{number}:solve");
     assert!(events.iter().any(|e| matches!(
         &e.reason,
         ChitEventType::Game { game_id, key } if game_id == OTHER && key == &other_solve_key
@@ -386,14 +385,4 @@ fn chit_balance(env: &PocketIc, user: &User) -> i32 {
 
 fn total_chit_earned(env: &PocketIc, user: &User) -> i32 {
     client::user::happy_path::initial_state(env, user).total_chit_earned
-}
-
-// FNV-1a 32-bit over the description bytes, as the LUI builds its CHIT keys
-pub(crate) fn fingerprint(description: &[u8]) -> String {
-    let mut h: u32 = 0x811c9dc5;
-    for b in description {
-        h ^= *b as u32;
-        h = h.wrapping_mul(0x01000193);
-    }
-    format!("{h:08x}")
 }
