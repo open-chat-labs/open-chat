@@ -35,6 +35,7 @@ impl DirectChats {
 
     pub fn get_or_create<F: FnOnce() -> u128>(
         &mut self,
+        my_user_id: UserId,
         their_user_id: UserId,
         their_user_type: UserType,
         anonymized_id: F,
@@ -42,7 +43,7 @@ impl DirectChats {
     ) -> &mut DirectChat {
         self.direct_chats
             .entry(their_user_id.into())
-            .or_insert_with(|| DirectChat::new(their_user_id, their_user_type, None, anonymized_id(), now))
+            .or_insert_with(|| DirectChat::new(my_user_id, their_user_id, their_user_type, None, anonymized_id(), now))
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {

@@ -108,10 +108,13 @@ pub fn handle_start_video_call(
         sender_context: None,
     };
 
-    let chat = state
-        .data
-        .direct_chats
-        .get_or_create(other, UserType::User, || state.env.rng().random(), now);
+    let chat = state.data.direct_chats.get_or_create(
+        state.env.canister_id().into(),
+        other,
+        UserType::User,
+        || state.env.rng().random(),
+        now,
+    );
 
     let mute_notification = their_message_index.is_some() || chat.notifications_muted.value;
 
