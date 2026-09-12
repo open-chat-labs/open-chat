@@ -1,6 +1,6 @@
-use crate::Data;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
+use crate::{Data, mutate_state};
 use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -27,6 +27,15 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
+
+    // Stop storing the other user's metrics in existing direct chats, deleting any already stored.
+    // TODO: Remove this after next release
+    mutate_state(|state| {
+        let my_user_id = state.env.canister_id().into();
+        for chat in state.data.direct_chats.iter_mut() {
+            chat.events.skip_their_metrics(my_user_id);
+        }
+    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");

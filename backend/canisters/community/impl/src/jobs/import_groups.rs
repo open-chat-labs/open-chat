@@ -1,4 +1,5 @@
 use crate::activity_notifications::extract_activity;
+use crate::jobs::migrate_chat_events_to_stable_memory;
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
@@ -226,6 +227,10 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 chat,
                 date_imported: None, // This is only set once everything is complete
             });
+
+            // Moves the imported group's data which is still on the heap (eg. its users' metrics)
+            // into stable memory under the channel's prefixes
+            migrate_chat_events_to_stable_memory::start_job_if_required(state);
 
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {

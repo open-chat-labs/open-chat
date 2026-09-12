@@ -71,13 +71,28 @@ impl ExpiringEvents {
     // Moves up to `max_count` entries from the heap into stable memory, returning how many were
     // moved
     pub fn migrate_to_stable_memory(&mut self, chat: Chat, max_count: usize) -> usize {
-        let mut count = 0;
-        while count < max_count
-            && let Some((expires_at, event_index)) = self.on_heap.pop_first()
-        {
-            self.insert(chat, event_index, expires_at);
-            count += 1;
+        if max_count == 0 {
+            return 0;
         }
+        let Some((first_expiry, _)) = self.on_heap.first().copied() else {
+            return 0;
+        };
+        if self.next_expiry_in_stable_memory.is_none_or(|ts| first_expiry < ts) {
+            self.next_expiry_in_stable_memory = Some(first_expiry);
+        }
+
+        let prefix = ExpiringEventKeyPrefix::new_from_chat(chat);
+        let mut count = 0;
+
+        // Entries are popped in (expiry date, event index) order, which is also their key order
+        with_map_mut(|m| {
+            m.insert_many(
+                std::iter::from_fn(|| self.on_heap.pop_first())
+                    .take(max_count)
+                    .inspect(|_| count += 1)
+                    .map(|key| (prefix.create_key(&key), Vec::new())),
+            )
+        });
         count
     }
 
