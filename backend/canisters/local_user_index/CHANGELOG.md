@@ -21,6 +21,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Waive the daily puzzle entry fee for a user who has never started rather than one who has never solved, so a player who never solves does not play free forever
 - Ignore an empty daily puzzle push rather than reading it as a day change, which would clear every puzzle and every in-progress record, entry fees included
 - Zero a daily puzzle reward the user canister refuses outright, rather than reporting CHIT that was never credited
+- Zero a daily puzzle reward from the retry queue too, not just from the call that recorded the solve, so a credit the user canister refuses or that gives up retrying stops being reported as paid
+- Return the fee a user would pay in `DailyPuzzleUserState`, so the client can send it as `expected_entry_fee`. The free first play hangs off history the client cannot see, and a player who started once and never solved could not be told apart from one who had never played
+- Keep a daily puzzle free first play tied to the day it was spent on, so a `regenerate_today` restart is free rather than charging the full fee to the one player who had not paid
+- Charge a daily puzzle hint penalty, and publish a hint count, only for hints actually paid for: the reward and the results row are both written before a hint debit is known to have landed
+- Bound the free outcomes of `daily_puzzle_hint` with `max_free_checks`, reported back as `free_checks` on the state and `max_free_checks` on the puzzle so the client can stop offering the check rather than let it come back throttled. The mistake check answers "is this key right?" for a client-chosen key, so it was an unmetered oracle: one call per key read the whole solution without spending CHIT or a submit. Every outcome that serves no paid hint is counted, and all of them refuse the same way once the budget is gone
+- Refuse a second daily puzzle hint reservation on a step whose debit is still in flight, rather than overwriting it; the overwrite dropped whichever hint the first call was paying for
+- Ignore a daily puzzle push carrying an older number than the one held, rather than reading it as a day change and clearing every in-progress record on the subnet, entry fees included
 - Hold each user's daily puzzle history as the last number solved and the run ending there, rather than the set of every day ever solved
 - Re-check for a missed daily puzzle push every 15 minutes, so a subnet that misses the rollover does not hold yesterday's puzzle until its next upgrade
 - Drop `#[trace]` from `daily_puzzle_start`, `daily_puzzle_hint` and `daily_puzzle_save_grid`, whose args and responses carry hints and completed grids

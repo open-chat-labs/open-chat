@@ -3,12 +3,12 @@ use std::env;
 use ts_export::generate_ts_method;
 
 fn main() {
-    generate_candid_method!(daily_puzzle, candidates, query);
     generate_candid_method!(daily_puzzle, config, query);
     generate_candid_method!(daily_puzzle, current_puzzles, query);
     generate_candid_method!(daily_puzzle, game_configs, query);
     generate_candid_method!(daily_puzzle, results, query);
 
+    generate_candid_method!(daily_puzzle, candidates, update);
     generate_candid_method!(daily_puzzle, push_now, update);
     generate_candid_method!(daily_puzzle, regenerate_today, update);
     generate_candid_method!(daily_puzzle, set_config, update);

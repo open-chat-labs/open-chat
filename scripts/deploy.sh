@@ -47,7 +47,7 @@ PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
 AIRDROP_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id airdrop_bot)
 STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
-DAILY_PUZZLE_CANISTER_ID=$(dfx canister --network $NETWORK id daily_puzzle)
+DAILY_PUZZLE_CANISTER_ID=$(dfx canister --network $NETWORK id daily_puzzle 2>/dev/null)
 REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_controller)
@@ -81,7 +81,7 @@ cargo run \
   --airdrop-bot $AIRDROP_BOT_CANISTER_ID \
   --storage-index $STORAGE_INDEX_CANISTER_ID \
   --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
-  --daily-puzzle $DAILY_PUZZLE_CANISTER_ID \
+  --daily-puzzle "$DAILY_PUZZLE_CANISTER_ID" \
   --registry $REGISTRY_CANISTER_ID \
   --market-maker $MARKET_MAKER_CANISTER_ID \
   --neuron-controller $NEURON_CONTROLLER_CANISTER_ID \

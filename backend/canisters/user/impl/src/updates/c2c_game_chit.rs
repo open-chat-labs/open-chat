@@ -20,7 +20,8 @@ fn c2c_game_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
         return Error(error.into());
     }
 
-    if args.amount == 0 || args.amount.abs() > MAX_GAME_CHIT_ABS_AMOUNT {
+    // Not `abs()`, which wraps for `i32::MIN` and would let that one value through
+    if args.amount == 0 || args.amount < -MAX_GAME_CHIT_ABS_AMOUNT || args.amount > MAX_GAME_CHIT_ABS_AMOUNT {
         return Error(OCErrorCode::InvalidRequest.with_message("Invalid amount"));
     }
 

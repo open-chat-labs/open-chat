@@ -19,6 +19,7 @@ type DailyPuzzleConfig = record {
     hint_penalty : nat32;
     min_carded_solve_ms : nat64;
     max_submits : nat16;
+    max_free_checks : nat16;
 };
 
 type GameConfig = record {
@@ -38,6 +39,7 @@ type PublicDailyPuzzle = record {
     first_play_free : bool;
     hint_prices : vec nat32;
     max_hints : nat8;
+    max_free_checks : nat16;
     min_carded_solve_ms : nat64;
 };
 
@@ -127,12 +129,12 @@ type VetoCandidateArgs = record {
 };
 
 service : {
-    candidates : (CandidatesArgs) -> (CandidatesResponse) query;
     config : (record {}) -> (ConfigResponse) query;
     current_puzzles : (record {}) -> (CurrentPuzzlesResponse) query;
     game_configs : (record {}) -> (GameConfigsResponse) query;
     results : (ResultsArgs) -> (ResultsResponse) query;
 
+    candidates : (CandidatesArgs) -> (CandidatesResponse);
     push_now : (record {}) -> (UnitResult);
     regenerate_today : (RegenerateTodayArgs) -> (UnitResult);
     set_config : (SetConfigArgs) -> (UnitResult);

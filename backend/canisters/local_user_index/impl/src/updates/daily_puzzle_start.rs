@@ -41,6 +41,8 @@ async fn daily_puzzle_start(args: Args) -> Response {
             game_id: args.game_id.clone(),
             key,
             amount: -amount,
+            // Debits are released inline rather than queued, so there is no reward to abandon
+            puzzle_number: None,
         };
         let outcome = apply(&debit).await;
         // `AlreadyAdded` lands in `Applied` too: a previous start paid but failed to record. The

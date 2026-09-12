@@ -29,13 +29,16 @@ fn scheduled(number: PuzzleNumber) -> (&'static str, u8) {
 }
 
 #[test]
-fn daily_puzzle_canister_serves_todays_puzzle_and_guards_governance_calls() {
+fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
         canister_ids,
         controller,
     } = wrapper.env();
+
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
 
     let now = now_millis(env);
     let today = (now / DAY_IN_MS) as u32;
@@ -72,7 +75,8 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_governance_calls() {
     // Tomorrow's pool fills in via timers
     let (tomorrows_game, _) = scheduled(today + 1);
     tick_many(env, 5);
-    let candidates = client::daily_puzzle::happy_path::candidates(env, *controller, canister_ids.daily_puzzle, today + 1);
+    let candidates =
+        client::daily_puzzle::happy_path::candidates(env, operator.principal, canister_ids.daily_puzzle, today + 1);
     assert_eq!(candidates.len(), 3);
     assert!(
         candidates
@@ -83,7 +87,7 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_governance_calls() {
     // Veto is keyed by game; a wrong game id is not found
     let response = client::daily_puzzle::veto_candidate(
         env,
-        *controller,
+        operator.principal,
         canister_ids.daily_puzzle,
         &daily_puzzle_canister::veto_candidate::Args {
             number: today + 1,
@@ -94,35 +98,37 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_governance_calls() {
     assert!(matches!(response, UnitResult::Error(e) if e.matches_code(OCErrorCode::ItemNotFound)));
     client::daily_puzzle::happy_path::veto_candidate(
         env,
-        *controller,
+        operator.principal,
         canister_ids.daily_puzzle,
         today + 1,
         tomorrows_game.to_string(),
         0,
     );
-    let candidates = client::daily_puzzle::happy_path::candidates(env, *controller, canister_ids.daily_puzzle, today + 1);
+    let candidates =
+        client::daily_puzzle::happy_path::candidates(env, operator.principal, canister_ids.daily_puzzle, today + 1);
     assert!(candidates[0].vetoed);
     assert!(candidates[1..].iter().all(|c| !c.vetoed));
 
-    // Governance guard
+    // Platform operator guard
     let enabled = DailyPuzzleConfig {
         enabled: true,
         ..Default::default()
     };
-    let result = env.update_call(
+    let non_operator = client::register_user(env, canister_ids);
+    let response = client::daily_puzzle::set_config(
+        env,
+        non_operator.principal,
         canister_ids.daily_puzzle,
-        Principal::from_slice(&[9, 9, 9]),
-        "set_config_msgpack",
-        msgpack::serialize_then_unwrap(&daily_puzzle_canister::set_config::Args { config: enabled.clone() }),
+        &daily_puzzle_canister::set_config::Args { config: enabled.clone() },
     );
     assert!(
-        result.is_err(),
-        "set_config from a non-governance principal should be rejected"
+        matches!(response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "set_config from a non-operator should be rejected"
     );
     let config = client::daily_puzzle::happy_path::config(env, Principal::anonymous(), canister_ids.daily_puzzle);
     assert!(!config.enabled);
 
-    client::daily_puzzle::happy_path::set_config(env, *controller, canister_ids.daily_puzzle, enabled.clone());
+    client::daily_puzzle::happy_path::set_config(env, operator.principal, canister_ids.daily_puzzle, enabled.clone());
     let config = client::daily_puzzle::happy_path::config(env, Principal::anonymous(), canister_ids.daily_puzzle);
     assert!(config.enabled);
     let puzzles = client::daily_puzzle::happy_path::current_puzzles(env, Principal::anonymous(), canister_ids.daily_puzzle);
@@ -135,7 +141,7 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_governance_calls() {
     };
     client::daily_puzzle::happy_path::set_game_config(
         env,
-        *controller,
+        operator.principal,
         canister_ids.daily_puzzle,
         todays_game.to_string(),
         game_config.clone(),
@@ -206,6 +212,9 @@ fn daily_puzzle_generation_instruction_counts() {
         controller,
     } = wrapper.env();
 
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+
     let now = now_millis(env);
     let today = (now / DAY_IN_MS) as u32;
     tick_many(env, 5);
@@ -227,10 +236,11 @@ fn daily_puzzle_generation_instruction_counts() {
             };
             7
         ];
-        client::daily_puzzle::happy_path::set_schedule(env, *controller, canister_ids.daily_puzzle, schedule);
+        client::daily_puzzle::happy_path::set_schedule(env, operator.principal, canister_ids.daily_puzzle, schedule);
         env.advance_time(Duration::from_secs(1));
         tick_many(env, 10);
-        let candidates = client::daily_puzzle::happy_path::candidates(env, *controller, canister_ids.daily_puzzle, today + 1);
+        let candidates =
+            client::daily_puzzle::happy_path::candidates(env, operator.principal, canister_ids.daily_puzzle, today + 1);
         assert_eq!(candidates.len(), 3, "{game_id} {width}x{width} tier {tier}");
         assert!(
             candidates
@@ -269,6 +279,9 @@ fn daily_puzzle_rotates_through_the_week() {
         controller,
     } = wrapper.env();
 
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+
     let today = (now_millis(env) / DAY_IN_MS) as u32;
     let puzzles = client::daily_puzzle::happy_path::current_puzzles(env, Principal::anonymous(), canister_ids.daily_puzzle);
     assert_eq!(puzzles.len(), 1);
@@ -284,7 +297,8 @@ fn daily_puzzle_rotates_through_the_week() {
         // its own timer callback, so give each boundary a few ticks.
         env.advance_time(Duration::from_millis(DAY_IN_MS / 2));
         tick_many(env, 5);
-        let candidates = client::daily_puzzle::happy_path::candidates(env, *controller, canister_ids.daily_puzzle, number);
+        let candidates =
+            client::daily_puzzle::happy_path::candidates(env, operator.principal, canister_ids.daily_puzzle, number);
         assert!(!candidates.is_empty(), "day {day}: no candidates for {game_id}");
         assert!(
             candidates.iter().all(|c| c.game_id == game_id && c.hint_count > 0),

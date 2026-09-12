@@ -50,17 +50,15 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_governance_principal(&self) -> bool {
-        self.data.governance_principals.contains(&self.env.caller())
-    }
-
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let current_number = Data::number_for(now);
-        let mut results_by_game: BTreeMap<GameId, u32> = BTreeMap::new();
+        // Counted against the borrowed key, so a game id is cloned once rather than once per row
+        let mut counts: BTreeMap<&GameId, u32> = BTreeMap::new();
         for (_, game_id, _) in self.data.results.keys() {
-            *results_by_game.entry(game_id.clone()).or_default() += 1;
+            *counts.entry(game_id).or_default() += 1;
         }
+        let results_by_game: BTreeMap<GameId, u32> = counts.into_iter().map(|(g, c)| (g.clone(), c)).collect();
 
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -116,6 +114,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 registry: self.data.registry_canister_id,
                 user_index: self.data.user_index_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
     }
@@ -138,9 +137,9 @@ pub struct Regeneration {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    pub governance_principals: HashSet<Principal>,
     pub registry_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
+    pub cycles_dispenser_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
     /// Set once from the first real rng seed; every puzzle seed derives from it.
     pub master_seed: u64,
@@ -162,16 +161,16 @@ struct Data {
 
 impl Data {
     pub fn new(
-        governance_principals: HashSet<Principal>,
         registry_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
         schedule: Vec<PuzzleParams>,
         test_mode: bool,
     ) -> Data {
         Data {
-            governance_principals,
             registry_canister_id,
             user_index_canister_id,
+            cycles_dispenser_canister_id,
             rng_seed: [0; 32],
             master_seed: 0,
             config: DailyPuzzleConfig::default(),
@@ -219,8 +218,10 @@ impl Data {
             .unwrap_or_default()
     }
 
-    fn has_puzzle(&self, number: PuzzleNumber, game_id: &str) -> bool {
-        self.puzzles.get(&number).is_some_and(|games| games.contains_key(game_id))
+    /// A day holds one puzzle. Keyed by game so a regeneration can swap the game, but a day that
+    /// already has a puzzle never gets a second one, whatever the schedule now says for it.
+    fn has_puzzle(&self, number: PuzzleNumber) -> bool {
+        self.puzzles.get(&number).is_some_and(|games| !games.is_empty())
     }
 
     fn candidate_pool(&self, number: PuzzleNumber, game_id: &str) -> Option<&Vec<Candidate>> {
@@ -239,7 +240,7 @@ impl Data {
     pub fn generation_needed(&self, now: TimestampMillis) -> Option<PuzzleNumber> {
         let current = Self::number_for(now);
         let game_id = &self.params_for(current).game_id;
-        if !self.has_puzzle(current, game_id)
+        if !self.has_puzzle(current)
             && !self.has_unvetoed_candidate(current, game_id)
             && self.candidate_pool(current, game_id).map_or(0, |p| p.len()) < MAX_CANDIDATE_POOL
         {
@@ -247,7 +248,7 @@ impl Data {
         }
         let next = current + 1;
         let game_id = &self.params_for(next).game_id;
-        if !self.has_puzzle(next, game_id) {
+        if !self.has_puzzle(next) {
             let pool_size = self.candidate_pool(next, game_id).map_or(0, |p| p.len());
             if pool_size < CANDIDATE_POOL_SIZE
                 || (!self.has_unvetoed_candidate(next, game_id) && pool_size < MAX_CANDIDATE_POOL)
@@ -304,7 +305,7 @@ impl Data {
         let current = Self::number_for(now);
         let game_id = self.params_for(current).game_id.clone();
         let mut promoted = false;
-        if !self.has_puzzle(current, &game_id)
+        if !self.has_puzzle(current)
             && let Some(pool) = self.candidate_pool(current, &game_id)
             && let Some(candidate) = pool.iter().find(|c| !c.vetoed)
         {
@@ -376,7 +377,9 @@ impl Data {
         self.game_configs.insert(game_id, config);
     }
 
-    /// Replaces the schedule and drops every unshipped candidate pool so it regenerates.
+    /// Replaces the schedule and drops every future candidate pool so it regenerates. Takes
+    /// effect from tomorrow: today keeps whatever has already shipped or been generated for it,
+    /// and an active regeneration still overrides today. Use `regenerate_today` to change today.
     pub fn set_schedule(&mut self, schedule: Vec<PuzzleParams>, now: TimestampMillis) {
         self.schedule = schedule;
         let current = Self::number_for(now);
@@ -432,12 +435,13 @@ impl Data {
     pub fn aggregates(&self, now: TimestampMillis) -> Vec<PuzzleAggregate> {
         let current = Self::number_for(now);
         let from = current.saturating_sub(6);
-        let mut by_key: BTreeMap<(PuzzleNumber, GameId), (Vec<u64>, u64)> = BTreeMap::new();
+        // Keyed by the borrowed game id, so it is cloned once per puzzle rather than once per solve
+        let mut by_key: BTreeMap<(PuzzleNumber, &GameId), (Vec<u64>, u64)> = BTreeMap::new();
         for ((number, game_id, _), result) in self
             .results
             .range((from, String::new(), UserId::from(Principal::from_slice(&[])))..)
         {
-            let entry = by_key.entry((*number, game_id.clone())).or_default();
+            let entry = by_key.entry((*number, game_id)).or_default();
             entry.0.push(result.solve_time_ms);
             entry.1 += result.hints_used as u64;
         }
@@ -450,8 +454,8 @@ impl Data {
                     if solves % 2 == 1 { times[solves / 2] } else { (times[solves / 2 - 1] + times[solves / 2]) / 2 };
                 PuzzleAggregate {
                     number,
-                    tier: self.puzzles.get(&number).and_then(|g| g.get(&game_id)).map(|p| p.tier),
-                    game_id,
+                    tier: self.puzzles.get(&number).and_then(|g| g.get(game_id)).map(|p| p.tier),
+                    game_id: game_id.clone(),
                     solves: solves as u32,
                     median_solve_ms,
                     mean_hints: hints as f64 / solves as f64,
@@ -616,6 +620,7 @@ pub struct PuzzleAggregate {
 pub struct CanisterIds {
     pub registry: CanisterId,
     pub user_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
 }
 
 #[cfg(test)]
@@ -638,7 +643,7 @@ mod tests {
             black_pct: 20,
         };
         let mut data = Data::new(
-            HashSet::new(),
+            Principal::anonymous(),
             Principal::anonymous(),
             Principal::anonymous(),
             vec![params; 7],

@@ -136,6 +136,11 @@ pub fn validate_config(config: &DailyPuzzleConfig) -> Result<(), String> {
     if config.max_submits == 0 {
         return Err("max_submits must be at least 1".to_string());
     }
+    // The free mistake check reads the solution a key at a time, so the bound has to stay well
+    // under the key count of the smallest board we ship (36) to be worth anything
+    if !(1..=30).contains(&config.max_free_checks) {
+        return Err("max_free_checks must be within 1..=30".to_string());
+    }
     validate_chit_amount("entry_fee", config.entry_fee)?;
     validate_chit_amount("hint_penalty", config.hint_penalty)?;
     for (i, reward) in config.reward_by_streak.iter().enumerate() {

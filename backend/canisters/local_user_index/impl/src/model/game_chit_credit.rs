@@ -1,8 +1,9 @@
+use crate::mutate_state;
 use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use timer_job_queues::{TimerJobItem, TimerJobQueue};
 use tracing::error;
-use types::{C2CError, Milliseconds, UserId};
+use types::{C2CError, Milliseconds, PuzzleNumber, UserId};
 use user_canister::c2c_game_chit::{Args, Response, SuccessResult};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
@@ -14,6 +15,11 @@ pub struct GameChitCredit {
     pub game_id: String,
     pub key: String,
     pub amount: i32,
+    // Set for a daily puzzle solve reward. The inline path zeroes the recorded reward when the
+    // user canister will never credit it; the retry path has to be able to do the same, or the
+    // record goes on claiming CHIT the balance never received.
+    #[serde(default)]
+    pub puzzle_number: Option<PuzzleNumber>,
 }
 
 pub type GameChitCreditRetryQueue = TimerJobQueue<GameChitCredit>;
@@ -51,15 +57,37 @@ pub async fn apply(credit: &GameChitCredit) -> GameChitOutcome {
     }
 }
 
+impl GameChitCredit {
+    // Nothing more will be tried for this credit, so stop reporting a reward that was never paid
+    fn abandon(&self) {
+        if let Some(number) = self.puzzle_number {
+            mutate_state(|state| {
+                state
+                    .data
+                    .daily_puzzle_engine
+                    .clear_reward(self.user_id, &self.game_id, number)
+            });
+        }
+    }
+}
+
 impl TimerJobItem for GameChitCredit {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
         match apply(self).await {
             GameChitOutcome::Applied(_) => Ok(()),
             GameChitOutcome::Refused(error) => {
                 error!(?error, key = %self.key, user_id = %self.user_id, "Game CHIT credit refused, dropping");
+                self.abandon();
                 Ok(())
             }
-            GameChitOutcome::Failed(error) => Err(delay_if_should_retry_failed_c2c_call(&error)),
+            GameChitOutcome::Failed(error) => {
+                let delay = delay_if_should_retry_failed_c2c_call(&error);
+                if delay.is_none() {
+                    error!(?error, key = %self.key, user_id = %self.user_id, "Game CHIT credit failed, dropping");
+                    self.abandon();
+                }
+                Err(delay)
+            }
         }
     }
 }

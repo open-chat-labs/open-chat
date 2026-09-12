@@ -1,4 +1,4 @@
-use crate::guards::caller_is_governance_principal;
+use crate::guards::verify_caller_is_platform_operator;
 use crate::jobs::generate_candidates;
 use crate::mutate_state;
 use canister_api_macros::update;
@@ -21,9 +21,12 @@ use types::UnitResult;
 /// reward is not paid again: the idempotency keys are `{game}:{number}:...` and do not identify
 /// which puzzle was held, so the user canister answers `AlreadyAdded` to the replayed calls.
 /// Solved days, and so streaks, are never touched.
-#[update(guard = "caller_is_governance_principal", candid = true, msgpack = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
-fn regenerate_today(args: Args) -> Response {
+async fn regenerate_today(args: Args) -> Response {
+    if let Err(error) = verify_caller_is_platform_operator().await {
+        return UnitResult::Error(error);
+    }
     mutate_state(|state| {
         let now = state.env.now();
         if let Err(message) = state.data.regenerate_today(args.game_id, now) {

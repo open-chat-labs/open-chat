@@ -81,6 +81,9 @@ fn game_chit_invalid_args_rejected() {
         ("light_up", "1:solve", 0),
         ("light_up", "1:solve", 100_001),
         ("light_up", "1:solve", -100_001),
+        // `abs()` wraps for this one value, so it used to pass both the limit and the balance
+        // check and take the balance to roughly negative two billion
+        ("light_up", "1:solve", i32::MIN),
         ("", "1:solve", 10),
         ("light_up", "", 10),
         (&"g".repeat(65), "1:solve", 10),

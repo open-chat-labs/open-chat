@@ -85,6 +85,7 @@ fn submit(args: &Args, state: &mut RuntimeState) -> OCResult<(SubmitOutcome, Opt
             game_id: args.game_id.clone(),
             key: state.data.daily_puzzle_engine.solve_key(&args.game_id, args.number),
             amount,
+            puzzle_number: Some(args.number),
         });
 
     Ok((outcome, credit))

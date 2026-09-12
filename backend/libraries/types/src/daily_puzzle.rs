@@ -54,6 +54,12 @@ pub struct DailyPuzzleConfig {
     pub min_carded_solve_ms: u64,
     /// Submissions per user per puzzle before the local user index refuses further ones.
     pub max_submits: u16,
+    /// Hint calls per user per puzzle that may come back without a paid hint. The free mistake
+    /// check answers "is this key right?" for a client-chosen key, so without a bound it is an
+    /// unmetered oracle: one call per key reads the whole solution without spending any CHIT.
+    /// Counted on every outcome that serves no paid hint, since refusing one outcome and not the
+    /// other still tells the caller which it was.
+    pub max_free_checks: u16,
 }
 
 impl Default for DailyPuzzleConfig {
@@ -66,6 +72,7 @@ impl Default for DailyPuzzleConfig {
             hint_penalty: 50,
             min_carded_solve_ms: 10_000,
             max_submits: 20,
+            max_free_checks: 20,
         }
     }
 }
@@ -135,6 +142,7 @@ impl DailyPuzzle {
             first_play_free: self.config.first_play_free,
             hint_prices: self.game_config.hint_prices.clone(),
             max_hints: self.game_config.max_hints,
+            max_free_checks: self.config.max_free_checks,
             min_carded_solve_ms: self.config.min_carded_solve_ms,
         }
     }
@@ -156,6 +164,9 @@ pub struct PublicDailyPuzzle {
     pub first_play_free: bool,
     pub hint_prices: Vec<u32>,
     pub max_hints: u8,
+    /// Paired with `DailyPuzzleUserState::free_checks`, so the client can stop offering the check
+    /// rather than let the call come back throttled
+    pub max_free_checks: u16,
     pub min_carded_solve_ms: u64,
 }
 
@@ -203,11 +214,18 @@ pub struct DailyPuzzleUserState {
     pub grid_saved_at: Option<TimestampMillis>,
     pub solved: Option<DailyPuzzleSolved>,
     pub submits: u16,
+    /// Hint calls that came back without a paid hint, bounded by `max_free_checks`.
+    pub free_checks: u16,
     /// Consecutive days with a solve, ending yesterday (or today if solved). Series-level, the same
     /// value on every state of the same day. What the card shows.
     pub streak: u32,
     /// Whether this user has ever solved any daily puzzle.
     pub has_solved_before: bool,
+    /// What this user would pay to start this puzzle, which is what `daily_puzzle_start` expects
+    /// in `expected_entry_fee`. Zero once started, since the fee is then already settled. The
+    /// free first play depends on history the client cannot see, so this is the only way to get
+    /// the figure right.
+    pub entry_fee: u32,
 }
 
 #[ts_export]

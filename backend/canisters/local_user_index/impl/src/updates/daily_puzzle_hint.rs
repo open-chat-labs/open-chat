@@ -48,6 +48,8 @@ async fn daily_puzzle_hint(args: Args) -> Response {
             game_id: args.game_id.clone(),
             key,
             amount: -amount,
+            // Debits are released inline rather than queued, so there is no reward to abandon
+            puzzle_number: None,
         };
         let error = match apply(&debit).await {
             GameChitOutcome::Applied(balances) => {

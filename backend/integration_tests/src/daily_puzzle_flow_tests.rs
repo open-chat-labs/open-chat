@@ -42,8 +42,8 @@ fn daily_puzzle_end_to_end() {
         enabled: true,
         ..DailyPuzzleConfig::default()
     };
-    client::daily_puzzle::happy_path::set_config(env, *controller, canister_ids.daily_puzzle, config.clone());
-    client::daily_puzzle::happy_path::push_now(env, *controller, canister_ids.daily_puzzle);
+    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, config.clone());
+    client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     set_canister_id(env, &user, local_user_index, canister_ids.daily_puzzle);
 
     let (puzzle, state) = wait_for_puzzle(env, &user, local_user_index);
@@ -69,10 +69,13 @@ fn daily_puzzle_end_to_end() {
     client::user::happy_path::claim_daily_chit(env, &user, None);
     assert_eq!(chit_balance(env, &user), DAILY_CHIT);
 
-    // First play is free
-    let started = start(env, &user, local_user_index, game_id, number, 0);
+    // First play is free, and the state says so: the fee the client sends is the one it was told
+    assert_eq!(state.entry_fee, 0);
+    let started = start(env, &user, local_user_index, game_id, number, state.entry_fee);
     let started_at = started.started_at;
     assert_eq!(started.state.started_at, Some(started_at));
+    // Nothing left to pay once the record exists
+    assert_eq!(started.state.entry_fee, 0);
     assert!(!started.state.has_solved_before);
     assert_eq!(chit_balance(env, &user), DAILY_CHIT);
     // Nothing was debited, so the response carries no balance
@@ -243,8 +246,8 @@ fn daily_puzzle_end_to_end() {
         enabled: false,
         ..config.clone()
     };
-    client::daily_puzzle::happy_path::set_config(env, *controller, canister_ids.daily_puzzle, disabled);
-    client::daily_puzzle::happy_path::push_now(env, *controller, canister_ids.daily_puzzle);
+    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, disabled);
+    client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     tick_many(env, 5);
     let fetched = fetch(env, &user, local_user_index);
     assert!(fetched.puzzles.is_empty(), "{fetched:?}");
@@ -264,8 +267,8 @@ fn daily_puzzle_end_to_end() {
     assert!(error.matches_code(OCErrorCode::NotInitialized), "{error:?}");
 
     // Re-enable: the solved record survives
-    client::daily_puzzle::happy_path::set_config(env, *controller, canister_ids.daily_puzzle, config);
-    client::daily_puzzle::happy_path::push_now(env, *controller, canister_ids.daily_puzzle);
+    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, config);
+    client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     tick_many(env, 5);
     let fetched = fetch(env, &user, local_user_index);
     assert!(
