@@ -282,9 +282,24 @@ fn daily_puzzle_rotates_through_the_week() {
     let operator = client::register_user(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
 
+    // Start at the top of a day. The loop below steps in 12-hour jumps and its two halves are the
+    // 12:00 top-up and the 00:00 ship, which only holds from there. The pooled env's clock is
+    // wherever earlier tests left it, and from the second half of a day the first jump crosses
+    // midnight: `generation_needed` then answers for `current` rather than `next`, so
+    // `ensure_puzzles` promotes the day 1 pool and removes it before the assertion reads it.
+    let into_day = now_millis(env) % DAY_IN_MS;
+    env.advance_time(Duration::from_millis(DAY_IN_MS - into_day + 60_000));
+
     let today = (now_millis(env) / DAY_IN_MS) as u32;
-    let puzzles = client::daily_puzzle::happy_path::current_puzzles(env, Principal::anonymous(), canister_ids.daily_puzzle);
-    assert_eq!(puzzles.len(), 1);
+    let mut puzzles = Vec::new();
+    for _ in 0..20 {
+        env.tick();
+        puzzles = client::daily_puzzle::happy_path::current_puzzles(env, Principal::anonymous(), canister_ids.daily_puzzle);
+        if puzzles.iter().any(|p| p.number == today) {
+            break;
+        }
+    }
+    assert_eq!(puzzles.len(), 1, "{puzzles:?}");
     assert_eq!(puzzles[0].number, today);
     assert_eq!(puzzles[0].game_id, scheduled(today).0);
 

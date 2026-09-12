@@ -82,9 +82,18 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(started.chit_balance, None);
     assert_eq!(started.total_chit_earned, None);
 
-    // Level 1 hint: highlights the first step of the solver's own trace, and carries neither the
-    // technique nor the conclusions, which are what levels 2 and 3 are sold for. Every level
-    // costs, so this one is debited like any other.
+    // The step the engine will serve. It prefers the first step that puts a mark on the board over
+    // the earliest outstanding one, because the cheap rules run to a standstill first and their
+    // negatives-only conclusions cost a hint and teach nothing. Which generator today's schedule
+    // serves decides whether that is trace[0] or not, so derive it rather than assuming.
+    let expected_step = trace
+        .iter()
+        .find(|c| c.iter().any(|(_, value)| *value != 0))
+        .unwrap_or(&trace[0]);
+
+    // Level 1 hint: highlights the step, and carries neither the technique nor the conclusions,
+    // which are what levels 2 and 3 are sold for. Every level costs, so this one is debited like
+    // any other.
     let level_1_price = puzzle.hint_prices[0];
     assert!(level_1_price > 0, "no hint level is free");
     let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), level_1_price);
@@ -110,7 +119,7 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(upgraded.hint.level, 3);
     assert_ne!(upgraded.hint.hint.technique, 0);
     assert_eq!(upgraded.hint.hint.focus, first.hint.hint.focus);
-    assert_eq!(upgraded.hint.hint.conclusions, trace[0]);
+    assert_eq!(upgraded.hint.hint.conclusions, *expected_step);
     assert_eq!(upgraded.hints_used, 1);
     assert_eq!(upgraded.state.hints.len(), 1);
     let balance_after_hint = balance_after_first - upgrade_price as i32;
