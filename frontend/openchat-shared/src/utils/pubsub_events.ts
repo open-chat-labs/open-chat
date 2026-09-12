@@ -8,6 +8,7 @@ import type {
     CommandDefinition,
     CommunityIdentifier,
     CommunitySummary,
+    DailyResultContent,
     DirectChatIdentifier,
     DirectChatSummary,
     EnhancedReplyContext,
@@ -86,6 +87,8 @@ export type PubSubEvents = {
     wallet: undefined;
     profile: undefined;
     claimDailyChit: undefined;
+    dailyPuzzle: { gameId?: string };
+    shareDailyResult: DailyResultContent;
     joinGroup: {
         group: MultiUserChat;
         select: boolean;

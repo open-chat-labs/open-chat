@@ -13,6 +13,7 @@ import {
     CommunityMap,
     DEFAULT_TOKENS,
     emptyChatMetrics,
+    emptyDailyPuzzleState,
     getDisplayDate,
     Immutable,
     mergeListOfCombinedUnreadCounts,
@@ -27,6 +28,7 @@ import {
     type ChatIdentifier,
     type ChatSummary,
     type ChitState,
+    type DailyPuzzleState,
     type CombinedUnreadCounts,
     type CommunityIdentifier,
     type CommunitySummary,
@@ -524,6 +526,8 @@ export const chitStateStore = writable<ChitState>(
     undefined,
     notEq,
 );
+
+export const dailyPuzzleStore = writable<DailyPuzzleState>(emptyDailyPuzzleState, undefined, notEq);
 
 export const serverCommunitiesStore = writable<CommunityMap<CommunitySummary>>(
     new CommunityMap<CommunitySummary>(),

@@ -110,6 +110,7 @@ export type MessageContent =
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent
+    | DailyResultContent
     | VideoCallContent
     | EncryptedContent;
 
@@ -187,7 +188,8 @@ export type AttachmentContent =
     | GiphyContent
     | CryptocurrencyContent
     | PrizeContentInitial
-    | P2PSwapContentInitial;
+    | P2PSwapContentInitial
+    | DailyResultContent;
 
 export function isAttachmentContent(content: MessageContent): content is AttachmentContent {
     switch (content.kind) {
@@ -199,6 +201,7 @@ export function isAttachmentContent(content: MessageContent): content is Attachm
         case "crypto_content":
         case "p2p_swap_content_initial":
         case "prize_content_initial":
+        case "daily_result":
             return true;
         default:
             return false;
@@ -624,6 +627,22 @@ export const MemeFighterContentSchema = Type.Object({
     url: Type.String(),
 });
 export type MemeFighterContent = Static<typeof MemeFighterContentSchema>;
+
+// Result card for a solved daily puzzle. `layout` is the hex-encoded puzzle description bytes
+// (version, width, height, cells) so the card can draw the grid without fetching the puzzle.
+export const DailyResultContentSchema = Type.Object({
+    kind: Type.Literal("daily_result"),
+    gameId: Type.String(),
+    number: Type.Number(),
+    userId: Type.String(),
+    solveTimeMs: Type.Number(),
+    hintsUsed: Type.Number(),
+    streak: Type.Number(),
+    layout: Type.String(),
+    tier: Type.Optional(Type.Number()),
+    caption: Type.Optional(Type.String()),
+});
+export type DailyResultContent = Static<typeof DailyResultContentSchema>;
 
 export const VideoContentSchema = Type.Object({
     kind: Type.Literal("video_content"),

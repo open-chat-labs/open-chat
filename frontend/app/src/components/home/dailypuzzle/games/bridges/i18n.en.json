@@ -1,0 +1,13 @@
+{
+    "name": "Bridges",
+    "rules": "Connect the islands with bridges so each island has exactly its number. Bridges run straight, never cross, and at most two join a pair.",
+    "technique.1": "This island can only reach its number by using every bridge that still fits around it, so draw all of them.",
+    "technique.2": "This island's number is too big to leave any neighbour out, so it needs at least one bridge in every direction it can reach.",
+    "technique.3": "Without a bridge to this neighbour, the other directions could not give this island enough bridges for its number, so a bridge must go here.",
+    "demo.1": "Join the islands with bridges. The number on an island is how many bridges must reach it.",
+    "demo.2": "Bridges run straight between two islands and never cross. This one counts one at each end.",
+    "demo.3": "The same pair can take a second bridge. Now it counts two at each end.",
+    "demo.4": "No island can go over its number. This one needs three bridges and has four.",
+    "demo.5": "One bridge down the side instead of two, and it has its three.",
+    "demo.6": "Every number matched, and every island joined to the rest. That finishes it."
+}

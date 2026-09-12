@@ -70,6 +70,7 @@
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
+    import Puzzle from "svelte-material-icons/Puzzle.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import Translatable from "../Translatable.svelte";
     import Typing from "@shared_components/Typing.svelte";
@@ -170,6 +171,8 @@
                 return Image;
             case "meme_fighter_content":
                 return MemeFighter;
+            case "daily_result":
+                return Puzzle;
             case "video_call_content":
                 return Phone;
             case "video_content":

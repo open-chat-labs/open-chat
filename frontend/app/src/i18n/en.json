@@ -650,6 +650,171 @@
     "currentChitBalance": "Current CHIT balance",
     "currentLimit": "Your current storage limit is {limit}GB and your account balance is {balance} ICP.",
     "currentUsage": "Current Storage Usage",
+    "dailyPuzzle": {
+        "title": "The Daily",
+        "number": "The Daily #{number}",
+        "tier": {
+            "0": "Easy",
+            "1": "Tricky"
+        },
+        "todaysPuzzle": "Today's puzzle",
+        "play": "Play",
+        "continue": "Continue",
+        "solved": "Solved",
+        "unavailable": "There is no puzzle available right now.",
+        "startFree": "Start (first puzzle free)",
+        "startFee": "Start for {fee} CHIT",
+        "hintFree": "Hint (level {level})",
+        "hintPrice": "Hint (level {level}, {price} CHIT)",
+        "hintsUsed": "{count} hints",
+        "hintsLeft": "{count} left",
+        "noHintsLeft": "No hints left for today's puzzle",
+        "streakDays": "{streak} day streak",
+        "submitting": "Checking your solution...",
+        "solvedTitle": "Solved!",
+        "solvedSummary": "{time} with {hints} hints. Streak: {streak}.",
+        "reward": "+{reward} CHIT",
+        "share": "Share",
+        "verified": "Verified",
+        "unverified": "Unverified",
+        "card": {
+            "time": "Time",
+            "hints": "Hints",
+            "dayStreak": "Day streak"
+        },
+        "wrong": "That's not it. Check the red cells.",
+        "mistake": "Something is wrong in the red cells.",
+        "failedToStart": "Sorry, we couldn't start the puzzle",
+        "failedToSubmit": "Sorry, we couldn't check your solution",
+        "failedHint": "Sorry, we couldn't get a hint",
+        "chitEvent": {
+            "entry": "Daily puzzle entry",
+            "solve": "Daily puzzle solved",
+            "hint": "Daily puzzle hint"
+        },
+        "needsNewerApp": "This puzzle type needs a newer app",
+        "games": {
+            "bridges": {
+                "name": "Bridges",
+                "rules": "Connect the islands with bridges so each island has exactly its number. Bridges run straight, never cross, and at most two join a pair.",
+                "technique": {
+                    "1": "This island can only reach its number by using every bridge that still fits around it, so draw all of them.",
+                    "2": "This island's number is too big to leave any neighbour out, so it needs at least one bridge in every direction it can reach.",
+                    "3": "Without a bridge to this neighbour, the other directions could not give this island enough bridges for its number, so a bridge must go here."
+                },
+                "demo": {
+                    "1": "Join the islands with bridges. The number on an island is how many bridges must reach it.",
+                    "2": "Bridges run straight between two islands and never cross. This one counts one at each end.",
+                    "3": "The same pair can take a second bridge. Now it counts two at each end.",
+                    "4": "No island can go over its number. This one needs three bridges and has four.",
+                    "5": "One bridge down the side instead of two, and it has its three.",
+                    "6": "Every number matched, and every island joined to the rest. That finishes it."
+                }
+            },
+            "light_up": {
+                "name": "Light Up",
+                "rules": "Light every white cell. A bulb lights its row and column up to a black cell, no bulb may shine on another, and a number says how many bulbs touch that cell.",
+                "technique": {
+                    "1": "This cell can only be lit from one place, so a bulb must go there.",
+                    "2": "This number already touches all the bulbs it asks for, so the other cells next to it must stay empty.",
+                    "3": "This number still needs a bulb in every free cell next to it, so put a bulb in each of them.",
+                    "4": "At least one of the highlighted cells must hold a bulb, and a bulb in this cell would rule all of them out, so this cell must stay empty."
+                },
+                "demo": {
+                    "1": "Place bulbs until every white cell is lit.",
+                    "2": "A bulb lights its own row and column, as far as the black cells.",
+                    "3": "A number counts the bulbs next to it. This 4 needs one on each side.",
+                    "4": "This corner is still dark, and nothing else can reach it, so it takes a bulb of its own.",
+                    "5": "No bulb may shine on another. These two are in the same column with nothing between them.",
+                    "6": "Every white cell is lit, the 4 has its four bulbs, and no bulb shines on another."
+                }
+            },
+            "loopy": {
+                "name": "Loopy",
+                "rules": "Draw one closed loop along the grid lines. It never crosses or branches, so every dot has two lines or none. A number says how many of its four sides the loop uses; cells with no number are free.",
+                "technique": {
+                    "1": "This number already has all the lines it needs around it, so its other sides are crosses.",
+                    "2": "This number has exactly as many open sides left as lines it still needs, so all of them are lines.",
+                    "3": "A line comes into a corner of this number from outside, so the two sides meeting at that corner can't both be lines, and every other open side of the number must be a line.",
+                    "4": "No line reaches this dot and only one of its sides is still open. One line alone at a dot is a dead end, so cross that side off.",
+                    "5": "A line reaches this dot and only one of its other sides is still open. A dot can never have just one line, so the loop continues along that side.",
+                    "6": "This dot already has its two lines, so cross off its remaining sides.",
+                    "7": "The lines forced at the corners of this number already give it all the lines it needs, so this side is a cross.",
+                    "8": "Even with every line still possible at its corners, this number falls short without this side, so this side is a line.",
+                    "9": "Drawing this segment would close a loop that leaves other lines out, so it is a cross.",
+                    "10": "The loop is complete and every number is satisfied, so every remaining segment is a cross."
+                },
+                "demo": {
+                    "1": "Draw one closed loop along the grid lines. A number counts the lines on that cell's four sides; a blank cell is free.",
+                    "2": "Start with a 0. None of its four sides can be a line, so cross them off.",
+                    "3": "Lines run dot to dot.",
+                    "4": "A line that stops dead is not a loop. Every dot needs two lines, or none at all.",
+                    "5": "It cannot branch either. Three lines at a dot is too many.",
+                    "6": "One closed circuit, and every number matched. Follow it round and you arrive back where you started."
+                }
+            },
+            "slant": {
+                "name": "Slant",
+                "rules": "Draw a diagonal in every cell. A number says how many diagonals touch that corner; corners with no number are free. The diagonals must never join up into a loop.",
+                "technique": {
+                    "1": "This number already has all the lines it needs, so every other cell around it must slant away from it.",
+                    "2": "This number still needs exactly as many lines as it has empty cells around it, so all of those cells must slant towards it.",
+                    "3": "The two corners this line would join are already linked by a chain of lines, so joining them would close a loop, and the cell must slant the other way.",
+                    "4": "This line would join two groups of lines that never reach the edge of the grid and have no other way out, sealing them into a loop, so the cell must slant the other way.",
+                    "5": "The numbers between this cell and the highlighted filled cell can only be met if the two slant the same way, so copy the filled cell.",
+                    "6": "Two neighbouring empty cells around this number must slant the same way, so between them they give it exactly one line, and that settles the other cells around it."
+                },
+                "demo": {
+                    "1": "Every cell gets one diagonal. It can lean either way, but no cell is left empty.",
+                    "2": "A number counts the diagonals that touch that corner. Two touch this 2, so it is done.",
+                    "3": "The same diagonal ends on a corner with no number. Those corners count nothing, so they never limit you.",
+                    "4": "This corner needs four, so all four cells around it have to point at it. There is only one way to do that.",
+                    "5": "These four have joined up into a closed ring. Rings are not allowed, so one of them must lean the other way.",
+                    "6": "Every cell filled, every number matched, and no ring anywhere."
+                }
+            },
+            "tents": {
+                "name": "Tents",
+                "rules": "Every tree needs its own tent directly beside it, never diagonally. Tents never touch, not even at corners. The numbers count the tents in each row and column.",
+                "technique": {
+                    "1": "No tree next to this cell still needs a tent, so this cell can't hold one.",
+                    "2": "A tent already touches this cell, so this cell can't hold one.",
+                    "3": "This tree has only one cell left where its tent can go, so that cell must be a tent.",
+                    "4": "This tree's tent must go in one of two cells, and both of them touch this cell, so this cell can't hold a tent.",
+                    "5": "Only these cells in this row or column can still take a tent, and every way of fitting in the ones it needs agrees about the marked cells, so you can fill them in.",
+                    "6": "Only these cells in this row or column can still take a tent, and every way of fitting in the ones it needs puts one next to the marked cells, so you can rule them out.",
+                    "7": "This row or column needs as many tents as it has cells left that could hold one, so every one of them is a tent.",
+                    "8": "This row or column already has all its tents, so no other cell in it can hold one."
+                },
+                "demo": {
+                    "1": "Every tree needs its own tent in a cell beside it. The numbers count the tents in each row and column.",
+                    "2": "A tent goes directly beside its tree, above, below, left or right. Corners do not count, so these cells stay empty.",
+                    "3": "This column needs one tent, and only one cell is left for it.",
+                    "4": "Tents never touch, not even at a corner. These two do, so one of them has to move.",
+                    "5": "Only one cell beside this tree is still free, so its tent goes there.",
+                    "6": "Every tree has a tent beside it, no two tents touch, and the counts all match."
+                }
+            },
+            "unruly": {
+                "name": "Unruly",
+                "rules": "Fill every cell with one of two colours. Never three of the same colour in a row or column, and every row and column ends up half of each.",
+                "technique": {
+                    "1": "These two neighbours are already the same colour, so the cell just past them must be the other one: three the same in a row is never allowed.",
+                    "2": "These two cells are the same colour with one gap between them, so the cell in the gap must be the other one: three the same in a row is never allowed.",
+                    "3": "This line has all the cells it is allowed of one colour and is one short of the other, so its last empty cell must be that other colour.",
+                    "4": "This line already has as many of this colour as it is allowed, so every cell still empty in it must be the other colour.",
+                    "5": "This line needs exactly one more of one colour, and putting it outside these three cells would leave three of the other colour in a row here, so every empty cell elsewhere in the line takes the other colour."
+                },
+                "demo": {
+                    "1": "Fill every cell orange or purple. The ringed ones are given, so those you cannot change.",
+                    "2": "Never three of the same colour in a row, across or down. That is one orange too many.",
+                    "3": "Every row and column ends up three of each colour. This row has four purples.",
+                    "4": "Two oranges with a gap. Orange in between would make three, so it has to be purple.",
+                    "5": "Every cell filled, no run of three, and three of each colour in every row and column."
+                }
+            }
+        }
+    },
     "dailyChit": {
         "alreadyClaimed": "Come back tomorrow to extend your streak!",
         "available": "Claim your CHIT and extend your streak!",

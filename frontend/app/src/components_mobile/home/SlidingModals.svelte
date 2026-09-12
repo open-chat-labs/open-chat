@@ -9,6 +9,8 @@
     import { Container, portalState } from "component-lib";
     import {
         chatListScopeStore,
+        type DailyResultContent,
+        localUpdates,
         OpenChat,
         routeForChatIdentifier,
         routeStore,
@@ -50,6 +52,7 @@
     import Translatable from "../Translatable.svelte";
     import ForwardMessageModal from "../ForwardMessageModal.svelte";
     import ShareMessageModal from "../ShareMessageModal.svelte";
+    import SelectChatModal from "../SelectChatModal.svelte";
     import AccessGatesEvaluator from "./access/AccessGatesEvaluator.svelte";
     import AboutAccessGates from "./access_gates/AboutAccessGates.svelte";
     import AccessGates from "./access_gates/AccessGates.svelte";
@@ -137,6 +140,8 @@
           }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "streak_insurance" }
+        | { kind: "daily_puzzle"; gameId?: string }
+        | { kind: "share_daily_result"; content: DailyResultContent }
         | { kind: "create_poll"; messageContext: MessageContext }
         | { kind: "poll_public_votes"; content: PollContent; senderId: string }
         | { kind: "create_prize"; messageContext: MessageContext }
@@ -269,6 +274,17 @@
         navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
     }
 
+    // Same close-and-navigate path, but the picker sits on top of the puzzle page (and whatever
+    // opened it), so unwind the whole stack before navigating to the chosen chat.
+    function shareDailyResultToChat(chatId: ChatIdentifier, content: DailyResultContent) {
+        localUpdates.draftMessages.setAttachment({ chatId }, content);
+        while (modalStack.length > 0) {
+            modalStack.pop();
+            historyDepth = historyDepth - 1;
+        }
+        navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+    }
+
     function popStack() {
         if (!recursivePop && modalStack.length > 0) {
             recursivePop = true;
@@ -339,6 +355,10 @@
                 push({ kind: "create_prize", messageContext }),
             ),
             subscribe("streakInsurance", () => push({ kind: "streak_insurance" })),
+            subscribe("dailyPuzzle", ({ gameId }) => push({ kind: "daily_puzzle", gameId })),
+            subscribe("shareDailyResult", (content) =>
+                push({ kind: "share_daily_result", content }),
+            ),
             subscribe("evaluateCommunityAccessGate", () =>
                 push({ kind: "evaluate_community_access_gate" }),
             ),
@@ -836,6 +856,18 @@
             {:catch}
                 {@render loadFailed()}
             {/await}
+        {:else if page.kind === "daily_puzzle"}
+            {#await import("./dailypuzzle/DailyPuzzle.svelte") then { default: DailyPuzzle }}
+                <DailyPuzzle gameId={page.gameId} onClose={pop} />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
+        {:else if page.kind === "share_daily_result"}
+            {@const content = page.content}
+            <SelectChatModal
+                onClose={pop}
+                excludeCurrent={false}
+                onSelect={(chatId) => shareDailyResultToChat(chatId, content)} />
         {:else if page.kind === "create_poll"}
             <PollBuilder messageContext={page.messageContext} onClose={pop} />
         {:else if page.kind === "poll_public_votes"}
