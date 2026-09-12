@@ -1,12 +1,12 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, client};
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_from_u128;
-use types::{ChatEvent, EventIndex, MessageContent, MessageContentInitial, TextContent};
+use types::{ChatEvent, ChatId, EventIndex, MessageContent, MessageContentInitial, TextContent};
 
 #[test]
 fn send_message_succeeds() {
@@ -29,6 +29,44 @@ fn send_message_succeeds() {
     assert!(matches!(events_response1.events[0].event, ChatEvent::Message(_)));
     assert_eq!(events_response2.events.len(), 1);
     assert!(matches!(events_response2.events[0].event, ChatEvent::Message(_)));
+}
+
+#[test]
+fn metrics_recorded_in_chat_with_self() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+
+    let message_id = random_from_u128();
+    client::user::happy_path::send_text_message(env, &user, user.user_id, "TEXT", Some(message_id));
+
+    env.advance_time(Duration::from_secs(1));
+    let updates_since = now_millis(env);
+    env.advance_time(Duration::from_secs(1));
+
+    client::user::happy_path::add_reaction(env, &user, user.user_id, "👍", message_id);
+
+    let initial_state = client::user::happy_path::initial_state(env, &user);
+    let summary = initial_state
+        .direct_chats
+        .summaries
+        .iter()
+        .find(|c| c.them == user.user_id)
+        .unwrap();
+    assert_eq!(summary.my_metrics.text_messages, 1);
+    assert_eq!(summary.my_metrics.reactions, 1);
+
+    let updates = client::user::happy_path::updates(env, &user, updates_since).unwrap();
+    let chat_updates = updates
+        .direct_chats
+        .updated
+        .iter()
+        .find(|c| c.chat_id == ChatId::from(user.user_id))
+        .unwrap();
+    let my_metrics = chat_updates.my_metrics.as_ref().unwrap();
+    assert_eq!(my_metrics.text_messages, 1);
+    assert_eq!(my_metrics.reactions, 1);
 }
 
 #[test]

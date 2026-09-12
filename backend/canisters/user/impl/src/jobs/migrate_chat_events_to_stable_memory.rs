@@ -12,8 +12,8 @@ thread_local! {
 }
 
 // Moves the chat events data which is still on the heap (each chat's MessageId -> EventIndex map,
-// its expiring events and its events' last updated timestamps) into stable memory. This can be
-// removed once every canister has been migrated.
+// its expiring events, its events' last updated timestamps and its users' metrics) into stable
+// memory. This can be removed once every canister has been migrated.
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none()
         && state

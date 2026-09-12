@@ -4,12 +4,12 @@ use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable
 use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use chat_events::ChatEventInternal;
+use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use constants::DAY_IN_MS;
 use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
-use stable_memory_map::{ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix};
+use stable_memory_map::{ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix, UserMetricsKeyPrefix};
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
@@ -47,6 +47,9 @@ fn convert_into_community_succeeds() {
         messages_sent.push((message_id, send_result.event_index));
     }
 
+    let group_summary = client::group::happy_path::summary(env, user1.principal, group_id);
+    assert_eq!(group_summary.membership.unwrap().my_metrics.text_messages, 9);
+
     let convert_into_community_response = client::group::convert_into_community(
         env,
         user1.principal,
@@ -65,6 +68,8 @@ fn convert_into_community_succeeds() {
         let expected_channel_names = vec![group_name];
 
         let summary1 = client::community::happy_path::summary(env, user1.principal, result.community_id);
+        // The users' metrics should have been carried over from the group
+        assert_eq!(summary1.channels[0].membership.as_ref().unwrap().my_metrics.text_messages, 9);
         assert_eq!(
             summary1.channels.into_iter().map(|c| c.name).collect_vec(),
             expected_channel_names
@@ -108,6 +113,13 @@ fn convert_into_community_succeeds() {
                 Some(u32::from(*event_index).to_be_bytes().to_vec())
             );
         }
+
+        // The users' metrics should have been moved into stable memory under the channel's prefix
+        let user_metrics_key = UserMetricsKeyPrefix::new_from_chat(Chat::Channel(result.community_id, result.channel_id))
+            .create_key(&user1.user_id);
+        let user_metrics =
+            ChatMetricsInternal::from_bytes(&small_entries_map.get(&user_metrics_key.as_ref().to_vec()).unwrap());
+        assert_eq!(user_metrics.hydrate().text_messages, 9);
 
         // Looking up an imported message by its id should succeed
         client::community::happy_path::add_reaction(

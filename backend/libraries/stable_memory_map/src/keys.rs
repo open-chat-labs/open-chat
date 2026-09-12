@@ -12,6 +12,7 @@ mod message_id;
 mod principal;
 mod storage;
 mod user_id;
+mod user_metrics;
 
 pub use chat_event::*;
 pub use community_event::*;
@@ -21,6 +22,7 @@ pub use message_id::*;
 pub use principal::*;
 pub use storage::*;
 pub use user_id::*;
+pub use user_metrics::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(transparent)]
@@ -123,6 +125,9 @@ pub enum KeyType {
     DirectChatEventsByLastUpdated = 29,
     GroupChatEventsByLastUpdated = 30,
     ChannelEventsByLastUpdated = 31,
+    DirectChatUserMetrics = 32,
+    GroupChatUserMetrics = 33,
+    ChannelUserMetrics = 34,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -175,7 +180,10 @@ impl KeyType {
             | KeyType::ChannelEventLastUpdated
             | KeyType::DirectChatEventsByLastUpdated
             | KeyType::GroupChatEventsByLastUpdated
-            | KeyType::ChannelEventsByLastUpdated => MapClass::SmallEntries,
+            | KeyType::ChannelEventsByLastUpdated
+            | KeyType::DirectChatUserMetrics
+            | KeyType::GroupChatUserMetrics
+            | KeyType::ChannelUserMetrics => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -237,6 +245,9 @@ impl TryFrom<u8> for KeyType {
             29 => Ok(KeyType::DirectChatEventsByLastUpdated),
             30 => Ok(KeyType::GroupChatEventsByLastUpdated),
             31 => Ok(KeyType::ChannelEventsByLastUpdated),
+            32 => Ok(KeyType::DirectChatUserMetrics),
+            33 => Ok(KeyType::GroupChatUserMetrics),
+            34 => Ok(KeyType::ChannelUserMetrics),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

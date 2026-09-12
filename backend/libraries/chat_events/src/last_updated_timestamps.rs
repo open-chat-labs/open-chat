@@ -18,6 +18,9 @@ pub struct LastUpdatedTimestamps {
     // stable memory, and existing ones are moved across in batches by `migrate_to_stable_memory`.
     // This can be removed once every chat has been migrated. It is always serialized so that a
     // canister can still be rolled back to a version expecting it.
+    //
+    // An event with an entry here has no entry in stable memory, since marking an event as updated
+    // removes its entry from here before writing to stable memory.
     by_timestamp: BTreeSet<(TimestampMillis, Option<MessageIndex>, EventIndex)>,
     #[serde(skip)]
     by_event_index: BTreeMap<(Option<MessageIndex>, EventIndex), TimestampMillis>,
@@ -110,14 +113,37 @@ impl LastUpdatedTimestamps {
     // Moves up to `max_count` entries from the heap into stable memory, returning how many were
     // moved
     pub fn migrate_to_stable_memory(&mut self, chat: Chat, max_count: usize) -> usize {
-        let mut count = 0;
-        while count < max_count
+        let mut batch = Vec::new();
+        while batch.len() < max_count
             && let Some((ts, thread_root_message_index, event_index)) = self.by_timestamp.pop_first()
         {
             self.by_event_index.remove(&(thread_root_message_index, event_index));
-            insert_into_stable_memory(chat, thread_root_message_index, event_index, ts);
-            count += 1;
+            batch.push((ts, thread_root_message_index, event_index));
         }
+        let count = batch.len();
+        if count == 0 {
+            return 0;
+        }
+
+        // None of these events have entries in stable memory, so there are no previous entries to
+        // remove and the entries can be inserted in bulk
+        let by_event_prefix = EventLastUpdatedKeyPrefix::new_from_chat(chat);
+        let by_timestamp_prefix = EventsByLastUpdatedKeyPrefix::new_from_chat(chat);
+
+        with_map_mut(|m| {
+            // The batch is in timestamp order, which is the key order of the entries keyed by timestamp
+            m.insert_many(
+                batch
+                    .iter()
+                    .map(|&(ts, tr, e)| (by_timestamp_prefix.create_key(&(ts, tr, e)), Vec::new())),
+            );
+            batch.sort_unstable_by_key(|&(_, tr, e)| (tr, e));
+            m.insert_many(
+                batch
+                    .into_iter()
+                    .map(|(ts, tr, e)| (by_event_prefix.create_key(&(tr, e)), ts.to_be_bytes().to_vec())),
+            );
+        });
         count
     }
 

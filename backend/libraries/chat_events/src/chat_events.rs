@@ -2,6 +2,7 @@ use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
+use crate::per_user_metrics::PerUserMetrics;
 use crate::search_index::SearchIndex;
 use crate::*;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
@@ -12,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{
     BaseKeyPrefix, ChatEventKeyPrefix, EventLastUpdatedKeyPrefix, EventsByLastUpdatedKeyPrefix, ExpiringEventKeyPrefix,
-    MessageIdKeyPrefix,
+    MessageIdKeyPrefix, UserMetricsKeyPrefix,
 };
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
@@ -30,7 +31,7 @@ use types::{
     P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
     PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
     ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
-    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
+    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation, is_default,
 };
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -48,7 +49,7 @@ pub struct ChatEvents {
     main: ChatEventsList,
     threads: BTreeMap<MessageIndex, ChatEventsList>,
     metrics: ChatMetricsInternal,
-    per_user_metrics: BTreeMap<UserId, ChatMetricsInternal>,
+    per_user_metrics: PerUserMetrics,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
@@ -59,6 +60,9 @@ pub struct ChatEvents {
     bot_subscriptions: BTreeMap<ChatEventType, HashSet<UserId>>,
     #[serde(rename = "pt", default, skip_serializing_if = "BTreeMap::is_empty")]
     active_proposal_tallies: BTreeMap<EventIndex, Tally>,
+    // Whether to skip the other user's metrics in a direct chat (see `skip_their_metrics`)
+    #[serde(rename = "stm", default, skip_serializing_if = "is_default")]
+    skip_their_metrics: bool,
 }
 
 impl ChatEvents {
@@ -70,19 +74,23 @@ impl ChatEvents {
     // main events list or a thread), so that they can all be garbage collected once it is deleted
     pub fn stable_memory_key_prefixes(events_prefix: ChatEventKeyPrefix) -> Vec<BaseKeyPrefix> {
         let message_ids_prefix = MessageIdKeyPrefix::from(&events_prefix);
-        // Only the main events list has expiring events and last updated timestamps (the last
-        // updated timestamps of events in threads are stored under the main events list's prefixes)
+        // Only the main events list has expiring events, last updated timestamps and user metrics
+        // (the last updated timestamps of events in threads are stored under the main events list's
+        // prefixes)
         let expiring_events_prefix = ExpiringEventKeyPrefix::try_from(&events_prefix).ok();
         let last_updated_prefix = EventLastUpdatedKeyPrefix::try_from(&events_prefix).ok();
         let by_last_updated_prefix = EventsByLastUpdatedKeyPrefix::try_from(&events_prefix).ok();
+        let user_metrics_prefix = UserMetricsKeyPrefix::try_from(&events_prefix).ok();
         let mut prefixes = vec![events_prefix.into(), message_ids_prefix.into()];
         prefixes.extend(expiring_events_prefix.map(BaseKeyPrefix::from));
         prefixes.extend(last_updated_prefix.map(BaseKeyPrefix::from));
         prefixes.extend(by_last_updated_prefix.map(BaseKeyPrefix::from));
+        prefixes.extend(user_metrics_prefix.map(BaseKeyPrefix::from));
         prefixes
     }
 
     pub fn new_direct_chat(
+        my_user_id: UserId,
         them: UserId,
         events_ttl: Option<Milliseconds>,
         anonymized_id: u128,
@@ -94,7 +102,7 @@ impl ChatEvents {
             main: ChatEventsList::new(chat, None),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: BTreeMap::new(),
+            per_user_metrics: PerUserMetrics::default(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -104,8 +112,10 @@ impl ChatEvents {
             search_index: SearchIndex::default(),
             bot_subscriptions: BTreeMap::new(),
             active_proposal_tallies: BTreeMap::new(),
+            skip_their_metrics: false,
         };
 
+        events.skip_their_metrics(my_user_id);
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
 
         events
@@ -126,7 +136,7 @@ impl ChatEvents {
             main: ChatEventsList::new(chat, None),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: BTreeMap::new(),
+            per_user_metrics: PerUserMetrics::default(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -136,6 +146,7 @@ impl ChatEvents {
             search_index: SearchIndex::default(),
             bot_subscriptions: BTreeMap::new(),
             active_proposal_tallies: BTreeMap::new(),
+            skip_their_metrics: false,
         };
 
         events.push_event(
@@ -188,6 +199,9 @@ impl ChatEvents {
                 .migrate_to_stable_memory(self.chat, max_count - moved);
         }
         if moved < max_count {
+            moved += self.per_user_metrics.migrate_to_stable_memory(self.chat, max_count - moved);
+        }
+        if moved < max_count {
             moved += self.main.migrate_message_ids_to_stable_memory(max_count - moved);
         }
         for thread in self.threads.values_mut() {
@@ -215,10 +229,27 @@ impl ChatEvents {
         self.expiring_events.discard_on_heap();
     }
 
+    // Copies each user's metrics from stable memory onto the heap, so that they are included when
+    // the chat is serialized to be imported into a community. The community moves them back into
+    // stable memory, under the new channel's prefix, via `migrate_to_stable_memory`.
+    pub fn copy_user_metrics_to_heap_for_export(&mut self) {
+        self.per_user_metrics.copy_to_heap(self.chat);
+    }
+
+    // Called by the User canister holding this direct chat, so that the other user's metrics are no
+    // longer stored (and any already stored are deleted), since only its own user's metrics are ever
+    // read. This has no effect on the user's chat with themselves.
+    pub fn skip_their_metrics(&mut self, my_user_id: UserId) {
+        if !self.skip_their_metrics {
+            self.skip_their_metrics = self.per_user_metrics.skip_their_metrics(self.chat, my_user_id);
+        }
+    }
+
     // The number of entries on the heap which are yet to be moved into stable memory
     pub fn heap_entries_to_migrate_count(&self) -> usize {
         self.expiring_events.on_heap_count()
             + self.last_updated_timestamps.on_heap_count()
+            + self.per_user_metrics.on_heap_count()
             + self.main.message_ids_on_heap_count()
             + self.threads.values().map(|t| t.message_ids_on_heap_count()).sum::<usize>()
     }
@@ -294,6 +325,8 @@ impl ChatEvents {
         add_to_metrics(
             &mut self.metrics,
             &mut self.per_user_metrics,
+            self.chat,
+            self.skip_their_metrics,
             args.sender,
             |m| message_internal.add_to_metrics(m),
             args.now,
@@ -381,6 +414,8 @@ impl ChatEvents {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
+                    self.chat,
+                    self.skip_their_metrics,
                     sender,
                     |m| m.incr(MetricKey::Edits, 1),
                     now,
@@ -509,6 +544,8 @@ impl ChatEvents {
                     add_to_metrics(
                         &mut self.metrics,
                         &mut self.per_user_metrics,
+                        self.chat,
+                        self.skip_their_metrics,
                         sender,
                         |m| m.incr(MetricKey::ReportedMessages, 1),
                         args.now,
@@ -517,6 +554,8 @@ impl ChatEvents {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
+                    self.chat,
+                    self.skip_their_metrics,
                     args.caller,
                     |m| m.incr(MetricKey::DeletedMessages, 1),
                     args.now,
@@ -607,6 +646,8 @@ impl ChatEvents {
                     add_to_metrics(
                         &mut self.metrics,
                         &mut self.per_user_metrics,
+                        self.chat,
+                        self.skip_their_metrics,
                         sender,
                         |m| m.decr(MetricKey::ReportedMessages, 1),
                         args.now,
@@ -615,6 +656,8 @@ impl ChatEvents {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
+                    self.chat,
+                    self.skip_their_metrics,
                     args.caller,
                     |m| m.decr(MetricKey::DeletedMessages, 1),
                     args.now,
@@ -718,6 +761,8 @@ impl ChatEvents {
                                 add_to_metrics(
                                     &mut self.metrics,
                                     &mut self.per_user_metrics,
+                                    self.chat,
+                                    self.skip_their_metrics,
                                     args.user_id,
                                     |m| m.incr(MetricKey::PollVotes, 1),
                                     args.now,
@@ -728,6 +773,8 @@ impl ChatEvents {
                             add_to_metrics(
                                 &mut self.metrics,
                                 &mut self.per_user_metrics,
+                                self.chat,
+                                self.skip_their_metrics,
                                 args.user_id,
                                 |m| m.decr(MetricKey::PollVotes, 1),
                                 args.now,
@@ -1045,6 +1092,8 @@ impl ChatEvents {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
+                    self.chat,
+                    self.skip_their_metrics,
                     user_id,
                     |m| m.incr(MetricKey::Reactions, 1),
                     now,
@@ -1110,6 +1159,8 @@ impl ChatEvents {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
+                    self.chat,
+                    self.skip_their_metrics,
                     args.user_id,
                     |m| m.decr(MetricKey::Reactions, 1),
                     args.now,
@@ -1162,6 +1213,8 @@ impl ChatEvents {
                 add_to_metrics(
                     &mut self.metrics,
                     &mut self.per_user_metrics,
+                    self.chat,
+                    self.skip_their_metrics,
                     args.user_id,
                     |m| m.incr(MetricKey::Tips, 1),
                     args.now,
@@ -2041,9 +2094,9 @@ impl ChatEvents {
         &self.metrics
     }
 
-    pub fn user_metrics(&self, user_id: &UserId, if_updated_since: Option<TimestampMillis>) -> Option<&ChatMetricsInternal> {
+    pub fn user_metrics(&self, user_id: &UserId, if_updated_since: Option<TimestampMillis>) -> Option<ChatMetricsInternal> {
         self.per_user_metrics
-            .get(user_id)
+            .get(self.chat, user_id)
             .filter(|m| if let Some(since) = if_updated_since { m.last_active > since } else { true })
     }
 
@@ -2710,7 +2763,9 @@ impl ChatEvents {
 
 fn add_to_metrics<F: FnMut(&mut ChatMetricsInternal)>(
     metrics: &mut ChatMetricsInternal,
-    per_user_metrics: &mut BTreeMap<UserId, ChatMetricsInternal>,
+    per_user_metrics: &mut PerUserMetrics,
+    chat: Chat,
+    skip_their_metrics: bool,
     user_id: UserId,
     mut action: F,
     timestamp: TimestampMillis,
@@ -2718,9 +2773,7 @@ fn add_to_metrics<F: FnMut(&mut ChatMetricsInternal)>(
     action(metrics);
     metrics.last_active = max(metrics.last_active, timestamp);
 
-    let user_metrics = per_user_metrics.entry(user_id).or_default();
-    action(user_metrics);
-    user_metrics.last_active = max(user_metrics.last_active, timestamp);
+    per_user_metrics.update(chat, skip_their_metrics, user_id, action, timestamp);
 }
 
 pub struct PushMessageArgs {
