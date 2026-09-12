@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Return a distinct `InsufficientAllowance` error when an ICRC-2 transfer exceeds the approval ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Support paying for Diamond membership from external wallets using ICRC2 ([#9265](https://github.com/open-chat-labs/open-chat/pull/9265))
+- Add `c2c_game_chit` endpoint for crediting and debiting CHIT from games, with per-key idempotency ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
+- Bound the `c2c_game_chit` amount by range rather than `abs()`, which wraps for `i32::MIN` and let that one value past both the limit and the balance check ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
 
 ### Changed
 

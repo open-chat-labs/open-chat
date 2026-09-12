@@ -36,6 +36,7 @@ pub enum ChitEventType {
     DailyClaimReinstated,
     StreakInsuranceClaim,
     PurchasedPremiumItem(u32),
+    Game { game_id: String, key: String },
 }
 
 #[ts_export]

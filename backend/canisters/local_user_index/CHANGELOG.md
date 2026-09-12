@@ -8,8 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add the daily puzzle game engine: `daily_puzzle_fetch`, `daily_puzzle_start`, `daily_puzzle_submit`, `daily_puzzle_hint` and `daily_puzzle_save_grid` for users, `c2c_daily_puzzle_push` for the daily_puzzle canister, `set_daily_puzzle_canister_id` for platform operators, with CHIT entry fees, hints and rewards settled via `c2c_game_chit` and solves relayed to the daily_puzzle canister
+- Hold the daily puzzles as a set keyed by game: `c2c_daily_puzzle_push` takes `puzzles`, `daily_puzzle_fetch` returns `puzzles` and `states`, streaks are series-level (a day counts once however many games were solved), CHIT keys are `{game_id}:{number}:...`, and today's set is pulled via `c2c_pull_puzzles`
+- Drop a user's daily puzzle record per game when a push for the same number replaces that game's puzzle (new description, or the game is no longer in the set), so a `regenerate_today` does not show the old puzzle's start or solve against the new one; solved days stay credited
+- Serve daily puzzle hints in three priced tiers: level 1 highlights the region the deduction looked at, level 2 adds the technique and the keys its sentence points at, level 3 adds the conclusions. No tier is free, an upgrade costs the difference between the levels, and the reward penalty applies to every step served
+- Answer a daily puzzle mistake check with the single lowest wrong key rather than every disagreement, so a board-sized `filled` cannot return the solution in one call
+- Keep a daily puzzle solve faster than `min_carded_solve_ms` out of the results index; it is still paid and still counts for the streak, but can back no card and move no published aggregate
+- Reserve the daily puzzle start and hint step before debiting the CHIT rather than after, and release the reservation if the debit fails, so overlapping requests cannot exceed `max_hints` and a failed or raced debit cannot take a fee without giving a game
+- Withhold a daily puzzle hint from state until its debit lands, so `daily_puzzle_fetch` cannot serve the conclusions to a caller whose debit is about to be refused; a release now undoes only the reservation that call made, leaving a hint another call has since paid for
+- Refuse every daily puzzle call on a record whose entry fee is still in flight, so a submit racing the start call cannot collect the reward on a game whose fee is then refused
+- Bound a submitted daily puzzle grid and a `filled` set by the puzzle's own solution rather than a fixed 400, which was smaller than a legitimate 14x14 loopy board
+- Waive the daily puzzle entry fee for a user who has never started rather than one who has never solved, so a player who never solves does not play free forever
+- Ignore an empty daily puzzle push rather than reading it as a day change, which would clear every puzzle and every in-progress record, entry fees included
+- Zero a daily puzzle reward the user canister refuses outright, rather than reporting CHIT that was never credited
+- Zero a daily puzzle reward from the retry queue too, not just from the call that recorded the solve, so a credit the user canister refuses or that gives up retrying stops being reported as paid
+- Return the fee a user would pay in `DailyPuzzleUserState`, so the client can send it as `expected_entry_fee`. The free first play hangs off history the client cannot see, and a player who started once and never solved could not be told apart from one who had never played
+- Keep a daily puzzle free first play tied to the day it was spent on, so a `regenerate_today` restart is free rather than charging the full fee to the one player who had not paid
+- Charge a daily puzzle hint penalty, and publish a hint count, only for hints actually paid for: the reward and the results row are both written before a hint debit is known to have landed
+- Bound the free outcomes of `daily_puzzle_hint` with `max_free_checks`, reported back as `free_checks` on the state and `max_free_checks` on the puzzle so the client can stop offering the check rather than let it come back throttled. The mistake check answers "is this key right?" for a client-chosen key, so it was an unmetered oracle: one call per key read the whole solution without spending CHIT or a submit. Every outcome that serves no paid hint is counted, and all of them refuse the same way once the budget is gone
+- Refuse a second daily puzzle hint reservation on a step whose debit is still in flight, rather than overwriting it; the overwrite dropped whichever hint the first call was paying for
+- Ignore a daily puzzle push carrying an older number than the one held, rather than reading it as a day change and clearing every in-progress record on the subnet, entry fees included
+- Hold each user's daily puzzle history as the last number solved and the run ending there, rather than the set of every day ever solved
+- Re-check for a missed daily puzzle push every 15 minutes, so a subnet that misses the rollover does not hold yesterday's puzzle until its next upgrade
+- Drop `#[trace]` from `daily_puzzle_start`, `daily_puzzle_hint` and `daily_puzzle_save_grid`, whose args and responses carry hints and completed grids
 - Add `c2c_create_multi_user_canister` and `c2c_upgrade_multi_user_canister_wasm` plus a rolling upgrade job for MultiUser canisters ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Add the `multi_user_canisters_enabled` flag, set by the UserIndex and surfaced in metrics ([#9314](https://github.com/open-chat-labs/open-chat/pull/9314))
+- Handle the `SetDailyPuzzleCanisterId` event from the UserIndex, the same path as the platform-operator `set_daily_puzzle_canister_id` endpoint ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
 - Expose the user-event sync queue's in-flight batch count in metrics, alongside the existing queued length ([#9177](https://github.com/open-chat-labs/open-chat/pull/9177))
 
 ### Changed
@@ -22,6 +46,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Include MultiUser canisters in the cycles top up paths, so they can report a low balance and are picked up by the weekly balance sweep ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Include Group and Community canisters in the weekly cycles balance sweep - they were queued up but never selected, so the sweep silently skipped them ([#9313](https://github.com/open-chat-labs/open-chat/pull/9313))
+- Put a fingerprint of the puzzle description in the daily puzzle CHIT keys (`{game_id}:{number}:{fp}:entry|solve|hint:{step}:{level}`, `fp` = FNV-1a 32-bit as 8 hex chars), so a `regenerate_today` puzzle is a distinct puzzle to the user canister: before this a user who had solved the morning puzzle got `AlreadyAdded` on the regenerated one, which the LUI treats as applied, and no CHIT was paid
+- Check `daily_puzzle_hint` mistakes against the puzzle's `solution_pairs` rather than indexing the solution bytes by hint key, which was wrong for games whose keys are edges (bridges, loopy); a filled key the puzzle does not have is a mistake, and a puzzle pushed without pairs still indexes the bytes
 
 ## [[2.0.2033](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2033-local_user_index)] - 2026-08-20
 

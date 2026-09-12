@@ -343,6 +343,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::SetMultiUserCanistersEnabled(enabled) => {
             state.data.multi_user_canisters_enabled = enabled;
         }
+        UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
+            state.set_daily_puzzle_canister_id(canister_id);
+        }
     }
 }
 

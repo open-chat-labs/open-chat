@@ -2,6 +2,10 @@ use candid::Principal;
 use types::{CanisterId, Cycles, Milliseconds, TimestampMillis, UserId};
 
 pub const USER_LIMIT: usize = 300_000;
+// Largest CHIT a single game event may move in either direction. Enforced by the user canister on
+// every `c2c_game_chit` call, and by whatever configures a game, so a proposal cannot set a price
+// or a reward the user canister will refuse.
+pub const MAX_GAME_CHIT_ABS_AMOUNT: i32 = 100_000;
 pub const SECOND_IN_MS: Milliseconds = 1000;
 pub const MINUTE_IN_MS: Milliseconds = SECOND_IN_MS * 60;
 pub const HOUR_IN_MS: Milliseconds = MINUTE_IN_MS * 60;
