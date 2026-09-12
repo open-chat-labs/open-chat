@@ -61,7 +61,14 @@ async fn push(refresh: bool) {
         )
     });
     if puzzles.is_empty() {
-        mutate_state(|state| state.data.pending_pushes.clear());
+        // Nothing for the current number: the gap between `regenerate_today` dropping today's
+        // puzzle and its replacement being generated. Indexes still owed a push keep their place
+        // in the queue - clearing it forgets the ones that never received the last puzzle, and the
+        // refresh push that follows the replacement is the only thing that would have put them
+        // back.
+        if !targets.is_empty() {
+            schedule(false, RETRY_DELAY);
+        }
         return;
     }
     let number = puzzles[0].number;

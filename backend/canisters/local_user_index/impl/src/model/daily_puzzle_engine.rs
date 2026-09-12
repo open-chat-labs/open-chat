@@ -1,4 +1,4 @@
-use constants::DAY_IN_MS;
+use constants::{DAY_IN_MS, MINUTE_IN_MS};
 use local_user_index_canister::daily_puzzle_fetch::FetchResult;
 use local_user_index_canister::daily_puzzle_hint::HintResult;
 use local_user_index_canister::daily_puzzle_start::StartResult;
@@ -6,9 +6,14 @@ use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use types::{
-    DailyPuzzle, DailyPuzzleResult, DailyPuzzleSolved, DailyPuzzleUserState, GameId, OCResult, PuzzleHint, PuzzleNumber,
-    ServedHint, TimestampMillis, UserId,
+    DailyPuzzle, DailyPuzzleResult, DailyPuzzleSolved, DailyPuzzleUserState, GameId, Milliseconds, OCResult, PuzzleHint,
+    PuzzleNumber, ServedHint, TimestampMillis, UserId,
 };
+
+// How long a hint reservation may sit unresolved before the step goes back in the pool. The debit
+// it waits on is a single c2c round trip, so nothing legitimate comes close; what this catches is
+// the reservation left behind when the callback never runs at all.
+const HINT_RESERVATION_TIMEOUT: Milliseconds = 5 * MINUTE_IN_MS;
 
 // Pure state machine for the daily puzzles. No canister APIs: every method takes `now` and the
 // endpoint files do the c2c calls between `prepare_*` and `commit_*`.
@@ -67,6 +72,11 @@ pub struct UserHistory {
     // blobs written before this existed, whose free play was spent on some earlier day.
     #[serde(default)]
     pub first_started: Option<PuzzleNumber>,
+    // The game the free play was spent on. Without it the restart waiver reads "nothing of
+    // today's is still held", which a second game on a day whose first game was regenerated also
+    // satisfies, handing that game away free too.
+    #[serde(default)]
+    pub first_game: Option<GameId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -97,6 +107,10 @@ pub struct HintEntry {
     // The level of an outstanding reservation. Recorded before the debit so calls that overlap
     // on the await cannot walk past `max_hints`, and cleared by `confirm_hint` / `release_hint`.
     pub pending_level: Option<u8>,
+    // When `pending_level` was set, so `expire_reservations` can tell a debit still in flight from
+    // one whose callback never ran
+    #[serde(default)]
+    pub pending_since: TimestampMillis,
 }
 
 pub enum StartPrepared {
@@ -134,6 +148,12 @@ pub enum HintPrepared {
         // The CHIT idempotency key for the debit
         key: String,
     },
+}
+
+pub struct DailyPuzzleSummary {
+    pub games: Vec<GameId>,
+    pub number: Option<PuzzleNumber>,
+    pub enabled: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -344,6 +364,7 @@ impl DailyPuzzleEngine {
         if !history.ever_started {
             history.ever_started = true;
             history.first_started = Some(number);
+            history.first_game = Some(game_id.to_string());
         }
 
         let puzzle = self.puzzles.get(game_id).ok_or_else(not_available)?;
@@ -497,12 +518,32 @@ impl DailyPuzzleEngine {
         if record.solved.is_some() {
             return Err(OCErrorCode::AlreadyAwarded.into());
         }
+        let max_free_checks = puzzle.config.max_free_checks;
+
+        // A reservation whose debit never came back would otherwise hold its step, and the place
+        // that step took against `max_hints`, for the rest of the day
+        self.expire_reservations(user_id, game_id, number, now);
+
         // Everything below reads the solution against client-chosen keys, and every outcome that
         // serves no paid hint is free. `filled` naming a single key turns that into a one-bit
-        // oracle on that key, whichever way it comes back, so each of those outcomes takes a check
-        // and all of them refuse the same way once the budget is gone: refusing one and not the
-        // other would leave the oracle intact. See `DailyPuzzleConfig::max_free_checks`.
-        let max_free_checks = puzzle.config.max_free_checks;
+        // oracle on that key, whichever way it comes back, so the check is taken here, before
+        // anything branches on what the solution says, and given back in `reserve_step` on the one
+        // path that serves a paid hint. Metering each outcome where it is raised instead left the
+        // two raised before the first check - the hint cap, and a call with no step outstanding -
+        // free, and a free refusal that only happens when the named keys are right is the whole
+        // oracle: at the cap, every wrong guess costs a check and every right one costs nothing.
+        //
+        // A call with nothing in `filled` names no key, so no outcome of it can answer a question
+        // about the solution and none of them is metered. That is also the call a client makes
+        // when it has lost its own state and is re-reading what it has already bought.
+        // See `DailyPuzzleConfig::max_free_checks`.
+        let metered = !filled.is_empty();
+        if metered {
+            self.take_free_check(user_id, game_id, max_free_checks)?;
+        }
+        // Re-borrowed after the mutable calls above
+        let puzzle = self.available(game_id, number, now)?;
+        let record = self.record(user_id, game_id, number).ok_or_else(not_started)?;
 
         // A mistake always wins: free, not counted against the hint cap, not recorded.
         // Hint keys are game-specific (bridges and loopy key edges, not cells), so the generator's
@@ -516,22 +557,22 @@ impl DailyPuzzleEngine {
         // for nothing, bypassing the priced ladder entirely. One key per call keeps "check my
         // work" useful and makes walking the board a deliberate key-by-key exercise rather than a
         // single request.
-        let pairs: BTreeMap<u16, u8> = puzzle.solution_pairs.iter().copied().collect();
         let wrong: Option<u16> = filled
             .iter()
             .filter(|(k, v)| {
-                if pairs.is_empty() {
+                if puzzle.solution_pairs.is_empty() {
                     puzzle.solution.get(*k as usize).is_some_and(|s| s != v)
                 } else {
-                    pairs.get(k) != Some(v)
+                    // `solution_pairs` is sorted by key, so the lookup needs no map built per call
+                    match puzzle.solution_pairs.binary_search_by_key(k, |(key, _)| *key) {
+                        Ok(i) => puzzle.solution_pairs[i].1 != *v,
+                        Err(_) => true,
+                    }
                 }
             })
             .map(|(k, _)| *k)
             .min();
         if let Some(wrong) = wrong {
-            self.take_free_check(user_id, game_id, max_free_checks)?;
-            let record = self.record(user_id, game_id, number).ok_or_else(not_started)?;
-            let puzzle = self.puzzles.get(game_id).ok_or_else(not_available)?;
             return Ok(HintPrepared::Mistake(HintResult {
                 hint: ServedHint {
                     hint: PuzzleHint {
@@ -584,12 +625,8 @@ impl DailyPuzzleEngine {
 
         match record.hints.iter().find(|e| e.step == step).and_then(|e| e.served.as_ref()) {
             Some(served) if level <= served.level => {
-                let served = served.clone();
-                self.take_free_check(user_id, game_id, max_free_checks)?;
-                let record = self.record(user_id, game_id, number).ok_or_else(not_started)?;
-                let puzzle = self.puzzles.get(game_id).ok_or_else(not_available)?;
                 return Ok(HintPrepared::AlreadyServed(HintResult {
-                    hint: served,
+                    hint: served.clone(),
                     hints_used: hints_paid(record),
                     state: self.user_state(user_id, puzzle),
                     chit_balance: None,
@@ -609,10 +646,11 @@ impl DailyPuzzleEngine {
         }
 
         if price != expected_price {
-            // Counted too: reaching here at all says the keys in `filled` are right, which is the
-            // other half of the oracle the bound exists to close
-            self.take_free_check(user_id, game_id, max_free_checks)?;
-            return Err(OCErrorCode::PriceMismatch.into());
+            // Quoted back rather than left to the client to work out again. The price depends on
+            // which step the server picked and on what this user has already bought, so a client
+            // holding a stale `hint_prices` or disagreeing about the step cannot always compute
+            // it, and every guess is a metered call.
+            return Err(OCErrorCode::PriceMismatch.with_message(price));
         }
 
         let served = ServedHint {
@@ -621,7 +659,7 @@ impl DailyPuzzleEngine {
             mistake: false,
         };
         let key = self.hint_key(game_id, number, step, level);
-        let result = self.reserve_step(user_id, game_id, number, step, level, &served)?;
+        let result = self.reserve_step(user_id, game_id, number, step, level, &served, metered, now)?;
 
         Ok(HintPrepared::Serve {
             step,
@@ -648,6 +686,10 @@ impl DailyPuzzleEngine {
 
     // Claims the step against `max_hints` without putting the hint itself in state. The result is
     // for this caller alone, so it carries the reserved hint as though it were already paid for.
+    // `refund_check` gives back the check `reserve_hint` took before it knew this call would end
+    // up serving a paid hint; it is applied here, after the reservation, so an outcome that
+    // refuses instead stays metered.
+    #[expect(clippy::too_many_arguments)]
     fn reserve_step(
         &mut self,
         user_id: UserId,
@@ -656,6 +698,8 @@ impl DailyPuzzleEngine {
         step: u16,
         level: u8,
         served: &ServedHint,
+        refund_check: bool,
+        now: TimestampMillis,
     ) -> OCResult<HintResult> {
         let record = self
             .user_games
@@ -672,13 +716,18 @@ impl DailyPuzzleEngine {
                 return Err(OCErrorCode::Throttled.with_message("hint in flight"));
             }
             entry.pending_level = Some(level);
+            entry.pending_since = now;
         } else {
             record.hints.push(HintEntry {
                 step,
                 served: None,
                 pending_level: Some(level),
+                pending_since: now,
             });
             record.hint_steps_used = record.hint_steps_used.saturating_add(1);
+        }
+        if refund_check {
+            record.free_checks = record.free_checks.saturating_sub(1);
         }
         let hints_used = record.hint_steps_used;
 
@@ -739,6 +788,36 @@ impl DailyPuzzleEngine {
         }
     }
 
+    // Drops reservations whose debit never came back. `confirm_hint` and `release_hint` both run
+    // after the await, so a trap inside the callback - out of cycles, a memory limit - leaves the
+    // reservation written before it with nothing to clear it, and the step answers "hint in
+    // flight" for the rest of the day while still holding its place against `max_hints`. A step
+    // nobody paid for goes back in the pool with its place; one that was paid for keeps both and
+    // loses only the stale reservation.
+    fn expire_reservations(&mut self, user_id: UserId, game_id: &str, number: PuzzleNumber, now: TimestampMillis) {
+        let Some(record) = self
+            .user_games
+            .get_mut(&user_id)
+            .and_then(|m| m.get_mut(game_id))
+            .filter(|r| r.number == number)
+        else {
+            return;
+        };
+        let mut dropped: u8 = 0;
+        record.hints.retain_mut(|entry| {
+            if entry.pending_level.is_none() || now.saturating_sub(entry.pending_since) < HINT_RESERVATION_TIMEOUT {
+                return true;
+            }
+            entry.pending_level = None;
+            if entry.served.is_some() {
+                return true;
+            }
+            dropped = dropped.saturating_add(1);
+            false
+        });
+        record.hint_steps_used = record.hint_steps_used.saturating_sub(dropped);
+    }
+
     fn entry_pending_at(
         &mut self,
         user_id: UserId,
@@ -785,11 +864,22 @@ impl DailyPuzzleEngine {
         Ok(())
     }
 
-    pub fn metrics(&self) -> DailyPuzzleEngineMetrics {
-        DailyPuzzleEngineMetrics {
+    // What the push and pull log lines report. `metrics` also counts users, which walks a map
+    // with an entry per user on the subnet, and those two run on every push and every pull.
+    pub fn summary(&self) -> DailyPuzzleSummary {
+        DailyPuzzleSummary {
             games: self.puzzles.keys().cloned().collect(),
             number: self.number,
             enabled: self.puzzles.values().any(|p| p.config.enabled),
+        }
+    }
+
+    pub fn metrics(&self) -> DailyPuzzleEngineMetrics {
+        let summary = self.summary();
+        DailyPuzzleEngineMetrics {
+            games: summary.games,
+            number: summary.number,
+            enabled: summary.enabled,
             users_with_records: self.user_games.values().filter(|m| !m.is_empty()).count() as u32,
             users_who_have_solved: self.history.values().filter(|h| h.last_solved.is_some()).count() as u64,
         }
@@ -866,15 +956,14 @@ impl DailyPuzzleEngine {
             // Never started, so this is the free one
             None => 0,
             Some(h) if !h.ever_started => 0,
-            // Started for the first time today, and nothing of today's is still held. A free entry
-            // pays no CHIT and so records no `{game}:{number}:entry` key on the user canister,
-            // which is what makes a replayed entry free after a `regenerate_today`; without this
-            // the replacement puzzle would charge the full fee to the one player whose free play
-            // it was. The `user_games` test is what keeps the waiver to a restart: a second game
-            // on the same day still holds its own record, so it pays.
-            Some(h) if h.first_started == Some(puzzle.number) && self.user_games.get(&user_id).is_none_or(|m| m.is_empty()) => {
-                0
-            }
+            // The free play was spent on this game, today, and its record is gone - which is
+            // what a `regenerate_today` leaves behind. A free entry pays no CHIT and so records no
+            // `{game}:{number}:entry` key on the user canister, which is what makes a replayed
+            // entry free; without this the replacement puzzle would charge the full fee to the one
+            // player whose free play it was. `reserve_start` only asks while this game has no
+            // record, so naming the game is what keeps the waiver to a restart: a second game on
+            // the same day was never the free one, whatever happened to the first.
+            Some(h) if h.first_started == Some(puzzle.number) && h.first_game.as_deref() == Some(puzzle.game_id.as_str()) => 0,
             _ => puzzle.config.entry_fee,
         }
     }
@@ -1192,6 +1281,111 @@ mod tests {
             engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START),
             Ok(HintPrepared::Serve { .. })
         ));
+    }
+
+    // At the hint cap every outcome is a refusal, so the refusals have to cost the same. One that
+    // only happens when the keys in `filled` are right, and costs nothing, is the oracle back:
+    // every wrong guess pays, every right one is free, and the two are told apart by the message.
+    #[test]
+    fn refusals_at_the_hint_cap_are_metered_too() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        // max_hints is 2, and a paid hint gives its check back
+        serve(&mut engine, u, 1, &[], 25);
+        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
+        assert_eq!(state(&engine, u, START).free_checks, 0);
+
+        // A probe whose keys are all right is refused by the cap, and pays for that answer
+        assert_err(
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 25, START),
+            OCErrorCode::Throttled,
+        );
+        assert_eq!(state(&engine, u, START).free_checks, 1);
+
+        // And once the budget is gone, a right guess and a wrong one refuse identically
+        let max = engine.puzzle(GAME).unwrap().config.max_free_checks;
+        while state(&engine, u, START).free_checks < max {
+            let _ = engine.reserve_hint(u, GAME, NUMBER, 1, &[(1, 1)], 25, START);
+        }
+        for filled in [&[(1u16, 1u8)][..], &[(0, 1), (2, 0), (6, 1)][..]] {
+            match engine.reserve_hint(u, GAME, NUMBER, 1, filled, 25, START) {
+                Err(error) => assert_eq!(error.message(), Some("max_free_checks")),
+                Ok(_) => panic!("expected an error"),
+            }
+        }
+    }
+
+    // A call naming no key asks nothing about the solution, so nothing it can answer is worth a
+    // check. That is the call a client makes when it has lost its own state and is re-reading
+    // what it has already bought.
+    #[test]
+    fn a_hint_call_with_nothing_filled_is_not_metered() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        let (step, _) = serve(&mut engine, u, 2, &[], 75);
+        for _ in 0..engine.puzzle(GAME).unwrap().config.max_free_checks + 1 {
+            match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
+                HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.level, 2),
+                _ => panic!("expected a re-serve"),
+            }
+        }
+        assert_eq!(state(&engine, u, START).free_checks, 0);
+        assert_eq!(state(&engine, u, START).hints.len(), 1);
+        assert_eq!(step, 0);
+    }
+
+    // `confirm_hint` and `release_hint` both run after the debit's await, so a trap inside the
+    // callback leaves a reservation with nothing to clear it. Left alone it holds its step, and
+    // the place that step took against `max_hints`, for the rest of the day.
+    #[test]
+    fn a_reservation_whose_debit_never_came_back_expires() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        let step = match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
+            HintPrepared::Serve { step, .. } => step,
+            _ => panic!("expected a serve"),
+        };
+        // Neither confirm nor release runs
+        assert_err(
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START),
+            OCErrorCode::Throttled,
+        );
+        assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 1);
+
+        // Once it has expired the step is back, and it still counts once against the cap
+        let later = START + HINT_RESERVATION_TIMEOUT;
+        match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, later).unwrap() {
+            HintPrepared::Serve { step: retried, .. } => assert_eq!(retried, step),
+            _ => panic!("expected a serve"),
+        }
+        assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 1);
+    }
+
+    // The free play is spent on one game, not on the day. A `regenerate_today` that leaves the
+    // user holding no record at all must not hand every other game that day away as well.
+    #[test]
+    fn the_restart_waiver_does_not_leak_to_another_game() {
+        let mut engine = new_engine();
+        let u = user(1);
+        engine.set_puzzles(vec![puzzle(NUMBER, true), puzzle_for(OTHER, NUMBER, true)]);
+        assert_eq!(state(&engine, u, START).entry_fee, 0);
+        started(&mut engine, u, START);
+
+        // The game the free play was spent on is regenerated, so the user holds no record at all
+        let mut replacement = puzzle(NUMBER, true);
+        replacement.description = vec![1, 3, 3, 0, 0, 0, 0, 0x20, 0, 0, 0, 0];
+        assert!(engine.set_puzzles(vec![replacement, puzzle_for(OTHER, NUMBER, true)]));
+        assert!(engine.record(u, GAME, NUMBER).is_none());
+
+        // The replacement is the free restart; the game the free play was never spent on is not
+        assert_eq!(state(&engine, u, START).entry_fee, 0);
+        assert_eq!(state_for(&engine, u, OTHER, START).entry_fee, 100);
     }
 
     #[test]

@@ -44,11 +44,11 @@ async fn pull() {
         Ok(Response::Success(puzzles)) if puzzles.is_empty() => info!("No daily puzzles to pull"),
         Ok(Response::Success(puzzles)) => mutate_state(|state| {
             let records_dropped = state.data.daily_puzzle_engine.set_puzzles(puzzles);
-            let metrics = state.data.daily_puzzle_engine.metrics();
+            let summary = state.data.daily_puzzle_engine.summary();
             info!(
-                number = ?metrics.number,
-                games = ?metrics.games,
-                enabled = metrics.enabled,
+                number = ?summary.number,
+                games = ?summary.games,
+                enabled = summary.enabled,
                 records_dropped,
                 "Daily puzzles pulled"
             );

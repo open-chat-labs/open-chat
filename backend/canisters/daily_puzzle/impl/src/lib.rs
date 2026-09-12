@@ -4,6 +4,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use constants::DAY_IN_MS;
 use daily_puzzle_canister::{CandidateView, PuzzleParams};
+use puzzle_core::GenerateError;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -33,6 +34,11 @@ pub const CANDIDATE_POOL_SIZE: usize = 3;
 /// generator produces, and the answer to that is `regenerate_today` or a schedule change, not
 /// another candidate.
 pub const MAX_CANDIDATE_POOL: usize = 32;
+
+/// How many seeds a number may burn through before the generation job gives up for the day. Each
+/// failure salts the next seed, so the day only stops once this many distinct seeds have all found
+/// nothing, which means the parameters are at a limit rather than the seed being unlucky.
+pub const MAX_GENERATION_FAILURES: u32 = 20;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -109,6 +115,7 @@ impl RuntimeState {
             last_registry_refresh: self.data.last_registry_refresh,
             master_seed_set: self.data.master_seed != 0,
             regeneration: self.data.regeneration.clone(),
+            generation_failures: self.data.generation_failures.clone(),
             aggregates: self.data.aggregates(now),
             test_mode: self.data.test_mode,
             canister_ids: CanisterIds {
@@ -126,8 +133,19 @@ pub struct Candidate {
     pub vetoed: bool,
 }
 
-/// A `regenerate_today` override: `params` replace the schedule entry for `number`, and `attempt`
-/// salts its seeds so each regeneration produces a different puzzle.
+/// Why `generate_candidate` produced nothing.
+#[derive(Debug, PartialEq, Eq)]
+pub enum GenerationFailure {
+    /// This seed found nothing; another may do better.
+    Exhausted,
+    /// Nothing another attempt can fix: the scheduled game has no generator, its parameters are
+    /// impossible for any seed, or the pool is already at its ceiling.
+    Permanent,
+}
+
+/// A pin on a number's parameters: `params` replace the schedule entry for `number`, and `attempt`
+/// salts its seeds so each regeneration produces a different puzzle. Set by `regenerate_today`,
+/// and by `set_schedule` to hold today to the game it was already working towards.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Regeneration {
     pub number: PuzzleNumber,
@@ -152,6 +170,10 @@ struct Data {
     pub candidates: BTreeMap<PuzzleNumber, BTreeMap<GameId, Vec<Candidate>>>,
     #[serde(default)]
     pub regeneration: Option<Regeneration>,
+    /// Seeds that found nothing, per number. Salts the next seed so a retry is a different puzzle
+    /// attempt rather than the one that just failed, and caps how many are tried.
+    #[serde(default)]
+    pub generation_failures: BTreeMap<PuzzleNumber, u32>,
     pub results: BTreeMap<(PuzzleNumber, GameId, UserId), DailyPuzzleResult>,
     pub local_user_indexes: HashSet<CanisterId>,
     pub pending_pushes: HashSet<CanisterId>,
@@ -179,6 +201,7 @@ impl Data {
             puzzles: BTreeMap::new(),
             candidates: BTreeMap::new(),
             regeneration: None,
+            generation_failures: BTreeMap::new(),
             results: BTreeMap::new(),
             local_user_indexes: HashSet::new(),
             pending_pushes: HashSet::new(),
@@ -199,11 +222,30 @@ impl Data {
             .map_or(&self.schedule[weekday(number)], |r| &r.params)
     }
 
+    /// The seed salt for `number`: one step per `regenerate_today` and one per failed generation,
+    /// packed so the two cannot land on a salt the other has already tried.
     fn attempt_for(&self, number: PuzzleNumber) -> u32 {
+        self.regenerations_for(number)
+            .saturating_mul(MAX_GENERATION_FAILURES + 1)
+            .saturating_add(self.failures_for(number))
+    }
+
+    fn regenerations_for(&self, number: PuzzleNumber) -> u32 {
         self.regeneration
             .as_ref()
             .filter(|r| r.number == number)
             .map_or(0, |r| r.attempt)
+    }
+
+    pub fn failures_for(&self, number: PuzzleNumber) -> u32 {
+        self.generation_failures.get(&number).copied().unwrap_or(0)
+    }
+
+    /// Records a seed that found nothing. Returns false once the number has used up its attempts.
+    pub fn record_generation_failure(&mut self, number: PuzzleNumber) -> bool {
+        let failures = self.generation_failures.entry(number).or_default();
+        *failures = failures.saturating_add(1);
+        *failures < MAX_GENERATION_FAILURES
     }
 
     pub fn game_config_for(&self, game_id: &str) -> GameConfig {
@@ -260,14 +302,14 @@ impl Data {
     }
 
     /// Generates one candidate of the scheduled game for `number` and returns its index in that
-    /// game's pool, or None when the scheduled game has no generator. Deterministic given
-    /// `master_seed`, the schedule, the number and the index.
-    pub fn generate_candidate(&mut self, number: PuzzleNumber) -> Option<u8> {
+    /// game's pool. Deterministic given `master_seed`, the schedule, the number, the index and
+    /// the number's attempt salt.
+    pub fn generate_candidate(&mut self, number: PuzzleNumber) -> Result<u8, GenerationFailure> {
         let params = self.params_for(number).clone();
         let index = self.candidate_pool(number, &params.game_id).map_or(0, |p| p.len());
         // Keeps the `u8` index below honest whatever the caller asked for
         if index >= MAX_CANDIDATE_POOL {
-            return None;
+            return Err(GenerationFailure::Permanent);
         }
         let seed = candidate_seed(
             self.master_seed,
@@ -276,7 +318,13 @@ impl Data {
             index as u64,
             self.attempt_for(number),
         );
-        let generated = generate(&params, seed)?;
+        let generated = match generate(&params, seed) {
+            Some(Ok(generated)) => generated,
+            // The parameters are legal and another seed may still work
+            Some(Err(GenerateError::Exhausted { .. })) => return Err(GenerationFailure::Exhausted),
+            // The schedule entry is wrong, or names a game with no generator: no seed fixes either
+            Some(Err(GenerateError::InvalidParams(_))) | None => return Err(GenerationFailure::Permanent),
+        };
         let puzzle = DailyPuzzle {
             game_id: params.game_id.clone(),
             number,
@@ -296,7 +344,7 @@ impl Data {
             .entry(params.game_id)
             .or_default()
             .push(Candidate { puzzle, vetoed: false });
-        Some(index as u8)
+        Ok(index as u8)
     }
 
     /// Ships today's scheduled puzzle from its candidate pool if it hasn't shipped yet, then
@@ -328,7 +376,7 @@ impl Data {
             Some(game_id) => forced_params(&self.schedule, &game_id).ok_or(format!("unknown game_id '{game_id}'"))?,
             None => self.schedule[weekday(current)].clone(),
         };
-        let attempt = self.attempt_for(current) + 1;
+        let attempt = self.regenerations_for(current) + 1;
         self.regeneration = Some(Regeneration {
             number: current,
             params,
@@ -342,6 +390,7 @@ impl Data {
     pub fn prune(&mut self, now: TimestampMillis) {
         let current = Self::number_for(now);
         self.candidates.retain(|n, _| *n >= current);
+        self.generation_failures.retain(|n, _| *n >= current);
         if self.regeneration.as_ref().is_some_and(|r| r.number < current) {
             self.regeneration = None;
         }
@@ -381,8 +430,20 @@ impl Data {
     /// effect from tomorrow: today keeps whatever has already shipped or been generated for it,
     /// and an active regeneration still overrides today. Use `regenerate_today` to change today.
     pub fn set_schedule(&mut self, schedule: Vec<PuzzleParams>, now: TimestampMillis) {
-        self.schedule = schedule;
         let current = Self::number_for(now);
+        // A day whose puzzle has not shipped yet still reads its game from the schedule, so
+        // without this a change made between the rollover and the promotion would move today's
+        // game - the opposite of what this says it does, and with nothing to tell the operator it
+        // happened. Pinning today to the entry it was already working towards keeps its candidate
+        // pool meaningful too.
+        if !self.has_puzzle(current) && self.regeneration.as_ref().is_none_or(|r| r.number != current) {
+            self.regeneration = Some(Regeneration {
+                number: current,
+                params: self.schedule[weekday(current)].clone(),
+                attempt: 0,
+            });
+        }
+        self.schedule = schedule;
         self.candidates.retain(|n, _| *n <= current);
     }
 
@@ -479,16 +540,15 @@ struct Generated {
 ///
 /// Generation is fallible. `InvalidParams` means no puzzle of this game can exist for these
 /// parameters whatever the seed, so the schedule entry is wrong; `Exhausted` means this seed found
-/// nothing and another might. Nothing here advances the seed on its own (`attempt_for` only moves
-/// when an operator calls `regenerate_today`), so either way the day stops here and the error is
-/// logged rather than reported as a missing generator.
+/// nothing and another might. The error comes back so the caller can tell those apart: the first
+/// stops the day, the second salts the seed and tries again.
 macro_rules! into_generated {
     ($game_id:expr, $generated:expr) => {{
         let generated = match $generated {
             Ok(generated) => generated,
             Err(error) => {
                 error!(game_id = $game_id, ?error, "Puzzle generation failed");
-                return None;
+                return Some(Err(error));
             }
         };
         Generated {
@@ -512,7 +572,7 @@ macro_rules! into_generated {
 
 /// Runs the generator registered for `params.game_id`; None when there isn't one. `black_pct`
 /// only applies to light_up; the other games use their crate's default density knobs.
-fn generate(params: &PuzzleParams, seed: u64) -> Option<Generated> {
+fn generate(params: &PuzzleParams, seed: u64) -> Option<Result<Generated, GenerateError>> {
     let easy = params.tier == 0;
     let (w, h) = (params.width, params.height);
     let generated = match params.game_id.as_str() {
@@ -566,7 +626,7 @@ fn generate(params: &PuzzleParams, seed: u64) -> Option<Generated> {
         ),
         _ => return None,
     };
-    Some(generated)
+    Some(Ok(generated))
 }
 
 #[derive(Serialize, Debug)]
@@ -595,6 +655,9 @@ pub struct Metrics {
     pub last_registry_refresh: TimestampMillis,
     pub master_seed_set: bool,
     pub regeneration: Option<Regeneration>,
+    /// Seeds that found nothing, per number. A number sitting at `MAX_GENERATION_FAILURES` has
+    /// given up for the day and needs `regenerate_today` or a schedule change.
+    pub generation_failures: BTreeMap<PuzzleNumber, u32>,
     pub aggregates: Vec<PuzzleAggregate>,
     pub test_mode: bool,
     pub canister_ids: CanisterIds,
@@ -679,7 +742,9 @@ mod tests {
             .chain(forced)
             .enumerate()
         {
-            let generated = generate(&params, 1000 + i as u64).unwrap_or_else(|| panic!("no generator for {}", params.game_id));
+            let generated = generate(&params, 1000 + i as u64)
+                .unwrap_or_else(|| panic!("no generator for {}", params.game_id))
+                .unwrap_or_else(|error| panic!("{} failed to generate: {error}", params.game_id));
             let (w, h) = (params.width as usize, params.height as usize);
             let (description_len, solution_len) = wire_lengths(&params.game_id, w, h);
             assert_eq!(generated.tier, params.tier, "{}", params.game_id);
@@ -860,7 +925,7 @@ mod tests {
         }
         // Today is given up on rather than generated forever; tomorrow still gets its pool
         assert_eq!(d.generation_needed(now), Some(101));
-        assert!(d.generate_candidate(100).is_none());
+        assert_eq!(d.generate_candidate(100), Err(GenerationFailure::Permanent));
         assert_eq!(pool(&d, 100).len(), MAX_CANDIDATE_POOL);
 
         // And the same ceiling on a future day, once its pool is full and all of it vetoed
@@ -944,6 +1009,71 @@ mod tests {
         // The override goes with the day
         d.prune(now + DAY_IN_MS);
         assert!(d.regeneration.is_none());
+    }
+
+    // Nothing else moves the seed, so a number whose generation failed would otherwise regenerate
+    // from the identical seed every time the rollover timer ran, and fail the same way, until an
+    // operator noticed. The failures salt it instead, and cap how many are tried.
+    #[test]
+    fn a_failed_generation_salts_the_next_seed_and_gives_up_eventually() {
+        let mut d = data();
+        let now = 100 * DAY_IN_MS + 1;
+        let mut salts = vec![d.attempt_for(100)];
+        for failures in 1..MAX_GENERATION_FAILURES {
+            assert!(d.record_generation_failure(100));
+            assert_eq!(d.failures_for(100), failures);
+            salts.push(d.attempt_for(100));
+        }
+        // The last one is refused: the parameters are at a limit, not the seed unlucky
+        assert!(!d.record_generation_failure(100));
+        assert_eq!(salts.len(), MAX_GENERATION_FAILURES as usize);
+
+        // A regeneration cannot land on a salt the failures have already used
+        d.regenerate_today(None, now).unwrap();
+        assert!(!salts.contains(&d.attempt_for(100)));
+
+        // And the counts go with the day
+        d.prune(now + DAY_IN_MS);
+        assert_eq!(d.failures_for(100), 0);
+    }
+
+    // "Takes effect from tomorrow" has to hold for the window between the rollover and today's
+    // puzzle shipping, which is exactly when an operator changing the schedule would not expect
+    // to be changing today.
+    #[test]
+    fn set_schedule_does_not_move_todays_game() {
+        let mut d = data();
+        let now = 100 * DAY_IN_MS + 1;
+        // Today has a candidate but has not shipped it yet
+        d.generate_candidate(100).unwrap();
+
+        let tents_params = forced_params(&[], tents::GAME_ID).unwrap();
+        d.set_schedule(vec![tents_params; 7], now);
+
+        assert_eq!(d.params_for(100).game_id, LU);
+        assert_eq!(d.params_for(101).game_id, tents::GAME_ID);
+        assert!(d.ensure_puzzles(now));
+        assert_eq!(d.current_puzzles(now)[0].game_id, LU);
+
+        // Tomorrow is the new game, and the day after the pin has gone
+        run_generation(&mut d, now + DAY_IN_MS);
+        assert_eq!(d.current_puzzles(now + DAY_IN_MS)[0].game_id, tents::GAME_ID);
+        assert!(d.regeneration.is_none());
+    }
+
+    // A regeneration is an explicit instruction about today, so a schedule change must not
+    // quietly replace it
+    #[test]
+    fn set_schedule_leaves_an_active_regeneration_alone() {
+        let mut d = data();
+        let now = 100 * DAY_IN_MS + 1;
+        d.regenerate_today(Some(loopy::GAME_ID.to_string()), now).unwrap();
+
+        let tents_params = forced_params(&[], tents::GAME_ID).unwrap();
+        d.set_schedule(vec![tents_params; 7], now);
+
+        assert_eq!(d.params_for(100).game_id, loopy::GAME_ID);
+        assert_eq!(d.regeneration.as_ref().unwrap().attempt, 1);
     }
 
     #[test]
@@ -1122,7 +1252,7 @@ mod tests {
         // And the generator refuses it too, rather than producing a light_up puzzle
         let mut d = data();
         d.schedule[weekday(100)].game_id = "sudoku".to_string();
-        assert_eq!(d.generate_candidate(100), None);
+        assert_eq!(d.generate_candidate(100), Err(GenerationFailure::Permanent));
         assert!(d.candidates.is_empty());
     }
 

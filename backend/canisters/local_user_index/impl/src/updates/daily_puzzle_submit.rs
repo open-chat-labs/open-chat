@@ -4,7 +4,7 @@ use crate::model::game_chit_credit::{GameChitCredit, GameChitOutcome, apply};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use local_user_index_canister::daily_puzzle_submit::{Response::*, *};
-use tracing::error;
+use tracing::{error, info};
 use types::{DailyPuzzleSolved, OCResult, UserId};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
@@ -30,7 +30,15 @@ async fn daily_puzzle_submit(args: Args) -> Response {
                 outcome.solved.chit_balance = Some(result.chit_balance);
                 outcome.solved.total_chit_earned = Some(result.total_chit_earned);
             }
-            GameChitOutcome::Applied(None) => {}
+            // `AlreadyAdded`: the solve key was recorded by an earlier record for this day that a
+            // `regenerate_today` has since dropped, so the day has been paid once already and this
+            // solve credits nothing. What it was paid is not knowable from here - the amount is
+            // not stored against the key - so report the CHIT this solve moved, which is none,
+            // rather than an amount that never left the user canister.
+            GameChitOutcome::Applied(None) => {
+                info!(key = %credit.key, %user_id, "Daily puzzle reward already credited for this day");
+                clear_reward(user_id, &args, &mut outcome.solved);
+            }
             // A refusal is permanent - the user is suspended, or the amount is over the user
             // canister's own limit - and no retry changes it. Zero the reward in the record and
             // in the response rather than reporting CHIT that was never credited.

@@ -54,11 +54,13 @@ pub struct DailyPuzzleConfig {
     pub min_carded_solve_ms: u64,
     /// Submissions per user per puzzle before the local user index refuses further ones.
     pub max_submits: u16,
-    /// Hint calls per user per puzzle that may come back without a paid hint. The free mistake
-    /// check answers "is this key right?" for a client-chosen key, so without a bound it is an
-    /// unmetered oracle: one call per key reads the whole solution without spending any CHIT.
-    /// Counted on every outcome that serves no paid hint, since refusing one outcome and not the
-    /// other still tells the caller which it was.
+    /// Hint calls per user per puzzle that name a key in `filled` and come back without a paid
+    /// hint. The free mistake check answers "is this key right?" for a client-chosen key, so
+    /// without a bound it is an unmetered oracle: one call per key reads the whole solution
+    /// without spending any CHIT. Counted on every such call before it branches on what the
+    /// solution says, and given back only when a paid hint is served, since a refusal that costs
+    /// nothing where the others cost a check still tells the caller which one it was. A call with
+    /// nothing in `filled` names no key and is not counted.
     pub max_free_checks: u16,
 }
 

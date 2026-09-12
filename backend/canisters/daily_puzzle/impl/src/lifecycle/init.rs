@@ -31,8 +31,8 @@ fn init(args: Args) {
         let now = env.now();
         data.master_seed = splitmix64(now);
         let number = Data::number_for(now);
-        if data.generate_candidate(number).is_none() {
-            error!(number, "No generator for today's scheduled game");
+        if let Err(error) = data.generate_candidate(number) {
+            error!(number, ?error, "No candidate generated for today's scheduled game");
         }
     }
 
