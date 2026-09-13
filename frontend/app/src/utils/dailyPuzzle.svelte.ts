@@ -224,7 +224,11 @@ export class DailyPuzzleGame {
         const filled = new Set(this.#filled().map(([k]) => k));
         const pointed = last.hint.target.length > 0 ? last.hint.target : last.hint.focus;
         const allPointedMarked = pointed.length > 0 && pointed.every((k) => filled.has(k));
-        const pointedIsUnmarkable = !pointed.some((k) => filled.has(k));
+        // Unmarkable means the game takes no mark there, not that the player has not marked it
+        // yet; a tap returns the state unchanged for keys that take no mark
+        const pointedIsUnmarkable = pointed.every(
+            (k) => this.game.tap(this.model, this.state, k) === this.state,
+        );
 
         if (
             this.#concluded(last) ||
