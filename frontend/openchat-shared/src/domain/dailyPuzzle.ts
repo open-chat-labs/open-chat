@@ -23,6 +23,8 @@ export type PublicDailyPuzzle = {
     firstPlayFree: boolean;
     hintPrices: number[];
     maxHints: number;
+    /** Free mistake checks per puzzle; every hint call that names a key spends one. */
+    maxFreeChecks: number;
     minCardedSolveMs: bigint;
 };
 
@@ -55,8 +57,12 @@ export type DailyPuzzleUserState = {
     gridSavedAt?: bigint;
     solved?: DailyPuzzleSolved;
     submits: number;
+    /** Free mistake checks this user has left on this puzzle. */
+    freeChecks: number;
     streak: number;
     hasSolvedBefore: boolean;
+    /** The fee the server will charge this user to start, and re-check on the start call. */
+    entryFee: number;
 };
 
 export type DailyPuzzleResult = {

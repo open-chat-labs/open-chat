@@ -41,6 +41,7 @@ export function publicDailyPuzzle(value: TPublicDailyPuzzle): PublicDailyPuzzle 
         firstPlayFree: value.first_play_free,
         hintPrices: value.hint_prices,
         maxHints: value.max_hints,
+        maxFreeChecks: value.max_free_checks,
         minCardedSolveMs: value.min_carded_solve_ms,
     };
 }
@@ -84,8 +85,10 @@ export function dailyPuzzleUserState(value: TDailyPuzzleUserState): DailyPuzzleU
         gridSavedAt: mapOptional(value.grid_saved_at, (t) => t),
         solved: mapOptional(value.solved, dailyPuzzleSolved),
         submits: value.submits,
+        freeChecks: value.free_checks,
         streak: value.streak,
         hasSolvedBefore: value.has_solved_before,
+        entryFee: value.entry_fee,
     };
 }
 

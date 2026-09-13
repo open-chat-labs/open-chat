@@ -140,11 +140,9 @@ export class DailyPuzzleGame {
         return this.userState?.startedAt !== undefined;
     }
 
+    /** The server's quote for this user, re-checked on the start call; never computed here. */
     get entryFee(): number {
-        const state = this.userState;
-        return this.puzzle.firstPlayFree && !(state?.hasSolvedBefore ?? false)
-            ? 0
-            : this.puzzle.entryFee;
+        return this.userState?.entryFee ?? this.puzzle.entryFee;
     }
 
     /** Caption shown before the puzzle is started. */

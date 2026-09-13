@@ -778,6 +778,7 @@ export const DailyPuzzleConfig = /* @__PURE__ */ Type.Object({
     hint_penalty: Type.Number(),
     min_carded_solve_ms: Type.BigInt(),
     max_submits: Type.Number(),
+    max_free_checks: Type.Number(),
 });
 
 export type GroupCanisterThreadDetails = Static<typeof GroupCanisterThreadDetails>;
@@ -5919,8 +5920,10 @@ export const DailyPuzzleUserState = /* @__PURE__ */ Type.Object({
     grid_saved_at: Type.Optional(Type.BigInt()),
     solved: Type.Optional(DailyPuzzleSolved),
     submits: Type.Number(),
+    free_checks: Type.Number(),
     streak: Type.Number(),
     has_solved_before: Type.Boolean(),
+    entry_fee: Type.Number(),
 });
 
 export type OptionUpdateVideoCall = Static<typeof OptionUpdateVideoCall>;
@@ -5964,6 +5967,7 @@ export const PublicDailyPuzzle = /* @__PURE__ */ Type.Object({
     first_play_free: Type.Boolean(),
     hint_prices: Type.Array(Type.Number()),
     max_hints: Type.Number(),
+    max_free_checks: Type.Number(),
     min_carded_solve_ms: Type.BigInt(),
 });
 

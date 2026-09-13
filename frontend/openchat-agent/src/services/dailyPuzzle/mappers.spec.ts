@@ -15,8 +15,10 @@ const state: TDailyPuzzleUserState = {
     grid_saved_at: undefined,
     solved: undefined,
     submits: 0,
+    free_checks: 2,
     streak: 0,
     has_solved_before: false,
+    entry_fee: 0,
 };
 
 const solved: TDailyPuzzleSolved = {
