@@ -65,6 +65,33 @@ export type DailyPuzzleUserState = {
     entryFee: number;
 };
 
+/** Series-level tuning as held by the daily_puzzle canister; mirrors the Rust `DailyPuzzleConfig`. */
+export type DailyPuzzleConfig = {
+    enabled: boolean;
+    entryFee: number;
+    firstPlayFree: boolean;
+    rewardByStreak: number[];
+    hintPenalty: number;
+    minCardedSolveMs: bigint;
+    maxSubmits: number;
+    maxFreeChecks: number;
+};
+
+/** Per-game tuning; mirrors the Rust `GameConfig`. */
+export type GameConfig = {
+    hintPrices: number[];
+    maxHints: number;
+};
+
+/** Generator parameters for one weekday; mirrors the Rust `PuzzleParams`. */
+export type PuzzleParams = {
+    gameId: string;
+    width: number;
+    height: number;
+    tier: number;
+    blackPct: number;
+};
+
 export type DailyPuzzleResult = {
     gameId: string;
     number: number;

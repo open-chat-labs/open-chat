@@ -1,4 +1,5 @@
 import type {
+    DailyPuzzleConfig,
     DailyPuzzleFetchResult,
     DailyPuzzleHintResponse,
     DailyPuzzleResult,
@@ -6,19 +7,26 @@ import type {
     DailyPuzzleStartResponse,
     DailyPuzzleSubmitResponse,
     DailyPuzzleUserState,
+    GameConfig,
     PublicDailyPuzzle,
     PuzzleHint,
+    PuzzleParams,
     ServedHint,
 } from "@shared";
 import type { OCError } from "@shared";
 import { consolidateBytes, mapOptional, principalBytesToString } from "../../utils/mapping";
 import { mapResult } from "../common/chatMappersV2";
 import type {
+    DailyPuzzleConfig as TDailyPuzzleConfig,
+    DailyPuzzleConfigResponse,
     DailyPuzzleCurrentPuzzlesResponse,
+    DailyPuzzleGameConfigsResponse,
+    DailyPuzzlePuzzleParams,
     DailyPuzzleResult as TDailyPuzzleResult,
     DailyPuzzleResultsResponse,
     DailyPuzzleSolved as TDailyPuzzleSolved,
     DailyPuzzleUserState as TDailyPuzzleUserState,
+    GameConfig as TGameConfig,
     LocalUserIndexDailyPuzzleFetchResponse,
     LocalUserIndexDailyPuzzleHintResponse,
     LocalUserIndexDailyPuzzleStartResponse,
@@ -158,4 +166,66 @@ export function dailyPuzzleResultsResponse(value: DailyPuzzleResultsResponse): D
         return value.Success.map(dailyPuzzleResult);
     }
     return [];
+}
+
+export function dailyPuzzleConfig(value: TDailyPuzzleConfig): DailyPuzzleConfig {
+    return {
+        enabled: value.enabled,
+        entryFee: value.entry_fee,
+        firstPlayFree: value.first_play_free,
+        rewardByStreak: value.reward_by_streak,
+        hintPenalty: value.hint_penalty,
+        minCardedSolveMs: value.min_carded_solve_ms,
+        maxSubmits: value.max_submits,
+        maxFreeChecks: value.max_free_checks,
+    };
+}
+
+export function apiDailyPuzzleConfig(value: DailyPuzzleConfig): TDailyPuzzleConfig {
+    return {
+        enabled: value.enabled,
+        entry_fee: value.entryFee,
+        first_play_free: value.firstPlayFree,
+        reward_by_streak: value.rewardByStreak,
+        hint_penalty: value.hintPenalty,
+        min_carded_solve_ms: value.minCardedSolveMs,
+        max_submits: value.maxSubmits,
+        max_free_checks: value.maxFreeChecks,
+    };
+}
+
+export function gameConfig(value: TGameConfig): GameConfig {
+    return {
+        hintPrices: value.hint_prices,
+        maxHints: value.max_hints,
+    };
+}
+
+export function apiGameConfig(value: GameConfig): TGameConfig {
+    return {
+        hint_prices: value.hintPrices,
+        max_hints: value.maxHints,
+    };
+}
+
+export function apiPuzzleParams(value: PuzzleParams): DailyPuzzlePuzzleParams {
+    return {
+        game_id: value.gameId,
+        width: value.width,
+        height: value.height,
+        tier: value.tier,
+        black_pct: value.blackPct,
+    };
+}
+
+export function dailyPuzzleConfigResponse(
+    value: DailyPuzzleConfigResponse,
+): DailyPuzzleConfig | OCError {
+    return mapResult(value, dailyPuzzleConfig);
+}
+
+export function dailyPuzzleGameConfigsResponse(
+    value: DailyPuzzleGameConfigsResponse,
+): [string, GameConfig][] | OCError {
+    return mapResult(value, (s) => s.map(([id, c]) => [id, gameConfig(c)]));
 }

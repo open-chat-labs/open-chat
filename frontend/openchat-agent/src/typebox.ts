@@ -2081,6 +2081,31 @@ export const DailyPuzzleResultsArgs = /* @__PURE__ */ Type.Object({
     user_ids: Type.Array(UserId),
 });
 
+export type DailyPuzzleSetGameConfigArgs = Static<typeof DailyPuzzleSetGameConfigArgs>;
+export const DailyPuzzleSetGameConfigArgs = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    config: GameConfig,
+});
+
+export type DailyPuzzleSetConfigArgs = Static<typeof DailyPuzzleSetConfigArgs>;
+export const DailyPuzzleSetConfigArgs = /* @__PURE__ */ Type.Object({
+    config: DailyPuzzleConfig,
+});
+
+export type DailyPuzzleRegenerateTodayArgs = Static<typeof DailyPuzzleRegenerateTodayArgs>;
+export const DailyPuzzleRegenerateTodayArgs = /* @__PURE__ */ Type.Object({
+    game_id: Type.Optional(Type.String()),
+});
+
+export type DailyPuzzlePuzzleParams = Static<typeof DailyPuzzlePuzzleParams>;
+export const DailyPuzzlePuzzleParams = /* @__PURE__ */ Type.Object({
+    game_id: Type.String(),
+    width: Type.Number(),
+    height: Type.Number(),
+    tier: Type.Number(),
+    black_pct: Type.Number(),
+});
+
 export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
     typeof UserIndexDiamondMembershipFeesDiamondMembershipFees
 >;
@@ -6577,6 +6602,11 @@ export const RegistryTokenDetails = /* @__PURE__ */ Type.Object({
     payments: Type.Array(RegistryPayment),
     one_sec_enabled: Type.Boolean(),
     evm_contract_addresses: Type.Array(EvmContractAddress),
+});
+
+export type DailyPuzzleSetScheduleArgs = Static<typeof DailyPuzzleSetScheduleArgs>;
+export const DailyPuzzleSetScheduleArgs = /* @__PURE__ */ Type.Object({
+    schedule: Type.Array(DailyPuzzlePuzzleParams),
 });
 
 export type DailyPuzzleResultsResponse = Static<typeof DailyPuzzleResultsResponse>;

@@ -28,4 +28,9 @@ fn main() {
     generate_ts_method!(daily_puzzle, current_puzzles);
     generate_ts_method!(daily_puzzle, game_configs);
     generate_ts_method!(daily_puzzle, results);
+
+    generate_ts_method!(daily_puzzle, regenerate_today);
+    generate_ts_method!(daily_puzzle, set_config);
+    generate_ts_method!(daily_puzzle, set_game_config);
+    generate_ts_method!(daily_puzzle, set_schedule);
 }

@@ -1542,6 +1542,27 @@ function getAction(
         case "dailyPuzzleResults":
             return agent.dailyPuzzleResults(payload.gameId, payload.number, payload.userIds);
 
+        case "dailyPuzzleConfig":
+            return agent.dailyPuzzleConfig();
+
+        case "dailyPuzzleGameConfigs":
+            return agent.dailyPuzzleGameConfigs();
+
+        case "dailyPuzzleSetConfig":
+            return agent.dailyPuzzleSetConfig(payload.config);
+
+        case "dailyPuzzleSetGameConfig":
+            return agent.dailyPuzzleSetGameConfig(payload.gameId, payload.config);
+
+        case "dailyPuzzleSetSchedule":
+            return agent.dailyPuzzleSetSchedule(payload.schedule);
+
+        case "dailyPuzzleRegenerateToday":
+            return agent.dailyPuzzleRegenerateToday(payload.gameId);
+
+        case "dailyPuzzlePushNow":
+            return agent.dailyPuzzlePushNow();
+
         case "setPremiumItemCost":
             return agent.setPremiumItemCost(payload.item, payload.chitCost);
 

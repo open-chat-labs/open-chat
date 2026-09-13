@@ -105,12 +105,15 @@ import type {
     PremiumItem,
 } from "./chit";
 import type {
+    DailyPuzzleConfig,
     DailyPuzzleFetchResult,
     DailyPuzzleHintResponse,
     DailyPuzzleResult,
     DailyPuzzleStartResponse,
     DailyPuzzleSubmitResponse,
+    GameConfig,
     PublicDailyPuzzle,
+    PuzzleParams,
 } from "./dailyPuzzle";
 import type {
     AddMembersToChannelResponse,
@@ -524,6 +527,13 @@ export type WorkerRequest =
     | DailyPuzzleSaveGrid
     | DailyPuzzleCurrent
     | DailyPuzzleResults
+    | DailyPuzzleGetConfig
+    | DailyPuzzleGameConfigs
+    | DailyPuzzleSetConfig
+    | DailyPuzzleSetGameConfig
+    | DailyPuzzleSetSchedule
+    | DailyPuzzleRegenerateToday
+    | DailyPuzzlePushNow
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -629,6 +639,39 @@ type DailyPuzzleResults = {
     gameId: string;
     number: number;
     userIds: string[];
+};
+
+type DailyPuzzleGetConfig = {
+    kind: "dailyPuzzleConfig";
+};
+
+type DailyPuzzleGameConfigs = {
+    kind: "dailyPuzzleGameConfigs";
+};
+
+type DailyPuzzleSetConfig = {
+    kind: "dailyPuzzleSetConfig";
+    config: DailyPuzzleConfig;
+};
+
+type DailyPuzzleSetGameConfig = {
+    kind: "dailyPuzzleSetGameConfig";
+    gameId: string;
+    config: GameConfig;
+};
+
+type DailyPuzzleSetSchedule = {
+    kind: "dailyPuzzleSetSchedule";
+    schedule: PuzzleParams[];
+};
+
+type DailyPuzzleRegenerateToday = {
+    kind: "dailyPuzzleRegenerateToday";
+    gameId: string | undefined;
+};
+
+type DailyPuzzlePushNow = {
+    kind: "dailyPuzzlePushNow";
 };
 
 export type SetAuthIdentity = {
@@ -2155,6 +2198,8 @@ export type WorkerResponseInner =
     | DailyPuzzleHintResponse
     | PublicDailyPuzzle[]
     | DailyPuzzleResult[]
+    | DailyPuzzleConfig
+    | [string, GameConfig][]
     | OneSecTransferFees[]
     | OneSecForwardingStatus;
 
@@ -2941,6 +2986,20 @@ export type WorkerResult<T> = T extends Init
     ? PublicDailyPuzzle[]
     : T extends DailyPuzzleResults
     ? DailyPuzzleResult[]
+    : T extends DailyPuzzleGetConfig
+    ? DailyPuzzleConfig | OCError
+    : T extends DailyPuzzleGameConfigs
+    ? [string, GameConfig][] | OCError
+    : T extends DailyPuzzleSetConfig
+    ? Success | OCError
+    : T extends DailyPuzzleSetGameConfig
+    ? Success | OCError
+    : T extends DailyPuzzleSetSchedule
+    ? Success | OCError
+    : T extends DailyPuzzleRegenerateToday
+    ? Success | OCError
+    : T extends DailyPuzzlePushNow
+    ? Success | OCError
     : T extends SetPremiumItemCost
     ? void
     : T extends CreateAccountLinkingCode

@@ -211,12 +211,15 @@ import type {
     ProposedProtectedAction,
     Success,
     OCError,
+    DailyPuzzleConfig,
     DailyPuzzleFetchResult,
     DailyPuzzleHintResponse,
     DailyPuzzleResult,
     DailyPuzzleStartResponse,
     DailyPuzzleSubmitResponse,
+    GameConfig,
     PublicDailyPuzzle,
+    PuzzleParams,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -4772,6 +4775,34 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<DailyPuzzleResult[]> {
         if (!this.config.dailyPuzzleCanister) return Promise.resolve([]);
         return this._dailyPuzzleClient.get().results(gameId, number, userIds);
+    }
+
+    dailyPuzzleConfig(): Promise<DailyPuzzleConfig | OCError> {
+        return this._dailyPuzzleClient.get().config();
+    }
+
+    dailyPuzzleGameConfigs(): Promise<[string, GameConfig][] | OCError> {
+        return this._dailyPuzzleClient.get().gameConfigs();
+    }
+
+    dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
+        return this._dailyPuzzleClient.get().setConfig(config);
+    }
+
+    dailyPuzzleSetGameConfig(gameId: string, config: GameConfig): Promise<Success | OCError> {
+        return this._dailyPuzzleClient.get().setGameConfig(gameId, config);
+    }
+
+    dailyPuzzleSetSchedule(schedule: PuzzleParams[]): Promise<Success | OCError> {
+        return this._dailyPuzzleClient.get().setSchedule(schedule);
+    }
+
+    dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
+        return this._dailyPuzzleClient.get().regenerateToday(gameId);
+    }
+
+    dailyPuzzlePushNow(): Promise<Success | OCError> {
+        return this._dailyPuzzleClient.get().pushNow();
     }
 
     setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {

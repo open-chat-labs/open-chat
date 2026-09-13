@@ -1,4 +1,15 @@
-import { dailyPuzzleHintResponse, dailyPuzzleSolved, dailyPuzzleStartResponse } from "./mappers";
+import {
+    apiDailyPuzzleConfig,
+    apiGameConfig,
+    apiPuzzleParams,
+    dailyPuzzleConfig,
+    dailyPuzzleConfigResponse,
+    dailyPuzzleGameConfigsResponse,
+    dailyPuzzleHintResponse,
+    dailyPuzzleSolved,
+    dailyPuzzleStartResponse,
+    gameConfig,
+} from "./mappers";
 import type {
     DailyPuzzleSolved as TDailyPuzzleSolved,
     DailyPuzzleUserState as TDailyPuzzleUserState,
@@ -105,6 +116,58 @@ describe("daily puzzle mappers", () => {
             expect(paid.chitBalance).toBe(3150);
             expect(paid.totalChitEarned).toBe(4350);
             expect(paid.reward).toBe(250);
+        });
+    });
+});
+
+describe("daily puzzle operator config mappers", () => {
+    const config = {
+        enabled: true,
+        entryFee: 123,
+        firstPlayFree: false,
+        rewardByStreak: [1, 2, 3],
+        hintPenalty: 77,
+        minCardedSolveMs: BigInt(12_345),
+        maxSubmits: 9,
+        maxFreeChecks: 11,
+    };
+    const game = { hintPrices: [10, 20, 30], maxHints: 4 };
+
+    test("series config maps both ways without losing a field", () => {
+        expect(apiDailyPuzzleConfig(config)).toEqual({
+            enabled: true,
+            entry_fee: 123,
+            first_play_free: false,
+            reward_by_streak: [1, 2, 3],
+            hint_penalty: 77,
+            min_carded_solve_ms: BigInt(12_345),
+            max_submits: 9,
+            max_free_checks: 11,
+        });
+        expect(dailyPuzzleConfig(apiDailyPuzzleConfig(config))).toEqual(config);
+        expect(dailyPuzzleConfigResponse({ Success: apiDailyPuzzleConfig(config) })).toEqual(
+            config,
+        );
+    });
+
+    test("game config maps both ways", () => {
+        expect(apiGameConfig(game)).toEqual({ hint_prices: [10, 20, 30], max_hints: 4 });
+        expect(gameConfig(apiGameConfig(game))).toEqual(game);
+        expect(
+            dailyPuzzleGameConfigsResponse({ Success: [["light_up", apiGameConfig(game)]] }),
+        ).toEqual([["light_up", game]]);
+    });
+
+    test("schedule entry maps to the canister's field names", () => {
+        expect(
+            apiPuzzleParams({ gameId: "light_up", width: 7, height: 8, tier: 1, blackPct: 20 }),
+        ).toEqual({ game_id: "light_up", width: 7, height: 8, tier: 1, black_pct: 20 });
+    });
+
+    test("a refusal comes through as the error, not a value", () => {
+        expect(dailyPuzzleConfigResponse({ Error: [100, "not an operator"] })).toMatchObject({
+            kind: "error",
+            code: 100,
         });
     });
 });

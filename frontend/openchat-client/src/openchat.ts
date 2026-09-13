@@ -151,11 +151,14 @@ import {
     type CkbtcMinterDepositInfo,
     type CkbtcMinterWithdrawalInfo,
     type ClaimDailyChitResponse,
+    type DailyPuzzleConfig,
     type DailyPuzzleHintResponse,
     type DailyPuzzleResult,
     type DailyPuzzleStartResponse,
     type DailyPuzzleState,
     type DailyPuzzleSubmitResponse,
+    type GameConfig,
+    type PuzzleParams,
     type ClientJoinCommunityResponse,
     type ClientJoinGroupResponse,
     type CommunitiesRoute,
@@ -10831,6 +10834,36 @@ export class OpenChat {
                 }
                 return resp;
             });
+    }
+
+    // Operator endpoints on the daily_puzzle canister. Every answer is the server's own: a
+    // refusal comes back as an OCError for the caller to show, never swallowed.
+    dailyPuzzleConfig(): Promise<DailyPuzzleConfig | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleConfig" });
+    }
+
+    dailyPuzzleGameConfigs(): Promise<[string, GameConfig][] | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleGameConfigs" });
+    }
+
+    dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleSetConfig", config });
+    }
+
+    dailyPuzzleSetGameConfig(gameId: string, config: GameConfig): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleSetGameConfig", gameId, config });
+    }
+
+    dailyPuzzleSetSchedule(schedule: PuzzleParams[]): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleSetSchedule", schedule });
+    }
+
+    dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });
+    }
+
+    dailyPuzzlePushNow(): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzlePushNow" });
     }
 
     dailyPuzzleSaveGrid(gameId: string, grid: Uint8Array): Promise<boolean> {
