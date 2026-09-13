@@ -109,6 +109,11 @@ type ResultsResponse = variant {
     Error : OCError;
 };
 
+type ScheduleResponse = variant {
+    Success : vec PuzzleParams;
+    Error : OCError;
+};
+
 type SetConfigArgs = record {
     config : DailyPuzzleConfig;
 };
@@ -133,6 +138,7 @@ service : {
     current_puzzles : (record {}) -> (CurrentPuzzlesResponse) query;
     game_configs : (record {}) -> (GameConfigsResponse) query;
     results : (ResultsArgs) -> (ResultsResponse) query;
+    schedule : (record {}) -> (ScheduleResponse) query;
 
     candidates : (CandidatesArgs) -> (CandidatesResponse);
     push_now : (record {}) -> (UnitResult);

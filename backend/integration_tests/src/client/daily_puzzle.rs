@@ -6,6 +6,7 @@ generate_msgpack_query_call!(config);
 generate_msgpack_query_call!(current_puzzles);
 generate_msgpack_query_call!(game_configs);
 generate_msgpack_query_call!(results);
+generate_msgpack_query_call!(schedule);
 
 // Updates
 generate_msgpack_update_call!(c2c_pull_puzzles);
@@ -20,6 +21,7 @@ generate_msgpack_update_call!(veto_candidate);
 
 pub mod happy_path {
     use candid::Principal;
+    use daily_puzzle_canister::PuzzleParams;
     use pocket_ic::PocketIc;
     use types::{
         CanisterId, DailyPuzzleConfig, DailyPuzzleResult, Empty, GameConfig, GameId, PublicDailyPuzzle, PuzzleNumber, UserId,
@@ -48,6 +50,15 @@ pub mod happy_path {
 
         match response {
             daily_puzzle_canister::config::Response::Success(config) => config,
+            response => panic!("'config' error: {response:?}"),
+        }
+    }
+
+    pub fn schedule(env: &PocketIc, sender: Principal, daily_puzzle_canister_id: CanisterId) -> Vec<PuzzleParams> {
+        let response = super::schedule(env, sender, daily_puzzle_canister_id, &Empty {});
+
+        match response {
+            daily_puzzle_canister::schedule::Response::Success(config) => config,
             response => panic!("'config' error: {response:?}"),
         }
     }
