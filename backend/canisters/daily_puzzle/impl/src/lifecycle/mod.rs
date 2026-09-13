@@ -46,7 +46,7 @@ fn init_state(env: Box<dyn Environment>, mut data: Data, wasm_version: BuildVers
 // upgrade did not help because `pre_upgrade` had already written a non-zero `rng_seed`. So this
 // retries itself, and `generate_candidates` calls it whenever it finds the seed missing.
 pub(crate) fn reseed_rng() {
-    if RESEED_IN_FLIGHT.replace(true) {
+    if !claim_reseed() {
         return;
     }
     ic_cdk::futures::spawn_migratory(reseed_rng_inner());
@@ -54,9 +54,9 @@ pub(crate) fn reseed_rng() {
     async fn reseed_rng_inner() {
         let result = try_get_random_seed().await;
         RESEED_IN_FLIGHT.set(false);
-        let seed = match result {
-            Ok(seed) => seed,
-            Err(error) => {
+        let seed = match on_seed(result) {
+            Reseed::Set(seed) => seed,
+            Reseed::Retry(error) => {
                 error!(error, "Failed to get a random seed, retrying");
                 ic_cdk_timers::set_timer(RESEED_RETRY_DELAY, async { reseed_rng() });
                 return;
@@ -71,5 +71,40 @@ pub(crate) fn reseed_rng() {
             generate_candidates::start_job_if_required(state);
         });
         trace!("Successfully reseeded rng");
+    }
+}
+
+// One reseed in flight at a time: `generate_candidates` asks for one every time it finds no seed
+fn claim_reseed() -> bool {
+    !RESEED_IN_FLIGHT.replace(true)
+}
+
+enum Reseed {
+    Set([u8; 32]),
+    Retry(String),
+}
+
+fn on_seed(result: Result<[u8; 32], String>) -> Reseed {
+    match result {
+        Ok(seed) => Reseed::Set(seed),
+        Err(error) => Reseed::Retry(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // #9332 invariant 33. A rejected raw_rand is retried rather than trapped, and only one
+    // reseed is in flight however many callers ask.
+    #[test]
+    fn a_rejected_seed_is_retried_and_one_reseed_is_in_flight() {
+        assert!(matches!(on_seed(Ok([7; 32])), Reseed::Set(seed) if seed == [7; 32]));
+        assert!(matches!(on_seed(Err("rejected".to_string())), Reseed::Retry(e) if e == "rejected"));
+
+        assert!(claim_reseed());
+        assert!(!claim_reseed());
+        RESEED_IN_FLIGHT.set(false);
+        assert!(claim_reseed());
     }
 }
