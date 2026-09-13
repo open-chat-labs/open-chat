@@ -6604,16 +6604,6 @@ export const RegistryTokenDetails = /* @__PURE__ */ Type.Object({
     evm_contract_addresses: Type.Array(EvmContractAddress),
 });
 
-export type DailyPuzzleScheduleResponse = Static<typeof DailyPuzzleScheduleResponse>;
-export const DailyPuzzleScheduleResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: Type.Array(DailyPuzzlePuzzleParams),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type DailyPuzzleSetScheduleArgs = Static<typeof DailyPuzzleSetScheduleArgs>;
 export const DailyPuzzleSetScheduleArgs = /* @__PURE__ */ Type.Object({
     schedule: Type.Array(DailyPuzzlePuzzleParams),
