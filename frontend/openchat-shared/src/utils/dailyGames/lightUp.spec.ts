@@ -74,7 +74,9 @@ describe("parseDescription", () => {
 
     test("rejects a short buffer", () => {
         const bytes = descBytes(["...", "...", "..."]);
-        expect(() => parseDescription(bytes.slice(0, -1))).toThrow("malformed light up description");
+        expect(() => parseDescription(bytes.slice(0, -1))).toThrow(
+            "malformed light up description",
+        );
         expect(() => parseDescription([1, 3])).toThrow("malformed light up description");
     });
 
@@ -287,7 +289,34 @@ describe("lightUp DailyGame", () => {
         const v = lightUp.check(d, grid(["B.B..", ".....", ".....", ".....", "....."]));
         expect(v[0]).toEqual({ keys: [0, 2], kind: "clash" });
         expect(v.find((x) => x.kind === "under")).toEqual({ keys: [16], kind: "under" });
-        expect(v.filter((x) => x.kind === "unlit").length).toBeGreaterThan(0);
+    });
+
+    // #9332 invariant 38: red only once a rule can no longer come good, and then at once
+    test("unlit cells are a grid in progress, not a violation", () => {
+        const v = lightUp.check(d, grid([".....", ".....", ".....", ".....", "....."]));
+        expect(v.filter((x) => x.kind === "unlit")).toEqual([]);
+        expect(v.filter((x) => x.kind === "impossible")).toEqual([]);
+    });
+
+    test("a clue is under while it can still be met and impossible once it cannot", () => {
+        // clue 16 wants 2; its four neighbours are 11, 15, 17, 21
+        const waiting = lightUp.check(d, grid([".....", ".....", ".x...", ".....", "....."]));
+        expect(waiting.find((x) => x.keys[0] === 16)).toEqual({ keys: [16], kind: "under" });
+        const stillPossible = lightUp.check(d, grid([".....", ".....", ".x...", "B.x..", "....."]));
+        expect(stillPossible.find((x) => x.keys[0] === 16)).toEqual({ keys: [16], kind: "under" });
+        const impossible = lightUp.check(d, grid([".....", ".....", ".x...", "x.x..", "....."]));
+        expect(impossible.find((x) => x.keys[0] === 16)).toEqual({
+            keys: [16],
+            kind: "impossible",
+        });
+    });
+
+    test("an unlit cell is impossible once nothing in its sight can take a bulb", () => {
+        // cell 0 sees 1, 2 along its row and 3, 6 down its column; dot them all and it is dark for good
+        const v = lightUp.check(allWhite3, grid(["xxx", "x..", "x.."]));
+        expect(v.find((x) => x.kind === "impossible")).toEqual({ keys: [0], kind: "impossible" });
+        const stillLightable = lightUp.check(allWhite3, grid(["xx.", "x..", "x.."]));
+        expect(stillLightable.find((x) => x.kind === "impossible")).toBeUndefined();
     });
 
     test("bytes round trip and reject the wrong length", () => {

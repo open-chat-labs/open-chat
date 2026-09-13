@@ -21,16 +21,19 @@
     let clashes = $derived(keysOf(violations, "clash"));
     let over = $derived(keysOf(violations, "over"));
     let under = $derived(keysOf(violations, "under"));
+    // a clue that can no longer be met, or a cell nothing can light any more
+    let impossible = $derived(keysOf(violations, "impossible"));
     let mistakes = $derived(keysOf(violations, "mistake"));
 
     function whiteFill(key: number): string {
         if (greyed) return "#e6e6e6";
+        if (impossible.has(key)) return "#ffb3b3";
         return lit.has(key) ? "#fff1a3" : "#ececec";
     }
 
     // a clue whose bulb count is exactly right is greyed out as done
     function clueFill(key: number): string {
-        if (over.has(key)) return "#ff6b6b";
+        if (over.has(key) || impossible.has(key)) return "#ff6b6b";
         if (!under.has(key)) return "#9a9a9a";
         return "#ffffff";
     }
@@ -56,7 +59,8 @@
                     font-size="6.5"
                     font-weight="700"
                     text-anchor="middle"
-                    dominant-baseline="central">{el.label}</text>
+                    dominant-baseline="central">{el.label}</text
+                >
             {/if}
         {:else}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -66,7 +70,8 @@
                 stroke="#bdbdbd"
                 stroke-width="0.3"
                 role="gridcell"
-                onclick={() => tap(el.key)} />
+                onclick={() => tap(el.key)}
+            />
             {#if marks.get(el.key) === "bulb"}
                 <circle
                     cx={c.cx}
@@ -75,7 +80,8 @@
                     fill={clashes.has(el.key) ? "#e5484d" : "#f5b700"}
                     stroke={clashes.has(el.key) ? "#a3232a" : "#a06c00"}
                     stroke-width="0.5"
-                    pointer-events="none" />
+                    pointer-events="none"
+                />
             {:else if marks.get(el.key) === "dot"}
                 <circle cx={c.cx} cy={c.cy} r="1" fill="#7a7a7a" pointer-events="none" />
             {/if}
@@ -90,7 +96,8 @@
                 fill={black ? "none" : hl.fill}
                 stroke={hl.stroke}
                 stroke-width="0.8"
-                pointer-events="none" />
+                pointer-events="none"
+            />
         {/if}
         {#if mistakes.has(el.key)}
             <rect
@@ -101,7 +108,8 @@
                 fill="rgba(229,72,77,0.35)"
                 stroke="#e5484d"
                 stroke-width="0.8"
-                pointer-events="none" />
+                pointer-events="none"
+            />
         {/if}
     {/each}
 </GridSvg>

@@ -168,21 +168,75 @@ export function cycleCell(cell: LightUpCell): LightUpCell {
     }
 }
 
-// Violation kinds for the board: "clash" = a bulb that sees another or sits on a black cell,
-// "over" / "under" = a clue with too many / too few bulbs, "unlit" = a white cell nothing lights.
-function toViolations(violations: LightUpViolation[]): Violation[] {
-    return violations.map((v) => {
+// Whether any cell that could light `index` can still take a bulb: itself, or an empty cell in
+// its line of sight before the first black cell in each direction.
+function canStillBeLit(desc: LightUpDescription, grid: LightUpCell[], index: number): boolean {
+    if (grid[index] === "empty") return true;
+    const w = desc.width;
+    const h = desc.height;
+    const x = index % w;
+    const y = Math.floor(index / w);
+    for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+    ]) {
+        for (
+            let cx = x + dx, cy = y + dy;
+            cx >= 0 && cx < w && cy >= 0 && cy < h;
+            cx += dx, cy += dy
+        ) {
+            const j = cy * w + cx;
+            if (desc.cells[j].kind !== "white") break;
+            if (grid[j] === "empty") return true;
+        }
+    }
+    return false;
+}
+
+// Violation kinds for the board. "clash" = a bulb that sees another or sits on a black cell.
+// "over" = a clue with too many bulbs. Both are wrong the moment they happen. A clue short of
+// bulbs is "under" while enough of its neighbours are still free to meet it, which the board
+// paints as waiting, never red, and "impossible" once they are not. An unlit cell is reported,
+// as "impossible", only once nothing in its line of sight can take a bulb any more; until then
+// it is a grid in progress, and the finished check is `solved`.
+function toViolations(
+    desc: LightUpDescription,
+    grid: LightUpCell[],
+    violations: LightUpViolation[],
+): Violation[] {
+    const out: Violation[] = [];
+    for (const v of violations) {
         switch (v.kind) {
             case "bulb_sees_bulb":
-                return { keys: [v.a, v.b], kind: "clash" };
+                out.push({ keys: [v.a, v.b], kind: "clash" });
+                break;
             case "bulb_on_black":
-                return { keys: [v.cell], kind: "clash" };
-            case "clue_count":
-                return { keys: [v.clue], kind: v.actual > v.expected ? "over" : "under" };
+                out.push({ keys: [v.cell], kind: "clash" });
+                break;
+            case "clue_count": {
+                if (v.actual > v.expected) {
+                    out.push({ keys: [v.clue], kind: "over" });
+                    break;
+                }
+                const free = neighbours(desc, v.clue).filter(
+                    (j) => desc.cells[j].kind === "white" && grid[j] === "empty",
+                ).length;
+                out.push({
+                    keys: [v.clue],
+                    kind: v.actual + free < v.expected ? "impossible" : "under",
+                });
+                break;
+            }
             case "unlit":
-                return { keys: [v.cell], kind: "unlit" };
+                if (!canStillBeLit(desc, grid, v.cell)) {
+                    out.push({ keys: [v.cell], kind: "impossible" });
+                }
+                break;
         }
-    });
+    }
+    return out;
 }
 
 export const lightUp: DailyGame<LightUpDescription, LightUpCell[]> = {
@@ -221,7 +275,7 @@ export const lightUp: DailyGame<LightUpDescription, LightUpCell[]> = {
         return out;
     },
     check(desc, grid) {
-        return toViolations(checkRules(desc, grid));
+        return toViolations(desc, grid, checkRules(desc, grid));
     },
     solved: isSolved,
     toBytes(_desc, grid) {
