@@ -10,7 +10,7 @@ use local_user_index_canister::c2c_daily_puzzle_push;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, info};
-use types::UnitResult;
+use types::{C2CError, UnitResult};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 const RETRY_DELAY: Duration = Duration::from_secs(60);
@@ -117,60 +117,122 @@ async fn push(refresh: bool) {
 
     let responses = futures::future::join_all(futures).await;
     let stale = GENERATION.get() != generation;
-    let done = |canister_id| {
-        if !stale {
+    for (canister_id, response) in responses {
+        if settled(&response) && !stale {
             mutate_state(|state| state.data.pending_pushes.remove(&canister_id));
         }
-    };
-    for (canister_id, response) in responses {
         match response {
-            Ok(UnitResult::Success) => {
-                done(canister_id);
-                info!(%canister_id, number, games, "Pushed puzzles");
-            }
+            Ok(UnitResult::Success) => info!(%canister_id, number, games, "Pushed puzzles"),
             // The index refused it, which its guard does while it has not yet been told this
             // canister's id. It pulls for itself the moment it is, so there is nothing to retry.
-            Ok(UnitResult::Error(error)) => {
-                done(canister_id);
-                info!(%canister_id, ?error, "Local user index declined puzzles");
+            Ok(UnitResult::Error(error)) => info!(%canister_id, ?error, "Local user index declined puzzles"),
+            Err(error) if settled(&Err(error.clone())) => {
+                error!(%canister_id, ?error, "Failed to push puzzles, not retrying")
             }
-            Err(error) => {
-                if delay_if_should_retry_failed_c2c_call(&error).is_none() {
-                    done(canister_id);
-                    error!(%canister_id, ?error, "Failed to push puzzles, not retrying");
-                } else {
-                    info!(%canister_id, ?error, "Failed to push puzzles, will retry");
-                }
-            }
+            Err(error) => info!(%canister_id, ?error, "Failed to push puzzles, will retry"),
         }
     }
 
-    // A newer run owns the set now and schedules its own retries
+    let pending = read_state(|state| state.data.pending_pushes.len());
+    match after_run(stale, pending, ATTEMPTS.get()) {
+        // A newer run owns the set now and schedules its own retries
+        None => {}
+        Some(After::Done) => ATTEMPTS.set(0),
+        Some(After::GiveUp) => {
+            let pending: Vec<_> = read_state(|state| state.data.pending_pushes.iter().copied().collect());
+            error!(
+                ?pending,
+                number, "Giving up pushing puzzles; these indexes will pull for themselves"
+            );
+            mutate_state(|state| state.data.pending_pushes.clear());
+            ATTEMPTS.set(0);
+        }
+        Some(After::Retry(delay)) => {
+            ATTEMPTS.set(ATTEMPTS.get() + 1);
+            schedule(false, delay);
+        }
+    }
+}
+
+// Whether a response leaves the index owed nothing more from this run. A success, a refusal, and
+// a failure no retry would change all settle it; only a transient failure keeps it pending.
+fn settled(response: &Result<UnitResult, C2CError>) -> bool {
+    match response {
+        Ok(_) => true,
+        Err(error) => delay_if_should_retry_failed_c2c_call(error).is_none(),
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum After {
+    Done,
+    Retry(Duration),
+    GiveUp,
+}
+
+// What a run does once its responses are in. `None` when a newer run has rebuilt the pending set
+// since this one started: its successes would otherwise remove entries the newer run still owes,
+// and the newer run's failure to the same index would then never be retried.
+fn after_run(stale: bool, pending: usize, previous_attempts: u32) -> Option<After> {
     if stale {
-        return;
+        return None;
     }
-    let pending: Vec<_> = read_state(|state| state.data.pending_pushes.iter().copied().collect());
-    if pending.is_empty() {
-        ATTEMPTS.set(0);
-        return;
+    if pending == 0 {
+        return Some(After::Done);
     }
-    let attempt = ATTEMPTS.get() + 1;
+    let attempt = previous_attempts + 1;
     if attempt > MAX_ATTEMPTS {
-        error!(
-            ?pending,
-            number, "Giving up pushing puzzles; these indexes will pull for themselves"
-        );
-        mutate_state(|state| state.data.pending_pushes.clear());
-        ATTEMPTS.set(0);
-        return;
+        return Some(After::GiveUp);
     }
-    ATTEMPTS.set(attempt);
-    schedule(false, retry_delay(attempt));
+    Some(After::Retry(retry_delay(attempt)))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // #9332 invariant 35. A push backs off, gives up after a bounded number of attempts, and a
+    // run whose responses arrive after a newer run has rebuilt the pending set leaves it alone.
+    #[test]
+    fn retries_back_off_then_give_up_and_a_stale_run_touches_nothing() {
+        assert_eq!(after_run(false, 0, 0), Some(After::Done));
+        assert_eq!(after_run(false, 0, 5), Some(After::Done));
+        for previous in 0..MAX_ATTEMPTS {
+            assert_eq!(
+                after_run(false, 3, previous),
+                Some(After::Retry(retry_delay(previous + 1))),
+                "{previous}"
+            );
+        }
+        assert_eq!(after_run(false, 3, MAX_ATTEMPTS), Some(After::GiveUp));
+        for previous in [0, 3, MAX_ATTEMPTS, MAX_ATTEMPTS + 5] {
+            assert_eq!(after_run(true, 3, previous), None);
+            assert_eq!(after_run(true, 0, previous), None);
+        }
+    }
+
+    #[test]
+    fn only_a_transient_failure_stays_pending() {
+        use candid::Principal;
+        use ic_cdk::call::RejectCode;
+        use types::C2CRetryPolicy;
+        let failed = |policy| {
+            Err(C2CError::new_with_retry_policy(
+                Principal::anonymous(),
+                "c2c_daily_puzzle_push",
+                RejectCode::SysTransient,
+                String::new(),
+                policy,
+            ))
+        };
+        assert!(settled(&Ok(UnitResult::Success)));
+        assert!(settled(&Ok(UnitResult::Error(
+            oc_error_codes::OCErrorCode::NotInitialized.into()
+        ))));
+        assert!(settled(&failed(C2CRetryPolicy::DoNotRetry)));
+        assert!(!settled(&failed(C2CRetryPolicy::RetryImmediately)));
+        assert!(!settled(&failed(C2CRetryPolicy::RetryAfterDelay)));
+    }
 
     #[test]
     fn retry_delay_doubles_to_a_ceiling() {
