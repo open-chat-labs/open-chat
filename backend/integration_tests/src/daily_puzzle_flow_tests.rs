@@ -507,6 +507,141 @@ fn daily_puzzle_refused_debits_and_replayed_keys() {
     wrapper.discard();
 }
 
+// #9332 invariant 30. Every canister deploys alone in any order, so the local user index has to
+// run with no daily canister, with the wrong one, and with the real one stopped mid-day. Nothing
+// traps, every game call answers not-available until there is a puzzle, and a solve made while
+// the daily canister is down still reaches the results index once it is back.
+#[test]
+fn daily_puzzle_survives_a_missing_wrong_or_stopped_daily_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    ensure_time_at_least_day0(env);
+    keep_clear_of_midnight(env);
+
+    let user = client::register_user(env, canister_ids);
+    let local_user_index = canister_ids.local_user_index(env, user.canister());
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
+    let number = day_number(env);
+
+    let not_available = |env: &mut PocketIc| {
+        let fetched = fetch(env, &user, local_user_index);
+        assert!(fetched.puzzles.is_empty(), "{fetched:?}");
+        let started = client::local_user_index::daily_puzzle_start(
+            env,
+            user.principal,
+            local_user_index,
+            &daily_puzzle_start::Args {
+                game_id: LIGHT_UP_GAME_ID.to_string(),
+                number,
+                expected_entry_fee: 0,
+            },
+        );
+        assert!(
+            matches!(&started, daily_puzzle_start::Response::Error(e) if e.matches_code(OCErrorCode::NotInitialized)),
+            "{started:?}"
+        );
+        let hinted = client::local_user_index::daily_puzzle_hint(
+            env,
+            user.principal,
+            local_user_index,
+            &daily_puzzle_hint::Args {
+                game_id: LIGHT_UP_GAME_ID.to_string(),
+                number,
+                level: 1,
+                filled: Vec::new(),
+                expected_price: 0,
+            },
+        );
+        assert!(
+            matches!(&hinted, daily_puzzle_hint::Response::Error(e) if e.matches_code(OCErrorCode::NotInitialized)),
+            "{hinted:?}"
+        );
+        let submitted = submit(env, &user, local_user_index, LIGHT_UP_GAME_ID, number, Vec::new());
+        assert!(
+            matches!(&submitted, daily_puzzle_submit::Response::Error(e) if e.matches_code(OCErrorCode::NotInitialized)),
+            "{submitted:?}"
+        );
+    };
+
+    // No daily canister id at all: an index deployed before the daily canister exists
+    not_available(env);
+
+    // The wrong canister: the pull fails, and the index keeps answering the same
+    set_canister_id(env, &user, local_user_index, canister_ids.group_index);
+    tick_many(env, 5);
+    not_available(env);
+
+    // The real one, and the game comes up
+    let config = DailyPuzzleConfig {
+        enabled: true,
+        ..DailyPuzzleConfig::default()
+    };
+    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, config);
+    client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
+    set_canister_id(env, &user, local_user_index, canister_ids.daily_puzzle);
+    let (puzzle, _) = wait_for_puzzle(env, &user, local_user_index);
+    let game_id = puzzle.game_id.as_str();
+    assert_eq!(puzzle.number, number);
+    assert!(puzzle.first_play_free);
+
+    // The daily canister goes down mid-day. The game runs off the index's own copy of the puzzle.
+    client::stop_canister(env, *controller, canister_ids.daily_puzzle);
+    client::user::happy_path::claim_daily_chit(env, &user, None);
+    start(env, &user, local_user_index, game_id, number, 0);
+    let served = hint(
+        env,
+        &user,
+        local_user_index,
+        game_id,
+        number,
+        1,
+        Vec::new(),
+        puzzle.hint_prices[0],
+    );
+    assert!(!served.hint.mistake);
+    let (_, solution) = solve(game_id, &puzzle.description, puzzle.tier);
+    env.advance_time(Duration::from_secs(30));
+    let daily_puzzle_submit::Response::Success(solved) = submit(env, &user, local_user_index, game_id, number, solution) else {
+        panic!("a correct grid should solve with the daily canister stopped");
+    };
+    assert!(solved.reward > 0);
+    tick_many(env, 5);
+    assert_eq!(
+        chit_balance(env, &user),
+        DAILY_CHIT - puzzle.hint_prices[0] as i32 + solved.reward as i32
+    );
+
+    // Back up, the solve made while it was down reaches the results index
+    client::start_canister(env, *controller, canister_ids.daily_puzzle);
+    let mut results = Vec::new();
+    for _ in 0..MAX_WAIT_TICKS {
+        results = client::daily_puzzle::happy_path::results(
+            env,
+            user.principal,
+            canister_ids.daily_puzzle,
+            game_id.to_string(),
+            number,
+            vec![user.user_id],
+        );
+        if !results.is_empty() {
+            break;
+        }
+        env.advance_time(Duration::from_secs(5));
+        env.tick();
+    }
+    assert_eq!(results.len(), 1, "{results:?}");
+    assert_eq!(results[0].user_id, user.user_id);
+    assert_eq!(results[0].hints_used, 1);
+
+    // Config was mutated, the clock moved, and a canister was stopped and started
+    wrapper.discard();
+}
+
 // Ticks until the LUI serves an enabled puzzle for today other than the one it held
 fn wait_for_replacement(env: &mut PocketIc, user: &User, local_user_index: CanisterId, previous: &[u8]) -> PublicDailyPuzzle {
     for _ in 0..MAX_WAIT_TICKS {
