@@ -204,42 +204,45 @@ export class DailyPuzzleGame {
         }
         this.state = next;
         this.#afterChange();
-        this.#dropHintOnceDone(key);
+        this.#trimHint();
+    }
+
+    // A key still to act on: the game takes a mark there and the player has not put one yet. A
+    // vertex, a clue or a tree takes no mark and is kept in the highlight as context.
+    #stillToDo(key: number, filled: Set<number>): boolean {
+        return this.game.tap(this.model, this.state, key) !== this.state && !filled.has(key);
     }
 
     // A hint's highlight and sentence describe a position, and once the player has made the
-    // move they describe the past: left up, they read as the game telling you to do something
-    // you have already done. Only a player edit can trigger this, never the level 3 reveal
-    // applying its own conclusions, or the highlight would vanish the instant it appeared.
-    //
-    // Below level 3 the server withholds the conclusions, so "have they done it?" cannot be
-    // answered from the values. It can be answered from the keys, which the highlight has
-    // already shown them: the hint is done once every cell it pointed at carries a mark. Some
-    // techniques instead point at a clue or a dot the player can never mark (Loopy's dot rules,
-    // Slant's corner numbers); there, the move they just made inside the highlighted region is
-    // the signal.
-    #dropHintOnceDone(tapped: number): void {
-        const last = this.lastHint;
-        if (last === undefined || this.focus.size === 0) return;
-
+    // moves it asked for they describe the past: left up, they read as the game telling you to
+    // do something you have already done. So the highlight only ever shows what is still to
+    // do, cells drop out of it as they are marked, and once nothing markable is left the whole
+    // hint goes on the player's next edit. Below level 3 the server withholds the conclusions,
+    // so "done" cannot be read from the values; it is read from the keys the highlight named
+    // (#9334 invariant 61). Only a player edit trims, never the level 3 reveal applying its own
+    // conclusions, or the highlight would vanish the instant it appeared.
+    #trimHint(): void {
+        if (this.focus.size === 0) return;
         const filled = new Set(this.#filled().map(([k]) => k));
-        const pointed = last.hint.target.length > 0 ? last.hint.target : last.hint.focus;
-        const allPointedMarked = pointed.length > 0 && pointed.every((k) => filled.has(k));
-        // Unmarkable means the game takes no mark there, not that the player has not marked it
-        // yet; a tap returns the state unchanged for keys that take no mark
-        const pointedIsUnmarkable = pointed.every(
-            (k) => this.game.tap(this.model, this.state, k) === this.state,
-        );
-
-        if (
-            this.#concluded(last) ||
-            allPointedMarked ||
-            (pointedIsUnmarkable && this.focus.has(tapped))
-        ) {
+        const last = this.lastHint;
+        // What the player was asked to mark: the cells the sentence points at, or, when it points
+        // at something that takes no mark (a vertex, a clue), the cells the deduction looked at
+        const pointed = [...this.target].filter((k) => this.#markable(k));
+        const asked =
+            pointed.length > 0 ? pointed : [...this.focus].filter((k) => this.#markable(k));
+        const remaining = asked.filter((k) => this.#stillToDo(k, filled));
+        if ((last !== undefined && this.#concluded(last)) || remaining.length === 0) {
             this.focus = new Set();
             this.target = new Set();
             this.caption = undefined;
+            return;
         }
+        this.focus = new Set([...this.focus].filter((k) => !filled.has(k) || !this.#markable(k)));
+        this.target = new Set([...this.target].filter((k) => this.focus.has(k)));
+    }
+
+    #markable(key: number): boolean {
+        return this.game.tap(this.model, this.state, key) !== this.state;
     }
 
     #afterChange(): void {
@@ -381,9 +384,14 @@ export class DailyPuzzleGame {
     }
 
     #applyHint(hint: ServedHint): void {
-        this.focus = new Set(hint.hint.focus);
+        // Cells the player has already marked are not shown: the hint is about what is left
+        const filled = new Set(this.#filled().map(([k]) => k));
+        const show = (keys: number[]) => keys.filter((k) => !filled.has(k) || !this.#markable(k));
+        this.focus = new Set(show(hint.hint.focus));
         // legacy hints carry no target: point at everything in focus
-        this.target = new Set(hint.hint.target.length > 0 ? hint.hint.target : hint.hint.focus);
+        this.target = new Set(
+            show(hint.hint.target.length > 0 ? hint.hint.target : hint.hint.focus),
+        );
         this.caption =
             hint.level >= 2
                 ? i18nKey(`${gameI18nPrefix(this.puzzle.gameId)}.technique.${hint.hint.technique}`)

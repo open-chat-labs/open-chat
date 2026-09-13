@@ -178,9 +178,11 @@ describe("DailyPuzzleGame", () => {
         expect([...g.focus]).toEqual([0, 1, 2]);
         expect([...g.target]).toEqual([0]);
 
-        // A mark elsewhere in the highlighted region is not the move the hint asked for
+        // A mark elsewhere in the highlighted region is not the move the hint asked for: the
+        // hint stays, and the marked cell drops out of the highlight
         g.tap(1);
-        expect(g.focus.size).toBe(3);
+        expect([...g.focus].sort()).toEqual([0, 2]);
+        expect([...g.target]).toEqual([0]);
 
         // The pointed-at cell gets its mark: acted on, so the hint goes
         g.tap(0);
@@ -258,5 +260,68 @@ describe("DailyPuzzleGame", () => {
         await g.hint();
         expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
         expect(toastStore.showFailureToast).toHaveBeenCalled();
+    });
+
+    // #9334 invariant 61. Slant #20709 step 9: the deduction looked at the four cells round the
+    // 3 at vertex 48; the sentence points at the vertex, which takes no mark.
+    describe("a hint highlights only what is still to do (slant)", () => {
+        const hex =
+            "01060601ffffffff0101ff01ff020303ffffffffffffffff00ff030101ff01ffffffff03ffff00ff0203ff01ffff01ff0002ffff";
+        const slantPuzzle: PublicDailyPuzzle = {
+            ...puzzle,
+            gameId: "slant",
+            number: 20709,
+            description: Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16))),
+        };
+        const slant = dailyPuzzleGame("slant")!.game;
+        const step9: ServedHint = {
+            hint: { technique: 2, focus: [48, 4, 10, 11, 5], target: [48], conclusions: [] },
+            level: 2,
+            mistake: false,
+        };
+        function buildSlant(marked: number[], client: OpenChat): DailyPuzzleGame {
+            const model = slant.parse(slantPuzzle.description);
+            let st = slant.empty(model);
+            for (const k of marked) st = slant.tap(model, st, k);
+            const grid = slant.toBytes(model, st);
+            const state = userState({ gameId: "slant", number: 20709, grid, gridSavedAt: 5n });
+            dailyPuzzleStore.set({ puzzles: [slantPuzzle], states: [state] });
+            return new DailyPuzzleGame(client, slantPuzzle, state, USER, slant);
+        }
+        const hintClient = () =>
+            fakeClient({
+                dailyPuzzleHint: vi.fn(async () => ({
+                    kind: "success",
+                    hint: step9,
+                    hintsUsed: 1,
+                    state: userState({ gameId: "slant", number: 20709, hints: [step9] }),
+                })),
+            });
+
+        test("cells already marked are not highlighted; the vertex and the empty cells are", async () => {
+            const g = buildSlant([4, 5], hintClient());
+            await g.hint();
+            expect([...g.focus].sort()).toEqual([10, 11, 48]);
+            expect([...g.target]).toEqual([48]);
+        });
+
+        test("a hint for a step the player has already done shows its sentence and clears on the next tap anywhere", async () => {
+            const g = buildSlant([4, 5, 10, 11], hintClient());
+            await g.hint();
+            expect([...g.focus]).toEqual([48]);
+            expect(g.caption).toBeDefined();
+            g.tap(20);
+            expect(g.focus.size).toBe(0);
+            expect(g.caption).toBeUndefined();
+        });
+
+        test("a hint clears once every cell it still asked for is marked", async () => {
+            const g = buildSlant([4, 5], hintClient());
+            await g.hint();
+            g.tap(10);
+            expect(g.focus.size).toBe(2);
+            g.tap(11);
+            expect(g.focus.size).toBe(0);
+        });
     });
 });
