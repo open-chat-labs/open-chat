@@ -70,32 +70,86 @@ impl GameChitCredit {
     }
 }
 
+// What the retry queue does with an outcome. `Applied(None)` is `AlreadyAdded`: the call is
+// guaranteed-response, so a reject that queued this retry means the user canister never ran the
+// original, and the key was recorded by an earlier record for the same day that a
+// `regenerate_today` has since dropped. The day has been paid once, this credit moved nothing, and
+// the inline path zeroes the reward for exactly this answer.
+#[derive(Debug, PartialEq, Eq)]
+enum Next {
+    Done,
+    Abandon,
+    Retry(Milliseconds),
+}
+
+fn next(outcome: &GameChitOutcome) -> Next {
+    match outcome {
+        GameChitOutcome::Applied(Some(_)) => Next::Done,
+        GameChitOutcome::Applied(None) | GameChitOutcome::Refused(_) => Next::Abandon,
+        GameChitOutcome::Failed(error) => match delay_if_should_retry_failed_c2c_call(error) {
+            Some(delay) => Next::Retry(delay),
+            None => Next::Abandon,
+        },
+    }
+}
+
 impl TimerJobItem for GameChitCredit {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
-        match apply(self).await {
-            GameChitOutcome::Applied(Some(_)) => Ok(()),
-            // `AlreadyAdded`. The call is guaranteed-response, so a reject that queued this retry
-            // means the user canister never ran the original: the key was recorded by an earlier
-            // record for the same day that a `regenerate_today` has since dropped. The day has
-            // been paid once, this credit moved nothing, and the inline path zeroes the reward for
-            // exactly this answer.
-            GameChitOutcome::Applied(None) => {
-                self.abandon();
-                Ok(())
-            }
-            GameChitOutcome::Refused(error) => {
-                error!(?error, key = %self.key, user_id = %self.user_id, "Game CHIT credit refused, dropping");
-                self.abandon();
-                Ok(())
-            }
-            GameChitOutcome::Failed(error) => {
-                let delay = delay_if_should_retry_failed_c2c_call(&error);
-                if delay.is_none() {
-                    error!(?error, key = %self.key, user_id = %self.user_id, "Game CHIT credit failed, dropping");
-                    self.abandon();
+        let outcome = apply(self).await;
+        match next(&outcome) {
+            Next::Done => Ok(()),
+            Next::Abandon => {
+                match &outcome {
+                    GameChitOutcome::Refused(error) => {
+                        error!(?error, key = %self.key, user_id = %self.user_id, "Game CHIT credit refused, dropping")
+                    }
+                    GameChitOutcome::Failed(error) => {
+                        error!(?error, key = %self.key, user_id = %self.user_id, "Game CHIT credit failed, dropping")
+                    }
+                    GameChitOutcome::Applied(_) => {}
                 }
-                Err(delay)
+                self.abandon();
+                Ok(())
             }
+            Next::Retry(delay) => Err(Some(delay)),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use ic_cdk::call::RejectCode;
+    use types::C2CRetryPolicy;
+
+    fn failed(policy: C2CRetryPolicy) -> GameChitOutcome {
+        GameChitOutcome::Failed(C2CError::new_with_retry_policy(
+            Principal::anonymous(),
+            "c2c_game_chit",
+            RejectCode::SysTransient,
+            String::new(),
+            policy,
+        ))
+    }
+
+    // #9332 invariant 13. A queued credit that lands on `AlreadyAdded` is abandoned, never
+    // retried and never credited a second time; a refusal is abandoned; only a transient failure
+    // is retried.
+    #[test]
+    fn already_added_and_refusals_abandon_only_transient_failures_retry() {
+        let applied = SuccessResult {
+            chit_balance: 0,
+            total_chit_earned: 0,
+        };
+        assert_eq!(next(&GameChitOutcome::Applied(Some(applied))), Next::Done);
+        assert_eq!(next(&GameChitOutcome::Applied(None)), Next::Abandon);
+        assert_eq!(
+            next(&GameChitOutcome::Refused(OCErrorCode::InsufficientFunds.into())),
+            Next::Abandon
+        );
+        assert_eq!(next(&failed(C2CRetryPolicy::DoNotRetry)), Next::Abandon);
+        assert!(matches!(next(&failed(C2CRetryPolicy::RetryImmediately)), Next::Retry(_)));
+        assert!(matches!(next(&failed(C2CRetryPolicy::RetryAfterDelay)), Next::Retry(d) if d > 0));
     }
 }
