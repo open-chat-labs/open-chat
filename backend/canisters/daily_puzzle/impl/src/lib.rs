@@ -293,7 +293,9 @@ impl Data {
         }
         let next = current + 1;
         let game_id = &self.params_for(next).game_id;
-        if !self.has_puzzle(next) {
+        // The same guard as today's: an exhausted number is not answered, or every trigger of the
+        // job would run one more full generation for it and log "giving up" again
+        if !self.has_puzzle(next) && self.failures_for(next) < MAX_GENERATION_FAILURES {
             let pool_size = self.candidate_pool(next, game_id).map_or(0, |p| p.len());
             if pool_size < CANDIDATE_POOL_SIZE
                 || (!self.has_unvetoed_candidate(next, game_id) && pool_size < MAX_CANDIDATE_POOL)
@@ -1313,5 +1315,49 @@ mod tests {
         }
         assert_eq!(d.puzzles.len(), PUZZLES_TO_KEEP);
         assert_eq!(*d.puzzles.keys().next().unwrap(), 20 - PUZZLES_TO_KEEP as u32);
+    }
+
+    // #9332 invariant 36. The schedule setter already refuses a game with no generator; the game
+    // config setter took anything and stored it under a key nothing would ever read.
+    #[test]
+    fn set_game_config_with_unknown_game_id_is_rejected() {
+        let mut d = data();
+        let before = d.game_configs.clone();
+        let error = d
+            .set_game_config("sudoku".to_string(), GameConfig::default())
+            .unwrap_err();
+        assert!(error.contains("unknown game_id"), "{error}");
+        assert_eq!(d.game_configs, before);
+        assert!(d.set_game_config(LU.to_string(), GameConfig::default()).is_ok());
+    }
+
+    // #9332 invariant 34. A day that has used up its generation attempts answered
+    // `generation_needed` first, forever, so tomorrow's pool was never built either. And the
+    // count survived a `regenerate_today`, so a day that had given up got one seed per
+    // regeneration and gave up again.
+    #[test]
+    fn an_exhausted_day_is_skipped_and_gets_a_fresh_run_on_regenerate_or_reschedule() {
+        let mut d = data();
+        let now = 100 * DAY_IN_MS + 1;
+        assert_eq!(d.generation_needed(now), Some(100));
+
+        while d.record_generation_failure(100) {}
+        assert_eq!(d.failures_for(100), MAX_GENERATION_FAILURES);
+        assert_eq!(d.generation_needed(now), Some(101), "an exhausted today must not block tomorrow");
+
+        d.regenerate_today(None, now).unwrap();
+        assert_eq!(d.failures_for(100), 0);
+        assert_eq!(d.generation_needed(now), Some(100));
+
+        // Tomorrow exhausted too, then the schedule changes: tomorrow is a new game or new
+        // parameters, so it gets its attempts back; today keeps its count
+        while d.record_generation_failure(100) {}
+        while d.record_generation_failure(101) {}
+        assert_eq!(d.generation_needed(now), None);
+        let tents_params = forced_params(&[], tents::GAME_ID).unwrap();
+        d.set_schedule(vec![tents_params; 7], now);
+        assert_eq!(d.failures_for(101), 0);
+        assert_eq!(d.failures_for(100), MAX_GENERATION_FAILURES);
+        assert_eq!(d.generation_needed(now), Some(101));
     }
 }
