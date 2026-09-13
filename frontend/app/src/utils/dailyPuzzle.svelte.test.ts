@@ -188,4 +188,75 @@ describe("DailyPuzzleGame", () => {
         expect(g.target.size).toBe(0);
         expect(g.caption).toBeUndefined();
     });
+
+    // #9334 invariant 60
+    test("an upgrade of the served step is quoted at the difference between the levels", async () => {
+        const hint: ServedHint = {
+            hint: { technique: 1, focus: [0, 1, 2], target: [0], conclusions: [] },
+            level: 1,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint,
+                hintsUsed: 1,
+                state: userState({ hints: [hint] }),
+            })),
+        });
+        const g = build(userState(), client);
+        expect(g.nextHintLevel).toBe(1);
+        expect(g.nextHintPrice).toBe(25);
+        await g.hint();
+        expect(g.nextHintLevel).toBe(2);
+        expect(g.nextHintPrice).toBe(75 - 25);
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenLastCalledWith(
+            "light_up",
+            2,
+            expect.anything(),
+            50,
+        );
+    });
+
+    test("a price mismatch is retried once with the price the server quoted", async () => {
+        const hint: ServedHint = {
+            hint: { technique: 1, focus: [0], target: [0], conclusions: [] },
+            level: 1,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi
+                .fn()
+                .mockResolvedValueOnce({ kind: "error", code: 250, message: "40" })
+                .mockResolvedValueOnce({
+                    kind: "success",
+                    hint,
+                    hintsUsed: 1,
+                    state: userState({ hints: [hint] }),
+                }),
+        });
+        const g = build(userState(), client);
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
+        expect(client.dailyPuzzleHint).toHaveBeenLastCalledWith(
+            "light_up",
+            1,
+            expect.anything(),
+            40,
+        );
+        expect(toastStore.showFailureToast).not.toHaveBeenCalled();
+        expect(g.lastHint).toEqual(hint);
+        expect(g.busy).toBe(false);
+    });
+
+    test("a second price mismatch is an error, not a loop", async () => {
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({ kind: "error", code: 250, message: "40" })),
+        });
+        const g = build(userState(), client);
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
+        expect(toastStore.showFailureToast).toHaveBeenCalled();
+    });
 });

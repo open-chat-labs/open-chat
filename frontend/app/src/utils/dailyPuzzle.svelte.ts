@@ -9,6 +9,7 @@ import {
     type ServedHint,
     type Violation,
     ANON_USER_ID,
+    ErrorCode,
     dailyPuzzleStore,
     publish,
     puzzleFingerprint,
@@ -303,8 +304,13 @@ export class DailyPuzzleGame {
         return 1;
     }
 
+    // What the server will charge for the next tap: a new step at level 1 costs level 1; upgrading
+    // the served step to the next level costs the difference between the two levels, as the
+    // engine prices it, so climbing the ladder is never dearer than jumping to the top.
     get nextHintPrice(): number {
-        return this.puzzle.hintPrices[this.nextHintLevel - 1] ?? 0;
+        const level = this.nextHintLevel;
+        const price = (l: number) => this.puzzle.hintPrices[l - 1] ?? 0;
+        return level > 1 ? price(level) - price(level - 1) : price(level);
     }
 
     #filled(): [number, number][] {
@@ -333,13 +339,28 @@ export class DailyPuzzleGame {
             this.#applyHint(last);
             return Promise.resolve();
         }
-        const level = this.nextHintLevel;
-        const price = this.nextHintPrice;
         this.busy = true;
+        return this.#requestHint(this.nextHintLevel, this.nextHintPrice, false).finally(() => {
+            this.busy = false;
+        });
+    }
+
+    // The server quotes the right price back on a mismatch (the step it picked, and what this
+    // user has already bought, are its to know), so one retry with that quote is the honest
+    // move; a second mismatch is an error.
+    #requestHint(level: number, price: number, retried: boolean): Promise<void> {
         return this.client
             .dailyPuzzleHint(this.puzzle.gameId, level, this.#filled(), price)
             .then((resp) => {
                 if (resp.kind === "error") {
+                    const quoted = Number(resp.message);
+                    if (
+                        resp.code === ErrorCode.PriceMismatch &&
+                        !retried &&
+                        Number.isFinite(quoted)
+                    ) {
+                        return this.#requestHint(level, quoted, true);
+                    }
                     toastStore.showFailureToast(i18nKey("dailyPuzzle.failedHint"), resp);
                     return;
                 }
@@ -356,9 +377,6 @@ export class DailyPuzzleGame {
             })
             .catch((err) => {
                 toastStore.showFailureToast(i18nKey("dailyPuzzle.failedHint"), err);
-            })
-            .finally(() => {
-                this.busy = false;
             });
     }
 
