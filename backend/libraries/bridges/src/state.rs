@@ -1,5 +1,5 @@
 use crate::Description;
-use crate::dsf::Dsf;
+use puzzle_core::Dsf;
 
 /// Tatham's `maxb`; the wire format only encodes 0..=2 bridges per pair.
 pub(crate) const MAX_BRIDGES: u8 = 2;
@@ -43,8 +43,6 @@ pub(crate) struct State {
     pub lines: Vec<u8>,
     pub max: Vec<u8>,
     pub marked: Vec<bool>,
-    /// Trace bookkeeping: the edge has already appeared in a conclusion.
-    pub concluded: Vec<bool>,
 }
 
 impl State {
@@ -132,7 +130,6 @@ impl State {
             lines: vec![0; ne],
             max: vec![MAX_BRIDGES; ne],
             marked: vec![false; ni],
-            concluded: vec![false; ne],
         }
     }
 
@@ -145,7 +142,6 @@ impl State {
         self.lines.iter_mut().for_each(|l| *l = 0);
         self.max.iter_mut().for_each(|m| *m = MAX_BRIDGES);
         self.marked.iter_mut().for_each(|m| *m = false);
-        self.concluded.iter_mut().for_each(|c| *c = false);
     }
 
     pub fn island_edges(&self, i: usize) -> impl Iterator<Item = usize> + use<> {

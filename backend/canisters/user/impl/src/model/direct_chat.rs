@@ -22,6 +22,7 @@ pub struct DirectChat {
 
 impl DirectChat {
     pub fn new(
+        my_user_id: UserId,
         them: UserId,
         user_type: UserType,
         events_ttl: Option<Milliseconds>,
@@ -31,7 +32,7 @@ impl DirectChat {
         DirectChat {
             them,
             date_created: now,
-            events: ChatEvents::new_direct_chat(them, events_ttl, anonymized_chat_id, now),
+            events: ChatEvents::new_direct_chat(my_user_id, them, events_ttl, anonymized_chat_id, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),
@@ -129,8 +130,8 @@ impl DirectChat {
         let events_ttl = self.events.get_events_time_to_live();
         let updated_events: Vec<_> = self
             .events
-            .iter_recently_updated_events()
-            .take_while(|(_, _, ts)| *ts > updates_since)
+            .recently_updated_events(updates_since, usize::MAX)
+            .into_iter()
             .map(|(_, e, ts)| (e, ts))
             .collect();
 

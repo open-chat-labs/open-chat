@@ -206,12 +206,7 @@ impl GroupChatCore {
             .unwrap_or_default();
 
         let events_ttl = self.events.get_events_time_to_live();
-        let mut updated_events: Vec<_> = self
-            .events
-            .iter_recently_updated_events()
-            .take_while(|(_, _, ts)| *ts > since)
-            .take(1000)
-            .collect();
+        let mut updated_events = self.events.recently_updated_events(since, 1000);
 
         if let Some(member) = &member {
             let new_proposal_votes = member

@@ -11,8 +11,8 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::SystemTime;
 use types::{
-    CanisterId, ChitEventType, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig, PuzzleHint, PuzzleNumber,
-    UnitResult,
+    CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
+    PuzzleHint, PuzzleNumber, UnitResult,
 };
 
 const GAME: &str = "light_up";
@@ -146,16 +146,15 @@ fn daily_puzzle_start_submit_and_streak() {
     assert_eq!(solved.total_chit_earned, Some(total_chit_earned(env, &user)));
 
     let events = client::user::happy_path::chit_events(env, &user, None, None, 20).events;
-    let fp = fingerprint(&puzzle.description);
-    let solve_key = format!("{GAME}:{number}:{fp}:solve");
-    let entry_key = format!("{GAME}:{number}:{fp}:entry");
+    let solve_key = format!("{number}:solve");
+    let entry_key = format!("{number}:entry");
     assert!(events.iter().any(|e| matches!(
         &e.reason,
-        ChitEventType::Game { game_id, key } if game_id == GAME && key == &solve_key
+        ChitEventType::Game { game_id, key } if game_id == DAILY_PUZZLE_CHIT_GAME_ID && key == &solve_key
     ) && e.amount == REWARD as i32));
     assert!(events.iter().any(|e| matches!(
         &e.reason,
-        ChitEventType::Game { game_id, key } if game_id == GAME && key == &entry_key
+        ChitEventType::Game { game_id, key } if game_id == DAILY_PUZZLE_CHIT_GAME_ID && key == &entry_key
     ) && e.amount == -(ENTRY_FEE as i32)));
 
     // The solve is series-level: both states show the streak and has_solved_before, only one is solved
@@ -185,26 +184,32 @@ fn daily_puzzle_start_submit_and_streak() {
     // No debit this time, so no balance in the response
     assert_eq!(again.chit_balance, None);
 
-    // The other game has its own entry fee and reward; the day still counts once for the streak
+    // A second game held for the same number. The daily canister never ships one (a day holds one
+    // puzzle; a regeneration replaces it), and CHIT is per day: the entry and solve keys name the
+    // number alone, so the user canister answers `AlreadyAdded` to both and this game charges and
+    // pays nothing. The day still counts once for the streak.
     let other_started = start(env, &user, local_user_index, OTHER, number, ENTRY_FEE);
     assert_eq!(other_started.state.game_id, OTHER);
-    assert_eq!(chit_balance(env, &user), balance - ENTRY_FEE as i32);
-    assert_eq!(other_started.chit_balance, Some(balance - ENTRY_FEE as i32));
+    assert_eq!(chit_balance(env, &user), balance);
+    assert_eq!(other_started.chit_balance, None);
     let daily_puzzle_submit::Response::Success(other_solved) =
         submit(env, &user, local_user_index, OTHER, number, other.solution.clone())
     else {
         panic!("correct grid should solve the other game");
     };
-    assert_eq!(other_solved.reward, REWARD);
+    assert_eq!(other_solved.reward, 0);
     assert_eq!(other_solved.streak, 1);
     tick_many(env, 3);
-    assert_eq!(chit_balance(env, &user), balance - ENTRY_FEE as i32 + REWARD as i32);
+    assert_eq!(chit_balance(env, &user), balance);
     let events = client::user::happy_path::chit_events(env, &user, None, None, 20).events;
-    let other_solve_key = format!("{OTHER}:{number}:{}:solve", fingerprint(&other.description));
-    assert!(events.iter().any(|e| matches!(
-        &e.reason,
-        ChitEventType::Game { game_id, key } if game_id == OTHER && key == &other_solve_key
-    ) && e.amount == REWARD as i32));
+    assert_eq!(
+        events
+            .iter()
+            .filter(|e| matches!(&e.reason, ChitEventType::Game { .. }))
+            .count(),
+        2,
+        "one entry and one solve for the day: {events:?}"
+    );
     let fetched = fetch(env, &user, local_user_index);
     assert!(fetched.states.iter().all(|s| s.solved.is_some() && s.streak == 1));
 
@@ -386,14 +391,4 @@ fn chit_balance(env: &PocketIc, user: &User) -> i32 {
 
 fn total_chit_earned(env: &PocketIc, user: &User) -> i32 {
     client::user::happy_path::initial_state(env, user).total_chit_earned
-}
-
-// FNV-1a 32-bit over the description bytes, as the LUI builds its CHIT keys
-pub(crate) fn fingerprint(description: &[u8]) -> String {
-    let mut h: u32 = 0x811c9dc5;
-    for b in description {
-        h ^= *b as u32;
-        h = h.wrapping_mul(0x01000193);
-    }
-    format!("{h:08x}")
 }

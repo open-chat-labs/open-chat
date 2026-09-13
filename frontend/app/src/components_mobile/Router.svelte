@@ -80,7 +80,14 @@
     const svt = (document as any).startViewTransition;
     const supportsObjectForm = (() => {
         try {
-            (document as any).startViewTransition({ update: () => {} });
+            const probe = (document as any).startViewTransition({ update: () => {} });
+            // A feature probe, not a transition: skip it, and swallow the rejections a skipped
+            // transition settles its promises with. Left alone they surface at startup as an
+            // unhandled "InvalidStateError: Transition was aborted because of invalid state".
+            probe.skipTransition?.();
+            probe.ready?.catch(() => {});
+            probe.finished?.catch(() => {});
+            probe.updateCallbackDone?.catch(() => {});
             return true;
         } catch {
             return false;

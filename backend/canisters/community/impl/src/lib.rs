@@ -7,7 +7,7 @@ use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExp
 use activity_notification_state::ActivityNotificationState;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatMetricsInternal, EventPusher, ExpiredThread};
+use chat_events::{ChatEventInternal, ChatEvents, ChatMetricsInternal, EventPusher, ExpiredThread};
 use community_canister::add_members_to_channel::UserFailedError;
 use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
@@ -399,9 +399,12 @@ impl RuntimeState {
     ) {
         for (channel_id, threads) in threads_to_delete {
             for thread in threads {
-                self.data.stable_memory_keys_to_garbage_collect.push(BaseKeyPrefix::from(
-                    ChatEventKeyPrefix::new_from_channel(channel_id, Some(thread.root_message_index)),
-                ));
+                self.data
+                    .stable_memory_keys_to_garbage_collect
+                    .extend(ChatEvents::stable_memory_key_prefixes(ChatEventKeyPrefix::new_from_channel(
+                        channel_id,
+                        Some(thread.root_message_index),
+                    )));
             }
         }
 

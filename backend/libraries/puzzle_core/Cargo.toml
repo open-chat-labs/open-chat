@@ -1,0 +1,14 @@
+[package]
+name = "puzzle_core"
+version.workspace = true
+edition.workspace = true
+
+[features]
+# Pulls in the generic conformance harness the six game crates run from
+# their integration tests. Off for canister builds.
+testing = []
+# The stdio and process-exit helpers the six `*_cli` development binaries
+# share. Off for canister builds, which have no use for either.
+cli = []
+
+[dependencies]

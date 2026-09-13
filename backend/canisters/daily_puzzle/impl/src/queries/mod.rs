@@ -1,4 +1,3 @@
-mod candidates;
 mod config;
 mod current_puzzles;
 mod game_configs;

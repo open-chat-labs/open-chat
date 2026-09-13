@@ -138,7 +138,7 @@
 
     async function onClickPrimary(): Promise<void> {
         if (step === 0) {
-            balanceWithRefresh.refresh();
+            balanceWithRefresh?.refresh();
         } else if (canSubmit) {
             onSubmit();
         } else if (step === 1) {

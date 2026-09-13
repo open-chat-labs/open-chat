@@ -1,6 +1,6 @@
 use crate::Data;
 use crate::lifecycle::init_state;
-use crate::memory::get_stable_memory_map_memory;
+use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory};
 use canister_api_macros::init;
 use canister_tracing_macros::trace;
 use group_canister::init::Args;
@@ -13,7 +13,10 @@ use utils::env::canister::CanisterEnv;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
-    stable_memory_map::init(get_stable_memory_map_memory());
+    stable_memory_map::init_with_small_entries_map(
+        get_stable_memory_map_memory(),
+        get_stable_memory_map_small_entries_memory(),
+    );
 
     let mut env = Box::new(CanisterEnv::new(args.rng_seed));
 

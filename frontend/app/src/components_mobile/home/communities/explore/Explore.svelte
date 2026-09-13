@@ -67,6 +67,10 @@
     let view = $state<View>("communities");
     let showingFilters = $state(false);
     let selectedCommunity = $state<CommunityMatch>();
+    // Sheet keeps rendering its children while it animates closed, so the community it shows
+    // has to outlive the dismiss. Clearing it on dismiss left the card reading props off
+    // undefined mid-animation ("Cannot read properties of undefined (reading 'primaryLanguage')")
+    let showSelectedCommunity = $state(false);
 
     let searchState = $derived<SearchState<CommunityMatch | BotMatch>>(
         view === "communities" ? communitySearchState : botSearchState,
@@ -217,6 +221,7 @@
 
     function showCommunity(community: CommunityMatch) {
         selectedCommunity = community;
+        showSelectedCommunity = true;
     }
 
     function scrolledToBottom(fromEnd: number) {
@@ -226,8 +231,8 @@
     }
 </script>
 
-{#if selectedCommunity !== undefined}
-    <Sheet onDismiss={() => (selectedCommunity = undefined)}>
+{#if showSelectedCommunity && selectedCommunity !== undefined}
+    <Sheet onDismiss={() => (showSelectedCommunity = false)}>
         <Container padding={"lg"} direction={"vertical"} gap={"md"}>
             {@const community = selectedCommunity}
             <CommunityCard

@@ -1,12 +1,17 @@
 use crate::{read_state, registry};
 use candid::Principal;
 use oc_error_codes::{OCError, OCErrorCode};
+use user_index_canister_c2c_client::lookup_user;
 
-pub fn caller_is_governance_principal() -> Result<(), String> {
-    if read_state(|state| state.is_caller_governance_principal()) {
-        Ok(())
-    } else {
-        Err("Caller is not a governance principal".to_string())
+/// Platform operators are known only to the user index, so this is an async check rather than a
+/// guard. The operator functions are all admin-page tools called a handful of times a day.
+pub async fn verify_caller_is_platform_operator() -> Result<(), OCError> {
+    let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
+
+    match lookup_user(caller, user_index_canister_id).await {
+        Ok(Some(user)) if user.is_platform_operator => Ok(()),
+        Ok(_) => Err(OCErrorCode::InitiatorNotAuthorized.into()),
+        Err(error) => Err(OCErrorCode::C2CError.with_message(format!("{error:?}"))),
     }
 }
 

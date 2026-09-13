@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use types::{ChatMetrics, TimestampMillis};
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Eq)]
 pub struct ChatMetricsInternal {
     #[serde(rename = "m")]
     metrics: Vec<MetricCounter>,
@@ -10,7 +10,7 @@ pub struct ChatMetricsInternal {
     pub last_active: TimestampMillis,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct MetricCounter([u8; 4]);
 
 impl MetricCounter {
@@ -160,7 +160,56 @@ impl ChatMetricsInternal {
     fn get(&self, key: MetricKey) -> u32 {
         self.metrics.iter().find(|m| m.key() == key).map_or(0, |m| m.count())
     }
+
+    // The compact encoding used when storing metrics in stable memory:
+    // Last active      6 bytes (big endian millis, enough until the year 10889)
+    // Counters         1 varint each (LEB128 of `(count << 5) | key`), so counts below 4 take 1 byte,
+    //                  below 512 take 2 bytes, below 65536 take 3 bytes, and MAX_COUNT takes 5 bytes
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(LAST_ACTIVE_LEN + 2 * self.metrics.len());
+        bytes.extend_from_slice(&self.last_active.to_be_bytes()[8 - LAST_ACTIVE_LEN..]);
+        for metric in self.metrics.iter() {
+            let mut value = (metric.count() << METRIC_KEY_BITS) | metric.key() as u32;
+            while value >= 0x80 {
+                bytes.push((value as u8) | 0x80);
+                value >>= 7;
+            }
+            bytes.push(value as u8);
+        }
+        bytes
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> ChatMetricsInternal {
+        let (last_active_bytes, counters) = bytes.split_at(LAST_ACTIVE_LEN);
+        let mut last_active = [0; 8];
+        last_active[8 - LAST_ACTIVE_LEN..].copy_from_slice(last_active_bytes);
+
+        let mut metrics = Vec::new();
+        let mut value = 0u32;
+        let mut shift = 0;
+        for byte in counters {
+            value |= ((byte & 0x7F) as u32) << shift;
+            if byte & 0x80 == 0 {
+                let key = MetricKey::from((value & METRIC_KEY_MASK) as u8);
+                metrics.push(MetricCounter::new(key, value >> METRIC_KEY_BITS));
+                value = 0;
+                shift = 0;
+            } else {
+                shift += 7;
+            }
+        }
+
+        ChatMetricsInternal {
+            metrics,
+            last_active: TimestampMillis::from_be_bytes(last_active),
+        }
+    }
 }
+
+const LAST_ACTIVE_LEN: usize = 6;
+// Metric keys go up to 22 so they fit in 5 bits
+const METRIC_KEY_BITS: u32 = 5;
+const METRIC_KEY_MASK: u32 = (1 << METRIC_KEY_BITS) - 1;
 
 #[cfg(test)]
 mod tests {
@@ -218,6 +267,60 @@ mod tests {
             metric.incr(1);
             assert_eq!(metric.key(), key);
             assert_eq!(metric.count(), MetricCounter::MAX_COUNT);
+        }
+    }
+
+    #[test]
+    fn bytes_roundtrip() {
+        let mut metrics = ChatMetricsInternal {
+            last_active: 1_700_000_000_000,
+            ..Default::default()
+        };
+        assert_eq!(metrics.to_bytes().len(), 6);
+        assert_eq!(ChatMetricsInternal::from_bytes(&metrics.to_bytes()), metrics);
+
+        metrics.incr(MetricKey::TextMessages, 3);
+        metrics.incr(MetricKey::Reactions, 511);
+        metrics.incr(MetricKey::Replies, 65535);
+        metrics.incr(MetricKey::CustomTypeMessages, MetricCounter::MAX_COUNT);
+
+        let bytes = metrics.to_bytes();
+        assert_eq!(bytes.len(), 6 + 1 + 2 + 3 + 5);
+
+        let decoded = ChatMetricsInternal::from_bytes(&bytes);
+        assert_eq!(decoded, metrics);
+        assert_eq!(decoded.get(MetricKey::TextMessages), 3);
+        assert_eq!(decoded.get(MetricKey::Reactions), 511);
+        assert_eq!(decoded.get(MetricKey::Replies), 65535);
+        assert_eq!(decoded.get(MetricKey::CustomTypeMessages), MetricCounter::MAX_COUNT);
+    }
+
+    #[test]
+    fn bytes_roundtrip_every_key_and_count_boundary() {
+        for key in 1u8..=22 {
+            for count in [
+                1,
+                3,
+                4,
+                511,
+                512,
+                65535,
+                65536,
+                (1 << 23) - 1,
+                1 << 23,
+                MetricCounter::MAX_COUNT,
+            ] {
+                let mut metrics = ChatMetricsInternal {
+                    last_active: (1 << 48) - 1,
+                    ..Default::default()
+                };
+                metrics.incr(MetricKey::from(key), count);
+                metrics.incr(MetricKey::TextMessages, 1);
+
+                let decoded = ChatMetricsInternal::from_bytes(&metrics.to_bytes());
+                assert_eq!(decoded, metrics);
+                assert_eq!(decoded.get(MetricKey::from(key)), metrics.get(MetricKey::from(key)));
+            }
         }
     }
 

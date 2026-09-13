@@ -1,4 +1,5 @@
 use crate::activity_notifications::extract_activity;
+use crate::jobs::migrate_chat_events_to_stable_memory;
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
@@ -192,6 +193,10 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             let mut chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
             chat.events.set_chat(Chat::Channel(community_id, channel_id));
             chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
+            // The message ids and expiring events were written to stable memory as the events were
+            // imported
+            chat.events.discard_message_ids_on_heap();
+            chat.events.discard_expiring_events_on_heap();
 
             let blocked: Vec<_> = chat.members.blocked();
             if !blocked.is_empty() {
@@ -222,6 +227,10 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 chat,
                 date_imported: None, // This is only set once everything is complete
             });
+
+            // Moves the imported group's data which is still on the heap (eg. its users' metrics)
+            // into stable memory under the channel's prefixes
+            migrate_chat_events_to_stable_memory::start_job_if_required(state);
 
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {

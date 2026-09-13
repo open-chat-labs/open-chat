@@ -10,12 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `upgrade_multi_user_canister_wasm` and `create_multi_user_canister` so MultiUser canisters can be installed and upgraded via the LocalUserIndexes ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Add `set_multi_user_canisters_enabled` endpoint which fans out to the LocalUserIndexes ([#9314](https://github.com/open-chat-labs/open-chat/pull/9314))
-- Add `set_daily_puzzle_canister_id` proposal endpoint which fans out the daily_puzzle canister id to the LocalUserIndexes, replayed to any added later ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
+- Add `set_daily_puzzle_canister_id` proposal endpoint which fans out the daily_puzzle canister id to the LocalUserIndexes, replayed to any added later ([#9345](https://github.com/open-chat-labs/open-chat/pull/9345))
 - Support paying for Diamond membership from external wallets using ICRC2 ([#9265](https://github.com/open-chat-labs/open-chat/pull/9265))
 
 ### Changed
 
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+- Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 
 ### Removed
 

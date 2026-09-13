@@ -3,14 +3,15 @@ use crate::model::daily_puzzle_engine::SubmitOutcome;
 use crate::model::game_chit_credit::{GameChitCredit, GameChitOutcome, apply};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
-use canister_tracing_macros::trace;
 use local_user_index_canister::daily_puzzle_submit::{Response::*, *};
-use tracing::error;
-use types::OCResult;
+use tracing::{error, info};
+use types::{DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzleSolved, OCResult, UserId};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
+// No `#[trace]`: it records args and result, and the args of a correct submit are the solution.
+// `canister_logger::init` enables the trace buffer wherever `test_mode` is on and `http_request`
+// serves it to anyone.
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
-#[trace]
 async fn daily_puzzle_submit(args: Args) -> Response {
     // The solve record and the results row are committed here, before any await
     let (mut outcome, credit) = match mutate_state(|state| submit(&args, state)) {
@@ -19,6 +20,9 @@ async fn daily_puzzle_submit(args: Args) -> Response {
     };
 
     if let Some(credit) = credit {
+        // Taken before the await: `calling_user_id` reads the message caller, which past this
+        // point is the user canister that replied
+        let user_id = credit.user_id;
         match apply(&credit).await {
             // The response carries the balances only when the credit landed in this call, so
             // the client can set its CHIT stores from them instead of guessing a delta
@@ -26,21 +30,44 @@ async fn daily_puzzle_submit(args: Args) -> Response {
                 outcome.solved.chit_balance = Some(result.chit_balance);
                 outcome.solved.total_chit_earned = Some(result.total_chit_earned);
             }
-            GameChitOutcome::Applied(None) => {}
+            // `AlreadyAdded`: the solve key was recorded by an earlier record for this day that a
+            // `regenerate_today` has since dropped, so the day has been paid once already and this
+            // solve credits nothing. What it was paid is not knowable from here - the amount is
+            // not stored against the key - so report the CHIT this solve moved, which is none,
+            // rather than an amount that never left the user canister.
+            GameChitOutcome::Applied(None) => {
+                info!(key = %credit.key, %user_id, "Daily puzzle reward already credited for this day");
+                clear_reward(user_id, &args, &mut outcome.solved);
+            }
+            // A refusal is permanent - the user is suspended, or the amount is over the user
+            // canister's own limit - and no retry changes it. Zero the reward in the record and
+            // in the response rather than reporting CHIT that was never credited.
             GameChitOutcome::Refused(error) => {
                 error!(?error, key = %credit.key, "Daily puzzle reward refused by user canister");
+                clear_reward(user_id, &args, &mut outcome.solved);
             }
             GameChitOutcome::Failed(error) => {
                 if delay_if_should_retry_failed_c2c_call(&error).is_some() {
                     mutate_state(|state| state.data.game_chit_credit_retry_queue.push(credit));
                 } else {
                     error!(?error, key = %credit.key, "Daily puzzle reward credit failed");
+                    clear_reward(user_id, &args, &mut outcome.solved);
                 }
             }
         }
     }
 
     Success(outcome.solved)
+}
+
+fn clear_reward(user_id: UserId, args: &Args, solved: &mut DailyPuzzleSolved) {
+    solved.reward = 0;
+    mutate_state(|state| {
+        state
+            .data
+            .daily_puzzle_engine
+            .clear_reward(user_id, &args.game_id, args.number)
+    });
 }
 
 fn submit(args: &Args, state: &mut RuntimeState) -> OCResult<(SubmitOutcome, Option<GameChitCredit>)> {
@@ -52,16 +79,21 @@ fn submit(args: &Args, state: &mut RuntimeState) -> OCResult<(SubmitOutcome, Opt
         .daily_puzzle_engine
         .submit(user_id, &args.game_id, args.number, &args.grid, now)?;
 
-    state.push_daily_puzzle_result(outcome.result.clone());
+    // A solve faster than `min_carded_solve_ms` still pays and still counts for the streak, but
+    // stays out of the index that cards are verified against and aggregates are computed from
+    if let Some(result) = outcome.result.clone() {
+        state.push_daily_puzzle_result(result);
+    }
 
     let credit = i32::try_from(outcome.solved.reward)
         .ok()
         .filter(|amount| *amount > 0)
         .map(|amount| GameChitCredit {
             user_id,
-            game_id: args.game_id.clone(),
-            key: state.data.daily_puzzle_engine.solve_key(&args.game_id, args.number),
+            game_id: DAILY_PUZZLE_CHIT_GAME_ID.to_string(),
+            key: state.data.daily_puzzle_engine.solve_key(args.number),
             amount,
+            record: Some((args.game_id.clone(), args.number)),
         });
 
     Ok((outcome, credit))

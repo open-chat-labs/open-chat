@@ -2,7 +2,6 @@ use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
 use daily_puzzle_canister::*;
 
 // Queries
-generate_msgpack_query_call!(candidates);
 generate_msgpack_query_call!(config);
 generate_msgpack_query_call!(current_puzzles);
 generate_msgpack_query_call!(game_configs);
@@ -11,6 +10,7 @@ generate_msgpack_query_call!(results);
 // Updates
 generate_msgpack_update_call!(c2c_pull_puzzles);
 generate_msgpack_update_call!(c2c_report_results);
+generate_msgpack_update_call!(candidates);
 generate_msgpack_update_call!(push_now);
 generate_msgpack_update_call!(regenerate_today);
 generate_msgpack_update_call!(set_config);
@@ -78,7 +78,7 @@ pub mod happy_path {
     }
 
     pub fn candidates(
-        env: &PocketIc,
+        env: &mut PocketIc,
         sender: Principal,
         daily_puzzle_canister_id: CanisterId,
         number: PuzzleNumber,

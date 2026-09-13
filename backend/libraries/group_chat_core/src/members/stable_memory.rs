@@ -75,16 +75,18 @@ impl MembersStableStorage {
 // Used to write all members to stable memory when migrating a group into a community
 pub fn write_members_from_bytes(chat: MultiUserChat, members: Vec<(UserId, ByteBuf)>) -> Option<UserId> {
     let prefix = UserIdKeyPrefix::new_from_chat(chat);
-    let mut latest = None;
-    with_map_mut(|m| {
-        for (user_id, byte_buf) in members {
+    let latest = members.last().map(|(user_id, _)| *user_id);
+    // The members are exported in key order, so they can be inserted in bulk efficiently
+    let entries: Vec<_> = members
+        .into_iter()
+        .map(|(user_id, byte_buf)| {
             let bytes = byte_buf.into_vec();
             // Check that the bytes are valid
             let _ = bytes_to_member(&bytes);
-            latest = Some(user_id);
-            m.insert(prefix.create_key(&user_id), bytes);
-        }
-    });
+            (prefix.create_key(&user_id), bytes)
+        })
+        .collect();
+    with_map_mut(|m| m.insert_many(entries));
     latest
 }
 

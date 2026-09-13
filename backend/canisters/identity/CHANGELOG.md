@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
+
 ### Fixed
 
 - Remove WebAuthn keys when a passkey is unlinked or its user deleted, and drop orphaned keys on upgrade ([#9324](https://github.com/open-chat-labs/open-chat/pull/9324))

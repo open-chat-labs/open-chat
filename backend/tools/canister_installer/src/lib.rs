@@ -272,9 +272,9 @@ async fn install_service_canisters_impl(
 
     let daily_puzzle_canister_wasm = get_canister_wasm(CanisterName::DailyPuzzle, version);
     let daily_puzzle_init_args = daily_puzzle_canister::init::Args {
-        governance_principals: vec![principal],
         registry_canister_id: canister_ids.registry,
         user_index_canister_id: canister_ids.user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
     };

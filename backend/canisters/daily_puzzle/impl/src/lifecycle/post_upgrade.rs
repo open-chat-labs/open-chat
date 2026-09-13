@@ -7,6 +7,7 @@ use daily_puzzle_canister::post_upgrade::Args;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
+use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
 #[trace]
@@ -20,6 +21,7 @@ fn post_upgrade(args: Args) {
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = init_env(data.rng_seed);
+    init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
+
 ## [[2.0.1984](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1984-openchat_installer)] - 2026-05-20
 
 ### Removed

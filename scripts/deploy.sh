@@ -81,7 +81,7 @@ cargo run \
   --airdrop-bot $AIRDROP_BOT_CANISTER_ID \
   --storage-index $STORAGE_INDEX_CANISTER_ID \
   --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
-  --daily-puzzle $DAILY_PUZZLE_CANISTER_ID \
+  --daily-puzzle "$DAILY_PUZZLE_CANISTER_ID" \
   --registry $REGISTRY_CANISTER_ID \
   --market-maker $MARKET_MAKER_CANISTER_ID \
   --neuron-controller $NEURON_CONTROLLER_CANISTER_ID \

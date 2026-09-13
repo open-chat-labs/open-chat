@@ -37,7 +37,7 @@
     let approving = $state(false);
 
     function reset() {
-        balanceWithRefresh.refresh();
+        balanceWithRefresh?.refresh();
     }
 
     function accept() {

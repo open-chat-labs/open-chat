@@ -1,3 +1,4 @@
+use constants::MAX_GAME_CHIT_ABS_AMOUNT;
 use daily_puzzle_canister::PuzzleParams;
 use types::{DailyPuzzleConfig, GameConfig, PuzzleNumber};
 
@@ -116,12 +117,34 @@ pub fn validate_schedule(schedule: &[PuzzleParams]) -> Result<(), String> {
     Ok(())
 }
 
+// Every CHIT figure is checked against the user canister's own limit here. Above it the user
+// canister answers `InvalidRequest`: an entry fee that large makes every start fail while the
+// game still reports itself enabled, and a reward that large is refused after the solve is
+// already recorded, so the player is credited nothing and told nothing.
+fn validate_chit_amount(label: &str, amount: u32) -> Result<(), String> {
+    if i32::try_from(amount).is_ok_and(|a| a <= MAX_GAME_CHIT_ABS_AMOUNT) {
+        Ok(())
+    } else {
+        Err(format!("{label} must not exceed {MAX_GAME_CHIT_ABS_AMOUNT}"))
+    }
+}
+
 pub fn validate_config(config: &DailyPuzzleConfig) -> Result<(), String> {
     if config.reward_by_streak.is_empty() {
         return Err("reward_by_streak must not be empty".to_string());
     }
     if config.max_submits == 0 {
         return Err("max_submits must be at least 1".to_string());
+    }
+    // The free mistake check reads the solution a key at a time, so the bound has to stay well
+    // under the key count of the smallest board we ship (36) to be worth anything
+    if !(1..=30).contains(&config.max_free_checks) {
+        return Err("max_free_checks must be within 1..=30".to_string());
+    }
+    validate_chit_amount("entry_fee", config.entry_fee)?;
+    validate_chit_amount("hint_penalty", config.hint_penalty)?;
+    for (i, reward) in config.reward_by_streak.iter().enumerate() {
+        validate_chit_amount(&format!("reward_by_streak[{i}]"), *reward)?;
     }
     Ok(())
 }
@@ -132,6 +155,19 @@ pub fn validate_game_config(config: &GameConfig) -> Result<(), String> {
     }
     if !(1..=10).contains(&config.max_hints) {
         return Err("max_hints must be within 1..=10".to_string());
+    }
+    for (i, price) in config.hint_prices.iter().enumerate() {
+        validate_chit_amount(&format!("hint_prices[{i}]"), *price)?;
+        // Every level costs. A free level 1 is served with no debit and no idempotency key, and
+        // hands back the free check its call spent, so it is unmetered in both currencies.
+        if i == 0 && *price == 0 {
+            return Err("hint_prices[0] must be greater than 0".to_string());
+        }
+        // An upgrade is priced at the difference between the two levels, so a flat or descending
+        // entry costs nothing: buy level 1, then take the conclusions - the answer - for free.
+        if i > 0 && *price <= config.hint_prices[i - 1] {
+            return Err(format!("hint_prices[{i}] must be greater than hint_prices[{}]", i - 1));
+        }
     }
     Ok(())
 }

@@ -1,5 +1,6 @@
 use crate::state::{Dir, Square, State, offset};
 use crate::{Cell, Description, Hint, Technique, Tier};
+use puzzle_core::{MAX_SEARCH_DEPTH, SearchBudget};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -27,6 +28,9 @@ pub(crate) fn solve(st: &mut State, tier: Tier, mut rec: Option<&mut Vec<Hint>>)
     let n = st.size();
 
     loop {
+        if !sound(st) {
+            return Outcome::NoSolution;
+        }
         let mut did = false;
 
         // Any tent with only one unattached tree adjacent to it is tied to
@@ -216,6 +220,53 @@ pub(crate) fn solve(st: &mut State, tier: Tier, mut rec: Option<&mut Vec<Hint>>)
     Outcome::Solved
 }
 
+/// Whether the grid is still consistent with the rules the solver is
+/// entitled to assume: no two tents touching, and no line holding more
+/// tents than its number.
+///
+/// Tatham's passes each reject their own contradictions, but several of
+/// the passes here fix squares in bulk before the pass that would have
+/// noticed: `line_count_exact` fills a whole line with tents on a count
+/// argument alone, and one sweep of the tree pass can place two tents
+/// next to each other. Without this the solver walks off a contradiction
+/// and reports `Solved` on a grid `check_rules` calls broken. Each of the
+/// other five games has the same check at the top of its loop.
+fn sound(st: &State) -> bool {
+    for i in 0..st.size() {
+        if st.grid[i] == Square::Tent && st.around(i).any(|j| st.grid[j] == Square::Tent) {
+            return false;
+        }
+    }
+    (0..st.w + st.h).all(|line| {
+        let (start, step, len) = line_span(st, line);
+        let tents = (0..len).filter(|&j| st.grid[start + j * step] == Square::Tent).count();
+        tents <= st.numbers[line] as usize
+    })
+}
+
+/// How many placements one line may enumerate before `line_deduce` gives
+/// up on it. C(n, k) grows fast enough that a handful of extra blanks is
+/// the difference between instant and never, and a description arriving
+/// from outside chooses n and k. Past the cap the line deduces nothing,
+/// which is sound: skipping a technique loses deductions, it never
+/// invents them.
+const MAX_LINE_COMBINATIONS: u64 = 200_000;
+
+/// Whether C(n, k) is above `cap`, without overflowing on the pairs where
+/// it is astronomically above it.
+fn combinations_exceed(n: usize, k: usize, cap: u64) -> bool {
+    let k = k.min(n - k);
+    let mut c: u64 = 1;
+    for i in 0..k {
+        // Exact at every step: after step i, c is C(n, i+1).
+        c = c.saturating_mul((n - i) as u64) / (i as u64 + 1);
+        if c > cap {
+            return true;
+        }
+    }
+    false
+}
+
 /// Tatham's next-combination step: move the rightmost movable tent one
 /// place right and shunt everything after it as far left as it goes.
 /// Returns false once the combinations are exhausted.
@@ -327,6 +378,9 @@ fn line_deduce(st: &mut State, tier: Tier, line: usize, rec: &mut Option<&mut Ve
         return None;
     }
     let k = k as usize;
+    if combinations_exceed(n, k, MAX_LINE_COMBINATIONS) {
+        return Some(false);
+    }
 
     let mut place: Vec<bool> = (0..n).map(|j| j < k).collect();
     // None = Tatham's MAGIC: not set by any valid combination yet.
@@ -454,8 +508,13 @@ pub(crate) fn count_solutions(d: &Description, cap: u32) -> u32 {
         options,
         found: Vec::new(),
         cap: cap as usize,
+        budget: SearchBudget::default(),
+        gave_up: false,
     };
-    search.run();
+    search.run(0);
+    if search.gave_up {
+        return cap;
+    }
     search.found.len() as u32
 }
 
@@ -469,6 +528,17 @@ struct Search {
     options: Vec<Vec<usize>>,
     found: Vec<Vec<bool>>,
     cap: usize,
+    /// The cap is on distinct tent bitmaps, and several tree-to-tent
+    /// matchings can produce one bitmap: trees whose candidate cells form
+    /// a cycle give exponentially many matchings and a single layout, so
+    /// `found.len()` can sit at 1 while the search runs forever. The node
+    /// budget is what actually stops that.
+    budget: SearchBudget,
+    /// Set when the search hit [`MAX_SEARCH_DEPTH`] or ran out of nodes
+    /// and stopped. The layouts found so far are then a floor, not a
+    /// count, so the caller reports the cap rather than a number it
+    /// cannot stand behind.
+    gave_up: bool,
 }
 
 impl Search {
@@ -483,8 +553,14 @@ impl Search {
             .any(|j| self.tent[j])
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, depth: u32) {
         if self.found.len() >= self.cap {
+            return;
+        }
+        // One frame per tree, and a description from outside chooses how
+        // many trees there are.
+        if depth >= MAX_SEARCH_DEPTH || !self.budget.take() {
+            self.gave_up = true;
             return;
         }
         let mut best: Option<(usize, Vec<usize>)> = None;
@@ -514,7 +590,7 @@ impl Search {
             self.tent[cell] = true;
             self.row_left[cell / self.w] -= 1;
             self.col_left[cell % self.w] -= 1;
-            self.run();
+            self.run(depth + 1);
             self.tent[cell] = false;
             self.row_left[cell / self.w] += 1;
             self.col_left[cell % self.w] += 1;
@@ -523,5 +599,23 @@ impl Search {
             }
         }
         self.assigned[t] = false;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::combinations_exceed;
+
+    #[test]
+    fn combination_counts_are_exact_up_to_the_cap() {
+        assert!(!combinations_exceed(0, 0, 1));
+        assert!(!combinations_exceed(32, 32, 1));
+        assert!(!combinations_exceed(10, 5, 252));
+        assert!(combinations_exceed(10, 5, 251));
+        // C(32, 16) is 601080390: the count a 32-wide line of blanks with
+        // half of them tents would enumerate, and the reason for the cap.
+        assert!(combinations_exceed(32, 16, 200_000));
+        assert!(!combinations_exceed(32, 16, 601_080_390));
+        assert!(combinations_exceed(32, 16, 601_080_389));
     }
 }
