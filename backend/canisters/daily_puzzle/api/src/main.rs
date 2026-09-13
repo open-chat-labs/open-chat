@@ -33,6 +33,4 @@ fn main() {
 
     generate_ts_method!(daily_puzzle, regenerate_today);
     generate_ts_method!(daily_puzzle, set_config);
-    generate_ts_method!(daily_puzzle, set_game_config);
-    generate_ts_method!(daily_puzzle, set_schedule);
 }

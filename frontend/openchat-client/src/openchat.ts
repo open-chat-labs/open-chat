@@ -158,7 +158,6 @@ import {
     type DailyPuzzleState,
     type DailyPuzzleSubmitResponse,
     type GameConfig,
-    type PuzzleParams,
     type ClientJoinCommunityResponse,
     type ClientJoinGroupResponse,
     type CommunitiesRoute,
@@ -355,11 +354,7 @@ import { locale } from "svelte-i18n";
 import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
-import {
-    approveFromExternalWallet,
-    type SignerWallet,
-    type WalletAccount,
-} from "./utils/signer";
+import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import {
     FilteredProposals,
     achievementsStore,
@@ -3553,7 +3548,10 @@ export class OpenChat {
 
     diffGroupPermissions = diffGroupPermissions;
 
-    messageContentFromFile(file: File | LazyFile, context: MessageContext): Promise<AttachmentContent> {
+    messageContentFromFile(
+        file: File | LazyFile,
+        context: MessageContext,
+    ): Promise<AttachmentContent> {
         return messageContentFromFile(file, isDiamondStore.value, {
             websiteVersion: this.config.websiteVersion,
             onProgress: (p) =>
@@ -10849,23 +10847,9 @@ export class OpenChat {
     dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleSetConfig", config });
     }
-
-    dailyPuzzleSetGameConfig(gameId: string, config: GameConfig): Promise<Success | OCError> {
-        return this.#worker.send({ kind: "dailyPuzzleSetGameConfig", gameId, config });
-    }
-
-    dailyPuzzleSetSchedule(schedule: PuzzleParams[]): Promise<Success | OCError> {
-        return this.#worker.send({ kind: "dailyPuzzleSetSchedule", schedule });
-    }
-
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });
     }
-
-    dailyPuzzlePushNow(): Promise<Success | OCError> {
-        return this.#worker.send({ kind: "dailyPuzzlePushNow" });
-    }
-
     dailyPuzzleSaveGrid(gameId: string, grid: Uint8Array): Promise<boolean> {
         const puzzle = todaysPuzzle(dailyPuzzleStore.value, gameId);
         if (puzzle === undefined) return Promise.resolve(false);

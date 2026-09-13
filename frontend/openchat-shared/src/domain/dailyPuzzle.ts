@@ -83,15 +83,6 @@ export type GameConfig = {
     maxHints: number;
 };
 
-/** Generator parameters for one weekday; mirrors the Rust `PuzzleParams`. */
-export type PuzzleParams = {
-    gameId: string;
-    width: number;
-    height: number;
-    tier: number;
-    blackPct: number;
-};
-
 export type DailyPuzzleResult = {
     gameId: string;
     number: number;

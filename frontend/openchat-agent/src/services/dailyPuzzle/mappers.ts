@@ -10,7 +10,6 @@ import type {
     GameConfig,
     PublicDailyPuzzle,
     PuzzleHint,
-    PuzzleParams,
     ServedHint,
 } from "@shared";
 import type { OCError } from "@shared";
@@ -21,7 +20,6 @@ import type {
     DailyPuzzleConfigResponse,
     DailyPuzzleCurrentPuzzlesResponse,
     DailyPuzzleGameConfigsResponse,
-    DailyPuzzlePuzzleParams,
     DailyPuzzleResult as TDailyPuzzleResult,
     DailyPuzzleResultsResponse,
     DailyPuzzleSolved as TDailyPuzzleSolved,
@@ -200,24 +198,6 @@ export function gameConfig(value: TGameConfig): GameConfig {
         maxHints: value.max_hints,
     };
 }
-
-export function apiGameConfig(value: GameConfig): TGameConfig {
-    return {
-        hint_prices: value.hintPrices,
-        max_hints: value.maxHints,
-    };
-}
-
-export function apiPuzzleParams(value: PuzzleParams): DailyPuzzlePuzzleParams {
-    return {
-        game_id: value.gameId,
-        width: value.width,
-        height: value.height,
-        tier: value.tier,
-        black_pct: value.blackPct,
-    };
-}
-
 export function dailyPuzzleConfigResponse(
     value: DailyPuzzleConfigResponse,
 ): DailyPuzzleConfig | OCError {

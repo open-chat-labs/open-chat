@@ -5,7 +5,6 @@ import type {
     GameConfig,
     OCError,
     PublicDailyPuzzle,
-    PuzzleParams,
     Success,
 } from "@shared";
 import { Empty, UnitResult } from "../../typebox";
@@ -14,8 +13,6 @@ import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { unitResult } from "../common/chatMappersV2";
 import {
     apiDailyPuzzleConfig,
-    apiGameConfig,
-    apiPuzzleParams,
     currentPuzzlesResponse,
     dailyPuzzleConfigResponse,
     dailyPuzzleGameConfigsResponse,
@@ -29,8 +26,6 @@ import {
     DailyPuzzleResultsArgs,
     DailyPuzzleResultsResponse,
     DailyPuzzleSetConfigArgs,
-    DailyPuzzleSetGameConfigArgs,
-    DailyPuzzleSetScheduleArgs,
 } from "./typebox";
 
 export class DailyPuzzleClient extends SingleCanisterMsgpackAgent {
@@ -91,27 +86,6 @@ export class DailyPuzzleClient extends SingleCanisterMsgpackAgent {
             UnitResult,
         );
     }
-
-    setGameConfig(gameId: string, config: GameConfig): Promise<Success | OCError> {
-        return this.update(
-            "set_game_config",
-            { game_id: gameId, config: apiGameConfig(config) },
-            unitResult,
-            DailyPuzzleSetGameConfigArgs,
-            UnitResult,
-        );
-    }
-
-    setSchedule(schedule: PuzzleParams[]): Promise<Success | OCError> {
-        return this.update(
-            "set_schedule",
-            { schedule: schedule.map(apiPuzzleParams) },
-            unitResult,
-            DailyPuzzleSetScheduleArgs,
-            UnitResult,
-        );
-    }
-
     regenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.update(
             "regenerate_today",
@@ -120,9 +94,5 @@ export class DailyPuzzleClient extends SingleCanisterMsgpackAgent {
             DailyPuzzleRegenerateTodayArgs,
             UnitResult,
         );
-    }
-
-    pushNow(): Promise<Success | OCError> {
-        return this.update("push_now", {}, unitResult, Empty, UnitResult);
     }
 }

@@ -113,7 +113,6 @@ import type {
     DailyPuzzleSubmitResponse,
     GameConfig,
     PublicDailyPuzzle,
-    PuzzleParams,
 } from "./dailyPuzzle";
 import type {
     AddMembersToChannelResponse,
@@ -530,10 +529,7 @@ export type WorkerRequest =
     | DailyPuzzleGetConfig
     | DailyPuzzleGameConfigs
     | DailyPuzzleSetConfig
-    | DailyPuzzleSetGameConfig
-    | DailyPuzzleSetSchedule
     | DailyPuzzleRegenerateToday
-    | DailyPuzzlePushNow
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -653,27 +649,10 @@ type DailyPuzzleSetConfig = {
     kind: "dailyPuzzleSetConfig";
     config: DailyPuzzleConfig;
 };
-
-type DailyPuzzleSetGameConfig = {
-    kind: "dailyPuzzleSetGameConfig";
-    gameId: string;
-    config: GameConfig;
-};
-
-type DailyPuzzleSetSchedule = {
-    kind: "dailyPuzzleSetSchedule";
-    schedule: PuzzleParams[];
-};
-
 type DailyPuzzleRegenerateToday = {
     kind: "dailyPuzzleRegenerateToday";
     gameId: string | undefined;
 };
-
-type DailyPuzzlePushNow = {
-    kind: "dailyPuzzlePushNow";
-};
-
 export type SetAuthIdentity = {
     kind: "setAuthIdentity";
     identity: JsonnableIdentityKeyAndChain | undefined;
@@ -2992,13 +2971,7 @@ export type WorkerResult<T> = T extends Init
     ? [string, GameConfig][] | OCError
     : T extends DailyPuzzleSetConfig
     ? Success | OCError
-    : T extends DailyPuzzleSetGameConfig
-    ? Success | OCError
-    : T extends DailyPuzzleSetSchedule
-    ? Success | OCError
     : T extends DailyPuzzleRegenerateToday
-    ? Success | OCError
-    : T extends DailyPuzzlePushNow
     ? Success | OCError
     : T extends SetPremiumItemCost
     ? void

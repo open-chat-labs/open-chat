@@ -1,14 +1,10 @@
 import {
     apiDailyPuzzleConfig,
-    apiGameConfig,
-    apiPuzzleParams,
     dailyPuzzleConfig,
     dailyPuzzleConfigResponse,
-    dailyPuzzleGameConfigsResponse,
     dailyPuzzleHintResponse,
     dailyPuzzleSolved,
     dailyPuzzleStartResponse,
-    gameConfig,
 } from "./mappers";
 import type {
     DailyPuzzleSolved as TDailyPuzzleSolved,
@@ -131,7 +127,6 @@ describe("daily puzzle operator config mappers", () => {
         maxSubmits: 9,
         maxFreeChecks: 11,
     };
-    const game = { hintPrices: [10, 20, 30], maxHints: 4 };
 
     test("series config maps both ways without losing a field", () => {
         expect(apiDailyPuzzleConfig(config)).toEqual({
@@ -148,20 +143,6 @@ describe("daily puzzle operator config mappers", () => {
         expect(dailyPuzzleConfigResponse({ Success: apiDailyPuzzleConfig(config) })).toEqual(
             config,
         );
-    });
-
-    test("game config maps both ways", () => {
-        expect(apiGameConfig(game)).toEqual({ hint_prices: [10, 20, 30], max_hints: 4 });
-        expect(gameConfig(apiGameConfig(game))).toEqual(game);
-        expect(
-            dailyPuzzleGameConfigsResponse({ Success: [["light_up", apiGameConfig(game)]] }),
-        ).toEqual([["light_up", game]]);
-    });
-
-    test("schedule entry maps to the canister's field names", () => {
-        expect(
-            apiPuzzleParams({ gameId: "light_up", width: 7, height: 8, tier: 1, blackPct: 20 }),
-        ).toEqual({ game_id: "light_up", width: 7, height: 8, tier: 1, black_pct: 20 });
     });
 
     test("a refusal comes through as the error, not a value", () => {

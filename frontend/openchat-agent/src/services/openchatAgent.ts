@@ -219,7 +219,6 @@ import type {
     DailyPuzzleSubmitResponse,
     GameConfig,
     PublicDailyPuzzle,
-    PuzzleParams,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -4788,23 +4787,9 @@ export class OpenChatAgent extends EventTarget {
     dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().setConfig(config);
     }
-
-    dailyPuzzleSetGameConfig(gameId: string, config: GameConfig): Promise<Success | OCError> {
-        return this._dailyPuzzleClient.get().setGameConfig(gameId, config);
-    }
-
-    dailyPuzzleSetSchedule(schedule: PuzzleParams[]): Promise<Success | OCError> {
-        return this._dailyPuzzleClient.get().setSchedule(schedule);
-    }
-
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);
     }
-
-    dailyPuzzlePushNow(): Promise<Success | OCError> {
-        return this._dailyPuzzleClient.get().pushNow();
-    }
-
     setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
         return this._userIndexClient.setPremiumItemCost(item, chitCost);
     }
