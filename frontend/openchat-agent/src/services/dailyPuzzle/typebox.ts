@@ -10,6 +10,7 @@ export {
     DailyPuzzleResult,
     DailyPuzzleResultsArgs,
     DailyPuzzleResultsResponse,
+    DailyPuzzleScheduleResponse,
     DailyPuzzleSetConfigArgs,
     DailyPuzzleSetGameConfigArgs,
     DailyPuzzleSetScheduleArgs,

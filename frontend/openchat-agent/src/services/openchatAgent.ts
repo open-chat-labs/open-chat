@@ -4785,6 +4785,10 @@ export class OpenChatAgent extends EventTarget {
         return this._dailyPuzzleClient.get().gameConfigs();
     }
 
+    dailyPuzzleSchedule(): Promise<PuzzleParams[] | OCError> {
+        return this._dailyPuzzleClient.get().schedule();
+    }
+
     dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().setConfig(config);
     }

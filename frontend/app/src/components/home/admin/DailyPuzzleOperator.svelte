@@ -8,6 +8,7 @@
         formToSchedule,
         gameConfigToForm,
         regenerateOptions,
+        scheduleToForm,
         type DailyPuzzleConfigForm,
         type GameConfigForm,
         type PuzzleParamsForm,
@@ -25,8 +26,8 @@
 
     const client = getContext<OpenChat>("client");
 
-    // The canister has no schedule query, so the rows start at its built-in default (Mon..Sun)
-    // rather than at what is currently set. Everything else is read back after every action.
+    // Shown until the canister answers the schedule query; a canister built before that query
+    // exists answers with an error and the rows stay at this default, which the note says.
     const defaultSchedule: PuzzleParamsForm[] = [
         { gameId: "light_up", width: "7", height: "7", tier: "0", blackPct: "20" },
         { gameId: "tents", width: "8", height: "8", tier: "0", blackPct: "20" },
@@ -45,6 +46,7 @@
     let selectedGameId = $state("");
     let gameForm: GameConfigForm = $state({ hintPrices: "", maxHints: "" });
     let schedule: PuzzleParamsForm[] = $state(defaultSchedule);
+    let scheduleFromCanister = $state(false);
     let regenerateGameId = $state("");
 
     let gameIds = $derived(gameConfigs.map(([id]) => id));
@@ -67,10 +69,15 @@
 
     // Every form is filled from what the canister holds now, never from what was just sent.
     async function refresh(): Promise<void> {
-        const [config, games] = await Promise.all([
+        const [config, games, stored] = await Promise.all([
             client.dailyPuzzleConfig(),
             client.dailyPuzzleGameConfigs(),
+            client.dailyPuzzleSchedule(),
         ]);
+        if (Array.isArray(stored)) {
+            schedule = scheduleToForm(stored);
+            scheduleFromCanister = true;
+        }
         if ("kind" in config) {
             fail("Failed to read the daily puzzle config", config);
         } else {
@@ -233,7 +240,8 @@
                 </div>
             </div>
             <Button tiny disabled={busy.has(0)} loading={busy.has(0)} onClick={saveConfig}
-                >Save</Button>
+                >Save</Button
+            >
         </section>
     {/if}
 
@@ -267,15 +275,21 @@
                 </div>
             </div>
             <Button tiny disabled={busy.has(1)} loading={busy.has(1)} onClick={saveGameConfig}
-                >Save</Button>
+                >Save</Button
+            >
         </section>
 
         <section class="operator-function">
             <div class="title">Schedule</div>
+            {#if !scheduleFromCanister}
+                <div class="hint">
+                    This canister does not answer the schedule query yet; these rows start at the
+                    built-in default.
+                </div>
+            {/if}
             <div class="hint">
-                The canister does not report its current schedule; these rows start at its built-in
-                default. Saving replaces all seven days. Width and height 5-14, tier 0 easy / 1
-                tricky, black pct only applies to light_up (10-60).
+                Saving replaces all seven days. Width and height 5-14, tier 0 easy / 1 tricky, black
+                pct only applies to light_up (10-60).
             </div>
             {#each schedule as day, i (i)}
                 <div class="name-value">
@@ -294,7 +308,8 @@
                 </div>
             {/each}
             <Button tiny disabled={busy.has(2)} loading={busy.has(2)} onClick={saveSchedule}
-                >Save</Button>
+                >Save</Button
+            >
         </section>
 
         <section class="operator-function">
@@ -308,7 +323,8 @@
                 <div class="label">Push now:</div>
                 <div class="value">
                     <Button tiny disabled={busy.has(3)} loading={busy.has(3)} onClick={pushNow}
-                        >Push now</Button>
+                        >Push now</Button
+                    >
                 </div>
             </div>
             <div class="name-value">
@@ -323,7 +339,8 @@
                         tiny
                         disabled={busy.has(4)}
                         loading={busy.has(4)}
-                        onClick={regenerateToday}>Regenerate</Button>
+                        onClick={regenerateToday}>Regenerate</Button
+                    >
                 </div>
             </div>
         </section>

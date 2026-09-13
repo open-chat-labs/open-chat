@@ -529,6 +529,7 @@ export type WorkerRequest =
     | DailyPuzzleResults
     | DailyPuzzleGetConfig
     | DailyPuzzleGameConfigs
+    | DailyPuzzleSchedule
     | DailyPuzzleSetConfig
     | DailyPuzzleSetGameConfig
     | DailyPuzzleSetSchedule
@@ -647,6 +648,10 @@ type DailyPuzzleGetConfig = {
 
 type DailyPuzzleGameConfigs = {
     kind: "dailyPuzzleGameConfigs";
+};
+
+type DailyPuzzleSchedule = {
+    kind: "dailyPuzzleSchedule";
 };
 
 type DailyPuzzleSetConfig = {
@@ -2990,6 +2995,8 @@ export type WorkerResult<T> = T extends Init
     ? DailyPuzzleConfig | OCError
     : T extends DailyPuzzleGameConfigs
     ? [string, GameConfig][] | OCError
+    : T extends DailyPuzzleSchedule
+    ? PuzzleParams[] | OCError
     : T extends DailyPuzzleSetConfig
     ? Success | OCError
     : T extends DailyPuzzleSetGameConfig

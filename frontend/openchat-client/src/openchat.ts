@@ -355,11 +355,7 @@ import { locale } from "svelte-i18n";
 import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
-import {
-    approveFromExternalWallet,
-    type SignerWallet,
-    type WalletAccount,
-} from "./utils/signer";
+import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import {
     FilteredProposals,
     achievementsStore,
@@ -3553,7 +3549,10 @@ export class OpenChat {
 
     diffGroupPermissions = diffGroupPermissions;
 
-    messageContentFromFile(file: File | LazyFile, context: MessageContext): Promise<AttachmentContent> {
+    messageContentFromFile(
+        file: File | LazyFile,
+        context: MessageContext,
+    ): Promise<AttachmentContent> {
         return messageContentFromFile(file, isDiamondStore.value, {
             websiteVersion: this.config.websiteVersion,
             onProgress: (p) =>
@@ -10844,6 +10843,10 @@ export class OpenChat {
 
     dailyPuzzleGameConfigs(): Promise<[string, GameConfig][] | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleGameConfigs" });
+    }
+
+    dailyPuzzleSchedule(): Promise<PuzzleParams[] | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleSchedule" });
     }
 
     dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {

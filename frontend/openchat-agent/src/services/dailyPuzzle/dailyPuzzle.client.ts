@@ -19,12 +19,14 @@ import {
     currentPuzzlesResponse,
     dailyPuzzleConfigResponse,
     dailyPuzzleGameConfigsResponse,
+    dailyPuzzleScheduleResponse,
     dailyPuzzleResultsResponse,
 } from "./mappers";
 import {
     DailyPuzzleConfigResponse,
     DailyPuzzleCurrentPuzzlesResponse,
     DailyPuzzleGameConfigsResponse,
+    DailyPuzzleScheduleResponse,
     DailyPuzzleRegenerateTodayArgs,
     DailyPuzzleResultsArgs,
     DailyPuzzleResultsResponse,
@@ -79,6 +81,16 @@ export class DailyPuzzleClient extends SingleCanisterMsgpackAgent {
             dailyPuzzleGameConfigsResponse,
             Empty,
             DailyPuzzleGameConfigsResponse,
+        );
+    }
+
+    schedule(): Promise<PuzzleParams[] | OCError> {
+        return this.query(
+            "schedule",
+            {},
+            dailyPuzzleScheduleResponse,
+            Empty,
+            DailyPuzzleScheduleResponse,
         );
     }
 

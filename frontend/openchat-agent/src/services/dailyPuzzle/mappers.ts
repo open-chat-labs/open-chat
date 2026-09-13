@@ -22,6 +22,7 @@ import type {
     DailyPuzzleCurrentPuzzlesResponse,
     DailyPuzzleGameConfigsResponse,
     DailyPuzzlePuzzleParams,
+    DailyPuzzleScheduleResponse,
     DailyPuzzleResult as TDailyPuzzleResult,
     DailyPuzzleResultsResponse,
     DailyPuzzleSolved as TDailyPuzzleSolved,
@@ -206,6 +207,22 @@ export function apiGameConfig(value: GameConfig): TGameConfig {
         hint_prices: value.hintPrices,
         max_hints: value.maxHints,
     };
+}
+
+export function puzzleParams(value: DailyPuzzlePuzzleParams): PuzzleParams {
+    return {
+        gameId: value.game_id,
+        width: value.width,
+        height: value.height,
+        tier: value.tier,
+        blackPct: value.black_pct,
+    };
+}
+
+export function dailyPuzzleScheduleResponse(
+    value: DailyPuzzleScheduleResponse,
+): PuzzleParams[] | OCError {
+    return mapResult(value, (s) => s.map(puzzleParams));
 }
 
 export function apiPuzzleParams(value: PuzzleParams): DailyPuzzlePuzzleParams {

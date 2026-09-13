@@ -4,6 +4,7 @@ import {
     apiPuzzleParams,
     dailyPuzzleConfig,
     dailyPuzzleConfigResponse,
+    dailyPuzzleScheduleResponse,
     dailyPuzzleGameConfigsResponse,
     dailyPuzzleHintResponse,
     dailyPuzzleSolved,
@@ -162,6 +163,17 @@ describe("daily puzzle operator config mappers", () => {
         expect(
             apiPuzzleParams({ gameId: "light_up", width: 7, height: 8, tier: 1, blackPct: 20 }),
         ).toEqual({ game_id: "light_up", width: 7, height: 8, tier: 1, black_pct: 20 });
+    });
+
+    test("the schedule query maps seven days of params (#9334 invariant 51)", () => {
+        const day = { game_id: "tents", width: 8, height: 8, tier: 1, black_pct: 20 };
+        const mapped = dailyPuzzleScheduleResponse({ Success: Array(7).fill(day) });
+        expect(mapped).toEqual(
+            Array(7).fill({ gameId: "tents", width: 8, height: 8, tier: 1, blackPct: 20 }),
+        );
+        expect(dailyPuzzleScheduleResponse({ Error: [100, "no"] })).toMatchObject({
+            kind: "error",
+        });
     });
 
     test("a refusal comes through as the error, not a value", () => {
