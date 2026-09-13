@@ -1385,6 +1385,20 @@ mod tests {
                 let Some(Ok(generated)) = generate(&params, seed) else {
                     continue;
                 };
+                // The fixture carries a Rust `check_rules` verdict, not just the solver's output
+                let verdict = match *game_id {
+                    light_up::GAME_ID => light_up::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    tents::GAME_ID => tents::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    slant::GAME_ID => slant::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    bridges::GAME_ID => bridges::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    loopy::GAME_ID => loopy::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    unruly::GAME_ID => unruly::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    other => panic!("no check_rules for {other}"),
+                };
+                assert!(
+                    matches!(verdict, Ok(0)),
+                    "{game_id} seed {seed}: check_rules rejects the solution: {verdict:?}"
+                );
                 kept += 1;
                 entries.push(format!(
                     "  {{ \"gameId\": \"{game_id}\", \"seed\": {seed}, \"description\": \"{}\", \"solution\": \"{}\" }}",
