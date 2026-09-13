@@ -8,8 +8,10 @@
 // Keys. An edge is a pair of islands with only water between them, keyed by
 // `from_cell * 2 + dir` where from_cell is the left / top island's cell index and dir 0 = right,
 // 1 = down. Values are bridge counts 0, 1 or 2. Islands are elements keyed by their cell index
-// (never tappable); hint focus and mistake keys are plain cell indices. The two key spaces
-// overlap, so a Board must read keys by element kind / violation kind, never by value alone.
+// (never tappable). Hint focus keys are plain cell indices; a mistake hint's key is an EDGE key,
+// because the server picks it from the `filled` pairs the client sent. The two key spaces
+// overlap, so a Board must read keys by element kind / violation kind, never by value alone:
+// see `bridgesMistakeElements`.
 //
 // State. Only edges the user has touched are in the map: tapping cycles 0 -> 1 -> 2 -> 0, and a
 // 0 the user cycled back to stays as an explicit entry, a committed "no bridge". `filled()`
@@ -399,3 +401,16 @@ export const bridges: DailyGame<BridgesDescription, BridgesState> = {
         return out;
     },
 };
+
+/**
+ * The elements a mistake hint points at. The server names the lowest `filled` key that is not
+ * in the solution, and `filled` holds edge keys, so a mistake key is an edge and is drawn on
+ * that edge, never on the island whose cell index happens to be the same number.
+ */
+export function bridgesMistakeElements(
+    elements: GameElement[],
+    keys: Iterable<number>,
+): GameElement[] {
+    const wanted = new Set(keys);
+    return elements.filter((el) => el.kind === "edge" && wanted.has(el.key));
+}

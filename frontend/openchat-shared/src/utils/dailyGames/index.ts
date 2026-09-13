@@ -26,6 +26,7 @@ export {
 export {
     bridges,
     bridgesIslandTotals,
+    bridgesMistakeElements,
     type BridgesDescription,
     type BridgesEdge,
     type BridgesState,

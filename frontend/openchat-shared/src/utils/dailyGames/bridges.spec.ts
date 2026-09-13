@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
     bridges,
+    bridgesMistakeElements,
     bridgesIslandTotals,
     checkRules,
     emptyState,
@@ -248,6 +249,15 @@ describe("grid bytes", () => {
 });
 
 describe("bridges DailyGame", () => {
+    // #9334 invariant 55. Island 0 and edge 0 both exist on this board; a mistake key is an edge.
+    test("a mistake key is drawn on the edge, not the island with the same index", () => {
+        const els = bridges.elements(four);
+        expect(bridgesMistakeElements(els, [0])).toEqual([
+            { key: 0, kind: "edge", x: 1, y: 0, w: 2, h: 1 },
+        ]);
+        expect(bridgesMistakeElements(els, [99])).toEqual([]);
+    });
+
     test("elements are islands with labels and edges spanning the water", () => {
         const els = bridges.elements(four);
         expect(els.filter((el) => el.kind === "cell")).toEqual([

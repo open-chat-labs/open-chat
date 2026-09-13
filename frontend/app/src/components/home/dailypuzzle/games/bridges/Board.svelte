@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         bridges,
+        bridgesMistakeElements,
         bridgesIslandTotals,
         type BridgesDescription,
         type BridgesState,
@@ -65,7 +66,8 @@
         y="0"
         width={model.width * CELL}
         height={model.height * CELL}
-        fill={greyed ? "#e6e6e6" : "#ececec"} />
+        fill={greyed ? "#e6e6e6" : "#ececec"}
+    />
     {#each edges as el (el.key)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <rect {...hitRect(el)} fill="transparent" role="gridcell" onclick={() => tap(el.key)} />
@@ -84,7 +86,8 @@
                     y2={horizontal ? c.cy + offset : (el.y + el.h + 0.5) * CELL}
                     {stroke}
                     stroke-width="1"
-                    pointer-events="none" />
+                    pointer-events="none"
+                />
             {/each}
         {:else if mark === "none"}
             <circle cx={c.cx} cy={c.cy} r="0.8" fill="#9a9a9a" pointer-events="none" />
@@ -99,7 +102,8 @@
             fill={islandFill(el.key)}
             stroke={disconnected.has(el.key) ? "#e5484d" : "#1f1f1f"}
             stroke-width={disconnected.has(el.key) ? 0.9 : 0.5}
-            pointer-events="none" />
+            pointer-events="none"
+        />
         <text
             x={c.cx}
             y={c.cy}
@@ -108,7 +112,8 @@
             font-weight="700"
             text-anchor="middle"
             dominant-baseline="central"
-            pointer-events="none">{el.label}</text>
+            pointer-events="none">{el.label}</text
+        >
     {/each}
     {#each [...focus] as index (index)}
         {@const o = cellOrigin(index)}
@@ -121,7 +126,8 @@
                 fill="none"
                 stroke={hl.stroke}
                 stroke-width="0.8"
-                pointer-events="none" />
+                pointer-events="none"
+            />
         {:else}
             <rect
                 x={o.x + 0.5}
@@ -131,19 +137,20 @@
                 fill={hl.fill}
                 stroke={hl.stroke}
                 stroke-width="0.8"
-                pointer-events="none" />
+                pointer-events="none"
+            />
         {/if}
     {/each}
-    {#each [...mistakes] as index (index)}
-        {@const o = cellOrigin(index)}
+    {#each bridgesMistakeElements(elements, mistakes) as el (el.key)}
         <rect
-            x={o.x + 0.5}
-            y={o.y + 0.5}
-            width={CELL - 1}
-            height={CELL - 1}
+            x={el.x * CELL + 0.5}
+            y={el.y * CELL + 0.5}
+            width={el.w * CELL - 1}
+            height={el.h * CELL - 1}
             fill="rgba(229,72,77,0.35)"
             stroke="#e5484d"
             stroke-width="0.8"
-            pointer-events="none" />
+            pointer-events="none"
+        />
     {/each}
 </GridSvg>
