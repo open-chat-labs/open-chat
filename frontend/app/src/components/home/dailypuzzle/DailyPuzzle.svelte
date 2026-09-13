@@ -6,9 +6,11 @@
         publish,
         stateFor,
         todaysPuzzle,
+        puzzleReplaced,
+        type PublicDailyPuzzle,
         type OpenChat,
     } from "@client";
-    import { getContext, onDestroy, tick } from "svelte";
+    import { getContext, onDestroy, tick, untrack } from "svelte";
     import Fire from "svelte-material-icons/Fire.svelte";
     import LightbulbOutline from "svelte-material-icons/LightbulbOutline.svelte";
     import ShareVariant from "svelte-material-icons/ShareVariant.svelte";
@@ -36,43 +38,56 @@
     let { gameId, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const puzzle = todaysPuzzle($dailyPuzzleStore, gameId);
+    let puzzle = $state.raw(todaysPuzzle($dailyPuzzleStore, gameId));
     // undefined = a game this build does not know how to render
     const def = puzzle !== undefined ? dailyPuzzleGame(puzzle.gameId) : undefined;
     const Board = def?.Board;
-    const game =
-        puzzle !== undefined && def !== undefined
+    function build(p: PublicDailyPuzzle | undefined): DailyPuzzleGame | undefined {
+        return p !== undefined && def !== undefined
             ? new DailyPuzzleGame(
                   client,
-                  puzzle,
-                  stateFor($dailyPuzzleStore, puzzle.gameId),
+                  p,
+                  stateFor($dailyPuzzleStore, p.gameId),
                   $currentUserIdStore,
                   def.game,
               )
             : undefined;
+    }
+    let game = $state.raw(build(puzzle));
+    // The poll can bring a different puzzle while this is open: a regenerate, or rollover. The
+    // board is rebuilt from the new one so no marks from the old puzzle remain, and the player is
+    // told (#9334 invariant 58).
+    let replaced = $state(false);
+    $effect(() => {
+        const next = todaysPuzzle($dailyPuzzleStore, gameId);
+        if (puzzle !== undefined && next !== undefined && puzzleReplaced(puzzle, next)) {
+            untrack(() => {
+                game?.dispose();
+                puzzle = next;
+                game = build(next);
+                replaced = true;
+            });
+        }
+    });
 
     onDestroy(() => game?.dispose());
 
-    let state = $derived(
+    let userState = $derived(
         puzzle !== undefined ? stateFor($dailyPuzzleStore, puzzle.gameId) : undefined,
     );
-    let started = $derived(state?.startedAt !== undefined);
-    let solved = $derived(state?.solved);
+    let started = $derived(userState?.startedAt !== undefined);
+    let solved = $derived(userState?.solved);
     let elapsed = $derived(
         solved !== undefined
             ? Number(solved.solveTimeMs)
-            : state?.startedAt !== undefined
-              ? $now500 - Number(state.startedAt)
+            : userState?.startedAt !== undefined
+              ? $now500 - Number(userState.startedAt)
               : 0,
     );
-    let hintsUsed = $derived(state?.hints.filter((h) => !h.mistake).length ?? 0);
-    let streak = $derived(state?.streak ?? 0);
+    let hintsUsed = $derived(userState?.hints.filter((h) => !h.mistake).length ?? 0);
+    let streak = $derived(userState?.streak ?? 0);
     let disabled = $derived(
-        game === undefined ||
-            !started ||
-            solved !== undefined ||
-            game.submitting ||
-            game.busy,
+        game === undefined || !started || solved !== undefined || game.submitting || game.busy,
     );
     let entryFee = $derived(game?.entryFee ?? 0);
     let canAfford = $derived($chitStateStore.chitBalance >= entryFee);
@@ -81,9 +96,7 @@
     let hintsLeft = $derived(Math.max(0, (puzzle?.maxHints ?? 0) - hintsUsed));
     // a new step would be needed and the daily cap has been reached
     let noHintsLeft = $derived(hintLevel === 1 && hintsLeft === 0);
-    let hintDisabled = $derived(
-        disabled || noHintsLeft || $chitStateStore.chitBalance < hintPrice,
-    );
+    let hintDisabled = $derived(disabled || noHintsLeft || $chitStateStore.chitBalance < hintPrice);
 
     function share() {
         // close first: Home opens the chat picker in the same modal slot
@@ -97,7 +110,9 @@
     {#snippet header()}
         {#if puzzle !== undefined}
             <div class="header">
-                <Translatable resourceKey={i18nKey("dailyPuzzle.number", { number: puzzle.number })} />
+                <Translatable
+                    resourceKey={i18nKey("dailyPuzzle.number", { number: puzzle.number })}
+                />
                 <span class="tier">
                     · <Translatable resourceKey={i18nKey(gameNameKey(puzzle.gameId))} />
                     · <Translatable resourceKey={i18nKey(tierKey(puzzle.tier))} />
@@ -118,17 +133,23 @@
                              the game being played instead. Today's puzzle appears on Start. -->
                         <GameDemo {def} />
                     {:else}
+                        {#if replaced}
+                            <p class="caption replaced">
+                                <Translatable resourceKey={i18nKey("dailyPuzzle.replaced")} />
+                            </p>
+                        {/if}
                         <Board
-                        model={game.model}
-                        state={game.state}
-                        marks={game.marks}
-                        lit={game.lit}
-                        violations={game.violations}
-                        focus={game.focus}
-                        target={game.target}
-                        greyed={!started}
-                        {disabled}
-                        onTap={(key: number) => game.tap(key)} />
+                            model={game.model}
+                            state={game.state}
+                            marks={game.marks}
+                            lit={game.lit}
+                            violations={game.violations}
+                            focus={game.focus}
+                            target={game.target}
+                            greyed={!started}
+                            {disabled}
+                            onTap={(key: number) => game?.tap(key)}
+                        />
                     {/if}
                 </div>
 
@@ -140,12 +161,12 @@
                     <div class="stat">
                         <LightbulbOutline size={"1.2em"} color={"var(--icon-txt)"} />
                         <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: hintsUsed })} />
+                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: hintsUsed })}
+                        />
                     </div>
                     <div class="stat">
                         <Fire size={"1.2em"} color={"var(--icon-txt)"} />
-                        <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.streakDays", { streak })} />
+                        <Translatable resourceKey={i18nKey("dailyPuzzle.streakDays", { streak })} />
                     </div>
                 </div>
 
@@ -162,11 +183,15 @@
                                     time: formatSolveTime(Number(solved.solveTimeMs)),
                                     hints: solved.hintsUsed,
                                     streak: solved.streak,
-                                })} />
+                                })}
+                            />
                         </p>
                         <p class="reward">
                             <Translatable
-                                resourceKey={i18nKey("dailyPuzzle.reward", { reward: solved.reward })} />
+                                resourceKey={i18nKey("dailyPuzzle.reward", {
+                                    reward: solved.reward,
+                                })}
+                            />
                         </p>
                     </div>
                 {:else if game.caption !== undefined}
@@ -203,18 +228,24 @@
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 {:else if !started}
-                    <Button loading={game.busy} disabled={game.busy || !canAfford} onClick={() => game.start()}>
+                    <Button
+                        loading={game.busy}
+                        disabled={game.busy || !canAfford}
+                        onClick={() => game?.start()}
+                    >
                         <Translatable
                             resourceKey={entryFee === 0
                                 ? i18nKey("dailyPuzzle.startFree")
-                                : i18nKey("dailyPuzzle.startFee", { fee: entryFee })} />
+                                : i18nKey("dailyPuzzle.startFee", { fee: entryFee })}
+                        />
                     </Button>
                 {:else}
                     <Button
                         loading={game.busy}
                         disabled={hintDisabled}
                         secondary
-                        onClick={() => game.hint()}>
+                        onClick={() => game?.hint()}
+                    >
                         <span class="btn-inner">
                             <LightbulbOutline size={"1em"} color={"currentColor"} />
                             {#if noHintsLeft}
@@ -226,12 +257,14 @@
                                         : i18nKey("dailyPuzzle.hintPrice", {
                                               level: hintLevel,
                                               price: hintPrice,
-                                          })} />
+                                          })}
+                                />
                                 {#if hintsLeft > 0}
                                     · <Translatable
                                         resourceKey={i18nKey("dailyPuzzle.hintsLeft", {
                                             count: hintsLeft,
-                                        })} />
+                                        })}
+                                    />
                                 {/if}
                             {/if}
                         </span>

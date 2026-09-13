@@ -228,3 +228,25 @@ export function descriptionFromHex(hex: string): Uint8Array {
 export function dailyPuzzleNumber(nowMs: number): number {
     return Math.floor(nowMs / 86_400_000);
 }
+
+/** Grace after expiry before refetching, so the rollover push has usually landed. */
+export const ROLLOVER_GRACE_MS = 5_000;
+
+/**
+ * How long until the earliest enabled puzzle expires, plus a grace, so a refetch can be timed for
+ * rollover while the app is open (#9334 invariant 57). Undefined when nothing enabled is held,
+ * and never negative: an already-expired puzzle asks for a refetch now.
+ */
+export function rolloverDelay(state: DailyPuzzleState, now: number): number | undefined {
+    const expiries = state.puzzles.filter((p) => p.enabled).map((p) => Number(p.expiresAt));
+    if (expiries.length === 0) return undefined;
+    return Math.max(0, Math.min(...expiries) - now) + ROLLOVER_GRACE_MS;
+}
+
+/**
+ * Whether `next` is a different puzzle from `current`: another number, or the same number with
+ * another layout, which is what a `regenerate_today` produces (#9334 invariant 58).
+ */
+export function puzzleReplaced(current: PublicDailyPuzzle, next: PublicDailyPuzzle): boolean {
+    return puzzleFingerprint(current) !== puzzleFingerprint(next);
+}

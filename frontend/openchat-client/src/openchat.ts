@@ -91,6 +91,7 @@ import {
     routeForMessage,
     setMinLogLevel,
     shouldPreprocessGate,
+    rolloverDelay,
     stateFor,
     storeEmailSignInSession,
     stripLinkDisabledMarker,
@@ -661,6 +662,10 @@ const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const BOT_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+// The daily puzzle changes at rollover and when an operator regenerates or enables it; an
+// installed app never reloads, so this is how it learns (#9334 invariants 56 and 57)
+const DAILY_PUZZLE_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+const DAILY_PUZZLE_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
@@ -705,6 +710,9 @@ export class OpenChat {
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
     #chatsPoller: Poller | undefined = undefined;
     #botsPoller: Poller | undefined = undefined;
+    #dailyPuzzlePoller: Poller | undefined = undefined;
+    #dailyPuzzleRolloverTimer: number | undefined = undefined;
+    #dailyPuzzleVisibilityListener: (() => void) | undefined = undefined;
     #registryPoller: Poller | undefined = undefined;
     #onlinePoller: Poller | undefined = undefined;
     #btcBalancePoller: Poller | undefined = undefined;
@@ -879,6 +887,8 @@ export class OpenChat {
               );
         // Stop the chats poller until we have finished loading the new identity
         this.#chatsPoller?.stop();
+        this.#dailyPuzzlePoller?.stop();
+        if (typeof window !== "undefined") window.clearTimeout(this.#dailyPuzzleRolloverTimer);
         currentUserStore.set(anonymousUser());
         chatsInitialisedStore.set(false);
         const authPrincipal = identity.getPrincipal().toString();
@@ -1257,7 +1267,7 @@ export class OpenChat {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
             this.#startOneSecBalanceUpdateJob();
-            this.dailyPuzzleFetch();
+            this.#startDailyPuzzlePoller();
             this.#worker
                 .send({ kind: "getUserStorageLimits" })
                 .then((storage) => {
@@ -1297,6 +1307,32 @@ export class OpenChat {
 
     resumeEventLoop() {
         this.#startChatsPoller();
+    }
+
+    #startDailyPuzzlePoller() {
+        this.#dailyPuzzlePoller?.stop();
+        if (anonUserStore.value) return;
+        this.#dailyPuzzlePoller = new Poller(
+            () => this.dailyPuzzleFetch(),
+            DAILY_PUZZLE_UPDATE_INTERVAL,
+            DAILY_PUZZLE_UPDATE_IDLE_INTERVAL,
+            true,
+        );
+        // Coming back to a backgrounded app is the moment a stale puzzle would show
+        if (typeof document !== "undefined" && this.#dailyPuzzleVisibilityListener === undefined) {
+            this.#dailyPuzzleVisibilityListener = () => {
+                if (document.visibilityState === "visible") this.dailyPuzzleFetch();
+            };
+            document.addEventListener("visibilitychange", this.#dailyPuzzleVisibilityListener);
+        }
+    }
+
+    #scheduleDailyPuzzleRollover(state: DailyPuzzleState) {
+        if (typeof window === "undefined") return;
+        window.clearTimeout(this.#dailyPuzzleRolloverTimer);
+        const delay = rolloverDelay(state, Date.now());
+        if (delay === undefined) return;
+        this.#dailyPuzzleRolloverTimer = window.setTimeout(() => this.dailyPuzzleFetch(), delay);
     }
 
     #startBotsPoller() {
@@ -10711,6 +10747,7 @@ export class OpenChat {
                     lastFetched: Date.now(),
                 };
                 dailyPuzzleStore.set(next);
+                this.#scheduleDailyPuzzleRollover(next);
                 return next;
             })
             .catch((err) => {

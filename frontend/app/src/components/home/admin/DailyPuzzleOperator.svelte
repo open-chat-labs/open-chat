@@ -75,6 +75,8 @@
                 if (resp.kind === "success") {
                     toastStore.showSuccessToast(i18nKey(successMessage));
                     await refresh();
+                    // The operator's own client sees the change now, not at the next poll
+                    await client.dailyPuzzleFetch();
                 } else {
                     fail(what, resp);
                 }

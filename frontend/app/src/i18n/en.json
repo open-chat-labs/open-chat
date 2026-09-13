@@ -684,6 +684,7 @@
         },
         "wrong": "That's not it. Check the red cells.",
         "mistake": "Something is wrong in the red cells.",
+        "replaced": "This puzzle was replaced. Here is the new one.",
         "failedToStart": "Sorry, we couldn't start the puzzle",
         "failedToSubmit": "Sorry, we couldn't check your solution",
         "failedHint": "Sorry, we couldn't get a hint",
