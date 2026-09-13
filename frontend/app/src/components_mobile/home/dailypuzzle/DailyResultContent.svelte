@@ -11,6 +11,11 @@
     import { formatSolveTime, gameNameKey, tierKey } from "@src/utils/dailyPuzzle.svelte";
     import { dailyPuzzleGame } from "@src/utils/dailyPuzzleGames";
     import {
+        cardNumbers,
+        verificationFrom,
+        type CardVerification,
+    } from "@src/utils/dailyResultCard";
+    import {
         Caption,
         ColourVars,
         Column,
@@ -56,8 +61,9 @@
     });
 
     // Checked against the daily canister's results index the first time the card scrolls into
-    // view. No row = the numbers are shown greyed and marked unverified.
-    let verification = $state<"pending" | "verified" | "unverified">("pending");
+    // view. The numbers shown are the row's; the payload's are a claim and are never shown.
+    let verification = $state<CardVerification>({ kind: "pending" });
+    let numbers = $derived(cardNumbers(verification));
     let checked = false;
     $effect(() => {
         if (intersecting && !checked) {
@@ -65,7 +71,7 @@
             client
                 .verifyDailyResults(content.gameId, content.number, [content.userId])
                 .then((rows) => {
-                    verification = rows[content.userId] !== undefined ? "verified" : "unverified";
+                    verification = verificationFrom(rows, content.userId);
                 });
         }
     });
@@ -79,7 +85,7 @@
     let textColour: ColourVarKeys = $derived(me ? "chatTextSent" : "textPrimary");
     let mutedColour: ColourVarKeys = $derived(me ? "chatMetadataSent" : "textSecondary");
     // Unverified numbers are shown muted; the verification entry itself stays full strength.
-    let valueColour = $derived(verification === "unverified" ? mutedColour : textColour);
+    let valueColour = $derived(verification.kind === "unverified" ? mutedColour : textColour);
     let ruleColour = $derived(me ? ColourVars.chatMetadataSent : ColourVars.surface2);
 </script>
 
@@ -107,8 +113,11 @@
             .
             <Translatable
                 resourceKey={i18nKey(
-                    verification === "verified" ? "dailyPuzzle.verified" : "dailyPuzzle.unverified",
-                )} />
+                    verification.kind === "verified"
+                        ? "dailyPuzzle.verified"
+                        : "dailyPuzzle.unverified",
+                )}
+            />
         </Caption>
     </Column>
     <Row gap="lg" crossAxisAlignment="center">
@@ -118,9 +127,13 @@
             </Column>
         {/if}
         <Column gap="xs" width="hug">
-            {@render stat(formatSolveTime(content.solveTimeMs), "dailyPuzzle.card.time", true)}
-            {@render stat(`${content.hintsUsed}`, "dailyPuzzle.card.hints")}
-            {@render stat(`${content.streak}`, "dailyPuzzle.card.dayStreak")}
+            {@render stat(
+                numbers ? formatSolveTime(numbers.solveTimeMs) : "–",
+                "dailyPuzzle.card.time",
+                true,
+            )}
+            {@render stat(numbers ? `${numbers.hintsUsed}` : "–", "dailyPuzzle.card.hints")}
+            {@render stat(numbers ? `${numbers.streak}` : "–", "dailyPuzzle.card.dayStreak")}
         </Column>
     </Row>
     <Row width="fill" height={{ size: "1px" }} backgroundColor={ruleColour}>{""}</Row>
@@ -134,7 +147,8 @@
             variant={"primary"}
             mode={"small"}
             width={"fill"}
-            onClick={() => publish("dailyPuzzle", { gameId: content.gameId })}>
+            onClick={() => publish("dailyPuzzle", { gameId: content.gameId })}
+        >
             {#snippet icon(color, size)}
                 <Play {color} {size} />
             {/snippet}

@@ -14,6 +14,11 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { formatSolveTime, gameNameKey, tierKey } from "../../../utils/dailyPuzzle.svelte";
     import { dailyPuzzleGame } from "../../../utils/dailyPuzzleGames";
+    import {
+        cardNumbers,
+        verificationFrom,
+        type CardVerification,
+    } from "../../../utils/dailyResultCard";
     import Button from "../../Button.svelte";
     import Translatable from "../../Translatable.svelte";
     import ContentCaption from "../ContentCaption.svelte";
@@ -42,8 +47,9 @@
     });
 
     // Checked against the daily canister's results index the first time the card scrolls into
-    // view. No row = the numbers are shown greyed and marked unverified.
-    let verification = $state<"pending" | "verified" | "unverified">("pending");
+    // view. The numbers shown are the row's; the payload's are a claim and are never shown.
+    let verification = $state<CardVerification>({ kind: "pending" });
+    let numbers = $derived(cardNumbers(verification));
     let checked = false;
     $effect(() => {
         if (intersecting && !checked) {
@@ -51,7 +57,7 @@
             client
                 .verifyDailyResults(content.gameId, content.number, [content.userId])
                 .then((rows) => {
-                    verification = rows[content.userId] !== undefined ? "verified" : "unverified";
+                    verification = verificationFrom(rows, content.userId);
                 });
         }
     });
@@ -81,33 +87,42 @@
                 <Pictogram {model} />
             </div>
         {/if}
-        <div class="stats" class:unverified={verification === "unverified"}>
+        <div class="stats" class:unverified={verification.kind === "unverified"}>
             <div class="stat">
-                <span class="value mono">{formatSolveTime(content.solveTimeMs)}</span>
+                <span class="value mono"
+                    >{numbers ? formatSolveTime(numbers.solveTimeMs) : "–"}</span
+                >
                 <span class="label"
-                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.time")} /></span>
+                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.time")} /></span
+                >
             </div>
             <div class="stat">
-                <span class="value">{content.hintsUsed}</span>
+                <span class="value">{numbers?.hintsUsed ?? "–"}</span>
                 <span class="label"
-                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.hints")} /></span>
+                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.hints")} /></span
+                >
             </div>
             <div class="stat">
-                <span class="value">{content.streak}</span>
+                <span class="value">{numbers?.streak ?? "–"}</span>
                 <span class="label"
-                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.dayStreak")} /></span>
+                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.dayStreak")} /></span
+                >
             </div>
-            <div class="stat verification" class:verified={verification === "verified"}>
-                {#if verification === "verified"}
+            <div class="stat verification" class:verified={verification.kind === "verified"}>
+                {#if verification.kind === "verified"}
                     <span class="icon"
-                        ><CheckCircleOutline size={"1.2em"} color={"currentColor"} /></span>
+                        ><CheckCircleOutline size={"1.2em"} color={"currentColor"} /></span
+                    >
                     <span class="label"
-                        ><Translatable resourceKey={i18nKey("dailyPuzzle.verified")} /></span>
-                {:else if verification === "unverified"}
+                        ><Translatable resourceKey={i18nKey("dailyPuzzle.verified")} /></span
+                    >
+                {:else if verification.kind === "unverified"}
                     <span class="icon"
-                        ><AlertCircleOutline size={"1.2em"} color={"currentColor"} /></span>
+                        ><AlertCircleOutline size={"1.2em"} color={"currentColor"} /></span
+                    >
                     <span class="label"
-                        ><Translatable resourceKey={i18nKey("dailyPuzzle.unverified")} /></span>
+                        ><Translatable resourceKey={i18nKey("dailyPuzzle.unverified")} /></span
+                    >
                 {/if}
             </div>
         </div>
