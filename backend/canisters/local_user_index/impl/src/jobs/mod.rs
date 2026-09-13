@@ -5,6 +5,7 @@ use tracing::info;
 pub mod check_media_scan_stall;
 pub mod delete_users;
 pub mod moderate_messages;
+pub mod pull_daily_puzzle;
 pub mod topup_canister_pool;
 pub mod topup_canisters;
 pub mod upgrade_communities;
@@ -16,6 +17,7 @@ pub(crate) fn start(state: &RuntimeState) {
     check_media_scan_stall::start_job();
     delete_users::start_job_if_required(state, None);
     moderate_messages::start_job_if_required(state);
+    pull_daily_puzzle::start_job();
     topup_canister_pool::start_job_if_required(state, None);
     topup_canisters::start_job();
     upgrade_communities::start_job_if_required(state);

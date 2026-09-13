@@ -59,6 +59,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "add_local_user_index_canister"
         | "create_multi_user_canister"
         | "set_multi_user_canisters_enabled"
+        | "set_daily_puzzle_canister_id"
         | "upgrade_user_canister_wasm"
         | "upgrade_multi_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"

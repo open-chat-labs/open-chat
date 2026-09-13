@@ -15,6 +15,12 @@ async fn main() {
         CanisterName::CyclesDispenser => {
             upgrade_cycles_dispenser_canister(identity, opts.url, opts.cycles_dispenser, opts.version).await
         }
+        CanisterName::DailyPuzzle => {
+            let canister_id = opts
+                .daily_puzzle
+                .expect("--daily-puzzle is required to upgrade the daily_puzzle canister");
+            upgrade_daily_puzzle_canister(identity, opts.url, canister_id, opts.version).await
+        }
         CanisterName::Escrow => upgrade_escrow_canister(identity, opts.url, opts.escrow, opts.version).await,
         CanisterName::EventRelay => upgrade_event_relay_canister(identity, opts.url, opts.event_relay, opts.version).await,
         CanisterName::EventStore => upgrade_event_store_canister(identity, opts.url, opts.event_store, opts.version).await,
@@ -95,6 +101,10 @@ struct Opts {
 
     #[arg(long)]
     cycles_dispenser: CanisterId,
+
+    /// Not yet created on every network, so only required when upgrading daily_puzzle itself
+    #[arg(long)]
+    daily_puzzle: Option<CanisterId>,
 
     #[arg(long)]
     registry: CanisterId,

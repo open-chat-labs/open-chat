@@ -270,6 +270,15 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let daily_puzzle_canister_wasm = get_canister_wasm(CanisterName::DailyPuzzle, version);
+    let daily_puzzle_init_args = daily_puzzle_canister::init::Args {
+        registry_canister_id: canister_ids.registry,
+        user_index_canister_id: canister_ids.user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
     let escrow_canister_wasm = get_canister_wasm(CanisterName::Escrow, version);
     let escrow_init_args = escrow_canister::init::Args {
         registry_canister_id: canister_ids.registry,
@@ -374,6 +383,12 @@ async fn install_service_canisters_impl(
             &canister_ids.neuron_controller,
             &neuron_controller_canister_wasm.module,
             Encode!(&neuron_controller_init_args).unwrap(),
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.daily_puzzle,
+            &daily_puzzle_canister_wasm.module,
+            Encode!(&daily_puzzle_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
@@ -516,6 +531,16 @@ async fn install_service_canisters_impl(
                 filter: None,
             },
         ),
+    )
+    .await
+    .unwrap();
+
+    user_index_canister_client::set_daily_puzzle_canister_id(
+        agent,
+        &canister_ids.user_index,
+        &user_index_canister::set_daily_puzzle_canister_id::Args {
+            canister_id: canister_ids.daily_puzzle,
+        },
     )
     .await
     .unwrap();

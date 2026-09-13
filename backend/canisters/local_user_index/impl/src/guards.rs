@@ -95,3 +95,11 @@ pub fn caller_is_platform_operator() -> Result<(), String> {
         Err("Caller is not a platform operator".to_string())
     }
 }
+
+pub fn caller_is_daily_puzzle_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_daily_puzzle_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the daily_puzzle canister".to_string())
+    }
+}

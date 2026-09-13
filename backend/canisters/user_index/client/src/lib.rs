@@ -20,6 +20,7 @@ generate_candid_update_call!(add_platform_operator);
 generate_candid_update_call!(remove_sms_messages);
 generate_candid_update_call!(remove_platform_moderator);
 generate_candid_update_call!(remove_platform_operator);
+generate_candid_update_call!(set_daily_puzzle_canister_id);
 generate_candid_update_call!(set_username);
 generate_candid_update_call!(upgrade_local_user_index_canister_wasm);
 generate_candid_update_call!(upgrade_multi_user_canister_wasm);

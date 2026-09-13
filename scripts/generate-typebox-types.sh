@@ -8,6 +8,7 @@ rm -rf ./tsBindings
 
 canister_names=(
   community
+  daily_puzzle
   group
   group_index
   identity

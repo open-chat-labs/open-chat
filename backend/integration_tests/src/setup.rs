@@ -107,6 +107,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let proposals_bot_canister_id = create_canister(env, controller);
     let storage_index_canister_id = create_canister(env, controller);
     let cycles_dispenser_canister_id = create_canister(env, controller);
+    let daily_puzzle_canister_id = create_canister(env, controller);
     let registry_canister_id = create_canister(env, controller);
     let escrow_canister_id = create_canister(env, controller);
     let translations_canister_id = create_canister(env, controller);
@@ -117,6 +118,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
+    let daily_puzzle_canister_wasm = wasms::DAILY_PUZZLE.clone();
     let escrow_canister_wasm = wasms::ESCROW.clone();
     let event_relay_canister_wasm = wasms::EVENT_RELAY.clone();
     let event_store_canister_wasm = wasms::EVENT_STORE.clone();
@@ -358,6 +360,21 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     };
     install_canister(env, controller, escrow_canister_id, escrow_canister_wasm, escrow_init_args);
 
+    let daily_puzzle_init_args = daily_puzzle_canister::init::Args {
+        registry_canister_id,
+        user_index_canister_id,
+        cycles_dispenser_canister_id,
+        wasm_version,
+        test_mode,
+    };
+    install_canister(
+        env,
+        controller,
+        daily_puzzle_canister_id,
+        daily_puzzle_canister_wasm,
+        daily_puzzle_init_args,
+    );
+
     let event_relay_init_args = event_relay_canister::init::Args {
         push_events_whitelist: vec![user_index_canister_id, online_users_canister_id],
         event_store_canister_id,
@@ -508,6 +525,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         airdrop_bot: airdrop_bot_canister_id,
         storage_index: storage_index_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
+        daily_puzzle: daily_puzzle_canister_id,
         registry: registry_canister_id,
         escrow: escrow_canister_id,
         translations: translations_canister_id,

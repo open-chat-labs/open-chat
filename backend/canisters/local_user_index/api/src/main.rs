@@ -27,6 +27,11 @@ fn main() {
     generate_ts_method!(local_user_index, bot_members);
     generate_ts_method!(local_user_index, bot_send_message);
     generate_ts_method!(local_user_index, claim_prize);
+    generate_ts_method!(local_user_index, daily_puzzle_fetch);
+    generate_ts_method!(local_user_index, daily_puzzle_hint);
+    generate_ts_method!(local_user_index, daily_puzzle_save_grid);
+    generate_ts_method!(local_user_index, daily_puzzle_start);
+    generate_ts_method!(local_user_index, daily_puzzle_submit);
     generate_ts_method!(local_user_index, install_bot);
     generate_ts_method!(local_user_index, invite_users_to_channel);
     generate_ts_method!(local_user_index, invite_users_to_community);

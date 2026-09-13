@@ -43,6 +43,7 @@ async fn process_user(user: UserToDelete) {
             Ok(DeleteUserSuccess::Deleted(canisters_to_notify)) => {
                 state.data.global_users.remove(&user_id);
                 state.data.local_users.remove(&user_id);
+                state.data.daily_puzzle_engine.remove_user(user_id);
 
                 let now = state.env.now();
                 for canister_id in canisters_to_notify {

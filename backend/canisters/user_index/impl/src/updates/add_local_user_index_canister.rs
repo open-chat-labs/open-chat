@@ -181,6 +181,12 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 UserIndexEvent::SetPremiumItemCost(SetPremiumItemCost { item_id, chit_cost }),
             )
         }
+        if let Some(daily_puzzle_canister_id) = state.data.daily_puzzle_canister_id {
+            state.data.user_index_event_sync_queue.push(
+                canister_id,
+                UserIndexEvent::SetDailyPuzzleCanisterId(daily_puzzle_canister_id),
+            );
+        }
         crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
         Success
     } else {

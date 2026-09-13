@@ -7,6 +7,7 @@ pub mod block_user;
 pub mod c2c_accept_p2p_swap;
 pub mod c2c_charge_user_account;
 pub mod c2c_community_canister;
+pub mod c2c_game_chit;
 pub mod c2c_grant_super_admin;
 pub mod c2c_group_canister;
 pub mod c2c_install_bot;

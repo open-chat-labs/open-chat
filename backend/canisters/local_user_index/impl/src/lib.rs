@@ -1,4 +1,7 @@
 use crate::model::community_event_batch::CommunityEventBatch;
+use crate::model::daily_puzzle_engine::{DailyPuzzleEngine, DailyPuzzleEngineMetrics};
+use crate::model::daily_puzzle_result_batch::DailyPuzzleResultBatch;
+use crate::model::game_chit_credit::{GameChitCreditRetryQueue, new_retry_queue};
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
@@ -35,14 +38,14 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
-use tracing::error;
+use tracing::{error, info};
 use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds, ModerationReferralConfig, Notification,
-    NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
-    VerifiedCredentialGateArgs,
+    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DailyPuzzleResult,
+    DiamondMembershipDetails, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds,
+    ModerationReferralConfig, Notification, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId,
+    UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -204,6 +207,29 @@ impl RuntimeState {
             .global_users
             .get_by_principal(&caller)
             .is_some_and(|u| u.is_platform_operator)
+    }
+
+    pub fn is_caller_daily_puzzle_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.daily_puzzle_canister_id == Some(caller)
+    }
+
+    pub fn set_daily_puzzle_canister_id(&mut self, canister_id: CanisterId) {
+        self.data.daily_puzzle_canister_id = Some(canister_id);
+        match self.data.daily_puzzle_results_queue.as_mut() {
+            Some(queue) => queue.set_state(canister_id),
+            None => self.data.daily_puzzle_results_queue = Some(BatchedTimerJobQueue::new(canister_id, true)),
+        }
+        info!(canister_id = %canister_id, "Daily puzzle canister id set");
+        jobs::pull_daily_puzzle::pull_now();
+    }
+
+    pub fn push_daily_puzzle_result(&mut self, result: DailyPuzzleResult) {
+        if let Some(queue) = self.data.daily_puzzle_results_queue.as_mut() {
+            queue.push(result);
+        } else {
+            error!(number = result.number, user_id = %result.user_id, "Daily puzzle canister id not set, result dropped");
+        }
     }
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent, now: TimestampMillis) {
@@ -548,6 +574,12 @@ impl RuntimeState {
             media_scan_last_verdict_at: self.data.media_scan_job_log.last_verdict_at(),
             media_scan_jobs_dropped: self.data.media_scan_job_log.dropped(),
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
+            daily_puzzle: DailyPuzzleMetrics {
+                canister_id: self.data.daily_puzzle_canister_id,
+                engine: self.data.daily_puzzle_engine.metrics(),
+                results_queue_len: self.data.daily_puzzle_results_queue.as_ref().map_or(0, |q| q.len()),
+                chit_credit_retry_queue_len: self.data.game_chit_credit_retry_queue.len(),
+            },
             bots: self
                 .data
                 .bots
@@ -571,6 +603,7 @@ impl RuntimeState {
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
                 website: self.data.website_canister_id,
+                daily_puzzle: self.data.daily_puzzle_canister_id,
             },
         }
     }
@@ -645,6 +678,16 @@ struct Data {
     // Mirrors the flag on the UserIndex. Not acted on yet
     #[serde(default)]
     pub multi_user_canisters_enabled: bool,
+    #[serde(default)]
+    pub daily_puzzle_canister_id: Option<CanisterId>,
+    #[serde(default)]
+    pub daily_puzzle_engine: DailyPuzzleEngine,
+    // Created when the daily puzzle canister id is set, since the queue needs a target
+    #[serde(default)]
+    pub daily_puzzle_results_queue: Option<BatchedTimerJobQueue<DailyPuzzleResultBatch>>,
+    // Solve rewards whose credit call failed after the solve was recorded
+    #[serde(default = "new_retry_queue")]
+    pub game_chit_credit_retry_queue: GameChitCreditRetryQueue,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -747,6 +790,10 @@ impl Data {
             media_scan_config,
             media_scan_job_log: MediaScanJobLog::default(),
             multi_user_canisters_enabled,
+            daily_puzzle_canister_id: None,
+            daily_puzzle_engine: DailyPuzzleEngine::default(),
+            daily_puzzle_results_queue: None,
+            game_chit_credit_retry_queue: new_retry_queue(),
         }
     }
 }
@@ -832,7 +879,16 @@ pub struct Metrics {
     pub bots: Vec<BotMetrics>,
     pub blocked_username_patterns: Vec<String>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub daily_puzzle: DailyPuzzleMetrics,
     pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct DailyPuzzleMetrics {
+    pub canister_id: Option<CanisterId>,
+    pub engine: DailyPuzzleEngineMetrics,
+    pub results_queue_len: usize,
+    pub chit_credit_retry_queue_len: usize,
 }
 
 #[derive(Serialize, Debug)]
@@ -847,6 +903,7 @@ pub struct CanisterIds {
     pub event_relay: CanisterId,
     pub internet_identity: CanisterId,
     pub website: CanisterId,
+    pub daily_puzzle: Option<CanisterId>,
 }
 
 #[derive(Serialize, Debug)]

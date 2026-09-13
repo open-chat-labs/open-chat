@@ -5,6 +5,7 @@ pub mod contacts;
 pub mod direct_chat;
 pub mod direct_chats;
 pub mod favourite_chats;
+pub mod game_chit_keys;
 pub mod group_chat;
 pub mod group_chats;
 pub mod hot_group_exclusions;

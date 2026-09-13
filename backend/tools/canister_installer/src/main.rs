@@ -19,6 +19,7 @@ async fn main() {
         airdrop_bot: opts.airdrop_bot,
         storage_index: opts.storage_index,
         cycles_dispenser: opts.cycles_dispenser,
+        daily_puzzle: opts.daily_puzzle,
         registry: opts.registry,
         market_maker: opts.market_maker,
         neuron_controller: opts.neuron_controller,
@@ -87,6 +88,9 @@ struct Opts {
 
     #[arg(long)]
     cycles_dispenser: CanisterId,
+
+    #[arg(long)]
+    daily_puzzle: CanisterId,
 
     #[arg(long)]
     registry: CanisterId,

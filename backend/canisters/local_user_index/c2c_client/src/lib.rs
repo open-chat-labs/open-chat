@@ -16,6 +16,7 @@ generate_c2c_call!(c2c_community_canister, 300);
 generate_c2c_call!(c2c_create_community);
 generate_c2c_call!(c2c_create_group);
 generate_c2c_call!(c2c_create_multi_user_canister);
+generate_c2c_call!(c2c_daily_puzzle_push);
 generate_c2c_call!(c2c_delete_community);
 generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_group_canister, 300);

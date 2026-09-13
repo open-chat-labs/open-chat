@@ -9,6 +9,7 @@ pub mod c2c_bot_add_reaction;
 pub mod c2c_bot_send_message;
 pub mod c2c_charge_user_account;
 pub mod c2c_community_canister;
+pub mod c2c_game_chit;
 pub mod c2c_grant_super_admin;
 pub mod c2c_group_canister;
 pub mod c2c_handle_bot_messages;

@@ -264,6 +264,25 @@ pub async fn upgrade_neuron_controller_canister(
     println!("Neuron controller canister upgraded");
 }
 
+pub async fn upgrade_daily_puzzle_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    daily_puzzle_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        daily_puzzle_canister_id,
+        version,
+        daily_puzzle_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::DailyPuzzle,
+    )
+    .await;
+
+    println!("Daily puzzle canister upgraded");
+}
+
 pub async fn upgrade_escrow_canister(
     identity: Box<dyn Identity>,
     url: String,
