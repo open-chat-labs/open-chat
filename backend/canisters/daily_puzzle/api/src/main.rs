@@ -7,6 +7,7 @@ fn main() {
     generate_candid_method!(daily_puzzle, current_puzzles, query);
     generate_candid_method!(daily_puzzle, game_configs, query);
     generate_candid_method!(daily_puzzle, results, query);
+    generate_candid_method!(daily_puzzle, schedule, query);
 
     generate_candid_method!(daily_puzzle, candidates, update);
     generate_candid_method!(daily_puzzle, push_now, update);
@@ -27,5 +28,6 @@ fn main() {
     generate_ts_method!(daily_puzzle, config);
     generate_ts_method!(daily_puzzle, current_puzzles);
     generate_ts_method!(daily_puzzle, game_configs);
+    generate_ts_method!(daily_puzzle, schedule);
     generate_ts_method!(daily_puzzle, results);
 }

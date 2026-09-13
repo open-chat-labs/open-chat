@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{GameId, LIGHT_UP_GAME_ID};
 
 mod lifecycle;
@@ -11,6 +12,7 @@ pub use queries::*;
 pub use updates::*;
 
 /// Generator parameters for one weekday.
+#[ts_export(daily_puzzle)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PuzzleParams {
     /// Defaults to light_up for schedules stored before games were part of the schedule.

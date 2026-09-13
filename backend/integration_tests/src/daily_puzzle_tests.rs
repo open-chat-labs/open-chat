@@ -236,7 +236,12 @@ fn daily_puzzle_generation_instruction_counts() {
             };
             7
         ];
-        client::daily_puzzle::happy_path::set_schedule(env, operator.principal, canister_ids.daily_puzzle, schedule);
+        client::daily_puzzle::happy_path::set_schedule(env, operator.principal, canister_ids.daily_puzzle, schedule.clone());
+        // #9334 invariant 51: what was stored is readable, so the operator tab is not write-only
+        assert_eq!(
+            client::daily_puzzle::happy_path::schedule(env, operator.principal, canister_ids.daily_puzzle),
+            schedule
+        );
         env.advance_time(Duration::from_secs(1));
         tick_many(env, 10);
         let candidates =
