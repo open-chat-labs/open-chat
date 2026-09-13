@@ -33,35 +33,31 @@ describe("puzzleFingerprint", () => {
 });
 
 describe("parseDailyPuzzleChitKey", () => {
-    test("parses keys with the puzzle fingerprint", () => {
-        expect(parseDailyPuzzleChitKey("light_up:20706:deadbeef:entry")).toEqual({
+    // #9332 invariant 49. These are the shapes the local user index mints, as its test
+    // `chit_keys_do_not_identify_the_puzzle` asserts them: entry and solve name the day only,
+    // hints name the game, step and level.
+    test("parses an entry key", () => {
+        expect(parseDailyPuzzleChitKey("20706:entry")).toEqual({ number: 20706, kind: "entry" });
+    });
+
+    test("parses a solve key", () => {
+        expect(parseDailyPuzzleChitKey("20706:solve")).toEqual({ number: 20706, kind: "solve" });
+    });
+
+    test("parses a hint key", () => {
+        expect(parseDailyPuzzleChitKey("light_up:20706:hint:12:3")).toEqual({
             gameId: "light_up",
             number: 20706,
-            fingerprint: "deadbeef",
-            kind: "entry",
-        });
-        expect(parseDailyPuzzleChitKey("light_up:20706:deadbeef:solve")?.kind).toBe("solve");
-        expect(parseDailyPuzzleChitKey("light_up:20706:deadbeef:hint:12:3")).toEqual({
-            gameId: "light_up",
-            number: 20706,
-            fingerprint: "deadbeef",
             kind: "hint",
         });
     });
 
-    test("still parses keys minted before the fingerprint", () => {
-        expect(parseDailyPuzzleChitKey("light_up:20706:solve")).toEqual({
-            gameId: "light_up",
-            number: 20706,
-            kind: "solve",
-        });
-        expect(parseDailyPuzzleChitKey("light_up:20706:hint:2:1")?.kind).toBe("hint");
-    });
-
     test("rejects malformed keys", () => {
         expect(parseDailyPuzzleChitKey("light_up")).toBeUndefined();
-        expect(parseDailyPuzzleChitKey("light_up:abc:solve")).toBeUndefined();
-        expect(parseDailyPuzzleChitKey("light_up:20706:deadbeef")).toBeUndefined();
-        expect(parseDailyPuzzleChitKey("light_up:20706:deadbeef:bogus")).toBeUndefined();
+        expect(parseDailyPuzzleChitKey("abc:solve")).toBeUndefined();
+        expect(parseDailyPuzzleChitKey("20706:bogus")).toBeUndefined();
+        expect(parseDailyPuzzleChitKey("light_up:20706:solve")).toBeUndefined();
+        expect(parseDailyPuzzleChitKey("light_up:20706:hint")).toBeUndefined();
+        expect(parseDailyPuzzleChitKey("light_up:abc:hint:1:1")).toBeUndefined();
     });
 });

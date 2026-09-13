@@ -147,29 +147,30 @@ export function withUserState(
 export type DailyPuzzleChitKind = "entry" | "solve" | "hint";
 
 export type DailyPuzzleChitKey = {
-    gameId: string;
+    /** Only hint keys name the game: entry and solve keys name the day alone. */
+    gameId?: string;
     number: number;
-    /** FNV-1a 32-bit of the puzzle description as 8 hex chars; absent on keys minted before it was added. */
-    fingerprint?: string;
     kind: DailyPuzzleChitKind;
 };
 
-function isChitKind(s: string | undefined): s is DailyPuzzleChitKind {
-    return s === "entry" || s === "solve" || s === "hint";
-}
-
 /**
- * Chit event keys are `"{game_id}:{number}:{fp}:entry|solve|hint[:step:level]"`. Keys minted
- * before the fingerprint segment was added have no `fp`, and still parse.
+ * Chit event keys as the local user index mints them: `"{number}:entry"`, `"{number}:solve"` and
+ * `"{game_id}:{number}:hint:{step}:{level}"`. Entry and solve deliberately do not name the game
+ * or the puzzle, so a regenerated day charges and pays once.
  */
 export function parseDailyPuzzleChitKey(key: string): DailyPuzzleChitKey | undefined {
-    const [gameId, number, third, fourth] = key.split(":");
-    if (gameId === undefined || number === undefined) return undefined;
-    const n = Number(number);
-    if (!Number.isInteger(n)) return undefined;
-    if (isChitKind(third)) return { gameId, number: n, kind: third };
-    if (third !== undefined && isChitKind(fourth)) {
-        return { gameId, number: n, fingerprint: third, kind: fourth };
+    const parts = key.split(":");
+    if (parts.length === 2) {
+        const [number, kind] = parts;
+        const n = Number(number);
+        if (!Number.isInteger(n) || (kind !== "entry" && kind !== "solve")) return undefined;
+        return { number: n, kind };
+    }
+    if (parts.length === 5 && parts[2] === "hint") {
+        const [gameId, number] = parts;
+        const n = Number(number);
+        if (gameId === "" || !Number.isInteger(n)) return undefined;
+        return { gameId, number: n, kind: "hint" };
     }
     return undefined;
 }
