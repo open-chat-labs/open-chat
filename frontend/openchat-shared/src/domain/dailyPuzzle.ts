@@ -123,12 +123,18 @@ export function todaysPuzzle(
         : state.puzzles.find((p) => p.gameId === gameId);
 }
 
-export function stateFor(state: DailyPuzzleState, gameId: string): DailyPuzzleUserState | undefined {
+export function stateFor(
+    state: DailyPuzzleState,
+    gameId: string,
+): DailyPuzzleUserState | undefined {
     return state.states.find((s) => s.gameId === gameId);
 }
 
 /** `state` with the user state for `next.gameId` replaced (or appended). */
-export function withUserState(state: DailyPuzzleState, next: DailyPuzzleUserState): DailyPuzzleState {
+export function withUserState(
+    state: DailyPuzzleState,
+    next: DailyPuzzleUserState,
+): DailyPuzzleState {
     const found = state.states.some((s) => s.gameId === next.gameId);
     return {
         ...state,

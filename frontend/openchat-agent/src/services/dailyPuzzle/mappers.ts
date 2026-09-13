@@ -144,7 +144,9 @@ export function dailyPuzzleHintResponse(
     }));
 }
 
-export function currentPuzzlesResponse(value: DailyPuzzleCurrentPuzzlesResponse): PublicDailyPuzzle[] {
+export function currentPuzzlesResponse(
+    value: DailyPuzzleCurrentPuzzlesResponse,
+): PublicDailyPuzzle[] {
     if ("Success" in value) {
         return value.Success.map(publicDailyPuzzle);
     }
