@@ -94,13 +94,26 @@ mod tests {
             i32::MAX,
             i32::MIN,
         ] {
-            assert_eq!(validate_args(&args("light_up", "1:solve", amount)), Err("Invalid amount"), "{amount}");
+            assert_eq!(
+                validate_args(&args("light_up", "1:solve", amount)),
+                Err("Invalid amount"),
+                "{amount}"
+            );
         }
         let long = "g".repeat(MAX_ID_LENGTH + 1);
         let max = "g".repeat(MAX_ID_LENGTH);
         assert!(validate_args(&args(&max, &max, 10)).is_ok());
-        for (game_id, key) in [("", "1:solve"), ("light_up", ""), (long.as_str(), "1:solve"), ("light_up", long.as_str())] {
-            assert_eq!(validate_args(&args(game_id, key, 10)), Err("Invalid game_id or key"), "{game_id:?} {key:?}");
+        for (game_id, key) in [
+            ("", "1:solve"),
+            ("light_up", ""),
+            (long.as_str(), "1:solve"),
+            ("light_up", long.as_str()),
+        ] {
+            assert_eq!(
+                validate_args(&args(game_id, key, 10)),
+                Err("Invalid game_id or key"),
+                "{game_id:?} {key:?}"
+            );
         }
     }
 }

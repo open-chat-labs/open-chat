@@ -1323,9 +1323,7 @@ mod tests {
     fn set_game_config_with_unknown_game_id_is_rejected() {
         let mut d = data();
         let before = d.game_configs.clone();
-        let error = d
-            .set_game_config("sudoku".to_string(), GameConfig::default())
-            .unwrap_err();
+        let error = d.set_game_config("sudoku".to_string(), GameConfig::default()).unwrap_err();
         assert!(error.contains("unknown game_id"), "{error}");
         assert_eq!(d.game_configs, before);
         assert!(d.set_game_config(LU.to_string(), GameConfig::default()).is_ok());
@@ -1343,7 +1341,11 @@ mod tests {
 
         while d.record_generation_failure(100) {}
         assert_eq!(d.failures_for(100), MAX_GENERATION_FAILURES);
-        assert_eq!(d.generation_needed(now), Some(101), "an exhausted today must not block tomorrow");
+        assert_eq!(
+            d.generation_needed(now),
+            Some(101),
+            "an exhausted today must not block tomorrow"
+        );
 
         d.regenerate_today(None, now).unwrap();
         assert_eq!(d.failures_for(100), 0);
