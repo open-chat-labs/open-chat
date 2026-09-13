@@ -5,7 +5,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use local_user_index_canister::daily_puzzle_start::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, UserId};
+use types::{DAILY_PUZZLE_CHIT_GAME_ID, OCResult, UserId};
 
 // No `#[trace]`: the result carries the hints served so far, and the trace buffer is served
 // unguarded wherever `test_mode` is on.
@@ -38,11 +38,11 @@ async fn daily_puzzle_start(args: Args) -> Response {
         };
         let debit = GameChitCredit {
             user_id,
-            game_id: args.game_id.clone(),
+            game_id: DAILY_PUZZLE_CHIT_GAME_ID.to_string(),
             key,
             amount: -amount,
             // Debits are released inline rather than queued, so there is no reward to abandon
-            puzzle_number: None,
+            record: None,
         };
         let outcome = apply(&debit).await;
         // `AlreadyAdded` lands in `Applied` too: a previous start paid but failed to record. The

@@ -18,9 +18,10 @@ use types::UnitResult;
 /// Results already recorded here for today's old puzzle stay (keyed by number + game; harmless).
 /// A local user index drops the user records for every game whose puzzle it is replacing, so
 /// anyone mid-game starts the replacement from scratch. Their CHIT is not charged again and their
-/// reward is not paid again: the idempotency keys are `{game}:{number}:...` and do not identify
-/// which puzzle was held, so the user canister answers `AlreadyAdded` to the replayed calls.
-/// Solved days, and so streaks, are never touched.
+/// reward is not paid again: the entry and solve idempotency keys are `{number}:entry` and
+/// `{number}:solve`, naming neither the puzzle nor the game, so the user canister answers
+/// `AlreadyAdded` to the replayed calls whether or not `game_id` swapped the game. Solved days,
+/// and so streaks, are never touched.
 #[update(candid = true, msgpack = true)]
 #[trace]
 async fn regenerate_today(args: Args) -> Response {

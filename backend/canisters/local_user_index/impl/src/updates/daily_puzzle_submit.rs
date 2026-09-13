@@ -5,7 +5,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use local_user_index_canister::daily_puzzle_submit::{Response::*, *};
 use tracing::{error, info};
-use types::{DailyPuzzleSolved, OCResult, UserId};
+use types::{DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzleSolved, OCResult, UserId};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 // No `#[trace]`: it records args and result, and the args of a correct submit are the solution.
@@ -90,10 +90,10 @@ fn submit(args: &Args, state: &mut RuntimeState) -> OCResult<(SubmitOutcome, Opt
         .filter(|amount| *amount > 0)
         .map(|amount| GameChitCredit {
             user_id,
-            game_id: args.game_id.clone(),
-            key: state.data.daily_puzzle_engine.solve_key(&args.game_id, args.number),
+            game_id: DAILY_PUZZLE_CHIT_GAME_ID.to_string(),
+            key: state.data.daily_puzzle_engine.solve_key(args.number),
             amount,
-            puzzle_number: Some(args.number),
+            record: Some((args.game_id.clone(), args.number)),
         });
 
     Ok((outcome, credit))

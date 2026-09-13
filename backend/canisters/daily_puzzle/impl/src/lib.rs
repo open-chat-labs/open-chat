@@ -282,9 +282,12 @@ impl Data {
     pub fn generation_needed(&self, now: TimestampMillis) -> Option<PuzzleNumber> {
         let current = Self::number_for(now);
         let game_id = &self.params_for(current).game_id;
+        // A day that has used up its attempts is skipped rather than answered first, so a stuck
+        // today does not also stop tomorrow's pool being built
         if !self.has_puzzle(current)
             && !self.has_unvetoed_candidate(current, game_id)
             && self.candidate_pool(current, game_id).map_or(0, |p| p.len()) < MAX_CANDIDATE_POOL
+            && self.failures_for(current) < MAX_GENERATION_FAILURES
         {
             return Some(current);
         }
@@ -384,6 +387,10 @@ impl Data {
         });
         self.puzzles.remove(&current);
         self.candidates.remove(&current);
+        // A fresh run of attempts: the salt already moved with `attempt`, so none of them can
+        // land on a seed the failed run tried. Left in place, a day that had given up would get
+        // one seed per regeneration and give up again.
+        self.generation_failures.remove(&current);
         Ok(())
     }
 
@@ -411,7 +418,10 @@ impl Data {
         self.config = config;
     }
 
-    pub fn set_game_config(&mut self, game_id: GameId, config: GameConfig) {
+    pub fn set_game_config(&mut self, game_id: GameId, config: GameConfig) -> Result<(), String> {
+        if !generators().contains(&game_id.as_str()) {
+            return Err(format!("unknown game_id '{game_id}'"));
+        }
         for puzzle in self.puzzles.values_mut().filter_map(|games| games.get_mut(&game_id)) {
             puzzle.game_config = config.clone();
         }
@@ -424,6 +434,7 @@ impl Data {
             candidate.puzzle.game_config = config.clone();
         }
         self.game_configs.insert(game_id, config);
+        Ok(())
     }
 
     /// Replaces the schedule and drops every future candidate pool so it regenerates. Takes
@@ -445,6 +456,9 @@ impl Data {
         }
         self.schedule = schedule;
         self.candidates.retain(|n, _| *n <= current);
+        // Tomorrow is a new game or new parameters, so its failed attempts under the old ones are
+        // no reason to give up on it
+        self.generation_failures.retain(|n, _| *n <= current);
     }
 
     pub fn veto_candidate(&mut self, number: PuzzleNumber, game_id: &str, index: u8) -> bool {
@@ -1125,7 +1139,7 @@ mod tests {
             hint_prices: vec![5, 10],
             max_hints: 2,
         };
-        d.set_game_config(LU.to_string(), game_config.clone());
+        d.set_game_config(LU.to_string(), game_config.clone()).unwrap();
         assert_eq!(d.puzzles[&100][LU].game_config, game_config);
         assert_eq!(pool(&d, 101)[0].puzzle.game_config, game_config);
         assert_eq!(d.game_config_for(LU), game_config);
@@ -1203,8 +1217,14 @@ mod tests {
             };
             assert!(validate_game_config(&game_config).is_err());
         }
+        // Every level costs: a free level 1 is unmetered in CHIT and in free checks
         let game_config = GameConfig {
             hint_prices: vec![0, 1, 2],
+            ..Default::default()
+        };
+        assert!(validate_game_config(&game_config).is_err());
+        let game_config = GameConfig {
+            hint_prices: vec![1, 2, 3],
             ..Default::default()
         };
         assert!(validate_game_config(&game_config).is_ok());

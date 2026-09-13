@@ -33,7 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Drop `#[trace]` from `daily_puzzle_start`, `daily_puzzle_hint` and `daily_puzzle_save_grid`, whose args and responses carry hints and completed grids
 - Add `c2c_create_multi_user_canister` and `c2c_upgrade_multi_user_canister_wasm` plus a rolling upgrade job for MultiUser canisters ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Add the `multi_user_canisters_enabled` flag, set by the UserIndex and surfaced in metrics ([#9314](https://github.com/open-chat-labs/open-chat/pull/9314))
-- Handle the `SetDailyPuzzleCanisterId` event from the UserIndex, the same path as the platform-operator `set_daily_puzzle_canister_id` endpoint ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
+- Handle the `SetDailyPuzzleCanisterId` event from the UserIndex, the same path as the platform-operator `set_daily_puzzle_canister_id` endpoint ([#9345](https://github.com/open-chat-labs/open-chat/pull/9345))
 - Expose the user-event sync queue's in-flight batch count in metrics, alongside the existing queued length ([#9177](https://github.com/open-chat-labs/open-chat/pull/9177))
 
 ### Changed
@@ -46,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Include MultiUser canisters in the cycles top up paths, so they can report a low balance and are picked up by the weekly balance sweep ([#9311](https://github.com/open-chat-labs/open-chat/pull/9311))
 - Include Group and Community canisters in the weekly cycles balance sweep - they were queued up but never selected, so the sweep silently skipped them ([#9313](https://github.com/open-chat-labs/open-chat/pull/9313))
-- Put a fingerprint of the puzzle description in the daily puzzle CHIT keys (`{game_id}:{number}:{fp}:entry|solve|hint:{step}:{level}`, `fp` = FNV-1a 32-bit as 8 hex chars), so a `regenerate_today` puzzle is a distinct puzzle to the user canister: before this a user who had solved the morning puzzle got `AlreadyAdded` on the regenerated one, which the LUI treats as applied, and no CHIT was paid
+- Key the daily puzzle entry fee and solve reward on the puzzle number alone (`{number}:entry`, `{number}:solve`), so a `regenerate_today` - with the same game or another - is a free restart for anyone mid-game and pays a day's reward once; hint keys still name the game and step
 - Check `daily_puzzle_hint` mistakes against the puzzle's `solution_pairs` rather than indexing the solution bytes by hint key, which was wrong for games whose keys are edges (bridges, loopy); a filled key the puzzle does not have is a mistake, and a puzzle pushed without pairs still indexes the bytes
 
 ## [[2.0.2033](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2033-local_user_index)] - 2026-08-20

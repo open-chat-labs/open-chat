@@ -14,7 +14,7 @@ use types::{OCResult, UserId};
 async fn daily_puzzle_hint(args: Args) -> Response {
     // The step is reserved here, before the debit, so calls that overlap on the await cannot get
     // more steps than `max_hints` between them. The hint itself only reaches state once paid for.
-    let (user_id, step, level, mut result, price, key) = match mutate_state(|state| prepare(&args, state)) {
+    let (user_id, step, level, mut result, price, key, metered) = match mutate_state(|state| prepare(&args, state)) {
         Ok((_, HintPrepared::Mistake(result))) | Ok((_, HintPrepared::AlreadyServed(result))) => return Success(result),
         Ok((
             user_id,
@@ -24,8 +24,9 @@ async fn daily_puzzle_hint(args: Args) -> Response {
                 result,
                 price,
                 key,
+                metered,
             },
-        )) => (user_id, step, level, result, price, key),
+        )) => (user_id, step, level, result, price, key, metered),
         Err(error) => return Error(error),
     };
 
@@ -49,7 +50,7 @@ async fn daily_puzzle_hint(args: Args) -> Response {
             key,
             amount: -amount,
             // Debits are released inline rather than queued, so there is no reward to abandon
-            puzzle_number: None,
+            record: None,
         };
         let error = match apply(&debit).await {
             GameChitOutcome::Applied(balances) => {
@@ -72,7 +73,7 @@ async fn daily_puzzle_hint(args: Args) -> Response {
         state
             .data
             .daily_puzzle_engine
-            .confirm_hint(user_id, &args.game_id, args.number, step, level)
+            .confirm_hint(user_id, &args.game_id, args.number, step, level, metered)
     });
 
     Success(result)

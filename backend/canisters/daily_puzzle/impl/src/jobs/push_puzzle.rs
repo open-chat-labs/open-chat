@@ -1,5 +1,8 @@
 //! Delivers the current day's puzzles to every local user index. A refresh re-reads the set from
-//! the registry and targets all of them; failures stay in `pending_pushes` and retry every 60s.
+//! the registry and targets all of them; an index whose push fails stays in `pending_pushes` and
+//! is retried with a backoff, and given up on after a while. Giving up is safe: every index pulls
+//! for itself every 15 minutes while it holds no puzzle for the day, so a push is only ever the
+//! fast path.
 
 use crate::{RuntimeState, mutate_state, read_state, registry};
 use ic_cdk_timers::TimerId;
@@ -8,11 +11,24 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, info};
 use types::UnitResult;
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 const RETRY_DELAY: Duration = Duration::from_secs(60);
+const MAX_RETRY_DELAY: Duration = Duration::from_secs(15 * 60);
+// Roughly an hour of retries. An index still failing after that is stopped, uninstalled or on a
+// wasm without the endpoint, and re-sending it the full puzzle every minute until midnight only
+// floods the error log.
+const MAX_ATTEMPTS: u32 = 8;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+    // Bumped every time `pending_pushes` is rebuilt, and captured by each run at its start. A run
+    // whose responses arrive after a newer run has rebuilt the set leaves it alone: its successes
+    // would otherwise remove entries the newer run still owes, and the newer run's failure to the
+    // same index would then never be retried.
+    static GENERATION: Cell<u64> = Cell::default();
+    // Consecutive runs that left something in `pending_pushes`, for the backoff
+    static ATTEMPTS: Cell<u32> = Cell::default();
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
@@ -37,6 +53,10 @@ fn run(refresh: bool) {
     ic_cdk::futures::spawn_migratory(push(refresh));
 }
 
+fn retry_delay(attempt: u32) -> Duration {
+    RETRY_DELAY.saturating_mul(1 << attempt.min(4)).min(MAX_RETRY_DELAY)
+}
+
 async fn push(refresh: bool) {
     if refresh {
         if let Err(error) = registry::refresh_local_user_indexes().await {
@@ -47,7 +67,10 @@ async fn push(refresh: bool) {
             }
         }
         mutate_state(|state| state.data.pending_pushes = state.data.local_user_indexes.clone());
+        GENERATION.set(GENERATION.get() + 1);
+        ATTEMPTS.set(0);
     }
+    let generation = GENERATION.get();
 
     let (puzzles, targets) = read_state(|state| {
         (
@@ -92,18 +115,69 @@ async fn push(refresh: bool) {
         })
         .collect();
 
-    for (canister_id, response) in futures::future::join_all(futures).await {
+    let responses = futures::future::join_all(futures).await;
+    let stale = GENERATION.get() != generation;
+    let done = |canister_id| {
+        if !stale {
+            mutate_state(|state| state.data.pending_pushes.remove(&canister_id));
+        }
+    };
+    for (canister_id, response) in responses {
         match response {
             Ok(UnitResult::Success) => {
-                mutate_state(|state| state.data.pending_pushes.remove(&canister_id));
+                done(canister_id);
                 info!(%canister_id, number, games, "Pushed puzzles");
             }
-            Ok(UnitResult::Error(error)) => error!(%canister_id, ?error, "Local user index rejected puzzles"),
-            Err(error) => error!(%canister_id, ?error, "Failed to push puzzles"),
+            // The index refused it, which its guard does while it has not yet been told this
+            // canister's id. It pulls for itself the moment it is, so there is nothing to retry.
+            Ok(UnitResult::Error(error)) => {
+                done(canister_id);
+                info!(%canister_id, ?error, "Local user index declined puzzles");
+            }
+            Err(error) => {
+                if delay_if_should_retry_failed_c2c_call(&error).is_none() {
+                    done(canister_id);
+                    error!(%canister_id, ?error, "Failed to push puzzles, not retrying");
+                } else {
+                    info!(%canister_id, ?error, "Failed to push puzzles, will retry");
+                }
+            }
         }
     }
 
-    if read_state(|state| !state.data.pending_pushes.is_empty()) {
-        schedule(false, RETRY_DELAY);
+    // A newer run owns the set now and schedules its own retries
+    if stale {
+        return;
+    }
+    let pending: Vec<_> = read_state(|state| state.data.pending_pushes.iter().copied().collect());
+    if pending.is_empty() {
+        ATTEMPTS.set(0);
+        return;
+    }
+    let attempt = ATTEMPTS.get() + 1;
+    if attempt > MAX_ATTEMPTS {
+        error!(
+            ?pending,
+            number, "Giving up pushing puzzles; these indexes will pull for themselves"
+        );
+        mutate_state(|state| state.data.pending_pushes.clear());
+        ATTEMPTS.set(0);
+        return;
+    }
+    ATTEMPTS.set(attempt);
+    schedule(false, retry_delay(attempt));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn retry_delay_doubles_to_a_ceiling() {
+        assert_eq!(retry_delay(1), Duration::from_secs(120));
+        assert_eq!(retry_delay(2), Duration::from_secs(240));
+        assert_eq!(retry_delay(3), Duration::from_secs(480));
+        assert_eq!(retry_delay(4), MAX_RETRY_DELAY);
+        assert_eq!(retry_delay(MAX_ATTEMPTS), MAX_RETRY_DELAY);
     }
 }

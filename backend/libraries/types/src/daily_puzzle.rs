@@ -13,6 +13,12 @@ pub type PuzzleNumber = u32;
 
 pub const LIGHT_UP_GAME_ID: &str = "light_up";
 
+/// The `game_id` sent to the user canister with a daily puzzle entry fee or solve reward. The user
+/// canister scopes its idempotency keys by game id, and these two must not move with the game a
+/// `regenerate_today` may swap in, so they are sent under the series rather than the day's game.
+/// Hints are bought per step of a particular puzzle and are sent under that puzzle's game.
+pub const DAILY_PUZZLE_CHIT_GAME_ID: &str = "daily_puzzle";
+
 /// One step of the generator's deduction trace. Served to the client in order as hints.
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]

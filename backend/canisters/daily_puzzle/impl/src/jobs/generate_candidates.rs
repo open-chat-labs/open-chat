@@ -16,8 +16,13 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
+// Not gated on `TIMER_ID` being empty. A trap inside `run` rolls back the `None` it wrote first,
+// so the cell holds the id of a timer that has already fired; gating on it would make every call
+// here a no-op until the next upgrade, with every operator lever dead. `schedule` clears whatever
+// is held instead, so the worst case of calling this while a retry is pending is that the retry
+// runs now.
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() && state.data.generation_needed(state.env.now()).is_some() {
+    if state.data.generation_needed(state.env.now()).is_some() {
         schedule(Duration::ZERO);
         true
     } else {
@@ -26,6 +31,9 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn schedule(delay: Duration) {
+    if let Some(timer_id) = TIMER_ID.take() {
+        ic_cdk_timers::clear_timer(timer_id);
+    }
     let timer_id = ic_cdk_timers::set_timer(delay, async { run() });
     TIMER_ID.set(Some(timer_id));
 }
@@ -35,8 +43,10 @@ fn run() {
     mutate_state(|state| {
         let now = state.env.now();
         if state.data.master_seed == 0 {
-            // The rng hasn't been seeded yet; try again shortly
-            schedule(Duration::from_secs(1));
+            // The rng has not been seeded yet. The reseed calls back here once it lands, and
+            // re-issues itself if raw_rand rejected, so there is nothing to re-arm. Issued from a
+            // fresh timer rather than inside this borrow of the state.
+            ic_cdk_timers::set_timer(Duration::ZERO, async { crate::lifecycle::reseed_rng() });
             return;
         }
         let Some(number) = state.data.generation_needed(now) else {

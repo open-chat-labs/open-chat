@@ -136,7 +136,7 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
 
     // Per-game config travels with the puzzle
     let game_config = GameConfig {
-        hint_prices: vec![0, 50, 150],
+        hint_prices: vec![10, 50, 150],
         max_hints: 5,
     };
     client::daily_puzzle::happy_path::set_game_config(

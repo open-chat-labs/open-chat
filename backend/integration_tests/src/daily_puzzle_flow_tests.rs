@@ -13,8 +13,8 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use types::{
-    CanisterId, ChitEventType, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig, LIGHT_UP_GAME_ID, PublicDailyPuzzle,
-    PuzzleNumber, UnitResult,
+    CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
+    LIGHT_UP_GAME_ID, PublicDailyPuzzle, PuzzleNumber, UnitResult,
 };
 
 const DAY_ZERO: u64 = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
@@ -118,7 +118,11 @@ fn daily_puzzle_end_to_end() {
     assert!(!upgraded.hint.mistake);
     assert_eq!(upgraded.hint.level, 3);
     assert_ne!(upgraded.hint.hint.technique, 0);
-    assert_eq!(upgraded.hint.hint.focus, first.hint.hint.focus);
+    // Level 3 carries the generator's focus in deduction order; the lower levels sort it, so the
+    // position of the concluded key does not name it below the level that sells it
+    let mut focus_at_3 = upgraded.hint.hint.focus.clone();
+    focus_at_3.sort_unstable();
+    assert_eq!(focus_at_3, first.hint.hint.focus);
     assert_eq!(upgraded.hint.hint.conclusions, *expected_step);
     assert_eq!(upgraded.hints_used, 1);
     assert_eq!(upgraded.state.hints.len(), 1);
@@ -185,7 +189,7 @@ fn daily_puzzle_end_to_end() {
 
     let events = client::user::happy_path::chit_events(env, &user, None, None, 50).events;
     let hint_prefix = format!("{game_id}:{number}:hint:");
-    let solve_key = format!("{game_id}:{number}:solve");
+    let solve_key = format!("{number}:solve");
     assert!(
         events.iter().any(|e| matches!(
             &e.reason,
@@ -197,7 +201,7 @@ fn daily_puzzle_end_to_end() {
     assert!(
         events.iter().any(|e| matches!(
             &e.reason,
-            ChitEventType::Game { game_id: g, key } if g == game_id && key == &solve_key
+            ChitEventType::Game { game_id: g, key } if g == DAILY_PUZZLE_CHIT_GAME_ID && key == &solve_key
         ) && e.amount == expected_reward as i32),
         "no solve credit event: {events:?}"
     );
@@ -335,6 +339,208 @@ fn daily_puzzle_dark_by_default() {
 
     // The LUI now holds a daily canister id
     wrapper.discard();
+}
+
+// The CHIT paths the happy flow never takes: a debit the user canister refuses, and a day paid
+// once already. Both run through the user canister's idempotency keys, which `game_chit_tests`
+// cannot reach directly because `c2c_game_chit` is refused at ingress.
+#[test]
+fn daily_puzzle_refused_debits_and_replayed_keys() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    ensure_time_at_least_day0(env);
+    keep_clear_of_midnight(env);
+
+    let user = client::register_user(env, canister_ids);
+    let local_user_index = canister_ids.local_user_index(env, user.canister());
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
+
+    // Every play costs, and the fee leaves too little for a hint, so both debits below are refused
+    let hint_prices = GameConfig::default().hint_prices;
+    let entry_fee = DAILY_CHIT as u32 - hint_prices[0] + 1;
+    let config = DailyPuzzleConfig {
+        enabled: true,
+        first_play_free: false,
+        entry_fee,
+        ..DailyPuzzleConfig::default()
+    };
+    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, config.clone());
+    client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
+    set_canister_id(env, &user, local_user_index, canister_ids.daily_puzzle);
+
+    let (puzzle, state) = wait_for_puzzle(env, &user, local_user_index);
+    let number = puzzle.number;
+    let game_id = puzzle.game_id.as_str();
+    assert!(!puzzle.first_play_free);
+    assert_eq!(state.entry_fee, entry_fee);
+    assert_eq!(chit_balance(env, &user), 0);
+
+    // No CHIT: the start is refused and leaves no record behind, so the day is not locked
+    let daily_puzzle_start::Response::Error(error) = client::local_user_index::daily_puzzle_start(
+        env,
+        user.principal,
+        local_user_index,
+        &daily_puzzle_start::Args {
+            game_id: game_id.to_string(),
+            number,
+            expected_entry_fee: entry_fee,
+        },
+    ) else {
+        panic!("start should be refused with no CHIT");
+    };
+    assert!(error.matches_code(OCErrorCode::InsufficientFunds), "{error:?}");
+    let state = state_of(fetch(env, &user, local_user_index), game_id).unwrap();
+    assert_eq!(state.started_at, None);
+    assert_eq!(state.entry_fee, entry_fee);
+
+    // Funded, the same start goes through and is debited
+    client::user::happy_path::claim_daily_chit(env, &user, None);
+    let started = start(env, &user, local_user_index, game_id, number, entry_fee);
+    let after_entry = DAILY_CHIT - entry_fee as i32;
+    assert_eq!(chit_balance(env, &user), after_entry);
+    assert_eq!(started.chit_balance, Some(after_entry));
+    assert!(after_entry < hint_prices[0] as i32);
+
+    let (_, solution) = solve(game_id, &puzzle.description, puzzle.tier);
+    let (wrong_key, wrong_value) = wrong_pair(game_id, &puzzle.description, &solution);
+    let right_pair = (wrong_key, solution_value(game_id, &puzzle.description, &solution, wrong_key));
+
+    // A paid hint the user cannot afford is refused, and the free check its call spent stays
+    // spent: a refusal that only happens when the named keys are right must cost the same as a
+    // mistake, or it answers "is this key right?" for nothing
+    let daily_puzzle_hint::Response::Error(error) = client::local_user_index::daily_puzzle_hint(
+        env,
+        user.principal,
+        local_user_index,
+        &daily_puzzle_hint::Args {
+            game_id: game_id.to_string(),
+            number,
+            level: 1,
+            filled: vec![right_pair],
+            expected_price: hint_prices[0],
+        },
+    ) else {
+        panic!("hint should be refused with too little CHIT");
+    };
+    assert!(error.matches_code(OCErrorCode::InsufficientFunds), "{error:?}");
+    let state = state_of(fetch(env, &user, local_user_index), game_id).unwrap();
+    assert!(state.hints.is_empty());
+    assert_eq!(state.free_checks, 1);
+    assert_eq!(chit_balance(env, &user), after_entry);
+
+    let mistake = hint(
+        env,
+        &user,
+        local_user_index,
+        game_id,
+        number,
+        1,
+        vec![(wrong_key, wrong_value)],
+        0,
+    );
+    assert!(mistake.hint.mistake);
+    assert_eq!(mistake.state.free_checks, 2);
+
+    // Solve, and the reward lands
+    env.advance_time(Duration::from_secs(30));
+    let daily_puzzle_submit::Response::Success(solved) =
+        submit(env, &user, local_user_index, game_id, number, solution.clone())
+    else {
+        panic!("correct grid should solve");
+    };
+    let reward = config.reward_by_streak[0];
+    assert_eq!(solved.reward, reward);
+    tick_many(env, 3);
+    let after_solve = after_entry + reward as i32;
+    assert_eq!(chit_balance(env, &user), after_solve);
+
+    // The operator replaces today's puzzle. The record goes with it, and the replacement is a
+    // free restart that pays nothing a second time: the entry and solve keys name the day, not
+    // the puzzle, so the user canister answers `AlreadyAdded` to both replays.
+    client::daily_puzzle::happy_path::regenerate_today(env, user.principal, canister_ids.daily_puzzle, None);
+    let replacement = wait_for_replacement(env, &user, local_user_index, &puzzle.description);
+    assert_eq!(replacement.number, number);
+    let state = state_of(fetch(env, &user, local_user_index), replacement.game_id.as_str()).unwrap();
+    assert_eq!(
+        state.started_at, None,
+        "the record should go with the puzzle it was made against"
+    );
+    assert!(state.solved.is_none());
+    assert!(state.has_solved_before);
+    assert_eq!(state.entry_fee, entry_fee);
+
+    let game_id = replacement.game_id.as_str();
+    let restarted = start(env, &user, local_user_index, game_id, number, entry_fee);
+    assert_eq!(
+        chit_balance(env, &user),
+        after_solve,
+        "the entry fee must not be charged twice"
+    );
+    assert_eq!(restarted.chit_balance, None);
+
+    let (_, solution) = solve(game_id, &replacement.description, replacement.tier);
+    env.advance_time(Duration::from_secs(30));
+    let daily_puzzle_submit::Response::Success(solved) = submit(env, &user, local_user_index, game_id, number, solution) else {
+        panic!("correct grid should solve");
+    };
+    assert_eq!(solved.reward, 0, "a day already paid must not pay again");
+    assert_eq!(solved.chit_balance, None);
+    assert_eq!(solved.streak, 1);
+    tick_many(env, 3);
+    assert_eq!(chit_balance(env, &user), after_solve);
+    let state = state_of(fetch(env, &user, local_user_index), game_id).unwrap();
+    assert_eq!(state.solved.as_ref().unwrap().reward, 0);
+
+    let events = client::user::happy_path::chit_events(env, &user, None, None, 50).events;
+    let game_events: Vec<_> = events
+        .iter()
+        .filter(|e| matches!(&e.reason, ChitEventType::Game { .. }))
+        .collect();
+    assert_eq!(game_events.len(), 2, "one entry and one solve: {game_events:?}");
+
+    // Config was mutated and the clock moved
+    wrapper.discard();
+}
+
+// Ticks until the LUI serves an enabled puzzle for today other than the one it held
+fn wait_for_replacement(env: &mut PocketIc, user: &User, local_user_index: CanisterId, previous: &[u8]) -> PublicDailyPuzzle {
+    for _ in 0..MAX_WAIT_TICKS {
+        let fetched = fetch(env, user, local_user_index);
+        if let Some(puzzle) = fetched
+            .puzzles
+            .iter()
+            .find(|p| p.enabled && p.number == day_number(env) && p.description != previous)
+        {
+            return puzzle.clone();
+        }
+        env.advance_time(Duration::from_secs(1));
+        env.tick();
+    }
+    panic!("the LUI never served a replacement puzzle after {MAX_WAIT_TICKS} ticks");
+}
+
+// The solution's value for `key`, from the generating crate's pairs
+fn solution_value(game_id: &str, description: &[u8], solution: &[u8], key: u16) -> u8 {
+    let pairs = match game_id {
+        light_up::GAME_ID => light_up::solution_pairs(description, solution),
+        tents::GAME_ID => tents::solution_pairs(description, solution),
+        loopy::GAME_ID => loopy::solution_pairs(description, solution),
+        unruly::GAME_ID => unruly::solution_pairs(description, solution),
+        slant::GAME_ID => slant::solution_pairs(description, solution),
+        bridges::GAME_ID => bridges::solution_pairs(description, solution),
+        other => panic!("no solution pairs for game {other}"),
+    }
+    .expect("valid description");
+    pairs
+        .iter()
+        .find(|(k, _)| *k == key)
+        .map(|(_, v)| *v)
+        .expect("key from the pairs")
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {

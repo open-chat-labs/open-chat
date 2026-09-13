@@ -18,7 +18,9 @@ async fn set_game_config(args: Args) -> Response {
     if let Err(message) = validate_game_config(&args.config) {
         return UnitResult::Error(OCErrorCode::InvalidRequest.with_message(message));
     }
-    mutate_state(|state| state.data.set_game_config(args.game_id, args.config));
+    if let Err(message) = mutate_state(|state| state.data.set_game_config(args.game_id, args.config)) {
+        return UnitResult::Error(OCErrorCode::InvalidRequest.with_message(message));
+    }
     push_puzzle::schedule(true, Duration::ZERO);
     UnitResult::Success
 }

@@ -3,7 +3,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use timer_job_queues::{TimerJobItem, TimerJobQueue};
 use tracing::error;
-use types::{C2CError, Milliseconds, PuzzleNumber, UserId};
+use types::{C2CError, GameId, Milliseconds, PuzzleNumber, UserId};
 use user_canister::c2c_game_chit::{Args, Response, SuccessResult};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
@@ -12,14 +12,18 @@ use utils::canister::delay_if_should_retry_failed_c2c_call;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GameChitCredit {
     pub user_id: UserId,
+    // The game id as sent to the user canister, which scopes its keys by it. Entry fees and solve
+    // rewards go under `DAILY_PUZZLE_CHIT_GAME_ID`, not the day's game: see the engine's note on
+    // keys.
     pub game_id: String,
     pub key: String,
     pub amount: i32,
-    // Set for a daily puzzle solve reward. The inline path zeroes the recorded reward when the
-    // user canister will never credit it; the retry path has to be able to do the same, or the
-    // record goes on claiming CHIT the balance never received.
+    // The record a daily puzzle solve reward was written to, by the day's game and number. The
+    // inline path zeroes the recorded reward when the user canister will never credit it; the
+    // retry path has to be able to do the same, or the record goes on claiming CHIT the balance
+    // never received.
     #[serde(default)]
-    pub puzzle_number: Option<PuzzleNumber>,
+    pub record: Option<(GameId, PuzzleNumber)>,
 }
 
 pub type GameChitCreditRetryQueue = TimerJobQueue<GameChitCredit>;
@@ -60,13 +64,8 @@ pub async fn apply(credit: &GameChitCredit) -> GameChitOutcome {
 impl GameChitCredit {
     // Nothing more will be tried for this credit, so stop reporting a reward that was never paid
     fn abandon(&self) {
-        if let Some(number) = self.puzzle_number {
-            mutate_state(|state| {
-                state
-                    .data
-                    .daily_puzzle_engine
-                    .clear_reward(self.user_id, &self.game_id, number)
-            });
+        if let Some((game_id, number)) = &self.record {
+            mutate_state(|state| state.data.daily_puzzle_engine.clear_reward(self.user_id, game_id, *number));
         }
     }
 }
@@ -74,7 +73,16 @@ impl GameChitCredit {
 impl TimerJobItem for GameChitCredit {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
         match apply(self).await {
-            GameChitOutcome::Applied(_) => Ok(()),
+            GameChitOutcome::Applied(Some(_)) => Ok(()),
+            // `AlreadyAdded`. The call is guaranteed-response, so a reject that queued this retry
+            // means the user canister never ran the original: the key was recorded by an earlier
+            // record for the same day that a `regenerate_today` has since dropped. The day has
+            // been paid once, this credit moved nothing, and the inline path zeroes the reward for
+            // exactly this answer.
+            GameChitOutcome::Applied(None) => {
+                self.abandon();
+                Ok(())
+            }
             GameChitOutcome::Refused(error) => {
                 error!(?error, key = %self.key, user_id = %self.user_id, "Game CHIT credit refused, dropping");
                 self.abandon();

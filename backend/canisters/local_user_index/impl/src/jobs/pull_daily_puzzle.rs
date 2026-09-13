@@ -53,7 +53,10 @@ async fn pull() {
                 "Daily puzzles pulled"
             );
         }),
-        Ok(Response::Error(error)) => info!(?error, "No daily puzzles to pull"),
+        // The only error the daily canister answers is a refusal: this index is not in the set it
+        // read from the registry. The interval will ask again; the log line is the point, because
+        // a subnet in this state has no puzzle and nothing else says so.
+        Ok(Response::Error(error)) => error!(?error, "Daily puzzle canister refused the pull"),
         Err(error) => {
             error!(?error, "Failed to pull daily puzzles");
             if delay_if_should_retry_failed_c2c_call(&error).is_some() {
