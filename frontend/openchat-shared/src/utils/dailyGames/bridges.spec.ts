@@ -427,10 +427,13 @@ describe("bridgesHitShapes", () => {
     // diagonal quarters split two ways), so no cell may hold a whole alongside a quarter, nor
     // the same quarter twice
     test("shapes of different edges never overlap", () => {
+        // the last layout has a two-cell edge crossed at one cell only: that cell splits, the
+        // other stays whole
         for (const layout of [
             [".1.", "1.1", ".1."],
             ["2.2", "...", "2.2"],
             ["3.3.", ".1.1", "3.3.", ".1.1"],
+            [".1..", "2..2", ".1.."],
         ]) {
             const shapes = bridgesHitShapes(desc(layout));
             const byCell = new Map<number, typeof shapes>();
@@ -441,7 +444,8 @@ describe("bridgesHitShapes", () => {
                 if (parts.includes("whole")) {
                     expect(list, `cell ${cell}`).toHaveLength(1);
                 } else {
-                    expect(new Set(parts).size, `cell ${cell}`).toBe(parts.length);
+                    expect(parts, `cell ${cell}`).toHaveLength(4);
+                    expect(new Set(parts).size, `cell ${cell}`).toBe(4);
                     expect(keys.size, `cell ${cell}`).toBe(2);
                 }
             }

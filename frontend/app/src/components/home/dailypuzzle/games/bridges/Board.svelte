@@ -6,9 +6,10 @@
         type BridgesDescription,
         type BridgesState,
         bridgesHitShapes,
+        type BridgesHitShape,
     } from "@client";
     import GridSvg from "../GridSvg.svelte";
-    import { CELL, elementCentre, highlight, keysOf } from "../gridSvg";
+    import { CELL, elementCentre, highlight, hitQuarter, keysOf } from "../gridSvg";
     import type { BoardProps } from "../types";
 
     let {
@@ -42,46 +43,10 @@
     // Tap targets, one per water cell per edge. A cell two edges share is split along its
     // diagonals so each edge keeps a target of its own (#9372); the polygon is in SVG units.
     let hitShapes = $derived(bridgesHitShapes(model));
-    function hitPoints(shape: { cell: number; part: string }): string {
-        const o = cellOrigin(shape.cell);
-        const x0 = o.x;
-        const y0 = o.y;
-        const x1 = o.x + CELL;
-        const y1 = o.y + CELL;
-        const cx = o.x + CELL / 2;
-        const cy = o.y + CELL / 2;
-        const pts: [number, number][] =
-            shape.part === "whole"
-                ? [
-                      [x0, y0],
-                      [x1, y0],
-                      [x1, y1],
-                      [x0, y1],
-                  ]
-                : shape.part === "left"
-                  ? [
-                        [x0, y0],
-                        [cx, cy],
-                        [x0, y1],
-                    ]
-                  : shape.part === "right"
-                    ? [
-                          [x1, y0],
-                          [cx, cy],
-                          [x1, y1],
-                      ]
-                    : shape.part === "top"
-                      ? [
-                            [x0, y0],
-                            [x1, y0],
-                            [cx, cy],
-                        ]
-                      : [
-                            [x0, y1],
-                            [x1, y1],
-                            [cx, cy],
-                        ];
-        return pts.map(([x, y]) => `${x},${y}`).join(" ");
+    function hitPoints(shape: BridgesHitShape): string {
+        return hitQuarter(cellOrigin(shape.cell), shape.part)
+            .map(([x, y]) => `${x},${y}`)
+            .join(" ");
     }
 
     function cellOrigin(index: number): { x: number; y: number } {

@@ -83,3 +83,54 @@ export function highlight(
     }
     return { on: false, fill: "none", stroke: "none" };
 }
+
+/**
+ * The tap polygon for one part of a cell, in SVG units: the whole cell, or one of the four
+ * quarters its diagonals cut it into, each with its apex at the centre. The four quarters
+ * partition the cell, so two edges sharing a cell (Bridges, #9372) can each own a pair without
+ * overlap: left and right for the horizontal edge, top and bottom for the vertical.
+ */
+export function hitQuarter(
+    origin: { x: number; y: number },
+    part: "whole" | "left" | "right" | "top" | "bottom",
+): [number, number][] {
+    const x0 = origin.x;
+    const y0 = origin.y;
+    const x1 = origin.x + CELL;
+    const y1 = origin.y + CELL;
+    const cx = origin.x + CELL / 2;
+    const cy = origin.y + CELL / 2;
+    switch (part) {
+        case "whole":
+            return [
+                [x0, y0],
+                [x1, y0],
+                [x1, y1],
+                [x0, y1],
+            ];
+        case "left":
+            return [
+                [x0, y0],
+                [cx, cy],
+                [x0, y1],
+            ];
+        case "right":
+            return [
+                [x1, y0],
+                [cx, cy],
+                [x1, y1],
+            ];
+        case "top":
+            return [
+                [x0, y0],
+                [x1, y0],
+                [cx, cy],
+            ];
+        case "bottom":
+            return [
+                [x0, y1],
+                [x1, y1],
+                [cx, cy],
+            ];
+    }
+}
