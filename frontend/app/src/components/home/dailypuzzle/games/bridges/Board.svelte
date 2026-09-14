@@ -5,6 +5,7 @@
         bridgesIslandTotals,
         type BridgesDescription,
         type BridgesState,
+        bridgesHitShapes,
     } from "@client";
     import GridSvg from "../GridSvg.svelte";
     import { CELL, elementCentre, highlight, keysOf } from "../gridSvg";
@@ -38,9 +39,49 @@
     // cell indices the server flagged
     let mistakes = $derived(keysOf(violations, "mistake"));
 
-    // the water rect an edge covers, in SVG units
-    function hitRect(el: { x: number; y: number; w: number; h: number }) {
-        return { x: el.x * CELL, y: el.y * CELL, width: el.w * CELL, height: el.h * CELL };
+    // Tap targets, one per water cell per edge. A cell two edges share is split along its
+    // diagonals so each edge keeps a target of its own (#9372); the polygon is in SVG units.
+    let hitShapes = $derived(bridgesHitShapes(model));
+    function hitPoints(shape: { cell: number; part: string }): string {
+        const o = cellOrigin(shape.cell);
+        const x0 = o.x;
+        const y0 = o.y;
+        const x1 = o.x + CELL;
+        const y1 = o.y + CELL;
+        const cx = o.x + CELL / 2;
+        const cy = o.y + CELL / 2;
+        const pts: [number, number][] =
+            shape.part === "whole"
+                ? [
+                      [x0, y0],
+                      [x1, y0],
+                      [x1, y1],
+                      [x0, y1],
+                  ]
+                : shape.part === "left"
+                  ? [
+                        [x0, y0],
+                        [cx, cy],
+                        [x0, y1],
+                    ]
+                  : shape.part === "right"
+                    ? [
+                          [x1, y0],
+                          [cx, cy],
+                          [x1, y1],
+                      ]
+                    : shape.part === "top"
+                      ? [
+                            [x0, y0],
+                            [x1, y0],
+                            [cx, cy],
+                        ]
+                      : [
+                            [x0, y1],
+                            [x1, y1],
+                            [cx, cy],
+                        ];
+        return pts.map(([x, y]) => `${x},${y}`).join(" ");
     }
 
     function cellOrigin(index: number): { x: number; y: number } {
@@ -68,9 +109,14 @@
         height={model.height * CELL}
         fill={greyed ? "#e6e6e6" : "#ececec"}
     />
-    {#each edges as el (el.key)}
+    {#each hitShapes as shape (`${shape.key}:${shape.cell}:${shape.part}`)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <rect {...hitRect(el)} fill="transparent" role="gridcell" onclick={() => tap(el.key)} />
+        <polygon
+            points={hitPoints(shape)}
+            fill="transparent"
+            role="gridcell"
+            onclick={() => tap(shape.key)}
+        />
     {/each}
     {#each edges as el (el.key)}
         {@const mark = marks.get(el.key)}

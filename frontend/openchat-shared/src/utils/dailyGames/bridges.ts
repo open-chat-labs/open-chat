@@ -340,6 +340,40 @@ function toViolations(
     return out;
 }
 
+/**
+ * Where a tap lands for an edge, one entry per water cell it runs over. A cell only one edge
+ * crosses is the whole cell. A cell two edges share is split along its diagonals: the left and
+ * right quarters tap the horizontal edge, the top and bottom quarters the vertical one, so each
+ * edge keeps a target of its own (#9372). One rect per edge, drawn in edge order, let the later
+ * edge swallow every tap on a shared cell, and an edge whose only cell was shared could not be
+ * placed at all.
+ */
+export type BridgesHitPart = "whole" | "left" | "right" | "top" | "bottom";
+export type BridgesHitShape = { key: number; cell: number; part: BridgesHitPart };
+
+export function bridgesHitShapes(desc: BridgesDescription): BridgesHitShape[] {
+    const shared = new Set<number>();
+    for (const e of desc.edges) {
+        if (e.crossings.length === 0) continue;
+        for (const c of e.cells) {
+            if (desc.edges.some((o) => o.key !== e.key && o.cells.includes(c))) shared.add(c);
+        }
+    }
+    const out: BridgesHitShape[] = [];
+    for (const e of desc.edges) {
+        for (const cell of e.cells) {
+            if (!shared.has(cell)) {
+                out.push({ key: e.key, cell, part: "whole" });
+            } else if (e.horizontal) {
+                out.push({ key: e.key, cell, part: "left" }, { key: e.key, cell, part: "right" });
+            } else {
+                out.push({ key: e.key, cell, part: "top" }, { key: e.key, cell, part: "bottom" });
+            }
+        }
+    }
+    return out;
+}
+
 export const bridges: DailyGame<BridgesDescription, BridgesState> = {
     id: "bridges",
     parse: parseDescription,
