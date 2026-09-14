@@ -431,7 +431,22 @@ mod tests {
         for key_type in KeyType::all().filter(|kt| (*kt as u8) <= KeyType::BlockedUsers as u8) {
             assert_eq!(key_type.map_class(), MapClass::Default, "{key_type:?}");
         }
-        assert_eq!(KeyType::all().filter(|kt| kt.map_class() == MapClass::Default).count(), 16);
+        // Key types added since then which are also in the main map
+        let added_to_main_map = [
+            KeyType::DirectChatMessageEventIndexes,
+            KeyType::GroupChatMessageEventIndexes,
+            KeyType::ChannelMessageEventIndexes,
+            KeyType::DirectChatThreadMessageEventIndexes,
+            KeyType::GroupChatThreadMessageEventIndexes,
+            KeyType::ChannelThreadMessageEventIndexes,
+        ];
+        for key_type in added_to_main_map {
+            assert_eq!(key_type.map_class(), MapClass::Default, "{key_type:?}");
+        }
+        assert_eq!(
+            KeyType::all().filter(|kt| kt.map_class() == MapClass::Default).count(),
+            KeyType::BlockedUsers as usize + added_to_main_map.len()
+        );
     }
 
     fn small_key(i: u32) -> TestSmallEntriesKey {
