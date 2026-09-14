@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 mod chat_event;
+mod chit_event;
 mod community_event;
 mod expiring_event;
 mod last_updated;
@@ -18,6 +19,7 @@ mod user_id;
 mod user_metrics;
 
 pub use chat_event::*;
+pub use chit_event::*;
 pub use community_event::*;
 pub use expiring_event::*;
 pub use last_updated::*;
@@ -148,6 +150,7 @@ pub enum KeyType {
     ChannelSearchSender = 46,
     MessageActivityEvent = 47,
     MessageActivityEventId = 48,
+    ChitEvent = 49,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -218,7 +221,8 @@ impl KeyType {
             | KeyType::GroupChatSearchSender
             | KeyType::ChannelSearchSender
             | KeyType::MessageActivityEvent
-            | KeyType::MessageActivityEventId => MapClass::SmallEntries,
+            | KeyType::MessageActivityEventId
+            | KeyType::ChitEvent => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -297,6 +301,7 @@ impl TryFrom<u8> for KeyType {
             46 => Ok(KeyType::ChannelSearchSender),
             47 => Ok(KeyType::MessageActivityEvent),
             48 => Ok(KeyType::MessageActivityEventId),
+            49 => Ok(KeyType::ChitEvent),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

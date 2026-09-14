@@ -34,6 +34,11 @@ fn post_upgrade(args: Args) {
         "Migrated message activity events to stable memory"
     );
 
+    // Move the CHIT events into stable memory
+    // TODO: Remove this after next release
+    let chit_events_migrated = data.chit_events.migrate_to_stable_memory();
+    info!(chit_events_migrated, "Migrated CHIT events to stable memory");
+
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
 

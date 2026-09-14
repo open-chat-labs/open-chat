@@ -158,8 +158,13 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
 }
 
 // Key types whose entries aren't tied to a chat, so aren't removed when a chat is deleted (eg. the
-// message activity event for a reaction)
-const USER_KEY_TYPES: [u8; 2] = [KeyType::MessageActivityEvent as u8, KeyType::MessageActivityEventId as u8];
+// message activity event for a reaction, or the CHIT events for the achievements earned by sending
+// messages)
+const USER_KEY_TYPES: [u8; 3] = [
+    KeyType::MessageActivityEvent as u8,
+    KeyType::MessageActivityEventId as u8,
+    KeyType::ChitEvent as u8,
+];
 
 // The number of entries in the small entries map, excluding those which belong to the user rather
 // than to any chat

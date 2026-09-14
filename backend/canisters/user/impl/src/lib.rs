@@ -342,7 +342,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
     pub fn reinstate_missed_daily_claims(&mut self, days_to_reinstate: Vec<u16>) {
         let now = self.env.now();
 
-        let daily_claims = self.data.chit_events.iter_daily_claims().collect();
+        let daily_claims = self.data.chit_events.daily_claims();
 
         let new_events = self
             .data
