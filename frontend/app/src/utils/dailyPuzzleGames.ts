@@ -1,34 +1,34 @@
 import { bridges, lightUp, loopy, slant, tents, unruly, type DailyGame } from "@client";
 import type { Component } from "svelte";
 import BridgesBoard from "../components/home/dailypuzzle/games/bridges/Board.svelte";
+import bridgesDemo from "../components/home/dailypuzzle/games/bridges/demo";
 import bridgesStrings from "../components/home/dailypuzzle/games/bridges/i18n.en.json";
 import BridgesPictogram from "../components/home/dailypuzzle/games/bridges/Pictogram.svelte";
+import LightUpBoard from "../components/home/dailypuzzle/games/light_up/Board.svelte";
+import lightUpDemo from "../components/home/dailypuzzle/games/light_up/demo";
+import lightUpStrings from "../components/home/dailypuzzle/games/light_up/i18n.en.json";
+import LightUpPictogram from "../components/home/dailypuzzle/games/light_up/Pictogram.svelte";
 import LoopyBoard from "../components/home/dailypuzzle/games/loopy/Board.svelte";
+import loopyDemo from "../components/home/dailypuzzle/games/loopy/demo";
 import loopyStrings from "../components/home/dailypuzzle/games/loopy/i18n.en.json";
 import LoopyPictogram from "../components/home/dailypuzzle/games/loopy/Pictogram.svelte";
 import SlantBoard from "../components/home/dailypuzzle/games/slant/Board.svelte";
+import slantDemo from "../components/home/dailypuzzle/games/slant/demo";
 import slantStrings from "../components/home/dailypuzzle/games/slant/i18n.en.json";
 import SlantPictogram from "../components/home/dailypuzzle/games/slant/Pictogram.svelte";
 import TentsBoard from "../components/home/dailypuzzle/games/tents/Board.svelte";
+import tentsDemo from "../components/home/dailypuzzle/games/tents/demo";
 import tentsStrings from "../components/home/dailypuzzle/games/tents/i18n.en.json";
 import TentsPictogram from "../components/home/dailypuzzle/games/tents/Pictogram.svelte";
-import UnrulyBoard from "../components/home/dailypuzzle/games/unruly/Board.svelte";
-import unrulyStrings from "../components/home/dailypuzzle/games/unruly/i18n.en.json";
-import UnrulyPictogram from "../components/home/dailypuzzle/games/unruly/Pictogram.svelte";
-import LightUpBoard from "../components/home/dailypuzzle/games/light_up/Board.svelte";
-import lightUpStrings from "../components/home/dailypuzzle/games/light_up/i18n.en.json";
-import LightUpPictogram from "../components/home/dailypuzzle/games/light_up/Pictogram.svelte";
 import type {
     BoardProps,
     DemoSpec,
     PictogramProps,
 } from "../components/home/dailypuzzle/games/types";
-import loopyDemo from "../components/home/dailypuzzle/games/loopy/demo";
-import bridgesDemo from "../components/home/dailypuzzle/games/bridges/demo";
-import lightUpDemo from "../components/home/dailypuzzle/games/light_up/demo";
-import slantDemo from "../components/home/dailypuzzle/games/slant/demo";
-import tentsDemo from "../components/home/dailypuzzle/games/tents/demo";
+import UnrulyBoard from "../components/home/dailypuzzle/games/unruly/Board.svelte";
 import unrulyDemo from "../components/home/dailypuzzle/games/unruly/demo";
+import unrulyStrings from "../components/home/dailypuzzle/games/unruly/i18n.en.json";
+import UnrulyPictogram from "../components/home/dailypuzzle/games/unruly/Pictogram.svelte";
 
 // Everything the app needs to render one kind of daily puzzle. The weekday rota can name any
 // game the backend generates; a game_id missing from this registry is one this build predates.
