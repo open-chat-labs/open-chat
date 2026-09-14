@@ -389,6 +389,20 @@ describe("hint states (#9360)", () => {
         expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
     });
 
+    // invariant 1, the plain reload: no edit between the mistake and the reload, so the record
+    // has to be written when the mistake is served, not only by a later edit
+    test("a reload straight after a mistake resumes the answer without a call", async () => {
+        const client = mistakeClient();
+        const g = build(userState(), client);
+        g.tap(0);
+        await g.hint();
+        const again = build(userState(), client);
+        expect(again.mistakes.has(0)).toBe(true);
+        expect(again.hintButton).toEqual({ kind: "mistake" });
+        await again.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
+    });
+
     // invariant 2
     test("while a mistake stands the button quotes no level and no price", async () => {
         const g = build(userState(), mistakeClient());
