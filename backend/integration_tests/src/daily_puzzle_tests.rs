@@ -3,7 +3,6 @@ use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, client};
 use candid::Principal;
 use constants::DAY_IN_MS;
-use daily_puzzle_canister::PuzzleParams;
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
@@ -11,21 +10,21 @@ use types::{
     DailyPuzzleConfig, DailyPuzzleResult, Empty, GameConfig, HttpRequest, LIGHT_UP_GAME_ID, PuzzleNumber, UnitResult, UserId,
 };
 
-/// The canister's test-mode schedule, Mon..Sun: (game_id, grid size). Mirrors
-/// `daily_puzzle_canister_impl::model::schedule::test_schedule`.
-const TEST_SCHEDULE: [(&str, u8); 7] = [
+/// The rota, Mon..Sun: (game_id, grid size). Mirrors `daily_puzzle_canister_impl::model::schedule`,
+/// which is the one definition (#9357); test mode runs the same rota as production.
+const SCHEDULE: [(&str, u8); 7] = [
     ("light_up", 7),
     ("tents", 8),
     ("slant", 6),
     ("bridges", 7),
-    ("unruly", 6),
-    ("slant", 6),
-    ("bridges", 7),
+    ("unruly", 8),
+    ("tents", 10),
+    ("light_up", 10),
 ];
 
-/// What the test schedule serves for puzzle number `number`. Number 0 (1970-01-01) was a Thursday.
+/// What the rota serves for puzzle number `number`. Number 0 (1970-01-01) was a Thursday.
 fn scheduled(number: PuzzleNumber) -> (&'static str, u8) {
-    TEST_SCHEDULE[((number + 3) % 7) as usize]
+    SCHEDULE[((number + 3) % 7) as usize]
 }
 
 #[test]
@@ -43,18 +42,10 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
     let now = now_millis(env);
     let today = (now / DAY_IN_MS) as u32;
 
-    // Installed disabled, with the default config
+    // Installed disabled, serving the build's constants (#9357 invariant 1)
     let config = client::daily_puzzle::happy_path::config(env, Principal::anonymous(), canister_ids.daily_puzzle);
     assert_eq!(config, DailyPuzzleConfig::default());
     assert!(!config.enabled);
-
-    // Every generator gets a default game config
-    let game_configs = client::daily_puzzle::happy_path::game_configs(env, Principal::anonymous(), canister_ids.daily_puzzle);
-    let expected: Vec<_> = ["bridges", "light_up", "loopy", "slant", "tents", "unruly"]
-        .into_iter()
-        .map(|g| (g.to_string(), GameConfig::default()))
-        .collect();
-    assert_eq!(game_configs, expected);
 
     // test_mode generates today's puzzle synchronously during init: one game per day
     let (todays_game, todays_size) = scheduled(today);
@@ -110,51 +101,34 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
     assert!(candidates[1..].iter().all(|c| !c.vetoed));
 
     // Platform operator guard
-    let enabled = DailyPuzzleConfig {
-        enabled: true,
-        ..Default::default()
-    };
     let non_operator = client::register_user(env, canister_ids);
-    let response = client::daily_puzzle::set_config(
+    let response = client::daily_puzzle::set_enabled(
         env,
         non_operator.principal,
         canister_ids.daily_puzzle,
-        &daily_puzzle_canister::set_config::Args { config: enabled.clone() },
+        &daily_puzzle_canister::set_enabled::Args { enabled: true },
     );
     assert!(
         matches!(response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
-        "set_config from a non-operator should be rejected"
+        "set_enabled from a non-operator should be rejected"
     );
     let config = client::daily_puzzle::happy_path::config(env, Principal::anonymous(), canister_ids.daily_puzzle);
     assert!(!config.enabled);
 
-    client::daily_puzzle::happy_path::set_config(env, operator.principal, canister_ids.daily_puzzle, enabled.clone());
+    // The flag is the one thing the operator moves; every number stays the constant
+    client::daily_puzzle::happy_path::set_enabled(env, operator.principal, canister_ids.daily_puzzle, true);
     let config = client::daily_puzzle::happy_path::config(env, Principal::anonymous(), canister_ids.daily_puzzle);
-    assert!(config.enabled);
+    assert_eq!(
+        config,
+        DailyPuzzleConfig {
+            enabled: true,
+            ..DailyPuzzleConfig::default()
+        }
+    );
     let puzzles = client::daily_puzzle::happy_path::current_puzzles(env, Principal::anonymous(), canister_ids.daily_puzzle);
     assert!(puzzles[0].enabled);
-
-    // Per-game config travels with the puzzle
-    let game_config = GameConfig {
-        hint_prices: vec![10, 50, 150],
-        max_hints: 5,
-    };
-    client::daily_puzzle::happy_path::set_game_config(
-        env,
-        operator.principal,
-        canister_ids.daily_puzzle,
-        todays_game.to_string(),
-        game_config.clone(),
-    );
-    let puzzles = client::daily_puzzle::happy_path::current_puzzles(env, Principal::anonymous(), canister_ids.daily_puzzle);
-    assert_eq!(puzzles[0].hint_prices, game_config.hint_prices);
-    assert_eq!(puzzles[0].max_hints, game_config.max_hints);
-    let game_configs = client::daily_puzzle::happy_path::game_configs(env, Principal::anonymous(), canister_ids.daily_puzzle);
-    assert_eq!(game_configs.len(), 6);
-    assert_eq!(
-        game_configs.iter().find(|(g, _)| g == todays_game).map(|(_, c)| c),
-        Some(&game_config)
-    );
+    assert_eq!(puzzles[0].entry_fee, config.entry_fee);
+    assert_eq!(puzzles[0].hint_prices, GameConfig::default().hint_prices);
 
     // Unknown user has no results
     let results = client::daily_puzzle::happy_path::results(
@@ -203,78 +177,9 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
     wrapper.discard();
 }
 
-#[test]
-fn daily_puzzle_generation_instruction_counts() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let operator = client::register_user(env, canister_ids);
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
-
-    let now = now_millis(env);
-    let today = (now / DAY_IN_MS) as u32;
-    tick_many(env, 5);
-
-    // The default schedule's larger slots plus light_up's other sizes
-    for (game_id, width, tier) in [
-        (LIGHT_UP_GAME_ID, 7u8, 1u8),
-        (LIGHT_UP_GAME_ID, 10, 0),
-        (LIGHT_UP_GAME_ID, 10, 1),
-        ("tents", 10, 1),
-    ] {
-        let schedule = vec![
-            PuzzleParams {
-                game_id: game_id.to_string(),
-                width,
-                height: width,
-                tier,
-                black_pct: 20,
-            };
-            7
-        ];
-        client::daily_puzzle::happy_path::set_schedule(env, operator.principal, canister_ids.daily_puzzle, schedule.clone());
-        // #9334 invariant 51: what was stored is readable, so the operator tab is not write-only
-        assert_eq!(
-            client::daily_puzzle::happy_path::schedule(env, operator.principal, canister_ids.daily_puzzle),
-            schedule
-        );
-        env.advance_time(Duration::from_secs(1));
-        tick_many(env, 10);
-        let candidates =
-            client::daily_puzzle::happy_path::candidates(env, operator.principal, canister_ids.daily_puzzle, today + 1);
-        assert_eq!(candidates.len(), 3, "{game_id} {width}x{width} tier {tier}");
-        assert!(
-            candidates
-                .iter()
-                .all(|c| c.game_id == game_id && c.description[1] == width && c.tier == tier)
-        );
-    }
-
-    let response = client::http_request(
-        env,
-        Principal::anonymous(),
-        canister_ids.daily_puzzle,
-        &HttpRequest {
-            method: "GET".to_string(),
-            url: "/logs".to_string(),
-            headers: Vec::new(),
-            body: Vec::new(),
-        },
-    );
-    let logs = String::from_utf8(response.body.to_vec()).unwrap();
-    for line in logs.lines().filter(|l| l.contains("Generated candidate")) {
-        println!("{line}");
-    }
-
-    wrapper.discard();
-}
-
-/// Walks a week of rollovers so every generator runs inside the canister, which also proves each
-/// fits the timer callback's instruction limit.
+/// Walks a week of rollovers so every rota entry, the 10x10 tricky boards included, is generated
+/// inside the canister, which proves each fits the timer callback's instruction limit. The
+/// "Generated candidate" log lines carry the instruction counts.
 #[test]
 fn daily_puzzle_rotates_through_the_week() {
     let mut wrapper = ENV.deref().get();

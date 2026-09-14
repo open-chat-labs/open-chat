@@ -12,8 +12,9 @@ fn inspect_message() {
     let method_name = ic_cdk::api::msg_method_name().trim_end_matches("_msgpack").to_string();
 
     let is_valid = match method_name.as_str() {
-        "candidates" | "push_now" | "regenerate_today" | "set_config" | "set_game_config" | "set_schedule"
-        | "veto_candidate" => ic_cdk::api::msg_caller() != Principal::anonymous(),
+        "candidates" | "push_now" | "regenerate_today" | "set_enabled" | "veto_candidate" => {
+            ic_cdk::api::msg_caller() != Principal::anonymous()
+        }
         "wallet_receive" => true,
         _ => false,
     };

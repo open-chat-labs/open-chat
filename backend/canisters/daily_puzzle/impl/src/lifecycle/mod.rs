@@ -31,6 +31,9 @@ fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
 
 fn init_state(env: Box<dyn Environment>, mut data: Data, wasm_version: BuildVersion) {
     let now = env.now();
+    // Restamps every held puzzle with this build's constants before the push below, so a release
+    // that changes a number reaches every local user index without an operator call (#9357
+    // invariant 2)
     data.ensure_puzzles(now);
     let state = RuntimeState::new(env, data);
 

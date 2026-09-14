@@ -1,11 +1,11 @@
-use crate::model::schedule::{PUZZLES_TO_KEEP, RESULTS_RETENTION_DAYS, forced_params, generators, weekday};
+use crate::model::schedule::{PUZZLES_TO_KEEP, RESULTS_RETENTION_DAYS, forced_params, schedule, scheduled};
 use crate::model::seed::candidate_seed;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use constants::DAY_IN_MS;
 use daily_puzzle_canister::{CandidateView, PuzzleParams};
 use puzzle_core::GenerateError;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use tracing::error;
@@ -31,7 +31,7 @@ pub const CANDIDATE_POOL_SIZE: usize = 3;
 /// Hard ceiling on a pool, because every veto asks for one more candidate and nothing else stops
 /// that. Candidate indices are `u8`, so past 255 they would wrap and a veto would address the
 /// wrong puzzle. Well below that: a pool this deep means governance is rejecting everything the
-/// generator produces, and the answer to that is `regenerate_today` or a schedule change, not
+/// generator produces, and the answer to that is `regenerate_today` or a rota change, not
 /// another candidate.
 pub const MAX_CANDIDATE_POOL: usize = 32;
 
@@ -75,9 +75,9 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             stable_memory_sizes: memory::memory_sizes(),
-            config: self.data.config.clone(),
-            game_configs: self.data.game_configs.clone(),
-            schedule: self.data.schedule.clone(),
+            config: self.data.config(),
+            game_config: GameConfig::default(),
+            schedule: schedule().to_vec(),
             current_number,
             current_puzzles: self
                 .data
@@ -143,9 +143,8 @@ pub enum GenerationFailure {
     Permanent,
 }
 
-/// A pin on a number's parameters: `params` replace the schedule entry for `number`, and `attempt`
-/// salts its seeds so each regeneration produces a different puzzle. Set by `regenerate_today`,
-/// and by `set_schedule` to hold today to the game it was already working towards.
+/// A pin on a number's parameters: `params` replace the rota entry for `number`, and `attempt`
+/// salts its seeds so each regeneration produces a different puzzle. Set by `regenerate_today`.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Regeneration {
     pub number: PuzzleNumber,
@@ -161,11 +160,11 @@ struct Data {
     pub rng_seed: [u8; 32],
     /// Set once from the first real rng seed; every puzzle seed derives from it.
     pub master_seed: u64,
-    pub config: DailyPuzzleConfig,
-    /// Per-game tuning; a game without an entry uses `GameConfig::default()`.
-    pub game_configs: BTreeMap<GameId, GameConfig>,
-    /// Length 7, indexed by weekday (0 = Monday).
-    pub schedule: Vec<PuzzleParams>,
+    /// The launch / kill switch: the only series value set at run time. Everything else in the
+    /// config is a constant of the build (#9357). Read from the `config` map a pre-#9357 build
+    /// stored, so an upgrade does not switch the game off.
+    #[serde(default, alias = "config", deserialize_with = "enabled_from_flag_or_legacy_config")]
+    pub enabled: bool,
     pub puzzles: BTreeMap<PuzzleNumber, BTreeMap<GameId, DailyPuzzle>>,
     pub candidates: BTreeMap<PuzzleNumber, BTreeMap<GameId, Vec<Candidate>>>,
     #[serde(default)]
@@ -186,7 +185,6 @@ impl Data {
         registry_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        schedule: Vec<PuzzleParams>,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -195,9 +193,7 @@ impl Data {
             cycles_dispenser_canister_id,
             rng_seed: [0; 32],
             master_seed: 0,
-            config: DailyPuzzleConfig::default(),
-            game_configs: generators().iter().map(|g| (g.to_string(), GameConfig::default())).collect(),
-            schedule,
+            enabled: false,
             puzzles: BTreeMap::new(),
             candidates: BTreeMap::new(),
             regeneration: None,
@@ -214,12 +210,20 @@ impl Data {
         (now / DAY_IN_MS) as PuzzleNumber
     }
 
-    /// The schedule entry for `number`'s weekday, unless `regenerate_today` overrode that number.
-    pub fn params_for(&self, number: PuzzleNumber) -> &PuzzleParams {
+    /// The series config as pushed with every puzzle: the constants plus the enabled flag.
+    pub fn config(&self) -> DailyPuzzleConfig {
+        DailyPuzzleConfig {
+            enabled: self.enabled,
+            ..DailyPuzzleConfig::default()
+        }
+    }
+
+    /// The rota entry for `number`'s weekday, unless `regenerate_today` overrode that number.
+    pub fn params_for(&self, number: PuzzleNumber) -> PuzzleParams {
         self.regeneration
             .as_ref()
             .filter(|r| r.number == number)
-            .map_or(&self.schedule[weekday(number)], |r| &r.params)
+            .map_or_else(|| scheduled(number), |r| r.params.clone())
     }
 
     /// The seed salt for `number`: one step per `regenerate_today` and one per failed generation,
@@ -246,10 +250,6 @@ impl Data {
         let failures = self.generation_failures.entry(number).or_default();
         *failures = failures.saturating_add(1);
         *failures < MAX_GENERATION_FAILURES
-    }
-
-    pub fn game_config_for(&self, game_id: &str) -> GameConfig {
-        self.game_configs.get(game_id).cloned().unwrap_or_default()
     }
 
     /// Every puzzle for the current day, one per game.
@@ -310,7 +310,7 @@ impl Data {
     /// game's pool. Deterministic given `master_seed`, the schedule, the number, the index and
     /// the number's attempt salt.
     pub fn generate_candidate(&mut self, number: PuzzleNumber) -> Result<u8, GenerationFailure> {
-        let params = self.params_for(number).clone();
+        let params = self.params_for(number);
         let index = self.candidate_pool(number, &params.game_id).map_or(0, |p| p.len());
         // Keeps the `u8` index below honest whatever the caller asked for
         if index >= MAX_CANDIDATE_POOL {
@@ -340,8 +340,8 @@ impl Data {
             hints: generated.hints,
             starts_at: number as u64 * DAY_IN_MS,
             expires_at: (number as u64 + 1) * DAY_IN_MS,
-            config: self.config.clone(),
-            game_config: self.game_config_for(&params.game_id),
+            config: self.config(),
+            game_config: GameConfig::default(),
         };
         self.candidates
             .entry(number)
@@ -354,7 +354,13 @@ impl Data {
 
     /// Ships today's scheduled puzzle from its candidate pool if it hasn't shipped yet, then
     /// prunes old state. Returns true when a puzzle was promoted (the callers push on that).
+    ///
+    /// Every path that ends in a push runs through here (upgrade, rollover, generation), so this
+    /// is also where every held puzzle is restamped with this build's constants: a release that
+    /// changes a number reaches the local user indexes on its first push with no operator call
+    /// (#9357 invariant 2).
     pub fn ensure_puzzles(&mut self, now: TimestampMillis) -> bool {
+        self.stamp_config();
         let current = Self::number_for(now);
         let game_id = self.params_for(current).game_id.clone();
         let mut promoted = false;
@@ -362,9 +368,7 @@ impl Data {
             && let Some(pool) = self.candidate_pool(current, &game_id)
             && let Some(candidate) = pool.iter().find(|c| !c.vetoed)
         {
-            let mut puzzle = candidate.puzzle.clone();
-            puzzle.config = self.config.clone();
-            puzzle.game_config = self.game_config_for(&game_id);
+            let puzzle = candidate.puzzle.clone();
             self.puzzles.entry(current).or_default().insert(game_id, puzzle);
             self.candidates.remove(&current);
             promoted = true;
@@ -373,13 +377,13 @@ impl Data {
         promoted
     }
 
-    /// Drops today's puzzle(s) and candidate pool and points today at `game_id` (or the schedule
-    /// when None) with a fresh seed salt, so the generation job builds and ships a new one.
+    /// Drops today's puzzle(s) and candidate pool and points today at `game_id` (or the rota when
+    /// None) with a fresh seed salt, so the generation job builds and ships a new one.
     pub fn regenerate_today(&mut self, game_id: Option<GameId>, now: TimestampMillis) -> Result<(), String> {
         let current = Self::number_for(now);
         let params = match game_id {
-            Some(game_id) => forced_params(&self.schedule, &game_id).ok_or(format!("unknown game_id '{game_id}'"))?,
-            None => self.schedule[weekday(current)].clone(),
+            Some(game_id) => forced_params(&game_id).ok_or(format!("unknown game_id '{game_id}'"))?,
+            None => scheduled(current),
         };
         let attempt = self.regenerations_for(current) + 1;
         self.regeneration = Some(Regeneration {
@@ -410,57 +414,26 @@ impl Data {
         self.results.retain(|(n, _, _), _| *n >= cutoff);
     }
 
-    pub fn set_config(&mut self, config: DailyPuzzleConfig) {
-        for puzzle in self.puzzles.values_mut().flat_map(|games| games.values_mut()) {
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+        self.stamp_config();
+    }
+
+    /// Writes the current config onto every puzzle and candidate held, so what is pushed and
+    /// served is this build's constants plus the current enabled flag, whatever the puzzle was
+    /// generated under.
+    fn stamp_config(&mut self) {
+        let config = self.config();
+        for puzzle in self.puzzles.values_mut().flat_map(|games| games.values_mut()).chain(
+            self.candidates
+                .values_mut()
+                .flat_map(|games| games.values_mut())
+                .flatten()
+                .map(|c| &mut c.puzzle),
+        ) {
             puzzle.config = config.clone();
+            puzzle.game_config = GameConfig::default();
         }
-        for candidate in self.candidates.values_mut().flat_map(|games| games.values_mut()).flatten() {
-            candidate.puzzle.config = config.clone();
-        }
-        self.config = config;
-    }
-
-    pub fn set_game_config(&mut self, game_id: GameId, config: GameConfig) -> Result<(), String> {
-        if !generators().contains(&game_id.as_str()) {
-            return Err(format!("unknown game_id '{game_id}'"));
-        }
-        for puzzle in self.puzzles.values_mut().filter_map(|games| games.get_mut(&game_id)) {
-            puzzle.game_config = config.clone();
-        }
-        for candidate in self
-            .candidates
-            .values_mut()
-            .filter_map(|games| games.get_mut(&game_id))
-            .flatten()
-        {
-            candidate.puzzle.game_config = config.clone();
-        }
-        self.game_configs.insert(game_id, config);
-        Ok(())
-    }
-
-    /// Replaces the schedule and drops every future candidate pool so it regenerates. Takes
-    /// effect from tomorrow: today keeps whatever has already shipped or been generated for it,
-    /// and an active regeneration still overrides today. Use `regenerate_today` to change today.
-    pub fn set_schedule(&mut self, schedule: Vec<PuzzleParams>, now: TimestampMillis) {
-        let current = Self::number_for(now);
-        // A day whose puzzle has not shipped yet still reads its game from the schedule, so
-        // without this a change made between the rollover and the promotion would move today's
-        // game - the opposite of what this says it does, and with nothing to tell the operator it
-        // happened. Pinning today to the entry it was already working towards keeps its candidate
-        // pool meaningful too.
-        if !self.has_puzzle(current) && self.regeneration.as_ref().is_none_or(|r| r.number != current) {
-            self.regeneration = Some(Regeneration {
-                number: current,
-                params: self.schedule[weekday(current)].clone(),
-                attempt: 0,
-            });
-        }
-        self.schedule = schedule;
-        self.candidates.retain(|n, _| *n <= current);
-        // Tomorrow is a new game or new parameters, so its failed attempts under the old ones are
-        // no reason to give up on it
-        self.generation_failures.retain(|n, _| *n <= current);
     }
 
     pub fn veto_candidate(&mut self, number: PuzzleNumber, game_id: &str, index: u8) -> bool {
@@ -540,6 +513,19 @@ impl Data {
             })
             .collect()
     }
+}
+
+// A pre-#9357 build stored the whole config under `config`; only its flag carries over.
+fn enabled_from_flag_or_legacy_config<'de, D: Deserializer<'de>>(deserializer: D) -> Result<bool, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Stored {
+        Flag(bool),
+        LegacyConfig { enabled: bool },
+    }
+    Ok(match Stored::deserialize(deserializer)? {
+        Stored::Flag(enabled) | Stored::LegacyConfig { enabled } => enabled,
+    })
 }
 
 struct Generated {
@@ -656,7 +642,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub config: DailyPuzzleConfig,
-    pub game_configs: BTreeMap<GameId, GameConfig>,
+    pub game_config: GameConfig,
     pub schedule: Vec<PuzzleParams>,
     pub current_number: PuzzleNumber,
     pub current_puzzles: Vec<CurrentPuzzleMetrics>,
@@ -672,7 +658,7 @@ pub struct Metrics {
     pub master_seed_set: bool,
     pub regeneration: Option<Regeneration>,
     /// Seeds that found nothing, per number. A number sitting at `MAX_GENERATION_FAILURES` has
-    /// given up for the day and needs `regenerate_today` or a schedule change.
+    /// given up for the day and needs `regenerate_today`.
     pub generation_failures: BTreeMap<PuzzleNumber, u32>,
     pub aggregates: Vec<PuzzleAggregate>,
     pub test_mode: bool,
@@ -705,29 +691,18 @@ pub struct CanisterIds {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::schedule::{
-        default_schedule, forced_params, test_schedule, validate_config, validate_game_config, validate_schedule,
-    };
+    use crate::model::schedule::launch_checks::{validate_config, validate_game_config, validate_schedule};
+    use crate::model::schedule::{generators, weekday};
     use crate::model::seed::puzzle_seed;
 
     const LU: &str = light_up::GAME_ID;
+    /// Numbers on the rota's Monday (light_up 7x7) and Tuesday (tents 8x8), so tests generate
+    /// small easy boards
+    const MONDAY: PuzzleNumber = 102;
+    const TUESDAY: PuzzleNumber = 103;
 
-    /// light_up 7x7 easy every day, so tests can key candidate pools by `LU` on any number
     fn data() -> Data {
-        let params = PuzzleParams {
-            game_id: LU.to_string(),
-            width: 7,
-            height: 7,
-            tier: 0,
-            black_pct: 20,
-        };
-        let mut data = Data::new(
-            Principal::anonymous(),
-            Principal::anonymous(),
-            Principal::anonymous(),
-            vec![params; 7],
-            true,
-        );
+        let mut data = Data::new(Principal::anonymous(), Principal::anonymous(), Principal::anonymous(), true);
         data.master_seed = 12345;
         data
     }
@@ -746,18 +721,13 @@ mod tests {
     #[test]
     fn every_scheduled_game_generates_in_wire_format() {
         let mut seen = HashSet::new();
-        // Every scheduled entry, plus one forced entry per registered generator so a game that
-        // no schedule currently names (loopy, retired for being far harder than the rest) is
-        // still proved to generate and to have usable default params.
+        // Every rota entry, plus one forced entry per registered generator so a game the rota
+        // doesn't name (loopy, benched for being far harder than the rest) is still proved to
+        // generate and to have usable default params.
         let forced = generators()
             .iter()
-            .map(|g| forced_params(&[], g).unwrap_or_else(|| panic!("no default params for {g}")));
-        for (i, params) in default_schedule()
-            .into_iter()
-            .chain(test_schedule())
-            .chain(forced)
-            .enumerate()
-        {
+            .map(|g| forced_params(g).unwrap_or_else(|| panic!("no default params for {g}")));
+        for (i, params) in schedule().into_iter().chain(forced).enumerate() {
             let generated = generate(&params, 1000 + i as u64)
                 .unwrap_or_else(|| panic!("no generator for {}", params.game_id))
                 .unwrap_or_else(|error| panic!("{} failed to generate: {error}", params.game_id));
@@ -791,27 +761,11 @@ mod tests {
         }
         assert_eq!(seen.len(), generators().len());
         assert!(generators().iter().all(|g| seen.contains(*g)));
-        // The schedule itself need not cover every generator, but it must not name one we
-        // cannot generate.
-        assert!(
-            default_schedule()
-                .iter()
-                .chain(test_schedule().iter())
-                .all(|p| generators().contains(&p.game_id.as_str()))
-        );
 
-        let mut unknown = default_schedule().remove(0);
+        let mut unknown = scheduled(MONDAY);
         unknown.game_id = "sudoku".to_string();
         assert!(generate(&unknown, 1).is_none());
-    }
-
-    #[test]
-    fn game_configs_default_for_every_generator() {
-        let d = data();
-        assert_eq!(d.game_configs.len(), generators().len());
-        for game_id in generators() {
-            assert_eq!(d.game_configs[*game_id], GameConfig::default());
-        }
+        assert!(forced_params("sudoku").is_none());
     }
 
     fn result(number: PuzzleNumber, user: u8) -> DailyPuzzleResult {
@@ -830,8 +784,13 @@ mod tests {
         UserId::from(Principal::from_slice(&[id]))
     }
 
+    /// The candidate pool of `number`'s rota game
     fn pool(d: &Data, number: PuzzleNumber) -> &Vec<Candidate> {
-        &d.candidates[&number][LU]
+        &d.candidates[&number][&scheduled(number).game_id]
+    }
+
+    fn shipped(d: &Data, number: PuzzleNumber) -> &DailyPuzzle {
+        &d.puzzles[&number][&scheduled(number).game_id]
     }
 
     #[test]
@@ -846,10 +805,10 @@ mod tests {
 
         let mut a = data();
         let mut b = data();
-        a.generate_candidate(100).unwrap();
-        b.generate_candidate(100).unwrap();
-        assert_eq!(pool(&a, 100)[0].puzzle.description, pool(&b, 100)[0].puzzle.description);
-        assert_eq!(pool(&a, 100)[0].puzzle.solution, pool(&b, 100)[0].puzzle.solution);
+        a.generate_candidate(MONDAY).unwrap();
+        b.generate_candidate(MONDAY).unwrap();
+        assert_eq!(pool(&a, MONDAY)[0].puzzle.description, pool(&b, MONDAY)[0].puzzle.description);
+        assert_eq!(pool(&a, MONDAY)[0].puzzle.solution, pool(&b, MONDAY)[0].puzzle.solution);
     }
 
     #[test]
@@ -860,8 +819,7 @@ mod tests {
         assert_eq!(weekday(10), 6);
         assert_eq!(weekday(11), 0);
 
-        let mut d = data();
-        d.schedule = default_schedule();
+        let d = data();
         assert_eq!(d.params_for(4).game_id, LU); // Monday
         assert_eq!(d.params_for(4).width, 7);
         assert_eq!(d.params_for(7).game_id, bridges::GAME_ID); // Thursday
@@ -869,62 +827,65 @@ mod tests {
         assert_eq!(d.params_for(9).tier, 1);
         assert_eq!(d.params_for(10).game_id, LU); // Sunday tricky
         assert_eq!(d.params_for(10).width, 10);
+        assert_eq!(weekday(MONDAY), 0);
+        assert_eq!(weekday(TUESDAY), 1);
     }
 
     #[test]
     fn ensure_puzzles_picks_first_non_vetoed_candidate() {
         let mut d = data();
-        let now = 100 * DAY_IN_MS + 1;
-        assert_eq!(d.generation_needed(now), Some(100));
-        d.generate_candidate(100).unwrap();
-        d.generate_candidate(100).unwrap();
-        d.generate_candidate(100).unwrap();
-        assert!(d.veto_candidate(100, LU, 0));
-        let expected = pool(&d, 100)[1].puzzle.description.clone();
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
+        assert_eq!(d.generation_needed(now), Some(MONDAY));
+        d.generate_candidate(MONDAY).unwrap();
+        d.generate_candidate(MONDAY).unwrap();
+        d.generate_candidate(MONDAY).unwrap();
+        assert!(d.veto_candidate(MONDAY, LU, 0));
+        let expected = pool(&d, MONDAY)[1].puzzle.description.clone();
 
         assert!(d.ensure_puzzles(now));
-        assert_eq!(d.puzzles[&100][LU].description, expected);
+        assert_eq!(shipped(&d, MONDAY).description, expected);
         assert_eq!(d.current_puzzles(now).len(), 1);
-        assert!(!d.candidates.contains_key(&100));
+        assert!(!d.candidates.contains_key(&MONDAY));
         // Tomorrow's pool is now the outstanding work
-        assert_eq!(d.generation_needed(now), Some(101));
+        assert_eq!(d.generation_needed(now), Some(TUESDAY));
     }
 
     #[test]
     fn ensure_puzzles_generates_new_candidate_when_all_vetoed() {
         let mut d = data();
-        let now = 100 * DAY_IN_MS + 1;
-        d.generate_candidate(100).unwrap();
-        assert!(d.veto_candidate(100, LU, 0));
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
+        d.generate_candidate(MONDAY).unwrap();
+        assert!(d.veto_candidate(MONDAY, LU, 0));
         assert!(!d.ensure_puzzles(now));
-        assert!(!d.puzzles.contains_key(&100));
+        assert!(!d.puzzles.contains_key(&MONDAY));
         assert!(d.current_puzzles(now).is_empty());
-        assert_eq!(d.generation_needed(now), Some(100));
+        assert_eq!(d.generation_needed(now), Some(MONDAY));
 
-        let index = d.generate_candidate(100).unwrap();
+        let index = d.generate_candidate(MONDAY).unwrap();
         assert_eq!(index, 1);
-        let expected = pool(&d, 100)[1].puzzle.description.clone();
+        let expected = pool(&d, MONDAY)[1].puzzle.description.clone();
         assert!(d.ensure_puzzles(now));
-        assert_eq!(d.puzzles[&100][LU].description, expected);
-        assert!(!d.candidates.contains_key(&100));
+        assert_eq!(shipped(&d, MONDAY).description, expected);
+        assert!(!d.candidates.contains_key(&MONDAY));
 
         // Tomorrow: a full pool, all vetoed, needs exactly one more
+        let tomorrow = tents::GAME_ID;
         for _ in 0..CANDIDATE_POOL_SIZE {
-            d.generate_candidate(101).unwrap();
+            d.generate_candidate(TUESDAY).unwrap();
         }
         assert_eq!(d.generation_needed(now), None);
         for i in 0..CANDIDATE_POOL_SIZE {
-            assert!(d.veto_candidate(101, LU, i as u8));
+            assert!(d.veto_candidate(TUESDAY, tomorrow, i as u8));
         }
-        assert_eq!(d.generation_needed(now), Some(101));
-        d.generate_candidate(101).unwrap();
+        assert_eq!(d.generation_needed(now), Some(TUESDAY));
+        d.generate_candidate(TUESDAY).unwrap();
         assert_eq!(d.generation_needed(now), None);
-        assert!(!d.veto_candidate(101, LU, 9));
-        assert!(!d.veto_candidate(101, "other", 0));
+        assert!(!d.veto_candidate(TUESDAY, tomorrow, 9));
+        assert!(!d.veto_candidate(TUESDAY, "other", 0));
 
-        let views = d.candidate_views(101);
+        let views = d.candidate_views(TUESDAY);
         assert_eq!(views.len(), 4);
-        assert!(views.iter().all(|v| v.game_id == LU));
+        assert!(views.iter().all(|v| v.game_id == tomorrow));
         assert_eq!(views.iter().filter(|v| v.vetoed).count(), 3);
     }
 
@@ -933,53 +894,48 @@ mod tests {
     #[test]
     fn candidate_pool_has_a_ceiling() {
         let mut d = data();
-        let now = 100 * DAY_IN_MS + 1;
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
         for i in 0..MAX_CANDIDATE_POOL {
-            assert_eq!(d.generation_needed(now), Some(100));
-            assert_eq!(d.generate_candidate(100).unwrap(), i as u8);
-            assert!(d.veto_candidate(100, LU, i as u8));
+            assert_eq!(d.generation_needed(now), Some(MONDAY));
+            assert_eq!(d.generate_candidate(MONDAY).unwrap(), i as u8);
+            assert!(d.veto_candidate(MONDAY, LU, i as u8));
         }
         // Today is given up on rather than generated forever; tomorrow still gets its pool
-        assert_eq!(d.generation_needed(now), Some(101));
-        assert_eq!(d.generate_candidate(100), Err(GenerationFailure::Permanent));
-        assert_eq!(pool(&d, 100).len(), MAX_CANDIDATE_POOL);
+        assert_eq!(d.generation_needed(now), Some(TUESDAY));
+        assert_eq!(d.generate_candidate(MONDAY), Err(GenerationFailure::Permanent));
+        assert_eq!(pool(&d, MONDAY).len(), MAX_CANDIDATE_POOL);
 
         // And the same ceiling on a future day, once its pool is full and all of it vetoed
-        while d.generation_needed(now) == Some(101) {
-            let index = d.generate_candidate(101).unwrap();
-            assert!(d.veto_candidate(101, LU, index));
+        while d.generation_needed(now) == Some(TUESDAY) {
+            let index = d.generate_candidate(TUESDAY).unwrap();
+            assert!(d.veto_candidate(TUESDAY, tents::GAME_ID, index));
         }
-        assert_eq!(pool(&d, 101).len(), MAX_CANDIDATE_POOL);
+        assert_eq!(pool(&d, TUESDAY).len(), MAX_CANDIDATE_POOL);
     }
 
     #[test]
-    fn two_game_schedule_generates_per_weekday() {
+    fn rota_generates_per_weekday() {
         let mut d = data();
-        // Monday 7x7, Tuesday 8x8: both light_up, different params per weekday
-        d.schedule[0].width = 7;
-        d.schedule[0].height = 7;
-        d.schedule[1].width = 8;
-        d.schedule[1].height = 8;
-        let monday = 102; // weekday(102) == 0
-        let tuesday = 103;
-        assert_eq!(weekday(monday), 0);
-        assert_eq!(weekday(tuesday), 1);
-
-        d.generate_candidate(monday).unwrap();
-        d.generate_candidate(tuesday).unwrap();
-        let mon = &pool(&d, monday)[0].puzzle;
-        let tue = &pool(&d, tuesday)[0].puzzle;
+        // Monday and Sunday are both light_up, at different sizes and tiers
+        let sunday = MONDAY + 6;
+        assert_eq!(weekday(sunday), 6);
+        d.generate_candidate(MONDAY).unwrap();
+        d.generate_candidate(sunday).unwrap();
+        let mon = &pool(&d, MONDAY)[0].puzzle;
+        let sun = &pool(&d, sunday)[0].puzzle;
         assert_eq!(mon.game_id, LU);
-        assert_eq!(tue.game_id, LU);
+        assert_eq!(sun.game_id, LU);
         assert_eq!(mon.description[1], 7);
-        assert_eq!(tue.description[1], 8);
+        assert_eq!(sun.description[1], 10);
+        assert_eq!(mon.tier, 0);
+        assert_eq!(sun.tier, 1);
 
-        let now = monday as u64 * DAY_IN_MS + 1;
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
         assert!(d.ensure_puzzles(now));
         assert_eq!(d.current_puzzles(now)[0].description[1], 7);
-        let now = tuesday as u64 * DAY_IN_MS + 1;
+        let now = sunday as u64 * DAY_IN_MS + 1;
         assert!(d.ensure_puzzles(now));
-        assert_eq!(d.current_puzzles(now)[0].description[1], 8);
+        assert_eq!(d.current_puzzles(now)[0].description[1], 10);
     }
 
     /// Simulates the generate_candidates timer callbacks until today's puzzle ships
@@ -995,32 +951,29 @@ mod tests {
     #[test]
     fn regenerate_today_forces_a_game_for_today_only() {
         let mut d = data();
-        d.schedule = default_schedule();
-        let monday = 102;
-        assert_eq!(weekday(monday), 0);
-        let now = monday as u64 * DAY_IN_MS + 1;
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
 
         run_generation(&mut d, now);
         assert_eq!(d.current_puzzles(now)[0].game_id, LU);
 
         d.regenerate_today(Some(tents::GAME_ID.to_string()), now).unwrap();
-        assert!(!d.puzzles.contains_key(&monday));
-        assert!(!d.candidates.contains_key(&monday));
-        assert_eq!(d.generation_needed(now), Some(monday));
+        assert!(!d.puzzles.contains_key(&MONDAY));
+        assert!(!d.candidates.contains_key(&MONDAY));
+        assert_eq!(d.generation_needed(now), Some(MONDAY));
 
         run_generation(&mut d, now);
         let current = d.current_puzzles(now);
         assert_eq!(current.len(), 1);
         assert_eq!(current[0].game_id, tents::GAME_ID);
         assert_eq!(current[0].description[1], 8); // Tuesday's tents entry
-        assert_eq!(current[0].number, monday);
-        assert!(!d.candidates.contains_key(&monday));
+        assert_eq!(current[0].number, MONDAY);
+        assert!(!d.candidates.contains_key(&MONDAY));
 
-        // Tomorrow still follows the schedule
-        assert_eq!(d.generation_needed(now), Some(monday + 1));
-        d.generate_candidate(monday + 1).unwrap();
-        assert_eq!(d.candidates[&(monday + 1)].keys().next().unwrap(), tents::GAME_ID);
-        assert_eq!(d.params_for(monday + 7).game_id, LU);
+        // Tomorrow still follows the rota
+        assert_eq!(d.generation_needed(now), Some(TUESDAY));
+        d.generate_candidate(TUESDAY).unwrap();
+        assert_eq!(d.candidates[&TUESDAY].keys().next().unwrap(), tents::GAME_ID);
+        assert_eq!(d.params_for(MONDAY + 7).game_id, LU);
 
         // The override goes with the day
         d.prune(now + DAY_IN_MS);
@@ -1053,65 +1006,26 @@ mod tests {
         assert_eq!(d.failures_for(100), 0);
     }
 
-    // "Takes effect from tomorrow" has to hold for the window between the rollover and today's
-    // puzzle shipping, which is exactly when an operator changing the schedule would not expect
-    // to be changing today.
-    #[test]
-    fn set_schedule_does_not_move_todays_game() {
-        let mut d = data();
-        let now = 100 * DAY_IN_MS + 1;
-        // Today has a candidate but has not shipped it yet
-        d.generate_candidate(100).unwrap();
-
-        let tents_params = forced_params(&[], tents::GAME_ID).unwrap();
-        d.set_schedule(vec![tents_params; 7], now);
-
-        assert_eq!(d.params_for(100).game_id, LU);
-        assert_eq!(d.params_for(101).game_id, tents::GAME_ID);
-        assert!(d.ensure_puzzles(now));
-        assert_eq!(d.current_puzzles(now)[0].game_id, LU);
-
-        // Tomorrow is the new game, and the day after the pin has gone
-        run_generation(&mut d, now + DAY_IN_MS);
-        assert_eq!(d.current_puzzles(now + DAY_IN_MS)[0].game_id, tents::GAME_ID);
-        assert!(d.regeneration.is_none());
-    }
-
-    // A regeneration is an explicit instruction about today, so a schedule change must not
-    // quietly replace it
-    #[test]
-    fn set_schedule_leaves_an_active_regeneration_alone() {
-        let mut d = data();
-        let now = 100 * DAY_IN_MS + 1;
-        d.regenerate_today(Some(loopy::GAME_ID.to_string()), now).unwrap();
-
-        let tents_params = forced_params(&[], tents::GAME_ID).unwrap();
-        d.set_schedule(vec![tents_params; 7], now);
-
-        assert_eq!(d.params_for(100).game_id, loopy::GAME_ID);
-        assert_eq!(d.regeneration.as_ref().unwrap().attempt, 1);
-    }
-
     #[test]
     fn regenerate_today_replaces_same_game_with_a_different_puzzle() {
         let mut d = data();
-        let now = 100 * DAY_IN_MS + 1;
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
         run_generation(&mut d, now);
-        let first = d.puzzles[&100][LU].description.clone();
+        let first = shipped(&d, MONDAY).description.clone();
 
         d.regenerate_today(None, now).unwrap();
         run_generation(&mut d, now);
-        let second = d.puzzles[&100][LU].description.clone();
+        let second = shipped(&d, MONDAY).description.clone();
         assert_ne!(first, second);
         assert_eq!(d.regeneration.as_ref().unwrap().attempt, 1);
 
         d.regenerate_today(None, now).unwrap();
         run_generation(&mut d, now);
-        let third = d.puzzles[&100][LU].description.clone();
+        let third = shipped(&d, MONDAY).description.clone();
         assert_ne!(second, third);
         assert_eq!(d.regeneration.as_ref().unwrap().attempt, 2);
 
-        // A game that isn't in the schedule at all gets the default params
+        // A game the rota doesn't name gets its default params
         d.regenerate_today(Some(loopy::GAME_ID.to_string()), now).unwrap();
         run_generation(&mut d, now);
         let current = d.current_puzzles(now);
@@ -1121,36 +1035,65 @@ mod tests {
         assert!(d.regenerate_today(Some("sudoku".to_string()), now).is_err());
     }
 
+    // #9357 invariants 1 and 2. `enabled` is the only value `set_enabled` moves, and every puzzle
+    // and candidate held is restamped with this build's constants, both on the flag flip and on
+    // the upgrade path (`ensure_puzzles`), so a release that changes a number reaches the local
+    // user indexes on the next push with no operator call.
     #[test]
-    fn puzzles_carry_config_and_game_config() {
+    fn puzzles_carry_the_constant_config_and_the_enabled_flag() {
         let mut d = data();
-        let now = 100 * DAY_IN_MS + 1;
-        d.generate_candidate(100).unwrap();
-        d.generate_candidate(101).unwrap();
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
+        d.generate_candidate(MONDAY).unwrap();
+        d.generate_candidate(TUESDAY).unwrap();
         d.ensure_puzzles(now);
 
-        let config = DailyPuzzleConfig {
+        let constants = DailyPuzzleConfig::default();
+        assert!(!constants.enabled);
+        assert_eq!(shipped(&d, MONDAY).config, constants);
+        assert_eq!(pool(&d, TUESDAY)[0].puzzle.config, constants);
+        assert_eq!(shipped(&d, MONDAY).game_config, GameConfig::default());
+
+        d.set_enabled(true);
+        let enabled = DailyPuzzleConfig {
             enabled: true,
-            ..Default::default()
+            ..constants.clone()
         };
-        d.set_config(config.clone());
-        assert_eq!(d.puzzles[&100][LU].config, config);
-        assert_eq!(pool(&d, 101)[0].puzzle.config, config);
+        assert_eq!(d.config(), enabled);
+        assert_eq!(shipped(&d, MONDAY).config, enabled);
+        assert_eq!(pool(&d, TUESDAY)[0].puzzle.config, enabled);
+        assert!(shipped(&d, MONDAY).public().enabled);
 
-        let game_config = GameConfig {
-            hint_prices: vec![5, 10],
-            max_hints: 2,
+        // New candidates pick up the current flag
+        d.generate_candidate(TUESDAY).unwrap();
+        assert_eq!(pool(&d, TUESDAY)[1].puzzle.config, enabled);
+
+        // A puzzle generated under an older build's numbers is brought up to this build's by
+        // the ship step every push path runs through, not by a call something has to remember
+        let stale = DailyPuzzleConfig {
+            entry_fee: 1,
+            reward_by_streak: vec![1],
+            ..enabled.clone()
         };
-        d.set_game_config(LU.to_string(), game_config.clone()).unwrap();
-        assert_eq!(d.puzzles[&100][LU].game_config, game_config);
-        assert_eq!(pool(&d, 101)[0].puzzle.game_config, game_config);
-        assert_eq!(d.game_config_for(LU), game_config);
-        assert_eq!(d.game_config_for("other"), GameConfig::default());
+        d.puzzles.get_mut(&MONDAY).unwrap().get_mut(LU).unwrap().config = stale.clone();
+        d.candidates.get_mut(&TUESDAY).unwrap().get_mut(tents::GAME_ID).unwrap()[0]
+            .puzzle
+            .config = stale;
+        d.puzzles
+            .get_mut(&MONDAY)
+            .unwrap()
+            .get_mut(LU)
+            .unwrap()
+            .game_config
+            .hint_prices = vec![1];
+        assert!(!d.ensure_puzzles(now), "nothing to promote, only to restamp");
+        assert_eq!(shipped(&d, MONDAY).config, enabled);
+        assert_eq!(pool(&d, TUESDAY)[0].puzzle.config, enabled);
+        assert_eq!(shipped(&d, MONDAY).game_config, GameConfig::default());
+        assert_eq!(shipped(&d, MONDAY).public().hint_prices, GameConfig::default().hint_prices);
 
-        // New candidates pick up the current game config
-        d.generate_candidate(101).unwrap();
-        assert_eq!(pool(&d, 101)[1].puzzle.game_config, game_config);
-        assert_eq!(d.puzzles[&100][LU].public().hint_prices, vec![5, 10]);
+        d.set_enabled(false);
+        assert!(!shipped(&d, MONDAY).config.enabled);
+        assert!(!pool(&d, TUESDAY)[1].puzzle.config.enabled);
     }
 
     #[test]
@@ -1185,9 +1128,46 @@ mod tests {
         assert_eq!(aggregates[1].solves, 1);
     }
 
+    /// The most a daily claim pays, at a 365-day streak. Mirrors `chit_for_streak` in the user
+    /// canister's `claim_daily_chit`.
+    const MAX_DAILY_CLAIM: u32 = 1000;
+
+    // #9357 acceptance: the launch numbers are constants, and the checks that used to guard the
+    // setters hold over them. Solve rewards stay below the daily claim, so the puzzle is a
+    // supplement to that habit and not a replacement; the entry fee stays below the streak-zero
+    // reward, so a first solve is never a net loss; and the entry fee plus three full hints
+    // costs more than the top reward, so hinting all the way through never pays.
     #[test]
-    fn config_and_schedule_validation() {
-        assert!(validate_config(&DailyPuzzleConfig::default()).is_ok());
+    fn launch_numbers_are_constants_that_pass_the_config_checks() {
+        let config = DailyPuzzleConfig::default();
+        let game_config = GameConfig::default();
+        validate_config(&config).unwrap();
+        validate_game_config(&game_config).unwrap();
+        validate_schedule(&schedule()).unwrap();
+
+        let max_reward = *config.reward_by_streak.iter().max().unwrap();
+        assert!(max_reward < MAX_DAILY_CLAIM, "{max_reward} vs {MAX_DAILY_CLAIM}");
+        assert!(config.entry_fee < config.reward_by_streak[0]);
+        let full_hint = *game_config.hint_prices.last().unwrap();
+        assert!(config.entry_fee + 3 * full_hint > max_reward);
+        assert_eq!(game_config.max_hints, 3);
+
+        // What the canister serves is exactly these, plus the flag
+        let mut d = data();
+        assert_eq!(d.config(), config);
+        d.set_enabled(true);
+        assert_eq!(
+            d.config(),
+            DailyPuzzleConfig {
+                enabled: true,
+                ..config.clone()
+            }
+        );
+    }
+
+    // The checks above must still bite, or passing them proves nothing
+    #[test]
+    fn config_checks_reject_bad_numbers() {
         let config = DailyPuzzleConfig {
             reward_by_streak: vec![],
             ..Default::default()
@@ -1198,112 +1178,152 @@ mod tests {
             ..Default::default()
         };
         assert!(validate_config(&config).is_err());
+        let config = DailyPuzzleConfig {
+            entry_fee: 100_001,
+            ..Default::default()
+        };
+        assert!(validate_config(&config).is_err());
 
-        assert!(validate_game_config(&GameConfig::default()).is_ok());
-        let game_config = GameConfig {
-            hint_prices: vec![],
-            ..Default::default()
-        };
-        assert!(validate_game_config(&game_config).is_err());
-        let game_config = GameConfig {
-            hint_prices: vec![0, 1, 2, 3],
-            ..Default::default()
-        };
-        assert!(validate_game_config(&game_config).is_err());
         // Upgrades are priced at the difference, so a flat or descending table hands over the
-        // conclusions for nothing
-        for prices in [vec![200, 75, 25], vec![100, 100, 100], vec![25, 75, 75]] {
+        // conclusions for nothing; a free level 1 is unmetered in CHIT and in free checks
+        for prices in [
+            vec![],
+            vec![0, 1, 2, 3],
+            vec![200, 75, 25],
+            vec![100, 100, 100],
+            vec![0, 1, 2],
+        ] {
             let game_config = GameConfig {
                 hint_prices: prices,
                 ..Default::default()
             };
             assert!(validate_game_config(&game_config).is_err());
         }
-        // Every level costs: a free level 1 is unmetered in CHIT and in free checks
-        let game_config = GameConfig {
-            hint_prices: vec![0, 1, 2],
-            ..Default::default()
-        };
-        assert!(validate_game_config(&game_config).is_err());
-        let game_config = GameConfig {
-            hint_prices: vec![1, 2, 3],
-            ..Default::default()
-        };
-        assert!(validate_game_config(&game_config).is_ok());
-        let game_config = GameConfig {
-            max_hints: 0,
-            ..Default::default()
-        };
-        assert!(validate_game_config(&game_config).is_err());
-        let game_config = GameConfig {
-            max_hints: 11,
-            ..Default::default()
-        };
-        assert!(validate_game_config(&game_config).is_err());
+        for max_hints in [0, 11] {
+            let game_config = GameConfig {
+                max_hints,
+                ..Default::default()
+            };
+            assert!(validate_game_config(&game_config).is_err());
+        }
 
-        assert!(validate_schedule(&default_schedule()).is_ok());
-        assert!(validate_schedule(&test_schedule()).is_ok());
-        assert!(validate_schedule(&default_schedule()[..6]).is_err());
-        let mut schedule = default_schedule();
-        schedule[0].width = 4;
-        assert!(validate_schedule(&schedule).is_err());
-        let mut schedule = default_schedule();
-        schedule[0].height = 15;
-        assert!(validate_schedule(&schedule).is_err());
-        let mut schedule = default_schedule();
-        schedule[0].tier = 2;
-        assert!(validate_schedule(&schedule).is_err());
-        let mut schedule = default_schedule();
-        schedule[0].black_pct = 61;
-        assert!(validate_schedule(&schedule).is_err());
+        assert!(validate_schedule(&schedule()[..6]).is_err());
+        for (i, mutate) in [
+            (
+                0,
+                Box::new(|p: &mut PuzzleParams| p.width = 4) as Box<dyn Fn(&mut PuzzleParams)>,
+            ),
+            (0, Box::new(|p: &mut PuzzleParams| p.height = 15)),
+            (0, Box::new(|p: &mut PuzzleParams| p.tier = 2)),
+            (0, Box::new(|p: &mut PuzzleParams| p.black_pct = 61)),
+            (3, Box::new(|p: &mut PuzzleParams| p.game_id = "sudoku".to_string())),
+            (4, Box::new(|p: &mut PuzzleParams| p.width = 7)),
+        ] {
+            let mut schedule = schedule();
+            mutate(&mut schedule[i]);
+            let error = validate_schedule(&schedule).unwrap_err();
+            assert!(error.contains(&format!("entry {i}")), "{error}");
+        }
         // black_pct is a light_up knob; other games accept any value
-        let mut schedule = default_schedule();
+        let mut schedule = schedule();
         schedule[1].black_pct = 0;
         schedule[2].black_pct = 255;
         assert!(validate_schedule(&schedule).is_ok());
     }
 
     #[test]
-    fn schedule_with_unknown_game_id_is_rejected() {
-        let mut schedule = default_schedule();
-        schedule[3].game_id = "sudoku".to_string();
-        let error = validate_schedule(&schedule).unwrap_err();
-        assert!(error.contains("entry 3"), "{error}");
-        assert!(error.contains("sudoku"), "{error}");
-
-        // And the generator refuses it too, rather than producing a light_up puzzle
-        let mut d = data();
-        d.schedule[weekday(100)].game_id = "sudoku".to_string();
-        assert_eq!(d.generate_candidate(100), Err(GenerationFailure::Permanent));
-        assert!(d.candidates.is_empty());
-    }
-
-    #[test]
     fn data_round_trips_through_msgpack() {
         let mut d = data();
-        let now = 100 * DAY_IN_MS + 1;
-        d.generate_candidate(100).unwrap();
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
+        d.generate_candidate(MONDAY).unwrap();
         d.ensure_puzzles(now);
-        d.generate_candidate(101).unwrap();
-        d.veto_candidate(101, LU, 0);
-        d.upsert_results(vec![result(100, 1), result(99, 2)], now);
+        d.generate_candidate(TUESDAY).unwrap();
+        d.veto_candidate(TUESDAY, tents::GAME_ID, 0);
+        d.upsert_results(vec![result(MONDAY, 1), result(MONDAY - 1, 2)], now);
         d.local_user_indexes.insert(Principal::from_slice(&[7]));
         d.pending_pushes.insert(Principal::from_slice(&[7]));
+        d.set_enabled(true);
 
         let bytes = msgpack::serialize_to_vec(&d).unwrap();
         let restored: Data = msgpack::deserialize(bytes.as_slice()).unwrap();
 
         assert_eq!(restored.master_seed, d.master_seed);
-        assert_eq!(restored.puzzles[&100][LU].description, d.puzzles[&100][LU].description);
-        assert_eq!(restored.puzzles[&100][LU].hints, d.puzzles[&100][LU].hints);
-        assert_eq!(restored.puzzles[&100][LU].game_config, d.puzzles[&100][LU].game_config);
-        assert!(pool(&restored, 101)[0].vetoed);
+        assert!(restored.enabled);
+        assert_eq!(shipped(&restored, MONDAY).description, shipped(&d, MONDAY).description);
+        assert_eq!(shipped(&restored, MONDAY).hints, shipped(&d, MONDAY).hints);
+        assert_eq!(shipped(&restored, MONDAY).game_config, shipped(&d, MONDAY).game_config);
+        assert!(pool(&restored, TUESDAY)[0].vetoed);
         assert_eq!(restored.results.len(), 2);
-        assert_eq!(restored.results[&(100, LU.to_string(), user(1))], result(100, 1));
+        assert_eq!(restored.results[&(MONDAY, LU.to_string(), user(1))], result(MONDAY, 1));
         assert_eq!(restored.local_user_indexes, d.local_user_indexes);
         assert_eq!(restored.pending_pushes, d.pending_pushes);
-        assert_eq!(restored.schedule, d.schedule);
-        assert_eq!(restored.game_configs, d.game_configs);
+    }
+
+    // A pre-#9357 build stored the whole config, the game configs and the schedule. The flag is
+    // read out of the stored config so the upgrade does not switch the game off; the rest is
+    // dropped in favour of this build's constants.
+    #[test]
+    fn legacy_state_keeps_its_enabled_flag_and_drops_the_rest() {
+        #[derive(Serialize)]
+        struct Legacy {
+            registry_canister_id: CanisterId,
+            user_index_canister_id: CanisterId,
+            cycles_dispenser_canister_id: CanisterId,
+            rng_seed: [u8; 32],
+            master_seed: u64,
+            config: DailyPuzzleConfig,
+            game_configs: BTreeMap<GameId, GameConfig>,
+            schedule: Vec<PuzzleParams>,
+            puzzles: BTreeMap<PuzzleNumber, BTreeMap<GameId, DailyPuzzle>>,
+            candidates: BTreeMap<PuzzleNumber, BTreeMap<GameId, Vec<Candidate>>>,
+            results: BTreeMap<(PuzzleNumber, GameId, UserId), DailyPuzzleResult>,
+            local_user_indexes: HashSet<CanisterId>,
+            pending_pushes: HashSet<CanisterId>,
+            last_registry_refresh: TimestampMillis,
+            test_mode: bool,
+        }
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
+        let mut held = data();
+        held.generate_candidate(MONDAY).unwrap();
+        held.ensure_puzzles(now);
+        let mut stale = shipped(&held, MONDAY).clone();
+        stale.config.entry_fee = 1;
+        stale.game_config.hint_prices = vec![1];
+        let legacy = |enabled| Legacy {
+            registry_canister_id: Principal::anonymous(),
+            user_index_canister_id: Principal::anonymous(),
+            cycles_dispenser_canister_id: Principal::anonymous(),
+            rng_seed: [1; 32],
+            master_seed: 9,
+            config: DailyPuzzleConfig {
+                enabled,
+                entry_fee: 1,
+                ..Default::default()
+            },
+            game_configs: BTreeMap::new(),
+            schedule: vec![scheduled(MONDAY); 7],
+            puzzles: BTreeMap::from([(MONDAY, BTreeMap::from([(LU.to_string(), stale.clone())]))]),
+            candidates: BTreeMap::new(),
+            results: BTreeMap::new(),
+            local_user_indexes: HashSet::new(),
+            pending_pushes: HashSet::new(),
+            last_registry_refresh: 0,
+            test_mode: true,
+        };
+        for enabled in [true, false] {
+            let bytes = msgpack::serialize_to_vec(legacy(enabled)).unwrap();
+            let mut restored: Data = msgpack::deserialize(bytes.as_slice()).unwrap();
+            assert_eq!(restored.enabled, enabled);
+            assert_eq!(restored.master_seed, 9);
+            assert_eq!(restored.config().entry_fee, DailyPuzzleConfig::default().entry_fee);
+            // The held puzzle carries the old build's numbers until the upgrade's ship step runs,
+            // which `init_state` does before its push
+            assert_eq!(shipped(&restored, MONDAY).config.entry_fee, 1);
+            restored.ensure_puzzles(now);
+            assert_eq!(shipped(&restored, MONDAY).config, restored.config());
+            assert_eq!(shipped(&restored, MONDAY).config.enabled, enabled);
+            assert_eq!(shipped(&restored, MONDAY).game_config, GameConfig::default());
+        }
     }
 
     #[test]
@@ -1317,24 +1337,12 @@ mod tests {
         assert_eq!(*d.puzzles.keys().next().unwrap(), 20 - PUZZLES_TO_KEEP as u32);
     }
 
-    // #9332 invariant 36. The schedule setter already refuses a game with no generator; the game
-    // config setter took anything and stored it under a key nothing would ever read.
-    #[test]
-    fn set_game_config_with_unknown_game_id_is_rejected() {
-        let mut d = data();
-        let before = d.game_configs.clone();
-        let error = d.set_game_config("sudoku".to_string(), GameConfig::default()).unwrap_err();
-        assert!(error.contains("unknown game_id"), "{error}");
-        assert_eq!(d.game_configs, before);
-        assert!(d.set_game_config(LU.to_string(), GameConfig::default()).is_ok());
-    }
-
     // #9332 invariant 34. A day that has used up its generation attempts answered
     // `generation_needed` first, forever, so tomorrow's pool was never built either. And the
     // count survived a `regenerate_today`, so a day that had given up got one seed per
     // regeneration and gave up again.
     #[test]
-    fn an_exhausted_day_is_skipped_and_gets_a_fresh_run_on_regenerate_or_reschedule() {
+    fn an_exhausted_day_is_skipped_and_gets_a_fresh_run_on_regenerate() {
         let mut d = data();
         let now = 100 * DAY_IN_MS + 1;
         assert_eq!(d.generation_needed(now), Some(100));
@@ -1351,76 +1359,9 @@ mod tests {
         assert_eq!(d.failures_for(100), 0);
         assert_eq!(d.generation_needed(now), Some(100));
 
-        // Tomorrow exhausted too, then the schedule changes: tomorrow is a new game or new
-        // parameters, so it gets its attempts back; today keeps its count
+        // Both exhausted: nothing to do until a regeneration or the rollover
         while d.record_generation_failure(100) {}
         while d.record_generation_failure(101) {}
         assert_eq!(d.generation_needed(now), None);
-        let tents_params = forced_params(&[], tents::GAME_ID).unwrap();
-        d.set_schedule(vec![tents_params; 7], now);
-        assert_eq!(d.failures_for(101), 0);
-        assert_eq!(d.failures_for(100), MAX_GENERATION_FAILURES);
-        assert_eq!(d.generation_needed(now), Some(101));
-    }
-
-    // #9332 invariant 37. The client's rule checkers must agree with the Rust `check_rules` on
-    // every finished grid. This keeps a fixture of generated puzzles and solutions that the
-    // client spec `dailyGames/parity.spec.ts` replays through each TypeScript checker: the
-    // solution must pass, and every single-cell change to it must fail. Run with
-    // `WRITE_PARITY_FIXTURE=1` to regenerate the fixture; without it the test fails if the
-    // checked-in fixture no longer matches what these generators produce.
-    #[test]
-    fn client_parity_fixture_is_current() {
-        fn hex(bytes: &[u8]) -> String {
-            bytes.iter().map(|b| format!("{b:02x}")).collect()
-        }
-        let mut entries = Vec::new();
-        for game_id in generators() {
-            let params = forced_params(&[], game_id).unwrap();
-            let mut seed = 0;
-            let mut kept = 0;
-            while kept < 4 {
-                seed += 1;
-                assert!(seed < 100, "{game_id} would not generate four puzzles");
-                let Some(Ok(generated)) = generate(&params, seed) else {
-                    continue;
-                };
-                // The fixture carries a Rust `check_rules` verdict, not just the solver's output
-                let verdict = match *game_id {
-                    light_up::GAME_ID => light_up::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
-                    tents::GAME_ID => tents::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
-                    slant::GAME_ID => slant::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
-                    bridges::GAME_ID => bridges::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
-                    loopy::GAME_ID => loopy::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
-                    unruly::GAME_ID => unruly::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
-                    other => panic!("no check_rules for {other}"),
-                };
-                assert!(
-                    matches!(verdict, Ok(0)),
-                    "{game_id} seed {seed}: check_rules rejects the solution: {verdict:?}"
-                );
-                kept += 1;
-                entries.push(format!(
-                    "  {{ \"gameId\": \"{game_id}\", \"seed\": {seed}, \"description\": \"{}\", \"solution\": \"{}\" }}",
-                    hex(&generated.description),
-                    hex(&generated.solution)
-                ));
-            }
-        }
-        let json = format!("[\n{}\n]\n", entries.join(",\n"));
-        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../../frontend/openchat-shared/src/utils/dailyGames/parity.json");
-        if std::env::var("WRITE_PARITY_FIXTURE").is_ok() {
-            std::fs::write(&path, &json).unwrap();
-            return;
-        }
-        // Prettier reflows the file, so compare the content, not the layout
-        let strip = |s: &str| s.chars().filter(|c| !c.is_whitespace()).collect::<String>();
-        let current = std::fs::read_to_string(&path).unwrap_or_default();
-        assert_eq!(
-            strip(&current),
-            strip(&json),
-            "parity.json is stale: run WRITE_PARITY_FIXTURE=1 cargo test -p daily_puzzle_canister_impl client_parity_fixture_is_current"
-        );
     }
 }

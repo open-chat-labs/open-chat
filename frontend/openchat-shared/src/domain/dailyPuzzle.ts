@@ -65,7 +65,10 @@ export type DailyPuzzleUserState = {
     entryFee: number;
 };
 
-/** Series-level tuning as held by the daily_puzzle canister; mirrors the Rust `DailyPuzzleConfig`. */
+/**
+ * Series-level tuning as held by the daily_puzzle canister; mirrors the Rust `DailyPuzzleConfig`.
+ * Read-only from the app: `enabled` is the one field an operator sets, the rest change by release.
+ */
 export type DailyPuzzleConfig = {
     enabled: boolean;
     entryFee: number;
@@ -75,12 +78,6 @@ export type DailyPuzzleConfig = {
     minCardedSolveMs: bigint;
     maxSubmits: number;
     maxFreeChecks: number;
-};
-
-/** Per-game tuning; mirrors the Rust `GameConfig`. */
-export type GameConfig = {
-    hintPrices: number[];
-    maxHints: number;
 };
 
 export type DailyPuzzleResult = {

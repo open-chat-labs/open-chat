@@ -6,5 +6,5 @@ use daily_puzzle_canister::config::{Response::*, *};
 #[query(candid = true, msgpack = true)]
 #[trace]
 fn config(_args: Args) -> Response {
-    read_state(|state| Success(state.data.config.clone()))
+    read_state(|state| Success(state.data.config()))
 }

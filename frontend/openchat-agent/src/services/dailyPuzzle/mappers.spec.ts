@@ -1,5 +1,4 @@
 import {
-    apiDailyPuzzleConfig,
     dailyPuzzleConfig,
     dailyPuzzleConfigResponse,
     dailyPuzzleHintResponse,
@@ -117,32 +116,31 @@ describe("daily puzzle mappers", () => {
 });
 
 describe("daily puzzle operator config mappers", () => {
+    // Every field off its default, so a dropped or reset one would show
     const config = {
         enabled: true,
-        entryFee: 123,
-        firstPlayFree: false,
-        rewardByStreak: [1, 2, 3],
-        hintPenalty: 77,
-        minCardedSolveMs: BigInt(12_345),
-        maxSubmits: 9,
-        maxFreeChecks: 11,
+        entry_fee: 123,
+        first_play_free: false,
+        reward_by_streak: [1, 2, 3],
+        hint_penalty: 77,
+        min_carded_solve_ms: BigInt(12_345),
+        max_submits: 9,
+        max_free_checks: 11,
     };
 
-    test("series config maps both ways without losing a field", () => {
-        expect(apiDailyPuzzleConfig(config)).toEqual({
+    test("series config maps without losing a field", () => {
+        const expected = {
             enabled: true,
-            entry_fee: 123,
-            first_play_free: false,
-            reward_by_streak: [1, 2, 3],
-            hint_penalty: 77,
-            min_carded_solve_ms: BigInt(12_345),
-            max_submits: 9,
-            max_free_checks: 11,
-        });
-        expect(dailyPuzzleConfig(apiDailyPuzzleConfig(config))).toEqual(config);
-        expect(dailyPuzzleConfigResponse({ Success: apiDailyPuzzleConfig(config) })).toEqual(
-            config,
-        );
+            entryFee: 123,
+            firstPlayFree: false,
+            rewardByStreak: [1, 2, 3],
+            hintPenalty: 77,
+            minCardedSolveMs: BigInt(12_345),
+            maxSubmits: 9,
+            maxFreeChecks: 11,
+        };
+        expect(dailyPuzzleConfig(config)).toEqual(expected);
+        expect(dailyPuzzleConfigResponse({ Success: config })).toEqual(expected);
     });
 
     test("a refusal comes through as the error, not a value", () => {
