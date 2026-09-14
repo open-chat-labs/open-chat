@@ -56,10 +56,12 @@ describe("daily puzzle locales (#9362)", () => {
             expect(broken.map(([k]) => k)).toEqual([]);
         });
 
-        // invariant 3
-        test(`${code} technique sentences are translated, not copied`, () => {
+        // invariant 3, widened to the rules and demo captions: every puzzle-logic sentence
+        test(`${code} puzzle sentences are translated, not copied`, () => {
             const copied = [...english].filter(
-                ([k, v]) => k.includes(".technique.") && local.get(k) === v,
+                ([k, v]) =>
+                    (k.includes(".technique.") || k.includes(".demo.") || k.endsWith(".rules")) &&
+                    local.get(k) === v,
             );
             expect(copied.map(([k]) => k)).toEqual([]);
         });
