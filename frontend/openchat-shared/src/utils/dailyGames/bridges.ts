@@ -436,10 +436,19 @@ export const bridges: DailyGame<BridgesDescription, BridgesState> = {
     solved: isSolved,
     toBytes: toGridBytes,
     fromBytes: fromGridBytes,
-    marks(_desc, state) {
+    // An explicit "no bridge" stays in state (it is what `filled()` sends) but is not drawn
+    // while an edge crossing it carries a bridge: the bridge already rules it out, and the mark
+    // sits in the bridge's own cell where it reads as a mark on the bridge (#9374).
+    marks(desc, state) {
         const out = new Map<number, string>();
         for (const [key, c] of state) {
-            out.set(key, c === 0 ? "none" : c === 1 ? "one" : "two");
+            if (c === 0) {
+                const e = edgeByKey(desc, key);
+                if (e !== undefined && e.crossings.some((k) => count(state, k) > 0)) continue;
+                out.set(key, "none");
+            } else {
+                out.set(key, c === 1 ? "one" : "two");
+            }
         }
         return out;
     },

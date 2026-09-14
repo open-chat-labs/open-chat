@@ -452,3 +452,27 @@ describe("bridgesHitShapes", () => {
         }
     });
 });
+
+// #9374: a no-bridge mark is not drawn under a crossing bridge, but the decision stays
+describe("no-bridge marks under a crossing bridge", () => {
+    test("marks() drops the mark while the crossing edge has a bridge, and keeps the state", () => {
+        // . 1 . / 1 . 1 / . 1 .: edge 3 -> 5 (key 6) and edge 1 -> 7 (key 3) cross at cell 4
+        const d = desc([".1.", "1.1", ".1."]);
+        let st: BridgesState = new Map();
+        // cycle the vertical edge to an explicit zero
+        st = bridges.tap(d, bridges.tap(d, bridges.tap(d, st, 3), 3), 3);
+        expect(st.get(3)).toBe(0);
+        expect(bridges.marks(d, st).get(3)).toBe("none");
+        // a bridge on the crossing edge hides it; state and filled() are unchanged
+        st = bridges.tap(d, st, 6);
+        expect(bridges.marks(d, st).has(3)).toBe(false);
+        expect(bridges.marks(d, st).get(6)).toBe("one");
+        expect(st.get(3)).toBe(0);
+        expect(bridges.filled(d, st)).toContainEqual([3, 0]);
+        // and it is back once the bridge is gone
+        st = bridges.tap(d, bridges.tap(d, st, 6), 6);
+        expect(st.get(6)).toBe(0);
+        expect(bridges.marks(d, st).get(3)).toBe("none");
+        expect(bridges.marks(d, st).get(6)).toBe("none");
+    });
+});

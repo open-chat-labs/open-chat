@@ -101,7 +101,25 @@
                 />
             {/each}
         {:else if mark === "none"}
-            <circle cx={c.cx} cy={c.cy} r="0.8" fill="#9a9a9a" pointer-events="none" />
+            <!-- a small cross: the player's own "no bridge" decision -->
+            <line
+                x1={c.cx - 1}
+                y1={c.cy - 1}
+                x2={c.cx + 1}
+                y2={c.cy + 1}
+                stroke="#9a9a9a"
+                stroke-width="0.5"
+                pointer-events="none"
+            />
+            <line
+                x1={c.cx - 1}
+                y1={c.cy + 1}
+                x2={c.cx + 1}
+                y2={c.cy - 1}
+                stroke="#9a9a9a"
+                stroke-width="0.5"
+                pointer-events="none"
+            />
         {/if}
     {/each}
     {#each islands as el (el.key)}
