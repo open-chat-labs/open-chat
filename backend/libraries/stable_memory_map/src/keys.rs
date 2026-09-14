@@ -10,6 +10,7 @@ mod last_updated;
 mod macros;
 mod message_id;
 mod principal;
+mod search_index;
 mod storage;
 mod user_id;
 mod user_metrics;
@@ -20,6 +21,7 @@ pub use expiring_event::*;
 pub use last_updated::*;
 pub use message_id::*;
 pub use principal::*;
+pub use search_index::*;
 pub use storage::*;
 pub use user_id::*;
 pub use user_metrics::*;
@@ -128,6 +130,12 @@ pub enum KeyType {
     DirectChatUserMetrics = 32,
     GroupChatUserMetrics = 33,
     ChannelUserMetrics = 34,
+    DirectChatSearchToken = 35,
+    GroupChatSearchToken = 36,
+    ChannelSearchToken = 37,
+    DirectChatSearchSender = 38,
+    GroupChatSearchSender = 39,
+    ChannelSearchSender = 40,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -183,7 +191,13 @@ impl KeyType {
             | KeyType::ChannelEventsByLastUpdated
             | KeyType::DirectChatUserMetrics
             | KeyType::GroupChatUserMetrics
-            | KeyType::ChannelUserMetrics => MapClass::SmallEntries,
+            | KeyType::ChannelUserMetrics
+            | KeyType::DirectChatSearchToken
+            | KeyType::GroupChatSearchToken
+            | KeyType::ChannelSearchToken
+            | KeyType::DirectChatSearchSender
+            | KeyType::GroupChatSearchSender
+            | KeyType::ChannelSearchSender => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -248,6 +262,12 @@ impl TryFrom<u8> for KeyType {
             32 => Ok(KeyType::DirectChatUserMetrics),
             33 => Ok(KeyType::GroupChatUserMetrics),
             34 => Ok(KeyType::ChannelUserMetrics),
+            35 => Ok(KeyType::DirectChatSearchToken),
+            36 => Ok(KeyType::GroupChatSearchToken),
+            37 => Ok(KeyType::ChannelSearchToken),
+            38 => Ok(KeyType::DirectChatSearchSender),
+            39 => Ok(KeyType::GroupChatSearchSender),
+            40 => Ok(KeyType::ChannelSearchSender),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

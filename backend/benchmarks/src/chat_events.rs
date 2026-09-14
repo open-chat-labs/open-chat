@@ -5,7 +5,8 @@ use chat_events::{
 };
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-use types::{ChannelId, Chat, EventIndex, MessageId, MultiUserChat, Reaction, TimestampMillis};
+use std::collections::HashSet;
+use types::{ChannelId, Chat, EventIndex, MessageId, MessageIndex, MultiUserChat, Reaction, TimestampMillis};
 
 #[bench(raw)]
 fn push_simple_text_messages() -> BenchResult {
@@ -149,6 +150,78 @@ fn migrate_imported_user_metrics() -> BenchResult {
 
     bench_fn(|| {
         chat_events.migrate_to_stable_memory(usize::MAX);
+    })
+}
+
+// Runs a mix of searches over a group containing 10,000 messages, each made up of words drawn from
+// a small vocabulary plus some Chinese text
+#[bench(raw)]
+fn search_messages() -> BenchResult {
+    let memory = MemoryManager::init(DefaultMemoryImpl::default());
+    stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+
+    const WORDS: [&str; 16] = [
+        "hello",
+        "world",
+        "open",
+        "chat",
+        "community",
+        "proposal",
+        "token",
+        "swap",
+        "price",
+        "moon",
+        "great",
+        "news",
+        "today",
+        "tomorrow",
+        "東京",
+        "明天见",
+    ];
+
+    let start = 1700000000000;
+    let mut chat_events = ChatEvents::new_group_chat(
+        MultiUserChat::Group(canister_id_from_u64(1).into()),
+        "abc".to_string(),
+        "xyz".to_string(),
+        canister_id_from_u64(2).into(),
+        None,
+        u128::MAX,
+        start,
+    );
+
+    for i in 0..10_000u64 {
+        let text = (0..8)
+            .map(|j| WORDS[((i * 31 + j * 17 + i * j * 7) % WORDS.len() as u64) as usize])
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        chat_events.push_message::<NullEventPusher>(
+            PushMessageArgs {
+                sender: canister_id_from_u64(i % 100).into(),
+                thread_root_message_index: None,
+                message_id: MessageId::from((i + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15)),
+                content: MessageContentInternal::Text(TextContentInternal { text }),
+                sender_context: None,
+                mentioned: Vec::new(),
+                replies_to: None,
+                forwarded: false,
+                sender_is_bot: false,
+                block_level_markdown: false,
+                og_previews: Vec::new(),
+                now: start + (i * 1000),
+            },
+            None,
+        );
+    }
+
+    let users: HashSet<_> = [canister_id_from_u64(7).into()].into_iter().collect();
+
+    bench_fn(|| {
+        for search_term in ["hello", "to", "proposal swap moon", "明天", "東京 price"] {
+            chat_events.search_messages(MessageIndex::default(), search_term, &HashSet::new(), 50);
+            chat_events.search_messages(MessageIndex::default(), search_term, &users, 50);
+        }
     })
 }
 
