@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 mod chat_event;
+mod chit_event;
 mod community_event;
 mod expiring_event;
 mod last_updated;
@@ -16,6 +17,7 @@ mod user_id;
 mod user_metrics;
 
 pub use chat_event::*;
+pub use chit_event::*;
 pub use community_event::*;
 pub use expiring_event::*;
 pub use last_updated::*;
@@ -136,6 +138,8 @@ pub enum KeyType {
     DirectChatThreadMessageEventIndexes = 38,
     GroupChatThreadMessageEventIndexes = 39,
     ChannelThreadMessageEventIndexes = 40,
+    // 41 to 48 are reserved for the message search index and the message activity feed
+    ChitEvent = 49,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -198,7 +202,8 @@ impl KeyType {
             | KeyType::ChannelEventsByLastUpdated
             | KeyType::DirectChatUserMetrics
             | KeyType::GroupChatUserMetrics
-            | KeyType::ChannelUserMetrics => MapClass::SmallEntries,
+            | KeyType::ChannelUserMetrics
+            | KeyType::ChitEvent => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -269,6 +274,7 @@ impl TryFrom<u8> for KeyType {
             38 => Ok(KeyType::DirectChatThreadMessageEventIndexes),
             39 => Ok(KeyType::GroupChatThreadMessageEventIndexes),
             40 => Ok(KeyType::ChannelThreadMessageEventIndexes),
+            49 => Ok(KeyType::ChitEvent),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
