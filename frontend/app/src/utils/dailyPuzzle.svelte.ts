@@ -25,10 +25,20 @@ function localKey(userId: string, number: number): string {
     return `daily_puzzle_${userId}_${number}`;
 }
 
+// The marks a mistake hint was answered against (`filledKey`) and the cells it flagged. The same
+// marks get the same answer, so while they stand the answer is shown rather than asked for
+// again, and after a reload too (#9360 invariant 1).
+export type MistakeRecord = { filledKey: string; keys: number[] };
+
 // The user's marks as `filled()` pairs, replayed through `apply` on resume. Unlike the server
 // copy (submission bytes) this keeps "no" marks. `fingerprint` ties the marks to the exact
 // puzzle they were saved against (see puzzleFingerprint).
-type LocalMarks = { filled: [number, number][]; savedAt: number; fingerprint: string };
+type LocalMarks = {
+    filled: [number, number][];
+    savedAt: number;
+    fingerprint: string;
+    mistake?: MistakeRecord;
+};
 
 function readLocal(userId: string, number: number): LocalMarks | undefined {
     if (userId === ANON_USER_ID) return undefined;
@@ -48,10 +58,11 @@ function writeLocal(
     number: number,
     fingerprint: string,
     filled: [number, number][],
+    mistake: MistakeRecord | undefined,
 ): void {
     if (userId === ANON_USER_ID) return;
     try {
-        const value: LocalMarks = { filled, savedAt: Date.now(), fingerprint };
+        const value: LocalMarks = { filled, savedAt: Date.now(), fingerprint, mistake };
         localStorage.setItem(localKey(userId, number), JSON.stringify(value));
     } catch {
         // storage unavailable: the server copy still exists
@@ -100,14 +111,25 @@ export class DailyPuzzleGame {
     state = $state.raw<unknown>(undefined);
     focus = $state<Set<number>>(new Set());
     target = $state<Set<number>>(new Set());
-    mistakes = $state<Set<number>>(new Set());
-    caption = $state<ResourceKey | undefined>(undefined);
+    // the caption a hint step set; a standing mistake overrides it (see `caption`)
+    #caption = $state<ResourceKey | undefined>(undefined);
+    #lastMistake = $state.raw<MistakeRecord | undefined>(undefined);
+    // The cells the last mistake hint flagged, for as long as the marks it was answered against
+    // stand. Any edit hides them; editing back to the same marks shows them again, since the
+    // server would only say the same thing (#9360).
+    mistakes = $derived.by((): Set<number> => {
+        const last = this.#lastMistake;
+        return last !== undefined && last.filledKey === this.#filledKey()
+            ? new Set(last.keys)
+            : new Set();
+    });
+    caption = $derived.by((): ResourceKey | undefined =>
+        this.mistakes.size > 0 ? i18nKey("dailyPuzzle.mistake") : this.#caption,
+    );
     busy = $state(false);
     submitting = $state(false);
     // the most recent hint step served for this puzzle (a mistake hint is not a step)
     lastHint = $state<ServedHint | undefined>(undefined);
-    // the marks the last mistake hint was answered against; the same marks get the same answer
-    #mistakeFilled: string | undefined;
 
     marks = $derived.by(() => this.game.marks(this.model, this.state));
     lit = $derived.by(() => this.game.lit?.(this.model, this.state) ?? new Set<number>());
@@ -177,6 +199,7 @@ export class DailyPuzzleGame {
         const serverAt = userState.gridSavedAt !== undefined ? Number(userState.gridSavedAt) : 0;
         const localAt = local?.savedAt ?? 0;
         if (local !== undefined && local.fingerprint === this.#fingerprint && localAt >= serverAt) {
+            this.#lastMistake = local.mistake;
             return local.filled.reduce((s, [k, v]) => this.game.apply(this.model, s, k, v), empty);
         }
         if (userState.gameId === this.puzzle.gameId && userState.number === this.puzzle.number) {
@@ -216,9 +239,9 @@ export class DailyPuzzleGame {
         return Math.max(0, this.puzzle.maxFreeChecks - (this.userState?.freeChecks ?? 0));
     }
 
-    /** True while the last hint was a mistake and the marks it was answered against are unchanged. */
+    /** True while the marks a mistake hint was answered against are the marks on the board. */
     get mistakeStands(): boolean {
-        return this.mistakes.size > 0 && this.#mistakeFilled === this.#filledKey();
+        return this.mistakes.size > 0;
     }
 
     get hintButton(): HintButton {
@@ -246,10 +269,6 @@ export class DailyPuzzleGame {
         if (this.inputDisabled) return;
         const next = this.game.tap(this.model, this.state, key);
         if (next === this.state) return;
-        if (this.mistakes.size > 0) {
-            this.mistakes = new Set();
-            this.caption = undefined;
-        }
         this.state = next;
         this.#afterChange();
         this.#trimHint();
@@ -279,10 +298,13 @@ export class DailyPuzzleGame {
         const asked =
             pointed.length > 0 ? pointed : [...this.focus].filter((k) => this.#markable(k));
         const remaining = asked.filter((k) => this.#stillToDo(k, filled));
-        if ((last !== undefined && this.#concluded(last)) || remaining.length === 0) {
+        // A reveal has nothing left to ask for, so any edit after it, including undoing a cell it
+        // filled, retires it: kept, its caption would describe a fill no longer on the board
+        const revealed = last !== undefined && last.level >= 3;
+        if (revealed || (last !== undefined && this.#concluded(last)) || remaining.length === 0) {
             this.focus = new Set();
             this.target = new Set();
-            this.caption = undefined;
+            this.#caption = undefined;
             return;
         }
         this.focus = new Set([...this.focus].filter((k) => !filled.has(k) || !this.#markable(k)));
@@ -295,7 +317,13 @@ export class DailyPuzzleGame {
 
     #afterChange(): void {
         this.#dirty = true;
-        writeLocal(this.userId, this.puzzle.number, this.#fingerprint, this.#filled());
+        writeLocal(
+            this.userId,
+            this.puzzle.number,
+            this.#fingerprint,
+            this.#filled(),
+            this.#lastMistake,
+        );
         if (this.#saveTimer === undefined) {
             this.#saveTimer = window.setTimeout(() => {
                 this.#saveTimer = undefined;
@@ -430,15 +458,24 @@ export class DailyPuzzleGame {
                     return;
                 }
                 if (resp.hint.mistake) {
-                    this.mistakes = new Set(resp.hint.hint.focus);
-                    this.#mistakeFilled = this.#filledKey();
+                    this.#lastMistake = {
+                        filledKey: this.#filledKey(),
+                        keys: resp.hint.hint.focus,
+                    };
                     this.focus = new Set();
                     this.target = new Set();
-                    this.caption = i18nKey("dailyPuzzle.mistake");
+                    this.#caption = undefined;
+                    writeLocal(
+                        this.userId,
+                        this.puzzle.number,
+                        this.#fingerprint,
+                        this.#filled(),
+                        this.#lastMistake,
+                    );
                     return;
                 }
                 this.lastHint = resp.hint;
-                this.mistakes = new Set();
+                this.#lastMistake = undefined;
                 this.#applyHint(resp.hint);
             })
             .catch((err) => {
@@ -457,7 +494,7 @@ export class DailyPuzzleGame {
             );
             this.focus = new Set([...hint.hint.focus, ...hint.hint.conclusions.map(([k]) => k)]);
             this.target = new Set();
-            this.caption = i18nKey("dailyPuzzle.revealed");
+            this.#caption = i18nKey("dailyPuzzle.revealed");
             this.#afterChange();
             return;
         }
@@ -469,7 +506,7 @@ export class DailyPuzzleGame {
         this.target = new Set(
             show(hint.hint.target.length > 0 ? hint.hint.target : hint.hint.focus),
         );
-        this.caption =
+        this.#caption =
             hint.level >= 2
                 ? i18nKey(`${gameI18nPrefix(this.puzzle.gameId)}.technique.${hint.hint.technique}`)
                 : undefined;

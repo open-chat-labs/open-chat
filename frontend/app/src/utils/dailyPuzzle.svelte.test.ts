@@ -365,6 +365,28 @@ describe("hint states (#9360)", () => {
         await g.hint();
         await g.hint();
         expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
+
+        // Editing away hides the answer; editing back to the same marks shows it again, and
+        // still asks for nothing: the server would only say the same thing
+        g.tap(0);
+        expect(g.mistakes.size).toBe(0);
+        g.tap(0);
+        g.tap(0);
+        expect(game.filled(model, g.state)).toEqual([[0, 1]]);
+        expect(g.mistakes.has(0)).toBe(true);
+        expect(g.hintButton).toEqual({ kind: "mistake" });
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
+
+        // A reload with the wrong mark still on the board resumes the same answer, so the first
+        // press after it does not spend a free check repainting the same cell
+        const again = build(userState(), client);
+        expect(game.filled(model, again.state)).toEqual([[0, 1]]);
+        expect(again.mistakes.has(0)).toBe(true);
+        expect(again.caption).toEqual(expect.objectContaining({ key: "dailyPuzzle.mistake" }));
+        expect(again.hintButton).toEqual({ kind: "mistake" });
+        await again.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
     });
 
     // invariant 2
@@ -384,10 +406,13 @@ describe("hint states (#9360)", () => {
         g.tap(0);
         await g.hint();
         expect(g.hintButton.kind).toBe("mistake");
-        // clearing the wrong mark is a change like any other
+        // clearing the wrong mark is a change like any other: the red cell and the caption go
+        // with it
         g.tap(0);
         g.tap(0);
         expect(g.mistakeStands).toBe(false);
+        expect(g.mistakes.size).toBe(0);
+        expect(g.caption).toBeUndefined();
         expect(g.hintButton.kind).toBe("hint");
         await g.hint();
         expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
@@ -464,5 +489,30 @@ describe("hint states (#9360)", () => {
         g.tap(4);
         expect(g.focus.size).toBe(0);
         expect(g.caption).toBeUndefined();
+    });
+
+    // invariant 6, the undo case: a reveal has nothing left to ask for, so undoing the cell it
+    // filled must not leave "Filled in for you." describing a fill no longer on the board
+    test("undoing a revealed cell retires the reveal caption and highlight", async () => {
+        const reveal: ServedHint = {
+            hint: { technique: 1, focus: [0, 1, 2], target: [0], conclusions: [[0, 1]] },
+            level: 3,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: reveal,
+                hintsUsed: 1,
+                state: userState({ hints: [reveal] }),
+            })),
+        });
+        const g = build(userState(), client);
+        await g.hint();
+        expect(g.caption).toEqual(expect.objectContaining({ key: "dailyPuzzle.revealed" }));
+        g.tap(0);
+        expect(game.filled(model, g.state)).not.toContainEqual([0, 1]);
+        expect(g.caption).toBeUndefined();
+        expect(g.focus.size).toBe(0);
     });
 });
