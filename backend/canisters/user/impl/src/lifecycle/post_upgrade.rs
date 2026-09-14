@@ -39,6 +39,11 @@ fn post_upgrade(args: Args) {
     let chit_events_migrated = data.chit_events.migrate_to_stable_memory();
     info!(chit_events_migrated, "Migrated CHIT events to stable memory");
 
+    // Move the referrals into stable memory
+    // TODO: Remove this after next release
+    let referrals_migrated = data.referrals.migrate_to_stable_memory();
+    info!(referrals_migrated, "Migrated referrals to stable memory");
+
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
 

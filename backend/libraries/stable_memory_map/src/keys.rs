@@ -13,6 +13,7 @@ mod message_activity_event;
 mod message_event_indexes;
 mod message_id;
 mod principal;
+mod referral;
 mod search_index;
 mod storage;
 mod user_id;
@@ -27,6 +28,7 @@ pub use message_activity_event::*;
 pub use message_event_indexes::*;
 pub use message_id::*;
 pub use principal::*;
+pub use referral::*;
 pub use search_index::*;
 pub use storage::*;
 pub use user_id::*;
@@ -151,6 +153,8 @@ pub enum KeyType {
     MessageActivityEvent = 47,
     MessageActivityEventId = 48,
     ChitEvent = 49,
+    // 50 to 53 are reserved for threads read, token swaps and P2P swaps
+    Referral = 54,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -222,7 +226,8 @@ impl KeyType {
             | KeyType::ChannelSearchSender
             | KeyType::MessageActivityEvent
             | KeyType::MessageActivityEventId
-            | KeyType::ChitEvent => MapClass::SmallEntries,
+            | KeyType::ChitEvent
+            | KeyType::Referral => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -302,6 +307,7 @@ impl TryFrom<u8> for KeyType {
             47 => Ok(KeyType::MessageActivityEvent),
             48 => Ok(KeyType::MessageActivityEventId),
             49 => Ok(KeyType::ChitEvent),
+            54 => Ok(KeyType::Referral),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
