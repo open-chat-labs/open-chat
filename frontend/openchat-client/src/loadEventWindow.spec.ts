@@ -32,7 +32,13 @@ import {
 } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { routeStore, serverEventsStore, serverGroupChatsStore } from "./state";
+import {
+    routeStore,
+    selectedThreadIdStore,
+    serverEventsStore,
+    serverGroupChatsStore,
+    serverThreadEventsStore,
+} from "./state";
 import { WorkerAgent } from "./workerAgent";
 
 // Invariants from #9358 (chat selection focused message jitter):
@@ -171,6 +177,46 @@ describe("loadEventWindow announces its target (#9358)", () => {
             order.findIndex((o) => o.startsWith("events:")),
         );
         unsubs.forEach((u) => u());
+    });
+
+    // invariant 1 (thread window)
+    test("publishes loadingMessageWindow for a thread window before its events are applied", async () => {
+        const threadRootMessageIndex = 20;
+        selectedThreadIdStore.set({ chatId, threadRootMessageIndex });
+        const order: string[] = [];
+        const unsubs = [
+            subscribe("loadingMessageWindow", ({ context, messageIndex }) => {
+                order.push(`announce:${context.threadRootMessageIndex}:${messageIndex}`);
+            }),
+            serverThreadEventsStore.subscribe((events) => {
+                if (events.length > 0) order.push(`events:${events.length}`);
+            }),
+        ];
+        vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(() => {
+            order.push("stream");
+            const resp: EventsResponse<ChatEvent> = {
+                events: [messageEvent(1, 1), messageEvent(2, 2), messageEvent(3, 3)],
+                expiredEventRanges: [],
+                latestEventIndex: 3,
+            } as unknown as EventsResponse<ChatEvent>;
+            return new Stream((resolve) => setTimeout(() => resolve(resp, true), 0)) as never;
+        });
+        const rootEvent = {
+            ...messageEvent(threadRootMessageIndex, 40),
+            event: {
+                ...messageEvent(threadRootMessageIndex, 40).event,
+                thread: { latestEventIndex: 3, numberOfReplies: 3, participantIds: new Set() },
+            },
+        } as never;
+
+        client.loadEventWindow(chatId, 2, rootEvent, true);
+        await new Promise((r) => setTimeout(r, 10));
+
+        expect(order[0]).toBe(`announce:${threadRootMessageIndex}:2`);
+        expect(order.indexOf("stream")).toBeGreaterThan(0);
+        expect(order.findIndex((o) => o.startsWith("events:"))).toBeGreaterThan(0);
+        unsubs.forEach((u) => u());
+        selectedThreadIdStore.set(undefined);
     });
 
     // invariant 4 (client side)
