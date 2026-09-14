@@ -12,6 +12,7 @@ mod message_event_indexes;
 mod message_id;
 mod principal;
 mod storage;
+mod thread_read;
 mod user_id;
 mod user_metrics;
 
@@ -23,6 +24,7 @@ pub use message_event_indexes::*;
 pub use message_id::*;
 pub use principal::*;
 pub use storage::*;
+pub use thread_read::*;
 pub use user_id::*;
 pub use user_metrics::*;
 
@@ -136,6 +138,9 @@ pub enum KeyType {
     DirectChatThreadMessageEventIndexes = 38,
     GroupChatThreadMessageEventIndexes = 39,
     ChannelThreadMessageEventIndexes = 40,
+    // 41 to 49 are reserved for the message search index, the message activity feed and CHIT events
+    GroupThreadRead = 50,
+    ChannelThreadRead = 51,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -198,7 +203,9 @@ impl KeyType {
             | KeyType::ChannelEventsByLastUpdated
             | KeyType::DirectChatUserMetrics
             | KeyType::GroupChatUserMetrics
-            | KeyType::ChannelUserMetrics => MapClass::SmallEntries,
+            | KeyType::ChannelUserMetrics
+            | KeyType::GroupThreadRead
+            | KeyType::ChannelThreadRead => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -269,6 +276,8 @@ impl TryFrom<u8> for KeyType {
             38 => Ok(KeyType::DirectChatThreadMessageEventIndexes),
             39 => Ok(KeyType::GroupChatThreadMessageEventIndexes),
             40 => Ok(KeyType::ChannelThreadMessageEventIndexes),
+            50 => Ok(KeyType::GroupThreadRead),
+            51 => Ok(KeyType::ChannelThreadRead),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

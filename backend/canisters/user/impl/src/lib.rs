@@ -28,6 +28,7 @@ use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
+use model::threads_read::ThreadsRead;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
@@ -42,7 +43,7 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotDefinitionUpdate, BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, CanisterId,
     Chat, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document,
-    IdempotentEnvelope, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
+    IdempotentEnvelope, MultiUserChat, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
     UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
@@ -592,15 +593,27 @@ impl Data {
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
         self.favourite_chats.remove(&Chat::Group(chat_id), now);
         self.hot_group_exclusions.add(chat_id, None, now);
-        self.group_chats.remove(chat_id, now)
+        let group = self.group_chats.remove(chat_id, now)?;
+        self.remove_threads_read_from_stable_memory(MultiUserChat::Group(chat_id));
+        Some(group)
     }
 
     pub fn remove_community(&mut self, community_id: CommunityId, now: TimestampMillis) -> Option<Community> {
         let community = self.communities.remove(community_id, now)?;
         for channel_id in community.channels.keys() {
             self.favourite_chats.remove(&Chat::Channel(community_id, *channel_id), now);
+            self.remove_threads_read_from_stable_memory(MultiUserChat::Channel(community_id, *channel_id));
         }
         Some(community)
+    }
+
+    // A chat only has a small number of entries, so they can be removed immediately. If they can't
+    // all be removed within this message, the rest are left for the garbage collection job.
+    fn remove_threads_read_from_stable_memory(&mut self, chat: MultiUserChat) {
+        let prefix = ThreadsRead::stable_memory_key_prefix(chat);
+        if stable_memory_map::garbage_collect(prefix.clone()).is_err() {
+            self.stable_memory_keys_to_garbage_collect.push(prefix);
+        }
     }
 
     pub fn handle_event_expiry(&mut self, expiry: TimestampMillis, now: TimestampMillis) {
