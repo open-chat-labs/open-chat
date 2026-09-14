@@ -13,6 +13,7 @@
     import { toastStore } from "@src/stores/toast";
     import { gameNameKey } from "@src/utils/dailyPuzzle.svelte";
     import {
+        Body,
         BodySmall,
         Button,
         ColourVars,
@@ -20,6 +21,7 @@
         CommonButton2,
         Container,
         H2,
+        Row,
         Subtitle,
     } from "component-lib";
     import { getContext } from "svelte";
@@ -180,28 +182,6 @@
                         resourceKey={i18nKey("dailyChit.comeback", { time: remaining })} />
                 {/if}
             </Button>
-            {#each puzzles as { puzzle, state } (puzzle.gameId)}
-                <CommonButton2
-                    onClick={() => publish("dailyPuzzle", { gameId: puzzle.gameId })}
-                    variant={"primary"}
-                    mode={"text"}>
-                    {#snippet icon(color, size)}
-                        <PuzzleOutline {color} {size}></PuzzleOutline>
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("dailyPuzzle.todaysPuzzle")}></Translatable>
-                    {" · "}
-                    <Translatable resourceKey={i18nKey(gameNameKey(puzzle.gameId))}></Translatable>
-                    {" · "}
-                    <Translatable resourceKey={i18nKey(puzzleStatusKey(state))}></Translatable>
-                    {#if (state?.streak ?? 0) > 0}
-                        {" · "}
-                        <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.streakDays", {
-                                streak: state?.streak ?? 0,
-                            })}></Translatable>
-                    {/if}
-                </CommonButton2>
-            {/each}
             {#if insuranceLink}
                 <CommonButton2
                     onClick={() => publish("streakInsurance")}
@@ -224,6 +204,36 @@
                     <Translatable resourceKey={i18nKey("Earn more")}></Translatable>
                 </CommonButton2>
             {/if}
+            {#each puzzles as { puzzle, state } (puzzle.gameId)}
+                <Button onClick={() => publish("dailyPuzzle", { gameId: puzzle.gameId })}>
+                    <Column crossAxisAlignment="center">
+                        <Row width="hug" gap="md">
+                            <Subtitle width="hug" fontWeight="bold">
+                                <PuzzleOutline color="var(--txt-on-primary)" size="1rem"
+                                ></PuzzleOutline>
+                                <Translatable resourceKey={i18nKey("dailyPuzzle.todaysPuzzle")}
+                                ></Translatable>
+                                {" // "}
+                                <Translatable resourceKey={i18nKey(gameNameKey(puzzle.gameId))}
+                                ></Translatable>
+                            </Subtitle>
+                        </Row>
+                        <Row width="hug" gap="sm">
+                            <Body width="hug">
+                                <Translatable resourceKey={i18nKey(puzzleStatusKey(state))}
+                                ></Translatable>
+                                {#if (state?.streak ?? 0) > 0}
+                                    {" . "}
+                                    <Translatable
+                                        resourceKey={i18nKey("dailyPuzzle.streakDays", {
+                                            streak: state?.streak ?? 0,
+                                        })}></Translatable>
+                                {/if}
+                            </Body>
+                        </Row>
+                    </Column>
+                </Button>
+            {/each}
         </Container>
     {/if}
 {/snippet}

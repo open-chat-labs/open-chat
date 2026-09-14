@@ -1,5 +1,4 @@
 <script lang="ts">
-    import InfoIcon from "@src/components/InfoIcon.svelte";
     import {
         chitStateStore,
         dailyPuzzleStore,
@@ -9,11 +8,12 @@
         type DailyPuzzleUserState,
         type OpenChat,
     } from "@client";
+    import InfoIcon from "@src/components/InfoIcon.svelte";
     import { getContext, tick } from "svelte";
     import { Confetti } from "svelte-confetti";
+    import PuzzleOutline from "svelte-material-icons/PuzzleOutline.svelte";
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
     import TrophyOutline from "svelte-material-icons/TrophyOutline.svelte";
-    import PuzzleOutline from "svelte-material-icons/PuzzleOutline.svelte";
     import { fade } from "svelte/transition";
     import { i18nKey } from "../../i18n/i18n";
     import { now500 } from "../../stores/time";
@@ -78,7 +78,10 @@
                 }
             })
             .catch((err) => {
-                toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"), JSON.stringify(err));
+                toastStore.showFailureToast(
+                    i18nKey("dailyChit.failedToClaim"),
+                    JSON.stringify(err),
+                );
                 onClose?.();
             })
             .finally(() => {
@@ -197,27 +200,6 @@
                 <Translatable resourceKey={i18nKey("dailyChit.info")} />
             </p>
 
-            {#each puzzles as { puzzle, state } (puzzle.gameId)}
-                <div class="puzzle">
-                    <PuzzleOutline size={$iconSize} color={"var(--icon-txt)"} />
-                    <div class="puzzle-text">
-                        <div>
-                            <Translatable resourceKey={i18nKey("dailyPuzzle.todaysPuzzle")} />
-                            · <Translatable resourceKey={i18nKey(gameNameKey(puzzle.gameId))} />
-                        </div>
-                        <div class="puzzle-streak">
-                            <Translatable
-                                resourceKey={i18nKey("dailyPuzzle.streakDays", {
-                                    streak: state?.streak ?? 0,
-                                })} />
-                        </div>
-                    </div>
-                    <Button tiny onClick={() => openPuzzle(puzzle.gameId)}>
-                        <Translatable resourceKey={i18nKey(puzzleStatusKey(state))} />
-                    </Button>
-                </div>
-            {/each}
-
             <div class="progress-wrapper">
                 <div class="progress">
                     <Progress size={"20px"} {percent}></Progress>
@@ -245,6 +227,26 @@
                     </div>
                 </Link>
             {/if}
+            {#each puzzles as { puzzle, state } (puzzle.gameId)}
+                <div class="puzzle">
+                    <PuzzleOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    <div class="puzzle-text">
+                        <div>
+                            <Translatable resourceKey={i18nKey("dailyPuzzle.todaysPuzzle")} />
+                            · <Translatable resourceKey={i18nKey(gameNameKey(puzzle.gameId))} />
+                        </div>
+                        <div class="puzzle-streak">
+                            <Translatable
+                                resourceKey={i18nKey("dailyPuzzle.streakDays", {
+                                    streak: state?.streak ?? 0,
+                                })} />
+                        </div>
+                    </div>
+                    <Button onClick={() => openPuzzle(puzzle.gameId)}>
+                        <Translatable resourceKey={i18nKey(puzzleStatusKey(state))} />
+                    </Button>
+                </div>
+            {/each}
         </div>
     {/snippet}
     {#snippet footer()}
@@ -425,7 +427,7 @@
         align-items: center;
         gap: $sp3;
         width: 100%;
-        padding: $sp3 $sp4;
+        padding: $sp3 $sp3 $sp3 $sp4;
         border: 1px solid var(--bd);
         border-radius: $sp3;
         text-align: left;
