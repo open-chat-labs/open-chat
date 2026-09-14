@@ -25,8 +25,10 @@ export {
 } from "./slant";
 export {
     bridges,
+    bridgesHitShapes,
     bridgesIslandTotals,
     bridgesMistakeElements,
+    type BridgesHitShape,
     type BridgesDescription,
     type BridgesEdge,
     type BridgesState,
