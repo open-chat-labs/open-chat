@@ -1073,6 +1073,10 @@
                 offset += prependCount * gapPx;
                 fromBottom += offset;
                 prependOffset = offset;
+                // a navigation in flight targets a flat index, which just shifted
+                if (pendingScrollFlatIdx !== undefined) {
+                    pendingScrollFlatIdx += prependCount;
+                }
             }
 
             vclDebug.log("items", {
@@ -1100,6 +1104,17 @@
             if (!follow && pinKey !== undefined && oldLen > 0) {
                 tick().then(() => {
                     if (!viewport || interrupt) return;
+                    // A navigation in flight owns the position: re-centre its
+                    // target instead. The pin's baseline rect predates the
+                    // navigation's refine write, so pinning would undo it —
+                    // seen as a window load's arrival positioning landing
+                    // ~330px off centre (the chat_start append in the same
+                    // flush re-anchored over the refine) until the debounced
+                    // correction 700ms later.
+                    if (pendingScrollFlatIdx !== undefined) {
+                        refineToIndex(pendingScrollFlatIdx);
+                        return;
+                    }
                     const again = rowByKey(viewport, pinKey);
                     const before = viewport.scrollTop;
                     if (again && pinTop !== undefined) {

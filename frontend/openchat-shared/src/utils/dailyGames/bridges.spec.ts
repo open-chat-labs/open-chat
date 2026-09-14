@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
     bridges,
+    bridgesHitShapes,
     bridgesMistakeElements,
     bridgesIslandTotals,
     checkRules,
@@ -384,5 +385,94 @@ describe("hintKeyStatus", () => {
         state = bridges.tap(d, bridges.tap(d, state, 0), 0);
         expect(state.get(0)).toBe(0);
         expect(bridges.hintKeyStatus!(d, state, 1)).toBe("done");
+    });
+});
+
+// #9372: crossing edges share a water cell; each keeps a tap target of its own
+describe("bridgesHitShapes", () => {
+    // . 1 . / 1 . 1 / . 1 .: the edge 3 -> 5 (key 6) and the edge 1 -> 7 (key 3) both run over
+    // the centre cell 4
+    const d = desc([".1.", "1.1", ".1."]);
+
+    // invariant 1
+    test("every edge has a shape, and in a shared cell each edge has its own", () => {
+        const shapes = bridgesHitShapes(d);
+        for (const e of d.edges) {
+            expect(shapes.some((s) => s.key === e.key)).toBe(true);
+        }
+        const centre = shapes.filter((s) => s.cell === 4);
+        expect(
+            centre
+                .filter((s) => s.key === 6)
+                .map((s) => s.part)
+                .sort(),
+        ).toEqual(["left", "right"]);
+        expect(
+            centre
+                .filter((s) => s.key === 3)
+                .map((s) => s.part)
+                .sort(),
+        ).toEqual(["bottom", "top"]);
+        // an unshared cell stays whole
+        const square = desc(["2.2", "...", "2.2"]);
+        expect(bridgesHitShapes(square).every((s) => s.part === "whole")).toBe(true);
+        expect(
+            bridgesHitShapes(square)
+                .map((s) => s.cell)
+                .sort(),
+        ).toEqual([1, 3, 5, 7]);
+    });
+
+    // invariant 2: the parts of a cell are disjoint by construction (a whole cell, or the four
+    // diagonal quarters split two ways), so no cell may hold a whole alongside a quarter, nor
+    // the same quarter twice
+    test("shapes of different edges never overlap", () => {
+        // the last layout has a two-cell edge crossed at one cell only: that cell splits, the
+        // other stays whole
+        for (const layout of [
+            [".1.", "1.1", ".1."],
+            ["2.2", "...", "2.2"],
+            ["3.3.", ".1.1", "3.3.", ".1.1"],
+            [".1..", "2..2", ".1.."],
+        ]) {
+            const shapes = bridgesHitShapes(desc(layout));
+            const byCell = new Map<number, typeof shapes>();
+            for (const s of shapes) byCell.set(s.cell, [...(byCell.get(s.cell) ?? []), s]);
+            for (const [cell, list] of byCell) {
+                const parts = list.map((s) => s.part);
+                const keys = new Set(list.map((s) => s.key));
+                if (parts.includes("whole")) {
+                    expect(list, `cell ${cell}`).toHaveLength(1);
+                } else {
+                    expect(parts, `cell ${cell}`).toHaveLength(4);
+                    expect(new Set(parts).size, `cell ${cell}`).toBe(4);
+                    expect(keys.size, `cell ${cell}`).toBe(2);
+                }
+            }
+        }
+    });
+});
+
+// #9374: a no-bridge mark is not drawn under a crossing bridge, but the decision stays
+describe("no-bridge marks under a crossing bridge", () => {
+    test("marks() drops the mark while the crossing edge has a bridge, and keeps the state", () => {
+        // . 1 . / 1 . 1 / . 1 .: edge 3 -> 5 (key 6) and edge 1 -> 7 (key 3) cross at cell 4
+        const d = desc([".1.", "1.1", ".1."]);
+        let st: BridgesState = new Map();
+        // cycle the vertical edge to an explicit zero
+        st = bridges.tap(d, bridges.tap(d, bridges.tap(d, st, 3), 3), 3);
+        expect(st.get(3)).toBe(0);
+        expect(bridges.marks(d, st).get(3)).toBe("none");
+        // a bridge on the crossing edge hides it; state and filled() are unchanged
+        st = bridges.tap(d, st, 6);
+        expect(bridges.marks(d, st).has(3)).toBe(false);
+        expect(bridges.marks(d, st).get(6)).toBe("one");
+        expect(st.get(3)).toBe(0);
+        expect(bridges.filled(d, st)).toContainEqual([3, 0]);
+        // and it is back once the bridge is gone
+        st = bridges.tap(d, bridges.tap(d, st, 6), 6);
+        expect(st.get(6)).toBe(0);
+        expect(bridges.marks(d, st).get(3)).toBe("none");
+        expect(bridges.marks(d, st).get(6)).toBe("none");
     });
 });

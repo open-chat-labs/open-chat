@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{
     BaseKeyPrefix, ChatEventKeyPrefix, EventLastUpdatedKeyPrefix, EventsByLastUpdatedKeyPrefix, ExpiringEventKeyPrefix,
-    MessageIdKeyPrefix, SearchSenderKeyPrefix, SearchTokenKeyPrefix, UserMetricsKeyPrefix,
+    MessageEventIndexesKeyPrefix, MessageIdKeyPrefix, SearchSenderKeyPrefix, SearchTokenKeyPrefix, UserMetricsKeyPrefix,
 };
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
@@ -74,6 +74,7 @@ impl ChatEvents {
     // main events list or a thread), so that they can all be garbage collected once it is deleted
     pub fn stable_memory_key_prefixes(events_prefix: ChatEventKeyPrefix) -> Vec<BaseKeyPrefix> {
         let message_ids_prefix = MessageIdKeyPrefix::from(&events_prefix);
+        let message_event_indexes_prefix = MessageEventIndexesKeyPrefix::from(&events_prefix);
         // Only the main events list has expiring events, last updated timestamps, user metrics and a
         // search index (the last updated timestamps of events in threads are stored under the main
         // events list's prefixes)
@@ -83,7 +84,11 @@ impl ChatEvents {
         let user_metrics_prefix = UserMetricsKeyPrefix::try_from(&events_prefix).ok();
         let search_token_prefix = SearchTokenKeyPrefix::try_from(&events_prefix).ok();
         let search_sender_prefix = SearchSenderKeyPrefix::try_from(&events_prefix).ok();
-        let mut prefixes = vec![events_prefix.into(), message_ids_prefix.into()];
+        let mut prefixes = vec![
+            events_prefix.into(),
+            message_ids_prefix.into(),
+            message_event_indexes_prefix.into(),
+        ];
         prefixes.extend(expiring_events_prefix.map(BaseKeyPrefix::from));
         prefixes.extend(last_updated_prefix.map(BaseKeyPrefix::from));
         prefixes.extend(by_last_updated_prefix.map(BaseKeyPrefix::from));
@@ -210,14 +215,14 @@ impl ChatEvents {
                 .search_index
                 .migrate_to_stable_memory(self.chat, &self.main, max_count - moved);
         }
-        if moved < max_count {
-            moved += self.main.migrate_message_ids_to_stable_memory(max_count - moved);
-        }
-        for thread in self.threads.values_mut() {
+        for events_list in std::iter::once(&mut self.main).chain(self.threads.values_mut()) {
             if moved >= max_count {
                 break;
             }
-            moved += thread.migrate_message_ids_to_stable_memory(max_count - moved);
+            moved += events_list.migrate_message_ids_to_stable_memory(max_count - moved);
+            if moved < max_count {
+                moved += events_list.migrate_message_event_indexes_to_stable_memory(max_count - moved);
+            }
         }
         moved
     }
@@ -238,11 +243,16 @@ impl ChatEvents {
         self.expiring_events.discard_on_heap();
     }
 
-    // Copies each user's metrics from stable memory onto the heap, so that they are included when
-    // the chat is serialized to be imported into a community. The community moves them back into
-    // stable memory, under the new channel's prefix, via `migrate_to_stable_memory`.
-    pub fn copy_user_metrics_to_heap_for_export(&mut self) {
+    // Copies each user's metrics and each events list's message event indexes from stable memory onto
+    // the heap, so that they are included when the chat is serialized to be imported into a community.
+    // The community moves them back into stable memory, under the new channel's prefixes, via
+    // `migrate_to_stable_memory`.
+    pub fn copy_to_heap_for_export(&mut self) {
         self.per_user_metrics.copy_to_heap(self.chat);
+        self.main.copy_message_event_indexes_to_heap();
+        for thread in self.threads.values_mut() {
+            thread.copy_message_event_indexes_to_heap();
+        }
     }
 
     // Called by the User canister holding this direct chat, so that the other user's metrics are no
@@ -260,8 +270,10 @@ impl ChatEvents {
             + self.last_updated_timestamps.on_heap_count()
             + self.per_user_metrics.on_heap_count()
             + self.search_index.on_heap_count()
-            + self.main.message_ids_on_heap_count()
-            + self.threads.values().map(|t| t.message_ids_on_heap_count()).sum::<usize>()
+            + std::iter::once(&self.main)
+                .chain(self.threads.values())
+                .map(|l| l.message_ids_on_heap_count() + l.message_event_indexes_on_heap_count())
+                .sum::<usize>()
     }
 
     pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {

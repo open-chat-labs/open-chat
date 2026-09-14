@@ -9,6 +9,7 @@ generate_msgpack_query_call!(channel_summary);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(local_user_index);
+generate_msgpack_query_call!(messages_by_message_index);
 generate_msgpack_query_call!(search_channel);
 generate_msgpack_query_call!(selected_channel_initial);
 generate_msgpack_query_call!(selected_channel_updates_v2);

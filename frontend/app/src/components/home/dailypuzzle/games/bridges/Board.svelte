@@ -5,9 +5,11 @@
         bridgesIslandTotals,
         type BridgesDescription,
         type BridgesState,
+        bridgesHitShapes,
+        type BridgesHitShape,
     } from "@client";
     import GridSvg from "../GridSvg.svelte";
-    import { CELL, elementCentre, highlight, keysOf } from "../gridSvg";
+    import { CELL, elementCentre, highlight, hitQuarter, keysOf } from "../gridSvg";
     import type { BoardProps } from "../types";
 
     let {
@@ -38,9 +40,13 @@
     // cell indices the server flagged
     let mistakes = $derived(keysOf(violations, "mistake"));
 
-    // the water rect an edge covers, in SVG units
-    function hitRect(el: { x: number; y: number; w: number; h: number }) {
-        return { x: el.x * CELL, y: el.y * CELL, width: el.w * CELL, height: el.h * CELL };
+    // Tap targets, one per water cell per edge. A cell two edges share is split along its
+    // diagonals so each edge keeps a target of its own (#9372); the polygon is in SVG units.
+    let hitShapes = $derived(bridgesHitShapes(model));
+    function hitPoints(shape: BridgesHitShape): string {
+        return hitQuarter(cellOrigin(shape.cell), shape.part)
+            .map(([x, y]) => `${x},${y}`)
+            .join(" ");
     }
 
     function cellOrigin(index: number): { x: number; y: number } {
@@ -68,9 +74,14 @@
         height={model.height * CELL}
         fill={greyed ? "#e6e6e6" : "#ececec"}
     />
-    {#each edges as el (el.key)}
+    {#each hitShapes as shape (`${shape.key}:${shape.cell}:${shape.part}`)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <rect {...hitRect(el)} fill="transparent" role="gridcell" onclick={() => tap(el.key)} />
+        <polygon
+            points={hitPoints(shape)}
+            fill="transparent"
+            role="gridcell"
+            onclick={() => tap(shape.key)}
+        />
     {/each}
     {#each edges as el (el.key)}
         {@const mark = marks.get(el.key)}
@@ -90,7 +101,25 @@
                 />
             {/each}
         {:else if mark === "none"}
-            <circle cx={c.cx} cy={c.cy} r="0.8" fill="#9a9a9a" pointer-events="none" />
+            <!-- a small cross: the player's own "no bridge" decision -->
+            <line
+                x1={c.cx - 1}
+                y1={c.cy - 1}
+                x2={c.cx + 1}
+                y2={c.cy + 1}
+                stroke="#9a9a9a"
+                stroke-width="0.5"
+                pointer-events="none"
+            />
+            <line
+                x1={c.cx - 1}
+                y1={c.cy + 1}
+                x2={c.cx + 1}
+                y2={c.cy - 1}
+                stroke="#9a9a9a"
+                stroke-width="0.5"
+                pointer-events="none"
+            />
         {/if}
     {/each}
     {#each islands as el (el.key)}

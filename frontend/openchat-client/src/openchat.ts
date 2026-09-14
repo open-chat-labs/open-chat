@@ -2886,7 +2886,9 @@ export class OpenChat {
 
         const chatId = chat.id;
         const threadRootMessageIndex = threadRootEvent.event.messageIndex;
+        const context = { chatId, threadRootMessageIndex };
 
+        publish("loadingMessageWindow", { context, messageIndex });
         const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
             .stream({
                 kind: "chatEventsWindow",
@@ -2902,17 +2904,14 @@ export class OpenChat {
             .catch(CommonResponses.failure);
 
         if (!isSuccessfulEventsResponse(eventsResponse)) {
+            publish("loadedMessageWindow", { context, messageIndex: undefined, initialLoad });
             if (initialLoad) {
                 await this.#fallBackToPreviousMessages(chatId, threadRootEvent);
             }
             return undefined;
         }
 
-        publish("loadedMessageWindow", {
-            context: { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex },
-            messageIndex,
-            initialLoad,
-        });
+        publish("loadedMessageWindow", { context, messageIndex, initialLoad });
 
         return messageIndex;
     }
@@ -2946,6 +2945,8 @@ export class OpenChat {
             }
 
             const range = indexRangeForChat(clientChat);
+            const context = { chatId: clientChat.id, threadRootMessageIndex: undefined };
+            publish("loadingMessageWindow", { context, messageIndex });
             const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
                 .stream({
                     kind: "chatEventsWindow",
@@ -2972,20 +2973,14 @@ export class OpenChat {
                 });
 
             if (!isSuccessfulEventsResponse(eventsResponse)) {
+                publish("loadedMessageWindow", { context, messageIndex: undefined, initialLoad });
                 if (initialLoad) {
                     await this.#fallBackToPreviousMessages(chatId);
                 }
                 return undefined;
             }
 
-            publish("loadedMessageWindow", {
-                context: {
-                    chatId: clientChat.id,
-                    threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-                },
-                messageIndex,
-                initialLoad,
-            });
+            publish("loadedMessageWindow", { context, messageIndex, initialLoad });
 
             return messageIndex;
         }

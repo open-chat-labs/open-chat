@@ -9,7 +9,10 @@ use constants::DAY_IN_MS;
 use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
-use stable_memory_map::{ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix, UserMetricsKeyPrefix};
+use stable_memory_map::{
+    ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, MessageEventIndexesKeyPrefix, MessageIdKeyPrefix,
+    UserMetricsKeyPrefix,
+};
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
@@ -47,9 +50,16 @@ fn convert_into_community_succeeds() {
         let send_result = client::group::happy_path::send_text_message(env, &user1, group_id, None, text, Some(message_id));
         messages_sent.push((message_id, send_result.event_index));
     }
+    // Send enough messages for the group to have written chunks of message event indexes to stable memory
+    for _ in 0..131 {
+        let message_id = random_from_u128();
+        let send_result =
+            client::group::happy_path::send_text_message(env, &user1, group_id, None, "hi".to_string(), Some(message_id));
+        messages_sent.push((message_id, send_result.event_index));
+    }
 
     let group_summary = client::group::happy_path::summary(env, user1.principal, group_id);
-    assert_eq!(group_summary.membership.unwrap().my_metrics.text_messages, 9);
+    assert_eq!(group_summary.membership.unwrap().my_metrics.text_messages, 140);
 
     let convert_into_community_response = client::group::convert_into_community(
         env,
@@ -70,7 +80,10 @@ fn convert_into_community_succeeds() {
 
         let summary1 = client::community::happy_path::summary(env, user1.principal, result.community_id);
         // The users' metrics should have been carried over from the group
-        assert_eq!(summary1.channels[0].membership.as_ref().unwrap().my_metrics.text_messages, 9);
+        assert_eq!(
+            summary1.channels[0].membership.as_ref().unwrap().my_metrics.text_messages,
+            140
+        );
         assert_eq!(
             summary1.channels.into_iter().map(|c| c.name).collect_vec(),
             expected_channel_names
@@ -120,7 +133,39 @@ fn convert_into_community_succeeds() {
             .create_key(&user1.user_id);
         let user_metrics =
             ChatMetricsInternal::from_bytes(&small_entries_map.get(&user_metrics_key.as_ref().to_vec()).unwrap());
-        assert_eq!(user_metrics.hydrate().text_messages, 9);
+        assert_eq!(user_metrics.hydrate().text_messages, 140);
+
+        // The message event indexes should have been moved into stable memory under the channel's prefix
+        let message_event_indexes_prefix =
+            MessageEventIndexesKeyPrefix::new_from_chat(Chat::Channel(result.community_id, result.channel_id), None);
+        assert!(stable_memory_map.contains_key(&message_event_indexes_prefix.create_key(&0).as_ref().to_vec()));
+        assert!(!stable_memory_map.contains_key(&message_event_indexes_prefix.create_key(&1).as_ref().to_vec()));
+
+        // Looking up imported messages by their message indexes should succeed, both for those in
+        // stable memory and for those on the heap
+        let message_indexes = vec![0.into(), 127.into(), 128.into(), 139.into()];
+        let community_canister::messages_by_message_index::Response::Success(messages) =
+            client::community::messages_by_message_index(
+                env,
+                user1.principal,
+                result.community_id.into(),
+                &community_canister::messages_by_message_index::Args {
+                    channel_id: result.channel_id,
+                    thread_root_message_index: None,
+                    messages: message_indexes.clone(),
+                    latest_known_update: None,
+                },
+            )
+        else {
+            panic!()
+        };
+        assert_eq!(
+            messages.messages.iter().map(|m| m.index).collect_vec(),
+            message_indexes
+                .iter()
+                .map(|m| messages_sent[u32::from(*m) as usize].1)
+                .collect_vec()
+        );
 
         // The imported messages should have been added to the channel's search index
         for users in [

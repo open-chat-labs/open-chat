@@ -145,7 +145,7 @@ fn migrate_imported_user_metrics() -> BenchResult {
 
     let start = 1700000000000;
     let mut chat_events = group_chat_with_messages(1000, start);
-    chat_events.copy_user_metrics_to_heap_for_export();
+    chat_events.copy_to_heap_for_export();
     chat_events.set_chat(Chat::Channel(canister_id_from_u64(3).into(), ChannelId::from(1u32)));
 
     bench_fn(|| {

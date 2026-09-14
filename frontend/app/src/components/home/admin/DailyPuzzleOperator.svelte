@@ -112,8 +112,8 @@
                 <Toggle id="daily-puzzle-enabled" small bind:checked={enabled} />
             </div>
         </div>
-        <Button tiny disabled={busy.has(0)} loading={busy.has(0)} onClick={saveEnabled}>Save</Button
-        >
+        <Button tiny disabled={busy.has(0)} loading={busy.has(0)} onClick={saveEnabled}
+            >Save</Button>
     </section>
 
     <section class="operator-function">
@@ -131,10 +131,9 @@
                         <option value={option.value}>{option.label}</option>
                     {/each}
                 </Select>
-                <Button tiny disabled={busy.has(1)} loading={busy.has(1)} onClick={regenerateToday}
-                    >Regenerate</Button
-                >
             </div>
+            <Button disabled={busy.has(1)} loading={busy.has(1)} onClick={regenerateToday}
+                >Regenerate</Button>
         </div>
     </section>
 {/if}

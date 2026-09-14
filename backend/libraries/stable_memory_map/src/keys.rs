@@ -8,6 +8,7 @@ mod community_event;
 mod expiring_event;
 mod last_updated;
 mod macros;
+mod message_event_indexes;
 mod message_id;
 mod principal;
 mod search_index;
@@ -19,6 +20,7 @@ pub use chat_event::*;
 pub use community_event::*;
 pub use expiring_event::*;
 pub use last_updated::*;
+pub use message_event_indexes::*;
 pub use message_id::*;
 pub use principal::*;
 pub use search_index::*;
@@ -130,12 +132,18 @@ pub enum KeyType {
     DirectChatUserMetrics = 32,
     GroupChatUserMetrics = 33,
     ChannelUserMetrics = 34,
-    DirectChatSearchToken = 35,
-    GroupChatSearchToken = 36,
-    ChannelSearchToken = 37,
-    DirectChatSearchSender = 38,
-    GroupChatSearchSender = 39,
-    ChannelSearchSender = 40,
+    DirectChatMessageEventIndexes = 35,
+    GroupChatMessageEventIndexes = 36,
+    ChannelMessageEventIndexes = 37,
+    DirectChatThreadMessageEventIndexes = 38,
+    GroupChatThreadMessageEventIndexes = 39,
+    ChannelThreadMessageEventIndexes = 40,
+    DirectChatSearchToken = 41,
+    GroupChatSearchToken = 42,
+    ChannelSearchToken = 43,
+    DirectChatSearchSender = 44,
+    GroupChatSearchSender = 45,
+    ChannelSearchSender = 46,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -151,8 +159,8 @@ pub enum MapClass {
 
 impl KeyType {
     // Once a canister holds data under a key type, that key type's class must never change, since
-    // its existing entries would no longer be found. Every key type below already holds data in the
-    // main map in production, so they must all stay as `Default`.
+    // its existing entries would no longer be found. Every key type up to `BlockedUsers` already holds
+    // data in the main map in production, so they must all stay as `Default`.
     //
     // All key types sharing a `KeyPrefix` must have the same class, so that a range over a prefix
     // stays within one map.
@@ -173,7 +181,14 @@ impl KeyType {
             | KeyType::FileReferenceCount
             | KeyType::FilesPerAccessor
             | KeyType::UserStorageRecord
-            | KeyType::BlockedUsers => MapClass::Default,
+            | KeyType::BlockedUsers
+            // Each entry is a chunk of event indexes, which is too large for the small entries map
+            | KeyType::DirectChatMessageEventIndexes
+            | KeyType::GroupChatMessageEventIndexes
+            | KeyType::ChannelMessageEventIndexes
+            | KeyType::DirectChatThreadMessageEventIndexes
+            | KeyType::GroupChatThreadMessageEventIndexes
+            | KeyType::ChannelThreadMessageEventIndexes => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -262,12 +277,18 @@ impl TryFrom<u8> for KeyType {
             32 => Ok(KeyType::DirectChatUserMetrics),
             33 => Ok(KeyType::GroupChatUserMetrics),
             34 => Ok(KeyType::ChannelUserMetrics),
-            35 => Ok(KeyType::DirectChatSearchToken),
-            36 => Ok(KeyType::GroupChatSearchToken),
-            37 => Ok(KeyType::ChannelSearchToken),
-            38 => Ok(KeyType::DirectChatSearchSender),
-            39 => Ok(KeyType::GroupChatSearchSender),
-            40 => Ok(KeyType::ChannelSearchSender),
+            35 => Ok(KeyType::DirectChatMessageEventIndexes),
+            36 => Ok(KeyType::GroupChatMessageEventIndexes),
+            37 => Ok(KeyType::ChannelMessageEventIndexes),
+            38 => Ok(KeyType::DirectChatThreadMessageEventIndexes),
+            39 => Ok(KeyType::GroupChatThreadMessageEventIndexes),
+            40 => Ok(KeyType::ChannelThreadMessageEventIndexes),
+            41 => Ok(KeyType::DirectChatSearchToken),
+            42 => Ok(KeyType::GroupChatSearchToken),
+            43 => Ok(KeyType::ChannelSearchToken),
+            44 => Ok(KeyType::DirectChatSearchSender),
+            45 => Ok(KeyType::GroupChatSearchSender),
+            46 => Ok(KeyType::ChannelSearchSender),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
