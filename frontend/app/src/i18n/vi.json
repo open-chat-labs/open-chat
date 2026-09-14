@@ -672,6 +672,178 @@
     "currentChitBalance": "Số dư CHIT hiện tại",
     "currentLimit": "Giới hạn lưu trữ của bạn là {limit}MB",
     "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
+    "dailyPuzzle": {
+        "title": "The Daily",
+        "number": "The Daily #{number}",
+        "tier": {
+            "0": "Dễ",
+            "1": "Hóc búa"
+        },
+        "todaysPuzzle": "Câu đố hôm nay",
+        "play": "Chơi",
+        "continue": "Tiếp tục",
+        "solved": "Đã giải",
+        "unavailable": "Hiện chưa có câu đố nào.",
+        "startFree": "Bắt đầu (câu đố đầu tiên miễn phí)",
+        "startFee": "Bắt đầu với {fee} CHIT",
+        "hintFree": "Gợi ý (cấp {level})",
+        "hintPrice": "Gợi ý (cấp {level}, {price} CHIT)",
+        "hintsUsed": "{count} gợi ý",
+        "hintsLeft": "Còn {count}",
+        "noHintsLeft": "Đã hết gợi ý cho câu đố hôm nay",
+        "streakDays": "Chuỗi {streak} ngày",
+        "submitting": "Đang kiểm tra lời giải của bạn...",
+        "solvedTitle": "Đã giải!",
+        "solvedSummary": "{time} với {hints} gợi ý. Chuỗi: {streak}.",
+        "reward": "+{reward} CHIT",
+        "share": "Chia sẻ",
+        "verified": "Đã xác minh",
+        "unverified": "Chưa xác minh",
+        "card": {
+            "time": "Thời gian",
+            "hints": "Gợi ý",
+            "dayStreak": "Chuỗi ngày"
+        },
+        "wrong": "Chưa đúng. Hãy kiểm tra các ô đỏ.",
+        "mistake": "Có lỗi ở các ô đỏ. Hãy sửa lại rồi yêu cầu gợi ý lần nữa.",
+        "fixMistakeFirst": "Hãy sửa các ô đỏ trước",
+        "noFreeChecks": "Đã hết lượt kiểm tra miễn phí cho câu đố hôm nay",
+        "checksLeft": "Còn {count} lượt kiểm tra",
+        "revealed": "Đã điền sẵn cho bạn.",
+        "reset": "Đặt lại",
+        "resetConfirm": "Xóa bảng?",
+        "replaced": "Câu đố này đã được thay thế. Đây là câu đố mới.",
+        "failedToStart": "Rất tiếc, không thể bắt đầu câu đố",
+        "failedToSubmit": "Rất tiếc, không thể kiểm tra lời giải của bạn",
+        "failedHint": "Rất tiếc, không thể lấy gợi ý",
+        "chitEvent": {
+            "entry": "Tham gia câu đố hằng ngày",
+            "solve": "Giải câu đố hằng ngày",
+            "hint": "Gợi ý câu đố hằng ngày"
+        },
+        "needsNewerApp": "Loại câu đố này cần phiên bản ứng dụng mới hơn",
+        "games": {
+            "bridges": {
+                "name": "Bridges",
+                "rules": "Nối các đảo bằng cầu sao cho mỗi đảo có đúng số cầu bằng con số của nó. Cầu đi thẳng, không bao giờ cắt nhau, và mỗi cặp đảo có tối đa hai cầu.",
+                "technique": {
+                    "1": "Đảo này chỉ đạt đủ con số khi dùng hết mọi cây cầu còn có thể đặt quanh nó, nên hãy vẽ tất cả.",
+                    "2": "Con số của đảo này quá lớn nên không thể bỏ sót đảo lân cận nào, vì vậy nó cần ít nhất một cầu theo mọi hướng có thể nối tới.",
+                    "3": "Nếu không có cầu tới đảo lân cận này, các hướng còn lại không thể cho đảo này đủ số cầu, nên phải có một cầu ở đây."
+                },
+                "demo": {
+                    "1": "Nối các đảo bằng cầu. Con số trên đảo là số cầu phải nối tới nó.",
+                    "2": "Cầu đi thẳng giữa hai đảo và không bao giờ cắt nhau. Cây cầu này tính một ở mỗi đầu.",
+                    "3": "Cùng một cặp đảo có thể nhận thêm cầu thứ hai. Giờ tính hai ở mỗi đầu.",
+                    "4": "Không đảo nào được vượt quá con số của nó. Đảo này cần ba cầu mà có tới bốn.",
+                    "5": "Đổi cạnh này thành một cầu thay vì hai, và nó có đúng ba.",
+                    "6": "Mọi con số đều khớp, mọi đảo đều nối với phần còn lại. Thế là xong."
+                }
+            },
+            "light_up": {
+                "name": "Light Up",
+                "rules": "Chiếu sáng mọi ô trắng. Bóng đèn chiếu sáng hàng và cột của nó cho tới khi gặp ô đen, không bóng nào được chiếu vào bóng khác, và con số cho biết có bao nhiêu bóng đèn nằm sát cạnh nó theo hàng ngang hoặc dọc, không tính đường chéo.",
+                "technique": {
+                    "1": "Ô này chỉ có thể được chiếu sáng từ một vị trí, nên phải đặt bóng đèn ở đó.",
+                    "2": "Con số này đã có đủ bóng đèn bên cạnh, nên các ô còn lại cạnh nó phải để trống.",
+                    "3": "Con số này vẫn cần bóng đèn ở mọi ô trống cạnh nó, nên hãy đặt bóng đèn vào từng ô đó.",
+                    "4": "Ít nhất một trong các ô được đánh dấu phải có bóng đèn, mà đặt bóng đèn ở ô này sẽ loại hết các ô đó, nên ô này phải để trống."
+                },
+                "demo": {
+                    "1": "Đặt bóng đèn cho tới khi mọi ô trắng đều sáng.",
+                    "2": "Bóng đèn chiếu sáng hàng và cột của nó, cho tới các ô đen.",
+                    "3": "Con số đếm bóng đèn cạnh nó. Số 4 này cần một bóng ở mỗi phía.",
+                    "4": "Góc này vẫn tối và không bóng nào khác chiếu tới được, nên nó cần một bóng đèn riêng.",
+                    "5": "Không bóng nào được chiếu vào bóng khác. Hai bóng này cùng cột và không có gì chắn giữa.",
+                    "6": "Mọi ô trắng đều sáng, số 4 có đủ bốn bóng, và không bóng nào chiếu vào bóng khác."
+                }
+            },
+            "loopy": {
+                "name": "Loopy",
+                "rules": "Vẽ một vòng khép kín theo các đường kẻ ô. Vòng không bao giờ cắt nhau hay rẽ nhánh, nên mỗi điểm có hai đường hoặc không có đường nào. Con số cho biết vòng dùng bao nhiêu trong bốn cạnh của ô; ô không có số thì tùy ý.",
+                "technique": {
+                    "1": "Con số này đã có đủ các đường cần thiết quanh nó, nên các cạnh còn lại là dấu chéo.",
+                    "2": "Con số này còn đúng bấy nhiêu cạnh chưa xác định bằng số đường nó còn cần, nên tất cả các cạnh đó đều là đường.",
+                    "3": "Một đường từ bên ngoài đi vào một góc của con số này, nên hai cạnh gặp nhau ở góc đó không thể cùng là đường, và mọi cạnh chưa xác định khác của con số này phải là đường.",
+                    "4": "Không có đường nào tới điểm này và chỉ còn một cạnh của nó chưa xác định. Một đường lẻ tại một điểm là ngõ cụt, nên hãy gạch chéo cạnh đó.",
+                    "5": "Một đường tới điểm này và chỉ còn một cạnh khác của nó chưa xác định. Một điểm không bao giờ có đúng một đường, nên vòng tiếp tục theo cạnh đó.",
+                    "6": "Điểm này đã có hai đường, nên hãy gạch chéo các cạnh còn lại của nó.",
+                    "7": "Các đường bắt buộc ở các góc của con số này đã cho nó đủ số đường cần thiết, nên cạnh này là dấu chéo.",
+                    "8": "Ngay cả khi tính mọi đường còn có thể ở các góc, con số này vẫn thiếu nếu không có cạnh này, nên cạnh này là đường.",
+                    "9": "Vẽ đoạn này sẽ khép kín vòng mà bỏ sót các đường khác, nên nó là dấu chéo.",
+                    "10": "Vòng đã hoàn thành và mọi con số đều thỏa mãn, nên mọi đoạn còn lại đều là dấu chéo."
+                },
+                "demo": {
+                    "1": "Vẽ một vòng khép kín theo các đường kẻ ô. Con số đếm các đường trên bốn cạnh của ô đó; ô trống thì tùy ý.",
+                    "2": "Bắt đầu với số 0. Không cạnh nào trong bốn cạnh của nó có thể là đường, nên hãy gạch chéo cả bốn.",
+                    "3": "Đường đi từ điểm này tới điểm kia.",
+                    "4": "Đường dừng lại giữa chừng thì không phải vòng. Mỗi điểm cần hai đường, hoặc không có đường nào.",
+                    "5": "Vòng cũng không được rẽ nhánh. Ba đường tại một điểm là quá nhiều.",
+                    "6": "Một vòng khép kín, và mọi con số đều khớp. Đi theo nó một vòng, bạn sẽ về đúng nơi xuất phát."
+                }
+            },
+            "slant": {
+                "name": "Slant",
+                "rules": "Vẽ một đường chéo trong mọi ô. Con số cho biết có bao nhiêu đường chéo chạm vào góc đó; góc không có số thì tùy ý. Các đường chéo không bao giờ được nối thành vòng.",
+                "technique": {
+                    "1": "Con số này đã có đủ các đường chéo cần thiết, nên mọi ô khác quanh nó phải nghiêng ra xa nó.",
+                    "2": "Con số này còn cần đúng bằng số ô trống quanh nó, nên tất cả các ô đó phải nghiêng về phía nó.",
+                    "3": "Hai góc mà đường chéo này sẽ nối đã được liên kết bằng một chuỗi đường chéo, nên nối chúng sẽ khép thành vòng, và ô này phải nghiêng theo hướng kia.",
+                    "4": "Đường chéo này sẽ nối hai nhóm đường chéo không chạm tới mép lưới và không có lối ra nào khác, nhốt chúng thành vòng, nên ô này phải nghiêng theo hướng kia.",
+                    "5": "Các con số nằm giữa ô này và ô đã điền được đánh dấu chỉ thỏa mãn khi cả hai nghiêng cùng hướng, nên hãy vẽ giống ô đã điền.",
+                    "6": "Hai ô trống kề nhau quanh con số này phải nghiêng cùng hướng, nên hai ô đó góp cho nó đúng một đường chéo, và điều đó quyết định các ô còn lại quanh nó."
+                },
+                "demo": {
+                    "1": "Mỗi ô có một đường chéo. Nó có thể nghiêng theo hướng nào cũng được, nhưng không ô nào để trống.",
+                    "2": "Con số đếm các đường chéo chạm vào góc đó. Hai đường chạm vào số 2 này, nên nó đã xong.",
+                    "3": "Đầu kia của đường chéo đó nằm ở một góc không có số. Những góc như vậy không đếm gì cả, nên không bao giờ giới hạn bạn.",
+                    "4": "Góc này cần bốn, nên cả bốn ô quanh nó phải hướng vào nó. Chỉ có một cách để làm vậy.",
+                    "5": "Bốn đường này đã nối thành một vòng khép kín. Vòng không được phép, nên một trong số chúng phải nghiêng theo hướng kia.",
+                    "6": "Mọi ô đều được điền, mọi con số đều khớp, và không có vòng nào."
+                }
+            },
+            "tents": {
+                "name": "Tents",
+                "rules": "Mỗi cây cần một lều riêng ngay sát cạnh nó, không bao giờ theo đường chéo. Lều không bao giờ chạm nhau, kể cả ở góc. Các con số đếm số lều trong mỗi hàng và cột.",
+                "technique": {
+                    "1": "Không cây nào cạnh ô này còn cần lều, nên ô này không thể có lều.",
+                    "2": "Đã có một lều chạm vào ô này, nên ô này không thể có lều.",
+                    "3": "Cây này chỉ còn một ô để đặt lều, nên ô đó phải là lều.",
+                    "4": "Lều của cây này phải nằm ở một trong hai ô, và cả hai ô đó đều chạm vào ô này, nên ô này không thể có lều.",
+                    "5": "Trong hàng hoặc cột này chỉ còn những ô này có thể đặt lều, và mọi cách xếp đủ số lều cần thiết đều thống nhất về các ô được đánh dấu, nên bạn có thể điền chúng.",
+                    "6": "Trong hàng hoặc cột này chỉ còn những ô này có thể đặt lều, và mọi cách xếp đủ số lều cần thiết đều đặt một lều cạnh các ô được đánh dấu, nên bạn có thể loại chúng.",
+                    "7": "Hàng hoặc cột này cần số lều đúng bằng số ô còn có thể đặt lều, nên mọi ô đó đều là lều.",
+                    "8": "Hàng hoặc cột này đã có đủ lều, nên không ô nào khác trong đó có thể có lều."
+                },
+                "demo": {
+                    "1": "Mỗi cây cần một lều riêng ở ô cạnh nó. Các con số đếm số lều trong mỗi hàng và cột.",
+                    "2": "Lều nằm ngay sát cây của nó: trên, dưới, trái hoặc phải. Góc không tính, nên những ô này để trống.",
+                    "3": "Cột này cần một lều, và chỉ còn một ô cho nó.",
+                    "4": "Lều không bao giờ chạm nhau, kể cả ở góc. Hai lều này chạm nhau, nên một trong hai phải dời đi.",
+                    "5": "Chỉ còn một ô trống cạnh cây này, nên lều của nó đặt ở đó.",
+                    "6": "Mỗi cây đều có lều bên cạnh, không hai lều nào chạm nhau, và các con số đều khớp."
+                }
+            },
+            "unruly": {
+                "name": "Unruly",
+                "rules": "Tô mọi ô bằng một trong hai màu. Không bao giờ có ba ô cùng màu liên tiếp trong một hàng hay cột, và mỗi hàng, mỗi cột cuối cùng có mỗi màu một nửa.",
+                "technique": {
+                    "1": "Hai ô kề nhau này đã cùng màu, nên ô ngay sau chúng phải là màu kia: ba ô cùng màu liên tiếp không bao giờ được phép.",
+                    "2": "Hai ô này cùng màu và cách nhau một ô, nên ô ở giữa phải là màu kia: ba ô cùng màu liên tiếp không bao giờ được phép.",
+                    "3": "Hàng hoặc cột này đã có tối đa số ô của một màu và còn thiếu một ô của màu kia, nên ô trống cuối cùng của nó phải là màu kia.",
+                    "4": "Hàng hoặc cột này đã có đủ số ô tối đa của màu này, nên mọi ô còn trống trong đó phải là màu kia.",
+                    "5": "Hàng hoặc cột này cần đúng thêm một ô của một màu, và đặt nó ngoài ba ô này sẽ để lại ba ô màu kia liên tiếp ở đây, nên mọi ô trống khác trong hàng hoặc cột này nhận màu kia."
+                },
+                "demo": {
+                    "1": "Tô mọi ô màu cam hoặc tím. Các ô có vòng tròn là cho sẵn, nên bạn không thể đổi.",
+                    "2": "Không bao giờ ba ô cùng màu liên tiếp, theo hàng ngang hay dọc. Ở đây thừa một ô cam.",
+                    "3": "Mỗi hàng và cột cuối cùng có ba ô mỗi màu. Hàng này có bốn ô tím.",
+                    "4": "Hai ô cam cách nhau một ô. Cam ở giữa sẽ thành ba, nên phải là tím.",
+                    "5": "Mọi ô đều được tô, không có ba ô liên tiếp cùng màu, và mỗi hàng, mỗi cột có ba ô mỗi màu."
+                }
+            }
+        }
+    },
     "dailyChit": {
         "alreadyClaimed": "Hãy quay lại vào ngày mai để kéo dài chuỗi trận của bạn!",
         "available": "Yêu cầu CHIT của bạn và kéo dài chuỗi của bạn!",

@@ -672,6 +672,178 @@
     "currentChitBalance": "Saldo CHIT attuale",
     "currentLimit": "Il tuo attuale limite di archiviazione è {limit}GB e il saldo del tuo account è {balance} ICP.",
     "currentUsage": "Utilizzo corrente dello spazio di archiviazione",
+    "dailyPuzzle": {
+        "title": "The Daily",
+        "number": "The Daily n. {number}",
+        "tier": {
+            "0": "Facile",
+            "1": "Impegnativo"
+        },
+        "todaysPuzzle": "Il puzzle di oggi",
+        "play": "Gioca",
+        "continue": "Continua",
+        "solved": "Risolto",
+        "unavailable": "Al momento non c'è nessun puzzle disponibile.",
+        "startFree": "Inizia (il primo puzzle è gratis)",
+        "startFee": "Inizia per {fee} CHIT",
+        "hintFree": "Suggerimento (livello {level})",
+        "hintPrice": "Suggerimento (livello {level}, {price} CHIT)",
+        "hintsUsed": "{count} suggerimenti",
+        "hintsLeft": "{count} rimasti",
+        "noHintsLeft": "Nessun suggerimento rimasto per il puzzle di oggi",
+        "streakDays": "Serie di {streak} giorni",
+        "submitting": "Controllo della tua soluzione...",
+        "solvedTitle": "Risolto!",
+        "solvedSummary": "{time} con {hints} suggerimenti. Serie: {streak}.",
+        "reward": "+{reward} CHIT",
+        "share": "Condividi",
+        "verified": "Verificato",
+        "unverified": "Non verificato",
+        "card": {
+            "time": "Tempo",
+            "hints": "Suggerimenti",
+            "dayStreak": "Giorni di fila"
+        },
+        "wrong": "Non è così. Controlla le celle rosse.",
+        "mistake": "C'è qualcosa che non va nelle celle rosse. Correggile, poi chiedi di nuovo un suggerimento.",
+        "fixMistakeFirst": "Prima correggi le celle rosse",
+        "noFreeChecks": "Nessun controllo gratuito rimasto per il puzzle di oggi",
+        "checksLeft": "{count} controlli rimasti",
+        "revealed": "Compilato per te.",
+        "reset": "Azzera",
+        "resetConfirm": "Svuotare la griglia?",
+        "replaced": "Questo puzzle è stato sostituito. Ecco quello nuovo.",
+        "failedToStart": "Spiacenti, non siamo riusciti ad avviare il puzzle",
+        "failedToSubmit": "Spiacenti, non siamo riusciti a controllare la tua soluzione",
+        "failedHint": "Spiacenti, non siamo riusciti a ottenere un suggerimento",
+        "chitEvent": {
+            "entry": "Partecipazione al puzzle giornaliero",
+            "solve": "Puzzle giornaliero risolto",
+            "hint": "Suggerimento del puzzle giornaliero"
+        },
+        "needsNewerApp": "Questo tipo di puzzle richiede un'app più recente",
+        "games": {
+            "bridges": {
+                "name": "Bridges",
+                "rules": "Collega le isole con dei ponti in modo che ogni isola abbia esattamente il suo numero. I ponti sono dritti, non si incrociano mai e al massimo due uniscono la stessa coppia.",
+                "technique": {
+                    "1": "Questa isola può raggiungere il suo numero solo usando ogni ponte che ci sta ancora intorno a lei, quindi disegnali tutti.",
+                    "2": "Il numero di questa isola è troppo grande per lasciare fuori un vicino, quindi le serve almeno un ponte in ogni direzione che può raggiungere.",
+                    "3": "Senza un ponte verso questo vicino, le altre direzioni non potrebbero dare a questa isola abbastanza ponti per il suo numero, quindi qui ci deve essere un ponte."
+                },
+                "demo": {
+                    "1": "Unisci le isole con dei ponti. Il numero su un'isola indica quanti ponti devono raggiungerla.",
+                    "2": "I ponti vanno dritti tra due isole e non si incrociano mai. Questo conta uno a ciascuna estremità.",
+                    "3": "La stessa coppia può avere un secondo ponte. Ora conta due a ciascuna estremità.",
+                    "4": "Nessuna isola può superare il suo numero. Questa ha bisogno di tre ponti e ne ha quattro.",
+                    "5": "Un ponte sul lato invece di due, e ha i suoi tre.",
+                    "6": "Ogni numero rispettato e ogni isola collegata alle altre. Così è finito."
+                }
+            },
+            "light_up": {
+                "name": "Light Up",
+                "rules": "Illumina ogni cella bianca. Una lampadina illumina la sua riga e la sua colonna fino a una cella nera, nessuna lampadina può illuminarne un'altra, e un numero indica quante lampadine le stanno accanto, in orizzontale o in verticale, mai in diagonale.",
+                "technique": {
+                    "1": "Questa cella può essere illuminata da un solo punto, quindi lì ci deve andare una lampadina.",
+                    "2": "Questo numero tocca già tutte le lampadine che richiede, quindi le altre celle accanto a lui devono restare vuote.",
+                    "3": "Questo numero ha ancora bisogno di una lampadina in ogni cella libera accanto a lui, quindi metti una lampadina in ciascuna.",
+                    "4": "Almeno una delle celle evidenziate deve contenere una lampadina, e una lampadina in questa cella le escluderebbe tutte, quindi questa cella deve restare vuota."
+                },
+                "demo": {
+                    "1": "Piazza lampadine finché ogni cella bianca è illuminata.",
+                    "2": "Una lampadina illumina la propria riga e colonna, fino alle celle nere.",
+                    "3": "Un numero conta le lampadine accanto a lui. Questo 4 ne vuole una per lato.",
+                    "4": "Questo angolo è ancora buio e nient'altro può raggiungerlo, quindi gli serve una lampadina tutta sua.",
+                    "5": "Nessuna lampadina può illuminarne un'altra. Queste due sono nella stessa colonna senza niente in mezzo.",
+                    "6": "Ogni cella bianca è illuminata, il 4 ha le sue quattro lampadine e nessuna lampadina ne illumina un'altra."
+                }
+            },
+            "loopy": {
+                "name": "Loopy",
+                "rules": "Disegna un unico anello chiuso lungo le linee della griglia. Non si incrocia mai e non si ramifica mai, quindi ogni punto ha due tratti o nessuno. Un numero indica quanti dei suoi quattro lati usa l'anello; le celle senza numero sono libere.",
+                "technique": {
+                    "1": "Questo numero ha già intorno tutti i tratti di cui ha bisogno, quindi i suoi altri lati sono croci.",
+                    "2": "A questo numero restano esattamente tanti lati aperti quanti tratti gli mancano, quindi sono tutti tratti.",
+                    "3": "Un tratto entra dall'esterno in un angolo di questo numero, quindi i due lati che si incontrano in quell'angolo non possono essere entrambi tratti, e ogni altro lato aperto del numero deve essere un tratto.",
+                    "4": "Nessun tratto raggiunge questo punto e solo uno dei suoi lati è ancora aperto. Un tratto da solo a un punto è un vicolo cieco, quindi barra quel lato.",
+                    "5": "Un tratto raggiunge questo punto e solo uno dei suoi altri lati è ancora aperto. Un punto non può mai avere un solo tratto, quindi l'anello prosegue lungo quel lato.",
+                    "6": "Questo punto ha già i suoi due tratti, quindi barra i lati che restano.",
+                    "7": "I tratti forzati agli angoli di questo numero gli danno già tutti i tratti di cui ha bisogno, quindi questo lato è una croce.",
+                    "8": "Anche con tutti i tratti ancora possibili ai suoi angoli, questo numero non arriva al suo valore senza questo lato, quindi questo lato è un tratto.",
+                    "9": "Disegnare questo segmento chiuderebbe un anello che lascerebbe fuori altri tratti, quindi è una croce.",
+                    "10": "L'anello è completo e ogni numero è soddisfatto, quindi ogni segmento rimasto è una croce."
+                },
+                "demo": {
+                    "1": "Disegna un unico anello chiuso lungo le linee della griglia. Un numero conta i tratti sui quattro lati di quella cella; una cella vuota è libera.",
+                    "2": "Parti da uno 0. Nessuno dei suoi quattro lati può essere un tratto, quindi barrali.",
+                    "3": "I tratti vanno da punto a punto.",
+                    "4": "Un tratto che finisce nel nulla non è un anello. Ogni punto ha bisogno di due tratti, o di nessuno.",
+                    "5": "Non può nemmeno ramificarsi. Tre tratti a un punto sono troppi.",
+                    "6": "Un solo circuito chiuso e ogni numero rispettato. Seguilo e torni al punto di partenza."
+                }
+            },
+            "slant": {
+                "name": "Slant",
+                "rules": "Disegna una diagonale in ogni cella. Un numero indica quante diagonali toccano quell'angolo; gli angoli senza numero sono liberi. Le diagonali non devono mai unirsi in un anello.",
+                "technique": {
+                    "1": "Questo numero ha già tutte le linee di cui ha bisogno, quindi ogni altra cella intorno a lui deve inclinarsi dalla parte opposta.",
+                    "2": "Questo numero ha ancora bisogno di esattamente tante linee quante sono le celle vuote intorno a lui, quindi tutte quelle celle devono inclinarsi verso di lui.",
+                    "3": "I due angoli che questa linea unirebbe sono già collegati da una catena di linee, quindi unirli chiuderebbe un anello, e la cella deve inclinarsi dall'altra parte.",
+                    "4": "Questa linea unirebbe due gruppi di linee che non raggiungono mai il bordo della griglia e non hanno altra via d'uscita, chiudendoli in un anello, quindi la cella deve inclinarsi dall'altra parte.",
+                    "5": "I numeri tra questa cella e la cella piena evidenziata si possono rispettare solo se le due si inclinano nello stesso modo, quindi copia la cella piena.",
+                    "6": "Due celle vuote vicine intorno a questo numero devono inclinarsi nello stesso modo, quindi insieme gli danno esattamente una linea, e questo decide le altre celle intorno a lui."
+                },
+                "demo": {
+                    "1": "Ogni cella riceve una diagonale. Può inclinarsi da una parte o dall'altra, ma nessuna cella resta vuota.",
+                    "2": "Un numero conta le diagonali che toccano quell'angolo. Due toccano questo 2, quindi è a posto.",
+                    "3": "La stessa diagonale finisce su un angolo senza numero. Quegli angoli non contano nulla, quindi non ti limitano mai.",
+                    "4": "Questo angolo ne vuole quattro, quindi tutte e quattro le celle intorno devono puntare verso di lui. C'è un solo modo per farlo.",
+                    "5": "Queste quattro si sono unite in un anello chiuso. Gli anelli non sono ammessi, quindi una di loro deve inclinarsi dall'altra parte.",
+                    "6": "Ogni cella piena, ogni numero rispettato e nessun anello da nessuna parte."
+                }
+            },
+            "tents": {
+                "name": "Tents",
+                "rules": "Ogni albero ha bisogno della propria tenda subito accanto, mai in diagonale. Le tende non si toccano mai, nemmeno agli angoli. I numeri contano le tende in ogni riga e colonna.",
+                "technique": {
+                    "1": "Nessun albero accanto a questa cella ha ancora bisogno di una tenda, quindi questa cella non può contenerne una.",
+                    "2": "Una tenda tocca già questa cella, quindi questa cella non può contenerne una.",
+                    "3": "A questo albero resta una sola cella dove mettere la sua tenda, quindi quella cella deve essere una tenda.",
+                    "4": "La tenda di questo albero deve andare in una di due celle, ed entrambe toccano questa cella, quindi questa cella non può contenere una tenda.",
+                    "5": "Solo queste celle in questa riga o colonna possono ancora ospitare una tenda, e ogni modo di sistemare quelle che le servono concorda sulle celle segnate, quindi puoi riempirle.",
+                    "6": "Solo queste celle in questa riga o colonna possono ancora ospitare una tenda, e ogni modo di sistemare quelle che le servono ne mette una accanto alle celle segnate, quindi puoi escluderle.",
+                    "7": "Questa riga o colonna ha bisogno di tante tende quante sono le celle rimaste che potrebbero contenerne una, quindi ognuna di loro è una tenda.",
+                    "8": "Questa riga o colonna ha già tutte le sue tende, quindi nessun'altra cella al suo interno può contenerne una."
+                },
+                "demo": {
+                    "1": "Ogni albero ha bisogno della propria tenda in una cella accanto. I numeri contano le tende in ogni riga e colonna.",
+                    "2": "Una tenda va subito accanto al suo albero, sopra, sotto, a sinistra o a destra. Gli angoli non contano, quindi queste celle restano vuote.",
+                    "3": "Questa colonna ha bisogno di una tenda e le resta una sola cella.",
+                    "4": "Le tende non si toccano mai, nemmeno a un angolo. Queste due si toccano, quindi una deve spostarsi.",
+                    "5": "Accanto a questo albero è rimasta libera una sola cella, quindi la sua tenda va lì.",
+                    "6": "Ogni albero ha una tenda accanto, nessuna tenda ne tocca un'altra e tutti i conti tornano."
+                }
+            },
+            "unruly": {
+                "name": "Unruly",
+                "rules": "Riempi ogni cella con uno di due colori. Mai tre dello stesso colore di fila in una riga o colonna, e ogni riga e colonna finisce con metà di ciascuno.",
+                "technique": {
+                    "1": "Queste due vicine sono già dello stesso colore, quindi la cella subito dopo deve essere dell'altro. Tre uguali di fila non sono mai ammessi.",
+                    "2": "Queste due celle sono dello stesso colore con uno spazio in mezzo, quindi la cella nello spazio deve essere dell'altro. Tre uguali di fila non sono mai ammessi.",
+                    "3": "Questa linea ha tutte le celle consentite di un colore e gliene manca una dell'altro, quindi la sua ultima cella vuota deve essere di quell'altro colore.",
+                    "4": "Questa linea ha già tante celle di questo colore quante ne sono consentite, quindi ogni cella ancora vuota al suo interno deve essere dell'altro colore.",
+                    "5": "A questa linea manca esattamente una cella di un colore, e metterla fuori da queste tre celle lascerebbe qui tre dell'altro colore di fila, quindi ogni cella vuota altrove nella linea prende l'altro colore."
+                },
+                "demo": {
+                    "1": "Riempi ogni cella di arancione o viola. Quelle cerchiate sono date, quindi non puoi cambiarle.",
+                    "2": "Mai tre dello stesso colore di fila, in orizzontale o in verticale. Qui c'è un arancione di troppo.",
+                    "3": "Ogni riga e colonna finisce con tre di ogni colore. Questa riga ha quattro viola.",
+                    "4": "Due arancioni con uno spazio. Arancione in mezzo ne farebbe tre, quindi deve essere viola.",
+                    "5": "Ogni cella piena, nessuna serie di tre e tre di ogni colore in ogni riga e colonna."
+                }
+            }
+        }
+    },
     "dailyChit": {
         "alreadyClaimed": "Torna domani per prolungare la tua serie di vittorie consecutive!",
         "available": "Richiedi il tuo CHIT ed estendi la tua serie di vittorie!",

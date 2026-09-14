@@ -672,6 +672,178 @@
     "currentChitBalance": "Solde CHIT actuel",
     "currentLimit": "Votre limite de stockage actuelle est de {limit} Go et le solde de votre compte est de {balance} ICP.",
     "currentUsage": "Utilisation actuelle du stockage",
+    "dailyPuzzle": {
+        "title": "The Daily",
+        "number": "The Daily n°{number}",
+        "tier": {
+            "0": "Facile",
+            "1": "Corsé"
+        },
+        "todaysPuzzle": "Le puzzle du jour",
+        "play": "Jouer",
+        "continue": "Continuer",
+        "solved": "Résolu",
+        "unavailable": "Aucun puzzle disponible pour le moment.",
+        "startFree": "Commencer (premier puzzle gratuit)",
+        "startFee": "Commencer pour {fee} CHIT",
+        "hintFree": "Indice (niveau {level})",
+        "hintPrice": "Indice (niveau {level}, {price} CHIT)",
+        "hintsUsed": "{count} indices",
+        "hintsLeft": "{count} restants",
+        "noHintsLeft": "Plus d'indices pour le puzzle du jour",
+        "streakDays": "Série de {streak} jours",
+        "submitting": "Vérification de votre solution...",
+        "solvedTitle": "Résolu !",
+        "solvedSummary": "{time} avec {hints} indices. Série : {streak}.",
+        "reward": "+{reward} CHIT",
+        "share": "Partager",
+        "verified": "Vérifié",
+        "unverified": "Non vérifié",
+        "card": {
+            "time": "Temps",
+            "hints": "Indices",
+            "dayStreak": "Jours d'affilée"
+        },
+        "wrong": "Ce n'est pas ça. Vérifiez les cases rouges.",
+        "mistake": "Quelque chose cloche dans les cases rouges. Corrigez-les, puis redemandez un indice.",
+        "fixMistakeFirst": "Corrigez d'abord les cases rouges",
+        "noFreeChecks": "Plus de vérifications gratuites pour le puzzle du jour",
+        "checksLeft": "{count} vérifications restantes",
+        "revealed": "Rempli pour vous.",
+        "reset": "Réinitialiser",
+        "resetConfirm": "Effacer la grille ?",
+        "replaced": "Ce puzzle a été remplacé. Voici le nouveau.",
+        "failedToStart": "Désolé, nous n'avons pas pu lancer le puzzle",
+        "failedToSubmit": "Désolé, nous n'avons pas pu vérifier votre solution",
+        "failedHint": "Désolé, nous n'avons pas pu obtenir d'indice",
+        "chitEvent": {
+            "entry": "Participation au puzzle du jour",
+            "solve": "Puzzle du jour résolu",
+            "hint": "Indice du puzzle du jour"
+        },
+        "needsNewerApp": "Ce type de puzzle nécessite une version plus récente de l'application",
+        "games": {
+            "bridges": {
+                "name": "Bridges",
+                "rules": "Reliez les îles par des ponts pour que chaque île ait exactement son nombre. Les ponts sont droits, ne se croisent jamais, et deux au plus relient une même paire.",
+                "technique": {
+                    "1": "Cette île ne peut atteindre son nombre qu'en utilisant chaque pont qui tient encore autour d'elle, donc tracez-les tous.",
+                    "2": "Le nombre de cette île est trop grand pour laisser un voisin de côté, donc il lui faut au moins un pont dans chaque direction qu'elle peut atteindre.",
+                    "3": "Sans pont vers ce voisin, les autres directions ne pourraient pas donner à cette île assez de ponts pour son nombre, donc un pont doit passer ici."
+                },
+                "demo": {
+                    "1": "Reliez les îles par des ponts. Le nombre sur une île indique combien de ponts doivent l'atteindre.",
+                    "2": "Les ponts vont tout droit entre deux îles et ne se croisent jamais. Celui-ci compte pour un à chaque bout.",
+                    "3": "Une même paire peut recevoir un second pont. Il compte maintenant pour deux à chaque bout.",
+                    "4": "Aucune île ne peut dépasser son nombre. Celle-ci a besoin de trois ponts et en a quatre.",
+                    "5": "Un pont sur le côté au lieu de deux, et elle a ses trois.",
+                    "6": "Chaque nombre est respecté, et chaque île est reliée aux autres. C'est terminé."
+                }
+            },
+            "light_up": {
+                "name": "Light Up",
+                "rules": "Éclairez chaque case blanche. Une ampoule éclaire sa ligne et sa colonne jusqu'à une case noire, aucune ampoule ne doit en éclairer une autre, et un nombre indique combien d'ampoules sont adjacentes, horizontalement ou verticalement, jamais en diagonale.",
+                "technique": {
+                    "1": "Cette case ne peut être éclairée que depuis un seul endroit, donc une ampoule doit y aller.",
+                    "2": "Ce nombre touche déjà toutes les ampoules qu'il demande, donc les autres cases adjacentes doivent rester vides.",
+                    "3": "Ce nombre a encore besoin d'une ampoule dans chaque case libre adjacente, donc placez une ampoule dans chacune.",
+                    "4": "Au moins une des cases surlignées doit contenir une ampoule, et une ampoule dans cette case les exclurait toutes, donc cette case doit rester vide."
+                },
+                "demo": {
+                    "1": "Placez des ampoules jusqu'à ce que chaque case blanche soit éclairée.",
+                    "2": "Une ampoule éclaire sa propre ligne et sa propre colonne, jusqu'aux cases noires.",
+                    "3": "Un nombre compte les ampoules adjacentes. Ce 4 en a besoin d'une de chaque côté.",
+                    "4": "Ce coin est encore sombre, et rien d'autre ne peut l'atteindre, donc il lui faut sa propre ampoule.",
+                    "5": "Aucune ampoule ne doit en éclairer une autre. Ces deux-là sont dans la même colonne sans rien entre elles.",
+                    "6": "Chaque case blanche est éclairée, le 4 a ses quatre ampoules, et aucune ampoule n'en éclaire une autre."
+                }
+            },
+            "loopy": {
+                "name": "Loopy",
+                "rules": "Tracez une seule boucle fermée le long des lignes de la grille. Elle ne se croise jamais et ne se ramifie jamais, donc chaque point a deux traits ou aucun. Un nombre indique combien de ses quatre côtés la boucle utilise ; les cases sans nombre sont libres.",
+                "technique": {
+                    "1": "Ce nombre a déjà tous les traits qu'il lui faut autour de lui, donc ses autres côtés sont des croix.",
+                    "2": "Ce nombre a exactement autant de côtés encore ouverts que de traits qu'il lui manque, donc ce sont tous des traits.",
+                    "3": "Un trait arrive de l'extérieur dans un coin de ce nombre, donc les deux côtés qui se rejoignent à ce coin ne peuvent pas être tous les deux des traits, et chaque autre côté ouvert du nombre doit être un trait.",
+                    "4": "Aucun trait n'atteint ce point et un seul de ses côtés est encore ouvert. Un trait seul à un point est une impasse, donc barrez ce côté.",
+                    "5": "Un trait atteint ce point et un seul de ses autres côtés est encore ouvert. Un point ne peut jamais avoir un seul trait, donc la boucle continue par ce côté.",
+                    "6": "Ce point a déjà ses deux traits, donc barrez ses côtés restants.",
+                    "7": "Les traits forcés aux coins de ce nombre lui donnent déjà tous les traits qu'il lui faut, donc ce côté est une croix.",
+                    "8": "Même avec tous les traits encore possibles à ses coins, ce nombre n'atteint pas son compte sans ce côté, donc ce côté est un trait.",
+                    "9": "Tracer ce segment fermerait une boucle qui laisserait d'autres traits dehors, donc c'est une croix.",
+                    "10": "La boucle est complète et chaque nombre est satisfait, donc chaque segment restant est une croix."
+                },
+                "demo": {
+                    "1": "Tracez une seule boucle fermée le long des lignes de la grille. Un nombre compte les traits sur les quatre côtés de cette case ; une case vide est libre.",
+                    "2": "Commencez par un 0. Aucun de ses quatre côtés ne peut être un trait, donc barrez-les.",
+                    "3": "Les traits vont de point en point.",
+                    "4": "Un trait qui s'arrête net n'est pas une boucle. Chaque point a besoin de deux traits, ou d'aucun.",
+                    "5": "Elle ne peut pas non plus se ramifier. Trois traits à un point, c'est trop.",
+                    "6": "Un seul circuit fermé, et chaque nombre respecté. Suivez-le et vous revenez à votre point de départ."
+                }
+            },
+            "slant": {
+                "name": "Slant",
+                "rules": "Tracez une diagonale dans chaque case. Un nombre indique combien de diagonales touchent ce coin ; les coins sans nombre sont libres. Les diagonales ne doivent jamais se rejoindre en boucle.",
+                "technique": {
+                    "1": "Ce nombre a déjà tous les traits qu'il lui faut, donc chaque autre case autour de lui doit pencher à l'opposé.",
+                    "2": "Ce nombre a encore besoin d'exactement autant de traits qu'il a de cases vides autour de lui, donc toutes ces cases doivent pencher vers lui.",
+                    "3": "Les deux coins que ce trait relierait sont déjà reliés par une chaîne de traits, donc les relier fermerait une boucle, et la case doit pencher dans l'autre sens.",
+                    "4": "Ce trait relierait deux groupes de traits qui n'atteignent jamais le bord de la grille et n'ont aucune autre issue, ce qui les enfermerait en boucle, donc la case doit pencher dans l'autre sens.",
+                    "5": "Les nombres entre cette case et la case remplie surlignée ne peuvent être respectés que si les deux penchent dans le même sens, donc copiez la case remplie.",
+                    "6": "Deux cases vides voisines autour de ce nombre doivent pencher dans le même sens, donc à elles deux elles lui donnent exactement un trait, et cela fixe les autres cases autour de lui."
+                },
+                "demo": {
+                    "1": "Chaque case reçoit une diagonale. Elle peut pencher d'un côté ou de l'autre, mais aucune case ne reste vide.",
+                    "2": "Un nombre compte les diagonales qui touchent ce coin. Deux touchent ce 2, donc il est satisfait.",
+                    "3": "La même diagonale finit sur un coin sans nombre. Ces coins ne comptent rien, donc ils ne vous limitent jamais.",
+                    "4": "Ce coin en a besoin de quatre, donc les quatre cases autour doivent pointer vers lui. Il n'y a qu'une façon de le faire.",
+                    "5": "Ces quatre-là se sont rejointes en anneau fermé. Les anneaux sont interdits, donc l'une d'elles doit pencher dans l'autre sens.",
+                    "6": "Chaque case remplie, chaque nombre respecté, et aucun anneau nulle part."
+                }
+            },
+            "tents": {
+                "name": "Tents",
+                "rules": "Chaque arbre a besoin de sa propre tente juste à côté de lui, jamais en diagonale. Les tentes ne se touchent jamais, pas même par les coins. Les nombres comptent les tentes de chaque ligne et colonne.",
+                "technique": {
+                    "1": "Aucun arbre voisin de cette case n'a encore besoin d'une tente, donc cette case ne peut pas en contenir.",
+                    "2": "Une tente touche déjà cette case, donc cette case ne peut pas en contenir.",
+                    "3": "Il ne reste à cet arbre qu'une seule case où placer sa tente, donc cette case doit être une tente.",
+                    "4": "La tente de cet arbre doit aller dans l'une de deux cases, et toutes deux touchent cette case, donc cette case ne peut pas contenir de tente.",
+                    "5": "Seules ces cases de cette ligne ou colonne peuvent encore recevoir une tente, et toutes les façons de placer celles qu'il lui faut s'accordent sur les cases marquées, donc vous pouvez les remplir.",
+                    "6": "Seules ces cases de cette ligne ou colonne peuvent encore recevoir une tente, et toutes les façons de placer celles qu'il lui faut en mettent une à côté des cases marquées, donc vous pouvez les exclure.",
+                    "7": "Cette ligne ou colonne a besoin d'autant de tentes qu'il lui reste de cases pouvant en contenir, donc chacune d'elles est une tente.",
+                    "8": "Cette ligne ou colonne a déjà toutes ses tentes, donc aucune autre case ne peut en contenir."
+                },
+                "demo": {
+                    "1": "Chaque arbre a besoin de sa propre tente dans une case voisine. Les nombres comptent les tentes de chaque ligne et colonne.",
+                    "2": "Une tente va juste à côté de son arbre, au-dessus, en dessous, à gauche ou à droite. Les coins ne comptent pas, donc ces cases restent vides.",
+                    "3": "Cette colonne a besoin d'une tente, et il ne lui reste qu'une seule case.",
+                    "4": "Les tentes ne se touchent jamais, pas même par un coin. Ces deux-là se touchent, donc l'une doit bouger.",
+                    "5": "Une seule case à côté de cet arbre est encore libre, donc sa tente va là.",
+                    "6": "Chaque arbre a une tente à côté de lui, aucune tente n'en touche une autre, et tous les comptes sont bons."
+                }
+            },
+            "unruly": {
+                "name": "Unruly",
+                "rules": "Remplissez chaque case avec l'une de deux couleurs. Jamais trois de la même couleur à la suite dans une ligne ou une colonne, et chaque ligne et colonne finit avec moitié de chaque.",
+                "technique": {
+                    "1": "Ces deux voisines ont déjà la même couleur, donc la case juste après doit être de l'autre. Trois identiques à la suite, c'est interdit.",
+                    "2": "Ces deux cases ont la même couleur avec un trou entre elles, donc la case du trou doit être de l'autre. Trois identiques à la suite, c'est interdit.",
+                    "3": "Cette ligne ou colonne a toutes les cases permises d'une couleur et il lui en manque une de l'autre, donc sa dernière case vide doit être de cette autre couleur.",
+                    "4": "Cette ligne ou colonne a déjà autant de cases de cette couleur que permis, donc chaque case encore vide doit être de l'autre couleur.",
+                    "5": "Il manque à cette ligne ou colonne exactement une case d'une couleur, et la mettre hors de ces trois cases laisserait ici trois de l'autre couleur à la suite, donc chaque case vide ailleurs prend l'autre couleur."
+                },
+                "demo": {
+                    "1": "Remplissez chaque case en orange ou en violet. Les cases entourées sont données, vous ne pouvez pas les changer.",
+                    "2": "Jamais trois de la même couleur à la suite, en ligne ou en colonne. Ça fait un orange de trop.",
+                    "3": "Chaque ligne et colonne finit avec trois de chaque couleur. Cette ligne a quatre violets.",
+                    "4": "Deux oranges avec un trou. Orange au milieu en ferait trois, donc ce doit être violet.",
+                    "5": "Chaque case remplie, aucune série de trois, et trois de chaque couleur dans chaque ligne et colonne."
+                }
+            }
+        }
+    },
     "dailyChit": {
         "alreadyClaimed": "Revenez demain pour prolonger votre séquence !",
         "available": "Réclamez votre CHIT et prolongez votre séquence !",

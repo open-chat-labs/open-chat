@@ -672,6 +672,178 @@
     "currentChitBalance": "Saldo actual de CHIT",
     "currentLimit": "Su límite de almacenamiento actual es {limit} GB y el saldo de su cuenta es {balance} ICP.",
     "currentUsage": "Uso de almacenamiento actual",
+    "dailyPuzzle": {
+        "title": "The Daily",
+        "number": "The Daily n.º {number}",
+        "tier": {
+            "0": "Fácil",
+            "1": "Complicado"
+        },
+        "todaysPuzzle": "El puzle de hoy",
+        "play": "Jugar",
+        "continue": "Continuar",
+        "solved": "Resuelto",
+        "unavailable": "Ahora mismo no hay ningún puzle disponible.",
+        "startFree": "Empezar (el primer puzle es gratis)",
+        "startFee": "Empezar por {fee} CHIT",
+        "hintFree": "Pista (nivel {level})",
+        "hintPrice": "Pista (nivel {level}, {price} CHIT)",
+        "hintsUsed": "{count} pistas",
+        "hintsLeft": "Quedan {count}",
+        "noHintsLeft": "No quedan pistas para el puzle de hoy",
+        "streakDays": "Racha de {streak} días",
+        "submitting": "Comprobando tu solución...",
+        "solvedTitle": "¡Resuelto!",
+        "solvedSummary": "{time} con {hints} pistas. Racha: {streak}.",
+        "reward": "+{reward} CHIT",
+        "share": "Compartir",
+        "verified": "Verificado",
+        "unverified": "Sin verificar",
+        "card": {
+            "time": "Tiempo",
+            "hints": "Pistas",
+            "dayStreak": "Racha de días"
+        },
+        "wrong": "No es eso. Revisa las casillas rojas.",
+        "mistake": "Algo falla en las casillas rojas. Corrígelas y vuelve a pedir una pista.",
+        "fixMistakeFirst": "Corrige primero las casillas rojas",
+        "noFreeChecks": "No quedan comprobaciones gratis para el puzle de hoy",
+        "checksLeft": "Quedan {count} comprobaciones",
+        "revealed": "Rellenado por ti.",
+        "reset": "Reiniciar",
+        "resetConfirm": "¿Vaciar el tablero?",
+        "replaced": "Este puzle ha sido sustituido. Aquí tienes el nuevo.",
+        "failedToStart": "Lo sentimos, no hemos podido iniciar el puzle",
+        "failedToSubmit": "Lo sentimos, no hemos podido comprobar tu solución",
+        "failedHint": "Lo sentimos, no hemos podido obtener una pista",
+        "chitEvent": {
+            "entry": "Participación en el puzle diario",
+            "solve": "Puzle diario resuelto",
+            "hint": "Pista del puzle diario"
+        },
+        "needsNewerApp": "Este tipo de puzle necesita una app más reciente",
+        "games": {
+            "bridges": {
+                "name": "Bridges",
+                "rules": "Conecta las islas con puentes de modo que cada isla tenga exactamente su número. Los puentes van en línea recta, nunca se cruzan y como máximo dos unen un mismo par.",
+                "technique": {
+                    "1": "Esta isla solo puede alcanzar su número usando todos los puentes que aún caben a su alrededor, así que dibújalos todos.",
+                    "2": "El número de esta isla es demasiado grande para dejar fuera a algún vecino, así que necesita al menos un puente en cada dirección que pueda alcanzar.",
+                    "3": "Sin un puente hacia este vecino, las otras direcciones no podrían darle a esta isla suficientes puentes para su número, así que aquí tiene que ir un puente."
+                },
+                "demo": {
+                    "1": "Une las islas con puentes. El número de una isla indica cuántos puentes deben llegar a ella.",
+                    "2": "Los puentes van en línea recta entre dos islas y nunca se cruzan. Este cuenta uno en cada extremo.",
+                    "3": "Un mismo par puede llevar un segundo puente. Ahora cuenta dos en cada extremo.",
+                    "4": "Ninguna isla puede pasarse de su número. Esta necesita tres puentes y tiene cuatro.",
+                    "5": "Un puente por el lado en vez de dos, y ya tiene sus tres.",
+                    "6": "Todos los números cuadran y todas las islas están unidas al resto. Con eso queda terminado."
+                }
+            },
+            "light_up": {
+                "name": "Light Up",
+                "rules": "Ilumina todas las casillas blancas. Una bombilla ilumina su fila y su columna hasta una casilla negra, ninguna bombilla puede alumbrar a otra, y un número indica cuántas bombillas hay pegadas a él, en horizontal o vertical, nunca en diagonal.",
+                "technique": {
+                    "1": "Esta casilla solo puede iluminarse desde un sitio, así que ahí tiene que ir una bombilla.",
+                    "2": "Este número ya toca todas las bombillas que pide, así que las demás casillas junto a él deben quedar vacías.",
+                    "3": "Este número aún necesita una bombilla en cada casilla libre junto a él, así que pon una bombilla en cada una.",
+                    "4": "Al menos una de las casillas resaltadas debe tener una bombilla, y una bombilla en esta casilla las descartaría todas, así que esta casilla debe quedar vacía."
+                },
+                "demo": {
+                    "1": "Coloca bombillas hasta que todas las casillas blancas estén iluminadas.",
+                    "2": "Una bombilla ilumina su propia fila y columna, hasta las casillas negras.",
+                    "3": "Un número cuenta las bombillas pegadas a él. Este 4 necesita una a cada lado.",
+                    "4": "Esta esquina sigue a oscuras y nada más puede llegar a ella, así que necesita su propia bombilla.",
+                    "5": "Ninguna bombilla puede alumbrar a otra. Estas dos están en la misma columna sin nada en medio.",
+                    "6": "Todas las casillas blancas están iluminadas, el 4 tiene sus cuatro bombillas y ninguna bombilla alumbra a otra."
+                }
+            },
+            "loopy": {
+                "name": "Loopy",
+                "rules": "Dibuja un único bucle cerrado siguiendo las líneas de la cuadrícula. Nunca se cruza ni se ramifica, así que cada punto tiene dos líneas o ninguna. Un número indica cuántos de sus cuatro lados usa el bucle; las casillas sin número son libres.",
+                "technique": {
+                    "1": "Este número ya tiene a su alrededor todas las líneas que necesita, así que sus otros lados son cruces.",
+                    "2": "A este número le quedan exactamente tantos lados abiertos como líneas le faltan, así que todos son líneas.",
+                    "3": "Una línea entra desde fuera en una esquina de este número, así que los dos lados que se juntan en esa esquina no pueden ser ambos líneas, y todos los demás lados abiertos del número deben ser líneas.",
+                    "4": "Ninguna línea llega a este punto y solo uno de sus lados sigue abierto. Una línea sola en un punto es un callejón sin salida, así que tacha ese lado.",
+                    "5": "Una línea llega a este punto y solo uno de sus otros lados sigue abierto. Un punto nunca puede tener una sola línea, así que el bucle continúa por ese lado.",
+                    "6": "Este punto ya tiene sus dos líneas, así que tacha sus lados restantes.",
+                    "7": "Las líneas forzadas en las esquinas de este número ya le dan todas las líneas que necesita, así que este lado es una cruz.",
+                    "8": "Incluso con todas las líneas aún posibles en sus esquinas, este número se queda corto sin este lado, así que este lado es una línea.",
+                    "9": "Dibujar este segmento cerraría un bucle que dejaría fuera otras líneas, así que es una cruz.",
+                    "10": "El bucle está completo y todos los números se cumplen, así que todos los segmentos restantes son cruces."
+                },
+                "demo": {
+                    "1": "Dibuja un único bucle cerrado siguiendo las líneas de la cuadrícula. Un número cuenta las líneas en los cuatro lados de esa casilla; una casilla en blanco es libre.",
+                    "2": "Empieza por un 0. Ninguno de sus cuatro lados puede ser una línea, así que táchalos.",
+                    "3": "Las líneas van de punto a punto.",
+                    "4": "Una línea que se corta en seco no es un bucle. Cada punto necesita dos líneas, o ninguna.",
+                    "5": "Tampoco puede ramificarse. Tres líneas en un punto son demasiadas.",
+                    "6": "Un solo circuito cerrado y todos los números cuadran. Síguelo y vuelves al punto de partida."
+                }
+            },
+            "slant": {
+                "name": "Slant",
+                "rules": "Dibuja una diagonal en cada casilla. Un número indica cuántas diagonales tocan esa esquina; las esquinas sin número son libres. Las diagonales nunca deben unirse formando un bucle.",
+                "technique": {
+                    "1": "Este número ya tiene todas las líneas que necesita, así que todas las demás casillas a su alrededor deben inclinarse en sentido contrario a él.",
+                    "2": "Este número aún necesita exactamente tantas líneas como casillas vacías tiene alrededor, así que todas esas casillas deben inclinarse hacia él.",
+                    "3": "Las dos esquinas que uniría esta línea ya están enlazadas por una cadena de líneas, así que unirlas cerraría un bucle, y la casilla debe inclinarse hacia el otro lado.",
+                    "4": "Esta línea uniría dos grupos de líneas que nunca llegan al borde de la cuadrícula y no tienen otra salida, encerrándolos en un bucle, así que la casilla debe inclinarse hacia el otro lado.",
+                    "5": "Los números entre esta casilla y la casilla rellena resaltada solo pueden cumplirse si las dos se inclinan igual, así que copia la casilla rellena.",
+                    "6": "Dos casillas vacías vecinas alrededor de este número deben inclinarse igual, así que entre las dos le dan exactamente una línea, y eso decide las demás casillas a su alrededor."
+                },
+                "demo": {
+                    "1": "Cada casilla lleva una diagonal. Puede inclinarse hacia cualquier lado, pero ninguna casilla queda vacía.",
+                    "2": "Un número cuenta las diagonales que tocan esa esquina. Dos tocan este 2, así que está completo.",
+                    "3": "La misma diagonal termina en una esquina sin número. Esas esquinas no cuentan nada, así que nunca te limitan.",
+                    "4": "Esta esquina necesita cuatro, así que las cuatro casillas a su alrededor tienen que apuntar hacia ella. Solo hay una forma de hacerlo.",
+                    "5": "Estas cuatro se han unido formando un anillo cerrado. Los anillos no están permitidos, así que una de ellas debe inclinarse hacia el otro lado.",
+                    "6": "Todas las casillas rellenas, todos los números cumplidos y ningún anillo."
+                }
+            },
+            "tents": {
+                "name": "Tents",
+                "rules": "Cada árbol necesita su propia tienda justo al lado, nunca en diagonal. Las tiendas nunca se tocan, ni siquiera por las esquinas. Los números cuentan las tiendas de cada fila y columna.",
+                "technique": {
+                    "1": "Ningún árbol junto a esta casilla necesita ya una tienda, así que esta casilla no puede tener una.",
+                    "2": "Una tienda ya toca esta casilla, así que esta casilla no puede tener una.",
+                    "3": "A este árbol solo le queda una casilla donde poner su tienda, así que esa casilla debe ser una tienda.",
+                    "4": "La tienda de este árbol debe ir en una de dos casillas, y ambas tocan esta casilla, así que esta casilla no puede tener una tienda.",
+                    "5": "Solo estas casillas de esta fila o columna pueden llevar todavía una tienda, y todas las formas de colocar las que necesita coinciden en las casillas marcadas, así que puedes rellenarlas.",
+                    "6": "Solo estas casillas de esta fila o columna pueden llevar todavía una tienda, y todas las formas de colocar las que necesita ponen una junto a las casillas marcadas, así que puedes descartarlas.",
+                    "7": "Esta fila o columna necesita tantas tiendas como casillas le quedan que puedan tener una, así que todas ellas son tiendas.",
+                    "8": "Esta fila o columna ya tiene todas sus tiendas, así que ninguna otra casilla en ella puede tener una."
+                },
+                "demo": {
+                    "1": "Cada árbol necesita su propia tienda en una casilla contigua. Los números cuentan las tiendas de cada fila y columna.",
+                    "2": "Una tienda va justo al lado de su árbol, arriba, abajo, a la izquierda o a la derecha. Las esquinas no cuentan, así que estas casillas quedan vacías.",
+                    "3": "Esta columna necesita una tienda y solo le queda una casilla.",
+                    "4": "Las tiendas nunca se tocan, ni siquiera por una esquina. Estas dos se tocan, así que una tiene que moverse.",
+                    "5": "Solo queda libre una casilla junto a este árbol, así que su tienda va ahí.",
+                    "6": "Cada árbol tiene una tienda al lado, ninguna tienda toca a otra y todos los números cuadran."
+                }
+            },
+            "unruly": {
+                "name": "Unruly",
+                "rules": "Rellena cada casilla con uno de dos colores. Nunca tres del mismo color seguidas en una fila o columna, y cada fila y columna acaba con la mitad de cada uno.",
+                "technique": {
+                    "1": "Estas dos vecinas ya son del mismo color, así que la casilla justo después debe ser del otro. Tres iguales seguidas nunca está permitido.",
+                    "2": "Estas dos casillas son del mismo color con un hueco entre ellas, así que la casilla del hueco debe ser del otro. Tres iguales seguidas nunca está permitido.",
+                    "3": "Esta línea ya tiene todas las casillas permitidas de un color y le falta una del otro, así que su última casilla vacía debe ser de ese otro color.",
+                    "4": "Esta línea ya tiene tantas de este color como se permiten, así que todas las casillas que aún estén vacías en ella deben ser del otro color.",
+                    "5": "A esta línea le falta exactamente una de un color, y ponerla fuera de estas tres casillas dejaría aquí tres del otro color seguidas, así que todas las casillas vacías en el resto de la línea llevan el otro color."
+                },
+                "demo": {
+                    "1": "Rellena cada casilla de naranja o morado. Las rodeadas con un círculo vienen dadas, así que esas no puedes cambiarlas.",
+                    "2": "Nunca tres del mismo color seguidas, en horizontal o vertical. Ahí sobra un naranja.",
+                    "3": "Cada fila y columna acaba con tres de cada color. Esta fila tiene cuatro morados.",
+                    "4": "Dos naranjas con un hueco. Naranja en medio haría tres, así que tiene que ser morado.",
+                    "5": "Todas las casillas rellenas, ninguna serie de tres y tres de cada color en cada fila y columna."
+                }
+            }
+        }
+    },
     "dailyChit": {
         "alreadyClaimed": "¡Vuelve mañana para ampliar tu racha!",
         "available": "¡Reclama tu CHIT y extiende tu racha!",
