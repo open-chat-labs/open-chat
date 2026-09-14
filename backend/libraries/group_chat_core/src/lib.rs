@@ -10,7 +10,6 @@ use itertools::Itertools;
 use lazy_static::lazy_static;
 use oc_error_codes::{OCError, OCErrorCode};
 use regex_lite::Regex;
-use search::simple::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -536,11 +535,9 @@ impl GroupChatCore {
             Some(p) => p,
         };
 
-        let query = Query::new(&search_term);
-
         let matches = self
             .events
-            .search_messages(member.min_visible_message_index(), query, users, max_results);
+            .search_messages(member.min_visible_message_index(), &search_term, &users, max_results);
 
         Ok(matches)
     }
