@@ -66,11 +66,8 @@ impl Community {
         self.last_read = now;
     }
 
-    pub fn import_group(&mut self, channel_id: ChannelId, mut group: GroupChat, now: TimestampMillis) {
-        group.messages_read.threads_read.move_entries(
-            MultiUserChat::Group(group.chat_id),
-            MultiUserChat::Channel(self.community_id, channel_id),
-        );
+    // The group's thread read entries in stable memory must already have been moved to the channel
+    pub fn import_group(&mut self, channel_id: ChannelId, group: GroupChat, now: TimestampMillis) {
         self.channels.insert(
             channel_id,
             Channel {
