@@ -276,12 +276,22 @@
     // mismatch guard without clearing scrollingToMessage — which would leave
     // background loading gated off in the newly selected chat.
     $effect(() => {
-        void messageContext;
-        scrollingToMessage = false;
-        navToken++;
-        // a hidden-time navigation belongs to the chat it was issued in
-        pendingHiddenNav = undefined;
-        anchorMessageIndex = undefined;
+        const context = messageContext;
+        untrack(() => {
+            scrollingToMessage = false;
+            navToken++;
+            // a hidden-time navigation belongs to the chat it was issued in
+            pendingHiddenNav = undefined;
+            anchorMessageIndex = undefined;
+            // a window announced for the incoming context is kept; any other
+            // belongs to a chat we are no longer showing
+            if (
+                pendingWindowFocus !== undefined &&
+                !messageContextsEqual(pendingWindowFocus.context, context)
+            ) {
+                pendingWindowFocus = undefined;
+            }
+        });
     });
     const insideTopThreshold = () => fromTop() < LOADING_THRESHOLD;
 
@@ -326,6 +336,43 @@
                 scrollToMessageIndex(nav.context, nav.index, nav.preserveFocus);
             });
         }
+    });
+
+    // The target of a message window load in flight, announced by the client
+    // before any of the window's events are applied. The list positions on it
+    // in the same flush that renders it. Waiting for loadedMessageWindow
+    // instead (it follows the stream's remaining awaits: user lookups, later
+    // chunks) painted the window at the bottom first and then jumped to the
+    // target — ~70ms of the wrong messages on desktop, longer on Android.
+    // While it is outstanding the viewport is hidden: a partial cache chunk
+    // can land without the target, and those rows must not paint either.
+    // It may arrive before the list has switched to its context (a chat
+    // selection announces synchronously; the props follow a flush later), so
+    // it is matched against the context at consumption time.
+    let pendingWindowFocus = $state<{ context: MessageContext; messageIndex: number }>();
+    let unpositioned = $derived(
+        pendingWindowFocus !== undefined &&
+            messageContextsEqual(pendingWindowFocus.context, messageContext),
+    );
+
+    $effect(() => {
+        const pending = pendingWindowFocus;
+        if (pending === undefined || !messageContextsEqual(pending.context, messageContext)) {
+            return;
+        }
+        const present = allItems.some(
+            (it) =>
+                it.kind === "event" &&
+                it.event.event.kind === "message" &&
+                it.event.event.messageIndex === pending.messageIndex,
+        );
+        if (!present) return;
+        untrack(() => {
+            pendingWindowFocus = undefined;
+            initialised = true;
+            vclDebug.log("scroll-to-msg-arrival", { index: pending.messageIndex });
+            scrollToMessageIndex(pending.context, pending.messageIndex, false);
+        });
     });
 
     // Restore the persisted scroll position (stored as fromBottom, not
@@ -457,6 +504,9 @@
             subscribe("reactionSelected", afterReaction),
             subscribe("sendingMessage", sendingMessage),
             subscribe("sentMessage", sentMessage),
+            subscribe("loadingMessageWindow", (args) => {
+                pendingWindowFocus = args;
+            }),
             subscribe("loadedMessageWindow", onMessageWindowLoaded),
             subscribe(
                 "loadedNewMessages",
@@ -1114,6 +1164,13 @@
         messageIndex: number | undefined;
         initialLoad: boolean;
     }) {
+        // The load has ended. If its target arrived in the items the arrival
+        // effect has already positioned on it (and cleared the pending focus);
+        // otherwise the target is loaded but hidden or filtered out, and the
+        // navigation below falls through to the next message or the bottom.
+        const pending = pendingWindowFocus;
+        if (pending === undefined || !messageContextsEqual(pending.context, context)) return;
+        pendingWindowFocus = undefined;
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
         if (!messageContextsEqual(context, messageContext)) return;
@@ -1129,6 +1186,8 @@
         initialLoad: boolean;
     }) {
         if (!messageContextsEqual(context, messageContext)) return;
+        // a window load that fell back to the latest messages has ended
+        if (initialLoad) pendingWindowFocus = undefined;
         await resetScroll(initialLoad);
         if (!messageContextsEqual(context, messageContext)) return;
 
@@ -1265,7 +1324,7 @@
     bind:viewport={messagesDiv}
     bind:viewportHeight={messagesDivHeight}
     id={`scrollable-list-${rootSelector}`}
-    viewportClass={`scrollable-list ${rootSelector} ${viewportClass ?? ""}`}
+    viewportClass={`scrollable-list ${rootSelector} ${viewportClass ?? ""}${unpositioned ? " vcl-unpositioned" : ""}`}
     {onUserScroll}
     {onUserTouch}
     {estimateClass}
@@ -1295,3 +1354,11 @@
     scrollToLast,
     scrollToMention,
 })}
+
+<style>
+    /* hidden, not unmounted: rows still lay out and measure, so the arrival
+       positioning lands on real heights */
+    :global(.vcl-viewport.vcl-unpositioned) {
+        visibility: hidden;
+    }
+</style>
