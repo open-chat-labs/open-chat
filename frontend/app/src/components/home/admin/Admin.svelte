@@ -5,19 +5,11 @@
     import Button from "../../Button.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import AuthorityReports from "./AuthorityReports.svelte";
-    import DailyPuzzleOperator from "./DailyPuzzleOperator.svelte";
     import OperatorFunctions from "./OperatorFunctions.svelte";
     import PendingOperatorProposals from "./PendingOperatorProposals.svelte";
     import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
     import VaultLog from "./VaultLog.svelte";
-
-    type AdminTab =
-        | "translations"
-        | "operator"
-        | "proposals"
-        | "authority"
-        | "vaultlog"
-        | "dailypuzzle";
+    import { adminTabs, type AdminTab } from "./adminTabs";
 
     let selectedTab: AdminTab = $state("translations");
 
@@ -46,60 +38,18 @@
             </div>
         </SectionHeader>
         <div class="tabs">
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                tabindex="0"
-                role="button"
-                onclick={() => selectTab("translations")}
-                class:selected={selectedTab === "translations"}
-                class="tab">
-                Translation Corrections
-            </div>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                tabindex="0"
-                role="button"
-                onclick={() => selectTab("operator")}
-                class:selected={selectedTab === "operator"}
-                class="tab">
-                Operator functions
-            </div>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                tabindex="0"
-                role="button"
-                onclick={() => selectTab("proposals")}
-                class:selected={selectedTab === "proposals"}
-                class="tab">
-                Pending operator proposals
-            </div>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                tabindex="0"
-                role="button"
-                onclick={() => selectTab("authority")}
-                class:selected={selectedTab === "authority"}
-                class="tab">
-                Authority reports
-            </div>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                tabindex="0"
-                role="button"
-                onclick={() => selectTab("vaultlog")}
-                class:selected={selectedTab === "vaultlog"}
-                class="tab">
-                Vault log
-            </div>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                tabindex="0"
-                role="button"
-                onclick={() => selectTab("dailypuzzle")}
-                class:selected={selectedTab === "dailypuzzle"}
-                class="tab">
-                Daily puzzle
-            </div>
+            {#each adminTabs as { id, label } (id)}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    onclick={() => selectTab(id)}
+                    class:selected={selectedTab === id}
+                    class="tab"
+                >
+                    {label}
+                </div>
+            {/each}
         </div>
         {#if selectedTab === "translations"}
             <ReviewTranslationCorrections />
@@ -111,8 +61,6 @@
             <AuthorityReports />
         {:else if selectedTab === "vaultlog"}
             <VaultLog />
-        {:else if selectedTab === "dailypuzzle"}
-            <DailyPuzzleOperator />
         {/if}
     </div>
 {/if}
