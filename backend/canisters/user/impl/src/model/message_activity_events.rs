@@ -15,10 +15,10 @@ use user_canister::{MessageActivity, MessageActivityEvent, MessageActivitySummar
 // find and replace the existing one.
 #[derive(Serialize, Deserialize, Default)]
 pub struct MessageActivityEvents {
-    // Events which haven't yet been moved into stable memory, ordered by timestamp descending. New
-    // events are always written to stable memory, and existing ones are moved across in batches by
-    // `migrate_to_stable_memory`. This can be removed once every user has been migrated.
-    #[serde(rename = "events", default)]
+    // The events which were held on the heap, which are all moved into stable memory in
+    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
+    // TODO: Remove this after next release
+    #[serde(rename = "events", default, skip_serializing)]
     on_heap: VecDeque<MessageActivityEvent>,
     #[serde(default)]
     in_stable_memory_count: u32,
@@ -35,19 +35,12 @@ impl MessageActivityEvents {
         let prefix = MessageActivityEventKeyPrefix::new();
 
         with_map_mut(|m| {
-            // Remove any existing event for the same activity on the same message
-            let mut replaced = false;
-            if let Some(index) = self.on_heap.iter().position(|e| event.matches(e)) {
-                self.on_heap.remove(index);
-                replaced = true;
-            }
             if let Some(bytes) = m.remove(id_key.clone()) {
+                // Remove the existing event for the same activity on the same message
                 m.remove(prefix.create_key(&(timestamp_from_bytes(&bytes), id.clone())));
                 self.in_stable_memory_count -= 1;
-                replaced = true;
-            }
-            // Keep no more than MAX_EVENTS
-            if !replaced && self.len() >= MessageActivityEvents::MAX_EVENTS {
+            } else if self.in_stable_memory_count >= MessageActivityEvents::MAX_EVENTS {
+                // Keep no more than MAX_EVENTS
                 self.remove_oldest(m);
             }
 
@@ -65,56 +58,42 @@ impl MessageActivityEvents {
     }
 
     pub fn summary(&self) -> MessageActivitySummary {
-        let unread_count_on_heap = self.on_heap.iter().take_while(|e| e.timestamp > self.read_up_to).count();
-        let (unread_count_in_stable_memory, latest_in_stable_memory) = with_map(|m| {
-            let unread_count = m.range(keys_after(self.read_up_to)).count();
-            let latest = m.range(all_keys()).next_back().map(|(k, _)| k.timestamp());
-            (unread_count, latest)
-        });
-        let latest_on_heap = self.on_heap.front().map(|e| e.timestamp);
-
-        MessageActivitySummary {
+        with_map(|m| MessageActivitySummary {
             read_up_to: self.read_up_to,
-            unread_count: (unread_count_on_heap + unread_count_in_stable_memory) as u32,
-            latest_event_timestamp: latest_on_heap.max(latest_in_stable_memory).unwrap_or_default(),
-        }
+            unread_count: m.range(keys_after(self.read_up_to)).count() as u32,
+            latest_event_timestamp: m.range(all_keys()).next_back().map_or(0, |(k, _)| k.timestamp()),
+        })
     }
 
     // Returns the events newer than `since`, ordered by timestamp descending
     pub fn latest_events(&self, since: TimestampMillis) -> Vec<MessageActivityEvent> {
-        let mut events: Vec<_> = with_map(|m| m.range(keys_after(since)).rev().map(|(_, v)| event_from_bytes(&v)).collect());
-        if !self.on_heap.is_empty() {
-            events.extend(self.on_heap.iter().take_while(|e| e.timestamp > since).cloned());
-            events.sort_by_key(|e| std::cmp::Reverse(e.timestamp));
-        }
-        events
+        with_map(|m| m.range(keys_after(since)).rev().map(|(_, v)| event_from_bytes(&v)).collect())
     }
 
     pub fn len(&self) -> u32 {
-        self.on_heap.len() as u32 + self.in_stable_memory_count
+        self.in_stable_memory_count
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }
 
-    // Moves up to `max_count` events from the heap into stable memory, returning how many were
-    // moved
-    pub fn migrate_to_stable_memory(&mut self, max_count: usize) -> usize {
-        if max_count == 0 || self.on_heap.is_empty() {
+    // Moves the events which were held on the heap into stable memory, returning how many were
+    // moved. There are at most `MAX_EVENTS` of them, so they are all moved at once.
+    // TODO: Remove this after next release
+    pub fn migrate_to_stable_memory(&mut self) -> usize {
+        if self.on_heap.is_empty() {
             return 0;
         }
 
         let prefix = MessageActivityEventKeyPrefix::new();
         let id_prefix = MessageActivityEventIdKeyPrefix::new();
-        let mut events = Vec::with_capacity(max_count.min(self.on_heap.len()));
-        let mut id_entries = Vec::with_capacity(events.capacity());
+        let mut events = Vec::with_capacity(self.on_heap.len());
+        let mut id_entries = Vec::with_capacity(self.on_heap.len());
 
-        // The oldest events are popped first, so their timestamp keys are in key order
-        while events.len() < max_count {
-            let Some(event) = self.on_heap.pop_back() else {
-                break;
-            };
+        // The events on the heap are ordered by timestamp descending, so taking them oldest first
+        // puts their timestamp keys in key order
+        for event in std::mem::take(&mut self.on_heap).into_iter().rev() {
             let id = event_id(&event);
             id_entries.push((id_prefix.create_key(&id), event.timestamp.to_be_bytes().to_vec()));
             events.push((prefix.create_key(&(event.timestamp, id)), event_to_bytes(event)));
@@ -130,34 +109,13 @@ impl MessageActivityEvents {
         count
     }
 
-    pub fn on_heap_count(&self) -> usize {
-        self.on_heap.len()
-    }
-
     fn remove_oldest(&mut self, m: &mut StableMemoryMapInner) {
-        let oldest_on_heap = self.on_heap.back().map(|e| e.timestamp);
-        let oldest_in_stable_memory = m.range(all_keys()).next().map(|(k, _)| k);
-
-        match (oldest_on_heap, oldest_in_stable_memory) {
-            (Some(on_heap), Some(in_stable_memory)) if on_heap > in_stable_memory.timestamp() => {
-                self.remove_from_stable_memory(m, in_stable_memory);
-            }
-            (Some(_), _) => {
-                self.on_heap.pop_back();
-            }
-            (None, Some(in_stable_memory)) => {
-                self.remove_from_stable_memory(m, in_stable_memory);
-            }
-            (None, None) => {}
-        }
-    }
-
-    fn remove_from_stable_memory(&mut self, m: &mut StableMemoryMapInner, key: MessageActivityEventKey) {
-        if let Some(bytes) = m.remove(key) {
-            let event = event_from_bytes(&bytes);
-            m.remove(MessageActivityEventIdKeyPrefix::new().create_key(&event_id(&event)));
-            self.in_stable_memory_count -= 1;
-        }
+        let Some((key, bytes)) = m.range(all_keys()).next() else {
+            return;
+        };
+        m.remove(key);
+        m.remove(MessageActivityEventIdKeyPrefix::new().create_key(&event_id(&event_from_bytes(&bytes))));
+        self.in_stable_memory_count -= 1;
     }
 }
 
@@ -364,38 +322,31 @@ mod tests {
             read_up_to: 50,
             last_updated: 100,
         };
-        // Written directly to stable memory
-        events.push(random_event(101, MessageActivity::Reaction, 101), 101);
-        // Replaces an event on the heap
-        events.push(random_event(10, MessageActivity::Reaction, 102), 102);
 
-        let check = |events: &MessageActivityEvents| {
-            assert_eq!(events.len(), 101);
-            let latest = events.latest_events(0);
-            assert_eq!(latest.len(), 101);
-            assert!(latest.windows(2).all(|w| w[0].timestamp >= w[1].timestamp));
-            assert_eq!(latest[0].timestamp, 102);
-            assert_eq!(latest[0].message_index, MessageIndex::from(10));
-            assert!(!latest.iter().any(|e| e.timestamp == 10));
-            let summary = events.summary();
-            assert_eq!(summary.unread_count, 52);
-            assert_eq!(summary.latest_event_timestamp, 102);
-        };
-        check(&events);
+        assert_eq!(events.migrate_to_stable_memory(), 100);
+        assert!(events.on_heap.is_empty());
+        assert_eq!(events.migrate_to_stable_memory(), 0);
 
-        assert_eq!(events.on_heap_count(), 99);
-        assert_eq!(events.migrate_to_stable_memory(40), 40);
-        assert_eq!(events.on_heap_count(), 59);
-        check(&events);
-        assert_eq!(events.migrate_to_stable_memory(100), 59);
-        assert_eq!(events.on_heap_count(), 0);
-        assert_eq!(events.migrate_to_stable_memory(100), 0);
-        check(&events);
+        assert_eq!(events.len(), 100);
+        let latest = events.latest_events(0);
+        assert_eq!(latest.len(), 100);
+        assert!(latest.windows(2).all(|w| w[0].timestamp > w[1].timestamp));
+        assert_eq!(latest[0].timestamp, 100);
+        let summary = events.summary();
+        assert_eq!(summary.unread_count, 50);
+        assert_eq!(summary.latest_event_timestamp, 100);
 
-        // The migrated events' id entries are in place
+        // The migrated events' id entries are in place, so a matching event replaces the existing one
         events.push(random_event(20, MessageActivity::Reaction, 200), 200);
-        assert_eq!(events.len(), 101);
-        assert!(!events.latest_events(0).iter().any(|e| e.timestamp == 20));
+        assert_eq!(events.len(), 100);
+        let latest = events.latest_events(0);
+        assert_eq!(latest.len(), 100);
+        assert_eq!(latest[0].timestamp, 200);
+        assert!(!latest.iter().any(|e| e.timestamp == 20));
+
+        // The heap isn't serialized
+        let deserialized: MessageActivityEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
+        assert_eq!(deserialized.len(), 100);
     }
 
     fn random_event(message_index: u32, activity: MessageActivity, timestamp: TimestampMillis) -> MessageActivityEvent {
