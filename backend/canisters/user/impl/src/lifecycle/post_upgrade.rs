@@ -20,10 +20,19 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    // Move the message activity events into stable memory. The feed holds at most 1000 events, so
+    // they can all be moved here rather than by a timer job, which would cost an extra call.
+    // TODO: Remove this after next release
+    let message_activity_events_migrated = data.message_activity_events.migrate_to_stable_memory();
+    info!(
+        message_activity_events_migrated,
+        "Migrated message activity events to stable memory"
+    );
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);

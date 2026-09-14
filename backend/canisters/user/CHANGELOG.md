@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `insert_many` for bulk writes to the stable memory map, writing each modified node once rather than once per entry ([#9353](https://github.com/open-chat-labs/open-chat/pull/9353))
 - Move each chat's MessageIndex -> EventIndex map from the heap into stable memory, in chunks of LEB128 encoded deltas ([#9376](https://github.com/open-chat-labs/open-chat/pull/9376))
 - Move each chat's search index from the heap into the stable memory map for small entries, as an inverted index which also supports languages written without spaces, such as Chinese, Japanese and Thai ([#9377](https://github.com/open-chat-labs/open-chat/pull/9377))
+- Move the message activity feed events from the heap into the stable memory map for small entries ([#9379](https://github.com/open-chat-labs/open-chat/pull/9379))
 - Stop storing the other user's metrics in direct chats (other than a user's chat with themselves), since only the user's own metrics are ever read ([#9354](https://github.com/open-chat-labs/open-chat/pull/9354))
 
 ### Fixed
