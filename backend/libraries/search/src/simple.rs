@@ -33,6 +33,11 @@ impl Document {
         self
     }
 
+    // The document's fields, each of which has been lowercased
+    pub fn fields(&self) -> impl Iterator<Item = &str> {
+        self.0.iter().map(|t| t.0.as_str())
+    }
+
     // Returns true if every token in the query matches the document, else false
     pub fn is_match(&self, query: &Query) -> bool {
         if query.tokens.is_empty() {
