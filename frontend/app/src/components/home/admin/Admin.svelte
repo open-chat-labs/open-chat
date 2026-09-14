@@ -5,19 +5,12 @@
     import Button from "../../Button.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import AuthorityReports from "./AuthorityReports.svelte";
-    import DailyPuzzleOperator from "./DailyPuzzleOperator.svelte";
     import OperatorFunctions from "./OperatorFunctions.svelte";
     import PendingOperatorProposals from "./PendingOperatorProposals.svelte";
     import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
     import VaultLog from "./VaultLog.svelte";
 
-    type AdminTab =
-        | "translations"
-        | "operator"
-        | "proposals"
-        | "authority"
-        | "vaultlog"
-        | "dailypuzzle";
+    type AdminTab = "translations" | "operator" | "proposals" | "authority" | "vaultlog";
 
     let selectedTab: AdminTab = $state("translations");
 
@@ -91,15 +84,6 @@
                 class="tab">
                 Vault log
             </div>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                tabindex="0"
-                role="button"
-                onclick={() => selectTab("dailypuzzle")}
-                class:selected={selectedTab === "dailypuzzle"}
-                class="tab">
-                Daily puzzle
-            </div>
         </div>
         {#if selectedTab === "translations"}
             <ReviewTranslationCorrections />
@@ -111,8 +95,6 @@
             <AuthorityReports />
         {:else if selectedTab === "vaultlog"}
             <VaultLog />
-        {:else if selectedTab === "dailypuzzle"}
-            <DailyPuzzleOperator />
         {/if}
     </div>
 {/if}

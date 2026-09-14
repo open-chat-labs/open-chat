@@ -96,64 +96,58 @@
     }
 </script>
 
-<div class="operator">
-    {#if config !== undefined}
-        <section class="operator-function">
-            <div class="title">Daily puzzle</div>
-            <div class="hint">
-                Currently {config.enabled ? "enabled" : "disabled"}. Saving pushes to every local
-                user index at once; disabling is the kill switch.
+<!-- Rendered inside Operator functions: the daily puzzle's levers are operator functions and
+     get a section there, not a tab of their own (#9368). -->
+<h3 class="group">Daily puzzle</h3>
+{#if config !== undefined}
+    <section class="operator-function">
+        <div class="title">Enabled</div>
+        <div class="hint">
+            Currently {config.enabled ? "enabled" : "disabled"}. Saving pushes to every local user
+            index at once; disabling is the kill switch.
+        </div>
+        <div class="name-value">
+            <div class="label">Enabled:</div>
+            <div class="value">
+                <Toggle id="daily-puzzle-enabled" small bind:checked={enabled} />
             </div>
-            <div class="name-value">
-                <div class="label">Enabled:</div>
-                <div class="value">
-                    <Toggle id="daily-puzzle-enabled" small bind:checked={enabled} />
-                </div>
-            </div>
-            <Button tiny disabled={busy.has(0)} loading={busy.has(0)} onClick={saveEnabled}
-                >Save</Button
-            >
-        </section>
+        </div>
+        <Button tiny disabled={busy.has(0)} loading={busy.has(0)} onClick={saveEnabled}>Save</Button
+        >
+    </section>
 
-        <section class="operator-function">
-            <div class="title">Regenerate today</div>
-            <div class="hint">
-                Drops today's puzzle and generates another. Anyone mid-game restarts the replacement
-                from scratch; nobody is charged a second entry fee or paid a second reward, and
-                streaks are untouched. For a bad puzzle, not routine use.
+    <section class="operator-function">
+        <div class="title">Regenerate today</div>
+        <div class="hint">
+            Drops today's puzzle and generates another. Anyone mid-game restarts the replacement
+            from scratch; nobody is charged a second entry fee or paid a second reward, and streaks
+            are untouched. For a bad puzzle, not routine use.
+        </div>
+        <div class="name-value">
+            <div class="label">Game:</div>
+            <div class="value schedule-row">
+                <Select bind:value={regenerateGameId}>
+                    {#each regenerate as option (option.value)}
+                        <option value={option.value}>{option.label}</option>
+                    {/each}
+                </Select>
+                <Button tiny disabled={busy.has(1)} loading={busy.has(1)} onClick={regenerateToday}
+                    >Regenerate</Button
+                >
             </div>
-            <div class="name-value">
-                <div class="label">Game:</div>
-                <div class="value schedule-row">
-                    <Select bind:value={regenerateGameId}>
-                        {#each regenerate as option (option.value)}
-                            <option value={option.value}>{option.label}</option>
-                        {/each}
-                    </Select>
-                    <Button
-                        tiny
-                        disabled={busy.has(1)}
-                        loading={busy.has(1)}
-                        onClick={regenerateToday}>Regenerate</Button
-                    >
-                </div>
-            </div>
-        </section>
-    {/if}
+        </div>
+    </section>
+{/if}
 
-    {#if error}
-        <ErrorMessage>
-            <Translatable resourceKey={error} />
-        </ErrorMessage>
-    {/if}
-</div>
+{#if error}
+    <ErrorMessage>
+        <Translatable resourceKey={error} />
+    </ErrorMessage>
+{/if}
 
 <style lang="scss">
-    .operator {
-        flex: auto;
-        @include nice-scrollbar();
-        padding: $sp4;
-        max-width: 700px;
+    .group {
+        margin-bottom: $sp3;
     }
 
     .operator-function {

@@ -20,6 +20,7 @@
     import Select from "../../Select.svelte";
     import Toggle from "../../Toggle.svelte";
     import Translatable from "../../Translatable.svelte";
+    import DailyPuzzleOperator from "./DailyPuzzleOperator.svelte";
 
     type Fees = {
         token: "CHAT" | "ICP";
@@ -958,6 +959,8 @@
             <Button tiny onClick={() => client.resumeEventLoop()}>Resume</Button>
         </ButtonGroup>
     </section>
+
+    <DailyPuzzleOperator />
 
     <Column
         backgroundColor="color-mix(in srgb, var(--warning), transparent 90%)"
