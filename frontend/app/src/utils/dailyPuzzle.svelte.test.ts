@@ -756,6 +756,45 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
         expect(g.caption).toBeUndefined();
     });
 
+    // The shape the server sends: the island is the target, the water cells of its edges are
+    // in focus (backend/libraries/bridges). Islands are context, so the water cells are what is
+    // asked for, and the hint clears once every one of them is decided
+    test("with an island target, the hint clears once the water cells in focus are decided", async () => {
+        const island: ServedHint = {
+            hint: { technique: 1, focus: [2, 1, 0, 5, 8], target: [2], conclusions: [] },
+            level: 1,
+            mistake: false,
+        };
+        const model = bridges.parse(bridgesPuzzle.description);
+        const state = userState({
+            gameId: "bridges",
+            number: 20710,
+            grid: bridges.toBytes(model, bridges.empty(model)),
+            gridSavedAt: 5n,
+        });
+        dailyPuzzleStore.set({ puzzles: [bridgesPuzzle], states: [state] });
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: island,
+                hintsUsed: 1,
+                state: userState({ gameId: "bridges", number: 20710, hints: [island] }),
+            })),
+        });
+        const g = new DailyPuzzleGame(client, bridgesPuzzle, state, USER, bridges);
+        await g.hint();
+        expect([...g.focus].sort()).toEqual([0, 1, 2, 5, 8]);
+        // an edge elsewhere (6 -> 8, over cell 7) changes nothing; island 0 collides with its key
+        g.tap(12);
+        expect([...g.focus].sort()).toEqual([0, 1, 2, 5, 8]);
+        // the bridge over cell 1 settles that cell; cell 5 is still asked for
+        g.tap(0);
+        expect([...g.focus].sort()).toEqual([0, 2, 5, 8]);
+        expect(g.caption).toBeUndefined(); // level 1 has no sentence
+        g.tap(5);
+        expect(g.focus.size).toBe(0);
+    });
+
     // invariant 2
     test("a water cell whose edge is already committed is not highlighted", async () => {
         const g = buildBridges([0]);
