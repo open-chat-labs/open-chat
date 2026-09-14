@@ -4,11 +4,12 @@ use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, client};
 use constants::DAY_IN_MS;
 use ic_stable_structures::memory_manager::MemoryId;
-use stable_memory_map::{KeyPrefix, UserMetricsKeyPrefix};
+use pocket_ic::PocketIc;
+use stable_memory_map::{KeyPrefix, KeyType, UserMetricsKeyPrefix};
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{Chat, ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
+use types::{CanisterId, Chat, ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
 
 #[test]
 fn delete_direct_chat_succeeds() {
@@ -76,8 +77,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     let user2 = client::register_user(env, canister_ids);
 
     let initial_stable_memory_map_keys = get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len();
-    let initial_small_entries_keys =
-        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
+    let initial_small_entries_keys = chat_small_entries_count(env, user1.canister());
 
     // Make the messages expire (though not within this test), so that the chat has expiring events
     client::user::happy_path::update_chat_settings(
@@ -88,8 +88,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
             events_ttl: OptionUpdate::SetToSome(DAY_IN_MS),
         },
     );
-    let small_entries_keys_before_messages =
-        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len();
+    let small_entries_keys_before_messages = chat_small_entries_count(env, user1.canister());
 
     let message_id: MessageId = random_from_u128();
     let result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), Some(message_id));
@@ -114,7 +113,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     // sender) for each message in the main events list, two entries (keyed by event and by timestamp)
     // recording when the thread root was last updated, plus the sender's metrics
     assert_eq!(
-        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
+        chat_small_entries_count(env, user1.canister()),
         small_entries_keys_before_messages + 21
     );
 
@@ -155,8 +154,18 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
         get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys
     );
-    assert_eq!(
-        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
-        initial_small_entries_keys
-    );
+    assert_eq!(chat_small_entries_count(env, user1.canister()), initial_small_entries_keys);
+}
+
+// Key types whose entries aren't tied to a chat, so aren't removed when a chat is deleted (eg. the
+// CHIT events for the achievements earned by sending messages)
+const USER_KEY_TYPES: [u8; 1] = [KeyType::ChitEvent as u8];
+
+// The number of entries in the small entries map, excluding those which belong to the user rather
+// than to any chat
+fn chat_small_entries_count(env: &PocketIc, canister_id: CanisterId) -> usize {
+    get_stable_memory_map(env, canister_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID)
+        .keys()
+        .filter(|k| !USER_KEY_TYPES.contains(&k[0]))
+        .count()
 }
