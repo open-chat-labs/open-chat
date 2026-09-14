@@ -683,7 +683,11 @@
             "dayStreak": "Day streak"
         },
         "wrong": "That's not it. Check the red cells.",
-        "mistake": "Something is wrong in the red cells.",
+        "mistake": "Something is wrong in the red cells. Fix them, then ask for a hint again.",
+        "fixMistakeFirst": "Fix the red cells first",
+        "noFreeChecks": "No free checks left for today's puzzle",
+        "checksLeft": "{count} checks left",
+        "revealed": "Filled in for you.",
         "replaced": "This puzzle was replaced. Here is the new one.",
         "failedToStart": "Sorry, we couldn't start the puzzle",
         "failedToSubmit": "Sorry, we couldn't check your solution",
@@ -714,7 +718,7 @@
             },
             "light_up": {
                 "name": "Light Up",
-                "rules": "Light every white cell. A bulb lights its row and column up to a black cell, no bulb may shine on another, and a number says how many bulbs touch that cell.",
+                "rules": "Light every white cell. A bulb lights its row and column up to a black cell, no bulb may shine on another, and a number says how many bulbs sit beside it, across or down, never diagonally.",
                 "technique": {
                     "1": "This cell can only be lit from one place, so a bulb must go there.",
                     "2": "This number already touches all the bulbs it asks for, so the other cells next to it must stay empty.",

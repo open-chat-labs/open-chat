@@ -1,6 +1,6 @@
 {
     "name": "Light Up",
-    "rules": "Light every white cell. A bulb lights its row and column up to a black cell, no bulb may shine on another, and a number says how many bulbs touch that cell.",
+    "rules": "Light every white cell. A bulb lights its row and column up to a black cell, no bulb may shine on another, and a number says how many bulbs sit beside it, across or down, never diagonally.",
     "technique.1": "This cell can only be lit from one place, so a bulb must go there.",
     "technique.2": "This number already touches all the bulbs it asks for, so the other cells next to it must stay empty.",
     "technique.3": "This number still needs a bulb in every free cell next to it, so put a bulb in each of them.",
