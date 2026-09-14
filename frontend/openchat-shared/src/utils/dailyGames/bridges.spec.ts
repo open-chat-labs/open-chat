@@ -363,3 +363,26 @@ describe("bridges DailyGame", () => {
         expect(bridges.fromBytes(square, bytes.slice(1))).toBeUndefined();
     });
 });
+
+// #9370: hint keys are cells, marks are edges, and the key spaces overlap
+describe("hintKeyStatus", () => {
+    test("reads a hint's cell key in cell space, never as an edge key", () => {
+        // 0 . 2 / . . . / 6 . 8: edge 0 -> 2 has key 0 over cell 1, edge 0 -> 6 has key 1 over
+        // cell 3, so cell 1 collides with the vertical edge's key
+        const d = desc(["2.2", "...", "2.2"]);
+        let state: BridgesState = new Map();
+        expect(bridges.hintKeyStatus!(d, state, 0)).toBe("context"); // island
+        expect(bridges.hintKeyStatus!(d, state, 4)).toBe("context"); // water no edge crosses
+        expect(bridges.hintKeyStatus!(d, state, 1)).toBe("todo");
+        // committing the colliding edge (key 1, through cell 3) is not cell 1 being done
+        state = bridges.tap(d, state, 1);
+        expect(bridges.hintKeyStatus!(d, state, 1)).toBe("todo");
+        expect(bridges.hintKeyStatus!(d, state, 3)).toBe("done");
+        // the edge through cell 1 is key 0; a bridge or an explicit no-bridge both settle it
+        state = bridges.tap(d, state, 0);
+        expect(bridges.hintKeyStatus!(d, state, 1)).toBe("done");
+        state = bridges.tap(d, bridges.tap(d, state, 0), 0);
+        expect(state.get(0)).toBe(0);
+        expect(bridges.hintKeyStatus!(d, state, 1)).toBe("done");
+    });
+});

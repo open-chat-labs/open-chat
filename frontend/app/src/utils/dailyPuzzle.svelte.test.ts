@@ -703,3 +703,105 @@ describe("reset (#9361)", () => {
         expect(g.hintButton.kind).toBe("hint");
     });
 });
+
+// #9370: Bridges hint keys are cells, its marks are edges, and the key spaces overlap
+describe("a Bridges hint clears in its own key space (#9370)", () => {
+    // 0 . 2 / . . . / 6 . 8: the edge 0 -> 2 (key 0) runs over cell 1; the edge 0 -> 6 (key 1)
+    // runs over cell 3, so a hint naming cell 1 collides with that edge's key
+    const bridgesPuzzle: PublicDailyPuzzle = {
+        ...puzzle,
+        gameId: "bridges",
+        number: 20710,
+        description: new Uint8Array([1, 3, 3, 2, 0, 2, 0, 0, 0, 2, 0, 2]),
+    };
+    const bridges = dailyPuzzleGame("bridges")!.game;
+    const hint: ServedHint = {
+        hint: { technique: 1, focus: [1, 2], target: [1], conclusions: [] },
+        level: 1,
+        mistake: false,
+    };
+    function buildBridges(committed: number[]): DailyPuzzleGame {
+        const model = bridges.parse(bridgesPuzzle.description);
+        let st = bridges.empty(model);
+        for (const k of committed) st = bridges.tap(model, st, k);
+        const grid = bridges.toBytes(model, st);
+        const state = userState({ gameId: "bridges", number: 20710, grid, gridSavedAt: 5n });
+        dailyPuzzleStore.set({ puzzles: [bridgesPuzzle], states: [state] });
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint,
+                hintsUsed: 1,
+                state: userState({ gameId: "bridges", number: 20710, hints: [hint] }),
+            })),
+        });
+        return new DailyPuzzleGame(client, bridgesPuzzle, state, USER, bridges);
+    }
+
+    // invariant 1
+    test("clears once an edge through the cell is drawn, and not on an edit elsewhere", async () => {
+        const g = buildBridges([]);
+        await g.hint();
+        expect([...g.focus].sort()).toEqual([1, 2]);
+        expect([...g.target]).toEqual([1]);
+        // the colliding edge (key 1, over cell 3) is not the bridge the hint asked for
+        g.tap(1);
+        expect([...g.target]).toEqual([1]);
+        g.tap(12);
+        expect([...g.target]).toEqual([1]);
+        // the bridge over cell 1 is edge key 0
+        g.tap(0);
+        expect(g.focus.size).toBe(0);
+        expect(g.target.size).toBe(0);
+        expect(g.caption).toBeUndefined();
+    });
+
+    // The shape the server sends: the island is the target, the water cells of its edges are
+    // in focus (backend/libraries/bridges). Islands are context, so the water cells are what is
+    // asked for, and the hint clears once every one of them is decided
+    test("with an island target, the hint clears once the water cells in focus are decided", async () => {
+        const island: ServedHint = {
+            hint: { technique: 1, focus: [2, 1, 0, 5, 8], target: [2], conclusions: [] },
+            level: 1,
+            mistake: false,
+        };
+        const model = bridges.parse(bridgesPuzzle.description);
+        const state = userState({
+            gameId: "bridges",
+            number: 20710,
+            grid: bridges.toBytes(model, bridges.empty(model)),
+            gridSavedAt: 5n,
+        });
+        dailyPuzzleStore.set({ puzzles: [bridgesPuzzle], states: [state] });
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: island,
+                hintsUsed: 1,
+                state: userState({ gameId: "bridges", number: 20710, hints: [island] }),
+            })),
+        });
+        const g = new DailyPuzzleGame(client, bridgesPuzzle, state, USER, bridges);
+        await g.hint();
+        expect([...g.focus].sort()).toEqual([0, 1, 2, 5, 8]);
+        // an edge elsewhere (6 -> 8, over cell 7) changes nothing; island 0 collides with its key
+        g.tap(12);
+        expect([...g.focus].sort()).toEqual([0, 1, 2, 5, 8]);
+        // the bridge over cell 1 settles that cell; cell 5 is still asked for
+        g.tap(0);
+        expect([...g.focus].sort()).toEqual([0, 2, 5, 8]);
+        expect(g.caption).toBeUndefined(); // level 1 has no sentence
+        g.tap(5);
+        expect(g.focus.size).toBe(0);
+    });
+
+    // invariant 2
+    test("a water cell whose edge is already committed is not highlighted", async () => {
+        const g = buildBridges([0]);
+        await g.hint();
+        expect(g.focus.has(1)).toBe(false);
+        expect(g.target.size).toBe(0);
+        // the island stays as context
+        expect(g.focus.has(2)).toBe(true);
+    });
+});
