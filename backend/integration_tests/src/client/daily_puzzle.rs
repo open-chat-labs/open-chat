@@ -4,9 +4,7 @@ use daily_puzzle_canister::*;
 // Queries
 generate_msgpack_query_call!(config);
 generate_msgpack_query_call!(current_puzzles);
-generate_msgpack_query_call!(game_configs);
 generate_msgpack_query_call!(results);
-generate_msgpack_query_call!(schedule);
 
 // Updates
 generate_msgpack_update_call!(c2c_pull_puzzles);
@@ -14,18 +12,13 @@ generate_msgpack_update_call!(c2c_report_results);
 generate_msgpack_update_call!(candidates);
 generate_msgpack_update_call!(push_now);
 generate_msgpack_update_call!(regenerate_today);
-generate_msgpack_update_call!(set_config);
-generate_msgpack_update_call!(set_game_config);
-generate_msgpack_update_call!(set_schedule);
+generate_msgpack_update_call!(set_enabled);
 generate_msgpack_update_call!(veto_candidate);
 
 pub mod happy_path {
     use candid::Principal;
-    use daily_puzzle_canister::PuzzleParams;
     use pocket_ic::PocketIc;
-    use types::{
-        CanisterId, DailyPuzzleConfig, DailyPuzzleResult, Empty, GameConfig, GameId, PublicDailyPuzzle, PuzzleNumber, UserId,
-    };
+    use types::{CanisterId, DailyPuzzleConfig, DailyPuzzleResult, Empty, GameId, PublicDailyPuzzle, PuzzleNumber, UserId};
 
     pub fn current_puzzles(env: &PocketIc, sender: Principal, daily_puzzle_canister_id: CanisterId) -> Vec<PublicDailyPuzzle> {
         let response = super::current_puzzles(env, sender, daily_puzzle_canister_id, &Empty {});
@@ -36,29 +29,11 @@ pub mod happy_path {
         }
     }
 
-    pub fn game_configs(env: &PocketIc, sender: Principal, daily_puzzle_canister_id: CanisterId) -> Vec<(GameId, GameConfig)> {
-        let response = super::game_configs(env, sender, daily_puzzle_canister_id, &Empty {});
-
-        match response {
-            daily_puzzle_canister::game_configs::Response::Success(configs) => configs,
-            response => panic!("'game_configs' error: {response:?}"),
-        }
-    }
-
     pub fn config(env: &PocketIc, sender: Principal, daily_puzzle_canister_id: CanisterId) -> DailyPuzzleConfig {
         let response = super::config(env, sender, daily_puzzle_canister_id, &Empty {});
 
         match response {
             daily_puzzle_canister::config::Response::Success(config) => config,
-            response => panic!("'config' error: {response:?}"),
-        }
-    }
-
-    pub fn schedule(env: &PocketIc, sender: Principal, daily_puzzle_canister_id: CanisterId) -> Vec<PuzzleParams> {
-        let response = super::schedule(env, sender, daily_puzzle_canister_id, &Empty {});
-
-        match response {
-            daily_puzzle_canister::schedule::Response::Success(config) => config,
             response => panic!("'config' error: {response:?}"),
         }
     }
@@ -135,37 +110,17 @@ pub mod happy_path {
         }
     }
 
-    pub fn set_config(env: &mut PocketIc, sender: Principal, daily_puzzle_canister_id: CanisterId, config: DailyPuzzleConfig) {
-        let response = super::set_config(
+    pub fn set_enabled(env: &mut PocketIc, sender: Principal, daily_puzzle_canister_id: CanisterId, enabled: bool) {
+        let response = super::set_enabled(
             env,
             sender,
             daily_puzzle_canister_id,
-            &daily_puzzle_canister::set_config::Args { config },
+            &daily_puzzle_canister::set_enabled::Args { enabled },
         );
 
         match response {
             types::UnitResult::Success => {}
-            response => panic!("'set_config' error: {response:?}"),
-        }
-    }
-
-    pub fn set_game_config(
-        env: &mut PocketIc,
-        sender: Principal,
-        daily_puzzle_canister_id: CanisterId,
-        game_id: GameId,
-        config: GameConfig,
-    ) {
-        let response = super::set_game_config(
-            env,
-            sender,
-            daily_puzzle_canister_id,
-            &daily_puzzle_canister::set_game_config::Args { game_id, config },
-        );
-
-        match response {
-            types::UnitResult::Success => {}
-            response => panic!("'set_game_config' error: {response:?}"),
+            response => panic!("'set_enabled' error: {response:?}"),
         }
     }
 
@@ -187,25 +142,6 @@ pub mod happy_path {
         match response {
             types::UnitResult::Success => {}
             response => panic!("'veto_candidate' error: {response:?}"),
-        }
-    }
-
-    pub fn set_schedule(
-        env: &mut PocketIc,
-        sender: Principal,
-        daily_puzzle_canister_id: CanisterId,
-        schedule: Vec<daily_puzzle_canister::PuzzleParams>,
-    ) {
-        let response = super::set_schedule(
-            env,
-            sender,
-            daily_puzzle_canister_id,
-            &daily_puzzle_canister::set_schedule::Args { schedule },
-        );
-
-        match response {
-            types::UnitResult::Success => {}
-            response => panic!("'set_schedule' error: {response:?}"),
         }
     }
 }

@@ -638,12 +638,6 @@ export const ChatMetrics = /* @__PURE__ */ Type.Object({
     last_active: Type.BigInt(),
 });
 
-export type GameConfig = Static<typeof GameConfig>;
-export const GameConfig = /* @__PURE__ */ Type.Object({
-    hint_prices: Type.Array(Type.Number()),
-    max_hints: Type.Number(),
-});
-
 export type ModerationReferralCategory = Static<typeof ModerationReferralCategory>;
 export const ModerationReferralCategory = /* @__PURE__ */ Type.Object({
     category: Type.Number(),
@@ -2064,15 +2058,10 @@ export const DailyPuzzleConfigResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type DailyPuzzleGameConfigsResponse = Static<typeof DailyPuzzleGameConfigsResponse>;
-export const DailyPuzzleGameConfigsResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: Type.Array(Type.Tuple([Type.String(), GameConfig])),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
+export type DailyPuzzleSetEnabledArgs = Static<typeof DailyPuzzleSetEnabledArgs>;
+export const DailyPuzzleSetEnabledArgs = /* @__PURE__ */ Type.Object({
+    enabled: Type.Boolean(),
+});
 
 export type DailyPuzzleResultsArgs = Static<typeof DailyPuzzleResultsArgs>;
 export const DailyPuzzleResultsArgs = /* @__PURE__ */ Type.Object({
@@ -2081,23 +2070,9 @@ export const DailyPuzzleResultsArgs = /* @__PURE__ */ Type.Object({
     user_ids: Type.Array(UserId),
 });
 
-export type DailyPuzzleSetConfigArgs = Static<typeof DailyPuzzleSetConfigArgs>;
-export const DailyPuzzleSetConfigArgs = /* @__PURE__ */ Type.Object({
-    config: DailyPuzzleConfig,
-});
-
 export type DailyPuzzleRegenerateTodayArgs = Static<typeof DailyPuzzleRegenerateTodayArgs>;
 export const DailyPuzzleRegenerateTodayArgs = /* @__PURE__ */ Type.Object({
     game_id: Type.Optional(Type.String()),
-});
-
-export type DailyPuzzlePuzzleParams = Static<typeof DailyPuzzlePuzzleParams>;
-export const DailyPuzzlePuzzleParams = /* @__PURE__ */ Type.Object({
-    game_id: Type.String(),
-    width: Type.Number(),
-    height: Type.Number(),
-    tier: Type.Number(),
-    black_pct: Type.Number(),
 });
 
 export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
@@ -6597,16 +6572,6 @@ export const RegistryTokenDetails = /* @__PURE__ */ Type.Object({
     one_sec_enabled: Type.Boolean(),
     evm_contract_addresses: Type.Array(EvmContractAddress),
 });
-
-export type DailyPuzzleScheduleResponse = Static<typeof DailyPuzzleScheduleResponse>;
-export const DailyPuzzleScheduleResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: Type.Array(DailyPuzzlePuzzleParams),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
 
 export type DailyPuzzleResultsResponse = Static<typeof DailyPuzzleResultsResponse>;
 export const DailyPuzzleResultsResponse = /* @__PURE__ */ Type.Union([

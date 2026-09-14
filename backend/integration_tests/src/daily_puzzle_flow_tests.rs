@@ -37,12 +37,9 @@ fn daily_puzzle_end_to_end() {
     let local_user_index = canister_ids.local_user_index(env, user.canister());
     client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
 
-    // Launch: enable in the daily canister (defaults otherwise), push, then point the LUI at it
-    let config = DailyPuzzleConfig {
-        enabled: true,
-        ..DailyPuzzleConfig::default()
-    };
-    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, config.clone());
+    // Launch: enable in the daily canister, push, then point the LUI at it
+    let config = DailyPuzzleConfig::default();
+    client::daily_puzzle::happy_path::set_enabled(env, user.principal, canister_ids.daily_puzzle, true);
     client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     set_canister_id(env, &user, local_user_index, canister_ids.daily_puzzle);
 
@@ -255,11 +252,7 @@ fn daily_puzzle_end_to_end() {
     assert!(error.matches_code(OCErrorCode::AlreadyAwarded), "{error:?}");
 
     // Kill switch
-    let disabled = DailyPuzzleConfig {
-        enabled: false,
-        ..config.clone()
-    };
-    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, disabled);
+    client::daily_puzzle::happy_path::set_enabled(env, user.principal, canister_ids.daily_puzzle, false);
     client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     tick_many(env, 5);
     let fetched = fetch(env, &user, local_user_index);
@@ -280,7 +273,7 @@ fn daily_puzzle_end_to_end() {
     assert!(error.matches_code(OCErrorCode::NotInitialized), "{error:?}");
 
     // Re-enable: the solved record survives
-    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, config);
+    client::daily_puzzle::happy_path::set_enabled(env, user.principal, canister_ids.daily_puzzle, true);
     client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     tick_many(env, 5);
     let fetched = fetch(env, &user, local_user_index);
@@ -293,7 +286,7 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(state.solved.as_ref().unwrap().reward, expected_reward);
     assert_eq!(state.streak, 1);
 
-    // Config was mutated and the clock moved
+    // The flag was flipped and the clock moved
     wrapper.discard();
 }
 
@@ -343,7 +336,9 @@ fn daily_puzzle_dark_by_default() {
 
 // The CHIT paths the happy flow never takes: a debit the user canister refuses, and a day paid
 // once already. Both run through the user canister's idempotency keys, which `game_chit_tests`
-// cannot reach directly because `c2c_game_chit` is refused at ingress.
+// cannot reach directly because `c2c_game_chit` is refused at ingress. The numbers are this
+// build's constants (#9357), so the refusals come from a user who holds no CHIT: the first play
+// is free but a hint is not, and the second day's entry is not either.
 #[test]
 fn daily_puzzle_refused_debits_and_replayed_keys() {
     let mut wrapper = ENV.deref().get();
@@ -360,25 +355,72 @@ fn daily_puzzle_refused_debits_and_replayed_keys() {
     let local_user_index = canister_ids.local_user_index(env, user.canister());
     client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
 
-    // Every play costs, and the fee leaves too little for a hint, so both debits below are refused
+    let config = DailyPuzzleConfig::default();
     let hint_prices = GameConfig::default().hint_prices;
-    let entry_fee = DAILY_CHIT as u32 - hint_prices[0] + 1;
-    let config = DailyPuzzleConfig {
-        enabled: true,
-        first_play_free: false,
-        entry_fee,
-        ..DailyPuzzleConfig::default()
-    };
-    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, config.clone());
+    client::daily_puzzle::happy_path::set_enabled(env, user.principal, canister_ids.daily_puzzle, true);
     client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     set_canister_id(env, &user, local_user_index, canister_ids.daily_puzzle);
 
+    // Day one: the free first play, with no CHIT to buy a hint
     let (puzzle, state) = wait_for_puzzle(env, &user, local_user_index);
     let number = puzzle.number;
     let game_id = puzzle.game_id.as_str();
-    assert!(!puzzle.first_play_free);
-    assert_eq!(state.entry_fee, entry_fee);
+    assert!(puzzle.first_play_free);
+    assert_eq!(puzzle.entry_fee, config.entry_fee);
+    assert_eq!(state.entry_fee, 0);
     assert_eq!(chit_balance(env, &user), 0);
+    let started = start(env, &user, local_user_index, game_id, number, 0);
+    assert_eq!(started.chit_balance, None);
+    assert_eq!(chit_balance(env, &user), 0);
+
+    let (_, solution) = solve(game_id, &puzzle.description, puzzle.tier);
+    let (wrong_key, wrong_value) = wrong_pair(game_id, &puzzle.description, &solution);
+    let right_pair = (wrong_key, solution_value(game_id, &puzzle.description, &solution, wrong_key));
+
+    // A paid hint the user cannot afford is refused, and the free check its call spent stays
+    // spent: a refusal that only happens when the named keys are right must cost the same as a
+    // mistake, or it answers "is this key right?" for nothing
+    let daily_puzzle_hint::Response::Error(error) = client::local_user_index::daily_puzzle_hint(
+        env,
+        user.principal,
+        local_user_index,
+        &daily_puzzle_hint::Args {
+            game_id: game_id.to_string(),
+            number,
+            level: 1,
+            filled: vec![right_pair],
+            expected_price: hint_prices[0],
+        },
+    ) else {
+        panic!("hint should be refused with no CHIT");
+    };
+    assert!(error.matches_code(OCErrorCode::InsufficientFunds), "{error:?}");
+    let state = state_of(fetch(env, &user, local_user_index), game_id).unwrap();
+    assert!(state.hints.is_empty());
+    assert_eq!(state.free_checks, 1);
+    assert_eq!(chit_balance(env, &user), 0);
+
+    let mistake = hint(
+        env,
+        &user,
+        local_user_index,
+        game_id,
+        number,
+        1,
+        vec![(wrong_key, wrong_value)],
+        0,
+    );
+    assert!(mistake.hint.mistake);
+    assert_eq!(mistake.state.free_checks, 2);
+
+    // Day two: the free play is spent, so the entry costs, and there is still no CHIT
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    let (puzzle, state) = wait_for_puzzle(env, &user, local_user_index);
+    let number = puzzle.number;
+    let game_id = puzzle.game_id.as_str();
+    let entry_fee = config.entry_fee;
+    assert_eq!(state.entry_fee, entry_fee);
+    assert_eq!(state.started_at, None);
 
     // No CHIT: the start is refused and leaves no record behind, so the day is not locked
     let daily_puzzle_start::Response::Error(error) = client::local_user_index::daily_puzzle_start(
@@ -404,49 +446,9 @@ fn daily_puzzle_refused_debits_and_replayed_keys() {
     let after_entry = DAILY_CHIT - entry_fee as i32;
     assert_eq!(chit_balance(env, &user), after_entry);
     assert_eq!(started.chit_balance, Some(after_entry));
-    assert!(after_entry < hint_prices[0] as i32);
 
+    // Solve, and the reward lands. Day one was never solved, so this is a streak-zero reward
     let (_, solution) = solve(game_id, &puzzle.description, puzzle.tier);
-    let (wrong_key, wrong_value) = wrong_pair(game_id, &puzzle.description, &solution);
-    let right_pair = (wrong_key, solution_value(game_id, &puzzle.description, &solution, wrong_key));
-
-    // A paid hint the user cannot afford is refused, and the free check its call spent stays
-    // spent: a refusal that only happens when the named keys are right must cost the same as a
-    // mistake, or it answers "is this key right?" for nothing
-    let daily_puzzle_hint::Response::Error(error) = client::local_user_index::daily_puzzle_hint(
-        env,
-        user.principal,
-        local_user_index,
-        &daily_puzzle_hint::Args {
-            game_id: game_id.to_string(),
-            number,
-            level: 1,
-            filled: vec![right_pair],
-            expected_price: hint_prices[0],
-        },
-    ) else {
-        panic!("hint should be refused with too little CHIT");
-    };
-    assert!(error.matches_code(OCErrorCode::InsufficientFunds), "{error:?}");
-    let state = state_of(fetch(env, &user, local_user_index), game_id).unwrap();
-    assert!(state.hints.is_empty());
-    assert_eq!(state.free_checks, 1);
-    assert_eq!(chit_balance(env, &user), after_entry);
-
-    let mistake = hint(
-        env,
-        &user,
-        local_user_index,
-        game_id,
-        number,
-        1,
-        vec![(wrong_key, wrong_value)],
-        0,
-    );
-    assert!(mistake.hint.mistake);
-    assert_eq!(mistake.state.free_checks, 2);
-
-    // Solve, and the reward lands
     env.advance_time(Duration::from_secs(30));
     let daily_puzzle_submit::Response::Success(solved) =
         submit(env, &user, local_user_index, game_id, number, solution.clone())
@@ -461,7 +463,8 @@ fn daily_puzzle_refused_debits_and_replayed_keys() {
 
     // The operator replaces today's puzzle. The record goes with it, and the replacement is a
     // free restart that pays nothing a second time: the entry and solve keys name the day, not
-    // the puzzle, so the user canister answers `AlreadyAdded` to both replays.
+    // the puzzle, so the user canister answers `AlreadyAdded` to both replays (#9357 invariant 4,
+    // #9332 invariant 3).
     client::daily_puzzle::happy_path::regenerate_today(env, user.principal, canister_ids.daily_puzzle, None);
     let replacement = wait_for_replacement(env, &user, local_user_index, &puzzle.description);
     assert_eq!(replacement.number, number);
@@ -503,7 +506,7 @@ fn daily_puzzle_refused_debits_and_replayed_keys() {
         .collect();
     assert_eq!(game_events.len(), 2, "one entry and one solve: {game_events:?}");
 
-    // Config was mutated and the clock moved
+    // The flag was flipped and the clock moved
     wrapper.discard();
 }
 
@@ -577,11 +580,7 @@ fn daily_puzzle_survives_a_missing_wrong_or_stopped_daily_canister() {
     not_available(env);
 
     // The real one, and the game comes up
-    let config = DailyPuzzleConfig {
-        enabled: true,
-        ..DailyPuzzleConfig::default()
-    };
-    client::daily_puzzle::happy_path::set_config(env, user.principal, canister_ids.daily_puzzle, config);
+    client::daily_puzzle::happy_path::set_enabled(env, user.principal, canister_ids.daily_puzzle, true);
     client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     set_canister_id(env, &user, local_user_index, canister_ids.daily_puzzle);
     let (puzzle, _) = wait_for_puzzle(env, &user, local_user_index);
@@ -638,7 +637,7 @@ fn daily_puzzle_survives_a_missing_wrong_or_stopped_daily_canister() {
     assert_eq!(results[0].user_id, user.user_id);
     assert_eq!(results[0].hints_used, 1);
 
-    // Config was mutated, the clock moved, and a canister was stopped and started
+    // The flag was flipped, the clock moved, and a canister was stopped and started
     wrapper.discard();
 }
 

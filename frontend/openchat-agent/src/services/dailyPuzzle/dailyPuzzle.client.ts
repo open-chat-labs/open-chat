@@ -2,7 +2,6 @@ import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
     DailyPuzzleConfig,
     DailyPuzzleResult,
-    GameConfig,
     OCError,
     PublicDailyPuzzle,
     Success,
@@ -12,20 +11,17 @@ import { principalStringToBytes } from "../../utils/mapping";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import { unitResult } from "../common/chatMappersV2";
 import {
-    apiDailyPuzzleConfig,
     currentPuzzlesResponse,
     dailyPuzzleConfigResponse,
-    dailyPuzzleGameConfigsResponse,
     dailyPuzzleResultsResponse,
 } from "./mappers";
 import {
     DailyPuzzleConfigResponse,
     DailyPuzzleCurrentPuzzlesResponse,
-    DailyPuzzleGameConfigsResponse,
     DailyPuzzleRegenerateTodayArgs,
     DailyPuzzleResultsArgs,
     DailyPuzzleResultsResponse,
-    DailyPuzzleSetConfigArgs,
+    DailyPuzzleSetEnabledArgs,
 } from "./typebox";
 
 export class DailyPuzzleClient extends SingleCanisterMsgpackAgent {
@@ -67,25 +63,16 @@ export class DailyPuzzleClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    gameConfigs(): Promise<[string, GameConfig][] | OCError> {
-        return this.query(
-            "game_configs",
-            {},
-            dailyPuzzleGameConfigsResponse,
-            Empty,
-            DailyPuzzleGameConfigsResponse,
-        );
-    }
-
-    setConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
+    setEnabled(enabled: boolean): Promise<Success | OCError> {
         return this.update(
-            "set_config",
-            { config: apiDailyPuzzleConfig(config) },
+            "set_enabled",
+            { enabled },
             unitResult,
-            DailyPuzzleSetConfigArgs,
+            DailyPuzzleSetEnabledArgs,
             UnitResult,
         );
     }
+
     regenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.update(
             "regenerate_today",

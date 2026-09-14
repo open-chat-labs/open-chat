@@ -7,7 +7,6 @@ import type {
     DailyPuzzleStartResponse,
     DailyPuzzleSubmitResponse,
     DailyPuzzleUserState,
-    GameConfig,
     PublicDailyPuzzle,
     PuzzleHint,
     ServedHint,
@@ -19,12 +18,10 @@ import type {
     DailyPuzzleConfig as TDailyPuzzleConfig,
     DailyPuzzleConfigResponse,
     DailyPuzzleCurrentPuzzlesResponse,
-    DailyPuzzleGameConfigsResponse,
     DailyPuzzleResult as TDailyPuzzleResult,
     DailyPuzzleResultsResponse,
     DailyPuzzleSolved as TDailyPuzzleSolved,
     DailyPuzzleUserState as TDailyPuzzleUserState,
-    GameConfig as TGameConfig,
     LocalUserIndexDailyPuzzleFetchResponse,
     LocalUserIndexDailyPuzzleHintResponse,
     LocalUserIndexDailyPuzzleStartResponse,
@@ -179,33 +176,8 @@ export function dailyPuzzleConfig(value: TDailyPuzzleConfig): DailyPuzzleConfig 
     };
 }
 
-export function apiDailyPuzzleConfig(value: DailyPuzzleConfig): TDailyPuzzleConfig {
-    return {
-        enabled: value.enabled,
-        entry_fee: value.entryFee,
-        first_play_free: value.firstPlayFree,
-        reward_by_streak: value.rewardByStreak,
-        hint_penalty: value.hintPenalty,
-        min_carded_solve_ms: value.minCardedSolveMs,
-        max_submits: value.maxSubmits,
-        max_free_checks: value.maxFreeChecks,
-    };
-}
-
-export function gameConfig(value: TGameConfig): GameConfig {
-    return {
-        hintPrices: value.hint_prices,
-        maxHints: value.max_hints,
-    };
-}
 export function dailyPuzzleConfigResponse(
     value: DailyPuzzleConfigResponse,
 ): DailyPuzzleConfig | OCError {
     return mapResult(value, dailyPuzzleConfig);
-}
-
-export function dailyPuzzleGameConfigsResponse(
-    value: DailyPuzzleGameConfigsResponse,
-): [string, GameConfig][] | OCError {
-    return mapResult(value, (s) => s.map(([id, c]) => [id, gameConfig(c)]));
 }

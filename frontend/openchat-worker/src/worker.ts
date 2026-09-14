@@ -1545,11 +1545,8 @@ function getAction(
         case "dailyPuzzleConfig":
             return agent.dailyPuzzleConfig();
 
-        case "dailyPuzzleGameConfigs":
-            return agent.dailyPuzzleGameConfigs();
-
-        case "dailyPuzzleSetConfig":
-            return agent.dailyPuzzleSetConfig(payload.config);
+        case "dailyPuzzleSetEnabled":
+            return agent.dailyPuzzleSetEnabled(payload.enabled);
 
         case "dailyPuzzleRegenerateToday":
             return agent.dailyPuzzleRegenerateToday(payload.gameId);

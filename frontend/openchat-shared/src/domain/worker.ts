@@ -111,7 +111,6 @@ import type {
     DailyPuzzleResult,
     DailyPuzzleStartResponse,
     DailyPuzzleSubmitResponse,
-    GameConfig,
     PublicDailyPuzzle,
 } from "./dailyPuzzle";
 import type {
@@ -527,8 +526,7 @@ export type WorkerRequest =
     | DailyPuzzleCurrent
     | DailyPuzzleResults
     | DailyPuzzleGetConfig
-    | DailyPuzzleGameConfigs
-    | DailyPuzzleSetConfig
+    | DailyPuzzleSetEnabled
     | DailyPuzzleRegenerateToday
     | SetPremiumItemCost
     | OneSecEnableForwarding
@@ -641,13 +639,9 @@ type DailyPuzzleGetConfig = {
     kind: "dailyPuzzleConfig";
 };
 
-type DailyPuzzleGameConfigs = {
-    kind: "dailyPuzzleGameConfigs";
-};
-
-type DailyPuzzleSetConfig = {
-    kind: "dailyPuzzleSetConfig";
-    config: DailyPuzzleConfig;
+type DailyPuzzleSetEnabled = {
+    kind: "dailyPuzzleSetEnabled";
+    enabled: boolean;
 };
 type DailyPuzzleRegenerateToday = {
     kind: "dailyPuzzleRegenerateToday";
@@ -2178,7 +2172,6 @@ export type WorkerResponseInner =
     | PublicDailyPuzzle[]
     | DailyPuzzleResult[]
     | DailyPuzzleConfig
-    | [string, GameConfig][]
     | OneSecTransferFees[]
     | OneSecForwardingStatus;
 
@@ -2967,9 +2960,7 @@ export type WorkerResult<T> = T extends Init
     ? DailyPuzzleResult[]
     : T extends DailyPuzzleGetConfig
     ? DailyPuzzleConfig | OCError
-    : T extends DailyPuzzleGameConfigs
-    ? [string, GameConfig][] | OCError
-    : T extends DailyPuzzleSetConfig
+    : T extends DailyPuzzleSetEnabled
     ? Success | OCError
     : T extends DailyPuzzleRegenerateToday
     ? Success | OCError

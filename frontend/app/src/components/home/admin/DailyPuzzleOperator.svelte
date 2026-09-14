@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         type DailyPuzzleConfig,
-        type GameConfig,
         type OCError,
         type OpenChat,
         type ResourceKey,
@@ -11,7 +10,8 @@
     import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { regenerateOptions, withEnabled } from "../../../utils/dailyPuzzleOperator";
+    import { dailyPuzzleGames } from "../../../utils/dailyPuzzleGames";
+    import { regenerateOptions } from "../../../utils/dailyPuzzleOperator";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Select from "../../Select.svelte";
@@ -20,15 +20,14 @@
 
     const client = getContext<OpenChat>("client");
 
-    // Two levers, deliberately (2026-09-13): the kill switch, and regenerating a bad puzzle.
-    // Prices, rewards, caps and the rota are code, so changing them gets a review.
+    // Two levers, deliberately (2026-09-13, #9357): the kill switch, and regenerating a bad
+    // puzzle. Prices, rewards, caps and the rota are code, so changing them gets a review.
     let error: ResourceKey | undefined = $state(undefined);
     let busy = $state(new SvelteSet<number>());
     let config: DailyPuzzleConfig | undefined = $state(undefined);
     let enabled = $state(false);
-    let gameConfigs: [string, GameConfig][] = $state([]);
     let regenerateGameId = $state("");
-    let regenerate = $derived(regenerateOptions(gameConfigs));
+    const regenerate = regenerateOptions(Object.keys(dailyPuzzleGames));
 
     function fail(what: string, resp: OCError | unknown) {
         const detail =
@@ -41,20 +40,12 @@
 
     // Shown state is what the canister holds now, never what was just sent
     async function refresh(): Promise<void> {
-        const [current, games] = await Promise.all([
-            client.dailyPuzzleConfig(),
-            client.dailyPuzzleGameConfigs(),
-        ]);
+        const current = await client.dailyPuzzleConfig();
         if ("kind" in current) {
             fail("Failed to read the daily puzzle config", current);
         } else {
             config = current;
             enabled = current.enabled;
-        }
-        if (Array.isArray(games)) {
-            gameConfigs = games;
-        } else {
-            fail("Failed to read the game configs", games);
         }
     }
 
@@ -86,12 +77,10 @@
     }
 
     function saveEnabled() {
-        if (config === undefined) return;
-        const next = withEnabled(config, enabled);
         run(
             0,
             "Failed to set the daily puzzle enabled flag",
-            () => client.dailyPuzzleSetConfig(next),
+            () => client.dailyPuzzleSetEnabled(enabled),
             `Daily puzzle ${enabled ? "enabled" : "disabled"}; pushed to every local user index`,
         );
     }

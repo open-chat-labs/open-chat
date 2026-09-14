@@ -10,9 +10,9 @@ use types::UnitResult;
 /// Ops tool for a broken or forced puzzle. Drops today's shipped puzzle(s) and candidate pool and
 /// generates today's puzzle again through the normal per-candidate timer path, so it appears
 /// within a few ticks and is then pushed to every local user index. With `game_id` set, today's
-/// puzzle is that game instead of the scheduled one, using the first schedule entry for that game
-/// or the default params when it isn't scheduled at all; the schedule itself is untouched and
-/// tomorrow follows it as usual. Each call salts the seed so the replacement differs from the
+/// puzzle is that game instead of the scheduled one, using the rota's first entry for that game
+/// or the game's default params when the rota doesn't name it; tomorrow follows the rota as
+/// usual. Each call salts the seed so the replacement differs from the
 /// puzzle it replaces.
 ///
 /// Results already recorded here for today's old puzzle stay (keyed by number + game; harmless).

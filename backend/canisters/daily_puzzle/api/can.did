@@ -22,11 +22,6 @@ type DailyPuzzleConfig = record {
     max_free_checks : nat16;
 };
 
-type GameConfig = record {
-    hint_prices : vec nat32;
-    max_hints : nat8;
-};
-
 type PublicDailyPuzzle = record {
     game_id : GameId;
     number : PuzzleNumber;
@@ -51,14 +46,6 @@ type DailyPuzzleResult = record {
     hints_used : nat8;
     streak : nat32;
     solved_at : TimestampMillis;
-};
-
-type PuzzleParams = record {
-    game_id : GameId;
-    width : nat8;
-    height : nat8;
-    tier : nat8;
-    black_pct : nat8;
 };
 
 type CandidateView = record {
@@ -89,11 +76,6 @@ type CurrentPuzzlesResponse = variant {
     Error : OCError;
 };
 
-type GameConfigsResponse = variant {
-    Success : vec record { GameId; GameConfig };
-    Error : OCError;
-};
-
 type RegenerateTodayArgs = record {
     game_id : opt GameId;
 };
@@ -109,22 +91,8 @@ type ResultsResponse = variant {
     Error : OCError;
 };
 
-type ScheduleResponse = variant {
-    Success : vec PuzzleParams;
-    Error : OCError;
-};
-
-type SetConfigArgs = record {
-    config : DailyPuzzleConfig;
-};
-
-type SetGameConfigArgs = record {
-    game_id : GameId;
-    config : GameConfig;
-};
-
-type SetScheduleArgs = record {
-    schedule : vec PuzzleParams;
+type SetEnabledArgs = record {
+    enabled : bool;
 };
 
 type VetoCandidateArgs = record {
@@ -136,15 +104,11 @@ type VetoCandidateArgs = record {
 service : {
     config : (record {}) -> (ConfigResponse) query;
     current_puzzles : (record {}) -> (CurrentPuzzlesResponse) query;
-    game_configs : (record {}) -> (GameConfigsResponse) query;
     results : (ResultsArgs) -> (ResultsResponse) query;
-    schedule : (record {}) -> (ScheduleResponse) query;
 
     candidates : (CandidatesArgs) -> (CandidatesResponse);
     push_now : (record {}) -> (UnitResult);
     regenerate_today : (RegenerateTodayArgs) -> (UnitResult);
-    set_config : (SetConfigArgs) -> (UnitResult);
-    set_game_config : (SetGameConfigArgs) -> (UnitResult);
-    set_schedule : (SetScheduleArgs) -> (UnitResult);
+    set_enabled : (SetEnabledArgs) -> (UnitResult);
     veto_candidate : (VetoCandidateArgs) -> (UnitResult);
 };

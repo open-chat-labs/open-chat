@@ -52,7 +52,7 @@ fn run() {
         let Some(number) = state.data.generation_needed(now) else {
             return;
         };
-        let params = state.data.params_for(number).clone();
+        let params = state.data.params_for(number);
         let start = ic_cdk::api::performance_counter(0);
         let index = match state.data.generate_candidate(number) {
             Ok(index) => index,

@@ -31,6 +31,10 @@ fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
 
 fn init_state(env: Box<dyn Environment>, mut data: Data, wasm_version: BuildVersion) {
     let now = env.now();
+    // Every price, reward and cap is a constant of this build, so the puzzles this canister holds
+    // are restamped on every upgrade and the push below carries the new numbers to every local
+    // user index without an operator call (#9357 invariant 2)
+    data.stamp_config();
     data.ensure_puzzles(now);
     let state = RuntimeState::new(env, data);
 

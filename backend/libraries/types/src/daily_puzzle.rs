@@ -36,8 +36,9 @@ pub struct PuzzleHint {
     pub conclusions: Vec<(u16, u8)>,
 }
 
-/// Series-level tuning, the same for every game. Lives in the daily_puzzle canister and travels
-/// with the push. Per-game tuning is `GameConfig`.
+/// Series-level tuning, the same for every game. Travels with the push. Per-game tuning is
+/// `GameConfig`. Only `enabled` is set at run time: every other field is the launch number in
+/// `Default` below, the one place it is defined, and changes by release (#9357).
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct DailyPuzzleConfig {
@@ -92,7 +93,8 @@ impl Default for DailyPuzzleConfig {
     }
 }
 
-/// Per-game tuning. Travels with the puzzle.
+/// Per-game tuning. Travels with the puzzle. The numbers are `Default` below, the one place they
+/// are defined; they change by release (#9357).
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct GameConfig {

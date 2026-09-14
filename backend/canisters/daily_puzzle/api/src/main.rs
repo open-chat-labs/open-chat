@@ -5,16 +5,12 @@ use ts_export::generate_ts_method;
 fn main() {
     generate_candid_method!(daily_puzzle, config, query);
     generate_candid_method!(daily_puzzle, current_puzzles, query);
-    generate_candid_method!(daily_puzzle, game_configs, query);
     generate_candid_method!(daily_puzzle, results, query);
-    generate_candid_method!(daily_puzzle, schedule, query);
 
     generate_candid_method!(daily_puzzle, candidates, update);
     generate_candid_method!(daily_puzzle, push_now, update);
     generate_candid_method!(daily_puzzle, regenerate_today, update);
-    generate_candid_method!(daily_puzzle, set_config, update);
-    generate_candid_method!(daily_puzzle, set_game_config, update);
-    generate_candid_method!(daily_puzzle, set_schedule, update);
+    generate_candid_method!(daily_puzzle, set_enabled, update);
     generate_candid_method!(daily_puzzle, veto_candidate, update);
 
     candid::export_service!();
@@ -27,10 +23,8 @@ fn main() {
 
     generate_ts_method!(daily_puzzle, config);
     generate_ts_method!(daily_puzzle, current_puzzles);
-    generate_ts_method!(daily_puzzle, game_configs);
-    generate_ts_method!(daily_puzzle, schedule);
     generate_ts_method!(daily_puzzle, results);
 
     generate_ts_method!(daily_puzzle, regenerate_today);
-    generate_ts_method!(daily_puzzle, set_config);
+    generate_ts_method!(daily_puzzle, set_enabled);
 }

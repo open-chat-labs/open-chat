@@ -158,7 +158,6 @@ import {
     type DailyPuzzleStartResponse,
     type DailyPuzzleState,
     type DailyPuzzleSubmitResponse,
-    type GameConfig,
     type ClientJoinCommunityResponse,
     type ClientJoinGroupResponse,
     type CommunitiesRoute,
@@ -10877,12 +10876,8 @@ export class OpenChat {
         return this.#worker.send({ kind: "dailyPuzzleConfig" });
     }
 
-    dailyPuzzleGameConfigs(): Promise<[string, GameConfig][] | OCError> {
-        return this.#worker.send({ kind: "dailyPuzzleGameConfigs" });
-    }
-
-    dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
-        return this.#worker.send({ kind: "dailyPuzzleSetConfig", config });
+    dailyPuzzleSetEnabled(enabled: boolean): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleSetEnabled", enabled });
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });
