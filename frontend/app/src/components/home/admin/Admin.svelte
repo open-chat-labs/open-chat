@@ -9,7 +9,8 @@
     import PendingOperatorProposals from "./PendingOperatorProposals.svelte";
     import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
     import VaultLog from "./VaultLog.svelte";
-    import { adminTabs, type AdminTab } from "./adminTabs";
+
+    type AdminTab = "translations" | "operator" | "proposals" | "authority" | "vaultlog";
 
     let selectedTab: AdminTab = $state("translations");
 
@@ -38,18 +39,51 @@
             </div>
         </SectionHeader>
         <div class="tabs">
-            {#each adminTabs as { id, label } (id)}
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <div
-                    tabindex="0"
-                    role="button"
-                    onclick={() => selectTab(id)}
-                    class:selected={selectedTab === id}
-                    class="tab"
-                >
-                    {label}
-                </div>
-            {/each}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div
+                tabindex="0"
+                role="button"
+                onclick={() => selectTab("translations")}
+                class:selected={selectedTab === "translations"}
+                class="tab">
+                Translation Corrections
+            </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div
+                tabindex="0"
+                role="button"
+                onclick={() => selectTab("operator")}
+                class:selected={selectedTab === "operator"}
+                class="tab">
+                Operator functions
+            </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div
+                tabindex="0"
+                role="button"
+                onclick={() => selectTab("proposals")}
+                class:selected={selectedTab === "proposals"}
+                class="tab">
+                Pending operator proposals
+            </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div
+                tabindex="0"
+                role="button"
+                onclick={() => selectTab("authority")}
+                class:selected={selectedTab === "authority"}
+                class="tab">
+                Authority reports
+            </div>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div
+                tabindex="0"
+                role="button"
+                onclick={() => selectTab("vaultlog")}
+                class:selected={selectedTab === "vaultlog"}
+                class="tab">
+                Vault log
+            </div>
         </div>
         {#if selectedTab === "translations"}
             <ReviewTranslationCorrections />
