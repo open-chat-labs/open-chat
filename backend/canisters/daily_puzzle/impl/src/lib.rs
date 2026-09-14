@@ -354,7 +354,13 @@ impl Data {
 
     /// Ships today's scheduled puzzle from its candidate pool if it hasn't shipped yet, then
     /// prunes old state. Returns true when a puzzle was promoted (the callers push on that).
+    ///
+    /// Every path that ends in a push runs through here (upgrade, rollover, generation), so this
+    /// is also where every held puzzle is restamped with this build's constants: a release that
+    /// changes a number reaches the local user indexes on its first push with no operator call
+    /// (#9357 invariant 2).
     pub fn ensure_puzzles(&mut self, now: TimestampMillis) -> bool {
+        self.stamp_config();
         let current = Self::number_for(now);
         let game_id = self.params_for(current).game_id.clone();
         let mut promoted = false;
@@ -416,7 +422,7 @@ impl Data {
     /// Writes the current config onto every puzzle and candidate held, so what is pushed and
     /// served is this build's constants plus the current enabled flag, whatever the puzzle was
     /// generated under.
-    pub fn stamp_config(&mut self) {
+    fn stamp_config(&mut self) {
         let config = self.config();
         for puzzle in self.puzzles.values_mut().flat_map(|games| games.values_mut()).chain(
             self.candidates
@@ -1031,7 +1037,7 @@ mod tests {
 
     // #9357 invariants 1 and 2. `enabled` is the only value `set_enabled` moves, and every puzzle
     // and candidate held is restamped with this build's constants, both on the flag flip and on
-    // the upgrade path (`stamp_config`), so a release that changes a number reaches the local
+    // the upgrade path (`ensure_puzzles`), so a release that changes a number reaches the local
     // user indexes on the next push with no operator call.
     #[test]
     fn puzzles_carry_the_constant_config_and_the_enabled_flag() {
@@ -1061,7 +1067,8 @@ mod tests {
         d.generate_candidate(TUESDAY).unwrap();
         assert_eq!(pool(&d, TUESDAY)[1].puzzle.config, enabled);
 
-        // A puzzle generated under an older build's numbers is brought up to this build's
+        // A puzzle generated under an older build's numbers is brought up to this build's by
+        // the ship step every push path runs through, not by a call something has to remember
         let stale = DailyPuzzleConfig {
             entry_fee: 1,
             reward_by_streak: vec![1],
@@ -1078,7 +1085,7 @@ mod tests {
             .unwrap()
             .game_config
             .hint_prices = vec![1];
-        d.stamp_config();
+        assert!(!d.ensure_puzzles(now), "nothing to promote, only to restamp");
         assert_eq!(shipped(&d, MONDAY).config, enabled);
         assert_eq!(pool(&d, TUESDAY)[0].puzzle.config, enabled);
         assert_eq!(shipped(&d, MONDAY).game_config, GameConfig::default());
@@ -1275,6 +1282,13 @@ mod tests {
             last_registry_refresh: TimestampMillis,
             test_mode: bool,
         }
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
+        let mut held = data();
+        held.generate_candidate(MONDAY).unwrap();
+        held.ensure_puzzles(now);
+        let mut stale = shipped(&held, MONDAY).clone();
+        stale.config.entry_fee = 1;
+        stale.game_config.hint_prices = vec![1];
         let legacy = |enabled| Legacy {
             registry_canister_id: Principal::anonymous(),
             user_index_canister_id: Principal::anonymous(),
@@ -1288,7 +1302,7 @@ mod tests {
             },
             game_configs: BTreeMap::new(),
             schedule: vec![scheduled(MONDAY); 7],
-            puzzles: BTreeMap::new(),
+            puzzles: BTreeMap::from([(MONDAY, BTreeMap::from([(LU.to_string(), stale.clone())]))]),
             candidates: BTreeMap::new(),
             results: BTreeMap::new(),
             local_user_indexes: HashSet::new(),
@@ -1298,10 +1312,17 @@ mod tests {
         };
         for enabled in [true, false] {
             let bytes = msgpack::serialize_to_vec(legacy(enabled)).unwrap();
-            let restored: Data = msgpack::deserialize(bytes.as_slice()).unwrap();
+            let mut restored: Data = msgpack::deserialize(bytes.as_slice()).unwrap();
             assert_eq!(restored.enabled, enabled);
             assert_eq!(restored.master_seed, 9);
             assert_eq!(restored.config().entry_fee, DailyPuzzleConfig::default().entry_fee);
+            // The held puzzle carries the old build's numbers until the upgrade's ship step runs,
+            // which `init_state` does before its push
+            assert_eq!(shipped(&restored, MONDAY).config.entry_fee, 1);
+            restored.ensure_puzzles(now);
+            assert_eq!(shipped(&restored, MONDAY).config, restored.config());
+            assert_eq!(shipped(&restored, MONDAY).config.enabled, enabled);
+            assert_eq!(shipped(&restored, MONDAY).game_config, GameConfig::default());
         }
     }
 

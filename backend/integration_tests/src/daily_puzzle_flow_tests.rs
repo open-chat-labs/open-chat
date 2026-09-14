@@ -251,9 +251,10 @@ fn daily_puzzle_end_to_end() {
     };
     assert!(error.matches_code(OCErrorCode::AlreadyAwarded), "{error:?}");
 
-    // Kill switch
+    // Kill switch. No `push_now` here: the flip has to reach the LUI on `set_enabled`'s own push,
+    // which is all the admin tab calls. An LUI holding a puzzle never pulls, so a flip that did
+    // not push would leave the game running until midnight (#9357 invariant 3).
     client::daily_puzzle::happy_path::set_enabled(env, user.principal, canister_ids.daily_puzzle, false);
-    client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     tick_many(env, 5);
     let fetched = fetch(env, &user, local_user_index);
     assert!(fetched.puzzles.is_empty(), "{fetched:?}");
@@ -272,9 +273,8 @@ fn daily_puzzle_end_to_end() {
     };
     assert!(error.matches_code(OCErrorCode::NotInitialized), "{error:?}");
 
-    // Re-enable: the solved record survives
+    // Re-enable, again on `set_enabled`'s own push: the solved record survives
     client::daily_puzzle::happy_path::set_enabled(env, user.principal, canister_ids.daily_puzzle, true);
-    client::daily_puzzle::happy_path::push_now(env, user.principal, canister_ids.daily_puzzle);
     tick_many(env, 5);
     let fetched = fetch(env, &user, local_user_index);
     assert!(
