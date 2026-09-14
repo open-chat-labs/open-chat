@@ -10,10 +10,10 @@ use utils::timestamped_map::ValueLastUpdated;
 // passed in to identify them.
 #[derive(Serialize, Deserialize, Default)]
 pub struct ThreadsRead {
-    // Entries which haven't yet been moved into stable memory. New entries are always written to
-    // stable memory, and existing ones are moved across in batches by `migrate_to_stable_memory`.
-    // This can be removed once every user has been migrated.
-    #[serde(rename = "map", default)]
+    // The entries which were held on the heap, which are all moved into stable memory in
+    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
+    // TODO: Remove this after next release
+    #[serde(rename = "map", default, skip_serializing)]
     on_heap: HashMap<MessageIndex, ValueLastUpdated<MessageIndex>>,
     #[serde(default)]
     last_updated: TimestampMillis,
@@ -27,15 +27,13 @@ impl ThreadsRead {
         read_up_to: MessageIndex,
         now: TimestampMillis,
     ) {
-        self.on_heap.remove(&root_message_index);
         let key = ThreadReadKeyPrefix::new_from_chat(chat).create_key(&root_message_index);
         with_map_mut(|m| m.insert(key, value_to_bytes(read_up_to, now)));
         self.last_updated = self.last_updated.max(now);
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        let latest_on_heap = self.on_heap.values().map(|v| v.last_updated).max().unwrap_or_default();
-        self.last_updated.max(latest_on_heap)
+        self.last_updated
     }
 
     pub fn all(&self, chat: MultiUserChat) -> HashMap<MessageIndex, MessageIndex> {
@@ -71,55 +69,42 @@ impl ThreadsRead {
         ThreadReadKeyPrefix::new_from_chat(chat).into()
     }
 
-    // Moves up to `max_count` entries from the heap into stable memory, returning how many were
+    // Moves the entries which were held on the heap into stable memory, returning how many were
     // moved
-    pub fn migrate_to_stable_memory(&mut self, chat: MultiUserChat, max_count: usize) -> usize {
-        let count = max_count.min(self.on_heap.len());
-        if count == 0 {
+    // TODO: Remove this after next release
+    pub fn migrate_to_stable_memory(&mut self, chat: MultiUserChat) -> usize {
+        if self.on_heap.is_empty() {
             return 0;
         }
 
         let prefix = ThreadReadKeyPrefix::new_from_chat(chat);
-        let mut root_message_indexes: Vec<_> = self.on_heap.keys().take(count).copied().collect();
-        root_message_indexes.sort_unstable();
+        let mut entries: Vec<_> = std::mem::take(&mut self.on_heap).into_iter().collect();
+        // Insert the entries in key order
+        entries.sort_unstable_by_key(|(root_message_index, _)| *root_message_index);
 
-        let entries: Vec<_> = root_message_indexes
-            .into_iter()
-            .map(|root_message_index| {
-                let value = self.on_heap.remove(&root_message_index).unwrap();
+        let count = entries.len();
+        with_map_mut(|m| {
+            m.insert_many(entries.into_iter().map(|(root_message_index, value)| {
                 self.last_updated = self.last_updated.max(value.last_updated);
                 (
                     prefix.create_key(&root_message_index),
                     value_to_bytes(value.value, value.last_updated),
                 )
-            })
-            .collect();
-
-        with_map_mut(|m| m.insert_many(entries));
+            }))
+        });
         count
-    }
-
-    pub fn on_heap_count(&self) -> usize {
-        self.on_heap.len()
     }
 
     // The entries updated after `since`
     fn entries(&self, chat: MultiUserChat, since: TimestampMillis) -> HashMap<MessageIndex, MessageIndex> {
-        let mut entries: HashMap<_, _> = with_map(|m| {
+        with_map(|m| {
             m.range(keys(chat))
                 .filter_map(|(k, v)| {
                     let (read_up_to, last_updated) = value_from_bytes(&v);
                     (last_updated > since).then_some((k.root_message_index(), read_up_to))
                 })
                 .collect()
-        });
-        entries.extend(
-            self.on_heap
-                .iter()
-                .filter(|(_, v)| v.last_updated > since)
-                .map(|(k, v)| (*k, v.value)),
-        );
-        entries
+        })
     }
 }
 
@@ -223,32 +208,28 @@ mod tests {
                 .collect(),
             last_updated: 0,
         };
-        // Written to stable memory, replacing an entry on the heap
+
+        assert_eq!(threads.migrate_to_stable_memory(group), 10);
+        assert!(threads.on_heap.is_empty());
+        assert_eq!(threads.migrate_to_stable_memory(group), 0);
+
+        assert_eq!(threads.last_updated(), 10);
+        let all = threads.all(group);
+        assert_eq!(all.len(), 10);
+        assert_eq!(all[&MessageIndex::from(5)], MessageIndex::from(50));
+        let updated = threads.updated_since(group, 8);
+        assert_eq!(updated.len(), 2);
+        assert_eq!(updated[&MessageIndex::from(9)], MessageIndex::from(90));
+
+        // Updating a migrated entry
         threads.insert(group, 5.into(), 55.into(), 20);
-        // A new entry written to stable memory
-        threads.insert(group, 11.into(), 110.into(), 21);
+        assert_eq!(threads.last_updated(), 20);
+        assert_eq!(threads.all(group).len(), 10);
+        assert_eq!(threads.updated_since(group, 10), HashMap::from([(5.into(), 55.into())]));
 
-        let check = |threads: &ThreadsRead| {
-            assert_eq!(threads.last_updated(), 21);
-            let all = threads.all(group);
-            assert_eq!(all.len(), 11);
-            assert_eq!(all[&MessageIndex::from(5)], MessageIndex::from(55));
-            assert_eq!(all[&MessageIndex::from(11)], MessageIndex::from(110));
-            assert_eq!(all[&MessageIndex::from(10)], MessageIndex::from(100));
-            let updated = threads.updated_since(group, 8);
-            assert_eq!(updated.len(), 4);
-            assert_eq!(updated[&MessageIndex::from(9)], MessageIndex::from(90));
-        };
-        check(&threads);
-
-        assert_eq!(threads.on_heap_count(), 9);
-        assert_eq!(threads.migrate_to_stable_memory(group, 4), 4);
-        assert_eq!(threads.on_heap_count(), 5);
-        check(&threads);
-        assert_eq!(threads.migrate_to_stable_memory(group, 100), 5);
-        assert_eq!(threads.on_heap_count(), 0);
-        assert_eq!(threads.migrate_to_stable_memory(group, 100), 0);
-        check(&threads);
+        // The heap isn't serialized
+        let deserialized: ThreadsRead = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&threads));
+        assert_eq!(deserialized.last_updated(), 20);
     }
 
     fn init_stable_memory_map() {

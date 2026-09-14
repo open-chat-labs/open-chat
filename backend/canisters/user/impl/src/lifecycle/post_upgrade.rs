@@ -6,6 +6,7 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use stable_memory::get_reader;
 use tracing::info;
+use types::MultiUserChat;
 use user_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
 
@@ -20,10 +21,30 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    // Move how far the user has read each thread into stable memory
+    // TODO: Remove this after next release
+    let mut threads_read_migrated = 0;
+    for group in data.group_chats.iter_mut() {
+        threads_read_migrated += group
+            .messages_read
+            .threads_read
+            .migrate_to_stable_memory(MultiUserChat::Group(group.chat_id));
+    }
+    for community in data.communities.iter_mut() {
+        let community_id = community.community_id;
+        for channel in community.channels.values_mut() {
+            threads_read_migrated += channel
+                .messages_read
+                .threads_read
+                .migrate_to_stable_memory(MultiUserChat::Channel(community_id, channel.channel_id));
+        }
+    }
+    info!(threads_read_migrated, "Migrated threads read to stable memory");
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
