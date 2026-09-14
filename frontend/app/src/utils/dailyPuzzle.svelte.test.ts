@@ -530,3 +530,176 @@ describe("hint states (#9360)", () => {
         expect(g.focus.size).toBe(0);
     });
 });
+
+// #9361: a reset clears the board and nothing else
+describe("reset (#9361)", () => {
+    const emptyBytes = () => game.toBytes(model, game.empty(model));
+
+    // invariant 5
+    test("a single tap never clears the board; the confirming tap does", () => {
+        const g = build(userState());
+        g.tap(0);
+        g.reset();
+        expect(g.resetArmed).toBe(true);
+        expect(game.filled(model, g.state)).toEqual([[0, 1]]);
+        g.reset();
+        expect(g.resetArmed).toBe(false);
+        expect(game.filled(model, g.state)).toEqual([]);
+    });
+
+    test("an edit between the two taps disarms the reset", () => {
+        const g = build(userState());
+        g.tap(0);
+        g.reset();
+        g.tap(4);
+        expect(g.resetArmed).toBe(false);
+        g.reset();
+        expect(g.resetArmed).toBe(true);
+        expect(game.filled(model, g.state).length).toBe(2);
+    });
+
+    // A reveal changes the board too, and it is paid for: the confirming tap must not wipe it
+    test("a level 3 reveal between the two taps disarms the reset", async () => {
+        const reveal: ServedHint = {
+            hint: { technique: 1, focus: [4], target: [4], conclusions: [[4, 1]] },
+            level: 3,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: reveal,
+                hintsUsed: 1,
+                state: userState({ hints: [reveal] }),
+            })),
+        });
+        const g = build(userState(), client);
+        g.tap(0);
+        g.reset();
+        expect(g.resetArmed).toBe(true);
+        await g.hint();
+        expect(g.resetArmed).toBe(false);
+        g.reset();
+        expect(game.filled(model, g.state).length).toBe(2);
+    });
+
+    // invariants 1 and 2
+    test("a reset sends exactly one save of the empty grid and touches nothing else", () => {
+        vi.useFakeTimers();
+        try {
+            const client = fakeClient();
+            const g = build(userState({ freeChecks: 1 }), client);
+            g.tap(0);
+            g.tap(4);
+            const before = g.userState;
+            client.dailyPuzzleSaveGrid.mockClear();
+            g.reset();
+            g.reset();
+            expect(client.dailyPuzzleSaveGrid).toHaveBeenCalledTimes(1);
+            expect(client.dailyPuzzleSaveGrid).toHaveBeenCalledWith("light_up", emptyBytes());
+            // the debounced save the edits had queued finds nothing dirty
+            vi.advanceTimersByTime(6000);
+            expect(client.dailyPuzzleSaveGrid).toHaveBeenCalledTimes(1);
+            expect(client.dailyPuzzleStart).not.toHaveBeenCalled();
+            expect(client.dailyPuzzleSubmit).not.toHaveBeenCalled();
+            expect(client.dailyPuzzleHint).not.toHaveBeenCalled();
+            expect(g.userState).toEqual(before);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    // invariant 3
+    test("a resume after a reset yields the empty board", () => {
+        const client = fakeClient();
+        const g = build(userState(), client);
+        g.tap(0);
+        g.reset();
+        g.reset();
+        // device copy
+        const again = build(userState(), client);
+        expect(game.filled(model, again.state)).toEqual([]);
+        // server copy: what was saved is the empty grid
+        const [, saved] = client.dailyPuzzleSaveGrid.mock.calls.at(-1)!;
+        expect(game.fromBytes(model, saved)).toEqual(game.empty(model));
+    });
+
+    // invariant 4
+    test("reset is unavailable before start, after solve, and on an empty board", async () => {
+        expect(build(userState({ startedAt: undefined })).canReset).toBe(false);
+        expect(build(userState()).canReset).toBe(false);
+        const g = build(userState());
+        g.tap(0);
+        expect(g.canReset).toBe(true);
+        // and not while a call is in flight, or its response would land on an empty board
+        g.busy = true;
+        expect(g.canReset).toBe(false);
+        g.busy = false;
+        const solved = build(
+            userState({
+                solved: { solvedAt: 2n, solveTimeMs: 1n, reward: 250, hintsUsed: 0, streak: 1 },
+                grid: game.toBytes(model, game.apply(model, game.empty(model), 0, 1)),
+                gridSavedAt: 5n,
+            }),
+        );
+        expect(game.filled(model, solved.state).length).toBe(1);
+        expect(solved.canReset).toBe(false);
+        solved.reset();
+        expect(solved.resetArmed).toBe(false);
+    });
+
+    test("a reset clears the hint highlight and caption with the marks", async () => {
+        const step: ServedHint = {
+            hint: { technique: 1, focus: [0, 1, 2], target: [4], conclusions: [] },
+            level: 2,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: step,
+                hintsUsed: 1,
+                state: userState({ hints: [step] }),
+            })),
+        });
+        const g = build(userState(), client);
+        g.tap(0);
+        await g.hint();
+        expect(g.focus.size).toBeGreaterThan(0);
+        expect(g.target.size).toBeGreaterThan(0);
+        expect(g.caption).toBeDefined();
+        g.reset();
+        g.reset();
+        expect(g.focus.size).toBe(0);
+        expect(g.target.size).toBe(0);
+        expect(g.caption).toBeUndefined();
+    });
+
+    test("a reset drops the mistake record: the same wrong mark afterwards is a fresh question", async () => {
+        const mistake: ServedHint = {
+            hint: { technique: 0, focus: [0], target: [], conclusions: [] },
+            level: 1,
+            mistake: true,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: mistake,
+                hintsUsed: 0,
+                state: userState({ hints: [mistake] }),
+            })),
+        });
+        const g = build(userState(), client);
+        g.tap(0);
+        await g.hint();
+        expect(g.mistakes.size).toBe(1);
+        g.reset();
+        g.reset();
+        expect(g.mistakes.size).toBe(0);
+        expect(g.caption).toBeUndefined();
+        // the board no longer exists, so its answer is not carried over to a re-marked one
+        g.tap(0);
+        expect(g.mistakes.size).toBe(0);
+        expect(g.hintButton.kind).toBe("hint");
+    });
+});

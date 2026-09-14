@@ -13,6 +13,7 @@
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import Fire from "svelte-material-icons/Fire.svelte";
     import LightbulbOutline from "svelte-material-icons/LightbulbOutline.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import ShareVariant from "svelte-material-icons/ShareVariant.svelte";
     import TimerOutline from "svelte-material-icons/TimerOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -239,6 +240,24 @@
                         />
                     </Button>
                 {:else}
+                    <Button
+                        tiny
+                        secondary={!game.resetArmed}
+                        danger={game.resetArmed}
+                        disabled={!game.canReset}
+                        onClick={() => game?.reset()}
+                    >
+                        <span class="btn-inner">
+                            <Refresh size={"1em"} color={"currentColor"} />
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    game.resetArmed
+                                        ? "dailyPuzzle.resetConfirm"
+                                        : "dailyPuzzle.reset",
+                                )}
+                            />
+                        </span>
+                    </Button>
                     <Button
                         loading={game.busy}
                         disabled={hintDisabled}
