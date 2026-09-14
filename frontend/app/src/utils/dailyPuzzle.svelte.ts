@@ -128,6 +128,8 @@ export class DailyPuzzleGame {
     );
     busy = $state(false);
     submitting = $state(false);
+    // A reset needs a confirming second tap; any edit in between disarms it (#9361 invariant 5)
+    resetArmed = $state(false);
     // the most recent hint step served for this puzzle (a mistake hint is not a step)
     lastHint = $state<ServedHint | undefined>(undefined);
 
@@ -269,9 +271,38 @@ export class DailyPuzzleGame {
         if (this.inputDisabled) return;
         const next = this.game.tap(this.model, this.state, key);
         if (next === this.state) return;
+        this.resetArmed = false;
         this.state = next;
         this.#afterChange();
         this.#trimHint();
+    }
+
+    /** A board to clear: started, not solved, and holding at least one mark (#9361 invariant 4). */
+    get canReset(): boolean {
+        return !this.inputDisabled && this.#filled().length > 0;
+    }
+
+    // First call arms, second call clears (#9361 invariant 5). Clears the marks and every
+    // highlight, and saves the empty grid at once so a reload on any device resumes an empty
+    // board rather than the mess (#9361 invariant 3). Nothing else moves: the start time, hints,
+    // free checks and any solve are the server's and are not touched (#9361 invariants 1, 2).
+    reset(): void {
+        if (!this.canReset) {
+            this.resetArmed = false;
+            return;
+        }
+        if (!this.resetArmed) {
+            this.resetArmed = true;
+            return;
+        }
+        this.resetArmed = false;
+        this.state = this.game.empty(this.model);
+        this.focus = new Set();
+        this.target = new Set();
+        this.#caption = undefined;
+        this.#lastMistake = undefined;
+        this.#afterChange();
+        this.flushSave();
     }
 
     // A key still to act on: the game takes a mark there and the player has not put one yet. A

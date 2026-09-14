@@ -688,6 +688,8 @@
         "noFreeChecks": "No free checks left for today's puzzle",
         "checksLeft": "{count} checks left",
         "revealed": "Filled in for you.",
+        "reset": "Reset",
+        "resetConfirm": "Clear the board?",
         "replaced": "This puzzle was replaced. Here is the new one.",
         "failedToStart": "Sorry, we couldn't start the puzzle",
         "failedToSubmit": "Sorry, we couldn't check your solution",

@@ -32,6 +32,7 @@
     import { getContext, onDestroy, untrack } from "svelte";
     import Fire from "svelte-material-icons/Fire.svelte";
     import LightbulbOutline from "svelte-material-icons/LightbulbOutline.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import ShareVariant from "svelte-material-icons/ShareVariant.svelte";
     import TimerOutline from "svelte-material-icons/TimerOutline.svelte";
     import { _ } from "svelte-i18n";
@@ -228,6 +229,22 @@
                         />
                     </Button>
                 {:else}
+                    <CommonButton2
+                        disabled={!game.canReset}
+                        variant={"secondary"}
+                        mode={"small"}
+                        width={"fill"}
+                        onClick={() => game?.reset()}
+                    >
+                        {#snippet icon(color, size)}
+                            <Refresh {color} {size} />
+                        {/snippet}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                game.resetArmed ? "dailyPuzzle.resetConfirm" : "dailyPuzzle.reset",
+                            )}
+                        />
+                    </CommonButton2>
                     <CommonButton2
                         loading={game.busy}
                         disabled={hintDisabled}
