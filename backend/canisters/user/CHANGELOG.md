@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move each chat's per-user metrics from the heap into the stable memory map for small entries ([#9352](https://github.com/open-chat-labs/open-chat/pull/9352))
 - Use `insert_many` for bulk writes to the stable memory map, writing each modified node once rather than once per entry ([#9353](https://github.com/open-chat-labs/open-chat/pull/9353))
 - Move each chat's MessageIndex -> EventIndex map from the heap into stable memory, in chunks of LEB128 encoded deltas ([#9376](https://github.com/open-chat-labs/open-chat/pull/9376))
-- Move how far the user has read each thread in each group and channel from the heap into the stable memory map for small entries ([#XXXX](https://github.com/open-chat-labs/open-chat/pull/XXXX))
+- Move how far the user has read each thread in each group and channel from the heap into the stable memory map for small entries ([#9381](https://github.com/open-chat-labs/open-chat/pull/9381))
 - Stop storing the other user's metrics in direct chats (other than a user's chat with themselves), since only the user's own metrics are ever read ([#9354](https://github.com/open-chat-labs/open-chat/pull/9354))
 
 ### Fixed
