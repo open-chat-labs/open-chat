@@ -1872,6 +1872,7 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "itertools 0.15.0",
+ "leb128",
  "ledger_utils",
  "msgpack",
  "oc_error_codes",

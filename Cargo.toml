@@ -246,6 +246,7 @@ jwt-simple = { version = "0.12", default-features = false, features = [
     "pure-rust",
 ] }
 lazy_static = "1"
+leb128 = "0.2.7"
 num-traits = "0.2"
 openssl = "0.10"
 p256 = { version = "0.14" }

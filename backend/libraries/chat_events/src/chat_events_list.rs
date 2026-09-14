@@ -1,5 +1,6 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
+use crate::message_event_indexes::MessageEventIndexes;
 use crate::message_ids::MessageIdsStableStorage;
 use crate::stable_memory::ChatEventsStableStorage;
 use crate::{
@@ -27,7 +28,7 @@ pub struct ChatEventsList {
     // It is always serialized so that a canister can still be rolled back to a version expecting it.
     #[serde(rename = "message_id_map", default)]
     message_ids_on_heap: HashMap<MessageId, EventIndex>,
-    message_event_indexes: Vec<EventIndex>,
+    message_event_indexes: MessageEventIndexes,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
 }
@@ -41,7 +42,7 @@ impl ChatEventsList {
         ChatEventsList {
             events_map: HybridMap::new(chat, thread_root_message_index),
             message_ids_on_heap: HashMap::new(),
-            message_event_indexes: Vec::new(),
+            message_event_indexes: MessageEventIndexes::default(),
             latest_event_index: None,
             latest_event_timestamp: None,
         }
@@ -60,8 +61,8 @@ impl ChatEventsList {
             {
                 panic!("MessageId already used: {:?}", m.message_id);
             }
-            assert_eq!(self.message_event_indexes.len(), usize::from(m.message_index));
-            self.message_event_indexes.push(event_index);
+            self.message_event_indexes
+                .push(self.events_map.stable_memory_prefix(), m.message_index, event_index);
         }
 
         let event_wrapper = EventWrapperInternal {
@@ -209,8 +210,12 @@ impl ChatEventsList {
     }
 
     fn convert_to_message_range(&self, from: EventIndex, to: EventIndex) -> Option<(MessageIndex, MessageIndex)> {
-        let from_message_index = self.message_event_indexes.partition_point(|&e| e < from);
-        let to_message_index = self.message_event_indexes.partition_point(|&e| e <= to).checked_sub(1)?;
+        let events_prefix = self.events_map.stable_memory_prefix();
+        let from_message_index = self.message_event_indexes.partition_point(events_prefix, |e| e < from);
+        let to_message_index = self
+            .message_event_indexes
+            .partition_point(events_prefix, |e| e <= to)
+            .checked_sub(1)?;
 
         if from_message_index <= to_message_index {
             Some((
@@ -266,7 +271,7 @@ impl ChatEventsList {
     pub fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
         match event_key {
             EventKey::EventIndex(e) => Some(e),
-            EventKey::MessageIndex(m) => self.message_event_indexes.get(usize::from(m)).copied(),
+            EventKey::MessageIndex(m) => self.message_event_indexes.get(self.events_map.stable_memory_prefix(), m),
             EventKey::MessageId(m) => self
                 .message_ids_on_heap
                 .get(&m)
@@ -314,6 +319,23 @@ impl ChatEventsList {
         }
 
         batch.len()
+    }
+
+    // Moves up to `max_count` chunks of message event indexes from the heap into stable memory,
+    // returning how many were moved
+    pub(crate) fn migrate_message_event_indexes_to_stable_memory(&mut self, max_count: usize) -> usize {
+        self.message_event_indexes
+            .migrate_to_stable_memory(self.events_map.stable_memory_prefix(), max_count)
+    }
+
+    pub(crate) fn message_event_indexes_on_heap_count(&self) -> usize {
+        self.message_event_indexes.on_heap_count_to_migrate()
+    }
+
+    // See `MessageEventIndexes::copy_to_heap`
+    pub(crate) fn copy_message_event_indexes_to_heap(&mut self) {
+        self.message_event_indexes
+            .copy_to_heap(self.events_map.stable_memory_prefix());
     }
 
     pub(crate) fn discard_message_ids_on_heap(&mut self) {
@@ -574,9 +596,7 @@ impl Reader for ChatEventsListReader<'_> {
         Box::new(
             self.events_list
                 .message_event_indexes
-                .iter()
-                .rev()
-                .copied()
+                .iter_rev(self.events_list.events_map.stable_memory_prefix())
                 .map_while(|e| self.events_list.get_event(e.into(), self.min_visible_event_index, None))
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
@@ -1060,6 +1080,74 @@ mod tests {
     }
 
     #[test]
+    fn message_event_indexes_are_chunked_into_stable_memory() {
+        let mut events = setup_events(Some(1000));
+        push_events(&mut events, 200);
+        push_events(&mut events, 400);
+        let expected = expected_message_event_indexes(&events);
+        assert_eq!(expected.len(), 300);
+
+        let events_list = events.main_events_list();
+        assert_eq!(events_list.latest_message_index(), Some(299.into()));
+        assert_eq!(events_list.next_message_index(), 300.into());
+        assert_eq!(events.heap_entries_to_migrate_count(), 0);
+        assert_eq!(events_list.message_event_indexes_on_heap_count(), 0);
+        assert_message_index_lookups(&events, &expected);
+
+        // The messages pushed at 2..102 expire at 1002..1102
+        let removed = events.remove_expired_events(1051).events;
+        assert_eq!(removed.len(), 50);
+        assert_eq!(
+            events
+                .main_events_list()
+                .convert_to_message_ranges(&[(expected[0], expected[49])]),
+            vec![(0.into(), 49.into())]
+        );
+
+        let reader = events.main_events_reader();
+        let latest: Vec<_> = reader.iter_latest_messages(None).map(|m| m.index).collect();
+        assert_eq!(latest, expected[50..].iter().rev().copied().collect_vec());
+    }
+
+    #[test]
+    fn importing_group_carries_over_message_event_indexes() {
+        let mut events = setup_group_events();
+        push_events(&mut events, 200);
+        push_events(&mut events, 400);
+        let expected = expected_message_event_indexes(&events);
+
+        // As done by the group before it is serialized for the community
+        events.copy_to_heap_for_export();
+        assert_eq!(events.main_events_list().message_event_indexes_on_heap_count(), 2);
+        assert_message_index_lookups(&events, &expected);
+
+        let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
+        ChatEvents::import_events(channel, export_events(&events));
+
+        let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
+        imported.set_chat(channel);
+        imported.discard_message_ids_on_heap();
+        imported.discard_expiring_events_on_heap();
+        assert_message_index_lookups(&imported, &expected);
+
+        while imported.migrate_to_stable_memory(1) > 0 {}
+        assert_eq!(imported.heap_entries_to_migrate_count(), 0);
+        assert_eq!(imported.main_events_list().message_event_indexes_on_heap_count(), 0);
+        assert_message_index_lookups(&imported, &expected);
+
+        let events_prefix = ChatEventKeyPrefix::new_from_chat(channel, None);
+        let chunks_key_prefix = stable_memory_map::MessageEventIndexesKeyPrefix::from(&events_prefix);
+        for chunk_index in 0..2 {
+            assert!(stable_memory_map::with_map(
+                |m| m.contains_key(chunks_key_prefix.create_key(&chunk_index))
+            ));
+        }
+        assert!(!stable_memory_map::with_map(
+            |m| m.contains_key(chunks_key_prefix.create_key(&2))
+        ));
+    }
+
+    #[test]
     fn expired_events_are_removed() {
         let mut events = setup_events(Some(1000));
         assert_eq!(events.heap_entries_to_migrate_count(), 0);
@@ -1144,6 +1232,24 @@ mod tests {
         for message_id in pushed_message_ids(2) {
             let event_index = *message_ids.remove(&message_id).unwrap().value();
             events_list.message_ids_on_heap.insert(message_id, event_index);
+        }
+    }
+
+    fn expected_message_event_indexes(events: &ChatEvents) -> Vec<EventIndex> {
+        let events_list = events.main_events_list();
+        (0..u32::from(events_list.next_message_index()))
+            .map(|i| events_list.event_index(EventKey::MessageIndex(i.into())).unwrap())
+            .collect()
+    }
+
+    fn assert_message_index_lookups(events: &ChatEvents, expected: &[EventIndex]) {
+        let events_list = events.main_events_list();
+        assert_eq!(usize::from(events_list.next_message_index()), expected.len());
+        for (message_index, event_index) in expected.iter().enumerate() {
+            assert_eq!(
+                events_list.event_index(EventKey::MessageIndex((message_index as u32).into())),
+                Some(*event_index)
+            );
         }
     }
 
