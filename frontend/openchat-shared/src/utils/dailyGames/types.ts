@@ -29,6 +29,12 @@ export type GameElement = {
  */
 export type Violation = { keys: number[]; kind: string };
 
+/**
+ * Whether a key a hint named is still for the player to act on. "context" is a key that takes
+ * no mark and stays in the highlight as scenery (a clue, a vertex, an island).
+ */
+export type HintKeyStatus = "todo" | "done" | "context";
+
 export interface DailyGame<M, S> {
     /** GameId as the backend names it, e.g. "light_up". */
     id: string;
@@ -60,4 +66,10 @@ export interface DailyGame<M, S> {
     marks(model: M, state: S): Map<number, string>;
     /** Optional derived highlight (Light Up beams). */
     lit?(model: M, state: S): Set<number>;
+    /**
+     * Optional. Games whose hint keys are not their mark keys (Bridges: hints name cells, marks
+     * are edges) say here whether a hint key is done, in their own terms. Absent, the shell
+     * reads a key as done once it takes a mark and has one (#9370).
+     */
+    hintKeyStatus?(model: M, state: S, key: number): HintKeyStatus;
 }

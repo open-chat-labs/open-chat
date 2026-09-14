@@ -18,7 +18,7 @@
 // sends those zeros too, so the server skips conclusions the user already ruled out, and an
 // island is only reported short once every one of its edges is committed.
 
-import type { DailyGame, GameElement, Violation } from "./types";
+import type { DailyGame, GameElement, HintKeyStatus, Violation } from "./types";
 
 export type BridgesEdge = {
     key: number;
@@ -376,6 +376,15 @@ export const bridges: DailyGame<BridgesDescription, BridgesState> = {
         const next = new Map(state);
         next.set(key, (count(state, key) + 1) % (MAX_BRIDGES + 1));
         return next;
+    },
+    // Hint keys are cells. An island is scenery; a water cell is done once the player has
+    // decided an edge through it, bridge or explicit "no bridge"; a cell no edge crosses is
+    // scenery too. Never read a cell key as an edge key: the spaces overlap (#9370).
+    hintKeyStatus(desc, state, key): HintKeyStatus {
+        if (desc.cells[key] !== 0) return "context";
+        const through = desc.edges.filter((e) => e.cells.includes(key));
+        if (through.length === 0) return "context";
+        return through.some((e) => state.has(e.key)) ? "done" : "todo";
     },
     apply(desc, state, key, value) {
         if (edgeByKey(desc, key) === undefined) return state;

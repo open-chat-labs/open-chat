@@ -3,6 +3,7 @@ import {
     type DailyGame,
     type DailyPuzzleUserState,
     type DailyResultContent,
+    type HintKeyStatus,
     type OpenChat,
     type PublicDailyPuzzle,
     type ResourceKey,
@@ -304,10 +305,15 @@ export class DailyPuzzleGame {
         this.flushSave();
     }
 
-    // A key still to act on: the game takes a mark there and the player has not put one yet. A
-    // vertex, a clue or a tree takes no mark and is kept in the highlight as context.
-    #stillToDo(key: number, filled: Set<number>): boolean {
-        return this.game.tap(this.model, this.state, key) !== this.state && !filled.has(key);
+    // Whether a key a hint named is still to act on, done, or scenery. A game whose hint keys
+    // are not its mark keys answers for itself (#9370); otherwise a key is to do when it takes a
+    // mark and has none, done when it has one, and context when it takes none (a vertex, a
+    // clue, a tree).
+    #keyStatus(key: number, filled: Set<number>): HintKeyStatus {
+        const own = this.game.hintKeyStatus?.(this.model, this.state, key);
+        if (own !== undefined) return own;
+        if (!this.#markable(key)) return "context";
+        return filled.has(key) ? "done" : "todo";
     }
 
     // A hint's highlight and sentence describe a position, and once the player has made the
@@ -322,12 +328,13 @@ export class DailyPuzzleGame {
         if (this.focus.size === 0) return;
         const filled = new Set(this.#filled().map(([k]) => k));
         const last = this.lastHint;
+        const status = (k: number) => this.#keyStatus(k, filled);
         // What the player was asked to mark: the cells the sentence points at, or, when it points
         // at something that takes no mark (a vertex, a clue), the cells the deduction looked at
-        const pointed = [...this.target].filter((k) => this.#markable(k));
+        const pointed = [...this.target].filter((k) => status(k) !== "context");
         const asked =
-            pointed.length > 0 ? pointed : [...this.focus].filter((k) => this.#markable(k));
-        const remaining = asked.filter((k) => this.#stillToDo(k, filled));
+            pointed.length > 0 ? pointed : [...this.focus].filter((k) => status(k) !== "context");
+        const remaining = asked.filter((k) => status(k) === "todo");
         // A reveal has nothing left to ask for, so any edit after it, including undoing a cell it
         // filled, retires it: kept, its caption would describe a fill no longer on the board
         const revealed = last !== undefined && last.level >= 3;
@@ -337,7 +344,7 @@ export class DailyPuzzleGame {
             this.#caption = undefined;
             return;
         }
-        this.focus = new Set([...this.focus].filter((k) => !filled.has(k) || !this.#markable(k)));
+        this.focus = new Set([...this.focus].filter((k) => status(k) !== "done"));
         this.target = new Set([...this.target].filter((k) => this.focus.has(k)));
     }
 
@@ -533,7 +540,7 @@ export class DailyPuzzleGame {
         }
         // Cells the player has already marked are not shown: the hint is about what is left
         const filled = new Set(this.#filled().map(([k]) => k));
-        const show = (keys: number[]) => keys.filter((k) => !filled.has(k) || !this.#markable(k));
+        const show = (keys: number[]) => keys.filter((k) => this.#keyStatus(k, filled) !== "done");
         this.focus = new Set(show(hint.hint.focus));
         // legacy hints carry no target: point at everything in focus
         this.target = new Set(
