@@ -132,9 +132,17 @@ export type PubSubEvents = {
     updateWebhook: { chat: MultiUserChat; hook: FullWebhookDetails };
     regenerateWebhook: { chat: MultiUserChat; hook: FullWebhookDetails };
     deleteWebhook: undefined;
-    loadedMessageWindow: {
+    // Published before a message window load applies any of its events, so the
+    // list can position on the target in the same flush the events render
+    loadingMessageWindow: {
         context: MessageContext;
         messageIndex: number;
+    };
+    loadedMessageWindow: {
+        context: MessageContext;
+        // undefined: the load ended without a window (failed, or fell back to
+        // the latest messages)
+        messageIndex: number | undefined;
         initialLoad: boolean;
     };
     loadedNewMessages: MessageContext;
