@@ -7,6 +7,7 @@ import {
     type ServedHint,
 } from "@client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import en from "../i18n/en.json";
 import { toastStore } from "../stores/toast";
 import { DailyPuzzleGame } from "./dailyPuzzle.svelte";
 import { dailyPuzzleGame } from "./dailyPuzzleGames";
@@ -323,5 +324,145 @@ describe("DailyPuzzleGame", () => {
             g.tap(11);
             expect(g.focus.size).toBe(0);
         });
+    });
+});
+
+// #9360: the hint button and caption follow the state the engine is in
+describe("hint states (#9360)", () => {
+    const mistake: ServedHint = {
+        hint: { technique: 0, focus: [0], target: [], conclusions: [] },
+        level: 1,
+        mistake: true,
+    };
+    const step: ServedHint = {
+        hint: { technique: 1, focus: [0, 1, 2], target: [0], conclusions: [] },
+        level: 1,
+        mistake: false,
+    };
+    // Answers a mistake for as long as cell 0 is marked, then serves a step
+    function mistakeClient(freeChecks = 2): OpenChat & Fake {
+        return fakeClient({
+            dailyPuzzleHint: vi.fn(async (_g: string, _l: number, filled: [number, number][]) => {
+                const wrong = filled.some(([k]) => k === 0);
+                return {
+                    kind: "success",
+                    hint: wrong ? mistake : step,
+                    hintsUsed: wrong ? 0 : 1,
+                    state: userState({ hints: [wrong ? mistake : step], freeChecks }),
+                };
+            }),
+        });
+    }
+
+    // invariant 1
+    test("a second press on the same marks after a mistake makes no server call", async () => {
+        const client = mistakeClient();
+        const g = build(userState(), client);
+        g.tap(0);
+        await g.hint();
+        expect(g.mistakes.has(0)).toBe(true);
+        expect(g.mistakeStands).toBe(true);
+        await g.hint();
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
+    });
+
+    // invariant 2
+    test("while a mistake stands the button quotes no level and no price", async () => {
+        const g = build(userState(), mistakeClient());
+        g.tap(0);
+        expect(g.hintButton.kind).toBe("hint");
+        await g.hint();
+        expect(g.hintButton).toEqual({ kind: "mistake" });
+        expect(g.caption).toEqual(expect.objectContaining({ key: "dailyPuzzle.mistake" }));
+    });
+
+    // invariant 3
+    test("any change to the marks after a mistake re-enables a real press", async () => {
+        const client = mistakeClient();
+        const g = build(userState(), client);
+        g.tap(0);
+        await g.hint();
+        expect(g.hintButton.kind).toBe("mistake");
+        // clearing the wrong mark is a change like any other
+        g.tap(0);
+        g.tap(0);
+        expect(g.mistakeStands).toBe(false);
+        expect(g.hintButton.kind).toBe("hint");
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
+        expect(g.lastHint).toEqual(step);
+    });
+
+    // invariant 4
+    test("a Throttled refusal is shown as no free checks left, not the generic failure", async () => {
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "error",
+                code: 320,
+                message: "max_free_checks",
+            })),
+        });
+        const g = build(userState(), client);
+        g.tap(0);
+        await g.hint();
+        expect(toastStore.showFailureToast).toHaveBeenCalledWith(
+            expect.objectContaining({ key: "dailyPuzzle.noFreeChecks" }),
+            expect.anything(),
+        );
+        expect(toastStore.showFailureToast).not.toHaveBeenCalledWith(
+            expect.objectContaining({ key: "dailyPuzzle.failedHint" }),
+            expect.anything(),
+        );
+    });
+
+    test("checks left are on the button only once fewer than five remain", () => {
+        const roomy = { ...puzzle, maxFreeChecks: 20 };
+        const state = userState({ freeChecks: 15 });
+        dailyPuzzleStore.set({ puzzles: [roomy], states: [state] });
+        const many = new DailyPuzzleGame(fakeClient(), roomy, state, USER, game);
+        expect(many.freeChecksLeft).toBe(5);
+        expect(many.hintButton).not.toHaveProperty("checksLeft");
+        // one more spent, and the count appears
+        const state16 = userState({ freeChecks: 16 });
+        dailyPuzzleStore.set({ puzzles: [roomy], states: [state16] });
+        const few = new DailyPuzzleGame(fakeClient(), roomy, state16, USER, game);
+        expect(few.hintButton).toMatchObject({ kind: "hint", checksLeft: 4 });
+    });
+
+    // invariant 5
+    test("the Light Up rules name the four sides and rule out diagonals", () => {
+        const rules = en.dailyPuzzle.games.light_up.rules;
+        expect(rules).toMatch(/across or down/);
+        expect(rules).toMatch(/never diagonally/);
+        expect(rules).not.toMatch(/touch/);
+    });
+
+    // invariant 6
+    test("after a level 3 reveal the caption is the reveal text and nothing is asked of the player", async () => {
+        const reveal: ServedHint = {
+            hint: { technique: 1, focus: [0, 1, 2], target: [0], conclusions: [[0, 1]] },
+            level: 3,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: reveal,
+                hintsUsed: 1,
+                state: userState({ hints: [reveal] }),
+            })),
+        });
+        const g = build(userState(), client);
+        await g.hint();
+        expect(game.filled(model, g.state)).toContainEqual([0, 1]);
+        expect(g.caption).toEqual(expect.objectContaining({ key: "dailyPuzzle.revealed" }));
+        expect(g.target.size).toBe(0);
+        // the cell it filled is shown as context, not as a move still to make
+        expect(g.focus.has(0)).toBe(true);
+        // the next edit clears it
+        g.tap(4);
+        expect(g.focus.size).toBe(0);
+        expect(g.caption).toBeUndefined();
     });
 });

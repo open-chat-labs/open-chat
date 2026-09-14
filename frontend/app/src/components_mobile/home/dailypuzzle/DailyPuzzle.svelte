@@ -15,6 +15,7 @@
         formatSolveTime,
         gameNameKey,
         tierKey,
+        type HintButton,
     } from "@src/utils/dailyPuzzle.svelte";
     import { dailyPuzzleGame } from "@src/utils/dailyPuzzleGames";
     import GameDemo from "../../../components/home/dailypuzzle/GameDemo.svelte";
@@ -99,12 +100,10 @@
     );
     let entryFee = $derived(game?.entryFee ?? 0);
     let canAfford = $derived($chitStateStore.chitBalance >= entryFee);
-    let hintPrice = $derived(game?.nextHintPrice ?? 0);
-    let hintLevel = $derived(game?.nextHintLevel ?? 1);
-    let hintsLeft = $derived(Math.max(0, (puzzle?.maxHints ?? 0) - hintsUsed));
-    // a new step would be needed and the daily cap has been reached
-    let noHintsLeft = $derived(hintLevel === 1 && hintsLeft === 0);
-    let hintDisabled = $derived(disabled || noHintsLeft || $chitStateStore.chitBalance < hintPrice);
+    let hintButton: HintButton = $derived(game?.hintButton ?? { kind: "noneLeft" });
+    let hintDisabled = $derived(
+        disabled || hintButton.kind !== "hint" || $chitStateStore.chitBalance < hintButton.price,
+    );
 
     function share() {
         game?.share();
@@ -240,21 +239,30 @@
                         {#snippet icon(color, size)}
                             <LightbulbOutline {color} {size} />
                         {/snippet}
-                        {#if noHintsLeft}
+                        {#if hintButton.kind === "mistake"}
+                            <Translatable resourceKey={i18nKey("dailyPuzzle.fixMistakeFirst")} />
+                        {:else if hintButton.kind === "noneLeft"}
                             <Translatable resourceKey={i18nKey("dailyPuzzle.noHintsLeft")} />
                         {:else}
                             <Translatable
-                                resourceKey={hintPrice === 0
-                                    ? i18nKey("dailyPuzzle.hintFree", { level: hintLevel })
+                                resourceKey={hintButton.price === 0
+                                    ? i18nKey("dailyPuzzle.hintFree", { level: hintButton.level })
                                     : i18nKey("dailyPuzzle.hintPrice", {
-                                          level: hintLevel,
-                                          price: hintPrice,
+                                          level: hintButton.level,
+                                          price: hintButton.price,
                                       })}
                             />
-                            {#if hintsLeft > 0}
+                            {#if hintButton.hintsLeft > 0}
                                 · <Translatable
                                     resourceKey={i18nKey("dailyPuzzle.hintsLeft", {
-                                        count: hintsLeft,
+                                        count: hintButton.hintsLeft,
+                                    })}
+                                />
+                            {/if}
+                            {#if hintButton.checksLeft !== undefined}
+                                · <Translatable
+                                    resourceKey={i18nKey("dailyPuzzle.checksLeft", {
+                                        count: hintButton.checksLeft,
                                     })}
                                 />
                             {/if}

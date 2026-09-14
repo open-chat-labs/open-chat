@@ -67,6 +67,19 @@ export function formatSolveTime(ms: number): string {
     return `${h > 0 ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
 }
 
+/** Free checks the server still allows before it throttles; shown once fewer than this remain. */
+export const SHOW_CHECKS_LEFT_BELOW = 5;
+
+/**
+ * What the hint button offers. Decided here rather than in the two pages so both agree and the
+ * decision is testable: while a mistake hint stands on an unchanged board the server would only
+ * repeat it, so no level or price is quoted (#9360 invariant 2).
+ */
+export type HintButton =
+    | { kind: "mistake" }
+    | { kind: "noneLeft" }
+    | { kind: "hint"; level: number; price: number; hintsLeft: number; checksLeft?: number };
+
 export function tierKey(tier: number): string {
     return `dailyPuzzle.tier.${tier}`;
 }
@@ -93,6 +106,8 @@ export class DailyPuzzleGame {
     submitting = $state(false);
     // the most recent hint step served for this puzzle (a mistake hint is not a step)
     lastHint = $state<ServedHint | undefined>(undefined);
+    // the marks the last mistake hint was answered against; the same marks get the same answer
+    #mistakeFilled: string | undefined;
 
     marks = $derived.by(() => this.game.marks(this.model, this.state));
     lit = $derived.by(() => this.game.lit?.(this.model, this.state) ?? new Set<number>());
@@ -186,6 +201,39 @@ export class DailyPuzzleGame {
             .finally(() => {
                 this.busy = false;
             });
+    }
+
+    get hintsUsed(): number {
+        return this.userState?.hints.filter((h) => !h.mistake).length ?? 0;
+    }
+
+    get hintsLeft(): number {
+        return Math.max(0, this.puzzle.maxHints - this.hintsUsed);
+    }
+
+    /** Free checks left before the server answers Throttled. */
+    get freeChecksLeft(): number {
+        return Math.max(0, this.puzzle.maxFreeChecks - (this.userState?.freeChecks ?? 0));
+    }
+
+    /** True while the last hint was a mistake and the marks it was answered against are unchanged. */
+    get mistakeStands(): boolean {
+        return this.mistakes.size > 0 && this.#mistakeFilled === this.#filledKey();
+    }
+
+    get hintButton(): HintButton {
+        if (this.mistakeStands) return { kind: "mistake" };
+        const level = this.nextHintLevel;
+        const hintsLeft = this.hintsLeft;
+        if (level === 1 && hintsLeft === 0) return { kind: "noneLeft" };
+        const checksLeft = this.freeChecksLeft;
+        return {
+            kind: "hint",
+            level,
+            price: this.nextHintPrice,
+            hintsLeft,
+            ...(checksLeft < SHOW_CHECKS_LEFT_BELOW ? { checksLeft } : {}),
+        };
     }
 
     get inputDisabled(): boolean {
@@ -320,6 +368,10 @@ export class DailyPuzzleGame {
         return this.game.filled(this.model, this.state);
     }
 
+    #filledKey(): string {
+        return JSON.stringify(this.#filled());
+    }
+
     // Same test the server applies when it picks the next step: a step is done once its
     // positive conclusions are on the board. Negative ones ("no line", "grass") are optional
     // notes the player may never mark, so requiring them would strand us on a finished step.
@@ -336,6 +388,9 @@ export class DailyPuzzleGame {
 
     hint(): Promise<void> {
         if (this.inputDisabled || this.busy) return Promise.resolve();
+        // The answer to these marks is already on screen, and asking again would spend a free
+        // check on it (#9360 invariant 1)
+        if (this.mistakeStands) return Promise.resolve();
         const last = this.lastHint;
         // A fully revealed step whose conclusions were undone: re-apply it, no charge
         if (last !== undefined && last.level === 3 && !this.#concluded(last)) {
@@ -364,11 +419,19 @@ export class DailyPuzzleGame {
                     ) {
                         return this.#requestHint(level, quoted, true);
                     }
-                    toastStore.showFailureToast(i18nKey("dailyPuzzle.failedHint"), resp);
+                    toastStore.showFailureToast(
+                        i18nKey(
+                            resp.code === ErrorCode.Throttled
+                                ? "dailyPuzzle.noFreeChecks"
+                                : "dailyPuzzle.failedHint",
+                        ),
+                        resp,
+                    );
                     return;
                 }
                 if (resp.hint.mistake) {
                     this.mistakes = new Set(resp.hint.hint.focus);
+                    this.#mistakeFilled = this.#filledKey();
                     this.focus = new Set();
                     this.target = new Set();
                     this.caption = i18nKey("dailyPuzzle.mistake");
@@ -384,6 +447,20 @@ export class DailyPuzzleGame {
     }
 
     #applyHint(hint: ServedHint): void {
+        if (hint.level >= 3) {
+            // The reveal fills the cells itself, so afterwards there is nothing to ask the player
+            // for: the caption says what was done and the filled cells sit in the faint context
+            // highlight, never the "mark this" one (#9360 invariant 6). Cleared on the next edit.
+            this.state = hint.hint.conclusions.reduce(
+                (s, [k, v]) => this.game.apply(this.model, s, k, v),
+                this.state,
+            );
+            this.focus = new Set([...hint.hint.focus, ...hint.hint.conclusions.map(([k]) => k)]);
+            this.target = new Set();
+            this.caption = i18nKey("dailyPuzzle.revealed");
+            this.#afterChange();
+            return;
+        }
         // Cells the player has already marked are not shown: the hint is about what is left
         const filled = new Set(this.#filled().map(([k]) => k));
         const show = (keys: number[]) => keys.filter((k) => !filled.has(k) || !this.#markable(k));
@@ -396,13 +473,6 @@ export class DailyPuzzleGame {
             hint.level >= 2
                 ? i18nKey(`${gameI18nPrefix(this.puzzle.gameId)}.technique.${hint.hint.technique}`)
                 : undefined;
-        if (hint.level >= 3) {
-            this.state = hint.hint.conclusions.reduce(
-                (s, [k, v]) => this.game.apply(this.model, s, k, v),
-                this.state,
-            );
-            this.#afterChange();
-        }
     }
 
     resultCard(): DailyResultContent | undefined {
