@@ -194,7 +194,10 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             chat.events.set_chat(Chat::Channel(community_id, channel_id));
             chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
             // The message ids and expiring events were written to stable memory as the events were
-            // imported
+            // imported. The imported messages were also added to the search index, but any messages
+            // still in the group's legacy search index on the heap are left there to be re-indexed
+            // under the channel's prefix by `migrate_chat_events_to_stable_memory`, in case some
+            // events were imported by a version of this canister which didn't index them.
             chat.events.discard_message_ids_on_heap();
             chat.events.discard_expiring_events_on_heap();
 

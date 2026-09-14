@@ -1,5 +1,7 @@
 use crate::message_ids::MessageIdsStableStorage;
+use crate::search_index::{SearchIndex, insert_entries};
 use crate::{ChatEventInternal, EventsMap};
+use search::simple::Document;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{
@@ -49,6 +51,7 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
     let mut event_entries = Vec::with_capacity(events.len());
     let mut message_id_entries = Vec::new();
     let mut expiring_event_entries = Vec::new();
+    let mut search_index_entries = Vec::new();
 
     for (context, bytes) in events {
         let prefix = ChatEventKeyPrefix::new_from_chat(chat, context.thread_root_message_index);
@@ -58,6 +61,16 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         if let ChatEventInternal::Message(message) = &event.event {
             let message_id_key = MessageIdKeyPrefix::from(&prefix).create_key(&message.message_id);
             message_id_entries.push((message_id_key, MessageIdsStableStorage::value_to_bytes(context.event_index)));
+
+            // Only the main events list is indexed, and deleted messages are removed from the index
+            if context.thread_root_message_index.is_none() && message.deleted_by.is_none() {
+                search_index_entries.extend(SearchIndex::entries(
+                    chat,
+                    message.message_index,
+                    message.sender,
+                    &Document::from(&message.content),
+                ));
+            }
         }
         if let Some(expires_at) = event.expires_at
             && let Ok(expiring_events_prefix) = ExpiringEventKeyPrefix::try_from(&prefix)
@@ -78,6 +91,7 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         m.insert_many(message_id_entries);
         m.insert_many(expiring_event_entries);
     });
+    insert_entries(search_index_entries);
 }
 
 #[derive(Serialize, Deserialize)]

@@ -12,6 +12,7 @@ mod message_activity_event;
 mod message_event_indexes;
 mod message_id;
 mod principal;
+mod search_index;
 mod storage;
 mod user_id;
 mod user_metrics;
@@ -24,6 +25,7 @@ pub use message_activity_event::*;
 pub use message_event_indexes::*;
 pub use message_id::*;
 pub use principal::*;
+pub use search_index::*;
 pub use storage::*;
 pub use user_id::*;
 pub use user_metrics::*;
@@ -138,7 +140,12 @@ pub enum KeyType {
     DirectChatThreadMessageEventIndexes = 38,
     GroupChatThreadMessageEventIndexes = 39,
     ChannelThreadMessageEventIndexes = 40,
-    // 41 to 46 are reserved for the message search index
+    DirectChatSearchToken = 41,
+    GroupChatSearchToken = 42,
+    ChannelSearchToken = 43,
+    DirectChatSearchSender = 44,
+    GroupChatSearchSender = 45,
+    ChannelSearchSender = 46,
     MessageActivityEvent = 47,
     MessageActivityEventId = 48,
     #[cfg(test)]
@@ -204,6 +211,12 @@ impl KeyType {
             | KeyType::DirectChatUserMetrics
             | KeyType::GroupChatUserMetrics
             | KeyType::ChannelUserMetrics
+            | KeyType::DirectChatSearchToken
+            | KeyType::GroupChatSearchToken
+            | KeyType::ChannelSearchToken
+            | KeyType::DirectChatSearchSender
+            | KeyType::GroupChatSearchSender
+            | KeyType::ChannelSearchSender
             | KeyType::MessageActivityEvent
             | KeyType::MessageActivityEventId => MapClass::SmallEntries,
             #[cfg(test)]
@@ -276,6 +289,12 @@ impl TryFrom<u8> for KeyType {
             38 => Ok(KeyType::DirectChatThreadMessageEventIndexes),
             39 => Ok(KeyType::GroupChatThreadMessageEventIndexes),
             40 => Ok(KeyType::ChannelThreadMessageEventIndexes),
+            41 => Ok(KeyType::DirectChatSearchToken),
+            42 => Ok(KeyType::GroupChatSearchToken),
+            43 => Ok(KeyType::ChannelSearchToken),
+            44 => Ok(KeyType::DirectChatSearchSender),
+            45 => Ok(KeyType::GroupChatSearchSender),
+            46 => Ok(KeyType::ChannelSearchSender),
             47 => Ok(KeyType::MessageActivityEvent),
             48 => Ok(KeyType::MessageActivityEventId),
             #[cfg(test)]

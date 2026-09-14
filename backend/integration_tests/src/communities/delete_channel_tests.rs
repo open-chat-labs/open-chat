@@ -117,10 +117,11 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys + 100
     );
-    // A message id and an expiring event for each message, plus the sender's metrics
+    // A message id, an expiring event and two search index entries (a token and the sender) for each
+    // message, plus the sender's metrics
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
-        initial_small_entries_keys + 201
+        initial_small_entries_keys + 401
     );
 
     for _ in 0..80 {
@@ -133,7 +134,7 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     );
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
-        initial_small_entries_keys + 282
+        initial_small_entries_keys + 642
     );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id1);
@@ -147,7 +148,7 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     );
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID).len(),
-        initial_small_entries_keys + 81
+        initial_small_entries_keys + 241
     );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id2);
