@@ -8,6 +8,7 @@ mod community_event;
 mod expiring_event;
 mod last_updated;
 mod macros;
+mod message_activity_event;
 mod message_event_indexes;
 mod message_id;
 mod principal;
@@ -19,6 +20,7 @@ pub use chat_event::*;
 pub use community_event::*;
 pub use expiring_event::*;
 pub use last_updated::*;
+pub use message_activity_event::*;
 pub use message_event_indexes::*;
 pub use message_id::*;
 pub use principal::*;
@@ -136,6 +138,9 @@ pub enum KeyType {
     DirectChatThreadMessageEventIndexes = 38,
     GroupChatThreadMessageEventIndexes = 39,
     ChannelThreadMessageEventIndexes = 40,
+    // 41 to 46 are reserved for the message search index
+    MessageActivityEvent = 47,
+    MessageActivityEventId = 48,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -198,7 +203,9 @@ impl KeyType {
             | KeyType::ChannelEventsByLastUpdated
             | KeyType::DirectChatUserMetrics
             | KeyType::GroupChatUserMetrics
-            | KeyType::ChannelUserMetrics => MapClass::SmallEntries,
+            | KeyType::ChannelUserMetrics
+            | KeyType::MessageActivityEvent
+            | KeyType::MessageActivityEventId => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -269,6 +276,8 @@ impl TryFrom<u8> for KeyType {
             38 => Ok(KeyType::DirectChatThreadMessageEventIndexes),
             39 => Ok(KeyType::GroupChatThreadMessageEventIndexes),
             40 => Ok(KeyType::ChannelThreadMessageEventIndexes),
+            47 => Ok(KeyType::MessageActivityEvent),
+            48 => Ok(KeyType::MessageActivityEventId),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
