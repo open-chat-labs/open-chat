@@ -15,6 +15,7 @@ mod message_id;
 mod principal;
 mod search_index;
 mod storage;
+mod token_swap;
 mod user_id;
 mod user_metrics;
 
@@ -29,6 +30,7 @@ pub use message_id::*;
 pub use principal::*;
 pub use search_index::*;
 pub use storage::*;
+pub use token_swap::*;
 pub use user_id::*;
 pub use user_metrics::*;
 
@@ -151,6 +153,8 @@ pub enum KeyType {
     MessageActivityEvent = 47,
     MessageActivityEventId = 48,
     ChitEvent = 49,
+    // 50 and 51 are reserved for threads read
+    TokenSwap = 52,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -195,7 +199,9 @@ impl KeyType {
             | KeyType::ChannelMessageEventIndexes
             | KeyType::DirectChatThreadMessageEventIndexes
             | KeyType::GroupChatThreadMessageEventIndexes
-            | KeyType::ChannelThreadMessageEventIndexes => MapClass::Default,
+            | KeyType::ChannelThreadMessageEventIndexes
+            // Each entry is a token swap, which is too large for the small entries map
+            | KeyType::TokenSwap => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -302,6 +308,7 @@ impl TryFrom<u8> for KeyType {
             47 => Ok(KeyType::MessageActivityEvent),
             48 => Ok(KeyType::MessageActivityEventId),
             49 => Ok(KeyType::ChitEvent),
+            52 => Ok(KeyType::TokenSwap),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
