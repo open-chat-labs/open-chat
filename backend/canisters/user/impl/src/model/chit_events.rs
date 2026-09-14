@@ -8,10 +8,10 @@ use utils::time::MonthKey;
 // stable memory map for small entries, with the running totals kept on the heap.
 #[derive(Serialize, Deserialize, Default)]
 pub struct ChitEvents {
-    // Events which haven't yet been moved into stable memory, ordered by timestamp. New events are
-    // always written to stable memory, and existing ones are moved across in batches by
-    // `migrate_to_stable_memory`. This can be removed once every user has been migrated.
-    #[serde(rename = "events", default)]
+    // The events which were held on the heap, which are all moved into stable memory in
+    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
+    // TODO: Remove this after next release
+    #[serde(rename = "events", default, skip_serializing)]
     on_heap: Vec<ChitEvent>,
     #[serde(default)]
     in_stable_memory_count: u32,
@@ -54,39 +54,28 @@ impl ChitEvents {
         let (start, end) = if ascending { (from, to) } else { (to, from) };
         let (start, end) = (start.unwrap_or_default(), end.unwrap_or(TimestampMillis::MAX));
 
-        if self.on_heap.is_empty() {
-            // Only deserialize the events in the requested page
-            return with_map(|m| {
-                if start > end {
-                    return (Vec::new(), 0);
-                }
-                let total = m.range(keys_between(start, end)).count() as u32;
-                let page = m.range(keys_between(start, end));
-                let events = if ascending {
-                    page.skip(skip)
-                        .take(max)
-                        .map(|(k, v)| event_from_bytes(k.timestamp(), &v))
-                        .collect()
-                } else {
-                    page.rev()
-                        .skip(skip)
-                        .take(max)
-                        .map(|(k, v)| event_from_bytes(k.timestamp(), &v))
-                        .collect()
-                };
-                (events, total)
-            });
+        if start > end {
+            return (Vec::new(), 0);
         }
 
-        let all = self.events_between(start, end);
-        let total = all.len() as u32;
-
-        let events = if ascending {
-            all.into_iter().skip(skip).take(max).collect()
-        } else {
-            all.into_iter().rev().skip(skip).take(max).collect()
-        };
-        (events, total)
+        // Only deserialize the events in the requested page
+        with_map(|m| {
+            let total = m.range(keys_between(start, end)).count() as u32;
+            let page = m.range(keys_between(start, end));
+            let events = if ascending {
+                page.skip(skip)
+                    .take(max)
+                    .map(|(k, v)| event_from_bytes(k.timestamp(), &v))
+                    .collect()
+            } else {
+                page.rev()
+                    .skip(skip)
+                    .take(max)
+                    .map(|(k, v)| event_from_bytes(k.timestamp(), &v))
+                    .collect()
+            };
+            (events, total)
+        })
     }
 
     pub fn total_chit_earned(&self) -> i32 {
@@ -140,19 +129,18 @@ impl ChitEvents {
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
-        let latest_on_heap = self.on_heap.last().map(|e| e.timestamp).unwrap_or_default();
-        latest_on_heap.max(self.latest_timestamp_in_stable_memory)
+        self.latest_timestamp_in_stable_memory
     }
 
     pub fn len(&self) -> u32 {
-        self.on_heap.len() as u32 + self.in_stable_memory_count
+        self.in_stable_memory_count
     }
 
-    // Moves up to `max_count` events from the heap into stable memory, returning how many were
+    // Moves the events which were held on the heap into stable memory, returning how many were
     // moved
-    pub fn migrate_to_stable_memory(&mut self, max_count: usize) -> usize {
-        let count = max_count.min(self.on_heap.len());
-        if count == 0 {
+    // TODO: Remove this after next release
+    pub fn migrate_to_stable_memory(&mut self) -> usize {
+        if self.on_heap.is_empty() {
             return 0;
         }
 
@@ -161,9 +149,8 @@ impl ChitEvents {
         let mut next_sequence = self.next_sequence;
 
         // The events on the heap are ordered by timestamp, so their keys are in key order
-        let entries: Vec<_> = self
-            .on_heap
-            .drain(..count)
+        let entries: Vec<_> = std::mem::take(&mut self.on_heap)
+            .into_iter()
             .map(|event| {
                 latest = latest.max(event.timestamp);
                 let key = prefix.create_key(&(event.timestamp, next_sequence));
@@ -172,15 +159,12 @@ impl ChitEvents {
             })
             .collect();
 
+        let count = entries.len();
         with_map_mut(|m| m.insert_many(entries));
         self.in_stable_memory_count += count as u32;
         self.next_sequence = next_sequence;
         self.latest_timestamp_in_stable_memory = latest;
         count
-    }
-
-    pub fn on_heap_count(&self) -> usize {
-        self.on_heap.len()
     }
 
     // Returns the events with timestamps within the given bounds (inclusive), in timestamp order
@@ -189,21 +173,11 @@ impl ChitEvents {
             return Vec::new();
         }
 
-        let mut events: Vec<_> = with_map(|m| {
+        with_map(|m| {
             m.range(keys_between(start, end))
                 .map(|(k, v)| event_from_bytes(k.timestamp(), &v))
                 .collect()
-        });
-
-        if !self.on_heap.is_empty() {
-            let first = self.on_heap.partition_point(|e| e.timestamp < start);
-            let last = self.on_heap.partition_point(|e| e.timestamp <= end);
-            if first < last {
-                events.extend(self.on_heap[first..last].iter().cloned());
-                events.sort_by_key(|e| e.timestamp);
-            }
-        }
-        events
+        })
     }
 }
 
@@ -375,33 +349,7 @@ mod tests {
 
     #[test]
     fn events_on_heap_are_migrated_to_stable_memory() {
-        let mut store = init_test_data(true);
-        assert_eq!(store.on_heap_count(), 7);
-
-        // An event with an earlier timestamp than those on the heap is written to stable memory
-        store.push(ChitEvent {
-            amount: 50,
-            timestamp: 5,
-            reason: ChitEventType::MemeContestWinner,
-        });
-
-        let check = |store: &ChitEvents| {
-            assert_eq!(store.len(), 8);
-            assert_eq!(store.last_updated(), 16);
-            assert_eq!(store.chit_balance(), 2550);
-            let (events, total) = store.events(None, None, 0, 10, true);
-            assert_eq!(total, 8);
-            assert_eq!(
-                events.iter().map(|e| e.timestamp).collect::<Vec<_>>(),
-                vec![5, 10, 11, 12, 13, 14, 15, 16]
-            );
-            let (events, _) = store.events(Some(14), Some(11), 0, 99, false);
-            assert_eq!(events.iter().map(|e| e.timestamp).collect::<Vec<_>>(), vec![14, 13, 12, 11]);
-            assert_eq!(store.achievements(Some(13)).len(), 2);
-            assert_eq!(store.daily_claims(), vec![10, 11, 12, 14]);
-        };
-        check(&store);
-
+        let expected = init_test_data(false);
         let pages = |store: &ChitEvents| {
             [true, false].map(|ascending| {
                 (0..4)
@@ -412,16 +360,32 @@ mod tests {
                     .collect::<Vec<_>>()
             })
         };
-        let pages_before_migration = pages(&store);
+        let expected_pages = pages(&expected);
 
-        assert_eq!(store.migrate_to_stable_memory(3), 3);
-        assert_eq!(store.on_heap_count(), 4);
-        check(&store);
-        assert_eq!(store.migrate_to_stable_memory(100), 4);
-        assert_eq!(store.on_heap_count(), 0);
-        assert_eq!(store.migrate_to_stable_memory(100), 0);
-        check(&store);
-        assert_eq!(pages(&store), pages_before_migration);
+        let mut store = init_test_data(true);
+        assert_eq!(store.migrate_to_stable_memory(), 7);
+        assert!(store.on_heap.is_empty());
+        assert_eq!(store.migrate_to_stable_memory(), 0);
+
+        assert_eq!(pages(&store), expected_pages);
+        assert_eq!(store.len(), 7);
+        assert_eq!(store.last_updated(), 16);
+        assert_eq!(store.chit_balance(), 2500);
+        assert_eq!(store.achievements(Some(13)).len(), 2);
+        assert_eq!(store.daily_claims(), vec![10, 11, 12, 14]);
+
+        // New events are keyed after the migrated ones, so none are overwritten
+        store.push(ChitEvent {
+            amount: 200,
+            timestamp: 16,
+            reason: ChitEventType::DailyClaim,
+        });
+        assert_eq!(store.len(), 8);
+        assert_eq!(store.events(Some(16), Some(16), 0, 10, true).1, 2);
+
+        // The heap isn't serialized
+        let deserialized: ChitEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&store));
+        assert_eq!(deserialized.len(), 8);
     }
 
     fn init_test_data(on_heap: bool) -> ChitEvents {
