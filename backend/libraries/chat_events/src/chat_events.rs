@@ -8,12 +8,12 @@ use crate::*;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_types::EventBuilder;
 use oc_error_codes::{OCError, OCErrorCode};
-use search::simple::{Document, Query};
+use search::simple::Document;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{
     BaseKeyPrefix, ChatEventKeyPrefix, EventLastUpdatedKeyPrefix, EventsByLastUpdatedKeyPrefix, ExpiringEventKeyPrefix,
-    MessageEventIndexesKeyPrefix, MessageIdKeyPrefix, UserMetricsKeyPrefix,
+    MessageEventIndexesKeyPrefix, MessageIdKeyPrefix, SearchSenderKeyPrefix, SearchTokenKeyPrefix, UserMetricsKeyPrefix,
 };
 use std::cmp::max;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
@@ -75,13 +75,15 @@ impl ChatEvents {
     pub fn stable_memory_key_prefixes(events_prefix: ChatEventKeyPrefix) -> Vec<BaseKeyPrefix> {
         let message_ids_prefix = MessageIdKeyPrefix::from(&events_prefix);
         let message_event_indexes_prefix = MessageEventIndexesKeyPrefix::from(&events_prefix);
-        // Only the main events list has expiring events, last updated timestamps and user metrics
-        // (the last updated timestamps of events in threads are stored under the main events list's
-        // prefixes)
+        // Only the main events list has expiring events, last updated timestamps, user metrics and a
+        // search index (the last updated timestamps of events in threads are stored under the main
+        // events list's prefixes)
         let expiring_events_prefix = ExpiringEventKeyPrefix::try_from(&events_prefix).ok();
         let last_updated_prefix = EventLastUpdatedKeyPrefix::try_from(&events_prefix).ok();
         let by_last_updated_prefix = EventsByLastUpdatedKeyPrefix::try_from(&events_prefix).ok();
         let user_metrics_prefix = UserMetricsKeyPrefix::try_from(&events_prefix).ok();
+        let search_token_prefix = SearchTokenKeyPrefix::try_from(&events_prefix).ok();
+        let search_sender_prefix = SearchSenderKeyPrefix::try_from(&events_prefix).ok();
         let mut prefixes = vec![
             events_prefix.into(),
             message_ids_prefix.into(),
@@ -91,6 +93,8 @@ impl ChatEvents {
         prefixes.extend(last_updated_prefix.map(BaseKeyPrefix::from));
         prefixes.extend(by_last_updated_prefix.map(BaseKeyPrefix::from));
         prefixes.extend(user_metrics_prefix.map(BaseKeyPrefix::from));
+        prefixes.extend(search_token_prefix.map(BaseKeyPrefix::from));
+        prefixes.extend(search_sender_prefix.map(BaseKeyPrefix::from));
         prefixes
     }
 
@@ -206,6 +210,11 @@ impl ChatEvents {
         if moved < max_count {
             moved += self.per_user_metrics.migrate_to_stable_memory(self.chat, max_count - moved);
         }
+        if moved < max_count {
+            moved += self
+                .search_index
+                .migrate_to_stable_memory(self.chat, &self.main, max_count - moved);
+        }
         for events_list in std::iter::once(&mut self.main).chain(self.threads.values_mut()) {
             if moved >= max_count {
                 break;
@@ -260,6 +269,7 @@ impl ChatEvents {
         self.expiring_events.on_heap_count()
             + self.last_updated_timestamps.on_heap_count()
             + self.per_user_metrics.on_heap_count()
+            + self.search_index.on_heap_count()
             + std::iter::once(&self.main)
                 .chain(self.threads.values())
                 .map(|l| l.message_ids_on_heap_count() + l.message_event_indexes_on_heap_count())
@@ -418,9 +428,12 @@ impl ChatEvents {
         ) {
             Ok(result) => {
                 let bot_notification = result.bot_notification;
-                let (message_index, event, document) = result.value;
-                if thread_root_message_index.is_none() {
-                    self.search_index.push(message_index, sender, document);
+                let (message_index, event, documents) = result.value;
+                if thread_root_message_index.is_none()
+                    && let Some((old_document, new_document)) = documents
+                {
+                    self.search_index
+                        .update(self.chat, message_index, sender, &old_document, &new_document);
                 }
 
                 add_to_metrics(
@@ -456,7 +469,10 @@ impl ChatEvents {
         chat: Chat,
         anonymized_id: String,
         mut event_pusher: Option<P>,
-    ) -> Result<(MessageIndex, EventMetaData, Document), UpdateEventError<OCResult<(MessageIndex, EventMetaData)>>> {
+    ) -> Result<
+        (MessageIndex, EventMetaData, Option<(Document, Document)>),
+        UpdateEventError<OCResult<(MessageIndex, EventMetaData)>>,
+    > {
         if message.sender != args.sender || matches!(message.content, MessageContentInternal::Deleted(_)) {
             return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
         }
@@ -471,10 +487,15 @@ impl ChatEvents {
                 || block_level_markdown_update.is_some();
 
             let old_length = message.content.text_length();
+            let old_document = Document::from(&message.content);
             message.content = args.content;
             message.og_previews = args.og_previews;
 
-            let document = Document::from(&message.content);
+            // Deleted messages aren't in the search index, so there is nothing to update
+            let documents = message
+                .deleted_by
+                .is_none()
+                .then(|| (old_document, Document::from(&message.content)));
 
             if edited {
                 if let Some(block_level_markdown) = block_level_markdown_update {
@@ -511,7 +532,7 @@ impl ChatEvents {
                     );
                 }
             }
-            return Ok((message.message_index, event, document));
+            return Ok((message.message_index, event, documents));
         }
 
         Err(UpdateEventError::NoChange(Ok((message.message_index, event))))
@@ -550,7 +571,7 @@ impl ChatEvents {
             |message, _| Self::delete_message_inner(message, &args),
         ) {
             Ok(result) => {
-                let (sender, message_index) = result.value;
+                let (sender, message_index, document) = result.value;
 
                 if sender != args.caller {
                     add_to_metrics(
@@ -573,7 +594,7 @@ impl ChatEvents {
                     args.now,
                 );
                 if args.thread_root_message_index.is_none() {
-                    self.search_index.remove(message_index);
+                    self.search_index.remove(self.chat, message_index, sender, &document);
                 }
                 Ok(DeleteMessageSuccess {
                     sender,
@@ -588,7 +609,7 @@ impl ChatEvents {
     fn delete_message_inner(
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
-    ) -> Result<(UserId, MessageIndex), UpdateEventError<OCErrorCode>> {
+    ) -> Result<(UserId, MessageIndex, Document), UpdateEventError<OCErrorCode>> {
         if message.sender == args.caller || args.is_admin {
             if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
                 Err(UpdateEventError::NoChange(OCErrorCode::NoChange))
@@ -600,7 +621,7 @@ impl ChatEvents {
                     deleted_by: args.caller,
                     timestamp: args.now,
                 });
-                Ok((sender, message.message_index))
+                Ok((sender, message.message_index, Document::from(&message.content)))
             }
         } else {
             Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized))
@@ -675,7 +696,7 @@ impl ChatEvents {
                     args.now,
                 );
                 if args.thread_root_message_index.is_none() {
-                    self.search_index.push(message_index, sender, document);
+                    self.search_index.add(self.chat, message_index, sender, &document);
                 }
                 Ok(result.bot_notification)
             }
@@ -1983,7 +2004,8 @@ impl ChatEvents {
             self.threads.get_mut(&root_message_index).unwrap()
         } else {
             if let ChatEventInternal::Message(m) = &event {
-                self.search_index.push(m.message_index, m.sender, Document::from(&m.content));
+                self.search_index
+                    .add(self.chat, m.message_index, m.sender, &Document::from(&m.content));
             }
             &mut self.main
         };
@@ -2047,14 +2069,14 @@ impl ChatEvents {
     pub fn search_messages(
         &self,
         min_visible_message_index: MessageIndex,
-        query: Query,
-        users: HashSet<UserId>,
+        search_term: &str,
+        users: &HashSet<UserId>,
         max_results: u8,
     ) -> Vec<MessageMatch> {
         self.search_index
-            .search_messages(min_visible_message_index, query, users)
+            .search(self.chat, min_visible_message_index, search_term, users, max_results as usize)
+            .into_iter()
             .map(|message_index| MessageMatch { message_index, score: 1 })
-            .take(max_results as usize)
             .collect()
     }
 
@@ -2270,6 +2292,10 @@ impl ChatEvents {
         let mut result = RemoveEventResult::default();
 
         if let ChatEventInternal::Message(m) = event.event {
+            if m.deleted_by.is_none() {
+                self.search_index
+                    .remove(self.chat, m.message_index, m.sender, &Document::from(&m.content));
+            }
             if let Some(thread) = m.thread_summary {
                 self.threads.remove(&m.message_index);
                 result.thread = Some(ExpiredThread {
@@ -2344,6 +2370,11 @@ impl ChatEvents {
     #[cfg(test)]
     pub(crate) fn main_events_list_mut(&mut self) -> &mut ChatEventsList {
         &mut self.main
+    }
+
+    #[cfg(test)]
+    pub(crate) fn search_index_mut(&mut self) -> &mut SearchIndex {
+        &mut self.search_index
     }
 
     pub fn end_video_call<P: EventPusher>(

@@ -11,6 +11,7 @@ mod macros;
 mod message_event_indexes;
 mod message_id;
 mod principal;
+mod search_index;
 mod storage;
 mod user_id;
 mod user_metrics;
@@ -22,6 +23,7 @@ pub use last_updated::*;
 pub use message_event_indexes::*;
 pub use message_id::*;
 pub use principal::*;
+pub use search_index::*;
 pub use storage::*;
 pub use user_id::*;
 pub use user_metrics::*;
@@ -136,6 +138,12 @@ pub enum KeyType {
     DirectChatThreadMessageEventIndexes = 38,
     GroupChatThreadMessageEventIndexes = 39,
     ChannelThreadMessageEventIndexes = 40,
+    DirectChatSearchToken = 41,
+    GroupChatSearchToken = 42,
+    ChannelSearchToken = 43,
+    DirectChatSearchSender = 44,
+    GroupChatSearchSender = 45,
+    ChannelSearchSender = 46,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -198,7 +206,13 @@ impl KeyType {
             | KeyType::ChannelEventsByLastUpdated
             | KeyType::DirectChatUserMetrics
             | KeyType::GroupChatUserMetrics
-            | KeyType::ChannelUserMetrics => MapClass::SmallEntries,
+            | KeyType::ChannelUserMetrics
+            | KeyType::DirectChatSearchToken
+            | KeyType::GroupChatSearchToken
+            | KeyType::ChannelSearchToken
+            | KeyType::DirectChatSearchSender
+            | KeyType::GroupChatSearchSender
+            | KeyType::ChannelSearchSender => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -269,6 +283,12 @@ impl TryFrom<u8> for KeyType {
             38 => Ok(KeyType::DirectChatThreadMessageEventIndexes),
             39 => Ok(KeyType::GroupChatThreadMessageEventIndexes),
             40 => Ok(KeyType::ChannelThreadMessageEventIndexes),
+            41 => Ok(KeyType::DirectChatSearchToken),
+            42 => Ok(KeyType::GroupChatSearchToken),
+            43 => Ok(KeyType::ChannelSearchToken),
+            44 => Ok(KeyType::DirectChatSearchSender),
+            45 => Ok(KeyType::GroupChatSearchSender),
+            46 => Ok(KeyType::ChannelSearchSender),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
