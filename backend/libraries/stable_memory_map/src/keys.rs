@@ -4,10 +4,12 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 mod chat_event;
+mod chit_event;
 mod community_event;
 mod expiring_event;
 mod last_updated;
 mod macros;
+mod message_activity_event;
 mod message_event_indexes;
 mod message_id;
 mod principal;
@@ -18,9 +20,11 @@ mod user_id;
 mod user_metrics;
 
 pub use chat_event::*;
+pub use chit_event::*;
 pub use community_event::*;
 pub use expiring_event::*;
 pub use last_updated::*;
+pub use message_activity_event::*;
 pub use message_event_indexes::*;
 pub use message_id::*;
 pub use principal::*;
@@ -146,7 +150,9 @@ pub enum KeyType {
     DirectChatSearchSender = 44,
     GroupChatSearchSender = 45,
     ChannelSearchSender = 46,
-    // 47 to 49 are reserved for the message activity feed and CHIT events
+    MessageActivityEvent = 47,
+    MessageActivityEventId = 48,
+    ChitEvent = 49,
     GroupThreadRead = 50,
     ChannelThreadRead = 51,
     #[cfg(test)]
@@ -218,6 +224,9 @@ impl KeyType {
             | KeyType::DirectChatSearchSender
             | KeyType::GroupChatSearchSender
             | KeyType::ChannelSearchSender
+            | KeyType::MessageActivityEvent
+            | KeyType::MessageActivityEventId
+            | KeyType::ChitEvent
             | KeyType::GroupThreadRead
             | KeyType::ChannelThreadRead => MapClass::SmallEntries,
             #[cfg(test)]
@@ -296,6 +305,9 @@ impl TryFrom<u8> for KeyType {
             44 => Ok(KeyType::DirectChatSearchSender),
             45 => Ok(KeyType::GroupChatSearchSender),
             46 => Ok(KeyType::ChannelSearchSender),
+            47 => Ok(KeyType::MessageActivityEvent),
+            48 => Ok(KeyType::MessageActivityEventId),
+            49 => Ok(KeyType::ChitEvent),
             50 => Ok(KeyType::GroupThreadRead),
             51 => Ok(KeyType::ChannelThreadRead),
             #[cfg(test)]

@@ -26,6 +26,20 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
+    // Move the message activity events into stable memory. The feed holds at most 1000 events, so
+    // they can all be moved here rather than by a timer job, which would cost an extra call.
+    // TODO: Remove this after next release
+    let message_activity_events_migrated = data.message_activity_events.migrate_to_stable_memory();
+    info!(
+        message_activity_events_migrated,
+        "Migrated message activity events to stable memory"
+    );
+
+    // Move the CHIT events into stable memory
+    // TODO: Remove this after next release
+    let chit_events_migrated = data.chit_events.migrate_to_stable_memory();
+    info!(chit_events_migrated, "Migrated CHIT events to stable memory");
+
     // Move how far the user has read each thread into stable memory
     // TODO: Remove this after next release
     let mut threads_read_migrated = 0;
