@@ -75,7 +75,10 @@ describe("operator functions (#9368)", () => {
 
         const headings = [...target.querySelectorAll("h3")].map((h) => h.textContent?.trim());
         expect(headings).toContain("Daily puzzle");
-        expect(target.querySelector("#daily-puzzle-enabled")).not.toBeNull();
+        // and it shows what the canister holds, not the component's default
+        const toggle = target.querySelector("#daily-puzzle-enabled") as HTMLInputElement | null;
+        expect(toggle).not.toBeNull();
+        expect(toggle!.checked).toBe(true);
         const buttons = [...target.querySelectorAll("button")].map((b) => b.textContent?.trim());
         expect(buttons).toContain("Regenerate");
     });

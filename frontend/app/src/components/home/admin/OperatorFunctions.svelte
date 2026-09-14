@@ -600,8 +600,7 @@
         </Row>
         <Row gap="md">
             <BodySmall width={labelWidth} colour="textSecondary" uppercase
-                >LE request reference:</BodySmall
-            >
+                >LE request reference:</BodySmall>
             <Input bind:value={destroyRequestRef} />
         </Row>
     </Column>
@@ -635,8 +634,7 @@
 {#snippet proposedAuthorityReporterView()}
     <Input
         bind:value={authorityReporter}
-        placeholder={i18nKey("Service principal (blank to unregister)")}
-    />
+        placeholder={i18nKey("Service principal (blank to unregister)")} />
 {/snippet}
 
 {#snippet currentMediaScanView()}
@@ -645,10 +643,7 @@
 
 {#snippet proposedMediaScanView()}
     <Toggle small id="media-scan-enabled" bind:checked={mediaScanEnabled} />
-    <Input
-        bind:value={mediaScanScanners}
-        placeholder={i18nKey("Comma separated scanner principals")}
-    />
+    <Input bind:value={mediaScanScanners} placeholder={i18nKey("Comma separated scanner principals")} />
 {/snippet}
 
 {#snippet proposedOpenAIKey()}
@@ -697,8 +692,7 @@
                 tiny
                 disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
                 loading={busy.has(0)}
-                onClick={setGroupUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setGroupUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -707,14 +701,12 @@
         <ButtonGroup align="fill">
             <Input
                 invalid={communityUpgradeConcurrencyInvalid}
-                bind:value={communityUpgradeConcurrency}
-            />
+                bind:value={communityUpgradeConcurrency} />
             <Button
                 tiny
                 disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
                 loading={busy.has(1)}
-                onClick={setCommunityUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setCommunityUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -726,8 +718,7 @@
                 tiny
                 disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
-                onClick={setUserUpgradeConcurrency}>Apply</Button
-            >
+                onClick={setUserUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -771,8 +762,7 @@
                 tiny
                 disabled={busy.has(3)}
                 loading={busy.has(3)}
-                onClick={setDiamondMembershipFees}>Apply</Button
-            >
+                onClick={setDiamondMembershipFees}>Apply</Button>
         </section>
     {/if}
 
@@ -794,8 +784,7 @@
             tiny
             disabled={busy.has(4)}
             loading={busy.has(4)}
-            onClick={stakeNeuronForSubmittingProposals}>Apply</Button
-        >
+            onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -876,8 +865,7 @@
             tiny
             disabled={busy.has(5) || exchangeIdInvalid}
             loading={busy.has(5)}
-            onClick={updateMarketMakerConfig}>Apply</Button
-        >
+            onClick={updateMarketMakerConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -889,8 +877,7 @@
                 tiny
                 disabled={busy.has(6) || !tokenLedgerValid}
                 loading={busy.has(6)}
-                onClick={setTokenEnabled}>Apply</Button
-            >
+                onClick={setTokenEnabled}>Apply</Button>
         </ButtonGroup>
     </section>
 
@@ -909,8 +896,7 @@
                         bind:value={
                             () => referralThresholds[bit] ?? "",
                             (v) => (referralThresholds[bit] = v)
-                        }
-                    />
+                        } />
                 </div>
             </div>
         {/each}
@@ -918,8 +904,7 @@
             tiny
             disabled={busy.has(9) || referralThresholdsInvalid}
             loading={busy.has(9)}
-            onClick={setModerationReferralConfig}>Apply</Button
-        >
+            onClick={setModerationReferralConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -951,15 +936,13 @@
                 tiny
                 disabled={busy.has(11)}
                 loading={busy.has(11)}
-                onClick={() => setVaultLegalHold(true)}>Set hold</Button
-            >
+                onClick={() => setVaultLegalHold(true)}>Set hold</Button>
             <Button
                 tiny
                 secondary
                 disabled={busy.has(11)}
                 loading={busy.has(11)}
-                onClick={() => setVaultLegalHold(false)}>Clear hold</Button
-            >
+                onClick={() => setVaultLegalHold(false)}>Clear hold</Button>
         </ButtonGroup>
     </section>
 
@@ -986,8 +969,7 @@
         supplementalClass="danger_zone"
         borderRadius="md"
         padding="lg"
-        gap="xl"
-    >
+        gap="xl">
         <Column gap="md" padding={["zero", "lg"]}>
             <Title fontWeight="bold">Danger Zone</Title>
             <Subtitle>Dual auth operator actions</Subtitle>
