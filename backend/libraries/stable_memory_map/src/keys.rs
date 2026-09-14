@@ -15,6 +15,7 @@ mod message_id;
 mod principal;
 mod search_index;
 mod storage;
+mod streak_insurance;
 mod user_id;
 mod user_metrics;
 
@@ -29,6 +30,7 @@ pub use message_id::*;
 pub use principal::*;
 pub use search_index::*;
 pub use storage::*;
+pub use streak_insurance::*;
 pub use user_id::*;
 pub use user_metrics::*;
 
@@ -151,6 +153,9 @@ pub enum KeyType {
     MessageActivityEvent = 47,
     MessageActivityEventId = 48,
     ChitEvent = 49,
+    // 50 to 54 are reserved for threads read, token swaps, P2P swaps and referrals
+    StreakInsurancePayment = 55,
+    StreakInsuranceClaim = 56,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -222,7 +227,9 @@ impl KeyType {
             | KeyType::ChannelSearchSender
             | KeyType::MessageActivityEvent
             | KeyType::MessageActivityEventId
-            | KeyType::ChitEvent => MapClass::SmallEntries,
+            | KeyType::ChitEvent
+            | KeyType::StreakInsurancePayment
+            | KeyType::StreakInsuranceClaim => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -302,6 +309,8 @@ impl TryFrom<u8> for KeyType {
             47 => Ok(KeyType::MessageActivityEvent),
             48 => Ok(KeyType::MessageActivityEventId),
             49 => Ok(KeyType::ChitEvent),
+            55 => Ok(KeyType::StreakInsurancePayment),
+            56 => Ok(KeyType::StreakInsuranceClaim),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

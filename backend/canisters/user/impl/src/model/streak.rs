@@ -1,5 +1,6 @@
 use constants::DAY_IN_MS;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::{KeyPrefix, StreakInsuranceKeyPrefix, with_map_mut};
 use std::collections::BTreeMap;
 use tracing::info;
 use types::{
@@ -20,8 +21,18 @@ pub struct Streak {
     days_missed: u8,
     #[serde(skip)]
     payment_lock: bool,
-    payments: Vec<UserCanisterStreakInsurancePayment>,
-    claims: Vec<UserCanisterStreakInsuranceClaim>,
+    // The insurance payments and claims are stored in the stable memory map for small entries.
+    // Those which were held on the heap are all moved into stable memory in `post_upgrade` by
+    // `migrate_to_stable_memory`, so these are always empty otherwise.
+    // TODO: Remove these after next release
+    #[serde(rename = "payments", default, skip_serializing)]
+    payments_on_heap: Vec<UserCanisterStreakInsurancePayment>,
+    #[serde(rename = "claims", default, skip_serializing)]
+    claims_on_heap: Vec<UserCanisterStreakInsuranceClaim>,
+    #[serde(default)]
+    payments_count: u32,
+    #[serde(default)]
+    claims_count: u32,
     utc_offset_mins: i16,
     utc_offset_updates: Vec<(TimestampMillis, i16)>,
 }
@@ -93,7 +104,9 @@ impl Streak {
                 new_days_claimed: self.days_missed,
                 insured_days_remaining: self.days_insured.saturating_sub(self.days_missed),
             };
-            self.claims.push(claim.clone());
+            let key = StreakInsuranceKeyPrefix::new_for_claims().create_key(&self.claims_count);
+            with_map_mut(|m| m.insert(key, msgpack::serialize_then_unwrap(&claim)));
+            self.claims_count += 1;
             info!(day = today, "Streak insurance used");
             return Some(claim);
         }
@@ -195,7 +208,46 @@ impl Streak {
     pub fn mark_streak_insurance_payment(&mut self, payment: UserCanisterStreakInsurancePayment) {
         self.insurance_last_updated = payment.timestamp;
         self.days_insured = payment.new_days_insured;
-        self.payments.push(payment);
+        let key = StreakInsuranceKeyPrefix::new_for_payments().create_key(&self.payments_count);
+        with_map_mut(|m| m.insert(key, msgpack::serialize_then_unwrap(&payment)));
+        self.payments_count += 1;
+    }
+
+    // Moves the insurance payments and claims which were held on the heap into stable memory,
+    // returning how many were moved
+    // TODO: Remove this after next release
+    pub fn migrate_to_stable_memory(&mut self) -> usize {
+        let payments = std::mem::take(&mut self.payments_on_heap);
+        let claims = std::mem::take(&mut self.claims_on_heap);
+        let payments_prefix = StreakInsuranceKeyPrefix::new_for_payments();
+        let claims_prefix = StreakInsuranceKeyPrefix::new_for_claims();
+        let count = payments.len() + claims.len();
+
+        // Keys are assigned in order, so the entries are inserted in key order
+        let payments: Vec<_> = payments
+            .iter()
+            .map(|payment| {
+                let key = payments_prefix.create_key(&self.payments_count);
+                self.payments_count += 1;
+                (key, msgpack::serialize_then_unwrap(payment))
+            })
+            .collect();
+        let claims: Vec<_> = claims
+            .iter()
+            .map(|claim| {
+                let key = claims_prefix.create_key(&self.claims_count);
+                self.claims_count += 1;
+                (key, msgpack::serialize_then_unwrap(claim))
+            })
+            .collect();
+
+        if count > 0 {
+            with_map_mut(|m| {
+                m.insert_many(payments);
+                m.insert_many(claims);
+            });
+        }
+        count
     }
 
     pub fn insurance_price(&self, days_currently_insured: u8, additional_days: u8) -> u128 {
@@ -290,6 +342,9 @@ fn mins_to_ms(mins: i16) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use stable_memory_map::with_map;
 
     #[test]
     fn never_claimed_can_claim() {
@@ -347,5 +402,96 @@ mod tests {
 
         now += DAY_IN_MS * 2;
         assert_eq!(0, streak.days(now));
+    }
+
+    #[test]
+    fn insurance_payments_and_claims_are_stored_in_stable_memory() {
+        init_stable_memory_map();
+
+        let mut now = DAY_ZERO + (60 * DAY_IN_MS);
+        let mut streak = Streak::default();
+        streak.claim(now).unwrap();
+        let payment = payment(now, 1);
+        streak.mark_streak_insurance_payment(payment.clone());
+
+        // Miss a day so that the insurance is used
+        now += DAY_IN_MS * 2;
+        let claim = streak.claim(now).unwrap().unwrap();
+
+        assert_eq!(streak.payments_count, 1);
+        assert_eq!(streak.claims_count, 1);
+        assert_eq!(payments_in_stable_memory(), to_bytes(&[payment]));
+        assert_eq!(claims_in_stable_memory(), to_bytes(&[claim]));
+    }
+
+    #[test]
+    fn insurance_payments_and_claims_on_heap_are_migrated_to_stable_memory() {
+        init_stable_memory_map();
+
+        let payments: Vec<_> = (1..=3).map(|i| payment(DAY_ZERO + i, i as u8)).collect();
+        let claims: Vec<_> = (1..=2).map(|i| claim(DAY_ZERO + i, i as u16)).collect();
+        let mut streak = Streak {
+            payments_on_heap: payments.clone(),
+            claims_on_heap: claims.clone(),
+            ..Default::default()
+        };
+
+        assert_eq!(streak.migrate_to_stable_memory(), 5);
+        assert!(streak.payments_on_heap.is_empty());
+        assert!(streak.claims_on_heap.is_empty());
+        assert_eq!(streak.payments_count, 3);
+        assert_eq!(streak.claims_count, 2);
+
+        // New entries are added after those which were migrated
+        let new_payment = payment(DAY_ZERO + 10, 4);
+        streak.mark_streak_insurance_payment(new_payment.clone());
+        let mut expected_payments = payments;
+        expected_payments.push(new_payment);
+
+        assert_eq!(payments_in_stable_memory(), to_bytes(&expected_payments));
+        assert_eq!(claims_in_stable_memory(), to_bytes(&claims));
+        assert_eq!(streak.migrate_to_stable_memory(), 0);
+    }
+
+    fn payment(timestamp: TimestampMillis, new_days_insured: u8) -> UserCanisterStreakInsurancePayment {
+        UserCanisterStreakInsurancePayment {
+            timestamp,
+            chat_amount: 100_000_000,
+            additional_days: 1,
+            new_days_insured,
+            transaction_index: timestamp,
+        }
+    }
+
+    fn claim(timestamp: TimestampMillis, streak_length: u16) -> UserCanisterStreakInsuranceClaim {
+        UserCanisterStreakInsuranceClaim {
+            timestamp,
+            streak_length,
+            new_days_claimed: 1,
+            insured_days_remaining: 0,
+        }
+    }
+
+    // The types don't implement PartialEq, so entries are compared by their serialized bytes
+    fn to_bytes<T: Serialize>(entries: &[T]) -> Vec<Vec<u8>> {
+        entries.iter().map(msgpack::serialize_then_unwrap).collect()
+    }
+
+    fn payments_in_stable_memory() -> Vec<Vec<u8>> {
+        entries_in_stable_memory(StreakInsuranceKeyPrefix::new_for_payments())
+    }
+
+    fn claims_in_stable_memory() -> Vec<Vec<u8>> {
+        entries_in_stable_memory(StreakInsuranceKeyPrefix::new_for_claims())
+    }
+
+    fn entries_in_stable_memory(prefix: StreakInsuranceKeyPrefix) -> Vec<Vec<u8>> {
+        let range = prefix.create_key(&0)..=prefix.create_key(&u32::MAX);
+        with_map(|m| m.range(range).map(|(_, v)| v).collect())
+    }
+
+    fn init_stable_memory_map() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
     }
 }
