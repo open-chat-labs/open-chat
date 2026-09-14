@@ -26,6 +26,7 @@ interface ImportMetaEnv {
     readonly OC_NODE_ENV: string;
     readonly OC_NOTIFICATIONS_CANISTER: string;
     readonly OC_ONE_SEC_MINTER_CANISTER: string;
+    readonly OC_DAILY_PUZZLE_CANISTER: string;
     readonly OC_ONLINE_CANISTER: string;
     readonly OC_OTA_UPDATES: "none" | "major" | "minor" | "patch";
     readonly OC_PREVIEW_PROXY_URL: string;

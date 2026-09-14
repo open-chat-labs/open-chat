@@ -5,6 +5,7 @@
     import AudioContent from "./AudioContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import FileContent from "./FileContent.svelte";
+    import DailyResultContent from "./dailypuzzle/DailyResultContent.svelte";
     import GiphyAttached from "./GiphyAttached.svelte";
     import ImageContent from "./ImageContent.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
@@ -53,5 +54,7 @@
         <PrizeContent me draft onRemove={onRemoveAttachment} {content} />
     {:else if content.kind === "file_content"}
         <FileContent onRemove={onRemoveAttachment} edited={false} me {content} draft />
+    {:else if content.kind === "daily_result"}
+        <DailyResultContent {content} intersecting />
     {/if}
 </Row>

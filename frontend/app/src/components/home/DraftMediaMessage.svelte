@@ -4,6 +4,7 @@
     import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
     import FileContent from "./FileContent.svelte";
+    import DailyResultContent from "./dailypuzzle/DailyResultContent.svelte";
 
     interface Props {
         content: AttachmentContent;
@@ -22,6 +23,10 @@
     {:else if content.kind === "file_content"}
         <div class="file-preview">
             <FileContent edited={false} me {content} draft />
+        </div>
+    {:else if content.kind === "daily_result"}
+        <div class="file-preview">
+            <DailyResultContent {content} intersecting />
         </div>
     {/if}
 </div>

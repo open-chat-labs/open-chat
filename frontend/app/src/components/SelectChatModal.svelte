@@ -46,6 +46,7 @@
     interface Props {
         onSelect: (chatId: ChatIdentifier) => void;
         onClose: () => void;
+        excludeCurrent?: boolean;
     }
 
     type ShareTo = {
@@ -77,7 +78,7 @@
         channels: ShareChat[];
     };
 
-    let { onClose, onSelect }: Props = $props();
+    let { onClose, onSelect, excludeCurrent = true }: Props = $props();
     let searchTerm = $state("");
     let searchTermLower = $derived(searchTerm.toLowerCase());
     let targets = $state<ShareTo>({
@@ -268,7 +269,7 @@
     ): ChatSummary[] {
         return chats.filter(
             (c) =>
-                !chatIdentifiersEqual(selectedChatId, c.id) &&
+                (!excludeCurrent || !chatIdentifiersEqual(selectedChatId, c.id)) &&
                 client.canSendMessage(c.id, "message", "text"),
         );
     }

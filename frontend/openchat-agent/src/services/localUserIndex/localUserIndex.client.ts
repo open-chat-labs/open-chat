@@ -9,6 +9,10 @@ import type {
     ChatEventsBatchResponse,
     ChatEventsResponse,
     ClaimPrizeResponse,
+    DailyPuzzleFetchResult,
+    DailyPuzzleHintResponse,
+    DailyPuzzleStartResponse,
+    DailyPuzzleSubmitResponse,
     EventsSuccessResult,
     EventWrapper,
     GrantedBotPermissions,
@@ -18,9 +22,11 @@ import type {
     JoinGroupResponse,
     MessageContext,
     MultiUserChatIdentifier,
+    OCError,
     PayForPremiumItemResponse,
     PremiumItem,
     RegisterUserResponse,
+    Success,
     Tally,
     VerifiedCredentialArgs,
 } from "@shared";
@@ -33,6 +39,7 @@ import {
 } from "@shared";
 import {
     BotInstallationLocation as ApiBotInstallationLocation,
+    Empty,
     LocalUserIndexAccessTokenV2Args,
     LocalUserIndexAccessTokenV2Response,
     LocalUserIndexActiveProposalTalliesArgs,
@@ -81,6 +88,7 @@ import {
     apiMultiUserChat,
     isSuccess,
     joinGroupResponse,
+    unitResult,
 } from "../common/chatMappersV2";
 import {
     accessTokenResponse,
@@ -97,6 +105,22 @@ import {
     registerUserResponse,
     withdrawFromIcpSwapResponse,
 } from "./mappers";
+import {
+    dailyPuzzleFetchResponse,
+    dailyPuzzleHintResponse,
+    dailyPuzzleStartResponse,
+    dailyPuzzleSubmitResponse,
+} from "../dailyPuzzle/mappers";
+import {
+    LocalUserIndexDailyPuzzleFetchResponse,
+    LocalUserIndexDailyPuzzleHintArgs,
+    LocalUserIndexDailyPuzzleHintResponse,
+    LocalUserIndexDailyPuzzleSaveGridArgs,
+    LocalUserIndexDailyPuzzleStartArgs,
+    LocalUserIndexDailyPuzzleStartResponse,
+    LocalUserIndexDailyPuzzleSubmitArgs,
+    LocalUserIndexDailyPuzzleSubmitResponse,
+} from "../dailyPuzzle/typebox";
 
 export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
     constructor(
@@ -563,6 +587,83 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             payForPremiumItemResponse,
             LocalUserIndexPayForPremiumItemArgs,
             LocalUserIndexPayForPremiumItemResponse,
+        );
+    }
+
+    dailyPuzzleFetch(localUserIndex: string): Promise<DailyPuzzleFetchResult | OCError> {
+        return this.query(
+            localUserIndex,
+            "daily_puzzle_fetch",
+            {},
+            dailyPuzzleFetchResponse,
+            Empty,
+            LocalUserIndexDailyPuzzleFetchResponse,
+        );
+    }
+
+    dailyPuzzleStart(
+        localUserIndex: string,
+        gameId: string,
+        number: number,
+        expectedEntryFee: number,
+    ): Promise<DailyPuzzleStartResponse> {
+        return this.update(
+            localUserIndex,
+            "daily_puzzle_start",
+            { game_id: gameId, number, expected_entry_fee: expectedEntryFee },
+            dailyPuzzleStartResponse,
+            LocalUserIndexDailyPuzzleStartArgs,
+            LocalUserIndexDailyPuzzleStartResponse,
+        );
+    }
+
+    dailyPuzzleSubmit(
+        localUserIndex: string,
+        gameId: string,
+        number: number,
+        grid: Uint8Array,
+    ): Promise<DailyPuzzleSubmitResponse> {
+        return this.update(
+            localUserIndex,
+            "daily_puzzle_submit",
+            { game_id: gameId, number, grid: Array.from(grid) },
+            dailyPuzzleSubmitResponse,
+            LocalUserIndexDailyPuzzleSubmitArgs,
+            LocalUserIndexDailyPuzzleSubmitResponse,
+        );
+    }
+
+    dailyPuzzleHint(
+        localUserIndex: string,
+        gameId: string,
+        number: number,
+        level: number,
+        filled: [number, number][],
+        expectedPrice: number,
+    ): Promise<DailyPuzzleHintResponse> {
+        return this.update(
+            localUserIndex,
+            "daily_puzzle_hint",
+            { game_id: gameId, number, level, filled, expected_price: expectedPrice },
+            dailyPuzzleHintResponse,
+            LocalUserIndexDailyPuzzleHintArgs,
+            LocalUserIndexDailyPuzzleHintResponse,
+        );
+    }
+
+    dailyPuzzleSaveGrid(
+        localUserIndex: string,
+        gameId: string,
+        number: number,
+        grid: Uint8Array,
+    ): Promise<Success | OCError> {
+        return this.update(
+            localUserIndex,
+            "daily_puzzle_save_grid",
+            { game_id: gameId, number, grid: Array.from(grid) },
+            unitResult,
+            LocalUserIndexDailyPuzzleSaveGridArgs,
+            UnitResult,
         );
     }
 

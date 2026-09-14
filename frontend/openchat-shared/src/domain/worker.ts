@@ -105,6 +105,16 @@ import type {
     PremiumItem,
 } from "./chit";
 import type {
+    DailyPuzzleConfig,
+    DailyPuzzleFetchResult,
+    DailyPuzzleHintResponse,
+    DailyPuzzleResult,
+    DailyPuzzleStartResponse,
+    DailyPuzzleSubmitResponse,
+    GameConfig,
+    PublicDailyPuzzle,
+} from "./dailyPuzzle";
+import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     ChangeCommunityRoleResponse,
@@ -509,6 +519,17 @@ export type WorkerRequest =
     | FinaliseAccountLinkingWithCode
     | GetSignInProof
     | PayForPremiumItem
+    | DailyPuzzleFetch
+    | DailyPuzzleStart
+    | DailyPuzzleSubmit
+    | DailyPuzzleHint
+    | DailyPuzzleSaveGrid
+    | DailyPuzzleCurrent
+    | DailyPuzzleResults
+    | DailyPuzzleGetConfig
+    | DailyPuzzleGameConfigs
+    | DailyPuzzleSetConfig
+    | DailyPuzzleRegenerateToday
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -566,6 +587,72 @@ type PayForPremiumItem = {
     userId: string;
 };
 
+type DailyPuzzleFetch = {
+    kind: "dailyPuzzleFetch";
+    userId: string;
+};
+
+type DailyPuzzleStart = {
+    kind: "dailyPuzzleStart";
+    userId: string;
+    gameId: string;
+    number: number;
+    expectedEntryFee: number;
+};
+
+type DailyPuzzleSubmit = {
+    kind: "dailyPuzzleSubmit";
+    userId: string;
+    gameId: string;
+    number: number;
+    grid: Uint8Array;
+};
+
+type DailyPuzzleHint = {
+    kind: "dailyPuzzleHint";
+    userId: string;
+    gameId: string;
+    number: number;
+    level: number;
+    filled: [number, number][];
+    expectedPrice: number;
+};
+
+type DailyPuzzleSaveGrid = {
+    kind: "dailyPuzzleSaveGrid";
+    userId: string;
+    gameId: string;
+    number: number;
+    grid: Uint8Array;
+};
+
+type DailyPuzzleCurrent = {
+    kind: "dailyPuzzleCurrent";
+};
+
+type DailyPuzzleResults = {
+    kind: "dailyPuzzleResults";
+    gameId: string;
+    number: number;
+    userIds: string[];
+};
+
+type DailyPuzzleGetConfig = {
+    kind: "dailyPuzzleConfig";
+};
+
+type DailyPuzzleGameConfigs = {
+    kind: "dailyPuzzleGameConfigs";
+};
+
+type DailyPuzzleSetConfig = {
+    kind: "dailyPuzzleSetConfig";
+    config: DailyPuzzleConfig;
+};
+type DailyPuzzleRegenerateToday = {
+    kind: "dailyPuzzleRegenerateToday";
+    gameId: string | undefined;
+};
 export type SetAuthIdentity = {
     kind: "setAuthIdentity";
     identity: JsonnableIdentityKeyAndChain | undefined;
@@ -2084,6 +2171,14 @@ export type WorkerResponseInner =
     | VerifyAccountLinkingCodeResponse
     | FinaliseAccountLinkingResponse
     | PayForPremiumItemResponse
+    | DailyPuzzleFetchResult
+    | DailyPuzzleStartResponse
+    | DailyPuzzleSubmitResponse
+    | DailyPuzzleHintResponse
+    | PublicDailyPuzzle[]
+    | DailyPuzzleResult[]
+    | DailyPuzzleConfig
+    | [string, GameConfig][]
     | OneSecTransferFees[]
     | OneSecForwardingStatus;
 
@@ -2856,6 +2951,28 @@ export type WorkerResult<T> = T extends Init
     ? EventWrapper<Message>[]
     : T extends PayForPremiumItem
     ? PayForPremiumItemResponse
+    : T extends DailyPuzzleFetch
+    ? DailyPuzzleFetchResult | OCError
+    : T extends DailyPuzzleStart
+    ? DailyPuzzleStartResponse
+    : T extends DailyPuzzleSubmit
+    ? DailyPuzzleSubmitResponse
+    : T extends DailyPuzzleHint
+    ? DailyPuzzleHintResponse
+    : T extends DailyPuzzleSaveGrid
+    ? Success | OCError
+    : T extends DailyPuzzleCurrent
+    ? PublicDailyPuzzle[]
+    : T extends DailyPuzzleResults
+    ? DailyPuzzleResult[]
+    : T extends DailyPuzzleGetConfig
+    ? DailyPuzzleConfig | OCError
+    : T extends DailyPuzzleGameConfigs
+    ? [string, GameConfig][] | OCError
+    : T extends DailyPuzzleSetConfig
+    ? Success | OCError
+    : T extends DailyPuzzleRegenerateToday
+    ? Success | OCError
     : T extends SetPremiumItemCost
     ? void
     : T extends CreateAccountLinkingCode

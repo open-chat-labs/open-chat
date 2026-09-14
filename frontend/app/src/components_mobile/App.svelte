@@ -81,6 +81,7 @@
             notificationsCanister: import.meta.env.OC_NOTIFICATIONS_CANISTER!,
             identityCanister: import.meta.env.OC_IDENTITY_CANISTER!,
             onlineCanister: import.meta.env.OC_ONLINE_CANISTER!,
+            dailyPuzzleCanister: import.meta.env.OC_DAILY_PUZZLE_CANISTER ?? "",
             userIndexCanister: import.meta.env.OC_USER_INDEX_CANISTER!,
             translationsCanister: import.meta.env.OC_TRANSLATIONS_CANISTER!,
             registryCanister: import.meta.env.OC_REGISTRY_CANISTER!,

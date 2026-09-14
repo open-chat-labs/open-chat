@@ -62,6 +62,7 @@ export function initEnv() {
             process.env.OC_NOTIFICATIONS_CANISTER = canisters.notifications_index[dfxNetwork];
             process.env.OC_IDENTITY_CANISTER = canisters.identity[dfxNetwork];
             process.env.OC_ONLINE_CANISTER = canisters.online_users[dfxNetwork];
+            process.env.OC_DAILY_PUZZLE_CANISTER = canisters.daily_puzzle?.[dfxNetwork] ?? "";
             process.env.OC_PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
             process.env.OC_AIRDROP_BOT_CANISTER = canisters.airdrop_bot[dfxNetwork];
             process.env.OC_STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];

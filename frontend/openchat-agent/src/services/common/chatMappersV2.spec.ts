@@ -1,11 +1,14 @@
 import { Principal } from "@icp-sdk/core/principal";
-import type { PendingCryptocurrencyTransfer } from "@shared";
+import type { DailyResultContent, PendingCryptocurrencyTransfer } from "@shared";
 import { encodeIcrcAccount } from "@shared";
 import { describe, expect, test } from "vitest";
+import type { MessageContent as TMessageContent } from "../../typebox";
 import {
     addressToIcrcAccount,
+    apiMessageContent,
     apiPendingCryptoTransaction,
     formatIcrcAccount,
+    messageContent,
     pendingCryptoTransfer,
 } from "./chatMappersV2";
 
@@ -69,5 +72,42 @@ describe("pending crypto transaction mapping", () => {
         const api = apiPendingCryptoTransaction(transfer);
         if (!("Pending" in api)) throw new Error("Expected a pending transaction");
         expect(pendingCryptoTransfer(api.Pending, recipient)).toEqual(transfer);
+    });
+});
+
+describe("daily result custom content mapping", () => {
+    const card: DailyResultContent = {
+        kind: "daily_result",
+        gameId: "crossword",
+        number: 42,
+        userId: "user-1",
+        solveTimeMs: 123_456,
+        hintsUsed: 2,
+        streak: 7,
+        layout: "0105050a0b",
+        tier: 1,
+    };
+
+    function roundTrip(content: DailyResultContent) {
+        return messageContent(apiMessageContent(content) as TMessageContent, "user-1");
+    }
+
+    test("round trips without a caption", () => {
+        expect(roundTrip(card)).toEqual(card);
+    });
+
+    test("round trips a caption", () => {
+        const captioned = { ...card, caption: "got there in the end" };
+        expect(roundTrip(captioned)).toEqual(captioned);
+    });
+
+    test("writes the caption into the payload as version 1", () => {
+        const api = apiMessageContent({ ...card, caption: "hi" });
+        expect(api).toHaveProperty("Custom.kind", "daily_result");
+        const json = JSON.parse(
+            new TextDecoder().decode((api as { Custom: { data: Uint8Array } }).Custom.data),
+        );
+        expect(json.v).toBe(1);
+        expect(json.caption).toBe("hi");
     });
 });

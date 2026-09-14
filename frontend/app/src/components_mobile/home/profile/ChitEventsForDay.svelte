@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type ChitEvent } from "@client";
+    import { parseDailyPuzzleChitKey, type ChitEvent } from "@client";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
@@ -60,6 +60,14 @@
                         {:else if event.reason.kind === "meme_contest_winner"}
                             <p>
                                 {`🏆️ Meme contest win: ${event.amount.toLocaleString()}`}
+                                {@render eventtime(timeStr)}
+                            </p>
+                        {:else if event.reason.kind === "game"}
+                            <p>
+                                🧩 <Translatable
+                                    resourceKey={i18nKey(
+                                        `dailyPuzzle.chitEvent.${parseDailyPuzzleChitKey(event.reason.key)?.kind ?? "entry"}`,
+                                    )} />: {event.amount.toLocaleString()}
                                 {@render eventtime(timeStr)}
                             </p>
                         {:else if event.reason.kind === "external_achievement_unlocked"}

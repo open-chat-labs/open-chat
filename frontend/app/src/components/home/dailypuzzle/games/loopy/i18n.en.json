@@ -1,0 +1,20 @@
+{
+    "name": "Loopy",
+    "rules": "Draw one closed loop along the grid lines. It never crosses or branches, so every dot has two lines or none. A number says how many of its four sides the loop uses; cells with no number are free.",
+    "technique.1": "This number already has all the lines it needs around it, so its other sides are crosses.",
+    "technique.2": "This number has exactly as many open sides left as lines it still needs, so all of them are lines.",
+    "technique.3": "A line comes into a corner of this number from outside, so the two sides meeting at that corner can't both be lines, and every other open side of the number must be a line.",
+    "technique.4": "No line reaches this dot and only one of its sides is still open. One line alone at a dot is a dead end, so cross that side off.",
+    "technique.5": "A line reaches this dot and only one of its other sides is still open. A dot can never have just one line, so the loop continues along that side.",
+    "technique.6": "This dot already has its two lines, so cross off its remaining sides.",
+    "technique.7": "The lines forced at the corners of this number already give it all the lines it needs, so this side is a cross.",
+    "technique.8": "Even with every line still possible at its corners, this number falls short without this side, so this side is a line.",
+    "technique.9": "Drawing this segment would close a loop that leaves other lines out, so it is a cross.",
+    "technique.10": "The loop is complete and every number is satisfied, so every remaining segment is a cross.",
+    "demo.1": "Draw one closed loop along the grid lines. A number counts the lines on that cell's four sides; a blank cell is free.",
+    "demo.2": "Start with a 0. None of its four sides can be a line, so cross them off.",
+    "demo.3": "Lines run dot to dot.",
+    "demo.4": "A line that stops dead is not a loop. Every dot needs two lines, or none at all.",
+    "demo.5": "It cannot branch either. Three lines at a dot is too many.",
+    "demo.6": "One closed circuit, and every number matched. Follow it round and you arrive back where you started."
+}

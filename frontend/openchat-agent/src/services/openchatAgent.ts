@@ -211,6 +211,14 @@ import type {
     ProposedProtectedAction,
     Success,
     OCError,
+    DailyPuzzleConfig,
+    DailyPuzzleFetchResult,
+    DailyPuzzleHintResponse,
+    DailyPuzzleResult,
+    DailyPuzzleStartResponse,
+    DailyPuzzleSubmitResponse,
+    GameConfig,
+    PublicDailyPuzzle,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -291,6 +299,7 @@ import { NotificationsClient } from "./notifications/notifications.client";
 import { OneSecForwarderClient } from "./oneSecForwarder/oneSecForwarder.client";
 import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OnlineClient } from "./online/online.client";
+import { DailyPuzzleClient } from "./dailyPuzzle/dailyPuzzle.client";
 import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 import { RegistryClient } from "./registry/registry.client";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
@@ -317,6 +326,7 @@ export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
     private _storageBucketClients: Map<string, StorageBucketClient> = new Map();
     private _onlineClient: OnlineClient;
+    private _dailyPuzzleClient: Lazy<DailyPuzzleClient>;
     private _groupIndexClient: GroupIndexClient;
     private _userClient: UserClient | AnonUserClient;
     private _notificationClient: NotificationsClient;
@@ -453,6 +463,9 @@ export class OpenChatAgent extends EventTarget {
         );
         this._oneSecMinterClient = new Lazy(
             () => new OneSecMinterClient(identity, this._agent, config.oneSecMinterCanister),
+        );
+        this._dailyPuzzleClient = new Lazy(
+            () => new DailyPuzzleClient(identity, this._agent, config.dailyPuzzleCanister),
         );
     }
 
@@ -1702,6 +1715,9 @@ export class OpenChatAgent extends EventTarget {
                     processAchievementsResponse(userResponse.achievements);
                     if (
                         userResponse.totalChitEarned !== chitState.value.totalChitEarned ||
+                        // A debit (daily puzzle entry or hint) moves the balance without
+                        // touching the total earned, so the balance must be compared too
+                        userResponse.chitBalance !== chitState.value.chitBalance ||
                         userResponse.streakEnds !== chitState.value.streakEnds ||
                         // TODO remove this once User canisters have been upgraded
                         userResponse.nextDailyClaim !== chitState.value.nextDailyChitClaim
@@ -4687,6 +4703,93 @@ export class OpenChatAgent extends EventTarget {
         return this._localUserIndexClient.payForPremiumItem(localUserIndex, item);
     }
 
+    async dailyPuzzleFetch(userId: string): Promise<DailyPuzzleFetchResult | OCError> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this._localUserIndexClient.dailyPuzzleFetch(localUserIndex);
+    }
+
+    async dailyPuzzleStart(
+        userId: string,
+        gameId: string,
+        number: number,
+        expectedEntryFee: number,
+    ): Promise<DailyPuzzleStartResponse> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this._localUserIndexClient.dailyPuzzleStart(
+            localUserIndex,
+            gameId,
+            number,
+            expectedEntryFee,
+        );
+    }
+
+    async dailyPuzzleSubmit(
+        userId: string,
+        gameId: string,
+        number: number,
+        grid: Uint8Array,
+    ): Promise<DailyPuzzleSubmitResponse> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this._localUserIndexClient.dailyPuzzleSubmit(localUserIndex, gameId, number, grid);
+    }
+
+    async dailyPuzzleHint(
+        userId: string,
+        gameId: string,
+        number: number,
+        level: number,
+        filled: [number, number][],
+        expectedPrice: number,
+    ): Promise<DailyPuzzleHintResponse> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this._localUserIndexClient.dailyPuzzleHint(
+            localUserIndex,
+            gameId,
+            number,
+            level,
+            filled,
+            expectedPrice,
+        );
+    }
+
+    async dailyPuzzleSaveGrid(
+        userId: string,
+        gameId: string,
+        number: number,
+        grid: Uint8Array,
+    ): Promise<Success | OCError> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this._localUserIndexClient.dailyPuzzleSaveGrid(localUserIndex, gameId, number, grid);
+    }
+
+    dailyPuzzleCurrent(): Promise<PublicDailyPuzzle[]> {
+        if (!this.config.dailyPuzzleCanister) return Promise.resolve([]);
+        return this._dailyPuzzleClient.get().currentPuzzles();
+    }
+
+    dailyPuzzleResults(
+        gameId: string,
+        number: number,
+        userIds: string[],
+    ): Promise<DailyPuzzleResult[]> {
+        if (!this.config.dailyPuzzleCanister) return Promise.resolve([]);
+        return this._dailyPuzzleClient.get().results(gameId, number, userIds);
+    }
+
+    dailyPuzzleConfig(): Promise<DailyPuzzleConfig | OCError> {
+        return this._dailyPuzzleClient.get().config();
+    }
+
+    dailyPuzzleGameConfigs(): Promise<[string, GameConfig][] | OCError> {
+        return this._dailyPuzzleClient.get().gameConfigs();
+    }
+
+    dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
+        return this._dailyPuzzleClient.get().setConfig(config);
+    }
+    dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
+        return this._dailyPuzzleClient.get().regenerateToday(gameId);
+    }
     setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
         return this._userIndexClient.setPremiumItemCost(item, chitCost);
     }

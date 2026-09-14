@@ -1362,4 +1362,65 @@ mod tests {
         assert_eq!(d.failures_for(100), MAX_GENERATION_FAILURES);
         assert_eq!(d.generation_needed(now), Some(101));
     }
+
+    // #9332 invariant 37. The client's rule checkers must agree with the Rust `check_rules` on
+    // every finished grid. This keeps a fixture of generated puzzles and solutions that the
+    // client spec `dailyGames/parity.spec.ts` replays through each TypeScript checker: the
+    // solution must pass, and every single-cell change to it must fail. Run with
+    // `WRITE_PARITY_FIXTURE=1` to regenerate the fixture; without it the test fails if the
+    // checked-in fixture no longer matches what these generators produce.
+    #[test]
+    fn client_parity_fixture_is_current() {
+        fn hex(bytes: &[u8]) -> String {
+            bytes.iter().map(|b| format!("{b:02x}")).collect()
+        }
+        let mut entries = Vec::new();
+        for game_id in generators() {
+            let params = forced_params(&[], game_id).unwrap();
+            let mut seed = 0;
+            let mut kept = 0;
+            while kept < 4 {
+                seed += 1;
+                assert!(seed < 100, "{game_id} would not generate four puzzles");
+                let Some(Ok(generated)) = generate(&params, seed) else {
+                    continue;
+                };
+                // The fixture carries a Rust `check_rules` verdict, not just the solver's output
+                let verdict = match *game_id {
+                    light_up::GAME_ID => light_up::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    tents::GAME_ID => tents::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    slant::GAME_ID => slant::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    bridges::GAME_ID => bridges::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    loopy::GAME_ID => loopy::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    unruly::GAME_ID => unruly::check_rules(&generated.description, &generated.solution).map(|v| v.len()),
+                    other => panic!("no check_rules for {other}"),
+                };
+                assert!(
+                    matches!(verdict, Ok(0)),
+                    "{game_id} seed {seed}: check_rules rejects the solution: {verdict:?}"
+                );
+                kept += 1;
+                entries.push(format!(
+                    "  {{ \"gameId\": \"{game_id}\", \"seed\": {seed}, \"description\": \"{}\", \"solution\": \"{}\" }}",
+                    hex(&generated.description),
+                    hex(&generated.solution)
+                ));
+            }
+        }
+        let json = format!("[\n{}\n]\n", entries.join(",\n"));
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../../frontend/openchat-shared/src/utils/dailyGames/parity.json");
+        if std::env::var("WRITE_PARITY_FIXTURE").is_ok() {
+            std::fs::write(&path, &json).unwrap();
+            return;
+        }
+        // Prettier reflows the file, so compare the content, not the layout
+        let strip = |s: &str| s.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+        let current = std::fs::read_to_string(&path).unwrap_or_default();
+        assert_eq!(
+            strip(&current),
+            strip(&json),
+            "parity.json is stale: run WRITE_PARITY_FIXTURE=1 cargo test -p daily_puzzle_canister_impl client_parity_fixture_is_current"
+        );
+    }
 }

@@ -1,0 +1,16 @@
+{
+    "name": "Slant",
+    "rules": "Draw a diagonal in every cell. A number says how many diagonals touch that corner; corners with no number are free. The diagonals must never join up into a loop.",
+    "technique.1": "This number already has all the lines it needs, so every other cell around it must slant away from it.",
+    "technique.2": "This number still needs exactly as many lines as it has empty cells around it, so all of those cells must slant towards it.",
+    "technique.3": "The two corners this line would join are already linked by a chain of lines, so joining them would close a loop, and the cell must slant the other way.",
+    "technique.4": "This line would join two groups of lines that never reach the edge of the grid and have no other way out, sealing them into a loop, so the cell must slant the other way.",
+    "technique.5": "The numbers between this cell and the highlighted filled cell can only be met if the two slant the same way, so copy the filled cell.",
+    "technique.6": "Two neighbouring empty cells around this number must slant the same way, so between them they give it exactly one line, and that settles the other cells around it.",
+    "demo.1": "Every cell gets one diagonal. It can lean either way, but no cell is left empty.",
+    "demo.2": "A number counts the diagonals that touch that corner. Two touch this 2, so it is done.",
+    "demo.3": "The same diagonal ends on a corner with no number. Those corners count nothing, so they never limit you.",
+    "demo.4": "This corner needs four, so all four cells around it have to point at it. There is only one way to do that.",
+    "demo.5": "These four have joined up into a closed ring. Rings are not allowed, so one of them must lean the other way.",
+    "demo.6": "Every cell filled, every number matched, and no ring anywhere."
+}

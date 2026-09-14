@@ -22,6 +22,7 @@
     import ProposalContent from "./proposals/ProposalContent.svelte";
     import ReportedMessageContent from "./ReportedMessageContent.svelte";
     import UserReferralCardContent from "./UserReferralCardContent.svelte";
+    import DailyResultContent from "./dailypuzzle/DailyResultContent.svelte";
     import VideoCallContent from "./VideoCallContent.svelte";
     import VideoContent from "./VideoContent.svelte";
     import TextContentReply from "./TextContentReply.svelte";
@@ -178,4 +179,6 @@
     <ImageContent {me} {title} {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
+{:else if content.kind === "daily_result"}
+    <DailyResultContent {content} {intersecting} />
 {/if}

@@ -222,6 +222,9 @@ export default {
                 process.env.OC_IDENTITY_CANISTER,
             ),
             "import.meta.env.OC_ONLINE_CANISTER": JSON.stringify(process.env.OC_ONLINE_CANISTER),
+            "import.meta.env.OC_DAILY_PUZZLE_CANISTER": JSON.stringify(
+                process.env.OC_DAILY_PUZZLE_CANISTER ?? "",
+            ),
             "import.meta.env.OC_PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.OC_PROPOSALS_BOT_CANISTER,
             ),

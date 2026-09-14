@@ -91,8 +91,11 @@ import {
     routeForMessage,
     setMinLogLevel,
     shouldPreprocessGate,
+    rolloverDelay,
+    stateFor,
     storeEmailSignInSession,
     stripLinkDisabledMarker,
+    todaysPuzzle,
     toDer,
     toTitleCase,
     updateCreatedUser,
@@ -101,6 +104,7 @@ import {
     userOrUserGroupId,
     userOrUserGroupName,
     userStatus,
+    withUserState,
     type AcceptP2PSwapResponse,
     type AcceptedRules,
     type AccessGate,
@@ -148,6 +152,13 @@ import {
     type CkbtcMinterDepositInfo,
     type CkbtcMinterWithdrawalInfo,
     type ClaimDailyChitResponse,
+    type DailyPuzzleConfig,
+    type DailyPuzzleHintResponse,
+    type DailyPuzzleResult,
+    type DailyPuzzleStartResponse,
+    type DailyPuzzleState,
+    type DailyPuzzleSubmitResponse,
+    type GameConfig,
     type ClientJoinCommunityResponse,
     type ClientJoinGroupResponse,
     type CommunitiesRoute,
@@ -344,11 +355,7 @@ import { locale } from "svelte-i18n";
 import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
-import {
-    approveFromExternalWallet,
-    type SignerWallet,
-    type WalletAccount,
-} from "./utils/signer";
+import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import {
     FilteredProposals,
     achievementsStore,
@@ -363,6 +370,7 @@ import {
     chatSummariesStore,
     chatsInitialisedStore,
     chitStateStore,
+    dailyPuzzleStore,
     communitiesStore,
     communityFiltersStore,
     confirmedThreadEventIndexesLoadedStore,
@@ -470,6 +478,7 @@ import { offlineStore } from "./stores";
 import { diamondDurationToMs } from "./stores/diamond";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { lastOnlineDates } from "./stores/lastOnlineDates";
+import { dailyPuzzleResultsCache } from "./stores/dailyPuzzleResults";
 import { minutesOnlineStore } from "./stores/minutesOnline";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { captureRulesAcceptanceStore } from "./stores/rules";
@@ -653,6 +662,10 @@ const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const BOT_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+// The daily puzzle changes at rollover and when an operator regenerates or enables it; an
+// installed app never reloads, so this is how it learns (#9334 invariants 56 and 57)
+const DAILY_PUZZLE_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+const DAILY_PUZZLE_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
@@ -688,11 +701,18 @@ export class OpenChat {
     #emptyChatIncidents = new Set<number>();
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
+    #dailyResultsPending = new Map<
+        string,
+        { userIds: Set<string>; promise: Promise<Record<string, DailyPuzzleResult>> }
+    >();
     #membershipCheck: number | undefined;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
     #chatsPoller: Poller | undefined = undefined;
     #botsPoller: Poller | undefined = undefined;
+    #dailyPuzzlePoller: Poller | undefined = undefined;
+    #dailyPuzzleRolloverTimer: number | undefined = undefined;
+    #dailyPuzzleVisibilityListener: (() => void) | undefined = undefined;
     #registryPoller: Poller | undefined = undefined;
     #onlinePoller: Poller | undefined = undefined;
     #btcBalancePoller: Poller | undefined = undefined;
@@ -867,6 +887,8 @@ export class OpenChat {
               );
         // Stop the chats poller until we have finished loading the new identity
         this.#chatsPoller?.stop();
+        this.#dailyPuzzlePoller?.stop();
+        if (typeof window !== "undefined") window.clearTimeout(this.#dailyPuzzleRolloverTimer);
         currentUserStore.set(anonymousUser());
         chatsInitialisedStore.set(false);
         const authPrincipal = identity.getPrincipal().toString();
@@ -1245,6 +1267,7 @@ export class OpenChat {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
             this.#startOneSecBalanceUpdateJob();
+            this.#startDailyPuzzlePoller();
             this.#worker
                 .send({ kind: "getUserStorageLimits" })
                 .then((storage) => {
@@ -1284,6 +1307,32 @@ export class OpenChat {
 
     resumeEventLoop() {
         this.#startChatsPoller();
+    }
+
+    #startDailyPuzzlePoller() {
+        this.#dailyPuzzlePoller?.stop();
+        if (anonUserStore.value) return;
+        this.#dailyPuzzlePoller = new Poller(
+            () => this.dailyPuzzleFetch(),
+            DAILY_PUZZLE_UPDATE_INTERVAL,
+            DAILY_PUZZLE_UPDATE_IDLE_INTERVAL,
+            true,
+        );
+        // Coming back to a backgrounded app is the moment a stale puzzle would show
+        if (typeof document !== "undefined" && this.#dailyPuzzleVisibilityListener === undefined) {
+            this.#dailyPuzzleVisibilityListener = () => {
+                if (document.visibilityState === "visible") this.dailyPuzzleFetch();
+            };
+            document.addEventListener("visibilitychange", this.#dailyPuzzleVisibilityListener);
+        }
+    }
+
+    #scheduleDailyPuzzleRollover(state: DailyPuzzleState) {
+        if (typeof window === "undefined") return;
+        window.clearTimeout(this.#dailyPuzzleRolloverTimer);
+        const delay = rolloverDelay(state, Date.now());
+        if (delay === undefined) return;
+        this.#dailyPuzzleRolloverTimer = window.setTimeout(() => this.dailyPuzzleFetch(), delay);
     }
 
     #startBotsPoller() {
@@ -3535,7 +3584,10 @@ export class OpenChat {
 
     diffGroupPermissions = diffGroupPermissions;
 
-    messageContentFromFile(file: File | LazyFile, context: MessageContext): Promise<AttachmentContent> {
+    messageContentFromFile(
+        file: File | LazyFile,
+        context: MessageContext,
+    ): Promise<AttachmentContent> {
         return messageContentFromFile(file, isDiamondStore.value, {
             websiteVersion: this.config.websiteVersion,
             onProgress: (p) =>
@@ -4880,12 +4932,10 @@ export class OpenChat {
         text: string | undefined,
         captioned: CaptionedContent | undefined,
     ): MessageContent {
-        return captioned
-            ? { ...captioned, caption: text }
-            : ({
-                  kind: "text_content",
-                  text: text ?? "",
-              } as MessageContent);
+        if (captioned === undefined) {
+            return { kind: "text_content", text: text ?? "" };
+        }
+        return { ...captioned, caption: text };
     }
 
     #onSendMessageFailure(
@@ -7219,14 +7269,20 @@ export class OpenChat {
         if (premiumItems !== undefined) {
             premiumItemsStore.set(premiumItems);
         }
-        if (chitState !== undefined && chitState.streakEnds >= chitStateStore.value.streakEnds) {
-            chitStateStore.set(chitState);
-            userStore.updateUser(currentUserIdStore.value, (user) => ({
-                ...user,
-                chitBalance: chitState.chitBalance,
-                streak: chitState.streak,
-                maxStreak: chitState.maxStreak,
-            }));
+        if (chitState !== undefined) {
+            // The balances are authoritative whatever the streak says: the streakEnds gate
+            // exists so a stale streak (eg. from a response that raced a local claim) cannot
+            // roll the streak back, but a stale balance was never protected by it, only left
+            // to drift. Apply the balances unconditionally and gate only the streak fields.
+            OpenChat.#setChitBalance(chitState.chitBalance, chitState.totalChitEarned);
+            if (chitState.streakEnds >= chitStateStore.value.streakEnds) {
+                chitStateStore.set(chitState);
+                userStore.updateUser(currentUserIdStore.value, (user) => ({
+                    ...user,
+                    streak: chitState.streak,
+                    maxStreak: chitState.maxStreak,
+                }));
+            }
         }
     }
 
@@ -10673,6 +10729,259 @@ export class OpenChat {
         });
     }
 
+    // The daily puzzle. Everything per user goes through the local user index; the daily
+    // canister is only asked for the public puzzle and for result verification.
+
+    dailyPuzzleFetch(): Promise<DailyPuzzleState> {
+        if (anonUserStore.value) return Promise.resolve(dailyPuzzleStore.value);
+        return this.#worker
+            .send({ kind: "dailyPuzzleFetch", userId: currentUserIdStore.value })
+            .then((resp) => {
+                if ("kind" in resp) {
+                    console.warn("Daily puzzle fetch failed", resp);
+                    return dailyPuzzleStore.value;
+                }
+                const next: DailyPuzzleState = {
+                    puzzles: resp.puzzles,
+                    states: resp.states,
+                    lastFetched: Date.now(),
+                };
+                dailyPuzzleStore.set(next);
+                this.#scheduleDailyPuzzleRollover(next);
+                return next;
+            })
+            .catch((err) => {
+                console.warn("Daily puzzle fetch failed", err);
+                return dailyPuzzleStore.value;
+            });
+    }
+
+    // Sets the CHIT stores from balances the server reported. Never guess a delta client-side:
+    // a debit the user canister answered AlreadyAdded charges nothing, and a credit can be queued
+    // for retry, so a guessed delta drifts from the real balance.
+    static #setChitBalance(chitBalance: number, totalChitEarned: number) {
+        withPausedStores(() => {
+            chitStateStore.update((chit) => {
+                chit.chitBalance = chitBalance;
+                chit.totalChitEarned = totalChitEarned;
+                return chit;
+            });
+            currentUserStore.update((user) => {
+                user.chitBalance = chitBalance;
+                user.totalChitEarned = totalChitEarned;
+                return user;
+            });
+            userStore.updateUser(currentUserIdStore.value, (u) => ({
+                ...u,
+                chitBalance,
+                totalChitEarned,
+            }));
+        });
+    }
+
+    static #setChitBalanceFrom(resp: { chitBalance?: number; totalChitEarned?: number }) {
+        if (resp.chitBalance !== undefined && resp.totalChitEarned !== undefined) {
+            OpenChat.#setChitBalance(resp.chitBalance, resp.totalChitEarned);
+        }
+    }
+
+    dailyPuzzleStart(gameId: string, expectedFee: number): Promise<DailyPuzzleStartResponse> {
+        const puzzle = todaysPuzzle(dailyPuzzleStore.value, gameId);
+        if (puzzle === undefined) {
+            return Promise.resolve({ kind: "error", code: -1, message: "No daily puzzle" });
+        }
+        return this.#worker
+            .send({
+                kind: "dailyPuzzleStart",
+                userId: currentUserIdStore.value,
+                gameId: puzzle.gameId,
+                number: puzzle.number,
+                expectedEntryFee: expectedFee,
+            })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    dailyPuzzleStore.update((s) => withUserState(s, resp.state));
+                    OpenChat.#setChitBalanceFrom(resp);
+                    this.dailyPuzzleFetch();
+                }
+                return resp;
+            });
+    }
+
+    dailyPuzzleSubmit(gameId: string, grid: Uint8Array): Promise<DailyPuzzleSubmitResponse> {
+        const puzzle = todaysPuzzle(dailyPuzzleStore.value, gameId);
+        if (puzzle === undefined) {
+            return Promise.resolve({ kind: "error", code: -1, message: "No daily puzzle" });
+        }
+        return this.#worker
+            .send({
+                kind: "dailyPuzzleSubmit",
+                userId: currentUserIdStore.value,
+                gameId: puzzle.gameId,
+                number: puzzle.number,
+                grid,
+            })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    dailyPuzzleStore.update((s) => {
+                        const state = stateFor(s, gameId);
+                        return state === undefined
+                            ? s
+                            : withUserState(s, {
+                                  ...state,
+                                  solved: resp.solved,
+                                  streak: resp.solved.streak,
+                                  hasSolvedBefore: true,
+                              });
+                    });
+                    OpenChat.#setChitBalanceFrom(resp.solved);
+                    this.dailyPuzzleFetch();
+                }
+                return resp;
+            });
+    }
+
+    dailyPuzzleHint(
+        gameId: string,
+        level: number,
+        filled: [number, number][],
+        expectedPrice: number,
+    ): Promise<DailyPuzzleHintResponse> {
+        const puzzle = todaysPuzzle(dailyPuzzleStore.value, gameId);
+        if (puzzle === undefined) {
+            return Promise.resolve({ kind: "error", code: -1, message: "No daily puzzle" });
+        }
+        return this.#worker
+            .send({
+                kind: "dailyPuzzleHint",
+                userId: currentUserIdStore.value,
+                gameId: puzzle.gameId,
+                number: puzzle.number,
+                level,
+                filled,
+                expectedPrice,
+            })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    dailyPuzzleStore.update((s) => withUserState(s, resp.state));
+                    OpenChat.#setChitBalanceFrom(resp);
+                    this.dailyPuzzleFetch();
+                }
+                return resp;
+            });
+    }
+
+    // Operator endpoints on the daily_puzzle canister. Every answer is the server's own: a
+    // refusal comes back as an OCError for the caller to show, never swallowed.
+    dailyPuzzleConfig(): Promise<DailyPuzzleConfig | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleConfig" });
+    }
+
+    dailyPuzzleGameConfigs(): Promise<[string, GameConfig][] | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleGameConfigs" });
+    }
+
+    dailyPuzzleSetConfig(config: DailyPuzzleConfig): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleSetConfig", config });
+    }
+    dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });
+    }
+    dailyPuzzleSaveGrid(gameId: string, grid: Uint8Array): Promise<boolean> {
+        const puzzle = todaysPuzzle(dailyPuzzleStore.value, gameId);
+        if (puzzle === undefined) return Promise.resolve(false);
+        return this.#worker
+            .send({
+                kind: "dailyPuzzleSaveGrid",
+                userId: currentUserIdStore.value,
+                gameId: puzzle.gameId,
+                number: puzzle.number,
+                grid,
+            })
+            .then((resp) => resp.kind === "success")
+            .catch(() => false);
+    }
+
+    // Result cards check themselves against the daily canister's results index. Calls made
+    // within 50ms of each other for the same puzzle are coalesced into one query, and answers
+    // (including "no row") are cached for a few minutes.
+    verifyDailyResults(
+        gameId: string,
+        number: number,
+        userIds: string[],
+    ): Promise<Record<string, DailyPuzzleResult>> {
+        const now = Date.now();
+        const verified: Record<string, DailyPuzzleResult> = {};
+        const missing: string[] = [];
+        for (const userId of userIds) {
+            const cached = dailyPuzzleResultsCache.get(gameId, number, userId, now);
+            if (cached === undefined) {
+                missing.push(userId);
+            } else if (cached.result !== undefined) {
+                verified[userId] = cached.result;
+            }
+        }
+        if (missing.length === 0) return Promise.resolve(verified);
+        return this.#verifyDailyResultsBatched(gameId, number, missing).then((fetched) => ({
+            ...verified,
+            ...fetched,
+        }));
+    }
+
+    #verifyDailyResultsBatched(
+        gameId: string,
+        number: number,
+        userIds: string[],
+    ): Promise<Record<string, DailyPuzzleResult>> {
+        const key = `${gameId}:${number}`;
+        let pending = this.#dailyResultsPending.get(key);
+        if (pending === undefined) {
+            const batch = new Set<string>();
+            const promise = new Promise<void>((resolve) => window.setTimeout(resolve, 50)).then(
+                () => {
+                    this.#dailyResultsPending.delete(key);
+                    return this.#processDailyResultsQueue(gameId, number, [...batch]);
+                },
+            );
+            pending = { userIds: batch, promise };
+            this.#dailyResultsPending.set(key, pending);
+        }
+        userIds.forEach((u) => pending.userIds.add(u));
+        return pending.promise;
+    }
+
+    async #processDailyResultsQueue(
+        gameId: string,
+        number: number,
+        userIds: string[],
+    ): Promise<Record<string, DailyPuzzleResult>> {
+        const byUser: Record<string, DailyPuzzleResult> = {};
+        try {
+            // the canister caps user_ids at 200 per call
+            for (let i = 0; i < userIds.length; i += 200) {
+                const chunk = userIds.slice(i, i + 200);
+                const rows = await this.#worker.send({
+                    kind: "dailyPuzzleResults",
+                    gameId,
+                    number,
+                    userIds: chunk,
+                });
+                for (const row of rows) {
+                    byUser[row.userId] = row;
+                }
+                dailyPuzzleResultsCache.set(
+                    gameId,
+                    number,
+                    chunk.map((u) => [u, byUser[u]]),
+                    Date.now(),
+                );
+            }
+        } catch (err) {
+            console.warn("Daily puzzle result verification failed", err);
+        }
+        return byUser;
+    }
+
     payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
         return this.#worker
             .send({
@@ -10683,21 +10992,7 @@ export class OpenChat {
             .then((resp) => {
                 if (resp.kind === "success") {
                     withPausedStores(() => {
-                        chitStateStore.update((chit) => {
-                            chit.chitBalance = resp.chitBalance;
-                            chit.totalChitEarned = resp.totalChitEarned;
-                            return chit;
-                        });
-                        currentUserStore.update((user) => {
-                            user.chitBalance = resp.chitBalance;
-                            user.totalChitEarned = resp.totalChitEarned;
-                            return user;
-                        });
-                        userStore.updateUser(currentUserIdStore.value, (u) => ({
-                            ...u,
-                            chitBalance: resp.chitBalance,
-                            totalChitEarned: resp.totalChitEarned,
-                        }));
+                        OpenChat.#setChitBalance(resp.chitBalance, resp.totalChitEarned);
                         premiumItemsStore.add(item);
                     });
                 } else {

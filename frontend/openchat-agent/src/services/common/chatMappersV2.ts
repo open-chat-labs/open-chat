@@ -871,6 +871,33 @@ function customContent(value: TCustomContent): MessageContent {
             kind: "user_referral_card",
         };
     }
+    if (value.kind === "daily_result") {
+        const json = new TextDecoder().decode(consolidateBytes(value.data));
+        const decoded = JSON.parse(json) as {
+            v: number;
+            gameId: string;
+            number: number;
+            userId: string;
+            solveTimeMs: number;
+            hintsUsed: number;
+            streak: number;
+            layout: string;
+            tier?: number;
+            caption?: string;
+        };
+        return {
+            kind: "daily_result",
+            gameId: decoded.gameId,
+            number: decoded.number,
+            userId: decoded.userId,
+            solveTimeMs: decoded.solveTimeMs,
+            hintsUsed: decoded.hintsUsed,
+            streak: decoded.streak,
+            layout: decoded.layout,
+            tier: decoded.tier,
+            caption: decoded.caption,
+        };
+    }
 
     throw new Error(`Unknown custom content kind received: ${value.kind}`);
 }
@@ -1684,6 +1711,27 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
                             url: domain.url,
                             width: domain.width,
                             height: domain.height,
+                        }),
+                    ),
+                },
+            };
+
+        case "daily_result":
+            return {
+                Custom: {
+                    kind: "daily_result",
+                    data: new TextEncoder().encode(
+                        JSON.stringify({
+                            v: 1,
+                            gameId: domain.gameId,
+                            number: domain.number,
+                            userId: domain.userId,
+                            solveTimeMs: domain.solveTimeMs,
+                            hintsUsed: domain.hintsUsed,
+                            streak: domain.streak,
+                            layout: domain.layout,
+                            tier: domain.tier,
+                            caption: domain.caption,
                         }),
                     ),
                 },

@@ -253,6 +253,9 @@ export function chitEventType(value: TChitEventType): ChitEventType {
                 item: value.PurchasedPremiumItem as PremiumItem,
             };
         }
+        if ("Game" in value) {
+            return { kind: "game", gameId: value.Game.game_id, key: value.Game.key };
+        }
     }
 
     throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", value);

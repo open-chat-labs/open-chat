@@ -1,0 +1,14 @@
+{
+    "name": "Light Up",
+    "rules": "Light every white cell. A bulb lights its row and column up to a black cell, no bulb may shine on another, and a number says how many bulbs touch that cell.",
+    "technique.1": "This cell can only be lit from one place, so a bulb must go there.",
+    "technique.2": "This number already touches all the bulbs it asks for, so the other cells next to it must stay empty.",
+    "technique.3": "This number still needs a bulb in every free cell next to it, so put a bulb in each of them.",
+    "technique.4": "At least one of the highlighted cells must hold a bulb, and a bulb in this cell would rule all of them out, so this cell must stay empty.",
+    "demo.1": "Place bulbs until every white cell is lit.",
+    "demo.2": "A bulb lights its own row and column, as far as the black cells.",
+    "demo.3": "A number counts the bulbs next to it. This 4 needs one on each side.",
+    "demo.4": "This corner is still dark, and nothing else can reach it, so it takes a bulb of its own.",
+    "demo.5": "No bulb may shine on another. These two are in the same column with nothing between them.",
+    "demo.6": "Every white cell is lit, the 4 has its four bulbs, and no bulb shines on another."
+}

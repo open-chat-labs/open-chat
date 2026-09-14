@@ -124,7 +124,14 @@ export type ChitEventType =
     | AchievementUnlocked
     | ReferralType
     | PurchasedPremiumItem
-    | ExternalAchievementUnlocked;
+    | ExternalAchievementUnlocked
+    | GameChitEvent;
+
+export type GameChitEvent = {
+    kind: "game";
+    gameId: string;
+    key: string;
+};
 
 export type PurchasedPremiumItem = {
     kind: "purchased_premium_item";

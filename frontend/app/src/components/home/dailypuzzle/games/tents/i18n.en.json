@@ -1,0 +1,18 @@
+{
+    "name": "Tents",
+    "rules": "Every tree needs its own tent directly beside it, never diagonally. Tents never touch, not even at corners. The numbers count the tents in each row and column.",
+    "technique.1": "No tree next to this cell still needs a tent, so this cell can't hold one.",
+    "technique.2": "A tent already touches this cell, so this cell can't hold one.",
+    "technique.3": "This tree has only one cell left where its tent can go, so that cell must be a tent.",
+    "technique.4": "This tree's tent must go in one of two cells, and both of them touch this cell, so this cell can't hold a tent.",
+    "technique.5": "Only these cells in this row or column can still take a tent, and every way of fitting in the ones it needs agrees about the marked cells, so you can fill them in.",
+    "technique.6": "Only these cells in this row or column can still take a tent, and every way of fitting in the ones it needs puts one next to the marked cells, so you can rule them out.",
+    "technique.7": "This row or column needs as many tents as it has cells left that could hold one, so every one of them is a tent.",
+    "technique.8": "This row or column already has all its tents, so no other cell in it can hold one.",
+    "demo.1": "Every tree needs its own tent in a cell beside it. The numbers count the tents in each row and column.",
+    "demo.2": "A tent goes directly beside its tree, above, below, left or right. Corners do not count, so these cells stay empty.",
+    "demo.3": "This column needs one tent, and only one cell is left for it.",
+    "demo.4": "Tents never touch, not even at a corner. These two do, so one of them has to move.",
+    "demo.5": "Only one cell beside this tree is still free, so its tent goes there.",
+    "demo.6": "Every tree has a tent beside it, no two tents touch, and the counts all match."
+}
