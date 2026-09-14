@@ -205,7 +205,12 @@
                 </CommonButton2>
             {/if}
             {#each puzzles as { puzzle, state } (puzzle.gameId)}
-                <Button onClick={() => publish("dailyPuzzle", { gameId: puzzle.gameId })}>
+                <Button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        publish("dailyPuzzle", { gameId: puzzle.gameId });
+                    }}>
                     <Column crossAxisAlignment="center">
                         <Row width="hug" gap="md">
                             <Subtitle width="hug" fontWeight="bold">
