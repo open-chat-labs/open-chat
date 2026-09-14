@@ -271,7 +271,6 @@ export class DailyPuzzleGame {
         if (this.inputDisabled) return;
         const next = this.game.tap(this.model, this.state, key);
         if (next === this.state) return;
-        this.resetArmed = false;
         this.state = next;
         this.#afterChange();
         this.#trimHint();
@@ -347,6 +346,9 @@ export class DailyPuzzleGame {
     }
 
     #afterChange(): void {
+        // Any change to the board, a tap or a reveal, disarms a pending reset: the confirming tap
+        // must clear the board the player armed it on, not one that has changed since
+        this.resetArmed = false;
         this.#dirty = true;
         writeLocal(
             this.userId,

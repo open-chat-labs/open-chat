@@ -558,6 +558,31 @@ describe("reset (#9361)", () => {
         expect(game.filled(model, g.state).length).toBe(2);
     });
 
+    // A reveal changes the board too, and it is paid for: the confirming tap must not wipe it
+    test("a level 3 reveal between the two taps disarms the reset", async () => {
+        const reveal: ServedHint = {
+            hint: { technique: 1, focus: [4], target: [4], conclusions: [[4, 1]] },
+            level: 3,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: reveal,
+                hintsUsed: 1,
+                state: userState({ hints: [reveal] }),
+            })),
+        });
+        const g = build(userState(), client);
+        g.tap(0);
+        g.reset();
+        expect(g.resetArmed).toBe(true);
+        await g.hint();
+        expect(g.resetArmed).toBe(false);
+        g.reset();
+        expect(game.filled(model, g.state).length).toBe(2);
+    });
+
     // invariants 1 and 2
     test("a reset sends exactly one save of the empty grid and touches nothing else", () => {
         vi.useFakeTimers();
@@ -606,6 +631,10 @@ describe("reset (#9361)", () => {
         const g = build(userState());
         g.tap(0);
         expect(g.canReset).toBe(true);
+        // and not while a call is in flight, or its response would land on an empty board
+        g.busy = true;
+        expect(g.canReset).toBe(false);
+        g.busy = false;
         const solved = build(
             userState({
                 solved: { solvedAt: 2n, solveTimeMs: 1n, reward: 250, hintsUsed: 0, streak: 1 },
@@ -619,7 +648,34 @@ describe("reset (#9361)", () => {
         expect(solved.resetArmed).toBe(false);
     });
 
-    test("a reset clears the mistake, hint highlight and caption with the marks", async () => {
+    test("a reset clears the hint highlight and caption with the marks", async () => {
+        const step: ServedHint = {
+            hint: { technique: 1, focus: [0, 1, 2], target: [4], conclusions: [] },
+            level: 2,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "success",
+                hint: step,
+                hintsUsed: 1,
+                state: userState({ hints: [step] }),
+            })),
+        });
+        const g = build(userState(), client);
+        g.tap(0);
+        await g.hint();
+        expect(g.focus.size).toBeGreaterThan(0);
+        expect(g.target.size).toBeGreaterThan(0);
+        expect(g.caption).toBeDefined();
+        g.reset();
+        g.reset();
+        expect(g.focus.size).toBe(0);
+        expect(g.target.size).toBe(0);
+        expect(g.caption).toBeUndefined();
+    });
+
+    test("a reset drops the mistake record: the same wrong mark afterwards is a fresh question", async () => {
         const mistake: ServedHint = {
             hint: { technique: 0, focus: [0], target: [], conclusions: [] },
             level: 1,
@@ -641,7 +697,9 @@ describe("reset (#9361)", () => {
         g.reset();
         expect(g.mistakes.size).toBe(0);
         expect(g.caption).toBeUndefined();
-        expect(g.focus.size).toBe(0);
+        // the board no longer exists, so its answer is not carried over to a re-marked one
+        g.tap(0);
+        expect(g.mistakes.size).toBe(0);
         expect(g.hintButton.kind).toBe("hint");
     });
 });
