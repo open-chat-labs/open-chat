@@ -52,7 +52,33 @@ impl ChitEvents {
         ascending: bool,
     ) -> (Vec<ChitEvent>, u32) {
         let (start, end) = if ascending { (from, to) } else { (to, from) };
-        let all = self.events_between(start.unwrap_or_default(), end.unwrap_or(TimestampMillis::MAX));
+        let (start, end) = (start.unwrap_or_default(), end.unwrap_or(TimestampMillis::MAX));
+
+        if self.on_heap.is_empty() {
+            // Only deserialize the events in the requested page
+            return with_map(|m| {
+                if start > end {
+                    return (Vec::new(), 0);
+                }
+                let total = m.range(keys_between(start, end)).count() as u32;
+                let page = m.range(keys_between(start, end));
+                let events = if ascending {
+                    page.skip(skip)
+                        .take(max)
+                        .map(|(k, v)| event_from_bytes(k.timestamp(), &v))
+                        .collect()
+                } else {
+                    page.rev()
+                        .skip(skip)
+                        .take(max)
+                        .map(|(k, v)| event_from_bytes(k.timestamp(), &v))
+                        .collect()
+                };
+                (events, total)
+            });
+        }
+
+        let all = self.events_between(start, end);
         let total = all.len() as u32;
 
         let events = if ascending {
@@ -376,6 +402,18 @@ mod tests {
         };
         check(&store);
 
+        let pages = |store: &ChitEvents| {
+            [true, false].map(|ascending| {
+                (0..4)
+                    .map(|page| {
+                        let (events, total) = store.events(None, None, page * 3, 3, ascending);
+                        (events.iter().map(|e| (e.timestamp, e.amount)).collect::<Vec<_>>(), total)
+                    })
+                    .collect::<Vec<_>>()
+            })
+        };
+        let pages_before_migration = pages(&store);
+
         assert_eq!(store.migrate_to_stable_memory(3), 3);
         assert_eq!(store.on_heap_count(), 4);
         check(&store);
@@ -383,6 +421,7 @@ mod tests {
         assert_eq!(store.on_heap_count(), 0);
         assert_eq!(store.migrate_to_stable_memory(100), 0);
         check(&store);
+        assert_eq!(pages(&store), pages_before_migration);
     }
 
     fn init_test_data(on_heap: bool) -> ChitEvents {
