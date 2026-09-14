@@ -672,6 +672,178 @@
     "currentChitBalance": "Aktueller CHIT-Saldo",
     "currentLimit": "Ihr aktuelles Speicherlimit beträgt {limit} GB und Ihr Kontostand beträgt {balance} ICP.",
     "currentUsage": "Aktuelle Speichernutzung",
+    "dailyPuzzle": {
+        "title": "The Daily",
+        "number": "The Daily Nr. {number}",
+        "tier": {
+            "0": "Leicht",
+            "1": "Knifflig"
+        },
+        "todaysPuzzle": "Das heutige Rätsel",
+        "play": "Spielen",
+        "continue": "Weiter",
+        "solved": "Gelöst",
+        "unavailable": "Zurzeit ist kein Rätsel verfügbar.",
+        "startFree": "Starten (erstes Rätsel gratis)",
+        "startFee": "Für {fee} CHIT starten",
+        "hintFree": "Tipp (Stufe {level})",
+        "hintPrice": "Tipp (Stufe {level}, {price} CHIT)",
+        "hintsUsed": "{count} Tipps",
+        "hintsLeft": "{count} übrig",
+        "noHintsLeft": "Keine Tipps mehr für das heutige Rätsel",
+        "streakDays": "{streak} Tage in Folge",
+        "submitting": "Ihre Lösung wird geprüft...",
+        "solvedTitle": "Gelöst!",
+        "solvedSummary": "{time} mit {hints} Tipps. Serie: {streak}.",
+        "reward": "+{reward} CHIT",
+        "share": "Teilen",
+        "verified": "Verifiziert",
+        "unverified": "Nicht verifiziert",
+        "card": {
+            "time": "Zeit",
+            "hints": "Tipps",
+            "dayStreak": "Tage in Folge"
+        },
+        "wrong": "Das stimmt nicht. Prüfen Sie die roten Zellen.",
+        "mistake": "In den roten Zellen stimmt etwas nicht. Korrigieren Sie sie und fragen Sie dann erneut nach einem Tipp.",
+        "fixMistakeFirst": "Korrigieren Sie zuerst die roten Zellen",
+        "noFreeChecks": "Keine kostenlosen Prüfungen mehr für das heutige Rätsel",
+        "checksLeft": "{count} Prüfungen übrig",
+        "revealed": "Für Sie ausgefüllt.",
+        "reset": "Zurücksetzen",
+        "resetConfirm": "Das Brett leeren?",
+        "replaced": "Dieses Rätsel wurde ersetzt. Hier ist das neue.",
+        "failedToStart": "Das Rätsel konnte leider nicht gestartet werden",
+        "failedToSubmit": "Ihre Lösung konnte leider nicht geprüft werden",
+        "failedHint": "Es konnte leider kein Tipp geholt werden",
+        "chitEvent": {
+            "entry": "Teilnahme am täglichen Rätsel",
+            "solve": "Tägliches Rätsel gelöst",
+            "hint": "Tipp zum täglichen Rätsel"
+        },
+        "needsNewerApp": "Dieser Rätseltyp braucht eine neuere App",
+        "games": {
+            "bridges": {
+                "name": "Bridges",
+                "rules": "Verbinden Sie die Inseln mit Brücken, sodass jede Insel genau ihre Zahl erhält. Brücken verlaufen gerade, kreuzen sich nie, und höchstens zwei verbinden ein Paar.",
+                "technique": {
+                    "1": "Diese Insel erreicht ihre Zahl nur, wenn sie jede Brücke nutzt, die noch um sie herum passt. Zeichnen Sie also alle.",
+                    "2": "Die Zahl dieser Insel ist zu groß, um einen Nachbarn auszulassen. Sie braucht also mindestens eine Brücke in jede Richtung, die sie erreichen kann.",
+                    "3": "Ohne eine Brücke zu diesem Nachbarn könnten die anderen Richtungen dieser Insel nicht genug Brücken für ihre Zahl liefern. Hier muss also eine Brücke hin."
+                },
+                "demo": {
+                    "1": "Verbinden Sie die Inseln mit Brücken. Die Zahl auf einer Insel gibt an, wie viele Brücken sie erreichen müssen.",
+                    "2": "Brücken verlaufen gerade zwischen zwei Inseln und kreuzen sich nie. Diese zählt an jedem Ende eins.",
+                    "3": "Dasselbe Paar kann eine zweite Brücke bekommen. Jetzt zählt es an jedem Ende zwei.",
+                    "4": "Keine Insel darf ihre Zahl überschreiten. Diese braucht drei Brücken und hat vier.",
+                    "5": "Eine Brücke an der Seite statt zwei, und sie hat ihre drei.",
+                    "6": "Jede Zahl stimmt, und jede Insel ist mit den übrigen verbunden. Damit ist es gelöst."
+                }
+            },
+            "light_up": {
+                "name": "Light Up",
+                "rules": "Beleuchten Sie jede weiße Zelle. Eine Lampe beleuchtet ihre Zeile und Spalte bis zu einer schwarzen Zelle, keine Lampe darf eine andere anstrahlen, und eine Zahl gibt an, wie viele Lampen direkt daneben stehen, waagerecht oder senkrecht, nie diagonal.",
+                "technique": {
+                    "1": "Diese Zelle kann nur von einer Stelle aus beleuchtet werden, also muss dort eine Lampe stehen.",
+                    "2": "Diese Zahl berührt bereits alle Lampen, die sie verlangt, also müssen die anderen Zellen daneben leer bleiben.",
+                    "3": "Diese Zahl braucht noch in jeder freien Zelle daneben eine Lampe, also setzen Sie in jede davon eine Lampe.",
+                    "4": "Mindestens eine der markierten Zellen muss eine Lampe enthalten, und eine Lampe in dieser Zelle würde sie alle ausschließen, also muss diese Zelle leer bleiben."
+                },
+                "demo": {
+                    "1": "Setzen Sie Lampen, bis jede weiße Zelle beleuchtet ist.",
+                    "2": "Eine Lampe beleuchtet ihre eigene Zeile und Spalte, bis zu den schwarzen Zellen.",
+                    "3": "Eine Zahl zählt die Lampen direkt daneben. Diese 4 braucht auf jeder Seite eine.",
+                    "4": "Diese Ecke ist noch dunkel, und nichts anderes erreicht sie, also bekommt sie eine eigene Lampe.",
+                    "5": "Keine Lampe darf eine andere anstrahlen. Diese beiden stehen in derselben Spalte, ohne etwas dazwischen.",
+                    "6": "Jede weiße Zelle ist beleuchtet, die 4 hat ihre vier Lampen, und keine Lampe strahlt eine andere an."
+                }
+            },
+            "loopy": {
+                "name": "Loopy",
+                "rules": "Zeichnen Sie eine einzige geschlossene Schleife entlang der Gitterlinien. Sie kreuzt sich nie und verzweigt sich nie, also hat jeder Punkt zwei Linien oder keine. Eine Zahl gibt an, wie viele ihrer vier Seiten die Schleife nutzt; Zellen ohne Zahl sind frei.",
+                "technique": {
+                    "1": "Diese Zahl hat bereits alle Linien um sich herum, die sie braucht, also sind ihre übrigen Seiten Kreuze.",
+                    "2": "Diese Zahl hat genau so viele offene Seiten übrig, wie sie noch Linien braucht, also sind alle davon Linien.",
+                    "3": "Eine Linie kommt von außen in eine Ecke dieser Zahl, also können die beiden Seiten, die sich an dieser Ecke treffen, nicht beide Linien sein, und jede andere offene Seite der Zahl muss eine Linie sein.",
+                    "4": "Keine Linie erreicht diesen Punkt, und nur eine seiner Seiten ist noch offen. Eine einzelne Linie an einem Punkt ist eine Sackgasse, also streichen Sie diese Seite.",
+                    "5": "Eine Linie erreicht diesen Punkt, und nur eine seiner anderen Seiten ist noch offen. Ein Punkt kann nie nur eine Linie haben, also führt die Schleife über diese Seite weiter.",
+                    "6": "Dieser Punkt hat bereits seine zwei Linien, also streichen Sie seine übrigen Seiten.",
+                    "7": "Die an den Ecken dieser Zahl erzwungenen Linien geben ihr bereits alle Linien, die sie braucht, also ist diese Seite ein Kreuz.",
+                    "8": "Selbst mit jeder an ihren Ecken noch möglichen Linie kommt diese Zahl ohne diese Seite nicht auf ihren Wert, also ist diese Seite eine Linie.",
+                    "9": "Dieses Segment zu zeichnen würde eine Schleife schließen, die andere Linien ausschließt, also ist es ein Kreuz.",
+                    "10": "Die Schleife ist vollständig und jede Zahl erfüllt, also ist jedes übrige Segment ein Kreuz."
+                },
+                "demo": {
+                    "1": "Zeichnen Sie eine einzige geschlossene Schleife entlang der Gitterlinien. Eine Zahl zählt die Linien an den vier Seiten dieser Zelle; eine leere Zelle ist frei.",
+                    "2": "Beginnen Sie mit einer 0. Keine ihrer vier Seiten kann eine Linie sein, also streichen Sie sie.",
+                    "3": "Linien verlaufen von Punkt zu Punkt.",
+                    "4": "Eine Linie, die einfach endet, ist keine Schleife. Jeder Punkt braucht zwei Linien oder gar keine.",
+                    "5": "Sie darf sich auch nicht verzweigen. Drei Linien an einem Punkt sind zu viele.",
+                    "6": "Ein geschlossener Rundweg, und jede Zahl stimmt. Folgen Sie ihm, und Sie kommen wieder dort an, wo Sie begonnen haben."
+                }
+            },
+            "slant": {
+                "name": "Slant",
+                "rules": "Zeichnen Sie in jede Zelle eine Diagonale. Eine Zahl gibt an, wie viele Diagonalen diese Ecke berühren; Ecken ohne Zahl sind frei. Die Diagonalen dürfen sich nie zu einer Schleife schließen.",
+                "technique": {
+                    "1": "Diese Zahl hat bereits alle Linien, die sie braucht, also muss jede andere Zelle um sie herum von ihr weg geneigt sein.",
+                    "2": "Diese Zahl braucht noch genau so viele Linien, wie sie leere Zellen um sich herum hat, also müssen alle diese Zellen zu ihr hin geneigt sein.",
+                    "3": "Die beiden Ecken, die diese Linie verbinden würde, sind bereits durch eine Kette von Linien verbunden. Sie zu verbinden würde also eine Schleife schließen, und die Zelle muss in die andere Richtung geneigt sein.",
+                    "4": "Diese Linie würde zwei Gruppen von Linien verbinden, die den Rand des Gitters nie erreichen und keinen anderen Ausweg haben, und sie so zu einer Schleife schließen. Die Zelle muss also in die andere Richtung geneigt sein.",
+                    "5": "Die Zahlen zwischen dieser Zelle und der markierten ausgefüllten Zelle lassen sich nur erfüllen, wenn beide in dieselbe Richtung geneigt sind. Übernehmen Sie also die ausgefüllte Zelle.",
+                    "6": "Zwei benachbarte leere Zellen um diese Zahl müssen in dieselbe Richtung geneigt sein, also geben sie ihr zusammen genau eine Linie, und das legt die anderen Zellen um sie herum fest."
+                },
+                "demo": {
+                    "1": "Jede Zelle bekommt eine Diagonale. Sie kann in beide Richtungen geneigt sein, aber keine Zelle bleibt leer.",
+                    "2": "Eine Zahl zählt die Diagonalen, die diese Ecke berühren. Zwei berühren diese 2, also ist sie erfüllt.",
+                    "3": "Dieselbe Diagonale endet an einer Ecke ohne Zahl. Solche Ecken zählen nichts, also schränken sie Sie nie ein.",
+                    "4": "Diese Ecke braucht vier, also müssen alle vier Zellen um sie herum auf sie zeigen. Dafür gibt es nur eine Möglichkeit.",
+                    "5": "Diese vier haben sich zu einem geschlossenen Ring verbunden. Ringe sind nicht erlaubt, also muss eine davon in die andere Richtung geneigt sein.",
+                    "6": "Jede Zelle ausgefüllt, jede Zahl erfüllt, und nirgends ein Ring."
+                }
+            },
+            "tents": {
+                "name": "Tents",
+                "rules": "Jeder Baum braucht sein eigenes Zelt direkt daneben, nie diagonal. Zelte berühren sich nie, auch nicht an den Ecken. Die Zahlen zählen die Zelte in jeder Zeile und Spalte.",
+                "technique": {
+                    "1": "Kein Baum neben dieser Zelle braucht noch ein Zelt, also kann diese Zelle keins enthalten.",
+                    "2": "Ein Zelt berührt diese Zelle bereits, also kann diese Zelle keins enthalten.",
+                    "3": "Für diesen Baum ist nur noch eine Zelle übrig, in die sein Zelt passt, also muss diese Zelle ein Zelt sein.",
+                    "4": "Das Zelt dieses Baums muss in eine von zwei Zellen, und beide berühren diese Zelle, also kann diese Zelle kein Zelt enthalten.",
+                    "5": "Nur diese Zellen in dieser Zeile oder Spalte können noch ein Zelt aufnehmen, und jede Möglichkeit, die benötigten unterzubringen, stimmt bei den markierten Zellen überein. Sie können sie also ausfüllen.",
+                    "6": "Nur diese Zellen in dieser Zeile oder Spalte können noch ein Zelt aufnehmen, und jede Möglichkeit, die benötigten unterzubringen, setzt eins neben die markierten Zellen. Sie können sie also ausschließen.",
+                    "7": "Diese Zeile oder Spalte braucht so viele Zelte, wie sie noch Zellen hat, die eins aufnehmen könnten, also ist jede davon ein Zelt.",
+                    "8": "Diese Zeile oder Spalte hat bereits alle ihre Zelte, also kann keine andere Zelle darin eins enthalten."
+                },
+                "demo": {
+                    "1": "Jeder Baum braucht sein eigenes Zelt in einer Zelle daneben. Die Zahlen zählen die Zelte in jeder Zeile und Spalte.",
+                    "2": "Ein Zelt steht direkt neben seinem Baum, darüber, darunter, links oder rechts. Ecken zählen nicht, also bleiben diese Zellen leer.",
+                    "3": "Diese Spalte braucht ein Zelt, und nur eine Zelle ist dafür übrig.",
+                    "4": "Zelte berühren sich nie, auch nicht an einer Ecke. Diese beiden tun es, also muss eins davon umziehen.",
+                    "5": "Neben diesem Baum ist nur noch eine Zelle frei, also kommt sein Zelt dorthin.",
+                    "6": "Jeder Baum hat ein Zelt neben sich, keine zwei Zelte berühren sich, und alle Zahlen stimmen."
+                }
+            },
+            "unruly": {
+                "name": "Unruly",
+                "rules": "Füllen Sie jede Zelle mit einer von zwei Farben. Nie drei gleiche Farben hintereinander in einer Zeile oder Spalte, und jede Zeile und Spalte enthält am Ende von jeder Farbe die Hälfte.",
+                "technique": {
+                    "1": "Diese beiden Nachbarn haben bereits dieselbe Farbe, also muss die Zelle direkt dahinter die andere sein. Drei gleiche hintereinander sind nie erlaubt.",
+                    "2": "Diese beiden Zellen haben dieselbe Farbe mit einer Lücke dazwischen, also muss die Zelle in der Lücke die andere sein. Drei gleiche hintereinander sind nie erlaubt.",
+                    "3": "Diese Linie hat schon alle erlaubten Zellen der einen Farbe, und von der anderen fehlt noch eine, also muss ihre letzte leere Zelle diese andere Farbe haben.",
+                    "4": "Diese Linie hat bereits so viele Zellen dieser Farbe, wie erlaubt sind, also muss jede noch leere Zelle darin die andere Farbe haben.",
+                    "5": "Diese Linie braucht genau noch eine Zelle der einen Farbe, und sie außerhalb dieser drei Zellen zu setzen würde hier drei der anderen Farbe hintereinander lassen. Also bekommt jede leere Zelle an anderer Stelle der Linie die andere Farbe."
+                },
+                "demo": {
+                    "1": "Füllen Sie jede Zelle orange oder violett. Die umrandeten sind vorgegeben, die können Sie nicht ändern.",
+                    "2": "Nie drei gleiche Farben hintereinander, waagerecht oder senkrecht. Das ist ein Orange zu viel.",
+                    "3": "Jede Zeile und Spalte enthält am Ende drei von jeder Farbe. Diese Zeile hat vier violette.",
+                    "4": "Zwei Orange mit einer Lücke. Orange dazwischen ergäbe drei, also muss es Violett sein.",
+                    "5": "Jede Zelle ausgefüllt, keine Dreierreihe, und drei von jeder Farbe in jeder Zeile und Spalte."
+                }
+            }
+        }
+    },
     "dailyChit": {
         "alreadyClaimed": "Kommen Sie morgen wieder, um Ihre Serie zu verlängern!",
         "available": "Fordern Sie Ihren CHIT an und verlängern Sie Ihre Serie!",

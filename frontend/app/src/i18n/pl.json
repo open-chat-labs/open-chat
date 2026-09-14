@@ -672,6 +672,178 @@
     "currentChitBalance": "Aktualne saldo CHIT",
     "currentLimit": "Twój aktualny limit miejsca na dysku to {limit} GB, a saldo konta to {balance} ICP.",
     "currentUsage": "Bieżące wykorzystanie pamięci",
+    "dailyPuzzle": {
+        "title": "The Daily",
+        "number": "The Daily #{number}",
+        "tier": {
+            "0": "Łatwa",
+            "1": "Podchwytliwa"
+        },
+        "todaysPuzzle": "Dzisiejsza łamigłówka",
+        "play": "Graj",
+        "continue": "Kontynuuj",
+        "solved": "Rozwiązana",
+        "unavailable": "W tej chwili nie ma dostępnej łamigłówki.",
+        "startFree": "Zacznij (pierwsza łamigłówka za darmo)",
+        "startFee": "Zacznij za {fee} CHIT",
+        "hintFree": "Podpowiedź (poziom {level})",
+        "hintPrice": "Podpowiedź (poziom {level}, {price} CHIT)",
+        "hintsUsed": "Podpowiedzi: {count}",
+        "hintsLeft": "Pozostało: {count}",
+        "noHintsLeft": "Brak podpowiedzi do dzisiejszej łamigłówki",
+        "streakDays": "Seria: {streak} dni",
+        "submitting": "Sprawdzamy rozwiązanie...",
+        "solvedTitle": "Rozwiązana!",
+        "solvedSummary": "{time}, podpowiedzi: {hints}. Seria: {streak}.",
+        "reward": "+{reward} CHIT",
+        "share": "Udostępnij",
+        "verified": "Zweryfikowane",
+        "unverified": "Niezweryfikowane",
+        "card": {
+            "time": "Czas",
+            "hints": "Podpowiedzi",
+            "dayStreak": "Seria dni"
+        },
+        "wrong": "To nie to. Sprawdź czerwone pola.",
+        "mistake": "W czerwonych polach jest błąd. Popraw je, a potem poproś o podpowiedź ponownie.",
+        "fixMistakeFirst": "Najpierw popraw czerwone pola",
+        "noFreeChecks": "Brak darmowych sprawdzeń do dzisiejszej łamigłówki",
+        "checksLeft": "Pozostałe sprawdzenia: {count}",
+        "revealed": "Wypełnione za Ciebie.",
+        "reset": "Resetuj",
+        "resetConfirm": "Wyczyścić planszę?",
+        "replaced": "Ta łamigłówka została zastąpiona. Oto nowa.",
+        "failedToStart": "Nie udało się rozpocząć łamigłówki",
+        "failedToSubmit": "Nie udało się sprawdzić rozwiązania",
+        "failedHint": "Nie udało się pobrać podpowiedzi",
+        "chitEvent": {
+            "entry": "Wejście do codziennej łamigłówki",
+            "solve": "Codzienna łamigłówka rozwiązana",
+            "hint": "Podpowiedź do codziennej łamigłówki"
+        },
+        "needsNewerApp": "Ten typ łamigłówki wymaga nowszej wersji aplikacji",
+        "games": {
+            "bridges": {
+                "name": "Bridges",
+                "rules": "Połącz wyspy mostami tak, aby każda wyspa miała dokładnie tyle mostów, ile wskazuje jej liczba. Mosty biegną prosto, nigdy się nie krzyżują, a parę wysp łączą najwyżej dwa.",
+                "technique": {
+                    "1": "Ta wyspa osiągnie swoją liczbę tylko wtedy, gdy użyje wszystkich mostów, które jeszcze się wokół niej mieszczą, więc narysuj je wszystkie.",
+                    "2": "Liczba tej wyspy jest za duża, by pominąć któregokolwiek sąsiada, więc potrzebuje co najmniej jednego mostu w każdym dostępnym kierunku.",
+                    "3": "Bez mostu do tego sąsiada pozostałe kierunki nie dałyby tej wyspie dość mostów dla jej liczby, więc tutaj musi być most."
+                },
+                "demo": {
+                    "1": "Połącz wyspy mostami. Liczba na wyspie mówi, ile mostów musi do niej dochodzić.",
+                    "2": "Mosty biegną prosto między dwiema wyspami i nigdy się nie krzyżują. Ten liczy się jako jeden na każdym końcu.",
+                    "3": "Tę samą parę może łączyć drugi most. Teraz liczy się jako dwa na każdym końcu.",
+                    "4": "Żadna wyspa nie może przekroczyć swojej liczby. Ta potrzebuje trzech mostów, a ma cztery.",
+                    "5": "Jeden most w dół wzdłuż boku zamiast dwóch i ma swoje trzy.",
+                    "6": "Każda liczba się zgadza i każda wyspa jest połączona z resztą. To kończy sprawę."
+                }
+            },
+            "light_up": {
+                "name": "Light Up",
+                "rules": "Oświetl każde białe pole. Żarówka oświetla swój wiersz i kolumnę aż do czarnego pola, żadna żarówka nie może świecić na inną, a liczba mówi, ile żarówek stoi obok niej w poziomie lub w pionie, nigdy po skosie.",
+                "technique": {
+                    "1": "To pole można oświetlić tylko z jednego miejsca, więc tam musi stać żarówka.",
+                    "2": "Ta liczba ma już obok siebie wszystkie żarówki, których wymaga, więc pozostałe pola obok niej muszą zostać puste.",
+                    "3": "Ta liczba wciąż potrzebuje żarówki w każdym wolnym polu obok siebie, więc postaw żarówkę w każdym z nich.",
+                    "4": "Co najmniej jedno z podświetlonych pól musi zawierać żarówkę, a żarówka w tym polu wykluczyłaby je wszystkie, więc to pole musi zostać puste."
+                },
+                "demo": {
+                    "1": "Stawiaj żarówki, aż każde białe pole będzie oświetlone.",
+                    "2": "Żarówka oświetla swój wiersz i kolumnę, aż do czarnych pól.",
+                    "3": "Liczba zlicza żarówki obok siebie. Ta 4 potrzebuje jednej z każdej strony.",
+                    "4": "Ten róg wciąż jest ciemny i nic innego do niego nie sięga, więc potrzebuje własnej żarówki.",
+                    "5": "Żadna żarówka nie może świecić na inną. Te dwie stoją w tej samej kolumnie i nic ich nie rozdziela.",
+                    "6": "Każde białe pole jest oświetlone, 4 ma swoje cztery żarówki i żadna żarówka nie świeci na inną."
+                }
+            },
+            "loopy": {
+                "name": "Loopy",
+                "rules": "Narysuj jedną zamkniętą pętlę wzdłuż linii siatki. Nigdy się nie krzyżuje ani nie rozgałęzia, więc każda kropka ma dwie linie albo żadnej. Liczba mówi, ilu z czterech boków pola używa pętla; pola bez liczby są dowolne.",
+                "technique": {
+                    "1": "Ta liczba ma już wokół siebie wszystkie linie, których potrzebuje, więc jej pozostałe boki to krzyżyki.",
+                    "2": "Ta liczba ma dokładnie tyle otwartych boków, ile linii jeszcze potrzebuje, więc wszystkie z nich to linie.",
+                    "3": "Do rogu tej liczby wchodzi linia z zewnątrz, więc dwa boki schodzące się w tym rogu nie mogą oba być liniami, a każdy inny otwarty bok tej liczby musi być linią.",
+                    "4": "Do tej kropki nie dochodzi żadna linia i tylko jeden jej bok jest jeszcze otwarty. Pojedyncza linia przy kropce to ślepy zaułek, więc skreśl ten bok.",
+                    "5": "Do tej kropki dochodzi linia i tylko jeden z jej pozostałych boków jest jeszcze otwarty. Kropka nigdy nie może mieć tylko jednej linii, więc pętla biegnie dalej tym bokiem.",
+                    "6": "Ta kropka ma już swoje dwie linie, więc skreśl jej pozostałe boki.",
+                    "7": "Linie wymuszone w rogach tej liczby dają jej już wszystkie potrzebne linie, więc ten bok to krzyżyk.",
+                    "8": "Nawet z każdą wciąż możliwą linią w jej rogach tej liczbie zabraknie bez tego boku, więc ten bok to linia.",
+                    "9": "Narysowanie tego odcinka zamknęłoby pętlę, zostawiając inne linie poza nią, więc to krzyżyk.",
+                    "10": "Pętla jest kompletna i każda liczba spełniona, więc każdy pozostały odcinek to krzyżyk."
+                },
+                "demo": {
+                    "1": "Narysuj jedną zamkniętą pętlę wzdłuż linii siatki. Liczba zlicza linie na czterech bokach tego pola; puste pole jest dowolne.",
+                    "2": "Zacznij od 0. Żaden z jego czterech boków nie może być linią, więc skreśl je.",
+                    "3": "Linie biegną od kropki do kropki.",
+                    "4": "Linia, która się urywa, to nie pętla. Każda kropka potrzebuje dwóch linii albo żadnej.",
+                    "5": "Nie może się też rozgałęziać. Trzy linie przy kropce to za dużo.",
+                    "6": "Jeden zamknięty obwód i każda liczba się zgadza. Przejdź go dookoła, a wrócisz do punktu wyjścia."
+                }
+            },
+            "slant": {
+                "name": "Slant",
+                "rules": "Narysuj przekątną w każdym polu. Liczba mówi, ile przekątnych dotyka tego rogu; rogi bez liczby są dowolne. Przekątne nigdy nie mogą połączyć się w pętlę.",
+                "technique": {
+                    "1": "Ta liczba ma już wszystkie linie, których potrzebuje, więc każde inne pole wokół niej musi być nachylone od niej.",
+                    "2": "Ta liczba potrzebuje dokładnie tylu linii, ile ma pustych pól wokół siebie, więc wszystkie te pola muszą być nachylone ku niej.",
+                    "3": "Dwa rogi, które połączyłaby ta linia, są już połączone łańcuchem linii, więc ich połączenie zamknęłoby pętlę, i pole musi być nachylone w drugą stronę.",
+                    "4": "Ta linia połączyłaby dwie grupy linii, które nigdy nie sięgają krawędzi siatki i nie mają innego wyjścia, zamykając je w pętlę, więc pole musi być nachylone w drugą stronę.",
+                    "5": "Liczby między tym polem a podświetlonym wypełnionym polem da się spełnić tylko wtedy, gdy oba są nachylone tak samo, więc skopiuj wypełnione pole.",
+                    "6": "Dwa sąsiednie puste pola wokół tej liczby muszą być nachylone tak samo, więc razem dają jej dokładnie jedną linię, a to rozstrzyga pozostałe pola wokół niej."
+                },
+                "demo": {
+                    "1": "Każde pole dostaje jedną przekątną. Może być nachylona w dowolną stronę, ale żadne pole nie zostaje puste.",
+                    "2": "Liczba zlicza przekątne dotykające tego rogu. Tej 2 dotykają dwie, więc jest spełniona.",
+                    "3": "Ta sama przekątna kończy się w rogu bez liczby. Takie rogi niczego nie liczą, więc nigdy Cię nie ograniczają.",
+                    "4": "Ten róg potrzebuje czterech, więc wszystkie cztery pola wokół niego muszą wskazywać na niego. Da się to zrobić tylko w jeden sposób.",
+                    "5": "Te cztery połączyły się w zamknięty pierścień. Pierścienie są niedozwolone, więc jedno z nich musi być nachylone w drugą stronę.",
+                    "6": "Każde pole wypełnione, każda liczba się zgadza i nigdzie nie ma pierścienia."
+                }
+            },
+            "tents": {
+                "name": "Tents",
+                "rules": "Każde drzewo potrzebuje własnego namiotu tuż obok siebie, nigdy po skosie. Namioty nigdy się nie stykają, nawet rogami. Liczby zliczają namioty w każdym wierszu i kolumnie.",
+                "technique": {
+                    "1": "Żadne drzewo obok tego pola nie potrzebuje już namiotu, więc w tym polu nie może go być.",
+                    "2": "Tego pola dotyka już namiot, więc w tym polu nie może być namiotu.",
+                    "3": "Temu drzewu zostało tylko jedno pole, w którym może stanąć jego namiot, więc w tym polu musi być namiot.",
+                    "4": "Namiot tego drzewa musi stanąć w jednym z dwóch pól, a oba stykają się z tym polem, więc w tym polu nie może być namiotu.",
+                    "5": "Tylko te pola w tym wierszu lub kolumnie mogą jeszcze przyjąć namiot, a każdy sposób rozmieszczenia wymaganej liczby zgadza się co do zaznaczonych pól, więc możesz je wypełnić.",
+                    "6": "Tylko te pola w tym wierszu lub kolumnie mogą jeszcze przyjąć namiot, a każdy sposób rozmieszczenia wymaganej liczby stawia jeden obok zaznaczonych pól, więc możesz je wykluczyć.",
+                    "7": "Ten wiersz lub kolumna potrzebuje tylu namiotów, ile ma jeszcze pól, w których namiot może stanąć, więc w każdym z nich jest namiot.",
+                    "8": "Ten wiersz lub kolumna ma już wszystkie swoje namioty, więc w żadnym innym jego polu nie może być namiotu."
+                },
+                "demo": {
+                    "1": "Każde drzewo potrzebuje własnego namiotu w polu obok siebie. Liczby zliczają namioty w każdym wierszu i kolumnie.",
+                    "2": "Namiot stoi tuż obok swojego drzewa: nad nim, pod nim, z lewej lub z prawej. Rogi się nie liczą, więc te pola zostają puste.",
+                    "3": "Ta kolumna potrzebuje jednego namiotu i zostało dla niego tylko jedno pole.",
+                    "4": "Namioty nigdy się nie stykają, nawet rogiem. Te dwa się stykają, więc jeden z nich musi się przesunąć.",
+                    "5": "Obok tego drzewa wolne jest tylko jedno pole, więc jego namiot staje tam.",
+                    "6": "Każde drzewo ma namiot obok siebie, żadne dwa namioty się nie stykają i wszystkie liczby się zgadzają."
+                }
+            },
+            "unruly": {
+                "name": "Unruly",
+                "rules": "Wypełnij każde pole jednym z dwóch kolorów. Nigdy trzy tego samego koloru pod rząd w wierszu lub kolumnie, a w każdym wierszu i kolumnie ma być po połowie każdego koloru.",
+                "technique": {
+                    "1": "Te dwa sąsiednie pola są już tego samego koloru, więc pole tuż za nimi musi mieć drugi kolor: trzy takie same pod rząd są niedozwolone.",
+                    "2": "Te dwa pola są tego samego koloru z jedną przerwą między nimi, więc pole w przerwie musi mieć drugi kolor: trzy takie same pod rząd są niedozwolone.",
+                    "3": "Ta linia ma już wszystkie dozwolone pola jednego koloru i brakuje jej jednego drugiego, więc jej ostatnie puste pole musi mieć ten drugi kolor.",
+                    "4": "Ta linia ma już tyle pól tego koloru, ile wolno, więc każde wciąż puste pole w niej musi mieć drugi kolor.",
+                    "5": "Ta linia potrzebuje dokładnie jeszcze jednego pola jednego koloru, a postawienie go poza tymi trzema polami zostawiłoby tutaj trzy drugiego koloru pod rząd, więc każde inne puste pole w linii dostaje drugi kolor."
+                },
+                "demo": {
+                    "1": "Wypełnij każde pole na pomarańczowo lub fioletowo. Pola w obwódce są dane z góry, więc tych nie możesz zmienić.",
+                    "2": "Nigdy trzy tego samego koloru pod rząd, w poziomie ani w pionie. Tu jest o jedno pomarańczowe za dużo.",
+                    "3": "W każdym wierszu i kolumnie ma być po trzy każdego koloru. Ten wiersz ma cztery fioletowe.",
+                    "4": "Dwa pomarańczowe z przerwą. Pomarańczowe pomiędzy dałoby trzy, więc musi być fioletowe.",
+                    "5": "Każde pole wypełnione, żadnej trójki pod rząd i po trzy każdego koloru w każdym wierszu i kolumnie."
+                }
+            }
+        }
+    },
     "dailyChit": {
         "alreadyClaimed": "Wróć jutro, aby przedłużyć swoją passę!",
         "available": "Odbierz swój CHIT i przedłuż swoją passę!",
