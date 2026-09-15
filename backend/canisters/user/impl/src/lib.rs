@@ -436,6 +436,11 @@ Your streak is now {new_streak} days!"
         self.data
             .stable_memory_keys_to_garbage_collect
             .extend(chat.events.all_stable_memory_key_prefixes());
+        // Each chat has a unique `key_id`, so if a new chat is created with the same user before
+        // the job has run then its entries won't be removed
+        self.data
+            .stable_memory_keys_to_garbage_collect
+            .push(model::unread_message_index_map::prefix(chat.events.stable_memory_prefix()).into());
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true
