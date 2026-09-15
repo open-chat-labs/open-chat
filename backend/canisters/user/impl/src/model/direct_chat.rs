@@ -73,8 +73,11 @@ impl DirectChat {
         self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 
         if let Some(their_message_index) = their_message_index {
-            self.unread_message_index_map
-                .add(message_event.event.message_index, their_message_index);
+            self.unread_message_index_map.add(
+                self.events.stable_memory_prefix(),
+                message_event.event.message_index,
+                their_message_index,
+            );
         }
 
         message_event

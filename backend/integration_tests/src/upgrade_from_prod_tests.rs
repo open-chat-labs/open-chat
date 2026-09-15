@@ -26,7 +26,8 @@ const SMALL_CHAT_MESSAGES: usize = 3;
 // direct chats, contacts and blocked users, then upgrades them to the new wasm and checks that everything still
 // works.
 //
-// This currently covers moving the contacts and blocked users from the heap into stable memory, and moving the events of existing direct chats from their legacy stable memory
+// This currently covers moving the contacts, blocked users and direct chats' unread message indexes from the heap into
+// stable memory, and moving the events of existing direct chats from their legacy stable memory
 // keys to their `key_id` based keys, which in test mode migrates a single batch of events per call,
 // so the migration is spread across `post_upgrade` and many runs of its timer job.
 // TODO: Remove the migration specific checks once every user canister has been migrated
@@ -104,6 +105,15 @@ fn user_canisters_survive_upgrade_from_prod() {
     for user in small_chat_users.iter() {
         for i in 0..SMALL_CHAT_MESSAGES {
             client::user::happy_path::send_text_message(env, &user1, user.user_id, i, None);
+        }
+    }
+    // Messages which user1 hasn't read yet, for each of which user1 stores the message's index in the
+    // sender's copy of the chat
+    let unread_chat_user = &small_chat_users[2];
+    let recreated_chat_user = &small_chat_users[3];
+    for user in [unread_chat_user, recreated_chat_user] {
+        for i in 0..SMALL_CHAT_MESSAGES {
+            client::user::happy_path::send_text_message(env, user, user1.user_id, i, None);
         }
     }
     tick_many(env, 3);
@@ -247,6 +257,68 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(
         count_keys(env, user1.canister(), KeyType::DirectChatEvent),
         total_keys + 1 - snapshots[2].len()
+    );
+
+    // The unread message indexes were moved into stable memory. User1 hasn't read any of the messages
+    // sent by large_chat_user nor the messages sent in the two small chats.
+    let mut unread_message_indexes = LARGE_CHAT_MESSAGES / 10 + 2 * SMALL_CHAT_MESSAGES;
+    assert_eq!(
+        count_keys(env, user1.canister(), KeyType::DirectChatUnreadMessageIndex),
+        unread_message_indexes
+    );
+    // Their messages are indexes 3 to 5 in both copies of the chat, since they were sent after user1's
+    assert_eq!(read_by_them_up_to(env, unread_chat_user, user1.user_id), Some(2.into()));
+
+    // Marking messages as read tells the sender and removes their entries
+    mark_read(env, &user1, unread_chat_user.user_id, 4.into());
+    tick_many(env, 3);
+    assert_eq!(read_by_them_up_to(env, unread_chat_user, user1.user_id), Some(4.into()));
+    unread_message_indexes -= 2;
+    assert_eq!(
+        count_keys(env, user1.canister(), KeyType::DirectChatUnreadMessageIndex),
+        unread_message_indexes
+    );
+
+    // Deleting a chat garbage collects its unread message indexes, but not those of a new chat with
+    // the same user which is created before the garbage collection job runs
+    let response = client::user::delete_direct_chat(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::delete_direct_chat::Args {
+            user_id: recreated_chat_user.user_id,
+            block_user: false,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::delete_direct_chat::Response::Success),
+        "{response:?}"
+    );
+    for i in 0..2 {
+        client::user::happy_path::send_text_message(env, recreated_chat_user, user1.user_id, i, None);
+    }
+    tick_many(env, 3);
+    env.advance_time(Duration::from_secs(60));
+    tick_many(env, 3);
+    unread_message_indexes = unread_message_indexes - SMALL_CHAT_MESSAGES + 2;
+    assert_eq!(
+        count_keys(env, user1.canister(), KeyType::DirectChatUnreadMessageIndex),
+        unread_message_indexes
+    );
+
+    // In the new chat, the messages are indexes 0 and 1 for user1 but 6 and 7 for the sender, so
+    // marking the first as read tells the sender that their message 6 has been read
+    assert_eq!(
+        read_by_them_up_to(env, recreated_chat_user, user1.user_id),
+        Some(MessageIndex::from(SMALL_CHAT_MESSAGES as u32 - 1))
+    );
+    mark_read(env, &user1, recreated_chat_user.user_id, 0.into());
+    tick_many(env, 3);
+    assert_eq!(read_by_them_up_to(env, recreated_chat_user, user1.user_id), Some(6.into()));
+    unread_message_indexes -= 1;
+    assert_eq!(
+        count_keys(env, user1.canister(), KeyType::DirectChatUnreadMessageIndex),
+        unread_message_indexes
     );
 
     // The blocked users were moved into stable memory, and can still be blocked and unblocked
@@ -400,6 +472,31 @@ fn set_contact(env: &mut PocketIc, user: &User, user_id: UserId, nickname: Optio
         },
     );
     assert!(matches!(response, UnitResult::Success), "{response:?}");
+}
+
+fn mark_read(env: &mut PocketIc, user: &User, them: UserId, read_up_to: MessageIndex) {
+    client::user::happy_path::mark_read(
+        env,
+        user,
+        vec![user_canister::mark_read::ChatMessagesRead {
+            chat_id: them.into(),
+            read_up_to: Some(read_up_to),
+            threads: Vec::new(),
+            date_read_pinned: None,
+        }],
+        Vec::new(),
+    );
+}
+
+// How far the other user has read the user's direct chat with them, as seen by the user
+fn read_by_them_up_to(env: &PocketIc, user: &User, them: UserId) -> Option<MessageIndex> {
+    client::user::happy_path::initial_state(env, user)
+        .direct_chats
+        .summaries
+        .into_iter()
+        .find(|c| c.them == them)
+        .unwrap()
+        .read_by_them_up_to
 }
 
 // Returns the users the user has blocked, ordered by user id
