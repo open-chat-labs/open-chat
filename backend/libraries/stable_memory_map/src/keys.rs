@@ -13,8 +13,11 @@ mod message_activity_event;
 mod message_event_indexes;
 mod message_id;
 mod principal;
+mod referral;
 mod search_index;
 mod storage;
+mod thread_read;
+mod token_swap;
 mod user_id;
 mod user_metrics;
 
@@ -27,8 +30,11 @@ pub use message_activity_event::*;
 pub use message_event_indexes::*;
 pub use message_id::*;
 pub use principal::*;
+pub use referral::*;
 pub use search_index::*;
 pub use storage::*;
+pub use thread_read::*;
+pub use token_swap::*;
 pub use user_id::*;
 pub use user_metrics::*;
 
@@ -151,6 +157,11 @@ pub enum KeyType {
     MessageActivityEvent = 47,
     MessageActivityEventId = 48,
     ChitEvent = 49,
+    GroupThreadRead = 50,
+    ChannelThreadRead = 51,
+    TokenSwap = 52,
+    // 53 is reserved for P2P swaps
+    Referral = 54,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -195,7 +206,9 @@ impl KeyType {
             | KeyType::ChannelMessageEventIndexes
             | KeyType::DirectChatThreadMessageEventIndexes
             | KeyType::GroupChatThreadMessageEventIndexes
-            | KeyType::ChannelThreadMessageEventIndexes => MapClass::Default,
+            | KeyType::ChannelThreadMessageEventIndexes
+            // Each entry is a token swap, which is too large for the small entries map
+            | KeyType::TokenSwap => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -222,7 +235,10 @@ impl KeyType {
             | KeyType::ChannelSearchSender
             | KeyType::MessageActivityEvent
             | KeyType::MessageActivityEventId
-            | KeyType::ChitEvent => MapClass::SmallEntries,
+            | KeyType::ChitEvent
+            | KeyType::GroupThreadRead
+            | KeyType::ChannelThreadRead
+            | KeyType::Referral => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -302,6 +318,10 @@ impl TryFrom<u8> for KeyType {
             47 => Ok(KeyType::MessageActivityEvent),
             48 => Ok(KeyType::MessageActivityEventId),
             49 => Ok(KeyType::ChitEvent),
+            50 => Ok(KeyType::GroupThreadRead),
+            51 => Ok(KeyType::ChannelThreadRead),
+            52 => Ok(KeyType::TokenSwap),
+            54 => Ok(KeyType::Referral),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

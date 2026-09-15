@@ -16,6 +16,7 @@ pub mod pin_number;
 pub mod premium_items;
 pub mod referrals;
 pub mod streak;
+pub mod threads_read;
 pub mod token_swaps;
 pub mod unread_message_index_map;
 pub mod user_canister_event_batch;

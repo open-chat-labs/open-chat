@@ -32,7 +32,13 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_swaps(state: &RuntimeState) -> HttpResponse {
-        let swaps: Vec<_> = state.data.token_swaps.iter().sorted_unstable_by_key(|s| s.started).collect();
+        let swaps: Vec<_> = state
+            .data
+            .token_swaps
+            .all()
+            .into_iter()
+            .sorted_unstable_by_key(|s| s.started)
+            .collect();
 
         build_json_response(&swaps)
     }
