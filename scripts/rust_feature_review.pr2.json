@@ -1,0 +1,2957 @@
+{
+  "schemaVersion": 1,
+  "configSha256": "0995cc1aa9b893d8a0915662e1fb0b2ac8fe6e1beafcac201798bcad9c06489d",
+  "boundary": "PR2's additive generic app/card/inbox/link/authority/verifier contracts and their changed serialization, generated endpoints, caller-side feature-test setup and native handoff/cache policy. The seven exact configured profiles include isolated release-tool hash-guard roots and explicitly rebound inherited model-manager/IPC/build roots only for the local ARM64 all-WebGPU APK. The review follows direct external owner edges plus reached nested payload/generated-owner support. Unchanged mixed-crate siblings, whole OpenChat core, fixture implementation side effects, third-party app semantics, model quality, optional native binaries and publisher artifacts remain excluded. Other PR2 native profiles are additive app scope, not an implied full PR1/PR2 native union. The changed Rust delta/module declarations were compared to the PR1 base, and no untracked Rust/manifest source was present.",
+  "units": [
+    {
+      "id": "owners-1-app-state-field-serialization",
+      "disposition": "external-owner-edges",
+      "explanation": "The added group/community Data fields derive Serde in the consuming implementation crates. Their app store/epoch/schema types are separately traced. Only the added app fields are selected, not all historical Data fields or unrelated canister state.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/community/impl/Cargo.toml",
+          "lines": [1, 58]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/lib.rs",
+          "lines": [544, 545, 595, 596, 708]
+        },
+        {
+          "path": "backend/canisters/group/impl/Cargo.toml",
+          "lines": [1, 53]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/lib.rs",
+          "lines": [573, 574, 615, 616, 617, 618, 713, 714]
+        },
+        {
+          "path": "backend/libraries/group_community_common/src/ai_app_chat_link_admission.rs",
+          "lines": [2, 16, 22, 48, 49, 51]
+        }
+      ],
+      "seeds": [
+        "app-state-field-serialization.community_canister_impl.serde.normal.production",
+        "app-state-field-serialization.group_canister_impl.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-2-shared-feature-test-user-registration-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "Selected registration/lookup/delegation caller schemas include UserId, WebAuthnKey, SuccessResult, AccountIdentifier and generated TS consumers. Their user-index, identity and local-index Candid/Serde/bytes/ts-rs/ledger owners remain normal Cargo edges in the Windows-default test context, not the full auth/index runtime.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/identity/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/identity/api/src/lib.rs",
+          "lines": [19, 20, 22, 24]
+        },
+        {
+          "path": "backend/canisters/identity/api/src/queries/get_delegation.rs",
+          "lines": [1, 2, 6, 7, 9, 17]
+        },
+        {
+          "path": "backend/canisters/identity/api/src/updates/create_identity.rs",
+          "lines": [2, 3, 7, 8, 10, 12, 14, 28]
+        },
+        {
+          "path": "backend/canisters/identity/api/src/updates/prepare_delegation.rs",
+          "lines": [1, 2, 22, 23, 25]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/updates/register_user.rs",
+          "lines": [1, 2, 4, 8, 9, 14, 18, 19, 38, 39, 43]
+        },
+        {
+          "path": "backend/canisters/user_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/queries/user_registration_canister.rs",
+          "lines": [1, 3, 4, 8, 9, 10]
+        },
+        {
+          "path": "backend/integration_tests/src/action_card_inbox_routing_tests.rs",
+          "lines": [23]
+        },
+        {
+          "path": "backend/integration_tests/src/client/identity.rs",
+          "lines": [7, 12, 40, 89]
+        },
+        {
+          "path": "backend/integration_tests/src/client/local_user_index.rs",
+          "lines": [27, 46, 57, 68]
+        },
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [128, 129, 137, 139, 158, 201, 210, 227, 229]
+        },
+        {
+          "path": "backend/integration_tests/src/client/user_index.rs",
+          "lines": [15, 464, 465]
+        },
+        {
+          "path": "backend/integration_tests/src/fan_out_delivery_tests.rs",
+          "lines": [99]
+        },
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [81, 83]
+        },
+        {
+          "path": "backend/libraries/types/src/lib.rs",
+          "lines": [212, 219, 252]
+        }
+      ],
+      "seeds": [
+        "shared-feature-test-user-registration-schema.user_index_canister.candid.normal.test",
+        "shared-feature-test-user-registration-schema.user_index_canister.serde.normal.test",
+        "shared-feature-test-user-registration-schema.user_index_canister.ts_rs.normal.test",
+        "shared-feature-test-user-registration-schema.identity_canister.candid.normal.test",
+        "shared-feature-test-user-registration-schema.identity_canister.serde.normal.test",
+        "shared-feature-test-user-registration-schema.identity_canister.serde_bytes.normal.test",
+        "shared-feature-test-user-registration-schema.identity_canister.ts_rs.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.candid.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.serde.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.serde_bytes.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.ts_rs.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.ic_ledger_types.normal.test"
+      ]
+    },
+    {
+      "id": "owners-3-shared-feature-test-fixture-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The shared setup/init/upload/subnet caller schemas were traced through BuildVersion, CanisterType/ChildCanisterType, canister/principal identifiers, byte/hash wrappers and primitive Empty/UnitResult/SuccessOnly values. The twelve explicit caller API Candid/Serde owners cover them. Unused HumanReadable conversions and implementation-side fixture effects are excluded.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/airdrop_bot/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/airdrop_bot/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/cycles_dispenser/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/cycles_dispenser/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/escrow/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/escrow/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/event_relay/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/event_relay/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/group_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/lib.rs",
+          "lines": [1, 2, 16, 17]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/upgrade_community_canister_wasm.rs",
+          "lines": [1, 3, 4]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/upgrade_group_canister_wasm.rs",
+          "lines": [1, 3, 4]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/upload_wasm_chunk.rs",
+          "lines": [2, 3, 6, 13, 19]
+        },
+        {
+          "path": "backend/canisters/online_users/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/online_users/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/openchat_installer/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/openchat_installer/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/proposals_bot/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/proposals_bot/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/registry/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/sign_in_with_email/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/sign_in_with_email/api/src/lifecycle/init_or_upgrade.rs",
+          "lines": [2, 3, 5, 27]
+        },
+        {
+          "path": "backend/canisters/storage_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/storage_index/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5, 17]
+        },
+        {
+          "path": "backend/canisters/translations/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/translations/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/integration_tests/src/action_card_inbox_routing_tests.rs",
+          "lines": [23]
+        },
+        {
+          "path": "backend/integration_tests/src/client/group_index.rs",
+          "lines": [14, 15, 16, 71, 96, 167, 179]
+        },
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [61, 72, 158]
+        },
+        {
+          "path": "backend/integration_tests/src/fan_out_delivery_tests.rs",
+          "lines": [99]
+        },
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [
+            145, 226, 241, 258, 277, 298, 326, 352, 360, 391, 408, 409, 466
+          ]
+        },
+        {
+          "path": "backend/libraries/sign_in_with_email_test_utils/src/lib.rs",
+          "lines": [13]
+        },
+        {
+          "path": "backend/libraries/types/src/canister_wasm.rs",
+          "lines": [16, 23, 54]
+        },
+        {
+          "path": "backend/libraries/types/src/lib.rs",
+          "lines": [196, 198, 205]
+        }
+      ],
+      "seeds": [
+        "shared-feature-test-fixture-schema.group_index_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.group_index_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.openchat_installer_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.openchat_installer_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.translations_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.translations_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.online_users_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.online_users_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.proposals_bot_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.proposals_bot_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.storage_index_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.storage_index_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.cycles_dispenser_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.cycles_dispenser_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.registry_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.registry_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.escrow_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.escrow_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.event_relay_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.event_relay_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.airdrop_bot_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.airdrop_bot_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.sign_in_with_email_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.sign_in_with_email_canister.serde.normal.test"
+      ]
+    },
+    {
+      "id": "owners-4-native-model-command-build-registration",
+      "disposition": "external-owner-edges",
+      "explanation": "For the explicit local all-WebGPU APK composition, the inherited model command registration reaches tauri-plugin's build support. Source equivalence/current lock identity were checked during the profile binding; other PR2 profiles are not implicitly expanded to the inherited native union.",
+      "profiles": ["android-arm64-transformers-webgpu"],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/build.rs",
+          "lines": [25, 36]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1, 28]
+        }
+      ],
+      "seeds": [
+        "native-model-command-build-registration.tauri-plugin-oc.tauri_plugin.build.build"
+      ]
+    },
+    {
+      "id": "owners-5-native-model-ipc-schema-and-commands",
+      "disposition": "external-owner-edges",
+      "explanation": "The local all-WebGPU APK explicitly rebinds the reviewed inherited model IPC/commands to Serde and Tauri. The current source changes only reorder the unchanged capability probe; unrelated error-wrapper/shell siblings are not model roots.",
+      "profiles": ["android-arm64-transformers-webgpu"],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/commands.rs",
+          "lines": [1, 211]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/lib.rs",
+          "lines": [61]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/models.rs",
+          "lines": [113]
+        }
+      ],
+      "seeds": [
+        "native-model-ipc-schema-and-commands.tauri-plugin-oc.serde.normal.production",
+        "native-model-ipc-schema-and-commands.tauri-plugin-oc.tauri.normal.production"
+      ]
+    },
+    {
+      "id": "owners-6-native-model-manager",
+      "disposition": "external-owner-edges",
+      "explanation": "The local all-WebGPU profile explicitly rebinds the source-reviewed model manager download/hash/cache/async/disk paths to futures-util, hex, reqwest, Serde/JSON, SHA2, sysinfo, Tauri and Tokio. Inference-only llama/minijinja, optional audio installation, and other native profiles are not silently enabled by this metadata selection.",
+      "profiles": ["android-arm64-transformers-webgpu"],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/model_manager.rs",
+          "lines": [1, 2, 3, 4, 12, 13, 298, 317, 646, 675, 761, 884]
+        }
+      ],
+      "seeds": [
+        "native-model-manager.tauri-plugin-oc.futures_util.normal.production",
+        "native-model-manager.tauri-plugin-oc.hex.normal.production",
+        "native-model-manager.tauri-plugin-oc.reqwest.normal.production",
+        "native-model-manager.tauri-plugin-oc.serde_json.normal.production",
+        "native-model-manager.tauri-plugin-oc.serde.normal.production",
+        "native-model-manager.tauri-plugin-oc.sha2.normal.production",
+        "native-model-manager.tauri-plugin-oc.sysinfo.normal.production",
+        "native-model-manager.tauri-plugin-oc.tauri.normal.production",
+        "native-model-manager.tauri-plugin-oc.tokio.normal.production"
+      ]
+    },
+    {
+      "id": "owners-7-native-model-packaging-support",
+      "disposition": "external-owner-edges",
+      "explanation": "The local all-WebGPU APK's reused build script owns tauri-build. This exact ARM64 composition excludes inference/store/devtools and is not a publisher APK/AAB or armv7 qualification.",
+      "profiles": ["android-arm64-transformers-webgpu"],
+      "sources": [
+        {
+          "path": "frontend/src-tauri/build.rs",
+          "lines": [5]
+        },
+        {
+          "path": "frontend/src-tauri/Cargo.toml",
+          "lines": [1, 14, 34]
+        }
+      ],
+      "seeds": [
+        "native-model-packaging-support.open-chat.tauri_build.build.build"
+      ]
+    },
+    {
+      "id": "owners-8-release-wasm-hash-guard",
+      "disposition": "external-owner-edges",
+      "explanation": "Only the added expected-Wasm-SHA256 guard's clap option, sha256 digest and canister_agent_utils filename selection/itertools path are selected in the isolated Windows/Linux tool profiles. These normal Cargo edges have build/tool origin, not deployed production; metadata collection does not run an upgrade or qualify unrelated upgrader networking.",
+      "profiles": ["windows-release-tool", "linux-release-tool"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_agent_utils/Cargo.toml",
+          "lines": [1, 12]
+        },
+        {
+          "path": "backend/libraries/canister_agent_utils/src/lib.rs",
+          "lines": [5, 203, 208, 209, 231, 237]
+        },
+        {
+          "path": "backend/libraries/sha256/Cargo.toml",
+          "lines": [1, 9]
+        },
+        {
+          "path": "backend/libraries/sha256/src/lib.rs",
+          "lines": [1, 4, 5, 6, 7]
+        },
+        {
+          "path": "backend/tools/canister_upgrader/Cargo.toml",
+          "lines": [1, 12]
+        },
+        {
+          "path": "backend/tools/canister_upgrader/src/lib.rs",
+          "lines": [2, 8, 35, 37, 41, 45, 46]
+        },
+        {
+          "path": "backend/tools/canister_upgrader/src/main.rs",
+          "lines": [3, 8, 10, 130, 131]
+        },
+        {
+          "path": "scripts/upgrade-canister.sh",
+          "lines": [14, 16, 74]
+        }
+      ],
+      "seeds": [
+        "release-wasm-hash-guard.canister_upgrader.clap.normal.build",
+        "release-wasm-hash-guard.sha256.sha2.normal.build",
+        "release-wasm-hash-guard.canister_agent_utils.itertools.normal.build"
+      ]
+    },
+    {
+      "id": "owners-9-shared-feature-test-user-registration-conversion",
+      "disposition": "external-owner-edges",
+      "explanation": "Unlike PR1's ordinary registration helper, the selected PR2 tests use diamond registration and its ledger transfer/Account construction, reaching types::UserId::From<Account>. The icrc-ledger-types normal edge therefore remains an explicit Windows-default test owner.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/action_card_inbox_routing_tests.rs",
+          "lines": [23]
+        },
+        {
+          "path": "backend/integration_tests/src/client/ledger.rs",
+          "lines": [3, 44, 49, 58]
+        },
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [157, 158, 159, 178]
+        },
+        {
+          "path": "backend/integration_tests/src/fan_out_delivery_tests.rs",
+          "lines": [99, 100]
+        },
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1, 15]
+        },
+        {
+          "path": "backend/libraries/types/src/user.rs",
+          "lines": [4, 129, 134, 135]
+        }
+      ],
+      "seeds": [
+        "shared-feature-test-user-registration-conversion.types.icrc_ledger_types.normal.test"
+      ]
+    },
+    {
+      "id": "owners-10-shared-feature-test-external-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "Selected setup constructs/encodes the external event-store InitArgs. Retain the exact Git-sourced event_store_canister test/dev root and its nested schema identity, without selecting the complete deployed fixture implementation.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/Cargo.toml",
+          "lines": [1, 22]
+        },
+        {
+          "path": "backend/integration_tests/src/action_card_inbox_routing_tests.rs",
+          "lines": [23]
+        },
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [61, 72, 158]
+        },
+        {
+          "path": "backend/integration_tests/src/fan_out_delivery_tests.rs",
+          "lines": [99]
+        },
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [378]
+        },
+        {
+          "path": "Cargo.toml",
+          "lines": [214]
+        }
+      ],
+      "seeds": [
+        "shared-feature-test-external-schema.integration_tests.event_store_canister.dev.test"
+      ]
+    },
+    {
+      "id": "owners-11-action-inbox-cycles-api",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected cycles-dispenser request/response schemas contain principal/canister identifiers and primitive amounts; their Candid/Serde owners are explicit. Other cycles-dispenser API and implementation paths are outside this caller-side boundary.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/init.rs",
+          "lines": [13]
+        },
+        {
+          "path": "backend/canisters/cycles_dispenser/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/cycles_dispenser/api/src/updates/c2c_request_cycles.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/cycles_dispenser_client/src/lib.rs",
+          "lines": [91]
+        }
+      ],
+      "seeds": [
+        "action-inbox-cycles-api.cycles_dispenser_canister.candid.normal.production",
+        "action-inbox-cycles-api.cycles_dispenser_canister.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-12-action-inbox-cycles-c2c",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected cycles request uses the existing generated c2c client and its Candid owner. Actual call transport is mapped in canister_client rather than inferred for the dependency-free client macro.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/cycles_dispenser/c2c_client/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/cycles_dispenser/c2c_client/src/lib.rs",
+          "lines": [8]
+        },
+        {
+          "path": "backend/libraries/canister_client_macros/src/lib.rs",
+          "lines": [192]
+        }
+      ],
+      "seeds": [
+        "action-inbox-cycles-c2c.cycles_dispenser_canister_c2c_client.candid.normal.production"
+      ]
+    },
+    {
+      "id": "owners-13-action-inbox-environment-entropy",
+      "disposition": "external-owner-edges",
+      "explanation": "Environment/CanisterEnv caller, clock, balance and seeded RNG operations, plus get_random_seed/raw_rand, use the listed utils Candid, ic-cdk, management-canister and rand edges. Memory and test environment leaves are separately reviewed; this does not select the entire utility crate.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/utils/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/utils/src/canister/raw_rand.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/utils/src/env.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/utils/src/env/canister.rs",
+          "lines": [2]
+        }
+      ],
+      "seeds": [
+        "action-inbox-environment-entropy.utils.candid.normal.production",
+        "action-inbox-environment-entropy.utils.ic_cdk_management_canister.normal.production",
+        "action-inbox-environment-entropy.utils.ic_cdk.normal.production",
+        "action-inbox-environment-entropy.utils.rand.normal.production"
+      ]
+    },
+    {
+      "id": "owners-14-action-inbox-http-metrics",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected HTTP metrics/log request path uses http_request's Candid/Serde/serde_json owners. ActionInbox Metrics, BuildVersion, HTTP/streaming payloads, router and log formatter were followed through their nested leaves; the supporting review finds no omitted external owner.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/impl/src/queries/http_request.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/libraries/http_request/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/http_request/src/lib.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": [
+        "action-inbox-http-metrics.http_request.candid.normal.production",
+        "action-inbox-http-metrics.http_request.serde_json.normal.production",
+        "action-inbox-http-metrics.http_request.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-15-action-inbox-logging-and-upgrades",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected logging initialization, persistence and upgrade path uses canister_logger's Candid, Serde, tracing and tracing-subscriber edges. The std-only purge/formatting helpers add no external dependency; unrelated logging consumers are excluded.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/init.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/canister_logger/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/canister_logger/src/lib.rs",
+          "lines": [3, 24]
+        }
+      ],
+      "seeds": [
+        "action-inbox-logging-and-upgrades.canister_logger.candid.normal.production",
+        "action-inbox-logging-and-upgrades.canister_logger.serde.normal.production",
+        "action-inbox-logging-and-upgrades.canister_logger.tracing_subscriber.normal.production",
+        "action-inbox-logging-and-upgrades.canister_logger.tracing.normal.production"
+      ]
+    },
+    {
+      "id": "owners-16-action-inbox-runtime-support",
+      "disposition": "external-owner-edges",
+      "explanation": "The inbox cycles-dispenser client uses ic-cdk, ic-cdk-timers and tracing to schedule/check/request its balance. Its API/c2c schema and shared call transport ownership are separately mapped.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/cycles_dispenser_client/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/cycles_dispenser_client/src/lib.rs",
+          "lines": [57, 79]
+        },
+        {
+          "path": "backend/libraries/utils/src/cycles/cycles_dispenser_client.rs",
+          "lines": [4]
+        }
+      ],
+      "seeds": [
+        "action-inbox-runtime-support.cycles_dispenser_client.ic_cdk_timers.normal.production",
+        "action-inbox-runtime-support.cycles_dispenser_client.ic_cdk.normal.production",
+        "action-inbox-runtime-support.cycles_dispenser_client.tracing.normal.production"
+      ]
+    },
+    {
+      "id": "owners-17-action-inbox-upgrade-persistence",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected stable-memory wrapper owns ic-cdk and ic-stable-structures. The new inbox fields and serialization owners were traced separately; existing unrelated canister state is not part of this review.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/post_upgrade.rs",
+          "lines": [7]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/pre_upgrade.rs",
+          "lines": [7]
+        },
+        {
+          "path": "backend/libraries/stable_memory/Cargo.toml",
+          "lines": [1]
+        }
+      ],
+      "seeds": [
+        "action-inbox-upgrade-persistence.stable_memory.ic_cdk.normal.production",
+        "action-inbox-upgrade-persistence.stable_memory.ic_stable_structures.normal.production"
+      ]
+    },
+    {
+      "id": "owners-18-action-inbox",
+      "disposition": "external-owner-edges",
+      "explanation": "The new inbox API, c2c client, stable inbox, lifecycle/jobs and endpoints were traced with their Candid/Serde/bytes, ic-cdk/timers, stable-structures, rand, JSON, subtle and tracing ownership. Nested configuration/metrics/identifier payloads are resolved in supporting units. The p256 signing helper is test-context only, not an inbox production root.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/lifecycle/init.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/lifecycle/post_upgrade.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/main.rs",
+          "lines": [9]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/queries/actions.rs",
+          "lines": [3, 4]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/updates/acknowledge_actions.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/updates/c2c_notify_actions.rs",
+          "lines": [4]
+        },
+        {
+          "path": "backend/canisters/action_inbox/c2c_client/Cargo.toml",
+          "lines": [1, 8, 10, 12]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/jobs/mod.rs",
+          "lines": [2, 13, 24]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lib.rs",
+          "lines": [1, 4]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/init.rs",
+          "lines": [5, 6]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/mod.rs",
+          "lines": [3, 16]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/post_upgrade.rs",
+          "lines": [6, 8]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/pre_upgrade.rs",
+          "lines": [5, 6]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/lifecycle/stable_state.rs",
+          "lines": [3, 52, 127, 128]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/memory.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/model/inbox.rs",
+          "lines": [8, 9, 10, 11, 1009, 1010, 1356, 1357]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/updates/acknowledge_actions.rs",
+          "lines": [4, 69, 70, 82, 151, 168]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/updates/c2c_notify_actions.rs",
+          "lines": [186, 291]
+        }
+      ],
+      "seeds": [
+        "action-inbox.action_inbox_canister_c2c_client.candid.normal.production",
+        "action-inbox.action_inbox_canister_c2c_client.ic_cdk.normal.production",
+        "action-inbox.action_inbox_canister_c2c_client.tracing.normal.production",
+        "action-inbox.action_inbox_canister_impl.candid.normal.production",
+        "action-inbox.action_inbox_canister_impl.ic_cdk_timers.normal.production",
+        "action-inbox.action_inbox_canister_impl.ic_cdk.normal.production",
+        "action-inbox.action_inbox_canister_impl.ic_stable_structures.normal.production",
+        "action-inbox.action_inbox_canister_impl.rand.normal.production",
+        "action-inbox.action_inbox_canister_impl.serde_bytes.normal.production",
+        "action-inbox.action_inbox_canister_impl.serde_json.normal.production",
+        "action-inbox.action_inbox_canister_impl.serde.normal.production",
+        "action-inbox.action_inbox_canister_impl.subtle.normal.production",
+        "action-inbox.action_inbox_canister_impl.tracing.normal.production",
+        "action-inbox.action_inbox_canister.candid.normal.production",
+        "action-inbox.action_inbox_canister.serde_bytes.normal.production",
+        "action-inbox.action_inbox_canister.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-19-action-inbox",
+      "disposition": "external-owner-edges",
+      "explanation": "The new inbox API, c2c client, stable inbox, lifecycle/jobs and endpoints were traced with their Candid/Serde/bytes, ic-cdk/timers, stable-structures, rand, JSON, subtle and tracing ownership. Nested configuration/metrics/identifier payloads are resolved in supporting units. The p256 signing helper is test-context only, not an inbox production root.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/updates/acknowledge_actions.rs",
+          "lines": [65, 66, 67, 68]
+        }
+      ],
+      "seeds": ["action-inbox.action_inbox_canister_impl.p256.dev.test"]
+    },
+    {
+      "id": "owners-20-app-api-schema-generation",
+      "disposition": "external-owner-edges",
+      "explanation": "Direct ts_export consumers in the changed community/group/user/user-index API and shared card types own their generated ts-rs derives. The ts_export support crate owns Serde/ts-rs, and the procedural macro owns quote/syn. Normal Cargo declarations retain their build/schema origin instead of being relabelled as runtime dependencies.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/community/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/community/api/src/main.rs",
+          "lines": [17]
+        },
+        {
+          "path": "backend/canisters/group/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group/api/src/main.rs",
+          "lines": [12]
+        },
+        {
+          "path": "backend/canisters/user_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/main.rs",
+          "lines": [56]
+        },
+        {
+          "path": "backend/canisters/user/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user/api/src/main.rs",
+          "lines": [47]
+        },
+        {
+          "path": "backend/canisters/user/api/src/updates/respond_to_action_card.rs",
+          "lines": [7, 21]
+        },
+        {
+          "path": "backend/libraries/ts_export_macros/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ts_export/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ts_export/src/lib.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/ai_actions.rs",
+          "lines": [6]
+        }
+      ],
+      "seeds": [
+        "app-api-schema-generation.community_canister.ts_rs.normal.build",
+        "app-api-schema-generation.group_canister.ts_rs.normal.build",
+        "app-api-schema-generation.ts_export_macros.quote.normal.build",
+        "app-api-schema-generation.ts_export_macros.syn.normal.build",
+        "app-api-schema-generation.ts_export.serde.normal.build",
+        "app-api-schema-generation.ts_export.ts_rs.normal.build",
+        "app-api-schema-generation.types.ts_rs.normal.build",
+        "app-api-schema-generation.user_canister.ts_rs.normal.build",
+        "app-api-schema-generation.user_index_canister.ts_rs.normal.build"
+      ]
+    },
+    {
+      "id": "owners-21-app-await-identity-epoch",
+      "disposition": "external-owner-edges",
+      "explanation": "The principal-to-user mapping's added serde(default) identity epoch is a primitive field. Its generated Serde usage belongs to principal_to_user_id_map; pre-existing identity mappings and unrelated authentication behavior are not additional roots.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/principal_to_user_id_map/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/principal_to_user_id_map/src/lib.rs",
+          "lines": [11]
+        }
+      ],
+      "seeds": [
+        "app-await-identity-epoch.principal_to_user_id_map.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-22-app-c2c-transport",
+      "disposition": "external-owner-edges",
+      "explanation": "Selected app c2c methods delegate to the reviewed canister_client Candid/ic-cdk/tracing implementation. Dependency-free canister_client_macros emits these consumer calls but does not itself own those external dependencies.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_client/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/canister_client/src/lib.rs",
+          "lines": [1, 68, 75]
+        }
+      ],
+      "seeds": [
+        "app-c2c-transport.canister_client.candid.normal.production",
+        "app-c2c-transport.canister_client.ic_cdk.normal.production",
+        "app-c2c-transport.canister_client.tracing.normal.production"
+      ]
+    },
+    {
+      "id": "owners-23-app-cards-links-auth-shared",
+      "disposition": "external-owner-edges",
+      "explanation": "The changed card payload/storage, link/capability/provenance, authority/entropy and app-registry/key routes were source-traced to the listed owner-specific schema, bytes, hash, crypto, timer, URL and tracing edges. Newly followed token/state/identifier wrappers reuse these owners. Preserve test-only Candid/stable-structures in chat_events, Candid/rand in community_impl, Candid in group_impl and group_community_common; imports from unrelated mixed-crate siblings do not justify new production roots.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/community/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/updates/create_ai_app_chat_link_token.rs",
+          "lines": [196, 198, 199]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/updates/respond_to_action_card.rs",
+          "lines": [545, 546, 560, 595]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/updates/send_message.rs",
+          "lines": [116]
+        },
+        {
+          "path": "backend/canisters/group/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/updates/create_ai_app_chat_link_token.rs",
+          "lines": [189]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/updates/respond_to_action_card.rs",
+          "lines": [530, 531, 545, 580]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/updates/send_message.rs",
+          "lines": [109]
+        },
+        {
+          "path": "backend/libraries/chat_events/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/chat_events/src/chat_events.rs",
+          "lines": [3549, 3550, 3551]
+        },
+        {
+          "path": "backend/libraries/chat_events/src/message_content_internal.rs",
+          "lines": [2628]
+        },
+        {
+          "path": "backend/libraries/group_community_common/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/group_community_common/src/ai_app_chat_link_admission.rs",
+          "lines": [194]
+        },
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/ai_actions.rs",
+          "lines": [658, 660, 779]
+        }
+      ],
+      "seeds": [
+        "app-cards-links-auth-shared.chat_events.candid.normal.test",
+        "app-cards-links-auth-shared.chat_events.ic_stable_structures.normal.test",
+        "app-cards-links-auth-shared.community_canister_impl.candid.normal.test",
+        "app-cards-links-auth-shared.community_canister_impl.rand.normal.test",
+        "app-cards-links-auth-shared.group_canister_impl.candid.normal.test",
+        "app-cards-links-auth-shared.group_community_common.candid.normal.test",
+        "app-cards-links-auth-shared.types.hex.normal.test"
+      ]
+    },
+    {
+      "id": "owners-24-app-cards-links-auth-shared",
+      "disposition": "external-owner-edges",
+      "explanation": "The changed card payload/storage, link/capability/provenance, authority/entropy and app-registry/key routes were source-traced to the listed owner-specific schema, bytes, hash, crypto, timer, URL and tracing edges. Newly followed token/state/identifier wrappers reuse these owners. Preserve test-only Candid/stable-structures in chat_events, Candid/rand in community_impl, Candid in group_impl and group_community_common; imports from unrelated mixed-crate siblings do not justify new production roots.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/community/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/community/api/src/queries/enabled_ai_apps.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/canisters/community/api/src/updates/create_ai_app_card_capability.rs",
+          "lines": [2, 3]
+        },
+        {
+          "path": "backend/canisters/community/api/src/updates/create_ai_app_card_confirmation_grant.rs",
+          "lines": [2, 3]
+        },
+        {
+          "path": "backend/canisters/community/api/src/updates/create_ai_app_chat_link_token.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/community/api/src/updates/set_ai_app_enabled.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/community/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/ai_app_card_authority.rs",
+          "lines": [4]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/ai_app_chat_link_authority.rs",
+          "lines": [4]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/lifecycle/post_upgrade.rs",
+          "lines": [51]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/updates/create_ai_app_card_capability.rs",
+          "lines": [102]
+        },
+        {
+          "path": "backend/canisters/group_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/ai_app_card_authority.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/ai_app_chat_link_authority.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/c2c_cancel_ai_app_chat_link_authority_v1.rs",
+          "lines": [2, 3]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/c2c_consume_ai_app_chat_link_authority_v1.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/c2c_issue_ai_app_card_authority_v1.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/jobs/cleanup_ai_app_card_authorities.rs",
+          "lines": [21]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/lifecycle/post_upgrade.rs",
+          "lines": [41]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/model/ai_app_card_authority.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/model/ai_app_chat_link_authority.rs",
+          "lines": [1, 3]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/pr2_entropy.rs",
+          "lines": [2, 3, 18, 21, 42, 58, 64, 80]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/updates/c2c_issue_ai_app_card_authority_v1.rs",
+          "lines": [10, 11]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/updates/c2c_issue_ai_app_chat_link_authority_v1.rs",
+          "lines": [10]
+        },
+        {
+          "path": "backend/canisters/group/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group/api/src/queries/enabled_ai_apps.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/canisters/group/api/src/updates/c2c_start_import_into_community.rs",
+          "lines": [18]
+        },
+        {
+          "path": "backend/canisters/group/api/src/updates/create_ai_app_card_capability.rs",
+          "lines": [2, 3]
+        },
+        {
+          "path": "backend/canisters/group/api/src/updates/create_ai_app_card_confirmation_grant.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/group/api/src/updates/create_ai_app_chat_link_token.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/group/api/src/updates/set_ai_app_enabled.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/ai_app_card_authority.rs",
+          "lines": [4]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/ai_app_chat_link_authority.rs",
+          "lines": [4]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/lifecycle/post_upgrade.rs",
+          "lines": [43]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/updates/create_ai_app_card_capability.rs",
+          "lines": [126]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/queries/action_inbox_canister.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/updates/c2c_cancel_ai_app_chat_link_token.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/updates/c2c_consume_ai_app_card_confirmation_grant.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/updates/c2c_create_ai_app_card_capability.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/updates/c2c_deposit_action_confirmed.rs",
+          "lines": [1, 91]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/updates/set_action_inbox_canister.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/action_deposit_envelope.rs",
+          "lines": [15, 85, 97, 173, 192, 212]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/lifecycle/post_upgrade.rs",
+          "lines": [44]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/pr2_entropy.rs",
+          "lines": [2, 3, 17, 20, 37, 53, 59, 75]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/updates/c2c_cancel_ai_app_chat_link_token.rs",
+          "lines": [11]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/updates/c2c_consume_ai_app_card_confirmation_grant.rs",
+          "lines": [16]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/updates/c2c_deposit_action_confirmed.rs",
+          "lines": [8, 10, 11, 12, 13, 147, 557, 558]
+        },
+        {
+          "path": "backend/canisters/user_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/queries/action_signing_keys.rs",
+          "lines": [1, 2, 3]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/queries/ai_app_user_keys.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/queries/ai_apps_by_ids.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/queries/ai_apps.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/activate_action_signing_key.rs",
+          "lines": [4, 32]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/c2c_ai_app_confirmed_action_route.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/user_index/api/tests/ai_app_chat_link_candid_golden.rs",
+          "lines": [22]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/ai_app_card_authority.rs",
+          "lines": [3, 45, 46, 58, 74, 75, 79, 97]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/ai_app_chat_link_authority.rs",
+          "lines": [3, 30, 31, 43, 60, 61, 64, 65]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/jobs/action_delivery_outbox.rs",
+          "lines": [6, 28, 33, 51, 73]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/jobs/migrate_ai_app_user_keys.rs",
+          "lines": [3, 6, 14]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/jobs/prune_ai_app_card_tokens.rs",
+          "lines": [2, 5, 21]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/jobs/retire_action_signing_keys.rs",
+          "lines": [6]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/jobs/scrub_upgrade_snapshot.rs",
+          "lines": [4, 75]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/lib.rs",
+          "lines": [688, 938, 969, 983, 993, 1084, 1113]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/action_delivery_outbox.rs",
+          "lines": [2, 1321, 1327]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/action_signing_keyring.rs",
+          "lines": [1, 2, 3, 5, 8, 227, 228, 229]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_action_registry.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_app_scoped_identity.rs",
+          "lines": [2, 3, 4, 9, 174]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_app_user_keys.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/pr2_entropy.rs",
+          "lines": [3, 101]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/updates/c2c_deposit_actions.rs",
+          "lines": [18]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/updates/c2c_redeem_ai_app_chat_link_token.rs",
+          "lines": [6]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/updates/create_ai_app_link_code.rs",
+          "lines": [89]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/updates/register_ai_app.rs",
+          "lines": [8, 262, 436, 441, 450, 455]
+        },
+        {
+          "path": "backend/canisters/user/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user/api/src/lib.rs",
+          "lines": [207]
+        },
+        {
+          "path": "backend/canisters/user/api/src/updates/create_ai_app_card_capability.rs",
+          "lines": [2, 3]
+        },
+        {
+          "path": "backend/canisters/user/api/src/updates/create_ai_app_card_confirmation_grant.rs",
+          "lines": [2, 3]
+        },
+        {
+          "path": "backend/canisters/user/api/src/updates/create_ai_app_chat_link_token.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/user/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user/impl/src/lifecycle/post_upgrade.rs",
+          "lines": [41]
+        },
+        {
+          "path": "backend/canisters/user/impl/src/updates/create_ai_app_card_capability.rs",
+          "lines": [30, 77, 160]
+        },
+        {
+          "path": "backend/canisters/user/impl/src/updates/create_ai_app_card_confirmation_grant.rs",
+          "lines": [40, 91]
+        },
+        {
+          "path": "backend/canisters/user/impl/src/updates/create_ai_app_chat_link_token.rs",
+          "lines": [65]
+        },
+        {
+          "path": "backend/canisters/user/impl/src/updates/create_ai_app_private_match_capability.rs",
+          "lines": [27]
+        },
+        {
+          "path": "backend/libraries/chat_events/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/chat_events/src/chat_events.rs",
+          "lines": [13, 3354, 3569, 3588, 3593, 4210]
+        },
+        {
+          "path": "backend/libraries/chat_events/src/message_content_internal.rs",
+          "lines": [2200, 2274, 2646, 2651, 2853, 2870]
+        },
+        {
+          "path": "backend/libraries/group_community_common/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/group_community_common/src/ai_app_chat_link_admission.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/libraries/p256_key_pair/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/p256_key_pair/src/lib.rs",
+          "lines": [7, 10, 18, 27]
+        },
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/ai_actions.rs",
+          "lines": [2, 3, 4, 5, 123, 124, 155, 451, 469]
+        },
+        {
+          "path": "backend/libraries/types/src/message_content.rs",
+          "lines": [976, 983, 1006, 1018, 1026, 1058, 1067]
+        },
+        {
+          "path": "backend/libraries/types/src/pr2_entropy.rs",
+          "lines": [1, 2, 3, 4, 5, 328]
+        }
+      ],
+      "seeds": [
+        "app-cards-links-auth-shared.chat_events.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.chat_events.serde.normal.production",
+        "app-cards-links-auth-shared.chat_events.sha2.normal.production",
+        "app-cards-links-auth-shared.community_canister_impl.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.community_canister_impl.tracing.normal.production",
+        "app-cards-links-auth-shared.community_canister.candid.normal.production",
+        "app-cards-links-auth-shared.community_canister.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.community_canister.serde.normal.production",
+        "app-cards-links-auth-shared.group_canister_impl.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.group_canister_impl.tracing.normal.production",
+        "app-cards-links-auth-shared.group_canister.candid.normal.production",
+        "app-cards-links-auth-shared.group_canister.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.group_canister.serde.normal.production",
+        "app-cards-links-auth-shared.group_community_common.serde.normal.production",
+        "app-cards-links-auth-shared.group_index_canister_impl.candid.normal.production",
+        "app-cards-links-auth-shared.group_index_canister_impl.ic_cdk_management_canister.normal.production",
+        "app-cards-links-auth-shared.group_index_canister_impl.ic_cdk_timers.normal.production",
+        "app-cards-links-auth-shared.group_index_canister_impl.ic_cdk.normal.production",
+        "app-cards-links-auth-shared.group_index_canister_impl.rand.normal.production",
+        "app-cards-links-auth-shared.group_index_canister_impl.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.group_index_canister_impl.serde.normal.production",
+        "app-cards-links-auth-shared.group_index_canister_impl.tracing.normal.production",
+        "app-cards-links-auth-shared.group_index_canister.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.group_index_canister.serde.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.candid.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.ct_codecs.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.hex.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.ic_cdk_management_canister.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.ic_cdk_timers.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.ic_cdk.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.rand.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.serde_json.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.serde.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister_impl.tracing.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister.candid.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.local_user_index_canister.serde.normal.production",
+        "app-cards-links-auth-shared.p256_key_pair.p256.normal.production",
+        "app-cards-links-auth-shared.p256_key_pair.serde.normal.production",
+        "app-cards-links-auth-shared.types.candid.normal.production",
+        "app-cards-links-auth-shared.types.rand.normal.production",
+        "app-cards-links-auth-shared.types.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.types.serde.normal.production",
+        "app-cards-links-auth-shared.types.sha2.normal.production",
+        "app-cards-links-auth-shared.user_canister_impl.candid.normal.production",
+        "app-cards-links-auth-shared.user_canister_impl.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.user_canister_impl.tracing.normal.production",
+        "app-cards-links-auth-shared.user_canister.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.user_canister.serde.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.candid.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.hex.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.hmac_sha256.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.ic_cdk_management_canister.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.ic_cdk_timers.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.ic_cdk.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.ic_stable_structures.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.p256.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.rand.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.serde_json.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.serde.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.subtle.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.tracing.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.url.normal.production",
+        "app-cards-links-auth-shared.user_index_canister_impl.zeroize.normal.production",
+        "app-cards-links-auth-shared.user_index_canister.candid.normal.production",
+        "app-cards-links-auth-shared.user_index_canister.hex.normal.production",
+        "app-cards-links-auth-shared.user_index_canister.serde_bytes.normal.production",
+        "app-cards-links-auth-shared.user_index_canister.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-25-app-contract-c2c-error",
+      "disposition": "external-owner-edges",
+      "explanation": "The app call failure path uses the shared types c2c error conversion and ic-cdk rejection representation. Its nested OCError schema/TS support is assigned to the corresponding owner groups.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/error.rs",
+          "lines": [2, 106]
+        }
+      ],
+      "seeds": ["app-contract-c2c-error.types.ic_cdk.normal.production"]
+    },
+    {
+      "id": "owners-26-app-contract-nested-error-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The reached OCError/error-code payload was followed through enum/code/scalar/string leaves. Its Candid and Serde derive ownership belongs to oc_error_codes and adds no other nested external owner.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/error_codes/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/error_codes/src/lib.rs",
+          "lines": [7, 8]
+        }
+      ],
+      "seeds": [
+        "app-contract-nested-error-schema.oc_error_codes.candid.normal.production",
+        "app-contract-nested-error-schema.oc_error_codes.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-27-app-contract-nested-error-ts-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The error-code schema's direct ts_export annotation introduces a consuming oc_error_codes-to-ts-rs owner edge. This is separate from procedural macro host dependencies.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/error_codes/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/error_codes/src/lib.rs",
+          "lines": [6]
+        },
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [82]
+        }
+      ],
+      "seeds": [
+        "app-contract-nested-error-ts-schema.oc_error_codes.ts_rs.normal.build"
+      ]
+    },
+    {
+      "id": "owners-28-app-contract-nested-schema-macro",
+      "disposition": "external-owner-edges",
+      "explanation": "The ts_export implementation inserts a consuming crate ts_rs::TS derive. quote/syn are owned by the macro crate in build context; generated schema dependencies stay with their consumers.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/ts_export_macros/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [1, 82]
+        }
+      ],
+      "seeds": [
+        "app-contract-nested-schema-macro.ts_export_macros.quote.normal.build",
+        "app-contract-nested-schema-macro.ts_export_macros.syn.normal.build"
+      ]
+    },
+    {
+      "id": "owners-29-app-contract-nested-schema-support",
+      "disposition": "external-owner-edges",
+      "explanation": "The reached ts_export support wrapper uses Serde and ts-rs for schema generation. Its normal Cargo declarations retain build-origin provenance and are not claimed as unrelated production behavior.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/ts_export/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ts_export/src/lib.rs",
+          "lines": [1, 11]
+        }
+      ],
+      "seeds": [
+        "app-contract-nested-schema-support.ts_export.serde.normal.build",
+        "app-contract-nested-schema-support.ts_export.ts_rs.normal.build"
+      ]
+    },
+    {
+      "id": "owners-30-app-contract-nested-user-ts-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The reached UserId wrapper owns its generated types-to-ts-rs derive. Principal and primitive/string schema leaves reuse the mapped schema owners; the independently reached diamond-registration Account conversion is explicitly handled by the test-conversion group.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [82]
+        },
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/user.rs",
+          "lines": [9]
+        }
+      ],
+      "seeds": ["app-contract-nested-user-ts-schema.types.ts_rs.normal.build"]
+    },
+    {
+      "id": "owners-31-app-contract-test-auth-bootstrap",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected shared feature-test bootstrap creates its RSA key through sign_in_with_email_test_utils; rand and rsa belong to that test helper. The complete email-auth canister implementation is not selected.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [391]
+        },
+        {
+          "path": "backend/libraries/sign_in_with_email_test_utils/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/sign_in_with_email_test_utils/src/lib.rs",
+          "lines": [12, 62]
+        }
+      ],
+      "seeds": [
+        "app-contract-test-auth-bootstrap.sign_in_with_email_test_utils.rand.normal.test",
+        "app-contract-test-auth-bootstrap.sign_in_with_email_test_utils.rsa.normal.test"
+      ]
+    },
+    {
+      "id": "owners-32-app-contract-test-bootstrap",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected integration setup uses ledger schemas, lazy initialization and random test data through the listed integration_tests owners. Caller-side initialization/upload/registration schemas are reviewed separately; unchanged fixture implementation side effects remain outside this delta.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/integration_tests/src/env.rs",
+          "lines": [4]
+        },
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [68, 89, 423, 521]
+        }
+      ],
+      "seeds": [
+        "app-contract-test-bootstrap.integration_tests.ic_ledger_types.dev.test",
+        "app-contract-test-bootstrap.integration_tests.icrc_ledger_types.dev.test",
+        "app-contract-test-bootstrap.integration_tests.lazy_static.dev.test",
+        "app-contract-test-bootstrap.integration_tests.rand.dev.test"
+      ]
+    },
+    {
+      "id": "owners-33-app-contract-test-transport",
+      "disposition": "external-owner-edges",
+      "explanation": "The feature-test transport reaches shared CanisterWasmBytes/delegation byte wrappers using types-to-serde_bytes. Fixed arrays, primitive aliases and std containers do not add a further owner.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/canister_wasm.rs",
+          "lines": [54]
+        },
+        {
+          "path": "backend/libraries/types/src/delegation.rs",
+          "lines": [9]
+        }
+      ],
+      "seeds": ["app-contract-test-transport.types.serde_bytes.normal.test"]
+    },
+    {
+      "id": "owners-34-app-contract-test-wasm-upload",
+      "disposition": "external-owner-edges",
+      "explanation": "Shared test setup hashes selected wasm chunks through the existing sha256 helper and its sha2 owner. File/chunk iteration and primitive byte payloads add no external owner, and this does not qualify or deploy the wasm itself.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [212]
+        },
+        {
+          "path": "backend/libraries/sha256/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/sha256/src/lib.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": ["app-contract-test-wasm-upload.sha256.sha2.normal.test"]
+    },
+    {
+      "id": "owners-35-app-ecies",
+      "disposition": "external-owner-edges",
+      "explanation": "The ECIES payload encrypt/decrypt path was traced through AES-GCM, HKDF, P256, SHA2 and Candid/Serde/byte encoding. Base64 and RNG helpers are retained only in their explicit test contexts; all source identities and target boundaries remain exact.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/ecies_payload/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ecies_payload/src/lib.rs",
+          "lines": [16, 17, 18, 19, 20, 21, 22, 23, 24, 247, 249, 298, 301, 318]
+        }
+      ],
+      "seeds": [
+        "app-ecies.ecies_payload.aes_gcm.normal.production",
+        "app-ecies.ecies_payload.candid.normal.production",
+        "app-ecies.ecies_payload.hkdf.normal.production",
+        "app-ecies.ecies_payload.p256.normal.production",
+        "app-ecies.ecies_payload.serde_bytes.normal.production",
+        "app-ecies.ecies_payload.serde.normal.production",
+        "app-ecies.ecies_payload.sha2.normal.production"
+      ]
+    },
+    {
+      "id": "owners-36-app-ecies",
+      "disposition": "external-owner-edges",
+      "explanation": "The ECIES payload encrypt/decrypt path was traced through AES-GCM, HKDF, P256, SHA2 and Candid/Serde/byte encoding. Base64 and RNG helpers are retained only in their explicit test contexts; all source identities and target boundaries remain exact.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/ecies_payload/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ecies_payload/src/lib.rs",
+          "lines": [338, 339, 624, 625]
+        }
+      ],
+      "seeds": [
+        "app-ecies.ecies_payload.base64.dev.test",
+        "app-ecies.ecies_payload.rand.dev.test"
+      ]
+    },
+    {
+      "id": "owners-37-app-endpoint-generation",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected canister API/tracing macro implementations use proc-macro2, quote, syn, Serde and serde_tokenstream at build time. Their generated ic-cdk/tracing/msgpack calls belong to the consuming crates. The candid option defaults false; msgpack-only community/group endpoints do not manufacture a new production Candid consumer edge.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_api_macros/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/canister_api_macros/src/lib.rs",
+          "lines": [1, 94]
+        },
+        {
+          "path": "backend/libraries/canister_tracing_macros/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/canister_tracing_macros/src/lib.rs",
+          "lines": [28]
+        }
+      ],
+      "seeds": [
+        "app-endpoint-generation.canister_api_macros.proc_macro2.normal.build",
+        "app-endpoint-generation.canister_api_macros.quote.normal.build",
+        "app-endpoint-generation.canister_api_macros.serde_tokenstream.normal.build",
+        "app-endpoint-generation.canister_api_macros.serde.normal.build",
+        "app-endpoint-generation.canister_api_macros.syn.normal.build",
+        "app-endpoint-generation.canister_tracing_macros.proc_macro2.normal.build",
+        "app-endpoint-generation.canister_tracing_macros.quote.normal.build",
+        "app-endpoint-generation.canister_tracing_macros.syn.normal.build"
+      ]
+    },
+    {
+      "id": "owners-38-app-envelope-hashes",
+      "disposition": "external-owner-edges",
+      "explanation": "The app envelope hashing call reaches sha256's SHA2 implementation. Its primitive byte inputs/outputs add no additional schema owner; unrelated callers are outside scope.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/api/src/updates/acknowledge_actions.rs",
+          "lines": [72]
+        },
+        {
+          "path": "backend/external_canisters/ai_app_verifier/api/src/updates/c2c_verify_ai_app_v2.rs",
+          "lines": [54]
+        },
+        {
+          "path": "backend/libraries/sha256/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/sha256/src/lib.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": ["app-envelope-hashes.sha256.sha2.normal.production"]
+    },
+    {
+      "id": "owners-39-app-envelope-signing",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected sign_bytes path uses jwt's P256 signing implementation. Uncalled JWT text/base64 helpers are not selected merely because they share this crate.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/user_index/impl/src/updates/c2c_deposit_actions.rs",
+          "lines": [12]
+        },
+        {
+          "path": "backend/libraries/jwt/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/jwt/src/lib.rs",
+          "lines": [109]
+        }
+      ],
+      "seeds": ["app-envelope-signing.jwt.p256.normal.production"]
+    },
+    {
+      "id": "owners-40-app-expiry-clock",
+      "disposition": "external-owner-edges",
+      "explanation": "The expiry path reaches canister_time's ic0 clock on wasm and std support on the host. Timestamp aliases are integers and introduce no further dependency owner.",
+      "profiles": ["wasm-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_time/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/canister_time/src/lib.rs",
+          "lines": [15]
+        },
+        {
+          "path": "backend/libraries/utils/src/env/canister.rs",
+          "lines": [29]
+        }
+      ],
+      "seeds": ["app-expiry-clock.canister_time.ic0.normal.production"]
+    },
+    {
+      "id": "owners-41-app-generated-endpoint-runtime",
+      "disposition": "external-owner-edges",
+      "explanation": "Generated app query/update wrappers in community, group, group-index, local-user-index, user and user-index consume ic-cdk. The macro implementation and msgpack/trace consumer edges are accounted for separately; no extra production Candid edge is inferred for msgpack-only wrappers.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/community/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/updates/create_ai_app_card_capability.rs",
+          "lines": [7]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/updates/c2c_issue_ai_app_card_authority_v1.rs",
+          "lines": [21]
+        },
+        {
+          "path": "backend/canisters/group/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/updates/create_ai_app_card_capability.rs",
+          "lines": [7]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/updates/c2c_deposit_action_confirmed.rs",
+          "lines": [23]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/updates/register_ai_app.rs",
+          "lines": [13]
+        },
+        {
+          "path": "backend/canisters/user/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user/impl/src/updates/create_ai_app_card_capability.rs",
+          "lines": [9]
+        },
+        {
+          "path": "backend/libraries/canister_api_macros/src/lib.rs",
+          "lines": [146]
+        }
+      ],
+      "seeds": [
+        "app-generated-endpoint-runtime.community_canister_impl.ic_cdk.normal.production",
+        "app-generated-endpoint-runtime.group_canister_impl.ic_cdk.normal.production",
+        "app-generated-endpoint-runtime.group_index_canister_impl.ic_cdk.normal.production",
+        "app-generated-endpoint-runtime.local_user_index_canister_impl.ic_cdk.normal.production",
+        "app-generated-endpoint-runtime.user_canister_impl.ic_cdk.normal.production",
+        "app-generated-endpoint-runtime.user_index_canister_impl.ic_cdk.normal.production"
+      ]
+    },
+    {
+      "id": "owners-42-app-integration-tests",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected app card/inbox/link/registry/fan-out/key-isolation/idempotency tests use PocketIc, Candid, ct-codecs, P256, rand and Serde/bytes/JSON through integration_tests. Shared setup and external fixture schemas have their own exact test-context owner edges; this inventory is not evidence that the integration tests were executed.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/integration_tests/src/action_card_inbox_routing_tests.rs",
+          "lines": [9, 10]
+        },
+        {
+          "path": "backend/integration_tests/src/action_inbox_lifecycle_tests.rs",
+          "lines": [
+            6, 8, 9, 10, 49, 50, 51, 61, 68, 69, 70, 225, 294, 337, 434, 470
+          ]
+        },
+        {
+          "path": "backend/integration_tests/src/ai_app_link_code_tests.rs",
+          "lines": [6, 8, 9, 10, 79, 222]
+        },
+        {
+          "path": "backend/integration_tests/src/ai_app_registry_tests.rs",
+          "lines": [10, 11, 12, 543]
+        },
+        {
+          "path": "backend/integration_tests/src/fan_out_delivery_tests.rs",
+          "lines": [8, 11, 12, 13, 17, 18, 722, 1017, 1310, 1317]
+        },
+        {
+          "path": "backend/integration_tests/src/per_user_key_isolation_tests.rs",
+          "lines": [4, 57, 68]
+        }
+      ],
+      "seeds": [
+        "app-integration-tests.integration_tests.candid.dev.test",
+        "app-integration-tests.integration_tests.ct_codecs.dev.test",
+        "app-integration-tests.integration_tests.p256.dev.test",
+        "app-integration-tests.integration_tests.pocket_ic.dev.test",
+        "app-integration-tests.integration_tests.rand.dev.test",
+        "app-integration-tests.integration_tests.serde_bytes.dev.test",
+        "app-integration-tests.integration_tests.serde_json.dev.test",
+        "app-integration-tests.integration_tests.serde.dev.test"
+      ]
+    },
+    {
+      "id": "owners-43-app-native-handoff-and-apk-cache-policy",
+      "disposition": "external-owner-edges",
+      "explanation": "The native handoff and bundle-update policy use Tauri, Serde/JSON and semver, plus the desktop-only open call. Android selects four mobile owners without desktop open; cached_update_allowed and the missing-index guard add only std container/control flow.",
+      "profiles": ["windows-default", "windows-inference"],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/desktop.rs",
+          "lines": [29]
+        }
+      ],
+      "seeds": [
+        "app-native-handoff-and-apk-cache-policy.tauri-plugin-oc.open.normal.production"
+      ]
+    },
+    {
+      "id": "owners-44-app-native-handoff-and-apk-cache-policy",
+      "disposition": "external-owner-edges",
+      "explanation": "The native handoff and bundle-update policy use Tauri, Serde/JSON and semver, plus the desktop-only open call. Android selects four mobile owners without desktop open; cached_update_allowed and the missing-index guard add only std container/control flow.",
+      "profiles": [
+        "windows-default",
+        "windows-inference",
+        "android-inference-store",
+        "android-arm64-transformers-webgpu"
+      ],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/update_manager.rs",
+          "lines": [3, 28, 37, 43, 48, 64, 137, 147]
+        }
+      ],
+      "seeds": [
+        "app-native-handoff-and-apk-cache-policy.tauri-plugin-oc.semver.normal.production",
+        "app-native-handoff-and-apk-cache-policy.tauri-plugin-oc.serde_json.normal.production",
+        "app-native-handoff-and-apk-cache-policy.tauri-plugin-oc.serde.normal.production",
+        "app-native-handoff-and-apk-cache-policy.tauri-plugin-oc.tauri.normal.production"
+      ]
+    },
+    {
+      "id": "owners-45-app-registry-search",
+      "disposition": "external-owner-edges",
+      "explanation": "The app registry search-index payload reaches the search crate's Serde schema ownership. Unchanged search implementation tests and their test-case dependency are not introduced by this app delta.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_app_registry.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/libraries/search/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/search/src/weighted.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": ["app-registry-search.search.serde.normal.production"]
+    },
+    {
+      "id": "owners-46-app-signing-key-persistence",
+      "disposition": "external-owner-edges",
+      "explanation": "The P256 key-pair serialization uses serde(with) byte adapters. The p256_key_pair-to-serde_bytes owner is explicit alongside its separately mapped P256/Serde owners; fixed key bytes add no additional package.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/p256_key_pair/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/p256_key_pair/src/lib.rs",
+          "lines": [12]
+        }
+      ],
+      "seeds": [
+        "app-signing-key-persistence.p256_key_pair.serde_bytes.normal.production"
+      ]
+    },
+    {
+      "id": "owners-47-app-test-msgpack",
+      "disposition": "external-owner-edges",
+      "explanation": "Selected test client serialization uses msgpack's Serde and exact Git-patched rmp-serde implementation. Test provenance remains independent from the same production wrapper; no registry substitution is permitted.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [93]
+        },
+        {
+          "path": "backend/libraries/msgpack/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/msgpack/src/lib.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": [
+        "app-test-msgpack.msgpack.rmp_serde.normal.test",
+        "app-test-msgpack.msgpack.serde.normal.test"
+      ]
+    },
+    {
+      "id": "owners-48-app-test-principals",
+      "disposition": "external-owner-edges",
+      "explanation": "Selected app tests use the existing testing RNG helper to construct Candid principals. These are normal dependency edges reached in test context only; no unrelated fixture runtime is inferred.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/ai_app_link_code_tests.rs",
+          "lines": [280]
+        },
+        {
+          "path": "backend/libraries/testing/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/testing/src/rng.rs",
+          "lines": [2]
+        }
+      ],
+      "seeds": [
+        "app-test-principals.testing.candid.normal.test",
+        "app-test-principals.testing.rand.normal.test"
+      ]
+    },
+    {
+      "id": "owners-49-app-verifier-contract",
+      "disposition": "external-owner-edges",
+      "explanation": "The verifier API and c2c methods use Candid/Serde/byte payloads and ic-cdk. The in-repo verifier fixture's Candid/ic-cdk/Serde/bytes edges remain test-context and do not qualify any third-party app implementation or attestation semantics.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/external_canisters/ai_app_verifier/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/external_canisters/ai_app_verifier/api/src/updates/c2c_attest_ai_app_card_confirmation_v1.rs",
+          "lines": [1, 2, 3]
+        },
+        {
+          "path": "backend/external_canisters/ai_app_verifier/api/src/updates/c2c_attest_ai_app_card_v1.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/external_canisters/ai_app_verifier/api/src/updates/c2c_authorize_ai_action_recipients.rs",
+          "lines": [1, 2, 3]
+        },
+        {
+          "path": "backend/external_canisters/ai_app_verifier/c2c_client/Cargo.toml",
+          "lines": [1, 8, 10]
+        },
+        {
+          "path": "backend/external_canisters/ai_app_verifier/test_impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/external_canisters/ai_app_verifier/test_impl/src/lib.rs",
+          "lines": [5, 6, 43, 70, 76, 80, 84, 89, 170, 182, 183, 285]
+        }
+      ],
+      "seeds": [
+        "app-verifier-contract.ai_app_verifier_canister_c2c_client.candid.normal.production",
+        "app-verifier-contract.ai_app_verifier_canister_c2c_client.ic_cdk.normal.production",
+        "app-verifier-contract.ai_app_verifier_canister.candid.normal.production",
+        "app-verifier-contract.ai_app_verifier_canister.serde_bytes.normal.production",
+        "app-verifier-contract.ai_app_verifier_canister.serde.normal.production",
+        "app-verifier-contract.ai_app_verifier_test_canister_impl.candid.normal.test",
+        "app-verifier-contract.ai_app_verifier_test_canister_impl.ic_cdk.normal.test",
+        "app-verifier-contract.ai_app_verifier_test_canister_impl.serde_bytes.normal.test",
+        "app-verifier-contract.ai_app_verifier_test_canister_impl.serde.normal.test"
+      ]
+    },
+    {
+      "id": "owners-50-app-wire-and-stable-payloads",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected app wire and stable payload serialization reaches msgpack's Serde and exact Git-patched rmp-serde source. Nested card/state payloads have separately reviewed owners; pre-existing unrelated stored schemas are excluded.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/impl/src/model/inbox.rs",
+          "lines": [55]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/updates/c2c_notify_actions.rs",
+          "lines": [60]
+        },
+        {
+          "path": "backend/libraries/msgpack/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/msgpack/src/lib.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": [
+        "app-wire-and-stable-payloads.msgpack.rmp_serde.normal.production",
+        "app-wire-and-stable-payloads.msgpack.serde.normal.production"
+      ]
+    },
+    {
+      "id": "nested-version-value",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The source-equivalent BuildVersion was read in full. Its Candid/Serde and generated types ts-rs owners are already selected for ActionInbox metrics, lifecycle and caller-side setup. Parsing/display/defaults are std operations over u32 fields.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/src/build_version.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "nested-timestamp-value",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The source-equivalent Timestamped wrapper was read through fields, update, Default and Deref. App state/lifecycle uses its primitive timestamp and the already selected Serde ownership; it does not introduce another external owner.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/src/timestamped.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "dependency-free-state-and-client-support",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The state macro emits std thread-local/RefCell access; git_commit_id uses option_env/std only. Their manifests and the canister-client macro manifest have no external dependencies. Generated client external calls remain attributed to the existing consumer owners.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_client_macros/Cargo.toml",
+          "lines": [1, 2, 3, 4, 5, 6, 7]
+        },
+        {
+          "path": "backend/libraries/canister_state_macros/Cargo.toml",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8]
+        },
+        {
+          "path": "backend/libraries/canister_state_macros/src/lib.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47
+          ]
+        },
+        {
+          "path": "backend/libraries/git_commit_id/Cargo.toml",
+          "lines": [1, 2, 3, 4, 5, 6]
+        },
+        {
+          "path": "backend/libraries/git_commit_id/src/lib.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "caller-side-setup-schemas",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The selected installer/upload/subnet/bucket/operator caller schemas and helper bodies were read. They reuse the explicit test-schema Candid/Serde/ts-rs and transport owners. Unused HumanReadable conversions, storage upload_file/hash/random helpers, unrelated user-index event payloads and all implementation-side effects remain outside this bounded setup call path.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/openchat_installer/api/src/lib.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+          ]
+        },
+        {
+          "path": "backend/canisters/openchat_installer/api/src/updates/install_canisters.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23
+          ]
+        },
+        {
+          "path": "backend/canisters/openchat_installer/api/src/updates/upload_wasm_chunk.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24
+          ]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/queries/subnets.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/updates/expand_onto_subnet.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        },
+        {
+          "path": "backend/canisters/storage_index/api/src/updates/add_bucket_canister.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        },
+        {
+          "path": "backend/canisters/storage_index/api/src/updates/upgrade_bucket_canister_wasm.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/lib.rs",
+          "lines": [108, 109, 110, 111, 112, 113]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/add_platform_operator.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/upgrade_local_user_index_canister_wasm.rs",
+          "lines": [1, 2, 3, 4]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/upgrade_user_canister_wasm.rs",
+          "lines": [1, 2, 3, 4]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/upload_wasm_chunk.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24
+          ]
+        },
+        {
+          "path": "backend/integration_tests/src/client/openchat_installer.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75
+          ]
+        },
+        {
+          "path": "backend/integration_tests/src/client/storage_index.rs",
+          "lines": [
+            1, 2, 11, 15, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+            39, 40, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108,
+            109, 110, 111, 112, 113
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "native-debug-optin-boundary",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The reviewed app-shell delta gates devtools behind debug_assertions, its explicit Cargo feature and OC_DEVTOOLS. None of the claimed profiles opts into devtools. Existing navigation/setup/plugin calls are unchanged and do not become model-delta owners merely because this file is pinned.",
+      "profiles": [
+        "windows-default",
+        "windows-inference",
+        "android-inference-store",
+        "android-arm64-transformers-webgpu"
+      ],
+      "sources": [
+        {
+          "path": "frontend/src-tauri/src/lib.rs",
+          "lines": [
+            14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+            31, 32, 33, 34
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "added-index-state-fields",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The added group-index authority stores and entropy gate, and the local-index entropy field/default, were followed into their separately mapped app schemas. Existing Candid/Serde/byte owners cover these added fields. Other pre-existing Data fields and canister behavior are outside the app delta.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/group_index/impl/src/lib.rs",
+          "lines": [
+            17, 18, 39, 329, 330, 331, 332, 333, 334, 380, 381, 382, 491, 492,
+            493
+          ]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/lib.rs",
+          "lines": [65, 623, 624, 726]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "nested-app-token-state",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The reviewed throttle/card/link/private-match state declarations use Serde, serde_bytes, Principal, app IDs, chat/context wrappers and std sets/maps/queues with primitive revision/epoch/expiry fields. Existing user-index and nested types owners cover these schemas; this unit does not select unrelated state siblings or treat every unchanged helper as a new root.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_app_call_throttle.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65
+          ]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_app_card_tokens.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+            88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+            104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+            117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
+            130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142,
+            143, 144, 145, 146, 147, 148
+          ]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_app_chat_link_tokens.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70
+          ]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_app_link_codes.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80
+          ]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/ai_app_private_match_tokens.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "card-core-forwarding-and-wrappers",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The changed GroupChatCore card methods check existing member/visibility state and delegate to the already reviewed chat_events card methods without an added state field or external call. ActionCard role selection uses the configured default role. The added bot/event/permission variants wrap the already mapped card payload or a unit enum; their existing Candid/Serde/TS owners remain sufficient. The metrics match adds an empty ActionCard branch.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/group_chat_core/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/group_chat_core/src/lib.rs",
+          "lines": [
+            1769, 1770, 1771, 1772, 1773, 1774, 1775, 1776, 1777, 1778, 1779,
+            1780, 1781, 1782, 1783, 1784, 1785, 1786, 1787, 1788, 1789, 1790,
+            1791, 1792, 1793, 1794, 1795, 1796, 1797, 1798, 1799, 1800, 1801,
+            1802, 1803, 1804, 1805, 1806, 1807, 1808, 1809, 1810, 1811, 1812,
+            1813, 1814, 1815, 1816, 1817, 1818, 1819, 1820, 1821, 1822, 1823,
+            1824, 1825, 1826, 1827, 1828, 1829, 1830, 1831, 1832, 1833, 1834,
+            1835, 1836, 1837, 1838, 1839, 1840, 1841, 1842, 1843, 1844, 1845,
+            1846, 1847, 1848, 1849, 1850, 1851, 1852, 1853, 1854, 1855, 1856,
+            1857, 1858, 1859, 1860, 1861, 1862, 1863, 1864, 1865, 1866, 1867,
+            1868, 1869, 1870, 1871, 1872, 1873, 1874, 1875, 1876, 1877, 1878,
+            1879, 1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889,
+            1890, 1891, 1892, 1893, 1894, 1895, 1896, 1897, 1898, 1899, 1900,
+            1901, 1902, 1903, 1904, 1905, 1906, 1907, 1908, 1909, 1910, 1911,
+            1912, 1913
+          ]
+        },
+        {
+          "path": "backend/libraries/group_chat_core/src/roles.rs",
+          "lines": [127, 272, 299, 303]
+        },
+        {
+          "path": "backend/libraries/group_community_common/src/enabled_ai_apps.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+            88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+            104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+            117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
+            130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142,
+            143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
+            156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168,
+            169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181,
+            182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194,
+            195, 196, 197, 198, 199, 200
+          ]
+        },
+        {
+          "path": "backend/libraries/chat_events/src/chat_event_internal.rs",
+          "lines": [392]
+        },
+        {
+          "path": "backend/libraries/types/src/bots.rs",
+          "lines": [3, 236, 455, 491]
+        },
+        {
+          "path": "backend/libraries/types/src/events.rs",
+          "lines": [71, 119]
+        },
+        {
+          "path": "backend/libraries/types/src/group_roles.rs",
+          "lines": [232, 257]
+        },
+        {
+          "path": "backend/libraries/types/src/chat.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+            88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+            104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+            117, 118
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "nested-card-identifiers",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "ChatId and CommunityId wrap Principal; ChannelId/MessageIndex/EventIndex and MessageId wrap integers. Their Candid/Serde/ts_export implementations and MessageId rand Distribution reuse selected types owners. Custom Serde visitors, std conversions/display and saturating arithmetic add no owner. Unrelated existing EventIndex regression tests are excluded from this nested-payload review.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/src/chat_id.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56
+          ]
+        },
+        {
+          "path": "backend/libraries/types/src/community_id.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47
+          ]
+        },
+        {
+          "path": "backend/libraries/types/src/channel_id.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+            88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+            104, 105, 106, 107
+          ]
+        },
+        {
+          "path": "backend/libraries/types/src/message_index.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38
+          ]
+        },
+        {
+          "path": "backend/libraries/types/src/message_id.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+            88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+            104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+            117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128
+          ]
+        },
+        {
+          "path": "backend/libraries/types/src/event_index.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "http-metrics-and-memory-leaves",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The ActionInbox metrics payload resolves to primitive counters, strings, BTreeMap<u8,u64>, Principal lists, CanisterIds and BuildVersion. HTTP request/response/streaming wrappers own Candid/Serde/bytes already mapped in types; routing uses std parsing/containers and Principal, and log formatting uses std Write. Heap/stable memory reads use wasm intrinsics or the existing utils ic-cdk owner. There is no additional URL/parser or nested metrics dependency.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/http_request/src/router.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+            88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+            104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+            117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
+            130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142,
+            143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
+            156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168,
+            169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181,
+            182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194,
+            195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
+            208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220
+          ]
+        },
+        {
+          "path": "backend/libraries/http_request/src/logs_handler.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        },
+        {
+          "path": "backend/libraries/types/src/http.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+            88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
+            104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+            117, 118, 119, 120, 121, 122, 123, 124
+          ]
+        },
+        {
+          "path": "backend/libraries/utils/src/memory.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "inbox-configuration-and-guards",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The new configuration endpoint returns app ID, canister/principal lists, timestamps, counters and flags through Candid/Msgpack with existing API/implementation owners. Its guard calls the reviewed caller/state helpers and returns std Result/String. These module/schema leaves add no dependency beyond the ActionInbox roots.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/api/src/lib.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/queries/configuration.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
+          ]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/queries/configuration.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35
+          ]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/guards.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "inbox-test-environment",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The selected TestEnv implementation uses Principal and StdRng plus primitive fields/std values. These are the same utils Candid/rand owner and normal Cargo edges already selected in the host profile; no new owner/package/target/kind is introduced by the ActionInbox migration callback test.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/utils/src/env/test.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "app-common-module-exports",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The group/community common delta only registers and re-exports ai_app_chat_link_admission and enabled_ai_apps. Their reviewed bodies use the already mapped Serde owner or std collections/primitive app IDs. Existing sibling modules are unchanged.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/group_community_common/src/lib.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "native-cache-policy-call-sites",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The bundle-manager delta consults UpdateManager.cached_update_allowed and returns an empty std HashMap for a disallowed or incomplete cache. Its existing semver/Serde/JSON/Tauri ownership is separately mapped; this change adds no browser/model-domain logic or additional external owner.",
+      "profiles": [
+        "windows-default",
+        "windows-inference",
+        "android-inference-store",
+        "android-arm64-transformers-webgpu"
+      ],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/src/bundle_manager.rs",
+          "lines": [45, 46, 47, 48, 49, 119, 120, 121, 122, 123]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "changed-app-module-declarations",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "Compared every added declaration in these API/implementation/model/verifier module files with the PR1 base. They only register the app/card modules already traced by this review; there are no extra expressions or external calls in the selected lines. ActionInbox lifecycle/jobs bodies are separately mapped rather than treated as declaration-only modules.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/action_inbox/api/src/lifecycle/mod.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/queries/mod.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/action_inbox/api/src/updates/mod.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/model/mod.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/queries/mod.rs",
+          "lines": [1, 2, 3]
+        },
+        {
+          "path": "backend/canisters/action_inbox/impl/src/updates/mod.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/community/api/src/queries/mod.rs",
+          "lines": [17]
+        },
+        {
+          "path": "backend/canisters/community/api/src/updates/mod.rs",
+          "lines": [42, 43, 44, 45, 74, 76]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/queries/mod.rs",
+          "lines": [14]
+        },
+        {
+          "path": "backend/canisters/community/impl/src/updates/mod.rs",
+          "lines": [31, 32, 33, 34, 53, 65]
+        },
+        {
+          "path": "backend/canisters/group/api/src/queries/mod.rs",
+          "lines": [13]
+        },
+        {
+          "path": "backend/canisters/group/api/src/updates/mod.rs",
+          "lines": [36, 37, 38, 39, 61, 63]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/queries/mod.rs",
+          "lines": [10]
+        },
+        {
+          "path": "backend/canisters/group/impl/src/updates/mod.rs",
+          "lines": [29, 30, 31, 32, 54, 56]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/mod.rs",
+          "lines": [2, 3, 4, 11, 12, 24]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/model/mod.rs",
+          "lines": [1, 2]
+        },
+        {
+          "path": "backend/canisters/group_index/impl/src/updates/mod.rs",
+          "lines": [2, 3, 4, 11, 12, 24]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/queries/mod.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/updates/mod.rs",
+          "lines": [9, 11, 12, 13, 14, 15, 21, 37, 52]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/queries/mod.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/canisters/local_user_index/impl/src/updates/mod.rs",
+          "lines": [9, 10, 11, 12, 13, 14, 19, 35, 51]
+        },
+        {
+          "path": "backend/canisters/user/api/src/updates/mod.rs",
+          "lines": [33, 34, 35, 36, 60]
+        },
+        {
+          "path": "backend/canisters/user/impl/src/updates/mod.rs",
+          "lines": [32, 33, 34, 35, 59]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/queries/mod.rs",
+          "lines": [1, 2, 3, 4, 8, 10, 15, 19, 20]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/mod.rs",
+          "lines": [
+            2, 9, 10, 11, 12, 13, 14, 15, 16, 20, 21, 25, 26, 27, 32, 33, 34,
+            36, 40, 41, 42, 48, 52, 55, 57, 62, 72, 79
+          ]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/model/mod.rs",
+          "lines": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/queries/mod.rs",
+          "lines": [1, 2, 3, 4, 8, 10, 15, 20, 21]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/updates/mod.rs",
+          "lines": [
+            2, 9, 10, 11, 12, 13, 14, 15, 16, 20, 21, 25, 26, 27, 32, 33, 34,
+            36, 40, 41, 42, 48, 52, 55, 57, 61, 71, 78
+          ]
+        },
+        {
+          "path": "backend/external_canisters/ai_app_verifier/api/src/updates/mod.rs",
+          "lines": [1, 2, 3, 4, 5]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "changed-app-job-registration",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The group-index cleanup job and user-index outbox/key migration/token pruning/key retirement registrations call their separately pinned and owner-mapped helpers. The changed declarations and start calls introduce no additional external owner; unchanged job siblings are excluded.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/group_index/impl/src/jobs/mod.rs",
+          "lines": [6, 11]
+        },
+        {
+          "path": "backend/canisters/user_index/impl/src/jobs/mod.rs",
+          "lines": [2, 4, 5, 8, 9, 15, 17, 18, 19]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "changed-app-test-module-declarations",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The new top-level app/inbox/registry/fan-out/key-isolation/idempotency test declarations and two community enablement tests only register the already reviewed feature test modules. Other historical integration tests are not selected by this changed declaration boundary.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/lib.rs",
+          "lines": [11, 12, 13, 14, 15, 34, 48, 66]
+        },
+        {
+          "path": "backend/integration_tests/src/communities/mod.rs",
+          "lines": [9, 10]
+        }
+      ],
+      "seeds": []
+    }
+  ],
+  "resolutions": [
+    {
+      "id": "nested-state-generated-owner-completeness",
+      "explanation": "Closed for the explicitly bounded app/card delta after the owner-specific source review, caller-side setup/registration schemas, added app state and final identifier/HTTP/metrics/configuration/module review. Payload leaves resolve to already mapped Candid/Serde/bytes/TS/hash/crypto owners or std/primitives. Generated endpoint ownership is assigned according to the actually selected macro options, and generated Data derives belong to their implementation consumers. The final supporting pass adds source evidence but no dependency roots or profile expansion. This is a versioned reviewer assertion, not automated whole-call-graph proof, advisory clearance, integration-test execution or release approval.",
+      "units": [
+        "owners-1-app-state-field-serialization",
+        "owners-2-shared-feature-test-user-registration-schema",
+        "owners-3-shared-feature-test-fixture-schema",
+        "owners-4-native-model-command-build-registration",
+        "owners-5-native-model-ipc-schema-and-commands",
+        "owners-6-native-model-manager",
+        "owners-7-native-model-packaging-support",
+        "owners-8-release-wasm-hash-guard",
+        "owners-9-shared-feature-test-user-registration-conversion",
+        "owners-10-shared-feature-test-external-schema",
+        "owners-11-action-inbox-cycles-api",
+        "owners-12-action-inbox-cycles-c2c",
+        "owners-13-action-inbox-environment-entropy",
+        "owners-14-action-inbox-http-metrics",
+        "owners-15-action-inbox-logging-and-upgrades",
+        "owners-16-action-inbox-runtime-support",
+        "owners-17-action-inbox-upgrade-persistence",
+        "owners-18-action-inbox",
+        "owners-19-action-inbox",
+        "owners-20-app-api-schema-generation",
+        "owners-21-app-await-identity-epoch",
+        "owners-22-app-c2c-transport",
+        "owners-23-app-cards-links-auth-shared",
+        "owners-24-app-cards-links-auth-shared",
+        "owners-25-app-contract-c2c-error",
+        "owners-26-app-contract-nested-error-schema",
+        "owners-27-app-contract-nested-error-ts-schema",
+        "owners-28-app-contract-nested-schema-macro",
+        "owners-29-app-contract-nested-schema-support",
+        "owners-30-app-contract-nested-user-ts-schema",
+        "owners-31-app-contract-test-auth-bootstrap",
+        "owners-32-app-contract-test-bootstrap",
+        "owners-33-app-contract-test-transport",
+        "owners-34-app-contract-test-wasm-upload",
+        "owners-35-app-ecies",
+        "owners-36-app-ecies",
+        "owners-37-app-endpoint-generation",
+        "owners-38-app-envelope-hashes",
+        "owners-39-app-envelope-signing",
+        "owners-40-app-expiry-clock",
+        "owners-41-app-generated-endpoint-runtime",
+        "owners-42-app-integration-tests",
+        "owners-43-app-native-handoff-and-apk-cache-policy",
+        "owners-44-app-native-handoff-and-apk-cache-policy",
+        "owners-45-app-registry-search",
+        "owners-46-app-signing-key-persistence",
+        "owners-47-app-test-msgpack",
+        "owners-48-app-test-principals",
+        "owners-49-app-verifier-contract",
+        "owners-50-app-wire-and-stable-payloads",
+        "nested-version-value",
+        "nested-timestamp-value",
+        "dependency-free-state-and-client-support",
+        "caller-side-setup-schemas",
+        "native-debug-optin-boundary",
+        "added-index-state-fields",
+        "nested-app-token-state",
+        "card-core-forwarding-and-wrappers",
+        "nested-card-identifiers",
+        "http-metrics-and-memory-leaves",
+        "inbox-configuration-and-guards",
+        "inbox-test-environment",
+        "app-common-module-exports",
+        "native-cache-policy-call-sites",
+        "changed-app-module-declarations",
+        "changed-app-job-registration",
+        "changed-app-test-module-declarations"
+      ]
+    }
+  ]
+}

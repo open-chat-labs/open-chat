@@ -35,6 +35,49 @@ afterEach(() => {
 });
 
 describe("registered app local processor contract", () => {
+    it("requires ordered source-index bindings only for the new raw-normalization operation", () => {
+        const raw = { ...envelope, sourceIndexes: [0] };
+        expect(parseAppProcessorResult(raw, binding, "normalize_raw")).toEqual({
+            kind: "candidates",
+            candidates: envelope.candidates,
+            sourceIndexes: [0],
+        });
+        expect(parseAppProcessorResult(raw, binding)).toBeUndefined();
+        expect(parseAppProcessorResult(envelope, binding, "normalize_raw")).toBeUndefined();
+        for (const sourceIndexes of [[], [1], [0, 1], ["0"], [NaN], Array(1)]) {
+            expect(
+                parseAppProcessorResult({ ...raw, sourceIndexes }, binding, "normalize_raw"),
+            ).toBeUndefined();
+        }
+        expect(
+            parseAppProcessorResult(
+                { ...raw, kind: "none", candidates: undefined },
+                binding,
+                "normalize_raw",
+            ),
+        ).toBeUndefined();
+    });
+    it("does not send raw normalization without image candidates or with private-reader transcripts", async () => {
+        for (const input of [
+            {
+                operation: "normalize_raw" as const,
+                modality: "text" as const,
+                candidates: [{ raw: "42" }],
+            },
+            { operation: "normalize_raw" as const, modality: "image" as const },
+            {
+                operation: "normalize_raw" as const,
+                modality: "image" as const,
+                candidates: [{ raw: "42" }],
+                ocrTranscripts: [],
+            },
+        ]) {
+            expect((await processWithApp("https://app.test/card", "observe", input)).kind).toBe(
+                "error",
+            );
+            expect(document.querySelector("iframe")).toBeNull();
+        }
+    });
     it("accepts only the bounded generic opt-in", () => {
         expect(appLocalProcessorSupports({ "x-openchat-local-processor": { version: 1 } })).toBe(
             true,

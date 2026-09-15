@@ -17,13 +17,14 @@ import {
   transformersWebGpuProductionAssetsEnabled,
   TRANSFORMERS_WEBGPU_IMMUTABLE_DELIVERY,
 } from "../frontend/app/transformersWebGpuFeatureFlag.mjs";
-import {
-  TRANSFORMERS_WEBGPU_MODEL_SPECS,
-  TRANSFORMERS_WEBGPU_RUNTIME_ASSETS,
-} from "../frontend/app/src/utils/transformersWebGpuProtocol.ts";
+import { TRANSFORMERS_WEBGPU_RUNTIME_ASSETS } from "../frontend/app/src/utils/transformersWebGpuRuntimeAssets.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(resolve(root, path), "utf8");
+// Native tooling reads source configuration directly, never the browser registry.
+const TRANSFORMERS_WEBGPU_MODEL_SPECS = Object.fromEntries(
+  JSON.parse(read("frontend/app/public/model-catalog.json")).models.map((model) => [model.id, model]),
+);
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 export function preflightSourceAttribution(headResult, statusResult) {

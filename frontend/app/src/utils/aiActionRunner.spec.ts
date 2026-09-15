@@ -1190,6 +1190,120 @@ describe("provenance before posting", () => {
         },
     );
 
+    it("normalizes v2 raw image fields before schema validation, exactly once, before attestation", async () => {
+        const fixture = processorFixture();
+        const modelId = "vendor/raw-vision:q4";
+        selectedWebModelIdMock.mockReturnValue(modelId);
+        (fixture.action.responseSchema as Record<string, unknown>)[
+            "x-openchat-image-prompt-by-model"
+        ] = {
+            version: 2,
+            templates: {
+                [modelId]: {
+                    template: "Read raw instrument values.",
+                    includeRuleGuidance: false,
+                    output: "app",
+                },
+            },
+        };
+        const raw = { reading_text: "42", raw_label: "Station Delta" };
+        const normalized = {
+            reading: 42,
+            observed_on: "2026-09-04",
+            display_label: "Station Delta",
+        };
+        acceleratedImageModelReadyMock.mockResolvedValue(true);
+        inferenceCapabilityMock.mockReturnValue({
+            available: true,
+            runtimesSupported: ["llama-cpp"],
+            selectedModalities: ["text", "image"],
+        });
+        inferOnDeviceMock.mockResolvedValueOnce({ kind: "ok", text: JSON.stringify(raw) });
+        processWithAppMock.mockResolvedValueOnce({
+            kind: "candidates",
+            candidates: [normalized],
+            sourceIndexes: [0],
+        });
+        const result = await proposeAndPostCandidate(
+            fixture.client,
+            messageContext,
+            { kind: "image_content", blobData: new Uint8Array([4, 2]) } as unknown as Parameters<
+                typeof proposeAndPostCandidate
+            >[2],
+            fixture.candidate,
+        );
+        expect(result).toMatchObject({ kind: "ready", extracted: normalized });
+        expect(processWithAppMock).toHaveBeenCalledExactlyOnceWith(
+            expect.any(String),
+            fixture.action.name,
+            { operation: "normalize_raw", modality: "image", candidates: [raw] },
+            expect.any(Function),
+        );
+        expect(inferOnDeviceMock).toHaveBeenCalledOnce();
+        expect(recognizeBrowserImageMock).not.toHaveBeenCalled();
+        expect(processWithAppMock.mock.invocationCallOrder[0]).toBeLessThan(
+            fixture.createAiAppCardProvenance.mock.invocationCallOrder[0],
+        );
+        const exact = (
+            fixture.createAiAppCardProvenance.mock.calls as unknown as unknown[][]
+        )[0][3] as AiAppCardContentV1;
+        expect(JSON.parse(new TextDecoder().decode(exact.confirmPayload))).toEqual(normalized);
+    });
+
+    it.each(["invalid row binding", "changed context"])(
+        "never attests raw fields or reruns inference after %s",
+        async (failure) => {
+            const fixture = processorFixture();
+            let current = true;
+            const modelId = "vendor/raw-vision:q4";
+            selectedWebModelIdMock.mockReturnValue(modelId);
+            (fixture.action.responseSchema as Record<string, unknown>)[
+                "x-openchat-image-prompt-by-model"
+            ] = {
+                version: 2,
+                templates: {
+                    [modelId]: {
+                        template: "Read raw values.",
+                        includeRuleGuidance: false,
+                        output: "app",
+                    },
+                },
+            };
+            acceleratedImageModelReadyMock.mockResolvedValue(true);
+            inferenceCapabilityMock.mockReturnValue({
+                available: true,
+                runtimesSupported: ["llama-cpp"],
+                selectedModalities: ["text", "image"],
+            });
+            inferOnDeviceMock.mockResolvedValueOnce({ kind: "ok", text: '{"reading_text":"42"}' });
+            processWithAppMock.mockImplementationOnce(async () => {
+                if (failure === "changed context") current = false;
+                return {
+                    kind: "candidates",
+                    candidates: [{ reading: 42 }],
+                    sourceIndexes: [failure === "changed context" ? 0 : 1],
+                };
+            });
+            const result = await proposeAndPostCandidate(
+                fixture.client,
+                messageContext,
+                {
+                    kind: "image_content",
+                    blobData: new Uint8Array([4, 2]),
+                } as unknown as Parameters<typeof proposeAndPostCandidate>[2],
+                fixture.candidate,
+                undefined,
+                () => current,
+            );
+            expect(result).toMatchObject({ kind: "error" });
+            expect(inferOnDeviceMock).toHaveBeenCalledOnce();
+            expect(processWithAppMock).toHaveBeenCalledOnce();
+            expect(recognizeBrowserImageMock).not.toHaveBeenCalled();
+            expect(fixture.createAiAppCardProvenance).not.toHaveBeenCalled();
+            expect(fixture.sendMessageWithContent).not.toHaveBeenCalled();
+        },
+    );
+
     it("gives a model-only image result to the app for normalization before attesting its returned fields", async () => {
         const fixture = processorFixture();
         const raw = { reading: 42, observed_on: "4 Sep 2026", display_label: "raw model label" };

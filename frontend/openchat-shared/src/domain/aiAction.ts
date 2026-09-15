@@ -153,12 +153,18 @@ function privateImageEvidencePrompt(
 // remove text-oriented/redundant guidance from expensive vision prefill. A malformed extension is
 // ignored so legacy/cached registrations retain the original prompt and rule guidance.
 export const AI_ACTION_IMAGE_PROMPT_EXTENSION = "x-openchat-image-prompt-template";
+export const AI_ACTION_IMAGE_PROMPT_BY_MODEL_EXTENSION = "x-openchat-image-prompt-by-model";
 export const AI_ACTION_IMAGE_FOCUSED_PASSES_EXTENSION = "x-openchat-image-focused-passes";
 export const MAX_AI_ACTION_IMAGE_PROMPT_BYTES = 4_096;
+export const MAX_AI_ACTION_IMAGE_PROMPT_MODELS = 8;
+export const MAX_AI_ACTION_IMAGE_PROMPT_MODEL_ID_CHARS = 128;
+export const MAX_AI_ACTION_IMAGE_PROMPT_BY_MODEL_BYTES = 16_384;
 
 export interface AiActionImagePromptTemplateConfig {
     template: string;
     includeRuleGuidance: boolean;
+    /** Present only in the atomic v2 per-model contract; v1 always emits canonical fields. */
+    output?: "canonical" | "app";
 }
 
 // An additive extension lets an app split expensive image extraction into a few small, disjoint
@@ -375,6 +381,102 @@ export function imagePromptTemplateConfig(
         template: extension.template,
         includeRuleGuidance: extension.includeRuleGuidance,
     };
+}
+
+// The model IDs and prompt contents are opaque app-authored data. This additive sibling leaves
+// the exact v1 extension intact for older clients, unknown models and text/private-reader paths.
+// Inspect data descriptors rather than invoking accessors on an in-memory schema object.
+function imagePromptOwnData(value: unknown): Record<string, unknown> | undefined {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) return undefined;
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) return undefined;
+    const entries: [string, unknown][] = [];
+    for (const key of Reflect.ownKeys(value)) {
+        if (typeof key !== "string") return undefined;
+        const descriptor = Object.getOwnPropertyDescriptor(value, key);
+        if (descriptor?.enumerable !== true || !Object.hasOwn(descriptor, "value")) {
+            return undefined;
+        }
+        entries.push([key, descriptor.value]);
+    }
+    return Object.fromEntries(entries);
+}
+
+/** Select only an exact registered model ID. Any malformed entry rejects the whole extension.
+ * The aggregate bound covers the UTF-8 serialized extension, including keys and JSON escapes. */
+export function imagePromptTemplateForModel(
+    responseSchema: object | undefined,
+    modelId: string | undefined,
+): AiActionImagePromptTemplateConfig | undefined {
+    if (responseSchema === undefined || typeof modelId !== "string") return undefined;
+    try {
+        const property = Object.getOwnPropertyDescriptor(
+            responseSchema,
+            AI_ACTION_IMAGE_PROMPT_BY_MODEL_EXTENSION,
+        );
+        if (property?.enumerable !== true || !Object.hasOwn(property, "value")) return undefined;
+        const extension = imagePromptOwnData(property.value);
+        if (
+            extension === undefined ||
+            Object.keys(extension).sort().join(",") !== "templates,version" ||
+            (extension.version !== 1 && extension.version !== 2)
+        ) {
+            return undefined;
+        }
+        const templates = imagePromptOwnData(extension.templates);
+        if (templates === undefined) return undefined;
+        const entries = Object.entries(templates);
+        if (entries.length === 0 || entries.length > MAX_AI_ACTION_IMAGE_PROMPT_MODELS) {
+            return undefined;
+        }
+        const encoder = new TextEncoder();
+        const validated = new Map<string, AiActionImagePromptTemplateConfig>();
+        for (const [id, raw] of entries) {
+            if (
+                id.length > MAX_AI_ACTION_IMAGE_PROMPT_MODEL_ID_CHARS ||
+                !/^[A-Za-z0-9][A-Za-z0-9._:/@+-]*$/.test(id)
+            ) {
+                return undefined;
+            }
+            const config = imagePromptOwnData(raw);
+            if (
+                config === undefined ||
+                Object.keys(config).sort().join(",") !==
+                    (extension.version === 1
+                        ? "includeRuleGuidance,template"
+                        : "includeRuleGuidance,output,template") ||
+                typeof config.template !== "string" ||
+                config.template.length > MAX_AI_ACTION_IMAGE_PROMPT_BYTES ||
+                config.template.trim().length === 0 ||
+                encoder.encode(config.template).byteLength > MAX_AI_ACTION_IMAGE_PROMPT_BYTES ||
+                containsUnsafePromptCodePoint(config.template) ||
+                typeof config.includeRuleGuidance !== "boolean" ||
+                (extension.version === 2 &&
+                    config.output !== "canonical" &&
+                    config.output !== "app")
+            ) {
+                return undefined;
+            }
+            validated.set(id, {
+                template: config.template,
+                includeRuleGuidance: config.includeRuleGuidance,
+                ...(extension.version === 2
+                    ? { output: config.output as "canonical" | "app" }
+                    : {}),
+            });
+        }
+        const serialized = JSON.stringify({
+            version: extension.version,
+            templates: Object.fromEntries(validated),
+        });
+        if (encoder.encode(serialized).byteLength > MAX_AI_ACTION_IMAGE_PROMPT_BY_MODEL_BYTES) {
+            return undefined;
+        }
+        return validated.get(modelId);
+    } catch {
+        // Malformed/proxied local schema values cannot turn an optional extension into a crash.
+        return undefined;
+    }
 }
 
 /** Parse focused passes layered over the backwards-compatible compact primary prompt. Version 1
@@ -860,6 +962,144 @@ export type RunAiActionResult =
       }
     | { kind: "error"; error: string };
 
+export const MAX_AI_ACTION_APP_OUTPUT_BYTES = 64 * 1024;
+export const AI_ACTION_APP_NORMALIZATION_TIMEOUT_MS = 30_000;
+/** Host-provided capability, never a callback or executable value read from an app schema. */
+export interface AiActionAppNormalization {
+    normalize: (candidates: Record<string, unknown>[]) => Promise<unknown>;
+}
+
+// Clone only bounded plain JSON data. Accessors, custom prototypes, symbols, sparse arrays,
+// nonfinite values and dangerous property names cannot cross the app-normalization boundary.
+function cloneAppOutputJson(value: unknown, depth = 0): unknown {
+    if (depth > 8) throw new Error("App output depth exceeded");
+    if (value === null || typeof value === "boolean") return value;
+    if (typeof value === "string" && value.length <= MAX_AI_ACTION_APP_OUTPUT_BYTES) return value;
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (Array.isArray(value)) {
+        if (Object.getPrototypeOf(value) !== Array.prototype) throw new Error("Invalid array");
+        const descriptors = Object.getOwnPropertyDescriptors(value as object);
+        const length: unknown = descriptors.length?.value;
+        if (
+            typeof length !== "number" ||
+            !Number.isInteger(length) ||
+            length < 0 ||
+            length > 256 ||
+            Reflect.ownKeys(descriptors).length !== length + 1
+        ) {
+            throw new Error("Invalid array bounds");
+        }
+        return Array.from({ length }, (_, index) => {
+            const item = descriptors[String(index)];
+            if (item?.enumerable !== true || !Object.hasOwn(item, "value"))
+                throw new Error("Invalid array item");
+            return cloneAppOutputJson(item.value, depth + 1);
+        });
+    }
+    const record = imagePromptOwnData(value);
+    if (record === undefined || Object.keys(record).length > 128) throw new Error("Invalid object");
+    return Object.fromEntries(
+        Object.entries(record).map(([key, item]) => {
+            if (["__proto__", "constructor", "prototype"].includes(key))
+                throw new Error("Invalid property");
+            return [key, cloneAppOutputJson(item, depth + 1)];
+        }),
+    );
+}
+
+export function cloneBoundedAppActionCandidates(
+    value: unknown,
+): Record<string, unknown>[] | undefined {
+    try {
+        const copied = cloneAppOutputJson(value);
+        if (
+            !Array.isArray(copied) ||
+            copied.length === 0 ||
+            copied.length > MAX_AI_ACTION_CANDIDATES ||
+            copied.some(
+                (item) => item === null || typeof item !== "object" || Array.isArray(item),
+            ) ||
+            new TextEncoder().encode(JSON.stringify(copied)).byteLength >
+                MAX_AI_ACTION_APP_OUTPUT_BYTES
+        )
+            return undefined;
+        return copied as Record<string, unknown>[];
+    } catch {
+        return undefined;
+    }
+}
+
+/** Raw app output must be one COMPLETE object/array, optionally inside one complete JSON fence.
+ * Do not use the legacy prose/truncation/wrapper recovery parser for this new contract. */
+export function parseCompleteAppActionOutput(text: string): Record<string, unknown>[] | undefined {
+    if (
+        text.length > MAX_AI_ACTION_APP_OUTPUT_BYTES ||
+        new TextEncoder().encode(text).byteLength > MAX_AI_ACTION_APP_OUTPUT_BYTES
+    )
+        return undefined;
+    const trimmed = text.trim();
+    const fence = /^```(?:json)?\r?\n([\s\S]*?)\r?\n```$/i.exec(trimmed);
+    const json = fence?.[1] ?? trimmed;
+    // The existing duplicate-key scanner covers the entire nested value in this synthetic
+    // envelope. JSON.parse enforces completion; no source object is unwrapped or discarded.
+    const parsed = parseBalancedJsonObject(`{"value":${json}}`);
+    if (parsed.kind !== "parsed") return undefined;
+    const value = parsed.value.value;
+    return cloneBoundedAppActionCandidates(Array.isArray(value) ? value : [value]);
+}
+
+async function normalizeAppActionOutput(
+    capability: AiActionAppNormalization,
+    candidates: Record<string, unknown>[],
+): Promise<
+    | { kind: "candidates"; candidates: Record<string, unknown>[] }
+    | { kind: "none" }
+    | { kind: "error" }
+> {
+    let clearDeadline: (() => void) | undefined;
+    try {
+        const input = cloneBoundedAppActionCandidates(candidates);
+        if (input === undefined) return { kind: "error" };
+        const result = await Promise.race([
+            Promise.resolve().then(() => capability.normalize(input)),
+            new Promise<undefined>((resolve) => {
+                const timer = setTimeout(
+                    () => resolve(undefined),
+                    AI_ACTION_APP_NORMALIZATION_TIMEOUT_MS,
+                );
+                clearDeadline = () => clearTimeout(timer);
+            }),
+        ]);
+        const data = imagePromptOwnData(result);
+        if (data === undefined) return { kind: "error" };
+        if (
+            Object.keys(data).join(",") === "kind" &&
+            (data.kind === "none" || data.kind === "ambiguous")
+        )
+            return { kind: "none" };
+        if (
+            Object.keys(data).sort().join(",") !== "candidates,kind,sourceIndexes" ||
+            data.kind !== "candidates"
+        )
+            return { kind: "error" };
+        const normalized = cloneBoundedAppActionCandidates(data.candidates);
+        const indexes = cloneAppOutputJson(data.sourceIndexes);
+        if (
+            normalized === undefined ||
+            normalized.length !== candidates.length ||
+            !Array.isArray(indexes) ||
+            indexes.length !== candidates.length ||
+            indexes.some((index, position) => index !== position)
+        )
+            return { kind: "error" };
+        return { kind: "candidates", candidates: normalized };
+    } catch {
+        return { kind: "error" };
+    } finally {
+        clearDeadline?.();
+    }
+}
+
 function formatValue(v: unknown): string {
     if (v === undefined || v === null) return "";
     if (typeof v === "string") return v;
@@ -867,21 +1107,62 @@ function formatValue(v: unknown): string {
     return JSON.stringify(v);
 }
 
-// Tolerantly pull the first JSON object out of a model's text (it may wrap it in prose or ```json fences).
-export function parseExtraction(text: string): Record<string, unknown> | undefined {
+type BalancedJsonObjectParse =
+    | { kind: "parsed"; value: Record<string, unknown> }
+    | { kind: "invalid" }
+    | { kind: "duplicate" };
+
+// JSON.parse silently keeps the last duplicate property, but a model's repeated name is not
+// evidence that its later value is a correction. Validate syntax natively, then inspect the original
+// string before that ambiguity can reach schema/card processing. Per-object key sets also cover
+// nested arrays/envelopes; decoded names make `field` and `f\u0069eld` collide. The iterative scan is
+// linear in the bounded reply length and does not add a recursive parser or model-specific policy.
+function parseBalancedJsonObject(text: string): BalancedJsonObjectParse {
+    let value: unknown;
+    try {
+        value = JSON.parse(text);
+    } catch {
+        return { kind: "invalid" };
+    }
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        return { kind: "invalid" };
+    }
+    const scopes: Set<string>[] = [];
+    for (let index = 0; index < text.length; index++) {
+        const char = text[index];
+        if (char === "{") {
+            scopes.push(new Set());
+        } else if (char === "}") {
+            scopes.pop();
+        } else if (char === '"') {
+            const token = jsonStringToken(text, index);
+            if (token === undefined) return { kind: "invalid" };
+            // In valid JSON, a quoted token followed by ':' is necessarily a property name.
+            if (text[skipJsonWhitespace(text, token.end)] === ":") {
+                const keys = scopes.at(-1);
+                if (keys === undefined) return { kind: "invalid" };
+                if (keys.has(token.value)) return { kind: "duplicate" };
+                keys.add(token.value);
+            }
+            index = token.end - 1;
+        }
+    }
+    return { kind: "parsed", value: value as Record<string, unknown> };
+}
+
+function parseExtractionCandidate(text: string): BalancedJsonObjectParse {
     const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
     const candidate = fenced ? fenced[1] : text;
     const start = candidate.indexOf("{");
     const end = candidate.lastIndexOf("}");
-    if (start < 0 || end <= start) return undefined;
-    try {
-        const obj: unknown = JSON.parse(candidate.slice(start, end + 1));
-        return obj !== null && typeof obj === "object"
-            ? (obj as Record<string, unknown>)
-            : undefined;
-    } catch {
-        return undefined;
-    }
+    if (start < 0 || end <= start) return { kind: "invalid" };
+    return parseBalancedJsonObject(candidate.slice(start, end + 1));
+}
+
+// Tolerantly pull the first JSON object out of a model's text (it may wrap it in prose or ```json fences).
+export function parseExtraction(text: string): Record<string, unknown> | undefined {
+    const parsed = parseExtractionCandidate(text);
+    return parsed.kind === "parsed" ? parsed.value : undefined;
 }
 
 // Tolerantly pull a LIST of candidate objects out of a model's text. The model may emit either a
@@ -911,8 +1192,12 @@ export function parseExtractionList(text: string): Record<string, unknown>[] | u
     // Keep one overflow sentinel (33) so the runner can distinguish "too many" from the valid
     // 32-candidate boundary, then stop before rules/schema/card work is performed for attacker-sized
     // output. Wrapper objects are bounded too; `flatMap` here previously expanded each nested list.
+    const objects = scanJsonObjects(text);
+    // An ambiguous balanced object rejects the whole batch, not just that row. Do not feed it to
+    // either fallback: recovery could otherwise resurrect a duplicate that was deliberately refused.
+    if (objects === undefined) return undefined;
     const scanned: Record<string, unknown>[] = [];
-    for (const object of scanJsonObjects(text)) {
+    for (const object of objects) {
         for (const entry of unwrapEntryList(object)) {
             scanned.push(entry);
             if (scanned.length > MAX_AI_ACTION_CANDIDATES) return scanned;
@@ -921,8 +1206,9 @@ export function parseExtractionList(text: string): Record<string, unknown>[] | u
     if (scanned.length > 0) return scanned;
     // Last resort: parseExtraction slices from the first "{" to the last "}". It cannot handle a
     // multi-object emission, but it does salvage a lone object the scanner could not balance.
-    const obj = parseExtraction(text);
-    if (obj !== undefined) return [obj];
+    const parsed = parseExtractionCandidate(text);
+    if (parsed.kind === "duplicate") return undefined;
+    if (parsed.kind === "parsed") return [parsed.value];
     return scanTruncatedScalarObjectPrefixes(text);
 }
 
@@ -953,7 +1239,7 @@ function unwrapEntryList(obj: Record<string, unknown>): Record<string, unknown>[
 // like {"annotation":"paid 50 } later"} does not derail the scan. An unterminated trailing object is simply
 // dropped — which is what makes a truncated generation degrade to "the objects that DID complete"
 // instead of to nothing.
-function scanJsonObjects(text: string): Record<string, unknown>[] {
+function scanJsonObjects(text: string): Record<string, unknown>[] | undefined {
     const out: Record<string, unknown>[] = [];
     let depth = 0;
     let start = -1;
@@ -976,19 +1262,13 @@ function scanJsonObjects(text: string): Record<string, unknown>[] {
             if (depth > 0) {
                 depth--;
                 if (depth === 0 && start >= 0) {
-                    try {
-                        const parsed: unknown = JSON.parse(text.slice(start, i + 1));
-                        if (
-                            parsed !== null &&
-                            typeof parsed === "object" &&
-                            !Array.isArray(parsed)
-                        ) {
-                            out.push(parsed as Record<string, unknown>);
-                            if (out.length > MAX_AI_ACTION_CANDIDATES) return out;
-                        }
-                    } catch {
-                        // a malformed object is skipped; the others still count
+                    const parsed = parseBalancedJsonObject(text.slice(start, i + 1));
+                    if (parsed.kind === "duplicate") return undefined;
+                    if (parsed.kind === "parsed") {
+                        out.push(parsed.value);
+                        if (out.length > MAX_AI_ACTION_CANDIDATES) return out;
                     }
+                    // A malformed object is still skipped; an ambiguous valid one fails above.
                     start = -1;
                 }
             }
@@ -1200,6 +1480,8 @@ function parseTruncatedScalarObjectAt(text: string, start: number): TruncatedObj
 // elements of a one-level array envelope; deeper nested structures are never promoted to candidates.
 function scanTruncatedScalarObjectPrefixes(text: string): Record<string, unknown>[] | undefined {
     const starts: number[] = [];
+    const activeStarts = new Map<number, number>();
+    const balancedEnds = new Map<number, number>();
     let objectDepth = 0;
     let arrayDepth = 0;
     let inString = false;
@@ -1217,13 +1499,21 @@ function scanTruncatedScalarObjectPrefixes(text: string): Record<string, unknown
         } else if (char === "{") {
             if (objectDepth === 0 || (objectDepth === 1 && arrayDepth > 0)) {
                 starts.push(index);
+                activeStarts.set(objectDepth, index);
                 // One outer wrapper plus the ordinary 33rd overflow sentinel is sufficient. More
                 // candidate starts are malformed/attacker-sized and fail closed without quadratic work.
                 if (starts.length > MAX_AI_ACTION_CANDIDATES + 2) return undefined;
             }
             objectDepth++;
         } else if (char === "}") {
-            if (objectDepth > 0) objectDepth--;
+            if (objectDepth > 0) {
+                objectDepth--;
+                const start = activeStarts.get(objectDepth);
+                if (start !== undefined) {
+                    balancedEnds.set(start, index + 1);
+                    activeStarts.delete(objectDepth);
+                }
+            }
         } else if (char === "[") {
             arrayDepth++;
         } else if (char === "]") {
@@ -1233,6 +1523,16 @@ function scanTruncatedScalarObjectPrefixes(text: string): Record<string, unknown
 
     const candidates: Record<string, unknown>[] = [];
     for (const start of starts) {
+        // A truncated envelope may contain a fully balanced child. It must pass the same duplicate
+        // check as a bare object, not regain acceptance through scalar-prefix recovery. Only candidate
+        // boundaries are retained within the existing start limit, without rescanning for braces.
+        const end = balancedEnds.get(start);
+        if (
+            end !== undefined &&
+            parseBalancedJsonObject(text.slice(start, end)).kind === "duplicate"
+        ) {
+            return undefined;
+        }
         const parsed = parseTruncatedScalarObjectAt(text, start);
         if (parsed.kind === "reject") return undefined;
         if (parsed.kind === "skip_wrapper") continue;
@@ -2244,6 +2544,7 @@ export async function runAiAction(
     // The owning app id, baked onto the built card (see buildActionCardContent).
     appId?: number,
     appRevision?: bigint,
+    appNormalization?: AiActionAppNormalization,
 ): Promise<RunAiActionResult> {
     // The inference contract is result-shaped, but a native bridge/worker can still reject when its
     // runtime execution context is destroyed. Keep that infrastructure failure inside the model
@@ -2295,13 +2596,34 @@ export async function runAiAction(
     const hasTextInput = input.text !== undefined && input.text.trim().length > 0;
     let candidates: Record<string, unknown>[] | undefined;
     let extractionRaw = "";
-    const imagePrompt = hasImageSource ? imagePromptTemplateConfig(def.responseSchema) : undefined;
+    const legacyImagePrompt = hasImageSource
+        ? imagePromptTemplateConfig(def.responseSchema)
+        : undefined;
+    const imagePrompt =
+        (input.image !== undefined
+            ? imagePromptTemplateForModel(def.responseSchema, input.modelId)
+            : undefined) ?? legacyImagePrompt;
+    const usesAppOutput = imagePrompt?.output === "app";
+    if (usesAppOutput && appNormalization === undefined) {
+        return {
+            kind: "error",
+            error: "This image prompt requires the app's local processor. Refresh the app connection and retry.",
+        };
+    }
     // Focused passes are an additive extension to the v1 compact prompt. Requiring both means an
     // older client can ignore the new declaration and still use the same safe compact primary.
     const imageModelPasses =
-        input.image !== undefined && imagePrompt !== undefined && input.singleImagePass !== true
+        input.image !== undefined &&
+        legacyImagePrompt !== undefined &&
+        input.singleImagePass !== true
             ? imageModelPassesConfig(def.responseSchema)
             : undefined;
+    if (usesAppOutput && imageModelPasses !== undefined) {
+        return {
+            kind: "error",
+            error: "App-normalized image output cannot be combined with focused model passes.",
+        };
+    }
     const compiledRuleLines = compileRules(rules, { hasMessageText: hasTextInput });
     const ruleLines = imagePrompt?.includeRuleGuidance === false ? [] : compiledRuleLines;
     const providesTodayContext = boundedRules(rules).some(
@@ -2472,7 +2794,9 @@ export async function runAiAction(
 
             // The model text is accepted as a single OBJECT or an ARRAY of objects (several records in
             // one message). Normalize to a list of candidate objects.
-            candidates = parseExtractionList(result.text);
+            candidates = usesAppOutput
+                ? parseCompleteAppActionOutput(result.text)
+                : parseExtractionList(result.text);
             // Small local models occasionally describe the right actions in prose or emit `[]` despite a
             // text message containing explicit amounts. Give TEXT input one bounded format-repair attempt;
             // it reuses the original evidence/prompt, stays unconstrained (schema grammars corrupt numeric
@@ -2506,6 +2830,18 @@ export async function runAiAction(
             kind: "error",
             error: `The model returned more than ${MAX_AI_ACTION_CANDIDATES} action candidates.`,
         };
+    }
+
+    if (usesAppOutput) {
+        const normalized = await normalizeAppActionOutput(appNormalization!, candidates);
+        if (normalized.kind === "error") {
+            return {
+                kind: "error",
+                error: "The app could not normalize the complete model result. No action was prepared.",
+            };
+        }
+        if (normalized.kind === "none") return { kind: "no_extraction", raw: "" };
+        candidates = normalized.candidates;
     }
 
     // Deterministic post-pass over each candidate. The card and confirmPayload are built from the

@@ -13,7 +13,9 @@ describe("browser Model Manager all-WebGPU parity", () => {
         it(`${relative} owns preload, cancellation, progress, settings, retry, and the curated allow-list`, () => {
             const source = readFileSync(fileURLToPath(new URL(relative, import.meta.url)), "utf8");
 
-            expect(source).toContain("TRANSFORMERS_WEBGPU_MODEL_SPECS");
+            expect(source).toContain("$webGpuModelCatalog.models");
+            expect(source).toContain("<WebGpuModelCatalogSettings");
+            expect(source).not.toContain("TRANSFORMERS_WEBGPU_MODEL_SPECS");
             expect(source).toContain("transformersWebGpuSelectionCanHandle(spec.id)");
             expect(source).toContain("spec.artifactBytes");
             expect(source).toContain("useWebModelFromUrl");

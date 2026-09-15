@@ -13,25 +13,15 @@ import {
     Tensor,
 } from "@huggingface/transformers";
 import {
-    PHONE_GEMMA4_E2B_MODEL_ID,
-    PHONE_QWEN3_VL_2B_MODEL_ID,
-    TRANSFORMERS_GEMMA_ARTIFACTS,
-    TRANSFORMERS_GEMMA_AUDIO_ARTIFACTS,
-    TRANSFORMERS_GEMMA_CACHE_KEY,
     TRANSFORMERS_GEMMA_DEVICE_MAP,
-    TRANSFORMERS_GEMMA_MODEL_ID,
-    TRANSFORMERS_GEMMA_REVISION,
-    TRANSFORMERS_QWEN_MODEL_ID,
-    TRANSFORMERS_QWEN_ARTIFACTS,
     TRANSFORMERS_QWEN_DEVICE_MAP,
-    TRANSFORMERS_QWEN_REVISION,
     TRANSFORMERS_WEBGPU_ADAPTER_UNAVAILABLE_REASON,
-    TRANSFORMERS_WEBGPU_CACHE_KEY,
     TRANSFORMERS_WEBGPU_MODEL_PROXY_BASE,
     TRANSFORMERS_WEBGPU_ORT_ASSET_BASE,
     type TransformersWebGpuFromWorker,
     type TransformersWebGpuToWorker,
 } from "../utils/transformersWebGpuProtocol";
+import { validateWebGpuModelSpec, webGpuGenerationOptions } from "../utils/webGpuModelCatalog";
 import {
     assertGemma4PromptTokenCount,
     createGemma4WebGpuEmbeddingSession,
@@ -50,6 +40,11 @@ import {
     transformersWebGpuImageLayout,
 } from "../utils/transformersWebGpuImageLayout";
 import { intrinsicImageDimensions } from "../utils/imageDimensions";
+import { assertQwen3VlWebGpuContext } from "../utils/transformersWebGpuQwenContext";
+import {
+    assertCompletedGeneration,
+    completionEosTokenIds,
+} from "../utils/transformersWebGpuCompletion";
 import {
     releaseAndRetireWebGpuDevice,
     type RetirableWebGpuDevice,
@@ -113,36 +108,6 @@ type WorkerNavigator = Navigator & {
 class AdapterUnavailableError extends Error {}
 
 const CACHE_DIGEST_HEADER = "x-content-sha256";
-const STAGED_EXTERNAL_DATA = {
-    decoder_model_merged: {
-        path: "onnx/decoder_model_merged_q4.onnx_data",
-        name: "decoder_model_merged_q4.onnx_data",
-    },
-    embed_tokens: {
-        path: "onnx/embed_tokens_q4.onnx_data",
-        name: "embed_tokens_q4.onnx_data",
-    },
-    vision_encoder: {
-        path: "onnx/vision_encoder_q4.onnx_data",
-        name: "vision_encoder_q4.onnx_data",
-    },
-} as const;
-
-const GEMMA_STAGED_EXTERNAL_DATA = {
-    decoder_model_merged: {
-        path: "onnx/decoder_model_merged_q4f16.onnx_data",
-        name: "decoder_model_merged_q4f16.onnx_data",
-    },
-    vision_encoder: {
-        path: "onnx/vision_encoder_q4f16.onnx_data",
-        name: "vision_encoder_q4f16.onnx_data",
-    },
-    audio_encoder: {
-        path: "onnx/audio_encoder_q4f16.onnx_data",
-        name: "audio_encoder_q4f16.onnx_data",
-    },
-} as const;
-
 const workerScope = globalThis as unknown as DedicatedWorkerGlobalScope;
 const onnx = env.backends.onnx as OnnxEnvironment;
 let loadedRuntime: LoadedRuntime | undefined;
@@ -224,10 +189,13 @@ function stagedSessionProgressFor(
     };
 }
 
-async function requestAdapter(requireShaderF16 = false): Promise<unknown> {
+async function requestAdapter(
+    requireShaderF16 = false,
+    standardSoftmaxRouting = requireShaderF16,
+): Promise<unknown> {
     const gpu = (navigator as WorkerNavigator).gpu;
     if (gpu === undefined) throw new AdapterUnavailableError();
-    setOrtWebGpuStandardSoftmaxRouting(requireShaderF16);
+    setOrtWebGpuStandardSoftmaxRouting(standardSoftmaxRouting);
     // ORT's pinned JSPI bridge requests another adapter directly from navigator.gpu. Install the
     // wrapper on that shared boundary before our preflight so both requests receive serialized
     // devices. Wrapping only env.webgpu.adapter does not reach the bridge's native pipeline calls.
@@ -388,7 +356,10 @@ function instrumentGpuSessions(runtime: LoadedRuntime, generation: number): void
     }
 }
 
-async function loadQwenRuntime(requestId: number): Promise<QwenLoadedRuntime> {
+async function loadQwenRuntime(
+    message: TransformersWebGpuInferRequest,
+): Promise<QwenLoadedRuntime> {
+    const { requestId, modelSpec: spec } = message;
     if (loadedRuntime?.kind === "qwen") return loadedRuntime;
     if (runtimePromise !== undefined) {
         return runtimePromise.then((runtime) => {
@@ -397,12 +368,15 @@ async function loadQwenRuntime(requestId: number): Promise<QwenLoadedRuntime> {
         });
     }
 
-    configureRuntimeAssets(TRANSFORMERS_WEBGPU_CACHE_KEY, "Qwen3-VL 2B");
+    configureRuntimeAssets(spec.cacheKey, "Qwen3-VL 2B");
     const generation = ++runtimeGeneration;
     const progress_callback = progressFor(requestId);
     const reportStagedSession = stagedSessionProgressFor(requestId, "Qwen3-VL 2B");
     runtimePromise = (async () => {
-        const adapter = await requestAdapter();
+        const adapter = await requestAdapter(
+            Object.values(spec.sessionDtypes).some((dtype) => dtype.includes("f16")),
+            false,
+        );
         if (onnx.webgpu === undefined)
             throw new Error("WebGPU runtime configuration is unavailable.");
         // Reuse the preflight adapter so ORT does not conflate an adapter-policy failure with model
@@ -411,8 +385,8 @@ async function loadQwenRuntime(requestId: number): Promise<QwenLoadedRuntime> {
         // Transformers.js 4.2's generic tokenizer metadata probe does not forward the configured
         // same-origin model proxy. Construct the official Qwen components from the same immutable
         // revision so phone loading remains same-origin and deterministic.
-        const modelBase = `${TRANSFORMERS_WEBGPU_MODEL_PROXY_BASE}${TRANSFORMERS_QWEN_MODEL_ID}/resolve/${TRANSFORMERS_QWEN_REVISION}/`;
-        const artifactCache = await caches.open(TRANSFORMERS_WEBGPU_CACHE_KEY);
+        const modelBase = `${TRANSFORMERS_WEBGPU_MODEL_PROXY_BASE}${spec.repository}/resolve/${spec.revision}/`;
+        const artifactCache = await caches.open(spec.cacheKey);
         const getArtifactUrl = (name: string): string =>
             new URL(`${modelBase}${name}`, workerScope.location.href).href;
         const getText = async (name: string): Promise<string> => {
@@ -426,40 +400,44 @@ async function loadQwenRuntime(requestId: number): Promise<QwenLoadedRuntime> {
         const getStagedExternalData = async (
             sessionName: string,
         ): Promise<Array<{ path: string; data: Blob }>> => {
-            const external = STAGED_EXTERNAL_DATA[sessionName as keyof typeof STAGED_EXTERNAL_DATA];
-            if (external === undefined) {
+            const externalFiles = spec.externalData[sessionName];
+            if (externalFiles === undefined) {
                 throw new Error(`Unexpected staged external-data request for ${sessionName}.`);
             }
-            const artifact = TRANSFORMERS_QWEN_ARTIFACTS.find(
-                (candidate) => candidate.path === external.path,
-            );
-            if (artifact === undefined) {
-                throw new Error(
-                    `The pinned Qwen ${sessionName} external-data manifest is unavailable.`,
+            const staged: Array<{ path: string; data: Blob }> = [];
+            for (const external of externalFiles) {
+                const artifact = spec.artifacts.find(
+                    (candidate) => candidate.path === external.path,
                 );
+                if (artifact === undefined) {
+                    throw new Error(
+                        `The pinned Qwen ${sessionName} external-data manifest is unavailable.`,
+                    );
+                }
+                const response = await artifactCache.match(getArtifactUrl(artifact.path));
+                if (
+                    response === undefined ||
+                    !response.ok ||
+                    Number(response.headers.get("content-length")) !== artifact.bytes ||
+                    response.headers.get(CACHE_DIGEST_HEADER)?.toLowerCase() !== artifact.sha256 ||
+                    response.headers.get("x-openchat-model-revision") !== spec.revision
+                ) {
+                    throw new Error(
+                        `The cached Qwen ${sessionName} external data failed its pinned metadata check. Open On-device models and tap Retry download.`,
+                    );
+                }
+                // CacheStorage can expose the disk-backed response as a Blob without constructing the
+                // corresponding V8 ArrayBuffer. The staged loader uses this for prompt sessions as well
+                // as the 1.1 GB decoder, then drops the Blob immediately after ORT's JSPI handoff.
+                const data = await response.blob();
+                if (data.size !== artifact.bytes) {
+                    throw new Error(
+                        `The cached Qwen ${sessionName} external data has the wrong byte size. Open On-device models and tap Retry download.`,
+                    );
+                }
+                staged.push({ path: external.name, data });
             }
-            const response = await artifactCache.match(getArtifactUrl(artifact.path));
-            if (
-                response === undefined ||
-                !response.ok ||
-                Number(response.headers.get("content-length")) !== artifact.bytes ||
-                response.headers.get(CACHE_DIGEST_HEADER)?.toLowerCase() !== artifact.sha256 ||
-                response.headers.get("x-openchat-model-revision") !== TRANSFORMERS_QWEN_REVISION
-            ) {
-                throw new Error(
-                    `The cached Qwen ${sessionName} external data failed its pinned metadata check. Open On-device models and tap Retry download.`,
-                );
-            }
-            // CacheStorage can expose the disk-backed response as a Blob without constructing the
-            // corresponding V8 ArrayBuffer. The staged loader uses this for prompt sessions as well
-            // as the 1.1 GB decoder, then drops the Blob immediately after ORT's JSPI handoff.
-            const data = await response.blob();
-            if (data.size !== artifact.bytes) {
-                throw new Error(
-                    `The cached Qwen ${sessionName} external data has the wrong byte size. Open On-device models and tap Retry download.`,
-                );
-            }
-            return [{ path: external.name, data }];
+            return staged;
         };
         const getJson = async (name: string): Promise<ModelJsonConfig> =>
             JSON.parse(await getText(name)) as ModelJsonConfig;
@@ -484,21 +462,18 @@ async function loadQwenRuntime(requestId: number): Promise<QwenLoadedRuntime> {
             chatTemplate,
         );
         const modelOptions = {
-            revision: TRANSFORMERS_QWEN_REVISION,
+            revision: spec.revision,
             // This exact map is fail-closed in v4.2: each ImageTextToText session name is
             // present, so no session takes the loader's implicit/default device.
             device: TRANSFORMERS_QWEN_DEVICE_MAP,
             // q4 is explicit for every session; device and dtype maps share exact session keys.
-            dtype: {
-                embed_tokens: "q4",
-                vision_encoder: "q4",
-                decoder_model_merged: "q4",
-            },
+            dtype: spec.sessionDtypes,
             progress_callback,
             // from_pretrained keeps session_options while dropping unknown top-level options.
             // The exact-model build patch consumes and removes this private hook before any
             // session options reach ORT.
             session_options: {
+                openchat_runtime_adapter: spec.adapter,
                 openchat_get_staged_external_data: getStagedExternalData,
                 openchat_wait_for_staged_webgpu_queue: waitForStagedWebGpuQueue,
                 openchat_with_staged_webgpu_release: withStagedWebGpuRelease,
@@ -506,7 +481,7 @@ async function loadQwenRuntime(requestId: number): Promise<QwenLoadedRuntime> {
             } as never,
         } as const;
         const model = await Qwen3VLForConditionalGeneration.from_pretrained(
-            TRANSFORMERS_QWEN_MODEL_ID,
+            spec.repository,
             modelOptions,
         );
         const runtime: QwenLoadedRuntime = { kind: "qwen", processor, model };
@@ -530,6 +505,7 @@ async function loadQwenRuntime(requestId: number): Promise<QwenLoadedRuntime> {
 async function loadGemmaRuntime(
     message: TransformersWebGpuInferRequest,
 ): Promise<GemmaLoadedRuntime> {
+    const spec = message.modelSpec;
     if (loadedRuntime?.kind === "gemma") return loadedRuntime;
     if (runtimePromise !== undefined) {
         return runtimePromise.then((runtime) => {
@@ -549,7 +525,7 @@ async function loadGemmaRuntime(
             "Gemma accepts one image or one voice message per local inference request.",
         );
     }
-    configureRuntimeAssets(TRANSFORMERS_GEMMA_CACHE_KEY, "Gemma 4 E2B");
+    configureRuntimeAssets(spec.cacheKey, "Gemma 4 E2B");
     const generation = ++runtimeGeneration;
     runtimePromise = (async () => {
         const adapter = await requestAdapter(true);
@@ -557,8 +533,8 @@ async function loadGemmaRuntime(
             throw new Error("WebGPU runtime configuration is unavailable.");
         }
         onnx.webgpu.adapter = adapter;
-        const modelBase = `${TRANSFORMERS_WEBGPU_MODEL_PROXY_BASE}${TRANSFORMERS_GEMMA_MODEL_ID}/resolve/${TRANSFORMERS_GEMMA_REVISION}/`;
-        const artifactCache = await caches.open(TRANSFORMERS_GEMMA_CACHE_KEY);
+        const modelBase = `${TRANSFORMERS_WEBGPU_MODEL_PROXY_BASE}${spec.repository}/resolve/${spec.revision}/`;
+        const artifactCache = await caches.open(spec.cacheKey);
         const getArtifactUrl = (name: string): string =>
             new URL(`${modelBase}${name}`, workerScope.location.href).href;
         const getCachedResponse = async (name: string): Promise<Response> => {
@@ -576,10 +552,9 @@ async function loadGemmaRuntime(
             path: string,
             name: string,
         ): Promise<Array<{ path: string; data: Blob }>> => {
-            const artifact = [
-                ...TRANSFORMERS_GEMMA_ARTIFACTS,
-                ...TRANSFORMERS_GEMMA_AUDIO_ARTIFACTS,
-            ].find((candidate) => candidate.path === path);
+            const artifact = [...spec.artifacts, ...(spec.optionalAudio?.artifacts ?? [])].find(
+                (candidate) => candidate.path === path,
+            );
             if (artifact === undefined) {
                 throw new Error(`The pinned Gemma external-data manifest is missing ${path}.`);
             }
@@ -587,7 +562,7 @@ async function loadGemmaRuntime(
             if (
                 Number(response.headers.get("content-length")) !== artifact.bytes ||
                 response.headers.get(CACHE_DIGEST_HEADER)?.toLowerCase() !== artifact.sha256 ||
-                response.headers.get("x-openchat-model-revision") !== TRANSFORMERS_GEMMA_REVISION
+                response.headers.get("x-openchat-model-revision") !== spec.revision
             ) {
                 throw new Error(
                     `The cached Gemma ${path} failed its pinned metadata check. Open On-device models and retry the download.`,
@@ -602,15 +577,17 @@ async function loadGemmaRuntime(
         const getStagedExternalData = async (
             sessionName: string,
         ): Promise<Array<{ path: string; data: Blob }>> => {
-            const external =
-                GEMMA_STAGED_EXTERNAL_DATA[sessionName as keyof typeof GEMMA_STAGED_EXTERNAL_DATA];
+            const external = spec.externalData[sessionName];
             if (external === undefined) {
                 throw new Error(`Unexpected Gemma external-data request for ${sessionName}.`);
             }
-            return exactExternalBlob(external.path, external.name);
+            const files: Array<{ path: string; data: Blob }> = [];
+            for (const file of external)
+                files.push(...(await exactExternalBlob(file.path, file.name)));
+            return files;
         };
         const createEmbeddingSession = async () => {
-            const artifact = TRANSFORMERS_GEMMA_ARTIFACTS.find(
+            const artifact = spec.artifacts.find(
                 (candidate) => candidate.path === "onnx/embed_tokens_q4f16.onnx_data",
             );
             if (artifact === undefined || artifact.bytes !== GEMMA4_EMBEDDING_SHARD_BYTES) {
@@ -620,7 +597,7 @@ async function loadGemmaRuntime(
             if (
                 Number(response.headers.get("content-length")) !== artifact.bytes ||
                 response.headers.get(CACHE_DIGEST_HEADER)?.toLowerCase() !== artifact.sha256 ||
-                response.headers.get("x-openchat-model-revision") !== TRANSFORMERS_GEMMA_REVISION
+                response.headers.get("x-openchat-model-revision") !== spec.revision
             ) {
                 throw new Error(
                     "The cached Gemma embedding shard failed its pinned metadata check.",
@@ -659,15 +636,11 @@ async function loadGemmaRuntime(
         }
         const processor = new Gemma4Processor(processorConfig, components, chatTemplate);
         const modelOptions = {
-            revision: TRANSFORMERS_GEMMA_REVISION,
+            revision: spec.revision,
             device: TRANSFORMERS_GEMMA_DEVICE_MAP,
-            dtype: {
-                embed_tokens: "q4f16",
-                vision_encoder: "q4f16",
-                audio_encoder: "q4f16",
-                decoder_model_merged: "q4f16",
-            },
+            dtype: spec.sessionDtypes,
             session_options: {
+                openchat_runtime_adapter: spec.adapter,
                 openchat_get_staged_external_data: getStagedExternalData,
                 openchat_wait_for_staged_webgpu_queue: waitForStagedWebGpuQueue,
                 openchat_with_staged_webgpu_release: withStagedWebGpuRelease,
@@ -680,7 +653,7 @@ async function loadGemmaRuntime(
             } as never,
         } as const;
         const model = await Gemma4ForConditionalGeneration.from_pretrained(
-            TRANSFORMERS_GEMMA_MODEL_ID,
+            spec.repository,
             modelOptions,
         );
         const runtime: GemmaLoadedRuntime = { kind: "gemma", processor, model };
@@ -715,9 +688,10 @@ function disposeTensors(values: Iterable<unknown>): void {
     }
 }
 
-/** Decode directly into an aspect-preserving, patch-bounded inference surface and close the
+/** Decode directly into a patch-bounded inference surface and close the
  * browser ImageBitmap. Common raster dimensions are read without decoding a full-size RGBA copy;
- * unknown formats fail closed instead of being silently stretched.
+ * near-aligned frames use bounded alignment resampling, other shapes retain letterboxing, and
+ * unknown formats fail closed.
  *
  * Transformers.js RawImage Blob reader first retains a full-resolution RGBA copy and does not close
  * its ImageBitmap, which raises the phone's transient memory peak before the model even runs. */
@@ -746,7 +720,7 @@ async function decodeBoundedImage(bytes: ArrayBuffer): Promise<RawImage> {
         const context = canvas.getContext("2d");
         if (context === null) throw new Error("The image worker could not create a 2D canvas.");
         // Neutral opaque padding avoids introducing black/transparent edges as artificial visual
-        // evidence while preserving the source aspect ratio.
+        // evidence when the selected layout retains letterboxing.
         context.fillStyle = "rgb(127, 127, 127)";
         context.fillRect(0, 0, layout.frameWidth, layout.frameHeight);
         context.drawImage(bitmap, layout.drawX, layout.drawY, layout.drawWidth, layout.drawHeight);
@@ -804,12 +778,12 @@ function syntheticNeutralImage(): RawImage {
 }
 
 async function inferQwen(message: TransformersWebGpuInferRequest): Promise<string> {
-    const { processor, model } = await loadQwenRuntime(message.requestId);
+    const { processor, model } = await loadQwenRuntime(message);
     post({ kind: "progress", requestId: message.requestId, phase: "inference" });
 
     const prompt =
         message.text === undefined ? message.prompt : `${message.prompt}\n\n${message.text}`;
-    // Keep small receipt text legible in an aspect-preserving frame of at most 640 raw patches while
+    // Keep small image text legible in a bounded-alignment frame of at most 640 raw patches while
     // staying below the 720-patch dispatch known to reset the SM8650 Adreno Vulkan queue.
     const image =
         message.image === undefined
@@ -848,14 +822,22 @@ async function inferQwen(message: TransformersWebGpuInferRequest): Promise<strin
         if (patchCount === undefined || patchCount > TRANSFORMERS_WEBGPU_MAX_RAW_IMAGE_PATCHES) {
             throw new Error("Qwen image preprocessing exceeded the mobile WebGPU patch limit.");
         }
-        const generated = await model.generate({
+        const configuredGeneration = webGpuGenerationOptions(message.modelSpec, message.maxTokens);
+        const maxNewTokens = configuredGeneration.max_new_tokens;
+        assertQwen3VlWebGpuContext(inputIds.dims, inputIds.data.length, maxNewTokens);
+        const generationOptions = {
             ...inputs,
-            max_new_tokens: Math.min(message.maxTokens ?? 96, 96),
-            do_sample: false,
-        });
+            ...configuredGeneration,
+        };
+        // Resolve exactly the config generate() uses, including model generation_config overrides.
+        const eosTokenIds = completionEosTokenIds(
+            model._prepare_generation_config(null, generationOptions).eos_token_id,
+        );
+        const generated = await model.generate(generationOptions);
         if (!(generated instanceof Tensor))
             throw new Error("Qwen returned no generated token tensor.");
         outputs = generated;
+        assertCompletedGeneration(inputIds, outputs, maxNewTokens, eosTokenIds);
         const inputLength = inputIds.dims.at(-1);
         if (inputLength === undefined) throw new Error("Qwen returned an invalid input shape.");
         completion = outputs.slice(null, [inputLength, outputs.dims[1]]);
@@ -923,15 +905,21 @@ async function inferGemma(message: TransformersWebGpuInferRequest): Promise<stri
                 | undefined
         )?.limits?.maxStorageBufferBindingSize;
         assertGemma4PromptTokenCount(inputLength, maxStorageBufferBindingSize);
-        const generated = await model.generate({
+        const configuredGeneration = webGpuGenerationOptions(message.modelSpec, message.maxTokens);
+        const maxNewTokens = configuredGeneration.max_new_tokens;
+        const generationOptions = {
             ...inputs,
-            max_new_tokens: Math.min(message.maxTokens ?? 96, 96),
-            do_sample: false,
+            ...configuredGeneration,
             num_logits_to_keep: 1,
-        } as never);
+        };
+        const eosTokenIds = completionEosTokenIds(
+            model._prepare_generation_config(null, generationOptions).eos_token_id,
+        );
+        const generated = await model.generate(generationOptions as never);
         if (!(generated instanceof Tensor))
             throw new Error("Gemma returned no generated token tensor.");
         outputs = generated;
+        assertCompletedGeneration(inputIds, outputs, maxNewTokens, eosTokenIds);
         completion = outputs.slice(null, [inputLength, outputs.dims[1]]);
         return processor.batch_decode(completion, { skip_special_tokens: true })[0]?.trim() ?? "";
     } finally {
@@ -942,13 +930,25 @@ async function inferGemma(message: TransformersWebGpuInferRequest): Promise<stri
 }
 
 async function infer(message: TransformersWebGpuInferRequest): Promise<string> {
-    switch (message.modelId) {
-        case PHONE_QWEN3_VL_2B_MODEL_ID:
+    const spec = validateWebGpuModelSpec(message.modelSpec);
+    if (spec.id !== message.modelId || !spec.enabled)
+        throw new Error("The selected model is not enabled in this catalog.");
+    const modality =
+        message.audioSamples !== undefined
+            ? "audio"
+            : message.image !== undefined
+              ? "image"
+              : "text";
+    if (!spec.modalities.includes(modality))
+        throw new Error(`The selected model does not support ${modality}.`);
+    message = { ...message, modelSpec: spec };
+    switch (spec.adapter) {
+        case "qwen3-vl-2b-staged-v1":
             if (message.audioSamples !== undefined) {
                 throw new Error("Qwen3-VL 2B does not support voice messages.");
             }
             return inferQwen(message);
-        case PHONE_GEMMA4_E2B_MODEL_ID:
+        case "gemma4-e2b-row-v1":
             return inferGemma(message);
         default:
             throw new Error("The requested all-WebGPU model is not supported by this worker.");

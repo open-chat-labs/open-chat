@@ -5,10 +5,8 @@
         transformersWebGpuSelectionCanHandle,
         transformersWebGpuAudioDownloaded,
     } from "../utils/transformersWebGpuInference";
-    import {
-        PHONE_GEMMA4_E2B_MODEL_ID,
-        transformersWebGpuModelSpec,
-    } from "../utils/transformersWebGpuProtocol";
+    import { transformersWebGpuModelSpec } from "../utils/transformersWebGpuProtocol";
+    import { TRANSFORMERS_WEBGPU_MAX_RAW_IMAGE_PATCHES } from "../utils/transformersWebGpuImageLayout";
     import {
         resetTransformersWebGpuMaxOutputTokens,
         TRANSFORMERS_WEBGPU_MAX_OUTPUT_TOKEN_LIMITS,
@@ -17,6 +15,7 @@
         updateTransformersWebGpuMaxOutputTokens,
     } from "../stores/transformersWebGpuSettings";
     import { onDestroy } from "svelte";
+    import { webGpuModelCatalog } from "../stores/webGpuModelCatalog";
 
     let {
         modelId,
@@ -30,7 +29,10 @@
     }>();
 
     let active = $derived(transformersWebGpuSelectionCanHandle(modelId));
-    let modelSpec = $derived(transformersWebGpuModelSpec(modelId));
+    let modelSpec = $derived.by(() => {
+        void $webGpuModelCatalog;
+        return transformersWebGpuModelSpec(modelId);
+    });
     let audioInstalled = $state(false);
     let audioChecking = $state(false);
     let audioBusy = $state(false);
@@ -175,25 +177,51 @@
         <dl>
             <div>
                 <dt>Embeddings</dt>
-                <dd><code>embed_tokens · webgpu · {modelSpec?.dtype ?? "q4"}</code></dd>
+                <dd>
+                    <code
+                        >embed_tokens · webgpu · {modelSpec?.sessionDtypes.embed_tokens ??
+                            "q4"}</code
+                    >
+                </dd>
             </div>
             <div>
                 <dt>Vision</dt>
-                <dd><code>vision_encoder · webgpu · {modelSpec?.dtype ?? "q4"}</code></dd>
+                <dd>
+                    <code
+                        >vision_encoder · webgpu · {modelSpec?.sessionDtypes.vision_encoder ??
+                            "q4"}</code
+                    >
+                </dd>
             </div>
             <div>
                 <dt>Decoder</dt>
-                <dd><code>decoder_model_merged · webgpu · {modelSpec?.dtype ?? "q4"}</code></dd>
+                <dd>
+                    <code
+                        >decoder_model_merged · webgpu · {modelSpec?.sessionDtypes
+                            .decoder_model_merged ?? "q4"}</code
+                    >
+                </dd>
             </div>
-            {#if modelId !== PHONE_GEMMA4_E2B_MODEL_ID}
+            {#if modelSpec?.adapter === "qwen3-vl-2b-staged-v1"}
                 <div>
                     <dt>Image input</dt>
-                    <dd><code>288 × 512 · normalized</code></dd>
+                    <dd>
+                        <code>
+                            Dynamic dimensions · up to {TRANSFORMERS_WEBGPU_MAX_RAW_IMAGE_PATCHES} raw
+                            patches · normalized
+                        </code>
+                    </dd>
                 </div>
             {/if}
             <div>
                 <dt>Decoding</dt>
-                <dd><code>greedy · do_sample=false</code></dd>
+                <dd>
+                    <code
+                        >do_sample={String(modelSpec?.generation.doSample ?? false)} · temperature={modelSpec
+                            ?.generation.temperature ?? 1} · top_p={modelSpec?.generation.topP ?? 1} ·
+                        top_k={modelSpec?.generation.topK ?? 50}</code
+                    >
+                </dd>
             </div>
             <div>
                 <dt>Lifecycle</dt>

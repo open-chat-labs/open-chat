@@ -10,6 +10,7 @@ use ai_app_verifier_canister::{
 use candid::{CandidType, Principal};
 use pocket_ic::PocketIc;
 use serde::Serialize;
+use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
@@ -23,6 +24,8 @@ const TEST_SPKI_PEM: &str = "-----BEGIN PUBLIC KEY-----\n\
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEL4Rj13upzgERFkEaivsNjEA/HvCr\n\
 m+J36bnO257UvRzwEW+OpmmEQt6fZ5lO3So6wXPtuziuv/FXrA6S7sni8g==\n\
 -----END PUBLIC KEY-----\n";
+
+const AI_APP_PAGE_SIZE: u8 = 8;
 
 #[derive(CandidType, Serialize)]
 struct NeutralVerifierInit {
@@ -85,22 +88,69 @@ fn register(
     )
 }
 
-fn ai_apps(env: &PocketIc, sender: Principal, user_index: CanisterId) -> Vec<AiAppRegistration> {
-    let response: user_index_canister::ai_apps::Response = client::execute_msgpack_query(
+fn owned_ai_apps(env: &PocketIc, sender: Principal, user_index: CanisterId) -> Vec<AiAppRegistration> {
+    let mut apps = Vec::new();
+    let mut ids = HashSet::new();
+    let mut expected_total = None;
+    for page_index in 0.. {
+        let response: user_index_canister::my_ai_apps::Response = client::execute_msgpack_query(
+            env,
+            sender,
+            user_index,
+            "my_ai_apps_msgpack",
+            &user_index_canister::my_ai_apps::Args {
+                page_index,
+                page_size: AI_APP_PAGE_SIZE,
+            },
+        );
+        let user_index_canister::my_ai_apps::Response::Success(result) = response else {
+            panic!("owner pagination must succeed: {response:?}")
+        };
+        assert!(result.apps.len() <= AI_APP_PAGE_SIZE as usize);
+        assert_eq!(*expected_total.get_or_insert(result.total), result.total);
+        let page_is_empty = result.apps.is_empty();
+        for app in result.apps {
+            assert!(ids.insert(app.id), "owner pagination must not repeat registrations");
+            apps.push(app);
+        }
+        assert!(apps.len() <= result.total as usize);
+        if apps.len() == result.total as usize {
+            return apps;
+        }
+        assert!(
+            !page_is_empty,
+            "owner pagination must make progress toward its reported total"
+        );
+    }
+    unreachable!()
+}
+
+fn apps_by_ids(env: &PocketIc, sender: Principal, user_index: CanisterId, ids: &[types::AiAppId]) -> Vec<AiAppRegistration> {
+    let response: user_index_canister::ai_apps_by_ids::Response = client::execute_msgpack_query(
         env,
         sender,
         user_index,
-        "ai_apps_msgpack",
-        &user_index_canister::ai_apps::Args {},
+        "ai_apps_by_ids_msgpack",
+        &user_index_canister::ai_apps_by_ids::Args {
+            lookups: ids
+                .iter()
+                .map(|&app_id| user_index_canister::ai_apps_by_ids::AiAppLookup { app_id, revision: None })
+                .collect(),
+        },
     );
     match response {
-        user_index_canister::ai_apps::Response::Success(result) => result.apps,
+        user_index_canister::ai_apps_by_ids::Response::Success(result) => {
+            assert!(result.apps.len() <= ids.len());
+            assert!(result.apps.iter().all(|app| ids.contains(&app.id)));
+            result.apps
+        }
+        other => panic!("exact app lookup must succeed: {other:?}"),
     }
 }
 
 // Registering the SAME name (same owner) again upserts the existing entry in place: the id and
 // created timestamp survive (per-chat enablement stores the id, so it must be stable), only the
-// manifest + `updated` change. The read-back over `ai_apps` must reflect the new description.
+// manifest + `updated` change. Caller-owned read-back must reflect the new description.
 #[test]
 fn re_register_same_name_upserts_in_place() {
     let mut wrapper = ENV.deref().get();
@@ -131,8 +181,8 @@ fn re_register_same_name_upserts_in_place() {
         other => panic!("expected Success on re-register, got {other:?}"),
     }
 
-    // Read-back over ai_apps (the owner sees its own unpublished app) reflects the upsert.
-    let apps = ai_apps(env, owner.principal, canister_ids.user_index);
+    // Caller-owned pagination includes unpublished apps, without other owners' published apps.
+    let apps = owned_ai_apps(env, owner.principal, canister_ids.user_index);
     let found = apps
         .iter()
         .find(|a| a.id == first_id)
@@ -228,7 +278,10 @@ fn register_rejects_invalid_manifests() {
             title: "t".to_string(),
             confirm_label: "ok".to_string(),
             cancel_label: "no".to_string(),
-            rows: vec![],
+            rows: vec![types::AiActionCardRowTemplate {
+                field: "value".to_string(),
+                label: "Value".to_string(),
+            }],
             disclosure: None,
         },
         endpoint: "https://example.com/hook".to_string(),
@@ -247,11 +300,17 @@ fn register_rejects_invalid_manifests() {
         ">20 actions must be InvalidRequest"
     );
 
+    let mut empty_rows = manifest(random_string(), "empty card rows");
+    let mut empty_row_action = action.clone();
+    empty_row_action.card.rows.clear();
+    empty_rows.actions = vec![empty_row_action];
+    assert!(matches!(
+        register(env, owner.principal, canister_ids.user_index, empty_rows),
+        user_index_canister::register_ai_app::Response::InvalidRequest(message)
+            if message == "actions[0]: card.rows must contain between 1 and 32 entries"
+    ));
+
     let mut invalid_action = action;
-    invalid_action.card.rows.push(types::AiActionCardRowTemplate {
-        field: "value".to_string(),
-        label: "Value".to_string(),
-    });
     invalid_action.consumer_public_key = Some("-----BEGIN PUBLIC KEY-----\nnot-a-key\n-----END PUBLIC KEY-----\n".to_string());
     let mut invalid_action_key = manifest(random_string(), "invalid action key");
     invalid_action_key.actions = vec![invalid_action];
@@ -274,6 +333,27 @@ fn explore_rejects_short_term_and_accepts_normal() {
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
 
+    for page_size in [0, AI_APP_PAGE_SIZE + 1, 10] {
+        let invalid: user_index_canister::explore_ai_apps::Response = client::execute_msgpack_query(
+            env,
+            owner.principal,
+            canister_ids.user_index,
+            "explore_ai_apps_msgpack",
+            &user_index_canister::explore_ai_apps::Args {
+                search_term: Some("test".to_string()),
+                page_index: 0,
+                page_size,
+            },
+        );
+        assert!(
+            matches!(
+                invalid,
+                user_index_canister::explore_ai_apps::Response::InvalidPageSize(AI_APP_PAGE_SIZE)
+            ),
+            "out-of-bound page size {page_size} must be rejected: {invalid:?}"
+        );
+    }
+
     let short: user_index_canister::explore_ai_apps::Response = client::execute_msgpack_query(
         env,
         owner.principal,
@@ -282,7 +362,7 @@ fn explore_rejects_short_term_and_accepts_normal() {
         &user_index_canister::explore_ai_apps::Args {
             search_term: Some("a".to_string()),
             page_index: 0,
-            page_size: 10,
+            page_size: AI_APP_PAGE_SIZE,
         },
     );
     assert!(
@@ -298,7 +378,7 @@ fn explore_rejects_short_term_and_accepts_normal() {
         &user_index_canister::explore_ai_apps::Args {
             search_term: Some("test".to_string()),
             page_index: 0,
-            page_size: 10,
+            page_size: AI_APP_PAGE_SIZE,
         },
     );
     assert!(
@@ -428,9 +508,11 @@ fn expired_drafts_are_reclaimed_through_the_public_registration_path() {
         user_index_canister::register_ai_app::Response::Success(registration) => registration.id,
         other => panic!("expired drafts must release owner/global capacity: {other:?}"),
     };
-    let visible = ai_apps(env, owner.principal, canister_ids.user_index);
+    let visible = owned_ai_apps(env, owner.principal, canister_ids.user_index);
     assert_eq!(visible.len(), 1, "lazy expiry must physically reclaim all five drafts");
     assert_eq!(visible[0].id, replacement_id);
+    // Do not return a clock advanced by thirty days to the shared environment pool.
+    wrapper.discard();
 }
 
 #[test]
@@ -472,7 +554,7 @@ fn governance_can_recover_an_app_after_owner_loss() {
         &user_index_canister::remove_ai_app::Args { app_id },
     );
     assert!(matches!(response, user_index_canister::remove_ai_app::Response::Success));
-    assert!(ai_apps(env, owner.principal, canister_ids.user_index).is_empty());
+    assert!(owned_ai_apps(env, owner.principal, canister_ids.user_index).is_empty());
 
     let second = client::user_index::remove_ai_app(
         env,
@@ -493,7 +575,10 @@ fn keyword_map_action() -> AiActionDefinition {
             title: "t".to_string(),
             confirm_label: "ok".to_string(),
             cancel_label: "no".to_string(),
-            rows: vec![],
+            rows: vec![types::AiActionCardRowTemplate {
+                field: "value".to_string(),
+                label: "Value".to_string(),
+            }],
             disclosure: None,
         },
         endpoint: "https://example.com/hook".to_string(),
@@ -534,7 +619,7 @@ fn re_register_with_base_manifest_drops_keyword_map_rules() {
         user_index_canister::register_ai_app::Response::Success(reg) => reg.id,
         other => panic!("expected Success, got {other:?}"),
     };
-    let apps = ai_apps(env, owner.principal, canister_ids.user_index);
+    let apps = owned_ai_apps(env, owner.principal, canister_ids.user_index);
     let app = apps.iter().find(|a| a.id == id).expect("registered app must be listed");
     assert_eq!(app.manifest.actions.len(), 1, "rules must be present before the re-register");
 
@@ -551,7 +636,7 @@ fn re_register_with_base_manifest_drops_keyword_map_rules() {
         other => panic!("expected Success, got {other:?}"),
     }
 
-    let apps = ai_apps(env, owner.principal, canister_ids.user_index);
+    let apps = owned_ai_apps(env, owner.principal, canister_ids.user_index);
     let app = apps.iter().find(|a| a.id == id).expect("app still listed");
     assert!(
         app.manifest.actions.is_empty(),
@@ -561,7 +646,7 @@ fn re_register_with_base_manifest_drops_keyword_map_rules() {
 }
 
 // A manifest whose action carries an AiActionRule::KeywordMap registers within caps and the rule
-// payload round-trips UNMANGLED through register + ai_apps read-back (per-variant serde renames on
+// payload round-trips UNMANGLED through register + owned read-back (per-variant serde renames on
 // the wire). Directly covers a consumer app's saved-types -> manifest fold.
 #[test]
 fn keyword_map_rules_survive_register_and_read_back() {
@@ -583,7 +668,7 @@ fn keyword_map_rules_survive_register_and_read_back() {
         other => panic!("expected Success, got {other:?}"),
     };
 
-    let apps = ai_apps(env, owner.principal, canister_ids.user_index);
+    let apps = owned_ai_apps(env, owner.principal, canister_ids.user_index);
     let app = apps.iter().find(|a| a.id == id).expect("app must be listed");
     assert_eq!(app.manifest.actions.len(), 1);
     let action = &app.manifest.actions[0];
@@ -646,7 +731,7 @@ fn publish_without_app_canister_is_not_verified() {
         &user_index_canister::explore_ai_apps::Args {
             search_term: Some(name.clone()),
             page_index: 0,
-            page_size: 10,
+            page_size: AI_APP_PAGE_SIZE,
         },
     );
     if let user_index_canister::explore_ai_apps::Response::Success(result) = explore {
@@ -654,6 +739,8 @@ fn publish_without_app_canister_is_not_verified() {
             !result.matches.iter().any(|a| a.id == id),
             "an unpublished app must not appear in explore"
         );
+    } else {
+        panic!("valid bounded explorer query must succeed: {explore:?}");
     }
 }
 
@@ -717,7 +804,7 @@ fn publish_fails_closed_when_verifier_cannot_vouch() {
 
     // Neither app ever became published: both absent from the public explorer for a non-owner.
     let other_user = client::register_diamond_user(env, canister_ids, *controller);
-    let apps = ai_apps(env, other_user.principal, user_index);
+    let apps = apps_by_ids(env, other_user.principal, user_index, &[id1, id2]);
     assert!(
         !apps.iter().any(|a| a.id == id1 || a.id == id2),
         "failed publishes must leave the apps invisible to non-owners"
@@ -880,9 +967,9 @@ fn publish_succeeds_when_app_canister_vouches() {
     );
 
     // Read back the same two ways the negative tests use.
-    // 1. A NON-owner now sees the app over ai_apps, flagged published.
+    // 1. A NON-owner now sees the exact app, even beyond the legacy first page, flagged published.
     let other_user = client::register_diamond_user(env, canister_ids, *controller);
-    let apps = ai_apps(env, other_user.principal, user_index);
+    let apps = apps_by_ids(env, other_user.principal, user_index, &[id]);
     let app = apps
         .iter()
         .find(|a| a.id == id)
@@ -898,7 +985,7 @@ fn publish_succeeds_when_app_canister_vouches() {
         &user_index_canister::explore_ai_apps::Args {
             search_term: Some("sample-app".to_string()),
             page_index: 0,
-            page_size: 10,
+            page_size: AI_APP_PAGE_SIZE,
         },
     );
     match explore {

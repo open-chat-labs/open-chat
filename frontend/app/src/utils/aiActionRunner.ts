@@ -680,6 +680,7 @@ async function runDefinition(
     };
     const runSelectedModel = async (singleImagePass = false): Promise<RunAiActionResult> => {
         browserModelImageEvidence = undefined;
+        let rawNormalizationAttempted = false;
         const result = await runAiAction(
             def,
             {
@@ -694,6 +695,28 @@ async function runDefinition(
             additionalRecipientKeys,
             appId,
             appRevision,
+            appProcessorUrl === undefined
+                ? undefined
+                : {
+                      normalize: async (candidates) => {
+                          rawNormalizationAttempted = true;
+                          if (!contextCurrent()) return { kind: "error" };
+                          const normalized = await processWithApp(
+                              appProcessorUrl,
+                              def.name,
+                              {
+                                  operation: "normalize_raw",
+                                  modality: "image",
+                                  candidates,
+                                  ...(input.text === undefined ? {} : { text: input.text }),
+                                  ...(sourceTimestamp === undefined ? {} : { sourceTimestamp }),
+                              },
+                              contextCurrent,
+                          );
+                          onPhase?.("validating");
+                          return contextCurrent() ? normalized : { kind: "error" };
+                      },
+                  },
         );
         if (
             webInference &&
@@ -710,7 +733,9 @@ async function runDefinition(
                 error: "A different image produced the same normalized action as the previous model result. This result was discarded; retry the image or choose another model.",
             };
         }
-        return normalizeWithApp(result);
+        // Raw output is normalized inside runAiAction before canonical rules/card construction.
+        // Do not normalize it again through the legacy post-card/manual-card path.
+        return rawNormalizationAttempted ? result : normalizeWithApp(result);
     };
     const runPrivateEvidenceModel = async (
         privateImageEvidence: PrivateImageEvidence,

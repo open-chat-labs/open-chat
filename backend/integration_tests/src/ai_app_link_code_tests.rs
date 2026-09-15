@@ -97,20 +97,28 @@ fn wait_for_initial_entropy_without_issuing_a_bearer(env: &mut PocketIc, user_in
     panic!("fresh UserIndex entropy did not become ready before the snapshot drill")
 }
 
-fn public_claim(
+fn assert_public_claim_rejected_at_ingress(
     env: &mut PocketIc,
     caller: Principal,
     user_index: CanisterId,
     code: String,
     public_key: String,
-) -> user_index_canister::claim_ai_app_link_code::Response {
-    client::execute_msgpack_update(
-        env,
-        caller,
-        user_index,
-        "claim_ai_app_link_code_msgpack",
-        &user_index_canister::claim_ai_app_link_code::Args { code, public_key },
-    )
+) {
+    let rejection = env
+        .update_call(
+            user_index,
+            caller,
+            "claim_ai_app_link_code_msgpack",
+            msgpack::serialize_then_unwrap(user_index_canister::claim_ai_app_link_code::Args { code, public_key }),
+        )
+        .expect_err("legacy browser link claims must be rejected at ingress");
+    assert_eq!(rejection.reject_code, pocket_ic::RejectCode::CanisterReject);
+    assert_eq!(rejection.error_code, pocket_ic::ErrorCode::CanisterRejectedMessage);
+    assert_eq!(
+        rejection.reject_message,
+        format!("Error from Canister {user_index}: Canister rejected the message"),
+        "only the deliberate inspect_message rejection satisfies this security assertion"
+    );
 }
 
 fn c2c_claim(
@@ -267,18 +275,12 @@ fn link_code_happy_path_is_single_use() {
 
     // A browser/other principal cannot turn a copied bearer into a binding, and the rejected call
     // does not consume the legitimate app's code.
-    assert!(
-        matches!(
-            public_claim(
-                env,
-                testing::rng::random_principal(),
-                canister_ids.user_index,
-                code.clone(),
-                delivery_pem.clone(),
-            ),
-            user_index_canister::claim_ai_app_link_code::Response::InvalidRequest(_)
-        ),
-        "the deprecated public claim must fail closed"
+    assert_public_claim_rejected_at_ingress(
+        env,
+        testing::rng::random_principal(),
+        canister_ids.user_index,
+        code.clone(),
+        delivery_pem.clone(),
     );
     let claimed = c2c_claim(env, app_canister, canister_ids.user_index, code.clone(), delivery_pem.clone());
     assert!(

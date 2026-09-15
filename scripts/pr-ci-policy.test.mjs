@@ -395,6 +395,26 @@ test("hosted frontend policy executes the action-inbox wiring regression suite",
   );
 });
 
+test("hosted frontend policy executes the upgrade digest regression suite", () => {
+  requireHostedPolicyRegression(
+    read("../.github/workflows/frontend.yaml"),
+    "scripts/upgrade_canister.test.mjs",
+  );
+});
+
+test("upgrade digest regression coverage rejects omission and misleading mentions", () => {
+  const filename = "scripts/upgrade_canister.test.mjs";
+  const workflow = read("../.github/workflows/frontend.yaml");
+  const omitted = workflow.replaceAll(filename, "");
+  const misleading = `${omitted}\n      # ${filename}\n      - name: Unrelated example\n        run: node --test ${filename}\n`;
+  for (const candidate of [omitted, misleading]) {
+    assert.throws(
+      () => requireHostedPolicyRegression(candidate, filename),
+      /hosted policy must execute/u,
+    );
+  }
+});
+
 test("wiring policy coverage cannot be satisfied by a comment or another step", () => {
   const workflow = read("../.github/workflows/frontend.yaml").replaceAll(
     "scripts/validate_action_inbox_wiring.test.mjs",

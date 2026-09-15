@@ -168,7 +168,7 @@ function assertAndroidDevFrontendGate(text) {
     assert.equal(commands.length, 1, "expected one executable run command");
     return commands[0][1];
   };
-  assert.equal(run(install), "npm ci");
+  assert.equal(run(install), "npm ci --no-audit");
   assert.doesNotMatch(install, /^ {8}working-directory:/mu);
   assert.ok(
     steps.indexOf(install) < steps.indexOf(policy),
@@ -249,12 +249,94 @@ test("Android launcher CI coverage rejects missing, commented, misplaced and non
     ),
     positive.replace("      - master\n", "      - other-branch\n"),
     positive.replaceAll("      - codex/pr1-local-models\n", ""),
-    positive.replace("        run: npm ci", "        # run: npm ci"),
+    positive.replace(
+      "        run: npm ci --no-audit",
+      "        # run: npm ci --no-audit",
+    ),
   ];
   for (const [index, mutant] of mutants.entries()) {
     assert.notEqual(mutant, positive, "mutation must alter workflow " + index);
     assert.throws(
       () => assertAndroidDevFrontendGate(mutant),
+      "mutation " + index,
+    );
+  }
+});
+
+// Inspect actual executable run fields, not comments or step names. These
+// workflows intentionally use literal npm ci commands: reject alternate install
+// syntax or appended flags rather than guessing their shell precedence.
+function assertAuditFreeInstalls(text, expectedJobs) {
+  const jobs = mappingBlock(text.replaceAll("\r\n", "\n"), "jobs", 0);
+  const observed = [];
+  for (const [, jobName] of jobs.matchAll(/^ {2}([a-z0-9-]+):[ \t]*$/gmu)) {
+    const steps = mappingBlock(mappingBlock(jobs, jobName, 2), "steps", 4);
+    for (const step of steps.split(/^ {6}- /mu).slice(1)) {
+      const commands = [...step.matchAll(/^(?:run:| {8}run:) ([^\n]*)$/gmu)];
+      for (const command of commands) {
+        const tail = step.slice(command.index + command[0].length);
+        const continuation = tail
+          .split("\n")
+          .slice(1)
+          .filter((line) => /^ {10}\S/u.test(line));
+        const executable = [command[1], ...continuation]
+          .filter((line) => !line.trimStart().startsWith("#"))
+          .join("\n");
+        if (!/\bnpm\s+(?:ci|install|i)\b/u.test(executable)) continue;
+        assert.equal(executable, "npm ci --no-audit", jobName);
+        observed.push(jobName);
+      }
+    }
+  }
+  assert.deepEqual(observed.sort(), [...expectedJobs].sort());
+}
+
+test("automatic frontend installs explicitly disable implicit npm audits", () => {
+  assertAuditFreeInstalls(read(".github/workflows/frontend.yaml"), [
+    "install-and-test",
+  ]);
+  assertAuditFreeInstalls(workflow, [
+    "dependency-policy",
+    "frontend-contracts",
+  ]);
+  assertAuditFreeInstalls(
+    read(".github/workflows/openchat_pr2_security.yaml"),
+    ["dependency-security"],
+  );
+});
+
+test("implicit-audit coverage rejects missing, overridden, commented and alternate installs", () => {
+  const fixture = [
+    "jobs:",
+    "  install:",
+    "    steps:",
+    "      - name: Install",
+    "        run: npm ci --no-audit",
+    "",
+  ].join("\n");
+  assertAuditFreeInstalls(fixture, ["install"]);
+  const mutants = [
+    fixture.replace(" --no-audit", ""),
+    fixture.replace("--no-audit", "--audit=false --audit=true"),
+    fixture.replace("--no-audit", "--no-audit --audit"),
+    fixture.replace("npm ci", "npm install"),
+    fixture.replace("npm ci", "npm i"),
+    fixture.replace("        run:", "        # run:"),
+    fixture.replace(
+      "npm ci --no-audit",
+      "|\n          npm ci\n          # --no-audit",
+    ),
+    fixture.replace(
+      "npm ci --no-audit",
+      "|\n          npm ci --no-audit\n          npm ci",
+    ),
+    fixture + "      - run: npm ci\n",
+    fixture + "      - run: npm ci --no-audit\n",
+  ];
+  for (const [index, mutant] of mutants.entries()) {
+    assert.notEqual(mutant, fixture, "mutation must alter workflow " + index);
+    assert.throws(
+      () => assertAuditFreeInstalls(mutant, ["install"]),
       "mutation " + index,
     );
   }
@@ -323,7 +405,7 @@ function sourceFiles(path) {
 // Discover current and future tests by model-owned naming families, not a frozen
 // list of today's filenames. App-authored action/OCR suites remain in full CI.
 const modelFamily =
-  /\/(?:customModels|onDeviceModels|model|onDeviceInference|nativeInferenceRuntimeBridge|webInference|transformersWebGpu|gemma4WebGpu|WebInferenceRuntimeSettings|localAi|localAudioInput|configuredLocalBlobUrl|localImageInput|imageDimensions|inferenceImage|publicBlob|publicKeyBuild|rollup-plugin-wasm-url|bootstrapSecurity)[^/]*\.(?:spec|test)\.[cm]?[jt]sx?$/u;
+  /\/(?:customModels|onDeviceModels|model|onDeviceInference|nativeInferenceRuntimeBridge|webInference|webGpuModelCatalog|transformersWebGpu|gemma4WebGpu|WebInferenceRuntimeSettings|WebGpuModelCatalog|localAi|localAudioInput|configuredLocalBlobUrl|localImageInput|imageDimensions|inferenceImage|publicBlob|publicKeyBuild|rollup-plugin-wasm-url|bootstrapSecurity)[^/]*\.(?:spec|test)\.[cm]?[jt]sx?$/u;
 const candidateFiles = [
   ...sourceFiles("app"),
   ...sourceFiles("openchat-agent/src/services/storageBucket"),
@@ -343,6 +425,24 @@ test("the model CI selects every discovered local-model frontend test", () => {
   );
   assert.deepEqual(missed, [], `unselected model tests:\n${missed.join("\n")}`);
 });
+
+for (const family of [
+  "app/src/utils/webGpuModelCatalog",
+  "app/src/components_shared/WebGpuModelCatalogSettings",
+]) {
+  test(`catalog suite cannot disappear from model CI: ${family}`, () => {
+    const suite = `${family}.spec.ts`;
+    assert(inventory.includes(suite), "catalog suite missing from discovery");
+    const removed = filters.filter((filter) => !suite.includes(filter));
+    const missed = inventory.filter(
+      (path) => !removed.some((filter) => path.includes(filter)),
+    );
+    assert(
+      missed.includes(suite),
+      "missing catalog selection must be detected",
+    );
+  });
+}
 
 test("model selectors are literal Vitest path prefixes that include future sibling tests", () => {
   for (const filter of filters) {
@@ -431,6 +531,7 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "frontend/openchat-shared/src/domain/worker.ts",
     "frontend/openchat-agent/src/services/openchatAgent.ts",
     "frontend/app/src/utils/transformersWebGpuInference.ts",
+    "frontend/app/src/utils/transformersWebGpuArtifactTransform.ts",
     "frontend/app/src/utils/transformersWebGpuAudio.ts",
     "frontend/app/src/utils/transformersWebGpuDeviceRetirement.ts",
     "frontend/app/src/utils/gemma4WebGpuEmbedding.ts",
@@ -440,11 +541,24 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "frontend/app/src/components/home/profile/ModelManager.svelte",
     "frontend/app/src/components_mobile/home/user_profile/ModelManager.svelte",
     "frontend/app/src/components_shared/WebInferenceRuntimeSettings.svelte",
+    "frontend/app/src/components_shared/WebGpuModelCatalogSettings.svelte",
+    "frontend/app/src/utils/webGpuModelCatalog.ts",
+    "frontend/app/src/stores/webGpuModelCatalog.ts",
+    "frontend/app/public/model-catalog.json",
     "frontend/openchat-shared/src/domain/onDeviceModel.ts",
     "frontend/openchat-agent/src/services/registry/modelCatalog.ts",
     "frontend/app/transformersWebGpuFeatureFlag.mjs",
     "frontend/app/transformersWebGpuDecoderGraph.mjs",
+    "frontend/app/transformersWebGpuMropeGraph.mjs",
+    "frontend/app/transformersWebGpuDeepStackGraph.mjs",
     "frontend/app/transformersWebGpuSequentialSessions.mjs",
+    "frontend/app/transformersWebGpuQwenGenerationGraph.mjs",
+    "frontend/app/transformersWebGpuQwenGenerationRuntime.mjs",
+    "frontend/app/transformersWebGpuQwenVisionGraph.mjs",
+    "frontend/app/transformersWebGpuQwenVisionGeometry.mjs",
+    "frontend/app/transformersWebGpuQwenVisionSession.mjs",
+    "frontend/app/transformersWebGpuOrtSessionConfig.mjs",
+    "frontend/app/src/utils/fixtures/qwenVisionGeometry.native.json",
     "frontend/app/build-workers.mjs",
     "frontend/app/rollup.config.mjs",
     "frontend/app/rollup.extras.mjs",
@@ -459,6 +573,8 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "scripts/check_openchat_pr1_security.mjs",
     "scripts/security_dependency_hash.mjs",
     "scripts/security_dependency_hash.test.mjs",
+    "scripts/security_owned_rules.mjs",
+    "scripts/security_owned_rules.test.mjs",
     "scripts/sbom_lock_identity.mjs",
     "scripts/sbom_lock_identity.test.mjs",
     "scripts/frontend_format_check.mjs",
@@ -631,11 +747,13 @@ test("frontend policy invokes the exact combined PR and release regressions pres
   const files = command[1].trim().split(/\s+/u);
   assert.deepEqual(files, [
     "scripts/pr-ci-policy.test.mjs",
+    "scripts/app_model_integration.test.mjs",
     "scripts/message_content_candid_contract.test.mjs",
     "scripts/validate_action_inbox_wiring.test.mjs",
     "scripts/android_release_policy.test.mjs",
     "scripts/android_release_checks.test.mjs",
     "scripts/release_preflight.test.mjs",
+    "scripts/upgrade_canister.test.mjs",
     "scripts/android_bundle.test.mjs",
     "scripts/android_build_prerequisites.test.mjs",
     "scripts/frontend_format_check.test.mjs",
@@ -644,6 +762,7 @@ test("frontend policy invokes the exact combined PR and release regressions pres
     "scripts/model_asset_notices.test.mjs",
     "scripts/sbom_lock_identity.test.mjs",
     "scripts/model_ci_coverage.test.mjs",
+    "scripts/security_mode_scope.test.mjs",
   ]);
   for (const path of files) assert.ok(existsSync(join(root, path)), path);
 });

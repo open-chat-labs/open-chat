@@ -1,8 +1,17 @@
 import type { InferenceRequest } from "@shared";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { patchQwen3Vl2bDecoderGraph } from "../../transformersWebGpuDecoderGraph.mjs";
+import {
+    patchQwen3Vl2bDeepStackDecoderGraph,
+    patchQwen3Vl2bDeepStackVisionGraph,
+} from "../../transformersWebGpuDeepStackGraph.mjs";
+import { patchQwen3Vl2bGenerationGraph } from "../../transformersWebGpuQwenGenerationGraph.mjs";
+import { patchQwen3Vl2bVisionGeometryGraph } from "../../transformersWebGpuQwenVisionGraph.mjs";
+import * as gpuProtocol from "./transformersWebGpuProtocol";
 import {
     createTransformersWebGpuEngine,
     deleteTransformersWebGpuAudio,
@@ -17,6 +26,7 @@ import {
     transformersWebGpuModelArtifactsDownloaded,
     transformersWebGpuModelArtifactsPresent,
     transformersWebGpuModelDownloaded,
+    transformersWebGpuInfer,
     transformersWebGpuRuntimeAvailability,
     transformersWebGpuRuntimeAvailableOffline,
     transformersWebGpuRuntimeAssetUrl,
@@ -43,6 +53,47 @@ import {
     type TransformersWebGpuFromWorker,
     type TransformersWebGpuToWorker,
 } from "./transformersWebGpuProtocol";
+
+function cachedBodyVerificationFixture(expected: Uint8Array, chunks: Uint8Array[]) {
+    const spec = gpuProtocol.transformersWebGpuModelSpec(PHONE_QWEN3_VL_2B_MODEL_ID)!;
+    const artifact = {
+        path: "cached-body-fixture.bin",
+        bytes: expected.length,
+        sha256: createHash("sha256").update(expected).digest("hex"),
+    };
+    const specSpy = vi.spyOn(gpuProtocol, "transformersWebGpuModelSpec").mockReturnValue({
+        ...spec,
+        artifacts: [artifact],
+        artifactBytes: expected.length,
+    });
+    const cancelled = vi.fn();
+    const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+            for (const chunk of chunks) controller.enqueue(chunk);
+            controller.close();
+        },
+        cancel: cancelled,
+    });
+    const response = new Response(body, {
+        headers: { "content-length": String(expected.length), "x-content-sha256": artifact.sha256 },
+    });
+    const cache: TransformersWebGpuArtifactCache = {
+        match: vi.fn(async () => response),
+        put: vi.fn(async () => undefined),
+        delete: vi.fn(async () => true),
+    };
+    return {
+        cancelled,
+        cache,
+        restore: () => specSpy.mockRestore(),
+        verify: (signal?: AbortSignal) =>
+            transformersWebGpuModelArtifactsDownloaded(PHONE_QWEN3_VL_2B_MODEL_ID, {
+                cacheStorage: { open: async () => cache },
+                baseUrl: "https://phone.test/",
+                signal,
+            }),
+    };
+}
 
 function runtimeBytes(asset: (typeof TRANSFORMERS_WEBGPU_RUNTIME_ASSETS)[number]): Uint8Array {
     return asset.kind === "worker"
@@ -130,8 +181,8 @@ describe("Transformers.js Qwen WebGPU spike", () => {
     it("pins the optimized model revision and audited q4 artifact footprint", () => {
         expect(TRANSFORMERS_QWEN_MODEL_ID).toBe("onnx-community/Qwen3-VL-2B-Instruct-ONNX");
         expect(TRANSFORMERS_QWEN_REVISION).toBe("3e4136ea66ae6e07c110e64fe07da2e029517ab5");
-        expect(TRANSFORMERS_QWEN_ARTIFACT_BYTES).toBe(1_534_532_835);
-        expect(TRANSFORMERS_QWEN_ARTIFACTS).toHaveLength(13);
+        expect(TRANSFORMERS_QWEN_ARTIFACT_BYTES).toBe(1_836_691_582);
+        expect(TRANSFORMERS_QWEN_ARTIFACTS).toHaveLength(14);
         expect(TRANSFORMERS_QWEN_ARTIFACTS).toContainEqual({
             path: "processor_config.json",
             bytes: 1_300,
@@ -222,7 +273,9 @@ describe("Transformers.js Qwen WebGPU spike", () => {
                     } else {
                         expect(url.origin).toBe("https://huggingface.co");
                         expect(url.pathname).toMatch(/\/resolve\/[a-f0-9]{40}\//);
-                        expect(url.pathname.endsWith(`/${artifact.path}`)).toBe(true);
+                        const sourcePath =
+                            artifact.source?.path ?? artifact.path;
+                        expect(url.pathname.endsWith(`/${sourcePath}`)).toBe(true);
                     }
                 }
             }
@@ -255,13 +308,13 @@ describe("Transformers.js Qwen WebGPU spike", () => {
             artifacts: readonly { path: string; bytes: number; sha256: string }[],
         ) => {
             const entries = cacheEntries.get(cacheKey)!;
+            const spec = gpuProtocol.transformersWebGpuModelSpec(modelId)!;
             for (const artifact of artifacts) {
                 entries.set(
-                    transformersWebGpuArtifactDownloadUrl(
-                        artifact.path,
-                        { baseUrl, packagedAndroid: false },
-                        modelId,
-                    ),
+                    new URL(
+                        `/hf-model/${spec.repository}/resolve/${spec.revision}/${artifact.path}`,
+                        baseUrl,
+                    ).href,
                     new Response(null, {
                         status: 200,
                         headers: {
@@ -676,15 +729,220 @@ describe("Transformers.js Qwen WebGPU spike", () => {
         expect(runtimeFetches).toBe(TRANSFORMERS_WEBGPU_RUNTIME_ASSETS.length + 1);
     });
 
+    it("blocks a previous decoder graph before inference with actionable update guidance", async () => {
+        const spec = gpuProtocol.transformersWebGpuModelSpec(PHONE_QWEN3_VL_2B_MODEL_ID)!;
+        const decoder = spec.artifacts.find(
+            ({ path }) => path === "onnx/decoder_model_merged_q4.onnx",
+        )!;
+        // Isolate the stale graph at the public inference boundary without fabricating GB-sized
+        // verified weight bodies. The complete manifest upgrade is exercised separately below.
+        const specSpy = vi.spyOn(gpuProtocol, "transformersWebGpuModelSpec").mockReturnValue({
+            ...spec,
+            artifacts: [decoder],
+            artifactBytes: decoder.bytes,
+        });
+        const oldResponse = new Response(new Uint8Array([1]), {
+            headers: {
+                "content-length": "5086571",
+                "x-content-sha256":
+                    "dee3961fa1fe66c37f3f716d44a8daf571e12a4c5c6ce7884f99fe31454e83e8",
+            },
+        });
+        const cache: TransformersWebGpuArtifactCache = {
+            match: vi.fn(async () => oldResponse.clone()),
+            put: vi.fn(),
+            delete: vi.fn(async () => true),
+        };
+        const storage = { open: vi.fn(async () => cache) };
+        const worker = vi.fn(() => {
+            throw new Error("stale graph must not create a worker");
+        });
+        const fetcher = vi.fn(async () => {
+            throw new Error("inference must not download");
+        });
+        invalidateTransformersWebGpuReadiness();
+        vi.stubGlobal("caches", storage);
+        vi.stubGlobal("Worker", worker);
+        vi.stubGlobal("fetch", fetcher);
+        try {
+            await expect(
+                transformersWebGpuInfer({ ...IMAGE_REQUEST, modelId: PHONE_QWEN3_VL_2B_MODEL_ID }),
+            ).resolves.toMatchObject({
+                kind: "error",
+                error: expect.stringContaining("Open On-device models and tap Retry download"),
+            });
+            expect(storage.open).toHaveBeenCalledWith(TRANSFORMERS_WEBGPU_CACHE_KEY);
+            expect(cache.delete).toHaveBeenCalledOnce();
+            expect(cache.put).not.toHaveBeenCalled();
+            expect(worker).not.toHaveBeenCalled();
+            expect(fetcher).not.toHaveBeenCalled();
+        } finally {
+            invalidateTransformersWebGpuReadiness();
+            specSpy.mockRestore();
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it("upgrades only the previous decoder graph in the stable cache and completes exact progress", async () => {
+        const target = TRANSFORMERS_QWEN_ARTIFACTS.find(
+            ({ path }) => path === "onnx/decoder_model_merged_q4.onnx",
+        )!;
+        // Exercise the delivered build transform, not the unchanged source override graph.
+        const replacement = patchQwen3Vl2bGenerationGraph(
+            patchQwen3Vl2bDeepStackDecoderGraph(
+                patchQwen3Vl2bDecoderGraph(
+                    readFileSync(
+                        resolve(
+                            import.meta.dirname,
+                            "../../model-overrides/qwen3vl2b/onnx/decoder_model_merged_q4.onnx",
+                        ),
+                    ),
+                ),
+            ),
+            { scope: "generation-only" },
+        );
+        expect(replacement.byteLength).toBe(target.bytes);
+        expect(createHash("sha256").update(replacement).digest("hex")).toBe(target.sha256);
+        const baseUrl = "https://phone.tailnet.test/";
+        const modelUrl = (path: string) =>
+            `${baseUrl}hf-model/${TRANSFORMERS_QWEN_MODEL_ID}/resolve/${TRANSFORMERS_QWEN_REVISION}/${path}`;
+        const entries = new Map<string, Response>();
+        const unchanged = new Map<string, Response>();
+        for (const artifact of TRANSFORMERS_QWEN_ARTIFACTS) {
+            const stale = artifact.path === target.path;
+            const response = new Response(null, {
+                headers: {
+                    "content-length": String(stale ? 5_086_571 : artifact.bytes),
+                    "x-content-sha256": stale
+                        ? "dee3961fa1fe66c37f3f716d44a8daf571e12a4c5c6ce7884f99fe31454e83e8"
+                        : artifact.sha256,
+                    "x-openchat-model-revision": TRANSFORMERS_QWEN_REVISION,
+                },
+            });
+            entries.set(modelUrl(artifact.path), response);
+            if (!stale) unchanged.set(modelUrl(artifact.path), response);
+        }
+        const cache: TransformersWebGpuArtifactCache = {
+            match: vi.fn(async (request) => entries.get(String(request))?.clone()),
+            put: vi.fn(async (request, response) => {
+                entries.set(
+                    String(request),
+                    new Response(await response.arrayBuffer(), { headers: response.headers }),
+                );
+            }),
+            delete: vi.fn(async (request) => entries.delete(String(request))),
+        };
+        const storage = {
+            open: vi.fn(async (_key: string) => cache),
+            delete: vi.fn(async () => true),
+        };
+        const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (String(input).endsWith(`/${target.path}`)) {
+                expect(String(input)).toBe(
+                    `${baseUrl}assets/transformers-webgpu/qwen3vl2b/${target.path}`,
+                );
+                expect(init?.cache).toBe("no-store");
+                return new Response(replacement.slice().buffer as ArrayBuffer, {
+                    headers: { "content-length": String(replacement.byteLength) },
+                });
+            }
+            const runtime = TRANSFORMERS_WEBGPU_RUNTIME_ASSETS.find(({ path }) =>
+                String(input).includes(path),
+            );
+            if (runtime === undefined)
+                throw new Error(`Unexpected model/shard fetch: ${String(input)}`);
+            return runtimeResponse(runtime);
+        });
+        // Existing unchanged bodies are represented by metadata fixtures, not allocated weights.
+        // The decoder replacement and all runtime responses still use actual bytes and SHA checks.
+        const verifyBody = vi.fn(async (response: Response, bytes: number, digest: string) => {
+            if (
+                unchanged.size &&
+                TRANSFORMERS_QWEN_ARTIFACTS.some(
+                    (artifact) =>
+                        artifact.path !== target.path &&
+                        artifact.bytes === bytes &&
+                        artifact.sha256 === digest,
+                )
+            )
+                return true;
+            const body = new Uint8Array(await response.arrayBuffer());
+            return (
+                body.byteLength === bytes &&
+                createHash("sha256").update(body).digest("hex") === digest
+            );
+        });
+        const options = {
+            cacheStorage: storage,
+            baseUrl,
+            packagedAndroid: true,
+            runtimeVersion: "decoder-upgrade-test",
+            cacheBodyVerifier: verifyBody,
+        };
+        const progress: { received: number; total: number }[] = [];
+        await expect(
+            transformersWebGpuModelArtifactsPresent(PHONE_QWEN3_VL_2B_MODEL_ID, options),
+        ).resolves.toBe(false);
+        await expect(
+            transformersWebGpuModelDownloaded(PHONE_QWEN3_VL_2B_MODEL_ID, options),
+        ).resolves.toBe(false);
+        expect(cache.delete).toHaveBeenCalledExactlyOnceWith(modelUrl(target.path));
+        expect(storage.delete).not.toHaveBeenCalled();
+
+        await preloadTransformersWebGpuModel(PHONE_QWEN3_VL_2B_MODEL_ID, {
+            ...options,
+            fetcher,
+            onProgress: (received, total) => progress.push({ received, total }),
+        });
+        await expect(
+            transformersWebGpuModelDownloaded(PHONE_QWEN3_VL_2B_MODEL_ID, options),
+        ).resolves.toBe(true);
+        await expect(
+            transformersWebGpuModelArtifactsPresent(PHONE_QWEN3_VL_2B_MODEL_ID, options),
+        ).resolves.toBe(true);
+        const modelFetches = fetcher.mock.calls.filter(
+            ([input]) =>
+                !TRANSFORMERS_WEBGPU_RUNTIME_ASSETS.some(({ path }) =>
+                    String(input).includes(path),
+                ),
+        );
+        expect(modelFetches).toHaveLength(1);
+        expect([...new Set(storage.open.mock.calls.map(([key]) => key))]).toEqual([
+            TRANSFORMERS_WEBGPU_CACHE_KEY,
+        ]);
+        expect(storage.delete).not.toHaveBeenCalled();
+        expect(cache.delete).toHaveBeenCalledExactlyOnceWith(modelUrl(target.path));
+        for (const [url, original] of unchanged) expect(entries.get(url)).toBe(original);
+        expect(
+            verifyBody.mock.calls.some(
+                ([, bytes, digest]) => bytes === target.bytes && digest === target.sha256,
+            ),
+        ).toBe(true);
+        expect(progress.at(-1)).toEqual({
+            received: TRANSFORMERS_QWEN_ARTIFACT_BYTES,
+            total: TRANSFORMERS_QWEN_ARTIFACT_BYTES,
+        });
+        expect(
+            progress.every(
+                ({ received, total }, index) =>
+                    total === TRANSFORMERS_QWEN_ARTIFACT_BYTES &&
+                    received <= total &&
+                    (index === 0 || received >= progress[index - 1].received),
+            ),
+        ).toBe(true);
+    });
+
     it("replaces same-size corrupt cached model bytes within one selection attempt", async () => {
         const target = TRANSFORMERS_QWEN_ARTIFACTS.find(
             ({ path }) => path === "onnx/vision_encoder_q4.onnx",
         )!;
-        const replacement = new Uint8Array(
-            readFileSync(
-                resolve(
-                    import.meta.dirname,
-                    "../../model-overrides/qwen3vl2b/onnx/vision_encoder_q4.onnx",
+        const replacement = patchQwen3Vl2bVisionGeometryGraph(
+            patchQwen3Vl2bDeepStackVisionGraph(
+                readFileSync(
+                    resolve(
+                        import.meta.dirname,
+                        "../../model-overrides/qwen3vl2b/onnx/vision_encoder_q4.onnx",
+                    ),
                 ),
             ),
         );
@@ -834,6 +1092,95 @@ describe("Transformers.js Qwen WebGPU spike", () => {
             }),
         ).rejects.toBe(backgrounded);
         expect(cancelled).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+        { label: "prequeued stream chunks", chunkBytes: 64 * 1024 },
+        { label: "one large stream chunk", chunkBytes: 8 * 1024 * 1024 },
+    ])(
+        "allows a timer heartbeat before cached SHA-256 completes with $label",
+        async ({ chunkBytes }) => {
+            const expected = new Uint8Array(8 * 1024 * 1024).fill(17);
+            const chunks = [];
+            for (let offset = 0; offset < expected.length; offset += chunkBytes) {
+                chunks.push(expected.subarray(offset, offset + chunkBytes));
+            }
+            const fixture = cachedBodyVerificationFixture(expected, chunks);
+            const createDigest = sha256.create;
+            let largestHashUpdate = 0;
+            const hashSpy = vi.spyOn(sha256, "create").mockImplementation(() => {
+                const digest = createDigest();
+                const update = digest.update.bind(digest);
+                digest.update = (data) => {
+                    largestHashUpdate = Math.max(largestHashUpdate, data.length);
+                    return update(data);
+                };
+                return digest;
+            });
+            let completed = false;
+            let heartbeatBeforeCompletion = false;
+            const heartbeat = new Promise<void>((resolve) =>
+                setTimeout(() => {
+                    heartbeatBeforeCompletion = !completed;
+                    resolve();
+                }, 0),
+            );
+            try {
+                await expect(fixture.verify()).resolves.toBe(true);
+                completed = true;
+                await heartbeat;
+                expect(heartbeatBeforeCompletion).toBe(true);
+                expect(largestHashUpdate).toBeGreaterThan(0);
+                expect(largestHashUpdate).toBeLessThanOrEqual(64 * 1024);
+                expect(fixture.cache.delete).not.toHaveBeenCalled();
+            } finally {
+                completed = true;
+                await heartbeat;
+                hashSpy.mockRestore();
+                fixture.restore();
+            }
+        },
+    );
+
+    it("honors timer-triggered cancellation while hashing prequeued cached bodies", async () => {
+        const expected = new Uint8Array(8 * 1024 * 1024).fill(17);
+        const chunks = [];
+        for (let offset = 0; offset < expected.length; offset += 64 * 1024) {
+            chunks.push(expected.subarray(offset, offset + 64 * 1024));
+        }
+        const fixture = cachedBodyVerificationFixture(expected, chunks);
+        const controller = new AbortController();
+        const reason = new Error("cancelled from a UI task");
+        const heartbeat = new Promise<void>((resolve) =>
+            setTimeout(() => {
+                controller.abort(reason);
+                resolve();
+            }, 0),
+        );
+        try {
+            const result = await fixture.verify(controller.signal).catch((error: unknown) => error);
+            await heartbeat;
+            expect(result).toBe(reason);
+            expect(fixture.cancelled).toHaveBeenCalledOnce();
+            expect(fixture.cache.delete).not.toHaveBeenCalled();
+        } finally {
+            await heartbeat;
+            fixture.restore();
+        }
+    });
+
+    it.each([
+        { label: "same-size corrupt", body: new Uint8Array([1, 2, 3, 9]) },
+        { label: "truncated", body: new Uint8Array([1, 2, 3]) },
+        { label: "oversized", body: new Uint8Array([1, 2, 3, 4, 5]) },
+    ])("rejects $label cached bytes even with matching pinned headers", async ({ body }) => {
+        const fixture = cachedBodyVerificationFixture(new Uint8Array([1, 2, 3, 4]), [body]);
+        try {
+            await expect(fixture.verify()).resolves.toBe(false);
+            expect(fixture.cache.delete).toHaveBeenCalledOnce();
+        } finally {
+            fixture.restore();
+        }
     });
 
     it("memoizes the per-page offline runtime proof and never permits a network fetch", async () => {

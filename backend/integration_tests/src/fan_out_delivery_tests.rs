@@ -5,10 +5,12 @@ use crate::wasms;
 use crate::{TestEnv, User};
 use ai_app_verifier_canister::c2c_verify_ai_app_v2::{self, ManifestCommitmentV2, VerificationBindingV2};
 use candid::{CandidType, Principal};
+use ct_codecs::{Base64UrlSafeNoPadding, Decoder};
 use ecies_payload::EciesEnvelope;
+use oc_error_codes::OCErrorCode;
 use p256::SecretKey;
 use p256::elliptic_curve::Generate;
-use p256::pkcs8::{EncodePrivateKey, EncodePublicKey};
+use p256::pkcs8::{DecodePrivateKey, EncodePrivateKey, EncodePublicKey, LineEnding};
 use pocket_ic::PocketIc;
 use rand::SeedableRng;
 use rand::rngs::StdRng;
@@ -319,14 +321,21 @@ pub(crate) fn publish_registered_app(
 }
 
 fn current_app(env: &PocketIc, user_index: CanisterId, owner: Principal, app_id: types::AiAppId) -> AiAppRegistration {
-    let response: user_index_canister::ai_apps::Response = client::execute_msgpack_query(
+    // The legacy ai_apps response is only the first eight visible apps, including apps left by
+    // other tests in this pooled environment. Resolve this exact registration, never a list page.
+    let response: user_index_canister::ai_apps_by_ids::Response = client::execute_msgpack_query(
         env,
         owner,
         user_index,
-        "ai_apps_msgpack",
-        &user_index_canister::ai_apps::Args {},
+        "ai_apps_by_ids_msgpack",
+        &user_index_canister::ai_apps_by_ids::Args {
+            lookups: vec![user_index_canister::ai_apps_by_ids::AiAppLookup { app_id, revision: None }],
+        },
     );
-    let user_index_canister::ai_apps::Response::Success(result) = response;
+    let user_index_canister::ai_apps_by_ids::Response::Success(result) = response else {
+        panic!("exact app lookup must succeed: {response:?}")
+    };
+    assert_eq!(result.apps.len(), 1, "owner must see exactly the requested registration");
     result
         .apps
         .into_iter()
@@ -1059,7 +1068,15 @@ fn app_key_lookup_rejects_browser_callers_and_accepts_local_user_index() {
     let user_index_canister::ai_app_user_keys::Response::Success(result) = response;
     assert_eq!(result.keys.len(), 1);
     assert_eq!(result.keys[0].user_id, setup.user_a.user_id);
-    assert_eq!(result.keys[0].public_key, recipient_a.pk_pem);
+    // Ingress canonicalizes SPKI to LF, while the fixture intentionally keeps platform-default
+    // PEM input (CRLF on Windows). Compare the exact canonical public key, not trimmed text.
+    let expected_key = SecretKey::from_pkcs8_pem(&recipient_a.sk_pem)
+        .unwrap()
+        .public_key()
+        .to_public_key_pem(LineEnding::LF)
+        .unwrap();
+    assert_eq!(result.keys[0].public_key, expected_key);
+    assert!(!result.keys[0].public_key.contains('\r'));
 }
 
 #[test]
@@ -1234,7 +1251,11 @@ fn malformed_member_key_is_rejected_at_ingress_and_missing_key_fails_atomically(
         None,
     );
     let response = confirm_raw(env, &setup.user_b, setup.group_id, message_id);
-    assert!(matches!(response, group_canister::respond_to_action_card::Response::Error(_)));
+    assert!(
+        matches!(&response, group_canister::respond_to_action_card::Response::Error(error)
+            if error.matches_code(OCErrorCode::C2CError) && error.message() == Some("action deposit was rejected")),
+        "the missing confirmer key must reject the deposit: {response:?}"
+    );
     tick_many(env, 10);
     assert_eq!(fetch_actions(env, setup.user_a.principal, setup.inbox, &selector_a).len(), 0);
     let cancel: group_canister::respond_to_action_card::Response = client::execute_msgpack_update(
@@ -1250,7 +1271,62 @@ fn malformed_member_key_is_rejected_at_ingress_and_missing_key_fails_atomically(
             confirmation_grant: None,
         },
     );
-    assert!(matches!(cancel, group_canister::respond_to_action_card::Response::Success(_)));
+    // A failed asynchronous callback cannot release a lease shared with an exact in-flight
+    // sibling. Cancel and actor takeover must remain blocked; the original actor can retry.
+    assert!(
+        matches!(&cancel, group_canister::respond_to_action_card::Response::Error(error)
+            if error.matches_code(OCErrorCode::NoChange) && error.message().is_none()),
+        "cancel must not replace the durable confirmation lease: {cancel:?}"
+    );
+    let takeover = confirm_raw(env, &setup.user_a, setup.group_id, message_id);
+    assert!(
+        matches!(&takeover, group_canister::respond_to_action_card::Response::Error(error)
+            if error.matches_code(OCErrorCode::NoChange) && error.message().is_none()),
+        "another actor must not take over the failed confirmation: {takeover:?}"
+    );
+    let recipient_b = new_recipient(&mut rng);
+    let claim_b = link_key_claim(
+        env,
+        canister_ids.user_index,
+        &setup.user_b,
+        &setup.app,
+        recipient_b.pk_pem.clone(),
+    );
+    let selector_b = selector_from_claim(&claim_b);
+    assert_eq!(fetch_actions(env, setup.user_b.principal, setup.inbox, &selector_b).len(), 0);
+    confirm(env, &setup.user_b, setup.group_id, message_id);
+    assert_eq!(fetch_actions(env, setup.user_a.principal, setup.inbox, &selector_a).len(), 0);
+    let delivered = fetch_actions(env, setup.user_b.principal, setup.inbox, &selector_b);
+    assert_eq!(
+        delivered.len(),
+        1,
+        "repairing the missing key must deliver exactly once to the original confirmer"
+    );
+    assert!(decrypt(&delivered[0], &recipient_a.sk_pem).is_err());
+    let plaintext = decrypt(&delivered[0], &recipient_b.sk_pem).expect("the repaired confirmer key must decrypt");
+    let envelope: serde_json::Value = serde_json::from_slice(&plaintext).unwrap();
+    assert_eq!(envelope["payloadEncoding"], "base64url");
+    assert_eq!(
+        Base64UrlSafeNoPadding::decode_to_vec(envelope["payload"].as_str().unwrap(), None).unwrap(),
+        CONFIRM_PAYLOAD
+    );
+    assert_eq!(envelope["context"]["appId"], setup.app.id);
+    assert_eq!(envelope["context"]["appRevision"], setup.app.updated);
+    assert_eq!(envelope["context"]["actionId"], ACTION_ID);
+    assert_eq!(
+        Base64UrlSafeNoPadding::decode_to_vec(envelope["context"]["appSubject"].as_str().unwrap(), None).unwrap(),
+        claim_b.app_subject.as_ref()
+    );
+    assert!(envelope["context"].get("confirmedBy").is_none());
+    let retry = confirm_raw(env, &setup.user_b, setup.group_id, message_id);
+    assert!(
+        matches!(&retry, group_canister::respond_to_action_card::Response::Error(error)
+            if error.matches_code(OCErrorCode::NoChange) && error.message().is_none()),
+        "an already committed exact retry must not add another delivery: {retry:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(fetch_actions(env, setup.user_a.principal, setup.inbox, &selector_a).len(), 0);
+    assert_eq!(fetch_actions(env, setup.user_b.principal, setup.inbox, &selector_b).len(), 1);
 }
 
 #[test]

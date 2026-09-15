@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 1,
+  "status": "draft",
+  "scopeId": "pr2-app-card-ocr-npm",
+  "seeds": [
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "tesseract.js",
+      "purpose": "Introduced runtime: app-selected optional OCR",
+      "evidence": [
+        {
+          "file": "frontend/app/src/utils/browserOcr.ts",
+          "contains": "const loaded = (await import(\"tesseract.js\")) as unknown as {"
+        },
+        {
+          "file": "frontend/app/src/utils/browserOcr.ts",
+          "contains": "return createWorker(languages, 1, {"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "tesseract.js-core",
+      "purpose": "Introduced runtime asset: packaged OCR WebAssembly core",
+      "evidence": [
+        {
+          "file": "frontend/app/vite.config.ts",
+          "contains": "path: path.resolve(__dirname, `../node_modules/tesseract.js-core/${fileName}`),"
+        },
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "src: \"../node_modules/tesseract.js-core/{tesseract-core-relaxedsimd-lstm.wasm.js,tesseract-core-simd-lstm.wasm.js,tesseract-core-lstm.wasm.js}\","
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@tesseract.js-data/eng",
+      "purpose": "Introduced runtime data: English OCR language profile",
+      "evidence": [
+        {
+          "file": "frontend/app/src/utils/browserOcr.ts",
+          "contains": "export const BROWSER_OCR_LANGUAGES = \"eng\";"
+        },
+        {
+          "file": "frontend/app/vite.config.ts",
+          "contains": "\"../node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz\","
+        },
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "src: \"../node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz\","
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@tesseract.js-data/ara",
+      "purpose": "Introduced runtime data: Arabic OCR language profile",
+      "evidence": [
+        {
+          "file": "frontend/app/src/utils/browserOcr.ts",
+          "contains": "export const BROWSER_OCR_SEMANTIC_LANGUAGES = \"ara+eng\";"
+        },
+        {
+          "file": "frontend/app/vite.config.ts",
+          "contains": "\"../node_modules/@tesseract.js-data/ara/4.0.0_best_int/ara.traineddata.gz\","
+        },
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "src: \"../node_modules/@tesseract.js-data/ara/4.0.0_best_int/ara.traineddata.gz\","
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "svelte",
+      "purpose": "Reused runtime: app card lifecycle and OCR stores",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components/home/ActionCardContent.svelte",
+          "contains": "import { getContext, onMount, untrack } from \"svelte\";"
+        },
+        {
+          "file": "frontend/app/src/utils/browserOcr.ts",
+          "contains": "import { writable } from \"svelte/store\";"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "component-lib",
+      "name": "@tsconfig/svelte",
+      "purpose": "Reused build: app reconnect control TypeScript configuration",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components_mobile/home/AiAppLinkSheet.svelte",
+          "contains": "import { Body, BodySmall, CommonButton, Container, Sheet, Title } from \"component-lib\";"
+        },
+        {
+          "file": "frontend/component-lib/tsconfig.json",
+          "contains": "\"extends\": \"@tsconfig/svelte/tsconfig.json\","
+        },
+        {
+          "file": "frontend/component-lib/package.json",
+          "contains": "\"@tsconfig/svelte\": \"^5.0.4\","
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "component-lib",
+      "name": "typescript",
+      "purpose": "Reused build: app reconnect control type declarations",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components_mobile/home/AiAppLinkSheet.svelte",
+          "contains": "import { Body, BodySmall, CommonButton, Container, Sheet, Title } from \"component-lib\";"
+        },
+        {
+          "file": "frontend/component-lib/package.json",
+          "contains": "\"build\": \"tsc --emitDeclarationOnly\""
+        },
+        {
+          "file": "frontend/component-lib/package.json",
+          "contains": "\"typescript\": \"^5.9.3\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "svelte-material-icons",
+      "purpose": "Reused runtime: app reconnect sheet icons",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components_mobile/home/AiAppLinkSheet.svelte",
+          "contains": "import Check from \"svelte-material-icons/Check.svelte\";"
+        },
+        {
+          "file": "frontend/app/src/components_mobile/home/AiAppLinkSheet.svelte",
+          "contains": "import ContentCopy from \"svelte-material-icons/ContentCopy.svelte\";"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "svelte-i18n",
+      "purpose": "Reused runtime: app link and reconnect translations",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components_mobile/home/AiAppLinkSheet.svelte",
+          "contains": "import { i18nKey } from \"@src/i18n/i18n\";"
+        },
+        {
+          "file": "frontend/app/src/i18n/i18n.ts",
+          "contains": "import { _, getLocaleFromNavigator, init, locale, register } from \"svelte-i18n\";"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@icp-sdk/core",
+      "purpose": "Reused runtime: app identity and card provenance transport",
+      "evidence": [
+        {
+          "file": "frontend/openchat-shared/src/domain/aiAction.ts",
+          "contains": "import { Principal } from \"@icp-sdk/core/principal\";"
+        },
+        {
+          "file": "frontend/openchat-shared/src/domain/aiAction.ts",
+          "contains": "const a = Principal.fromText(left).toUint8Array();"
+        },
+        {
+          "file": "frontend/openchat-agent/src/services/userIndex/userIndex.client.ts",
+          "contains": "createAiAppCardProvenance("
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@sinclair/typebox",
+      "purpose": "Reused runtime: app link and card provenance wire schemas",
+      "evidence": [
+        {
+          "file": "frontend/openchat-agent/src/typebox.ts",
+          "contains": "import { Type, type Static } from \"@sinclair/typebox\";"
+        },
+        {
+          "file": "frontend/openchat-agent/src/typebox.ts",
+          "contains": "export const UserIndexCreateAiAppLinkCodeArgs = Type.Object({"
+        },
+        {
+          "file": "frontend/openchat-agent/src/typebox.ts",
+          "contains": "export const UserIndexCreateAiAppCardProvenanceArgs = Type.Object({"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "msgpackr",
+      "purpose": "Reused runtime: app and card transport encoding",
+      "evidence": [
+        {
+          "file": "frontend/openchat-agent/src/services/userIndex/userIndex.client.ts",
+          "contains": "createAiAppLinkCode(appId: number): Promise<AiAppLinkCode | undefined> {"
+        },
+        {
+          "file": "frontend/openchat-agent/src/services/userIndex/userIndex.client.ts",
+          "contains": "import { SingleCanisterMsgpackAgent } from \"../canisterAgent/msgpack\";"
+        },
+        {
+          "file": "frontend/openchat-agent/src/services/canisterAgent/msgpack.ts",
+          "contains": "import { deserializeFromMsgPack, serializeToMsgPack } from \"../../utils/msgpack\";"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@noble/hashes",
+      "purpose": "Reused runtime: app and card transport byte encoding",
+      "evidence": [
+        {
+          "file": "frontend/openchat-agent/src/services/userIndex/userIndex.client.ts",
+          "contains": "createAiAppCardProvenance("
+        },
+        {
+          "file": "frontend/openchat-agent/src/services/canisterAgent/msgpack.ts",
+          "contains": "import { utf8ToBytes } from \"@noble/hashes/utils\";"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "idb",
+      "purpose": "Reused runtime: app card cached message reconciliation",
+      "evidence": [
+        {
+          "file": "frontend/openchat-agent/src/utils/chatsDb.ts",
+          "contains": "const reconciled = reconcileSuccessfulActionCard(message);"
+        },
+        {
+          "file": "frontend/openchat-agent/src/utils/chatsDb.ts",
+          "contains": "import { IndexedDbConnectionManager } from \"./indexedDb\";"
+        },
+        {
+          "file": "frontend/openchat-agent/src/utils/indexedDb.ts",
+          "contains": "openDB,"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "tauri-plugin-oc",
+      "name": "@tauri-apps/api",
+      "purpose": "Reused runtime: external app reconnect in native clients",
+      "evidence": [
+        {
+          "file": "frontend/app/src/utils/aiAppSurfaces.ts",
+          "contains": "void openExternalUrl(client, normalizedUrl).catch(() => undefined);"
+        },
+        {
+          "file": "frontend/app/src/utils/urls.ts",
+          "contains": "import { openUrl } from \"tauri-plugin-oc-api\";"
+        },
+        {
+          "file": "frontend/app/src/utils/urls.ts",
+          "contains": "await openUrl({ url: href });"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "vite",
+      "purpose": "Reused build: local OCR asset serving plugin",
+      "evidence": [
+        {
+          "file": "frontend/app/vite.config.ts",
+          "contains": "import { build, defineConfig, type Plugin, type PluginOption } from \"vite\";"
+        },
+        {
+          "file": "frontend/app/vite.config.ts",
+          "contains": "function localExtractorAssetsPlugin(): Plugin {"
+        },
+        {
+          "file": "frontend/app/vite.config.ts",
+          "contains": "localExtractorAssetsPlugin(),"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "rollup-plugin-copy",
+      "purpose": "Reused build: packaged OCR worker core and language assets",
+      "evidence": [
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "import copy from \"rollup-plugin-copy\";"
+        },
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "copy({"
+        },
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "...localExtractorCopyTargets,"
+        }
+      ]
+    }
+  ],
+  "sourceReview": {
+    "status": "reviewed-direct-feature-roots",
+    "textIdentity": "utf8-lf",
+    "boundary": "changed-feature-consumers-and-necessary-reached-edges",
+    "reviewedOn": "2026-09-11",
+    "scope": "Dedicated model or app-card consumers, necessary local UI and canister transport edges, and changed feature-specific asset or worker build hooks.",
+    "exclusions": [
+      "Unchanged shared frontend compiler, minifier, styles and unrelated application plugins are not selected by mixed-file coexistence.",
+      "Unchanged authenticator CBOR processing and unrelated wallet, media and chat functionality are outside this feature-root review.",
+      "Unit-test runners and type-only imports are not runtime roots; explicitly selected component declaration tooling is separately labelled Build."
+    ],
+    "snapshots": [
+      {
+        "workingTreeReview": "2026-09-13: existing 44-file app ownership scope unchanged except the model-owned Rollup runtime asset import now targets a pure local constants module. Same 17 direct roots and separately reviewed 18 model roots. No app semantics or dependencies changed; not a core/advisory audit or runtime acceptance.",
+        "reviewRecord": "catalog-native-build-source-review-20260913.json",
+        "sha256": "d89aed77c20b53f54e5b6e3c0663027cd7a5bfdf004b91d4f92dc9b68a0a3522"
+      },
+      {
+        "workingTreeReview": "2026-09-12: current 44-file app/card/processor source review; same 17 direct roots and separately reviewed 18 inherited model roots. Only shared aiAction, aiActionRunner, appLocalProcessor and model-owned Rollup differ from prior per-file identities; no import/require target is added. Bounded raw app normalization and opaque per-model output selection retain existing dependency ownership. No broad core/advisory audit, image accuracy, phone or release acceptance.",
+        "reviewRecord": "app-root-source-review-20260912.json",
+        "sha256": "707342813cabca85d52ff0f030616b228f93356bdfd39a7e9483f04947b60348"
+      },
+      {
+        "sourceRevision": "d7b94d8649951a5b7d4f46b7d216d41734dd4cf7",
+        "sha256": "fa50e7bb510dd3630485bf5c2ce8afa32a5346728446fa1853290aaeb0fd6936"
+      },
+      {
+        "sourceRevision": "d7b94d8649951a5b7d4f46b7d216d41734dd4cf7",
+        "workingTreeReview": "2026-09-09: 44-file app/OCR source set unchanged. Only shared vite.config.ts and rollup.config.mjs differ from the prior frozen snapshot: model DeepStack decoder/vision transforms, exact byte checks and per-file transformed graph caching. No app/OCR business-logic or dependency-root changes; inherited model scope separately reviewed. No advisory query or full-model/phone accuracy acceptance.",
+        "sha256": "cd87d41d29df8a78e3acc47add76c09886810f345619efcc825b8f3b41017f2f"
+      },
+      {
+        "sourceRevision": "d7b94d8649951a5b7d4f46b7d216d41734dd4cf7",
+        "workingTreeReview": "2026-09-09: reviewed dirty working tree, not the committed sourceRevision bytes or an exact last-review delta. Current 44-file app/card/OCR scope retains all 17 roots. The committed-baseline changes within this scope are limited to shared model hooks in Vite/Rollup; app consumers and OCR dependency ownership remain unchanged, with inherited model ownership separately reviewed. Direct-feature dependency ownership only; no advisory, security, runtime or phone acceptance.",
+        "sha256": "52264e99f73f8bd8bff300dba20d49820e7c7aa5395b74b136aa57e69d8310ab"
+      },
+      {
+        "workingTreeReview": "2026-09-11: fresh CURRENT PR2 dirty-source app/card/local-reader ownership review, not committed source bytes or an exact prior-review delta. All 44 selected files and 17 direct roots reviewed, with the separately reviewed 18-root model scope inherited. Generic opaque-model image-prompt lookup and duplicate-JSON rejection remain in shared aiAction.ts using built-ins and existing imports only; UI, transport and local-reader asset ownership retain existing roots. Per-file raw/LF hashes and import/ownership findings retained in the project-temp admin record. No advisory, security, runtime, accuracy, phone or release acceptance.",
+        "reviewRecord": "app-card-root-ownership-current-20260911.json",
+        "sha256": "01dc69642fecf4a077a149ad102868724f2447d134d6d571c9a23ad084069eec"
+      }
+    ],
+    "inherits": "scripts/npm_feature_scope.pr1.json"
+  }
+}

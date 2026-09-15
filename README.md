@@ -28,7 +28,9 @@ To run the website run `npm --prefix frontend run dev`. This process doesn't exi
 
 Open the website at `http://localhost:5001/`.
 
-To upgrade a canister run `./scripts/upgrade-canister-local.sh <DFX_IDENTITY_NAME> <CANISTER_NAME> <VERSION>` (eg. `./scripts/upgrade-canister-local.sh default user 1.0.0`)
+To upgrade a canister run `./scripts/upgrade-canister-local.sh <DFX_IDENTITY_NAME> <CANISTER_NAME> <VERSION> <WASM_SRC> <TRUSTED_WASM_SHA256>`.
+For a local build, pass `""` as `WASM_SRC` (for example, `./scripts/upgrade-canister-local.sh default user 1.0.0 "" <TRUSTED_WASM_SHA256>`).
+The final argument must be the exact 64-hex SHA-256 from an independently trusted release/build record for the artifact bytes being installed. Do not derive the expected digest from a download that has not been verified. Missing or malformed digests stop the command before building, downloading or upgrading.
 
 To start again with a fresh install, stop DFX, then run `rm -rf .dfx`, then start from the top of these instructions again.
 

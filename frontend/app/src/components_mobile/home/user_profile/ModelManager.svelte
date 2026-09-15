@@ -20,10 +20,9 @@
     } from "@utils/modelCatalog";
     import { isNativeClient, usesWebInferenceRuntime } from "@utils/onDeviceInference";
     import { transformersWebGpuSelectionCanHandle } from "@utils/transformersWebGpuInference";
-    import {
-        TRANSFORMERS_WEBGPU_MODEL_SPECS,
-        transformersWebGpuModelSpec,
-    } from "@utils/transformersWebGpuProtocol";
+    import { transformersWebGpuModelSpec } from "@utils/transformersWebGpuProtocol";
+    import { webGpuModelCatalog } from "@src/stores/webGpuModelCatalog";
+    import WebGpuModelCatalogSettings from "../../../components_shared/WebGpuModelCatalogSettings.svelte";
     import {
         cancelWebModelDownload,
         clearWebModel,
@@ -87,10 +86,10 @@
     // leftovers are appended, so a stale/partial remote catalog can never shrink the chooser.
     let catalogSource = $state<ModelCatalogEntry[]>(defaultModelCatalog.models);
 
-    // The immutable all-WebGPU registry is authoritative for identity, size and capabilities. Catalog
-    // metadata contributes licence links only; a stale remote catalog cannot hide a pinned runtime.
+    // The validated WebGPU catalog controls the enabled list, immutable artifacts and capabilities.
+    // Legacy native catalog metadata contributes licence links only.
     let webChoices = $derived(
-        Object.values(TRANSFORMERS_WEBGPU_MODEL_SPECS)
+        $webGpuModelCatalog.models
             .filter((spec) => transformersWebGpuSelectionCanHandle(spec.id))
             .map((spec) => {
                 const metadata = catalogSource.find((entry) => entry.id === spec.id);
@@ -524,6 +523,7 @@
                     <Translatable resourceKey={i18nKey(webError)}></Translatable>
                 </BodySmall>
             {/if}
+            <WebGpuModelCatalogSettings busy={webRuntimeSettingsBusy} />
             {#if currentWebId !== undefined && transformersWebGpuSelectionCanHandle(currentWebId) && $webModelStatus.name !== undefined}
                 <WebInferenceRuntimeSettings
                     context="phone"

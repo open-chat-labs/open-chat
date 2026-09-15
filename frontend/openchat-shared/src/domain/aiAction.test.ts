@@ -158,6 +158,60 @@ describe("parseExtractionList", () => {
         expect(parseExtractionList("no json here")).toBeUndefined();
     });
 
+    it.each([
+        ["conflicting scalar", '{"reading":12,"reading":12345}'],
+        ["identical scalar", '{"reading":12,"reading":12}'],
+        ["optional scalar", '{"reading":12,"unit":"HPA","unit":"LUX"}'],
+        ["escaped equivalent name", '{"reading":12,"read\\u0069ng":12345}'],
+        ["nested object", '{"reading":12,"details":{"unit":"HPA","unit":"LUX"}}'],
+        ["nested array", '{"reading":12,"details":[{"unit":"HPA","unit":"LUX"}]}'],
+        ["array envelope", '{"records":[{"reading":12,"reading":12345}]}'],
+        ["duplicate envelope key", '{"records":[{"reading":12}],"records":[{"reading":20}]}'],
+        ["duplicate before valid record", '[{"reading":12,"reading":12345},{"reading":20}]'],
+        ["duplicate after valid record", '[{"reading":20},{"reading":12,"reading":12345}]'],
+        [
+            "separate fenced blocks",
+            '```json\n{"reading":20}\n```\n```json\n{"reading":12,"reading":12345}\n```',
+        ],
+        ["unclosed fence", '```json\n{"reading":12,"reading":12345}'],
+        ["unclosed wrapper with conflicting child", '{"records":[{"reading":12,"reading":12345}]'],
+        ["unclosed wrapper with identical child", '{"records":[{"reading":12,"reading":12},'],
+        [
+            "unclosed wrapper with valid and duplicate children",
+            '{"records":[{"reading":20},{"reading":12,"reading":12345}]',
+        ],
+        [
+            "single-object fallback after unclosed prose quote",
+            'Result "below: {"reading":12,"reading":12345}',
+        ],
+    ])(
+        "rejects balanced duplicate names without fallback or partial batch acceptance: %s",
+        (_label, raw) => {
+            expect(parseExtractionList(raw)).toBeUndefined();
+        },
+    );
+
+    it("keeps property-name scopes separate and ignores key-like text inside values", () => {
+        const entries = [
+            {
+                reading: 12,
+                Reading: 13,
+                details: { reading: 14 },
+                annotation: 'a { brace } and "reading": 99',
+            },
+            { reading: 20, details: [{ reading: 21 }, { reading: 22 }] },
+        ];
+        expect(parseExtractionList(JSON.stringify(entries))).toEqual(entries);
+    });
+
+    it("checks deeply nested objects without recursive property traversal", () => {
+        const depth = 2_000;
+        const wrap = (leaf: string) =>
+            '{"reading":12,"details":' + '{"unit":'.repeat(depth) + leaf + "}".repeat(depth + 1);
+        expect(parseExtractionList(wrap("1"))?.[0].reading).toBe(12);
+        expect(parseExtractionList(wrap('{"unit":1,"unit":2}'))).toBeUndefined();
+    });
+
     it("salvages only the complete scalar prefix of a truncated wrapped object", () => {
         expect(parseExtractionList(TRUNCATED_MODEL_RECORD_AT_BOUNDARY)).toEqual([
             {
@@ -272,6 +326,14 @@ describe("parseExtraction", () => {
     });
     it("returns undefined when there is no JSON object", () => {
         expect(parseExtraction("no json here")).toBeUndefined();
+    });
+    it.each([
+        '{"reading":12,"reading":12345}',
+        '{"reading":12,"reading":12}',
+        '{"reading":12,"read\\u0069ng":12345}',
+        '```json\n{"reading":12,"details":{"unit":"HPA","unit":"LUX"}}\n```',
+    ])("rejects duplicate names in the single-object entry point: %s", (raw) => {
+        expect(parseExtraction(raw)).toBeUndefined();
     });
 });
 
@@ -454,11 +516,13 @@ describe("runAiAction", () => {
                 ocrProfiles: ["eng"],
             });
 
-            const multilingualSchema = structuredClone(responseSchema);
-            multilingualSchema[AI_ACTION_PRIVATE_IMAGE_VERIFIER_EXTENSION] = {
-                ...multilingualSchema[AI_ACTION_PRIVATE_IMAGE_VERIFIER_EXTENSION],
-                version: 2,
-                ocrProfiles: ["eng", "ara+eng"],
+            const multilingualSchema = {
+                ...structuredClone(responseSchema),
+                [AI_ACTION_PRIVATE_IMAGE_VERIFIER_EXTENSION]: {
+                    ...structuredClone(responseSchema[AI_ACTION_PRIVATE_IMAGE_VERIFIER_EXTENSION]),
+                    version: 2,
+                    ocrProfiles: ["eng", "ara+eng"],
+                },
             };
             expect(privateImageVerifierConfig(multilingualSchema)?.ocrProfiles).toEqual([
                 "eng",
@@ -681,7 +745,7 @@ describe("runAiAction", () => {
 
         it("rejects mixed, empty, NUL-bearing, or oversized private evidence before inference", async () => {
             const infer = vi.fn(okInfer("{}"));
-            const invalidInputs = [
+            const invalidInputs: Parameters<typeof runAiAction>[1][] = [
                 {
                     image: new Uint8Array([1]),
                     privateImageEvidence: { primaryText },
@@ -829,7 +893,7 @@ describe("runAiAction", () => {
             });
         }
     });
-    it("keeps balanced JSON last-wins but tombstones a truncated duplicate reading", async () => {
+    it("rejects balanced duplicate names but keeps truncated duplicate tombstones", async () => {
         const reportDef: AiActionDefinition = {
             ...MULTI_DEF,
             acceptsImage: true,
@@ -856,8 +920,9 @@ describe("runAiAction", () => {
             balancedInfer,
         );
         expect(balancedInfer).toHaveBeenCalledOnce();
-        expect(balancedResult.kind).toBe("ready");
-        if (balancedResult.kind === "ready") expect(balancedResult.extracted.reading).toBe(12_345);
+        // Balanced JSON used to let JSON.parse silently choose the last value. A model's later
+        // duplicate is not evidence of a correction, so ambiguity must not become a ready card.
+        expect(balancedResult.kind).toBe("no_extraction");
 
         const truncatedInfer = vi.fn(okInfer(correctedButTruncated));
         const truncatedResult = await runAiAction(
@@ -1595,10 +1660,12 @@ describe("runAiAction", () => {
             ...DEF,
             acceptsImage: true,
         };
-        const infer = vi.fn(async () => ({
-            kind: "ok" as const,
-            text: "not parseable JSON",
-        }));
+        const infer = vi.fn(
+            async (_req: InferenceRequest): Promise<InferenceResult> => ({
+                kind: "ok",
+                text: "not parseable JSON",
+            }),
+        );
 
         const result = await runAiAction(
             def,

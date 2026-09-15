@@ -19,10 +19,9 @@
     } from "@utils/modelCatalog";
     import { isNativeClient, usesWebInferenceRuntime } from "@utils/onDeviceInference";
     import { transformersWebGpuSelectionCanHandle } from "@utils/transformersWebGpuInference";
-    import {
-        TRANSFORMERS_WEBGPU_MODEL_SPECS,
-        transformersWebGpuModelSpec,
-    } from "@utils/transformersWebGpuProtocol";
+    import { transformersWebGpuModelSpec } from "@utils/transformersWebGpuProtocol";
+    import { webGpuModelCatalog } from "@src/stores/webGpuModelCatalog";
+    import WebGpuModelCatalogSettings from "../../../components_shared/WebGpuModelCatalogSettings.svelte";
     import {
         cancelWebModelDownload,
         clearWebModel,
@@ -122,10 +121,10 @@
     let webErrorModelId = $state<string | undefined>(undefined);
     let webChoiceGeneration = 0;
 
-    // The immutable all-WebGPU registry is authoritative for identity, size and capabilities. Catalog
-    // metadata contributes licence links only; a stale remote catalog cannot hide a pinned runtime.
+    // The validated WebGPU catalog controls the enabled list, immutable artifacts and capabilities.
+    // Legacy native catalog metadata contributes licence links only.
     let webChoices = $derived(
-        Object.values(TRANSFORMERS_WEBGPU_MODEL_SPECS)
+        $webGpuModelCatalog.models
             .filter((spec) => transformersWebGpuSelectionCanHandle(spec.id))
             .map((spec) => {
                 const metadata = catalogSource.find((entry) => entry.id === spec.id);
@@ -515,6 +514,7 @@
         {#if webError !== ""}
             <p class="error"><Translatable resourceKey={i18nKey(webError)} /></p>
         {/if}
+        <WebGpuModelCatalogSettings busy={webRuntimeSettingsBusy} />
         {#if currentWebId !== undefined && transformersWebGpuSelectionCanHandle(currentWebId) && $webModelStatus.name !== undefined}
             <WebInferenceRuntimeSettings
                 context="desktop"

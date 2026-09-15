@@ -2,6 +2,33 @@
     "schemaVersion": 1,
     "checkedOn": "2026-09-06",
     "textRepresentation": "UTF-8, CRLF normalized to LF, one terminal LF; otherwise upstream text preserved. Header extracts identify their source explicitly.",
+    "modifications": {
+        "name": "MODEL_MODIFICATIONS.md",
+        "bytes": 14343,
+        "sha256": "0b5e4a7dfb70c4ba1e9a7ce8ca986fe91a590ef380526ee2282c92f2af438926"
+    },
+    "modifiedGraphs": [
+        {
+            "path": "onnx/decoder_model_merged_q4.onnx",
+            "sourceStage": "DeepStack-restored OpenChat decoder",
+            "sourceBytes": 5086571,
+            "sourceSha256": "dee3961fa1fe66c37f3f716d44a8daf571e12a4c5c6ce7884f99fe31454e83e8",
+            "bytes": 4896612,
+            "sha256": "475d9ad51b0da52e7510a8b597bdf42a533e552de3a3b74c58284ae6b2472375",
+            "transform": "frontend/app/transformersWebGpuQwenGenerationGraph.mjs",
+            "scope": "Generation only; eight host controls, unchanged-byte embedding alias and last-position logits."
+        },
+        {
+            "path": "onnx/vision_encoder_q4.onnx",
+            "sourceStage": "DeepStack-restored OpenChat vision graph",
+            "sourceBytes": 395100,
+            "sourceSha256": "0b494b36663cc3ce66a34b33fb03e7f722c2957d10db29d55fe63854e7d358be",
+            "bytes": 576592,
+            "sha256": "b62a78861a16cb0023156cc20dc6d8d7f0d97c99ce2360a9b4670d2f9327f6ac",
+            "transform": "frontend/app/transformersWebGpuQwenVisionGraph.mjs",
+            "scope": "Single-image vision; grouped attention and thirteen host geometry inputs, preserving all four feature outputs."
+        }
+    ],
     "packages": [
         {
             "name": "@wllama/wllama",

@@ -1,7 +1,10 @@
 import type { ModelFile, ModelModality } from "@shared";
 import { webcrypto } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { basename, resolve } from "node:path";
 import { get } from "svelte/store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as gpuProtocol from "./transformersWebGpuProtocol";
 import {
     resetTransformersWebGpuMaxOutputTokens,
     updateTransformersWebGpuMaxOutputTokens,
@@ -51,6 +54,7 @@ const wl = vi.hoisted(() => ({
 }));
 
 const transformers = vi.hoisted(() => ({
+    useActualReadiness: false,
     enabled: false,
     downloaded: false,
     downloadedModelIds: new Set<string>(),
@@ -111,6 +115,9 @@ vi.mock("./transformersWebGpuInference", async (importOriginal) => {
                 if (transformers.modelDownloadedImpl !== undefined) {
                     return transformers.modelDownloadedImpl(modelId, options);
                 }
+                if (transformers.useActualReadiness) {
+                    return actual.transformersWebGpuModelDownloaded(modelId, options);
+                }
                 return (
                     transformers.downloaded &&
                     (transformers.downloadedModelIds.size === 0 ||
@@ -119,7 +126,12 @@ vi.mock("./transformersWebGpuInference", async (importOriginal) => {
             },
         ),
         transformersWebGpuModelArtifactsDownloaded: vi.fn(
-            async () => transformers.artifactsDownloaded,
+            async (modelId: string, options: { signal?: AbortSignal } = {}) =>
+                transformers.useActualReadiness
+                    ? actual.transformersWebGpuModelArtifactsDownloaded(modelId, options)
+                    : transformers.artifactsDownloaded &&
+                      (transformers.downloadedModelIds.size === 0 ||
+                          transformers.downloadedModelIds.has(modelId)),
         ),
         transformersWebGpuModelArtifactsPresent: vi.fn(async (modelId: string) => {
             if (transformers.artifactPresenceImpl !== undefined) {
@@ -158,12 +170,15 @@ vi.mock("./transformersWebGpuInference", async (importOriginal) => {
                 transformers.downloaded = true;
                 transformers.artifactsDownloaded = true;
                 transformers.downloadedModelIds.add(_modelId);
-                const total = _modelId === "gemma-4-e2b-it-q4" ? 3_229_930_094 : 1_534_532_835;
+                const total = _modelId === "gemma-4-e2b-it-q4" ? 3_229_930_094 : 1_836_700_049;
                 options?.onProgress?.(total, total);
             },
         ),
-        refreshTransformersWebGpuRuntimeAssets: vi.fn(async () => {
+        refreshTransformersWebGpuRuntimeAssets: vi.fn(async (modelId: string, options = {}) => {
             transformers.runtimeRefreshCalls += 1;
+            if (transformers.useActualReadiness) {
+                return actual.refreshTransformersWebGpuRuntimeAssets(modelId, options);
+            }
             await transformers.runtimeRefreshGate;
             if (transformers.runtimeRefreshError !== undefined) {
                 throw new Error(transformers.runtimeRefreshError);
@@ -727,6 +742,7 @@ describe("pinned all-WebGPU model integration", () => {
         transformers.modelDownloadedCalls = 0;
         transformers.modelDownloadedSignals = [];
         transformers.artifactsDownloaded = false;
+        transformers.useActualReadiness = false;
         transformers.artifactPresenceImpl = undefined;
         transformers.audioReady = false;
         transformers.audioChecks = 0;
@@ -1148,6 +1164,180 @@ describe("pinned all-WebGPU model integration", () => {
             [gemma.id]: "downloaded",
         });
         expect(get(webModelStatus)).toMatchObject({ id: entry.id, status: "attached" });
+    });
+
+    it("refreshes an inactive cached model's stale worker after exactly one full artifact verification", async () => {
+        const actual = await vi.importActual<typeof import("./transformersWebGpuInference")>(
+            "./transformersWebGpuInference",
+        );
+        const gemma = {
+            id: "gemma-4-e2b-it-q4",
+            name: "Gemma 4 E2B (multimodal)",
+            files: [],
+            sizeBytes: 0,
+            modalities: ["text", "image", "audio"] as ModelModality[],
+        };
+        await useWebModelFromUrl(gemma);
+        const previousDisposals = transformers.disposeCalls;
+        const previousPreloads = transformers.preloadCalls;
+        const originalSpec = gpuProtocol.transformersWebGpuModelSpec(entry.id)!;
+        const bytes = new TextEncoder().encode("small real SHA-256 model fixture");
+        const artifact = {
+            path: "selection-fixture.bin",
+            bytes: bytes.length,
+            sha256: await hashOf(bytes),
+        };
+        const specSpy = vi.spyOn(gpuProtocol, "transformersWebGpuModelSpec");
+        specSpy.mockImplementation((id) =>
+            id === entry.id
+                ? { ...originalSpec, artifacts: [artifact], artifactBytes: bytes.length }
+                : undefined,
+        );
+        let artifactReads = 0;
+        const stored = new Map<string, Response>();
+        const cache = {
+            match: vi.fn(async (request: RequestInfo | URL) => {
+                const url = String(request);
+                if (url.endsWith(artifact.path)) {
+                    artifactReads += 1;
+                    return new Response(bytes.slice().buffer, {
+                        headers: {
+                            "content-length": String(bytes.length),
+                            "x-content-sha256": artifact.sha256,
+                        },
+                    });
+                }
+                return stored.get(url)?.clone();
+            }),
+            put: vi.fn(async (request: RequestInfo | URL, response: Response) => {
+                stored.set(
+                    String(request),
+                    new Response(await response.arrayBuffer(), {
+                        headers: response.headers,
+                    }),
+                );
+            }),
+            delete: vi.fn(async (request: RequestInfo | URL) => stored.delete(String(request))),
+        };
+        const fetcher = vi.fn(async (request: RequestInfo | URL) => {
+            expect(transformers.disposeCalls).toBe(previousDisposals);
+            const asset = gpuProtocol.TRANSFORMERS_WEBGPU_RUNTIME_ASSETS.find(({ path }) =>
+                String(request).includes(path),
+            );
+            expect(
+                asset,
+                "model weights must never be fetched for a runtime-only refresh",
+            ).toBeDefined();
+            const runtimeBytes =
+                asset!.kind === "worker"
+                    ? new Uint8Array(asset!.minimumBytes)
+                    : new Uint8Array(
+                          readFileSync(
+                              resolve(
+                                  import.meta.dirname,
+                                  "../../../node_modules/onnxruntime-web/dist",
+                                  basename(asset!.path),
+                              ),
+                          ),
+                      );
+            return new Response(runtimeBytes.buffer, {
+                headers: { "content-type": "text/javascript" },
+            });
+        });
+        vi.stubGlobal("caches", { open: vi.fn(async () => cache) });
+        vi.stubGlobal("fetch", fetcher);
+        actual.invalidateTransformersWebGpuReadiness();
+        transformers.artifactsDownloaded = true;
+        transformers.downloadedModelIds.add(entry.id);
+        await refreshWebModelInstallStatus([entry.id]);
+        transformers.useActualReadiness = true;
+        try {
+            await expect(useWebModelFromUrl(entry)).resolves.toBeUndefined();
+            expect(artifactReads).toBe(1);
+            expect(transformers.runtimeRefreshCalls).toBe(1);
+            expect(transformers.preloadCalls).toBe(previousPreloads);
+            expect(transformers.deleteCalls).toBe(0);
+            expect(fetcher).toHaveBeenCalledTimes(
+                gpuProtocol.TRANSFORMERS_WEBGPU_RUNTIME_ASSETS.length * 2,
+            );
+            expect(get(webModelStatus)).toMatchObject({ id: entry.id, status: "attached" });
+            await expect(actual.transformersWebGpuModelDownloaded(entry.id)).resolves.toBe(true);
+            expect(artifactReads).toBe(1);
+        } finally {
+            transformers.useActualReadiness = false;
+            actual.invalidateTransformersWebGpuReadiness();
+            specSpy.mockRestore();
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it("repairs cached corrupt weights instead of treating runtime refresh as a body proof", async () => {
+        await useWebModelFromUrl(entry);
+        const preloads = transformers.preloadCalls;
+        transformers.downloaded = false;
+        transformers.artifactsDownloaded = false;
+
+        await expect(useWebModelFromUrl(entry)).resolves.toBeUndefined();
+
+        expect(transformers.preloadCalls).toBe(preloads + 1);
+        expect(transformers.runtimeRefreshCalls).toBe(0);
+        expect(get(webModelStatus)).toMatchObject({ id: entry.id, status: "attached" });
+    });
+
+    it("preserves the previous model when the cached selection's runtime-only refresh fails", async () => {
+        const gemma = {
+            id: "gemma-4-e2b-it-q4",
+            name: "Gemma 4 E2B (multimodal)",
+            files: [],
+            sizeBytes: 0,
+            modalities: ["text", "image", "audio"] as ModelModality[],
+        };
+        await useWebModelFromUrl(entry);
+        await useWebModelFromUrl(gemma);
+        const preloads = transformers.preloadCalls;
+        const disposals = transformers.disposeCalls;
+        const persisted = localStorage.getItem(LS_URL_MODEL);
+        transformers.downloaded = false;
+        transformers.artifactsDownloaded = true;
+        transformers.runtimeRefreshError = "packaged worker unavailable";
+
+        await expect(useWebModelFromUrl(entry)).resolves.toContain("packaged worker unavailable");
+
+        expect(transformers.runtimeRefreshCalls).toBe(1);
+        expect(transformers.preloadCalls).toBe(preloads);
+        expect(transformers.disposeCalls).toBe(disposals);
+        expect(transformers.deleteCalls).toBe(0);
+        expect(localStorage.getItem(LS_URL_MODEL)).toBe(persisted);
+        expect(get(webModelStatus)).toMatchObject({ id: gemma.id, status: "attached" });
+    });
+
+    it("rejects an unsuccessful cached-weight repair without evicting the previous model", async () => {
+        const gemma = {
+            id: "gemma-4-e2b-it-q4",
+            name: "Gemma 4 E2B (multimodal)",
+            files: [],
+            sizeBytes: 0,
+            modalities: ["text", "image", "audio"] as ModelModality[],
+        };
+        await useWebModelFromUrl(entry);
+        await useWebModelFromUrl(gemma);
+        const preloads = transformers.preloadCalls;
+        const disposals = transformers.disposeCalls;
+        const persisted = localStorage.getItem(LS_URL_MODEL);
+        transformers.downloaded = false;
+        transformers.artifactsDownloaded = false;
+        transformers.preloadImpl = async () => {
+            expect(transformers.disposeCalls).toBe(disposals);
+        };
+
+        await expect(useWebModelFromUrl(entry)).resolves.toContain("could not be verified");
+
+        expect(transformers.preloadCalls).toBe(preloads + 1);
+        expect(transformers.runtimeRefreshCalls).toBe(0);
+        expect(transformers.disposeCalls).toBe(disposals);
+        expect(transformers.deleteCalls).toBe(0);
+        expect(localStorage.getItem(LS_URL_MODEL)).toBe(persisted);
+        expect(get(webModelStatus)).toMatchObject({ id: gemma.id, status: "attached" });
     });
 
     it("reports inactive cached models independently from the current selection", async () => {

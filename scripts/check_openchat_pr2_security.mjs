@@ -5,11 +5,15 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { reviewedDependencyDigest } from "./security_dependency_hash.mjs";
+import { securityModes } from "./security_mode_scope.mjs";
+import { ownedSecurityRules } from "./security_owned_rules.mjs";
 
+const modes = securityModes(process.argv.slice(2), "pr2");
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const policy = JSON.parse(readFileSync(resolve(root, ".github/security/openchat-pr2-security-baseline.json"), "utf8"));
-const modes = new Set(process.argv.slice(2));
-if (!modes.size) for (const mode of ["ci", "npm", "rust", "licenses"]) modes.add(mode);
+const ownedChecksOnly = [...modes].every((mode) => mode === "licenses");
+const policy = ownedChecksOnly
+  ? ownedSecurityRules("pr2")
+  : JSON.parse(readFileSync(resolve(root, ".github/security/openchat-pr2-security-baseline.json"), "utf8"));
 const failures = [];
 
 function run(command, args, cwd = root) {
@@ -48,8 +52,8 @@ function json(result, label) {
   }
 }
 
-const changed = changedPaths();
-for (const [path, expected] of Object.entries(policy.reviewedDependencyFiles)) {
+const changed = ownedChecksOnly ? [] : changedPaths();
+for (const [path, expected] of Object.entries(ownedChecksOnly ? {} : policy.reviewedDependencyFiles)) {
   const absolute = resolve(root, path);
   if (!existsSync(absolute)) {
     failures.push(`Reviewed dependency file is missing: ${path}`);
@@ -58,14 +62,14 @@ for (const [path, expected] of Object.entries(policy.reviewedDependencyFiles)) {
   const actual = reviewedDependencyDigest(readFileSync(absolute), policy, path);
   if (actual !== expected) failures.push(`Reviewed dependency file changed: ${path} (${actual} != ${expected})`);
 }
-const reviewedDependencyFiles = new Set(Object.keys(policy.reviewedDependencyFiles));
+const reviewedDependencyFiles = new Set(Object.keys(ownedChecksOnly ? {} : policy.reviewedDependencyFiles));
 const unreviewedCargoManifests = changed.filter(
   (path) => (path === "Cargo.toml" || path.endsWith("/Cargo.toml")) && !reviewedDependencyFiles.has(path),
 );
 if (unreviewedCargoManifests.length) {
   failures.push(`PR2 has unreviewed Cargo manifests:\n  ${unreviewedCargoManifests.join("\n  ")}`);
 }
-if (new Date().toISOString().slice(0, 10) > policy.expiresOn) {
+if (!ownedChecksOnly && new Date().toISOString().slice(0, 10) > policy.expiresOn) {
   failures.push(`Security baseline expired on ${policy.expiresOn}; re-audit PR2 dependencies`);
 }
 
@@ -158,8 +162,10 @@ if (modes.has("rust")) {
 }
 
 if (modes.has("licenses")) {
+  const metadataResult = run(process.platform === "win32" ? "cargo.exe" : "cargo", ["metadata", "--locked", "--offline", "--format-version", "1"]);
+  if (metadataResult.status !== 0) throw new Error(`cargo metadata failed: ${metadataResult.stderr}`);
   const metadata = json(
-    run(process.platform === "win32" ? "cargo.exe" : "cargo", ["metadata", "--locked", "--format-version", "1"]),
+    metadataResult,
     "cargo metadata",
   );
   for (const expected of policy.directRustPackages) {
@@ -183,4 +189,6 @@ if (failures.length) {
   console.error(`\nPR2 security policy failed:\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`PR2 security policy passed; baseline expires ${policy.expiresOn}.`);
+console.log(ownedChecksOnly
+  ? "PR2 offline owned checks passed (licenses); advisory and release acceptance not assessed."
+  : `PR2 security policy passed; baseline expires ${policy.expiresOn}.`);

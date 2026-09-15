@@ -45,13 +45,13 @@ description: OpenChat release train runbook — tagging components, prod-test (i
 Work through components in release order. For each canister, the **double-deploy protocol**: deploy the new wasm twice, first labelled version tag−1, then labelled tag. This exercises the upgrade path twice (catches non-idempotent migrations). "tag−1" = the new tag number minus 1 (NOT the component's previous released tag).
 
 ```bash
-sh ./scripts/upgrade-canister-prod-test.sh openchat <canister> 2.0.<tag-1>
+./scripts/upgrade-canister-prod-test.sh openchat <canister> 2.0.<tag-1> "" <TRUSTED_WASM_SHA256>
 # check metrics (below), then:
-sh ./scripts/upgrade-canister-prod-test.sh openchat <canister> 2.0.<tag>
+./scripts/upgrade-canister-prod-test.sh openchat <canister> 2.0.<tag> "" <TRUSTED_WASM_SHA256>
 # check metrics again
 ```
 
-No 4th arg (wasm_src) → the wasm is BUILT LOCALLY from the current checkout, so the working tree must be at the tag commit (master head, clean). Both deploys therefore carry the new code's git_commit_id — expected.
+An explicit empty 4th argument (wasm_src) builds locally from the current checkout, so the working tree must be at the tag commit (master head, clean). Both deploys therefore carry the new code's git_commit_id — expected. The required 5th argument is the exact 64-hex SHA-256 from an independently trusted release/build record for the artifact bytes being installed; obtain it before running either upgrade. Do not treat an unverified download's own digest as the trusted expected value. Use the executable Bash entrypoint above, not `sh`. Missing or malformed digests fail before any build, download or upgrade.
 
 Website prod test is a single deploy, no double protocol (asset canister, no upgrade path):
 

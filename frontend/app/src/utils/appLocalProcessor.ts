@@ -13,7 +13,7 @@ const EXTENSION = "x-openchat-local-processor";
 const PREFIX = "oc:app-process:";
 
 export interface AppProcessorInput {
-    operation: "extract" | "normalize";
+    operation: "extract" | "normalize" | "normalize_raw";
     modality: "text" | "image" | "audio";
     text?: string;
     ocrTranscripts?: { profile: string; text: string }[];
@@ -22,7 +22,7 @@ export interface AppProcessorInput {
 }
 
 export type AppProcessorResult =
-    | { kind: "candidates"; candidates: Record<string, unknown>[] }
+    | { kind: "candidates"; candidates: Record<string, unknown>[]; sourceIndexes?: number[] }
     | { kind: "none" | "ambiguous" }
     | { kind: "error"; error: string };
 
@@ -76,6 +76,7 @@ export function validAppProcessorCandidates(value: unknown): value is Record<str
 export function parseAppProcessorResult(
     value: unknown,
     expected: Binding,
+    operation: AppProcessorInput["operation"] = "normalize",
 ): AppProcessorResult | undefined {
     if (
         !record(value) ||
@@ -85,23 +86,46 @@ export function parseAppProcessorResult(
         value.requestNonce !== expected.requestNonce ||
         Object.keys(value).some(
             (key) =>
-                !["type", "version", "frameNonce", "requestNonce", "kind", "candidates"].includes(
-                    key,
-                ),
+                ![
+                    "type",
+                    "version",
+                    "frameNonce",
+                    "requestNonce",
+                    "kind",
+                    "candidates",
+                    ...(operation === "normalize_raw" ? ["sourceIndexes"] : []),
+                ].includes(key),
         ) ||
         bytes(value) > APP_PROCESSOR_MAX_BYTES
     )
         return undefined;
     if (value.kind === "candidates" && validAppProcessorCandidates(value.candidates)) {
+        if (operation === "normalize_raw") {
+            const indexes = value.sourceIndexes;
+            if (
+                !Array.isArray(indexes) ||
+                indexes.length !== value.candidates.length ||
+                Array.from({ length: indexes.length }, (_, index) => index).some(
+                    (index) => !Object.hasOwn(indexes, index) || indexes[index] !== index,
+                )
+            )
+                return undefined;
+            return { kind: "candidates", candidates: value.candidates, sourceIndexes: indexes };
+        }
         return { kind: "candidates", candidates: value.candidates };
     }
     if (
         !Object.hasOwn(value, "candidates") &&
+        !Object.hasOwn(value, "sourceIndexes") &&
         (value.kind === "none" || value.kind === "ambiguous")
     ) {
         return { kind: value.kind };
     }
-    if (!Object.hasOwn(value, "candidates") && value.kind === "error") {
+    if (
+        !Object.hasOwn(value, "candidates") &&
+        !Object.hasOwn(value, "sourceIndexes") &&
+        value.kind === "error"
+    ) {
         return { kind: "error", error: "The app could not prepare this action. Please retry." };
     }
     return undefined;
@@ -132,7 +156,10 @@ export async function processWithApp(
         (input.text !== undefined &&
             new TextEncoder().encode(input.text).byteLength > MAX_SOURCE_BYTES) ||
         (input.candidates !== undefined && !validAppProcessorCandidates(input.candidates)) ||
-        (input.operation === "normalize" && input.candidates === undefined) ||
+        ((input.operation === "normalize" || input.operation === "normalize_raw") &&
+            input.candidates === undefined) ||
+        (input.operation === "normalize_raw" &&
+            (input.modality !== "image" || input.ocrTranscripts !== undefined)) ||
         !safeJson(input) ||
         bytes(input) > APP_PROCESSOR_MAX_BYTES
     )
@@ -202,7 +229,7 @@ export async function processWithApp(
                     "*",
                 );
             } else if (sent && data.type === PREFIX + "result") {
-                finish(parseAppProcessorResult(data, binding) ?? unavailable());
+                finish(parseAppProcessorResult(data, binding, input.operation) ?? unavailable());
             }
         };
         const timeout = setTimeout(cancel, APP_PROCESSOR_TIMEOUT_MS);

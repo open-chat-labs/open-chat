@@ -39,7 +39,7 @@ jobs:
           node-version: "24.18.1"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit
 
         # A missing platform package is a lockfile failure, not permission to rewrite it in CI.
       - name: Verify locked Rollup Linux Binary
@@ -52,7 +52,12 @@ jobs:
 
       - name: Check PR and release policy regressions
         working-directory: .
-        run: node --test scripts/pr-ci-policy.test.mjs scripts/message_content_candid_contract.test.mjs scripts/validate_action_inbox_wiring.test.mjs scripts/android_release_policy.test.mjs scripts/android_release_checks.test.mjs scripts/release_preflight.test.mjs scripts/android_bundle.test.mjs scripts/android_build_prerequisites.test.mjs scripts/frontend_format_check.test.mjs scripts/android_dev.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_asset_notices.test.mjs scripts/sbom_lock_identity.test.mjs scripts/model_ci_coverage.test.mjs
+        run: node --test scripts/pr-ci-policy.test.mjs scripts/app_model_integration.test.mjs scripts/message_content_candid_contract.test.mjs scripts/validate_action_inbox_wiring.test.mjs scripts/android_release_policy.test.mjs scripts/android_release_checks.test.mjs scripts/release_preflight.test.mjs scripts/upgrade_canister.test.mjs scripts/android_bundle.test.mjs scripts/android_build_prerequisites.test.mjs scripts/frontend_format_check.test.mjs scripts/android_dev.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_asset_notices.test.mjs scripts/sbom_lock_identity.test.mjs scripts/model_ci_coverage.test.mjs scripts/security_mode_scope.test.mjs
+
+      # Pure local fixtures only: no advisory requests, installs, or live model runs.
+      - name: Check offline feature inventory and CI contracts
+        working-directory: .
+        run: node --test scripts/npm_feature_scope.test.mjs scripts/npm_feature_seed_review.test.mjs scripts/npm_feature_advisories.test.mjs scripts/npm_feature_advisories.review.test.mjs scripts/rust_feature_scope.test.mjs scripts/rust_feature_seed_review.test.mjs scripts/rust_feature_advisories.test.mjs scripts/rust_feature_advisory_results.test.mjs scripts/rust_feature_advisory_runner.test.mjs scripts/rust_feature_sbom.test.mjs scripts/rust_feature_sbom_validate.test.mjs scripts/rust_feature_collection.test.mjs scripts/rust_feature_ci.test.mjs scripts/check_feature_ci.test.mjs scripts/security_mode_scope.test.mjs scripts/security_owned_rules.test.mjs
 
       - name: Verify narrowly scoped dependency compatibility
         working-directory: .

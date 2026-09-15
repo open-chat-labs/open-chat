@@ -1,9 +1,70 @@
 # Refreshing the existing two-PR stack
 
-Assessment: 2026-09-07. This records the locally committed reconciliation and remaining publication/runtime gates.
+Assessment: 2026-09-14. This retains the earlier reconciliation history and separates current local evidence from publication/runtime gates.
 Keep both existing PRs in draft while the dependency and runtime gates are unresolved.
 
-## Current reconciliation snapshot
+## Current local handoff
+
+The latest cleanup APK is `OpenChat-local-test-cleanup-20260914.apk`, SHA-256
+`d5e28646738a8d7c79d022d00ec0f4cad0194e08f607ed4b2f0af65d2735529c`.
+Its source-bound local build, emulator cold startup (4.2 seconds), 26 installed assets,
+and catalog/version checks pass. Emulator GPU inference is not qualified: its WebView
+returns no adapter before model execution. A fresh physical-phone check remains required.
+
+The earlier catalog-enabled APK was exercised on the physical phone. Its SHA-256 is
+`086befb3049b85f8c2864e98d0112fb5776749bde25240ee602dabf18eee98d5`.
+The APK accepted a configured, pinned Qwen candidate via its HTTPS catalog controls without
+an APK or runtime-code change. Two Gemma image proposals and three consecutive Qwen image
+proposals opened verified, source-correct app cards. Both Qwen runs under the corrected
+observer closed their workers after cleanup. No model-weight requests were observed during
+those proposals. Cached Gemma/Qwen return switches also complete without downloading weights;
+a fresh post-switch Gemma proposal also passed. The optional audio add-on remains uninstalled.
+This is bounded physical-device evidence,
+not broader accuracy, delivery, audio-inference or final-stack acceptance.
+
+The current feature-CI checker passes the scoped Rust/SBOM workflow replacement in both
+slices. Both bounded source-review receipts and their fresh offline collections now pass;
+this is not live advisory clearance. No core-wide audit was run or waived.
+Exact-source advisory coverage is complete; inherited findings are documented and
+deferred at the user's request, with the original gate results retained. Final source/PR
+hygiene and exact-head hosted checks remain open. Keep draft status.
+See [current readiness](model-app-readiness.md#model-cleanup-verification-follow-up--september-14)
+for artifact-bound results and remaining gates. No publisher signing or production rollout
+is required for the requested local-test APK.
+
+### Historical September 12 handoff
+
+The following APK, prompt and device-state statements retain their original September 12
+scope and are superseded by the current handoff above.
+
+Local heads remain PR1 `2c5c0b5a5b2d5c96c0522a0af88b6c1c5e0f162b` and PR2
+`d7b94d8649951a5b7d4f46b7d216d41734dd4cf7`, with additional uncommitted model/app-card
+follow-ups. September 9's GitHub recheck still finds the old draft PR heads (`045f7132e`
+and `c7299aa11`) and no reported check runs; the local stack has not replaced them.
+
+The latest inspected local-test APK is `OpenChat-local-test-prompts-20260911.apk`,
+78,662,410 bytes / SHA-256
+`8129fb21ea40a365394541513d6a392bcc33b96a29abe31c22f46a11d23ad05b`.
+Its file identity was rechecked September 12. It predates the configurable catalog and final
+bootstrap/packaging correction; a new local-test build is still required. Earlier APK/emulator
+receipts retain their own source/artifact scope and do not qualify the current working tree.
+
+The catalog's model-only PR1 port is complete: 661 PR1 / 667 PR2 model tests pass across
+32 suites each, both full frontend type checks have zero errors, and independently built
+model workers are byte-identical. Actual shared catalog controls pass browser import,
+storage/reload/removal/refresh and mobile-width checks. The separately reviewed direct-feature
+ownership snapshots cover 51 model source/evidence paths per PR plus 44 app/card paths in PR2,
+retaining the existing 18/17 dependency roots. Combined offline CI/ownership selections pass
+155 PR1 / 213 PR2 tests; the current app contract selection passes 479 host and 295 focused
+partner-app tests. No broad core/advisory audit or release acceptance is implied.
+
+Qwen's latest mixed-precision v17 screen is 7/8 source and offline card fields, not qualified.
+The missing receipt currency, physical-device checks, live card delivery, prompt activation,
+new APK/server deployment and remaining scoped release gates are still open. No phone is
+currently detected by ADB. See [current readiness](model-app-readiness.md) for exact receipts
+and limitations. No publisher signing, upload or production rollout is required for local APK testing.
+
+## Historical September 7 reconciliation snapshot
 
 The sections below retain the earlier refresh history. PR1 reconciliation was committed at
 `b461c4b7a3b59daa1d1a4aace002e1d3ffa55d57`, including the reviewed generic Android component,

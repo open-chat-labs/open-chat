@@ -1,0 +1,58 @@
+name: App and model integration contracts
+
+on:
+  pull_request:
+    branches: [codex/pr1-local-models]
+  push:
+    branches: [codex/pr2-app-chat-interfaces, codex/pr2-clean-integration]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# This adds the missing stacked-PR route. The existing upstream full-suite
+# integration_tests.yaml and its runner/selection are intentionally unchanged.
+jobs:
+  app-model-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CARGO_BUILD_JOBS: "2"
+    steps:
+      - name: Check out the exact candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up the repository-pinned Node runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24.18.1"
+      - name: Verify scoped integration selection and failure handling offline
+        run: node --test scripts/app_model_integration.test.mjs
+      - uses: ./.github/workflows/setup-rust
+        with:
+          cache: read
+          shared-key: app-model-integration
+      - uses: arduino/setup-protoc@v1
+      # The shared PocketIC base environment needs the existing complete WASM set.
+      # Building that fixture is not permission to expand the selected test scope.
+      - name: Build the candidate canister fixtures
+        run: ./scripts/generate-all-canister-wasms.sh
+      - name: Stage isolated hash-verified integration fixtures
+        run: node scripts/app_model_integration.mjs prepare "$RUNNER_TEMP/openchat-app-model-integration"
+      - name: Link the locked candidate test harness without running it
+        run: cargo test --locked --package integration_tests --no-run --message-format=json > "$RUNNER_TEMP/openchat-app-model-integration/cargo-messages.json"
+      - name: Run and verify every selected app and model integration test
+        run: node scripts/app_model_integration.mjs run "$RUNNER_TEMP/openchat-app-model-integration"
+      - name: Retain source-bound integration results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: app-model-integration-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/openchat-app-model-integration/summary.json
+            ${{ runner.temp }}/openchat-app-model-integration/run.stdout.log
+            ${{ runner.temp }}/openchat-app-model-integration/run.stderr.log
+          if-no-files-found: warn

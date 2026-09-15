@@ -23,24 +23,28 @@ import { spawnSync } from "node:child_process";
 import { reviewedDependencyDigest } from "./security_dependency_hash.mjs";
 import { checkFrontendFormatting } from "./frontend_format_check.mjs";
 import { assertSbomLockIdentity } from "./sbom_lock_identity.mjs";
+import { securityModes } from "./security_mode_scope.mjs";
+import { ownedSecurityRules } from "./security_owned_rules.mjs";
 
+const modes = securityModes(process.argv.slice(2), "pr1");
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const policyPath = resolve(
   root,
   ".github/security/openchat-pr1-security-baseline.json",
 );
-const policy = JSON.parse(readFileSync(policyPath, "utf8"));
-const modes = new Set(process.argv.slice(2));
-if (modes.size === 0) {
-  modes.add("ci");
-  modes.add("npm");
-  modes.add("rust");
-  modes.add("licenses");
-  modes.add("format");
-}
+// Only explicit formatting/license checks use the independent owned rules.
+// CI and any future advisory path retain the historical fail-closed boundary.
+const ownedChecksOnly = [...modes].every((mode) =>
+  ["format", "licenses"].includes(mode),
+);
+const policy = ownedChecksOnly
+  ? ownedSecurityRules("pr1")
+  : JSON.parse(readFileSync(policyPath, "utf8"));
 
 const failures = [];
-for (const [path, expected] of Object.entries(policy.reviewedDependencyFiles)) {
+for (const [path, expected] of Object.entries(
+  ownedChecksOnly ? {} : policy.reviewedDependencyFiles,
+)) {
   const absolutePath = resolve(root, path);
   if (!existsSync(absolutePath)) {
     failures.push("Reviewed dependency file is missing: " + path);
@@ -64,7 +68,7 @@ for (const [path, expected] of Object.entries(policy.reviewedDependencyFiles)) {
   }
 }
 const today = new Date().toISOString().slice(0, 10);
-if (today > policy.expiresOn) {
+if (!ownedChecksOnly && today > policy.expiresOn) {
   failures.push(
     `Security baseline expired on ${policy.expiresOn}; re-audit and update ${policy.trackingIssue}`,
   );
@@ -341,6 +345,7 @@ if (modes.has("licenses")) {
   const metadataResult = run(executable("cargo"), [
     "metadata",
     "--locked",
+    "--offline",
     "--format-version",
     "1",
     "--features",
@@ -579,5 +584,7 @@ if (failures.length) {
 }
 
 console.log(
-  `PR1 security policy passed; baseline review expires ${policy.expiresOn}.`,
+  ownedChecksOnly
+    ? `PR1 offline owned checks passed (${[...modes].join(", ")}); advisory and release acceptance not assessed.`
+    : `PR1 security policy passed; baseline review expires ${policy.expiresOn}.`,
 );
