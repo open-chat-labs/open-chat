@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
-    BaseKeyPrefix, DirectChatUnreadMessageIndexKey, DirectChatUnreadMessageIndexKeyPrefix, KeyPrefix, with_map, with_map_mut,
+    DirectChatUnreadMessageIndexKey, DirectChatUnreadMessageIndexKeyPrefix, KeyPrefix, with_map, with_map_mut,
 };
 use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
@@ -54,8 +54,17 @@ impl UnreadMessageIndexMap {
         });
     }
 
-    pub fn stable_memory_key_prefix(them: UserId) -> BaseKeyPrefix {
-        DirectChatUnreadMessageIndexKeyPrefix::new(them).into()
+    // Removes all of the chat's entries. This is done immediately rather than by the garbage
+    // collection job, since the job would also remove the entries of a new chat with the same user
+    // if one were created before the job ran. The map only holds the messages we haven't read yet
+    // so is small.
+    pub fn remove_all(&mut self, them: UserId) {
+        with_map_mut(|m| {
+            let keys: Vec<_> = m.range(all_keys(them)).map(|(k, _)| k).collect();
+            for key in keys {
+                m.remove(key);
+            }
+        });
     }
 
     // Moves the entries which were held on the heap into stable memory, returning how many were
@@ -151,6 +160,26 @@ mod tests {
         map2.remove_up_to(user2, 21.into());
         assert!(entries(user2).is_empty());
         assert_eq!(entries(user1), vec![(1.into(), 10.into())]);
+    }
+
+    #[test]
+    fn remove_all_only_removes_the_chats_entries() {
+        init_stable_memory_map();
+        let (user1, user2) = (user_id(1), user_id(2));
+        let mut map1 = UnreadMessageIndexMap::default();
+        let mut map2 = UnreadMessageIndexMap::default();
+        map1.add(user1, 1.into(), 10.into());
+        map2.add(user2, 1.into(), 20.into());
+        map2.add(user2, 2.into(), 21.into());
+
+        map2.remove_all(user2);
+        assert!(entries(user2).is_empty());
+        assert_eq!(entries(user1), vec![(1.into(), 10.into())]);
+
+        // A new chat with the same user can then add entries again
+        let mut map2 = UnreadMessageIndexMap::default();
+        map2.add(user2, 1.into(), 30.into());
+        assert_eq!(entries(user2), vec![(1.into(), 30.into())]);
     }
 
     #[test]

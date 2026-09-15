@@ -30,7 +30,6 @@ use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use model::threads_read::ThreadsRead;
-use model::unread_message_index_map::UnreadMessageIndexMap;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
@@ -426,7 +425,7 @@ Your streak is now {new_streak} days!"
     }
 
     pub fn delete_direct_chat(&mut self, user_id: UserId, block_user: bool, now: TimestampMillis) -> bool {
-        let Some(chat) = self.data.direct_chats.remove(user_id.into(), now) else {
+        let Some(mut chat) = self.data.direct_chats.remove(user_id.into(), now) else {
             return false;
         };
 
@@ -438,9 +437,7 @@ Your streak is now {new_streak} days!"
             .stable_memory_keys_to_garbage_collect
             .extend(chat.events.all_stable_memory_key_prefixes());
 
-        self.data
-            .stable_memory_keys_to_garbage_collect
-            .push(UnreadMessageIndexMap::stable_memory_key_prefix(user_id));
+        chat.unread_message_index_map.remove_all(user_id);
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true
