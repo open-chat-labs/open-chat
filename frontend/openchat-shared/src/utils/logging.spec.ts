@@ -122,6 +122,10 @@ describe("thrownByDocumentScript", () => {
         expect(thrownByDocumentScript(payload("http://dynamichost/", "http://dynamichost/"))).toBe(
             true,
         );
+        // a deep link opened in the in-app browser: still the document, not a script
+        expect(
+            thrownByDocumentScript(payload("https://oc.app/community/abc-cai/channel/123")),
+        ).toBe(true);
     });
 
     test("leaves our script files alone", () => {

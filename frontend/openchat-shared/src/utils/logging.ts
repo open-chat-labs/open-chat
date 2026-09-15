@@ -72,15 +72,16 @@ function thrownByExtension(payload: any): boolean {
 
 // True when the throw site is the HTML document itself rather than a script file: in-app browsers
 // (Google Search App above all) inject scripts inline, and their stack overflows and minified
-// `Error: La` throws carry the page URL as the filename. Our bundle is all script files; the one
-// inline snippet in index.html is a two-line global shim that runs before anything else.
+// `Error: La` throws carry the page URL as the filename, whichever route was open. Every script
+// of ours has a file extension; a route path has none. The one inline snippet in index.html is a
+// two-line global shim that runs before anything else.
 // Exported for testing.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function thrownByDocumentScript(payload: any): boolean {
     const filename = throwSiteFilename(payload);
     if (filename === undefined || !/^https?:\/\//i.test(filename)) return false;
     try {
-        return new URL(filename).pathname === "/";
+        return !/\.[a-z0-9]+$/i.test(new URL(filename).pathname);
     } catch {
         return false;
     }
