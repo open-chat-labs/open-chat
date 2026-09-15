@@ -347,6 +347,7 @@ import {
     type ProposedProtectedAction,
     isAndroidTauriApp,
     isIosTauriApp,
+    isPrincipalValid,
     userIdToIcrcAccount,
 } from "@shared";
 import { tick } from "svelte";
@@ -5646,12 +5647,15 @@ export class OpenChat {
     captureReferralCode(): boolean {
         const code = this.#extractReferralCodeFromPath();
         let captured = false;
-        if (code) {
+        // A referral code is the referrer's user id; anything else (a username typed into the
+        // link) would fail Principal.fromText the moment we looked the referrer up
+        if (code && isPrincipalValid(code)) {
             gaTrack("captured_referral_code", "registration");
             localStorage.setItem("openchat_referredby", code);
             captured = true;
         }
-        this.#referralCode = localStorage.getItem("openchat_referredby") ?? undefined;
+        const stored = localStorage.getItem("openchat_referredby");
+        this.#referralCode = stored !== null && isPrincipalValid(stored) ? stored : undefined;
         return captured;
     }
 

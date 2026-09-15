@@ -844,7 +844,7 @@ export class CommunityClient
     ): Promise<GroupChatDetailsResponse> {
         const cacheKey = `${chatId.communityId}_${chatId.channelId}`;
         const fromCache = await this.chatsDb.getCachedGroupDetails(cacheKey);
-        if (fromCache !== undefined) {
+        if (fromCache != null) {
             if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
             } else {
@@ -1066,7 +1066,14 @@ export class CommunityClient
             summaryResponse,
             CommunitySummaryArgs,
             TCommunitySummaryResponse,
-        );
+        ).catch((err) => {
+            // The community canister has been deleted: a stale link or cached reference,
+            // not a defect. channelSummary maps the same rejection the same way.
+            if (err instanceof DestinationInvalidError) {
+                return { kind: "failure" } as CommunitySummaryResponse;
+            }
+            throw err;
+        });
     }
 
     exploreChannels(

@@ -133,6 +133,8 @@
     }
 
     function onWindowFocus() {
+        // focus can land while this component is being torn down, after the chat prop is gone
+        if (chat === undefined) return;
         client.closeNotificationsForChat(chat.id);
     }
 

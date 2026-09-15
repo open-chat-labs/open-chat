@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { normaliseSourceMapUrls, uncaughtReason } from "./logging";
+import { normaliseSourceMapUrls, thrownByDocumentScript, uncaughtReason } from "./logging";
 
 // These expectations are the other half of a contract: `scripts/upload-source-maps.mjs` registers
 // each map as `http://dynamichost/<path relative to frontend/app/build>`. If a frame's filename
@@ -104,5 +104,43 @@ describe("uncaughtReason", () => {
         expect(uncaughtReason(undefined)).toBeUndefined();
         expect(uncaughtReason([])).toBeUndefined();
         expect(uncaughtReason("not an array")).toBeUndefined();
+    });
+});
+
+// Invariant: an error whose throw site is the HTML document itself is not reported. Google
+// Search App's in-app browser injects scripts inline and their stack overflows arrived as
+// `http://dynamichost/:197:363` (Rollbar #31932, #31933, #31928-31).
+describe("thrownByDocumentScript", () => {
+    function payload(...filenames: unknown[]) {
+        return { body: { trace: { frames: filenames.map((filename) => ({ filename })) } } };
+    }
+
+    test("matches a throw site with no script path, before or after normalisation", () => {
+        expect(thrownByDocumentScript(payload("https://oc.app/main.js", "https://oc.app/"))).toBe(
+            true,
+        );
+        expect(thrownByDocumentScript(payload("http://dynamichost/", "http://dynamichost/"))).toBe(
+            true,
+        );
+        // a deep link opened in the in-app browser: still the document, not a script
+        expect(
+            thrownByDocumentScript(payload("https://oc.app/community/abc-cai/channel/123")),
+        ).toBe(true);
+    });
+
+    test("leaves our script files alone", () => {
+        expect(
+            thrownByDocumentScript(
+                payload("https://oc.app/", "http://dynamichost/main-D_Idsc5v.js"),
+            ),
+        ).toBe(false);
+        expect(thrownByDocumentScript(payload("http://dynamichost/worker.js"))).toBe(false);
+    });
+
+    test("ignores non-http and missing filenames", () => {
+        expect(thrownByDocumentScript(payload("<anonymous>"))).toBe(false);
+        expect(thrownByDocumentScript(payload(undefined))).toBe(false);
+        expect(thrownByDocumentScript(payload())).toBe(false);
+        expect(thrownByDocumentScript(undefined)).toBe(false);
     });
 });

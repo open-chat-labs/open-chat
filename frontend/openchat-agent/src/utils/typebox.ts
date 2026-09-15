@@ -1,4 +1,4 @@
-import { Value } from "@sinclair/typebox/value";
+import { AssertError, Value } from "@sinclair/typebox/value";
 import { Kind, type Static, type TSchema } from "@sinclair/typebox";
 import { deepRemoveNullishFields } from "./nullish";
 import { TypeboxValidationError } from "@shared/domain/error";
@@ -132,6 +132,22 @@ export function typeboxValidate<T extends TSchema>(value: unknown, validator: T)
         return converted as Static<T>;
     } catch (err) {
         console.error("Typebox validation failed: ", value, err);
-        throw new TypeboxValidationError(err instanceof Error ? err : undefined);
+        throw new TypeboxValidationError(withPath(err));
     }
+}
+
+// "Expected union value" on its own says nothing about which field; the path does, and for a
+// union of single-key objects the keys present say which variant was meant. The value itself
+// stays out of the message (it can be message text).
+function withPath(err: unknown): Error | undefined {
+    if (!(err instanceof Error)) return undefined;
+    if (!(err instanceof AssertError) || err.error === undefined) return err;
+    const { path, value } = err.error;
+    const keys =
+        value !== null && typeof value === "object" && !Array.isArray(value)
+            ? ` with keys ${Object.keys(value).join(",") || "(none)"}`
+            : "";
+    const detailed = new Error(`${err.message} at ${path || "(root)"}${keys}`);
+    detailed.stack = err.stack;
+    return detailed;
 }
