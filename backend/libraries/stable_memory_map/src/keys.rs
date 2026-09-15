@@ -8,6 +8,7 @@ mod chat_event;
 mod chit_event;
 mod community_event;
 mod contact;
+mod direct_chat_unread_message_index;
 mod expiring_event;
 mod last_updated;
 mod macros;
@@ -30,6 +31,7 @@ pub use chat_event::*;
 pub use chit_event::*;
 pub use community_event::*;
 pub use contact::*;
+pub use direct_chat_unread_message_index::*;
 pub use expiring_event::*;
 pub use last_updated::*;
 pub use message_activity_event::*;
@@ -183,6 +185,7 @@ pub enum KeyType {
     DirectChatThreadEvent = 58,
     Contact = 59,
     BlockedUser = 60,
+    DirectChatUnreadMessageIndex = 61,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -268,7 +271,8 @@ impl KeyType {
             | KeyType::Referral
             | KeyType::StreakInsurancePayment
             | KeyType::StreakInsuranceClaim
-            | KeyType::BlockedUser => MapClass::SmallEntries,
+            | KeyType::BlockedUser
+            | KeyType::DirectChatUnreadMessageIndex => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -359,6 +363,7 @@ impl TryFrom<u8> for KeyType {
             58 => Ok(KeyType::DirectChatThreadEvent),
             59 => Ok(KeyType::Contact),
             60 => Ok(KeyType::BlockedUser),
+            61 => Ok(KeyType::DirectChatUnreadMessageIndex),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
