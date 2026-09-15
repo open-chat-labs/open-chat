@@ -123,9 +123,19 @@ a global policy on other manual installs.
 The moderate adm-zip finding remains **open**: `0.6.0` is still selected and
 no patched release was listed in the reviewed advisory. Disabling this optional
 download path is a bounded prevention measure, not a dependency fix or an
-allowlist entry. Its release disposition requires a separate decision; the
-inherited Rust deferral and accepted model note limitation do not cover it.
+allowlist entry. The inherited Rust deferral and accepted model note limitation
+do not cover this separate finding.
 No advisory gate has been suppressed or changed to report a clean result.
+
+### User-directed deferral — September 15
+
+After reviewing the installer risk and the bounded skip setting, the user chose
+to defer this finding and approved the respective branch pushes and disclosed CI.
+Retain `GHSA-vwc7-r8mq-g2x9` as an open, deferred moderate finding for the
+local-testing/PR-preparation handoff. This is not a dependency fix, a clean scan,
+or a change to upstream maintainer release policy. The configured advisory check
+may remain failed for the recorded finding; its raw result must stay visible.
+Keep the optional Node download mitigation and do not silently enable that path.
 
 Private local compatibility receipts are retained beneath the project-specific
 temporary root in `sharp-0354-candidate-20260915-OanUei/` and
