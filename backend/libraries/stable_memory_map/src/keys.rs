@@ -3,6 +3,7 @@ use ic_stable_structures::storable::Bound;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+mod blocked_user;
 mod chat_event;
 mod chit_event;
 mod community_event;
@@ -24,6 +25,7 @@ mod token_swap;
 mod user_id;
 mod user_metrics;
 
+pub use blocked_user::*;
 pub use chat_event::*;
 pub use chit_event::*;
 pub use community_event::*;
@@ -180,6 +182,7 @@ pub enum KeyType {
     DirectChatEvent = 57,
     DirectChatThreadEvent = 58,
     Contact = 59,
+    BlockedUser = 60,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -264,7 +267,8 @@ impl KeyType {
             | KeyType::ChannelThreadRead
             | KeyType::Referral
             | KeyType::StreakInsurancePayment
-            | KeyType::StreakInsuranceClaim => MapClass::SmallEntries,
+            | KeyType::StreakInsuranceClaim
+            | KeyType::BlockedUser => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -354,6 +358,7 @@ impl TryFrom<u8> for KeyType {
             57 => Ok(KeyType::DirectChatEvent),
             58 => Ok(KeyType::DirectChatThreadEvent),
             59 => Ok(KeyType::Contact),
+            60 => Ok(KeyType::BlockedUser),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

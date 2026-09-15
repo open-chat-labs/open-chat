@@ -99,6 +99,11 @@ fn post_upgrade(args: Args) {
     let contacts_migrated = data.contacts.migrate_to_stable_memory();
     info!(contacts_migrated, "Migrated contacts to stable memory");
 
+    // Move the blocked users into stable memory
+    // TODO: Remove this after next release
+    let blocked_users_migrated = data.blocked_users.migrate_to_stable_memory();
+    info!(blocked_users_migrated, "Migrated blocked users to stable memory");
+
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
 

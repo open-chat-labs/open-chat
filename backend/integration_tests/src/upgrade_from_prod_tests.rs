@@ -6,7 +6,7 @@ use candid::Principal;
 use constants::DAY_IN_MS;
 use ic_stable_structures::memory_manager::MemoryId;
 use pocket_ic::PocketIc;
-use stable_memory_map::KeyType;
+use stable_memory_map::{KeyType, MapClass};
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_from_u128;
@@ -16,16 +16,17 @@ use types::{
 };
 
 const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
+const STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID: MemoryId = MemoryId::new(4);
 // Enough messages for the chat's events to be migrated in several batches of 100
 const LARGE_CHAT_MESSAGES: usize = 250;
 const SMALL_CHATS: usize = 8;
 const SMALL_CHAT_MESSAGES: usize = 3;
 
 // Installs user canisters from the User canister wasm currently in production, fills them with
-// direct chats and contacts, then upgrades them to the new wasm and checks that everything still
+// direct chats, contacts and blocked users, then upgrades them to the new wasm and checks that everything still
 // works.
 //
-// This currently covers moving the contacts from the heap into stable memory, and moving the events of existing direct chats from their legacy stable memory
+// This currently covers moving the contacts and blocked users from the heap into stable memory, and moving the events of existing direct chats from their legacy stable memory
 // keys to their `key_id` based keys, which in test mode migrates a single batch of events per call,
 // so the migration is spread across `post_upgrade` and many runs of its timer job.
 // TODO: Remove the migration specific checks once every user canister has been migrated
@@ -126,6 +127,16 @@ fn user_canisters_survive_upgrade_from_prod() {
     let mut contacts_snapshot: Vec<_> = contacts_snapshot[..5].to_vec();
     contacts_snapshot.sort();
     assert_eq!(contacts(env, &user1), contacts_snapshot);
+
+    // Blocked users, who user1 has no chats with, so that the chats aren't affected
+    let blocked: Vec<_> = (0..4).map(|_| client::register_user(env, canister_ids)).collect();
+    for user in blocked.iter() {
+        client::user::happy_path::block_user(env, &user1, user.user_id);
+    }
+    client::user::happy_path::unblock_user(env, &user1, blocked[3].user_id);
+    let mut blocked_users_snapshot: Vec<_> = blocked[..3].iter().map(|u| u.user_id).collect();
+    blocked_users_snapshot.sort();
+    assert_eq!(blocked_users(env, &user1), blocked_users_snapshot);
     assert_eq!(snapshots[0].len(), LARGE_CHAT_MESSAGES + 1);
     let total_events: usize = snapshots.iter().map(|s| s.len()).sum();
 
@@ -237,6 +248,20 @@ fn user_canisters_survive_upgrade_from_prod() {
         count_keys(env, user1.canister(), KeyType::DirectChatEvent),
         total_keys + 1 - snapshots[2].len()
     );
+
+    // The blocked users were moved into stable memory, and can still be blocked and unblocked
+    assert_eq!(blocked_users(env, &user1), blocked_users_snapshot);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::BlockedUser), 3);
+    assert_eq!(
+        client::user::happy_path::updates(env, &user1, 0).and_then(|u| u.blocked_users),
+        Some(blocked_users_snapshot.clone())
+    );
+    client::user::happy_path::unblock_user(env, &user1, blocked[0].user_id);
+    client::user::happy_path::block_user(env, &user1, blocked[3].user_id);
+    let mut expected_blocked_users: Vec<_> = blocked[1..].iter().map(|u| u.user_id).collect();
+    expected_blocked_users.sort();
+    assert_eq!(blocked_users(env, &user1), expected_blocked_users);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::BlockedUser), 3);
 
     // The contacts were moved into stable memory, and can still be updated
     assert_eq!(contacts(env, &user1), contacts_snapshot);
@@ -377,6 +402,13 @@ fn set_contact(env: &mut PocketIc, user: &User, user_id: UserId, nickname: Optio
     assert!(matches!(response, UnitResult::Success), "{response:?}");
 }
 
+// Returns the users the user has blocked, ordered by user id
+fn blocked_users(env: &PocketIc, user: &User) -> Vec<UserId> {
+    let mut blocked_users = client::user::happy_path::initial_state(env, user).blocked_users;
+    blocked_users.sort();
+    blocked_users
+}
+
 // Returns the user's contacts, ordered by user id
 fn contacts(env: &PocketIc, user: &User) -> Vec<(UserId, Option<String>)> {
     let user_canister::contacts::Response::Success(result) =
@@ -387,7 +419,11 @@ fn contacts(env: &PocketIc, user: &User) -> Vec<(UserId, Option<String>)> {
 }
 
 fn count_keys(env: &PocketIc, canister_id: CanisterId, key_type: KeyType) -> usize {
-    get_stable_memory_map(env, canister_id, STABLE_MEMORY_MAP_MEMORY_ID)
+    let memory_id = match key_type.map_class() {
+        MapClass::Default => STABLE_MEMORY_MAP_MEMORY_ID,
+        MapClass::SmallEntries => STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID,
+    };
+    get_stable_memory_map(env, canister_id, memory_id)
         .keys()
         .filter(|k| k[0] == key_type as u8)
         .count()

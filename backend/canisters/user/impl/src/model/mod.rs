@@ -1,3 +1,4 @@
+pub mod blocked_users;
 pub mod chit_events;
 pub mod communities;
 pub mod community;
