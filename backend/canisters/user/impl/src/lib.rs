@@ -148,7 +148,16 @@ impl RuntimeState {
                 next_event_expiry = Some(expiry);
             }
             files_to_delete.extend(result.files);
+            // Threads aren't currently enabled for direct chats, but if a thread's root message
+            // expires then its entries in stable memory must be garbage collected
+            for thread in result.threads {
+                self.data
+                    .stable_memory_keys_to_garbage_collect
+                    .extend(chat.events.thread_stable_memory_key_prefixes(thread.root_message_index));
+            }
         }
+
+        jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
 
         if !files_to_delete.is_empty() {
             let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };

@@ -191,6 +191,13 @@ impl ChatEvents {
             .collect()
     }
 
+    // The prefixes of the stable memory entries belonging to a thread, derived from the main events
+    // list's prefix so that they can still be built after the thread has been removed (eg. when its
+    // root message expires)
+    pub fn thread_stable_memory_key_prefixes(&self, root_message_index: MessageIndex) -> Vec<BaseKeyPrefix> {
+        Self::stable_memory_key_prefixes(self.main.stable_memory_prefix().for_thread(root_message_index))
+    }
+
     pub fn set_chat(&mut self, chat: Chat) {
         self.chat = chat;
         let prefix = ChatEventKeyPrefix::new_from_chat(chat, None);

@@ -1285,6 +1285,44 @@ mod tests {
         events
     }
 
+    #[test]
+    fn thread_stable_memory_key_prefixes_can_be_built_after_thread_removed() {
+        let mut events = setup_events(None);
+        let root_message_index = MessageIndex::from(0);
+
+        events.push_message::<NullEventPusher>(
+            PushMessageArgs {
+                sender: Principal::from_slice(&[2]).into(),
+                thread_root_message_index: Some(root_message_index),
+                message_id: MessageId::from(1_000_000u128),
+                content: MessageContentInternal::Text(TextContentInternal {
+                    text: "hello".to_string(),
+                }),
+                sender_context: None,
+                mentioned: Vec::new(),
+                replies_to: None,
+                now: 200,
+                forwarded: false,
+                sender_is_bot: false,
+                block_level_markdown: false,
+                og_previews: Vec::new(),
+            },
+            None,
+        );
+
+        let thread_prefixes = events.thread_stable_memory_key_prefixes(root_message_index);
+        let all_prefixes = events.all_stable_memory_key_prefixes();
+        assert!(!thread_prefixes.is_empty());
+        assert!(thread_prefixes.iter().all(|p| all_prefixes.contains(p)));
+
+        let result = events.remove_old_events_batch(1000, 1000, 200);
+        assert!(result.threads.iter().any(|t| t.root_message_index == root_message_index));
+        assert!(events.thread_keys().next().is_none());
+
+        // The thread's list has been removed but its prefixes can still be built for garbage collection
+        assert_eq!(events.thread_stable_memory_key_prefixes(root_message_index), thread_prefixes);
+    }
+
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
