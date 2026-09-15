@@ -17,6 +17,7 @@ mod principal;
 mod referral;
 mod search_index;
 mod storage;
+mod streak_insurance;
 mod thread_read;
 mod token_swap;
 mod user_id;
@@ -35,6 +36,7 @@ pub use principal::*;
 pub use referral::*;
 pub use search_index::*;
 pub use storage::*;
+pub use streak_insurance::*;
 pub use thread_read::*;
 pub use token_swap::*;
 pub use user_id::*;
@@ -164,6 +166,8 @@ pub enum KeyType {
     TokenSwap = 52,
     P2PSwap = 53,
     Referral = 54,
+    StreakInsurancePayment = 55,
+    StreakInsuranceClaim = 56,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -242,7 +246,9 @@ impl KeyType {
             | KeyType::ChitEvent
             | KeyType::GroupThreadRead
             | KeyType::ChannelThreadRead
-            | KeyType::Referral => MapClass::SmallEntries,
+            | KeyType::Referral
+            | KeyType::StreakInsurancePayment
+            | KeyType::StreakInsuranceClaim => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -327,6 +333,8 @@ impl TryFrom<u8> for KeyType {
             52 => Ok(KeyType::TokenSwap),
             53 => Ok(KeyType::P2PSwap),
             54 => Ok(KeyType::Referral),
+            55 => Ok(KeyType::StreakInsurancePayment),
+            56 => Ok(KeyType::StreakInsuranceClaim),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
