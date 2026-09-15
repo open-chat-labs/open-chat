@@ -444,6 +444,7 @@ mod tests {
             KeyType::DirectChatEvent,
             KeyType::DirectChatThreadEvent,
             KeyType::Contact,
+            KeyType::ProfileDocument,
         ];
         for key_type in added_to_main_map {
             assert_eq!(key_type.map_class(), MapClass::Default, "{key_type:?}");

@@ -3,7 +3,8 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, CanisterId, OCResult, Timestamped};
+use stable_memory_map::ProfileDocumentType;
+use types::{Achievement, CanisterId, OCResult};
 use user_canister::set_avatar::*;
 use utils::document::validate_avatar;
 
@@ -23,7 +24,7 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let id = args.avatar.as_ref().map(|a| a.id);
     let now = state.env.now();
 
-    state.data.avatar = Timestamped::new(args.avatar, now);
+    state.data.avatar.set(ProfileDocumentType::Avatar, args.avatar, now);
     state.award_achievement_and_notify(Achievement::SetAvatar, now);
 
     ic_cdk::futures::spawn_migratory(update_index_canister(state.data.user_index_canister_id, id));

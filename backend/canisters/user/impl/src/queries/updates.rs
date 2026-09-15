@@ -24,10 +24,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let avatar_id = state
         .data
         .avatar
-        .if_set_after(updates_since)
-        .map_or(OptionUpdate::NoChange, |update| {
-            OptionUpdate::from_update(update.as_ref().map(|a| a.id))
-        });
+        .id_if_set_after(updates_since)
+        .map_or(OptionUpdate::NoChange, OptionUpdate::from_update);
 
     let blocked_users = state
         .data

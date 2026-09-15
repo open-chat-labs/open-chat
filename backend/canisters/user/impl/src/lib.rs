@@ -27,6 +27,7 @@ use model::blocked_users::BlockedUsers;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
+use model::profile_document::ProfileDocument;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use model::threads_read::ThreadsRead;
@@ -43,7 +44,7 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotDefinitionUpdate, BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, CanisterId,
-    Chat, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document,
+    Chat, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload,
     IdempotentEnvelope, MultiUserChat, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
     UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
@@ -468,8 +469,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    pub avatar: Timestamped<Option<Document>>,
-    pub profile_background: Timestamped<Option<Document>>,
+    pub avatar: ProfileDocument,
+    pub profile_background: ProfileDocument,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
@@ -540,8 +541,8 @@ impl Data {
             group_index_canister_id,
             identity_canister_id,
             escrow_canister_id,
-            avatar: Timestamped::default(),
-            profile_background: Timestamped::default(),
+            avatar: ProfileDocument::default(),
+            profile_background: ProfileDocument::default(),
             test_mode,
             is_platform_moderator: false,
             hot_group_exclusions: HotGroupExclusions::default(),
