@@ -88,6 +88,7 @@ impl DirectChats {
 
     pub fn removed_since(&self, since: TimestampMillis) -> Vec<ChatId> {
         removed_chats::removed_since(&RemovedChatKeyPrefix::new_for_direct_chats(), since)
+            .into_iter()
             .map(|(_, chat_id)| chat_id.into())
             .collect()
     }

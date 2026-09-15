@@ -1,6 +1,7 @@
 use candid::Principal;
 use stable_memory_map::{KeyPrefix, RemovedChatKey, RemovedChatKeyPrefix, with_map, with_map_mut};
 use std::collections::HashSet;
+use std::ops::RangeInclusive;
 use types::TimestampMillis;
 
 // Records of the chats (direct chats, groups or communities) the user has been removed from,
@@ -12,23 +13,11 @@ pub fn add(prefix: &RemovedChatKeyPrefix, chat_id: Principal, now: TimestampMill
 
 // Returns each chat removed after `since`, most recently removed first. A chat which was removed
 // multiple times may be returned multiple times.
-pub fn removed_since(
-    prefix: &RemovedChatKeyPrefix,
-    since: TimestampMillis,
-) -> impl Iterator<Item = (TimestampMillis, Principal)> {
-    let entries: Vec<_> = if let Some(start) = since.checked_add(1) {
-        with_map(|m| {
-            m.range::<RemovedChatKey, _>(
-                prefix.create_key(&(start, Principal::from_slice(&[])))
-                    ..=prefix.create_key(&(TimestampMillis::MAX, Principal::from_slice(&[u8::MAX; 29]))),
-            )
-            .map(|(k, _)| (k.timestamp(), k.chat_id()))
-            .collect()
-        })
-    } else {
-        Vec::new()
+pub fn removed_since(prefix: &RemovedChatKeyPrefix, since: TimestampMillis) -> Vec<(TimestampMillis, Principal)> {
+    let Some(range) = range(prefix, since) else {
+        return Vec::new();
     };
-    entries.into_iter().rev()
+    with_map(|m| m.range(range).rev().map(|(k, _)| (k.timestamp(), k.chat_id())).collect())
 }
 
 // Returns each chat removed after `since` which `is_current` returns false for, most recently
@@ -38,15 +27,33 @@ pub fn removed_since_excluding<T: Copy + From<Principal> + Eq + std::hash::Hash>
     since: TimestampMillis,
     is_current: impl Fn(&T) -> bool,
 ) -> Vec<T> {
+    let Some(range) = range(prefix, since) else {
+        return Vec::new();
+    };
     let mut seen = HashSet::new();
-    removed_since(prefix, since)
-        .map(|(_, chat_id)| T::from(chat_id))
-        .filter(|chat_id| !is_current(chat_id) && seen.insert(*chat_id))
-        .collect()
+    // The entries are filtered while iterating so that only the chats returned are collected
+    with_map(|m| {
+        m.range(range)
+            .rev()
+            .map(|(k, _)| T::from(k.chat_id()))
+            .filter(|chat_id| !is_current(chat_id) && seen.insert(*chat_id))
+            .collect()
+    })
 }
 
+// Only reads the first matching entry
 pub fn any_removed_since(prefix: &RemovedChatKeyPrefix, since: TimestampMillis) -> bool {
-    removed_since(prefix, since).next().is_some()
+    range(prefix, since).is_some_and(|range| with_map(|m| m.range(range).next().is_some()))
+}
+
+// The range of keys of the chats removed after `since`, or None if there can't be any. The iterators
+// over this range borrow the stable memory map, so they must be consumed within `with_map`.
+fn range(prefix: &RemovedChatKeyPrefix, since: TimestampMillis) -> Option<RangeInclusive<RemovedChatKey>> {
+    let start = since.checked_add(1)?;
+    Some(
+        prefix.create_key(&(start, Principal::from_slice(&[])))
+            ..=prefix.create_key(&(TimestampMillis::MAX, Principal::from_slice(&[u8::MAX; 29]))),
+    )
 }
 
 // Moves the records of removed chats which were held on the heap into stable memory, returning how
@@ -87,15 +94,13 @@ mod tests {
         add(&prefix, chat(2), 20);
         add(&prefix, chat(1), 30);
 
-        assert_eq!(
-            removed_since(&prefix, 0).collect::<Vec<_>>(),
-            vec![(30, chat(1)), (20, chat(2)), (10, chat(1))]
-        );
-        assert_eq!(removed_since(&prefix, 20).collect::<Vec<_>>(), vec![(30, chat(1))]);
-        assert_eq!(removed_since(&prefix, 30).count(), 0);
-        assert_eq!(removed_since(&prefix, TimestampMillis::MAX).count(), 0);
+        assert_eq!(removed_since(&prefix, 0), vec![(30, chat(1)), (20, chat(2)), (10, chat(1))]);
+        assert_eq!(removed_since(&prefix, 20), vec![(30, chat(1))]);
+        assert_eq!(removed_since(&prefix, 30).len(), 0);
+        assert_eq!(removed_since(&prefix, TimestampMillis::MAX).len(), 0);
         assert!(any_removed_since(&prefix, 29));
         assert!(!any_removed_since(&prefix, 30));
+        assert!(!any_removed_since(&prefix, TimestampMillis::MAX));
     }
 
     #[test]
@@ -123,9 +128,9 @@ mod tests {
         add(&group_chats, chat(2), 20);
         add(&communities, chat(3), 30);
 
-        assert_eq!(removed_since(&direct_chats, 0).collect::<Vec<_>>(), vec![(10, chat(1))]);
-        assert_eq!(removed_since(&group_chats, 0).collect::<Vec<_>>(), vec![(20, chat(2))]);
-        assert_eq!(removed_since(&communities, 0).collect::<Vec<_>>(), vec![(30, chat(3))]);
+        assert_eq!(removed_since(&direct_chats, 0), vec![(10, chat(1))]);
+        assert_eq!(removed_since(&group_chats, 0), vec![(20, chat(2))]);
+        assert_eq!(removed_since(&communities, 0), vec![(30, chat(3))]);
     }
 
     #[test]
@@ -140,7 +145,7 @@ mod tests {
         );
 
         assert_eq!(
-            removed_since(&prefix, 0).collect::<Vec<_>>(),
+            removed_since(&prefix, 0),
             (1..=50u8).rev().map(|i| (i as u64, chat(i))).collect::<Vec<_>>()
         );
     }
