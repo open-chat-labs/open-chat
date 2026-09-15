@@ -16,20 +16,16 @@ pub struct Contacts {
     // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
     // TODO: Remove this after next release
     #[serde(rename = "map", default, skip_serializing)]
-    on_heap: HashMap<UserId, ContactOnHeap>,
+    on_heap: HashMap<UserId, Contact>,
 }
 
 // Each contact is serialized into stable memory, so its field names are kept short
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct Contact {
-    #[serde(rename = "n", default, skip_serializing_if = "Option::is_none")]
+    // The alias is the field's name when the contacts were held on the heap
+    // TODO: Remove the alias after next release
+    #[serde(rename = "n", alias = "nickname", default, skip_serializing_if = "Option::is_none")]
     pub nickname: Option<String>,
-}
-
-// TODO: Remove this after next release
-#[derive(Serialize, Deserialize, Default)]
-struct ContactOnHeap {
-    nickname: Option<String>,
 }
 
 pub enum SetContactResponse {
@@ -103,12 +99,7 @@ impl Contacts {
         let prefix = ContactKeyPrefix::new();
         let mut entries: Vec<_> = std::mem::take(&mut self.on_heap)
             .into_iter()
-            .map(|(user_id, contact)| {
-                let contact = Contact {
-                    nickname: contact.nickname,
-                };
-                (prefix.create_key(&user_id), contact_to_bytes(&contact))
-            })
+            .map(|(user_id, contact)| (prefix.create_key(&user_id), contact_to_bytes(&contact)))
             .collect();
         // Insert the entries in key order
         entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
@@ -220,14 +211,18 @@ mod tests {
         // Contacts serialized by the previous version, whose field names were in full
         #[derive(Serialize)]
         struct PreviousContacts {
-            map: HashMap<UserId, ContactOnHeap>,
+            map: HashMap<UserId, PreviousContact>,
+        }
+        #[derive(Serialize)]
+        struct PreviousContact {
+            nickname: Option<String>,
         }
         let previous = PreviousContacts {
             map: (1..=50)
                 .map(|i| {
                     (
                         user_id(i),
-                        ContactOnHeap {
+                        PreviousContact {
                             nickname: Some(format!("nickname{i}")),
                         },
                     )
