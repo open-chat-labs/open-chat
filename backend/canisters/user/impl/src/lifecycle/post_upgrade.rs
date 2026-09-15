@@ -6,6 +6,7 @@ use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use stable_memory::get_reader;
+use stable_memory_map::ProfileDocumentType;
 use tracing::info;
 use types::MultiUserChat;
 use user_canister::post_upgrade::Args;
@@ -124,6 +125,17 @@ fn post_upgrade(args: Args) {
         + data.group_chats.migrate_removed_to_stable_memory()
         + data.communities.migrate_removed_to_stable_memory();
     info!(removed_chats_migrated, "Migrated removed chats to stable memory");
+
+    // Move the avatar and profile background into stable memory
+    // TODO: Remove this after next release
+    let avatar_migrated = data.avatar.migrate_to_stable_memory(ProfileDocumentType::Avatar);
+    let profile_background_migrated = data
+        .profile_background
+        .migrate_to_stable_memory(ProfileDocumentType::ProfileBackground);
+    info!(
+        avatar_migrated,
+        profile_background_migrated, "Migrated avatar and profile background to stable memory"
+    );
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);

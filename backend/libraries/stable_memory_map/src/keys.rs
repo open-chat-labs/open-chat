@@ -17,6 +17,7 @@ mod message_event_indexes;
 mod message_id;
 mod p2p_swap;
 mod principal;
+mod profile_document;
 mod referral;
 mod removed_chat;
 mod search_index;
@@ -40,6 +41,7 @@ pub use message_event_indexes::*;
 pub use message_id::*;
 pub use p2p_swap::*;
 pub use principal::*;
+pub use profile_document::*;
 pub use referral::*;
 pub use removed_chat::*;
 pub use search_index::*;
@@ -191,6 +193,7 @@ pub enum KeyType {
     DirectChatRemoved = 62,
     GroupChatRemoved = 63,
     CommunityRemoved = 64,
+    ProfileDocument = 65,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -243,7 +246,9 @@ impl KeyType {
             // Each entry is a P2P swap, which is too large for the small entries map
             | KeyType::P2PSwap
             // Contacts are expected to gain more fields, so they use the main map to leave room to grow
-            | KeyType::Contact => MapClass::Default,
+            | KeyType::Contact
+            // Each entry is an avatar or profile background, which can be up to 1MB
+            | KeyType::ProfileDocument => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -375,6 +380,7 @@ impl TryFrom<u8> for KeyType {
             62 => Ok(KeyType::DirectChatRemoved),
             63 => Ok(KeyType::GroupChatRemoved),
             64 => Ok(KeyType::CommunityRemoved),
+            65 => Ok(KeyType::ProfileDocument),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

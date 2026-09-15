@@ -4,7 +4,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, Timestamped};
+use stable_memory_map::ProfileDocumentType;
+use types::OCResult;
 use user_canister::set_profile_background::*;
 use utils::document::validate_profile_background;
 
@@ -23,7 +24,10 @@ fn set_profile_background_impl(args: Args, state: &mut RuntimeState) -> OCResult
     let id = args.profile_background.as_ref().map(|a| a.id);
     let now = state.env.now();
 
-    state.data.profile_background = Timestamped::new(args.profile_background, now);
+    state
+        .data
+        .profile_background
+        .set(ProfileDocumentType::ProfileBackground, args.profile_background, now);
     state.push_local_user_index_canister_event(LocalUserIndexEvent::UserSetProfileBackground(id), now);
     Ok(())
 }

@@ -3,16 +3,29 @@ use crate::{RuntimeState, read_state};
 use http_request::{AvatarRoute, Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
 use itertools::Itertools;
+use stable_memory_map::ProfileDocumentType;
 use types::{ChitEventType, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(route: AvatarRoute, state: &RuntimeState) -> HttpResponse {
-        get_document(route.blob_id, state.data.avatar.as_ref(), "avatar")
+        get_document(
+            route.blob_id,
+            state.data.avatar.get(ProfileDocumentType::Avatar).as_ref(),
+            "avatar",
+        )
     }
 
     fn get_profile_background_impl(id: Option<u128>, state: &RuntimeState) -> HttpResponse {
-        get_document(id, state.data.profile_background.as_ref(), "profile_background")
+        get_document(
+            id,
+            state
+                .data
+                .profile_background
+                .get(ProfileDocumentType::ProfileBackground)
+                .as_ref(),
+            "profile_background",
+        )
     }
 
     fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {

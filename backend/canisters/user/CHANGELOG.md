@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the blocked users into the stable memory map for small entries ([#9393](https://github.com/open-chat-labs/open-chat/pull/9393))
 - Move each direct chat's unread message index map into stable memory ([#9394](https://github.com/open-chat-labs/open-chat/pull/9394))
 - Move the lists of removed direct chats, groups and communities into stable memory ([#9395](https://github.com/open-chat-labs/open-chat/pull/9395))
+- Move the avatar and profile background into the main stable memory map ([#9397](https://github.com/open-chat-labs/open-chat/pull/9397))
 
 ### Fixed
 

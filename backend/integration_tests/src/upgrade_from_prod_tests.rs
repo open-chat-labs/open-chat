@@ -11,8 +11,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatEvent, ChatId, CommunityId, Empty, EventIndex, EventWrapper, HttpRequest,
-    HttpResponse, MessageContent, MessageId, MessageIndex, OptionUpdate, TimestampMillis, UnitResult, UserId,
+    BuildVersion, CanisterId, CanisterWasm, ChatEvent, ChatId, CommunityId, Document, Empty, EventIndex, EventWrapper,
+    HttpRequest, HttpResponse, MessageContent, MessageId, MessageIndex, OptionUpdate, TimestampMillis, UnitResult, UserId,
 };
 
 const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
@@ -23,11 +23,11 @@ const SMALL_CHATS: usize = 8;
 const SMALL_CHAT_MESSAGES: usize = 3;
 
 // Installs user canisters from the User canister wasm currently in production, fills them with
-// direct chats, contacts and blocked users, then upgrades them to the new wasm and checks that everything still
+// direct chats, contacts, blocked users, an avatar and a profile background, then upgrades them to the new wasm and checks that everything still
 // works.
 //
-// This currently covers moving the contacts, blocked users, direct chats' unread message indexes and the records of the
-// chats the user has been removed from from the heap into
+// This currently covers moving the contacts, blocked users, direct chats' unread message indexes, the records of the
+// chats the user has been removed from and the avatar and profile background from the heap into
 // stable memory, and moving the events of existing direct chats from their legacy stable memory
 // keys to their `key_id` based keys, which in test mode migrates a single batch of events per call,
 // so the migration is spread across `post_upgrade` and many runs of its timer job.
@@ -148,6 +148,14 @@ fn user_canisters_survive_upgrade_from_prod() {
     let mut blocked_users_snapshot: Vec<_> = blocked[..3].iter().map(|u| u.user_id).collect();
     blocked_users_snapshot.sort();
     assert_eq!(blocked_users(env, &user1), blocked_users_snapshot);
+
+    // An avatar and a profile background
+    let avatar = document(100_000);
+    let profile_background = document(1024 * 1024);
+    client::user::happy_path::set_avatar(env, &user1, Some(avatar.clone()));
+    set_profile_background(env, &user1, Some(profile_background.clone()));
+    assert_document_served(env, &user1, "avatar", &avatar);
+    assert_document_served(env, &user1, "profile_background", &profile_background);
     assert_eq!(snapshots[0].len(), LARGE_CHAT_MESSAGES + 1);
     let total_events: usize = snapshots.iter().map(|s| s.len()).sum();
 
@@ -399,6 +407,39 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(blocked_users(env, &user1), expected_blocked_users);
     assert_eq!(count_keys(env, user1.canister(), KeyType::BlockedUser), 3);
 
+    // The avatar and profile background were moved into stable memory, and can still be updated
+    assert_eq!(count_keys(env, user1.canister(), KeyType::ProfileDocument), 2);
+    assert_document_served(env, &user1, "avatar", &avatar);
+    assert_document_served(env, &user1, "profile_background", &profile_background);
+    assert_eq!(
+        client::user::happy_path::initial_state(env, &user1).avatar_id,
+        Some(avatar.id)
+    );
+    let profile = public_profile(env, &user1);
+    assert_eq!(profile.avatar_id, Some(avatar.id));
+    assert_eq!(profile.profile_background_id, Some(profile_background.id));
+
+    let documents_updated_since = now_millis(env);
+    env.advance_time(Duration::from_secs(1));
+    let new_avatar = document(1000);
+    client::user::happy_path::set_avatar(env, &user1, Some(new_avatar.clone()));
+    set_profile_background(env, &user1, None);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::ProfileDocument), 1);
+    assert_document_served(env, &user1, "avatar", &new_avatar);
+    // Requesting a replaced document redirects to the new one, and a removed one is gone
+    assert_eq!(get_document(env, &user1, "avatar", avatar.id).status_code, 301);
+    assert_eq!(
+        get_document(env, &user1, "profile_background", profile_background.id).status_code,
+        410
+    );
+    assert_eq!(
+        client::user::happy_path::updates(env, &user1, documents_updated_since).map(|u| u.avatar_id),
+        Some(OptionUpdate::SetToSome(new_avatar.id))
+    );
+    let profile = public_profile(env, &user1);
+    assert_eq!(profile.avatar_id, Some(new_avatar.id));
+    assert_eq!(profile.profile_background_id, None);
+
     // The contacts were moved into stable memory, and can still be updated
     assert_eq!(contacts(env, &user1), contacts_snapshot);
     assert_eq!(count_keys(env, user1.canister(), KeyType::Contact), contacts_snapshot.len());
@@ -590,6 +631,51 @@ fn contacts(env: &PocketIc, user: &User) -> Vec<(UserId, Option<String>)> {
     let mut contacts: Vec<_> = result.contacts.into_iter().map(|c| (c.user_id, c.nickname)).collect();
     contacts.sort_by_key(|(user_id, _)| *user_id);
     contacts
+}
+
+fn document(len: usize) -> Document {
+    Document {
+        id: random_from_u128(),
+        mime_type: "image/png".to_string(),
+        data: (0..len).map(|i| i as u8).collect(),
+    }
+}
+
+fn set_profile_background(env: &mut PocketIc, user: &User, profile_background: Option<Document>) {
+    client::user::happy_path::set_profile_background(
+        env,
+        user,
+        &user_canister::set_profile_background::Args { profile_background },
+    );
+}
+
+// Requests the avatar or profile background with the given id via `http_request`
+fn get_document(env: &PocketIc, user: &User, path: &str, id: u128) -> HttpResponse {
+    let request = HttpRequest {
+        method: "GET".to_string(),
+        url: format!("/{path}/{id}"),
+        headers: Vec::new(),
+        body: Vec::new(),
+    };
+    client::http_request(env, Principal::anonymous(), user.canister(), &request)
+}
+
+fn assert_document_served(env: &PocketIc, user: &User, path: &str, document: &Document) {
+    let response = get_document(env, user, path, document.id);
+    assert_eq!(response.status_code, 200);
+    assert!(response.body == document.data, "{path} data doesn't match");
+    assert!(
+        response
+            .headers
+            .iter()
+            .any(|h| h.0 == "Content-Type" && h.1 == document.mime_type)
+    );
+}
+
+fn public_profile(env: &PocketIc, user: &User) -> user_canister::public_profile::PublicProfile {
+    let user_canister::public_profile::Response::Success(result) =
+        client::user::public_profile(env, user.principal, user.canister(), &Empty {});
+    result
 }
 
 fn count_keys(env: &PocketIc, canister_id: CanisterId, key_type: KeyType) -> usize {

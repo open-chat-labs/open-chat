@@ -516,7 +516,7 @@ fn send_message_impl(
                     messages: vec![send_message_args],
                     sender_name,
                     sender_display_name,
-                    sender_avatar_id: state.data.avatar.value.as_ref().map(|d| d.id),
+                    sender_avatar_id: state.data.avatar.id(),
                 })),
             );
         }
