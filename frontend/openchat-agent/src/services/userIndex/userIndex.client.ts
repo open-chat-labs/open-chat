@@ -119,6 +119,7 @@ import {
 import type { UserDb } from "../../utils/userCache";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
+    dropInvalidUserIds,
     apiBotDefinition,
     apiBotInstallLocation,
     apiJsonDiamondDuration,
@@ -562,6 +563,10 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     }
 
     async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
+        // A string that is not a principal (a username pasted into a referral link, say) must
+        // not take the whole batch down in Principal.fromText: there is no such user, so the
+        // caller sees exactly what it would for an unknown id
+        users = dropInvalidUserIds(users);
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await this.userDb.getCachedUsers(allUsers);

@@ -3,6 +3,8 @@ import {
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
+    type ChatEvent,
+    type EventWrapper,
     type GroupChatSummary,
     type PollConfig,
     type PollContent,
@@ -16,6 +18,7 @@ import {
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
+    sortByTimestampThenEventIndex,
 } from "./chat";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -367,5 +370,29 @@ describe("get members string for group chat", () => {
     test("with more than 5 members", () => {
         const members = getMembersString(user, lookup, withMoreThanSix, "Unknown User", "You");
         expect(members).toEqual("8 members");
+    });
+});
+
+describe("sortByTimestampThenEventIndex", () => {
+    const ev = (index: number, timestamp: bigint | number) =>
+        ({ index, timestamp, event: { kind: "empty" } }) as unknown as EventWrapper<ChatEvent>;
+
+    test("orders by timestamp, then by event index", () => {
+        expect([ev(3, 20n), ev(2, 10n), ev(1, 10n)].sort(sortByTimestampThenEventIndex)).toEqual([
+            ev(1, 10n),
+            ev(2, 10n),
+            ev(3, 20n),
+        ]);
+    });
+
+    // Invariant: the sort never throws. An event carrying a number timestamp (source still
+    // unknown) hit `a.timestamp - b.timestamp` and took the whole events store down with
+    // "Cannot mix BigInt and other types" (Rollbar #31919).
+    test("tolerates a number timestamp among bigints", () => {
+        expect([ev(2, 20n), ev(1, 10), ev(3, 30n)].sort(sortByTimestampThenEventIndex)).toEqual([
+            ev(1, 10),
+            ev(2, 20n),
+            ev(3, 30n),
+        ]);
     });
 });
