@@ -273,8 +273,7 @@ describe("Transformers.js Qwen WebGPU spike", () => {
                     } else {
                         expect(url.origin).toBe("https://huggingface.co");
                         expect(url.pathname).toMatch(/\/resolve\/[a-f0-9]{40}\//);
-                        const sourcePath =
-                            artifact.source?.path ?? artifact.path;
+                        const sourcePath = artifact.source?.path ?? artifact.path;
                         expect(url.pathname.endsWith(`/${sourcePath}`)).toBe(true);
                     }
                 }

@@ -574,6 +574,9 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "scripts/sbom_lock_identity.test.mjs",
     "scripts/frontend_format_check.mjs",
     "scripts/frontend_format_check.test.mjs",
+    "scripts/frontend_format_inherited.mjs",
+    "scripts/frontend_format_inherited.json",
+    "scripts/frontend_format_inherited.test.mjs",
     "frontend/app/publicKeyBuild.mjs",
     "frontend/app/src/publicKeyBuild.spec.ts",
     "scripts/model_ci_coverage.test.mjs",
@@ -748,6 +751,7 @@ test("frontend policy invokes only generic regression scripts present in this ch
     "scripts/security_mode_scope.test.mjs",
     "scripts/sbom_lock_identity.test.mjs",
     "scripts/frontend_format_check.test.mjs",
+    "scripts/frontend_format_inherited.test.mjs",
   ]);
   for (const path of files) assert.ok(existsSync(join(root, path)), path);
 });
@@ -768,6 +772,42 @@ test("historical dependency hash proofs run in the full-history security checkou
     read(".github/workflows/frontend.yaml"),
     /security_dependency_hash\.test\.mjs/u,
   );
+});
+
+function assertCurrentAndroidSdkPackages(text) {
+  const job = mappingBlock(
+    mappingBlock(text, "jobs", 0),
+    "android-component-contracts",
+    2,
+  );
+  const steps = mappingBlock(job, "steps", 4);
+  const setup = steps
+    .split(/(?=^      - )/mu)
+    .filter((step) =>
+      /^        uses: android-actions\/setup-android@v3\r?$/mu.test(step),
+    );
+  assert.equal(setup.length, 1, "review the component SDK setup action");
+  const inputs = mappingBlock(setup[0], "with", 8);
+  assert.match(inputs, /^          packages: platform-tools\r?$/mu);
+  assert.equal((inputs.match(/^          packages:/gmu) ?? []).length, 1);
+}
+
+test("component SDK setup explicitly excludes the deprecated tools package", () => {
+  assertCurrentAndroidSdkPackages(workflow);
+  // setup-android v3 defaults to "tools platform-tools" when packages is
+  // omitted. The action itself bootstraps cmdline-tools before this input.
+  for (const replacement of [
+    "",
+    "          packages: tools platform-tools",
+    "          packages: ''",
+  ]) {
+    const mutant = workflow.replace(
+      "          packages: platform-tools",
+      replacement,
+    );
+    assert.notEqual(mutant, workflow);
+    assert.throws(() => assertCurrentAndroidSdkPackages(mutant));
+  }
 });
 
 test("Android component identity compiles actual sources against host fixtures and SDK 36 in PR CI", () => {

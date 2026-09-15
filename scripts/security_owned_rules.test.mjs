@@ -19,7 +19,7 @@ const notices = [
 ];
 const registry = "registry+https://github.com/rust-lang/crates.io-index";
 
-test("owned rules preserve exactly the existing formatting and license tuples", () => {
+test("owned rules preserve formatting and license tuples independently of the reconciled source boundary", () => {
   for (const policy of policies) {
     const legacy = JSON.parse(
       readFileSync(
@@ -32,13 +32,19 @@ test("owned rules preserve exactly the existing formatting and license tuples", 
     );
     const fields =
       policy === "pr1"
-        ? ["baseCommit", "format", "introducedRustPackages"]
+        ? ["format", "introducedRustPackages"]
         : ["directRustPackages", "workspaceOnlyPackages"];
     assert.deepEqual(
-      ownedSecurityRules(policy),
+      Object.fromEntries(
+        fields.map((field) => [field, ownedSecurityRules(policy)[field]]),
+      ),
       Object.fromEntries(fields.map((field) => [field, legacy[field]])),
     );
   }
+  assert.equal(
+    ownedSecurityRules("pr1").baseCommit,
+    "df9d9ed52db00e87fbb7309280a325902c9bb2cc",
+  );
 });
 
 test("rules reject unknown policy and isolate caller mutations", () => {
@@ -48,6 +54,22 @@ test("rules reject unknown policy and isolate caller mutations", () => {
   changed.format.extensions.length = 0;
   changed.introducedRustPackages.length = 0;
   assert.deepEqual(ownedSecurityRules("pr1"), before);
+});
+
+test("format debt proof uses fixed policy base independently of stacked PR path comparison", () => {
+  const source = readFileSync(
+    resolve(root, "scripts/check_openchat_pr1_security.mjs"),
+    "utf8",
+  );
+  assert.match(
+    source,
+    /comparisonBase:\s*process\.env\.PR_BASE_SHA\s*\|\|\s*policy\.baseCommit/u,
+  );
+  assert.match(
+    source,
+    /checkFrontendFormatting\(\s*frontendRoot,\s*prettierPaths,\s*undefined,\s*\{\s*inheritedBase:\s*policy\.baseCommit\s*\}/u,
+  );
+  assert.doesNotMatch(source, /inheritedBase:\s*process\.env/u);
 });
 
 function fixture(policy) {
@@ -138,13 +160,13 @@ function hook(input) {
       if (["git", "git.exe"].includes(name)) {
         const expectedBase = f.baseOverride || f.rules.baseCommit;
         const safe = ["-c", "safe.directory=" + resolve(f.root).replaceAll(String.fromCharCode(92), "/")];
-        const diff = [...safe, "diff", "--name-only", f.ci ? expectedBase + "...HEAD" : expectedBase, "--"];
-        const untracked = [...safe, "ls-files", "--others", "--exclude-standard"];
+        const diff = [...safe, "diff", "--name-only", "--diff-filter=ACMRT", "-z", f.ci ? expectedBase + "...HEAD" : expectedBase, "--"];
+        const untracked = [...safe, "ls-files", "--others", "--exclude-standard", "-z"];
         const isDiff = JSON.stringify(args) === JSON.stringify(diff);
         if (!isDiff && JSON.stringify(args) !== JSON.stringify(untracked)) trip("unexpected-git");
         if (f.ci && !isDiff) trip("ci-untracked");
         record("GIT", args);
-        return { status: f.gitExit ?? 0, stdout: (isDiff ? f.changed : f.untracked).join("\\n"), stderr: "git fixture" };
+        return { status: f.gitExit ?? 0, stdout: (isDiff ? f.changed : f.untracked).join("\\0"), stderr: "git fixture" };
       }
       if (["cargo", "cargo.exe"].includes(name)) {
         const expected = ["metadata", "--locked", "--offline", "--format-version", "1", ...(f.policy === "pr1" ? ["--features", "inference"] : [])];
@@ -152,8 +174,10 @@ function hook(input) {
         record("METADATA", args);
         return { status: f.cargoExit ?? 0, stdout: f.badJson ? "not json" : JSON.stringify({ packages: f.packages }), stderr: "cargo fixture" };
       }
-      if (command === process.execPath && args[0] === resolve(f.root, "frontend/node_modules/prettier/bin/prettier.cjs") && args[1] === "--plugin=prettier-plugin-svelte" && args[2] === "--check" && options.cwd === resolve(f.root, "frontend")) {
-        record("FORMAT", args.slice(3));
+      if (command === process.execPath && args[0] === resolve(f.root, "frontend/node_modules/prettier/bin/prettier.cjs") && args[1] === "--plugin=prettier-plugin-svelte" && ["--check", "--list-different"].includes(args[2]) && options.cwd === resolve(f.root, "frontend")) {
+        const eol = process.platform === "win32" && !f.ci ? ["--end-of-line=auto"] : [];
+        if (JSON.stringify(args.slice(3, 3 + eol.length)) !== JSON.stringify(eol)) trip("unexpected-format-eol");
+        record(args[2] === "--check" ? "FORMAT" : "FORMAT_LIST", args.slice(3 + eol.length));
         return { status: f.formatExit ?? 0, stdout: "formatter fixture", stderr: "formatter details" };
       }
       trip("unexpected-command");

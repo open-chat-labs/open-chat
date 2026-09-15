@@ -11,6 +11,7 @@ import {
   checkNpmFeatureCi,
   NPM_FEATURE_CI_TEST_COMMAND,
   npmFeatureQueryCommand,
+  npmFeatureSmokeCommand,
   checkOfflineFeatureHelpers,
   FEATURE_CI_NODE_VERSION,
   OFFLINE_FEATURE_HELPER_TESTS,
@@ -76,7 +77,26 @@ test("npm CI checks the exact execution runtime and checkout line endings", () =
 for (const key of ["model", ...(slice === "pr2" ? ["security"] : [])]) {
   const scope = key === "model" ? "pr1" : "pr2";
   const query = npmFeatureQueryCommand(scope);
+  const smoke = npmFeatureSmokeCommand(scope);
   for (const [label, mutate] of [
+    [
+      "missing real offline runtime smoke",
+      (text) => text.replace(smoke.split("\n").at(-1), "true"),
+    ],
+    [
+      "network-enabled runtime smoke",
+      (text) => text.replace("--mode plan", "--mode query-bulk"),
+    ],
+    [
+      "smoke moved after advisory query",
+      (text) => {
+        const indent = (command) => command.replaceAll("\n", "\n          ");
+        return text
+          .replace(indent(smoke), "__SMOKE_SWAP__")
+          .replace(indent(query), indent(smoke))
+          .replace("__SMOKE_SWAP__", indent(query));
+      },
+    ],
     ["missing query", (text) => text.replace(query.split("\n").at(-1), "true")],
     [
       "plan-only query",
@@ -454,6 +474,7 @@ test("the actual frontend workflow executes all offline feature helpers without 
     "scripts/npm_feature_seed_review.test.mjs",
     "scripts/npm_feature_advisories.test.mjs",
     "scripts/npm_feature_advisories.review.test.mjs",
+    "scripts/npm_feature_runtime.test.mjs",
     "scripts/rust_feature_scope.test.mjs",
     "scripts/rust_feature_seed_review.test.mjs",
     "scripts/rust_feature_advisories.test.mjs",

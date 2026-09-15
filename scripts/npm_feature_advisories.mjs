@@ -4,7 +4,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync, realpathSync, mkdtempSync } from "node:fs";
-import { createRequire } from "node:module";
 import { resolve, join, relative, isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -12,6 +11,7 @@ import {
   writeNewScopeReport,
 } from "./npm_feature_scope.mjs";
 import { reviewFeatureSeeds } from "./npm_feature_seed_review.mjs";
+import { loadNpmFeatureRuntime } from "./npm_feature_runtime.mjs";
 
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const record = (value) =>
@@ -362,151 +362,173 @@ export async function runFeatureAdvisories({
     "output directory must be outside the repository",
   );
   const run = mkdtempSync(join(directory, "npm-feature-advisories-"));
-  const variants = variant === "pr2" ? ["pr1", "pr2"] : ["pr1"];
-  const require = createRequire(
-    resolve(realpathSync(arboristPath), "package.json"),
-  );
-  const semver = require("semver");
-  const semverPackage = require("semver/package.json");
-  assert.equal(
-    semverPackage.version,
-    "7.7.4",
-    "reviewed npm semver runtime required",
-  );
-  const inventories = [];
-  const inputs = [];
-  const capture = (path, expected) => {
-    const bytes = readFileSync(path);
-    const digest = sha(bytes);
-    if (expected !== undefined)
-      assert.equal(
-        digest,
-        expected,
-        "bound inventory input changed before query",
+  let stage = "runtime";
+  let advisoryRequestAttempted = false;
+  try {
+    const variants = variant === "pr2" ? ["pr1", "pr2"] : ["pr1"];
+    const runtime = loadNpmFeatureRuntime(arboristPath);
+    const semver = runtime.semver;
+    const inventories = [];
+    const inputs = [];
+    const capture = (path, expected) => {
+      const bytes = readFileSync(path);
+      const digest = sha(bytes);
+      if (expected !== undefined)
+        assert.equal(
+          digest,
+          expected,
+          "bound inventory input changed before query",
+        );
+      inputs.push({ path, sha256: digest });
+      return bytes;
+    };
+    const reviews = [];
+    for (const part of variants) {
+      stage = "source-review";
+      const seedFile = `scripts/npm_feature_scope.${part}.json`;
+      const config = JSON.parse(
+        capture(resolve(root, seedFile)).toString("utf8"),
       );
-    inputs.push({ path, sha256: digest });
-    return bytes;
-  };
-  const reviews = [];
-  for (const part of variants) {
-    const seedFile = `scripts/npm_feature_scope.${part}.json`;
-    const config = JSON.parse(
-      capture(resolve(root, seedFile)).toString("utf8"),
-    );
-    reviews.push(reviewFeatureSeeds(root, config));
-    const outputPath = join(run, `${part}-inventory.json`);
-    const receipt = await runNpmFeatureScope({
-      repositoryRoot: root,
-      project: "frontend",
-      seedFile,
-      arboristPath,
-      outputPath,
-    });
-    const inventory = JSON.parse(
-      capture(outputPath, receipt.reportSha256).toString("utf8"),
-    );
-    capture(
-      resolve(root, "frontend/package.json"),
-      inventory.inputs.packageJsonSha256,
-    );
-    capture(
-      resolve(root, "frontend/package-lock.json"),
-      inventory.inputs.packageLockSha256,
-    );
-    capture(resolve(root, "frontend/.npmrc"), inventory.inputs.npmrcSha256);
-    assert.equal(
-      sha(readFileSync(resolve(root, seedFile))),
-      inventory.inputs.seedsSha256,
-    );
-    for (const item of inventory.inputs.localPackageManifests)
+      reviews.push(reviewFeatureSeeds(root, config));
+      const outputPath = join(run, `${part}-inventory.json`);
+      stage = "inventory";
+      const receipt = await runNpmFeatureScope({
+        repositoryRoot: root,
+        project: "frontend",
+        seedFile,
+        arboristPath,
+        outputPath,
+      });
+      const inventory = JSON.parse(
+        capture(outputPath, receipt.reportSha256).toString("utf8"),
+      );
       capture(
-        resolve(root, "frontend", item.location, "package.json"),
-        item.packageJsonSha256,
+        resolve(root, "frontend/package.json"),
+        inventory.inputs.packageJsonSha256,
       );
-    inventories.push(inventory);
-  }
-  const plan = planFeatureAdvisories(inventories, semver);
-  const requestSha256 = writeNewScopeReport(
-    root,
-    join(run, "request.json"),
-    plan.payload,
-  );
-  const report = {
-    version: 1,
-    scope: variant,
-    at: new Date().toISOString(),
-    mode: queryBulk ? "bulk-query" : "offline-plan",
-    sourceReviews: reviews,
-    inventoryOnly: !queryBulk,
-    requestFileSha256: requestSha256,
-    requestedPackages: Object.keys(plan.payload).length,
-    requestedVersions: Object.values(plan.payload).reduce(
-      (n, values) => n + values.length,
-      0,
-    ),
-    selectedLocations: plan.selected.length,
-    localSourceLocationsNotSubmitted: plan.local,
-    peerDiagnostics: inventories.flatMap((item) =>
-      item.supplementaryPeerGraph.peerDiagnostics.map((entry) => ({
-        scopeId: item.scopeId,
-        ...entry,
-      })),
-    ),
-    advisoryAcceptance: false,
-    wholeRepositoryCoverage: false,
-  };
-  const verifyInputs = () => {
-    for (const input of inputs)
+      capture(
+        resolve(root, "frontend/package-lock.json"),
+        inventory.inputs.packageLockSha256,
+      );
+      capture(resolve(root, "frontend/.npmrc"), inventory.inputs.npmrcSha256);
       assert.equal(
-        sha(readFileSync(input.path)),
-        input.sha256,
-        "source/lock changed during check",
+        sha(readFileSync(resolve(root, seedFile))),
+        inventory.inputs.seedsSha256,
       );
-    for (let index = 0; index < variants.length; index++)
-      assert.deepEqual(
-        reviewFeatureSeeds(
-          root,
-          JSON.parse(
-            readFileSync(
-              resolve(
-                root,
-                `scripts/npm_feature_scope.${variants[index]}.json`,
+      for (const item of inventory.inputs.localPackageManifests)
+        capture(
+          resolve(root, "frontend", item.location, "package.json"),
+          item.packageJsonSha256,
+        );
+      inventories.push(inventory);
+    }
+    stage = "planning";
+    const plan = planFeatureAdvisories(inventories, semver);
+    const requestSha256 = writeNewScopeReport(
+      root,
+      join(run, "request.json"),
+      plan.payload,
+    );
+    const report = {
+      version: 1,
+      scope: variant,
+      at: new Date().toISOString(),
+      mode: queryBulk ? "bulk-query" : "offline-plan",
+      sourceReviews: reviews,
+      inventoryOnly: !queryBulk,
+      requestFileSha256: requestSha256,
+      requestedPackages: Object.keys(plan.payload).length,
+      requestedVersions: Object.values(plan.payload).reduce(
+        (n, values) => n + values.length,
+        0,
+      ),
+      selectedLocations: plan.selected.length,
+      localSourceLocationsNotSubmitted: plan.local,
+      peerDiagnostics: inventories.flatMap((item) =>
+        item.supplementaryPeerGraph.peerDiagnostics.map((entry) => ({
+          scopeId: item.scopeId,
+          ...entry,
+        })),
+      ),
+      advisoryAcceptance: false,
+      wholeRepositoryCoverage: false,
+      collectorRuntime: runtime.evidence,
+    };
+    const verifyInputs = () => {
+      runtime.verifyUnchanged();
+      for (const input of inputs)
+        assert.equal(
+          sha(readFileSync(input.path)),
+          input.sha256,
+          "source/lock changed during check",
+        );
+      for (let index = 0; index < variants.length; index++)
+        assert.deepEqual(
+          reviewFeatureSeeds(
+            root,
+            JSON.parse(
+              readFileSync(
+                resolve(
+                  root,
+                  `scripts/npm_feature_scope.${variants[index]}.json`,
+                ),
+                "utf8",
               ),
-              "utf8",
             ),
           ),
-        ),
-        reviews[index],
+          reviews[index],
+        );
+    };
+    verifyInputs(); // Fail source/seed drift before any selected names leave the machine.
+    if (queryBulk) {
+      stage = "query";
+      advisoryRequestAttempted = true;
+      // Use the collector's configured npm runtime, never download or resolve another semver library.
+      const fetched = await fetchFeatureAdvisories(plan.payload, semver);
+      const evaluation = evaluateFeatureAdvisories(
+        plan,
+        fetched.response,
+        semver,
       );
-  };
-  verifyInputs(); // Fail source/seed drift before any selected names leave the machine.
-  if (queryBulk) {
-    // Use the collector's configured npm runtime, never download or resolve another semver library.
-    const fetched = await fetchFeatureAdvisories(plan.payload, semver);
-    const evaluation = evaluateFeatureAdvisories(
-      plan,
-      fetched.response,
-      semver,
-    );
-    report.responseFileSha256 = writeNewScopeReport(
+      report.responseFileSha256 = writeNewScopeReport(
+        root,
+        join(run, "response.json"),
+        fetched.response,
+      );
+      Object.assign(report, evaluation, {
+        responseSha256: fetched.responseSha256,
+        submittedRequestSha256: fetched.requestSha256,
+        semverVersion: runtime.evidence.semver,
+        advisoryAcceptance: evaluation.knownAdvisoriesPass,
+      });
+    }
+    stage = "verification";
+    verifyInputs();
+    stage = "summary";
+    const reportSha256 = writeNewScopeReport(
       root,
-      join(run, "response.json"),
-      fetched.response,
+      join(run, "summary.json"),
+      report,
     );
-    Object.assign(report, evaluation, {
-      responseSha256: fetched.responseSha256,
-      submittedRequestSha256: fetched.requestSha256,
-      semverVersion: semverPackage.version,
-      advisoryAcceptance: evaluation.knownAdvisoriesPass,
-    });
+    return { ...report, outputDirectory: run, reportSha256 };
+  } catch {
+    // Never serialize arbitrary exception text, paths, environment or package names.
+    // The allowlisted stage distinguishes toolchain/collection failures from findings.
+    const failure = {
+      version: 1,
+      scope: variant,
+      mode: queryBulk ? "bulk-query" : "offline-plan",
+      status: "failed",
+      stage,
+      advisoryRequestAttempted,
+      advisoryAcceptance: false,
+      wholeRepositoryCoverage: false,
+    };
+    writeNewScopeReport(root, join(run, "failure.json"), failure);
+    throw new Error(
+      `Feature-scoped npm check failed at ${stage}; sanitized failure receipt written.`,
+    );
   }
-  verifyInputs();
-  const reportSha256 = writeNewScopeReport(
-    root,
-    join(run, "summary.json"),
-    report,
-  );
-  return { ...report, outputDirectory: run, reportSha256 };
 }
 
 export function parseFeatureAdvisoryArgs(args) {

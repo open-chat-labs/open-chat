@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "reviewedOn": "2026-09-15",
+  "normalization": "CRLF-to-LF-only",
+  "proofMethod": "For each LF-normalized source, compare actual CLI-equivalent Prettier output. Each fingerprint is SHA-256(JSON.stringify([removedLines, addedLines])); all candidate edit fingerprints, including multiplicity, occur in the pinned upstream edit list. CLI ignores deprecated svelteBracketNewLine; the direct API diagnostic explicitly omitted it.",
+  "records": [
+    {
+      "scope": "pr1",
+      "path": "frontend/app/src/components_mobile/onboard/OnboardModal.svelte",
+      "baseCommit": "df9d9ed52db00e87fbb7309280a325902c9bb2cc",
+      "baseSha256": "916ad148b953e5a64f4a4142b03e4af6476b0691794c3b18e59a985b95e2e4c4",
+      "candidateSha256": "ef413763f5536172f4727320b822d8404584cde355e77802057f08f0226de89c",
+      "formatter": {
+        "prettierVersion": "3.8.4",
+        "sveltePluginVersion": "3.5.2",
+        "configSha256": "6a608fe0bd06378aa252d9bc4bf291eea44b90d15657b5e95dc02cde509a44aa"
+      },
+      "proof": {
+        "baseEditSha256s": [
+          "a8e91b2a1da16190fd7744fe765fdab2f023f807e1b12ba29b269f37dcddd31b",
+          "55a23e521c2edd0702e7760fbb47f189dcee3087e7f2fd70f0e2ecd9febb5ecf",
+          "e7999d3f3110cfd2ff571e28ff77d4a5bc3ab5f74f9f0be92c28753123680f5b",
+          "f0b866cef971643ff2b8e66f072ef847465f20c2f5ea54b1b2c45aa1df6d7511",
+          "4b3d51296dd9be3292ec84e83164c1fdb1e6dacd2af0dbff88e91648f4c988b6",
+          "8b2c234936a5a957c74e8fb0df600d3aeb177a8646064e4bae185e5d87aa8aaa",
+          "7245bfe967ce1ff5aa0b6b76128df0401ea61d78a76e183845b4d20e54b919cd",
+          "5250db9f5258adc9ea68e44e23c59632b5a85ae7da7dc468fc180b9f7d0473a5",
+          "f0b866cef971643ff2b8e66f072ef847465f20c2f5ea54b1b2c45aa1df6d7511",
+          "bae8be695b3ce1a52a447cdb2e81a2d7408c51e5f059adcfb0800b8349551472",
+          "f0b866cef971643ff2b8e66f072ef847465f20c2f5ea54b1b2c45aa1df6d7511",
+          "f0b866cef971643ff2b8e66f072ef847465f20c2f5ea54b1b2c45aa1df6d7511",
+          "2231588559504c02200136618572f44fdc27a341c66b4e58aee9dd600b4bad42",
+          "46c881b3bdebcbcc793375c534e5d387d124fbde5f267581ddef2683e2c76bd7",
+          "a50f2b06f7aae45664cc872e6b994e322c270fe44df583a82eb9d3da014850e4"
+        ],
+        "candidateEditSha256s": [
+          "a8e91b2a1da16190fd7744fe765fdab2f023f807e1b12ba29b269f37dcddd31b",
+          "55a23e521c2edd0702e7760fbb47f189dcee3087e7f2fd70f0e2ecd9febb5ecf",
+          "e7999d3f3110cfd2ff571e28ff77d4a5bc3ab5f74f9f0be92c28753123680f5b",
+          "f0b866cef971643ff2b8e66f072ef847465f20c2f5ea54b1b2c45aa1df6d7511",
+          "4b3d51296dd9be3292ec84e83164c1fdb1e6dacd2af0dbff88e91648f4c988b6",
+          "8b2c234936a5a957c74e8fb0df600d3aeb177a8646064e4bae185e5d87aa8aaa",
+          "7245bfe967ce1ff5aa0b6b76128df0401ea61d78a76e183845b4d20e54b919cd",
+          "5250db9f5258adc9ea68e44e23c59632b5a85ae7da7dc468fc180b9f7d0473a5",
+          "f0b866cef971643ff2b8e66f072ef847465f20c2f5ea54b1b2c45aa1df6d7511",
+          "bae8be695b3ce1a52a447cdb2e81a2d7408c51e5f059adcfb0800b8349551472",
+          "f0b866cef971643ff2b8e66f072ef847465f20c2f5ea54b1b2c45aa1df6d7511",
+          "f0b866cef971643ff2b8e66f072ef847465f20c2f5ea54b1b2c45aa1df6d7511",
+          "2231588559504c02200136618572f44fdc27a341c66b4e58aee9dd600b4bad42",
+          "46c881b3bdebcbcc793375c534e5d387d124fbde5f267581ddef2683e2c76bd7",
+          "a50f2b06f7aae45664cc872e6b994e322c270fe44df583a82eb9d3da014850e4"
+        ]
+      },
+      "justification": "All remaining formatter edits are byte-identical to formatting debt in the pinned upstream file; preserve untouched OpenChat core formatting. Any candidate, base, formatter or config change requires a fresh review."
+    },
+    {
+      "scope": "pr1",
+      "path": "frontend/app/src/stores/settings.ts",
+      "baseCommit": "df9d9ed52db00e87fbb7309280a325902c9bb2cc",
+      "baseSha256": "a8df69a7540e272044caef6d11ace0d66bd415c29dd8dce80b6929451dbdef7b",
+      "candidateSha256": "8c80ba3fbbf7ae7fe8880fac3ab21a0462fc1ab636aca9f562850f0eb429ee0d",
+      "formatter": {
+        "prettierVersion": "3.8.4",
+        "sveltePluginVersion": "3.5.2",
+        "configSha256": "6a608fe0bd06378aa252d9bc4bf291eea44b90d15657b5e95dc02cde509a44aa"
+      },
+      "proof": {
+        "baseEditSha256s": [
+          "b5294dd2ed0c932c9afe9e7fd299f31c21f8a0f69a2b8599e4918ecd3d5fd132",
+          "f338dd65cd245313ba8cec407b4b1b9a00cbbffdc9f5c86a5927f8a092bffebb"
+        ],
+        "candidateEditSha256s": [
+          "f338dd65cd245313ba8cec407b4b1b9a00cbbffdc9f5c86a5927f8a092bffebb"
+        ]
+      },
+      "justification": "All remaining formatter edits are byte-identical to formatting debt in the pinned upstream file; preserve untouched OpenChat core formatting. Any candidate, base, formatter or config change requires a fresh review."
+    },
+    {
+      "scope": "pr1",
+      "path": "frontend/openchat-client/src/openchat.ts",
+      "baseCommit": "df9d9ed52db00e87fbb7309280a325902c9bb2cc",
+      "baseSha256": "d7991357952f127ec55af7f895d3925c456b8a32dfdee734dab3ef1e35f04bca",
+      "candidateSha256": "bee3b835cfdd6bbc16428138428475f9f17610d174d21e7c62e8f2f80d591674",
+      "formatter": {
+        "prettierVersion": "3.8.4",
+        "sveltePluginVersion": "3.5.2",
+        "configSha256": "6a608fe0bd06378aa252d9bc4bf291eea44b90d15657b5e95dc02cde509a44aa"
+      },
+      "proof": {
+        "baseEditSha256s": [
+          "60139892fbed5af1e60ec318533ed1c8d39fa4d3fd71e2835e2d3a392e41bb01",
+          "242bf644c419694fbe6f03251fb982089075b4679e442037dd1c41f7544739cb",
+          "b6d1efd20026ba685c1242d20bd7701952cb2951b23d0a4f99c5cd1b62d0b3fc"
+        ],
+        "candidateEditSha256s": [
+          "60139892fbed5af1e60ec318533ed1c8d39fa4d3fd71e2835e2d3a392e41bb01",
+          "242bf644c419694fbe6f03251fb982089075b4679e442037dd1c41f7544739cb",
+          "b6d1efd20026ba685c1242d20bd7701952cb2951b23d0a4f99c5cd1b62d0b3fc"
+        ]
+      },
+      "justification": "All remaining formatter edits are byte-identical to formatting debt in the pinned upstream file; preserve untouched OpenChat core formatting. Any candidate, base, formatter or config change requires a fresh review."
+    },
+    {
+      "scope": "pr2",
+      "path": "frontend/app/src/stores/settings.ts",
+      "baseCommit": "df9d9ed52db00e87fbb7309280a325902c9bb2cc",
+      "baseSha256": "a8df69a7540e272044caef6d11ace0d66bd415c29dd8dce80b6929451dbdef7b",
+      "candidateSha256": "b2fa51210f3d3c7d5badaf745fb4837180a3292c6769284937c4b53a8f520e61",
+      "formatter": {
+        "prettierVersion": "3.8.4",
+        "sveltePluginVersion": "3.5.2",
+        "configSha256": "6a608fe0bd06378aa252d9bc4bf291eea44b90d15657b5e95dc02cde509a44aa"
+      },
+      "proof": {
+        "baseEditSha256s": [
+          "b5294dd2ed0c932c9afe9e7fd299f31c21f8a0f69a2b8599e4918ecd3d5fd132",
+          "f338dd65cd245313ba8cec407b4b1b9a00cbbffdc9f5c86a5927f8a092bffebb"
+        ],
+        "candidateEditSha256s": [
+          "f338dd65cd245313ba8cec407b4b1b9a00cbbffdc9f5c86a5927f8a092bffebb"
+        ]
+      },
+      "justification": "All remaining formatter edits are byte-identical to formatting debt in the pinned upstream file; preserve untouched OpenChat core formatting. Any candidate, base, formatter or config change requires a fresh review."
+    },
+    {
+      "scope": "pr2",
+      "path": "frontend/openchat-client/src/state/app/stores.ts",
+      "baseCommit": "df9d9ed52db00e87fbb7309280a325902c9bb2cc",
+      "baseSha256": "2424a659b6ecf5ea52a73e6b655b5e8ee1dc4753d9ef9bf577dc0d0c0d6b7c6b",
+      "candidateSha256": "544c787d73c0cd542b6665d881e864f49ceb6afb9d79ca128df597fdcd41cfda",
+      "formatter": {
+        "prettierVersion": "3.8.4",
+        "sveltePluginVersion": "3.5.2",
+        "configSha256": "6a608fe0bd06378aa252d9bc4bf291eea44b90d15657b5e95dc02cde509a44aa"
+      },
+      "proof": {
+        "baseEditSha256s": [
+          "e42e58b182969bc74b96b708f4ff5bb44b686af4567475b36db68d1f47f89ec2"
+        ],
+        "candidateEditSha256s": [
+          "e42e58b182969bc74b96b708f4ff5bb44b686af4567475b36db68d1f47f89ec2"
+        ]
+      },
+      "justification": "All remaining formatter edits are byte-identical to formatting debt in the pinned upstream file; preserve untouched OpenChat core formatting. Any candidate, base, formatter or config change requires a fresh review."
+    }
+  ]
+}

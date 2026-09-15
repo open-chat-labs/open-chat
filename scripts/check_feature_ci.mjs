@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 export const FEATURE_CI_NODE_VERSION = "24.18.1";
 export const NPM_FEATURE_CI_TEST_COMMAND =
-  "node --test scripts/npm_feature_scope.test.mjs scripts/npm_feature_seed_review.test.mjs scripts/npm_feature_advisories.test.mjs scripts/npm_feature_advisories.review.test.mjs scripts/check_feature_ci.test.mjs scripts/security_mode_scope.test.mjs scripts/security_owned_rules.test.mjs";
+  "node --test scripts/npm_feature_scope.test.mjs scripts/npm_feature_seed_review.test.mjs scripts/npm_feature_advisories.test.mjs scripts/npm_feature_advisories.review.test.mjs scripts/npm_feature_runtime.test.mjs scripts/check_feature_ci.test.mjs scripts/security_mode_scope.test.mjs scripts/security_owned_rules.test.mjs";
 export const npmFeatureQueryCommand = (scope) => {
   assert(["pr1", "pr2"].includes(scope), "Explicit npm feature scope required");
   return [
@@ -14,11 +14,19 @@ export const npmFeatureQueryCommand = (scope) => {
     `node scripts/npm_feature_advisories.mjs --repository-root "$GITHUB_WORKSPACE" --scope ${scope} --arborist-path "$npm_root/npm/node_modules/@npmcli/arborist" --output-directory "$RUNNER_TEMP" --mode query-bulk`,
   ].join("\n");
 };
+export const npmFeatureSmokeCommand = (scope) =>
+  npmFeatureQueryCommand(scope)
+    .replace(
+      "scripts/npm_feature_advisories.mjs",
+      "scripts/npm_feature_runtime_smoke.mjs",
+    )
+    .replace("--mode query-bulk", "--mode plan");
 export const OFFLINE_FEATURE_HELPER_TESTS = Object.freeze([
   "scripts/npm_feature_scope.test.mjs",
   "scripts/npm_feature_seed_review.test.mjs",
   "scripts/npm_feature_advisories.test.mjs",
   "scripts/npm_feature_advisories.review.test.mjs",
+  "scripts/npm_feature_runtime.test.mjs",
   "scripts/rust_feature_scope.test.mjs",
   "scripts/rust_feature_seed_review.test.mjs",
   "scripts/rust_feature_advisories.test.mjs",
@@ -302,6 +310,7 @@ export function checkNpmFeatureCi({
       ["npm ci --no-audit", "frontend"],
       [NPM_FEATURE_CI_TEST_COMMAND, "."],
       [`node scripts/check_feature_ci.mjs npm-${scope}`, "."],
+      [npmFeatureSmokeCommand(scope), "."],
       [npmFeatureQueryCommand(scope), "."],
       [`node scripts/check_openchat_${scope}_security.mjs licenses`, "."],
     ];
@@ -326,11 +335,15 @@ export function checkNpmFeatureCi({
         /^(?:shell:| {8}shell:)/mu,
         "No gate shell override",
       );
-      if (expected === npmFeatureQueryCommand(scope))
+      if (
+        [npmFeatureQueryCommand(scope), npmFeatureSmokeCommand(scope)].includes(
+          expected,
+        )
+      )
         assert.match(
           step,
           /^ {8}run: \|$/mu,
-          "Query requires literal Bash block",
+          "Scoped collector requires literal Bash block",
         );
       else
         assert.match(
@@ -339,6 +352,14 @@ export function checkNpmFeatureCi({
           "Gate requires literal single-line command",
         );
     }
+    const execution = commands(job).map((item) => item.command);
+    assert(
+      execution.indexOf("npm ci --no-audit") <
+        execution.indexOf(npmFeatureSmokeCommand(scope)) &&
+        execution.indexOf(npmFeatureSmokeCommand(scope)) <
+          execution.indexOf(npmFeatureQueryCommand(scope)),
+      "Real offline runtime smoke must run after installation and before any advisory query",
+    );
     assert.doesNotMatch(
       job,
       /\bnpm\s+audit\b|check_openchat_pr[12]_security\.mjs ci npm/u,

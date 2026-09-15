@@ -1,7 +1,9 @@
 // Existing formatting and owned license rules only, separated from historical
 // whole-lockfile advisory baselines. This is not dependency/advisory acceptance.
 const modelRules = {
-  baseCommit: "3c49a73021ab4c660bced03ae4281db5a4b36cd8",
+  // Current reconciled upstream boundary for push/local formatting. Advisory
+  // baselines intentionally retain their historical identity and are not changed.
+  baseCommit: "df9d9ed52db00e87fbb7309280a325902c9bb2cc",
   format: {
     sourceRoot: "frontend/",
     extensions: [".js", ".json", ".mjs", ".svelte", ".ts"],

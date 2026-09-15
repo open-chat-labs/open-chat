@@ -1,3 +1,5 @@
+// @vitest-environment node
+import { Buffer } from "node:buffer";
 import { runInNewContext } from "node:vm";
 import { describe, expect, it, vi } from "vitest";
 import { createQwen3Vl2bVisionSession } from "../../transformersWebGpuQwenVisionSession.mjs";
@@ -116,7 +118,20 @@ describe("Qwen vision-only geometry session facade", () => {
                     control = expected[name];
                 expect(tensor.type).toBe(control.type);
                 expect(tensor.dims).toEqual(control.dims);
-                expect(tensor.data).toEqual(control.data);
+                // Compare all bytes, including signed zeros, without per-element matcher overhead
+                // on the 640 x 640 attention mask. Dimensions/type and distinct ownership stay checked.
+                const actualBytes = Buffer.from(
+                    tensor.data.buffer,
+                    tensor.data.byteOffset,
+                    tensor.data.byteLength,
+                );
+                const expectedBytes = Buffer.from(
+                    control.data.buffer,
+                    control.data.byteOffset,
+                    control.data.byteLength,
+                );
+                expect(actualBytes.byteLength).toBe(expectedBytes.byteLength);
+                expect(actualBytes.equals(expectedBytes)).toBe(true);
                 expect(tensor.data).not.toBe(control.data);
                 expect(tensor.dispose).not.toHaveBeenCalled();
             });

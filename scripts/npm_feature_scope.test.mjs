@@ -288,7 +288,7 @@ import {
 
 const bytes = (value) => Buffer.from(JSON.stringify(value));
 const hash = (value) => createHash("sha256").update(value).digest("hex");
-const runtime = { name: "@npmcli/arborist", version: "9.4.0" };
+const runtime = { name: "@npmcli/arborist", version: "9.7.0" };
 function fixture({ legacyPeerDeps = false } = {}) {
   const pkg = { name: "fixture", version: "1.0.0" };
   const lock = { lockfileVersion: 3, packages: { "": pkg } };
@@ -600,7 +600,7 @@ test("whole-project, private and unsupported seeds or runtime identities are rej
         ...f.inputs(),
         arboristPackageBytes: bytes({ ...runtime, version: "10.0.0" }),
       }),
-    /9.4.0/u,
+    /9.7.0/u,
   );
   assert.throws(
     () =>
