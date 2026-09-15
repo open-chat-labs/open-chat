@@ -1,7 +1,7 @@
 use crate::metrics::ChatMetricsInternal;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{ChatEventKeyPrefix, Key, KeyPrefix, UserMetricsKeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{ChatEventKeyPrefix, EntryExt, Key, KeyPrefix, UserMetricsKeyPrefix, with_map, with_map_mut};
 use std::cmp::{max, min};
 use std::collections::BTreeMap;
 use types::{Chat, ChatId, TimestampMillis, UserId};
@@ -50,14 +50,16 @@ impl PerUserMetrics {
         let key = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(&user_id);
 
         with_map_mut(|m| {
+            let entry = m.entry(key);
             let mut metrics = self.on_heap.remove(&user_id).unwrap_or_else(|| {
-                m.get(key.clone())
+                entry
+                    .value()
                     .map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
                     .unwrap_or_default()
             });
             action(&mut metrics);
             metrics.last_active = max(metrics.last_active, timestamp);
-            m.insert(key, metrics.to_bytes());
+            entry.set(metrics.to_bytes());
         });
     }
 

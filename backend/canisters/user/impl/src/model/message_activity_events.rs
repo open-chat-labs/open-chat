@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
-    KeyPrefix, MessageActivityEventId, MessageActivityEventIdKeyPrefix, MessageActivityEventKey, MessageActivityEventKeyPrefix,
-    StableMemoryMapInner, with_map, with_map_mut,
+    Entry, KeyPrefix, MessageActivityEventId, MessageActivityEventIdKeyPrefix, MessageActivityEventKey,
+    MessageActivityEventKeyPrefix, StableMemoryMapInner, with_map, with_map_mut,
 };
 use std::collections::VecDeque;
 use std::ops::RangeInclusive;
@@ -35,16 +35,25 @@ impl MessageActivityEvents {
         let prefix = MessageActivityEventKeyPrefix::new();
 
         with_map_mut(|m| {
-            if let Some(bytes) = m.remove(id_key.clone()) {
+            let timestamp_bytes = event.timestamp.to_be_bytes().to_vec();
+            let previous_timestamp = match m.entry(id_key) {
+                Entry::Occupied(e) => Some(timestamp_from_bytes(&e.insert(timestamp_bytes).into_value())),
+                Entry::Vacant(e) => {
+                    e.insert(timestamp_bytes);
+                    None
+                }
+            };
+
+            if let Some(previous_timestamp) = previous_timestamp {
                 // Remove the existing event for the same activity on the same message
-                m.remove(prefix.create_key(&(timestamp_from_bytes(&bytes), id.clone())));
+                m.remove(prefix.create_key(&(previous_timestamp, id.clone())));
                 self.in_stable_memory_count -= 1;
             } else if self.in_stable_memory_count >= MessageActivityEvents::MAX_EVENTS {
-                // Keep no more than MAX_EVENTS
+                // Keep no more than MAX_EVENTS. The oldest event can't be for the same activity on
+                // the same message, since there is no existing event for that.
                 self.remove_oldest(m);
             }
 
-            m.insert(id_key, event.timestamp.to_be_bytes().to_vec());
             m.insert(prefix.create_key(&(event.timestamp, id)), event_to_bytes(event));
             self.in_stable_memory_count += 1;
         });

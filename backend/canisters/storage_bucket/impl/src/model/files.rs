@@ -235,17 +235,17 @@ impl Files {
 
         let file_ids = self.accessors_map.remove(*accessor_id);
         for file_id in file_ids {
-            if let Some(mut file) = self.get(&file_id) {
+            // Only write the file back if it still has other accessors, otherwise it is removed
+            let has_other_accessors = self.files.update(&file_id, |file| {
                 file.accessors.remove(accessor_id);
-                if file.accessors.is_empty() {
-                    // `remove_file` releases the file's reference to the blob (and the blob itself
-                    // when that was the last one); decrementing here as well would drop a
-                    // reference held by another file or by a vault pin
-                    if let Some(file_removed) = self.remove_file(file_id) {
-                        files_removed.push(file_removed);
-                    }
-                } else {
-                    self.files.insert(file_id, file);
+                !file.accessors.is_empty()
+            });
+            if has_other_accessors == Some(false) {
+                // `remove_file` releases the file's reference to the blob (and the blob itself
+                // when that was the last one); decrementing here as well would drop a
+                // reference held by another file or by a vault pin
+                if let Some(file_removed) = self.remove_file(file_id) {
+                    files_removed.push(file_removed);
                 }
             }
         }
@@ -254,23 +254,25 @@ impl Files {
     }
 
     pub fn update_owner(&mut self, file_id: &FileId, new_owner: Principal) -> bool {
-        if let Some(mut file) = self.get(file_id) {
-            file.owner = new_owner;
-            self.files.insert(*file_id, file);
-            true
-        } else {
-            false
-        }
+        self.files
+            .update(file_id, |file| {
+                file.owner = new_owner;
+                true
+            })
+            .is_some()
     }
 
     pub fn update_accessor_id(&mut self, old_accessor_id: AccessorId, new_accessor_id: AccessorId) {
         let files = self.accessors_map.remove(old_accessor_id);
         for file_id in files.iter() {
-            if let Some(mut file) = self.get(file_id)
-                && file.accessors.remove(&old_accessor_id)
-            {
-                file.accessors.insert(new_accessor_id);
-                self.files.insert(*file_id, file);
+            let updated = self.files.update(file_id, |file| {
+                let updated = file.accessors.remove(&old_accessor_id);
+                if updated {
+                    file.accessors.insert(new_accessor_id);
+                }
+                updated
+            });
+            if updated == Some(true) {
                 self.accessors_map.link(new_accessor_id, *file_id);
             }
         }
