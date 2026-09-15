@@ -118,6 +118,13 @@ fn post_upgrade(args: Args) {
         "Migrated unread message indexes to stable memory"
     );
 
+    // Move the records of the chats the user has been removed from into stable memory
+    // TODO: Remove this after next release
+    let removed_chats_migrated = data.direct_chats.migrate_removed_to_stable_memory()
+        + data.group_chats.migrate_removed_to_stable_memory()
+        + data.communities.migrate_removed_to_stable_memory();
+    info!(removed_chats_migrated, "Migrated removed chats to stable memory");
+
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
 

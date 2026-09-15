@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::stable_memory::get_stable_memory_map;
-use crate::utils::{metrics, tick_many};
+use crate::utils::{metrics, now_millis, tick_many};
 use crate::{TestEnv, User, client, wasms};
 use candid::Principal;
 use constants::DAY_IN_MS;
@@ -9,10 +9,10 @@ use pocket_ic::PocketIc;
 use stable_memory_map::{KeyType, MapClass};
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::random_from_u128;
+use testing::rng::{random_from_u128, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatEvent, Empty, EventIndex, EventWrapper, HttpRequest, HttpResponse,
-    MessageContent, MessageId, MessageIndex, OptionUpdate, TimestampMillis, UnitResult, UserId,
+    BuildVersion, CanisterId, CanisterWasm, ChatEvent, ChatId, CommunityId, Empty, EventIndex, EventWrapper, HttpRequest,
+    HttpResponse, MessageContent, MessageId, MessageIndex, OptionUpdate, TimestampMillis, UnitResult, UserId,
 };
 
 const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
@@ -26,7 +26,8 @@ const SMALL_CHAT_MESSAGES: usize = 3;
 // direct chats, contacts and blocked users, then upgrades them to the new wasm and checks that everything still
 // works.
 //
-// This currently covers moving the contacts, blocked users and direct chats' unread message indexes from the heap into
+// This currently covers moving the contacts, blocked users, direct chats' unread message indexes and the records of the
+// chats the user has been removed from from the heap into
 // stable memory, and moving the events of existing direct chats from their legacy stable memory
 // keys to their `key_id` based keys, which in test mode migrates a single batch of events per call,
 // so the migration is spread across `post_upgrade` and many runs of its timer job.
@@ -150,6 +151,54 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(snapshots[0].len(), LARGE_CHAT_MESSAGES + 1);
     let total_events: usize = snapshots.iter().map(|s| s.len()).sum();
 
+    // Chats user1 has been removed from: a deleted direct chat, two groups and a community
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let removed_group_ids: Vec<_> = (0..2)
+        .map(|_| client::user::happy_path::create_group(env, &owner, &random_string(), true, true))
+        .collect();
+    let removed_community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+    for group_id in removed_group_ids.iter() {
+        client::group::happy_path::join_group(env, user1.principal, *group_id);
+    }
+    client::community::happy_path::join_community(env, user1.principal, removed_community_id);
+    let removed_chat_user = client::register_user(env, canister_ids);
+    client::user::happy_path::send_text_message(env, &user1, removed_chat_user.user_id, "hi", None);
+    tick_many(env, 3);
+    let removed_since = now_millis(env);
+    env.advance_time(Duration::from_secs(1));
+    for group_id in removed_group_ids.iter() {
+        client::user::happy_path::leave_group(env, &user1, *group_id);
+    }
+    client::user::happy_path::leave_community(env, &user1, removed_community_id);
+    let response = client::user::delete_direct_chat(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::delete_direct_chat::Args {
+            user_id: removed_chat_user.user_id,
+            block_user: false,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::delete_direct_chat::Response::Success),
+        "{response:?}"
+    );
+    // Garbage collect the deleted chat's events, so that they aren't included in the key counts below
+    env.advance_time(Duration::from_secs(60));
+    tick_many(env, 3);
+    let mut removed_group_ids_sorted = removed_group_ids.clone();
+    removed_group_ids_sorted.sort();
+    let removed_snapshot = removed_chats(env, &user1, removed_since);
+    assert_eq!(
+        removed_snapshot,
+        (
+            vec![removed_chat_user.user_id.into()],
+            removed_group_ids_sorted.clone(),
+            vec![removed_community_id]
+        )
+    );
+
     // The prod wasm stores direct chat events under keys based on the other user's id. User1 also has
     // a chat with the OpenChat bot, whose events are included in the key counts.
     let total_keys = count_keys(env, user1.canister(), KeyType::DirectChatEventLegacy);
@@ -206,6 +255,21 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(wasm_version(env, large_chat_user.canister()), new_version);
     assert_eq!(direct_chats_with_legacy_events(env, large_chat_user.canister()), 0);
     assert_eq!(all_events(env, &large_chat_user, user1.user_id), large_chat_snapshot_for_them);
+
+    // The records of the chats user1 was removed from were moved into stable memory
+    assert_eq!(removed_chats(env, &user1, removed_since), removed_snapshot);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatRemoved), 1);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChatRemoved), 2);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::CommunityRemoved), 1);
+
+    // A group which is rejoined is no longer returned as removed, until it is left again
+    client::group::happy_path::join_group(env, user1.principal, removed_group_ids[0]);
+    tick_many(env, 3);
+    assert_eq!(removed_chats(env, &user1, removed_since).1, vec![removed_group_ids[1]]);
+    env.advance_time(Duration::from_secs(1));
+    client::user::happy_path::leave_group(env, &user1, removed_group_ids[0]);
+    assert_eq!(removed_chats(env, &user1, removed_since).1, removed_group_ids_sorted);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChatRemoved), 3);
 
     // Migrated messages can still be updated, and new messages sent
     client::user::happy_path::edit_text_message(
@@ -497,6 +561,19 @@ fn read_by_them_up_to(env: &PocketIc, user: &User, them: UserId) -> Option<Messa
         .find(|c| c.them == them)
         .unwrap()
         .read_by_them_up_to
+}
+
+// Returns the direct chats, groups and communities the user has been removed from since `since`,
+// each ordered by id
+fn removed_chats(env: &PocketIc, user: &User, since: TimestampMillis) -> (Vec<ChatId>, Vec<ChatId>, Vec<CommunityId>) {
+    let updates = client::user::happy_path::updates(env, user, since).unwrap();
+    let mut direct_chats = updates.direct_chats.removed;
+    let mut group_chats = updates.group_chats.removed;
+    let mut communities = updates.communities.removed;
+    direct_chats.sort();
+    group_chats.sort();
+    communities.sort();
+    (direct_chats, group_chats, communities)
 }
 
 // Returns the users the user has blocked, ordered by user id
