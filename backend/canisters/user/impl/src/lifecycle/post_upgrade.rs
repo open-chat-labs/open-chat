@@ -104,13 +104,14 @@ fn post_upgrade(args: Args) {
     let blocked_users_migrated = data.blocked_users.migrate_to_stable_memory();
     info!(blocked_users_migrated, "Migrated blocked users to stable memory");
 
-    // Move each direct chat's map of unread message indexes into stable memory
+    // Move each direct chat's map of unread message indexes into stable memory, under keys derived
+    // from the chat's `key_id` (which every chat has been assigned above)
     // TODO: Remove this after next release
     let mut unread_message_indexes_migrated = 0;
     for direct_chat in data.direct_chats.iter_mut() {
         unread_message_indexes_migrated += direct_chat
             .unread_message_index_map
-            .migrate_to_stable_memory(direct_chat.them);
+            .migrate_to_stable_memory(direct_chat.events.stable_memory_prefix());
     }
     info!(
         unread_message_indexes_migrated,
