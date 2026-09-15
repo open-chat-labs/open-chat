@@ -41,7 +41,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
         .data
         .token_swaps
         .get(args.swap_id)
-        .cloned()
         .filter(|s| matches!(s.args.exchange_args, ExchangeArgs::ICPSwap(_)))
     else {
         return Err(OCErrorCode::SwapNotFound.into());

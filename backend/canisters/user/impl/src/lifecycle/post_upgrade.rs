@@ -60,6 +60,11 @@ fn post_upgrade(args: Args) {
     }
     info!(threads_read_migrated, "Migrated threads read to stable memory");
 
+    // Move the token swaps into stable memory
+    // TODO: Remove this after next release
+    let token_swaps_migrated = data.token_swaps.migrate_to_stable_memory();
+    info!(token_swaps_migrated, "Migrated token swaps to stable memory");
+
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
 
