@@ -436,11 +436,21 @@ mod tests {
     }
 
     fn p(chat: Chat) -> ChatEventKeyPrefix {
-        ChatEventKeyPrefix::new_from_chat(chat, None)
+        match chat {
+            // Direct chats are keyed by a `key_id`, so derive one from the other user's id
+            Chat::Direct(them) => ChatEventKeyPrefix::new_from_direct_chat_key_id(
+                Principal::from(them)
+                    .as_slice()
+                    .iter()
+                    .fold(0u32, |acc, b| acc.wrapping_mul(31).wrapping_add(*b as u32)),
+                None,
+            ),
+            _ => ChatEventKeyPrefix::new_from_chat(chat, None),
+        }
     }
 
     fn stable_user_ids(chat: Chat) -> Vec<UserId> {
-        let prefix = UserMetricsKeyPrefix::new_from_chat(chat);
+        let prefix = UserMetricsKeyPrefix::new_from_events_prefix(&p(chat));
         with_map(|m| {
             m.range(prefix.create_key(&Principal::from_slice(&[]).into())..)
                 .take_while(|(k, _)| k.matches_prefix(&prefix))

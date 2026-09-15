@@ -40,6 +40,22 @@ impl HybridMap<ChatEventsStableStorage> {
     pub fn stable_memory_prefix(&self) -> &ChatEventKeyPrefix {
         self.slow.prefix()
     }
+
+    pub fn legacy_stable_memory_prefix(&self) -> Option<&ChatEventKeyPrefix> {
+        self.slow.legacy_prefix()
+    }
+
+    pub fn has_legacy_events(&self) -> bool {
+        self.slow.has_legacy_events()
+    }
+
+    pub fn assign_key_id_prefix(&mut self, prefix: ChatEventKeyPrefix) {
+        self.slow.assign_key_id_prefix(prefix);
+    }
+
+    pub fn migrate_legacy_events(&mut self, should_stop: &mut impl FnMut() -> bool) -> bool {
+        self.slow.migrate_legacy_events(should_stop)
+    }
 }
 
 impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {

@@ -61,6 +61,21 @@ impl DirectChats {
         })
     }
 
+    // Assigns a `key_id` to each chat created before `key_id`s were introduced, returning how many
+    // were assigned. Their events are then moved to the new keys by
+    // `jobs::migrate_direct_chat_events_to_key_id_keys`.
+    // TODO: Remove this once every user canister has been migrated
+    pub fn assign_key_ids(&mut self) -> usize {
+        let mut count = 0;
+        for chat in self.direct_chats.values_mut() {
+            if chat.events.assign_direct_chat_key_id(self.next_key_id + 1) {
+                self.next_key_id += 1;
+                count += 1;
+            }
+        }
+        count
+    }
+
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
         self.direct_chats.values().filter(move |c| c.has_updates_since(since))
     }

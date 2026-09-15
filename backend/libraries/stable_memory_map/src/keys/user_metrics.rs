@@ -11,10 +11,7 @@ use types::{Chat, UserId};
 key!(
     UserMetricsKey,
     UserMetricsKeyPrefix,
-    KeyType::DirectChatUserMetrics
-        | KeyType::GroupChatUserMetrics
-        | KeyType::ChannelUserMetrics
-        | KeyType::DirectChatUserMetricsV2
+    KeyType::DirectChatUserMetrics | KeyType::GroupChatUserMetrics | KeyType::ChannelUserMetrics
 );
 
 impl UserMetricsKeyPrefix {
@@ -36,10 +33,9 @@ impl TryFrom<&ChatEventKeyPrefix> for UserMetricsKeyPrefix {
     fn try_from(value: &ChatEventKeyPrefix) -> Result<Self, Self::Error> {
         let mut bytes = BaseKeyPrefix::from(value.clone()).0;
         bytes[0] = match extract_key_type(&bytes).unwrap() {
-            KeyType::DirectChatEvent => KeyType::DirectChatUserMetrics,
             KeyType::GroupChatEvent => KeyType::GroupChatUserMetrics,
             KeyType::ChannelEvent => KeyType::ChannelUserMetrics,
-            KeyType::DirectChatEventV2 => KeyType::DirectChatUserMetricsV2,
+            KeyType::DirectChatEvent => KeyType::DirectChatUserMetrics,
             _ => return Err(()),
         } as u8;
         Ok(UserMetricsKeyPrefix(bytes))
@@ -63,11 +59,9 @@ impl UserMetricsKey {
     pub fn user_id(&self) -> UserId {
         // User ids vary in length, so the prefix length is determined by the key type
         let prefix_len = match extract_key_type(&self.0).unwrap() {
-            // Key type, then the other user's id preceded by its length
-            KeyType::DirectChatUserMetrics => 2 + self.0[1] as usize,
             KeyType::GroupChatUserMetrics => 1,
             // Key type, then the channel id (or the direct chat's key id)
-            KeyType::ChannelUserMetrics | KeyType::DirectChatUserMetricsV2 => 5,
+            KeyType::ChannelUserMetrics | KeyType::DirectChatUserMetrics => 5,
             _ => unreachable!(),
         };
         Principal::from_slice(&self.0[prefix_len..]).into()
@@ -84,8 +78,6 @@ mod tests {
     #[test]
     fn user_metrics_keys_e2e() {
         for _ in 0..100 {
-            let them_bytes: [u8; 10] = rng().random();
-            let them = Principal::from_slice(&them_bytes).into();
             let user_id_len = rng().random_range(0..=29);
             let user_id_bytes: Vec<u8> = (0..user_id_len).map(|_| rng().random()).collect();
             let user_id = Principal::from_slice(&user_id_bytes).into();
@@ -93,13 +85,8 @@ mod tests {
 
             for (events_prefix, key_type, prefix_len) in [
                 (
-                    ChatEventKeyPrefix::new_from_chat(Chat::Direct(them), None),
-                    KeyType::DirectChatUserMetrics,
-                    12,
-                ),
-                (
                     ChatEventKeyPrefix::new_from_direct_chat_key_id(rng().next_u32(), None),
-                    KeyType::DirectChatUserMetricsV2,
+                    KeyType::DirectChatUserMetrics,
                     5,
                 ),
                 (

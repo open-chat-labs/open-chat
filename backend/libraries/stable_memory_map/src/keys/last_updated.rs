@@ -12,19 +12,13 @@ use types::{Chat, EventIndex, MessageIndex, TimestampMillis};
 key!(
     EventLastUpdatedKey,
     EventLastUpdatedKeyPrefix,
-    KeyType::DirectChatEventLastUpdated
-        | KeyType::GroupChatEventLastUpdated
-        | KeyType::ChannelEventLastUpdated
-        | KeyType::DirectChatEventLastUpdatedV2
+    KeyType::DirectChatEventLastUpdated | KeyType::GroupChatEventLastUpdated | KeyType::ChannelEventLastUpdated
 );
 
 key!(
     EventsByLastUpdatedKey,
     EventsByLastUpdatedKeyPrefix,
-    KeyType::DirectChatEventsByLastUpdated
-        | KeyType::GroupChatEventsByLastUpdated
-        | KeyType::ChannelEventsByLastUpdated
-        | KeyType::DirectChatEventsByLastUpdatedV2
+    KeyType::DirectChatEventsByLastUpdated | KeyType::GroupChatEventsByLastUpdated | KeyType::ChannelEventsByLastUpdated
 );
 
 // Each event is identified by its thread (if any) followed by its event index, which is encoded as
@@ -53,10 +47,9 @@ impl TryFrom<&ChatEventKeyPrefix> for EventLastUpdatedKeyPrefix {
     fn try_from(value: &ChatEventKeyPrefix) -> Result<Self, Self::Error> {
         let mut bytes = BaseKeyPrefix::from(value.clone()).0;
         bytes[0] = match extract_key_type(&bytes).unwrap() {
-            KeyType::DirectChatEvent => KeyType::DirectChatEventLastUpdated,
             KeyType::GroupChatEvent => KeyType::GroupChatEventLastUpdated,
             KeyType::ChannelEvent => KeyType::ChannelEventLastUpdated,
-            KeyType::DirectChatEventV2 => KeyType::DirectChatEventLastUpdatedV2,
+            KeyType::DirectChatEvent => KeyType::DirectChatEventLastUpdated,
             _ => return Err(()),
         } as u8;
         Ok(EventLastUpdatedKeyPrefix(bytes))
@@ -82,10 +75,9 @@ impl TryFrom<&ChatEventKeyPrefix> for EventsByLastUpdatedKeyPrefix {
     fn try_from(value: &ChatEventKeyPrefix) -> Result<Self, Self::Error> {
         let mut bytes = BaseKeyPrefix::from(value.clone()).0;
         bytes[0] = match extract_key_type(&bytes).unwrap() {
-            KeyType::DirectChatEvent => KeyType::DirectChatEventsByLastUpdated,
             KeyType::GroupChatEvent => KeyType::GroupChatEventsByLastUpdated,
             KeyType::ChannelEvent => KeyType::ChannelEventsByLastUpdated,
-            KeyType::DirectChatEventV2 => KeyType::DirectChatEventsByLastUpdatedV2,
+            KeyType::DirectChatEvent => KeyType::DirectChatEventsByLastUpdated,
             _ => return Err(()),
         } as u8;
         Ok(EventsByLastUpdatedKeyPrefix(bytes))
@@ -177,33 +169,30 @@ mod tests {
     fn last_updated_keys_e2e() {
         for thread in [false, true] {
             for _ in 0..100 {
-                let user_id_bytes: [u8; 10] = rng().random();
-                let user_id = Principal::from_slice(&user_id_bytes).into();
+                let key_id = rng().next_u32();
                 let channel_id = ChannelId::from(rng().next_u32());
                 let thread_root_message_index = thread.then(|| MessageIndex::from(rng().next_u32()));
                 let event_index = EventIndex::from(rng().next_u32());
                 let last_updated = rng().next_u64();
 
-                for (chat, key_types, prefix_len) in [
+                for (events_prefix, key_types, prefix_len) in [
                     (
-                        Chat::Direct(user_id),
+                        ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id, None),
                         (KeyType::DirectChatEventLastUpdated, KeyType::DirectChatEventsByLastUpdated),
-                        12,
+                        5,
                     ),
                     (
-                        Chat::Group(Principal::anonymous().into()),
+                        ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None),
                         (KeyType::GroupChatEventLastUpdated, KeyType::GroupChatEventsByLastUpdated),
                         1,
                     ),
                     (
-                        Chat::Channel(Principal::anonymous().into(), channel_id),
+                        ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::anonymous().into(), channel_id), None),
                         (KeyType::ChannelEventLastUpdated, KeyType::ChannelEventsByLastUpdated),
                         5,
                     ),
                 ] {
-                    let events_prefix = ChatEventKeyPrefix::new_from_chat(chat, None);
-
-                    let prefix = EventLastUpdatedKeyPrefix::new_from_chat(chat);
+                    let prefix = EventLastUpdatedKeyPrefix::new_from_events_prefix(&events_prefix);
                     let key = BaseKey::from(prefix.create_key(&(thread_root_message_index, event_index)));
                     let last_updated_key = EventLastUpdatedKey::try_from(key).unwrap();
 
@@ -219,7 +208,7 @@ mod tests {
                     let deserialized: EventLastUpdatedKey = msgpack::deserialize_then_unwrap(&serialized);
                     assert_eq!(deserialized, last_updated_key);
 
-                    let prefix = EventsByLastUpdatedKeyPrefix::new_from_chat(chat);
+                    let prefix = EventsByLastUpdatedKeyPrefix::new_from_events_prefix(&events_prefix);
                     let key = BaseKey::from(prefix.create_key(&(last_updated, thread_root_message_index, event_index)));
                     let by_last_updated_key = EventsByLastUpdatedKey::try_from(key).unwrap();
 
@@ -230,9 +219,9 @@ mod tests {
                     assert_eq!(by_last_updated_key.last_updated(), last_updated);
                     assert_eq!(by_last_updated_key.thread_root_message_index(), thread_root_message_index);
                     assert_eq!(by_last_updated_key.event_index(), event_index);
-                    assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix).as_slice()[1..]);
+                    assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix.clone()).as_slice()[1..]);
 
-                    let thread_events_prefix = ChatEventKeyPrefix::new_from_chat(chat, Some(1.into()));
+                    let thread_events_prefix = events_prefix.for_thread(1.into());
                     assert!(EventLastUpdatedKeyPrefix::try_from(&thread_events_prefix).is_err());
                     assert!(EventsByLastUpdatedKeyPrefix::try_from(&thread_events_prefix).is_err());
 

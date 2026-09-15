@@ -21,19 +21,13 @@ use types::{Chat, MessageIndex, UserId};
 key!(
     SearchTokenKey,
     SearchTokenKeyPrefix,
-    KeyType::DirectChatSearchToken
-        | KeyType::GroupChatSearchToken
-        | KeyType::ChannelSearchToken
-        | KeyType::DirectChatSearchTokenV2
+    KeyType::DirectChatSearchToken | KeyType::GroupChatSearchToken | KeyType::ChannelSearchToken
 );
 
 key!(
     SearchSenderKey,
     SearchSenderKeyPrefix,
-    KeyType::DirectChatSearchSender
-        | KeyType::GroupChatSearchSender
-        | KeyType::ChannelSearchSender
-        | KeyType::DirectChatSearchSenderV2
+    KeyType::DirectChatSearchSender | KeyType::GroupChatSearchSender | KeyType::ChannelSearchSender
 );
 
 const TOKEN_TERMINATOR: u8 = 0;
@@ -67,10 +61,9 @@ impl TryFrom<&ChatEventKeyPrefix> for SearchTokenKeyPrefix {
     fn try_from(value: &ChatEventKeyPrefix) -> Result<Self, Self::Error> {
         let mut bytes = BaseKeyPrefix::from(value.clone()).0;
         bytes[0] = match extract_key_type(&bytes).unwrap() {
-            KeyType::DirectChatEvent => KeyType::DirectChatSearchToken,
             KeyType::GroupChatEvent => KeyType::GroupChatSearchToken,
             KeyType::ChannelEvent => KeyType::ChannelSearchToken,
-            KeyType::DirectChatEventV2 => KeyType::DirectChatSearchTokenV2,
+            KeyType::DirectChatEvent => KeyType::DirectChatSearchToken,
             _ => return Err(()),
         } as u8;
         Ok(SearchTokenKeyPrefix(bytes))
@@ -116,10 +109,9 @@ impl TryFrom<&ChatEventKeyPrefix> for SearchSenderKeyPrefix {
     fn try_from(value: &ChatEventKeyPrefix) -> Result<Self, Self::Error> {
         let mut bytes = BaseKeyPrefix::from(value.clone()).0;
         bytes[0] = match extract_key_type(&bytes).unwrap() {
-            KeyType::DirectChatEvent => KeyType::DirectChatSearchSender,
             KeyType::GroupChatEvent => KeyType::GroupChatSearchSender,
             KeyType::ChannelEvent => KeyType::ChannelSearchSender,
-            KeyType::DirectChatEventV2 => KeyType::DirectChatSearchSenderV2,
+            KeyType::DirectChatEvent => KeyType::DirectChatSearchSender,
             _ => return Err(()),
         } as u8;
         Ok(SearchSenderKeyPrefix(bytes))
@@ -149,14 +141,12 @@ impl SearchSenderKey {
 
 fn prefix_len(key: &[u8]) -> usize {
     match extract_key_type(key).unwrap() {
-        // Key type, then the other user's id preceded by its length
-        KeyType::DirectChatSearchToken | KeyType::DirectChatSearchSender => 2 + key[1] as usize,
         KeyType::GroupChatSearchToken | KeyType::GroupChatSearchSender => 1,
         // Key type, then the channel id (or the direct chat's key id)
         KeyType::ChannelSearchToken
         | KeyType::ChannelSearchSender
-        | KeyType::DirectChatSearchTokenV2
-        | KeyType::DirectChatSearchSenderV2 => 5,
+        | KeyType::DirectChatSearchToken
+        | KeyType::DirectChatSearchSender => 5,
         _ => unreachable!(),
     }
 }
@@ -179,20 +169,12 @@ mod tests {
     use types::ChannelId;
 
     fn chats() -> Vec<(ChatEventKeyPrefix, KeyType, KeyType, usize)> {
-        let them_bytes: [u8; 10] = rng().random();
-        let them = Principal::from_slice(&them_bytes).into();
         let channel_id = ChannelId::from(rng().next_u32());
         vec![
             (
-                ChatEventKeyPrefix::new_from_chat(Chat::Direct(them), None),
+                ChatEventKeyPrefix::new_from_direct_chat_key_id(rng().next_u32(), None),
                 KeyType::DirectChatSearchToken,
                 KeyType::DirectChatSearchSender,
-                12,
-            ),
-            (
-                ChatEventKeyPrefix::new_from_direct_chat_key_id(rng().next_u32(), None),
-                KeyType::DirectChatSearchTokenV2,
-                KeyType::DirectChatSearchSenderV2,
                 5,
             ),
             (

@@ -60,8 +60,8 @@ fn search_matches_model() {
     init_stable_memory_map();
     let mut rng = StdRng::seed_from_u64(1);
     let chats = [
-        ChatEventKeyPrefix::new_from_chat(Chat::Direct(user_id(100).into()), None),
         ChatEventKeyPrefix::new_from_direct_chat_key_id(1, None),
+        ChatEventKeyPrefix::new_from_direct_chat_key_id(2, None),
         ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None),
         ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::anonymous().into(), ChannelId::from(1u32)), None),
         ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::anonymous().into(), ChannelId::from(2u32)), None),

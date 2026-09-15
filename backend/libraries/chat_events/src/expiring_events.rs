@@ -123,8 +123,8 @@ mod tests {
     #[test]
     fn expired_events_are_taken_in_expiry_order() {
         init_stable_memory_map();
-        let chat1 = ChatEventKeyPrefix::new_from_chat(Chat::Direct(Principal::from_slice(&[1]).into()), None);
-        let chat2 = ChatEventKeyPrefix::new_from_chat(Chat::Direct(Principal::from_slice(&[2]).into()), None);
+        let chat1 = ChatEventKeyPrefix::new_from_direct_chat_key_id(1, None);
+        let chat2 = ChatEventKeyPrefix::new_from_direct_chat_key_id(2, None);
         let mut expiring_events1 = ExpiringEvents::default();
         let mut expiring_events2 = ExpiringEvents::default();
 

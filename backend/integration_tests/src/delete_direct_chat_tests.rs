@@ -127,7 +127,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
         // entries by their key type and the user id they end with
         let user_metrics_keys: Vec<_> = get_stable_memory_map(env, me.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID)
             .keys()
-            .filter(|k| k[0] == KeyType::DirectChatUserMetricsV2 as u8)
+            .filter(|k| k[0] == KeyType::DirectChatUserMetrics as u8)
             .collect();
         assert!(user_metrics_keys.iter().any(|k| k.ends_with(me.user_id.as_slice())));
         assert!(!user_metrics_keys.iter().any(|k| k.ends_with(them.user_id.as_slice())));
