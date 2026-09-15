@@ -11,6 +11,7 @@ import {
 import { dirname, isAbsolute, relative, resolve, sep, posix } from "node:path";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
+import { assertReviewedArborist } from "./npm_feature_runtime.mjs";
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const json = (bytes) => JSON.parse(Buffer.from(bytes).toString("utf8"));
@@ -83,7 +84,8 @@ function declared(pkg, node, legacyPeerDeps) {
     "unsupported virtual dependency mode",
   );
   const result = new Map();
-  // Arborist 9.4.0 Node._loadDeps precedence; external registry packages do
+  // Reviewed Arborist 9.7.0 Node._loadDeps precedence (unchanged from 9.4.0);
+  // real-engine coverage is in npm_feature_runtime_smoke.mjs. Registry packages do
   // not acquire their development dependency graph.
   const sections = legacyPeerDeps ? [] : [["peerDependencies", "peer"]];
   sections.push(["dependencies", "prod"], ["optionalDependencies", "optional"]);
@@ -128,10 +130,7 @@ function collectGraph({
   const lock = json(lockBytes);
   const config = json(seedBytes);
   const runtime = json(arboristPackageBytes);
-  check(
-    runtime.name === "@npmcli/arborist" && runtime.version === "9.4.0",
-    "expected Arborist 9.4.0",
-  );
+  assertReviewedArborist(runtime);
   check(
     [2, 3].includes(lock.lockfileVersion) && lock.packages && lock.packages[""],
     "expected a complete npm v2/v3 packages lock",
@@ -677,10 +676,7 @@ export async function runNpmFeatureScope({
   const npmrcBytes = readNpmrc();
   const installMode = readNpmInstallMode(npmrcBytes, process.env);
   const runtime = json(bytes[3]);
-  check(
-    runtime.name === "@npmcli/arborist" && runtime.version === "9.4.0",
-    "expected Arborist 9.4.0",
-  );
+  assertReviewedArborist(runtime);
   const require = createRequire(import.meta.url);
   const Arborist = require(runtimePath);
   // Do not replace this with loadActual, buildIdealTree, reify or audit.

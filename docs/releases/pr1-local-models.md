@@ -4,7 +4,33 @@ Target: existing [upstream PR #9132](https://github.com/open-chat-labs/open-chat
 Keep draft status. This handoff records the model-only source slice; publishing and hosted
 check status must be verified against the exact remote head, not inferred from local tests.
 
-## September 15 pre-publication checkpoint
+## September 15 CI repair checkpoint
+
+The first publication reached `656859b54cba959e7bcca018664e92522a51caad`.
+Its hosted failures were actionable CI/test defects, not completed acceptance.
+The follow-up candidate removes explicit `any` from Qwen test fixtures and checks
+large tensors/graphs with complete native byte equality. Assertions, all geometry
+cases, production runtime, model weights and timeout ceilings are preserved.
+
+Collector validation now uses the exact CI Node 24.18.1 / npm 11.16.0 bundle, with
+reviewed Arborist 9.7.0 / semver 7.8.1 semantics and a real, network-blocked offline
+smoke before any advisory request. Android setup explicitly requests platform-tools,
+not the retired tools package. Formatting uses the reconciled upstream boundary;
+any inherited style exception binds the full candidate and upstream source bytes,
+formatter versions and configuration. It is not a blanket core-path exclusion.
+
+The complete local frontend rerun passes **1,975/1,975 tests across 139 files** on
+Node 24.18.1, with no skips. Full frontend lint has zero errors (30 existing warnings),
+and both frontend and agent type checks pass. The exact checked-in offline helper
+selection passes 685/685, without skips; scoped formatting passes for 146 files.
+Initial failures from pruned local dependency files
+and their unchanged-source reruns are retained. The four directly repaired Qwen
+suites pass 161/161 independently in both slices. Exact-head hosted reruns remain
+required; these repairs do not establish model accuracy, advisory clearance,
+phone delivery or release approval. No application prompt or shipping inference
+behavior changes in this repair.
+
+## Historical September 15 pre-publication checkpoint
 
 The selected PR1 frontend contracts pass 972/972 tests across 49 files, and the selected
 offline CI/packaging helpers pass 590/590, with no skipped tests. Source ownership and

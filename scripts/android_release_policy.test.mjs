@@ -503,6 +503,97 @@ test("AAB requires explicit tool path and valid policy before executing tools", 
   }
 });
 
+function assertBundletoolRunnerEnvironment(workflow) {
+  const build = workflow.split(/^  build-android:\r?$/mu)[1];
+  assert.ok(build, "missing Android build job");
+  const header = build.split(/^    steps:\r?$/mu)[0];
+  const environment = /^    env:\r?\n((?: {6}[^\r\n]*(?:\r?\n|$))*)/mu.exec(
+    header,
+  )?.[1];
+  assert.ok(environment, "missing Android build job environment");
+  // GitHub evaluates job env before a runner exists. These contexts are
+  // available in steps, but not jobs.<job_id>.env (GitHub contexts reference).
+  for (const [, expression] of environment.matchAll(/\$\{\{([\s\S]*?)\}\}/gu)) {
+    assert.doesNotMatch(expression, /\b(?:runner|env|job|steps)\s*(?:\.|\[)/u);
+  }
+  assert.doesNotMatch(environment, /^\s*ANDROID_BUNDLETOOL_JAR:/mu);
+
+  const download = build
+    .split("- name: Download and verify pinned bundletool")[1]
+    ?.split(/\r?\n      - /u)[0];
+  assert.ok(download, "missing verified bundletool download step");
+  const assignment =
+    'ANDROID_BUNDLETOOL_JAR="$RUNNER_TEMP/bundletool-all-1.18.1.jar"';
+  const persistence =
+    'printf \'ANDROID_BUNDLETOOL_JAR=%s\\n\' "$ANDROID_BUNDLETOOL_JAR" >> "$GITHUB_ENV"';
+  assert.equal(
+    download.split(assignment).length,
+    2,
+    "assign the runner path once",
+  );
+  assert.equal(
+    download.split(persistence).length,
+    2,
+    "persist the verified path once",
+  );
+  assert.ok(download.indexOf(assignment) < download.indexOf("curl --fail"));
+  assert.ok(
+    download.indexOf("curl --fail") < download.indexOf("verify-bundletool"),
+  );
+  assert.ok(
+    download.indexOf(persistence) > download.indexOf("verify-bundletool"),
+  );
+}
+
+test("bundletool path is evaluated on the runner and persisted after verification", () => {
+  const workflow = readFileSync(
+    new URL("../.github/workflows/android_release.yaml", import.meta.url),
+    "utf8",
+  );
+  assertBundletoolRunnerEnvironment(workflow);
+  // runner is valid in step env; do not ban it throughout the workflow.
+  assertBundletoolRunnerEnvironment(
+    workflow.replace(
+      "      - name: Download and verify pinned bundletool",
+      "      - name: Download and verify pinned bundletool\n        env:\n          VERIFIED_TEMP: ${{ runner.temp }}",
+    ),
+  );
+});
+
+test("bundletool environment regressions fail before a workflow is published", () => {
+  const workflow = readFileSync(
+    new URL("../.github/workflows/android_release.yaml", import.meta.url),
+    "utf8",
+  );
+  const assignment =
+    '          ANDROID_BUNDLETOOL_JAR="$RUNNER_TEMP/bundletool-all-1.18.1.jar"';
+  const persistence =
+    '          printf \'ANDROID_BUNDLETOOL_JAR=%s\\n\' "$ANDROID_BUNDLETOOL_JAR" >> "$GITHUB_ENV"';
+  const mutants = [
+    workflow.replace(
+      '      ANDROID_BUILD_TOOLS_VERSION: "35.0.0"',
+      '      ANDROID_BUILD_TOOLS_VERSION: "35.0.0"\n      ANDROID_BUNDLETOOL_JAR: ${{ runner.temp }}/bundletool-all-1.18.1.jar',
+    ),
+    workflow.replace(
+      '      ANDROID_BUILD_TOOLS_VERSION: "35.0.0"',
+      '      ANDROID_BUILD_TOOLS_VERSION: "35.0.0"\n      BROKEN_RUNNER_PATH: ${{ runner.temp }}',
+    ),
+    workflow.replace(assignment, ""),
+    workflow.replace(persistence, ""),
+    workflow
+      .replace(persistence, "")
+      .replace(assignment, assignment + "\n" + persistence),
+  ];
+  for (const [index, mutant] of mutants.entries()) {
+    assert.notEqual(
+      mutant,
+      workflow,
+      `mutation ${index} must alter the workflow`,
+    );
+    assert.throws(() => assertBundletoolRunnerEnvironment(mutant));
+  }
+});
+
 test("workflow gates every build/upload behind the policy and verifies both artifacts", () => {
   const workflow = readFileSync(
     new URL("../.github/workflows/android_release.yaml", import.meta.url),
@@ -568,9 +659,10 @@ test("workflow gates every build/upload behind the policy and verifies both arti
     download.indexOf("verify-bundletool") > download.indexOf("curl --fail"),
   );
   assert.doesNotMatch(download, /java|\|\| true|continue-on-error/u);
+  assertBundletoolRunnerEnvironment(workflow);
   assert.match(
     workflow,
-    /ANDROID_BUNDLETOOL_JAR: \$\{\{ runner\.temp \}\}\/bundletool-all-1\.18\.1\.jar/u,
+    /- name: Setup Android SDK\s+uses: android-actions\/setup-android@v3\s+with:\s+packages: platform-tools\s/u,
   );
   assert.match(
     workflow,

@@ -21,7 +21,10 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { reviewedDependencyDigest } from "./security_dependency_hash.mjs";
-import { checkFrontendFormatting } from "./frontend_format_check.mjs";
+import {
+  candidateFormattingPaths,
+  checkFrontendFormatting,
+} from "./frontend_format_check.mjs";
 import { assertSbomLockIdentity } from "./sbom_lock_identity.mjs";
 import { securityModes } from "./security_mode_scope.mjs";
 import { ownedSecurityRules } from "./security_owned_rules.mjs";
@@ -102,28 +105,12 @@ function runGit(args) {
   ]);
 }
 
-function outputLines(result) {
-  return result.stdout.split(/\r?\n/u).filter(Boolean);
-}
-
 function candidatePaths() {
-  const comparisonBase = process.env.PR_BASE_SHA || policy.baseCommit;
-  if (!comparisonBase) return [];
-  const range =
-    process.env.CI === "true" ? `${comparisonBase}...HEAD` : comparisonBase;
-  const changed = runGit(["diff", "--name-only", range, "--"]);
-  if (changed.status !== 0) {
-    throw new Error(`git candidate path check failed: ${changed.stderr}`);
-  }
-  const paths = outputLines(changed);
-  if (process.env.CI !== "true") {
-    const untracked = runGit(["ls-files", "--others", "--exclude-standard"]);
-    if (untracked.status !== 0) {
-      throw new Error(`git untracked path check failed: ${untracked.stderr}`);
-    }
-    paths.push(...outputLines(untracked));
-  }
-  return [...new Set(paths)].sort();
+  return candidateFormattingPaths({
+    root,
+    comparisonBase: process.env.PR_BASE_SHA || policy.baseCommit,
+    ci: process.env.CI === "true",
+  });
 }
 
 function parseJsonOutput(result, label) {
@@ -216,6 +203,8 @@ if (modes.has("format")) {
     for (const failure of checkFrontendFormatting(
       frontendRoot,
       prettierPaths,
+      undefined,
+      { inheritedBase: policy.baseCommit },
     )) {
       failures.push(`Candidate source/config formatting failed:\n${failure}`);
     }

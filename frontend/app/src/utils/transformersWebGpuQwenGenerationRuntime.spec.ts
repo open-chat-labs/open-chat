@@ -15,6 +15,8 @@ class Tensor {
     }
 }
 type Feeds = Record<string, Tensor>;
+type GenerationControl = { type: string; dims: number[]; data: BigInt64Array };
+type InputMetadata = { name: string; type: string; shape: readonly (string | number)[] };
 function feeds(embeddingSequence = 604, tokenSequence = 0, past = 0): Feeds {
     const sequence = embeddingSequence + tokenSequence;
     const result: Feeds = {
@@ -81,7 +83,7 @@ describe("Qwen generation-only host metadata", () => {
                 [[8], [0, 0, 0, 0, 0, 0, 0, 1024 - T]],
                 [[8], [0, 0, 0, 0, 0, 0, 1024 - T, 0]],
             ];
-            Object.values(controls).forEach((control: any, index) => {
+            Object.values(controls).forEach((control: GenerationControl, index) => {
                 expect(control.type).toBe("int64");
                 expect(control.dims).toEqual(expected[index][0]);
                 expect(Array.from(control.data, Number)).toEqual(expected[index][1]);
@@ -107,7 +109,7 @@ describe("Qwen generation-only host metadata", () => {
         expect(Object.isFrozen(runtime)).toBe(true);
         expect(
             runtime.inputMetadata.every(
-                (item: any) => Object.isFrozen(item) && Object.isFrozen(item.shape),
+                (item: InputMetadata) => Object.isFrozen(item) && Object.isFrozen(item.shape),
             ),
         ).toBe(true);
     });

@@ -17,7 +17,20 @@ type NativeGeometryCase = {
         sha256: string;
     }[];
 };
-const fixture = JSON.parse(
+type InputMetadata = { name: string; type: string; shape: readonly (number | string)[] };
+type GeometryControl =
+    | { type: "int64"; dims: number[]; data: BigInt64Array }
+    | { type: "float32"; dims: number[]; data: Float32Array };
+type GeometryFixture = {
+    provenance: {
+        receiptSha256: string;
+        originalGeometryGraphSha256: string;
+        comparison: Record<string, number | boolean>;
+    };
+    cases: NativeGeometryCase[];
+    boundary: InputMetadata[];
+};
+const fixture: GeometryFixture = JSON.parse(
     readFileSync(
         path.resolve(import.meta.dirname, "fixtures/qwenVisionGeometry.native.json"),
         "utf8",
@@ -28,7 +41,7 @@ const hash = (data: ArrayBufferView) =>
     createHash("sha256")
         .update(Buffer.from(data.buffer, data.byteOffset, data.byteLength))
         .digest("hex");
-const feeds = (grid = [1, 32, 20]): any => ({
+const feeds = (grid = [1, 32, 20]) => ({
     pixel_values: {
         type: "float32",
         dims: [grid[1] * grid[2], 1536],
@@ -49,6 +62,7 @@ const feeds = (grid = [1, 32, 20]): any => ({
         data: BigInt64Array.from(grid, BigInt),
     },
 });
+type GeometryFeeds = ReturnType<typeof feeds>;
 const runtime = createQwen3Vl2bVisionGeometryRuntime();
 
 describe("Qwen vision fixed geometry (no model runtime)", () => {
@@ -70,9 +84,11 @@ describe("Qwen vision fixed geometry (no model runtime)", () => {
         const admitted = [];
         for (let h = 16; h <= 32; h += 2)
             for (let w = 16; w <= 32; w += 2) if (h * w <= 640) admitted.push([1, h, w]);
-        expect(fixture.cases.map((item: any) => item.grid)).toEqual(admitted);
+        expect(fixture.cases.map((item) => item.grid)).toEqual(admitted);
         expect(runtime.inputMetadata).toEqual(fixture.boundary);
-        expect(runtime.inputNames).toEqual(fixture.boundary.map((item: any) => item.name));
+        expect(runtime.inputNames).toEqual(
+            fixture.boundary.map((item: InputMetadata) => item.name),
+        );
         expect(runtime.inputNames.length).toBe(13);
     });
 
@@ -120,25 +136,26 @@ describe("Qwen vision fixed geometry (no model runtime)", () => {
         const result = sandbox.makeControls(feeds());
         expect(sandbox.inputNames).toEqual(runtime.inputNames);
         expect(hash(result[runtime.inputNames[4]].data)).toBe(
-            fixture.cases.at(-1).controls[4].sha256,
+            fixture.cases.at(-1)!.controls[4].sha256,
         );
         expect(Object.isFrozen(sandbox)).toBe(true);
         expect(Object.isFrozen(sandbox.inputNames)).toBe(true);
         expect(
             sandbox.inputMetadata.every(
-                (item: any) => Object.isFrozen(item) && Object.isFrozen(item.shape),
+                (item: InputMetadata) => Object.isFrozen(item) && Object.isFrozen(item.shape),
             ),
         ).toBe(true);
     });
 
     it("owns fresh output arrays, preserves full frame order and cannot be poisoned by previous outputs", () => {
         const source = feeds(),
-            a = runtime.makeControls(source);
+            a: Record<string, GeometryControl> = runtime.makeControls(source);
         const pristine = Object.fromEntries(
-            Object.entries(a).map(([name, t]: any) => [name, hash(t.data)]),
+            Object.entries(a).map(([name, t]) => [name, hash(t.data)]),
         );
-        Object.values(a).forEach((t: any) => {
-            t.data.fill(t.type === "int64" ? 999n : 999);
+        Object.values(a).forEach((t) => {
+            if (t.type === "int64") t.data.fill(999n);
+            else t.data.fill(999);
             t.dims.fill(1);
         });
         const b = runtime.makeControls(source),
@@ -159,67 +176,67 @@ describe("Qwen vision fixed geometry (no model runtime)", () => {
     });
 
     it.each([
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.pixel_values.type = "float16";
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.pixel_values.dims = [640, 1535];
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.pixel_values.dims = [639, 1536];
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.pixel_values.dims = [-0, 1536];
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.pixel_values.dims = [NaN, 1536];
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.type = "int32";
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.dims = [3];
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.dims = [2, 3];
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.data = new BigInt64Array([2n, 32n, 20n]);
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.data = new BigInt64Array([1n, 34n, 22n]);
             x.pixel_values.dims[0] = 748;
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.data = new BigInt64Array([1n, 32n, 32n]);
             x.pixel_values.dims[0] = 1024;
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.data = new BigInt64Array([1n, 31n, 20n]);
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.data = new BigInt64Array([1n, 14n, 20n]);
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.data = new BigInt64Array([1n, 32n, 20n, 0n]);
         },
-        (x: any) => {
-            x.image_grid_thw.data = [1n, 32n, 20n];
+        (x: GeometryFeeds) => {
+            Object.assign(x.image_grid_thw, { data: [1n, 32n, 20n] });
         },
-        (x: any) => {
-            x.image_grid_thw.data = new Int32Array([1, 32, 20]);
+        (x: GeometryFeeds) => {
+            Object.assign(x.image_grid_thw, { data: new Int32Array([1, 32, 20]) });
         },
-        (x: any) => {
+        (x: GeometryFeeds) => {
             x.image_grid_thw.location = "gpu-buffer";
         },
-        (x: any) => {
-            delete x.pixel_values;
+        (x: GeometryFeeds) => {
+            Reflect.deleteProperty(x, "pixel_values");
         },
-        (x: any) => {
-            x.extra = {};
+        (x: GeometryFeeds) => {
+            Reflect.set(x, "extra", {});
         },
-        (x: any) => {
-            x[runtime.inputNames[0]] = {};
+        (x: GeometryFeeds) => {
+            Reflect.set(x, runtime.inputNames[0], {});
         },
     ])("rejects unqualified feed metadata before producing controls", (mutate) => {
         const source = feeds();

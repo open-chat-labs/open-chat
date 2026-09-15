@@ -86,7 +86,15 @@ export function validateFixturePins(manifest) {
     assert.deepEqual(
       keys,
       (pin.name === "pocket-ic"
-        ? ["name", "url", "gunzip", "bytes", "sha256"]
+        ? [
+            "name",
+            "url",
+            "gunzip",
+            "archiveBytes",
+            "archiveSha256",
+            "bytes",
+            "sha256",
+          ]
         : ["name", "url", "bytes", "sha256"]
       ).sort(),
     );
@@ -99,7 +107,15 @@ export function validateFixturePins(manifest) {
     const url = new URL(pin.url);
     assert.equal(url.protocol, "https:");
     assert.equal(url.username + url.password + url.search + url.hash, "");
-    if (pin.name === "pocket-ic") assert.equal(pin.gunzip, true);
+    if (pin.name === "pocket-ic") {
+      assert.equal(pin.gunzip, true);
+      assert.ok(
+        Number.isSafeInteger(pin.archiveBytes) &&
+          pin.archiveBytes > 0 &&
+          pin.archiveBytes <= maxAssetBytes,
+      );
+      assert.match(pin.archiveSha256, /^[a-f0-9]{64}$/u);
+    }
   }
   return manifest.fixtures;
 }
@@ -259,6 +275,24 @@ export function verifyFixture(bytes, pin) {
       pin.bytes <= maxAssetBytes,
   );
   assert.match(pin.sha256, /^[a-f0-9]{64}$/u);
+  if (pin.gunzip) {
+    assert.ok(
+      Number.isSafeInteger(pin.archiveBytes) &&
+        pin.archiveBytes > 0 &&
+        pin.archiveBytes <= maxAssetBytes,
+    );
+    assert.match(pin.archiveSha256, /^[a-f0-9]{64}$/u);
+    assert.equal(
+      bytes.length,
+      pin.archiveBytes,
+      `Fixture archive byte length differs: ${pin.name}`,
+    );
+    assert.equal(
+      sha256(bytes),
+      pin.archiveSha256,
+      `Fixture archive SHA-256 differs: ${pin.name}`,
+    );
+  }
   const payload = pin.gunzip
     ? gunzipSync(bytes, { maxOutputLength: pin.bytes })
     : bytes;

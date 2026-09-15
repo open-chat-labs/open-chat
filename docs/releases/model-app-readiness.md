@@ -1,11 +1,44 @@
 # Model and app integration: PR and release readiness
 
-Assessment: 2026-09-15. **Scoped local checks pass; exact-head hosted acceptance is pending.**
-No PR, release, PR branch base, production switch, signing key, or production service was changed
-by this preparation. App-owned local registration updates are recorded below. The locally
-reconciled stack has not been pushed or published.
+Assessment: 2026-09-15. **CI repairs are under verification; release acceptance is not complete.**
+The first reconciled stack was published to the existing draft PR branches at
+PR1 `656859b54cba959e7bcca018664e92522a51caad` and
+PR2 `156b7bfbed79d692b34d5db693ec1d86546e04fd`. The pre-publication record below is
+historical. No production activation, publisher signing or release dispatch occurred.
 
-## Final scoped PR checks — September 15
+## CI repair follow-up — September 15
+
+The follow-up addresses the actual hosted failures: Qwen test lint/performance,
+the formatting comparison boundary and inherited style debt, the retired Android
+SDK tools package, invalid job-level bundletool runner context, exact npm collector
+runtime compatibility, and the wrong PocketIC fixture identity. The standalone
+PocketIC archive and decompressed binary now have separate byte/hash pins; all five
+official fixture downloads were verified. The app/model Linux integration tests
+must still run after that download gate; successful fixture verification is not a
+substitute for them.
+
+Qwen's full-byte assertions and all geometry cases are retained, without increased
+timeouts or shipping runtime changes. The collector's real offline smoke uses the
+exact CI runtime and blocks network and mutable graph operations. Scoped advisory
+checks remain strict; the ten inherited findings remain documented/deferred.
+No new core audit or broader dependency scope is authorized by these repairs.
+
+Local verification now uses Node 24.18.1. Complete frontend suites pass:
+PR1 **1,975/1,975 across 139 files**, PR2 **3,116/3,116 across 209 files**, with no skips.
+Both frontend/agent type-check sets pass. Full read-only lint has zero errors
+(30 PR1 / 31 PR2 warnings); warnings are not represented as warning-free checks.
+Initial failures caused by pruned local dependency files are preserved separately
+from their reruns. The exact checked-in offline helper selections pass **685/685
+for PR1** and **1,016/1,016 for PR2**, without skips. Scoped formatting passes for
+146 PR1 and 339 PR2 files, with explicit source-bound inherited-style reports
+(three and two respectively). Independent review found no unresolved actionable
+CI-repair issues. Exact-head hosted runs are still required for CI acceptance.
+
+The previous three physical-phone Qwen proposals remain valid for their recorded
+APK/runtime and were unsaved. They do not waive the separate app-owned receipt-note
+accuracy mismatch, current authenticated delivery, or untested optional features.
+
+## Historical scoped PR checks — September 15
 
 Fresh selected local suites pass, without changing assertions, mocks or timeouts:
 

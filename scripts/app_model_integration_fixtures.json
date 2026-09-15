@@ -1,13 +1,15 @@
 {
   "schemaVersion": 1,
-  "provenance": "Versions and URLs preserve the existing integration runner. SHA-256 and byte lengths were verified against the cached fixtures used for the 2026-09-08 integration attempt; they are integrity pins, not a claim that integration tests passed.",
+  "provenance": "Versions and URLs preserve the existing integration runner. PocketIC pins bind the standalone 11.0.0 GitHub asset 324682378, not the different dfx-cached build: its compressed size and SHA-256 match the official release API, and its decompressed size and SHA-256 were independently measured on 2026-09-15 after archive verification. Other fixture pins preserve the cached 2026-09-08 inputs. Integrity pins do not claim integration tests passed.",
   "fixtures": [
     {
       "name": "pocket-ic",
       "url": "https://github.com/dfinity/pocketic/releases/download/11.0.0/pocket-ic-x86_64-linux.gz",
       "gunzip": true,
-      "bytes": 114356024,
-      "sha256": "6bb60d58c49751aba7ac855b41595da66b0d6629f399894d70887af1b9b7b3b7"
+      "archiveBytes": 49658395,
+      "archiveSha256": "c5ba1ae43fe59281bc68cde0d45442452ecb1d04aefdf3f320c94d6f08612db3",
+      "bytes": 115083760,
+      "sha256": "1e3218a5d0bb4ca64ba271986833604c48d746f35117fe0844e4bddbb15ca96e"
     },
     {
       "name": "icp_ledger.wasm.gz",

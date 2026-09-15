@@ -288,21 +288,39 @@ test("fixture integrity rejects wrong bytes, wrong hashes, truncated gzip and no
   };
   assert.deepEqual(verifyFixture(wasm, pin), wasm);
   const plain = Buffer.from("executable fixture");
+  const archive = gzipSync(plain);
   const executablePin = {
     name: "pocket-ic",
+    archiveBytes: archive.length,
+    archiveSha256: hash(archive),
     bytes: plain.length,
     sha256: hash(plain),
     gunzip: true,
   };
-  assert.deepEqual(verifyFixture(gzipSync(plain), executablePin), plain);
+  assert.deepEqual(verifyFixture(archive, executablePin), plain);
+  for (const changed of [
+    { ...executablePin, archiveBytes: archive.length + 1 },
+    { ...executablePin, archiveSha256: "0".repeat(64) },
+    { ...executablePin, archiveBytes: undefined },
+    { ...executablePin, archiveSha256: undefined },
+  ])
+    assert.throws(() => verifyFixture(archive, changed));
   for (const changed of [
     { ...pin, bytes: pin.bytes + 1 },
     { ...pin, sha256: "0".repeat(64) },
   ])
     assert.throws(() => verifyFixture(wasm, changed));
   assert.throws(() => verifyFixture(wasm.subarray(0, 10), pin));
-  assert.throws(() =>
-    verifyFixture(gzipSync(Buffer.alloc(100)), { ...executablePin, bytes: 10 }),
+  const oversizedArchive = gzipSync(Buffer.alloc(100));
+  assert.throws(
+    () =>
+      verifyFixture(oversizedArchive, {
+        ...executablePin,
+        archiveBytes: oversizedArchive.length,
+        archiveSha256: hash(oversizedArchive),
+        bytes: 10,
+      }),
+    /Buffer larger than 10 bytes/u,
   );
   const invalidWasm = gzipSync(Buffer.from("not wasm"));
   assert.throws(() =>
@@ -311,6 +329,35 @@ test("fixture integrity rejects wrong bytes, wrong hashes, truncated gzip and no
       bytes: invalidWasm.length,
       sha256: hash(invalidWasm),
     }),
+  );
+});
+
+test("standalone PocketIC build size passes exactly while the different dfx-cached size fails", () => {
+  // Synthetic bytes, not a downloaded executable. Exercise the actual two
+  // observed build sizes so a small fixture cannot hide this decompression bug.
+  const officialBytes = 115083760;
+  const cachedDfxBytes = 114356024;
+  assert.equal(fixturePins[0].bytes, officialBytes);
+  const payload = Buffer.alloc(officialBytes);
+  const archive = gzipSync(payload);
+  const pin = {
+    name: "pocket-ic",
+    gunzip: true,
+    archiveBytes: archive.length,
+    archiveSha256: hash(archive),
+    bytes: officialBytes,
+    sha256: hash(payload),
+  };
+  const verified = verifyFixture(archive, pin);
+  assert.equal(verified.length, officialBytes);
+  assert.equal(hash(verified), pin.sha256);
+  assert.throws(
+    () => verifyFixture(archive, { ...pin, bytes: cachedDfxBytes }),
+    /Buffer larger than 114356024 bytes/u,
+  );
+  assert.throws(
+    () => verifyFixture(archive, { ...pin, bytes: officialBytes + 1 }),
+    /Fixture byte length differs/u,
   );
 });
 
@@ -360,8 +407,8 @@ test("fixture pins match reviewed bytes and the existing repository version sour
     [
       [
         "pocket-ic",
-        114356024,
-        "6bb60d58c49751aba7ac855b41595da66b0d6629f399894d70887af1b9b7b3b7",
+        115083760,
+        "1e3218a5d0bb4ca64ba271986833604c48d746f35117fe0844e4bddbb15ca96e",
       ],
       [
         "icp_ledger.wasm.gz",
@@ -384,6 +431,11 @@ test("fixture pins match reviewed bytes and the existing repository version sour
         "88753cdbde8e0de2d2d25bc3f0da83846fc3ceb310bd8d45bd59ce840a9bf840",
       ],
     ],
+  );
+  assert.equal(fixturePins[0].archiveBytes, 49658395);
+  assert.equal(
+    fixturePins[0].archiveSha256,
+    "c5ba1ae43fe59281bc68cde0d45442452ecb1d04aefdf3f320c94d6f08612db3",
   );
   const version = read("./run-integration-tests.sh").match(
     /POCKET_IC_SERVER_VERSION="([^"]+)"/u,
@@ -454,6 +506,21 @@ test("the entire real pin manifest rejects malformed hashes, omissions, duplicat
     }),
     edit((value) => {
       value.fixtures[0].gunzip = false;
+    }),
+    edit((value) => {
+      delete value.fixtures[0].archiveBytes;
+    }),
+    edit((value) => {
+      value.fixtures[0].archiveBytes = 0;
+    }),
+    edit((value) => {
+      value.fixtures[0].archiveBytes = 128 * 1024 * 1024 + 1;
+    }),
+    edit((value) => {
+      value.fixtures[0].archiveSha256 = "g".repeat(64);
+    }),
+    edit((value) => {
+      delete value.fixtures[0].archiveSha256;
     }),
     edit((value) => {
       value.fixtures[4].gunzip = true;

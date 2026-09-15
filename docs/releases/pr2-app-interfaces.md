@@ -4,14 +4,26 @@ Target: existing [fork PR #73](https://github.com/ktimam/open-chat/pull/73), sta
 refreshed model PR. Keep draft status; retarget upstream only after the stack is agreed.
 This is a prepared description, not a PR update or publication action.
 
-Current pre-publication checkpoint (September 15): the scoped local frontend selection passes
+Current CI-repair status: the initial reconciled stack was published at
+`156b7bfbed79d692b34d5db693ec1d86546e04fd`; both PRs remain drafts. The follow-up
+fixes the shared model CI defects, Android bundletool runner-context validation,
+and the standalone PocketIC fixture identity. Fixture downloads pass verification,
+but the hosted Linux integration tests must still run beyond that gate. Local
+Node 24.18.1 frontend/agent type checks pass; the complete frontend suite passes
+3,116/3,116 across 209 files with no skips, and full lint has zero errors (31 warnings).
+The checked-in offline helper selection passes 1,016/1,016 without skips; scoped
+formatting passes for 339 files. Exact-head hosted acceptance and the
+separate app-owned receipt-note accuracy/delivery gates remain outstanding.
+See the [current CI-repair record](model-app-readiness.md#ci-repair-follow-up--september-15).
+
+Historical pre-publication checkpoint (September 15): the scoped local frontend selection passes
 1,892/1,892 tests across 91 files; offline model/app CI and packaging helpers pass 915/915.
 Successful runs have no skipped tests. The current combined cleanup APK passed three fresh
 smaller-Qwen image/card proposals, including a repeated image without restarting. All three
 completed GPU cleanup; cards were left unsaved. Exact-head hosted CI/review remains pending,
 and these local Node 24.14.1 results are not the hosted Node 24.18.1 runtime. Existing inherited
 advisories remain documented/deferred, not suppressed. See the
-[current final check record](model-app-readiness.md#final-scoped-pr-checks--september-15).
+[historical scoped check record](model-app-readiness.md#historical-scoped-pr-checks--september-15).
 The dated narrative below is retained as history and does not override that checkpoint.
 
 Historical local status (September 14): the catalog-enabled combined APK has opened verified

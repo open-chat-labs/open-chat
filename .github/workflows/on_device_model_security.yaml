@@ -81,6 +81,7 @@ on:
       - "scripts/model_asset_notices*"
       - "scripts/verify_webgpu_distribution*"
       - "scripts/frontend_format_check*"
+      - "scripts/frontend_format_inherited*"
       - "scripts/android_dev*"
       - "scripts/android_bundle*"
       - "scripts/android_build_prerequisites*"
@@ -133,13 +134,20 @@ jobs:
         run: node scripts/check_openchat_pr1_security.mjs format
       - name: Test scoped npm ownership, collection and advisory contracts offline
         working-directory: .
-        run: node --test scripts/npm_feature_scope.test.mjs scripts/npm_feature_seed_review.test.mjs scripts/npm_feature_advisories.test.mjs scripts/npm_feature_advisories.review.test.mjs scripts/check_feature_ci.test.mjs scripts/security_mode_scope.test.mjs scripts/security_owned_rules.test.mjs
+        run: node --test scripts/npm_feature_scope.test.mjs scripts/npm_feature_seed_review.test.mjs scripts/npm_feature_advisories.test.mjs scripts/npm_feature_advisories.review.test.mjs scripts/npm_feature_runtime.test.mjs scripts/check_feature_ci.test.mjs scripts/security_mode_scope.test.mjs scripts/security_owned_rules.test.mjs
       - name: Check partial npm CI wiring and exact Node runtime
         working-directory: .
         run: node scripts/check_feature_ci.mjs npm-pr1
+      - name: Validate the actual collector runtime offline before advisory requests
+        working-directory: .
+        run: |
+          set -euo pipefail
+          npm_root="$(npm root --global)"
+          node scripts/npm_feature_runtime_smoke.mjs --repository-root "$GITHUB_WORKSPACE" --scope pr1 --arborist-path "$npm_root/npm/node_modules/@npmcli/arborist" --output-directory "$RUNNER_TEMP" --mode plan
       - name: Query advisories only for reviewed model dependency roots
         working-directory: .
-        # Arborist 9.4.0 and semver 7.7.4 are verified by the scoped runner.
+        # The exact Node/npm/Arborist/semver tuple and reviewed source hashes
+        # are verified offline before the scoped runner can query advisories.
         # Source, seeds, install mode and lock identities are checked before/after.
         run: |
           set -euo pipefail
@@ -187,6 +195,8 @@ jobs:
           java-version: "21"
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Install the Android API used by the component contracts
         run: sdkmanager "platforms;android-36"
       - name: Compile actual component sources and run host and SDK contracts

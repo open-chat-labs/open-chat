@@ -579,6 +579,9 @@ test("model runtime, workers, helpers, UI, build, notices and policy inputs trig
     "scripts/sbom_lock_identity.test.mjs",
     "scripts/frontend_format_check.mjs",
     "scripts/frontend_format_check.test.mjs",
+    "scripts/frontend_format_inherited.mjs",
+    "scripts/frontend_format_inherited.json",
+    "scripts/frontend_format_inherited.test.mjs",
     "frontend/app/publicKeyBuild.mjs",
     "frontend/app/src/publicKeyBuild.spec.ts",
     "scripts/model_ci_coverage.test.mjs",
@@ -757,6 +760,7 @@ test("frontend policy invokes the exact combined PR and release regressions pres
     "scripts/android_bundle.test.mjs",
     "scripts/android_build_prerequisites.test.mjs",
     "scripts/frontend_format_check.test.mjs",
+    "scripts/frontend_format_inherited.test.mjs",
     "scripts/android_dev.test.mjs",
     "scripts/verify_webgpu_distribution.test.mjs",
     "scripts/model_asset_notices.test.mjs",
@@ -887,6 +891,42 @@ test("Node image and installer fixes stay scoped to their reviewed model parents
       Object.hasOwn(overrides, parent.slice(0, parent.lastIndexOf("@"))),
       false,
     );
+  }
+});
+
+function assertCurrentAndroidSdkPackages(text) {
+  const job = mappingBlock(
+    mappingBlock(text, "jobs", 0),
+    "android-component-contracts",
+    2,
+  );
+  const steps = mappingBlock(job, "steps", 4);
+  const setup = steps
+    .split(/(?=^      - )/mu)
+    .filter((step) =>
+      /^        uses: android-actions\/setup-android@v3\r?$/mu.test(step),
+    );
+  assert.equal(setup.length, 1, "review the component SDK setup action");
+  const inputs = mappingBlock(setup[0], "with", 8);
+  assert.match(inputs, /^          packages: platform-tools\r?$/mu);
+  assert.equal((inputs.match(/^          packages:/gmu) ?? []).length, 1);
+}
+
+test("component SDK setup explicitly excludes the deprecated tools package", () => {
+  assertCurrentAndroidSdkPackages(workflow);
+  // setup-android v3 defaults to "tools platform-tools" when packages is
+  // omitted. The action itself bootstraps cmdline-tools before this input.
+  for (const replacement of [
+    "",
+    "          packages: tools platform-tools",
+    "          packages: ''",
+  ]) {
+    const mutant = workflow.replace(
+      "          packages: platform-tools",
+      replacement,
+    );
+    assert.notEqual(mutant, workflow);
+    assert.throws(() => assertCurrentAndroidSdkPackages(mutant));
   }
 });
 
