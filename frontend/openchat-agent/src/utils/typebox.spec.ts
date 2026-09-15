@@ -299,6 +299,19 @@ describe("typeboxValidate rejects malformed payloads", () => {
         }
     });
 
+    // Invariant: a validation failure names the path that failed and, for an object, the keys
+    // it carried. "Expected union value" on its own gave Rollbar #31917 nothing to act on.
+    test("names the failing path and keys in the message, never the value", () => {
+        const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+        try {
+            expect(() =>
+                typeboxValidate({ Error: "secret text" }, CommunityEventsResponse),
+            ).toThrow(/^Expected union value at \(root\) with keys Error$/);
+        } finally {
+            spy.mockRestore();
+        }
+    });
+
     test("error message matches the reference error message", () => {
         const spy = vi.spyOn(console, "error").mockImplementation(() => {});
         try {
@@ -316,7 +329,8 @@ describe("typeboxValidate rejects malformed payloads", () => {
                 msg = (e as Error).message;
             }
             expect(refMsg.length).toBeGreaterThan(0);
-            expect(msg).toBe(refMsg);
+            // ours appends the failing path (see "names the failing path")
+            expect(msg.startsWith(refMsg)).toBe(true);
         } finally {
             spy.mockRestore();
         }

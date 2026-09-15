@@ -1026,12 +1026,15 @@ function createMessageSortFunction(
     };
 }
 
-function sortByTimestampThenEventIndex(
+export function sortByTimestampThenEventIndex(
     a: EventWrapper<ChatEvent>,
     b: EventWrapper<ChatEvent>,
 ): number {
-    if (a.timestamp === b.timestamp) return a.index - b.index;
-    return Number(a.timestamp - b.timestamp);
+    // Relational operators compare a bigint with a number; `-` throws on the mix, and one
+    // event with a number timestamp took the whole sort down (Rollbar #31919)
+    if (a.timestamp < b.timestamp) return -1;
+    if (a.timestamp > b.timestamp) return 1;
+    return a.index - b.index;
 }
 
 export function serialiseMessageForRtc(message: NewUnconfirmedMessage): NewUnconfirmedMessage {

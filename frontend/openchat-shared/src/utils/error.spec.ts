@@ -109,6 +109,23 @@ describe("shouldReportError", () => {
         expect(shouldReportError(lost)).toBe(false);
     });
 
+    // Invariant: agent-side network weather is never reported. Each message below was a live
+    // Rollbar item (#31014 certificate in the past, #31131/#31934 polling timeout, #31936
+    // backoff exhausted, #31918 a stale tab's IndexedDB schema).
+    test("silences polling timeouts, stale certificates and a stale IDB schema", () => {
+        for (const message of [
+            "Certificate is signed more than 5 minutes in the past. Certificate time: " +
+                "2026-09-15T06:29:39.289Z Current time: 2026-09-15T07:11:21.800Z Clock drift: 0ms",
+            "Request timed out after 300000 msec\n  Request ID: d975f6\n  Request status: unknown",
+            "Backoff strategy exhausted after 1 attempts.\n  Request ID: c6fc51",
+            "Failed to execute 'transaction' on 'IDBDatabase': One of the specified object " +
+                "stores was not found.",
+        ]) {
+            expect(shouldReportError(new HttpError(500, new Error(message)))).toBe(false);
+            expect(shouldReportError(new Error(message))).toBe(false);
+        }
+    });
+
     test("silences a wrong client clock in both directions", () => {
         // the client's clock is ahead, so the certificate the replica signed looks like the future
         expect(
