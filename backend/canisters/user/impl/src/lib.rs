@@ -23,6 +23,7 @@ use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use itertools::Itertools;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use model::blocked_users::BlockedUsers;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
@@ -336,15 +337,13 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
     }
 
     pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
-        if self.data.blocked_users.value.insert(user_id) {
-            self.data.blocked_users.timestamp = now;
+        if self.data.blocked_users.block(user_id, now) {
             self.push_local_user_index_canister_event(LocalUserIndexEvent::UserBlocked(user_id), now);
         }
     }
 
     pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) {
-        if self.data.blocked_users.value.remove(&user_id) {
-            self.data.blocked_users.timestamp = now;
+        if self.data.blocked_users.unblock(user_id, now) {
             self.push_local_user_index_canister_event(LocalUserIndexEvent::UserUnblocked(user_id), now);
         }
     }
@@ -458,7 +457,7 @@ struct Data {
     pub group_chats: GroupChats,
     pub communities: Communities,
     pub favourite_chats: FavouriteChats,
-    pub blocked_users: Timestamped<HashSet<UserId>>,
+    pub blocked_users: BlockedUsers,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -530,7 +529,7 @@ impl Data {
             group_chats: GroupChats::default(),
             communities: Communities::default(),
             favourite_chats: FavouriteChats::default(),
-            blocked_users: Timestamped::default(),
+            blocked_users: BlockedUsers::default(),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,

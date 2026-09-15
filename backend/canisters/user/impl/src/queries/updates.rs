@@ -32,8 +32,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let blocked_users = state
         .data
         .blocked_users
-        .if_set_after(updates_since)
-        .map(|user_ids| user_ids.iter().copied().collect());
+        .if_updated_since(updates_since)
+        .map(|user_ids| user_ids.into_iter().collect());
 
     let pin_number_updated = state.data.pin_number.last_updated() > updates_since;
     let is_unique_person_updated = state
