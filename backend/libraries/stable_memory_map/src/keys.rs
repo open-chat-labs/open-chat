@@ -112,10 +112,13 @@ fn validate_key<F: FnOnce(KeyType) -> bool>(key: &[u8], validator: F) -> Result<
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum KeyType {
-    DirectChatEvent = 1,
+    // The events of direct chats created before `key_id`s were introduced stay under these two
+    // `Legacy` key types until they have been moved across to `DirectChatEvent` and
+    // `DirectChatThreadEvent`. Both can be removed once every user canister has been migrated.
+    DirectChatEventLegacy = 1,
     GroupChatEvent = 2,
     ChannelEvent = 3,
-    DirectChatThreadEvent = 4,
+    DirectChatThreadEventLegacy = 4,
     GroupChatThreadEvent = 5,
     ChannelThreadEvent = 6,
     GroupMember = 7,
@@ -168,20 +171,12 @@ pub enum KeyType {
     Referral = 54,
     StreakInsurancePayment = 55,
     StreakInsuranceClaim = 56,
-    // The `V2` direct chat key types are for direct chats whose keys use the chat's `key_id` in place
-    // of the other user's id (see `ChatEventKeyPrefix::new_from_direct_chat_key_id`)
-    DirectChatEventV2 = 57,
-    DirectChatThreadEventV2 = 58,
-    DirectChatMessageIdV2 = 59,
-    DirectChatThreadMessageIdV2 = 60,
-    DirectChatExpiringEventV2 = 61,
-    DirectChatEventLastUpdatedV2 = 62,
-    DirectChatEventsByLastUpdatedV2 = 63,
-    DirectChatUserMetricsV2 = 64,
-    DirectChatMessageEventIndexesV2 = 65,
-    DirectChatThreadMessageEventIndexesV2 = 66,
-    DirectChatSearchTokenV2 = 67,
-    DirectChatSearchSenderV2 = 68,
+    // Every direct chat key type other than the two `Legacy` ones uses the chat's `key_id` in place
+    // of the other user's id (see `ChatEventKeyPrefix::new_from_direct_chat_key_id`). The events
+    // need new key types since the legacy entries are still being migrated, whereas the other key
+    // types never held data in the legacy layout so they keep their original values.
+    DirectChatEvent = 57,
+    DirectChatThreadEvent = 58,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -204,14 +199,14 @@ impl KeyType {
     // stays within one map.
     pub const fn map_class(self) -> MapClass {
         match self {
-            KeyType::DirectChatEvent
+            KeyType::DirectChatEventLegacy
             | KeyType::GroupChatEvent
             | KeyType::ChannelEvent
-            | KeyType::DirectChatThreadEvent
+            | KeyType::DirectChatThreadEventLegacy
             | KeyType::GroupChatThreadEvent
             | KeyType::ChannelThreadEvent
-            | KeyType::DirectChatEventV2
-            | KeyType::DirectChatThreadEventV2
+            | KeyType::DirectChatEvent
+            | KeyType::DirectChatThreadEvent
             | KeyType::GroupMember
             | KeyType::ChannelMember
             | KeyType::CommunityMember
@@ -229,8 +224,6 @@ impl KeyType {
             | KeyType::DirectChatThreadMessageEventIndexes
             | KeyType::GroupChatThreadMessageEventIndexes
             | KeyType::ChannelThreadMessageEventIndexes
-            | KeyType::DirectChatMessageEventIndexesV2
-            | KeyType::DirectChatThreadMessageEventIndexesV2
             // Each entry is a token swap, which is too large for the small entries map
             | KeyType::TokenSwap
             // Each entry is a P2P swap, which is too large for the small entries map
@@ -266,15 +259,7 @@ impl KeyType {
             | KeyType::ChannelThreadRead
             | KeyType::Referral
             | KeyType::StreakInsurancePayment
-            | KeyType::StreakInsuranceClaim
-            | KeyType::DirectChatMessageIdV2
-            | KeyType::DirectChatThreadMessageIdV2
-            | KeyType::DirectChatExpiringEventV2
-            | KeyType::DirectChatEventLastUpdatedV2
-            | KeyType::DirectChatEventsByLastUpdatedV2
-            | KeyType::DirectChatUserMetricsV2
-            | KeyType::DirectChatSearchTokenV2
-            | KeyType::DirectChatSearchSenderV2 => MapClass::SmallEntries,
+            | KeyType::StreakInsuranceClaim => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -305,10 +290,10 @@ impl TryFrom<u8> for KeyType {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            1 => Ok(KeyType::DirectChatEvent),
+            1 => Ok(KeyType::DirectChatEventLegacy),
             2 => Ok(KeyType::GroupChatEvent),
             3 => Ok(KeyType::ChannelEvent),
-            4 => Ok(KeyType::DirectChatThreadEvent),
+            4 => Ok(KeyType::DirectChatThreadEventLegacy),
             5 => Ok(KeyType::GroupChatThreadEvent),
             6 => Ok(KeyType::ChannelThreadEvent),
             7 => Ok(KeyType::GroupMember),
@@ -361,18 +346,8 @@ impl TryFrom<u8> for KeyType {
             54 => Ok(KeyType::Referral),
             55 => Ok(KeyType::StreakInsurancePayment),
             56 => Ok(KeyType::StreakInsuranceClaim),
-            57 => Ok(KeyType::DirectChatEventV2),
-            58 => Ok(KeyType::DirectChatThreadEventV2),
-            59 => Ok(KeyType::DirectChatMessageIdV2),
-            60 => Ok(KeyType::DirectChatThreadMessageIdV2),
-            61 => Ok(KeyType::DirectChatExpiringEventV2),
-            62 => Ok(KeyType::DirectChatEventLastUpdatedV2),
-            63 => Ok(KeyType::DirectChatEventsByLastUpdatedV2),
-            64 => Ok(KeyType::DirectChatUserMetricsV2),
-            65 => Ok(KeyType::DirectChatMessageEventIndexesV2),
-            66 => Ok(KeyType::DirectChatThreadMessageEventIndexesV2),
-            67 => Ok(KeyType::DirectChatSearchTokenV2),
-            68 => Ok(KeyType::DirectChatSearchSenderV2),
+            57 => Ok(KeyType::DirectChatEvent),
+            58 => Ok(KeyType::DirectChatThreadEvent),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

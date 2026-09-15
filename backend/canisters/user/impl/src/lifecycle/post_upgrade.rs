@@ -1,3 +1,4 @@
+use crate::jobs::migrate_direct_chat_events_to_key_id_keys;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
 use crate::{Data, mutate_state};
@@ -9,6 +10,9 @@ use tracing::info;
 use types::MultiUserChat;
 use user_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
+
+// The instruction budget for migrating direct chat events within `post_upgrade`
+const MAX_MIGRATION_INSTRUCTIONS: u64 = 10_000_000_000;
 
 #[post_upgrade(msgpack = true)]
 #[trace]
@@ -25,6 +29,13 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    // Give each existing direct chat a `key_id`, so that every stable memory entry written from
+    // here on (including by the migrations below) is keyed by it rather than by the other user's
+    // id. The events themselves are moved to the new keys at the end of `post_upgrade`.
+    // TODO: Remove this after next release
+    let key_ids_assigned = data.direct_chats.assign_key_ids();
+    info!(key_ids_assigned, "Assigned key_ids to direct chats");
 
     // Move the message activity events into stable memory. The feed holds at most 1000 events, so
     // they can all be moved here rather than by a timer job, which would cost an extra call.
@@ -93,6 +104,18 @@ fn post_upgrade(args: Args) {
         for chat in state.data.direct_chats.iter_mut() {
             chat.events.skip_their_metrics(my_user_id);
         }
+    });
+
+    // Move the events of existing direct chats to their `key_id` based keys, checking the
+    // instruction usage as it goes and handing over to a timer job if the budget runs out.
+    // TODO: Remove this after next release
+    mutate_state(|state| {
+        let max_instructions = migrate_direct_chat_events_to_key_id_keys::max_instructions(state, MAX_MIGRATION_INSTRUCTIONS);
+        let complete = migrate_direct_chat_events_to_key_id_keys::run_batch(state, max_instructions);
+        if !complete {
+            migrate_direct_chat_events_to_key_id_keys::start_job_if_required(state);
+        }
+        info!(complete, "Migrated direct chat events to key_id keys");
     });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();

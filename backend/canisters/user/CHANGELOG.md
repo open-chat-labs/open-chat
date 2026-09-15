@@ -27,17 +27,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the timestamps of when each chat's events were last updated from the heap into the stable memory map for small entries ([#9351](https://github.com/open-chat-labs/open-chat/pull/9351))
 - Move each chat's per-user metrics from the heap into the stable memory map for small entries ([#9352](https://github.com/open-chat-labs/open-chat/pull/9352))
 - Use `insert_many` for bulk writes to the stable memory map, writing each modified node once rather than once per entry ([#9353](https://github.com/open-chat-labs/open-chat/pull/9353))
+- Stop storing the other user's metrics in direct chats (other than a user's chat with themselves), since only the user's own metrics are ever read ([#9354](https://github.com/open-chat-labs/open-chat/pull/9354))
 - Move each chat's MessageIndex -> EventIndex map from the heap into stable memory, in chunks of LEB128 encoded deltas ([#9376](https://github.com/open-chat-labs/open-chat/pull/9376))
 - Move each chat's search index from the heap into the stable memory map for small entries, as an inverted index which also supports languages written without spaces, such as Chinese, Japanese and Thai ([#9377](https://github.com/open-chat-labs/open-chat/pull/9377))
 - Move the message activity feed events from the heap into the stable memory map for small entries ([#9379](https://github.com/open-chat-labs/open-chat/pull/9379))
 - Move the CHIT events from the heap into the stable memory map for small entries ([#9380](https://github.com/open-chat-labs/open-chat/pull/9380))
 - Move how far the user has read each thread in each group and channel from the heap into the stable memory map for small entries ([#9381](https://github.com/open-chat-labs/open-chat/pull/9381))
-- Stop storing the other user's metrics in direct chats (other than a user's chat with themselves), since only the user's own metrics are ever read ([#9354](https://github.com/open-chat-labs/open-chat/pull/9354))
 - Move the token swaps into the main stable memory map ([#9382](https://github.com/open-chat-labs/open-chat/pull/9382))
 - Move the referrals into the stable memory map for small entries ([#9383](https://github.com/open-chat-labs/open-chat/pull/9383))
 - Move the P2P swaps into the main stable memory map ([#9384](https://github.com/open-chat-labs/open-chat/pull/9384))
 - Move the streak insurance payments and claims into the stable memory map for small entries ([#9385](https://github.com/open-chat-labs/open-chat/pull/9385))
 - Use a per-chat `key_id` in place of the user id in new direct chats' stable memory keys ([#9389](https://github.com/open-chat-labs/open-chat/pull/9389))
+- Assign a `key_id` to every existing direct chat and move its events to the `key_id` based stable memory keys ([#9391](https://github.com/open-chat-labs/open-chat/pull/9391))
 
 ### Fixed
 

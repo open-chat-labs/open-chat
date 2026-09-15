@@ -259,8 +259,8 @@ mod tests {
     #[test]
     fn recently_updated_events_are_returned_most_recent_first() {
         init_stable_memory_map();
-        let chat1 = ChatEventKeyPrefix::new_from_chat(Chat::Direct(Principal::from_slice(&[1]).into()), None);
-        let chat2 = ChatEventKeyPrefix::new_from_chat(Chat::Direct(Principal::from_slice(&[2]).into()), None);
+        let chat1 = ChatEventKeyPrefix::new_from_direct_chat_key_id(1, None);
+        let chat2 = ChatEventKeyPrefix::new_from_direct_chat_key_id(2, None);
         let mut timestamps1 = LastUpdatedTimestamps::default();
         let mut timestamps2 = LastUpdatedTimestamps::default();
         let mut model = Model::new();

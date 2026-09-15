@@ -390,6 +390,10 @@ Your streak is now {new_streak} days!"
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             direct_chats: self.data.direct_chats.len() as u32,
+            // TODO: Remove this once every user canister has been migrated
+            direct_chats_with_legacy_events: jobs::migrate_direct_chat_events_to_key_id_keys::direct_chats_with_legacy_events(
+                self,
+            ) as u32,
             group_chats: self.data.group_chats.len() as u32,
             communities: self.data.communities.len() as u32,
             groups_created: self.data.group_chats.groups_created(),
@@ -750,6 +754,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub direct_chats: u32,
+    pub direct_chats_with_legacy_events: u32,
     pub group_chats: u32,
     pub communities: u32,
     pub groups_created: u32,

@@ -64,6 +64,7 @@ mod threads_read_tests;
 mod tip_message_tests;
 mod update_group_tests;
 mod update_profile_tests;
+mod upgrade_from_prod_tests;
 mod utils;
 mod video_call_tests;
 mod wasms;

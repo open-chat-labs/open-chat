@@ -1,56 +1,55 @@
 use crate::keys::extract_key_type;
 use crate::keys::macros::key;
 use crate::{KeyPrefix, KeyType};
-use ic_principal::Principal;
 use types::{ChannelId, Chat, EventIndex, MessageIndex, UserId};
 
 key!(
     ChatEventKey,
     ChatEventKeyPrefix,
-    KeyType::DirectChatEvent
+    KeyType::DirectChatEventLegacy
         | KeyType::GroupChatEvent
         | KeyType::ChannelEvent
-        | KeyType::DirectChatThreadEvent
+        | KeyType::DirectChatThreadEventLegacy
         | KeyType::GroupChatThreadEvent
         | KeyType::ChannelThreadEvent
-        | KeyType::DirectChatEventV2
-        | KeyType::DirectChatThreadEventV2
+        | KeyType::DirectChatEvent
+        | KeyType::DirectChatThreadEvent
 );
 
 impl ChatEventKeyPrefix {
     pub fn new_from_chat(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         match chat {
-            Chat::Direct(user_id) => Self::new_from_direct_chat(Principal::from(user_id).into(), thread_root_message_index),
+            // Direct chats are keyed by their `key_id` (see `new_from_direct_chat_key_id`), not by the other user's id
+            Chat::Direct(_) => unreachable!("Direct chat prefixes must be built from the chat's key_id"),
             Chat::Group(_) => Self::new_from_group_chat(thread_root_message_index),
             Chat::Channel(_, channel_id) => Self::new_from_channel(channel_id, thread_root_message_index),
         }
     }
 
-    pub fn new_from_direct_chat(user_id: UserId, thread_root_message_index: Option<MessageIndex>) -> Self {
-        // Legacy layout, used by direct chats created before `key_id`s were introduced (see
-        // `new_from_direct_chat_key_id`). We don't actually need the userId length marker but
-        // existing entries have it so we need to keep it to be backwards compatible.
-
+    // Legacy layout, used by direct chats created before `key_id`s were introduced (see
+    // `new_from_direct_chat_key_id`). Events are moved out of this layout after upgrading, so this
+    // only remains to locate them until then. Nothing else may be derived from a legacy prefix.
+    pub fn new_from_direct_chat_legacy(user_id: UserId, thread_root_message_index: Option<MessageIndex>) -> Self {
         let user_id_bytes = user_id.as_slice();
 
         match thread_root_message_index {
             None => {
-                // KeyType::DirectChatEvent         1 byte
+                // KeyType::DirectChatEventLegacy         1 byte
                 // UserId length                    1 byte
                 // UserId bytes                     UserId length bytes
                 let mut bytes = Vec::with_capacity(user_id_bytes.len() + 2);
-                bytes.push(KeyType::DirectChatEvent as u8);
+                bytes.push(KeyType::DirectChatEventLegacy as u8);
                 bytes.push(user_id_bytes.len() as u8);
                 bytes.extend_from_slice(user_id_bytes);
                 ChatEventKeyPrefix(bytes)
             }
             Some(root_message_index) => {
-                // KeyType::DirectChatThreadEvent   1 byte
+                // KeyType::DirectChatThreadEventLegacy   1 byte
                 // UserId length                    1 byte
                 // UserId bytes                     UserId length bytes
                 // Thread root message index        4 bytes
                 let mut bytes = Vec::with_capacity(user_id_bytes.len() + 6);
-                bytes.push(KeyType::DirectChatThreadEvent as u8);
+                bytes.push(KeyType::DirectChatThreadEventLegacy as u8);
                 bytes.push(user_id_bytes.len() as u8);
                 bytes.extend_from_slice(user_id_bytes);
                 bytes.extend_from_slice(&u32::from(root_message_index).to_be_bytes());
@@ -66,19 +65,19 @@ impl ChatEventKeyPrefix {
         // keys use their own key types so that they can never be confused with the legacy layout.
         match thread_root_message_index {
             None => {
-                // KeyType::DirectChatEventV2       1 byte
+                // KeyType::DirectChatEvent       1 byte
                 // KeyId                            4 bytes
                 let mut bytes = Vec::with_capacity(5);
-                bytes.push(KeyType::DirectChatEventV2 as u8);
+                bytes.push(KeyType::DirectChatEvent as u8);
                 bytes.extend_from_slice(&key_id.to_be_bytes());
                 ChatEventKeyPrefix(bytes)
             }
             Some(root_message_index) => {
-                // KeyType::DirectChatThreadEventV2 1 byte
+                // KeyType::DirectChatThreadEvent 1 byte
                 // KeyId                            4 bytes
                 // Thread root message index        4 bytes
                 let mut bytes = Vec::with_capacity(9);
-                bytes.push(KeyType::DirectChatThreadEventV2 as u8);
+                bytes.push(KeyType::DirectChatThreadEvent as u8);
                 bytes.extend_from_slice(&key_id.to_be_bytes());
                 bytes.extend_from_slice(&u32::from(root_message_index).to_be_bytes());
                 ChatEventKeyPrefix(bytes)
@@ -136,23 +135,30 @@ impl ChatEventKeyPrefix {
         ChatEventKeyPrefix(bytes)
     }
 
+    pub fn is_legacy_direct_chat(&self) -> bool {
+        matches!(
+            self.key_type(),
+            KeyType::DirectChatEventLegacy | KeyType::DirectChatThreadEventLegacy
+        )
+    }
+
     pub fn is_direct_chat(&self) -> bool {
         matches!(
             self.key_type(),
-            KeyType::DirectChatEvent
+            KeyType::DirectChatEventLegacy
+                | KeyType::DirectChatThreadEventLegacy
+                | KeyType::DirectChatEvent
                 | KeyType::DirectChatThreadEvent
-                | KeyType::DirectChatEventV2
-                | KeyType::DirectChatThreadEventV2
         )
     }
 
     pub fn is_thread(&self) -> bool {
         matches!(
             self.key_type(),
-            KeyType::DirectChatThreadEvent
+            KeyType::DirectChatThreadEventLegacy
                 | KeyType::GroupChatThreadEvent
                 | KeyType::ChannelThreadEvent
-                | KeyType::DirectChatThreadEventV2
+                | KeyType::DirectChatThreadEvent
         )
     }
 
@@ -176,10 +182,10 @@ impl KeyPrefix for ChatEventKeyPrefix {
 // The key type of the threads of a chat whose main events list uses the given key type
 fn thread_key_type(main_events_key_type: KeyType) -> Option<KeyType> {
     match main_events_key_type {
-        KeyType::DirectChatEvent => Some(KeyType::DirectChatThreadEvent),
+        KeyType::DirectChatEventLegacy => Some(KeyType::DirectChatThreadEventLegacy),
         KeyType::GroupChatEvent => Some(KeyType::GroupChatThreadEvent),
         KeyType::ChannelEvent => Some(KeyType::ChannelThreadEvent),
-        KeyType::DirectChatEventV2 => Some(KeyType::DirectChatThreadEventV2),
+        KeyType::DirectChatEvent => Some(KeyType::DirectChatThreadEvent),
         _ => None,
     }
 }
@@ -200,10 +206,10 @@ impl ChatEventKey {
     pub fn thread_root_message_index(&self) -> Option<MessageIndex> {
         if matches!(
             self.key_type(),
-            KeyType::DirectChatThreadEvent
+            KeyType::DirectChatThreadEventLegacy
                 | KeyType::GroupChatThreadEvent
                 | KeyType::ChannelThreadEvent
-                | KeyType::DirectChatThreadEventV2
+                | KeyType::DirectChatThreadEvent
         ) {
             let start = self.0.len() - 8;
             let end = start + 4;
@@ -227,8 +233,9 @@ impl ChatEventKey {
 mod tests {
     use super::*;
     use crate::{BaseKey, Key};
+    use ic_principal::Principal;
     use rand::{Rng, RngExt, rng};
-    use types::{ChannelId, Chat, EventIndex, MessageIndex};
+    use types::{ChannelId, Chat, EventIndex, MessageIndex, UserId};
 
     #[test]
     fn direct_chat_event_key_e2e() {
@@ -237,21 +244,28 @@ mod tests {
                 let user_id_bytes: [u8; 10] = rng().random();
                 let user_id = Principal::from_slice(&user_id_bytes);
                 let thread_root_message_index = thread.then(|| MessageIndex::from(rng().next_u32()));
-                let prefix = ChatEventKeyPrefix::new_from_direct_chat(user_id.into(), thread_root_message_index);
+                let prefix = ChatEventKeyPrefix::new_from_direct_chat_legacy(user_id.into(), thread_root_message_index);
                 let event_index = EventIndex::from(rng().next_u32());
                 let key = BaseKey::from(prefix.create_key(&event_index));
                 let event_key = ChatEventKey::try_from(key.clone()).unwrap();
 
                 assert_eq!(
                     *event_key.0.first().unwrap(),
-                    if thread { KeyType::DirectChatThreadEvent } else { KeyType::DirectChatEvent } as u8
+                    if thread { KeyType::DirectChatThreadEventLegacy } else { KeyType::DirectChatEventLegacy } as u8
                 );
                 assert_eq!(event_key.0.len(), if thread { 20 } else { 16 });
                 assert!(event_key.matches_prefix(&prefix));
-                assert!(event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat(user_id.into(), None)));
-                assert!(!event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat(Principal::anonymous().into(), None)));
+                assert!(event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat_legacy(user_id.into(), None)));
+                assert!(!event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat_legacy(
+                    Principal::anonymous().into(),
+                    None
+                )));
                 assert!(!event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat_key_id(1, None)));
                 assert_eq!(event_key.event_index(), event_index);
+                assert_eq!(event_key.thread_root_message_index(), thread_root_message_index);
+                assert!(prefix.is_direct_chat());
+                assert!(prefix.is_legacy_direct_chat());
+                assert_eq!(prefix.is_thread(), thread);
 
                 let serialized = msgpack::serialize_then_unwrap(&event_key);
                 assert_eq!(serialized.len(), event_key.0.len() + 2);
@@ -275,16 +289,20 @@ mod tests {
 
                 assert_eq!(
                     *event_key.0.first().unwrap(),
-                    if thread { KeyType::DirectChatThreadEventV2 } else { KeyType::DirectChatEventV2 } as u8
+                    if thread { KeyType::DirectChatThreadEvent } else { KeyType::DirectChatEvent } as u8
                 );
                 assert_eq!(event_key.0.len(), if thread { 13 } else { 9 });
                 assert!(event_key.matches_prefix(&prefix));
                 assert!(event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id, None)));
                 assert!(!event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id.wrapping_add(1), None)));
-                assert!(!event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat(Principal::anonymous().into(), None)));
+                assert!(!event_key.is_in_chat(&ChatEventKeyPrefix::new_from_direct_chat_legacy(
+                    Principal::anonymous().into(),
+                    None
+                )));
                 assert_eq!(event_key.event_index(), event_index);
                 assert_eq!(event_key.thread_root_message_index(), thread_root_message_index);
                 assert!(prefix.is_direct_chat());
+                assert!(!prefix.is_legacy_direct_chat());
                 assert_eq!(prefix.is_thread(), thread);
 
                 let serialized = msgpack::serialize_then_unwrap(&event_key);
@@ -299,12 +317,11 @@ mod tests {
     #[test]
     fn for_thread_matches_new_from_chat() {
         let user_id_bytes: [u8; 10] = rng().random();
-        let user_id = Principal::from_slice(&user_id_bytes).into();
+        let user_id: UserId = Principal::from_slice(&user_id_bytes).into();
         let channel_id = ChannelId::from(rng().next_u32());
         let root = MessageIndex::from(rng().next_u32());
 
         for chat in [
-            Chat::Direct(user_id),
             Chat::Group(Principal::anonymous().into()),
             Chat::Channel(Principal::anonymous().into(), channel_id),
         ] {
@@ -313,7 +330,7 @@ mod tests {
             let thread = main.for_thread(root);
             assert!(thread.is_thread());
             assert_eq!(thread, ChatEventKeyPrefix::new_from_chat(chat, Some(root)));
-            assert_eq!(main.is_direct_chat(), matches!(chat, Chat::Direct(_)));
+            assert!(!main.is_direct_chat());
         }
 
         let key_id = rng().next_u32();
@@ -321,6 +338,12 @@ mod tests {
         assert_eq!(
             main.for_thread(root),
             ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id, Some(root))
+        );
+
+        let legacy = ChatEventKeyPrefix::new_from_direct_chat_legacy(user_id, None);
+        assert_eq!(
+            legacy.for_thread(root),
+            ChatEventKeyPrefix::new_from_direct_chat_legacy(user_id, Some(root))
         );
     }
 

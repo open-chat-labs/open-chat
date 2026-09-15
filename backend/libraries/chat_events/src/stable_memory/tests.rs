@@ -1,3 +1,4 @@
+use crate::EventsMap;
 use crate::message_content_internal::icrc1::AccountInternal;
 use crate::stable_memory::tests::test_values::{
     AUDIO_CURRENT, AUDIO_PREV1, AUDIO_PREV2, AUDIO_PREV3, CRYPTO_CURRENT, CRYPTO_PREV1, CRYPTO_PREV2, CRYPTO_PREV3,
@@ -11,7 +12,7 @@ use crate::stable_memory::tests::test_values::{
     TEXT_CURRENT, TEXT_PREV1, TEXT_PREV2, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CALL_PREV2, VIDEO_CURRENT, VIDEO_PREV1,
     VIDEO_PREV2,
 };
-use crate::stable_memory::{bytes_to_event, event_to_bytes};
+use crate::stable_memory::{ChatEventsStableStorage, bytes_to_event, event_to_bytes};
 use crate::{
     AudioContentInternal, BlobReferenceInternal, CallParticipantInternal, ChatEventInternal, ChatInternal,
     CompletedCryptoTransactionInternal, CryptoContentInternal, CustomContentInternal, DeletedByInternal, FileContentInternal,
@@ -20,9 +21,13 @@ use crate::{
     PollContentInternal, PrizeContentInternal, PrizeWinnerContentInternal, ProposalContentInternal, ReplyContextInternal,
     ReportedMessageInternal, TextContentInternal, ThreadSummaryInternal, VideoCallContentInternal, VideoContentInternal,
 };
+use candid::Principal;
 use constants::CHAT_SYMBOL;
+use ic_stable_structures::DefaultMemoryImpl;
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use rand::rngs::StdRng;
 use rand::{Rng, RngExt, SeedableRng};
+use stable_memory_map::{ChatEventKeyPrefix, Key, KeyPrefix, with_map};
 use testing::rng::deterministic::{random_from_principal, random_from_u32, random_from_u128, random_principal, random_string};
 use types::{
     EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal, ProposalDecisionStatus,
@@ -595,4 +600,187 @@ fn generate_value<R: Rng>(content: MessageContentInternal, rng: &mut R) -> Event
 fn get_deterministic_rng() -> StdRng {
     let seed = [0; 32];
     StdRng::from_seed(seed)
+}
+
+#[test]
+fn legacy_events_stay_readable_while_being_migrated() {
+    init_stable_memory_map();
+    let legacy_prefix = ChatEventKeyPrefix::new_from_direct_chat_legacy(Principal::from_slice(&[1]).into(), None);
+    let new_prefix = ChatEventKeyPrefix::new_from_direct_chat_key_id(5, None);
+
+    // A chat from before `key_id`s were introduced, with gaps where events have been removed
+    let mut storage = ChatEventsStableStorage::new(legacy_prefix.clone());
+    let count = 250u32;
+    for i in 0..count {
+        storage.insert(empty_event(i));
+    }
+    for i in (0..count).step_by(10) {
+        storage.remove(i.into());
+    }
+    let expected: Vec<EventIndex> = (0..count).filter(|i| i % 10 != 0).map(EventIndex::from).collect();
+
+    let check = |storage: &ChatEventsStableStorage| {
+        assert_eq!(event_indexes(storage.iter()), expected);
+        assert_eq!(event_indexes(storage.iter().rev()), reversed(&expected));
+        for (start, end) in [
+            (0, 249),
+            (50, 150),
+            (95, 105),
+            (99, 100),
+            (100, 100),
+            (111, 112),
+            (150, 250),
+            (200, 200),
+            (10, 10),
+        ] {
+            let expected_range: Vec<_> = expected
+                .iter()
+                .copied()
+                .filter(|i| (start..=end).contains(&u32::from(*i)))
+                .collect();
+            let inclusive = EventIndex::from(start)..=EventIndex::from(end);
+            assert_eq!(
+                event_indexes(storage.range(inclusive.clone())),
+                expected_range,
+                "{start}..={end}"
+            );
+            assert_eq!(
+                event_indexes(storage.range(inclusive).rev()),
+                reversed(&expected_range),
+                "{start}..={end} rev"
+            );
+            let expected_range: Vec<_> = expected_range.into_iter().filter(|i| u32::from(*i) < end).collect();
+            let exclusive = EventIndex::from(start)..EventIndex::from(end);
+            assert_eq!(
+                event_indexes(storage.range(exclusive.clone())),
+                expected_range,
+                "{start}..{end}"
+            );
+            assert_eq!(
+                event_indexes(storage.range(exclusive).rev()),
+                reversed(&expected_range),
+                "{start}..{end} rev"
+            );
+        }
+        for i in 0..count + 5 {
+            let expected = if i < count && i % 10 != 0 { Some(EventIndex::from(i)) } else { None };
+            assert_eq!(storage.get(i.into()).map(|e| e.index), expected, "{i}");
+        }
+    };
+    check(&storage);
+
+    storage.assign_key_id_prefix(new_prefix.clone());
+    assert!(storage.has_legacy_events());
+    assert_eq!(storage.legacy_prefix(), Some(&legacy_prefix));
+    assert_eq!(storage.prefix, new_prefix);
+    check(&storage);
+
+    // Stop after every batch, checking the events on both sides of the boundary
+    let mut rounds = 0;
+    while !storage.migrate_legacy_events_batch() {
+        rounds += 1;
+        assert!(storage.has_legacy_events());
+        check(&storage);
+
+        // The state survives being serialized mid-migration
+        storage = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&storage));
+        assert!(storage.has_legacy_events());
+        check(&storage);
+
+        // Inserts and removes go to whichever keys the event is stored under
+        let boundary = u32::from(storage.legacy.as_ref().unwrap().migrated_below);
+        assert!(boundary > 0 && boundary < count);
+        for i in [boundary - 1, boundary].into_iter().filter(|i| i % 10 != 0) {
+            assert!(storage.remove(i.into()).is_some());
+            assert!(storage.get(i.into()).is_none());
+            storage.insert(empty_event(i));
+            assert!(storage.get(i.into()).is_some());
+        }
+        check(&storage);
+    }
+    assert_eq!(rounds, 2);
+    assert!(!storage.has_legacy_events());
+    assert_eq!(storage.legacy_prefix(), None);
+    check(&storage);
+
+    // Nothing is left under the legacy keys and every event is under the new keys
+    assert!(keys_under(&legacy_prefix).is_empty());
+    assert_eq!(keys_under(&new_prefix), expected);
+
+    storage = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&storage));
+    assert!(!storage.has_legacy_events());
+    check(&storage);
+}
+
+#[test]
+fn legacy_events_are_migrated_in_bounded_batches() {
+    init_stable_memory_map();
+    let legacy_prefix = ChatEventKeyPrefix::new_from_direct_chat_legacy(Principal::from_slice(&[1]).into(), None);
+    let new_prefix = ChatEventKeyPrefix::new_from_direct_chat_key_id(5, None);
+
+    // Exactly 2 full batches, so the final call moves nothing but completes the migration
+    let mut storage = ChatEventsStableStorage::new(legacy_prefix.clone());
+    for i in 0..200 {
+        storage.insert(empty_event(i));
+    }
+    storage.assign_key_id_prefix(new_prefix.clone());
+    for expected_migrated in [100, 200] {
+        assert!(!storage.migrate_legacy_events_batch());
+        assert_eq!(keys_under(&new_prefix).len(), expected_migrated);
+    }
+    assert!(storage.has_legacy_events());
+    assert!(storage.migrate_legacy_events_batch());
+    assert!(!storage.has_legacy_events());
+    assert!(keys_under(&legacy_prefix).is_empty());
+    assert_eq!(keys_under(&new_prefix).len(), 200);
+
+    // A small list is migrated in a single call
+    let small_legacy_prefix = legacy_prefix.for_thread(1.into());
+    let small_new_prefix = new_prefix.for_thread(1.into());
+    let mut small = ChatEventsStableStorage::new(small_legacy_prefix.clone());
+    for i in 0..10 {
+        small.insert(empty_event(i));
+    }
+    small.assign_key_id_prefix(small_new_prefix.clone());
+    assert!(small.migrate_legacy_events_batch());
+    assert!(!small.has_legacy_events());
+    assert!(keys_under(&small_legacy_prefix).is_empty());
+    assert_eq!(keys_under(&small_new_prefix).len(), 10);
+
+    // A list with no events completes immediately
+    let mut empty = ChatEventsStableStorage::new(legacy_prefix.for_thread(2.into()));
+    empty.assign_key_id_prefix(new_prefix.for_thread(2.into()));
+    assert!(empty.migrate_legacy_events_batch());
+    assert!(!empty.has_legacy_events());
+}
+
+fn empty_event(index: u32) -> EventWrapperInternal<ChatEventInternal> {
+    EventWrapperInternal {
+        index: index.into(),
+        timestamp: index as u64,
+        expires_at: None,
+        event: ChatEventInternal::Empty,
+    }
+}
+
+fn event_indexes(iter: impl Iterator<Item = EventWrapperInternal<ChatEventInternal>>) -> Vec<EventIndex> {
+    iter.map(|e| e.index).collect()
+}
+
+fn reversed(indexes: &[EventIndex]) -> Vec<EventIndex> {
+    indexes.iter().rev().copied().collect()
+}
+
+fn keys_under(prefix: &ChatEventKeyPrefix) -> Vec<EventIndex> {
+    with_map(|m| {
+        m.range(prefix.create_key(&EventIndex::default())..)
+            .take_while(|(k, _)| k.matches_prefix(prefix))
+            .map(|(k, _)| k.event_index())
+            .collect()
+    })
+}
+
+fn init_stable_memory_map() {
+    let memory = MemoryManager::init(DefaultMemoryImpl::default());
+    stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
 }

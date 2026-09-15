@@ -185,17 +185,74 @@ impl ChatEvents {
     // The prefixes of all the stable memory entries belonging to the chat, so that they can all be
     // garbage collected once the chat is deleted
     pub fn all_stable_memory_key_prefixes(&self) -> Vec<BaseKeyPrefix> {
-        std::iter::once(&self.main)
-            .chain(self.threads.values())
-            .flat_map(|list| Self::stable_memory_key_prefixes(list.stable_memory_prefix().clone()))
-            .collect()
+        let mut prefixes = Self::stable_memory_key_prefixes(self.main.stable_memory_prefix().clone());
+        prefixes.extend(self.legacy_direct_chat_prefix(None).map(BaseKeyPrefix::from));
+        for root_message_index in self.threads.keys() {
+            prefixes.extend(self.thread_stable_memory_key_prefixes(*root_message_index));
+        }
+        prefixes
     }
 
     // The prefixes of the stable memory entries belonging to a thread, derived from the main events
     // list's prefix so that they can still be built after the thread has been removed (eg. when its
     // root message expires)
     pub fn thread_stable_memory_key_prefixes(&self, root_message_index: MessageIndex) -> Vec<BaseKeyPrefix> {
-        Self::stable_memory_key_prefixes(self.main.stable_memory_prefix().for_thread(root_message_index))
+        let mut prefixes = Self::stable_memory_key_prefixes(self.main.stable_memory_prefix().for_thread(root_message_index));
+        prefixes.extend(
+            self.legacy_direct_chat_prefix(Some(root_message_index))
+                .map(BaseKeyPrefix::from),
+        );
+        prefixes
+    }
+
+    // The prefix of the legacy keys of a direct chat created before `key_id`s were introduced, which
+    // may still hold events until `migrate_legacy_events_batch` has moved them across, or the events of a
+    // thread which was removed before they were moved. The prefix is built from the other user's id
+    // rather than taken from the events lists so that it is included even once the migration is
+    // complete. This can be removed along with the legacy key types.
+    fn legacy_direct_chat_prefix(&self, thread_root_message_index: Option<MessageIndex>) -> Option<ChatEventKeyPrefix> {
+        if let Chat::Direct(them) = self.chat {
+            Some(ChatEventKeyPrefix::new_from_direct_chat_legacy(
+                them.into(),
+                thread_root_message_index,
+            ))
+        } else {
+            None
+        }
+    }
+
+    // Assigns a `key_id` to a direct chat created before `key_id`s were introduced, so that from now
+    // on its stable memory keys are derived from the `key_id` rather than from the other user's id.
+    // Its events stay under their legacy keys until `migrate_legacy_events_batch` has moved them across.
+    // Returns false if the chat already has a `key_id`.
+    pub fn assign_direct_chat_key_id(&mut self, key_id: u32) -> bool {
+        if !self.main.stable_memory_prefix().is_legacy_direct_chat() {
+            return false;
+        }
+        let prefix = ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id, None);
+        for (root_message_index, thread) in self.threads.iter_mut() {
+            thread.assign_key_id_prefix(prefix.for_thread(*root_message_index));
+        }
+        self.expiring_events.refresh_next_expiry(&prefix);
+        self.main.assign_key_id_prefix(prefix);
+        true
+    }
+
+    pub fn has_legacy_events(&self) -> bool {
+        self.main.has_legacy_events() || self.threads.values().any(|t| t.has_legacy_events())
+    }
+
+    // Moves the next batch of events of a direct chat from its legacy keys to its `key_id` based
+    // keys, returning true once every event (including those in threads) has been moved. Each call
+    // moves a single bounded batch, so callers can check their instruction usage between calls.
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        if let Some(list) = std::iter::once(&mut self.main)
+            .chain(self.threads.values_mut())
+            .find(|list| list.has_legacy_events())
+        {
+            list.migrate_legacy_events_batch();
+        }
+        !self.has_legacy_events()
     }
 
     pub fn set_chat(&mut self, chat: Chat) {
@@ -2436,6 +2493,11 @@ impl ChatEvents {
     #[cfg(test)]
     pub(crate) fn main_events_list_mut(&mut self) -> &mut ChatEventsList {
         &mut self.main
+    }
+
+    #[cfg(test)]
+    pub(crate) fn thread_events_list_mut(&mut self, root_message_index: MessageIndex) -> Option<&mut ChatEventsList> {
+        self.threads.get_mut(&root_message_index)
     }
 
     #[cfg(test)]

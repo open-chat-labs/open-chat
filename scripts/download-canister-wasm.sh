@@ -6,6 +6,7 @@ cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
 WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" the commit Id or the release version
+OUTPUT_NAME=${3:-$CANISTER_NAME} # Optionally save the wasm under a different name (eg. "user_prod")
 
 if [[ -z $WASM_SRC ]] || [[ $WASM_SRC == "latest" ]]
 then
@@ -35,7 +36,7 @@ echo "Downloading $CANISTER_NAME wasm at commit $COMMIT_ID"
 mkdir -p wasms
 cd wasms
 
-HTTP_CODE=$(curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/$CANISTER_NAME.wasm.gz --write-out "%{http_code}")
+HTTP_CODE=$(curl -s -o $OUTPUT_NAME.wasm.gz https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/$CANISTER_NAME.wasm.gz --write-out "%{http_code}")
 
 if [[ ${HTTP_CODE} -ne 200 ]] ; then
     echo "Failed to download wasm: ${CANISTER_NAME}. Response code: ${HTTP_CODE}"

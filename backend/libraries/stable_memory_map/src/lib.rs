@@ -441,10 +441,8 @@ mod tests {
             KeyType::ChannelThreadMessageEventIndexes,
             KeyType::TokenSwap,
             KeyType::P2PSwap,
-            KeyType::DirectChatEventV2,
-            KeyType::DirectChatThreadEventV2,
-            KeyType::DirectChatMessageEventIndexesV2,
-            KeyType::DirectChatThreadMessageEventIndexesV2,
+            KeyType::DirectChatEvent,
+            KeyType::DirectChatThreadEvent,
         ];
         for key_type in added_to_main_map {
             assert_eq!(key_type.map_class(), MapClass::Default, "{key_type:?}");
