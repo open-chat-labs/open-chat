@@ -11,8 +11,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_from_u128;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatEvent, EventIndex, EventWrapper, HttpRequest, HttpResponse, MessageContent,
-    MessageId, MessageIndex, OptionUpdate, TimestampMillis, UserId,
+    BuildVersion, CanisterId, CanisterWasm, ChatEvent, Empty, EventIndex, EventWrapper, HttpRequest, HttpResponse,
+    MessageContent, MessageId, MessageIndex, OptionUpdate, TimestampMillis, UnitResult, UserId,
 };
 
 const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
@@ -22,14 +22,15 @@ const SMALL_CHATS: usize = 8;
 const SMALL_CHAT_MESSAGES: usize = 3;
 
 // Installs user canisters from the User canister wasm currently in production, fills them with
-// direct chats, then upgrades them to the new wasm and checks that everything still works.
+// direct chats and contacts, then upgrades them to the new wasm and checks that everything still
+// works.
 //
-// This currently covers moving the events of existing direct chats from their legacy stable memory
+// This currently covers moving the contacts from the heap into stable memory, and moving the events of existing direct chats from their legacy stable memory
 // keys to their `key_id` based keys, which in test mode migrates a single batch of events per call,
 // so the migration is spread across `post_upgrade` and many runs of its timer job.
 // TODO: Remove the migration specific checks once every user canister has been migrated
 #[test]
-fn direct_chats_survive_upgrade_from_prod() {
+fn user_canisters_survive_upgrade_from_prod() {
     // Installing the prod wasm would downgrade the user canisters of any other test drawing a pooled
     // env, so use a new one
     let mut wrapper = ENV.deref().create_new();
@@ -109,6 +110,22 @@ fn direct_chats_survive_upgrade_from_prod() {
     let chat_partners: Vec<&User> = std::iter::once(&large_chat_user).chain(&small_chat_users).collect();
     let snapshots: Vec<_> = chat_partners.iter().map(|u| all_events(env, &user1, u.user_id)).collect();
     let large_chat_snapshot_for_them = all_events(env, &large_chat_user, user1.user_id);
+
+    // Contacts, including one for a user user1 has no chat with
+    let contacts_snapshot: Vec<_> = small_chat_users
+        .iter()
+        .take(5)
+        .chain(std::iter::once(&large_chat_user))
+        .enumerate()
+        .map(|(i, user)| (user.user_id, Some(format!("nickname{i}"))))
+        .collect();
+    for (user_id, nickname) in contacts_snapshot.iter() {
+        set_contact(env, &user1, *user_id, OptionUpdate::SetToSome(nickname.clone().unwrap()));
+    }
+    set_contact(env, &user1, large_chat_user.user_id, OptionUpdate::SetToNone);
+    let mut contacts_snapshot: Vec<_> = contacts_snapshot[..5].to_vec();
+    contacts_snapshot.sort();
+    assert_eq!(contacts(env, &user1), contacts_snapshot);
     assert_eq!(snapshots[0].len(), LARGE_CHAT_MESSAGES + 1);
     let total_events: usize = snapshots.iter().map(|s| s.len()).sum();
 
@@ -221,6 +238,35 @@ fn direct_chats_survive_upgrade_from_prod() {
         total_keys + 1 - snapshots[2].len()
     );
 
+    // The contacts were moved into stable memory, and can still be updated
+    assert_eq!(contacts(env, &user1), contacts_snapshot);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::Contact), contacts_snapshot.len());
+    set_contact(
+        env,
+        &user1,
+        small_chat_users[0].user_id,
+        OptionUpdate::SetToSome("updated".to_string()),
+    );
+    set_contact(env, &user1, small_chat_users[1].user_id, OptionUpdate::SetToNone);
+    set_contact(
+        env,
+        &user1,
+        large_chat_user.user_id,
+        OptionUpdate::SetToSome("new".to_string()),
+    );
+    let mut expected_contacts: Vec<_> = contacts_snapshot
+        .iter()
+        .filter(|(user_id, _)| *user_id != small_chat_users[1].user_id)
+        .map(|(user_id, nickname)| {
+            let nickname = if *user_id == small_chat_users[0].user_id { Some("updated".to_string()) } else { nickname.clone() };
+            (*user_id, nickname)
+        })
+        .chain(std::iter::once((large_chat_user.user_id, Some("new".to_string()))))
+        .collect();
+    expected_contacts.sort();
+    assert_eq!(contacts(env, &user1), expected_contacts);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::Contact), expected_contacts.len());
+
     // Messages which were set to disappear before the upgrade still do so
     let disappearing_chat_user = &small_chat_users[0];
     let first_message_index = snapshots[1].iter().find(|e| e.message.is_some()).unwrap().index;
@@ -317,6 +363,27 @@ fn delete_message(env: &mut PocketIc, user: &User, them: UserId, message_id: Mes
         matches!(response, user_canister::delete_messages::Response::Success),
         "{response:?}"
     );
+}
+
+fn set_contact(env: &mut PocketIc, user: &User, user_id: UserId, nickname: OptionUpdate<String>) {
+    let response = client::user::set_contact(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::set_contact::Args {
+            contact: user_canister::set_contact::OptionalContact { user_id, nickname },
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+}
+
+// Returns the user's contacts, ordered by user id
+fn contacts(env: &PocketIc, user: &User) -> Vec<(UserId, Option<String>)> {
+    let user_canister::contacts::Response::Success(result) =
+        client::user::contacts(env, user.principal, user.canister(), &Empty {});
+    let mut contacts: Vec<_> = result.contacts.into_iter().map(|c| (c.user_id, c.nickname)).collect();
+    contacts.sort_by_key(|(user_id, _)| *user_id);
+    contacts
 }
 
 fn count_keys(env: &PocketIc, canister_id: CanisterId, key_type: KeyType) -> usize {

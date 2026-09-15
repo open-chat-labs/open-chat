@@ -3,6 +3,7 @@ use user_canister::*;
 
 // Queries
 generate_msgpack_query_call!(chit_events);
+generate_msgpack_query_call!(contacts);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(events_window);
@@ -42,6 +43,7 @@ generate_msgpack_update_call!(save_crypto_account);
 generate_msgpack_update_call!(send_message_v2);
 generate_msgpack_update_call!(send_message_with_transfer_to_channel);
 generate_msgpack_update_call!(send_message_with_transfer_to_group);
+generate_msgpack_update_call!(set_contact);
 generate_msgpack_update_call!(set_message_reminder_v2);
 generate_msgpack_update_call!(set_pin_number);
 generate_msgpack_update_call!(set_profile_background);
