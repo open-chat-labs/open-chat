@@ -17,6 +17,7 @@ mod message_event_indexes;
 mod message_id;
 mod p2p_swap;
 mod principal;
+mod private_reply;
 mod profile_document;
 mod referral;
 mod removed_chat;
@@ -41,6 +42,7 @@ pub use message_event_indexes::*;
 pub use message_id::*;
 pub use p2p_swap::*;
 pub use principal::*;
+pub use private_reply::*;
 pub use profile_document::*;
 pub use referral::*;
 pub use removed_chat::*;
@@ -194,6 +196,7 @@ pub enum KeyType {
     GroupChatRemoved = 63,
     CommunityRemoved = 64,
     ProfileDocument = 65,
+    PrivateReplyToGroup = 66,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -285,7 +288,8 @@ impl KeyType {
             | KeyType::DirectChatUnreadMessageIndex
             | KeyType::DirectChatRemoved
             | KeyType::GroupChatRemoved
-            | KeyType::CommunityRemoved => MapClass::SmallEntries,
+            | KeyType::CommunityRemoved
+            | KeyType::PrivateReplyToGroup => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -381,6 +385,7 @@ impl TryFrom<u8> for KeyType {
             63 => Ok(KeyType::GroupChatRemoved),
             64 => Ok(KeyType::CommunityRemoved),
             65 => Ok(KeyType::ProfileDocument),
+            66 => Ok(KeyType::PrivateReplyToGroup),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

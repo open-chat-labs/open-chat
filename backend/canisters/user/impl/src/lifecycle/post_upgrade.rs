@@ -126,6 +126,11 @@ fn post_upgrade(args: Args) {
         + data.communities.migrate_removed_to_stable_memory();
     info!(removed_chats_migrated, "Migrated removed chats to stable memory");
 
+    // Move the private replies to groups into stable memory
+    // TODO: Remove this after next release
+    let private_replies_migrated = data.direct_chats.migrate_private_replies_to_stable_memory();
+    info!(private_replies_migrated, "Migrated private replies to stable memory");
+
     // Move the avatar and profile background into stable memory
     // TODO: Remove this after next release
     let avatar_migrated = data.avatar.migrate_to_stable_memory(ProfileDocumentType::Avatar);
