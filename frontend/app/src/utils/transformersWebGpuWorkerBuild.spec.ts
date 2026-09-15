@@ -1,9 +1,11 @@
+// @vitest-environment node
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { compileFunction, constants } from "node:vm";
+import { compileFunction } from "node:vm";
 import { ModuleKind, ScriptTarget, transpileModule } from "typescript";
+import { loadConfigFromFile } from "vite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
     createTransformersWebGpuDevRuntimeVersion,
@@ -44,14 +46,14 @@ type WorkerPlugin = {
     transformIndexHtml(): Array<{ attrs: { content: string } }>;
 };
 const makePlugin = compileFunction(
-    `const { build, path, pathToFileURL, __dirname, workerTargets, workerBuildDir,
+    `const { build, path, __dirname, workerTargets, workerBuildDir,
         transformersWebGpuOrtJspiAlias, ocPackageAliases, devTransformersWebGpuRuntimeVersion,
         TRANSFORMERS_WEBGPU_DEV_RUNTIME_VERSION_META, transformersWebGpuSpikeEnabled,
+        transformersWebGpuSequentialSessionsPlugin, transformersWebGpuOrtSessionConfigPlugin,
         chokidar, fs } = context;
     ${pluginCode}
     return ocWorkerPlugin();`,
     ["context"],
-    { importModuleDynamically: constants.USE_MAIN_CONTEXT_DEFAULT_LOADER },
 ) as (context: Record<string, unknown>) => WorkerPlugin;
 
 const temporaryDirectories: string[] = [];
@@ -65,13 +67,7 @@ afterEach(() => {
 async function harness() {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "openchat-worker-build-"));
     temporaryDirectories.push(directory);
-    const helper = path.join(directory, "transformersWebGpuSequentialSessions.mjs");
-    const writeHelper = (version: string) =>
-        fs.writeFileSync(
-            helper,
-            `export function transformersWebGpuSequentialSessionsPlugin() { return { name: ${JSON.stringify(version)} }; }`,
-        );
-    writeHelper("initial-transform");
+    const helper = path.join(directory, "src/utils/transformersWebGpuQwenContext.ts");
     const workerBuildDir = path.join(directory, "node_modules/.oc-worker");
     const runtime = createTransformersWebGpuDevRuntimeVersion("1000.0.test");
     const handlers = new Map<string, () => void>();
@@ -100,7 +96,8 @@ async function harness() {
     const plugin = makePlugin({
         build,
         path,
-        pathToFileURL,
+        transformersWebGpuSequentialSessionsPlugin: () => ({ name: "sequential-sessions" }),
+        transformersWebGpuOrtSessionConfigPlugin: () => ({ name: "early-int64-config" }),
         __dirname: directory,
         workerTargets: realWorkerTargets({ path, __dirname: directory, enabled: true }),
         workerBuildDir,
@@ -136,7 +133,6 @@ async function harness() {
     return {
         directory,
         helper,
-        writeHelper,
         workerBuildDir,
         runtime,
         plugin,
@@ -219,11 +215,12 @@ describe("development model worker build dependency closure", () => {
             "src/utils/transformersWebGpuAudio.ts",
             "src/utils/transformersWebGpuDeviceRetirement.ts",
             "src/utils/transformersWebGpuImageLayout.ts",
+            "src/utils/transformersWebGpuQwenContext.ts",
+            "src/utils/transformersWebGpuCompletion.ts",
             "src/utils/transformersWebGpuOrtDiagnostics.ts",
             "src/utils/transformersWebGpuPipelineCompilation.ts",
             "src/utils/transformersWebGpuProcessorConfig.ts",
             "src/utils/transformersWebGpuProtocol.ts",
-            "transformersWebGpuSequentialSessions.mjs",
         ];
         for (const [index, relative] of helperFiles.entries()) {
             const file = path.join(test.directory, relative);
@@ -235,6 +232,8 @@ describe("development model worker build dependency closure", () => {
         }
         expect(test.build).toHaveBeenCalledTimes(3 * (helperFiles.length + 1));
         for (const file of [
+            path.join(test.directory, "transformersWebGpuSequentialSessions.mjs"),
+            path.join(test.directory, "transformersWebGpuOrtSessionConfig.mjs"),
             path.join(test.workerBuildDir, "transformers_webgpu_worker.js"),
             path.join(test.workerBuildDir, "transformers_webgpu_worker.js.map"),
             path.join(test.directory, "../openchat-worker/lib/worker.js"),
@@ -246,37 +245,103 @@ describe("development model worker build dependency closure", () => {
         expect(test.error).not.toHaveBeenCalled();
     });
 
-    it("uses newly edited transform code after success and after a failed attempt", async () => {
+    it("uses both build transforms only for the model worker in development and production", async () => {
         const test = await harness();
-        expect(test.modelBuilds().at(-1)?.[0].plugins[0].name).toBe("initial-transform");
-        test.writeHelper("updated-transform");
-        await test.change(test.helper);
-        await vi.waitFor(() => expect(test.send).toHaveBeenCalledTimes(1));
-        expect(test.modelBuilds().at(-1)?.[0].plugins[0].name).toBe("updated-transform");
-        const successfulGeneration = test.runtime.current();
+        const check = (options: WorkerBuildOptions) =>
+            expect(options.plugins).toEqual(
+                options.build.lib.fileName() === "transformers_webgpu_worker.js"
+                    ? [{ name: "sequential-sessions" }, { name: "early-int64-config" }]
+                    : [],
+            );
+        for (const [options] of test.build.mock.calls) check(options);
+        const production = fs.readFileSync(path.join(APP_DIR, "build-workers.mjs"), "utf8");
+        const start = production.indexOf("const targets =");
+        expect(start).toBeGreaterThan(0);
+        const run = compileFunction(
+            `const { path, __dirname, build, transformersWebGpuSpikeEnabled,
+                transformersWebGpuSequentialSessionsPlugin, transformersWebGpuOrtSessionConfigPlugin,
+                transformersWebGpuOrtJspiAlias, ocPackageAliases } = context;
+            return (async () => { ${production.slice(start)} })();`,
+            ["context"],
+        );
+        for (const enabled of [false, true]) {
+            const build = vi.fn(async (options: WorkerBuildOptions) => check(options));
+            await run({
+                path,
+                __dirname: APP_DIR,
+                build,
+                transformersWebGpuSpikeEnabled: enabled,
+                transformersWebGpuSequentialSessionsPlugin: () => ({ name: "sequential-sessions" }),
+                transformersWebGpuOrtSessionConfigPlugin: () => ({ name: "early-int64-config" }),
+                transformersWebGpuOrtJspiAlias: {},
+                ocPackageAliases: [],
+            });
+            expect(build).toHaveBeenCalledTimes(enabled ? 4 : 3);
+        }
+    });
 
-        test.writeHelper("failed-attempt-transform");
-        test.failNext();
-        await test.change(test.helper);
-        await vi.waitFor(() => expect(test.error).toHaveBeenCalledTimes(1));
-        expect(test.runtime.current()).toBe(successfulGeneration);
-        expect(test.send).toHaveBeenCalledTimes(1);
-
-        test.writeHelper("retry-transform");
-        await test.change(test.helper);
-        await vi.waitFor(() => expect(test.send).toHaveBeenCalledTimes(2));
-        expect(test.build.mock.calls.at(-1)?.[0].plugins[0].name).toBe("retry-transform");
-        expect(test.runtime.current()).toBe("1000.0.test.webgpu.3");
-
-        fs.writeFileSync(test.helper, "export function {");
-        await test.change(test.helper);
-        await vi.waitFor(() => expect(test.error).toHaveBeenCalledTimes(2));
-        expect(test.runtime.current()).toBe("1000.0.test.webgpu.3");
-        expect(test.send).toHaveBeenCalledTimes(2);
-        test.writeHelper("syntax-retry-transform");
-        await test.change(test.helper);
-        await vi.waitFor(() => expect(test.send).toHaveBeenCalledTimes(3));
-        expect(test.build.mock.calls.at(-1)?.[0].plugins[0].name).toBe("syntax-retry-transform");
-        expect(test.runtime.current()).toBe("1000.0.test.webgpu.4");
+    it("reloads transitive statically imported config helpers after edits and a failed reload", async () => {
+        // These real imports give Vite ownership of build-helper restart/freshness; the separate
+        // runtime-source watcher must not pretend query-busting a parent invalidates its children.
+        for (const module of [
+            "transformersWebGpuSequentialSessions",
+            "transformersWebGpuOrtSessionConfig",
+        ]) {
+            expect(source).toContain(`from "./${module}.mjs"`);
+        }
+        expect(source).not.toContain("?worker-build=");
+        expect(source).not.toContain("buildAttempt");
+        const directory = fs.mkdtempSync(path.join(os.tmpdir(), "openchat-config-freshness-"));
+        temporaryDirectories.push(directory);
+        const config = path.join(directory, "vite.config.mjs");
+        const parent = path.join(directory, "parent.mjs");
+        const leaf = path.join(directory, "leaf.mjs");
+        fs.writeFileSync(
+            config,
+            `import { factory } from './parent.mjs'; export default { define: factory() };`,
+        );
+        fs.writeFileSync(
+            parent,
+            `import { createRequire } from 'node:module';
+            import path from 'node:path'; import { leaf } from './leaf.mjs';
+            const marker = createRequire(import.meta.url)(path.join(import.meta.dirname, 'marker.cjs'));
+            export function factory() { return { value: leaf(), embedded: leaf.toString(), marker,
+                sourceUrl: import.meta.url, sourceDir: import.meta.dirname }; }`,
+        );
+        fs.writeFileSync(
+            path.join(directory, "marker.cjs"),
+            `module.exports = 'source-relative-ok';`,
+        );
+        const writeLeaf = (value: string) =>
+            fs.writeFileSync(leaf, `export function leaf() { return ${JSON.stringify(value)}; }`);
+        const load = () =>
+            loadConfigFromFile(
+                { command: "serve", mode: "development" },
+                config,
+                directory,
+                "silent",
+            );
+        const check = async (value: string) => {
+            const result = await load();
+            expect(result).not.toBeNull();
+            expect(result!.config.define).toMatchObject({
+                value,
+                marker: "source-relative-ok",
+                sourceUrl: pathToFileURL(parent).href,
+                sourceDir: directory,
+            });
+            expect(result!.config.define!.embedded).toContain(JSON.stringify(value));
+            expect(result!.dependencies.map((file) => path.resolve(file)).sort()).toEqual(
+                [config, parent, leaf].sort(),
+            );
+        };
+        writeLeaf("initial");
+        await check("initial");
+        writeLeaf("updated");
+        await check("updated");
+        fs.writeFileSync(leaf, "export function {");
+        await expect(load()).rejects.toThrow();
+        writeLeaf("corrected");
+        await check("corrected");
     });
 });

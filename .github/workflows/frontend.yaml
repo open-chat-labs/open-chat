@@ -36,7 +36,7 @@ jobs:
           node-version: "24.18.1"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit
 
         # A missing platform package is a lockfile failure, not permission to rewrite it in CI.
       - name: Verify locked Rollup Linux Binary
@@ -49,7 +49,12 @@ jobs:
 
       - name: Check model and packaging policy regressions
         working-directory: .
-        run: node --test scripts/android_bundle.test.mjs scripts/android_build_prerequisites.test.mjs scripts/android_dev.test.mjs scripts/model_asset_notices.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_ci_coverage.test.mjs scripts/sbom_lock_identity.test.mjs scripts/frontend_format_check.test.mjs
+        run: node --test scripts/android_bundle.test.mjs scripts/android_build_prerequisites.test.mjs scripts/android_dev.test.mjs scripts/model_asset_notices.test.mjs scripts/verify_webgpu_distribution.test.mjs scripts/model_ci_coverage.test.mjs scripts/security_mode_scope.test.mjs scripts/sbom_lock_identity.test.mjs scripts/frontend_format_check.test.mjs
+
+      # Pure local fixtures only: no advisory requests, installs, or live model runs.
+      - name: Check offline feature inventory and CI contracts
+        working-directory: .
+        run: node --test scripts/npm_feature_scope.test.mjs scripts/npm_feature_seed_review.test.mjs scripts/npm_feature_advisories.test.mjs scripts/npm_feature_advisories.review.test.mjs scripts/rust_feature_scope.test.mjs scripts/rust_feature_seed_review.test.mjs scripts/rust_feature_advisories.test.mjs scripts/rust_feature_advisory_results.test.mjs scripts/rust_feature_advisory_runner.test.mjs scripts/rust_feature_sbom.test.mjs scripts/rust_feature_sbom_validate.test.mjs scripts/rust_feature_collection.test.mjs scripts/rust_feature_ci.test.mjs scripts/check_feature_ci.test.mjs scripts/security_mode_scope.test.mjs scripts/security_owned_rules.test.mjs
 
       - name: Verify narrowly scoped dependency compatibility
         working-directory: .

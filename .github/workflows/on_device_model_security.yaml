@@ -15,6 +15,7 @@ on:
       - "dfx.json"
       - "frontend/**/package.json"
       - "frontend/package-lock.json"
+      - "frontend/.npmrc"
       - "frontend/vitest.config.ts"
       - "frontend/vite-env.d.ts"
       - "frontend/global.d.ts"
@@ -28,7 +29,10 @@ on:
       - "frontend/app/src/utils/nativeInferenceRuntimeBridge*"
       - "frontend/app/src/utils/imageDimensions*"
       - "frontend/app/src/utils/webInference*"
+      - "frontend/app/src/utils/webGpuModelCatalog*"
+      - "frontend/app/public/model-catalog.json"
       - "frontend/app/src/utils/transformersWebGpu*"
+      - "frontend/app/src/utils/fixtures/qwenVisionGeometry.native.json"
       - "frontend/app/src/utils/gemma4WebGpu*"
       - "frontend/app/src/utils/localAi*"
       - "frontend/app/src/utils/localAudioInput*"
@@ -37,11 +41,13 @@ on:
       - "frontend/app/src/stores/customModels*"
       - "frontend/app/src/stores/onDeviceModels*"
       - "frontend/app/src/stores/transformersWebGpu*"
+      - "frontend/app/src/stores/webGpuModelCatalog*"
       - "frontend/app/src/workers/transformersWebGpu*"
       - "frontend/app/src/components*/**/ModelManager.svelte"
       - "frontend/app/src/components/home/MessageEntry.svelte"
       - "frontend/app/src/components_mobile/home/MessageEntry.svelte"
       - "frontend/app/src/components_shared/WebInferenceRuntimeSettings*"
+      - "frontend/app/src/components_shared/WebGpuModelCatalog*"
       - "frontend/app/transformersWebGpu*"
       - "frontend/app/build*"
       - "frontend/app/rollup*"
@@ -62,6 +68,12 @@ on:
       - "frontend/tauri-plugin-oc/**"
       - "scripts/check_openchat_pr1_security.mjs"
       - "scripts/security_dependency_hash*"
+      - "scripts/security_mode_scope*"
+      - "scripts/npm_feature*"
+      - "scripts/rust_feature*"
+      - "scripts/vendor/cyclonedx-1.6/**"
+      - "scripts/check_feature_ci*"
+      - "scripts/security_owned_rules*"
       - "scripts/sbom_lock_identity*"
       - "scripts/frontend_format_check*"
       - "scripts/model_ci_coverage*"
@@ -103,32 +115,70 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install exact frontend lockfile
         working-directory: frontend
-        run: npm ci
+        run: npm ci --no-audit
       - name: Verify historical reviewed dependency hash portability
         run: node --test scripts/security_dependency_hash.test.mjs
       - name: Check candidate source and config formatting
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/check_openchat_pr1_security.mjs format
-      - name: Enforce supported CI runtime and npm dependency policy
-        env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: node scripts/check_openchat_pr1_security.mjs ci npm
-      - name: Install pinned Rust security tools
+      - name: Test scoped npm ownership, collection and advisory contracts offline
+        working-directory: .
+        run: node --test scripts/npm_feature_scope.test.mjs scripts/npm_feature_seed_review.test.mjs scripts/npm_feature_advisories.test.mjs scripts/npm_feature_advisories.review.test.mjs scripts/check_feature_ci.test.mjs scripts/security_mode_scope.test.mjs scripts/security_owned_rules.test.mjs
+      - name: Check partial npm CI wiring and exact Node runtime
+        working-directory: .
+        run: node scripts/check_feature_ci.mjs npm-pr1
+      - name: Query advisories only for reviewed model dependency roots
+        working-directory: .
+        # Arborist 9.4.0 and semver 7.7.4 are verified by the scoped runner.
+        # Source, seeds, install mode and lock identities are checked before/after.
         run: |
-          cargo install cargo-audit --locked --version 0.22.2
-          cargo install cargo-cyclonedx --locked --version 0.5.9
-      - name: Enforce RustSec delta and reviewed dependency licenses
-        run: node scripts/check_openchat_pr1_security.mjs rust licenses
-      - name: Generate local-model CycloneDX SBOM
-        env:
-          SBOM_OUTPUT: ${{ runner.temp }}/openchat-pr1-model.cdx.json
-        run: node scripts/check_openchat_pr1_security.mjs sbom
-      - name: Upload local-model SBOM
+          set -euo pipefail
+          npm_root="$(npm root --global)"
+          node scripts/npm_feature_advisories.mjs --repository-root "$GITHUB_WORKSPACE" --scope pr1 --arborist-path "$npm_root/npm/node_modules/@npmcli/arborist" --output-directory "$RUNNER_TEMP" --mode query-bulk
+      - name: Upload scoped model npm evidence, including failed checks
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: openchat-pr1-model-sbom
-          path: ${{ runner.temp }}/openchat-pr1-model.cdx.json
+          name: openchat-pr1-scoped-npm-report
+          path: ${{ runner.temp }}/npm-feature-advisories-*
+          if-no-files-found: error
+      - name: Prepare locked Rust metadata inputs explicitly
+        working-directory: .
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.95.0 --profile minimal
+          cargo_path="$(rustup which --toolchain 1.95.0 cargo)"
+          rustc_path="$(rustup which --toolchain 1.95.0 rustc)"
+          RUSTC="$rustc_path" "$cargo_path" fetch --locked
+      - name: Check introduced model dependency licenses offline
+        working-directory: .
+        # Fails closed if locked Cargo metadata is not already cached.
+        run: node scripts/check_openchat_pr1_security.mjs licenses
+      - name: Check complete feature workflow wiring
+        working-directory: .
+        run: node scripts/check_feature_ci.mjs pr1
+      - name: Run scoped Rust collection, schema and advisory gate
+        working-directory: .
+        # Incomplete source review stops before advisory egress; no broad fallback.
+        run: |
+          set -euo pipefail
+          cargo_path="$(rustup which --toolchain 1.95.0 cargo)"
+          config_sha256="$(sha256sum scripts/rust_feature_scope.pr1.json)"
+          config_sha256="${config_sha256%% *}"
+          node scripts/rust_feature_ci.mjs --repository-root "$GITHUB_WORKSPACE" --scope pr1 --config-sha256 "$config_sha256" --output-directory "$RUNNER_TEMP" --cargo-executable "$cargo_path" --mode check-scoped
+      - name: Upload scoped Rust evidence, including failed checks
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: openchat-pr1-scoped-rust-report
+          path: |
+            ${{ runner.temp }}/rust-feature-ci-*/summary.json
+            ${{ runner.temp }}/rust-feature-ci-*/rust-feature-collection-*/summary.json
+            ${{ runner.temp }}/rust-feature-ci-*/rust-feature-collection-*/collection.json
+            ${{ runner.temp }}/rust-feature-ci-*/rust-feature-collection-*/*.selected.json
+            ${{ runner.temp }}/rust-feature-ci-*/rust-feature-collection-*/selected-rust.cdx*.json
+            ${{ runner.temp }}/rust-feature-ci-*/rust-feature-advisories-*/*
           if-no-files-found: error
 
   android-component-contracts:
@@ -217,7 +267,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install exact frontend lockfile
         working-directory: frontend
-        run: npm ci
+        run: npm ci --no-audit
       - name: Run all local-model frontend contracts
         working-directory: frontend
         # Vitest uses literal path filters, not shell globs. Prefixes also select
@@ -230,6 +280,7 @@ jobs:
           app/src/stores/onDeviceModels
           app/src/stores/transformersWebGpu
           app/src/components_shared/WebInferenceRuntimeSettings
+          app/src/components_shared/WebGpuModelCatalog
           app/src/utils/localAi
           app/src/utils/localAudioInput
           app/src/utils/configuredLocalBlobUrl
@@ -238,6 +289,7 @@ jobs:
           app/src/utils/onDeviceInference
           app/src/utils/nativeInferenceRuntimeBridge
           app/src/utils/webInference
+          app/src/utils/webGpuModelCatalog
           app/src/utils/transformersWebGpu
           app/src/utils/gemma4WebGpu
           app/src/bootstrapSecurity

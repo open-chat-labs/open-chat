@@ -2,7 +2,6 @@ import replace from "@rollup/plugin-replace";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import chokidar from "chokidar";
 import fs from "fs";
-import { pathToFileURL } from "node:url";
 import path from "path";
 import execute from "rollup-plugin-shell";
 import { build, defineConfig, type Plugin, type PluginOption } from "vite";
@@ -20,10 +19,22 @@ import {
     createTransformersWebGpuDevRuntimeVersion,
     TRANSFORMERS_WEBGPU_DEV_RUNTIME_VERSION_META,
 } from "./src/utils/transformersWebGpuDevRuntimeVersion";
+import { patchQwen3Vl2bDecoderGraph } from "./transformersWebGpuDecoderGraph.mjs";
 import {
-    patchQwen3Vl2bDecoderGraph,
-    QWEN3_VL_2B_DECODER_PATCHED_BYTES,
-} from "./transformersWebGpuDecoderGraph.mjs";
+    patchQwen3Vl2bDeepStackDecoderGraph,
+    patchQwen3Vl2bDeepStackVisionGraph,
+} from "./transformersWebGpuDeepStackGraph.mjs";
+import {
+    patchQwen3Vl2bGenerationGraph,
+    QWEN3_VL_2B_GENERATION_BYTES,
+} from "./transformersWebGpuQwenGenerationGraph.mjs";
+import {
+    patchQwen3Vl2bVisionGeometryGraph,
+    QWEN3_VL_2B_VISION_GEOMETRY_BYTES,
+} from "./transformersWebGpuQwenVisionGraph.mjs";
+// Static imports let Vite track and reload the complete build-helper dependency closure.
+import { transformersWebGpuSequentialSessionsPlugin } from "./transformersWebGpuSequentialSessions.mjs";
+import { transformersWebGpuOrtSessionConfigPlugin } from "./transformersWebGpuOrtSessionConfig.mjs";
 import { transformersWebGpuFeatureEnabled } from "./transformersWebGpuFeatureFlag.mjs";
 
 const version = `1000.0.${Date.now()}`;
@@ -105,6 +116,7 @@ const QWEN3_VL_2B_MODEL_ROUTE_PREFIX =
     "/hf-model/onnx-community/Qwen3-VL-2B-Instruct-ONNX/resolve/3e4136ea66ae6e07c110e64fe07da2e029517ab5/onnx/";
 type Qwen3Vl2bModelOverride = {
     path: string;
+    bytes: number;
     transform?: (bytes: Uint8Array) => Uint8Array;
 };
 const qwen3Vl2bModelOverrides = new Map<string, Qwen3Vl2bModelOverride>([
@@ -115,7 +127,12 @@ const qwen3Vl2bModelOverrides = new Map<string, Qwen3Vl2bModelOverride>([
                 __dirname,
                 "./model-overrides/qwen3vl2b/onnx/decoder_model_merged_q4.onnx",
             ),
-            transform: patchQwen3Vl2bDecoderGraph,
+            bytes: QWEN3_VL_2B_GENERATION_BYTES,
+            transform: (bytes) =>
+                patchQwen3Vl2bGenerationGraph(
+                    patchQwen3Vl2bDeepStackDecoderGraph(patchQwen3Vl2bDecoderGraph(bytes)),
+                    { scope: "generation-only" },
+                ),
         },
     ],
     [
@@ -125,6 +142,9 @@ const qwen3Vl2bModelOverrides = new Map<string, Qwen3Vl2bModelOverride>([
                 __dirname,
                 "./model-overrides/qwen3vl2b/onnx/vision_encoder_q4.onnx",
             ),
+            bytes: QWEN3_VL_2B_VISION_GEOMETRY_BYTES,
+            transform: (bytes) =>
+                patchQwen3Vl2bVisionGeometryGraph(patchQwen3Vl2bDeepStackVisionGraph(bytes)),
         },
     ],
 ]);
@@ -177,7 +197,7 @@ function transformersWebGpuAssetsPlugin(): Plugin {
  * `/hf-model`. Keeping the replacement route under that same immutable URL means Cache API entries
  * are origin-scoped correctly for both loopback and a private HTTPS development hostname. */
 function qwen3Vl2bModelOverridesPlugin(): Plugin {
-    let patchedDecoder: Uint8Array | undefined;
+    const patchedGraphs = new Map<string, Uint8Array>();
     return {
         name: "qwen3-vl-2b-adreno-model-overrides",
         configureServer(server) {
@@ -211,13 +231,16 @@ function qwen3Vl2bModelOverridesPlugin(): Plugin {
                 let transformed: Uint8Array | undefined;
                 if (asset.transform !== undefined) {
                     try {
-                        patchedDecoder ??= asset.transform(fs.readFileSync(asset.path));
-                        transformed = patchedDecoder;
-                        if (transformed.byteLength !== QWEN3_VL_2B_DECODER_PATCHED_BYTES) {
-                            throw new Error("The deterministic Qwen decoder byte count changed.");
+                        transformed = patchedGraphs.get(relative);
+                        if (transformed === undefined) {
+                            transformed = asset.transform(fs.readFileSync(asset.path));
+                            if (transformed.byteLength !== asset.bytes) {
+                                throw new Error("The deterministic Qwen graph byte count changed.");
+                            }
+                            patchedGraphs.set(relative, transformed);
                         }
                     } catch (error) {
-                        server.config.logger.error(`[qwen-decoder-graph] ${String(error)}`);
+                        server.config.logger.error(`[qwen-model-graph] ${String(error)}`);
                         res.statusCode = 503;
                         res.end("pinned model transform failed");
                         return;
@@ -248,13 +271,7 @@ function qwen3Vl2bModelOverridesPlugin(): Plugin {
 // openchat-worker/lib/worker.js together with the chokidar poll that waited for
 // those lib files to appear.
 function ocWorkerPlugin(): Plugin {
-    let buildAttempt = 0;
     async function buildWorker() {
-        // This helper is itself watched. Import it afresh for every attempt so changing the
-        // transform rebuilds with new code, including when the preceding attempt failed.
-        const { transformersWebGpuSequentialSessionsPlugin } = await import(
-            `${pathToFileURL(path.resolve(__dirname, "transformersWebGpuSequentialSessions.mjs")).href}?worker-build=${++buildAttempt}`
-        );
         for (const target of workerTargets) {
             await build({
                 configFile: false,
@@ -272,7 +289,11 @@ function ocWorkerPlugin(): Plugin {
                 define: { "process.env.NODE_ENV": JSON.stringify("development") },
                 plugins:
                     target.sequentialWebGpuSessions === true
-                        ? [transformersWebGpuSequentialSessionsPlugin()]
+                        ? [
+                              transformersWebGpuSequentialSessionsPlugin(),
+                              // The qualified JS helper infers its literal enforce value as string.
+                              transformersWebGpuOrtSessionConfigPlugin() as Plugin,
+                          ]
                         : [],
                 build: {
                     outDir: workerBuildDir,
@@ -356,9 +377,10 @@ function ocWorkerPlugin(): Plugin {
                 "./src/utils/imageDimensions.ts",
                 "./src/utils/transformersWebGpuAudio.ts",
                 "./src/utils/transformersWebGpuImageLayout.ts",
+                "./src/utils/transformersWebGpuQwenContext.ts",
+                "./src/utils/transformersWebGpuCompletion.ts",
                 "./src/utils/transformersWebGpuOrtDiagnostics.ts",
                 "./src/utils/transformersWebGpuPipelineCompilation.ts",
-                "./transformersWebGpuSequentialSessions.mjs",
             ].map((d) => path.resolve(__dirname, d));
 
             let timer: ReturnType<typeof setTimeout> | undefined;

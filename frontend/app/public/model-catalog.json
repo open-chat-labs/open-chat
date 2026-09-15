@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "version": "2026-09-default",
+  "models": [
+    {
+      "id": "qwen3-vl-2b-instruct-q4",
+      "name": "Qwen3-VL 2B (vision)",
+      "description": "Pinned Qwen3-VL 2B text and image model. Embeddings, vision, and decoding all run on WebGPU.",
+      "repository": "onnx-community/Qwen3-VL-2B-Instruct-ONNX",
+      "revision": "3e4136ea66ae6e07c110e64fe07da2e029517ab5",
+      "dtype": "q4",
+      "cacheKey": "codex-qwen3vl2b-all-webgpu-v4.2.0-q4-adreno-qk-f32-v1",
+      "artifacts": [
+        {
+          "path": "config.json",
+          "bytes": 1961,
+          "sha256": "85a783d2fc70cfaa46a7ea5fbed1ea0ad06ec120a3165bd75d464a77f566ab18"
+        },
+        {
+          "path": "generation_config.json",
+          "bytes": 276,
+          "sha256": "bf25bd273e561fe1196a04a35e9806c8f66bf260ae030d88b51dc9c76c37e797"
+        },
+        {
+          "path": "tokenizer.json",
+          "bytes": 9117036,
+          "sha256": "40ae5d1ee027b985684a3bbeef4ee16b2b5697d1d90658bec5bc5d2a73018bd7"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "bytes": 6200,
+          "sha256": "0364a2cb734b560ab69d4884ef694c8cbd36cbd3d8642c41013105524e41bb41"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "bytes": 336,
+          "sha256": "6a970fd06f30e6943b3e2c14d5d3b42d49b06cf99b99103d56689bef462d90f8"
+        },
+        {
+          "path": "processor_config.json",
+          "bytes": 1300,
+          "sha256": "14932921ca485d458a04dafd8069fbb0a4505622a48208d19ed247115801385b"
+        },
+        {
+          "path": "chat_template.jinja",
+          "bytes": 5292,
+          "sha256": "3636d0f0bd6bef02654cdffdc447b79cb2cef8ab02cc75267345946291a489e4"
+        },
+        {
+          "path": "onnx/decoder_model_merged_q4.onnx",
+          "bytes": 4896612,
+          "sha256": "475d9ad51b0da52e7510a8b597bdf42a533e552de3a3b74c58284ae6b2472375"
+        },
+        {
+          "path": "onnx/decoder_model_merged_q4.onnx_data",
+          "bytes": 1102630912,
+          "sha256": "35b8960257384ebe1eb293646f52fdec8d5d25177f37edfb116d63a90f92756c"
+        },
+        {
+          "path": "onnx/embed_tokens_q4.onnx",
+          "bytes": 857,
+          "sha256": "9499fcdba2e1cbbc172913fb2fb950d9b53de54b6a9338997b0956feb035bbad"
+        },
+        {
+          "path": "onnx/embed_tokens_q4.onnx_data",
+          "bytes": 199340032,
+          "sha256": "6c3b078ca20e4233f27de203812ba74c6b29d5ae4208932857886582ec6aa50d"
+        },
+        {
+          "path": "onnx/vision_encoder_q4.onnx",
+          "bytes": 576592,
+          "sha256": "b62a78861a16cb0023156cc20dc6d8d7f0d97c99ce2360a9b4670d2f9327f6ac"
+        },
+        {
+          "path": "onnx/vision_encoder_q4.onnx_data",
+          "bytes": 217952256,
+          "sha256": "4582e91d7221675fb1593ab2f13115aa8403f601be2d9826bb0a84619e62af5a"
+        },
+        {
+          "path": "onnx/vision_encoder_q4_deepstack.onnx_data",
+          "bytes": 302161920,
+          "sha256": "f331bfc4a32c5dcda5a3589283acd90672f8f903cda0d8f425f8aaaf0b148168",
+          "source": {
+            "repository": "Qwen/Qwen3-VL-2B-Instruct",
+            "revision": "89644892e4d85e24eaac8bacfd4f463576704203",
+            "path": "model.safetensors",
+            "range": {
+              "start": 4045844952,
+              "end": 4196925911,
+              "totalBytes": 4255140312
+            },
+            "bytes": 151080960,
+            "sha256": "fecb4139b02964dea60cc588fdf3020796cb56280eb89626f2695617f72643d3",
+            "transform": "bf16-le-to-f32-le"
+          }
+        }
+      ],
+      "artifactBytes": 1836691582,
+      "modalities": [
+        "text",
+        "image"
+      ],
+      "packagedModelBase": "/assets/transformers-webgpu/qwen3vl2b/",
+      "developmentModelBase": "/hf-model/onnx-community/Qwen3-VL-2B-Instruct-ONNX/resolve/3e4136ea66ae6e07c110e64fe07da2e029517ab5/",
+      "packagedArtifacts": [
+        "onnx/decoder_model_merged_q4.onnx",
+        "onnx/vision_encoder_q4.onnx"
+      ],
+      "enabled": true,
+      "adapter": "qwen3-vl-2b-staged-v1",
+      "sessionDtypes": {
+        "embed_tokens": "q4",
+        "vision_encoder": "q4",
+        "decoder_model_merged": "q4"
+      },
+      "externalData": {
+        "embed_tokens": [
+          {
+            "path": "onnx/embed_tokens_q4.onnx_data",
+            "name": "embed_tokens_q4.onnx_data"
+          }
+        ],
+        "vision_encoder": [
+          {
+            "path": "onnx/vision_encoder_q4.onnx_data",
+            "name": "vision_encoder_q4.onnx_data"
+          },
+          {
+            "path": "onnx/vision_encoder_q4_deepstack.onnx_data",
+            "name": "vision_encoder_q4_deepstack.onnx_data"
+          }
+        ],
+        "decoder_model_merged": [
+          {
+            "path": "onnx/decoder_model_merged_q4.onnx_data",
+            "name": "decoder_model_merged_q4.onnx_data"
+          }
+        ]
+      },
+      "generation": {
+        "maxOutputTokens": 96,
+        "doSample": false,
+        "temperature": 1,
+        "topP": 1,
+        "topK": 50,
+        "repetitionPenalty": 1
+      }
+    },
+    {
+      "id": "gemma-4-e2b-it-q4",
+      "name": "Gemma 4 E2B (multimodal)",
+      "description": "Pinned Gemma 4 E2B text and image model. Voice messages are available as a separate optional download.",
+      "repository": "onnx-community/gemma-4-E2B-it-ONNX",
+      "revision": "9f4bef82ea6e296bc69f8a2f5939f73af81b07a6",
+      "dtype": "q4f16",
+      "cacheKey": "codex-gemma4-e2b-all-webgpu-v4.2.0-q4f16-row-embed-v1",
+      "artifacts": [
+        {
+          "path": "config.json",
+          "bytes": 5549,
+          "sha256": "5494e6677d9e150ea20ba3101ae8a32b0f141004626f052725d8bf48991b9faa"
+        },
+        {
+          "path": "generation_config.json",
+          "bytes": 238,
+          "sha256": "e6a0b50de21a511f15ac4857b7f227f68ee60ecb1f11255d07b75e0bdc60e155"
+        },
+        {
+          "path": "tokenizer.json",
+          "bytes": 19439251,
+          "sha256": "47bd35616c7c782aaca6ccf48c75f3461d5877170984b8836b375107d0a9f566"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "bytes": 18807,
+          "sha256": "06afbf54e228050cba79c4a0afd83543cc89070a2d62b8337d0aa8b4cdc348c3"
+        },
+        {
+          "path": "processor_config.json",
+          "bytes": 1689,
+          "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "bytes": 43,
+          "sha256": "4457c6e8a09070d7d5d1cd983fbfb67ebafe602bd98120c3543a024f5d07056b"
+        },
+        {
+          "path": "chat_template.jinja",
+          "bytes": 16317,
+          "sha256": "781d10940fbc44be40064b5d43a056fc486c84ceaa55538226368b57314132bf"
+        },
+        {
+          "path": "onnx/decoder_model_merged_q4f16.onnx",
+          "bytes": 673231,
+          "sha256": "73c0f1fe04f9a3a048fb3319c0671b6cf0346bf33a3a8624c853bcffe01c24a4"
+        },
+        {
+          "path": "onnx/decoder_model_merged_q4f16.onnx_data",
+          "bytes": 1519700992,
+          "sha256": "3b27245a7396cb7039a4e4118bd2a8aa35106bae381522edf7c4867b5f22bb10"
+        },
+        {
+          "path": "onnx/embed_tokens_q4f16.onnx",
+          "bytes": 5621,
+          "sha256": "d7ca53f6a169471b5699b2f57ee4c7aa2c73732b0152f3909e64b71384444825"
+        },
+        {
+          "path": "onnx/embed_tokens_q4f16.onnx_data",
+          "bytes": 1590689792,
+          "sha256": "024b199e6358ed42970f807686add5f9430d7e254ca7ce22fc9c83f015b9c517"
+        },
+        {
+          "path": "onnx/vision_encoder_q4f16.onnx",
+          "bytes": 189124,
+          "sha256": "e0a4e48e519ade4eeddbb4cdadb812a7251aea871f7fb5f50576615fd3af22a3"
+        },
+        {
+          "path": "onnx/vision_encoder_q4f16.onnx_data",
+          "bytes": 99189440,
+          "sha256": "0835071d2c79c105f8e1b549b7f8dd8c9af07fa95f01ead2e7add280602d3c6d"
+        }
+      ],
+      "artifactBytes": 3229930094,
+      "modalities": [
+        "text",
+        "image",
+        "audio"
+      ],
+      "packagedArtifacts": [],
+      "optionalAudio": {
+        "artifacts": [
+          {
+            "path": "onnx/audio_encoder_q4f16.onnx",
+            "bytes": 260446,
+            "sha256": "5e0deb22791685c792d4b8e089deef9670fa4a4cecde434213d6a742e58fc3fa"
+          },
+          {
+            "path": "onnx/audio_encoder_q4f16.onnx_data",
+            "bytes": 171258112,
+            "sha256": "df58e61a00bafa9449ee5fd52895ce952f158bbdd1fe38df8a68f48f36842e62"
+          }
+        ],
+        "artifactBytes": 171518558
+      },
+      "enabled": true,
+      "adapter": "gemma4-e2b-row-v1",
+      "sessionDtypes": {
+        "embed_tokens": "q4f16",
+        "vision_encoder": "q4f16",
+        "decoder_model_merged": "q4f16",
+        "audio_encoder": "q4f16"
+      },
+      "externalData": {
+        "embed_tokens": [
+          {
+            "path": "onnx/embed_tokens_q4f16.onnx_data",
+            "name": "embed_tokens_q4f16.onnx_data"
+          }
+        ],
+        "vision_encoder": [
+          {
+            "path": "onnx/vision_encoder_q4f16.onnx_data",
+            "name": "vision_encoder_q4f16.onnx_data"
+          }
+        ],
+        "decoder_model_merged": [
+          {
+            "path": "onnx/decoder_model_merged_q4f16.onnx_data",
+            "name": "decoder_model_merged_q4f16.onnx_data"
+          }
+        ],
+        "audio_encoder": [
+          {
+            "path": "onnx/audio_encoder_q4f16.onnx_data",
+            "name": "audio_encoder_q4f16.onnx_data"
+          }
+        ]
+      },
+      "generation": {
+        "maxOutputTokens": 96,
+        "doSample": false,
+        "temperature": 1,
+        "topP": 1,
+        "topK": 50,
+        "repetitionPenalty": 1
+      }
+    }
+  ]
+}

@@ -11,6 +11,7 @@ const ORT_REVISION = "1b1e1db7bcf583e5927588e8d85c5a89717dc45c";
 const TRANSFORMERS_LICENSE_SHA256 =
     "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30";
 const APACHE_LICENSE_SHA256 = "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2";
+const MODIFIED_GRAPHS = ["onnx/decoder_model_merged_q4.onnx", "onnx/vision_encoder_q4.onnx"];
 
 const REQUIRED_DOCUMENTS = {
     wllama: [
@@ -140,15 +141,43 @@ export function collectModelAssetNotices({
                 throw new Error(`Model asset license changed or is incomplete: ${name}`);
             add(`${OUTPUT_DIRECTORY}/${name}`, source);
         }
-        add(
-            `${OUTPUT_DIRECTORY}/MODEL_MODIFICATIONS.md`,
-            text(`${NOTICE_DIRECTORY}/MODEL_MODIFICATIONS.md`),
-        );
-        for (const graph of ["decoder_model_merged_q4.onnx", "vision_encoder_q4.onnx"]) {
+        const modification = manifest.modifications;
+        const modificationText = text(`${NOTICE_DIRECTORY}/MODEL_MODIFICATIONS.md`);
+        if (
+            modification?.name !== "MODEL_MODIFICATIONS.md" ||
+            modification.bytes !== Buffer.byteLength(modificationText) ||
+            modification.sha256 !== sha256(modificationText)
+        ) {
+            throw new Error("Model modification notice changed or is incomplete.");
+        }
+        if (
+            !Array.isArray(manifest.modifiedGraphs) ||
+            JSON.stringify(manifest.modifiedGraphs.map((graph) => graph.path)) !==
+                JSON.stringify(MODIFIED_GRAPHS) ||
+            manifest.modifiedGraphs.some(
+                (graph) =>
+                    ![graph.sourceBytes, graph.bytes].every(
+                        (bytes) => Number.isSafeInteger(bytes) && bytes > 0,
+                    ) ||
+                    ![graph.sourceSha256, graph.sha256].every((digest) =>
+                        /^[a-f0-9]{64}$/.test(digest),
+                    ) ||
+                    ![graph.sourceStage, graph.transform, graph.scope].every(
+                        (value) => typeof value === "string" && value.length > 0,
+                    ),
+            )
+        ) {
+            throw new Error("Incomplete modified model graph provenance.");
+        }
+        add(`${OUTPUT_DIRECTORY}/MODEL_MODIFICATIONS.md`, modificationText);
+        for (const graph of manifest.modifiedGraphs) {
             add(
-                `assets/transformers-webgpu/qwen3vl2b/onnx/${graph}.NOTICE.txt`,
-                `MODIFIED MODEL GRAPH: ${graph}\n\n` +
+                `assets/transformers-webgpu/qwen3vl2b/${graph.path}.NOTICE.txt`,
+                `MODIFIED MODEL GRAPH: ${graph.path}\n\n` +
                     "OpenChat modifies this Qwen3-VL-2B graph; it is not the unmodified publisher artifact.\n" +
+                    `Source stage: ${graph.sourceStage}; ${graph.sourceBytes} bytes; SHA-256 ${graph.sourceSha256}\n` +
+                    `Packaged graph: ${graph.bytes} bytes; SHA-256 ${graph.sha256}\n` +
+                    `Transform: ${graph.transform}\nScope: ${graph.scope}\n\n` +
                     "The original Qwen model is Apache-2.0. The complete license, upstream attribution,\n" +
                     "immutable hashes and modification description accompany the distribution at:\n" +
                     "assets/licenses/model-assets/Apache-2.0.txt\n" +

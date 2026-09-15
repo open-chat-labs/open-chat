@@ -2,6 +2,7 @@ import { flushSync, tick } from "svelte";
 import { createClassComponent } from "svelte/legacy";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WebInferenceRuntimeSettings from "./WebInferenceRuntimeSettings.svelte";
+import { TRANSFORMERS_WEBGPU_MAX_RAW_IMAGE_PATCHES } from "../utils/transformersWebGpuImageLayout";
 import {
     deleteTransformersWebGpuAudio,
     preloadTransformersWebGpuAudio,
@@ -38,7 +39,7 @@ async function settle() {
     flushSync();
 }
 
-function render() {
+function render(context: "desktop" | "phone" = "phone") {
     const target = document.createElement("div");
     document.body.append(target);
     // The compatibility wrapper provides real reactive prop updates to the compiled Svelte 5
@@ -46,7 +47,7 @@ function render() {
     const component = createClassComponent({
         component: WebInferenceRuntimeSettings,
         target,
-        props: { context: "phone" as const, modelId: GEMMA, modelName: "Gemma" },
+        props: { context, modelId: GEMMA, modelName: "Gemma" },
     });
     let destroyed = false;
     const destroy = () => {
@@ -80,6 +81,29 @@ beforeEach(() => {
 
 afterEach(() => {
     cleanup.splice(0).forEach((destroy) => destroy());
+});
+
+describe("all-WebGPU image budget label", () => {
+    it.each(["desktop", "phone"] as const)(
+        "shows Qwen's dynamic shared patch cap without a fixed resolution in %s settings",
+        async (context) => {
+            const view = render(context);
+            await settle();
+            view.switchTo(QWEN);
+            await settle();
+            const imageLabel = Array.from(view.target.querySelectorAll("dt")).find(
+                (item) => item.textContent === "Image input",
+            );
+            expect(imageLabel?.nextElementSibling?.textContent?.replace(/\s+/g, " ").trim()).toBe(
+                `Dynamic dimensions · up to ${TRANSFORMERS_WEBGPU_MAX_RAW_IMAGE_PATCHES} raw patches · normalized`,
+            );
+            expect(view.target.textContent).not.toContain("288 × 512");
+            expect(imageLabel?.parentElement?.querySelector("input, select")).toBeNull();
+            view.switchTo(GEMMA);
+            await settle();
+            expect(view.target.textContent).not.toContain("Image input");
+        },
+    );
 });
 
 describe("optional voice settings component lifecycle", () => {

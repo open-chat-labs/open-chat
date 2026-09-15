@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { build } from "vite";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
 import { transformersWebGpuSequentialSessionsPlugin } from "./transformersWebGpuSequentialSessions.mjs";
+import { transformersWebGpuOrtSessionConfigPlugin } from "./transformersWebGpuOrtSessionConfig.mjs";
 import { transformersWebGpuFeatureEnabled } from "./transformersWebGpuFeatureFlag.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -72,7 +73,10 @@ for (const target of targets) {
         define: { "process.env.NODE_ENV": JSON.stringify("production") },
         plugins:
             target.sequentialWebGpuSessions === true
-                ? [transformersWebGpuSequentialSessionsPlugin()]
+                ? [
+                      transformersWebGpuSequentialSessionsPlugin(),
+                      transformersWebGpuOrtSessionConfigPlugin(),
+                  ]
                 : [],
         build: {
             outDir: path.resolve(__dirname, target.outDir),

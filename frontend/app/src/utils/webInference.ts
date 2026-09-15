@@ -1,3 +1,4 @@
+import { currentWebGpuModelCatalog, subscribeWebGpuModelCatalog } from "./webGpuModelCatalog";
 // BROWSER on-device inference — the web half of the onDeviceInference facade.
 //
 // llama.cpp compiled to WASM (@wllama/wllama) runs a GGUF that the user picks from a NORMAL DISK
@@ -34,6 +35,7 @@ import {
     transformersWebGpuAudioDownloaded,
     transformersWebGpuAudioReady,
     transformersWebGpuInfer,
+    transformersWebGpuModelArtifactsDownloaded,
     transformersWebGpuModelArtifactsPresent,
     transformersWebGpuModelDownloaded,
     transformersWebGpuModelNotDownloadedMessage,
@@ -174,6 +176,23 @@ export type WebModelInstallState = "checking" | "downloaded" | "not_downloaded";
 export const webModelInstallStatus = writable<Readonly<Record<string, WebModelInstallState>>>({});
 let webModelInstallStates: Record<string, WebModelInstallState> = {};
 const webModelInstallGenerations = new Map<string, number>();
+
+subscribeWebGpuModelCatalog(() => {
+    // A download must not finish by activating metadata from a superseded catalog snapshot.
+    cancelWebModelDownload();
+    const spec = transformersWebGpuModelSpec(state.id);
+    if (spec !== undefined) {
+        state.name = spec.name;
+        state.declaredModalities = [...spec.modalities];
+        state.imageSupported = spec.modalities.includes("image");
+        publish();
+    }
+    void refreshWebModelInstallStatus(currentWebGpuModelCatalog().models.map((m) => m.id)).catch(
+        () => {
+            /* Inference still requires a full verification before execution. */
+        },
+    );
+});
 
 function nextWebModelInstallGeneration(modelId: string): number {
     const generation = (webModelInstallGenerations.get(modelId) ?? 0) + 1;
@@ -674,12 +693,29 @@ export async function useWebModelFromUrl(
             // A previously verified model keeps its own revisioned cache when another model is
             // selected. Re-activating it is cache-only: reuse the per-page proof instead of entering
             // the downloader (which invalidates that proof and rehashes every model shard).
-            const cachedAndVerified =
+            const cachedArtifactsVerified =
                 installed &&
+                (await transformersWebGpuModelArtifactsDownloaded(entry.id, {
+                    signal: attempt.controller.signal,
+                }));
+            if (!isCurrentAttempt()) throw attempt.controller.signal.reason;
+            let cachedAndVerified =
+                cachedArtifactsVerified &&
                 (await transformersWebGpuModelDownloaded(entry.id, {
                     signal: attempt.controller.signal,
                 }));
             if (!isCurrentAttempt()) throw attempt.controller.signal.reason;
+            if (cachedArtifactsVerified && !cachedAndVerified) {
+                // An inactive downloaded model may still have the previous build's worker.
+                // Refresh only that runtime layer: full preload would invalidate the body
+                // proof above and hash every unchanged multi-gigabyte model shard again.
+                armStallTimer();
+                await refreshTransformersWebGpuRuntimeAssets(entry.id, {
+                    signal: attempt.controller.signal,
+                });
+                if (!isCurrentAttempt()) throw attempt.controller.signal.reason;
+                cachedAndVerified = true;
+            }
             if (!cachedAndVerified) {
                 state.status = "downloading";
                 state.progress = { received: 0, total: modelSpec.artifactBytes };

@@ -8,7 +8,7 @@ export type TransformersWebGpuImageLayout = Readonly<{
 }>;
 
 // The proven SM8650 ceiling is below 720 raw 16x16 patches. Keep a margin while allowing a
-// portrait document to use 320x512 instead of being stretched into the old 288x512 rectangle.
+// portrait input to use a 320x512 frame instead of the old fixed 288x512 rectangle.
 const PATCH_SIZE = 16;
 const FRAME_ALIGNMENT = 32;
 const MIN_FRAME_EDGE = 256;
@@ -42,9 +42,11 @@ function positiveDimensions(width: number, height: number): boolean {
 }
 
 /**
- * Select an aligned frame under the proven phone patch ceiling, then letterbox an aspect-preserving
- * decode into it. Maximizing decoded content area makes small receipt text legible; padding wins
- * over stretching, so digits and named months keep their actual glyph shapes.
+ * Select an aligned frame under the proven phone patch ceiling, maximizing decoded content area.
+ * Fill a near-aligned frame only when each padding deficit is below one alignment quantum and the
+ * additional aspect enlargement over the rounded contain decode is at most 12.5%. Other shapes
+ * keep centered, aspect-preserving letterboxing. Neither path crops source content or enlarges
+ * the selected patch grid.
  */
 export function transformersWebGpuImageLayout(
     sourceWidth: number,
@@ -99,6 +101,23 @@ export function transformersWebGpuImageLayout(
     }
     if (best === undefined) return TRANSFORMERS_WEBGPU_FALLBACK_IMAGE_LAYOUT;
     const { contentPixels: _contentPixels, paddingPixels: _paddingPixels, ...layout } = best;
+    const scaledWidth = layout.frameWidth * layout.drawHeight;
+    const scaledHeight = layout.frameHeight * layout.drawWidth;
+    if (
+        layout.frameWidth - layout.drawWidth < FRAME_ALIGNMENT &&
+        layout.frameHeight - layout.drawHeight < FRAME_ALIGNMENT &&
+        // Integer cross-products enforce max axis enlargement / min axis enlargement <= 9/8.
+        // A padding deficit alone would permit >12.5% distortion near the minimum frame edge.
+        8 * Math.max(scaledWidth, scaledHeight) <= 9 * Math.min(scaledWidth, scaledHeight)
+    ) {
+        return {
+            ...layout,
+            drawWidth: layout.frameWidth,
+            drawHeight: layout.frameHeight,
+            drawX: 0,
+            drawY: 0,
+        };
+    }
     return layout;
 }
 

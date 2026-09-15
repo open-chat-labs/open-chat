@@ -8,13 +8,27 @@ import {
   modelAssetNoticesPlugin,
 } from "../frontend/app/modelAssetNotices.mjs";
 import {
-  TRANSFORMERS_QWEN_REVISION,
-  TRANSFORMERS_GEMMA_REVISION,
-  TRANSFORMERS_GEMMA_AUDIO_ARTIFACTS,
-  TRANSFORMERS_WEBGPU_PACKAGED_MODEL_ARTIFACTS,
-} from "../frontend/app/src/utils/transformersWebGpuProtocol.ts";
+  QWEN3_VL_2B_GENERATION_SOURCE_BYTES,
+  QWEN3_VL_2B_GENERATION_SOURCE_SHA256,
+  QWEN3_VL_2B_GENERATION_BYTES,
+  QWEN3_VL_2B_GENERATION_SHA256,
+} from "../frontend/app/transformersWebGpuQwenGenerationGraph.mjs";
+import {
+  QWEN3_VL_2B_VISION_GEOMETRY_SOURCE_BYTES,
+  QWEN3_VL_2B_VISION_GEOMETRY_SOURCE_SHA256,
+  QWEN3_VL_2B_VISION_GEOMETRY_BYTES,
+  QWEN3_VL_2B_VISION_GEOMETRY_SHA256,
+} from "../frontend/app/transformersWebGpuQwenVisionGraph.mjs";
 
 const frontend = path.resolve(import.meta.dirname, "../frontend");
+const catalog = JSON.parse(readFileSync(path.join(frontend, "app/public/model-catalog.json"), "utf8"));
+const qwen = catalog.models.find((model) => model.id === "qwen3-vl-2b-instruct-q4");
+const gemma = catalog.models.find((model) => model.id === "gemma-4-e2b-it-q4");
+const TRANSFORMERS_QWEN_ARTIFACTS = qwen?.artifacts ?? [];
+const TRANSFORMERS_QWEN_REVISION = qwen?.revision;
+const TRANSFORMERS_GEMMA_REVISION = gemma?.revision;
+const TRANSFORMERS_GEMMA_AUDIO_ARTIFACTS = gemma?.optionalAudio?.artifacts ?? [];
+const TRANSFORMERS_WEBGPU_PACKAGED_MODEL_ARTIFACTS = qwen?.packagedArtifacts ?? [];
 const noticePath = "assets/licenses/model-assets/";
 const manifestPath = path.join(
   frontend,
@@ -105,6 +119,115 @@ test("Rollup emits the complete same set into web/APK frontendDist", () => {
     emitFile: (asset) => emitted.push(asset),
   });
   assert.deepEqual(emitted, collectModelAssetNotices(options));
+});
+
+test("modification notices bind both final graphs and preserve their source-stage provenance", () => {
+  const assets = collectModelAssetNotices({ includeWebGpu: true });
+  const manifest = JSON.parse(
+    assets.find(({ fileName }) => fileName === noticePath + "sources.json")
+      .source,
+  );
+  const expected = [
+    [
+      "onnx/decoder_model_merged_q4.onnx",
+      QWEN3_VL_2B_GENERATION_SOURCE_BYTES,
+      QWEN3_VL_2B_GENERATION_SOURCE_SHA256,
+      QWEN3_VL_2B_GENERATION_BYTES,
+      QWEN3_VL_2B_GENERATION_SHA256,
+    ],
+    [
+      "onnx/vision_encoder_q4.onnx",
+      QWEN3_VL_2B_VISION_GEOMETRY_SOURCE_BYTES,
+      QWEN3_VL_2B_VISION_GEOMETRY_SOURCE_SHA256,
+      QWEN3_VL_2B_VISION_GEOMETRY_BYTES,
+      QWEN3_VL_2B_VISION_GEOMETRY_SHA256,
+    ],
+  ];
+  assert.deepEqual(
+    manifest.modifiedGraphs.map((graph) => [
+      graph.path,
+      graph.sourceBytes,
+      graph.sourceSha256,
+      graph.bytes,
+      graph.sha256,
+    ]),
+    expected,
+  );
+  const modifications = assets.find(
+    ({ fileName }) => fileName === noticePath + "MODEL_MODIFICATIONS.md",
+  ).source;
+  for (const [file, sourceBytes, sourceSha256, bytes, sha256] of expected) {
+    const artifact = TRANSFORMERS_QWEN_ARTIFACTS.find(
+      (item) => item.path === file,
+    );
+    assert.equal(artifact.bytes, bytes);
+    assert.equal(artifact.sha256, sha256);
+    const sidecar = assets.find(
+      ({ fileName }) =>
+        fileName === `assets/transformers-webgpu/qwen3vl2b/${file}.NOTICE.txt`,
+    ).source;
+    for (const identity of [
+      String(sourceBytes),
+      sourceSha256,
+      String(bytes),
+      sha256,
+    ]) {
+      assert.ok(sidecar.includes(identity), identity);
+      assert.ok(modifications.includes(identity), identity);
+    }
+  }
+  assert.match(modifications, /generation-only/);
+  assert.match(modifications, /eight private INT64/);
+  assert.match(modifications, /thirteen private/);
+  assert.match(modifications, /not.*all-token scoring/);
+  assert.match(
+    modifications,
+    /do not establish assembled-worker,\s+APK, phone or prompt-accuracy qualification/,
+  );
+});
+
+test("changed modification text or incomplete graph provenance cannot be emitted", () => {
+  assert.throws(
+    () =>
+      collectModelAssetNotices({
+        includeWebGpu: true,
+        readFile: readWith(
+          "app/model-asset-notices/MODEL_MODIFICATIONS.md",
+          () => "stale notice\n",
+        ),
+      }),
+    /modification notice changed or is incomplete/i,
+  );
+  for (const modify of [
+    (value) => {
+      delete value.modifications;
+    },
+    (value) => {
+      value.modifiedGraphs.pop();
+    },
+    (value) => {
+      value.modifiedGraphs[0].path = value.modifiedGraphs[1].path;
+    },
+    (value) => {
+      value.modifiedGraphs[0].sourceSha256 = "invalid";
+    },
+  ]) {
+    assert.throws(
+      () =>
+        collectModelAssetNotices({
+          includeWebGpu: true,
+          readFile: readWith(
+            "app/model-asset-notices/sources.json",
+            (bytes) => {
+              const value = JSON.parse(bytes);
+              modify(value);
+              return JSON.stringify(value);
+            },
+          ),
+        }),
+      /modification|graph provenance/i,
+    );
+  }
 });
 
 test("canonicalization accepts CRLF but rejects invalid UTF-8 and preserves BOM/whitespace", () => {

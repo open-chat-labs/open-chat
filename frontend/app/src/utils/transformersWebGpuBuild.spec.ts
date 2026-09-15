@@ -12,6 +12,14 @@ import {
     QWEN3_VL_2B_DECODER_TOKEN_IDS_INPUT as GRAPH_TOKEN_IDS_INPUT,
     QWEN3_VL_2B_TIED_EMBEDDING_EXTERNAL_DATA,
 } from "../../transformersWebGpuDecoderGraph.mjs";
+import { patchQwen3Vl2bDeepStackDecoderGraph } from "../../transformersWebGpuDeepStackGraph.mjs";
+import {
+    patchQwen3Vl2bGenerationGraph,
+    QWEN3_VL_2B_GENERATION_BYTES,
+    QWEN3_VL_2B_GENERATION_SHA256,
+} from "../../transformersWebGpuQwenGenerationGraph.mjs";
+import { createQwen3Vl2bGenerationRuntime } from "../../transformersWebGpuQwenGenerationRuntime.mjs";
+import { createQwen3Vl2bVisionGeometryRuntime } from "../../transformersWebGpuQwenVisionGeometry.mjs";
 import {
     patchTransformersWebGpuSessionSource,
     TRANSFORMERS_QWEN_DECODER_INPUT_METADATA,
@@ -57,12 +65,17 @@ describe("Transformers.js WebGPU build isolation", () => {
             "utf8",
         );
         const workers = fs.readFileSync(path.join(APP_DIR, "build-workers.mjs"), "utf8");
+        const appBuild = fs.readFileSync(path.join(APP_DIR, "rollup.config.mjs"), "utf8");
         const modelWorker = fs.readFileSync(
             path.join(APP_DIR, "src/workers/transformersWebGpuInference.worker.ts"),
             "utf8",
         );
         const protocol = fs.readFileSync(
             path.join(APP_DIR, "src/utils/transformersWebGpuProtocol.ts"),
+            "utf8",
+        );
+        const runtimeAssets = fs.readFileSync(
+            path.join(APP_DIR, "src/utils/transformersWebGpuRuntimeAssets.ts"),
             "utf8",
         );
         const assetPolicy = fs.readFileSync(path.join(APP_DIR, ".ic-assets.json5"), "utf8");
@@ -119,7 +132,9 @@ describe("Transformers.js WebGPU build isolation", () => {
         expect(modelWorker).toContain("ort-wasm-simd-threaded.jspi.mjs");
         expect(modelWorker).toContain("ort-wasm-simd-threaded.jspi.wasm");
         expect(modelWorker).not.toContain("ort-wasm-simd-threaded.asyncify");
-        expect(protocol).toContain("ort-1.29.0-dev.20260723-1b1e1db7bc");
+        expect(runtimeAssets).toContain("ort-1.29.0-dev.20260723-1b1e1db7bc");
+        expect(protocol).toContain('from "./transformersWebGpuRuntimeAssets"');
+        expect(appBuild).toContain('"./src/utils/transformersWebGpuRuntimeAssets.ts"');
         expect(assetPolicy).toContain("{*.css,*.js,*.mjs,*.wasm}");
         expect(modelWorker).toContain("tap Retry download");
         expect(modelWorker).not.toContain("env.allowRemoteModels = false");
@@ -161,9 +176,14 @@ describe("Transformers.js WebGPU build isolation", () => {
             ),
         );
         expect(runtimeCompletion).not.toContain("watchDeviceLoss(runtime, generation)");
-        expect(modelWorker).toContain("caches.open(TRANSFORMERS_WEBGPU_CACHE_KEY)");
-        expect(modelWorker).toContain("onnx/embed_tokens_q4.onnx_data");
-        expect(modelWorker).toContain("onnx/vision_encoder_q4.onnx_data");
+        expect(modelWorker).toContain("caches.open(spec.cacheKey)");
+        expect(modelWorker).toContain("spec.externalData[sessionName]");
+        expect(modelWorker).toContain("revision: spec.revision");
+        expect(modelWorker).toContain("dtype: spec.sessionDtypes");
+        expect(modelWorker).toContain("validateWebGpuModelSpec(message.modelSpec)");
+        expect(modelWorker).toContain(
+            "webGpuGenerationOptions(message.modelSpec, message.maxTokens)",
+        );
         expect(workers).toContain("transformersWebGpuSequentialSessionsPlugin()");
         expect(sessionPatch).toContain("for (const name of Object.keys(names))");
     });
@@ -260,12 +280,26 @@ describe("Transformers.js WebGPU build isolation", () => {
         ) => Promise<Record<string, FakeSession>>;
 
         const events: string[] = [];
+        const geometry = createQwen3Vl2bVisionGeometryRuntime();
+        const generation = createQwen3Vl2bGenerationRuntime();
+        const visionOutputs = [
+            "image_features",
+            ...[0, 1, 2].map((index) => `__openchat_deepstack_features_${index}`),
+        ];
+        const cacheNames = Array.from({ length: 28 }, (_, layer) =>
+            ["key", "value"].map((kind) => `past_key_values.${layer}.${kind}`),
+        ).flat();
+        const presentNames = cacheNames.map((name) => name.replace("past_key_values.", "present."));
+        const patches = 256;
+        const features = patches / 4;
+        const promptLength = features + 3;
         let activeSessions = 0;
         class FakeBlob {
             constructor(readonly size: number) {}
         }
         class FakeOrtTensor {
             readonly location = "cpu";
+            dispose = vi.fn();
             constructor(
                 readonly type: string,
                 readonly data: Float32Array | BigInt64Array,
@@ -334,6 +368,14 @@ describe("Transformers.js WebGPU build isolation", () => {
             expect(sessionOptions.openchat_get_staged_external_data).toBeUndefined();
             expect(sessionOptions.openchat_wait_for_staged_webgpu_queue).toBeUndefined();
             expect(sessionOptions.openchat_with_staged_webgpu_release).toBeUndefined();
+            expect(sessionOptions).toMatchObject({
+                executionProviders: [{ name: "webgpu", preferredLayout: "NCHW" }],
+                graphOptimizationLevel: "disabled",
+                extra: {
+                    session: { disable_cpu_ep_fallback: "1" },
+                    "ep.webgpuexecutionprovider.enableInt64": "1",
+                },
+            });
             const externalNames: Record<string, string> = {
                 vision_encoder: "vision_encoder_q4.onnx_data",
                 embed_tokens: "embed_tokens_q4.onnx_data",
@@ -344,6 +386,14 @@ describe("Transformers.js WebGPU build isolation", () => {
                     path: externalNames[config.name],
                     data: expect.any(FakeBlob),
                 },
+                ...(config.name === "vision_encoder"
+                    ? [
+                          {
+                              path: "vision_encoder_q4_deepstack.onnx_data",
+                              data: expect.any(FakeBlob),
+                          },
+                      ]
+                    : []),
             ]);
             activeSessions += 1;
             events.push(`create:${config.name}:active=${activeSessions}`);
@@ -361,22 +411,82 @@ describe("Transformers.js WebGPU build isolation", () => {
                               type: "int64",
                               shape: ["batch_size", "openchat_token_sequence_length"],
                           },
-                      ]
-                    : [
-                          {
-                              name: "input_ids",
+                          ...[0, 1, 2].map((index) => ({
+                              name: `__openchat_deepstack_${index}`,
                               isTensor: true,
-                              type: "int64",
-                              shape: ["batch_size", "sequence_length"],
-                          },
-                      ];
+                              type: "float32",
+                              shape: ["batch_size", "sequence_length", 2048],
+                          })),
+                          ...generation.inputMetadata.map((entry) => ({
+                              ...entry,
+                              isTensor: true,
+                              shape: [...entry.shape],
+                          })),
+                      ]
+                    : config.name === "vision_encoder"
+                      ? [
+                            {
+                                name: "pixel_values",
+                                isTensor: true,
+                                type: "float32",
+                                shape: ["num_patches", 1536],
+                            },
+                            {
+                                name: "image_grid_thw",
+                                isTensor: true,
+                                type: "int64",
+                                shape: ["num_images", 3],
+                            },
+                            ...geometry.inputMetadata.map((entry) => ({
+                                ...entry,
+                                isTensor: true,
+                                shape: [...entry.shape],
+                            })),
+                        ]
+                      : [
+                            {
+                                name: "input_ids",
+                                isTensor: true,
+                                type: "int64",
+                                shape: ["batch_size", "sequence_length"],
+                            },
+                        ];
+            const outputMetadata =
+                config.name === "vision_encoder"
+                    ? visionOutputs.map((name) => ({
+                          name,
+                          isTensor: true,
+                          type: "float32",
+                          shape: ["num_features", 2048],
+                      }))
+                    : config.name === "decoder_model_merged"
+                      ? [
+                            {
+                                name: "logits",
+                                isTensor: true,
+                                type: "float32",
+                                shape: ["batch_size", 1, 151936],
+                            },
+                            ...presentNames.map((name) => ({
+                                name,
+                                isTensor: true,
+                                type: "float32",
+                                shape: ["batch_size", 8, "total_sequence_length", 128],
+                            })),
+                        ]
+                      : [
+                            {
+                                name: "inputs_embeds",
+                                isTensor: true,
+                                type: "float32",
+                                shape: ["batch_size", "sequence_length", 2048],
+                            },
+                        ];
             return {
                 inputNames: metadata.map(({ name }) => name),
                 inputMetadata: metadata,
-                outputNames: ["output"],
-                outputMetadata: [
-                    { name: "output", isTensor: true, type: "float32", shape: [1, 1] },
-                ],
+                outputNames: outputMetadata.map(({ name }) => name),
+                outputMetadata,
                 config,
                 run: async (...args) => {
                     events.push(`run:${config.name}:active=${activeSessions}`);
@@ -391,19 +501,58 @@ describe("Transformers.js WebGPU build isolation", () => {
                             ),
                         };
                     }
-                    if (config.name === "vision_encoder")
+                    if (config.name === "vision_encoder") {
+                        expect(Object.keys(feeds)).toEqual(metadata.map(({ name }) => name));
+                        expect(Object.keys(feeds)).toHaveLength(15);
                         return {
                             image_features: new FakePinnedOrtTensor(
                                 "float32",
-                                new Float32Array(1),
-                                [1, 1, 1],
+                                new Float32Array(features * 2048),
+                                [features, 2048],
+                            ),
+                            ...Object.fromEntries(
+                                [0, 1, 2].map((index) => [
+                                    `__openchat_deepstack_features_${index}`,
+                                    new FakePinnedOrtTensor(
+                                        "float32",
+                                        new Float32Array(features * 2048).fill(index + 1),
+                                        [features, 2048],
+                                    ),
+                                ]),
                             ),
                         };
+                    }
+                    expect(Object.keys(feeds).sort()).toEqual(
+                        metadata.map(({ name }) => name).sort(),
+                    );
+                    expect(Object.keys(feeds)).toHaveLength(71);
                     const privateIds = feeds[TRANSFORMERS_QWEN_DECODER_TOKEN_IDS_INPUT];
                     expect(feeds.inputs_embeds).toBeInstanceOf(FakePinnedOrtTensor);
                     events.push(`decoder-embeds:${feeds.inputs_embeds.dims.join("x")}`);
                     events.push(`decoder-ids:${privateIds.dims.join("x")}`);
-                    return {};
+                    const sequence = feeds.inputs_embeds.dims[1] + privateIds.dims[1];
+                    const total = feeds[cacheNames[0]].dims[2] + sequence;
+                    // This lifecycle test checks learned output metadata, not numerical inference.
+                    // Keep the 56 cache values unreadable instead of allocating learned buffers.
+                    const learned = (dims: number[]) => {
+                        const tensor = new FakePinnedOrtTensor(
+                            "float32",
+                            new Float32Array(0),
+                            dims,
+                        );
+                        Object.defineProperty(tensor, "data", {
+                            get() {
+                                throw new Error("Learned output data must not be read");
+                            },
+                        });
+                        return tensor;
+                    };
+                    return {
+                        logits: learned([1, 1, 151936]),
+                        ...Object.fromEntries(
+                            presentNames.map((name) => [name, learned([1, 8, total, 128])]),
+                        ),
+                    };
                 },
                 release: async () => {
                     if (released) return;
@@ -434,6 +583,14 @@ describe("Transformers.js WebGPU build isolation", () => {
                     path: artifact.path,
                     data: new FakeBlob(artifact.bytes),
                 },
+                ...(name === "vision_encoder"
+                    ? [
+                          {
+                              path: "vision_encoder_q4_deepstack.onnx_data",
+                              data: new FakeBlob(302_161_920),
+                          },
+                      ]
+                    : []),
             ];
         });
         const waitForStagedWebGpuQueue = vi.fn(async (name: string) => {
@@ -455,6 +612,7 @@ describe("Transformers.js WebGPU build isolation", () => {
             },
             {
                 revision: "3e4136ea66ae6e07c110e64fe07da2e029517ab5",
+                config: { image_token_id: 151655 },
                 device: {
                     embed_tokens: "webgpu",
                     decoder_model_merged: "webgpu",
@@ -466,6 +624,7 @@ describe("Transformers.js WebGPU build isolation", () => {
                     vision_encoder: "q4",
                 },
                 session_options: {
+                    openchat_runtime_adapter: "qwen3-vl-2b-staged-v1",
                     openchat_get_staged_external_data: getStagedExternalData,
                     openchat_wait_for_staged_webgpu_queue: waitForStagedWebGpuQueue,
                     openchat_with_staged_webgpu_release: withStagedWebGpuRelease,
@@ -484,17 +643,54 @@ describe("Transformers.js WebGPU build isolation", () => {
         expect(events.some((event) => event.startsWith("get:decoder_model_merged"))).toBe(false);
         const promptIds = new FakeInputOrtTensor(
             "int64",
-            new BigInt64Array([1n, 2n, 3n, 4n]),
-            [1, 4],
+            new BigInt64Array([1n, ...Array<bigint>(features).fill(151655n), 3n, 4n]),
+            [1, promptLength],
         );
         const promptEmbeds = await sessions.embed_tokens.run({ input_ids: promptIds });
         expect(promptEmbeds.inputs_embeds).toBeInstanceOf(FakePinnedOrtTensor);
-        expect((promptEmbeds.inputs_embeds as FakeOrtTensor).dims).toEqual([1, 4, 2048]);
+        expect((promptEmbeds.inputs_embeds as FakeOrtTensor).dims).toEqual([1, promptLength, 2048]);
         expect(activeSessions).toBe(1);
-        await sessions.vision_encoder.run({});
-        await sessions.decoder_model_merged.run({
-            inputs_embeds: promptEmbeds.inputs_embeds,
+        expect(sessions.vision_encoder.inputNames).toEqual(["pixel_values", "image_grid_thw"]);
+        await sessions.vision_encoder.run({
+            pixel_values: new FakePinnedOrtTensor("float32", new Float32Array(patches * 1536), [
+                patches,
+                1536,
+            ]),
+            image_grid_thw: new FakePinnedOrtTensor(
+                "int64",
+                new BigInt64Array([1n, 16n, 16n]),
+                [1, 3],
+            ),
         });
+        const decoderFeeds = (
+            embeds: Record<string, unknown>,
+            previous?: Record<string, unknown>,
+        ): Record<string, unknown> => {
+            const sequence = (embeds.inputs_embeds as FakeOrtTensor).dims[1];
+            const past = (previous?.[presentNames[0]] as FakeOrtTensor | undefined)?.dims[2] ?? 0;
+            return {
+                ...embeds,
+                attention_mask: new FakeInputOrtTensor(
+                    "int64",
+                    new BigInt64Array(past + sequence).fill(1n),
+                    [1, past + sequence],
+                ),
+                position_ids: new FakeInputOrtTensor("int64", new BigInt64Array(3 * sequence), [
+                    3,
+                    1,
+                    sequence,
+                ]),
+                ...Object.fromEntries(
+                    cacheNames.map((name, index) => [
+                        name,
+                        previous?.[presentNames[index]] ??
+                            new FakeInputOrtTensor("float32", new Float32Array(0), [1, 8, 0, 128]),
+                    ]),
+                ),
+            };
+        };
+        const promptResult = await sessions.decoder_model_merged.run(decoderFeeds(promptEmbeds));
+        expect(Object.keys(promptResult)).toHaveLength(57);
         expect(events).toContain("release:embed_tokens:active=1");
         expect(events).toContain("release:vision_encoder:active=0");
         expect(events).toContain("retire-start:prompt-to-decoder transition:active=1");
@@ -507,7 +703,7 @@ describe("Transformers.js WebGPU build isolation", () => {
             events.indexOf("get:decoder_model_merged:active=0"),
         );
         expect(events).toContain("decoder-ids:1x0");
-        expect(events).toContain("decoder-embeds:1x4x2048");
+        expect(events).toContain(`decoder-embeds:1x${promptLength}x2048`);
         expect(getStagedExternalData.mock.calls.map(([name]) => name)).toEqual([
             "vision_encoder",
             "embed_tokens",
@@ -521,9 +717,12 @@ describe("Transformers.js WebGPU build isolation", () => {
         expect((cachedEmbeds.inputs_embeds as FakeOrtTensor).dims).toEqual([1, 1, 2048]);
         expect(cachedEmbeds.inputs_embeds).toBeInstanceOf(FakePinnedOrtTensor);
         expect(cachedEmbeds.inputs_embeds).not.toBeInstanceOf(FakeInputOrtTensor);
-        await sessions.decoder_model_merged.run({
-            inputs_embeds: cachedEmbeds.inputs_embeds,
-        });
+        const cachedFeeds = decoderFeeds(cachedEmbeds, promptResult);
+        for (const [index, name] of cacheNames.entries()) {
+            expect(cachedFeeds[name]).toBe(promptResult[presentNames[index]]);
+        }
+        const cachedResult = await sessions.decoder_model_merged.run(cachedFeeds);
+        expect(Object.keys(cachedResult)).toHaveLength(57);
         expect(events).toContain("decoder-ids:1x1");
         expect(events).toContain("decoder-embeds:1x0x2048");
         expect(events.filter((event) => event.startsWith("get:embed_tokens"))).toHaveLength(1);
@@ -644,9 +843,19 @@ describe("Transformers.js WebGPU build isolation", () => {
                 ({ path: artifactPath }) => artifactPath === "onnx/decoder_model_merged_q4.onnx",
             ),
         ).toMatchObject({
-            bytes: QWEN3_VL_2B_DECODER_PATCHED_BYTES,
-            sha256: QWEN3_VL_2B_DECODER_PATCHED_SHA256,
+            bytes: QWEN3_VL_2B_GENERATION_BYTES,
+            sha256: QWEN3_VL_2B_GENERATION_SHA256,
         });
+        const delivered = patchQwen3Vl2bGenerationGraph(
+            patchQwen3Vl2bDeepStackDecoderGraph(patched),
+            {
+                scope: "generation-only",
+            },
+        );
+        expect(delivered.byteLength).toBe(QWEN3_VL_2B_GENERATION_BYTES);
+        expect(createHash("sha256").update(delivered).digest("hex")).toBe(
+            QWEN3_VL_2B_GENERATION_SHA256,
+        );
 
         const schema = nodeRequire(
             path.join(
@@ -678,7 +887,7 @@ describe("Transformers.js WebGPU build isolation", () => {
         const sourceGraph = schema.onnx.ModelProto.decode(source).graph;
         const graph = schema.onnx.ModelProto.decode(patched).graph;
         expect(graph.input).toHaveLength(sourceGraph.input.length + 1);
-        expect(graph.initializer).toHaveLength(sourceGraph.initializer.length + 1);
+        expect(graph.initializer).toHaveLength(sourceGraph.initializer.length + 6);
         expect(graph.initializer.filter(({ dataLocation }) => dataLocation === 1)).toHaveLength(
             sourceGraph.initializer.filter(({ dataLocation }) => dataLocation === 1).length,
         );

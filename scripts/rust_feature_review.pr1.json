@@ -1,0 +1,1349 @@
+{
+  "schemaVersion": 1,
+  "configSha256": "0077fc99023afef27afdc29de8388a853ed17bfc7250dd3149c5536d07dea752",
+  "boundary": "PR1 model-catalog registry API/state/authorization, native model manager/IPC/optional inference/build, and the caller-side setup/schema/transport dependencies exercised by the model tests, for the five exact configured profiles. This review follows direct external owner edges plus reached nested payload and generated-owner support; unrelated mixed-crate siblings, unchanged fixture implementation behavior, optional devtools, C/C++ binary qualification and whole-core auditing are excluded exactly as documented in the base inventory. The changed Rust delta was checked against the inventory, including the five now-pinned module declarations; no untracked Rust/manifest file was present. The separate PR1 dynamodb_index_store worktree edit was not reviewed or incorporated.",
+  "units": [
+    {
+      "id": "owners-1-shared-feature-test-user-registration-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The shared register_user caller reaches user-registration lookup, identity delegation and local-index registration. Nested WebAuthnKey, SuccessResult, AccountIdentifier, UserId and generated ts-rs consumers have explicit owner edges. Those normal Cargo edges remain test-context, Windows-default only.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/identity/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/identity/api/src/lib.rs",
+          "lines": [19, 20, 22, 24]
+        },
+        {
+          "path": "backend/canisters/identity/api/src/queries/get_delegation.rs",
+          "lines": [1, 2, 6, 7, 9, 17]
+        },
+        {
+          "path": "backend/canisters/identity/api/src/updates/create_identity.rs",
+          "lines": [2, 3, 7, 8, 10, 12, 14, 28]
+        },
+        {
+          "path": "backend/canisters/identity/api/src/updates/prepare_delegation.rs",
+          "lines": [1, 2, 22, 23, 25]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/local_user_index/api/src/updates/register_user.rs",
+          "lines": [1, 2, 4, 8, 9, 14, 18, 19, 38, 39, 43]
+        },
+        {
+          "path": "backend/canisters/user_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/queries/user_registration_canister.rs",
+          "lines": [1, 3, 4, 8, 9, 10]
+        },
+        {
+          "path": "backend/integration_tests/src/client/identity.rs",
+          "lines": [7, 12, 40, 89]
+        },
+        {
+          "path": "backend/integration_tests/src/client/local_user_index.rs",
+          "lines": [27, 46, 57, 68]
+        },
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [127, 128, 136, 138, 200, 209, 226, 228]
+        },
+        {
+          "path": "backend/integration_tests/src/client/user_index.rs",
+          "lines": [15, 444, 445]
+        },
+        {
+          "path": "backend/integration_tests/src/model_catalog_tests.rs",
+          "lines": [35, 43]
+        },
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [81, 83]
+        },
+        {
+          "path": "backend/libraries/types/src/lib.rs",
+          "lines": [208, 215, 248]
+        }
+      ],
+      "seeds": [
+        "shared-feature-test-user-registration-schema.user_index_canister.candid.normal.test",
+        "shared-feature-test-user-registration-schema.user_index_canister.serde.normal.test",
+        "shared-feature-test-user-registration-schema.user_index_canister.ts_rs.normal.test",
+        "shared-feature-test-user-registration-schema.identity_canister.candid.normal.test",
+        "shared-feature-test-user-registration-schema.identity_canister.serde.normal.test",
+        "shared-feature-test-user-registration-schema.identity_canister.serde_bytes.normal.test",
+        "shared-feature-test-user-registration-schema.identity_canister.ts_rs.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.candid.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.serde.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.serde_bytes.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.ts_rs.normal.test",
+        "shared-feature-test-user-registration-schema.local_user_index_canister.ic_ledger_types.normal.test"
+      ]
+    },
+    {
+      "id": "owners-2-shared-feature-test-fixture-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The shared catalog-test setup/init/upload/subnet caller schemas were fully traced, including ChildCanisterType, installer CanisterType, BuildVersion, hashes, byte wrappers, Empty/UnitResult/SuccessOnly and primitive aliases. Candid/Serde owner edges are already listed; unused HumanReadable conversions and API/implementation siblings are excluded.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/airdrop_bot/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/airdrop_bot/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/cycles_dispenser/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/cycles_dispenser/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/escrow/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/escrow/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/event_relay/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/event_relay/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/group_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/lib.rs",
+          "lines": [1, 2, 13, 14]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/upgrade_community_canister_wasm.rs",
+          "lines": [1, 3, 4]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/upgrade_group_canister_wasm.rs",
+          "lines": [1, 3, 4]
+        },
+        {
+          "path": "backend/canisters/group_index/api/src/updates/upload_wasm_chunk.rs",
+          "lines": [2, 3, 6, 13, 19]
+        },
+        {
+          "path": "backend/canisters/online_users/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/online_users/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/openchat_installer/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/openchat_installer/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/proposals_bot/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/proposals_bot/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/registry/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/canisters/sign_in_with_email/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/sign_in_with_email/api/src/lifecycle/init_or_upgrade.rs",
+          "lines": [2, 3, 5, 27]
+        },
+        {
+          "path": "backend/canisters/storage_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/storage_index/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5, 17]
+        },
+        {
+          "path": "backend/canisters/translations/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/translations/api/src/lifecycle/init.rs",
+          "lines": [1, 2, 5]
+        },
+        {
+          "path": "backend/integration_tests/src/client/group_index.rs",
+          "lines": [14, 15, 16, 71, 96, 167, 179]
+        },
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [60, 71]
+        },
+        {
+          "path": "backend/integration_tests/src/model_catalog_tests.rs",
+          "lines": [35, 43]
+        },
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [
+            145, 226, 241, 258, 277, 298, 326, 352, 360, 391, 408, 409, 466
+          ]
+        },
+        {
+          "path": "backend/libraries/sign_in_with_email_test_utils/src/lib.rs",
+          "lines": [13]
+        },
+        {
+          "path": "backend/libraries/types/src/canister_wasm.rs",
+          "lines": [16, 23, 54]
+        },
+        {
+          "path": "backend/libraries/types/src/lib.rs",
+          "lines": [192, 194, 201]
+        }
+      ],
+      "seeds": [
+        "shared-feature-test-fixture-schema.group_index_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.group_index_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.openchat_installer_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.openchat_installer_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.translations_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.translations_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.online_users_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.online_users_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.proposals_bot_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.proposals_bot_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.storage_index_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.storage_index_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.cycles_dispenser_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.cycles_dispenser_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.registry_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.registry_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.escrow_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.escrow_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.event_relay_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.event_relay_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.airdrop_bot_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.airdrop_bot_canister.serde.normal.test",
+        "shared-feature-test-fixture-schema.sign_in_with_email_canister.candid.normal.test",
+        "shared-feature-test-fixture-schema.sign_in_with_email_canister.serde.normal.test"
+      ]
+    },
+    {
+      "id": "owners-3-shared-feature-test-external-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected shared setup constructs the external event-store InitArgs and encodes it. Preserve its exact Git identity as a test-only dev root, without selecting the full deployed event-store fixture runtime.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/Cargo.toml",
+          "lines": [1, 18]
+        },
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [60, 71]
+        },
+        {
+          "path": "backend/integration_tests/src/model_catalog_tests.rs",
+          "lines": [35, 43]
+        },
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [378]
+        },
+        {
+          "path": "Cargo.toml",
+          "lines": [206]
+        }
+      ],
+      "seeds": [
+        "shared-feature-test-external-schema.integration_tests.event_store_canister.dev.test"
+      ]
+    },
+    {
+      "id": "owners-4-model-catalog-api",
+      "disposition": "external-owner-edges",
+      "explanation": "Catalog Args/Response derive Candid and Serde; their ModelCatalog payload, entries, modalities, runtime and files use the separately mapped types schema owners and std containers only.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/api/Cargo.toml",
+          "lines": [1, 9, 12]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/queries/model_catalog.rs",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/updates/set_model_catalog.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": [
+        "model-catalog-api.registry_canister.candid.normal.production",
+        "model-catalog-api.registry_canister.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-5-model-catalog-c2c-error",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected lookup failure is wrapped/formatted through the reviewed OCError/c2c error path. Its ic-cdk ownership is retained; unrelated types conversions are not selected.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/error.rs",
+          "lines": [2, 106]
+        }
+      ],
+      "seeds": ["model-catalog-c2c-error.types.ic_cdk.normal.production"]
+    },
+    {
+      "id": "owners-6-model-catalog-caller-and-clock",
+      "disposition": "external-owner-edges",
+      "explanation": "The catalog setter invokes only Environment caller and now. The selected Candid/ic-cdk caller support is retained; unrelated entropy and utility methods are outside this changed call boundary.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/impl/src/updates/set_model_catalog.rs",
+          "lines": [13, 28]
+        },
+        {
+          "path": "backend/libraries/utils/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/utils/src/env.rs",
+          "lines": [1, 20]
+        },
+        {
+          "path": "backend/libraries/utils/src/env/canister.rs",
+          "lines": [28, 32]
+        }
+      ],
+      "seeds": [
+        "model-catalog-caller-and-clock.utils.candid.normal.production",
+        "model-catalog-caller-and-clock.utils.ic_cdk.normal.production"
+      ]
+    },
+    {
+      "id": "owners-7-model-catalog-clock",
+      "disposition": "external-owner-edges",
+      "explanation": "Environment now delegates to the reviewed canister_time wrapper and ic0 time call; the timestamp is a primitive integer and contributes no further nested owner.",
+      "profiles": ["wasm-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_time/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/canister_time/src/lib.rs",
+          "lines": [13, 15]
+        },
+        {
+          "path": "backend/libraries/utils/src/env/canister.rs",
+          "lines": [29]
+        }
+      ],
+      "seeds": ["model-catalog-clock.canister_time.ic0.normal.production"]
+    },
+    {
+      "id": "owners-8-model-catalog-entrypoint-macro",
+      "disposition": "external-owner-edges",
+      "explanation": "The catalog query/update macros were traced through their proc-macro implementation. proc-macro2, quote, serde_tokenstream, serde and syn belong to the build-time macro owner; generated runtime ownership is assigned to the consumer separately.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/impl/src/queries/model_catalog.rs",
+          "lines": [7]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/updates/set_model_catalog.rs",
+          "lines": [10]
+        },
+        {
+          "path": "backend/libraries/canister_api_macros/Cargo.toml",
+          "lines": [1, 12]
+        },
+        {
+          "path": "backend/libraries/canister_api_macros/src/lib.rs",
+          "lines": [1, 94, 146]
+        }
+      ],
+      "seeds": [
+        "model-catalog-entrypoint-macro.canister_api_macros.proc_macro2.normal.build",
+        "model-catalog-entrypoint-macro.canister_api_macros.quote.normal.build",
+        "model-catalog-entrypoint-macro.canister_api_macros.serde_tokenstream.normal.build",
+        "model-catalog-entrypoint-macro.canister_api_macros.serde.normal.build",
+        "model-catalog-entrypoint-macro.canister_api_macros.syn.normal.build"
+      ]
+    },
+    {
+      "id": "owners-9-model-catalog-entrypoints-and-persistence",
+      "disposition": "external-owner-edges",
+      "explanation": "The catalog getter/setter and added Timestamped<ModelCatalog> state field use the reviewed registry implementation Candid, Serde, ic-cdk and tracing consumers. Existing unrelated Data fields are not new feature roots.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/lib.rs",
+          "lines": [110]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/queries/model_catalog.rs",
+          "lines": [7]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/updates/set_model_catalog.rs",
+          "lines": [10]
+        },
+        {
+          "path": "backend/libraries/canister_api_macros/src/lib.rs",
+          "lines": [94, 146]
+        },
+        {
+          "path": "backend/libraries/canister_tracing_macros/src/lib.rs",
+          "lines": [28]
+        }
+      ],
+      "seeds": [
+        "model-catalog-entrypoints-and-persistence.registry_canister_impl.candid.normal.production",
+        "model-catalog-entrypoints-and-persistence.registry_canister_impl.ic_cdk.normal.production",
+        "model-catalog-entrypoints-and-persistence.registry_canister_impl.serde.normal.production",
+        "model-catalog-entrypoints-and-persistence.registry_canister_impl.tracing.normal.production"
+      ]
+    },
+    {
+      "id": "owners-10-model-catalog-integration-tests",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected catalog integration test and its generated client calls use Candid, Serde, lazy_static and PocketIc. The caller-side setup/registration schemas and transports are separately mapped, not the full fixture implementation runtime.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/integration_tests/src/client/macros.rs",
+          "lines": [18, 50]
+        },
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [86, 106]
+        },
+        {
+          "path": "backend/integration_tests/src/client/registry.rs",
+          "lines": [7, 14]
+        },
+        {
+          "path": "backend/integration_tests/src/env.rs",
+          "lines": [4, 9]
+        },
+        {
+          "path": "backend/integration_tests/src/model_catalog_tests.rs",
+          "lines": [33]
+        }
+      ],
+      "seeds": [
+        "model-catalog-integration-tests.integration_tests.candid.dev.test",
+        "model-catalog-integration-tests.integration_tests.lazy_static.dev.test",
+        "model-catalog-integration-tests.integration_tests.pocket_ic.dev.test",
+        "model-catalog-integration-tests.integration_tests.serde.dev.test"
+      ]
+    },
+    {
+      "id": "owners-11-model-catalog-msgpack-transport",
+      "disposition": "external-owner-edges",
+      "explanation": "The entrypoint macro's selected Msgpack transport reaches the existing msgpack wrapper, Serde and exact Git-patched rmp-serde source. No crates.io substitution is made for that Git identity.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/impl/src/queries/model_catalog.rs",
+          "lines": [7]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/updates/set_model_catalog.rs",
+          "lines": [10]
+        },
+        {
+          "path": "backend/libraries/msgpack/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/msgpack/src/lib.rs",
+          "lines": [1, 11, 23]
+        },
+        {
+          "path": "Cargo.toml",
+          "lines": [311]
+        }
+      ],
+      "seeds": [
+        "model-catalog-msgpack-transport.msgpack.rmp_serde.normal.production",
+        "model-catalog-msgpack-transport.msgpack.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-12-model-catalog-nested-error-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The lookup response's OCError schema was inspected through its enum/code fields and derives. The error-code crate owns Candid and Serde; nested scalar/string payloads do not add another external owner.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/error_codes/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/error_codes/src/lib.rs",
+          "lines": [7, 8]
+        }
+      ],
+      "seeds": [
+        "model-catalog-nested-error-schema.oc_error_codes.candid.normal.production",
+        "model-catalog-nested-error-schema.oc_error_codes.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-13-model-catalog-nested-error-ts-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The direct ts_export consumer in the error-code schema owns its generated ts-rs derive. The macro crate's own host dependencies are accounted for separately.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/error_codes/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/error_codes/src/lib.rs",
+          "lines": [6]
+        },
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [82]
+        }
+      ],
+      "seeds": [
+        "model-catalog-nested-error-ts-schema.oc_error_codes.ts_rs.normal.build"
+      ]
+    },
+    {
+      "id": "owners-14-model-catalog-nested-schema-macro",
+      "disposition": "external-owner-edges",
+      "explanation": "The ts_export macro source was read through insertion of the consuming crate's ts_rs::TS derive. Its quote/syn host edges remain distinct from consuming schema ownership.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/ts_export_macros/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [1, 82]
+        }
+      ],
+      "seeds": [
+        "model-catalog-nested-schema-macro.ts_export_macros.quote.normal.build",
+        "model-catalog-nested-schema-macro.ts_export_macros.syn.normal.build"
+      ]
+    },
+    {
+      "id": "owners-15-model-catalog-nested-schema-support",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected ts_export support wrapper uses Serde and ts-rs in its schema-generation role. Those normal Cargo declarations retain build-origin provenance rather than being relabelled as runtime roots.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/ts_export/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/ts_export/src/lib.rs",
+          "lines": [1, 11]
+        }
+      ],
+      "seeds": [
+        "model-catalog-nested-schema-support.ts_export.serde.normal.build",
+        "model-catalog-nested-schema-support.ts_export.ts_rs.normal.build"
+      ]
+    },
+    {
+      "id": "owners-16-model-catalog-nested-user-ts-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The actual lookup payload UserDetails contains Principal, UserId, strings and booleans. UserId's direct ts_export derive owns types-to-ts-rs; its unrelated Account/AccountIdentifier conversions are not used by the catalog operator lookup.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/ts_export_macros/src/lib.rs",
+          "lines": [82]
+        },
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/user.rs",
+          "lines": [9]
+        }
+      ],
+      "seeds": ["model-catalog-nested-user-ts-schema.types.ts_rs.normal.build"]
+    },
+    {
+      "id": "owners-17-model-catalog-operator-lookup-call",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected generated lookup delegates to canister_client's reviewed Candid/ic-cdk/tracing call implementation. canister_client_macros has an empty dependency section; its generated consumer calls are not attributed to that dependency-free crate.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_client_macros/src/lib.rs",
+          "lines": [96, 109, 110]
+        },
+        {
+          "path": "backend/libraries/canister_client/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/canister_client/src/lib.rs",
+          "lines": [1, 68, 75, 84, 93]
+        }
+      ],
+      "seeds": [
+        "model-catalog-operator-lookup-call.canister_client.candid.normal.production",
+        "model-catalog-operator-lookup-call.canister_client.ic_cdk.normal.production",
+        "model-catalog-operator-lookup-call.canister_client.tracing.normal.production"
+      ]
+    },
+    {
+      "id": "owners-18-model-catalog-operator-lookup-schema",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected lookup Args contains Principal; Response contains UserDetails, UserNotFound or OCError. Their nested schema owners are explicitly mapped, with no additional payload type left unresolved.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/user_index/api/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/queries/c2c_lookup_user.rs",
+          "lines": [1, 6]
+        }
+      ],
+      "seeds": [
+        "model-catalog-operator-lookup-schema.user_index_canister.candid.normal.production",
+        "model-catalog-operator-lookup-schema.user_index_canister.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-19-model-catalog-operator-lookup",
+      "disposition": "external-owner-edges",
+      "explanation": "set_model_catalog calls lookup_user to inspect is_platform_operator. The selected c2c wrapper's Principal/Candid edge and generated request path were inspected; unrelated client methods do not expand this boundary.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/impl/src/updates/set_model_catalog.rs",
+          "lines": [5, 15]
+        },
+        {
+          "path": "backend/canisters/user_index/c2c_client/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/user_index/c2c_client/src/lib.rs",
+          "lines": [1, 22]
+        }
+      ],
+      "seeds": [
+        "model-catalog-operator-lookup.user_index_canister_c2c_client.candid.normal.production"
+      ]
+    },
+    {
+      "id": "owners-20-model-catalog-stable-persistence-wrapper",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected pre/post-upgrade stable-memory wrapper retains ic-cdk and ic-stable-structures ownership. The new payload is covered by ModelCatalog/Timestamped Serde schema owners; unrelated stored fields remain outside this delta.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/impl/src/lifecycle/post_upgrade.rs",
+          "lines": [16]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/lifecycle/pre_upgrade.rs",
+          "lines": [24]
+        },
+        {
+          "path": "backend/libraries/stable_memory/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/stable_memory/src/lib.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": [
+        "model-catalog-stable-persistence-wrapper.stable_memory.ic_cdk.normal.production",
+        "model-catalog-stable-persistence-wrapper.stable_memory.ic_stable_structures.normal.production"
+      ]
+    },
+    {
+      "id": "owners-21-model-catalog-stable-persistence",
+      "disposition": "external-owner-edges",
+      "explanation": "The existing registry memory accessor used by persistence owns ic-stable-structures. This selection follows storage of the added catalog field, not every unrelated registry state dependency.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/impl/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/memory.rs",
+          "lines": [1, 11]
+        }
+      ],
+      "seeds": [
+        "model-catalog-stable-persistence.registry_canister_impl.ic_stable_structures.normal.production"
+      ]
+    },
+    {
+      "id": "owners-22-model-catalog-test-auth-bootstrap",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected shared test bootstrap creates its RSA test key through sign_in_with_email_test_utils, preserving that caller's rand/rsa ownership. This does not select the full email-auth implementation.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [391]
+        },
+        {
+          "path": "backend/libraries/sign_in_with_email_test_utils/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/sign_in_with_email_test_utils/src/lib.rs",
+          "lines": [12, 62]
+        }
+      ],
+      "seeds": [
+        "model-catalog-test-auth-bootstrap.sign_in_with_email_test_utils.rand.normal.test",
+        "model-catalog-test-auth-bootstrap.sign_in_with_email_test_utils.rsa.normal.test"
+      ]
+    },
+    {
+      "id": "owners-23-model-catalog-test-bootstrap",
+      "disposition": "external-owner-edges",
+      "explanation": "The feature-test setup/environment's explicit ledger, random and lazy fixture initialization uses the listed test-context owners. Caller-side init/upload/registration types are reviewed in their own units; unchanged canister-side fixture effects are excluded.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/integration_tests/src/env.rs",
+          "lines": [4]
+        },
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [68, 89, 423, 521]
+        }
+      ],
+      "seeds": [
+        "model-catalog-test-bootstrap.integration_tests.ic_ledger_types.dev.test",
+        "model-catalog-test-bootstrap.integration_tests.icrc_ledger_types.dev.test",
+        "model-catalog-test-bootstrap.integration_tests.lazy_static.dev.test",
+        "model-catalog-test-bootstrap.integration_tests.rand.dev.test"
+      ]
+    },
+    {
+      "id": "owners-24-model-catalog-test-msgpack-transport",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected test client's Msgpack encoding/decoding reaches the same reviewed msgpack owners as production. Test provenance is retained independently, without changing the exact external Git source.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/client/mod.rs",
+          "lines": [93, 113, 248]
+        },
+        {
+          "path": "backend/libraries/msgpack/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/msgpack/src/lib.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": [
+        "model-catalog-test-msgpack-transport.msgpack.rmp_serde.normal.test",
+        "model-catalog-test-msgpack-transport.msgpack.serde.normal.test"
+      ]
+    },
+    {
+      "id": "owners-25-model-catalog-test-principal-generation",
+      "disposition": "external-owner-edges",
+      "explanation": "Catalog tests use the reviewed testing RNG helper to create Candid principals. The testing owner retains its normal Candid/rand declarations in test context only.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/model_catalog_tests.rs",
+          "lines": [5]
+        },
+        {
+          "path": "backend/libraries/testing/Cargo.toml",
+          "lines": [1, 9, 10]
+        },
+        {
+          "path": "backend/libraries/testing/src/rng.rs",
+          "lines": [2, 6]
+        }
+      ],
+      "seeds": [
+        "model-catalog-test-principal-generation.testing.candid.normal.test",
+        "model-catalog-test-principal-generation.testing.rand.normal.test"
+      ]
+    },
+    {
+      "id": "owners-26-model-catalog-test-transport",
+      "disposition": "external-owner-edges",
+      "explanation": "The shared feature-test transport serializes CanisterWasmBytes and delegation payloads through their reviewed serde_bytes wrappers. Primitive aliases, fixed arrays and std collections introduce no further external edge.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/types/src/canister_wasm.rs",
+          "lines": [54]
+        },
+        {
+          "path": "backend/libraries/types/src/delegation.rs",
+          "lines": [9]
+        }
+      ],
+      "seeds": ["model-catalog-test-transport.types.serde_bytes.normal.test"]
+    },
+    {
+      "id": "owners-27-model-catalog-test-wasm-upload",
+      "disposition": "external-owner-edges",
+      "explanation": "Shared setup hashes selected wasm chunks through the sha256 wrapper; its sha2 owner is retained in test context. File/chunk iteration and primitive byte containers add no external owner.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/setup.rs",
+          "lines": [212]
+        },
+        {
+          "path": "backend/libraries/sha256/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "backend/libraries/sha256/src/lib.rs",
+          "lines": [1]
+        }
+      ],
+      "seeds": ["model-catalog-test-wasm-upload.sha256.sha2.normal.test"]
+    },
+    {
+      "id": "owners-28-model-catalog-tracing-macro",
+      "disposition": "external-owner-edges",
+      "explanation": "The selected trace macro source was read; proc-macro2, quote and syn are host owners, and the generated tracing call belongs to registry_canister_impl separately.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_tracing_macros/Cargo.toml",
+          "lines": [1, 12]
+        },
+        {
+          "path": "backend/libraries/canister_tracing_macros/src/lib.rs",
+          "lines": [1, 28, 31]
+        }
+      ],
+      "seeds": [
+        "model-catalog-tracing-macro.canister_tracing_macros.proc_macro2.normal.build",
+        "model-catalog-tracing-macro.canister_tracing_macros.quote.normal.build",
+        "model-catalog-tracing-macro.canister_tracing_macros.syn.normal.build"
+      ]
+    },
+    {
+      "id": "owners-29-model-catalog-types",
+      "disposition": "external-owner-edges",
+      "explanation": "The complete model_catalog.rs payload and validation code were inspected. ModelCatalog, entries, ModelFile, Modality and ModelRuntime use Candid/Serde and std data/validation; its unit tests add no external owner and there is no direct ts_export annotation here.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/Cargo.toml",
+          "lines": [1, 9, 20]
+        },
+        {
+          "path": "backend/libraries/types/src/model_catalog.rs",
+          "lines": [1, 13]
+        }
+      ],
+      "seeds": [
+        "model-catalog-types.types.candid.normal.production",
+        "model-catalog-types.types.serde.normal.production"
+      ]
+    },
+    {
+      "id": "owners-30-native-model-command-build-registration",
+      "disposition": "external-owner-edges",
+      "explanation": "The existing tauri-plugin build script consumes the newly registered model command names through tauri-plugin's build feature. No unrelated build dependency is selected.",
+      "profiles": [
+        "windows-default",
+        "windows-inference",
+        "android-inference-store",
+        "android-arm64-transformers-webgpu"
+      ],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/build.rs",
+          "lines": [25, 36]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1, 28]
+        }
+      ],
+      "seeds": [
+        "native-model-command-build-registration.tauri-plugin-oc.tauri_plugin.build.build"
+      ]
+    },
+    {
+      "id": "owners-31-native-model-inference",
+      "disposition": "external-owner-edges",
+      "explanation": "The reviewed optional native inference path retains llama-cpp-2/mtmd, minijinja, pycompat, serde_json and hex only in its declared inference profiles. Vendored C/C++ binary and notice verification is separate, and these roots do not leak into the all-WebGPU profile.",
+      "profiles": ["windows-inference", "android-inference-store"],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1, 16, 17, 18, 41]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/inference.rs",
+          "lines": [15, 47, 212, 233, 262, 264, 281, 422]
+        }
+      ],
+      "seeds": [
+        "native-model-inference.tauri-plugin-oc.hex.normal.production",
+        "native-model-inference.tauri-plugin-oc.llama_cpp_2.normal.production",
+        "native-model-inference.tauri-plugin-oc.minijinja_contrib.normal.production",
+        "native-model-inference.tauri-plugin-oc.minijinja.normal.production",
+        "native-model-inference.tauri-plugin-oc.serde_json.normal.production"
+      ]
+    },
+    {
+      "id": "owners-32-native-model-ipc-schema-and-commands",
+      "disposition": "external-owner-edges",
+      "explanation": "Added model IPC structures, command handlers and plugin registration use Serde/Tauri and Result<_, String>. The legacy error-wrapper siblings are not introduced by these model commands.",
+      "profiles": [
+        "windows-default",
+        "windows-inference",
+        "android-inference-store",
+        "android-arm64-transformers-webgpu"
+      ],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/commands.rs",
+          "lines": [1, 211]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/lib.rs",
+          "lines": [61]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/models.rs",
+          "lines": [113]
+        }
+      ],
+      "seeds": [
+        "native-model-ipc-schema-and-commands.tauri-plugin-oc.serde.normal.production",
+        "native-model-ipc-schema-and-commands.tauri-plugin-oc.tauri.normal.production"
+      ]
+    },
+    {
+      "id": "owners-33-native-model-manager",
+      "disposition": "external-owner-edges",
+      "explanation": "The reviewed model manager's download, streaming, hash, disk, cache and async operations retain futures-util, reqwest, hex, sha2, sysinfo, tokio, Serde/JSON and Tauri. Internal model types and std path/container helpers add no omitted external owner.",
+      "profiles": [
+        "windows-default",
+        "windows-inference",
+        "android-inference-store",
+        "android-arm64-transformers-webgpu"
+      ],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/model_manager.rs",
+          "lines": [1, 2, 3, 4, 12, 13, 298, 317, 646, 675, 761, 884]
+        }
+      ],
+      "seeds": [
+        "native-model-manager.tauri-plugin-oc.futures_util.normal.production",
+        "native-model-manager.tauri-plugin-oc.hex.normal.production",
+        "native-model-manager.tauri-plugin-oc.reqwest.normal.production",
+        "native-model-manager.tauri-plugin-oc.serde_json.normal.production",
+        "native-model-manager.tauri-plugin-oc.serde.normal.production",
+        "native-model-manager.tauri-plugin-oc.sha2.normal.production",
+        "native-model-manager.tauri-plugin-oc.sysinfo.normal.production",
+        "native-model-manager.tauri-plugin-oc.tauri.normal.production",
+        "native-model-manager.tauri-plugin-oc.tokio.normal.production"
+      ]
+    },
+    {
+      "id": "owners-34-native-model-packaging-support",
+      "disposition": "external-owner-edges",
+      "explanation": "The reused application build script owns tauri-build for the explicitly declared model/native profiles. Existing app-shell/navigation plugins are not new model-delta roots; optional devtools remains excluded from the claimed profiles.",
+      "profiles": [
+        "windows-default",
+        "windows-inference",
+        "android-inference-store",
+        "android-arm64-transformers-webgpu"
+      ],
+      "sources": [
+        {
+          "path": "frontend/src-tauri/build.rs",
+          "lines": [5]
+        },
+        {
+          "path": "frontend/src-tauri/Cargo.toml",
+          "lines": [1, 14, 34]
+        }
+      ],
+      "seeds": [
+        "native-model-packaging-support.open-chat.tauri_build.build.build"
+      ]
+    },
+    {
+      "id": "owners-35-native-model-unit-tests",
+      "disposition": "external-owner-edges",
+      "explanation": "Explicit native model-manager/inference tests retain their reqwest, sha2, hex and serde_json uses as test contexts. No new native dev-dependency section or optional-devtools test profile is inferred.",
+      "profiles": ["windows-default", "windows-inference"],
+      "sources": [
+        {
+          "path": "frontend/tauri-plugin-oc/Cargo.toml",
+          "lines": [1]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/inference.rs",
+          "lines": [464, 469, 903]
+        },
+        {
+          "path": "frontend/tauri-plugin-oc/src/model_manager.rs",
+          "lines": [1061, 1492]
+        }
+      ],
+      "seeds": [
+        "native-model-unit-tests.tauri-plugin-oc.hex.normal.test",
+        "native-model-unit-tests.tauri-plugin-oc.reqwest.normal.test",
+        "native-model-unit-tests.tauri-plugin-oc.serde_json.normal.test",
+        "native-model-unit-tests.tauri-plugin-oc.sha2.normal.test"
+      ]
+    },
+    {
+      "id": "nested-version-value",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "BuildVersion was read in full: Candid/Serde and the generated types ts-rs owner already cover the caller-side fixture value; parsing/display/defaults use only std and u32 fields.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/src/build_version.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "nested-timestamp-value",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "Timestamped<ModelCatalog> was read through its fields, update, Default and Deref implementations. The existing types Serde owner covers serialization; TimestampMillis and closure/container operations add no owner.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/types/src/timestamped.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "dependency-free-state-and-client-support",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The state macro emits std thread-local/RefCell access; git_commit_id uses option_env/std only. Their manifests and the canister-client macro manifest have no external dependencies. Generated client external calls remain attributed to the existing consumer owners.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/libraries/canister_client_macros/Cargo.toml",
+          "lines": [1, 2, 3, 4, 5, 6, 7]
+        },
+        {
+          "path": "backend/libraries/canister_state_macros/Cargo.toml",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8]
+        },
+        {
+          "path": "backend/libraries/canister_state_macros/src/lib.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47
+          ]
+        },
+        {
+          "path": "backend/libraries/git_commit_id/Cargo.toml",
+          "lines": [1, 2, 3, 4, 5, 6]
+        },
+        {
+          "path": "backend/libraries/git_commit_id/src/lib.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "caller-side-setup-schemas",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The selected installer/upload/subnet/bucket/operator caller schemas and helper bodies were read. They reuse the explicit test-schema Candid/Serde/ts-rs and transport owners. Unused HumanReadable conversions, storage upload_file/hash/random helpers, unrelated user-index event payloads and all implementation-side effects remain outside this bounded setup call path.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/openchat_installer/api/src/lib.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+          ]
+        },
+        {
+          "path": "backend/canisters/openchat_installer/api/src/updates/install_canisters.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23
+          ]
+        },
+        {
+          "path": "backend/canisters/openchat_installer/api/src/updates/upload_wasm_chunk.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24
+          ]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/queries/subnets.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/updates/expand_onto_subnet.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        },
+        {
+          "path": "backend/canisters/storage_index/api/src/updates/add_bucket_canister.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        },
+        {
+          "path": "backend/canisters/storage_index/api/src/updates/upgrade_bucket_canister_wasm.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/lib.rs",
+          "lines": [108, 109, 110, 111, 112, 113]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/add_platform_operator.rs",
+          "lines": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/upgrade_local_user_index_canister_wasm.rs",
+          "lines": [1, 2, 3, 4]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/upgrade_user_canister_wasm.rs",
+          "lines": [1, 2, 3, 4]
+        },
+        {
+          "path": "backend/canisters/user_index/api/src/updates/upload_wasm_chunk.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24
+          ]
+        },
+        {
+          "path": "backend/integration_tests/src/client/openchat_installer.rs",
+          "lines": [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+            54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+            71, 72, 73, 74, 75
+          ]
+        },
+        {
+          "path": "backend/integration_tests/src/client/storage_index.rs",
+          "lines": [
+            1, 2, 11, 15, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+            39, 40, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108,
+            109, 110, 111, 112, 113
+          ]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "catalog-module-declarations",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "All four changed registry module declarations were compared with the feature base: each only registers the already reviewed catalog query/setter. No external call or extra module was introduced by those changed lines.",
+      "profiles": ["wasm-default", "windows-default"],
+      "sources": [
+        {
+          "path": "backend/canisters/registry/api/src/queries/mod.rs",
+          "lines": [2]
+        },
+        {
+          "path": "backend/canisters/registry/api/src/updates/mod.rs",
+          "lines": [8]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/queries/mod.rs",
+          "lines": [3]
+        },
+        {
+          "path": "backend/canisters/registry/impl/src/updates/mod.rs",
+          "lines": [8]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "catalog-test-module-declaration",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The sole changed integration-test module declaration registers model_catalog_tests. Existing unrelated tests and module side effects are not additional scoped model roots.",
+      "profiles": ["windows-default"],
+      "sources": [
+        {
+          "path": "backend/integration_tests/src/lib.rs",
+          "lines": [37]
+        }
+      ],
+      "seeds": []
+    },
+    {
+      "id": "native-debug-optin-boundary",
+      "disposition": "no-additional-external-owner-edge",
+      "explanation": "The reviewed app-shell delta gates devtools behind debug_assertions, its explicit Cargo feature and OC_DEVTOOLS. None of the claimed profiles opts into devtools. Existing navigation/setup/plugin calls are unchanged and do not become model-delta owners merely because this file is pinned.",
+      "profiles": [
+        "windows-default",
+        "windows-inference",
+        "android-inference-store",
+        "android-arm64-transformers-webgpu"
+      ],
+      "sources": [
+        {
+          "path": "frontend/src-tauri/src/lib.rs",
+          "lines": [
+            14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+            31, 32, 33, 34
+          ]
+        }
+      ],
+      "seeds": []
+    }
+  ],
+  "resolutions": [
+    {
+      "id": "nested-state-generated-owner-completeness",
+      "explanation": "Closed for this bounded feature boundary after the source-traced owner review, shared caller-schema pass and final September 14 reread of ModelCatalog, operator lookup/UserDetails/UserId, BuildVersion/Timestamped, empty-dependency state/client/git helpers and module declarations. Model payload leaves are primitives/std containers or the explicit Candid/Serde/ts-rs/error/byte owners. Generated entrypoint/trace/TS dependencies remain with their actual host or consumer owners. No claim is made to inventory every unchanged nested field or call in core state, every fixture implementation, or optional native binaries; those were never part of this approved model-delta boundary.",
+      "units": [
+        "owners-1-shared-feature-test-user-registration-schema",
+        "owners-2-shared-feature-test-fixture-schema",
+        "owners-3-shared-feature-test-external-schema",
+        "owners-4-model-catalog-api",
+        "owners-5-model-catalog-c2c-error",
+        "owners-6-model-catalog-caller-and-clock",
+        "owners-7-model-catalog-clock",
+        "owners-8-model-catalog-entrypoint-macro",
+        "owners-9-model-catalog-entrypoints-and-persistence",
+        "owners-10-model-catalog-integration-tests",
+        "owners-11-model-catalog-msgpack-transport",
+        "owners-12-model-catalog-nested-error-schema",
+        "owners-13-model-catalog-nested-error-ts-schema",
+        "owners-14-model-catalog-nested-schema-macro",
+        "owners-15-model-catalog-nested-schema-support",
+        "owners-16-model-catalog-nested-user-ts-schema",
+        "owners-17-model-catalog-operator-lookup-call",
+        "owners-18-model-catalog-operator-lookup-schema",
+        "owners-19-model-catalog-operator-lookup",
+        "owners-20-model-catalog-stable-persistence-wrapper",
+        "owners-21-model-catalog-stable-persistence",
+        "owners-22-model-catalog-test-auth-bootstrap",
+        "owners-23-model-catalog-test-bootstrap",
+        "owners-24-model-catalog-test-msgpack-transport",
+        "owners-25-model-catalog-test-principal-generation",
+        "owners-26-model-catalog-test-transport",
+        "owners-27-model-catalog-test-wasm-upload",
+        "owners-28-model-catalog-tracing-macro",
+        "owners-29-model-catalog-types",
+        "owners-30-native-model-command-build-registration",
+        "owners-31-native-model-inference",
+        "owners-32-native-model-ipc-schema-and-commands",
+        "owners-33-native-model-manager",
+        "owners-34-native-model-packaging-support",
+        "owners-35-native-model-unit-tests",
+        "nested-version-value",
+        "nested-timestamp-value",
+        "dependency-free-state-and-client-support",
+        "caller-side-setup-schemas",
+        "catalog-module-declarations",
+        "catalog-test-module-declaration",
+        "native-debug-optin-boundary"
+      ]
+    }
+  ]
+}

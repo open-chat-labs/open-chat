@@ -1,0 +1,4715 @@
+{
+    "format": 1,
+    "description": "SHA-256 of exact original ONNX geometry-only CPU outputs, not regenerated from the browser helper. No pixels, external learned weights, or full-model inference.",
+    "provenance": {
+        "recordedOn": "2026-09-10",
+        "backend": "onnxruntime-node 1.24.3 CPU",
+        "graphOptimizationLevel": "disabled",
+        "nativeLibrarySha256": "4bc168111012971ae1ffef36c1f29c06b026d17e9063bd17f6390359fbe32a84",
+        "sourceRevision": "3e4136ea66ae6e07c110e64fe07da2e029517ab5",
+        "rawVisionSha256": "9e4585fdc96e118b27412133e3a37dca85f1abd471015accad9e76bc9959e6c3",
+        "deliveredVisionSha256": "0b494b36663cc3ce66a34b33fb03e7f722c2957d10db29d55fe63854e7d358be",
+        "originalGeometryGraphSha256": "9bf6a1b6311458154eaf5a11d6ebe95bd7f449036958737d4c3ee677e16a7755",
+        "nodeProtosSha256": "d5f436653de94d90b19e708a019bcec9aadd19182e41fdddc18f5f42ce6fd450",
+        "inlineTensorProtosSha256": "7f4e2210888b2f0fddf70502c9d2cd57b58115a2e01f8d7767d6f1c3d893f3b6",
+        "receiptSha256": "0e1696d26a286a768cf6f12989a260ac4f8c471f1ae67f116a4c89abd17a5b12",
+        "comparison": {
+            "absoluteTolerance": 0,
+            "relativeTolerance": 0,
+            "elementwiseExact": true,
+            "byteEquality": true,
+            "cases": 55,
+            "tensors": 715
+        },
+        "scope": "The independently extracted original 91 nodes and 16 inline constants were executed by ONNX Runtime CPU, not the replacement compiler. Pixel input was Shape-only. These hashes qualify the deterministic geometry program, not learned graph placement, model accuracy, or phone memory."
+    },
+    "boundary": [
+        {
+            "name": "/model/vision_rope/h_ids/Add/output_0",
+            "type": "int64",
+            "shape": ["num_patches"]
+        },
+        {
+            "name": "/model/vision_rope/w_ids/Add/output_0",
+            "type": "int64",
+            "shape": ["num_patches"]
+        },
+        {
+            "name": "/model/vision_rope/max_range/Unsqueeze/output_0",
+            "type": "float32",
+            "shape": ["max_hw", 1]
+        },
+        {
+            "name": "/model/vision_rope/pos_ids/Unsqueeze/output_0",
+            "type": "int64",
+            "shape": [1, "num_tokens"]
+        },
+        {
+            "name": "/model/vision_rope/attn_mask/UnsqueezeBatchHead/output_0",
+            "type": "float32",
+            "shape": [1, 1, "num_patches", "num_patches"]
+        },
+        {
+            "name": "/model/pos_embed/idx_00/output_0",
+            "type": "int64",
+            "shape": ["num_patches"]
+        },
+        {
+            "name": "/model/pos_embed/idx_01/output_0",
+            "type": "int64",
+            "shape": ["num_patches"]
+        },
+        {
+            "name": "/model/pos_embed/idx_10/output_0",
+            "type": "int64",
+            "shape": ["num_patches"]
+        },
+        {
+            "name": "/model/pos_embed/idx_11/output_0",
+            "type": "int64",
+            "shape": ["num_patches"]
+        },
+        {
+            "name": "/model/pos_embed/w00_2d/output_0",
+            "type": "float32",
+            "shape": ["num_patches", 1]
+        },
+        {
+            "name": "/model/pos_embed/w01_2d/output_0",
+            "type": "float32",
+            "shape": ["num_patches", 1]
+        },
+        {
+            "name": "/model/pos_embed/w10_2d/output_0",
+            "type": "float32",
+            "shape": ["num_patches", 1]
+        },
+        {
+            "name": "/model/pos_embed/w11_2d/output_0",
+            "type": "float32",
+            "shape": ["num_patches", 1]
+        }
+    ],
+    "cases": [
+        {
+            "grid": [1, 16, 16],
+            "patches": 256,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [256],
+                    "bytes": 2048,
+                    "sha256": "519b23fbd422a41d73b76569d3abc03fd82d4708ff023344e4af7279cd34ff00"
+                },
+                {
+                    "type": "int64",
+                    "dims": [256],
+                    "bytes": 2048,
+                    "sha256": "16d739d52575362ca40fc24c225be936d287cf4bd69dbd5cb4b5fa3d8b1d74cb"
+                },
+                {
+                    "type": "float32",
+                    "dims": [16, 1],
+                    "bytes": 64,
+                    "sha256": "58dda328598e2f7fe472621bfc54935aaa354d1a6ebcaf9562cd743fd575eb19"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 256],
+                    "bytes": 2048,
+                    "sha256": "bbd330b12e8159e117376ef24fa106413bc9fc18032a0d43e95c5dae5e47953f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 256, 256],
+                    "bytes": 262144,
+                    "sha256": "8a39d2abd3999ab73c34db2476849cddf303ce389b35826850f9a700589b4a90"
+                },
+                {
+                    "type": "int64",
+                    "dims": [256],
+                    "bytes": 2048,
+                    "sha256": "180a92b177e3c99753003354cfd0bca8edf7665132496dde88f98392246265e0"
+                },
+                {
+                    "type": "int64",
+                    "dims": [256],
+                    "bytes": 2048,
+                    "sha256": "c3751adeb14a744f1b09e8e2a8a34a9b28bee5fb5e06c96def9f16de88a7127a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [256],
+                    "bytes": 2048,
+                    "sha256": "778ee9b1eaa2ab6bdc7881a8ab51c2165115205803df35aa5054327f0eb2d52f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [256],
+                    "bytes": 2048,
+                    "sha256": "d1146f79b954bdaf93e3f9624553ea01e5c47a792a2db8b932d4f4af41b543d9"
+                },
+                {
+                    "type": "float32",
+                    "dims": [256, 1],
+                    "bytes": 1024,
+                    "sha256": "e90d9465c7425a1a49c9c4e9cc6e7c173a449b3ee46aa3b5dff8195e16ea93e0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [256, 1],
+                    "bytes": 1024,
+                    "sha256": "418161744dcecb8e8892b04cfecaeb166b097ff108787fff226739205c8b9b1d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [256, 1],
+                    "bytes": 1024,
+                    "sha256": "10669b2423f1b9e8fe2b8cd98e3e2728113f05441acd0b1ec5acd955bc4e4048"
+                },
+                {
+                    "type": "float32",
+                    "dims": [256, 1],
+                    "bytes": 1024,
+                    "sha256": "d1a4965f320b79c8f95477dcc72b214255ac32f6404831c1498bfe13130ffc41"
+                }
+            ]
+        },
+        {
+            "grid": [1, 16, 18],
+            "patches": 288,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "8890c5772e8863b56b6ffdb7b46fe4fcea452266ae2d0e14c8fddd67820f4c88"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "cefd3b301674c29738dd41eeec282694cc1d5612abaeb648f9d57407ec419d8a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [18, 1],
+                    "bytes": 72,
+                    "sha256": "e2fea6553423387adcf538ee52f8365e3e2b088f73f96a62d2a0dba0bcdea1ea"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 288],
+                    "bytes": 2304,
+                    "sha256": "ba1b53cae912da6d52ef63ea1bc6596d368e11e463348612a15dea36c45b41fc"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 288, 288],
+                    "bytes": 331776,
+                    "sha256": "a251c7b271e711604c800658cf80ad17ef32328ab9b24fca54438b214224c3d9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "9e81aefe1105cb479c99bc391b45d1d506a3a0d6c14c23ceab1f80853c139355"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "60700692fbd7f2f25e7ebca1eaca8b258773a75095441dee771e06b6dc48e893"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "7a65c600824cfb3f10b1eedee0924379684039323d37caeed78a9bc5bfbb4ffd"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "081edf3d41e950c6f793f560b52bb0403d9cd618e3edc4d760f20e31eff64ced"
+                },
+                {
+                    "type": "float32",
+                    "dims": [288, 1],
+                    "bytes": 1152,
+                    "sha256": "f114f9e3f096f1a838894efd44ad4ea9668c556f359f926bf377552fe2f15db1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [288, 1],
+                    "bytes": 1152,
+                    "sha256": "724a36cb492aa88e0a3bf76e2fb93198e6854e5a4d5a9a318afc3c158817e034"
+                },
+                {
+                    "type": "float32",
+                    "dims": [288, 1],
+                    "bytes": 1152,
+                    "sha256": "0ca8ffa4a8344b9e0dac6fa50067ac29ec5a1bace3af6629facef59c029a4d36"
+                },
+                {
+                    "type": "float32",
+                    "dims": [288, 1],
+                    "bytes": 1152,
+                    "sha256": "8a92d3df3d45698d0c7c0e8a17ec7c135e2fa460823ee9e33d4a5a5ec1859b5b"
+                }
+            ]
+        },
+        {
+            "grid": [1, 16, 20],
+            "patches": 320,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "c136f63ad76b673b51d405236a6809e06c350ebe46de3793ac494ba93e3bd61e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "4b3aa56a4ce719c2f0b93fe9a43dcbdeb5b26c0debb412f44128c6ac5bafc5ea"
+                },
+                {
+                    "type": "float32",
+                    "dims": [20, 1],
+                    "bytes": 80,
+                    "sha256": "e8f41b3baa7b95cfb55e51fdf1713bfcf5f976511c9dd8458abd78e549ba022c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 320],
+                    "bytes": 2560,
+                    "sha256": "e370e9ce28960d1b146ffd19676fbe67fec17879e654141e0d9102d194ede374"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 320, 320],
+                    "bytes": 409600,
+                    "sha256": "d58201a30b35a60612306667b083ca4dfaf9efa107386fff36188e42c34c3c19"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "f0485a6b9fbe7790b15491e94208ea9b3a465cb140a8eb55a2e578df3e414cf6"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "f9a1b6f44576030da0d6b6e0b6f42a1cb2bc7ec3213f060b5299c35ba777d5d3"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "728d7fe3b60a8cfa46b0bb855c8de50e07b20b7e27d21b9a089598feaeeab318"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "dd25239dd8d5c65b6059ef44362c0c524306b8f2d91bf0a747ff89aff40b7723"
+                },
+                {
+                    "type": "float32",
+                    "dims": [320, 1],
+                    "bytes": 1280,
+                    "sha256": "1f6c66f7eba311f86b4057173f6fbf796f896b7ff666d017bb4ef240ed34dcd7"
+                },
+                {
+                    "type": "float32",
+                    "dims": [320, 1],
+                    "bytes": 1280,
+                    "sha256": "d395e5409ebcb11b2b65f6b82b93f493dbac6e6e1be1522e9c785cfe0d0bf458"
+                },
+                {
+                    "type": "float32",
+                    "dims": [320, 1],
+                    "bytes": 1280,
+                    "sha256": "2143834427ba81612bf5f300eda8bfa6a31a3dec5188c72df058bfb79a005a48"
+                },
+                {
+                    "type": "float32",
+                    "dims": [320, 1],
+                    "bytes": 1280,
+                    "sha256": "9f5040015173544a3f6836fad50c838ec1ef4c28687117c100e4a426bb59c2c0"
+                }
+            ]
+        },
+        {
+            "grid": [1, 16, 22],
+            "patches": 352,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "d9aa47efcfd0c3211c4df817ab9218ba540aa4a39c440d42fcdbfd37c5faf306"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "b372666e1d5f1993245d5b55dca1e4a1ef6e0a15c2ce6e955315b6057b757cea"
+                },
+                {
+                    "type": "float32",
+                    "dims": [22, 1],
+                    "bytes": 88,
+                    "sha256": "b90ec8418f27583542bf9c0076b30e5d80bc5cfde66b2b8f6284d7d6be2a2703"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 352],
+                    "bytes": 2816,
+                    "sha256": "c96f0d70b8ad5cb166e28e8890fb285195d36c8952433f806b5b4708403520fc"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 352, 352],
+                    "bytes": 495616,
+                    "sha256": "8a77aa12367c7154eaad2fdb9f2c6c915ee8449f7e9ec4febaeaa5f30c1afd30"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "222639fb8eeecb6681fb3a7905e15f0f8f459e65ad22f7c2fac53bc7ff4785f5"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "c2a6bd7c75d00004034167b788be385f69ed4214b075d9ddb448ad4cbfa738c4"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "2118a05d4f4139c1d9ffb5c4d7286646fd971e7d00c9d527e0e7d5a8b1ac9318"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "5edb067abade1d2f2fbfd592a16d912c61b3f88b77316a6127698ddcf8850c19"
+                },
+                {
+                    "type": "float32",
+                    "dims": [352, 1],
+                    "bytes": 1408,
+                    "sha256": "706f5836d298840d54f4c71b909c7467ec68626d6e57628da79919f92d70cc39"
+                },
+                {
+                    "type": "float32",
+                    "dims": [352, 1],
+                    "bytes": 1408,
+                    "sha256": "e06fd1bc0ab8798316dbd1ad41dbac0ce2394010fa150b1cdd0907ed3d5843f7"
+                },
+                {
+                    "type": "float32",
+                    "dims": [352, 1],
+                    "bytes": 1408,
+                    "sha256": "2d3d1d5c1b6eae0c2fc6277ba3eee21addc719735eb6aaa4a6c5ff3cb4bf0523"
+                },
+                {
+                    "type": "float32",
+                    "dims": [352, 1],
+                    "bytes": 1408,
+                    "sha256": "dbbe4af7c4a723ee9bba18870b58e022e0a6583218f024eb44c0cdaf770e57cd"
+                }
+            ]
+        },
+        {
+            "grid": [1, 16, 24],
+            "patches": 384,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "dc22102682d166230f0dd03b6c9c76522ba8606b39dd0825e3d68c70c57b91ef"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "f78ec66c5463d153200a0b320b93efe0e1e5b1b4ecdfdd4eaf56ccec61385451"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 384],
+                    "bytes": 3072,
+                    "sha256": "b8745f9ffcd88faa37920a920e3af125c5ddde1dc572c098f8ff78f4b5b8d347"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 384, 384],
+                    "bytes": 589824,
+                    "sha256": "250480ecefa3655c774b6a4e5d4eb16675ee4f181c2285c25020fac6e3aaf3b5"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "a8b42cf3ba702fb60853e92330149f34ca634507fffcde28e0948489e17569ce"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "67bd3df0641aed3d4e7bd74784ffd90e89730c1d122d1d06fd3853c04c77ff48"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "313fab86ac6dd3ff97e739a9ec66d7e621861da56a56c1821b993af3cdbc5f9d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "301c56fb87736417d96c62185b370d3a41e9eca02bfcdb11c31d5d52e13fa42c"
+                },
+                {
+                    "type": "float32",
+                    "dims": [384, 1],
+                    "bytes": 1536,
+                    "sha256": "a21daa561526595f1874e64d072e5d31f787d71dadc4f3a710d82ac3928f5b98"
+                },
+                {
+                    "type": "float32",
+                    "dims": [384, 1],
+                    "bytes": 1536,
+                    "sha256": "3aa931c7756fe1f97a7f5e077a54c73aef874ad197e309ad44f03128c27fec1f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [384, 1],
+                    "bytes": 1536,
+                    "sha256": "150015a81d752b8e65ddd026e64d9a5a746638589da26ce1cc4c5debb981c058"
+                },
+                {
+                    "type": "float32",
+                    "dims": [384, 1],
+                    "bytes": 1536,
+                    "sha256": "324a42238336307a0ec75ad3d393fe302a5e3858fb377f469c5762f8971ca6dc"
+                }
+            ]
+        },
+        {
+            "grid": [1, 16, 26],
+            "patches": 416,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "d0a5c23b55779e09082c20f62fc7ca8cbbe5311340e443f089034e86e6003790"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "cc42aad27ba4100356d3f9faf3ca80dff6fe8b23df5109877d869942deb6a669"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 416],
+                    "bytes": 3328,
+                    "sha256": "c6e347780b8fe6e8e3664d1917de4271f0f63420652d441155f4e0367c3bd2c6"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 416, 416],
+                    "bytes": 692224,
+                    "sha256": "1f1bfcff6ec70f865f80e25d3a8f9119c9d30596fe1d20a6cf0edacec8281c6d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "6a17a443019fde8d1d55c4416438f6176085964cffc261e5c3efdcd20455092e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "7ed04d4c4ca73a6a3ed1a1677755e67b58dea93553885dfb22e294c60498b30d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "16de47236e0404be4286580cf3ba8f2c6fe97fc696986e188b8b8fe5a3684934"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "c7821fab93f11543d33c48f56e3a08193fec23d33ad758d89d55e77fb99a1834"
+                },
+                {
+                    "type": "float32",
+                    "dims": [416, 1],
+                    "bytes": 1664,
+                    "sha256": "509bdd6614bbd3e64f40e5e2d7956637f8b68029eb98706b38561d3a5dc00c1d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [416, 1],
+                    "bytes": 1664,
+                    "sha256": "84e81d7f5da90c7f4a1a84b9347649a1b0408c584fd251a86dd65ab7bf4646d5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [416, 1],
+                    "bytes": 1664,
+                    "sha256": "62884f476c84ebcf36fa2a62c23a62f1462b657a50855996da327825ef0aea15"
+                },
+                {
+                    "type": "float32",
+                    "dims": [416, 1],
+                    "bytes": 1664,
+                    "sha256": "1223cf32ea0185268a7dcb5f465ae484a7b49ffc9b75425b25bf8826c053e4f9"
+                }
+            ]
+        },
+        {
+            "grid": [1, 16, 28],
+            "patches": 448,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "70504fc9359390a5cd2b549a740e554e3cd3642d71561185b2c998e5485b396e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "f61e69392c97849c18ac621b393ce70fcca5f14f975ca9a8f9d2aed4e7a1c860"
+                },
+                {
+                    "type": "float32",
+                    "dims": [28, 1],
+                    "bytes": 112,
+                    "sha256": "4f2a7b3d0ccdbf29fc680922e9c93f266eed28042ccfa917a1769369198d8d1d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 448],
+                    "bytes": 3584,
+                    "sha256": "5c95b813dae5487c321aabe5560f6b0006c75594c9dfed79ff9a405a79512424"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 448, 448],
+                    "bytes": 802816,
+                    "sha256": "125c62526cce3e4b947fa527adf081ae0394d1ef0fbeb74db5ce742574533cf3"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "8de41a26bd4933e9de9f96f905c6622daaa3fffae66da92a7d280aa8f370dccb"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "140a7bdb7e3ff86e2ca31798292a63bdde3e40b588bc1afcc56af86c15171164"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "5b4aa900364185e09a83dbfdc8d805f2b74f7e141b025a76401f73fd614a3973"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "0bc8667025e6ea8c926197511df8403f9c06e7b92e8e6092da2d108a45317023"
+                },
+                {
+                    "type": "float32",
+                    "dims": [448, 1],
+                    "bytes": 1792,
+                    "sha256": "f885e776c70aa46e1aea4e28f8bf6101a13978806874e7656503d99bc10578e5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [448, 1],
+                    "bytes": 1792,
+                    "sha256": "3d983428289c364e4a71f998bd313e4176f493044031933b84b5f17e6fafeb4a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [448, 1],
+                    "bytes": 1792,
+                    "sha256": "a822df61d551e1549ff84b5ff5ed12e50c07fe98012f491f21f909d7e7655b6a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [448, 1],
+                    "bytes": 1792,
+                    "sha256": "edab57d6f0ab4fab2a4e606c82bc8f6266f82ceb02729ca5106e93da67df790f"
+                }
+            ]
+        },
+        {
+            "grid": [1, 16, 30],
+            "patches": 480,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "86a2c1d6c978bc9181e88cb01241ab7ecb4b0ea1e2e18547d3ce562f97f2efdc"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "7060d0612bb19beb9357893945f9c57acdcb11138f5a4b32c1448978c030ac47"
+                },
+                {
+                    "type": "float32",
+                    "dims": [30, 1],
+                    "bytes": 120,
+                    "sha256": "f55ab64fe554301fbb1c735911e414f30f2e167b9a5b6c7d85e95fc361c9e6c9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 480],
+                    "bytes": 3840,
+                    "sha256": "18540e693a730044189ffde0720b95275b461e2d5fa743269c8eb7e72f15f4f5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 480, 480],
+                    "bytes": 921600,
+                    "sha256": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "08b5d9adfbe761d7fff036257db3c20191ec11c55466c3edff399d90dbdc14dd"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "1b463e8755a34d0f628376b194700e3d8f69a5078fd49877d7882baf7b48938b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "87d6f0ccdcc2a455e781bb1832735158b6652dcd5bf173d4685243067491948a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "e8e41eea322c151bfe483a3ec59781a9d393f04faa6bd65f80fadb55faf2f5d0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "1de57780f259228e6f68ab81252e4808c0f50167cca30ab1b1a54ff2ac5100c5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "92129b9df1c54090ed40efdfd7adb797c7a9a118538a0c233ed7f340922e4a57"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "380fbe2031ea2c482dd51b28788f26e205d47dd54d783f1dab8d5366abc68e2c"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "8745dc79e72df15fe45a153038db03dceccd2636b6e62a0ad119002230908cc7"
+                }
+            ]
+        },
+        {
+            "grid": [1, 16, 32],
+            "patches": 512,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "c72b07247b71a29501544abe386e7c9a50d6e029aa28b5da3c51985293a82fd4"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "da007c39bfb2dd923c152786b174c036f045d15b2747a3a7f8cd56421c607b6a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [32, 1],
+                    "bytes": 128,
+                    "sha256": "0c43f2957858ef1a2ee3e2cec548164d548995c05a42c6588927998cd6dd10d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 512],
+                    "bytes": 4096,
+                    "sha256": "5738153ec97595b1c1e4dc027f7b7fb4534f19ed2ce9f9ee712e6d34a384cde7"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 512, 512],
+                    "bytes": 1048576,
+                    "sha256": "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "8f7de11ebbe23cec803a686f458cbdc9a20e2007c38f0cde93af61cc2b16cf6a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "6624f7beb82cb8f277f2ce22fd8883eef5ee796c70577eddd0abfa1f73849cf4"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "f1fff2c406c1b3681599601a61ad1b3d6f0d346eb69517872eec3514a43e7b31"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "d369ed5a4775f46ab94174cc5f00f1dba821c452f42f77eee907528a3db6b41b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [512, 1],
+                    "bytes": 2048,
+                    "sha256": "e9d30c18c7b1dc65c813bbacad08de611f07a4bde7056600fa9521c03f90f150"
+                },
+                {
+                    "type": "float32",
+                    "dims": [512, 1],
+                    "bytes": 2048,
+                    "sha256": "ae9e2c108b7db66a83a67a4c49e7bf94b494fd3d9830a2de69e15be15569bc00"
+                },
+                {
+                    "type": "float32",
+                    "dims": [512, 1],
+                    "bytes": 2048,
+                    "sha256": "e317d447c8760f70f38dae3aadaca15552aa91bbd3ee99e484823a5664743a9b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [512, 1],
+                    "bytes": 2048,
+                    "sha256": "fa6bb126fcfcec012d077b60a9d33e7ce311584791e568646428976abd98e441"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 16],
+            "patches": 288,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "21bf19796d586721e27d9374645846dac345cf069c3112e63e0eb4bcd0d087ac"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "ea55181ba4dd0a69fbe10031a1b8ef96e9fd5a7243d20300cab5c7e4dce97572"
+                },
+                {
+                    "type": "float32",
+                    "dims": [18, 1],
+                    "bytes": 72,
+                    "sha256": "e2fea6553423387adcf538ee52f8365e3e2b088f73f96a62d2a0dba0bcdea1ea"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 288],
+                    "bytes": 2304,
+                    "sha256": "ba1b53cae912da6d52ef63ea1bc6596d368e11e463348612a15dea36c45b41fc"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 288, 288],
+                    "bytes": 331776,
+                    "sha256": "a251c7b271e711604c800658cf80ad17ef32328ab9b24fca54438b214224c3d9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "b3d2fec5424e00cc410e13c39010f2d92495ebc984fb69b50b53dfac8f3353f1"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "ce980767c181043bf268a70f6a07d3477dbb1a32754436c4dddf9c6975b53fd7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "737563da0b59e9c4cd43dafcae2f5a89120abf05ab0ef9c34de0d16581760743"
+                },
+                {
+                    "type": "int64",
+                    "dims": [288],
+                    "bytes": 2304,
+                    "sha256": "b2c17ca240118250541a5af5da4615c079ccaaa85cfbfdd8721d6d89bf1319b6"
+                },
+                {
+                    "type": "float32",
+                    "dims": [288, 1],
+                    "bytes": 1152,
+                    "sha256": "d267d29fea47ff06c728e3963bbc5de6fb9dff914644f0f12134807bd7c2cb3d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [288, 1],
+                    "bytes": 1152,
+                    "sha256": "74f4dae6fa696f9fc9942a2241943e31cf3568209d837fada6534c68b6ca8df3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [288, 1],
+                    "bytes": 1152,
+                    "sha256": "1435ea5d15dcace93fcf4375d77782091e777bb4796993c45427c7143c227368"
+                },
+                {
+                    "type": "float32",
+                    "dims": [288, 1],
+                    "bytes": 1152,
+                    "sha256": "1246dd782a2c827a0d929de1c84f3f1d51d8a199e96ba1ca2db2b2138fcd5a21"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 18],
+            "patches": 324,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [324],
+                    "bytes": 2592,
+                    "sha256": "6fa35a71518b77ed36512e2ceaf1eb8421771f22cdb7f92da953d1d911208243"
+                },
+                {
+                    "type": "int64",
+                    "dims": [324],
+                    "bytes": 2592,
+                    "sha256": "d37207fa15b1c56395a002c7fc830131a27f1f7d83fc6e182619a97b9a455ff4"
+                },
+                {
+                    "type": "float32",
+                    "dims": [18, 1],
+                    "bytes": 72,
+                    "sha256": "e2fea6553423387adcf538ee52f8365e3e2b088f73f96a62d2a0dba0bcdea1ea"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 324],
+                    "bytes": 2592,
+                    "sha256": "668be41264b72daedde581221bbeda6b61a4a58782a8ec2e8d55a49ee2fe3466"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 324, 324],
+                    "bytes": 419904,
+                    "sha256": "6574feb48b44a8d6b0aa4fbd5eeb32c6fdea7f57a0f6bb96f6c3cd2936349ff7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [324],
+                    "bytes": 2592,
+                    "sha256": "e2e7b591127ba4a12629b398b1bc977138892e3d39241d858884fe889bbbc2b8"
+                },
+                {
+                    "type": "int64",
+                    "dims": [324],
+                    "bytes": 2592,
+                    "sha256": "ec5bb02b90060d6c6bdfa0e17064e90b80dc6931de1b16c85a03b74fa109b03a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [324],
+                    "bytes": 2592,
+                    "sha256": "5c8fcf7b6a1e650b72bda422d57c82edbd8394a56073b8ff7638a05516a4cd85"
+                },
+                {
+                    "type": "int64",
+                    "dims": [324],
+                    "bytes": 2592,
+                    "sha256": "6b073b65a5973bb0e268d990ecc6a5e5d07d146cf73d22a65c8e63274b665040"
+                },
+                {
+                    "type": "float32",
+                    "dims": [324, 1],
+                    "bytes": 1296,
+                    "sha256": "31e1aa440d20943448f2c0b53791b0e97f3701e6e25f85e5c386d7132647cbde"
+                },
+                {
+                    "type": "float32",
+                    "dims": [324, 1],
+                    "bytes": 1296,
+                    "sha256": "2dd2ae5057dbd86ac6666ea596cc0c84f6a0f2abccf37bd9af8d9f095efb7b00"
+                },
+                {
+                    "type": "float32",
+                    "dims": [324, 1],
+                    "bytes": 1296,
+                    "sha256": "1ad93d1b3985ba1887df949b6881fb8579a0b6dfe2df2f4720d5a00f1b512414"
+                },
+                {
+                    "type": "float32",
+                    "dims": [324, 1],
+                    "bytes": 1296,
+                    "sha256": "547e22d4ec74343ac985415172b2f2bf912300bab50f16ac62dde654f7882714"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 20],
+            "patches": 360,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "f39e3a71bbcedf5bc3eff0bb77964c158b169eb2e7fd0e1337304e78c0faf98f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "617fc526c92e9fb778f7b9650dfa93f5ce7dfe55b503bd5d7938d53607826ee5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [20, 1],
+                    "bytes": 80,
+                    "sha256": "e8f41b3baa7b95cfb55e51fdf1713bfcf5f976511c9dd8458abd78e549ba022c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 360],
+                    "bytes": 2880,
+                    "sha256": "c5b5d89abc3aae5b9debf1091964dedb9e385c3348ba8746fecd1165ae058289"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 360, 360],
+                    "bytes": 518400,
+                    "sha256": "35cee74fe697d2c7732cc06aede881251e466d1c0f4cd3f4ac46e96bdc1536ff"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "5f831cb50c18a18d914e1db8160b720aa6e1c35a73e1ff23bc827e82e5be1d92"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "a5f32f2c2a8462742b57fb8b5aec8ef6532732d5f020e4e78a6c42a5da088137"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "fa9d08a9228d7d5a0ab0fa489ee8f5680e76cb019ee2c9bca67e3ce577781194"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "08a5a6140dc91eaab28cc43eb05e9be0f4fb6699ae2d7105bf7a348e2f8ff333"
+                },
+                {
+                    "type": "float32",
+                    "dims": [360, 1],
+                    "bytes": 1440,
+                    "sha256": "51354a86c865d62d0f064704bcc4823a6a0fb22757c2885b5e49744aa6eaa966"
+                },
+                {
+                    "type": "float32",
+                    "dims": [360, 1],
+                    "bytes": 1440,
+                    "sha256": "9fe08c1a160c1979f93301246d40e038111e65684f20cc7598c3f5b0c8494320"
+                },
+                {
+                    "type": "float32",
+                    "dims": [360, 1],
+                    "bytes": 1440,
+                    "sha256": "851df48648a4cf571832e5edc8bef14cd957ff964e3583c331a69fea6bd255fd"
+                },
+                {
+                    "type": "float32",
+                    "dims": [360, 1],
+                    "bytes": 1440,
+                    "sha256": "28d5128d756ee7fc51e5375ecda95a46c8b140938b4bbbd4ff819c6e9fb0b6e1"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 22],
+            "patches": 396,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "e8099b5131ce4ea90a1a78c66b2b6effb12c917d61794fd56e912f25ff1f4cbc"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "2711df56248fb68cfdd93e118d72eab3778a73f7ed4462c09bacc64a367a0fb3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [22, 1],
+                    "bytes": 88,
+                    "sha256": "b90ec8418f27583542bf9c0076b30e5d80bc5cfde66b2b8f6284d7d6be2a2703"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 396],
+                    "bytes": 3168,
+                    "sha256": "ea6da762ccaa4db8c17ed4157df5b4c78a6332cbe99a24ef340e0de0631aef85"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 396, 396],
+                    "bytes": 627264,
+                    "sha256": "803f7693dd2f8ce55483907d34d1276cd00d8a94d9c98face73a32b080002af2"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "2b505f3de57c41141d04248b9ee58959aade8b0ed771937055c25b55dc3f370e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "db2d49ef23955236f6ac3a8734a91592fbaacb0dd9c2f03174d6f185d2bb2949"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "2a9a950007ca7daae5881c7795104e2b3970565c1bf8b172aeeacc0aff712a31"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "b19ddbb3df99c35b0f70c510511d60432bdc2a9d2014853bcc597ea2d80d6da3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [396, 1],
+                    "bytes": 1584,
+                    "sha256": "cf17610c0fd97b81f64701cf316249ce99039886e917747aadb02be6ebc7a497"
+                },
+                {
+                    "type": "float32",
+                    "dims": [396, 1],
+                    "bytes": 1584,
+                    "sha256": "d361969772ecfa411e5b7eec7d9433078809a2ce971180508794f5eb7cd8ce02"
+                },
+                {
+                    "type": "float32",
+                    "dims": [396, 1],
+                    "bytes": 1584,
+                    "sha256": "ed3bc38b169ddfc8f3587c1ade407168640b919cf4dfb1369d173634bb474eec"
+                },
+                {
+                    "type": "float32",
+                    "dims": [396, 1],
+                    "bytes": 1584,
+                    "sha256": "f854af74bf2340229ce6d8cba2581f233822c9033cf6f0d380877362fbc3198d"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 24],
+            "patches": 432,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "6afec811ede15c9610fb18c786eb41ef94db730ce8c2e2c16c2567df47579a2b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "d8ec40899c456884f2c4fdf5390958ad2c5b35d225f9b80f6c8d61cdaea32545"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 432],
+                    "bytes": 3456,
+                    "sha256": "9aeb4812d10ecc8a9eb78a9a613cc442792514b697dd0dbe69e2db6cbfb3985a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 432, 432],
+                    "bytes": 746496,
+                    "sha256": "d77d495ff57663a56841834a111561ecef9c004f29ad13ba67cc70eb0a6e9461"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "4c463ec228bc82fe2cc8bacfb429a5fce88d16d444e67e268a1e2bdf72b8f0f3"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "c661386899b007758c36e9f0d1f26a2bc29e4d665277e23589ffab0eaf2e9297"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "b1f66c3aee7181fdd7ff45da14b75c989981eff536cfed31d0da34b6fa4879a9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "136f1d293b6ab1e1a58bcb85655b7a1f7143c7b5cc78803637769859ad2a95c1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [432, 1],
+                    "bytes": 1728,
+                    "sha256": "22587df57daf6a00c05f4d10c124c48ae7f7111879e2e653bf29e1012b29838a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [432, 1],
+                    "bytes": 1728,
+                    "sha256": "3927156197ac5f4a67542ee182e97074acf8325fc99bbfe157a2c32dadec03cf"
+                },
+                {
+                    "type": "float32",
+                    "dims": [432, 1],
+                    "bytes": 1728,
+                    "sha256": "0f33152b075db318137f3ee1d62fadb6c52575944093f94fd4ac31fc4792b840"
+                },
+                {
+                    "type": "float32",
+                    "dims": [432, 1],
+                    "bytes": 1728,
+                    "sha256": "9f91c2578c3ae8eb074324d4032d493448f04fc6161fc1992ae292d418981f38"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 26],
+            "patches": 468,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "e37016f5794bbf974a23958a78a9c3c23e5a7304c251f593c212b04b5c403fb4"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "3781cd8facda35772c7a23a7a7b023b913f467ef7f90cdb9756e3ca5c4071eb0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 468],
+                    "bytes": 3744,
+                    "sha256": "bc8a9ad34ba921fc3f63db311d1eb3cc7eff828ebda8fd2bc9f1ea5880c2d074"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 468, 468],
+                    "bytes": 876096,
+                    "sha256": "f35d823e056bd41b95619dc5f4e02ed95db2ce7d3ac88bd11ad6b55dcfa76712"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "c88f8db7519ebe6eebc0fdb11abc2f526b21360963d175864dd98d89f40efe1e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "6858e1483c5a47f017a304a92f16e96d2e383c62644161607315a9202a7d7c75"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "2ecb8c96a7fc15b3f0c171f906f3f4a42be5eb2454c365d80ed4fd9eb0e95112"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "bf9feddd474a7a1b56097c184f5ca2fdd71c31ac48b2dfacf2849dba0000b54b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [468, 1],
+                    "bytes": 1872,
+                    "sha256": "b1f3545a22026535b9fb7bc0c0f3faab69bbc7c891e4f7fcd010e06757aac3d1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [468, 1],
+                    "bytes": 1872,
+                    "sha256": "26078b09a6f874cceb004abcfaf4129122e6d1c3304e36a41a8c463e747fd7a4"
+                },
+                {
+                    "type": "float32",
+                    "dims": [468, 1],
+                    "bytes": 1872,
+                    "sha256": "a532ad233bb1d942578e19ee3cc48e983827760e45e654ff670d6c8399539879"
+                },
+                {
+                    "type": "float32",
+                    "dims": [468, 1],
+                    "bytes": 1872,
+                    "sha256": "b33393d478643a42c440b769a30a79b1bcf5d1ae6fb23ccb21a95ac651b55eb1"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 28],
+            "patches": 504,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "bc489b75b350600070fedbe6ed6280e6220012b949e95b9134c01e2011e462cf"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "5a7dc61bae538cad6e425432599d4a37b6233aae57422d195cf5c6ee1e2b8aed"
+                },
+                {
+                    "type": "float32",
+                    "dims": [28, 1],
+                    "bytes": 112,
+                    "sha256": "4f2a7b3d0ccdbf29fc680922e9c93f266eed28042ccfa917a1769369198d8d1d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 504],
+                    "bytes": 4032,
+                    "sha256": "e75d1bc5b690bf1a5c9bd36bf9a042cec46e9db3bc793948a5a803b4c44e8523"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 504, 504],
+                    "bytes": 1016064,
+                    "sha256": "da2116e7bae6d30bc75ca73efee631147bafd8cebf866a7cfe7d4e458a72e2d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "60b278738de719ddd3b14efa7271cc91bcc68e64bb80f2397d81d96fb33146b3"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "6b06998f3f79c4e622fe054adf6f76fd3203a6335be8391809607b2c32f7f272"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "3cb1ac5f4a9bf4edfbec10b3437760dbb138bd26230b5b156357340bb932b407"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "98f631167545887677b5684874de5b4d2616ceffba525540c38380442c187b56"
+                },
+                {
+                    "type": "float32",
+                    "dims": [504, 1],
+                    "bytes": 2016,
+                    "sha256": "c5f483a762857d4f1f0009ff714c3d322036c9a8d534e07d0a8e30b20b192223"
+                },
+                {
+                    "type": "float32",
+                    "dims": [504, 1],
+                    "bytes": 2016,
+                    "sha256": "f176782053c47ff0eac9dd88028e955eb78aab3f3a7b06d27305990fab991c23"
+                },
+                {
+                    "type": "float32",
+                    "dims": [504, 1],
+                    "bytes": 2016,
+                    "sha256": "3aedf4d6da1ad9bd45ba8b4fc8546fbef579b27eb319c496fcb53cacaa81d13b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [504, 1],
+                    "bytes": 2016,
+                    "sha256": "29c2f95f177a5753de2514f99f46819642d31d35cd4efe77a4d7b7263f63bf54"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 30],
+            "patches": 540,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "0424af194633925f984ec2e478aae1734c147bb8e292204762eda47d01f21a14"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "7a879eb9c4be62160aafcfcff58dac06b6f906d216f3eef3581e0fec3567649d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [30, 1],
+                    "bytes": 120,
+                    "sha256": "f55ab64fe554301fbb1c735911e414f30f2e167b9a5b6c7d85e95fc361c9e6c9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 540],
+                    "bytes": 4320,
+                    "sha256": "5abd87dd8f22d8c636fd07bde2e1de3303027bc4ac6a0e36acd86e3dad68a21c"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 540, 540],
+                    "bytes": 1166400,
+                    "sha256": "a7c0d2966553344a88cd00b271ab8b21d8d248fe94c097c0bae3a515600ba8cb"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "e5e684038f86c8925132b20f1a311bba069da8413a3b0e98b0948b2c264c7c2f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "44fcac9e3e0666ab4fad9faf6b2772c6e23620d3234cd9ee487fcbc7c2998f0b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "13ab5c9c89693cee1fc3b76a1b38dc94f95c10ee07452ef99655982291642d77"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "c6fe8e520824ac21b5199fdd624a96394f6cb0ffcc2049d3becf4eed5f506721"
+                },
+                {
+                    "type": "float32",
+                    "dims": [540, 1],
+                    "bytes": 2160,
+                    "sha256": "2442da32284dd15ac85bbbf0c22820d4168a20ff6a36d6c4395989629cd51645"
+                },
+                {
+                    "type": "float32",
+                    "dims": [540, 1],
+                    "bytes": 2160,
+                    "sha256": "49427d678796dacd0e02b0e9ada393267be8eac4cc8c560ccad25e00bf3d4f19"
+                },
+                {
+                    "type": "float32",
+                    "dims": [540, 1],
+                    "bytes": 2160,
+                    "sha256": "cf55971a085c9063ced0dfb9a42810b00310187c5a06ac43fbaed3f02230ef3e"
+                },
+                {
+                    "type": "float32",
+                    "dims": [540, 1],
+                    "bytes": 2160,
+                    "sha256": "a884ff1d6137201c164a3adca12cf2d27a79f00a79dd643c4aac74c23e2c3a25"
+                }
+            ]
+        },
+        {
+            "grid": [1, 18, 32],
+            "patches": 576,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "93ddc38b40ce7eaa97843f745745d69d09c2e0c3a1a1571150305e09d818701c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "b82197de84d1b5c687db9e0d5aa812101d1f895ff719c5b3f17bf3839a130db6"
+                },
+                {
+                    "type": "float32",
+                    "dims": [32, 1],
+                    "bytes": 128,
+                    "sha256": "0c43f2957858ef1a2ee3e2cec548164d548995c05a42c6588927998cd6dd10d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 576],
+                    "bytes": 4608,
+                    "sha256": "64c73f9630b27e01473c1ef83ed6950f74a31e2194fa3fca5b298290fa375a12"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 576, 576],
+                    "bytes": 1327104,
+                    "sha256": "0f7cfb43327ad082e6362afa8bcb4f762da9c55356e9c002f0b2697f0b6cd138"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "98f534c1062f79d28fcab40f4c32791a2e0d23ee05335b8b95e8847ab9715ed3"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "9c5571a1f7c9f06f75c3cab62aad1890e13cab20d26bb62262ecca211f8d94de"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "d59704045f7ef49bc95fe101a10f3e930e2ec79b728d461b134d3c99997ada5e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "2f65023e6bc3a8a83739312a3853921cae4a63e2e6b5f1cd22377cc9c690d1a0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "509fa3e8a8afb89bb5b62d22bbdc6d05c4537717e5611013abea5a4e5dbf00e0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "2cdbe940a96283220aedc69518b384af042ec53911fbee33ed1653084817dcce"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "220da6b8fe3520989d5c5f61e8263237fa90f3b27bce87178c346eaacd311af4"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "5643b9e1058672b2acaa5fcf7fffad97ad4b21cad52eb0584c63903ff82d9306"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 16],
+            "patches": 320,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "a06fc1a72e2ebeca21de270c88b76e4f6ab36df334f98d54703be25704771c52"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "ebb5ca1da3b2370eb02678b1271d52e36f06c1a7d81349bbfc4a888e7accb978"
+                },
+                {
+                    "type": "float32",
+                    "dims": [20, 1],
+                    "bytes": 80,
+                    "sha256": "e8f41b3baa7b95cfb55e51fdf1713bfcf5f976511c9dd8458abd78e549ba022c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 320],
+                    "bytes": 2560,
+                    "sha256": "e370e9ce28960d1b146ffd19676fbe67fec17879e654141e0d9102d194ede374"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 320, 320],
+                    "bytes": 409600,
+                    "sha256": "d58201a30b35a60612306667b083ca4dfaf9efa107386fff36188e42c34c3c19"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "c04e590dcbf2c37701783ebcb39518354b2b10b61d41403e969981bbfc11ffb0"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "dc42c62a2a635b2e369b18e9f5e06c25fe1956f6387c3bc1a0ed249083f0e78a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "6a620178f8d5ef79591445818fa6676902ecec8d7e74f05ef77c11153eae94ee"
+                },
+                {
+                    "type": "int64",
+                    "dims": [320],
+                    "bytes": 2560,
+                    "sha256": "9bc95c7cb09cf1b016f532b615a94043015c95d4686bb0ae0dbba2d690251e29"
+                },
+                {
+                    "type": "float32",
+                    "dims": [320, 1],
+                    "bytes": 1280,
+                    "sha256": "b21255ce34a4448071c52a691b751b1a29666d20e89faaec9a1323f1f99105e8"
+                },
+                {
+                    "type": "float32",
+                    "dims": [320, 1],
+                    "bytes": 1280,
+                    "sha256": "fdb289ac8254eb5b2185e896e15179410774548149f881a07f6a5ba1fb8e0e59"
+                },
+                {
+                    "type": "float32",
+                    "dims": [320, 1],
+                    "bytes": 1280,
+                    "sha256": "a1bb0e277cd745033d44f70bc1072e8caf0af3fbe526033c3404088129e1a942"
+                },
+                {
+                    "type": "float32",
+                    "dims": [320, 1],
+                    "bytes": 1280,
+                    "sha256": "a19e51edccd98f44f7887971bfbb1d0281e766f06df9f7c50398353783e9d32d"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 18],
+            "patches": 360,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "72aec70130397599d910697aa23cc64d3c6bb844a8da82b6daf47ac65f5c8a74"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "26522666b9a24f4a071004cbd80fd2af21fe7d2e0a7b22ffb9e97abc2611e9c2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [20, 1],
+                    "bytes": 80,
+                    "sha256": "e8f41b3baa7b95cfb55e51fdf1713bfcf5f976511c9dd8458abd78e549ba022c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 360],
+                    "bytes": 2880,
+                    "sha256": "c5b5d89abc3aae5b9debf1091964dedb9e385c3348ba8746fecd1165ae058289"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 360, 360],
+                    "bytes": 518400,
+                    "sha256": "35cee74fe697d2c7732cc06aede881251e466d1c0f4cd3f4ac46e96bdc1536ff"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "3d3a9aa1ed2a2c129cbe265512ce58487138937f860755995210056631c202e1"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "d7d96c30ee074b19a48e77c54e8aae8a7a9ab773dc499b3e9de877c47210f29f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "dd1fb2d304739a7f61b28b15572a28617b42728f1914d71251f34c14de4b2def"
+                },
+                {
+                    "type": "int64",
+                    "dims": [360],
+                    "bytes": 2880,
+                    "sha256": "2426bac2130054599a79744d01e3b58bb81eeeded1e71de90f8e991a9eaa522a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [360, 1],
+                    "bytes": 1440,
+                    "sha256": "ead6002479031c65cef6bf8c8265ce4891249f2a69d458817dddd24599b4e76e"
+                },
+                {
+                    "type": "float32",
+                    "dims": [360, 1],
+                    "bytes": 1440,
+                    "sha256": "a68669d07113173568d1e3518ac70e41b82e1bafcfff727035634125107cd5b1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [360, 1],
+                    "bytes": 1440,
+                    "sha256": "fadb44a68e984a265dc19d9592aa8f6b892e2f867b86c86e78207a8dcf5459c9"
+                },
+                {
+                    "type": "float32",
+                    "dims": [360, 1],
+                    "bytes": 1440,
+                    "sha256": "087e8adc0f4d9e17f555d274b49b1f8c85c50418717e3f6a55f55f546a9ac367"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 20],
+            "patches": 400,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [400],
+                    "bytes": 3200,
+                    "sha256": "8e0d5f04d0b1b0b061881dec2a3f9370e23b506bff4293455f397abc9a786a0e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [400],
+                    "bytes": 3200,
+                    "sha256": "d521902e7be94199396fdf76e2876a0ea47afd1daf401932ebe3ecb1a2aeaa58"
+                },
+                {
+                    "type": "float32",
+                    "dims": [20, 1],
+                    "bytes": 80,
+                    "sha256": "e8f41b3baa7b95cfb55e51fdf1713bfcf5f976511c9dd8458abd78e549ba022c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 400],
+                    "bytes": 3200,
+                    "sha256": "4d1a187c7ef4e27616b805e78acaf13ef5d14885ae2e3cb572dd1969e7cd6c2d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 400, 400],
+                    "bytes": 640000,
+                    "sha256": "3d00ed86b663cd1b8ac82b105257cd109412f92dca442048532439f920a7f645"
+                },
+                {
+                    "type": "int64",
+                    "dims": [400],
+                    "bytes": 3200,
+                    "sha256": "7fdc7d1132472433b62cdd2a9acad0ee43640a02d9bd99b884b289a60d21b2c4"
+                },
+                {
+                    "type": "int64",
+                    "dims": [400],
+                    "bytes": 3200,
+                    "sha256": "9dd45f9dc8a0f3a2c1415009fb56158c092e7860533d2963ffc60873253070c3"
+                },
+                {
+                    "type": "int64",
+                    "dims": [400],
+                    "bytes": 3200,
+                    "sha256": "81247e02a610099f6e7d7c8985bbaa29a60edf896198a0481ef230e2f86e666f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [400],
+                    "bytes": 3200,
+                    "sha256": "2917c9dd665f044b4b12154577adeb2a1484d06b13aefc38179129fa53992239"
+                },
+                {
+                    "type": "float32",
+                    "dims": [400, 1],
+                    "bytes": 1600,
+                    "sha256": "b631c76fe4ae4f87a34d621ba0b8823da8bf2ae893661a9a8731af2fd96c2571"
+                },
+                {
+                    "type": "float32",
+                    "dims": [400, 1],
+                    "bytes": 1600,
+                    "sha256": "fa92ddbf971323bcb6f078e0a62afda2f459ee76928058aa72fe21a63a9ae0fb"
+                },
+                {
+                    "type": "float32",
+                    "dims": [400, 1],
+                    "bytes": 1600,
+                    "sha256": "e2f615536cb3ccb4a29641583f46c7259c184e7ceacac25672b5d7e0f5310c2a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [400, 1],
+                    "bytes": 1600,
+                    "sha256": "93fa0ad70563ada384c6691bc8b06a522a87f53567b7fc4162eeb98a1afcd946"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 22],
+            "patches": 440,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "246d5eb046962c7020c0679efad04f07179fe7aa30a3f1db7cefcb70161f280a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "93663390ae6b0f7a6882eb46e6d4a88d250dee0ce4c15cc561d96f7f7781cb2b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [22, 1],
+                    "bytes": 88,
+                    "sha256": "b90ec8418f27583542bf9c0076b30e5d80bc5cfde66b2b8f6284d7d6be2a2703"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 440],
+                    "bytes": 3520,
+                    "sha256": "f5bf10a4e8145796cef34acd21ad77297ed1e015b44892416b056e36270844ea"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 440, 440],
+                    "bytes": 774400,
+                    "sha256": "a468d8a309a9840df05148c1859a0f2df206c5b5a3bf9b3eed47812a852c5abf"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "ec164857eabae637d0d3034b24770ea0533d65fc173a2250a2827325dec4ad5e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "cb3ac30a6d75cf940d6658a382d8e06bc3945351cbee2a128878635fc702041c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "d8ead7c2a38d421ae0efd1f273c5ebc5f6c8087811f93dfe8727359420505532"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "3247bbf1c3d56c3adc6673367c1f81a11d324c2fbb1015ebf6808e110c2b66d2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [440, 1],
+                    "bytes": 1760,
+                    "sha256": "946cfe8b75c8f94e150ec87e17613cc96f4b9176dcec5ff07a5c1f2cb2d1ea07"
+                },
+                {
+                    "type": "float32",
+                    "dims": [440, 1],
+                    "bytes": 1760,
+                    "sha256": "460063c661cb386171f79058733ba5598d5de6aecacc27027e7a3e0a1fbdd24f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [440, 1],
+                    "bytes": 1760,
+                    "sha256": "e739884c26ae477711f9e92c76ee2d8e564abe10afdfd5cf3885c01361a32ad4"
+                },
+                {
+                    "type": "float32",
+                    "dims": [440, 1],
+                    "bytes": 1760,
+                    "sha256": "47a822b91e83ae911d13a5e0c96259cb0a0170d34eb4a589cf696edb7a37b104"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 24],
+            "patches": 480,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "0542ef5d995a22c41cc21792275ef9a707f082e0be7c4fefb6fc99bbedf2da78"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "17d8a0d2e82bbf5795bd4ff84111036fd8d69604e1d6b88df6340d0cba0a8a81"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 480],
+                    "bytes": 3840,
+                    "sha256": "18540e693a730044189ffde0720b95275b461e2d5fa743269c8eb7e72f15f4f5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 480, 480],
+                    "bytes": 921600,
+                    "sha256": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "ead6ae015a5cc8d7705d6637c79dd317067f11c81ca61bdee346561131186eca"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "e45a2a2df5cfd8e599a63acfdefd033ceca19c1177a7fe8d46e6bcc523d6689c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "d7c402ebc4bd65e58d935b5406c1cdd394079dafbabf11a956b6d49c6647c5ad"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "42bbc3d6c0c7a8f3f0499678d353687b2b64789457da5cc04558bc89270dda73"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "dfb4a8aca4f312cf4da338b1fc4a32a89ea0575e258499a97bbb4185beaf5ff2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "42d587143f453a5daca76b8975534d6a32607a25a018de1856806bb1332fdc89"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "24c3402ed0a6aa61235f2c66c0582dc02d78253424fb8cc053c5b5fa2ef85d6e"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "d214b43ff1e96ba7149e06131bdf8631faed89d84c4d0bf850ea865f716efaa8"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 26],
+            "patches": 520,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "fe816ec677add86a6b5d037e7c41fe838ad955db93bbae3e38f08930652bccb8"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "4ae7c334695323f870c6c00c451aa397ce4a1c08fa7240df324fc44a8fdaae3b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 520],
+                    "bytes": 4160,
+                    "sha256": "8c593a2e6dc40f8f9bc904790aa181fe5f9f15a3a9b2515e049f98f8f8d2014e"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 520, 520],
+                    "bytes": 1081600,
+                    "sha256": "cd581b95f6e76baf4ea1fa1ef1d45cc703a7c3a769f98f4a08bc008549997016"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "fff6788e1ab298dd2d23ea728cc9f61a96be3efed4a7ec832954e5597f3d7980"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "ee667d19aeadfc0159e2664bb381bdc5a08071a1efdf96099a6b193f7dfaf0d8"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "df1356e23c28bf1af23cd83592cd7d4dcdf95b914e284864f75d307912d42f2f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "03cb969d9e0bfb235bbe678538d799cafbbea7e67a3fcaca3271a7f21d091473"
+                },
+                {
+                    "type": "float32",
+                    "dims": [520, 1],
+                    "bytes": 2080,
+                    "sha256": "604373ce732ef68c802678eac6dffae762fb70fc6f56a0fc88fe92b4c3c572e1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [520, 1],
+                    "bytes": 2080,
+                    "sha256": "a9c9aa7cda14f47d2726f5af2d8ba1106b45a12ade9aefda5efe3453c0ed2278"
+                },
+                {
+                    "type": "float32",
+                    "dims": [520, 1],
+                    "bytes": 2080,
+                    "sha256": "7a5d157f4e82d3d6af4238c4cd1929d6de6265057ed874865a9269f1c284cafd"
+                },
+                {
+                    "type": "float32",
+                    "dims": [520, 1],
+                    "bytes": 2080,
+                    "sha256": "bf93ac7986acc8a119609d2f7f6cd65705dfb9ef402512b7bd59c78d4c5f9a9e"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 28],
+            "patches": 560,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "48390fc42428b4e71040d1f4eadc249b7a21556fc00ec72915d6dc5e03f62fe0"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "21f71971bd333cb35dc09939e6219867fab0cece9fd7f6c2754c85b1ae60dc2c"
+                },
+                {
+                    "type": "float32",
+                    "dims": [28, 1],
+                    "bytes": 112,
+                    "sha256": "4f2a7b3d0ccdbf29fc680922e9c93f266eed28042ccfa917a1769369198d8d1d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 560],
+                    "bytes": 4480,
+                    "sha256": "b93349590951ce01781ce503e1a134a9aa83944f7f2c14c2f293326b73873616"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 560, 560],
+                    "bytes": 1254400,
+                    "sha256": "1355d45676c9d7585491d2f231087470dd654cf2055e4ba48e5624d2a606799f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "059221bcd5ac7ad3aaf85279d666817dffc3dbb694dbfd3f592f982918be10ca"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "d0d5a03b3111dad0fdc7e793662d5968309bc18d9501bd389153cfb7fc7ab0d8"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "f1aecae72f0905fa18ef65c512f0fb39b79d3c00f38de0b7941bf3af8c5aba2d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "83fd1efae981d4725529539731e6b11830f44779361e7ca67d1d386519ce262c"
+                },
+                {
+                    "type": "float32",
+                    "dims": [560, 1],
+                    "bytes": 2240,
+                    "sha256": "0204c9b547137ca29b5495ebb81a7dd466ec7cc49690bfef08f3ad14415c11fd"
+                },
+                {
+                    "type": "float32",
+                    "dims": [560, 1],
+                    "bytes": 2240,
+                    "sha256": "d03f07e765d5fd8f48596e08207f922e5d22ecc1fd3cf4e6c85fba4a654997d9"
+                },
+                {
+                    "type": "float32",
+                    "dims": [560, 1],
+                    "bytes": 2240,
+                    "sha256": "5b89f2ddcf9834ca54f7f3eb3b46eb5087c24658b6ac38f23715ac69e0b34ef8"
+                },
+                {
+                    "type": "float32",
+                    "dims": [560, 1],
+                    "bytes": 2240,
+                    "sha256": "c5a9ea331a4656a52ebb9d466c5474fedb80fe4c1f2e704d4bac2033f898327f"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 30],
+            "patches": 600,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "809a401de99afbb0aecd20156f2ea1864f674c27f5e2a2a86970f3dd380d050a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "6136cc03651dafc4556e9f83ba7bde3e2d2048c431d1539d8963d133e526e41a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [30, 1],
+                    "bytes": 120,
+                    "sha256": "f55ab64fe554301fbb1c735911e414f30f2e167b9a5b6c7d85e95fc361c9e6c9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 600],
+                    "bytes": 4800,
+                    "sha256": "c6f1a209e5af3dc3be5de07aa2e684c160f501ac00abb1f5d679e842afc16685"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 600, 600],
+                    "bytes": 1440000,
+                    "sha256": "eda525bab6d74d439bd683b578242e87fd3146fc4d631b7c81d9f76dd4d47a2d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "1faa2aef871f8fe26b7097e62129647bec7c176f36d5cc1475ebfb851f316cae"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "99d1b91df578029466f989c89f35940f2bc4cf03d5fc6fcb6f36e43ff23664eb"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "11e3655f8901f970f53171a824119f1d9ab886858d28fa609ad4d8bd41219ffe"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "c9be288703b3cd4278c807df55100921a17b69a8097787d421bb3c1c5be11288"
+                },
+                {
+                    "type": "float32",
+                    "dims": [600, 1],
+                    "bytes": 2400,
+                    "sha256": "6700a47c0b2b3f64aadffac6efde62b67ff9fb9ae775b9d54c901922e465ea46"
+                },
+                {
+                    "type": "float32",
+                    "dims": [600, 1],
+                    "bytes": 2400,
+                    "sha256": "c24a1e4f29305381981ca238ce5ed4db04dbb9ffa642ab183461a569a5789285"
+                },
+                {
+                    "type": "float32",
+                    "dims": [600, 1],
+                    "bytes": 2400,
+                    "sha256": "84a375fec4a6add1d7f6d2a742c10dd512fb72c19e447b68942ac533b2d5090f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [600, 1],
+                    "bytes": 2400,
+                    "sha256": "93b5624fc7eda4b77218658b06b2a48d543a7f44f86c3c8d8ff1dfdc5eb4a97a"
+                }
+            ]
+        },
+        {
+            "grid": [1, 20, 32],
+            "patches": 640,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "a8b1740cbd95fd12aea6fb9d6ec1b60193132573476cbd77ee8ea2fd72404ffa"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "a3b65c3b3ff6216be4e601fefe6bb9c3ab1e82d68b1163de938c63aa4c009d72"
+                },
+                {
+                    "type": "float32",
+                    "dims": [32, 1],
+                    "bytes": 128,
+                    "sha256": "0c43f2957858ef1a2ee3e2cec548164d548995c05a42c6588927998cd6dd10d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 640],
+                    "bytes": 5120,
+                    "sha256": "64ef42900a8eeb3185e91e3a833d3a5f7ecb792af81d88f1073b6e5f987fc605"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 640, 640],
+                    "bytes": 1638400,
+                    "sha256": "0655c923944257942252e3484efa09d83329b93522af84c653f8b36b3453eaee"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "7fa11706191af63013d600f43aa672562d6fa24ce283b02a794c6daba8005fae"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "615d0eb495ed5b7b677d4b66a0f4807f5741229c749ef00ae88c4ff14682fe83"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "482865a73e81fbb6a2ee0984a9772ab115355e3dffd3ae3dec92d7cf88eff104"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "35cadf292fb3f5d6ce41d2161604cd4e7a68f6a018f71e8c98ab54dfdbad546d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [640, 1],
+                    "bytes": 2560,
+                    "sha256": "f1b6221622e3bb570b1fabca35d5bee947092721a95d6bcd541fbaa9e466f66a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [640, 1],
+                    "bytes": 2560,
+                    "sha256": "2f5462143c2e3ece5675619fa69f258f8e3025dd5f0112a04fdedec165e025d8"
+                },
+                {
+                    "type": "float32",
+                    "dims": [640, 1],
+                    "bytes": 2560,
+                    "sha256": "17da77cc1658326ae66b488aa22a95935b997642c6f0096220df0a05e291d83e"
+                },
+                {
+                    "type": "float32",
+                    "dims": [640, 1],
+                    "bytes": 2560,
+                    "sha256": "aa20eb8079dde04fa7e4e3a03d36a7b03311e8aa6565aa4f90c53230196f24f3"
+                }
+            ]
+        },
+        {
+            "grid": [1, 22, 16],
+            "patches": 352,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "31591293ada9335eda91b3d27dd14b59022a626fbabe27a397d42d175f5c07de"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "3b86146126fb8b2ebb178e6c45d840d4f6485153c52a517ab94ec4db2797ce2f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [22, 1],
+                    "bytes": 88,
+                    "sha256": "b90ec8418f27583542bf9c0076b30e5d80bc5cfde66b2b8f6284d7d6be2a2703"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 352],
+                    "bytes": 2816,
+                    "sha256": "c96f0d70b8ad5cb166e28e8890fb285195d36c8952433f806b5b4708403520fc"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 352, 352],
+                    "bytes": 495616,
+                    "sha256": "8a77aa12367c7154eaad2fdb9f2c6c915ee8449f7e9ec4febaeaa5f30c1afd30"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "386ff8b3d48ec9d2fd070a07992c1eabde12a263aea98148c854b0da35526b77"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "0e05d91bae0804de7d35fc82fb0d9afe266b8dad24175f9d29195b2e8aab112b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "f3efa8dde3db5d12ce08ab500ae7caa45285b9ca7d7ccbe3264c90f284fc8a2a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [352],
+                    "bytes": 2816,
+                    "sha256": "1bdcb408f6176cdac827bac17cbaaec65e843a7e5f866069f280dd806c0ac114"
+                },
+                {
+                    "type": "float32",
+                    "dims": [352, 1],
+                    "bytes": 1408,
+                    "sha256": "f391e2268c47b7809b1bf01a4f76f147ff2f2e7be53a6898c8914412978a9df1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [352, 1],
+                    "bytes": 1408,
+                    "sha256": "e408863fb848bdb47988d28228cf1ae933294a22946aaa1ba7df6e4a0c5756c6"
+                },
+                {
+                    "type": "float32",
+                    "dims": [352, 1],
+                    "bytes": 1408,
+                    "sha256": "0220e4617de2a2e93d56595c725bee4f18cf4855126ceca8166ed6dd7db084f5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [352, 1],
+                    "bytes": 1408,
+                    "sha256": "ddf77608abed429b3446a62070b11b3c1260429245e28d90bd568968504baf87"
+                }
+            ]
+        },
+        {
+            "grid": [1, 22, 18],
+            "patches": 396,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "4387689285032596c03bf246ac644b04fd55c6eb45b9991585d2d3501e1fa338"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "5db5f628157dc8b5c846501b167b282c8e79d9eaf3d68e556cdff6c2b7191b19"
+                },
+                {
+                    "type": "float32",
+                    "dims": [22, 1],
+                    "bytes": 88,
+                    "sha256": "b90ec8418f27583542bf9c0076b30e5d80bc5cfde66b2b8f6284d7d6be2a2703"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 396],
+                    "bytes": 3168,
+                    "sha256": "ea6da762ccaa4db8c17ed4157df5b4c78a6332cbe99a24ef340e0de0631aef85"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 396, 396],
+                    "bytes": 627264,
+                    "sha256": "803f7693dd2f8ce55483907d34d1276cd00d8a94d9c98face73a32b080002af2"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "8ae689a90b0644f97f3c0ea4e4d6861fa216d512eaa0cf5b3c98bdd55fac76c6"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "8a598502b2cad170d50b41b1926aaf28ded52d375382aebb9408331fc0cbce15"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "3a049d8cbb8a47596eea4006f01eaeb533741c0d267b0d2874fba21833d2fa0a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [396],
+                    "bytes": 3168,
+                    "sha256": "177d172dceb0654614b8864a3d4b3ed2458aa05b41b47a4e7f419f6c06d20651"
+                },
+                {
+                    "type": "float32",
+                    "dims": [396, 1],
+                    "bytes": 1584,
+                    "sha256": "3d8365d23ead398753029495667fdb66662082f4cfb552098542e9f31db65a0d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [396, 1],
+                    "bytes": 1584,
+                    "sha256": "89067688ce67086d3d725c4959278c034431dbab5b95d5e075074e7c6c218d79"
+                },
+                {
+                    "type": "float32",
+                    "dims": [396, 1],
+                    "bytes": 1584,
+                    "sha256": "d6abd071b2e9061a4604e89341c38bdd05d1daa809dce4b356026214b69c8ced"
+                },
+                {
+                    "type": "float32",
+                    "dims": [396, 1],
+                    "bytes": 1584,
+                    "sha256": "743daa3f9cef7bd6e1583fe922de24e8703b5a4440e3a22a6ea3d2fc33bfaf7f"
+                }
+            ]
+        },
+        {
+            "grid": [1, 22, 20],
+            "patches": 440,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "49bfe45c524619cf720ef03d1634c636b1b3b262a41f0e0c2f2ac4991c3d6f8e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "dd58a021edaf2729e05ca0cb5743865f59cc6a3d29682d37e4dd88ac792431fc"
+                },
+                {
+                    "type": "float32",
+                    "dims": [22, 1],
+                    "bytes": 88,
+                    "sha256": "b90ec8418f27583542bf9c0076b30e5d80bc5cfde66b2b8f6284d7d6be2a2703"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 440],
+                    "bytes": 3520,
+                    "sha256": "f5bf10a4e8145796cef34acd21ad77297ed1e015b44892416b056e36270844ea"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 440, 440],
+                    "bytes": 774400,
+                    "sha256": "a468d8a309a9840df05148c1859a0f2df206c5b5a3bf9b3eed47812a852c5abf"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "b12112a21fe370979ee66b6e0f8214022a8f4a1e4ab0251207a3268e94ca0ca9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "22d8a6ecf9ceb486a1c4a21db0eff5f67a40c3a95a364ae4aa694965bc7e4185"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "c263ab3015987b6ad1b0fcaf15ad69ec77433f434af4099a27f7cc5b7d7a0917"
+                },
+                {
+                    "type": "int64",
+                    "dims": [440],
+                    "bytes": 3520,
+                    "sha256": "09226a5efdabd07f0612f64eb12e2b3a0c8a95a978c9d817ab871432721956b8"
+                },
+                {
+                    "type": "float32",
+                    "dims": [440, 1],
+                    "bytes": 1760,
+                    "sha256": "21df79ec618871a329f113131b571f86e92c5e5ee24f6c7773e0c8f6fed5ce84"
+                },
+                {
+                    "type": "float32",
+                    "dims": [440, 1],
+                    "bytes": 1760,
+                    "sha256": "e8c09e6bbb782b3290966bfffae2ea816b62c3a634bcaf22e8c736534c620897"
+                },
+                {
+                    "type": "float32",
+                    "dims": [440, 1],
+                    "bytes": 1760,
+                    "sha256": "1d4605355d5e379acebd36648aaecca2bfa0fd41a8038a4935c7f599f1ee3093"
+                },
+                {
+                    "type": "float32",
+                    "dims": [440, 1],
+                    "bytes": 1760,
+                    "sha256": "d4857a060b6221fb7afee9aa7fd7eab1e07339f6d2fd3aae5c4f44880a33e2a9"
+                }
+            ]
+        },
+        {
+            "grid": [1, 22, 22],
+            "patches": 484,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [484],
+                    "bytes": 3872,
+                    "sha256": "bde09e5bd7deae55a848e5e8959b22db53245184e251706dccfea259bf4fc93c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [484],
+                    "bytes": 3872,
+                    "sha256": "ded76496fdf0a3fe13d81f7034be75db52fde14398465c2e91b7bdd7c6cdec27"
+                },
+                {
+                    "type": "float32",
+                    "dims": [22, 1],
+                    "bytes": 88,
+                    "sha256": "b90ec8418f27583542bf9c0076b30e5d80bc5cfde66b2b8f6284d7d6be2a2703"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 484],
+                    "bytes": 3872,
+                    "sha256": "ce2989f802e39ec22626a97196fd355be6fe1c45e36ed9d6b69fe43298e879d9"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 484, 484],
+                    "bytes": 937024,
+                    "sha256": "c5b731942d79cf9b0023fe0bf8c7ba08eed0c947e2322b5b7cfe18b9b38223f4"
+                },
+                {
+                    "type": "int64",
+                    "dims": [484],
+                    "bytes": 3872,
+                    "sha256": "10a80074fe93ae807c1ac08f8c2fa5b3f42ea7e3fef6b529ee7f1f2bb119d1ee"
+                },
+                {
+                    "type": "int64",
+                    "dims": [484],
+                    "bytes": 3872,
+                    "sha256": "3584d8e94603605165c6fc0ff692b8bd4818ec73a0a422faa4cb2c2925524193"
+                },
+                {
+                    "type": "int64",
+                    "dims": [484],
+                    "bytes": 3872,
+                    "sha256": "b9ce2848cd4b9f33d352ea027af7b0314098720fe45bbcdf3a2a8785dfa89700"
+                },
+                {
+                    "type": "int64",
+                    "dims": [484],
+                    "bytes": 3872,
+                    "sha256": "e4843ce8b68c0fe4b3c30c6244f7891835e0d8bbe9c78ecc4490279ced8407e9"
+                },
+                {
+                    "type": "float32",
+                    "dims": [484, 1],
+                    "bytes": 1936,
+                    "sha256": "eebca604b79f6b9ce83fcb2c5502e817c3e0d6655a721c7c84b29f2a076036c7"
+                },
+                {
+                    "type": "float32",
+                    "dims": [484, 1],
+                    "bytes": 1936,
+                    "sha256": "b372791982dd38082aaa49ca9602accb7f86604c9e38ed701aeaaf0bb8a172be"
+                },
+                {
+                    "type": "float32",
+                    "dims": [484, 1],
+                    "bytes": 1936,
+                    "sha256": "b98c4ea870b2e721f6eacac11a5367dd462b7ab3ed63ec05485a722c17970bfd"
+                },
+                {
+                    "type": "float32",
+                    "dims": [484, 1],
+                    "bytes": 1936,
+                    "sha256": "eb6f0aa0e265d85cad0409035de96892f2521c81a0b11990572aa7905899c93d"
+                }
+            ]
+        },
+        {
+            "grid": [1, 22, 24],
+            "patches": 528,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "b8616b41d18b696b506144e50d22d36a605c2187e3df8c3263abaee777136b41"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "00d200dfe16f15ba4d8ddc13779ba323c2ba06ea4f4ec8537ddd0a6f53ccce88"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 528],
+                    "bytes": 4224,
+                    "sha256": "87decb663900058f4e95d6c24c457f17cc554e52f1b3900a53f80064b3f396a2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 528, 528],
+                    "bytes": 1115136,
+                    "sha256": "07ea13dbd52cd19820dccbcda9b6bfad22ec69b39a4fc6534a7d38da050ecb98"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "7d93ef40f5a7da58b3d722c3cacca792becb8540702fbbd2a20233fa194fbd00"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "0583121b6bde03bed31c223a08dd0f6c390b0bf899051b340f613d7ee5524317"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "a228933624b965cf3b47ae8f60b9f8d03d30dd3179ee759414b6fe273e476b73"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "106513c7f037f509c4d1117280a9b3a54fbfbbbdd22c431f847675362f7d3a1e"
+                },
+                {
+                    "type": "float32",
+                    "dims": [528, 1],
+                    "bytes": 2112,
+                    "sha256": "d828af7b42860f498b9317f975f1617f538e8959c9a7cf167a6a02cb9929a74b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [528, 1],
+                    "bytes": 2112,
+                    "sha256": "fbc6e622b01ef9a4c132970bb7561375048a14de2ffaadfecfb9647f2110e0d5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [528, 1],
+                    "bytes": 2112,
+                    "sha256": "afce9ac0fd781aa5c689c611b121527becbcf25eb2e0d98b6f453b04899e2c52"
+                },
+                {
+                    "type": "float32",
+                    "dims": [528, 1],
+                    "bytes": 2112,
+                    "sha256": "40eb60e68bff68715cd84050ab4e113b0e6a18c4754fb6b7eca6cfcff83c9ace"
+                }
+            ]
+        },
+        {
+            "grid": [1, 22, 26],
+            "patches": 572,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "ee1d9d2c7cd5fcf3543bccc51737e20dd2b17861e325b8af73ac1e3dfe00240a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "e7ef9b01f5a3b7abbc08207c27ec71977152e31e218a70a458254b8cb3c4789b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 572],
+                    "bytes": 4576,
+                    "sha256": "531d7efa390a701de2af90ada2b083a1f7957fabe505fc38e1ec5384c8cab1be"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 572, 572],
+                    "bytes": 1308736,
+                    "sha256": "8a73bcd17f6499011c52e570a755f99c6bf491257fce3e817e529f574e77854e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "dde8dbb24f3930e4d01bbce56d408aa1f08f85c01d61f1afa63e7ff45f42c064"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "82f205fbec7cdef317c22587871585028e48975e4e88aa28e989b816be6d2f2c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "10ec84cb32c4d7105571fd6a0ae4b2f7abba969dfaf08eae39c9a465761f017e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "afef2c508307d8609b4053dea6c60a4001bfc7a168d05e8e459db77b53bd589b"
+                },
+                {
+                    "type": "float32",
+                    "dims": [572, 1],
+                    "bytes": 2288,
+                    "sha256": "9e7c0d100b18332b30219eff1b227c13d4d6bbac843172b4cafb24709c6b0ab0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [572, 1],
+                    "bytes": 2288,
+                    "sha256": "218dcca54acf06b9fdc8b7e2a23f8efa7bbac4c86d4b95b9a771f1517fca6a85"
+                },
+                {
+                    "type": "float32",
+                    "dims": [572, 1],
+                    "bytes": 2288,
+                    "sha256": "3db51bdb23dfc79a8b2439f6eb8a60ee19dbd071f660fbc67b371417f5bceaac"
+                },
+                {
+                    "type": "float32",
+                    "dims": [572, 1],
+                    "bytes": 2288,
+                    "sha256": "c13f5ae98d2c07c7ae3785028a3190640e7b6356ed7205df86af1ca7a4359f4f"
+                }
+            ]
+        },
+        {
+            "grid": [1, 22, 28],
+            "patches": 616,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "06ba42b0828a5f541b719ccbce4011da254b02e75c237907367d95968f0b02e1"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "0182454250e9e62ed4f5a7af50778bd21364892c86ef32de16f3b4380fcae17d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [28, 1],
+                    "bytes": 112,
+                    "sha256": "4f2a7b3d0ccdbf29fc680922e9c93f266eed28042ccfa917a1769369198d8d1d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 616],
+                    "bytes": 4928,
+                    "sha256": "1b635fbbd2d8e8e986b76dabcdb2119ed9b4185ce8d6be3a3364c78478dc3528"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 616, 616],
+                    "bytes": 1517824,
+                    "sha256": "2546b85cb48da92849cc18dbdefe30f3f452294b17e44ed6e452c64df699ca5f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "dcf4b47c35c610ebb69bcbdfb3bb378ee580976b0d956ded3ce9a86b1f548f6e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "627d0a60b50af68ff8762eb40d76867d4f5c3c9857053453da1899330ae313d8"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "c787fde8efb2869b507e56837298e0fe50e0b2b6b5f1bba0988bd9a11fa14204"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "0204a99602d9963d94171542087802fa426af8cca66b0f980a6d6209ad21c929"
+                },
+                {
+                    "type": "float32",
+                    "dims": [616, 1],
+                    "bytes": 2464,
+                    "sha256": "5119a610e5264a5e7bba0f001a9d64097011af41a5f8110f2962d42015e19062"
+                },
+                {
+                    "type": "float32",
+                    "dims": [616, 1],
+                    "bytes": 2464,
+                    "sha256": "63f5ac1fa670d7e535157ef54b6b78c9387296ed0b79f6e453f60f1a86c79d47"
+                },
+                {
+                    "type": "float32",
+                    "dims": [616, 1],
+                    "bytes": 2464,
+                    "sha256": "3a31cee10890821fe9e2a181fdf0fe80d4db77ecdd649b48f41c646ee3e67ec0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [616, 1],
+                    "bytes": 2464,
+                    "sha256": "2bb3291ec35d7c8279710f1dcbf69fe122fdf5b741fca12c7475276dda78389d"
+                }
+            ]
+        },
+        {
+            "grid": [1, 24, 16],
+            "patches": 384,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "00cd6ab4ba350c50813b9d7d026ae842f55844f651ea2c9e92b038dbbdd10a4f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "de37d3af31f37037edbb1fdaf053c25a6ff0cd2f8df2a56f9cca8bda84111a51"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 384],
+                    "bytes": 3072,
+                    "sha256": "b8745f9ffcd88faa37920a920e3af125c5ddde1dc572c098f8ff78f4b5b8d347"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 384, 384],
+                    "bytes": 589824,
+                    "sha256": "250480ecefa3655c774b6a4e5d4eb16675ee4f181c2285c25020fac6e3aaf3b5"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "d3bb7d1c27c1ce0029164a895da1eb00094371c119e324b3862ea0d271266be9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "4fee4fc487570be7121976b269d895f3b27cd6d6bbeaee95f3ad3304d4b54ece"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "976b6c8062138bff7f9c28ac1fd05d6312c062f0e2e808985387f1f8e4055f1a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [384],
+                    "bytes": 3072,
+                    "sha256": "40914185f7acf2e48ed0c8e4c31e5e56d889976db14df7d68820ffa481099f03"
+                },
+                {
+                    "type": "float32",
+                    "dims": [384, 1],
+                    "bytes": 1536,
+                    "sha256": "8b63916079cf3ef1e5d78280994c7625e16e4e6acaa5ea7f921e5443d8ee42f6"
+                },
+                {
+                    "type": "float32",
+                    "dims": [384, 1],
+                    "bytes": 1536,
+                    "sha256": "86211f7f0764a427eed094c8ecf4bc9fe046df0c2f8333626d40e3300868b803"
+                },
+                {
+                    "type": "float32",
+                    "dims": [384, 1],
+                    "bytes": 1536,
+                    "sha256": "cde26eda703817508e43de6194d4531455adbfbf7447788091c701efd76a2dad"
+                },
+                {
+                    "type": "float32",
+                    "dims": [384, 1],
+                    "bytes": 1536,
+                    "sha256": "036a60c07151524172a73f625db17c7823a828a6b099ae68d00376f7a73c1061"
+                }
+            ]
+        },
+        {
+            "grid": [1, 24, 18],
+            "patches": 432,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "c896365efa26862a1514da38250cd9b888eb5c2a13db2ef87d7a15dcad4e9a3f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "d57c0ee957936e0a5f0e1e6b81c608afb76d4867add8715017c7876b95ede8fc"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 432],
+                    "bytes": 3456,
+                    "sha256": "9aeb4812d10ecc8a9eb78a9a613cc442792514b697dd0dbe69e2db6cbfb3985a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 432, 432],
+                    "bytes": 746496,
+                    "sha256": "d77d495ff57663a56841834a111561ecef9c004f29ad13ba67cc70eb0a6e9461"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "ae93b65cbc5caec69f8937f6c55f6a5ee1daf685a64857a5a8f6ad67cab8db81"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "074e8ef1445d3d9aa789e3516edf9765cc8fb4d2ef1bf8034a0a098682a50347"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "f0235ca8b799f23fd46beb4af755b57b6dfab8c650b92b48887a5e1c4c8c776b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [432],
+                    "bytes": 3456,
+                    "sha256": "126083c28d1ff432592fcb3a5d72c7d3c790f2ecedcf24f4e15c20a2546e87e0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [432, 1],
+                    "bytes": 1728,
+                    "sha256": "c842b87d280e2e23af9791dfa12fdb1d820fee7128771878dcd5017af9ff4026"
+                },
+                {
+                    "type": "float32",
+                    "dims": [432, 1],
+                    "bytes": 1728,
+                    "sha256": "d21e7804117915db4443c8b9af688d3c33ef1cfd9cb3841b886b16d4ba0ef729"
+                },
+                {
+                    "type": "float32",
+                    "dims": [432, 1],
+                    "bytes": 1728,
+                    "sha256": "54d250f6f65bb53e7d88c2ea322e5c489b7bbfc2c6485a07742122066b41dc90"
+                },
+                {
+                    "type": "float32",
+                    "dims": [432, 1],
+                    "bytes": 1728,
+                    "sha256": "1522009bbfa76f3c59a12e4ab721636c3019f72a548f8145e6fcd0ef81e25a1d"
+                }
+            ]
+        },
+        {
+            "grid": [1, 24, 20],
+            "patches": 480,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "028a2212e3eda07452d70a4049ef22c62de118b43ece2ccd2f0f4ea1b7e739e4"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "ef3ed0a1dbe3ceb0749c100863ca4d517c64209cf9d50ec3bbc88dbb4b56df99"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 480],
+                    "bytes": 3840,
+                    "sha256": "18540e693a730044189ffde0720b95275b461e2d5fa743269c8eb7e72f15f4f5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 480, 480],
+                    "bytes": 921600,
+                    "sha256": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "ee975a256ce0574fb74dcf979bbdafbe5f557bff4ff3d17b5c8c7ca9bf046cdc"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "226b7e846c508957724ce072e3cda17300365f29804bebc8139762aac77d2112"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "8f74a1ddd7dd0347abb1f55cd9f9c603ec3d2a74296b408169cdad5383309ee5"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "555c25e8857da5f4e03b90101170d6c69a3d21ffcb37eb75d16567d2c4e3da97"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "417c54792797ba1824dee414c8821f465d1a88d503e3328c77e3415460b2a590"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "5707b2850e940b798ac1ac1dce97bf1ff1ed5a616b2565aaef854d8b730c0753"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "0d28fe9cd59b76b8e4437356bb2cc355b5f7e6b4294e5ad5bd6394a71dca9105"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "830ac213e90d45a836762d067890b923c7e64eba0bff6c1f4ab56dea43eba8f7"
+                }
+            ]
+        },
+        {
+            "grid": [1, 24, 22],
+            "patches": 528,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "cbf6f03c3be6075cec80ffdba0d4f4bb0cb6c16b9c6ed5d7e772424a67ed695f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "e982d20b43d27fcae226db7758d46d1fd5869c506165117162f44b5c5e3c8ee3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 528],
+                    "bytes": 4224,
+                    "sha256": "87decb663900058f4e95d6c24c457f17cc554e52f1b3900a53f80064b3f396a2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 528, 528],
+                    "bytes": 1115136,
+                    "sha256": "07ea13dbd52cd19820dccbcda9b6bfad22ec69b39a4fc6534a7d38da050ecb98"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "42699211e33e0c208660af4ca7bb17d47605dfbe098a2ea067dcf0d70614f6d6"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "8096ee1688b5abcc473e2bdc5f7af3be2ba77966389cef89d9cd65465e685336"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "a6454b9c4e4c89789421c3781d93c922c468eb688d15fabcf36226fefb2736b6"
+                },
+                {
+                    "type": "int64",
+                    "dims": [528],
+                    "bytes": 4224,
+                    "sha256": "c93874f1db32d7716269c50355761cd8fef85de74314f6b9ceb5277106cf7035"
+                },
+                {
+                    "type": "float32",
+                    "dims": [528, 1],
+                    "bytes": 2112,
+                    "sha256": "d4dec467c23ef4815800ae29fbba1a639c3338d30a1bac2de4e5b9eeb3818df5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [528, 1],
+                    "bytes": 2112,
+                    "sha256": "97d9e7e01bcf8efeb49b3ffed922d22392b0f9c528556b08c091835db856e3fc"
+                },
+                {
+                    "type": "float32",
+                    "dims": [528, 1],
+                    "bytes": 2112,
+                    "sha256": "b15e07023be65438376c54adaf44fcc8a73d254dfd43286c7de969049040a8e8"
+                },
+                {
+                    "type": "float32",
+                    "dims": [528, 1],
+                    "bytes": 2112,
+                    "sha256": "4beeb9aaa1638553cd25affeaf2d764b1771449fe9a26ad9b65299f2dc13d144"
+                }
+            ]
+        },
+        {
+            "grid": [1, 24, 24],
+            "patches": 576,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "9b5b014fc67537813b7043ecef6c2f7dd2ff07c8754e9eb9aaf3e704cc5470a2"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "63b5e782c9543e1b93b4946a6e856b72c8338b23364811d9ea924c60d142cbb3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [24, 1],
+                    "bytes": 96,
+                    "sha256": "45a99655901702d55ab6284a18aed6a5e16677181d16c7a7517b68c2ae2c0c7a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 576],
+                    "bytes": 4608,
+                    "sha256": "64c73f9630b27e01473c1ef83ed6950f74a31e2194fa3fca5b298290fa375a12"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 576, 576],
+                    "bytes": 1327104,
+                    "sha256": "0f7cfb43327ad082e6362afa8bcb4f762da9c55356e9c002f0b2697f0b6cd138"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "a378328b7a0a4f70faaa68cef3b0c88f3741eec5ac01aa901d2bc0a33f7b5956"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "828dbd19f9020ee23b2826f3825c8b99622a04ce95c9e27c9183b2d72d3ddfb5"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "af5cf7689177002d4067a2597224183900ab60fc383e8665440fcf80151bb5cd"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "db6803cdacc0ffdb4f3b07b7eac1032366be15696f7c3c3e89a702e26f61e680"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "44f2849275deb93fa2dab3264b0fac0f5280090aafe1c35e987b635062f50d45"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "dcd234601a59a51b2f4309df7a3a0eb312f06d21f39331eb6447f936951b3cb4"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "d8eb5a3ce91641f8809d8659e0dec978af935645326a3535565044f6ed1276f9"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "a1ae26981d01b91b61f5db966f7587ae6b1b8ba0fd780fe2495f7566115a56ef"
+                }
+            ]
+        },
+        {
+            "grid": [1, 24, 26],
+            "patches": 624,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "a928d911334393d2c5d5d678d4a0871fe7cbe0b4f719aa327cfad4e90c550512"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "86bc6cfc0880a2552ef1f640e1baa1dbde5b604413317278716a83034ddf3b8f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 624],
+                    "bytes": 4992,
+                    "sha256": "a46398bfc1ea1b7e4ce5f50923647cc3fde54c836aa21dc6d6402bbc6008e0a1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 624, 624],
+                    "bytes": 1557504,
+                    "sha256": "4cbeaa592c26ed60f0ecbddbdb925d18d79be73fb00cc640240278d0b2a618f5"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "d773ee03c74fbf229989101858672a7a0c4916dc96a8100badb7e1fc357c52d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "0d948270e90b81d41b4dd326bf7734a76358776c6d32c15829f8bfd381abb97c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "f4bed1afa4fb580960792676f21f9b9be4d33657a770de81aa0a21a15edbcf75"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "911ac87b1fb4c6f4d33823037dcf116c8b3decd2d498ba17e24f6c732fff42eb"
+                },
+                {
+                    "type": "float32",
+                    "dims": [624, 1],
+                    "bytes": 2496,
+                    "sha256": "2eaedce98e15ab692d3e9351c7494b860d09fed184e1758c89d981fb3fac69b5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [624, 1],
+                    "bytes": 2496,
+                    "sha256": "eb6681e98a87e15d5b23d72351f838da361a10d352d842277cc1a3d611bc29fe"
+                },
+                {
+                    "type": "float32",
+                    "dims": [624, 1],
+                    "bytes": 2496,
+                    "sha256": "76abbefccda0594fb41cb4ec3a6da6c859337ab47408b7b52ab79ecc02e2b578"
+                },
+                {
+                    "type": "float32",
+                    "dims": [624, 1],
+                    "bytes": 2496,
+                    "sha256": "565c8cc4642a23cba7754b16d2258f6b69b0180eafb565ace91f206280ccfb94"
+                }
+            ]
+        },
+        {
+            "grid": [1, 26, 16],
+            "patches": 416,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "a5ebe5e8688e90165542afc354373472a7cf385d44e16bfd94695d7fc2de15e9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "26532630819d93db1fa5699d24045ed98b81877405d5dc405df8af9cec4d43e5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 416],
+                    "bytes": 3328,
+                    "sha256": "c6e347780b8fe6e8e3664d1917de4271f0f63420652d441155f4e0367c3bd2c6"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 416, 416],
+                    "bytes": 692224,
+                    "sha256": "1f1bfcff6ec70f865f80e25d3a8f9119c9d30596fe1d20a6cf0edacec8281c6d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "dd1881303f5bfe07a74834cc202f75e251567c31cc965206a4cdbcd467fbd48a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "0666fe534ff33403d0fb1871136a94718c2b20dbbd9054f0b8c7b7e6b0246da0"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "7ae0f685c3f25470c610ee5ffb4bc3578872d51008a2c7f3e74b9ad44d6e6d6f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [416],
+                    "bytes": 3328,
+                    "sha256": "51e299afbe7d443590edb63f218191d54788b1fd5d29e227247d6265a6d16aee"
+                },
+                {
+                    "type": "float32",
+                    "dims": [416, 1],
+                    "bytes": 1664,
+                    "sha256": "20099e8fe056fc33b2809b58b907a99c20b8add5d9ca981b6682cf0d477c5828"
+                },
+                {
+                    "type": "float32",
+                    "dims": [416, 1],
+                    "bytes": 1664,
+                    "sha256": "b729058acbf3074e2d40afe69b56d21e2474c4a9476ae82fb876b6ed3afbb210"
+                },
+                {
+                    "type": "float32",
+                    "dims": [416, 1],
+                    "bytes": 1664,
+                    "sha256": "fa36047778264041dd33e404562a7508da0fb9bc9d3a6bb633352c868c7af9e3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [416, 1],
+                    "bytes": 1664,
+                    "sha256": "3ebd95816c6544ce9b344b0766979a9ad16e93a4e61ce2c117146c184287253e"
+                }
+            ]
+        },
+        {
+            "grid": [1, 26, 18],
+            "patches": 468,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "1ccdd45c9d2b46f065ce3055c03ee7b89c90fa71557bf78f46ab1a59d748442a"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "1df6dcf06f21c170d4111619f3e1d9e4cb77ee4e1e4cd7f6ac9ac0f14fb0c0e5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 468],
+                    "bytes": 3744,
+                    "sha256": "bc8a9ad34ba921fc3f63db311d1eb3cc7eff828ebda8fd2bc9f1ea5880c2d074"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 468, 468],
+                    "bytes": 876096,
+                    "sha256": "f35d823e056bd41b95619dc5f4e02ed95db2ce7d3ac88bd11ad6b55dcfa76712"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "2484e219c9c2cae2ea00b39c3adca4c8888a31483d2860347bf27c3ce7437994"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "922a41e98d7c60a1e5e4bdef9c03ce4f78a5aa85571ae4b6618a5d13a151d4f0"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "6330bb44175600593cd63b5691aa0d4fb1e4d18a4b4235f39d0f83b2b5f76363"
+                },
+                {
+                    "type": "int64",
+                    "dims": [468],
+                    "bytes": 3744,
+                    "sha256": "96dafcfa76f1b01818eeedcf259e7ffa1b0b985c444c0f71bf9d5b0667268b01"
+                },
+                {
+                    "type": "float32",
+                    "dims": [468, 1],
+                    "bytes": 1872,
+                    "sha256": "fc49038ff849fd4bd54bfdc5f7230089c0cede6de77938ae36e25ac8790f245a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [468, 1],
+                    "bytes": 1872,
+                    "sha256": "29c1277bda6c2fc876681b32516bb1334dd152205b31384dfdbba01249e2309f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [468, 1],
+                    "bytes": 1872,
+                    "sha256": "f2b6704b8ec1863da6ea182690647f6e3c5e730d596554b288e1c8f4b620917d"
+                },
+                {
+                    "type": "float32",
+                    "dims": [468, 1],
+                    "bytes": 1872,
+                    "sha256": "ef95637b676f04a6d32b186c9d733e7b25528e4ab0cc90cb57274f08ba73d43c"
+                }
+            ]
+        },
+        {
+            "grid": [1, 26, 20],
+            "patches": 520,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "19cad006bffd2396742a17c9e26823e24347388688c3bad5fd5371e8a6ca3d92"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "27b703e036b482fd7dd741add76eeed867362d02f96e52e079c334481d417e37"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 520],
+                    "bytes": 4160,
+                    "sha256": "8c593a2e6dc40f8f9bc904790aa181fe5f9f15a3a9b2515e049f98f8f8d2014e"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 520, 520],
+                    "bytes": 1081600,
+                    "sha256": "cd581b95f6e76baf4ea1fa1ef1d45cc703a7c3a769f98f4a08bc008549997016"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "8b0fff631f85694569d0e0a2ce677817e33078c0ebec8d21e86dc05788785bd4"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "d501698689cabc1116e5c63b9ea7df7a8075dd7aac3bd765841327a853ba8463"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "3b5c7878b8fa8dc94eda3b159c44efd320eb726b44e31772cb41f8a87e866a47"
+                },
+                {
+                    "type": "int64",
+                    "dims": [520],
+                    "bytes": 4160,
+                    "sha256": "eda50966db36169d5aa579314a83e0506559e3a55a6ba55ee5d560eae899e813"
+                },
+                {
+                    "type": "float32",
+                    "dims": [520, 1],
+                    "bytes": 2080,
+                    "sha256": "73a56a8ff5fe6e3349ab8196083bbf9dd9bbc983dbb61ac1e947abeab2e0ac46"
+                },
+                {
+                    "type": "float32",
+                    "dims": [520, 1],
+                    "bytes": 2080,
+                    "sha256": "421aee23f3cb2f4e7becb3f43d374f5af6a077849c0252a5c62ad43dae87b4ba"
+                },
+                {
+                    "type": "float32",
+                    "dims": [520, 1],
+                    "bytes": 2080,
+                    "sha256": "4e56ffa2e59c5879747c51c6a96927dde5d265795238e78ec81514ac96f24ea2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [520, 1],
+                    "bytes": 2080,
+                    "sha256": "5b08480ccd4cf3994495a22d9cc1bddf83d9cd51bf7e4fb4325c213c63dcd00d"
+                }
+            ]
+        },
+        {
+            "grid": [1, 26, 22],
+            "patches": 572,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "b8e381c4a59cd09e84de6a6a86337c259fbbb4ae17c0172bc2bb8104cbd47558"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "cf7b89154fc1b4b62b39753fa599fe750cce010f7dd50858c430d930b81fd3bd"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 572],
+                    "bytes": 4576,
+                    "sha256": "531d7efa390a701de2af90ada2b083a1f7957fabe505fc38e1ec5384c8cab1be"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 572, 572],
+                    "bytes": 1308736,
+                    "sha256": "8a73bcd17f6499011c52e570a755f99c6bf491257fce3e817e529f574e77854e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "8371d128db42ebc723a16178a0fcac7d9cb763d6045d16166eee3b50f02343ce"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "fe99beb19807c9f58c547859ebb513a4ab2a0791eb28781938365824fb401db8"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "044ec6c1aafe8bbf17027e679491bad8ff85125077a79db3739adfc65c1d02c1"
+                },
+                {
+                    "type": "int64",
+                    "dims": [572],
+                    "bytes": 4576,
+                    "sha256": "bb4e11b7e5de761bebe3b735de857d7b17f731ca97821e250040c8823ce7d5cc"
+                },
+                {
+                    "type": "float32",
+                    "dims": [572, 1],
+                    "bytes": 2288,
+                    "sha256": "1362bae2e55c9fd20d63bb1e215b20f4465949116634c5cb5ebb18537daf025a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [572, 1],
+                    "bytes": 2288,
+                    "sha256": "948e5da250012dca1f0c0cb76fad7a32020ce86b1ed16189e500e2cc3e3ffed1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [572, 1],
+                    "bytes": 2288,
+                    "sha256": "ad4f1f17a76ee1df42ed9c7f55a467f3034f8657cfa872bd8340ab84e5996a9f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [572, 1],
+                    "bytes": 2288,
+                    "sha256": "e9a033d1800ba381d268425b1bf3d0202b04fd78ba3618505cdb3f9f877f6e8b"
+                }
+            ]
+        },
+        {
+            "grid": [1, 26, 24],
+            "patches": 624,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "accde7a9e891a6f6382e526281248ba06926fcab1eb26984cda12c529f0b9f5f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "2529bd89cd0b05acc428876bce3287dbda2c94afb00a279395b2865bbfb9b1ac"
+                },
+                {
+                    "type": "float32",
+                    "dims": [26, 1],
+                    "bytes": 104,
+                    "sha256": "c3288c5fbfe9cca84110afd0a19d6a88fd0ab839e41b5048b013e84a862f474b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 624],
+                    "bytes": 4992,
+                    "sha256": "a46398bfc1ea1b7e4ce5f50923647cc3fde54c836aa21dc6d6402bbc6008e0a1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 624, 624],
+                    "bytes": 1557504,
+                    "sha256": "4cbeaa592c26ed60f0ecbddbdb925d18d79be73fb00cc640240278d0b2a618f5"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "08a4a226e6c06895a774867d504458ffaabbc4bc05aa6f0b2333f0e3c08037ba"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "1d5ba19c14e58066daf0a58da93beffadf608192c545b2e388fcd20fb0df6849"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "7cd213a92a0887488e623878205f9f774a20167b949e73c884d89d6b50db375f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [624],
+                    "bytes": 4992,
+                    "sha256": "af7804548498451a7e9c7b93fc0c78ea27063579acd0e145e7e9b64e76f2f625"
+                },
+                {
+                    "type": "float32",
+                    "dims": [624, 1],
+                    "bytes": 2496,
+                    "sha256": "a90dc6d027a91bbaf0d33f44b9a4d3b488b968c34b317df137818ff4e0670584"
+                },
+                {
+                    "type": "float32",
+                    "dims": [624, 1],
+                    "bytes": 2496,
+                    "sha256": "ff57d72da06100bd6b7d380f772adeb3afe9839ef67365d40342a1f8933c0ac2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [624, 1],
+                    "bytes": 2496,
+                    "sha256": "19181c84526494d647059e99ff3e1cb61183326d9788064bf64665500e56cc0f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [624, 1],
+                    "bytes": 2496,
+                    "sha256": "4221d3d4426fcc4f3a100eeca71077e15bb4e78b63b4e6b4944910885a86a015"
+                }
+            ]
+        },
+        {
+            "grid": [1, 28, 16],
+            "patches": 448,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "5c453718949112f54037690a757422b4f775da2b128825f3bf240c2a17f0bfed"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "c504b6eaf49ff7ba2971bc75b7cb6f85a2f07227be02e649ffed8343314f6a8c"
+                },
+                {
+                    "type": "float32",
+                    "dims": [28, 1],
+                    "bytes": 112,
+                    "sha256": "4f2a7b3d0ccdbf29fc680922e9c93f266eed28042ccfa917a1769369198d8d1d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 448],
+                    "bytes": 3584,
+                    "sha256": "5c95b813dae5487c321aabe5560f6b0006c75594c9dfed79ff9a405a79512424"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 448, 448],
+                    "bytes": 802816,
+                    "sha256": "125c62526cce3e4b947fa527adf081ae0394d1ef0fbeb74db5ce742574533cf3"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "f3500044649ac47fe549f9d72844baf5d607399feb40c06932eed4ddf6de1cc8"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "b62b8de54d9200bc160682be7dd0e970908f8aeda0e978cf08e490750e59ab75"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "4ccb278c0611b4cbb2354a9665e3c4500b74d161376d3b2625a152af13cea83f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [448],
+                    "bytes": 3584,
+                    "sha256": "677fcf1d468c27d1f89f5be000b5aebf679fe98be6ab91c7ff71c683e3aba211"
+                },
+                {
+                    "type": "float32",
+                    "dims": [448, 1],
+                    "bytes": 1792,
+                    "sha256": "d908aa4885fec652f59bf5e85de9a3cfd6adcc6665836467259982c70ff30c92"
+                },
+                {
+                    "type": "float32",
+                    "dims": [448, 1],
+                    "bytes": 1792,
+                    "sha256": "0bd52e791b794bdfd4f1639c29b70a51cc67ffb855f39c4988c521e3de94bff8"
+                },
+                {
+                    "type": "float32",
+                    "dims": [448, 1],
+                    "bytes": 1792,
+                    "sha256": "791ea4bab15a8f6ff447dda82b27ea210f30ab839ef9fdf6ed1e1abd4ef2eea4"
+                },
+                {
+                    "type": "float32",
+                    "dims": [448, 1],
+                    "bytes": 1792,
+                    "sha256": "250c545e0b63f9dd28ff600f415e9ae889d77cd820f5ca68873c9c171e224b1c"
+                }
+            ]
+        },
+        {
+            "grid": [1, 28, 18],
+            "patches": 504,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "a9a784c52dbad798b2fcd4a46e4267915281f462310898fa69f0d9709aa7a945"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "e7db16e8cfdc56a3a16c420f0607c1caf8c634f1ac7e6653a54feff67b2ce19c"
+                },
+                {
+                    "type": "float32",
+                    "dims": [28, 1],
+                    "bytes": 112,
+                    "sha256": "4f2a7b3d0ccdbf29fc680922e9c93f266eed28042ccfa917a1769369198d8d1d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 504],
+                    "bytes": 4032,
+                    "sha256": "e75d1bc5b690bf1a5c9bd36bf9a042cec46e9db3bc793948a5a803b4c44e8523"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 504, 504],
+                    "bytes": 1016064,
+                    "sha256": "da2116e7bae6d30bc75ca73efee631147bafd8cebf866a7cfe7d4e458a72e2d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "6d82e79fe01723009e3aca98ab53a2993466f708ef0ad50266f356c552076773"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "3a7f29d404f4a7fa78fb62f4e9eb073dd76dd6bf21e4eacd246f687ec8bf6ab2"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "d80067a6eb09f0d6254391db939e79303423be817a7b62ecac995cbec6b2fe06"
+                },
+                {
+                    "type": "int64",
+                    "dims": [504],
+                    "bytes": 4032,
+                    "sha256": "d35ea4170d396d1be1fc42666f5ed965d63a974512a399ba619e35863ff6b379"
+                },
+                {
+                    "type": "float32",
+                    "dims": [504, 1],
+                    "bytes": 2016,
+                    "sha256": "bd8bac09f5c89bd395b139a8255ab44067a185f585ecab5f6dbd425794ce621a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [504, 1],
+                    "bytes": 2016,
+                    "sha256": "19f4c8a9475698d74a842d3a0158aba86b8f41042b7c2a60474d12a426846196"
+                },
+                {
+                    "type": "float32",
+                    "dims": [504, 1],
+                    "bytes": 2016,
+                    "sha256": "0437a5dacdc56971c286a50a790bce1c901ca784325b0ad638114b6bea476acd"
+                },
+                {
+                    "type": "float32",
+                    "dims": [504, 1],
+                    "bytes": 2016,
+                    "sha256": "d1c2e67d7812811303258fdf604203b30555ad71d840b825c84032b45aef48cf"
+                }
+            ]
+        },
+        {
+            "grid": [1, 28, 20],
+            "patches": 560,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "00a3130006c06a4814059fc37f6004dcc7575380f63cae449327c38935315c51"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "f7f3a89a0a21379e8a17632068e5d50da5eb5854cf30317acba2cd4d2b137c97"
+                },
+                {
+                    "type": "float32",
+                    "dims": [28, 1],
+                    "bytes": 112,
+                    "sha256": "4f2a7b3d0ccdbf29fc680922e9c93f266eed28042ccfa917a1769369198d8d1d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 560],
+                    "bytes": 4480,
+                    "sha256": "b93349590951ce01781ce503e1a134a9aa83944f7f2c14c2f293326b73873616"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 560, 560],
+                    "bytes": 1254400,
+                    "sha256": "1355d45676c9d7585491d2f231087470dd654cf2055e4ba48e5624d2a606799f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "88c8945a0552742d59835427c34d256640fde476ab6f9ce4afdeada4b82c93d3"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "f15cba9e9231a2e2ec8a49cb065a7b6a1e98458dd2b71a2a36f48bbaac4b9bab"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "c4959072576e73da9c48396a94b7e82633edbefcd98a1dfec2a86b797bad78d9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [560],
+                    "bytes": 4480,
+                    "sha256": "b0d49ad5851834e3c258f2bf607d3dedb4066621f8d21478d553d50d69a0f6f1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [560, 1],
+                    "bytes": 2240,
+                    "sha256": "2ce1d7a6ab3180b15e4827c67a69c7b744daf52ac974b34c3423fc2584587945"
+                },
+                {
+                    "type": "float32",
+                    "dims": [560, 1],
+                    "bytes": 2240,
+                    "sha256": "e8836a9830d569508aec4d442eab6325d57ae67041abcc7a2d4e301afd6eb9e3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [560, 1],
+                    "bytes": 2240,
+                    "sha256": "a80462f824a044a810eb86381c93968a8849d4b771bb43b764cd0c306a0cde34"
+                },
+                {
+                    "type": "float32",
+                    "dims": [560, 1],
+                    "bytes": 2240,
+                    "sha256": "acab8fe54965b17f9335926226b6d39bc7b51cbf38e4b3cd1d2a9e3a07224247"
+                }
+            ]
+        },
+        {
+            "grid": [1, 28, 22],
+            "patches": 616,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "289cbda5c3cb5d43c729655630c891743e8b8b5c45d649a9115b4d17a98db24e"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "add199530525e4cb14e8ccefe6b57a7485372207c72ad903ba67bca5e9a1a146"
+                },
+                {
+                    "type": "float32",
+                    "dims": [28, 1],
+                    "bytes": 112,
+                    "sha256": "4f2a7b3d0ccdbf29fc680922e9c93f266eed28042ccfa917a1769369198d8d1d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 616],
+                    "bytes": 4928,
+                    "sha256": "1b635fbbd2d8e8e986b76dabcdb2119ed9b4185ce8d6be3a3364c78478dc3528"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 616, 616],
+                    "bytes": 1517824,
+                    "sha256": "2546b85cb48da92849cc18dbdefe30f3f452294b17e44ed6e452c64df699ca5f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "ca1532b59fe5d43e061786631b2d6e0a158270aef134e1c2a64c6552a4e5605f"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "af3f992532e5ee63238f45c2d1a896645b6bf6f5a3a75dee96f858c2765dc431"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "d2c6e2daf21d822733e0bb24fb47583b1f5c876f14eba851492355dc0b8b6edd"
+                },
+                {
+                    "type": "int64",
+                    "dims": [616],
+                    "bytes": 4928,
+                    "sha256": "34143aaad8db9d15e29dcfe2018e882e834f74c24b5c86d6ea223d2302556b79"
+                },
+                {
+                    "type": "float32",
+                    "dims": [616, 1],
+                    "bytes": 2464,
+                    "sha256": "8f97b3141d59579075596a8934065936d1cf1c760e82a877be4e40b97e1af8e9"
+                },
+                {
+                    "type": "float32",
+                    "dims": [616, 1],
+                    "bytes": 2464,
+                    "sha256": "7d76dca86751abeca7a91de4e271a265e026f61bf48b0afc29e6e2d9e72fa5f3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [616, 1],
+                    "bytes": 2464,
+                    "sha256": "45369b343e1e7e8e987dbfadc0fa64ed6373fa6d9b0d25e3c708193b98b4d2bb"
+                },
+                {
+                    "type": "float32",
+                    "dims": [616, 1],
+                    "bytes": 2464,
+                    "sha256": "6f51ca04b2d98559eb6e29c51722d8d4cb0857d833a33036d5aad499b7c09f0b"
+                }
+            ]
+        },
+        {
+            "grid": [1, 30, 16],
+            "patches": 480,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "b3722e7cb1cd0909002cc273776b9eb61a676c86f6bdf56221e52fa174461ea8"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "bd820c97f32c7f2c5c341300a50e5d0dec20e93899e863c883ab6cd1a488d780"
+                },
+                {
+                    "type": "float32",
+                    "dims": [30, 1],
+                    "bytes": 120,
+                    "sha256": "f55ab64fe554301fbb1c735911e414f30f2e167b9a5b6c7d85e95fc361c9e6c9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 480],
+                    "bytes": 3840,
+                    "sha256": "18540e693a730044189ffde0720b95275b461e2d5fa743269c8eb7e72f15f4f5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 480, 480],
+                    "bytes": 921600,
+                    "sha256": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "23a853204b9b67935b01e270c55e54c7d2aa8be1d243e629a062a8b0377773f2"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "7585fe778a17e355664a1b813495a89b8bf7ca85b4499dc00204f2a856632455"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "62317d0895e770b20154621995f731a123753c070e9551545f0c3ce23b5df9d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [480],
+                    "bytes": 3840,
+                    "sha256": "5c4e92c4b2f7b37f77b7ce7e5b96da20ec2adfce7ab5ddf15607831bb4eb17cd"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "a5ac32ebfd4cb8d05a4c2620d0d5fbdd0be931fa457f5f326cae4e804fd7b8e2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "0b786e7ad3351f8bcad2dc8b0aeffcc51cc49cbd099a42e43afa34a71c6a53bb"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "711bc07ce8e95c05b3397fb7ae9c2d9194f2657c62a8f08100ac3059744951b2"
+                },
+                {
+                    "type": "float32",
+                    "dims": [480, 1],
+                    "bytes": 1920,
+                    "sha256": "a27ee2d8bb866e1d58f857f04173d606f4b5ebc3230ae9b2012c592a0175a084"
+                }
+            ]
+        },
+        {
+            "grid": [1, 30, 18],
+            "patches": 540,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "69d6f0566a05403a0c23403ca57804eb25d8729314cfc50ddbc506a667981339"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "aa60f5214a9dcd638d76f3b5fcc5cd5b7bbec6c8a2d9e277fa79e4c06866f459"
+                },
+                {
+                    "type": "float32",
+                    "dims": [30, 1],
+                    "bytes": 120,
+                    "sha256": "f55ab64fe554301fbb1c735911e414f30f2e167b9a5b6c7d85e95fc361c9e6c9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 540],
+                    "bytes": 4320,
+                    "sha256": "5abd87dd8f22d8c636fd07bde2e1de3303027bc4ac6a0e36acd86e3dad68a21c"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 540, 540],
+                    "bytes": 1166400,
+                    "sha256": "a7c0d2966553344a88cd00b271ab8b21d8d248fe94c097c0bae3a515600ba8cb"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "04b9b2f919fc510088f436f278669fd416de3d3e8fbc4718f77bbe326336aa61"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "109ffc0e3642e63e279941f93f5ca541dce4582dc25e223ae9bdcf43afee701b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "d168ab1a721919607c68eec17bb9ef4bed21185265a5aaee5570cbf4150a8040"
+                },
+                {
+                    "type": "int64",
+                    "dims": [540],
+                    "bytes": 4320,
+                    "sha256": "10569131321484c902e965658379eba78467b4952544ec8aa1a226010ded8097"
+                },
+                {
+                    "type": "float32",
+                    "dims": [540, 1],
+                    "bytes": 2160,
+                    "sha256": "40d5323c09101fa0901149f4470ac60c98c9455469b5a103e01ea869aa6cb275"
+                },
+                {
+                    "type": "float32",
+                    "dims": [540, 1],
+                    "bytes": 2160,
+                    "sha256": "ef08357a6eb091556316520072bca3fccc20eba24a43d3c238b6c27643fc3e69"
+                },
+                {
+                    "type": "float32",
+                    "dims": [540, 1],
+                    "bytes": 2160,
+                    "sha256": "dcb1096624721fb188024accd6b5d87ba0e71104fe192800a4b5356f272b2782"
+                },
+                {
+                    "type": "float32",
+                    "dims": [540, 1],
+                    "bytes": 2160,
+                    "sha256": "9a6d2eb5a18141c3d3718c84fb7da8efa77e3ad464a702e74db9550152cd48c1"
+                }
+            ]
+        },
+        {
+            "grid": [1, 30, 20],
+            "patches": 600,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "bab89cf42bf87130dbf2407e0234e311cbee9ce825815d5fe9b5b06e5a059f8b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "1711506fc6812e21783839c68bba0ced7f37b38ffa23b943d2cbd7f41708bc17"
+                },
+                {
+                    "type": "float32",
+                    "dims": [30, 1],
+                    "bytes": 120,
+                    "sha256": "f55ab64fe554301fbb1c735911e414f30f2e167b9a5b6c7d85e95fc361c9e6c9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 600],
+                    "bytes": 4800,
+                    "sha256": "c6f1a209e5af3dc3be5de07aa2e684c160f501ac00abb1f5d679e842afc16685"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 600, 600],
+                    "bytes": 1440000,
+                    "sha256": "eda525bab6d74d439bd683b578242e87fd3146fc4d631b7c81d9f76dd4d47a2d"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "521ca9604962b43201c30c0e6c6a846004c6a0b5cb16d1a9a178ced640032265"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "4a5a5de900e9f8f2dc8f1fe2d19a44af7617eaf092cf7d96079ffd22315d3572"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "fd1567b371ec908408c6be03d2eaaa00e94eede250fe4882682ebbe7f241d08b"
+                },
+                {
+                    "type": "int64",
+                    "dims": [600],
+                    "bytes": 4800,
+                    "sha256": "f4aa58ebda5f3f66f5f1b9cad39dcb106433cce60811d084f18fa0cc3636249f"
+                },
+                {
+                    "type": "float32",
+                    "dims": [600, 1],
+                    "bytes": 2400,
+                    "sha256": "0d3decbf1f1e436b24886bac9ddce52204baf8faf9c6f0be1df5b8ee6e3988ed"
+                },
+                {
+                    "type": "float32",
+                    "dims": [600, 1],
+                    "bytes": 2400,
+                    "sha256": "613fdb0a438af90970f47707080c7d97709bcf5d3ba106b6e8f551c85272e11e"
+                },
+                {
+                    "type": "float32",
+                    "dims": [600, 1],
+                    "bytes": 2400,
+                    "sha256": "c7bf08c57ecff091f149b757b12582fd4f958f6323906a9299e7ef4dd1db418a"
+                },
+                {
+                    "type": "float32",
+                    "dims": [600, 1],
+                    "bytes": 2400,
+                    "sha256": "8250be543b3d72e1b82c8ff75d09798b26b76a942e9218f05f413bf6235f7f5e"
+                }
+            ]
+        },
+        {
+            "grid": [1, 32, 16],
+            "patches": 512,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "3ec6dcc5b9b0e64c226ad506774855a55a77b8257133e0dbcd65b82a46c75ce9"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "f5a41f2d1a96c760881496c540ba56fb6f5e013611f5543fcd185d9653117aea"
+                },
+                {
+                    "type": "float32",
+                    "dims": [32, 1],
+                    "bytes": 128,
+                    "sha256": "0c43f2957858ef1a2ee3e2cec548164d548995c05a42c6588927998cd6dd10d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 512],
+                    "bytes": 4096,
+                    "sha256": "5738153ec97595b1c1e4dc027f7b7fb4534f19ed2ce9f9ee712e6d34a384cde7"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 512, 512],
+                    "bytes": 1048576,
+                    "sha256": "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "22fb3099a3b99b21bffd6bdf7e580a4f541a467557138275f9e029cb75807675"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "c668f96fe951d115849ed3f582d428e73f0573d2968fc60804e01a269000c26c"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "dd3c4e0b2375a16d91563f7d85f96728327e275a1eadc777e4048b1cef733158"
+                },
+                {
+                    "type": "int64",
+                    "dims": [512],
+                    "bytes": 4096,
+                    "sha256": "8b35529a167ea6a11a9ff67b4b47f902c93199da0a6edcfb450c637c50f17236"
+                },
+                {
+                    "type": "float32",
+                    "dims": [512, 1],
+                    "bytes": 2048,
+                    "sha256": "36c0aad72cf6bd41d24db495684b5808359b112a546731d272a3a78e5325f023"
+                },
+                {
+                    "type": "float32",
+                    "dims": [512, 1],
+                    "bytes": 2048,
+                    "sha256": "1b89d5e341e1f0308f8a0d1666640a40e13b059ddb8dfa88342e0816ee3e65b3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [512, 1],
+                    "bytes": 2048,
+                    "sha256": "dd3bfdf91012c28f752c3811d39a8533f5d25c6472e8431984d58814fcd02ba0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [512, 1],
+                    "bytes": 2048,
+                    "sha256": "00b2f09c4b5b904a7b15f26f11b384e4a594677b41b3a9fa07028b4726aead9e"
+                }
+            ]
+        },
+        {
+            "grid": [1, 32, 18],
+            "patches": 576,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "c4fa42f23045df955d2372f444de2d9aacb7f89db7b1ac8187f09cc7bcaa7bed"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "851b4e203d7cd780e269600000d468fb8d04a163b40b91a4b14f04bb5c764f65"
+                },
+                {
+                    "type": "float32",
+                    "dims": [32, 1],
+                    "bytes": 128,
+                    "sha256": "0c43f2957858ef1a2ee3e2cec548164d548995c05a42c6588927998cd6dd10d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 576],
+                    "bytes": 4608,
+                    "sha256": "64c73f9630b27e01473c1ef83ed6950f74a31e2194fa3fca5b298290fa375a12"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 576, 576],
+                    "bytes": 1327104,
+                    "sha256": "0f7cfb43327ad082e6362afa8bcb4f762da9c55356e9c002f0b2697f0b6cd138"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "2aed3e9e6f08b678e583a1c76d0df02d8d5789c957dc1de8701e7a95d07ab707"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "d891901e1a1b999540800daa312b2def5e6f70377b0beca9e8426d4e4da98cff"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "42fd1cea7993eeff2ab365489f7bb8e9d2aa81d596a4a9832d619f3efa598d24"
+                },
+                {
+                    "type": "int64",
+                    "dims": [576],
+                    "bytes": 4608,
+                    "sha256": "550a8f1165038b68944daffc70cac0894d46ca4872f78f44e5848528a17b76eb"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "9ad43deaf7123e1518794bcba8f8ecbc6be3f6b6c42c9d1aaaf69bbe5b4cf944"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "0838d64c860f41f9741d275b074c611362d55eed2eac1c0ef53926ad7af419d3"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "2be6ba8578f6a9d4c5778a6f8b405750cb75b09cf3ea91412fdbf65b65ec69ab"
+                },
+                {
+                    "type": "float32",
+                    "dims": [576, 1],
+                    "bytes": 2304,
+                    "sha256": "892ac965819afdb91d6e8f268e3d9dc97de21c02d323ed27d505d34cf8285874"
+                }
+            ]
+        },
+        {
+            "grid": [1, 32, 20],
+            "patches": 640,
+            "controls": [
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "994785264587426cbf5ae2de68332c34cd228cab894920f2b00cf7a5d916cf08"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "f4537ce87aff47262fc030020896e2eced820278c0ef861dc9e26331c3b2e0d8"
+                },
+                {
+                    "type": "float32",
+                    "dims": [32, 1],
+                    "bytes": 128,
+                    "sha256": "0c43f2957858ef1a2ee3e2cec548164d548995c05a42c6588927998cd6dd10d7"
+                },
+                {
+                    "type": "int64",
+                    "dims": [1, 640],
+                    "bytes": 5120,
+                    "sha256": "64ef42900a8eeb3185e91e3a833d3a5f7ecb792af81d88f1073b6e5f987fc605"
+                },
+                {
+                    "type": "float32",
+                    "dims": [1, 1, 640, 640],
+                    "bytes": 1638400,
+                    "sha256": "0655c923944257942252e3484efa09d83329b93522af84c653f8b36b3453eaee"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "64c33fa38143052b88c62cc2902d3354800ef64cb5b8a760607f9e3bd399f668"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "f5b27f5642b6baab2249dfbca0a734dd02c81c7150e7092dd2120231d9da8120"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "3c605a7c383a1ddb43a7042fbf8beedd1057ce3baac19ba935aa8ebd979c0e30"
+                },
+                {
+                    "type": "int64",
+                    "dims": [640],
+                    "bytes": 5120,
+                    "sha256": "f2d34854e5a93d38fb4ae49ae3eb9091a6a0ea09b018396b831caa7f8c587909"
+                },
+                {
+                    "type": "float32",
+                    "dims": [640, 1],
+                    "bytes": 2560,
+                    "sha256": "d872706358d5fe833c18540a10db9bdee09f53a173c5df31e942fb01529752e0"
+                },
+                {
+                    "type": "float32",
+                    "dims": [640, 1],
+                    "bytes": 2560,
+                    "sha256": "2eefbaa9d75af69a7d5b8c0905047bb4207c46abcaff63e6283a9af26add77a5"
+                },
+                {
+                    "type": "float32",
+                    "dims": [640, 1],
+                    "bytes": 2560,
+                    "sha256": "f1af1a5736135d9f5eee69882e7d3d10fef492d2853c08b7242533c8288667f1"
+                },
+                {
+                    "type": "float32",
+                    "dims": [640, 1],
+                    "bytes": 2560,
+                    "sha256": "b925de868e6ad5ee97ed1d82379e7cdcbb51cb314cf28ba0917634f7a34be4e1"
+                }
+            ]
+        }
+    ]
+}

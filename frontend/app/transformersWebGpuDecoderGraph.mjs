@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { transformQwen3Vl2bInterleavedMrope } from "./transformersWebGpuMropeGraph.mjs";
 
 const nodeRequire = createRequire(import.meta.url);
 const schema = nodeRequire(
@@ -15,9 +16,13 @@ export const QWEN3_VL_2B_DECODER_SOURCE_SHA256 =
     "0b309c7423500f5226b07e1895adbecb245105a61abe065dedeb5ae136da335c";
 
 // Locked after protobuf encoding. Any graph change must be reviewed as a new immutable artifact.
-export const QWEN3_VL_2B_DECODER_PATCHED_BYTES = 5_087_381;
+export const QWEN3_VL_2B_DECODER_PATCHED_BYTES = 5_085_647;
 export const QWEN3_VL_2B_DECODER_PATCHED_SHA256 =
-    "1c7b80033889ec7e5168e3d35942041e0aafcbb259a417f378da0432b434e04d";
+    "29df8b402b9dc86a3e2683911f1e4a28067f12713ae3c1715851feb0e39b20e3";
+
+// Preserve the independently reviewed tied-embedding stage before correcting mRoPE.
+const TIED_EMBEDDING_BYTES = 5_087_381;
+const TIED_EMBEDDING_SHA256 = "1c7b80033889ec7e5168e3d35942041e0aafcbb259a417f378da0432b434e04d";
 
 export const QWEN3_VL_2B_DECODER_TOKEN_IDS_INPUT = "__openchat_input_ids";
 export const QWEN3_VL_2B_DECODER_SELECTED_EMBEDS = "__openchat_selected_input_embeddings";
@@ -346,7 +351,7 @@ function verifyPatchedModel(model, originalNodes) {
 }
 
 /**
- * Adds an exact internal autoregressive embedding path to the audited Qwen3-VL decoder graph.
+ * Adds an exact internal autoregressive embedding path and corrects Qwen3 frequency selection.
  *
  * The multimodal prompt still enters through `inputs_embeds`. Cached steps send an empty
  * `[batch, 0, 2048]` prompt tensor and token IDs through the private input. Concat on axis 1 is an
@@ -366,7 +371,13 @@ export function patchQwen3Vl2bDecoderGraph(sourceBytes) {
 
     const model = schema.ModelProto.decode(bytes);
     const { originalNodes } = transformModel(model);
-    const patched = schema.ModelProto.encode(model).finish();
+    const tied = schema.ModelProto.encode(model).finish();
+    if (tied.byteLength !== TIED_EMBEDDING_BYTES || sha256(tied) !== TIED_EMBEDDING_SHA256) {
+        throw new Error("Deterministic Qwen tied-embedding stage changed.");
+    }
+    verifyPatchedModel(schema.ModelProto.decode(tied), originalNodes);
+    const correctedModel = transformQwen3Vl2bInterleavedMrope(schema.ModelProto.decode(tied));
+    const patched = schema.ModelProto.encode(correctedModel).finish();
     const patchedHash = sha256(patched);
     if (
         patched.byteLength !== QWEN3_VL_2B_DECODER_PATCHED_BYTES ||
@@ -376,6 +387,5 @@ export function patchQwen3Vl2bDecoderGraph(sourceBytes) {
             `Deterministic Qwen decoder transform changed (${patched.byteLength} bytes, sha256 ${patchedHash}).`,
         );
     }
-    verifyPatchedModel(schema.ModelProto.decode(patched), originalNodes);
     return patched;
 }

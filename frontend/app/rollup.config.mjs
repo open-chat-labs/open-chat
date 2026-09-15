@@ -25,14 +25,22 @@ import { wasmUrlAsset } from "./rollup-plugin-wasm-url.mjs";
 import { modelAssetNoticesPlugin } from "./modelAssetNotices.mjs";
 import { publicKeyBuildPlugin } from "./publicKeyBuild.mjs";
 import { transformersWebGpuFeatureEnabled } from "./transformersWebGpuFeatureFlag.mjs";
+import { TRANSFORMERS_WEBGPU_RUNTIME_ASSETS } from "./src/utils/transformersWebGpuRuntimeAssets.ts";
+import { patchQwen3Vl2bDecoderGraph } from "./transformersWebGpuDecoderGraph.mjs";
 import {
-    TRANSFORMERS_QWEN_ARTIFACTS,
-    TRANSFORMERS_WEBGPU_RUNTIME_ASSETS,
-} from "./src/utils/transformersWebGpuProtocol.ts";
+    patchQwen3Vl2bDeepStackDecoderGraph,
+    patchQwen3Vl2bDeepStackVisionGraph,
+} from "./transformersWebGpuDeepStackGraph.mjs";
 import {
-    patchQwen3Vl2bDecoderGraph,
-    QWEN3_VL_2B_DECODER_PATCHED_BYTES,
-} from "./transformersWebGpuDecoderGraph.mjs";
+    patchQwen3Vl2bGenerationGraph,
+    QWEN3_VL_2B_GENERATION_BYTES,
+    QWEN3_VL_2B_GENERATION_SHA256,
+} from "./transformersWebGpuQwenGenerationGraph.mjs";
+import {
+    patchQwen3Vl2bVisionGeometryGraph,
+    QWEN3_VL_2B_VISION_GEOMETRY_BYTES,
+    QWEN3_VL_2B_VISION_GEOMETRY_SHA256,
+} from "./transformersWebGpuQwenVisionGraph.mjs";
 import {
     __dirname,
     copyFile,
@@ -165,25 +173,32 @@ function packagedAndroidTransformersGraphs() {
                 }
             }
             const graphDir = path.resolve(__dirname, "model-overrides/qwen3vl2b/onnx");
-            const decoder = patchQwen3Vl2bDecoderGraph(
-                fs.readFileSync(path.join(graphDir, "decoder_model_merged_q4.onnx")),
+            const decoder = patchQwen3Vl2bGenerationGraph(
+                patchQwen3Vl2bDeepStackDecoderGraph(
+                    patchQwen3Vl2bDecoderGraph(
+                        fs.readFileSync(path.join(graphDir, "decoder_model_merged_q4.onnx")),
+                    ),
+                ),
+                { scope: "generation-only" },
             );
-            if (decoder.byteLength !== QWEN3_VL_2B_DECODER_PATCHED_BYTES) {
+            if (decoder.byteLength !== QWEN3_VL_2B_GENERATION_BYTES) {
                 throw new Error("The packaged Qwen decoder byte count changed.");
             }
-            const vision = fs.readFileSync(path.join(graphDir, "vision_encoder_q4.onnx"));
-            for (const [name, bytes] of [
-                ["decoder_model_merged_q4.onnx", decoder],
-                ["vision_encoder_q4.onnx", vision],
+            const vision = patchQwen3Vl2bVisionGeometryGraph(
+                patchQwen3Vl2bDeepStackVisionGraph(
+                    fs.readFileSync(path.join(graphDir, "vision_encoder_q4.onnx")),
+                ),
+            );
+            if (vision.byteLength !== QWEN3_VL_2B_VISION_GEOMETRY_BYTES) {
+                throw new Error("The packaged Qwen vision byte count changed.");
+            }
+            // Built-in asset bytes belong to the adapter, not the editable selection catalog.
+            // Keep them available for imported compatible entries even with no bundled selections.
+            for (const [name, bytes, expectedSha256] of [
+                ["decoder_model_merged_q4.onnx", decoder, QWEN3_VL_2B_GENERATION_SHA256],
+                ["vision_encoder_q4.onnx", vision, QWEN3_VL_2B_VISION_GEOMETRY_SHA256],
             ]) {
-                const artifact = TRANSFORMERS_QWEN_ARTIFACTS.find(
-                    (entry) => entry.path === `onnx/${name}`,
-                );
-                if (
-                    !artifact ||
-                    bytes.byteLength !== artifact.bytes ||
-                    createHash("sha256").update(bytes).digest("hex") !== artifact.sha256
-                ) {
+                if (createHash("sha256").update(bytes).digest("hex") !== expectedSha256) {
                     throw new Error(
                         `Packaged model graph differs from its immutable manifest: ${name}`,
                     );

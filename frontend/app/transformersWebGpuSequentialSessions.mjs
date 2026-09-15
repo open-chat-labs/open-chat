@@ -1,3 +1,7 @@
+import { createQwen3Vl2bGenerationRuntime } from "./transformersWebGpuQwenGenerationRuntime.mjs";
+import { createQwen3Vl2bVisionGeometryRuntime } from "./transformersWebGpuQwenVisionGeometry.mjs";
+import { createQwen3Vl2bVisionSession } from "./transformersWebGpuQwenVisionSession.mjs";
+
 const SOURCE_SESSION_MODULE_SUFFIX = "/@huggingface/transformers/src/models/session.js";
 const DIST_SESSION_MODULE_SUFFIX = "/@huggingface/transformers/dist/transformers.web.js";
 
@@ -12,10 +16,202 @@ export const TRANSFORMERS_WEBGPU_TIED_EMBEDDING_MARKER =
 
 export const TRANSFORMERS_QWEN_DECODER_TOKEN_IDS_INPUT = "__openchat_input_ids";
 
-const STAGED_QWEN_MODEL_ID = "onnx-community/Qwen3-VL-2B-Instruct-ONNX";
-const STAGED_QWEN_REVISION = "3e4136ea66ae6e07c110e64fe07da2e029517ab5";
-const STAGED_GEMMA_MODEL_ID = "onnx-community/gemma-4-E2B-it-ONNX";
-const STAGED_GEMMA_REVISION = "9f4bef82ea6e296bc69f8a2f5939f73af81b07a6";
+// This function is embedded into the pinned upstream module below. It performs only
+// validation and bit-preserving tensor placement, never model arithmetic on the CPU.
+function createQwenDeepStackTransport(imageTokenId) {
+    if (imageTokenId !== 151655) {
+        throw new Error("The pinned Qwen image-token configuration changed.");
+    }
+    const outputNames = [0, 1, 2].map((i) => "__openchat_deepstack_features_" + i);
+    const inputNames = [0, 1, 2].map((i) => "__openchat_deepstack_" + i);
+    let promptIds;
+    let features;
+    let TensorConstructor;
+    let failed = false;
+    const clearPrompt = () => {
+        promptIds = undefined;
+        features = undefined;
+    };
+    const check = () => {
+        if (failed) throw new Error("The Qwen DeepStack transport failed or was released.");
+    };
+    const bindConstructor = (tensor) => {
+        if (
+            typeof tensor.constructor !== "function" ||
+            (TensorConstructor !== undefined && TensorConstructor !== tensor.constructor)
+        ) {
+            throw new Error("Qwen DeepStack features use a different ORT Tensor constructor.");
+        }
+        TensorConstructor = tensor.constructor;
+    };
+    const checkedFeatures = (tensor, count) => {
+        if (
+            tensor?.location !== "cpu" ||
+            tensor.type !== "float32" ||
+            !(tensor.data instanceof Float32Array) ||
+            !Array.isArray(tensor.dims) ||
+            tensor.dims.length !== 2 ||
+            tensor.dims[1] !== 2048 ||
+            !Number.isSafeInteger(tensor.dims[0]) ||
+            tensor.dims[0] < 1 ||
+            (count !== undefined && tensor.dims[0] !== count) ||
+            tensor.data.length !== tensor.dims[0] * 2048 ||
+            !tensor.data.every(Number.isFinite)
+        ) {
+            throw new Error("Qwen DeepStack requires exact CPU-owned float32 feature rows.");
+        }
+        bindConstructor(tensor);
+        return tensor;
+    };
+    const makeFeeds = (dims, positions) => {
+        const feeds = {};
+        try {
+            for (let stage = 0; stage < 3; stage++) {
+                const data = new Float32Array(dims[0] * dims[1] * 2048);
+                if (positions !== undefined) {
+                    positions.forEach((position, row) => {
+                        data.set(
+                            features[stage].subarray(row * 2048, (row + 1) * 2048),
+                            position * 2048,
+                        );
+                    });
+                }
+                feeds[inputNames[stage]] = new TensorConstructor("float32", data, [...dims]);
+            }
+            return feeds;
+        } catch (error) {
+            for (const tensor of Object.values(feeds)) {
+                try {
+                    tensor.dispose?.();
+                } catch {
+                    /* Preserve the allocation failure. */
+                }
+            }
+            throw error;
+        }
+    };
+    return {
+        inputNames,
+        check,
+        clearPrompt,
+        fail: () => {
+            failed = true;
+            clearPrompt();
+            TensorConstructor = undefined;
+        },
+        capturePromptIds: (inputIds) => {
+            check();
+            if (
+                promptIds !== undefined ||
+                inputIds.location !== "cpu" ||
+                !(inputIds.data instanceof BigInt64Array) ||
+                inputIds.dims[0] !== 1 ||
+                inputIds.dims[1] < 1 ||
+                inputIds.data.length !== inputIds.dims[1]
+            ) {
+                throw new Error("Qwen DeepStack requires one exact CPU int64 input_ids batch.");
+            }
+            // Upstream owns this tensor and may subsequently reshape or dispose it.
+            promptIds = new BigInt64Array(inputIds.data);
+        },
+        captureEmbedding: (tensor) => {
+            check();
+            bindConstructor(tensor);
+        },
+        captureVision: (result) => {
+            const owned = result && typeof result === "object" ? Object.values(result) : [];
+            let accepted = false;
+            let failed = false;
+            let capturedResult;
+            let cleanupFailed = false;
+            let cleanupError;
+            try {
+                check();
+                if (
+                    features !== undefined ||
+                    !result ||
+                    JSON.stringify(Object.keys(result).sort()) !==
+                        JSON.stringify(["image_features", ...outputNames].sort()) ||
+                    new Set(owned).size !== 4
+                ) {
+                    throw new Error("The Qwen DeepStack vision output contract changed.");
+                }
+                const image = checkedFeatures(result.image_features);
+                const captured = outputNames.map((name) => {
+                    const tensor = checkedFeatures(result[name], image.dims[0]);
+                    return new Float32Array(tensor.data);
+                });
+                features = captured;
+                accepted = true;
+                // Upstream encode_image intentionally returns only image_features. Keep our
+                // owned copies and dispose the extra raw ORT outputs before it drops them.
+                capturedResult = { image_features: image };
+            } catch (error) {
+                failed = true;
+                throw error;
+            } finally {
+                for (const tensor of new Set(owned)) {
+                    if (!accepted || tensor !== result.image_features) {
+                        try {
+                            tensor?.dispose?.();
+                        } catch (error) {
+                            if (!cleanupFailed) cleanupError = error;
+                            cleanupFailed = true;
+                        }
+                    }
+                }
+                if (cleanupFailed && accepted) {
+                    // Returning an image failed with the extra-output cleanup; ownership never
+                    // reaches Transformers.js, so discard that output too.
+                    try {
+                        result.image_features?.dispose?.();
+                    } catch {
+                        // Preserve the first cleanup error while still attempting image disposal.
+                    }
+                }
+            }
+            if (cleanupFailed && !failed) throw cleanupError;
+            return capturedResult;
+        },
+        promptFeeds: (embeddings) => {
+            check();
+            try {
+                if (
+                    promptIds === undefined ||
+                    features === undefined ||
+                    embeddings.dims[0] !== 1 ||
+                    embeddings.dims[1] !== promptIds.length ||
+                    embeddings.constructor !== TensorConstructor
+                ) {
+                    throw new Error(
+                        "Qwen DeepStack prompt features or original input_ids are unavailable.",
+                    );
+                }
+                const positions = [];
+                for (let i = 0; i < promptIds.length; i++)
+                    if (promptIds[i] === 151655n) positions.push(i);
+                if (positions.length !== features[0].length / 2048) {
+                    throw new Error("Qwen DeepStack image-token and feature counts do not match.");
+                }
+                return makeFeeds(embeddings.dims, positions);
+            } finally {
+                clearPrompt();
+            }
+        },
+        cachedFeeds: (embeddings) => {
+            check();
+            if (
+                promptIds !== undefined ||
+                features !== undefined ||
+                embeddings.dims[0] !== 1 ||
+                embeddings.constructor !== TensorConstructor
+            ) {
+                throw new Error("Qwen DeepStack cached-step state is inconsistent.");
+            }
+            return makeFeeds(embeddings.dims);
+        },
+    };
+}
 
 /**
  * Force the pinned Gemma GQA nodes onto ORT's decomposed WebGPU attention path without changing
@@ -179,9 +375,9 @@ export const TRANSFORMERS_GEMMA_DECODER_INPUT_METADATA = Object.freeze([
 
 /**
  * Public metadata read synchronously by Transformers.js before the decoder's first run. The
- * matching tests parse both the audited source graph and transformed graph. The transform's one
- * private token-ID input is deliberately hidden from generic Transformers.js validation and is
- * injected only by the exact Qwen facade below.
+ * matching tests parse both the audited source graph and transformed graph. The private token-ID
+ * and three DeepStack inputs plus eight geometry controls are hidden from generic validation and
+ * injected by the Qwen facade. Learned tensor arithmetic remains in the WebGPU graph.
  */
 export const TRANSFORMERS_QWEN_DECODER_INPUT_METADATA = Object.freeze([
     {
@@ -240,6 +436,10 @@ const UPSTREAM_CONSTRUCT_SESSIONS = `export async function constructSessions(pre
 function stagedConstructSessionsSource(exported) {
     return `${exported ? "export " : ""}async function constructSessions(pretrained_model_name_or_path, names, options, cache_sessions = undefined) {
 ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
+${createQwenDeepStackTransport.toString()}
+${createQwen3Vl2bGenerationRuntime.toString()}
+${createQwen3Vl2bVisionGeometryRuntime.toString()}
+${createQwen3Vl2bVisionSession.toString()}
   const createSession = async (name, stagedExternalData = undefined) => {
     // Transformers.js 4.2 omits cache_sessions for Gemma4 even though its decoder exposes the
     // standard present.* outputs. Keep those tensors GPU-resident or every generated token would
@@ -250,6 +450,7 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
         : cache_sessions?.[name] ?? false;
     const configuredSessionOptions = options.session_options ?? {};
     const {
+      openchat_runtime_adapter: _runtimeAdapter,
       openchat_get_staged_external_data: _stagedExternalDataLoader,
       openchat_wait_for_staged_webgpu_queue: _waitForStagedWebGpuQueue,
       openchat_with_staged_webgpu_release: _withStagedWebGpuRelease,
@@ -259,6 +460,7 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
       ...cleanSessionOptions
     } = configuredSessionOptions;
     const cleanOptions =
+      _runtimeAdapter === undefined &&
       _stagedExternalDataLoader === undefined &&
       _waitForStagedWebGpuQueue === undefined &&
       _withStagedWebGpuRelease === undefined &&
@@ -290,6 +492,9 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
     );
     _reportStagedSession?.(name, "metadata-done");
     let session;
+    // Until this function returns, it owns any successfully created native session, including
+    // failures in reporting, external-data cleanup or the post-create queue barrier.
+    try {
     try {
       if (stagedExternalData !== undefined) {
         const externalData = loaded.session_options.externalData;
@@ -312,6 +517,21 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
         stagedGemma && name === "decoder_model_merged"
           ? patchGemma4DecoderForStandardSoftmaxRouting(loaded.buffer_or_path)
           : loaded.buffer_or_path;
+      if (stagedQwen) {
+        // These exact settings qualify the pinned Qwen graphs. Never silently move a learned
+        // operation onto the CPU; the INT64 option must reach ORT before provider creation.
+        const configured = loaded.session_options;
+        loaded.session_options = {
+          ...configured,
+          executionProviders: [{ name: "webgpu", preferredLayout: "NCHW" }],
+          graphOptimizationLevel: "disabled",
+          extra: {
+            ...configured.extra,
+            session: { ...configured.extra?.session, disable_cpu_ep_fallback: "1" },
+            "ep.webgpuexecutionprovider.enableInt64": "1",
+          },
+        };
+      }
       session = await createInferenceSession(
         sessionModel,
         loaded.session_options,
@@ -341,35 +561,32 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
       loaded = void 0;
     }
     if (stagedQwen || stagedGemma) {
-      try {
-        await _waitForStagedWebGpuQueue(name);
-        _reportStagedSession?.(name, "queue-drained");
-      } catch (error) {
-        try { await session.release?.(); } catch {}
-        throw error;
-      }
+      await _waitForStagedWebGpuQueue(name);
+      _reportStagedSession?.(name, "queue-drained");
     }
     return session;
+    } catch (error) {
+      try { await session?.release?.(); } catch {}
+      throw error;
+    }
   };
   const selected = (mapping, name) =>
     typeof mapping === "object" && mapping !== null ? mapping[name] : mapping;
   const nameKeys = Object.keys(names);
   const stagedQwen =
-    pretrained_model_name_or_path === ${JSON.stringify(STAGED_QWEN_MODEL_ID)} &&
-    options.revision === ${JSON.stringify(STAGED_QWEN_REVISION)} &&
+    options.session_options?.openchat_runtime_adapter === "qwen3-vl-2b-staged-v1" &&
     nameKeys.length === 3 &&
     names.embed_tokens === "embed_tokens" &&
     names.vision_encoder === "vision_encoder" &&
     names.decoder_model_merged === "decoder_model_merged" &&
     nameKeys.every((name) => selected(options.device, name) === "webgpu") &&
-    nameKeys.every((name) => selected(options.dtype, name) === "q4") &&
+    nameKeys.every((name) => ["q4", "fp16", "fp32"].includes(selected(options.dtype, name))) &&
     typeof options.session_options?.openchat_get_staged_external_data === "function" &&
     typeof options.session_options?.openchat_wait_for_staged_webgpu_queue === "function" &&
     typeof options.session_options?.openchat_with_staged_webgpu_release === "function";
 
   const stagedGemma =
-    pretrained_model_name_or_path === ${JSON.stringify(STAGED_GEMMA_MODEL_ID)} &&
-    options.revision === ${JSON.stringify(STAGED_GEMMA_REVISION)} &&
+    options.session_options?.openchat_runtime_adapter === "gemma4-e2b-row-v1" &&
     nameKeys.length === 4 &&
     names.embed_tokens === "embed_tokens" &&
     names.audio_encoder === "audio_encoder" &&
@@ -385,7 +602,13 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
       options.session_options?.openchat_gemma_required_modality,
     );
 
+  if (options.session_options?.openchat_runtime_adapter !== undefined && !stagedQwen && !stagedGemma) {
+    throw new Error("Unsupported catalog adapter session configuration; no fallback is permitted.");
+  }
   if (stagedQwen) {
+    const deepStack = createQwenDeepStackTransport(options.config?.image_token_id);
+    const generationRuntime = createQwen3Vl2bGenerationRuntime();
+    const visionGeometry = createQwen3Vl2bVisionGeometryRuntime();
     console.info(${JSON.stringify(TRANSFORMERS_WEBGPU_STAGED_DECODER_MARKER)});
     const sessions = {};
     let initialVision;
@@ -396,6 +619,9 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
       const visionExternalData =
         await options.session_options.openchat_get_staged_external_data("vision_encoder");
       initialVision = await createSession("vision_encoder", visionExternalData);
+      // The admitted facade owns the raw session. Keep a mutable outer shell for staged
+      // lifetime tracking and the worker's generic GPU instrumentation.
+      initialVision = { ...createQwen3Vl2bVisionSession(initialVision, visionGeometry) };
       const embedExternalData =
         await options.session_options.openchat_get_staged_external_data("embed_tokens");
       initialEmbed = await createSession("embed_tokens", embedExternalData);
@@ -414,6 +640,9 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
     let embedSession = initialEmbed;
     let embedReleased = false;
     let embedTransitionRelease;
+    let embedRunning = false;
+    let embedDrained = Promise.resolve();
+    let embedReleasePromise;
     let promptEmbeddingCompleted = false;
     let promptDecoderCompleted = false;
     let pendingAutoregressiveInputIds;
@@ -436,7 +665,7 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
       if (embedTransitionRelease === undefined) {
         const session = embedSession;
         embedSession = undefined;
-        embedTransitionRelease = Promise.resolve(session?.release?.());
+        embedTransitionRelease = Promise.resolve().then(() => session?.release?.());
       }
       await embedTransitionRelease;
     };
@@ -448,7 +677,9 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
         inputIds.type !== "int64" ||
         !Array.isArray(inputIds.dims) ||
         inputIds.dims.length !== 2 ||
-        !inputIds.dims.every((dimension) => Number.isSafeInteger(dimension) && dimension >= 0)
+        !inputIds.dims.every((dimension) => Number.isSafeInteger(dimension) && dimension > 0) ||
+        inputIds.dims[0] !== 1 || inputIds.location !== "cpu" ||
+        !(inputIds.data instanceof BigInt64Array) || inputIds.data.length !== inputIds.dims[1]
       ) {
         throw new Error("The staged Qwen embedding facade received invalid int64 input_ids.");
       }
@@ -457,13 +688,23 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
     sessions.embed_tokens = {
       ...embedMetadata,
       run: async (...args) => {
+        deepStack.check();
+        if (embedRunning) throw new Error("The staged Qwen embedding facade is already running.");
         if (embedReleased) throw new Error("The staged Qwen embedding facade was released.");
+        embedRunning = true;
+        let settleEmbed;
+        embedDrained = new Promise((resolve) => { settleEmbed = resolve; });
+        let initialEmbeddingOutput;
+        try {
         const inputIds = checkedInputIds(args[0]);
         if (!promptEmbeddingCompleted) {
           if (embedSession === undefined) {
             throw new Error("The initial staged Qwen embedding session is unavailable.");
           }
+          deepStack.capturePromptIds(inputIds);
           const result = await embedSession.run(...args);
+          initialEmbeddingOutput = result?.inputs_embeds;
+          if (embedReleased) throw new Error("The staged Qwen embedding facade was released during execution.");
           if (
             result?.inputs_embeds?.location !== "cpu" ||
             result.inputs_embeds.type !== "float32" ||
@@ -482,10 +723,13 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
           // a real pinned-WebGPU output so replaceTensors/isONNXTensor recognizes synthetic cached
           // embeddings after the standalone embedding session has been permanently released.
           pinnedOrtTensorConstructor = result.inputs_embeds.constructor;
+          deepStack.captureEmbedding(result.inputs_embeds);
           promptEmbeddingCompleted = true;
           // This is the only standalone embedding run. The decoder reuses the same tied q4 bytes
           // internally for every cached step, so this WebGPU session must never be recreated.
           await releaseInitialEmbed();
+          if (embedReleased) throw new Error("The staged Qwen embedding facade was released during execution.");
+          initialEmbeddingOutput = undefined;
           return result;
         }
         if (!promptDecoderCompleted) {
@@ -512,30 +756,71 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
             [inputIds.dims[0], inputIds.dims[1], 2048],
           ),
         };
+        } catch (error) {
+          try { initialEmbeddingOutput?.dispose?.(); } catch {}
+          pendingAutoregressiveInputIds = undefined;
+          deepStack.fail();
+          throw error;
+        } finally {
+          embedRunning = false;
+          settleEmbed();
+        }
       },
-      release: async () => {
-        if (embedReleased) return;
+      release: () => {
+        if (embedReleasePromise !== undefined) return embedReleasePromise;
         embedReleased = true;
-        pendingAutoregressiveInputIds = undefined;
-        await releaseInitialEmbed();
+        deepStack.fail();
+        embedReleasePromise = (async () => {
+          await embedDrained;
+          pendingAutoregressiveInputIds = undefined;
+          await releaseInitialEmbed();
+        })();
+        return embedReleasePromise;
       },
     };
 
     let visionCompleted = false;
+    let visionRunning = false;
+    let visionDrained = Promise.resolve();
     const visionRun = initialVision.run.bind(initialVision);
     const visionRelease = initialVision.release?.bind(initialVision);
     let visionReleasePromise;
-    initialVision.release = async () => {
-      visionReleasePromise ??= Promise.resolve(visionRelease?.());
-      await visionReleasePromise;
+    initialVision.release = () => {
+      if (visionReleasePromise === undefined) {
+        visionReleasePromise = (async () => {
+          await visionDrained;
+          try { await visionRelease?.(); } finally { deepStack.clearPrompt(); }
+        })();
+      }
+      return visionReleasePromise;
     };
     initialVision.run = async (...args) => {
-      const result = await visionRun(...args);
-      if (result?.image_features?.location !== "cpu") {
-        throw new Error("Qwen staging requires CPU-owned image features.");
+      deepStack.check();
+      if (visionRunning) throw new Error("The Qwen DeepStack vision session is already running.");
+      visionRunning = true;
+      let settleVision;
+      visionDrained = new Promise((resolve) => { settleVision = resolve; });
+      try {
+        if (visionReleasePromise !== undefined || visionCompleted) {
+          throw new Error("The Qwen DeepStack vision session was released or already used.");
+        }
+        const result = await visionRun(...args);
+        if (visionReleasePromise !== undefined) {
+          for (const tensor of new Set(Object.values(result))) {
+            try { tensor?.dispose?.(); } catch {}
+          }
+          throw new Error("The Qwen DeepStack vision session was released during execution.");
+        }
+        const captured = deepStack.captureVision(result);
+        visionCompleted = true;
+        return captured;
+      } catch (error) {
+        deepStack.fail();
+        throw error;
+      } finally {
+        visionRunning = false;
+        settleVision();
       }
-      visionCompleted = true;
-      return result;
     };
     sessions.vision_encoder = initialVision;
 
@@ -543,6 +828,9 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
     let decoderSession;
     let decoderPromise;
     let decoderReleased = false;
+    let decoderRunning = false;
+    let decoderDrained = Promise.resolve();
+    let decoderReleasePromise;
     const loadDecoder = async () => {
       if (decoderReleased) throw new Error("The staged Qwen decoder session was released.");
       if (decoderSession !== undefined) return decoderSession;
@@ -578,40 +866,48 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
             await options.session_options.openchat_get_staged_external_data(
               "decoder_model_merged",
             );
-          if (!Array.isArray(decoderExternalData) || decoderExternalData.length !== 1) {
+          if (!Array.isArray(decoderExternalData) || decoderExternalData.length < 1 || decoderExternalData.length > 16 ||
+              decoderExternalData.some((file) => typeof file.path !== "string" || !(file.data instanceof Blob) || file.data.size < 1) ||
+              new Set(decoderExternalData.map((file) => file.path)).size !== decoderExternalData.length) {
             throw new Error("The staged Qwen decoder external-data loader returned no exact shard.");
           }
           const session = await createSession("decoder_model_merged", decoderExternalData);
+          try {
           const expectedInputNames = [
             ...decoderInputMetadata.map((entry) => entry.name),
             ${JSON.stringify(TRANSFORMERS_QWEN_DECODER_TOKEN_IDS_INPUT)},
+            ...deepStack.inputNames,
+            ...generationRuntime.inputNames,
           ];
           if (
             JSON.stringify(session.inputNames) !== JSON.stringify(expectedInputNames) ||
+            !Array.isArray(session.inputMetadata) ||
             session.inputMetadata.length !== expectedInputNames.length
           ) {
-            await session.release?.();
             throw new Error(
               "The transformed Qwen decoder private input contract does not match its facade.",
             );
           }
-          const privateMetadata = session.inputMetadata[session.inputMetadata.length - 1];
-          if (
-            privateMetadata.type !== "int64" ||
-            !Array.isArray(privateMetadata.shape) ||
-            privateMetadata.shape.length !== 2 ||
-            privateMetadata.shape[0] !== "batch_size" ||
-            privateMetadata.shape[1] !== "openchat_token_sequence_length"
-          ) {
-            await session.release?.();
+          const expectedMetadata = [
+            ...decoderInputMetadata,
+            { name: ${JSON.stringify(TRANSFORMERS_QWEN_DECODER_TOKEN_IDS_INPUT)}, type: "int64", shape: ["batch_size", "openchat_token_sequence_length"] },
+            ...deepStack.inputNames.map((name) => ({ name, type: "float32", shape: ["batch_size", "sequence_length", 2048] })),
+            ...generationRuntime.inputMetadata,
+          ];
+          if (session.inputMetadata.some((entry, i) => entry?.name !== expectedMetadata[i].name ||
+              entry.isTensor !== true || entry.type !== expectedMetadata[i].type ||
+              JSON.stringify(entry.shape) !== JSON.stringify(expectedMetadata[i].shape))) {
             throw new Error("The transformed Qwen decoder private input metadata changed.");
           }
           if (decoderReleased) {
-            await session.release?.();
             throw new Error("The staged Qwen decoder session was released.");
           }
           decoderSession = session;
           return session;
+          } catch (error) {
+            try { await session.release?.(); } catch {}
+            throw error;
+          }
         })();
       }
       return decoderPromise;
@@ -623,6 +919,25 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
       outputMetadata: [],
       config: { device: "webgpu", dtype: "q4" },
       run: async (...args) => {
+        deepStack.check();
+        if (decoderRunning) throw new Error("The Qwen DeepStack decoder is already running.");
+        if (decoderReleased) throw new Error("The staged Qwen decoder session was released.");
+        decoderRunning = true;
+        let settleDecoder;
+        decoderDrained = new Promise((resolve) => { settleDecoder = resolve; });
+        let privateFeeds;
+        let decoderFeeds;
+        let inputIds;
+        let cachedStep = false;
+        let result;
+        let failure = false;
+        const discardResult = () => {
+          for (const tensor of new Set(Object.values(result ?? {}))) {
+            try { tensor?.dispose?.(); } catch {}
+          }
+          result = undefined;
+        };
+        try {
         const feeds = args[0];
         const inputsEmbeds = feeds?.inputs_embeds;
         if (
@@ -641,8 +956,7 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
           throw new Error("The staged Qwen decoder facade received invalid inputs_embeds.");
         }
 
-        let inputIds;
-        const cachedStep = promptDecoderCompleted;
+        cachedStep = promptDecoderCompleted;
         if (!cachedStep) {
           if (!promptEmbeddingCompleted || inputsEmbeds.dims[1] < 1) {
             throw new Error("The staged Qwen decoder received an invalid multimodal prompt.");
@@ -667,8 +981,10 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
           }
         }
 
-        const decoderFeeds = {
+        privateFeeds = cachedStep ? deepStack.cachedFeeds(inputsEmbeds) : deepStack.promptFeeds(inputsEmbeds);
+        decoderFeeds = {
           ...feeds,
+          ...privateFeeds,
           // Generic Transformers.js generation must observe a normal [B, T, 2048] tensor through
           // its cached-step bookkeeping. Replace that shape carrier only at the raw ORT boundary;
           // the transformed decoder selects its tied GatherBlockQuantized branch with [B, 0, 2048].
@@ -681,27 +997,70 @@ ${patchGemma4DecoderForStandardSoftmaxRouting.toString()}
             : inputsEmbeds,
           [${JSON.stringify(TRANSFORMERS_QWEN_DECODER_TOKEN_IDS_INPUT)}]: inputIds,
         };
-        try {
-          const result = await (await loadDecoder()).run(decoderFeeds, ...args.slice(1));
+          const loadedDecoder = await loadDecoder();
+          deepStack.check();
+          result = await generationRuntime.run(
+            decoderFeeds, loadedDecoder.run.bind(loadedDecoder), args.slice(1),
+          );
+          if (decoderReleased) {
+            throw new Error("The Qwen DeepStack decoder was released during execution.");
+          }
           if (!cachedStep) promptDecoderCompleted = true;
           return result;
+        } catch (error) {
+          failure = true;
+          discardResult();
+          deepStack.fail();
+          throw error;
         } finally {
+          // Dispose every outer-owned feed before publishing the drain signal. In particular,
+          // a throwing dispose must not free the native session early or strand release forever.
+          let cleanupError;
+          let cleanupFailed = false;
+          const owned = [
+            ...Object.values(privateFeeds ?? {}),
+            ...(!cachedStep && inputIds !== undefined ? [inputIds] : []),
+            ...(cachedStep && decoderFeeds !== undefined ? [decoderFeeds.inputs_embeds] : []),
+          ];
+          for (const tensor of owned) {
+            try { tensor.dispose?.(); } catch (error) {
+              if (!cleanupFailed) cleanupError = error;
+              cleanupFailed = true;
+            }
+          }
+          if (cleanupFailed) {
+            deepStack.fail();
+            generationRuntime.retire();
+            if (!failure) discardResult();
+          }
           if (cachedStep) pendingAutoregressiveInputIds = undefined;
+          decoderRunning = false;
+          settleDecoder();
+          if (cleanupFailed && !failure) throw cleanupError;
         }
       },
-      release: async () => {
-        if (decoderReleased) return;
+      release: () => {
+        if (decoderReleasePromise !== undefined) return decoderReleasePromise;
         decoderReleased = true;
-        const session = decoderSession;
-        const pending = decoderPromise;
-        decoderSession = undefined;
-        decoderPromise = undefined;
-        if (session !== undefined) {
-          await session.release?.();
-        } else if (pending !== undefined) {
-          const loaded = await pending.catch(() => undefined);
-          await loaded?.release?.();
-        }
+        deepStack.fail();
+        const runtimeDrained = generationRuntime.retire();
+        decoderReleasePromise = (async () => {
+          await runtimeDrained;
+          await decoderDrained;
+          pendingAutoregressiveInputIds = undefined;
+          const session = decoderSession;
+          const pending = decoderPromise;
+          decoderSession = undefined;
+          decoderPromise = undefined;
+          if (session !== undefined) {
+            await session.release?.();
+          } else if (pending !== undefined) {
+            // A load cancelled before admission releases its own raw session exactly once.
+            const loaded = await pending.catch(() => undefined);
+            await loaded?.release?.();
+          }
+        })();
+        return decoderReleasePromise;
       },
     };
     return sessions;

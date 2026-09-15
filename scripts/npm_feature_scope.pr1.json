@@ -1,0 +1,379 @@
+{
+  "schemaVersion": 1,
+  "status": "draft",
+  "scopeId": "pr1-model-npm",
+  "seeds": [
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@huggingface/transformers",
+      "purpose": "Runtime: model and optional audio inference",
+      "evidence": [
+        {
+          "file": "frontend/app/src/workers/transformersWebGpuInference.worker.ts",
+          "contains": "\"@huggingface/transformers\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@wllama/wllama",
+      "purpose": "Runtime: browser text inference",
+      "evidence": [
+        {
+          "file": "frontend/app/src/utils/webInference.ts",
+          "contains": "\"@wllama/wllama/esm/index.js\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "onnxruntime-web",
+      "purpose": "Runtime and Build: accelerated model execution and pinned graph transforms",
+      "evidence": [
+        {
+          "file": "frontend/app/src/utils/gemma4WebGpuEmbedding.ts",
+          "contains": "\"onnxruntime-web/webgpu\""
+        },
+        {
+          "file": "frontend/app/transformersWebGpuDecoderGraph.mjs",
+          "contains": "../node_modules/onnxruntime-web/lib/onnxjs/ort-schema/protobuf/onnx.js"
+        },
+        {
+          "file": "frontend/app/transformersWebGpuMropeGraph.mjs",
+          "contains": "../node_modules/onnxruntime-web/lib/onnxjs/ort-schema/protobuf/onnx.js"
+        },
+        {
+          "file": "frontend/app/transformersWebGpuDeepStackGraph.mjs",
+          "contains": "../node_modules/onnxruntime-web/lib/onnxjs/ort-schema/protobuf/onnx.js"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@noble/hashes",
+      "purpose": "Runtime: model asset hashing",
+      "evidence": [
+        {
+          "file": "frontend/app/src/utils/transformersWebGpuInference.ts",
+          "contains": "\"@noble/hashes/sha2.js\""
+        },
+        {
+          "file": "frontend/app/src/utils/transformersWebGpuArtifactTransform.ts",
+          "contains": "\"@noble/hashes/sha2.js\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "svelte",
+      "purpose": "Runtime: model stores and inference facade",
+      "evidence": [
+        {
+          "file": "frontend/app/src/stores/customModels.ts",
+          "contains": "\"svelte/store\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "tauri-plugin-oc-api",
+      "purpose": "Runtime: native model commands and events",
+      "evidence": [
+        {
+          "file": "frontend/app/src/utils/onDeviceInference.ts",
+          "contains": "\"tauri-plugin-oc-api\""
+        },
+        {
+          "file": "frontend/tauri-plugin-oc/package.json",
+          "contains": "\"@tauri-apps/api\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@sinclair/typebox",
+      "purpose": "Runtime: model catalog schemas",
+      "evidence": [
+        {
+          "file": "frontend/openchat-agent/src/services/registry/modelCatalog.ts",
+          "contains": "\"@sinclair/typebox\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@icp-sdk/core",
+      "purpose": "Runtime: model catalog canister transport",
+      "evidence": [
+        {
+          "file": "frontend/openchat-agent/src/services/registry/registry.client.ts",
+          "contains": "modelCatalog(): Promise<ModelCatalog>"
+        },
+        {
+          "file": "frontend/openchat-agent/src/services/canisterAgent/msgpack.ts",
+          "contains": "\"@icp-sdk/core/agent\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "msgpackr",
+      "purpose": "Runtime: model catalog transport encoding",
+      "evidence": [
+        {
+          "file": "frontend/openchat-agent/src/services/registry/registry.client.ts",
+          "contains": "modelCatalog(): Promise<ModelCatalog>"
+        },
+        {
+          "file": "frontend/openchat-agent/src/utils/msgpack.ts",
+          "contains": "\"msgpackr\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "vite",
+      "purpose": "Build: standalone model workers",
+      "evidence": [
+        {
+          "file": "frontend/app/build-workers.mjs",
+          "contains": "import { build } from \"vite\";"
+        },
+        {
+          "file": "frontend/app/build-workers.mjs",
+          "contains": "transformersWebGpuInference.worker.ts"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "@tauri-apps/cli",
+      "purpose": "Build: native model development launcher",
+      "evidence": [
+        {
+          "file": "scripts/android_dev.mjs",
+          "contains": "\"@tauri-apps/cli/tauri.js\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "chokidar",
+      "purpose": "Build: model worker watch lifecycle",
+      "evidence": [
+        {
+          "file": "frontend/app/vite.config.ts",
+          "contains": "import chokidar from \"chokidar\";"
+        },
+        {
+          "file": "frontend/app/vite.config.ts",
+          "contains": "chokidar.watch(watchDirs"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "rollup-plugin-copy",
+      "purpose": "Build: packaged model assets",
+      "evidence": [
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "import copy from \"rollup-plugin-copy\";"
+        },
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "onnxruntime-web/dist/"
+        }
+      ]
+    },
+    {
+      "kind": "location",
+      "location": "node_modules/fs-extra",
+      "purpose": "Build: packaged model graph file access",
+      "evidence": [
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "import fs from \"fs-extra\";"
+        },
+        {
+          "file": "frontend/app/rollup.config.mjs",
+          "contains": "model-overrides/qwen3vl2b/onnx"
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "svelte-i18n",
+      "purpose": "Runtime: model manager translation rendering",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components_mobile/home/user_profile/ModelManager.svelte",
+          "contains": "i18nKey"
+        },
+        {
+          "file": "frontend/app/src/i18n/i18n.ts",
+          "contains": "\"svelte-i18n\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "",
+      "name": "svelte-material-icons",
+      "purpose": "Runtime: mobile model manager Chip control icon",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components_mobile/home/user_profile/ModelManager.svelte",
+          "contains": "Caption, Chip, Container"
+        },
+        {
+          "file": "frontend/component-lib/src/components/Chip.svelte",
+          "contains": "\"svelte-material-icons/Close.svelte\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "component-lib",
+      "name": "@tsconfig/svelte",
+      "purpose": "Build: model manager component TypeScript configuration",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components_mobile/home/user_profile/ModelManager.svelte",
+          "contains": "\"component-lib\""
+        },
+        {
+          "file": "frontend/component-lib/tsconfig.json",
+          "contains": "\"@tsconfig/svelte/tsconfig.json\""
+        }
+      ]
+    },
+    {
+      "kind": "edge",
+      "from": "component-lib",
+      "name": "typescript",
+      "purpose": "Build: model manager component type declarations",
+      "evidence": [
+        {
+          "file": "frontend/app/src/components_mobile/home/user_profile/ModelManager.svelte",
+          "contains": "\"component-lib\""
+        },
+        {
+          "file": "frontend/component-lib/package.json",
+          "contains": "\"tsc --emitDeclarationOnly\""
+        }
+      ]
+    }
+  ],
+  "sourceReview": {
+    "status": "reviewed-direct-feature-roots",
+    "textIdentity": "utf8-lf",
+    "boundary": "changed-feature-consumers-and-necessary-reached-edges",
+    "reviewedOn": "2026-09-14",
+    "scope": "Dedicated model or app-card consumers, necessary local UI and canister transport edges, and changed feature-specific asset or worker build hooks.",
+    "exclusions": [
+      "Unchanged shared frontend compiler, minifier, styles and unrelated application plugins are not selected by mixed-file coexistence.",
+      "Unchanged authenticator CBOR processing and unrelated wallet, media and chat functionality are outside this feature-root review.",
+      "Unit-test runners and type-only imports are not runtime roots; explicitly selected component declaration tooling is separately labelled Build."
+    ],
+    "snapshots": [
+      {
+        "workingTreeReview": "2026-09-14: Qwen generation, vision and DeepStack cleanup returns/errors moved outside finally without new imports, dependencies, prompts or app semantics. Same 52 selected files and 18 model roots; cleanup/error-identity regressions pass before and after. Source ownership only, not phone, advisory or release acceptance.",
+        "reviewRecord": "model-cleanup-source-review-20260914.json",
+        "sha256": "b03408dc47dbc46d8eceb4789b695206c6abe4f372a3385ee36fa017558290cf"
+      },
+      {
+        "workingTreeReview": "2026-09-14: mirrored Qwen cleanup control-flow correction in the additive stack; identical three runtime modules, same 52 selected files and 18 model roots. No new import, dependency, prompt or app semantics. Source ownership only, not phone, advisory or release acceptance.",
+        "reviewRecord": "model-cleanup-source-review-20260914.json",
+        "sha256": "796a37f4c8feca57c133a3f01706173a0e3a8a1cbba15c3cfc22adfb24d0eeee"
+      },
+      {
+        "workingTreeReview": "2026-09-13: build-owned runtime assets extracted into an import-free leaf; browser protocol re-exports unchanged values and Rollup no longer loads browser catalog state. 52 selected files, same 18 model roots. Scope-limited source ownership only, not runtime, advisory or release acceptance.",
+        "reviewRecord": "catalog-native-build-source-review-20260913.json",
+        "sha256": "e5a347ddaab7e550186c74294f9c72db7dc3c3fe15daa5067ba564def609bad6"
+      },
+      {
+        "workingTreeReview": "2026-09-13: build-owned runtime assets extracted into an import-free leaf; browser protocol re-exports unchanged values and Rollup no longer loads browser catalog state. 52 selected files, same 18 model roots. Scope-limited source ownership only, not runtime, advisory or release acceptance.",
+        "reviewRecord": "catalog-native-build-source-review-20260913.json",
+        "sha256": "2f6b49f2fc0c27a52b897abe6b9fcb1db6f26ffbd6bc8e31f8c581229700dc5d"
+      },
+      {
+        "workingTreeReview": "2026-09-12: current configurable model catalog source; 51 selected source/evidence files, same 18 model dependency roots. Only local catalog/JSON and existing Svelte imports added; immutable built-in graph packaging no longer depends on catalog ordering or presence. Direct feature ownership only, no advisory/core audit, accuracy, phone or release acceptance.",
+        "reviewRecord": "catalog-model-source-review-20260912.json",
+        "sha256": "c26876c7f51719bce5210d6b7ddef5f637a3e64f626f8e90e2f3c9d3c9681239"
+      },
+      {
+        "workingTreeReview": "2026-09-12: current configurable model catalog source; 51 selected source/evidence files, same 18 model dependency roots. Only local catalog/JSON and existing Svelte imports added; immutable built-in graph packaging no longer depends on catalog ordering or presence. Direct feature ownership only, no advisory/core audit, accuracy, phone or release acceptance.",
+        "reviewRecord": "catalog-model-source-review-20260912.json",
+        "sha256": "12727ac45eb295d809c31e8c1979a09e099a2e05657c420a40ff5984f23ecd22"
+      },
+      {
+        "sourceRevision": "2c5c0b5a5b2d5c96c0522a0af88b6c1c5e0f162b",
+        "sha256": "e391d0108032495377feb0679149b5a991114e02fc21eba33ba4ffa787bfb880"
+      },
+      {
+        "sourceRevision": "d7b94d8649951a5b7d4f46b7d216d41734dd4cf7",
+        "sha256": "7d50b210b221924797fdb3b379cddcb0b910dbb67c7937f5d327fff98e5eb89c"
+      },
+      {
+        "sourceRevision": "2c5c0b5a5b2d5c96c0522a0af88b6c1c5e0f162b",
+        "workingTreeReview": "2026-09-08: cached model runtime-only refresh and bounded, yielding SHA verification; existing feature dependencies unchanged.",
+        "sha256": "0ea793613d2f739edb16831f143c4931e72c0b5a05f138cacc9559415941da2c"
+      },
+      {
+        "sourceRevision": "d7b94d8649951a5b7d4f46b7d216d41734dd4cf7",
+        "workingTreeReview": "2026-09-08: mirrored cached model runtime-only refresh and bounded, yielding SHA verification; existing feature dependencies unchanged.",
+        "sha256": "3e18286176d41690ca83ce315bc14d7dc4441622ea7be9beee2d22df657a492a"
+      },
+      {
+        "sourceRevision": "2c5c0b5a5b2d5c96c0522a0af88b6c1c5e0f162b",
+        "workingTreeReview": "2026-09-09: pinned decoder mRoPE correction preserves external weights and tied embeddings. Both build transforms use the existing onnxruntime-web parser; only Node built-ins otherwise added. No new dependency roots, advisory query or accuracy acceptance.",
+        "sha256": "0dcacd6b1fb16b8479d4972d8cfc7681e8b1a23dbff3505c16b5ffcc2e2542c5"
+      },
+      {
+        "sourceRevision": "d7b94d8649951a5b7d4f46b7d216d41734dd4cf7",
+        "workingTreeReview": "2026-09-09: mirrored pinned decoder mRoPE correction and source review; existing runtime/build dependency roots unchanged. No advisory query or accuracy acceptance.",
+        "sha256": "4f2028ec7bbb568d7e92d196098cc5c992c271717eecf09796611c2f91732abf"
+      },
+      {
+        "sourceRevision": "2c5c0b5a5b2d5c96c0522a0af88b6c1c5e0f162b",
+        "workingTreeReview": "2026-09-09: frozen DeepStack graph, strict BF16-to-FP32 artifact transport and staged feature alignment source; 38 reviewed files and the same 18 roots. DeepStackGraph reuses the ONNX parser and ArtifactTransform reuses Noble hashes. No advisory query or full-model/phone accuracy acceptance.",
+        "sha256": "6670f651d164d7689180f9b75a412534449bae3e0acb8f7becf3e8ba7b927908"
+      },
+      {
+        "sourceRevision": "d7b94d8649951a5b7d4f46b7d216d41734dd4cf7",
+        "workingTreeReview": "2026-09-09: mirrored frozen DeepStack graph, strict BF16-to-FP32 artifact transport and staged feature alignment source; 38 reviewed files and the same 18 roots. Existing ONNX parser and Noble hash evidence includes the new consumers. No advisory query or full-model/phone accuracy acceptance.",
+        "sha256": "52ba9d45f1552a3f122d58244110c8649eab8d2e4a25610cec04a00b29a7abdc"
+      },
+      {
+        "sourceRevision": "2c5c0b5a5b2d5c96c0522a0af88b6c1c5e0f162b",
+        "workingTreeReview": "2026-09-09: reviewed dirty working tree, not the committed sourceRevision bytes or an exact last-review delta. Current 40-file model scope retains all 18 roots and now includes the dedicated staged-session transform helper. QwenContext, image layout and staged-session transport add no package; graph transforms reuse the existing ONNX parser and artifact transport reuses Noble hashes. Direct-feature dependency ownership only; no advisory, security, runtime or phone acceptance.",
+        "sha256": "15b5f9c2aeca637788d71bf1b0474ec4e067c590240227aaf0b1955500e3bd7e"
+      },
+      {
+        "sourceRevision": "d7b94d8649951a5b7d4f46b7d216d41734dd4cf7",
+        "workingTreeReview": "2026-09-09: reviewed mirrored dirty working tree, not the committed sourceRevision bytes or an exact last-review delta. Current 40-file model scope retains all 18 roots and now includes the dedicated staged-session transform helper. QwenContext, image layout and staged-session transport add no package; graph transforms reuse the existing ONNX parser and artifact transport reuses Noble hashes. Direct-feature dependency ownership only; no advisory, security, runtime or phone acceptance.",
+        "sha256": "3aafb847e7aad846a15843fac6278050ecc88a59481aa48b6309767e7c923c96"
+      },
+      {
+        "workingTreeReview": "2026-09-11: fresh CURRENT PR1 dirty-source ownership review, not committed source bytes or an exact prior-review delta. All 48 selected model source/evidence files and 18 roots reviewed; graph transforms reuse the existing ONNX parser, early ORT configuration uses Node crypto, and browser factories/completion/pipeline helpers add no npm package. PR1-specific UI, transport and model build hooks independently checked against PR2; no added model root. Per-file raw/LF hashes and import/ownership findings retained in the project-temp admin record. No advisory, security, runtime, accuracy, phone or release acceptance; app/card scope not approved.",
+        "reviewRecord": "model-root-ownership-current-20260911.json",
+        "sha256": "ff421b4f4dfb13780b3ad74f33c5069889781309248158218583cbc395832ca5"
+      }
+    ]
+  }
+}

@@ -127,7 +127,7 @@ describe("Gemma 4 E2B all-WebGPU runtime", () => {
             "onnx/audio_encoder_q4f16.onnx_data",
         );
         expect(spec?.packagedArtifacts).toEqual([]);
-        expect(spec?.optionalAudio?.artifacts).toBe(TRANSFORMERS_GEMMA_AUDIO_ARTIFACTS);
+        expect(spec?.optionalAudio?.artifacts).toEqual(TRANSFORMERS_GEMMA_AUDIO_ARTIFACTS);
         expect(spec?.optionalAudio?.artifacts.map(({ path }) => path)).toEqual([
             "onnx/audio_encoder_q4f16.onnx",
             "onnx/audio_encoder_q4f16.onnx_data",
@@ -368,157 +368,226 @@ describe("Gemma 4 E2B all-WebGPU runtime", () => {
         expect(workerSource).not.toContain("max_soft_tokens: 280");
     });
 
-    it("stages only the requested encoder and releases it before decoder materialization", async () => {
-        const distPath = path.join(
-            FRONTEND_DIR,
-            "node_modules/@huggingface/transformers/dist/transformers.web.js",
-        );
-        const patched = patchTransformersWebGpuSessionSource(
-            fs.readFileSync(distPath, "utf8"),
-            distPath,
-        );
-        if (patched === null) throw new Error("session transform was not applied");
-        const start = patched.indexOf("async function constructSessions");
-        const end = patched.indexOf("\nfunction replaceTensors", start);
-        const source = patched.slice(start, end);
-        expect(source).toContain(TRANSFORMERS_GEMMA_MODEL_ID);
-        expect(source).toContain(TRANSFORMERS_GEMMA_REVISION);
-        expect(source).toContain("openchat_create_gemma_embed_session");
-        expect(source).toContain('modality === "audio" ? "audio_encoder"');
+    it.each([
+        ["text", "cpu", "float32", true],
+        ["image", "cpu", "float32", true],
+        ["audio", "cpu", "float32", true],
+        ["audio", "gpu-buffer", "float32", false],
+        ["audio", "cpu", "float16", false],
+        ["audio", "missing", "float32", false],
+    ] as const)(
+        "stages %s with %s/%s features without loading unrelated encoders",
+        async (modality, featureLocation, featureType, acceptsFeatures) => {
+            const distPath = path.join(
+                FRONTEND_DIR,
+                "node_modules/@huggingface/transformers/dist/transformers.web.js",
+            );
+            const patched = patchTransformersWebGpuSessionSource(
+                fs.readFileSync(distPath, "utf8"),
+                distPath,
+            );
+            if (patched === null) throw new Error("session transform was not applied");
+            const start = patched.indexOf("async function constructSessions");
+            const end = patched.indexOf("\nfunction replaceTensors", start);
+            const source = patched.slice(start, end);
+            expect(source).toContain('openchat_runtime_adapter === "gemma4-e2b-row-v1"');
+            expect(source).not.toContain(TRANSFORMERS_GEMMA_MODEL_ID);
+            expect(source).not.toContain(TRANSFORMERS_GEMMA_REVISION);
+            expect(source).toContain("openchat_create_gemma_embed_session");
 
-        const events: string[] = [];
-        let activeSessions = 0;
-        const names = {
-            embed_tokens: "embed_tokens",
-            decoder_model_merged: "decoder_model_merged",
-            audio_encoder: "audio_encoder",
-            vision_encoder: "vision_encoder",
-        };
-        let rawDecoderFeeds: Record<string, unknown> | undefined;
-        const session = (name: string) => ({
-            inputNames:
-                name === "decoder_model_merged"
-                    ? TRANSFORMERS_GEMMA_DECODER_INPUT_METADATA.map(({ name }) => name)
-                    : [],
-            inputMetadata:
-                name === "decoder_model_merged"
-                    ? TRANSFORMERS_GEMMA_DECODER_INPUT_METADATA.map((item) => ({ ...item }))
-                    : [],
-            outputNames: [],
-            outputMetadata: [],
-            config: { device: "webgpu", dtype: "q4f16" },
-            run: vi.fn(async (feeds?: Record<string, unknown>) => {
-                if (name === "decoder_model_merged") rawDecoderFeeds = feeds;
-                return name === "vision_encoder"
-                    ? { image_features: { location: "cpu", type: "float32" } }
-                    : {};
-            }),
-            release: vi.fn(async () => {
-                activeSessions--;
-                events.push(`release:${name}:active=${activeSessions}`);
-            }),
-        });
-        const getSession = vi.fn(
-            async (
-                _model: string,
-                name: string,
-                options: { session_options?: { externalData?: Array<{ data: Blob }> } },
-                _cache: boolean,
-            ) => ({
-                buffer_or_path:
+            const events: string[] = [];
+            const encoderName =
+                modality === "image"
+                    ? "vision_encoder"
+                    : modality === "audio"
+                      ? "audio_encoder"
+                      : undefined;
+            let activeSessions = 0;
+            const names = {
+                embed_tokens: "embed_tokens",
+                decoder_model_merged: "decoder_model_merged",
+                audio_encoder: "audio_encoder",
+                vision_encoder: "vision_encoder",
+            };
+            let rawDecoderFeeds: Record<string, unknown> | undefined;
+            const session = (name: string) => ({
+                inputNames:
                     name === "decoder_model_merged"
-                        ? repeatedBytes(GEMMA_GQA_ORIGINAL_ATTRIBUTE, 12)
-                        : new Uint8Array([1]),
-                session_options: { externalData: options.session_options?.externalData },
-                session_config: { name, device: "webgpu", dtype: "q4f16" },
-            }),
-        );
-        const createInferenceSession = vi.fn(
-            async (_bytes: Uint8Array, _options: unknown, config: { name: string }) => {
-                events.push(`create:${config.name}:active=${activeSessions}`);
-                activeSessions++;
-                return session(config.name);
-            },
-        );
-        const construct = new Function(
-            "getSession",
-            "createInferenceSession",
-            "Blob",
-            `${source}; return constructSessions;`,
-        )(getSession, createInferenceSession, Blob) as (
-            model: string,
-            names: Record<string, string>,
-            options: Record<string, unknown>,
-            cache: Record<string, boolean>,
-        ) => Promise<Record<string, ReturnType<typeof session>>>;
-        const embedding = {
-            inputNames: ["input_ids"],
-            inputMetadata: [],
-            outputNames: ["inputs_embeds", "per_layer_inputs"],
-            outputMetadata: [],
-            config: { device: "webgpu", dtype: "q4f16" },
-            run: vi.fn(),
-            release: vi.fn(),
-        };
-        const releaseBarrier = vi.fn(async (stage: string, release: () => Promise<void>) => {
-            events.push(`barrier:${stage}:active=${activeSessions}`);
-            await release();
-        });
-        const sessions = await construct(
-            TRANSFORMERS_GEMMA_MODEL_ID,
-            names,
-            {
-                revision: TRANSFORMERS_GEMMA_REVISION,
-                device: TRANSFORMERS_GEMMA_DEVICE_MAP,
-                dtype: Object.fromEntries(Object.keys(names).map((name) => [name, "q4f16"])),
-                session_options: {
-                    openchat_get_staged_external_data: vi.fn(async (name: string) => [
-                        { path: `${name}.data`, data: new Blob([new Uint8Array([1])]) },
-                    ]),
-                    openchat_wait_for_staged_webgpu_queue: vi.fn(async (name: string) => {
-                        events.push(`drain:${name}:active=${activeSessions}`);
-                    }),
-                    openchat_with_staged_webgpu_release: releaseBarrier,
-                    openchat_create_gemma_embed_session: vi.fn(async () => embedding),
-                    openchat_gemma_required_modality: "image",
+                        ? TRANSFORMERS_GEMMA_DECODER_INPUT_METADATA.map(({ name }) => name)
+                        : [],
+                inputMetadata:
+                    name === "decoder_model_merged"
+                        ? TRANSFORMERS_GEMMA_DECODER_INPUT_METADATA.map((item) => ({ ...item }))
+                        : [],
+                outputNames: [],
+                outputMetadata: [],
+                config: { device: "webgpu", dtype: "q4f16" },
+                run: vi.fn(async (feeds?: Record<string, unknown>) => {
+                    if (name === "decoder_model_merged") rawDecoderFeeds = feeds;
+                    return name === encoderName && featureLocation !== "missing"
+                        ? {
+                              [modality === "image" ? "image_features" : "audio_features"]: {
+                                  location: featureLocation,
+                                  type: featureType,
+                              },
+                          }
+                        : {};
+                }),
+                release: vi.fn(async () => {
+                    activeSessions--;
+                    events.push(`release:${name}:active=${activeSessions}`);
+                }),
+            });
+            const getSession = vi.fn(
+                async (
+                    _model: string,
+                    name: string,
+                    options: { session_options?: { externalData?: Array<{ data: Blob }> } },
+                    _cache: boolean,
+                ) => ({
+                    buffer_or_path:
+                        name === "decoder_model_merged"
+                            ? repeatedBytes(GEMMA_GQA_ORIGINAL_ATTRIBUTE, 12)
+                            : new Uint8Array([1]),
+                    session_options: { externalData: options.session_options?.externalData },
+                    session_config: { name, device: "webgpu", dtype: "q4f16" },
+                }),
+            );
+            const createInferenceSession = vi.fn(
+                async (_bytes: Uint8Array, _options: unknown, config: { name: string }) => {
+                    events.push(`create:${config.name}:active=${activeSessions}`);
+                    activeSessions++;
+                    return session(config.name);
                 },
-            },
-            {},
-        );
-        expect(events).toContain("create:vision_encoder:active=0");
-        expect(events.some((event) => event.startsWith("create:audio_encoder"))).toBe(false);
-        expect(events.some((event) => event.startsWith("create:decoder_model_merged"))).toBe(false);
-        await sessions.vision_encoder.run();
-        class FakeTensor {
-            readonly dispose = vi.fn();
-            constructor(
-                readonly type: string,
-                readonly data: Float32Array | BigInt64Array,
-                readonly dims: number[],
-            ) {}
-        }
-        const callerKeep = new FakeTensor("int64", new BigInt64Array([0n]), []);
-        await sessions.decoder_model_merged.run({
-            inputs_embeds: new FakeTensor("float32", new Float32Array([0]), [1, 1, 1_536]),
-            num_logits_to_keep: callerKeep,
-        });
-        expect(releaseBarrier).toHaveBeenCalledWith(
-            "image-to-decoder transition",
-            expect.any(Function),
-        );
-        expect(events).toContain("release:vision_encoder:active=0");
-        expect(events).toContain("create:decoder_model_merged:active=0");
-        const decoderLoad = getSession.mock.calls.find(
-            ([, name]) => name === "decoder_model_merged",
-        );
-        expect(decoderLoad?.[3]).toBe(true);
-        const forcedKeep = rawDecoderFeeds?.num_logits_to_keep as FakeTensor;
-        expect(forcedKeep).not.toBe(callerKeep);
-        expect(forcedKeep.type).toBe("int64");
-        expect(forcedKeep.dims).toEqual([]);
-        expect([...forcedKeep.data]).toEqual([1n]);
-        expect(forcedKeep.dispose).toHaveBeenCalledOnce();
-        expect(sessions.audio_encoder).toBeUndefined();
-        expect(sessions.embed_tokens).toBe(embedding);
-    });
+            );
+            const construct = new Function(
+                "getSession",
+                "createInferenceSession",
+                "Blob",
+                `${source}; return constructSessions;`,
+            )(getSession, createInferenceSession, Blob) as (
+                model: string,
+                names: Record<string, string>,
+                options: Record<string, unknown>,
+                cache: Record<string, boolean>,
+            ) => Promise<Record<string, ReturnType<typeof session>>>;
+            const embedding = {
+                inputNames: ["input_ids"],
+                inputMetadata: [],
+                outputNames: ["inputs_embeds", "per_layer_inputs"],
+                outputMetadata: [],
+                config: { device: "webgpu", dtype: "q4f16" },
+                run: vi.fn(),
+                release: vi.fn(),
+            };
+            const releaseBarrier = vi.fn(async (stage: string, release: () => Promise<void>) => {
+                events.push(`barrier:${stage}:active=${activeSessions}`);
+                await release();
+            });
+            const sessions = await construct(
+                "catalog-owner/compatible-gemma-variant",
+                names,
+                {
+                    revision: "1111111111111111111111111111111111111111",
+                    device: TRANSFORMERS_GEMMA_DEVICE_MAP,
+                    dtype: Object.fromEntries(Object.keys(names).map((name) => [name, "q4f16"])),
+                    session_options: {
+                        openchat_runtime_adapter: "gemma4-e2b-row-v1",
+                        openchat_get_staged_external_data: vi.fn(async (name: string) => [
+                            { path: `${name}.data`, data: new Blob([new Uint8Array([1])]) },
+                        ]),
+                        openchat_wait_for_staged_webgpu_queue: vi.fn(async (name: string) => {
+                            events.push(`drain:${name}:active=${activeSessions}`);
+                        }),
+                        openchat_with_staged_webgpu_release: releaseBarrier,
+                        openchat_create_gemma_embed_session: vi.fn(async () => embedding),
+                        openchat_gemma_required_modality: modality,
+                    },
+                },
+                {},
+            );
+            expect(getSession.mock.calls.map(([, name]) => name)).toEqual([
+                encoderName ?? "decoder_model_merged",
+            ]);
+            expect(events).toContain(`create:${encoderName ?? "decoder_model_merged"}:active=0`);
+            for (const name of ["audio_encoder", "vision_encoder"]) {
+                if (name !== encoderName) expect(sessions[name]).toBeUndefined();
+            }
+            class FakeTensor {
+                readonly dispose = vi.fn();
+                constructor(
+                    readonly type: string,
+                    readonly data: Float32Array | BigInt64Array,
+                    readonly dims: number[],
+                ) {}
+            }
+            const callerKeep = new FakeTensor("int64", new BigInt64Array([0n]), []);
+            const feeds = {
+                inputs_embeds: new FakeTensor("float32", new Float32Array([0]), [1, 1, 1_536]),
+                num_logits_to_keep: callerKeep,
+            };
+            if (encoderName !== undefined) {
+                await expect(sessions.decoder_model_merged.run(feeds)).rejects.toThrow(
+                    "before its WebGPU encoder completed",
+                );
+                expect(getSession.mock.calls.map(([, name]) => name)).toEqual([encoderName]);
+                if (!acceptsFeatures) {
+                    await expect(sessions[encoderName].run()).rejects.toThrow(
+                        "Gemma staging requires CPU-owned audio encoder features.",
+                    );
+                    await expect(sessions.decoder_model_merged.run(feeds)).rejects.toThrow(
+                        "before its WebGPU encoder completed",
+                    );
+                    expect(getSession.mock.calls.map(([, name]) => name)).toEqual([encoderName]);
+                    await sessions.decoder_model_merged.release();
+                    await sessions[encoderName].release();
+                    await sessions.embed_tokens.release();
+                    expect(activeSessions).toBe(0);
+                    expect(releaseBarrier).not.toHaveBeenCalled();
+                    return;
+                }
+                await sessions[encoderName].run();
+            }
+            await sessions.decoder_model_merged.run(feeds);
+            if (encoderName !== undefined) {
+                expect(releaseBarrier).toHaveBeenCalledExactlyOnceWith(
+                    `${modality}-to-decoder transition`,
+                    expect.any(Function),
+                );
+                expect(events).toContain(`release:${encoderName}:active=0`);
+            } else {
+                expect(releaseBarrier).not.toHaveBeenCalled();
+            }
+            expect(events).toContain("create:decoder_model_merged:active=0");
+            expect(getSession.mock.calls.map(([, name]) => name)).toEqual(
+                encoderName === undefined
+                    ? ["decoder_model_merged"]
+                    : [encoderName, "decoder_model_merged"],
+            );
+            const decoderLoad = getSession.mock.calls.find(
+                ([, name]) => name === "decoder_model_merged",
+            );
+            expect(decoderLoad?.[3]).toBe(true);
+            const forcedKeep = rawDecoderFeeds?.num_logits_to_keep as FakeTensor;
+            expect(forcedKeep).not.toBe(callerKeep);
+            expect(forcedKeep.type).toBe("int64");
+            expect(forcedKeep.dims).toEqual([]);
+            expect([...forcedKeep.data]).toEqual([1n]);
+            expect(forcedKeep.dispose).toHaveBeenCalledOnce();
+            expect(sessions.audio_encoder).toBeUndefined();
+            expect(sessions.vision_encoder).toBeUndefined();
+            expect(sessions.embed_tokens).toBe(embedding);
+            await sessions.decoder_model_merged.release();
+            await sessions.decoder_model_merged.release();
+            await sessions.embed_tokens.release();
+            expect(activeSessions).toBe(0);
+            expect(
+                events.filter((event) => event.startsWith("release:decoder_model_merged")),
+            ).toHaveLength(1);
+            expect(embedding.release).toHaveBeenCalledOnce();
+            await expect(sessions.decoder_model_merged.run(feeds)).rejects.toThrow(
+                "The staged Gemma decoder was released.",
+            );
+        },
+    );
 });
