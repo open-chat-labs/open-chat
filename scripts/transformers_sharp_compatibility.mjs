@@ -21,12 +21,12 @@ assert.equal(
 const sharp = requireParent("sharp");
 assert.equal(
   sharp.versions.sharp,
-  "0.35.3",
+  "0.35.4",
   "Review the image API contract before changing the override",
 );
 assert.equal(
   sharp.versions.vips,
-  "8.18.3",
+  "8.18.6",
   "Use the patched prebuilt libvips, not an older global installation",
 );
 // Import the actual Node package entry; its RawImage implementation imports the installed sharp.
@@ -74,7 +74,7 @@ try {
     check(await original.pad([1, 2, 3, 4]), 9, 11, channels);
     check(await original.center_crop(4, 2), 4, 2, channels);
     check(await original.center_crop(8, 6), 8, 6, channels);
-    // Transformers 4.2.0's mixed pad/crop branch fails on both sharp 0.34.5 and 0.35.3.
+    // Transformers 4.2.0's mixed pad/crop branch fails on sharp 0.34.5, 0.35.3 and 0.35.4.
     // Keep this pre-existing limitation explicit; do not mistake it for a successful transform.
     await assert.rejects(
       original.center_crop(4, 6),
@@ -88,7 +88,7 @@ try {
     const saved = path.join(fixtureRoot, `roundtrip-${channels}.png`);
     await original.save(saved);
     const roundtrip = await RawImage.read(saved);
-        // Saving grayscale without an explicit colourspace yields RGB, as in sharp 0.34.5.
+    // Saving grayscale without an explicit colourspace yields RGB, as in sharp 0.34.5.
     const savedChannels = channels === 1 ? 3 : channels;
     check(
       roundtrip,
@@ -119,7 +119,7 @@ try {
   );
   checks++;
   console.log(
-    `Transformers 4.2.0 / sharp 0.35.3 / libvips 8.18.3 compatibility: ${checks} checks passed (offline; no models or inference)`,
+    `Transformers 4.2.0 / sharp 0.35.4 / libvips 8.18.6 compatibility: ${checks} checks passed (offline; no models or inference)`,
   );
 } finally {
   assert.equal(path.basename(fixtureRoot).startsWith("openchat-sharp-"), true);

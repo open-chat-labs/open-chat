@@ -153,7 +153,9 @@ jobs:
           rustup target add aarch64-linux-android armv7-linux-androideabi
 
       - name: Install frontend dependencies
-        run: npm ci
+        env:
+          ONNXRUNTIME_NODE_INSTALL: "skip"
+        run: npm ci --no-audit
 
       - name: Install the repository-pinned dfx build prerequisite
         uses: dfinity/setup-dfx@e50c04f104ee4285ec010f10609483cf41e4d365

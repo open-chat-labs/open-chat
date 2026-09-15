@@ -14,7 +14,7 @@ validated registry and catalog controls. The enabled Android WebGPU build uses t
 
 An existing APK needs one application update to acquire this catalog implementation.
 After that, compatible catalog changes can be imported/refreshed without rebuilding the APK.
-Updating the JSON bundled *inside* an old APK cannot change that installed file; import
+Updating the JSON bundled _inside_ an old APK cannot change that installed file; import
 the new JSON or refresh from an explicitly configured server instead.
 
 Catalog refresh is explicit, not part of image processing or chat startup. The last validated
@@ -26,24 +26,24 @@ to load an untrusted source. Importing a local JSON file does not need a remote 
 
 ## Configuration
 
-| Field | Meaning |
-| --- | --- |
-| `schemaVersion` | Currently `1`; incompatible versions are rejected. |
-| `version` | Operator-supplied catalog version displayed in both UIs. |
-| `models` | Ordered, complete list; omit a model or set `enabled: false` to remove it from selection. An empty list is valid. |
-| `id`, `name`, `description` | Stable application-facing identifier and chooser text. |
-| `adapter` | A supported, build-owned runtime adapter, not a JavaScript URL. |
-| `repository`, `revision` | Hub repository and immutable 40-character commit. Branch names such as `main` are rejected. |
-| `artifacts` | Every base graph, shard, tokenizer and processor file, with exact relative path, byte count and SHA-256. |
-| `cacheKey` | Immutable cache identity. New keys start with `openchat-model-`; changed artifacts/revision require a new key. Existing bundled keys are retained for migration. |
-| `dtype`, `sessionDtypes` | Overall label and exact per-session precision. Only precisions supported by the adapter are accepted. |
-| `externalData` | Per-session list of declared artifact paths and the names expected by ONNX. Multiple decoder shards are supported, up to the validated limit. |
-| `modalities` | Enabled text/image/audio inputs, constrained by adapter capabilities. |
-| `optionalAudio` | Separate artifact list for opt-in voice support. Base readiness never requires these downloads. |
+| Field                                    | Meaning                                                                                                                                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schemaVersion`                          | Currently `1`; incompatible versions are rejected.                                                                                                                               |
+| `version`                                | Operator-supplied catalog version displayed in both UIs.                                                                                                                         |
+| `models`                                 | Ordered, complete list; omit a model or set `enabled: false` to remove it from selection. An empty list is valid.                                                                |
+| `id`, `name`, `description`              | Stable application-facing identifier and chooser text.                                                                                                                           |
+| `adapter`                                | A supported, build-owned runtime adapter, not a JavaScript URL.                                                                                                                  |
+| `repository`, `revision`                 | Hub repository and immutable 40-character commit. Branch names such as `main` are rejected.                                                                                      |
+| `artifacts`                              | Every base graph, shard, tokenizer and processor file, with exact relative path, byte count and SHA-256.                                                                         |
+| `cacheKey`                               | Immutable cache identity. New keys start with `openchat-model-`; changed artifacts/revision require a new key. Existing bundled keys are retained for migration.                 |
+| `dtype`, `sessionDtypes`                 | Overall label and exact per-session precision. Only precisions supported by the adapter are accepted.                                                                            |
+| `externalData`                           | Per-session list of declared artifact paths and the names expected by ONNX. Multiple decoder shards are supported, up to the validated limit.                                    |
+| `modalities`                             | Enabled text/image/audio inputs, constrained by adapter capabilities.                                                                                                            |
+| `optionalAudio`                          | Separate artifact list for opt-in voice support. Base readiness never requires these downloads.                                                                                  |
 | `packagedArtifacts`, `packagedModelBase` | Graphs/artifacts hosted outside the original Hub revision. Despite the historical field name, the base may be a hosted HTTPS URL or same-origin asset path, not just APK assets. |
-| `developmentModelBase` | Optional development-only base for those hosted artifacts. The bundled Qwen entry uses the existing development graph route. Other entries can use operator-hosted assets. |
-| `generation` | `maxOutputTokens`, `doSample`, `temperature`, `topP`, `topK`, `repetitionPenalty`. |
-| `artifactBytes` | Informational; the loader recomputes totals from the artifact list. |
+| `developmentModelBase`                   | Optional development-only base for those hosted artifacts. The bundled Qwen entry uses the existing development graph route. Other entries can use operator-hosted assets.       |
+| `generation`                             | `maxOutputTokens`, `doSample`, `temperature`, `topP`, `topK`, `repetitionPenalty`.                                                                                               |
+| `artifactBytes`                          | Informational; the loader recomputes totals from the artifact list.                                                                                                              |
 
 Generation ranges: output 1–96 tokens, temperature 0.01–2, top-p 0.01–1,
 top-k integer 1–100, repetition penalty 0.5–2. The effective output cap is the minimum of
@@ -98,7 +98,17 @@ does not inject or rewrite application prompts.
 
 ## Verification scope
 
-### September 14 local phone checkpoint
+### Current selection — September 15
+
+The user chose the bundled approximately 1.7 GiB all-q4 Qwen model with the tested,
+app-owned prompt. The mixed-precision diagnostic weights and private download route
+are retired; smaller Qwen and Gemma remain cached and selectable. There is no pending
+mixed-package hosting or default-model decision. Three fresh consecutive smaller-Qwen
+proposals, including a repeated image, passed on the local-test phone APK with WebGPU
+cleanup. These are separate results from the mixed-model history below, not a relabelling.
+See [the current model release record](releases/pr1-local-models.md).
+
+### Historical September 14 local phone checkpoint
 
 The catalog-enabled combined local APK completed three consecutive image proposals with the
 mixed-precision Qwen candidate, then a cached-model round trip and a fresh Gemma proposal.

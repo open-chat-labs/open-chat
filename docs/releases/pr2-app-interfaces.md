@@ -4,7 +4,22 @@ Target: existing [fork PR #73](https://github.com/ktimam/open-chat/pull/73), sta
 refreshed model PR. Keep draft status; retarget upstream only after the stack is agreed.
 This is a prepared description, not a PR update or publication action.
 
-Current CI-repair status: the initial reconciled stack was published at
+## Exact-head hosted checkpoint — September 15
+
+At published head `2b17aa16e973c573f1ac28476639aa7c2417df36`,
+[full frontend CI](https://github.com/ktimam/open-chat/actions/runs/34980944567)
+passes 3,116 tests and production WebGPU distribution verification. Model frontend,
+Android, real-inference and both native-platform jobs pass. Backend tests, formatting,
+lint and Candid checks also pass. The completed app/model integration job passed
+54 tests with zero failures, one deliberate capacity-stress ignore and 411 filtered out.
+The separate scoped npm collector compatibility fix passes offline tests locally;
+the published workflow remains red. The scoped Sharp patch and optional Node GPU
+download setting are local follow-ups, not new hosted acceptance. The remaining
+adm-zip advisory is still open; existing inherited Rust findings remain deferred. No whole-core
+audit, advisory suppression, active app-prompt change or new APK is implied.
+See the [hosted follow-up](model-app-readiness.md#exact-head-hosted-follow-up--september-15).
+
+Historical CI-repair status: the initial reconciled stack was published at
 `156b7bfbed79d692b34d5db693ec1d86546e04fd`; both PRs remain drafts. The follow-up
 fixes the shared model CI defects, Android bundletool runner-context validation,
 and the standalone PocketIC fixture identity. Fixture downloads pass verification,

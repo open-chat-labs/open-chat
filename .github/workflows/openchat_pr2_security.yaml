@@ -34,6 +34,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install exact frontend lockfile
         working-directory: frontend
+        env:
+          ONNXRUNTIME_NODE_INSTALL: "skip"
         run: npm ci --no-audit
       - name: Verify portable digest migration against reviewed history
         run: node --test scripts/security_dependency_hash.test.mjs

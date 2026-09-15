@@ -1,5 +1,39 @@
 # Local model dependency refresh
 
+## Scoped Sharp patch and optional Node download setting — 2026-09-15
+
+The current model-parent override selects Sharp `0.35.4` / libvips `8.18.6`.
+All 42 existing offline actual-Transformers image checks passed in an isolated
+Windows candidate. Relevant CI dependency installs set `ONNXRUNTIME_NODE_INSTALL=skip`
+to omit unused optional Node GPU downloads; browser WebGPU and native inference
+settings are unchanged. This does not resolve the remaining adm-zip finding.
+See [the scoped triage and verification limits](releases/npm-feature-advisory-triage.md).
+Older versions, hashes and results below are retained historical evidence.
+
+## Scoped npm response compatibility — 2026-09-15
+
+The separately approved feature-only bulk request received HTTP 200 with a valid
+620-byte JSON body, no Content-Type header, and advisories keyed by package name
+without repeated inner `name` fields. The retained public response has SHA-256
+`bb43a9b2d6a6ef5ea522955e623c50f9f3de61ee1786d939678fbfea5b3dbe11`; its exact
+JSON values are frozen in `scripts/fixtures/npm-bulk-public-response-20260915.json`.
+No request inventory, source, image, account data or credentials are in that fixture.
+
+The official pinned npm 11.16.0 client calls `res.json()` in Arborist's
+`lib/audit-report.js` and passes each outer package key to its advisory calculator.
+The calculator fills an absent inner name from that key. Our collector now accepts
+an absent MIME header only through the existing bounded, fatal-UTF-8, duplicate-key
+rejecting JSON parser. Explicit conflicting MIME remains rejected. An inner name,
+when present, must still exactly match the requested outer key.
+
+HTTP status, size, deadlines, package scope, advisory IDs, severity, ranges and HTTPS
+URLs remain validated. The captured moderate/high findings remain failures, not
+exceptions or security approval. Separate fetch/retention/evaluation stages preserve
+the bounded reply before semantic evaluation; failure receipts contain only local
+allowlisted categories and numeric HTTP status, never arbitrary exception text.
+
+The earlier assessment below is retained as historical evidence.
+
 Assessment: 2026-09-06. This is local validation evidence, not release approval.
 
 ## Change boundary

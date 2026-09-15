@@ -1,10 +1,48 @@
 # Model and app integration: PR and release readiness
 
-Assessment: 2026-09-15. **CI repairs are under verification; release acceptance is not complete.**
+Assessment: 2026-09-15. **Hosted functional checks passed; local dependency follow-ups and final publication remain.**
 The first reconciled stack was published to the existing draft PR branches at
 PR1 `656859b54cba959e7bcca018664e92522a51caad` and
 PR2 `156b7bfbed79d692b34d5db693ec1d86546e04fd`. The pre-publication record below is
 historical. No production activation, publisher signing or release dispatch occurred.
+
+## Exact-head hosted follow-up — September 15
+
+Published heads are PR1 `3ea234c43c576c664bce669354784d2a5d3883ce` and
+PR2 `2b17aa16e973c573f1ac28476639aa7c2417df36`. Hosted full frontend suites pass
+1,975 and 3,116 tests respectively, including production WebGPU distribution
+verification. Both model frontend, Android, real-inference and Linux/Windows
+native jobs pass. PR2 backend formatting, lint and unit tests pass (957 unit tests
+and one pre-existing ignore), as do Candid syntax and Rust compatibility checks.
+
+The selected PR2 [integration job](https://github.com/ktimam/open-chat/actions/runs/34980944229/job/104420803290)
+completed successfully at 14:49 UTC: **54 passed, zero failed, one deliberate capacity-stress
+ignore and 411 filtered out**, in 217.05 seconds. Candidate canister build, hash-verified
+fixture staging, harness linking, test execution and result-artifact upload all succeeded.
+The earlier 14:42 inspection was still at the build stage; it was not counted as a pass.
+
+The model workflows remain red at the separate scoped npm check. One approved,
+exact-payload diagnostic received HTTP 200 and valid JSON without Content-Type or
+inner advisory names; the collector rejected that representation. Its compatibility
+fix and regression tests pass locally. The response is retained before semantic
+evaluation, not called a clean scan. No core audit or fallback request was performed.
+The ten existing Rust findings remain documented/deferred, not suppressed. The returned
+model-closure findings for `sharp` and `adm-zip` are separate from that disposition.
+Sharp's scoped `0.35.4` patch passes 42 actual-Transformers image checks. The relevant
+installs skip unused optional Node GPU downloads; the unpatched adm-zip finding is
+still open. These collector, lock and install-setting follow-ups are local and
+unpublished; see [scoped npm triage](npm-feature-advisory-triage.md).
+
+The app's active prompt and local-test APK remain unchanged. A rejected app-owned
+prompt experiment is not a shipping change. A fresh same-worker unchanged-prompt control
+completed all ten runtime checks and nine exact card matches; the sole remaining miss
+is the previously recorded app-owned receipt-note selection. Active configuration is unchanged.
+The user subsequently accepted that specific printed-subtitle note limitation for release
+and directed retaining the phone-tested prompt. The app-owned raw result remains 9/10;
+it is not rescored as complete accuracy or extended to other values/images. This one known
+note mismatch is therefore no longer an approval blocker for the selected app profile.
+Application accuracy, authenticated delivery and remaining current acceptance must
+still be evaluated separately from these hosted successes.
 
 ## CI repair follow-up — September 15
 
@@ -42,10 +80,10 @@ accuracy mismatch, current authenticated delivery, or untested optional features
 
 Fresh selected local suites pass, without changing assertions, mocks or timeouts:
 
-| Source slice | Frontend contracts | Offline CI/packaging helpers |
-| --- | --- | --- |
-| PR1 | 49 files, 972/972 tests | 590/590 tests |
-| PR2 | 91 files, 1,892/1,892 tests | 915/915 tests |
+| Source slice | Frontend contracts          | Offline CI/packaging helpers |
+| ------------ | --------------------------- | ---------------------------- |
+| PR1          | 49 files, 972/972 tests     | 590/590 tests                |
+| PR2          | 91 files, 1,892/1,892 tests | 915/915 tests                |
 
 Successful runs have no failures or skipped tests. Source-bound npm ownership and executable
 feature-CI contract checks also pass in both slices. These local runs used Node 24.14.1;
