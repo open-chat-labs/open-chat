@@ -65,10 +65,13 @@
     let rendering = $state<Promise<void>>();
 
     onMount(async () => {
+        // the prop reads through to Home's `showProfileCard`, which is undefined again if the
+        // card was closed while getUser was in flight
+        const id = userId;
         try {
             rendering = new Promise(async (resolve) => {
-                user = await client.getUser(userId);
-                client.getPublicProfile(userId).subscribe({
+                user = await client.getUser(id);
+                client.getPublicProfile(id).subscribe({
                     onResult: (result) => {
                         profile = result;
                         if (profile === undefined) {

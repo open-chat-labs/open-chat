@@ -1,4 +1,5 @@
 import type {
+    UsersArgs,
     AutonomousBotConfig,
     BotDefinition,
     BotInstallationLocation,
@@ -34,7 +35,7 @@ import type {
     UserSummary,
     UserSummaryUpdate,
 } from "@shared";
-import { CommonResponses, UnsupportedValueError } from "@shared";
+import { CommonResponses, UnsupportedValueError, isPrincipalValid } from "@shared";
 import type {
     BotDefinition as ApiBotDefinition,
     BotInstallationLocation as ApiBotInstallationLocation,
@@ -826,4 +827,16 @@ export function exploreBotsResponse(
         return ocError(value.Error);
     }
     throw new UnsupportedValueError("Unexpected ExploreBotsResponse type received", value);
+}
+
+// Filters out user ids that could never be principals; `Principal.fromText` would throw on them
+// and fail the whole batch.
+export function dropInvalidUserIds(users: UsersArgs): UsersArgs {
+    return {
+        ...users,
+        userGroups: users.userGroups.map((g) => ({
+            ...g,
+            users: g.users.filter(isPrincipalValid),
+        })),
+    };
 }

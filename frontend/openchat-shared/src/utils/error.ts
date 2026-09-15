@@ -123,8 +123,15 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /database deleted by request of the user/i,
     // Safari's in-app browser bridge complaining about its own injected script
     /wkwebview api client did not respond to this postmessage/i,
-    // The client's clock is wrong, so the replica certificate looks like it is from the future
-    /certificate is signed more than 5 minutes in the future/i,
+    // The client's clock is wrong, so the replica certificate looks like it is from the future;
+    // or the device slept mid-request and the certificate is stale by the time it is checked
+    /certificate is signed more than 5 minutes in the (future|past)/i,
+    // The agent gave up polling for an update's result: the network, not our code
+    /request timed out after \d+ msec/i,
+    /backoff strategy exhausted/i,
+    // Two tabs on different IndexedDB schema versions: the older one's transaction names a
+    // store the upgrade removed. Resolves itself on reload.
+    /one of the specified object stores was not found/i,
     // The same wrong clock seen from the other side: the ingress expiry the agent computed from
     // Date.now() falls outside the window the replica will accept. Devices weeks or months out of
     // date produce these in storms, and because the replica echoes the timestamps back in the

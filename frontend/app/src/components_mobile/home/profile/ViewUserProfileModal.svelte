@@ -50,9 +50,12 @@
     let profile: PublicProfile | undefined = $state();
     let user: UserSummary | undefined = $state();
     onMount(async () => {
+        // the prop reads through to the parent's card state, which is undefined again if the
+        // card was closed while getUser was in flight
+        const id = userId;
         try {
-            user = await client.getUser(userId);
-            client.getPublicProfile(userId).subscribe({
+            user = await client.getUser(id);
+            client.getPublicProfile(id).subscribe({
                 onResult: (result) => {
                     profile = result;
                     if (profile === undefined) {

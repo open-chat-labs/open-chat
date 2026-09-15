@@ -51,16 +51,39 @@ export function uncaughtReason(args: any): unknown {
     );
 }
 
-// True when the innermost frame of the primary error is browser-extension code: the error was
-// thrown by an extension (CSP violations from injected wasm, wallet inpage scripts, ...), not us.
+// The innermost frame of the primary error: Rollbar frames are ordered outermost first, so the
+// throw site is last.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function thrownByExtension(payload: any): boolean {
+function throwSiteFilename(payload: any): string | undefined {
     const body = payload?.body;
     const frames = (body?.trace_chain?.[0] ?? body?.trace)?.frames;
-    if (!Array.isArray(frames) || frames.length === 0) return false;
-    // Rollbar frames are ordered outermost first, so the throw site is last
+    if (!Array.isArray(frames) || frames.length === 0) return undefined;
     const filename = frames[frames.length - 1]?.filename;
-    return typeof filename === "string" && /^(chrome|moz|safari-web)-extension:\/\//.test(filename);
+    return typeof filename === "string" ? filename : undefined;
+}
+
+// True when the throw site is browser-extension code: the error was thrown by an extension (CSP
+// violations from injected wasm, wallet inpage scripts, ...), not us.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function thrownByExtension(payload: any): boolean {
+    const filename = throwSiteFilename(payload);
+    return filename !== undefined && /^(chrome|moz|safari-web)-extension:\/\//.test(filename);
+}
+
+// True when the throw site is the HTML document itself rather than a script file: in-app browsers
+// (Google Search App above all) inject scripts inline, and their stack overflows and minified
+// `Error: La` throws carry the page URL as the filename. Our bundle is all script files; the one
+// inline snippet in index.html is a two-line global shim that runs before anything else.
+// Exported for testing.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function thrownByDocumentScript(payload: any): boolean {
+    const filename = throwSiteFilename(payload);
+    if (filename === undefined || !/^https?:\/\//i.test(filename)) return false;
+    try {
+        return new URL(filename).pathname === "/";
+    } catch {
+        return false;
+    }
 }
 
 // Rollbar matches an uploaded source map to a stack frame by exact minified URL. The same bundle
@@ -126,7 +149,7 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             // (isUncaught false) already passed shouldReportError and are not re-filtered here.
             checkIgnore: (isUncaught, args, payload) => {
                 if (!isUncaught) return false;
-                if (thrownByExtension(payload)) return true;
+                if (thrownByExtension(payload) || thrownByDocumentScript(payload)) return true;
                 // Prefer the reason itself: it still carries name and code, which the payload
                 // does not for anything that crossed the worker boundary
                 const reason = uncaughtReason(args);
