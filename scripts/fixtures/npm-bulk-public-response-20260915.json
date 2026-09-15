@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "endpoint": "https://registry.npmjs.org/-/npm/v1/security/advisories/bulk",
+    "receivedAt": "2026-09-15T14:45:38Z",
+    "status": 200,
+    "contentType": null,
+    "responseBytes": 620,
+    "responseSha256": "bb43a9b2d6a6ef5ea522955e623c50f9f3de61ee1786d939678fbfea5b3dbe11"
+  },
+  "response": {
+    "adm-zip": [
+      {
+        "id": 1193734,
+        "url": "https://github.com/advisories/GHSA-vwc7-r8mq-g2x9",
+        "title": "adm-zip extraction follows destination symlinks, allowing arbitrary file overwrite",
+        "severity": "moderate",
+        "vulnerable_versions": ">=0.5.9 <=0.6.0",
+        "cwe": ["CWE-59"],
+        "cvss": {
+          "score": 6.5,
+          "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:N/I:H/A:N"
+        }
+      }
+    ],
+    "sharp": [
+      {
+        "id": 1193725,
+        "url": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c",
+        "title": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545",
+        "severity": "high",
+        "vulnerable_versions": "<0.35.4",
+        "cwe": ["CWE-122"],
+        "cvss": { "score": 0, "vectorString": null }
+      }
+    ]
+  }
+}

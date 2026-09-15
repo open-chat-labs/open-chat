@@ -301,6 +301,100 @@ test("automatic frontend installs explicitly disable implicit npm audits", () =>
   ]);
 });
 
+function assertOptionalNodeDownloadsSkipped(text, expectedJobs, indent = 2) {
+  const jobs = mappingBlock(text.replaceAll("\r\n", "\n"), "jobs", 0);
+  const observed = [];
+  const jobPattern = new RegExp(`^ {${indent}}([a-z0-9-]+):[ \\t]*$`, "gmu");
+  const stepPattern = new RegExp(`^ {${3 * indent}}- `, "mu");
+  const runPattern = new RegExp(
+    `^(?:run:| {${3 * indent + 2}}run:) ([^\\n]*)$`,
+    "gmu",
+  );
+  const continuationPattern = new RegExp(`^ {${4 * indent + 2},}\\S`, "u");
+  for (const [, jobName] of jobs.matchAll(jobPattern)) {
+    const steps = mappingBlock(
+      mappingBlock(jobs, jobName, indent),
+      "steps",
+      2 * indent,
+    );
+    for (const step of steps.split(stepPattern).slice(1)) {
+      for (const command of step.matchAll(runPattern)) {
+        const continuation = step
+          .slice(command.index + command[0].length)
+          .split("\n")
+          .slice(1)
+          .filter((line) => continuationPattern.test(line));
+        const executable = [command[1], ...continuation]
+          .filter((line) => !line.trimStart().startsWith("#"))
+          .join("\n");
+        if (!/\bnpm\s+(?:ci|install|i)\b/u.test(executable)) continue;
+        assert.equal(executable, "npm ci --no-audit", jobName);
+        const env = mappingBlock(step, "env", 3 * indent + 2);
+        assert.equal(env.trim(), 'ONNXRUNTIME_NODE_INSTALL: "skip"', jobName);
+        observed.push(jobName);
+      }
+    }
+  }
+  assert.deepEqual(observed.sort(), [...expectedJobs].sort());
+}
+
+test("feature installs skip unused ONNX Node GPU downloads without disabling lifecycle scripts", () => {
+  assertOptionalNodeDownloadsSkipped(read(".github/workflows/frontend.yaml"), [
+    "install-and-test",
+  ]);
+  assertOptionalNodeDownloadsSkipped(workflow, [
+    "dependency-policy",
+    "frontend-contracts",
+  ]);
+  assertOptionalNodeDownloadsSkipped(
+    read(".github/workflows/android_release.yaml"),
+    ["build-android"],
+    4,
+  );
+});
+
+test("optional Node download setting rejects absent, wrong, commented, duplicated and misplaced configuration", () => {
+  const fixture = [
+    "jobs:",
+    "  install:",
+    "    steps:",
+    "      - name: Install",
+    "        env:",
+    '          ONNXRUNTIME_NODE_INSTALL: "skip"',
+    "        run: npm ci --no-audit",
+    "",
+  ].join("\n");
+  assertOptionalNodeDownloadsSkipped(fixture, ["install"]);
+  const setting = '          ONNXRUNTIME_NODE_INSTALL: "skip"';
+  const mutants = [
+    fixture.replace("        env:\n" + setting + "\n", ""),
+    fixture.replace('"skip"', '"true"'),
+    fixture.replace(setting, '          # ONNXRUNTIME_NODE_INSTALL: "skip"'),
+    fixture.replace(setting, setting + "\n" + setting),
+    fixture.replace("        env:", "        # env:"),
+    fixture.replace(
+      "        run: npm ci --no-audit",
+      "      - name: Other\n        run: npm ci --no-audit",
+    ),
+    fixture.replace("npm ci --no-audit", "npm ci --no-audit --ignore-scripts"),
+    ...[
+      "npm ci",
+      "npm install --no-audit",
+      "npm ci --no-audit --ignore-scripts",
+    ].map((command) => fixture + "      - run: " + command + "\n"),
+    fixture + "      - run: |\n          npm ci\n",
+    fixture +
+      "      - run: |\n          if true; then\n            npm ci\n          fi\n",
+  ];
+  for (const [index, mutant] of mutants.entries()) {
+    assert.notEqual(mutant, fixture, "mutation must alter workflow " + index);
+    assert.throws(
+      () => assertOptionalNodeDownloadsSkipped(mutant, ["install"]),
+      "mutation " + index,
+    );
+  }
+});
+
 test("implicit-audit coverage rejects missing, overridden, commented and alternate installs", () => {
   const fixture = [
     "jobs:",
@@ -972,7 +1066,7 @@ test("Node image and installer fixes stay scoped to their reviewed model parents
   const overrides = manifest.overrides;
   assert.equal(manifest.dependencies["@huggingface/transformers"], "4.2.0");
   for (const [parent, dependency, version] of [
-    ["@huggingface/transformers@4.2.0", "sharp", "0.35.3"],
+    ["@huggingface/transformers@4.2.0", "sharp", "0.35.4"],
     ["onnxruntime-node@1.24.3", "adm-zip", "0.6.0"],
   ]) {
     assert.deepEqual(overrides[parent], { [dependency]: version });

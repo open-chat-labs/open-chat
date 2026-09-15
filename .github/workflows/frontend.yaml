@@ -36,6 +36,8 @@ jobs:
           node-version: "24.18.1"
 
       - name: Install dependencies
+        env:
+          ONNXRUNTIME_NODE_INSTALL: "skip"
         run: npm ci --no-audit
 
         # A missing platform package is a lockfile failure, not permission to rewrite it in CI.

@@ -184,7 +184,7 @@
             "axios": "1.18.1"
         },
         "@huggingface/transformers@4.2.0": {
-            "sharp": "0.35.3"
+            "sharp": "0.35.4"
         },
         "@metamask/utils": {
             "uuid": "^11.1.1"

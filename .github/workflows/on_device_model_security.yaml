@@ -116,6 +116,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install exact frontend lockfile
         working-directory: frontend
+        env:
+          ONNXRUNTIME_NODE_INSTALL: "skip"
         run: npm ci --no-audit
       - name: Verify historical reviewed dependency hash portability
         run: node --test scripts/security_dependency_hash.test.mjs
@@ -277,6 +279,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install exact frontend lockfile
         working-directory: frontend
+        env:
+          ONNXRUNTIME_NODE_INSTALL: "skip"
         run: npm ci --no-audit
       - name: Run all local-model frontend contracts
         working-directory: frontend

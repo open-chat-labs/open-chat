@@ -20,6 +20,26 @@ export const BULK_URL =
   "https://registry.npmjs.org/-/npm/v1/security/advisories/bulk";
 const MAX_BYTES = 4 * 1024 * 1024;
 const knownScopes = new Set(["pr1-model-npm", "pr2-app-card-ocr-npm"]);
+// Only locally assigned categories and numeric status may enter a failure receipt.
+// Never copy exception text, response headers, paths or registry configuration.
+const bulkFailureDetails = new WeakMap();
+export function safeFeatureAdvisoryFailure(stage, error, observedHttpStatus) {
+  const details =
+    error instanceof Error ? bulkFailureDetails.get(error) : undefined;
+  const httpStatus = details?.httpStatus ?? observedHttpStatus;
+  return {
+    failureCategory:
+      details?.category ??
+      (stage === "evaluation"
+        ? "bulk-advisory-validation"
+        : stage === "fetch"
+          ? "bulk-request-or-response"
+          : "scoped-check"),
+    ...(Number.isInteger(httpStatus) && httpStatus >= 100 && httpStatus <= 599
+      ? { httpStatus }
+      : {}),
+  };
+}
 
 /** Input is a freshly collected, source-reviewed inventory, not an arbitrary submitted lockfile. */
 export function planFeatureAdvisories(inventories, semver) {
@@ -146,7 +166,8 @@ export function evaluateFeatureAdvisories(plan, response, semver) {
     const seen = new Set();
     for (const advisory of advisories) {
       assert(
-        record(advisory) && advisory.name === name,
+        record(advisory) &&
+          (!Object.hasOwn(advisory, "name") || advisory.name === name),
         "advisory name mismatch",
       );
       assert(
@@ -285,6 +306,8 @@ export async function fetchFeatureAdvisories(
   assert(Buffer.byteLength(body) <= MAX_BYTES);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30_000);
+  let failureCategory = "bulk-transport";
+  let httpStatus;
   try {
     const response = await fetcher(BULK_URL, {
       method: "POST",
@@ -297,16 +320,22 @@ export async function fetchFeatureAdvisories(
       body,
       signal: controller.signal,
     });
+    httpStatus = response.status;
+    failureCategory = "bulk-http-status";
     assert(
       response.status === 200,
       "bulk service failed; no fallback was attempted",
     );
+    failureCategory = "bulk-content-type";
+    const contentType = response.headers.get("content-type");
+    // npm's pinned client parses res.json() without requiring this optional header.
+    // An explicitly conflicting MIME is still rejected; absent MIME is not a JSON bypass.
     assert(
-      /^application\/json(?:\s*;|$)/iu.test(
-        response.headers.get("content-type") ?? "",
-      ),
+      contentType === null ||
+        /^application\/json(?:\s*;|$)/iu.test(contentType),
       "non-JSON bulk response",
     );
+    failureCategory = "bulk-response-body";
     const length = response.headers.get("content-length");
     assert(
       length === null || (/^\d+$/u.test(length) && Number(length) <= MAX_BYTES),
@@ -331,15 +360,39 @@ export async function fetchFeatureAdvisories(
       reader.releaseLock();
     }
     const bytes = Buffer.concat(chunks);
+    failureCategory = "bulk-response-json";
     const parsed = parseUniqueJson(bytes);
     return {
       response: parsed,
+      httpStatus,
       responseSha256: sha(bytes),
       requestSha256: sha(body),
     };
+  } catch (error) {
+    const failure =
+      error instanceof Error ? error : new Error("bulk request failed");
+    bulkFailureDetails.set(failure, { category: failureCategory, httpStatus });
+    throw failure;
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Retention precedes semantic evaluation so a rejected public reply remains diagnosable. */
+export async function queryFeatureAdvisories(
+  plan,
+  semver,
+  retainResponse,
+  onStage,
+  fetcher = globalThis.fetch,
+) {
+  onStage("fetch");
+  const fetched = await fetchFeatureAdvisories(plan.payload, semver, fetcher);
+  onStage("response-retention", fetched.httpStatus);
+  const responseFileSha256 = await retainResponse(fetched.response);
+  onStage("evaluation", fetched.httpStatus);
+  const evaluation = evaluateFeatureAdvisories(plan, fetched.response, semver);
+  return { ...fetched, responseFileSha256, evaluation };
 }
 
 export async function runFeatureAdvisories({
@@ -364,6 +417,7 @@ export async function runFeatureAdvisories({
   const run = mkdtempSync(join(directory, "npm-feature-advisories-"));
   let stage = "runtime";
   let advisoryRequestAttempted = false;
+  let httpStatus;
   try {
     const variants = variant === "pr2" ? ["pr1", "pr2"] : ["pr1"];
     const runtime = loadNpmFeatureRuntime(arboristPath);
@@ -481,25 +535,26 @@ export async function runFeatureAdvisories({
     };
     verifyInputs(); // Fail source/seed drift before any selected names leave the machine.
     if (queryBulk) {
-      stage = "query";
+      stage = "fetch";
       advisoryRequestAttempted = true;
       // Use the collector's configured npm runtime, never download or resolve another semver library.
-      const fetched = await fetchFeatureAdvisories(plan.payload, semver);
-      const evaluation = evaluateFeatureAdvisories(
+      const queried = await queryFeatureAdvisories(
         plan,
-        fetched.response,
         semver,
+        (response) =>
+          writeNewScopeReport(root, join(run, "response.json"), response),
+        (nextStage, responseStatus) => {
+          stage = nextStage;
+          if (responseStatus !== undefined) httpStatus = responseStatus;
+        },
       );
-      report.responseFileSha256 = writeNewScopeReport(
-        root,
-        join(run, "response.json"),
-        fetched.response,
-      );
-      Object.assign(report, evaluation, {
-        responseSha256: fetched.responseSha256,
-        submittedRequestSha256: fetched.requestSha256,
+      Object.assign(report, queried.evaluation, {
+        httpStatus,
+        responseFileSha256: queried.responseFileSha256,
+        responseSha256: queried.responseSha256,
+        submittedRequestSha256: queried.requestSha256,
         semverVersion: runtime.evidence.semver,
-        advisoryAcceptance: evaluation.knownAdvisoriesPass,
+        advisoryAcceptance: queried.evaluation.knownAdvisoriesPass,
       });
     }
     stage = "verification";
@@ -511,7 +566,7 @@ export async function runFeatureAdvisories({
       report,
     );
     return { ...report, outputDirectory: run, reportSha256 };
-  } catch {
+  } catch (error) {
     // Never serialize arbitrary exception text, paths, environment or package names.
     // The allowlisted stage distinguishes toolchain/collection failures from findings.
     const failure = {
@@ -523,6 +578,7 @@ export async function runFeatureAdvisories({
       advisoryRequestAttempted,
       advisoryAcceptance: false,
       wholeRepositoryCoverage: false,
+      ...safeFeatureAdvisoryFailure(stage, error, httpStatus),
     };
     writeNewScopeReport(root, join(run, "failure.json"), failure);
     throw new Error(

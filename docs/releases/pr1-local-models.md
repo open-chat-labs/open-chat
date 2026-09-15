@@ -4,6 +4,30 @@ Target: existing [upstream PR #9132](https://github.com/open-chat-labs/open-chat
 Keep draft status. This handoff records the model-only source slice; publishing and hosted
 check status must be verified against the exact remote head, not inferred from local tests.
 
+## Verified hosted checks — September 15
+
+The published model head `3ea234c43c576c664bce669354784d2a5d3883ce` passed
+[full frontend CI](https://github.com/ktimam/open-chat/actions/runs/34980936411)
+(1,975 tests), production WebGPU distribution verification, and the frontend,
+Android and Linux/Windows native jobs in
+[model CI](https://github.com/ktimam/open-chat/actions/runs/34980936382).
+The model-only frontend selection passed 972 tests; native tests passed 18 per OS,
+and the real-inference check passed. These are exact-head hosted results, not
+substitutes for application accuracy or phone acceptance.
+
+The overall model workflow is still red because its separate scoped dependency
+check failed. The approved diagnostic subsequently received a valid JSON body
+without a Content-Type header or duplicated inner package names, which the collector
+rejected. The collector compatibility fix and offline regressions now pass locally;
+this does not clear or suppress an advisory. The separate Sharp patch passes its
+42 image API compatibility checks; relevant installs skip unused optional Node GPU
+downloads. The unpatched adm-zip finding remains open for a separate disposition.
+These follow-up changes are not yet published or verified by a new hosted run.
+The ten previously recorded Rust findings remain documented/deferred.
+See [the scoped npm follow-up](npm-feature-advisory-triage.md).
+
+The following CI-repair narrative records the preceding local checkpoint.
+
 ## September 15 CI repair checkpoint
 
 The first publication reached `656859b54cba959e7bcca018664e92522a51caad`.

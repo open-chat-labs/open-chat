@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
 import {
@@ -7,6 +9,8 @@ import {
   evaluateFeatureAdvisories,
   fetchFeatureAdvisories,
   parseFeatureAdvisoryArgs,
+  queryFeatureAdvisories,
+  safeFeatureAdvisoryFailure,
 } from "./npm_feature_advisories.mjs";
 const require = createRequire(
   new URL("../frontend/package.json", import.meta.url),
@@ -14,6 +18,58 @@ const require = createRequire(
 const semver = require("semver");
 const planFeatureAdvisories = (inventories) =>
   planWithSemver(inventories, semver);
+const publicBulkFixture = JSON.parse(
+  readFileSync(
+    new URL(
+      "./fixtures/npm-bulk-public-response-20260915.json",
+      import.meta.url,
+    ),
+  ),
+);
+const publicBulkBytes = Buffer.from(JSON.stringify(publicBulkFixture.response));
+
+test("public npm response with no MIME header remains bounded hash-bound JSON", async () => {
+  assert.equal(publicBulkBytes.length, publicBulkFixture.source.responseBytes);
+  assert.equal(
+    createHash("sha256").update(publicBulkBytes).digest("hex"),
+    publicBulkFixture.source.responseSha256,
+  );
+  const result = await fetchFeatureAdvisories(
+    { "adm-zip": ["0.6.0"], sharp: ["0.35.3"] },
+    semver,
+    async () =>
+      new Response(publicBulkBytes, {
+        status: publicBulkFixture.source.status,
+      }),
+  );
+  assert.deepEqual(result.response, publicBulkFixture.response);
+});
+
+test("public bulk outer package keys bind advisories without redundant inner names", () => {
+  const items = [pkg("adm-zip", "0.6.0"), pkg("sharp", "0.35.3")];
+  const data = inventory();
+  data.packages = items;
+  data.supplementaryPeerGraph.packages = items;
+  const before = JSON.stringify(publicBulkFixture.response);
+  const result = evaluateFeatureAdvisories(
+    planFeatureAdvisories([data]),
+    publicBulkFixture.response,
+    semver,
+  );
+  assert.equal(result.knownAdvisoriesPass, false);
+  assert.deepEqual(
+    result.findings.map(({ name, severity, versions }) => ({
+      name,
+      severity,
+      versions,
+    })),
+    [
+      { name: "adm-zip", severity: "moderate", versions: ["0.6.0"] },
+      { name: "sharp", severity: "high", versions: ["0.35.3"] },
+    ],
+  );
+  assert.equal(JSON.stringify(publicBulkFixture.response), before);
+});
 
 function pkg(name, version = "1.2.3") {
   return {
@@ -277,4 +333,205 @@ test("requires explicit scope, runtime, output and a separate query mode", () =>
   assert.throws(() =>
     parseFeatureAdvisoryArgs([...args, "--fallback", "quick"]),
   );
+});
+
+for (const name of [null, "", false, 17, [], {}, undefined]) {
+  test(`present invalid inner name stays rejected: ${JSON.stringify(name)}`, () => {
+    assert.throws(
+      () =>
+        evaluateFeatureAdvisories(
+          planFeatureAdvisories([inventory()]),
+          { "model-runtime": [advisory({ name })] },
+          semver,
+        ),
+      /advisory name mismatch/u,
+    );
+  });
+}
+
+for (const field of ["id", "title", "severity", "vulnerable_versions", "url"]) {
+  test(`optional name does not make required ${field} optional`, () => {
+    const value = advisory();
+    delete value.name;
+    delete value[field];
+    assert.throws(() =>
+      evaluateFeatureAdvisories(
+        planFeatureAdvisories([inventory()]),
+        { "model-runtime": [value] },
+        semver,
+      ),
+    );
+  });
+}
+
+for (const contentType of [
+  "",
+  "text/plain",
+  "text/html",
+  "application/jsonp",
+  "application/json, text/html",
+]) {
+  test(`rejects explicitly conflicting MIME: ${contentType || "(empty)"}`, async () => {
+    await assert.rejects(
+      fetchFeatureAdvisories(
+        { "model-runtime": ["1.2.3"] },
+        semver,
+        async () =>
+          new Response(Buffer.from("{}"), {
+            headers: { "content-type": contentType },
+          }),
+      ),
+      /non-JSON bulk response/u,
+    );
+  });
+}
+
+for (const [label, bytes] of [
+  ["invalid JSON", Buffer.from("{")],
+  ["malformed UTF-8", Buffer.from([0xff])],
+  ["duplicate keys", Buffer.from('{"model-runtime":[],"model-runtime":[]}')],
+  ["oversized stream", Buffer.alloc(4194305, 32)],
+]) {
+  test(`absent MIME still rejects ${label}`, async () => {
+    await assert.rejects(
+      fetchFeatureAdvisories(
+        { "model-runtime": ["1.2.3"] },
+        semver,
+        async () => new Response(bytes),
+      ),
+    );
+  });
+}
+
+test("failure receipts allow only local categories and numeric HTTP status", async () => {
+  let captured;
+  await assert.rejects(
+    fetchFeatureAdvisories(
+      { "model-runtime": ["1.2.3"] },
+      semver,
+      async () => new Response("private server text", { status: 503 }),
+    ),
+    (error) => {
+      captured = error;
+      return true;
+    },
+  );
+  assert.deepEqual(safeFeatureAdvisoryFailure("fetch", captured), {
+    failureCategory: "bulk-http-status",
+    httpStatus: 503,
+  });
+  const unsafe = Object.assign(
+    new Error("private path and authentication data"),
+    {
+      category: "untrusted category",
+      httpStatus: "private status",
+    },
+  );
+  assert.deepEqual(safeFeatureAdvisoryFailure("fetch", unsafe), {
+    failureCategory: "bulk-request-or-response",
+  });
+  assert.deepEqual(safeFeatureAdvisoryFailure("evaluation", unsafe, 200), {
+    failureCategory: "bulk-advisory-validation",
+    httpStatus: 200,
+  });
+  assert.equal(
+    JSON.stringify(
+      safeFeatureAdvisoryFailure("evaluation", unsafe, "secret"),
+    ).includes("secret"),
+    false,
+  );
+});
+
+test("retains a bounded reply before a semantic failure without accepting the check", async () => {
+  const plan = planFeatureAdvisories([inventory()]);
+  const response = { "model-runtime": [advisory({ severity: "unknown" })] };
+  const bytes = Buffer.from(JSON.stringify(response));
+  const stages = [];
+  let retained, stage, httpStatus, failure;
+  let acceptance = false,
+    calls = 0;
+  try {
+    const queried = await queryFeatureAdvisories(
+      plan,
+      semver,
+      async (value) => {
+        retained = structuredClone(value);
+        return "retained-digest";
+      },
+      (next, status) => {
+        stage = next;
+        httpStatus = status;
+        stages.push(next);
+        if (next === "evaluation") assert.deepEqual(retained, response);
+      },
+      async () => {
+        calls++;
+        return new Response(bytes);
+      },
+    );
+    acceptance = queried.evaluation.knownAdvisoriesPass;
+  } catch (error) {
+    failure = safeFeatureAdvisoryFailure(stage, error, httpStatus);
+  }
+  assert.equal(calls, 1);
+  assert.deepEqual(stages, ["fetch", "response-retention", "evaluation"]);
+  assert.deepEqual(retained, response);
+  assert.deepEqual(failure, {
+    failureCategory: "bulk-advisory-validation",
+    httpStatus: 200,
+  });
+  assert.equal(acceptance, false);
+});
+
+test("invalid JSON fails before retention and never reaches semantic acceptance", async () => {
+  const plan = planFeatureAdvisories([inventory()]);
+  const stages = [];
+  let retained = false,
+    stage,
+    failure,
+    acceptance = false;
+  try {
+    const queried = await queryFeatureAdvisories(
+      plan,
+      semver,
+      () => {
+        retained = true;
+      },
+      (next) => {
+        stage = next;
+        stages.push(next);
+      },
+      async () => new Response(Buffer.from("{")),
+    );
+    acceptance = queried.evaluation.knownAdvisoriesPass;
+  } catch (error) {
+    failure = safeFeatureAdvisoryFailure(stage, error);
+  }
+  assert.deepEqual(stages, ["fetch"]);
+  assert.equal(retained, false);
+  assert.equal(acceptance, false);
+  assert.deepEqual(failure, {
+    failureCategory: "bulk-response-json",
+    httpStatus: 200,
+  });
+});
+
+test("retention failure stops evaluation and is not advisory acceptance", async () => {
+  const plan = planFeatureAdvisories([inventory()]);
+  const stages = [];
+  let acceptance = false;
+  await assert.rejects(async () => {
+    const queried = await queryFeatureAdvisories(
+      plan,
+      semver,
+      async () => {
+        throw new Error("synthetic write failure");
+      },
+      (stage) => stages.push(stage),
+      async () => new Response(Buffer.from("{}")),
+    );
+    acceptance = queried.evaluation.knownAdvisoriesPass;
+  }, /synthetic write failure/u);
+  assert.deepEqual(stages, ["fetch", "response-retention"]);
+  assert.equal(acceptance, false);
 });

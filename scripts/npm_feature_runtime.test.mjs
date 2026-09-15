@@ -100,6 +100,7 @@ test("actual runner writes sanitized pre-query runtime failure evidence", async 
     advisoryRequestAttempted: false,
     advisoryAcceptance: false,
     wholeRepositoryCoverage: false,
+    failureCategory: "scoped-check",
   });
   const savedConnect = Socket.prototype.connect;
   const savedFetch = globalThis.fetch;
