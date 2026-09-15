@@ -15,6 +15,7 @@ mod message_id;
 mod principal;
 mod search_index;
 mod storage;
+mod thread_read;
 mod user_id;
 mod user_metrics;
 
@@ -29,6 +30,7 @@ pub use message_id::*;
 pub use principal::*;
 pub use search_index::*;
 pub use storage::*;
+pub use thread_read::*;
 pub use user_id::*;
 pub use user_metrics::*;
 
@@ -151,6 +153,8 @@ pub enum KeyType {
     MessageActivityEvent = 47,
     MessageActivityEventId = 48,
     ChitEvent = 49,
+    GroupThreadRead = 50,
+    ChannelThreadRead = 51,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -222,7 +226,9 @@ impl KeyType {
             | KeyType::ChannelSearchSender
             | KeyType::MessageActivityEvent
             | KeyType::MessageActivityEventId
-            | KeyType::ChitEvent => MapClass::SmallEntries,
+            | KeyType::ChitEvent
+            | KeyType::GroupThreadRead
+            | KeyType::ChannelThreadRead => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -302,6 +308,8 @@ impl TryFrom<u8> for KeyType {
             47 => Ok(KeyType::MessageActivityEvent),
             48 => Ok(KeyType::MessageActivityEventId),
             49 => Ok(KeyType::ChitEvent),
+            50 => Ok(KeyType::GroupThreadRead),
+            51 => Ok(KeyType::ChannelThreadRead),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),
