@@ -6,6 +6,7 @@ use std::borrow::Cow;
 mod chat_event;
 mod chit_event;
 mod community_event;
+mod contact;
 mod expiring_event;
 mod last_updated;
 mod macros;
@@ -26,6 +27,7 @@ mod user_metrics;
 pub use chat_event::*;
 pub use chit_event::*;
 pub use community_event::*;
+pub use contact::*;
 pub use expiring_event::*;
 pub use last_updated::*;
 pub use message_activity_event::*;
@@ -177,6 +179,7 @@ pub enum KeyType {
     // types never held data in the legacy layout so they keep their original values.
     DirectChatEvent = 57,
     DirectChatThreadEvent = 58,
+    Contact = 59,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -227,7 +230,9 @@ impl KeyType {
             // Each entry is a token swap, which is too large for the small entries map
             | KeyType::TokenSwap
             // Each entry is a P2P swap, which is too large for the small entries map
-            | KeyType::P2PSwap => MapClass::Default,
+            | KeyType::P2PSwap
+            // Contacts are expected to gain more fields, so they use the main map to leave room to grow
+            | KeyType::Contact => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -348,6 +353,7 @@ impl TryFrom<u8> for KeyType {
             56 => Ok(KeyType::StreakInsuranceClaim),
             57 => Ok(KeyType::DirectChatEvent),
             58 => Ok(KeyType::DirectChatThreadEvent),
+            59 => Ok(KeyType::Contact),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

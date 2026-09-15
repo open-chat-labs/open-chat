@@ -10,10 +10,11 @@ fn contacts(_args: Args) -> Response {
             contacts: state
                 .data
                 .contacts
-                .iter()
+                .all()
+                .into_iter()
                 .map(|(user_id, contact)| Contact {
-                    user_id: *user_id,
-                    nickname: contact.nickname.clone(),
+                    user_id,
+                    nickname: contact.nickname,
                 })
                 .collect(),
         })
