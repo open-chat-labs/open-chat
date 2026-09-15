@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the contacts into the main stable memory map ([#9392](https://github.com/open-chat-labs/open-chat/pull/9392))
 - Move the blocked users into the stable memory map for small entries ([#9393](https://github.com/open-chat-labs/open-chat/pull/9393))
 - Move each direct chat's unread message index map into stable memory ([#9387](https://github.com/open-chat-labs/open-chat/pull/9387))
+- Move the lists of removed direct chats, groups and communities into stable memory ([#9388](https://github.com/open-chat-labs/open-chat/pull/9388))
 
 ### Fixed
 
