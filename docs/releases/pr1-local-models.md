@@ -21,8 +21,9 @@ without a Content-Type header or duplicated inner package names, which the colle
 rejected. The collector compatibility fix and offline regressions now pass locally;
 this does not clear or suppress an advisory. The separate Sharp patch passes its
 42 image API compatibility checks; relevant installs skip unused optional Node GPU
-downloads. The unpatched adm-zip finding remains open for a separate disposition.
-These follow-up changes are not yet published or verified by a new hosted run.
+downloads. The user separately directed deferring the unpatched adm-zip finding
+for this local-testing/PR-preparation handoff; it stays open and visible, not suppressed.
+These follow-up changes still require publication and exact-head hosted verification.
 The ten previously recorded Rust findings remain documented/deferred.
 See [the scoped npm follow-up](npm-feature-advisory-triage.md).
 
