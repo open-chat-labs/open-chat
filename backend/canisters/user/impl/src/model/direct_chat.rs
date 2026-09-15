@@ -74,7 +74,7 @@ impl DirectChat {
 
         if let Some(their_message_index) = their_message_index {
             self.unread_message_index_map
-                .add(message_event.event.message_index, their_message_index);
+                .add(self.them, message_event.event.message_index, their_message_index);
         }
 
         message_event
