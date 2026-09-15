@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the P2P swaps into the main stable memory map ([#9384](https://github.com/open-chat-labs/open-chat/pull/9384))
 - Move the streak insurance payments and claims into the stable memory map for small entries ([#9385](https://github.com/open-chat-labs/open-chat/pull/9385))
 - Use a per-chat `key_id` in place of the user id in new direct chats' stable memory keys ([#9389](https://github.com/open-chat-labs/open-chat/pull/9389))
+- Assign a `key_id` to every existing direct chat and move its events to the `key_id` based stable memory keys, then remove the legacy key types ([#9391](https://github.com/open-chat-labs/open-chat/pull/9391))
 
 ### Fixed
 
