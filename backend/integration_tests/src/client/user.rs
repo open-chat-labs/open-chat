@@ -236,6 +236,23 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::add_reaction::Response::Success));
     }
 
+    pub fn mark_read(
+        env: &mut PocketIc,
+        sender: &User,
+        messages_read: Vec<user_canister::mark_read::ChatMessagesRead>,
+        community_messages_read: Vec<user_canister::mark_read::CommunityMessagesRead>,
+    ) {
+        let user_canister::mark_read::Response::Success = super::mark_read(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::mark_read::Args {
+                messages_read,
+                community_messages_read,
+            },
+        );
+    }
+
     pub fn initial_state(env: &PocketIc, sender: &User) -> user_canister::initial_state::SuccessResult {
         let response = super::initial_state(
             env,

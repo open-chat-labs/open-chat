@@ -78,6 +78,10 @@ impl Communities {
         self.communities.values()
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Community> {
+        self.communities.values_mut()
+    }
+
     pub fn removed_since(&self, timestamp: TimestampMillis) -> Vec<CommunityId> {
         self.removed
             .iter()

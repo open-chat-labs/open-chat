@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move each chat's search index from the heap into the stable memory map for small entries, as an inverted index which also supports languages written without spaces, such as Chinese, Japanese and Thai ([#9377](https://github.com/open-chat-labs/open-chat/pull/9377))
 - Move the message activity feed events from the heap into the stable memory map for small entries ([#9379](https://github.com/open-chat-labs/open-chat/pull/9379))
 - Move the CHIT events from the heap into the stable memory map for small entries ([#9380](https://github.com/open-chat-labs/open-chat/pull/9380))
+- Move how far the user has read each thread in each group and channel from the heap into the stable memory map for small entries ([#9381](https://github.com/open-chat-labs/open-chat/pull/9381))
 - Stop storing the other user's metrics in direct chats (other than a user's chat with themselves), since only the user's own metrics are ever read ([#9354](https://github.com/open-chat-labs/open-chat/pull/9354))
 - Move the token swaps into the main stable memory map ([#9382](https://github.com/open-chat-labs/open-chat/pull/9382))
 

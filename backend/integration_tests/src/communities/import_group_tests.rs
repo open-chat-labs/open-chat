@@ -5,13 +5,14 @@ use candid::Principal;
 use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
+use std::collections::HashMap;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     CanisterId, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, MultiUserChat,
     PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent, icrc1,
 };
-use user_canister::mark_read::ChatMessagesRead;
+use user_canister::mark_read::{ChatMessagesRead, ThreadRead};
 
 #[test]
 fn import_group_succeeds() {
@@ -127,7 +128,10 @@ fn read_up_to_data_maintained_after_import() {
             messages_read: vec![ChatMessagesRead {
                 chat_id: group_id,
                 read_up_to: Some(4.into()),
-                threads: Vec::new(),
+                threads: vec![ThreadRead {
+                    root_message_index: 1.into(),
+                    read_up_to: 2.into(),
+                }],
                 date_read_pinned: None,
             }],
             community_messages_read: Vec::new(),
@@ -159,6 +163,7 @@ fn read_up_to_data_maintained_after_import() {
 
     let channel = community.channels.iter().find(|c| c.channel_id == channel_id).unwrap();
     assert_eq!(channel.read_by_me_up_to, Some(4.into()));
+    assert_eq!(channel.threads_read, HashMap::from([(1.into(), 2.into())]));
 }
 
 #[test]
