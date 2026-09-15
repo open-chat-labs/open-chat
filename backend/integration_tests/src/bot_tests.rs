@@ -8,6 +8,7 @@ use community_canister::c2c_bot_community_events::{
 use community_canister::community_events::EventsPageArgs;
 use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use local_user_index_canister::chat_events::{EventsByIndexArgs, EventsSelectionCriteria};
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -364,6 +365,70 @@ fn e2e_autonomous_bot_test() {
             .notifications
             .iter()
             .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot_id)))
+    );
+}
+
+// Invariant: bot_create_channel returns InvalidExternalUrl for a non-https external_url, the
+// same rule as create_channel.
+#[test]
+fn bot_create_channel_rejects_non_https_external_url() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::from_community_permission(
+            CommunityPermission::CreatePublicChannel,
+        )),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    let response = client::local_user_index::bot_create_channel(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_create_channel::Args {
+            community_id,
+            is_public: true,
+            name: "My channel".to_string(),
+            description: "For stuff".to_string(),
+            rules: Rules {
+                text: "Some rules".to_string(),
+                enabled: false,
+            },
+            avatar: None,
+            history_visible_to_new_joiners: true,
+            messages_visible_to_non_members: true,
+            permissions: None,
+            events_ttl: None,
+            gate_config: None,
+            external_url: Some("javascript:alert(1)".to_string()),
+        },
+    );
+
+    assert!(
+        matches!(&response, local_user_index_canister::bot_create_channel::Response::Error(e) if e.matches_code(OCErrorCode::InvalidExternalUrl)),
+        "{response:?}"
     );
 }
 

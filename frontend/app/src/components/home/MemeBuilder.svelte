@@ -4,7 +4,8 @@
         mobileWidth,
         type MemeFighterContent as MemeFighterContentType,
     } from "@client";
-    import { tick } from "svelte";
+    import { onMount, tick } from "svelte";
+    import { guardMemeFighterMessages } from "@src/utils/memeFighter";
     import { i18nKey } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
     import Button from "../Button.svelte";
@@ -27,6 +28,9 @@
     let iframe: HTMLIFrameElement;
     let img: HTMLImageElement | undefined = $state();
     let placeholder = "/assets/memefighter.svg";
+
+    // must be registered before maker-core's own listener (added in reset())
+    onMount(guardMemeFighterMessages);
 
     export function reset() {
         memeUrl = undefined;

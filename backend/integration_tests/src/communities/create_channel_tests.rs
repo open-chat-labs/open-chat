@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -97,6 +98,47 @@ fn existing_users_joined_to_new_public_channel() {
 
     assert!(user2_summary.channels.iter().any(|c| c.channel_id == channel_id));
     assert!(user3_summary.channels.iter().any(|c| c.channel_id == channel_id));
+}
+
+// Invariant: create_channel returns InvalidExternalUrl for a non-https external_url.
+#[test_case("javascript:alert(1)")]
+#[test_case("http://example.com")]
+#[test_case("data:text/html,x")]
+fn create_channel_rejects_non_https_external_url(external_url: &str) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user, community_id } = init_test_data(env, canister_ids, *controller, true);
+
+    let response = client::community::create_channel(
+        env,
+        user.principal,
+        community_id.into(),
+        &community_canister::create_channel::Args {
+            is_public: true,
+            name: random_string(),
+            description: random_string(),
+            rules: Rules::default(),
+            subtype: None,
+            avatar: None,
+            history_visible_to_new_joiners: true,
+            messages_visible_to_non_members: None,
+            permissions_v2: None,
+            events_ttl: None,
+            gate_config: None,
+            external_url: Some(external_url.to_string()),
+        },
+    );
+
+    assert!(
+        matches!(&response, community_canister::create_channel::Response::Error(e) if e.matches_code(OCErrorCode::InvalidExternalUrl)),
+        "{response:?}"
+    );
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {

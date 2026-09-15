@@ -48,6 +48,7 @@ use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
+mod external_url;
 mod guards;
 mod jobs;
 mod lifecycle;

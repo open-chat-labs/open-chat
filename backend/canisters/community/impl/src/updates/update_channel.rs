@@ -1,3 +1,4 @@
+use crate::external_url::validate_external_url;
 use crate::jobs;
 use crate::timer_job_types::JoinMembersToPublicChannelJob;
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
@@ -6,7 +7,6 @@ use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, OptionUpdate};
-use url::Url;
 
 #[update(msgpack = true)]
 #[trace]
@@ -22,10 +22,8 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
 
     clean_args(&mut args);
 
-    if let OptionUpdate::SetToSome(external_url) = &args.external_url
-        && Url::parse(external_url).is_err()
-    {
-        return Err(OCErrorCode::InvalidExternalUrl.into());
+    if let OptionUpdate::SetToSome(external_url) = &args.external_url {
+        validate_external_url(external_url)?;
     }
 
     if let OptionUpdate::SetToSome(gate_config) = &args.gate_config

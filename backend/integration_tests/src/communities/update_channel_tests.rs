@@ -1,5 +1,6 @@
 use crate::env::ENV;
 use crate::{TestEnv, client};
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
@@ -87,4 +88,45 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
         assert_eq!(user3_channel_summary.min_visible_event_index, 0.into());
         assert_eq!(user3_channel_summary.min_visible_message_index, 0.into());
     }
+}
+
+// Invariant: update_channel returns InvalidExternalUrl for a non-https external_url.
+#[test_case("javascript:alert(1)")]
+#[test_case("http://example.com")]
+fn update_channel_rejects_non_https_external_url(external_url: &str) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id = client::user::happy_path::create_community(env, &user, &random_string(), true, vec![random_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, user.principal, community_id, true, random_string());
+
+    let response = client::community::update_channel(
+        env,
+        user.principal,
+        community_id.into(),
+        &community_canister::update_channel::Args {
+            channel_id,
+            name: None,
+            description: None,
+            rules: None,
+            avatar: OptionUpdate::NoChange,
+            permissions_v2: None,
+            events_ttl: OptionUpdate::NoChange,
+            gate_config: OptionUpdate::NoChange,
+            public: None,
+            messages_visible_to_non_members: None,
+            external_url: OptionUpdate::SetToSome(external_url.to_string()),
+        },
+    );
+
+    assert!(
+        matches!(&response, community_canister::update_channel::Response::Error(e) if e.matches_code(OCErrorCode::InvalidExternalUrl)),
+        "{response:?}"
+    );
 }
