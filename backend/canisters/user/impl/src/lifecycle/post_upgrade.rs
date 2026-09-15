@@ -110,7 +110,8 @@ fn post_upgrade(args: Args) {
     // instruction usage as it goes and handing over to a timer job if the budget runs out.
     // TODO: Remove this after next release
     mutate_state(|state| {
-        let complete = migrate_direct_chat_events_to_key_id_keys::run_batch(state, MAX_MIGRATION_INSTRUCTIONS);
+        let max_instructions = migrate_direct_chat_events_to_key_id_keys::max_instructions(state, MAX_MIGRATION_INSTRUCTIONS);
+        let complete = migrate_direct_chat_events_to_key_id_keys::run_batch(state, max_instructions);
         if !complete {
             migrate_direct_chat_events_to_key_id_keys::start_job_if_required(state);
         }

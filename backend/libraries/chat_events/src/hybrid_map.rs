@@ -53,8 +53,8 @@ impl HybridMap<ChatEventsStableStorage> {
         self.slow.assign_key_id_prefix(prefix);
     }
 
-    pub fn migrate_legacy_events(&mut self, should_stop: &mut impl FnMut() -> bool) -> bool {
-        self.slow.migrate_legacy_events(should_stop)
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        self.slow.migrate_legacy_events_batch()
     }
 }
 

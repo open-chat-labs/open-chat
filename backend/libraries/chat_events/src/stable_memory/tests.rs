@@ -677,7 +677,7 @@ fn legacy_events_stay_readable_while_being_migrated() {
 
     // Stop after every batch, checking the events on both sides of the boundary
     let mut rounds = 0;
-    while !storage.migrate_legacy_events(&mut || true) {
+    while !storage.migrate_legacy_events_batch() {
         rounds += 1;
         assert!(storage.has_legacy_events());
         check(&storage);
@@ -713,25 +713,44 @@ fn legacy_events_stay_readable_while_being_migrated() {
 }
 
 #[test]
-fn legacy_events_are_migrated_in_one_call_when_not_stopped() {
+fn legacy_events_are_migrated_in_bounded_batches() {
     init_stable_memory_map();
     let legacy_prefix = ChatEventKeyPrefix::new_from_direct_chat_legacy(Principal::from_slice(&[1]).into(), None);
     let new_prefix = ChatEventKeyPrefix::new_from_direct_chat_key_id(5, None);
 
+    // Exactly 2 full batches, so the final call moves nothing but completes the migration
     let mut storage = ChatEventsStableStorage::new(legacy_prefix.clone());
-    for i in 0..250 {
+    for i in 0..200 {
         storage.insert(empty_event(i));
     }
     storage.assign_key_id_prefix(new_prefix.clone());
-    assert!(storage.migrate_legacy_events(&mut || false));
+    for expected_migrated in [100, 200] {
+        assert!(!storage.migrate_legacy_events_batch());
+        assert_eq!(keys_under(&new_prefix).len(), expected_migrated);
+    }
+    assert!(storage.has_legacy_events());
+    assert!(storage.migrate_legacy_events_batch());
     assert!(!storage.has_legacy_events());
     assert!(keys_under(&legacy_prefix).is_empty());
-    assert_eq!(keys_under(&new_prefix).len(), 250);
+    assert_eq!(keys_under(&new_prefix).len(), 200);
 
-    // A chat with no events completes immediately
-    let mut empty = ChatEventsStableStorage::new(legacy_prefix.for_thread(1.into()));
-    empty.assign_key_id_prefix(new_prefix.for_thread(1.into()));
-    assert!(empty.migrate_legacy_events(&mut || true));
+    // A small list is migrated in a single call
+    let small_legacy_prefix = legacy_prefix.for_thread(1.into());
+    let small_new_prefix = new_prefix.for_thread(1.into());
+    let mut small = ChatEventsStableStorage::new(small_legacy_prefix.clone());
+    for i in 0..10 {
+        small.insert(empty_event(i));
+    }
+    small.assign_key_id_prefix(small_new_prefix.clone());
+    assert!(small.migrate_legacy_events_batch());
+    assert!(!small.has_legacy_events());
+    assert!(keys_under(&small_legacy_prefix).is_empty());
+    assert_eq!(keys_under(&small_new_prefix).len(), 10);
+
+    // A list with no events completes immediately
+    let mut empty = ChatEventsStableStorage::new(legacy_prefix.for_thread(2.into()));
+    empty.assign_key_id_prefix(new_prefix.for_thread(2.into()));
+    assert!(empty.migrate_legacy_events_batch());
     assert!(!empty.has_legacy_events());
 }
 

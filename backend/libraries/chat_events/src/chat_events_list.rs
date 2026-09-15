@@ -53,14 +53,14 @@ impl ChatEventsList {
 
     // Switches a direct chat whose events are stored under legacy keys over to the given `key_id`
     // based prefix, from which every other prefix is derived from then on. The events themselves are
-    // moved across by `migrate_legacy_events`.
+    // moved across by `migrate_legacy_events_batch`.
     pub fn assign_key_id_prefix(&mut self, prefix: ChatEventKeyPrefix) {
         self.events_map.assign_key_id_prefix(prefix);
     }
 
-    // Returns true once every event has been moved from the legacy keys
-    pub fn migrate_legacy_events(&mut self, should_stop: &mut impl FnMut() -> bool) -> bool {
-        self.events_map.migrate_legacy_events(should_stop)
+    // Moves the next batch of events from the legacy keys, returning true once every event has been moved
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        self.events_map.migrate_legacy_events_batch()
     }
 
     pub fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self {
@@ -1416,7 +1416,7 @@ mod tests {
         // Stop after every batch, checking the events remain readable and the state survives being
         // serialized mid-migration
         let mut rounds = 0;
-        while !events.migrate_legacy_events(&mut || true) {
+        while !events.migrate_legacy_events_batch() {
             rounds += 1;
             assert!(events.has_legacy_events());
             events = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
@@ -1425,7 +1425,8 @@ mod tests {
             assert_eq!(event_indexes(&events, Some(root_message_index)), thread_indexes);
             assert_eq!(events.stable_memory_prefix(), &new_prefix);
         }
-        assert_eq!(rounds, 3);
+        // 3 full batches from the main events list, then the last event, then the thread's events
+        assert_eq!(rounds, 4);
         assert!(!events.has_legacy_events());
         events = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
         assert!(!events.has_legacy_events());

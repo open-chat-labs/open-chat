@@ -206,7 +206,7 @@ impl ChatEvents {
     }
 
     // The prefix of the legacy keys of a direct chat created before `key_id`s were introduced, which
-    // may still hold events until `migrate_legacy_events` has moved them across, or the events of a
+    // may still hold events until `migrate_legacy_events_batch` has moved them across, or the events of a
     // thread which was removed before they were moved. The prefix is built from the other user's id
     // rather than taken from the events lists so that it is included even once the migration is
     // complete. This can be removed along with the legacy key types.
@@ -223,7 +223,7 @@ impl ChatEvents {
 
     // Assigns a `key_id` to a direct chat created before `key_id`s were introduced, so that from now
     // on its stable memory keys are derived from the `key_id` rather than from the other user's id.
-    // Its events stay under their legacy keys until `migrate_legacy_events` has moved them across.
+    // Its events stay under their legacy keys until `migrate_legacy_events_batch` has moved them across.
     // Returns false if the chat already has a `key_id`.
     pub fn assign_direct_chat_key_id(&mut self, key_id: u32) -> bool {
         if !self.main.stable_memory_prefix().is_legacy_direct_chat() {
@@ -242,10 +242,17 @@ impl ChatEvents {
         self.main.has_legacy_events() || self.threads.values().any(|t| t.has_legacy_events())
     }
 
-    // Moves the events of a direct chat from its legacy keys to its `key_id` based keys, calling
-    // `should_stop` after each batch. Returns true once every event has been moved.
-    pub fn migrate_legacy_events(&mut self, should_stop: &mut impl FnMut() -> bool) -> bool {
-        self.main.migrate_legacy_events(should_stop) && self.threads.values_mut().all(|t| t.migrate_legacy_events(should_stop))
+    // Moves the next batch of events of a direct chat from its legacy keys to its `key_id` based
+    // keys, returning true once every event (including those in threads) has been moved. Each call
+    // moves a single bounded batch, so callers can check their instruction usage between calls.
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        if let Some(list) = std::iter::once(&mut self.main)
+            .chain(self.threads.values_mut())
+            .find(|list| list.has_legacy_events())
+        {
+            list.migrate_legacy_events_batch();
+        }
+        !self.has_legacy_events()
     }
 
     pub fn set_chat(&mut self, chat: Chat) {

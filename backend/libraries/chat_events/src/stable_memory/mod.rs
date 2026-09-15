@@ -122,7 +122,7 @@ struct LegacyEvents {
     migrated_below: EventIndex,
 }
 
-// How many events are moved before checking whether the migration should pause
+// The maximum number of events moved by each call to `migrate_legacy_events_batch`
 const LEGACY_EVENTS_MIGRATION_BATCH_SIZE: usize = 100;
 
 impl StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>> for ChatEventsStableStorage {
@@ -154,7 +154,7 @@ impl ChatEventsStableStorage {
     }
 
     // Switches a direct chat whose events are stored under legacy keys over to the given `key_id`
-    // based prefix. The events stay readable under their legacy keys until `migrate_legacy_events`
+    // based prefix. The events stay readable under their legacy keys until `migrate_legacy_events_batch`
     // has moved them across.
     pub fn assign_key_id_prefix(&mut self, prefix: ChatEventKeyPrefix) {
         assert!(self.legacy.is_none(), "events are already being migrated from legacy keys");
@@ -169,45 +169,38 @@ impl ChatEventsStableStorage {
         });
     }
 
-    // Moves events from their legacy keys to their new keys in batches, calling `should_stop`
-    // after each batch. Returns true once every event has been moved.
-    pub fn migrate_legacy_events(&mut self, should_stop: &mut impl FnMut() -> bool) -> bool {
-        loop {
-            let Some(legacy) = &self.legacy else {
-                return true;
-            };
-            let batch: Vec<_> = with_map(|m| {
-                m.range(legacy.prefix.create_key(&legacy.migrated_below)..)
-                    .take_while(|(k, _)| k.matches_prefix(&legacy.prefix))
-                    .take(LEGACY_EVENTS_MIGRATION_BATCH_SIZE)
-                    .map(|(k, v)| (k.event_index(), v))
-                    .collect()
-            });
-            let Some((last_index, _)) = batch.last() else {
-                self.legacy = None;
-                return true;
-            };
-            let migrated_below = last_index.incr();
-            let batch_size = batch.len();
-            with_map_mut(|m| {
-                for (index, _) in batch.iter() {
-                    m.remove(legacy.prefix.create_key(index));
-                }
-                m.insert_many(
-                    batch
-                        .into_iter()
-                        .map(|(index, bytes)| (self.prefix.create_key(&index), bytes)),
-                );
-            });
-            if batch_size < LEGACY_EVENTS_MIGRATION_BATCH_SIZE {
-                self.legacy = None;
-                return true;
+    // Moves the next batch of events from their legacy keys to their new keys, returning true once
+    // every event has been moved. Each batch holds at most `LEGACY_EVENTS_MIGRATION_BATCH_SIZE`
+    // events, so callers can check their instruction usage between batches.
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        let Some(legacy) = &self.legacy else {
+            return true;
+        };
+        let batch: Vec<_> = with_map(|m| {
+            m.range(legacy.prefix.create_key(&legacy.migrated_below)..)
+                .take_while(|(k, _)| k.matches_prefix(&legacy.prefix))
+                .take(LEGACY_EVENTS_MIGRATION_BATCH_SIZE)
+                .map(|(k, v)| (k.event_index(), v))
+                .collect()
+        });
+        let complete = batch.len() < LEGACY_EVENTS_MIGRATION_BATCH_SIZE;
+        let migrated_below = batch.last().map(|(index, _)| index.incr());
+        with_map_mut(|m| {
+            for (index, _) in batch.iter() {
+                m.remove(legacy.prefix.create_key(index));
             }
+            m.insert_many(
+                batch
+                    .into_iter()
+                    .map(|(index, bytes)| (self.prefix.create_key(&index), bytes)),
+            );
+        });
+        if complete {
+            self.legacy = None;
+        } else if let Some(migrated_below) = migrated_below {
             self.legacy.as_mut().unwrap().migrated_below = migrated_below;
-            if should_stop() {
-                return false;
-            }
         }
+        complete
     }
 
     // The prefix under which the event with the given index is stored
