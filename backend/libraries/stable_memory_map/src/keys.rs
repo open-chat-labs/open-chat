@@ -17,6 +17,7 @@ mod message_event_indexes;
 mod message_id;
 mod p2p_swap;
 mod principal;
+mod removed_chat;
 mod referral;
 mod search_index;
 mod storage;
@@ -39,6 +40,7 @@ pub use message_event_indexes::*;
 pub use message_id::*;
 pub use p2p_swap::*;
 pub use principal::*;
+pub use removed_chat::*;
 pub use referral::*;
 pub use search_index::*;
 pub use storage::*;
@@ -186,6 +188,9 @@ pub enum KeyType {
     Contact = 59,
     BlockedUser = 60,
     DirectChatUnreadMessageIndex = 61,
+    DirectChatRemoved = 62,
+    GroupChatRemoved = 63,
+    CommunityRemoved = 64,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -272,7 +277,10 @@ impl KeyType {
             | KeyType::StreakInsurancePayment
             | KeyType::StreakInsuranceClaim
             | KeyType::BlockedUser
-            | KeyType::DirectChatUnreadMessageIndex => MapClass::SmallEntries,
+            | KeyType::DirectChatUnreadMessageIndex
+            | KeyType::DirectChatRemoved
+            | KeyType::GroupChatRemoved
+            | KeyType::CommunityRemoved => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -364,6 +372,9 @@ impl TryFrom<u8> for KeyType {
             59 => Ok(KeyType::Contact),
             60 => Ok(KeyType::BlockedUser),
             61 => Ok(KeyType::DirectChatUnreadMessageIndex),
+            62 => Ok(KeyType::DirectChatRemoved),
+            63 => Ok(KeyType::GroupChatRemoved),
+            64 => Ok(KeyType::CommunityRemoved),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

@@ -1,7 +1,9 @@
 use crate::model::direct_chat::DirectChat;
+use crate::model::removed_chats;
 use chat_events::{ChatInternal, ChatMetricsInternal};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::RemovedChatKeyPrefix;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 
@@ -10,7 +12,11 @@ pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     metrics: ChatMetricsInternal,
-    chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
+    // The chats removed which were held on the heap, which are all moved into stable memory in
+    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
+    // TODO: Remove this after next release
+    #[serde(rename = "chats_removed", default, skip_serializing)]
+    removed_on_heap: BTreeSet<(TimestampMillis, ChatId)>,
     // This is needed so that when a group is imported into a community we can quickly update the
     // replies to point to the community
     private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
@@ -81,11 +87,8 @@ impl DirectChats {
     }
 
     pub fn removed_since(&self, since: TimestampMillis) -> Vec<ChatId> {
-        self.chats_removed
-            .iter()
-            .rev()
-            .take_while(|(ts, _)| *ts > since)
-            .map(|(_, c)| *c)
+        removed_chats::removed_since(&RemovedChatKeyPrefix::new_for_direct_chats(), since)
+            .map(|(_, chat_id)| chat_id.into())
             .collect()
     }
 
@@ -102,7 +105,7 @@ impl DirectChats {
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
         self.direct_chats.values().any(|c| c.has_updates_since(since))
             || self.pinned.timestamp > since
-            || self.chats_removed.last().is_some_and(|(ts, _)| *ts > since)
+            || removed_chats::any_removed_since(&RemovedChatKeyPrefix::new_for_direct_chats(), since)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &DirectChat> {
@@ -170,12 +173,71 @@ impl DirectChats {
         }
     }
 
+    // TODO: Remove this after next release
+    pub fn migrate_removed_to_stable_memory(&mut self) -> usize {
+        removed_chats::migrate_to_stable_memory(
+            &RemovedChatKeyPrefix::new_for_direct_chats(),
+            std::mem::take(&mut self.removed_on_heap)
+                .into_iter()
+                .map(|(timestamp, chat_id)| (timestamp, chat_id.into())),
+        )
+    }
+
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {
         if let Some(chat) = self.direct_chats.remove(&chat_id) {
-            self.chats_removed.insert((now, chat_id));
+            removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), chat_id.into(), now);
             Some(chat)
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    #[test]
+    fn removed_direct_chats_serialized_before_the_migration_are_migrated_to_stable_memory() {
+        // The format `DirectChats` was serialized in before the removed chats were moved into
+        // stable memory
+        #[derive(Serialize)]
+        struct LegacyDirectChats {
+            direct_chats: HashMap<ChatId, DirectChat>,
+            pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
+            metrics: ChatMetricsInternal,
+            chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
+            private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
+        }
+
+        init_stable_memory_map();
+        let legacy = LegacyDirectChats {
+            direct_chats: HashMap::new(),
+            pinned: Timestamped::default(),
+            metrics: ChatMetricsInternal::default(),
+            chats_removed: (1..=5).map(|i| (i as u64 * 10, chat(i))).collect(),
+            private_replies_to_groups: BTreeMap::new(),
+        };
+
+        let mut direct_chats: DirectChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
+
+        assert!(!direct_chats.any_updated(0));
+        assert_eq!(direct_chats.migrate_removed_to_stable_memory(), 5);
+        assert_eq!(direct_chats.migrate_removed_to_stable_memory(), 0);
+        assert_eq!(direct_chats.removed_since(20), vec![chat(5), chat(4), chat(3)]);
+        assert!(direct_chats.any_updated(49));
+        assert!(!direct_chats.any_updated(50));
+    }
+
+    fn chat(i: u8) -> ChatId {
+        Principal::from_slice(&[i; 10]).into()
+    }
+
+    fn init_stable_memory_map() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
     }
 }
