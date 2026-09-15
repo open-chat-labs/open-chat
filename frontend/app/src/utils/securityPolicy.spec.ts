@@ -59,8 +59,14 @@ describe("Permissions-Policy header", () => {
         expect(policy.get("web-share")).toBe("(self)");
         expect(policy.get("clipboard-write")).toBe("(self)");
         expect(policy.get("publickey-credentials-get")).toBe("(self)");
-        expect(policy.get("fullscreen")).toMatch(/^\(self\b/);
-        expect(policy.get("picture-in-picture")).toMatch(/^\(self\b/);
+    });
+
+    // Invariant: the blog's YouTube embed keeps fullscreen and picture-in-picture, and the
+    // app keeps them for its own <video> controls.
+    test("YouTube embed keeps fullscreen and picture-in-picture", () => {
+        const youtube = '"https://www.youtube.com"';
+        expect(policy.get("fullscreen")).toBe(`(self ${youtube})`);
+        expect(policy.get("picture-in-picture")).toBe(`(self ${youtube})`);
     });
 
     // Invariant: features with no consumer are off.
