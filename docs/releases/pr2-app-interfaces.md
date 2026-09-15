@@ -15,7 +15,7 @@ lint and Candid checks also pass. The completed app/model integration job passed
 The separate scoped npm collector compatibility fix passes offline tests locally;
 the published workflow remains red. The scoped Sharp patch and optional Node GPU
 download setting are local follow-ups, not new hosted acceptance. The remaining
-adm-zip advisory is still open; existing inherited Rust findings remain deferred. No whole-core
+adm-zip advisory is open and user-deferred for this handoff; inherited Rust findings also remain deferred. No whole-core
 audit, advisory suppression, active app-prompt change or new APK is implied.
 See the [hosted follow-up](model-app-readiness.md#exact-head-hosted-follow-up--september-15).
 

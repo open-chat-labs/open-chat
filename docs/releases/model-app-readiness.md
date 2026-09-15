@@ -30,8 +30,9 @@ The ten existing Rust findings remain documented/deferred, not suppressed. The r
 model-closure findings for `sharp` and `adm-zip` are separate from that disposition.
 Sharp's scoped `0.35.4` patch passes 42 actual-Transformers image checks. The relevant
 installs skip unused optional Node GPU downloads; the unpatched adm-zip finding is
-still open. These collector, lock and install-setting follow-ups are local and
-unpublished; see [scoped npm triage](npm-feature-advisory-triage.md).
+open and now user-deferred for this local-testing/PR-preparation handoff. The user
+approved the respective branch pushes and disclosed CI; these follow-ups require
+their own exact-head hosted results. See [scoped npm triage](npm-feature-advisory-triage.md).
 
 The app's active prompt and local-test APK remain unchanged. A rejected app-owned
 prompt experiment is not a shipping change. A fresh same-worker unchanged-prompt control
@@ -41,8 +42,12 @@ The user subsequently accepted that specific printed-subtitle note limitation fo
 and directed retaining the phone-tested prompt. The app-owned raw result remains 9/10;
 it is not rescored as complete accuracy or extended to other values/images. This one known
 note mismatch is therefore no longer an approval blocker for the selected app profile.
-Application accuracy, authenticated delivery and remaining current acceptance must
-still be evaluated separately from these hosted successes.
+The prior user-confirmed successful action delivery remains applicable: the final
+confirmation/submission functions and backend delivery path are unchanged, and the
+current prepared card matches the previously confirmed values. The source-parity
+review is retained with the companion app's evidence. This is user-confirmed delivery,
+not agent-observed backend read-back; another real entry is not required for this handoff.
+Exact-head hosted verification of the final follow-ups remains separate.
 
 ## CI repair follow-up — September 15
 
