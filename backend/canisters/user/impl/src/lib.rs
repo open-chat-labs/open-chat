@@ -435,7 +435,7 @@ Your streak is now {new_streak} days!"
                 ));
         }
 
-        jobs::garbage_collect_stable_memory::start_job_if_required(self);
+        jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true
     }
 
@@ -613,6 +613,7 @@ impl Data {
         let prefix = ThreadsRead::stable_memory_key_prefix(chat);
         if stable_memory_map::garbage_collect(prefix.clone()).is_err() {
             self.stable_memory_keys_to_garbage_collect.push(prefix);
+            jobs::garbage_collect_stable_memory::start_job_if_required(self);
         }
     }
 
