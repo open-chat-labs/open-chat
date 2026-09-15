@@ -10,7 +10,7 @@ fn token_swap_status(args: Args) -> Response {
 }
 
 fn token_swap_status_impl(args: Args, state: &RuntimeState) -> Response {
-    if let Some(token_swap) = state.data.token_swaps.get(args.swap_id).cloned() {
+    if let Some(token_swap) = state.data.token_swaps.get(args.swap_id) {
         Success(token_swap.into())
     } else {
         Error(OCErrorCode::SwapNotFound.into())

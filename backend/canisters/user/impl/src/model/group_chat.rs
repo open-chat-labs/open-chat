@@ -1,9 +1,9 @@
+use crate::model::threads_read::ThreadsRead;
 use constants::HOUR_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
+use types::{CanisterId, ChatId, MessageIndex, MultiUserChat, TimestampMillis, Timestamped};
 use user_canister::mark_read::ThreadRead;
-use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChat {
@@ -37,7 +37,7 @@ impl GroupChat {
         [
             self.date_joined,
             self.messages_read.read_by_me_up_to.timestamp,
-            self.messages_read.threads_read.last_updated().unwrap_or_default(),
+            self.messages_read.threads_read.last_updated(),
             self.messages_read.date_read_pinned.timestamp,
             self.archived.timestamp,
         ]
@@ -54,7 +54,8 @@ impl GroupChat {
         date_read_pinned: Option<TimestampMillis>,
         now: TimestampMillis,
     ) {
-        self.messages_read.mark_read(read_up_to, threads, date_read_pinned, now);
+        self.messages_read
+            .mark_read(MultiUserChat::Group(self.chat_id), read_up_to, threads, date_read_pinned, now);
     }
 
     pub fn to_summary(&self) -> user_canister::GroupChatSummary {
@@ -62,7 +63,7 @@ impl GroupChat {
             chat_id: self.chat_id,
             local_user_index_canister_id: self.local_user_index_canister_id,
             read_by_me_up_to: self.messages_read.read_by_me_up_to.value,
-            threads_read: self.messages_read.threads_read.iter().map(|(k, v)| (*k, v.value)).collect(),
+            threads_read: self.messages_read.threads_read.all(MultiUserChat::Group(self.chat_id)),
             archived: self.archived.value,
             date_read_pinned: self.messages_read.date_read_pinned.value,
         }
@@ -72,7 +73,9 @@ impl GroupChat {
         user_canister::GroupChatSummaryUpdates {
             chat_id: self.chat_id,
             read_by_me_up_to: self.messages_read.read_by_me_up_to_updates(updates_since),
-            threads_read: self.messages_read.threads_read_updates(updates_since),
+            threads_read: self
+                .messages_read
+                .threads_read_updates(MultiUserChat::Group(self.chat_id), updates_since),
             archived: self.archived.if_set_after(updates_since).copied(),
             date_read_pinned: self.messages_read.date_read_pinned_updates(updates_since),
         }
@@ -82,13 +85,14 @@ impl GroupChat {
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupMessagesRead {
     pub read_by_me_up_to: Timestamped<Option<MessageIndex>>,
-    pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
+    pub threads_read: ThreadsRead,
     pub date_read_pinned: Timestamped<Option<TimestampMillis>>,
 }
 
 impl GroupMessagesRead {
     pub fn mark_read(
         &mut self,
+        chat: MultiUserChat,
         read_up_to: Option<MessageIndex>,
         threads: Vec<ThreadRead>,
         date_read_pinned: Option<TimestampMillis>,
@@ -108,7 +112,8 @@ impl GroupMessagesRead {
         }
 
         for thread in threads {
-            self.threads_read.insert(thread.root_message_index, thread.read_up_to, now);
+            self.threads_read
+                .insert(chat, thread.root_message_index, thread.read_up_to, now);
         }
 
         if date_read_pinned > self.date_read_pinned.value {
@@ -120,11 +125,12 @@ impl GroupMessagesRead {
         self.read_by_me_up_to.if_set_after(updates_since).copied().flatten()
     }
 
-    pub fn threads_read_updates(&self, updates_since: TimestampMillis) -> HashMap<MessageIndex, MessageIndex> {
-        self.threads_read
-            .updated_since(updates_since)
-            .map(|(k, v)| (*k, v.value))
-            .collect()
+    pub fn threads_read_updates(
+        &self,
+        chat: MultiUserChat,
+        updates_since: TimestampMillis,
+    ) -> HashMap<MessageIndex, MessageIndex> {
+        self.threads_read.updated_since(chat, updates_since)
     }
 
     pub fn date_read_pinned_updates(&self, updates_since: TimestampMillis) -> Option<TimestampMillis> {

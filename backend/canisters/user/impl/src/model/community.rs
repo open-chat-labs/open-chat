@@ -1,7 +1,7 @@
 use crate::model::group_chat::{GroupChat, GroupMessagesRead};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CanisterId, ChannelId, CommunityId, TimestampMillis, Timestamped};
+use types::{CanisterId, ChannelId, CommunityId, MultiUserChat, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize)]
 pub struct Community {
@@ -56,6 +56,7 @@ impl Community {
                 .or_insert(Channel::new(channel_messages_read.channel_id))
                 .messages_read
                 .mark_read(
+                    MultiUserChat::Channel(self.community_id, channel_messages_read.channel_id),
                     channel_messages_read.read_up_to,
                     channel_messages_read.threads,
                     channel_messages_read.date_read_pinned,
@@ -65,6 +66,7 @@ impl Community {
         self.last_read = now;
     }
 
+    // The group's thread read entries in stable memory must already have been moved to the channel
     pub fn import_group(&mut self, channel_id: ChannelId, group: GroupChat, now: TimestampMillis) {
         self.channels.insert(
             channel_id,
@@ -87,7 +89,10 @@ impl Community {
                 .map(|c| user_canister::ChannelSummary {
                     channel_id: c.channel_id,
                     read_by_me_up_to: c.messages_read.read_by_me_up_to.value,
-                    threads_read: c.messages_read.threads_read.iter().map(|(k, v)| (*k, v.value)).collect(),
+                    threads_read: c
+                        .messages_read
+                        .threads_read
+                        .all(MultiUserChat::Channel(self.community_id, c.channel_id)),
                     archived: c.archived.value,
                     date_read_pinned: c.messages_read.date_read_pinned.value,
                 })
@@ -112,7 +117,9 @@ impl Community {
                     user_canister::ChannelSummaryUpdates {
                         channel_id: c.channel_id,
                         read_by_me_up_to: c.messages_read.read_by_me_up_to_updates(since),
-                        threads_read: c.messages_read.threads_read_updates(since),
+                        threads_read: c
+                            .messages_read
+                            .threads_read_updates(MultiUserChat::Channel(self.community_id, c.channel_id), since),
                         archived: c.archived.if_set_after(since).copied(),
                         date_read_pinned: c.messages_read.date_read_pinned_updates(since),
                     }
@@ -160,7 +167,7 @@ impl Channel {
     pub fn last_updated(&self) -> TimestampMillis {
         [
             self.messages_read.read_by_me_up_to.timestamp,
-            self.messages_read.threads_read.last_updated().unwrap_or_default(),
+            self.messages_read.threads_read.last_updated(),
             self.messages_read.date_read_pinned.timestamp,
             self.archived.timestamp,
             self.imported.unwrap_or_default(),
