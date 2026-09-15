@@ -11,12 +11,20 @@ use types::{Chat, EventIndex, TimestampMillis};
 key!(
     ExpiringEventKey,
     ExpiringEventKeyPrefix,
-    KeyType::DirectChatExpiringEvent | KeyType::GroupChatExpiringEvent | KeyType::ChannelExpiringEvent
+    KeyType::DirectChatExpiringEvent
+        | KeyType::GroupChatExpiringEvent
+        | KeyType::ChannelExpiringEvent
+        | KeyType::DirectChatExpiringEventV2
 );
 
 impl ExpiringEventKeyPrefix {
     pub fn new_from_chat(chat: Chat) -> Self {
-        Self::try_from(&ChatEventKeyPrefix::new_from_chat(chat, None)).unwrap()
+        Self::new_from_events_prefix(&ChatEventKeyPrefix::new_from_chat(chat, None))
+    }
+
+    // Panics if the events prefix is for a thread
+    pub fn new_from_events_prefix(events_prefix: &ChatEventKeyPrefix) -> Self {
+        Self::try_from(events_prefix).unwrap()
     }
 }
 
@@ -30,6 +38,7 @@ impl TryFrom<&ChatEventKeyPrefix> for ExpiringEventKeyPrefix {
             KeyType::DirectChatEvent => KeyType::DirectChatExpiringEvent,
             KeyType::GroupChatEvent => KeyType::GroupChatExpiringEvent,
             KeyType::ChannelEvent => KeyType::ChannelExpiringEvent,
+            KeyType::DirectChatEventV2 => KeyType::DirectChatExpiringEventV2,
             _ => return Err(()),
         } as u8;
         Ok(ExpiringEventKeyPrefix(bytes))

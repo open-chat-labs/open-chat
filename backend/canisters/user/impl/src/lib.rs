@@ -15,7 +15,7 @@ use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatEvents, EventPusher};
+use chat_events::{ChatEventInternal, EventPusher};
 use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -33,7 +33,7 @@ use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
+use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::cmp::Reverse;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -148,7 +148,16 @@ impl RuntimeState {
                 next_event_expiry = Some(expiry);
             }
             files_to_delete.extend(result.files);
+            // Threads aren't currently enabled for direct chats, but if a thread's root message
+            // expires then its entries in stable memory must be garbage collected
+            for thread in result.threads {
+                self.data
+                    .stable_memory_keys_to_garbage_collect
+                    .extend(chat.events.thread_stable_memory_key_prefixes(thread.root_message_index));
+            }
         }
+
+        jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
 
         if !files_to_delete.is_empty() {
             let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
@@ -423,17 +432,7 @@ Your streak is now {new_streak} days!"
 
         self.data
             .stable_memory_keys_to_garbage_collect
-            .extend(ChatEvents::stable_memory_key_prefixes(
-                ChatEventKeyPrefix::new_from_direct_chat(user_id, None),
-            ));
-
-        for message_index in chat.events.thread_keys() {
-            self.data
-                .stable_memory_keys_to_garbage_collect
-                .extend(ChatEvents::stable_memory_key_prefixes(
-                    ChatEventKeyPrefix::new_from_direct_chat(user_id, Some(message_index)),
-                ));
-        }
+            .extend(chat.events.all_stable_memory_key_prefixes());
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true

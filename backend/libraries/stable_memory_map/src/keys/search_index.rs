@@ -21,20 +21,31 @@ use types::{Chat, MessageIndex, UserId};
 key!(
     SearchTokenKey,
     SearchTokenKeyPrefix,
-    KeyType::DirectChatSearchToken | KeyType::GroupChatSearchToken | KeyType::ChannelSearchToken
+    KeyType::DirectChatSearchToken
+        | KeyType::GroupChatSearchToken
+        | KeyType::ChannelSearchToken
+        | KeyType::DirectChatSearchTokenV2
 );
 
 key!(
     SearchSenderKey,
     SearchSenderKeyPrefix,
-    KeyType::DirectChatSearchSender | KeyType::GroupChatSearchSender | KeyType::ChannelSearchSender
+    KeyType::DirectChatSearchSender
+        | KeyType::GroupChatSearchSender
+        | KeyType::ChannelSearchSender
+        | KeyType::DirectChatSearchSenderV2
 );
 
 const TOKEN_TERMINATOR: u8 = 0;
 
 impl SearchTokenKeyPrefix {
     pub fn new_from_chat(chat: Chat) -> Self {
-        Self::try_from(&ChatEventKeyPrefix::new_from_chat(chat, None)).unwrap()
+        Self::new_from_events_prefix(&ChatEventKeyPrefix::new_from_chat(chat, None))
+    }
+
+    // Panics if the events prefix is for a thread, since only the main events list is indexed
+    pub fn new_from_events_prefix(events_prefix: &ChatEventKeyPrefix) -> Self {
+        Self::try_from(events_prefix).unwrap()
     }
 
     pub fn create_key_for_token(&self, token: &str, message_index: MessageIndex) -> SearchTokenKey {
@@ -59,6 +70,7 @@ impl TryFrom<&ChatEventKeyPrefix> for SearchTokenKeyPrefix {
             KeyType::DirectChatEvent => KeyType::DirectChatSearchToken,
             KeyType::GroupChatEvent => KeyType::GroupChatSearchToken,
             KeyType::ChannelEvent => KeyType::ChannelSearchToken,
+            KeyType::DirectChatEventV2 => KeyType::DirectChatSearchTokenV2,
             _ => return Err(()),
         } as u8;
         Ok(SearchTokenKeyPrefix(bytes))
@@ -88,7 +100,12 @@ impl SearchTokenKey {
 
 impl SearchSenderKeyPrefix {
     pub fn new_from_chat(chat: Chat) -> Self {
-        Self::try_from(&ChatEventKeyPrefix::new_from_chat(chat, None)).unwrap()
+        Self::new_from_events_prefix(&ChatEventKeyPrefix::new_from_chat(chat, None))
+    }
+
+    // Panics if the events prefix is for a thread, since only the main events list is indexed
+    pub fn new_from_events_prefix(events_prefix: &ChatEventKeyPrefix) -> Self {
+        Self::try_from(events_prefix).unwrap()
     }
 }
 
@@ -102,6 +119,7 @@ impl TryFrom<&ChatEventKeyPrefix> for SearchSenderKeyPrefix {
             KeyType::DirectChatEvent => KeyType::DirectChatSearchSender,
             KeyType::GroupChatEvent => KeyType::GroupChatSearchSender,
             KeyType::ChannelEvent => KeyType::ChannelSearchSender,
+            KeyType::DirectChatEventV2 => KeyType::DirectChatSearchSenderV2,
             _ => return Err(()),
         } as u8;
         Ok(SearchSenderKeyPrefix(bytes))
@@ -134,8 +152,11 @@ fn prefix_len(key: &[u8]) -> usize {
         // Key type, then the other user's id preceded by its length
         KeyType::DirectChatSearchToken | KeyType::DirectChatSearchSender => 2 + key[1] as usize,
         KeyType::GroupChatSearchToken | KeyType::GroupChatSearchSender => 1,
-        // Key type, then the channel id
-        KeyType::ChannelSearchToken | KeyType::ChannelSearchSender => 5,
+        // Key type, then the channel id (or the direct chat's key id)
+        KeyType::ChannelSearchToken
+        | KeyType::ChannelSearchSender
+        | KeyType::DirectChatSearchTokenV2
+        | KeyType::DirectChatSearchSenderV2 => 5,
         _ => unreachable!(),
     }
 }
@@ -157,25 +178,31 @@ mod tests {
     use rand::{Rng, RngExt, rng};
     use types::ChannelId;
 
-    fn chats() -> Vec<(Chat, KeyType, KeyType, usize)> {
+    fn chats() -> Vec<(ChatEventKeyPrefix, KeyType, KeyType, usize)> {
         let them_bytes: [u8; 10] = rng().random();
         let them = Principal::from_slice(&them_bytes).into();
         let channel_id = ChannelId::from(rng().next_u32());
         vec![
             (
-                Chat::Direct(them),
+                ChatEventKeyPrefix::new_from_chat(Chat::Direct(them), None),
                 KeyType::DirectChatSearchToken,
                 KeyType::DirectChatSearchSender,
                 12,
             ),
             (
-                Chat::Group(Principal::anonymous().into()),
+                ChatEventKeyPrefix::new_from_direct_chat_key_id(rng().next_u32(), None),
+                KeyType::DirectChatSearchTokenV2,
+                KeyType::DirectChatSearchSenderV2,
+                5,
+            ),
+            (
+                ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None),
                 KeyType::GroupChatSearchToken,
                 KeyType::GroupChatSearchSender,
                 1,
             ),
             (
-                Chat::Channel(Principal::anonymous().into(), channel_id),
+                ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::anonymous().into(), channel_id), None),
                 KeyType::ChannelSearchToken,
                 KeyType::ChannelSearchSender,
                 5,
@@ -189,9 +216,8 @@ mod tests {
             let token: String = ["abc", "東京", "x", "ünïcödé"][rng().random_range(0..4)].repeat(rng().random_range(1..4));
             let message_index = MessageIndex::from(rng().next_u32());
 
-            for (chat, key_type, _, prefix_len) in chats() {
-                let events_prefix = ChatEventKeyPrefix::new_from_chat(chat, None);
-                let prefix = SearchTokenKeyPrefix::new_from_chat(chat);
+            for (events_prefix, key_type, _, prefix_len) in chats() {
+                let prefix = SearchTokenKeyPrefix::new_from_events_prefix(&events_prefix);
                 let key = BaseKey::from(prefix.create_key(&(token.clone(), message_index)));
                 let token_key = SearchTokenKey::try_from(key).unwrap();
 
@@ -201,9 +227,9 @@ mod tests {
                 assert!(token_key.matches_prefix(&prefix));
                 assert_eq!(token_key.token(), token);
                 assert_eq!(token_key.message_index(), message_index);
-                assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix).as_slice()[1..]);
+                assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix.clone()).as_slice()[1..]);
 
-                let thread_events_prefix = ChatEventKeyPrefix::new_from_chat(chat, Some(1.into()));
+                let thread_events_prefix = events_prefix.for_thread(1.into());
                 assert!(SearchTokenKeyPrefix::try_from(&thread_events_prefix).is_err());
 
                 let serialized = msgpack::serialize_then_unwrap(&token_key);
@@ -221,9 +247,8 @@ mod tests {
             let user_id = Principal::from_slice(&user_id_bytes).into();
             let message_index = MessageIndex::from(rng().next_u32());
 
-            for (chat, _, key_type, prefix_len) in chats() {
-                let events_prefix = ChatEventKeyPrefix::new_from_chat(chat, None);
-                let prefix = SearchSenderKeyPrefix::new_from_chat(chat);
+            for (events_prefix, _, key_type, prefix_len) in chats() {
+                let prefix = SearchSenderKeyPrefix::new_from_events_prefix(&events_prefix);
                 let key = BaseKey::from(prefix.create_key(&(user_id, message_index)));
                 let sender_key = SearchSenderKey::try_from(key).unwrap();
 
@@ -232,9 +257,9 @@ mod tests {
                 assert_eq!(sender_key.0.len(), prefix_len + 1 + user_id_len + 4);
                 assert!(sender_key.matches_prefix(&prefix));
                 assert_eq!(sender_key.message_index(), message_index);
-                assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix).as_slice()[1..]);
+                assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix.clone()).as_slice()[1..]);
 
-                let thread_events_prefix = ChatEventKeyPrefix::new_from_chat(chat, Some(1.into()));
+                let thread_events_prefix = events_prefix.for_thread(1.into());
                 assert!(SearchSenderKeyPrefix::try_from(&thread_events_prefix).is_err());
 
                 let serialized = msgpack::serialize_then_unwrap(&sender_key);

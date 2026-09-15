@@ -168,6 +168,20 @@ pub enum KeyType {
     Referral = 54,
     StreakInsurancePayment = 55,
     StreakInsuranceClaim = 56,
+    // The `V2` direct chat key types are for direct chats whose keys use the chat's `key_id` in place
+    // of the other user's id (see `ChatEventKeyPrefix::new_from_direct_chat_key_id`)
+    DirectChatEventV2 = 57,
+    DirectChatThreadEventV2 = 58,
+    DirectChatMessageIdV2 = 59,
+    DirectChatThreadMessageIdV2 = 60,
+    DirectChatExpiringEventV2 = 61,
+    DirectChatEventLastUpdatedV2 = 62,
+    DirectChatEventsByLastUpdatedV2 = 63,
+    DirectChatUserMetricsV2 = 64,
+    DirectChatMessageEventIndexesV2 = 65,
+    DirectChatThreadMessageEventIndexesV2 = 66,
+    DirectChatSearchTokenV2 = 67,
+    DirectChatSearchSenderV2 = 68,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -196,6 +210,8 @@ impl KeyType {
             | KeyType::DirectChatThreadEvent
             | KeyType::GroupChatThreadEvent
             | KeyType::ChannelThreadEvent
+            | KeyType::DirectChatEventV2
+            | KeyType::DirectChatThreadEventV2
             | KeyType::GroupMember
             | KeyType::ChannelMember
             | KeyType::CommunityMember
@@ -213,6 +229,8 @@ impl KeyType {
             | KeyType::DirectChatThreadMessageEventIndexes
             | KeyType::GroupChatThreadMessageEventIndexes
             | KeyType::ChannelThreadMessageEventIndexes
+            | KeyType::DirectChatMessageEventIndexesV2
+            | KeyType::DirectChatThreadMessageEventIndexesV2
             // Each entry is a token swap, which is too large for the small entries map
             | KeyType::TokenSwap
             // Each entry is a P2P swap, which is too large for the small entries map
@@ -248,7 +266,15 @@ impl KeyType {
             | KeyType::ChannelThreadRead
             | KeyType::Referral
             | KeyType::StreakInsurancePayment
-            | KeyType::StreakInsuranceClaim => MapClass::SmallEntries,
+            | KeyType::StreakInsuranceClaim
+            | KeyType::DirectChatMessageIdV2
+            | KeyType::DirectChatThreadMessageIdV2
+            | KeyType::DirectChatExpiringEventV2
+            | KeyType::DirectChatEventLastUpdatedV2
+            | KeyType::DirectChatEventsByLastUpdatedV2
+            | KeyType::DirectChatUserMetricsV2
+            | KeyType::DirectChatSearchTokenV2
+            | KeyType::DirectChatSearchSenderV2 => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -335,6 +361,18 @@ impl TryFrom<u8> for KeyType {
             54 => Ok(KeyType::Referral),
             55 => Ok(KeyType::StreakInsurancePayment),
             56 => Ok(KeyType::StreakInsuranceClaim),
+            57 => Ok(KeyType::DirectChatEventV2),
+            58 => Ok(KeyType::DirectChatThreadEventV2),
+            59 => Ok(KeyType::DirectChatMessageIdV2),
+            60 => Ok(KeyType::DirectChatThreadMessageIdV2),
+            61 => Ok(KeyType::DirectChatExpiringEventV2),
+            62 => Ok(KeyType::DirectChatEventLastUpdatedV2),
+            63 => Ok(KeyType::DirectChatEventsByLastUpdatedV2),
+            64 => Ok(KeyType::DirectChatUserMetricsV2),
+            65 => Ok(KeyType::DirectChatMessageEventIndexesV2),
+            66 => Ok(KeyType::DirectChatThreadMessageEventIndexesV2),
+            67 => Ok(KeyType::DirectChatSearchTokenV2),
+            68 => Ok(KeyType::DirectChatSearchSenderV2),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

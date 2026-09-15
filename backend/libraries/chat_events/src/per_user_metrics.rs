@@ -1,7 +1,7 @@
 use crate::metrics::ChatMetricsInternal;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{Key, KeyPrefix, UserMetricsKeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{ChatEventKeyPrefix, Key, KeyPrefix, UserMetricsKeyPrefix, with_map, with_map_mut};
 use std::cmp::{max, min};
 use std::collections::BTreeMap;
 use types::{Chat, ChatId, TimestampMillis, UserId};
@@ -25,17 +25,18 @@ pub struct PerUserMetrics {
 }
 
 impl PerUserMetrics {
-    pub fn get(&self, chat: Chat, user_id: &UserId) -> Option<ChatMetricsInternal> {
+    pub fn get(&self, events_prefix: &ChatEventKeyPrefix, user_id: &UserId) -> Option<ChatMetricsInternal> {
         if let Some(metrics) = self.on_heap.get(user_id) {
             return Some(metrics.clone());
         }
 
-        let key = UserMetricsKeyPrefix::new_from_chat(chat).create_key(user_id);
+        let key = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(user_id);
         with_map(|m| m.get(key)).map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
     }
 
     pub fn update<F: FnOnce(&mut ChatMetricsInternal)>(
         &mut self,
+        events_prefix: &ChatEventKeyPrefix,
         chat: Chat,
         skip_their_metrics: bool,
         user_id: UserId,
@@ -46,7 +47,7 @@ impl PerUserMetrics {
             return;
         }
 
-        let key = UserMetricsKeyPrefix::new_from_chat(chat).create_key(&user_id);
+        let key = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(&user_id);
 
         with_map_mut(|m| {
             let mut metrics = self.on_heap.remove(&user_id).unwrap_or_else(|| {
@@ -64,7 +65,7 @@ impl PerUserMetrics {
     // which are ever read, so the other user's metrics can be skipped, unless the chat is the user's
     // chat with themselves, in which case the other user *is* the canister's user. Returns whether
     // the other user's metrics should be skipped, in which case any already stored are deleted.
-    pub fn skip_their_metrics(&mut self, chat: Chat, my_user_id: UserId) -> bool {
+    pub fn skip_their_metrics(&mut self, events_prefix: &ChatEventKeyPrefix, chat: Chat, my_user_id: UserId) -> bool {
         let Chat::Direct(them) = chat else {
             return false;
         };
@@ -74,14 +75,14 @@ impl PerUserMetrics {
         }
 
         self.on_heap.remove(&them);
-        with_map_mut(|m| m.remove(UserMetricsKeyPrefix::new_from_chat(chat).create_key(&them)));
+        with_map_mut(|m| m.remove(UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(&them)));
         true
     }
 
     // Copies every entry in stable memory onto the heap, so that they are included when the chat is
     // serialized to be imported into a community
-    pub fn copy_to_heap(&mut self, chat: Chat) {
-        let prefix = UserMetricsKeyPrefix::new_from_chat(chat);
+    pub fn copy_to_heap(&mut self, events_prefix: &ChatEventKeyPrefix) {
+        let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
         let start = prefix.create_key(&Principal::from_slice(&[]).into());
 
         with_map(|m| {
@@ -94,8 +95,8 @@ impl PerUserMetrics {
     // Moves up to `max_count` entries from the heap into stable memory, returning how many were
     // moved. Any existing entry in stable memory for one of these users is a copy of the heap entry
     // (see `copy_to_heap`), so it can simply be overwritten.
-    pub fn migrate_to_stable_memory(&mut self, chat: Chat, max_count: usize) -> usize {
-        let prefix = UserMetricsKeyPrefix::new_from_chat(chat);
+    pub fn migrate_to_stable_memory(&mut self, events_prefix: &ChatEventKeyPrefix, max_count: usize) -> usize {
+        let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
         let count = min(max_count, self.on_heap.len());
         let mut entries = Vec::with_capacity(count);
         for (user_id, metrics) in std::iter::from_fn(|| self.on_heap.pop_first()).take(count) {
@@ -151,7 +152,7 @@ mod tests {
         assert_eq!(metrics1.on_heap_count(), 0);
         assert_matches_model(&metrics1, chat1, &model1);
         assert_matches_model(&metrics2, chat2, &model2);
-        assert!(metrics1.get(chat1, &user_id(100)).is_none());
+        assert!(metrics1.get(&p(chat1), &user_id(100)).is_none());
     }
 
     #[test]
@@ -198,11 +199,11 @@ mod tests {
         assert_eq!(metrics.on_heap_count(), 49);
         assert_matches_model(&metrics, chat, &model);
 
-        assert_eq!(metrics.migrate_to_stable_memory(chat, 20), 20);
+        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), 20), 20);
         assert_eq!(metrics.on_heap_count(), 29);
         assert_matches_model(&metrics, chat, &model);
 
-        assert_eq!(metrics.migrate_to_stable_memory(chat, 100), 29);
+        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), 100), 29);
         assert_eq!(metrics.on_heap_count(), 0);
         assert_matches_model(&metrics, chat, &model);
     }
@@ -238,7 +239,7 @@ mod tests {
         }
 
         // The group copies its entries onto the heap before serializing them
-        metrics.copy_to_heap(group);
+        metrics.copy_to_heap(&p(group));
         assert_eq!(metrics.on_heap_count(), model.len());
         assert_matches_model(&metrics, group, &model);
 
@@ -246,7 +247,7 @@ mod tests {
         let bytes = msgpack::serialize_then_unwrap(&metrics);
         let mut imported: PerUserMetrics = msgpack::deserialize_then_unwrap(&bytes);
         assert_matches_model(&imported, channel, &model);
-        assert_eq!(imported.migrate_to_stable_memory(channel, usize::MAX), model.len());
+        assert_eq!(imported.migrate_to_stable_memory(&p(channel), usize::MAX), model.len());
         assert_matches_model(&imported, channel, &model);
 
         // If the import is abandoned, the group's copies on the heap are the same as the entries in
@@ -262,7 +263,7 @@ mod tests {
             2000,
         );
         assert_matches_model(&metrics, group, &model);
-        metrics.migrate_to_stable_memory(group, usize::MAX);
+        metrics.migrate_to_stable_memory(&p(group), usize::MAX);
         assert_matches_model(&metrics, group, &model);
     }
 
@@ -303,18 +304,18 @@ mod tests {
         assert_matches_model(&metrics, chat, &model);
 
         // Once it does, the other user's metrics are deleted
-        assert!(metrics.skip_their_metrics(chat, me));
+        assert!(metrics.skip_their_metrics(&p(chat), chat, me));
         model.remove(&them);
-        assert!(metrics.get(chat, &them).is_none());
+        assert!(metrics.get(&p(chat), &them).is_none());
         assert_matches_model(&metrics, chat, &model);
 
         // And they are no longer stored
         for now in 1001..1100 {
             let key = MetricKey::from((rng().next_u32() % 22 + 1) as u8);
             apply(&mut metrics, &mut model, chat, true, me, key, true, now);
-            metrics.update(chat, true, them, |m| m.incr(key, 1), now);
+            metrics.update(&p(chat), chat, true, them, |m| m.incr(key, 1), now);
         }
-        assert!(metrics.get(chat, &them).is_none());
+        assert!(metrics.get(&p(chat), &them).is_none());
         assert_matches_model(&metrics, chat, &model);
         assert_eq!(stable_user_ids(chat), vec![me]);
 
@@ -334,7 +335,7 @@ mod tests {
 
         // In a user's chat with themselves, the other user is the user whose canister holds the chat,
         // so nothing is skipped or deleted
-        assert!(!metrics.skip_their_metrics(chat, me));
+        assert!(!metrics.skip_their_metrics(&p(chat), chat, me));
         assert_matches_model(&metrics, chat, &model);
 
         for now in 1001..1100 {
@@ -350,8 +351,10 @@ mod tests {
         let me = user_id(1);
         let mut metrics = PerUserMetrics::default();
 
-        assert!(!metrics.skip_their_metrics(Chat::Group(Principal::anonymous().into()), me));
-        assert!(!metrics.skip_their_metrics(Chat::Channel(Principal::anonymous().into(), ChannelId::from(1u32)), me));
+        let group = Chat::Group(Principal::anonymous().into());
+        assert!(!metrics.skip_their_metrics(&p(group), group, me));
+        let channel = Chat::Channel(Principal::anonymous().into(), ChannelId::from(1u32));
+        assert!(!metrics.skip_their_metrics(&p(channel), channel, me));
     }
 
     #[test]
@@ -364,15 +367,15 @@ mod tests {
         let them = user_id(1);
         let chat = Chat::Direct(them.into());
         let (mut metrics, mut model) = legacy_metrics(&[them, me]);
-        assert_eq!(metrics.migrate_to_stable_memory(chat, 1), 1);
+        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), 1), 1);
         assert_eq!(stable_user_ids(chat), vec![them]);
 
-        assert!(metrics.skip_their_metrics(chat, me));
+        assert!(metrics.skip_their_metrics(&p(chat), chat, me));
         model.remove(&them);
         assert!(stable_user_ids(chat).is_empty());
         assert_matches_model(&metrics, chat, &model);
 
-        assert_eq!(metrics.migrate_to_stable_memory(chat, usize::MAX), 1);
+        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), usize::MAX), 1);
         assert_eq!(stable_user_ids(chat), vec![me]);
         assert_matches_model(&metrics, chat, &model);
 
@@ -381,12 +384,12 @@ mod tests {
         let chat = Chat::Direct(them.into());
         let (mut metrics, mut model) = legacy_metrics(&[them, me]);
 
-        assert!(metrics.skip_their_metrics(chat, me));
+        assert!(metrics.skip_their_metrics(&p(chat), chat, me));
         model.remove(&them);
         assert_eq!(metrics.on_heap_count(), 1);
         assert_matches_model(&metrics, chat, &model);
 
-        assert_eq!(metrics.migrate_to_stable_memory(chat, usize::MAX), 1);
+        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), usize::MAX), 1);
         assert_eq!(stable_user_ids(chat), vec![me]);
         assert_matches_model(&metrics, chat, &model);
     }
@@ -405,7 +408,7 @@ mod tests {
         let action = |m: &mut ChatMetricsInternal| {
             if incr { m.incr(key, 1) } else { m.decr(key, 1) }
         };
-        metrics.update(chat, skip_their_metrics, user_id, action, now);
+        metrics.update(&p(chat), chat, skip_their_metrics, user_id, action, now);
 
         let expected = model.entry(user_id).or_default();
         action(expected);
@@ -414,7 +417,7 @@ mod tests {
 
     fn assert_matches_model(metrics: &PerUserMetrics, chat: Chat, model: &Model) {
         for (user_id, expected) in model {
-            assert_eq!(metrics.get(chat, user_id).as_ref(), Some(expected));
+            assert_eq!(metrics.get(&p(chat), user_id).as_ref(), Some(expected));
         }
     }
 
@@ -430,6 +433,10 @@ mod tests {
             msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&model)),
             model,
         )
+    }
+
+    fn p(chat: Chat) -> ChatEventKeyPrefix {
+        ChatEventKeyPrefix::new_from_chat(chat, None)
     }
 
     fn stable_user_ids(chat: Chat) -> Vec<UserId> {
