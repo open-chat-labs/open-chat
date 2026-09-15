@@ -440,6 +440,7 @@ mod tests {
             KeyType::GroupChatThreadMessageEventIndexes,
             KeyType::ChannelThreadMessageEventIndexes,
             KeyType::TokenSwap,
+            KeyType::P2PSwap,
         ];
         for key_type in added_to_main_map {
             assert_eq!(key_type.map_class(), MapClass::Default, "{key_type:?}");
