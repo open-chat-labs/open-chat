@@ -12,13 +12,19 @@ use types::{Chat, EventIndex, MessageIndex, TimestampMillis};
 key!(
     EventLastUpdatedKey,
     EventLastUpdatedKeyPrefix,
-    KeyType::DirectChatEventLastUpdated | KeyType::GroupChatEventLastUpdated | KeyType::ChannelEventLastUpdated
+    KeyType::DirectChatEventLastUpdated
+        | KeyType::GroupChatEventLastUpdated
+        | KeyType::ChannelEventLastUpdated
+        | KeyType::DirectChatEventLastUpdatedV2
 );
 
 key!(
     EventsByLastUpdatedKey,
     EventsByLastUpdatedKeyPrefix,
-    KeyType::DirectChatEventsByLastUpdated | KeyType::GroupChatEventsByLastUpdated | KeyType::ChannelEventsByLastUpdated
+    KeyType::DirectChatEventsByLastUpdated
+        | KeyType::GroupChatEventsByLastUpdated
+        | KeyType::ChannelEventsByLastUpdated
+        | KeyType::DirectChatEventsByLastUpdatedV2
 );
 
 // Each event is identified by its thread (if any) followed by its event index, which is encoded as
@@ -30,7 +36,12 @@ const EVENT_SUFFIX_LEN: usize = 9;
 
 impl EventLastUpdatedKeyPrefix {
     pub fn new_from_chat(chat: Chat) -> Self {
-        Self::try_from(&ChatEventKeyPrefix::new_from_chat(chat, None)).unwrap()
+        Self::new_from_events_prefix(&ChatEventKeyPrefix::new_from_chat(chat, None))
+    }
+
+    // Panics if the events prefix is for a thread
+    pub fn new_from_events_prefix(events_prefix: &ChatEventKeyPrefix) -> Self {
+        Self::try_from(events_prefix).unwrap()
     }
 }
 
@@ -45,6 +56,7 @@ impl TryFrom<&ChatEventKeyPrefix> for EventLastUpdatedKeyPrefix {
             KeyType::DirectChatEvent => KeyType::DirectChatEventLastUpdated,
             KeyType::GroupChatEvent => KeyType::GroupChatEventLastUpdated,
             KeyType::ChannelEvent => KeyType::ChannelEventLastUpdated,
+            KeyType::DirectChatEventV2 => KeyType::DirectChatEventLastUpdatedV2,
             _ => return Err(()),
         } as u8;
         Ok(EventLastUpdatedKeyPrefix(bytes))
@@ -53,7 +65,12 @@ impl TryFrom<&ChatEventKeyPrefix> for EventLastUpdatedKeyPrefix {
 
 impl EventsByLastUpdatedKeyPrefix {
     pub fn new_from_chat(chat: Chat) -> Self {
-        Self::try_from(&ChatEventKeyPrefix::new_from_chat(chat, None)).unwrap()
+        Self::new_from_events_prefix(&ChatEventKeyPrefix::new_from_chat(chat, None))
+    }
+
+    // Panics if the events prefix is for a thread
+    pub fn new_from_events_prefix(events_prefix: &ChatEventKeyPrefix) -> Self {
+        Self::try_from(events_prefix).unwrap()
     }
 }
 
@@ -68,6 +85,7 @@ impl TryFrom<&ChatEventKeyPrefix> for EventsByLastUpdatedKeyPrefix {
             KeyType::DirectChatEvent => KeyType::DirectChatEventsByLastUpdated,
             KeyType::GroupChatEvent => KeyType::GroupChatEventsByLastUpdated,
             KeyType::ChannelEvent => KeyType::ChannelEventsByLastUpdated,
+            KeyType::DirectChatEventV2 => KeyType::DirectChatEventsByLastUpdatedV2,
             _ => return Err(()),
         } as u8;
         Ok(EventsByLastUpdatedKeyPrefix(bytes))

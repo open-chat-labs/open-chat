@@ -5,11 +5,11 @@ use crate::{TestEnv, client};
 use constants::DAY_IN_MS;
 use ic_stable_structures::memory_manager::MemoryId;
 use pocket_ic::PocketIc;
-use stable_memory_map::{KeyPrefix, KeyType, UserMetricsKeyPrefix};
+use stable_memory_map::KeyType;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{CanisterId, Chat, ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
+use types::{CanisterId, ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
 
 #[test]
 fn delete_direct_chat_succeeds() {
@@ -123,10 +123,14 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     tick_many(env, 3);
 
     for (me, them) in [(&user1, &user2), (&user2, &user1)] {
-        let prefix = UserMetricsKeyPrefix::new_from_chat(Chat::Direct(them.user_id.into()));
-        let small_entries = get_stable_memory_map(env, me.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID);
-        assert!(small_entries.contains_key(&prefix.create_key(&me.user_id).as_ref().to_vec()));
-        assert!(!small_entries.contains_key(&prefix.create_key(&them.user_id).as_ref().to_vec()));
+        // The chat's keys use its `key_id` rather than the other user's id, so find the metrics
+        // entries by their key type and the user id they end with
+        let user_metrics_keys: Vec<_> = get_stable_memory_map(env, me.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID)
+            .keys()
+            .filter(|k| k[0] == KeyType::DirectChatUserMetricsV2 as u8)
+            .collect();
+        assert!(user_metrics_keys.iter().any(|k| k.ends_with(me.user_id.as_slice())));
+        assert!(!user_metrics_keys.iter().any(|k| k.ends_with(them.user_id.as_slice())));
     }
 
     let delete_direct_chat_response = client::user::delete_direct_chat(

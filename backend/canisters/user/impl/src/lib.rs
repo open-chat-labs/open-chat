@@ -15,7 +15,7 @@ use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatEvents, EventPusher};
+use chat_events::{ChatEventInternal, EventPusher};
 use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -33,7 +33,7 @@ use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
+use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::cmp::Reverse;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -423,17 +423,7 @@ Your streak is now {new_streak} days!"
 
         self.data
             .stable_memory_keys_to_garbage_collect
-            .extend(ChatEvents::stable_memory_key_prefixes(
-                ChatEventKeyPrefix::new_from_direct_chat(user_id, None),
-            ));
-
-        for message_index in chat.events.thread_keys() {
-            self.data
-                .stable_memory_keys_to_garbage_collect
-                .extend(ChatEvents::stable_memory_key_prefixes(
-                    ChatEventKeyPrefix::new_from_direct_chat(user_id, Some(message_index)),
-                ));
-        }
+            .extend(chat.events.all_stable_memory_key_prefixes());
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true

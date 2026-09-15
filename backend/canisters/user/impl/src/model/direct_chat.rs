@@ -25,6 +25,7 @@ impl DirectChat {
         my_user_id: UserId,
         them: UserId,
         user_type: UserType,
+        key_id: u32,
         events_ttl: Option<Milliseconds>,
         anonymized_chat_id: u128,
         now: TimestampMillis,
@@ -32,7 +33,7 @@ impl DirectChat {
         DirectChat {
             them,
             date_created: now,
-            events: ChatEvents::new_direct_chat(my_user_id, them, events_ttl, anonymized_chat_id, now),
+            events: ChatEvents::new_direct_chat(my_user_id, them, key_id, events_ttl, anonymized_chat_id, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),

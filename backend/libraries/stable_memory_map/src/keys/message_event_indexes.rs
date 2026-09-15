@@ -18,6 +18,8 @@ key!(
         | KeyType::DirectChatThreadMessageEventIndexes
         | KeyType::GroupChatThreadMessageEventIndexes
         | KeyType::ChannelThreadMessageEventIndexes
+        | KeyType::DirectChatMessageEventIndexesV2
+        | KeyType::DirectChatThreadMessageEventIndexesV2
 );
 
 impl MessageEventIndexesKeyPrefix {
@@ -36,6 +38,8 @@ impl From<&ChatEventKeyPrefix> for MessageEventIndexesKeyPrefix {
             KeyType::DirectChatThreadEvent => KeyType::DirectChatThreadMessageEventIndexes,
             KeyType::GroupChatThreadEvent => KeyType::GroupChatThreadMessageEventIndexes,
             KeyType::ChannelThreadEvent => KeyType::ChannelThreadMessageEventIndexes,
+            KeyType::DirectChatEventV2 => KeyType::DirectChatMessageEventIndexesV2,
+            KeyType::DirectChatThreadEventV2 => KeyType::DirectChatThreadMessageEventIndexesV2,
             key_type => unreachable!("Unexpected key type for a chat event: {key_type:?}"),
         } as u8;
         MessageEventIndexesKeyPrefix(bytes)

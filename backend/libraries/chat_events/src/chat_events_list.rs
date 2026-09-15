@@ -9,13 +9,13 @@ use crate::{
 };
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{KeyPrefix, StableMemoryMap, with_map_mut};
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, StableMemoryMap, with_map_mut};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::iter::Peekable;
 use std::ops::Deref;
 use types::{
-    Chat, ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
+    ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
     Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
@@ -34,13 +34,17 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
-    pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
-        self.events_map.set_stable_memory_prefix(chat, thread_root_message_index);
+    pub fn set_stable_memory_prefix(&mut self, prefix: ChatEventKeyPrefix) {
+        self.events_map.set_stable_memory_prefix(prefix);
     }
 
-    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+    pub fn stable_memory_prefix(&self) -> &ChatEventKeyPrefix {
+        self.events_map.stable_memory_prefix()
+    }
+
+    pub fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self {
         ChatEventsList {
-            events_map: HybridMap::new(chat, thread_root_message_index),
+            events_map: HybridMap::new(stable_memory_prefix),
             message_ids_on_heap: HashMap::new(),
             message_event_indexes: MessageEventIndexes::default(),
             latest_event_index: None,
@@ -366,7 +370,8 @@ impl ChatEventsList {
 }
 
 pub struct ChatEventsListReader<'r> {
-    chat: Chat,
+    // The prefix of the chat's main events list, used to look up when events were last updated
+    main_events_prefix: &'r ChatEventKeyPrefix,
     events_list: &'r ChatEventsList,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
@@ -383,22 +388,28 @@ impl Deref for ChatEventsListReader<'_> {
 
 impl<'r> ChatEventsListReader<'r> {
     pub(crate) fn new(
-        chat: Chat,
+        main_events_prefix: &'r ChatEventKeyPrefix,
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
     ) -> ChatEventsListReader<'r> {
-        Self::with_min_visible_event_index(chat, events_list, last_updated_timestamps, EventIndex::default(), None)
+        Self::with_min_visible_event_index(
+            main_events_prefix,
+            events_list,
+            last_updated_timestamps,
+            EventIndex::default(),
+            None,
+        )
     }
 
     pub(crate) fn with_min_visible_event_index(
-        chat: Chat,
+        main_events_prefix: &'r ChatEventKeyPrefix,
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
         bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
     ) -> ChatEventsListReader<'r> {
         ChatEventsListReader {
-            chat,
+            main_events_prefix,
             events_list,
             last_updated_timestamps,
             min_visible_event_index,
@@ -612,7 +623,7 @@ impl Reader for ChatEventsListReader<'_> {
                 || (self.last_updated_timestamps.latest_update().is_some_and(|ts| ts > since)
                     && self
                         .last_updated_timestamps
-                        .last_updated(self.chat, None, m.index)
+                        .last_updated(self.main_events_prefix, None, m.index)
                         .is_some_and(|ts| ts > since))
         })
     }
@@ -708,7 +719,7 @@ mod tests {
     use serde_bytes::ByteBuf;
     use stable_memory_map::ChatEventKeyPrefix;
     use std::mem::size_of;
-    use types::{ChannelId, EventContext, Milliseconds, MultiUserChat};
+    use types::{ChannelId, Chat, EventContext, Milliseconds, MultiUserChat};
 
     #[test]
     fn enum_size() {
@@ -1281,6 +1292,7 @@ mod tests {
         let mut events = ChatEvents::new_direct_chat(
             Principal::from_slice(&[2]).into(),
             Principal::from_slice(&[1]).into(),
+            1,
             events_ttl,
             random(),
             1,

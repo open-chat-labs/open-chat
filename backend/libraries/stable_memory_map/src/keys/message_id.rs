@@ -17,6 +17,8 @@ key!(
         | KeyType::DirectChatThreadMessageId
         | KeyType::GroupChatThreadMessageId
         | KeyType::ChannelThreadMessageId
+        | KeyType::DirectChatMessageIdV2
+        | KeyType::DirectChatThreadMessageIdV2
 );
 
 impl MessageIdKeyPrefix {
@@ -35,6 +37,8 @@ impl From<&ChatEventKeyPrefix> for MessageIdKeyPrefix {
             KeyType::DirectChatThreadEvent => KeyType::DirectChatThreadMessageId,
             KeyType::GroupChatThreadEvent => KeyType::GroupChatThreadMessageId,
             KeyType::ChannelThreadEvent => KeyType::ChannelThreadMessageId,
+            KeyType::DirectChatEventV2 => KeyType::DirectChatMessageIdV2,
+            KeyType::DirectChatThreadEventV2 => KeyType::DirectChatThreadMessageIdV2,
             key_type => unreachable!("Unexpected key type for a chat event: {key_type:?}"),
         } as u8;
         MessageIdKeyPrefix(bytes)

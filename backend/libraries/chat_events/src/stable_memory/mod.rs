@@ -19,19 +19,29 @@ use types::{
 mod tests;
 
 // Used to efficiently read all events from stable memory when migrating a group into a community
-pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: usize) -> Vec<(EventContext, ByteBuf)> {
+pub fn read_events_as_bytes(
+    main_events_prefix: &ChatEventKeyPrefix,
+    after: Option<EventContext>,
+    max_bytes: usize,
+) -> Vec<(EventContext, ByteBuf)> {
     let key = match after {
-        None => ChatEventKeyPrefix::new_from_chat(chat, None).create_key(&EventIndex::default()),
+        None => main_events_prefix.create_key(&EventIndex::default()),
         Some(EventContext {
-            thread_root_message_index,
+            thread_root_message_index: None,
             event_index,
-        }) => ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index).create_key(&event_index.incr()),
+        }) => main_events_prefix.create_key(&event_index.incr()),
+        Some(EventContext {
+            thread_root_message_index: Some(root_message_index),
+            event_index,
+        }) => main_events_prefix
+            .for_thread(root_message_index)
+            .create_key(&event_index.incr()),
     };
     with_map(|m| {
         let mut total_bytes = 0;
         m.range(key..)
             .take_while(|(k, v)| {
-                if !k.matches_chat(&chat) {
+                if !k.is_in_chat(main_events_prefix) {
                     return false;
                 }
                 if k.thread_root_message_index().is_some() {
@@ -65,7 +75,7 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
             // Only the main events list is indexed, and deleted messages are removed from the index
             if context.thread_root_message_index.is_none() && message.deleted_by.is_none() {
                 search_index_entries.extend(SearchIndex::entries(
-                    chat,
+                    &prefix,
                     message.message_index,
                     message.sender,
                     &Document::from(&message.content),
@@ -114,10 +124,8 @@ impl StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>
 }
 
 impl ChatEventsStableStorage {
-    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
-        ChatEventsStableStorage {
-            prefix: ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index),
-        }
+    pub fn new(prefix: ChatEventKeyPrefix) -> Self {
+        ChatEventsStableStorage { prefix }
     }
 
     fn iter_as_bytes(&self) -> Iter {
@@ -143,8 +151,8 @@ impl ChatEventsStableStorage {
 }
 
 impl EventsMap for ChatEventsStableStorage {
-    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
-        ChatEventsStableStorage::new(chat, thread_root_message_index)
+    fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self {
+        ChatEventsStableStorage::new(stable_memory_prefix)
     }
 
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {

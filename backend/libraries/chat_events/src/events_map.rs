@@ -1,11 +1,12 @@
 use crate::ChatEventInternal;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::ChatEventKeyPrefix;
 use std::collections::BTreeMap;
 use std::ops::RangeBounds;
-use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex};
+use types::{EventIndex, EventWrapperInternal};
 
 pub trait EventsMap {
-    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self;
+    fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self;
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>>;
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>);
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>>;
@@ -20,7 +21,7 @@ pub trait EventsMap {
 pub struct ChatEventsMap(BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>);
 
 impl EventsMap for ChatEventsMap {
-    fn new(_chat: Chat, _thread_root_message_index: Option<MessageIndex>) -> Self {
+    fn new(_stable_memory_prefix: ChatEventKeyPrefix) -> Self {
         ChatEventsMap(BTreeMap::new())
     }
 

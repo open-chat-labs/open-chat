@@ -14,6 +14,12 @@ pub struct DirectChats {
     // This is needed so that when a group is imported into a community we can quickly update the
     // replies to point to the community
     private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
+    // Each new direct chat is assigned the next value, which is used in place of the other user's
+    // id in its stable memory keys, so that if a chat is deleted then recreated with the same user
+    // the new chat's keys never collide with the old chat's (which may not yet have been garbage
+    // collected). Chats created before this was introduced still use the other user's id.
+    #[serde(default)]
+    next_key_id: u32,
 }
 
 impl DirectChats {
@@ -41,9 +47,18 @@ impl DirectChats {
         anonymized_id: F,
         now: TimestampMillis,
     ) -> &mut DirectChat {
-        self.direct_chats
-            .entry(their_user_id.into())
-            .or_insert_with(|| DirectChat::new(my_user_id, their_user_id, their_user_type, None, anonymized_id(), now))
+        self.direct_chats.entry(their_user_id.into()).or_insert_with(|| {
+            self.next_key_id += 1;
+            DirectChat::new(
+                my_user_id,
+                their_user_id,
+                their_user_type,
+                self.next_key_id,
+                None,
+                anonymized_id(),
+                now,
+            )
+        })
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {

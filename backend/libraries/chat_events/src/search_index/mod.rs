@@ -2,14 +2,14 @@ use crate::{ChatEventsList, EventKey};
 use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
-    Key, KeyPrefix, SearchSenderKey, SearchSenderKeyPrefix, SearchTokenKey, SearchTokenKeyPrefix, StableMemoryMapInner,
-    with_map, with_map_mut,
+    ChatEventKeyPrefix, Key, KeyPrefix, SearchSenderKey, SearchSenderKeyPrefix, SearchTokenKey, SearchTokenKeyPrefix,
+    StableMemoryMapInner, with_map, with_map_mut,
 };
 use std::cmp::{max, min};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::ops::Bound;
 use tokenizer::{QueryTerm, document_tokens, query_terms};
-use types::{Chat, EventIndex, MessageIndex, UserId};
+use types::{EventIndex, MessageIndex, UserId};
 
 mod tokenizer;
 
@@ -49,29 +49,48 @@ pub struct SearchIndex {
 }
 
 impl SearchIndex {
-    pub fn add(&mut self, chat: Chat, message_index: MessageIndex, sender: UserId, document: &Document) {
+    pub fn add(
+        &mut self,
+        events_prefix: &ChatEventKeyPrefix,
+        message_index: MessageIndex,
+        sender: UserId,
+        document: &Document,
+    ) {
         self.on_heap.remove(&message_index);
 
-        let entries = Self::entries(chat, message_index, sender, document);
+        let entries = Self::entries(events_prefix, message_index, sender, document);
         insert_entries(entries);
     }
 
-    pub fn remove(&mut self, chat: Chat, message_index: MessageIndex, sender: UserId, document: &Document) {
+    pub fn remove(
+        &mut self,
+        events_prefix: &ChatEventKeyPrefix,
+        message_index: MessageIndex,
+        sender: UserId,
+        document: &Document,
+    ) {
         self.on_heap.remove(&message_index);
-        Self::remove_from_stable_memory(chat, message_index, sender, document);
+        Self::remove_from_stable_memory(events_prefix, message_index, sender, document);
     }
 
-    pub fn update(&mut self, chat: Chat, message_index: MessageIndex, sender: UserId, old: &Document, new: &Document) {
+    pub fn update(
+        &mut self,
+        events_prefix: &ChatEventKeyPrefix,
+        message_index: MessageIndex,
+        sender: UserId,
+        old: &Document,
+        new: &Document,
+    ) {
         if self.on_heap.remove(&message_index).is_some() {
             // The message may or may not also be in the index in stable memory (see `on_heap`)
-            Self::remove_from_stable_memory(chat, message_index, sender, old);
-            self.add(chat, message_index, sender, new);
+            Self::remove_from_stable_memory(events_prefix, message_index, sender, old);
+            self.add(events_prefix, message_index, sender, new);
             return;
         }
 
         let old_tokens = document_tokens(old);
         let new_tokens = document_tokens(new);
-        let token_prefix = SearchTokenKeyPrefix::new_from_chat(chat);
+        let token_prefix = SearchTokenKeyPrefix::new_from_events_prefix(events_prefix);
         with_map_mut(|m| {
             for token in old_tokens.difference(&new_tokens) {
                 m.remove(token_prefix.create_key_for_token(token, message_index));
@@ -84,9 +103,14 @@ impl SearchIndex {
         });
     }
 
-    fn remove_from_stable_memory(chat: Chat, message_index: MessageIndex, sender: UserId, document: &Document) {
-        let token_prefix = SearchTokenKeyPrefix::new_from_chat(chat);
-        let sender_prefix = SearchSenderKeyPrefix::new_from_chat(chat);
+    fn remove_from_stable_memory(
+        events_prefix: &ChatEventKeyPrefix,
+        message_index: MessageIndex,
+        sender: UserId,
+        document: &Document,
+    ) {
+        let token_prefix = SearchTokenKeyPrefix::new_from_events_prefix(events_prefix);
+        let sender_prefix = SearchSenderKeyPrefix::new_from_events_prefix(events_prefix);
         with_map_mut(|m| {
             for token in document_tokens(document) {
                 m.remove(token_prefix.create_key_for_token(&token, message_index));
@@ -99,7 +123,7 @@ impl SearchIndex {
     // `search_term` and, if `users` isn't empty, sent by one of `users`
     pub fn search(
         &self,
-        chat: Chat,
+        events_prefix: &ChatEventKeyPrefix,
         min_visible_message_index: MessageIndex,
         search_term: &str,
         users: &HashSet<UserId>,
@@ -110,7 +134,8 @@ impl SearchIndex {
             return Vec::new();
         }
 
-        let mut results = with_map(|m| search_stable_memory(m, chat, min_visible_message_index, &terms, users, max_results));
+        let mut results =
+            with_map(|m| search_stable_memory(m, events_prefix, min_visible_message_index, &terms, users, max_results));
 
         if !self.on_heap.is_empty() {
             let query = Query::new(search_term);
@@ -136,7 +161,12 @@ impl SearchIndex {
     // entries have been processed, and returns the number processed. Each message is re-indexed
     // from its current content, since messages which have since expired or been removed may have
     // been left on the heap.
-    pub fn migrate_to_stable_memory(&mut self, chat: Chat, events: &ChatEventsList, max_count: usize) -> usize {
+    pub fn migrate_to_stable_memory(
+        &mut self,
+        events_prefix: &ChatEventKeyPrefix,
+        events: &ChatEventsList,
+        max_count: usize,
+    ) -> usize {
         let mut processed = 0;
         let mut entries = Vec::new();
 
@@ -151,7 +181,7 @@ impl SearchIndex {
             let count_before = entries.len();
             if let Some(message) = message {
                 entries.extend(Self::entries(
-                    chat,
+                    events_prefix,
                     message_index,
                     message.sender,
                     &Document::from(&message.content),
@@ -176,19 +206,25 @@ impl SearchIndex {
 
     // Recreates the state of a message from before the search index was stored in stable memory
     #[cfg(test)]
-    pub(crate) fn move_to_heap(&mut self, chat: Chat, message_index: MessageIndex, sender: UserId, document: Document) {
-        self.remove(chat, message_index, sender, &document);
+    pub(crate) fn move_to_heap(
+        &mut self,
+        events_prefix: &ChatEventKeyPrefix,
+        message_index: MessageIndex,
+        sender: UserId,
+        document: Document,
+    ) {
+        self.remove(events_prefix, message_index, sender, &document);
         self.on_heap.insert(message_index, (sender, document));
     }
 
     pub(crate) fn entries(
-        chat: Chat,
+        events_prefix: &ChatEventKeyPrefix,
         message_index: MessageIndex,
         sender: UserId,
         document: &Document,
     ) -> Vec<SearchIndexEntry> {
-        let token_prefix = SearchTokenKeyPrefix::new_from_chat(chat);
-        let sender_prefix = SearchSenderKeyPrefix::new_from_chat(chat);
+        let token_prefix = SearchTokenKeyPrefix::new_from_events_prefix(events_prefix);
+        let sender_prefix = SearchSenderKeyPrefix::new_from_events_prefix(events_prefix);
         document_tokens(document)
             .into_iter()
             .map(|token| SearchIndexEntry::Token(token_prefix.create_key_for_token(&token, message_index)))
@@ -221,14 +257,14 @@ pub(crate) fn insert_entries(entries: Vec<SearchIndexEntry>) {
 
 fn search_stable_memory(
     map: &StableMemoryMapInner,
-    chat: Chat,
+    events_prefix: &ChatEventKeyPrefix,
     min_visible_message_index: MessageIndex,
     terms: &[QueryTerm],
     users: &HashSet<UserId>,
     max_results: usize,
 ) -> Vec<MessageIndex> {
-    let token_prefix = SearchTokenKeyPrefix::new_from_chat(chat);
-    let sender_prefix = SearchSenderKeyPrefix::new_from_chat(chat);
+    let token_prefix = SearchTokenKeyPrefix::new_from_events_prefix(events_prefix);
+    let sender_prefix = SearchSenderKeyPrefix::new_from_events_prefix(events_prefix);
     let mut cursors = Vec::with_capacity(terms.len() + 1);
     let prefix_terms = terms.iter().filter(|t| t.prefix).count();
     let max_expansions_per_term = max(MAX_PREFIX_EXPANSIONS / max(prefix_terms, 1), MIN_PREFIX_EXPANSIONS_PER_TERM);
