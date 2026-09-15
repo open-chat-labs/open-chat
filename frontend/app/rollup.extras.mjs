@@ -19,6 +19,12 @@ function generateCspHashValue(text) {
     return `'sha256-${base64}'`;
 }
 
+// frame-src is scheme-only rather than an origin list because external content channels
+// (ExternalContent.svelte) frame whatever https url a community owner sets. Known framed
+// origins: openchat.daily.co (video calls), maker.memefighter.app (MemeBuilder),
+// www.youtube.com and docs.google.com (blog/whitepaper embeds), www.googletagmanager.com
+// (noscript GTM). `https:` still blocks javascript:, data:, blob: and http frames.
+// img-src, media-src and the native-only connect-src `asset: *` are out of scope of #9338.
 export function generateCspForScripts(inlineScripts, development) {
     const cspHashValues = inlineScripts.map(generateCspHashValue);
     const production = !development;
@@ -30,7 +36,7 @@ export function generateCspForScripts(inlineScripts, development) {
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://cdnjs.cloudflare.com/;
         style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com/ https://cdnjs.cloudflare.com/;
         font-src 'self' https://fonts.gstatic.com/ data:;
-        frame-src *;
+        frame-src https:;
         object-src 'none';
         base-uri 'self';
         form-action 'self';${production ? "\nupgrade-insecure-requests;" : ""}
