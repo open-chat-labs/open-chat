@@ -49,7 +49,8 @@ describe("Permissions-Policy header", () => {
         const daily = '"https://openchat.daily.co"';
         expect(policy.get("camera")).toBe(`(self ${daily})`);
         expect(policy.get("microphone")).toBe(`(self ${daily})`);
-        expect(policy.get("display-capture")).toBe(`(${daily})`);
+        // self is needed as well: a document can only delegate a feature it holds itself
+        expect(policy.get("display-capture")).toBe(`(self ${daily})`);
         expect(policy.get("autoplay")).toBe(`(self ${daily})`);
     });
 

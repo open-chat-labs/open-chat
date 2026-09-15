@@ -3,12 +3,14 @@
         match: "**/*",
         headers: {
             // Permissions-Policy. Every enabled feature names its consumer; anything else is off.
-            // An origin must be listed here for a cross-origin <iframe allow="..."> to receive it.
+            // For a cross-origin <iframe allow="..."> to receive a feature, the allowlist must
+            // contain both `self` and the frame's origin.
             //   autoplay           self: GiphyContent/VideoContent/IncomingCall ringtone;
             //                      openchat.daily.co: remote audio/video in the Daily call frame.
             //   camera             self: QR Scanner; openchat.daily.co: Daily call frame.
             //   microphone         self: AudioAttacher; openchat.daily.co: Daily call frame.
-            //   display-capture    openchat.daily.co only: screen share inside the Daily frame.
+            //   display-capture    openchat.daily.co: screen share inside the Daily frame. `self`
+            //                      is required too: a document can only delegate a feature it has.
             //   fullscreen         self: native <video> controls; www.youtube.com: blog embed
             //                      (AccessGateExpiry). Daily's fullscreen button is disabled.
             //   picture-in-picture self: native <video> controls; www.youtube.com: blog embed.
@@ -18,7 +20,7 @@
             //   clipboard-read, encrypted-media, idle-detection: no consumer, off.
             //   screen-wake-lock: requested by the Daily frame but never granted; unchanged here.
             // External content channels (ExternalContent.svelte) get nothing delegated.
-            "Permissions-Policy": "accelerometer=(), ambient-light-sensor=(), autoplay=(self \"https://openchat.daily.co\"), battery=(), camera=(self \"https://openchat.daily.co\"), cross-origin-isolated=(), display-capture=(\"https://openchat.daily.co\"), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(self \"https://www.youtube.com\"), geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(self \"https://openchat.daily.co\"), midi=(), navigation-override=(), payment=(), picture-in-picture=(self \"https://www.youtube.com\"), publickey-credentials-get=(self), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(self), xr-spatial-tracking=(), clipboard-read=(), clipboard-write=(self), idle-detection=()",
+            "Permissions-Policy": "accelerometer=(), ambient-light-sensor=(), autoplay=(self \"https://openchat.daily.co\"), battery=(), camera=(self \"https://openchat.daily.co\"), cross-origin-isolated=(), display-capture=(self \"https://openchat.daily.co\"), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(self \"https://www.youtube.com\"), geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(self \"https://openchat.daily.co\"), midi=(), navigation-override=(), payment=(), picture-in-picture=(self \"https://www.youtube.com\"), publickey-credentials-get=(self), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(self), xr-spatial-tracking=(), clipboard-read=(), clipboard-write=(self), idle-detection=()",
             "X-Frame-Options": "set in csp",
             "Referrer-Policy": "same-origin",
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
