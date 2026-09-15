@@ -126,6 +126,26 @@ mod tests {
         assert_eq!(deserialized.len(), 51);
     }
 
+    #[test]
+    fn swaps_serialized_before_the_migration_are_migrated_to_stable_memory() {
+        // The format `P2PSwaps` was serialized in before the swaps were moved into stable memory
+        #[derive(Serialize)]
+        struct LegacyP2PSwaps {
+            swaps: HashMap<u32, P2PSwap>,
+        }
+
+        init_stable_memory_map();
+        let legacy = LegacyP2PSwaps {
+            swaps: (1..=5).map(|id| (id, swap(id))).collect(),
+        };
+
+        let mut swaps: P2PSwaps = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
+
+        assert_eq!(swaps.migrate_to_stable_memory(), 5);
+        assert_eq!(swaps.len(), 5);
+        assert_eq!(stored_ids(), (1..=5).collect::<Vec<_>>());
+    }
+
     fn stored_ids() -> Vec<u32> {
         let prefix = P2PSwapKeyPrefix::new();
         with_map(|m| {
