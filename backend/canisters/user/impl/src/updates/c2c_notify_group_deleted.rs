@@ -4,7 +4,7 @@ use crate::{Data, RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatInternal;
-use types::{ChannelId, Chat, ChatId, CommunityId, CommunityImportedInto, TimestampMillis};
+use types::{ChannelId, Chat, ChatId, CommunityId, CommunityImportedInto, MultiUserChat, TimestampMillis};
 use user_canister::c2c_notify_group_deleted::*;
 use user_canister::mark_read::ChannelMessagesRead;
 
@@ -18,6 +18,18 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
     let now = state.env.now();
     let chat_id = args.deleted_group.id;
     let was_favourite = state.data.favourite_chats.remove(&Chat::Group(chat_id), now);
+
+    // Removing the group deletes how far the user has read each of its threads from stable memory,
+    // so if the group has been imported into a community, move those entries to the channel first
+    if let Some(imported_into) = &args.deleted_group.community_imported_into
+        && let Some(group) = state.data.group_chats.get_mut(&chat_id)
+    {
+        group.messages_read.threads_read.move_entries(
+            MultiUserChat::Group(chat_id),
+            MultiUserChat::Channel(imported_into.community_id, imported_into.channel.channel_id),
+        );
+    }
+
     let group_removed = state.data.remove_group(chat_id, now);
 
     if let Some(CommunityImportedInto {

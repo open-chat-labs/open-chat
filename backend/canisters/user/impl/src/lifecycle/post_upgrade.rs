@@ -6,6 +6,7 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use stable_memory::get_reader;
 use tracing::info;
+use types::MultiUserChat;
 use user_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
 
@@ -38,6 +39,41 @@ fn post_upgrade(args: Args) {
     // TODO: Remove this after next release
     let chit_events_migrated = data.chit_events.migrate_to_stable_memory();
     info!(chit_events_migrated, "Migrated CHIT events to stable memory");
+
+    // Move how far the user has read each thread into stable memory
+    // TODO: Remove this after next release
+    let mut threads_read_migrated = 0;
+    for group in data.group_chats.iter_mut() {
+        threads_read_migrated += group
+            .messages_read
+            .threads_read
+            .migrate_to_stable_memory(MultiUserChat::Group(group.chat_id));
+    }
+    for community in data.communities.iter_mut() {
+        let community_id = community.community_id;
+        for channel in community.channels.values_mut() {
+            threads_read_migrated += channel
+                .messages_read
+                .threads_read
+                .migrate_to_stable_memory(MultiUserChat::Channel(community_id, channel.channel_id));
+        }
+    }
+    info!(threads_read_migrated, "Migrated threads read to stable memory");
+
+    // Move the token swaps into stable memory
+    // TODO: Remove this after next release
+    let token_swaps_migrated = data.token_swaps.migrate_to_stable_memory();
+    info!(token_swaps_migrated, "Migrated token swaps to stable memory");
+
+    // Move the referrals into stable memory
+    // TODO: Remove this after next release
+    let referrals_migrated = data.referrals.migrate_to_stable_memory();
+    info!(referrals_migrated, "Migrated referrals to stable memory");
+
+    // Move the P2P swaps into stable memory
+    // TODO: Remove this after next release
+    let p2p_swaps_migrated = data.p2p_swaps.migrate_to_stable_memory();
+    info!(p2p_swaps_migrated, "Migrated P2P swaps to stable memory");
 
     // Move the streak insurance payments and claims into stable memory
     // TODO: Remove this after next release

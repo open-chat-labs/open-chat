@@ -12,10 +12,14 @@ mod macros;
 mod message_activity_event;
 mod message_event_indexes;
 mod message_id;
+mod p2p_swap;
 mod principal;
+mod referral;
 mod search_index;
 mod storage;
 mod streak_insurance;
+mod thread_read;
+mod token_swap;
 mod user_id;
 mod user_metrics;
 
@@ -27,10 +31,14 @@ pub use last_updated::*;
 pub use message_activity_event::*;
 pub use message_event_indexes::*;
 pub use message_id::*;
+pub use p2p_swap::*;
 pub use principal::*;
+pub use referral::*;
 pub use search_index::*;
 pub use storage::*;
 pub use streak_insurance::*;
+pub use thread_read::*;
+pub use token_swap::*;
 pub use user_id::*;
 pub use user_metrics::*;
 
@@ -153,7 +161,11 @@ pub enum KeyType {
     MessageActivityEvent = 47,
     MessageActivityEventId = 48,
     ChitEvent = 49,
-    // 50 to 54 are reserved for threads read, token swaps, P2P swaps and referrals
+    GroupThreadRead = 50,
+    ChannelThreadRead = 51,
+    TokenSwap = 52,
+    P2PSwap = 53,
+    Referral = 54,
     StreakInsurancePayment = 55,
     StreakInsuranceClaim = 56,
     #[cfg(test)]
@@ -200,7 +212,11 @@ impl KeyType {
             | KeyType::ChannelMessageEventIndexes
             | KeyType::DirectChatThreadMessageEventIndexes
             | KeyType::GroupChatThreadMessageEventIndexes
-            | KeyType::ChannelThreadMessageEventIndexes => MapClass::Default,
+            | KeyType::ChannelThreadMessageEventIndexes
+            // Each entry is a token swap, which is too large for the small entries map
+            | KeyType::TokenSwap
+            // Each entry is a P2P swap, which is too large for the small entries map
+            | KeyType::P2PSwap => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -228,6 +244,9 @@ impl KeyType {
             | KeyType::MessageActivityEvent
             | KeyType::MessageActivityEventId
             | KeyType::ChitEvent
+            | KeyType::GroupThreadRead
+            | KeyType::ChannelThreadRead
+            | KeyType::Referral
             | KeyType::StreakInsurancePayment
             | KeyType::StreakInsuranceClaim => MapClass::SmallEntries,
             #[cfg(test)]
@@ -309,6 +328,11 @@ impl TryFrom<u8> for KeyType {
             47 => Ok(KeyType::MessageActivityEvent),
             48 => Ok(KeyType::MessageActivityEventId),
             49 => Ok(KeyType::ChitEvent),
+            50 => Ok(KeyType::GroupThreadRead),
+            51 => Ok(KeyType::ChannelThreadRead),
+            52 => Ok(KeyType::TokenSwap),
+            53 => Ok(KeyType::P2PSwap),
+            54 => Ok(KeyType::Referral),
             55 => Ok(KeyType::StreakInsurancePayment),
             56 => Ok(KeyType::StreakInsuranceClaim),
             #[cfg(test)]
