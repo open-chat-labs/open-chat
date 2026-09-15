@@ -52,14 +52,12 @@ impl TimerJobItem for IndexEventBatch {
                         let reason = file.reason.into();
 
                         if let Some(user_id) = state.data.files.owner(&file.file_id)
-                            && let Some(user) = state.data.users.get(&user_id)
-                        {
-                            let old_status =
+                            && let Some(old_status) =
                                 state
                                     .data
                                     .users
-                                    .set_file_status(user_id, user, file_id, FileStatusInternal::Rejected(reason));
-
+                                    .update_file_status(user_id, file_id, FileStatusInternal::Rejected(reason))
+                        {
                             if let Some(FileStatusInternal::Uploading(_)) = old_status {
                                 state.data.files.remove_pending_file(&file_id);
                             } else {

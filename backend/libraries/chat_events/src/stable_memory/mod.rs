@@ -5,8 +5,8 @@ use search::simple::Document;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{
-    ChatEventKey, ChatEventKeyPrefix, ExpiringEventKeyPrefix, Key, KeyPrefix, MessageIdKeyPrefix, StableMemoryMap, with_map,
-    with_map_mut,
+    ChatEventKey, ChatEventKeyPrefix, Entry, ExpiringEventKeyPrefix, Key, KeyPrefix, MessageIdKeyPrefix, StableMemoryMap,
+    with_map, with_map_mut,
 };
 use std::cmp::{max, min};
 use std::collections::VecDeque;
@@ -131,7 +131,7 @@ impl StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>
     }
 
     fn value_to_bytes(value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
-        event_to_bytes(value)
+        event_to_bytes(&value)
     }
 
     fn bytes_to_value(_key: &EventIndex, bytes: Vec<u8>) -> EventWrapperInternal<ChatEventInternal> {
@@ -261,7 +261,25 @@ impl EventsMap for ChatEventsStableStorage {
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
         let key = self.prefix_for(event.index).create_key(&event.index);
-        with_map_mut(|m| m.insert(key, event_to_bytes(event)));
+        with_map_mut(|m| m.insert(key, event_to_bytes(&event)));
+    }
+
+    fn update<T, E, F: FnOnce(&mut EventWrapperInternal<ChatEventInternal>) -> Result<T, E>>(
+        &mut self,
+        event_index: EventIndex,
+        update_fn: F,
+    ) -> Option<Result<(EventWrapperInternal<ChatEventInternal>, T), E>> {
+        let key = self.prefix_for(event_index).create_key(&event_index);
+        with_map_mut(|m| {
+            let Entry::Occupied(e) = m.entry(key) else {
+                return None;
+            };
+            let mut event = bytes_to_event(&e.get());
+            Some(update_fn(&mut event).map(|value| {
+                e.insert(event_to_bytes(&event));
+                (event, value)
+            }))
+        })
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
@@ -284,8 +302,8 @@ impl EventsMap for ChatEventsStableStorage {
     }
 }
 
-fn event_to_bytes(value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
-    msgpack::serialize_then_unwrap(&value)
+fn event_to_bytes(value: &EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
+    msgpack::serialize_then_unwrap(value)
 }
 
 fn bytes_to_event(bytes: &[u8]) -> EventWrapperInternal<ChatEventInternal> {

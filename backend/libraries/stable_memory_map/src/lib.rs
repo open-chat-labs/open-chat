@@ -10,9 +10,40 @@ use std::ops::{Bound, RangeBounds};
 
 mod keys;
 
+pub use ic_stable_structures::btreemap::entry::{OccupiedEntry, VacantEntry};
 pub use keys::*;
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
+
+pub type Entry<'a> = ic_stable_structures::btreemap::entry::Entry<'a, BaseKey, Vec<u8>, Memory>;
+
+pub trait EntryExt {
+    // The entry's value, or `None` if the entry is vacant
+    fn value(&self) -> Option<Vec<u8>>;
+
+    // Sets the entry's value, whether or not the entry is occupied
+    fn set(self, value: Vec<u8>);
+}
+
+impl EntryExt for Entry<'_> {
+    fn value(&self) -> Option<Vec<u8>> {
+        match self {
+            Entry::Occupied(e) => Some(e.get()),
+            Entry::Vacant(_) => None,
+        }
+    }
+
+    fn set(self, value: Vec<u8>) {
+        match self {
+            Entry::Occupied(e) => {
+                e.insert(value);
+            }
+            Entry::Vacant(e) => {
+                e.insert(value);
+            }
+        }
+    }
+}
 
 // The page size of the map for small entries. Keys and values are unbounded so the main map uses
 // the default of 1024 bytes, which suits chat events but wastes most of each page on small,
@@ -92,11 +123,69 @@ pub trait StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
         existing
     }
 
+    // Inserts `value` if there is no value for `key`, returning whether it was inserted
+    fn insert_if_absent(&mut self, key: KeyPrefix::Suffix, value: Value) -> bool {
+        let inserted = with_map_mut(|m| match m.entry(self.prefix().create_key(&key)) {
+            Entry::Vacant(e) => {
+                e.insert(Self::value_to_bytes(value));
+                true
+            }
+            Entry::Occupied(_) => false,
+        });
+
+        if inserted {
+            self.on_inserted(&key, &None);
+        }
+        inserted
+    }
+
+    // Applies `update_fn` to the value for `key`, then writes the value back if `update_fn` returns
+    // true. Returns `None` if there is no value for `key`, otherwise whether the value was updated.
+    // The key is only looked up once, rather than once to read the value and again to write it.
+    // The stable memory map is borrowed while `update_fn` runs, so `update_fn` must not access it.
+    fn update<F: FnOnce(&mut Value) -> bool>(&mut self, key: &KeyPrefix::Suffix, update_fn: F) -> Option<bool> {
+        let existing_bytes = with_map_mut(|m| {
+            let Entry::Occupied(e) = m.entry(self.prefix().create_key(key)) else {
+                return None;
+            };
+            let mut value = Self::bytes_to_value(key, e.get());
+            if update_fn(&mut value) {
+                Some(Some(e.insert(Self::value_to_bytes(value)).into_value()))
+            } else {
+                Some(None)
+            }
+        })?;
+
+        let Some(existing_bytes) = existing_bytes else {
+            return Some(false);
+        };
+        self.on_inserted(key, &Some(LazyValue::new(key.clone(), existing_bytes, Self::bytes_to_value)));
+        Some(true)
+    }
+
     fn remove(&mut self, key: &KeyPrefix::Suffix) -> Option<LazyValue<KeyPrefix::Suffix, Value>> {
         let bytes_removed = with_map_mut(|m| m.remove(self.prefix().create_key(key)))?;
 
         let key_clone = key.clone();
         let removed = LazyValue::new(key_clone, bytes_removed, Self::bytes_to_value);
+        self.on_removed(key, &removed);
+        Some(removed)
+    }
+
+    // Removes the value for `key` if `predicate` returns true for it
+    fn remove_if<F: FnOnce(&Value) -> bool>(
+        &mut self,
+        key: &KeyPrefix::Suffix,
+        predicate: F,
+    ) -> Option<LazyValue<KeyPrefix::Suffix, Value>> {
+        let bytes_removed = with_map_mut(|m| {
+            let Entry::Occupied(e) = m.entry(self.prefix().create_key(key)) else {
+                return None;
+            };
+            predicate(&Self::bytes_to_value(key, e.get())).then(|| e.remove().into_value())
+        })?;
+
+        let removed = LazyValue::new(key.clone(), bytes_removed, Self::bytes_to_value);
         self.on_removed(key, &removed);
         Some(removed)
     }
@@ -188,6 +277,16 @@ impl StableMemoryMapInner {
     pub fn remove<K: Key>(&mut self, key: K) -> Option<Vec<u8>> {
         let key = key.into();
         self.map_mut(map_class(key.as_slice())).remove(&key)
+    }
+
+    // Looks up `key` once, returning an entry through which its value can be read and then
+    // inserted, replaced or removed without looking the key up again. Use this rather than `get`
+    // followed by `insert` or `remove`. Looking up an entry may write to stable memory (full nodes
+    // on the path to the key are split), even if the entry is only read, so use `get` or
+    // `contains_key` when the value won't be written.
+    pub fn entry<K: Key>(&mut self, key: K) -> Entry<'_> {
+        let key = key.into();
+        self.map_mut(map_class(key.as_slice())).entry(key)
     }
 
     pub fn range<'a, K: Key + 'a, R: RangeBounds<K>>(&'a self, range: R) -> impl DoubleEndedIterator<Item = (K, Vec<u8>)> + 'a {
@@ -384,6 +483,105 @@ mod tests {
             let keys: Vec<_> = m.range(small_key(0)..).map(|(k, _)| suffix(&k)).collect();
             assert_eq!(keys, (0..1000).chain([5000]).collect::<Vec<_>>());
         });
+    }
+
+    #[test]
+    fn entries_via_entry_api_are_routed_by_key_type() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        with_map_mut(|m| {
+            m.entry(small_key(1)).or_insert(vec![1]);
+            m.entry(default_key()).or_insert(vec![2]);
+            m.entry(small_key(1)).and_modify(|v| v.push(3)).or_insert(vec![4]);
+            assert_eq!(m.entry(small_key(1)).value(), Some(vec![1, 3]));
+            assert!(m.entry(small_key(2)).value().is_none());
+            m.entry(small_key(2)).set(vec![5]);
+            m.entry(small_key(2)).set(vec![6]);
+            if let Entry::Occupied(e) = m.entry(default_key()) {
+                assert_eq!(e.remove().into_value(), vec![2]);
+            }
+            assert!(matches!(m.entry(default_key()), Entry::Vacant(_)));
+        });
+
+        with_map(|m| {
+            assert_eq!(m.map.len(), 0);
+            assert_eq!(m.small_entries_map.as_ref().unwrap().len(), 2);
+            assert_eq!(m.get(small_key(1)), Some(vec![1, 3]));
+            assert_eq!(m.get(small_key(2)), Some(vec![6]));
+        });
+    }
+
+    #[test]
+    fn trait_methods_update_the_map_and_call_hooks() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+        let mut map = CountingMap {
+            prefix: TestSmallEntriesKeyPrefix::new(),
+            len: 0,
+        };
+
+        assert!(map.insert_if_absent(1, 10));
+        assert!(!map.insert_if_absent(1, 20));
+        assert!(map.insert_if_absent(2, 20));
+        assert_eq!(map.get(&1), Some(10));
+        assert_eq!(map.len, 2);
+
+        assert_eq!(
+            map.update(&1, |v| {
+                *v += 1;
+                true
+            }),
+            Some(true)
+        );
+        assert_eq!(
+            map.update(&2, |v| {
+                *v += 1;
+                false
+            }),
+            Some(false)
+        );
+        assert_eq!(map.update(&3, |_| true), None);
+        assert_eq!(map.get(&1), Some(11));
+        assert_eq!(map.get(&2), Some(20));
+        assert!(!map.contains_key(&3));
+        assert_eq!(map.len, 2);
+
+        assert!(map.remove_if(&1, |v| *v == 10).is_none());
+        assert!(map.remove_if(&3, |_| true).is_none());
+        assert_eq!(map.remove_if(&1, |v| *v == 11).map(|v| v.into_value()), Some(11));
+        assert!(!map.contains_key(&1));
+        assert!(map.contains_key(&2));
+        assert_eq!(map.len, 1);
+    }
+
+    struct CountingMap {
+        prefix: TestSmallEntriesKeyPrefix,
+        len: usize,
+    }
+
+    impl StableMemoryMap<TestSmallEntriesKeyPrefix, u32> for CountingMap {
+        fn prefix(&self) -> &TestSmallEntriesKeyPrefix {
+            &self.prefix
+        }
+
+        fn value_to_bytes(value: u32) -> Vec<u8> {
+            value.to_be_bytes().to_vec()
+        }
+
+        fn bytes_to_value(_key: &u32, bytes: Vec<u8>) -> u32 {
+            u32::from_be_bytes(bytes.try_into().unwrap())
+        }
+
+        fn on_inserted(&mut self, _key: &u32, existing: &Option<LazyValue<u32, u32>>) {
+            if existing.is_none() {
+                self.len += 1;
+            }
+        }
+
+        fn on_removed(&mut self, _key: &u32, _removed: &LazyValue<u32, u32>) {
+            self.len -= 1;
+        }
     }
 
     #[test]

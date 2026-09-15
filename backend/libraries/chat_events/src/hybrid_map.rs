@@ -30,6 +30,21 @@ impl<MSlow: EventsMap> HybridMap<MSlow> {
     fn fast_enabled(&self) -> bool {
         self.max_events_in_fast_map > 0
     }
+
+    fn insert_into_fast(&mut self, event: &EventWrapperInternal<ChatEventInternal>) {
+        if event.index > self.latest_event_index {
+            self.latest_event_index = event.index;
+        }
+        if self.fast_enabled() {
+            let fast_cut_off = EventIndex::from(u32::from(self.latest_event_index).saturating_sub(self.max_events_in_fast_map));
+            if event.index >= fast_cut_off {
+                self.fast.insert(event.index, event.clone());
+                while self.fast.len() > self.max_events_in_fast_map as usize {
+                    self.fast.pop_first();
+                }
+            }
+        }
+    }
 }
 
 impl HybridMap<ChatEventsStableStorage> {
@@ -86,19 +101,36 @@ impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        if event.index > self.latest_event_index {
-            self.latest_event_index = event.index;
-        }
-        if self.fast_enabled() {
-            let fast_cut_off = EventIndex::from(u32::from(self.latest_event_index).saturating_sub(self.max_events_in_fast_map));
-            if event.index >= fast_cut_off {
-                self.fast.insert(event.index, event.clone());
-                while self.fast.len() > self.max_events_in_fast_map as usize {
-                    self.fast.pop_first();
-                }
-            }
-        }
+        self.insert_into_fast(&event);
         self.slow.insert(event);
+    }
+
+    fn update<T, E, F: FnOnce(&mut EventWrapperInternal<ChatEventInternal>) -> Result<T, E>>(
+        &mut self,
+        event_index: EventIndex,
+        update_fn: F,
+    ) -> Option<Result<(EventWrapperInternal<ChatEventInternal>, T), E>> {
+        if event_index > self.latest_event_index {
+            set_last_read_from_slow(false);
+            return None;
+        }
+
+        if let Some(event) = self.fast.get(&event_index) {
+            // The event was read from the heap, so only needs writing to the slow map
+            set_last_read_from_slow(false);
+            let mut event = event.clone();
+            return Some(update_fn(&mut event).map(|value| {
+                self.insert(event.clone());
+                (event, value)
+            }));
+        }
+
+        set_last_read_from_slow(true);
+        let result = self.slow.update(event_index, update_fn);
+        if let Some(Ok((event, _))) = &result {
+            self.insert_into_fast(event);
+        }
+        result
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
