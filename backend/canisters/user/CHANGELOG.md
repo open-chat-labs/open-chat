@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Stop storing the other user's metrics in direct chats (other than a user's chat with themselves), since only the user's own metrics are ever read ([#9354](https://github.com/open-chat-labs/open-chat/pull/9354))
 - Move the token swaps into the main stable memory map ([#9382](https://github.com/open-chat-labs/open-chat/pull/9382))
 - Move the referrals into the stable memory map for small entries ([#9383](https://github.com/open-chat-labs/open-chat/pull/9383))
+- Move the P2P swaps into the main stable memory map ([#9384](https://github.com/open-chat-labs/open-chat/pull/9384))
 
 ### Fixed
 

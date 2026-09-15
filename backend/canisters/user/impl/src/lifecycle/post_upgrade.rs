@@ -70,6 +70,11 @@ fn post_upgrade(args: Args) {
     let referrals_migrated = data.referrals.migrate_to_stable_memory();
     info!(referrals_migrated, "Migrated referrals to stable memory");
 
+    // Move the P2P swaps into stable memory
+    // TODO: Remove this after next release
+    let p2p_swaps_migrated = data.p2p_swaps.migrate_to_stable_memory();
+    info!(p2p_swaps_migrated, "Migrated P2P swaps to stable memory");
+
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
 

@@ -12,6 +12,7 @@ mod macros;
 mod message_activity_event;
 mod message_event_indexes;
 mod message_id;
+mod p2p_swap;
 mod principal;
 mod referral;
 mod search_index;
@@ -29,6 +30,7 @@ pub use last_updated::*;
 pub use message_activity_event::*;
 pub use message_event_indexes::*;
 pub use message_id::*;
+pub use p2p_swap::*;
 pub use principal::*;
 pub use referral::*;
 pub use search_index::*;
@@ -160,7 +162,7 @@ pub enum KeyType {
     GroupThreadRead = 50,
     ChannelThreadRead = 51,
     TokenSwap = 52,
-    // 53 is reserved for P2P swaps
+    P2PSwap = 53,
     Referral = 54,
     #[cfg(test)]
     TestSmallEntries = 255,
@@ -208,7 +210,9 @@ impl KeyType {
             | KeyType::GroupChatThreadMessageEventIndexes
             | KeyType::ChannelThreadMessageEventIndexes
             // Each entry is a token swap, which is too large for the small entries map
-            | KeyType::TokenSwap => MapClass::Default,
+            | KeyType::TokenSwap
+            // Each entry is a P2P swap, which is too large for the small entries map
+            | KeyType::P2PSwap => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -321,6 +325,7 @@ impl TryFrom<u8> for KeyType {
             50 => Ok(KeyType::GroupThreadRead),
             51 => Ok(KeyType::ChannelThreadRead),
             52 => Ok(KeyType::TokenSwap),
+            53 => Ok(KeyType::P2PSwap),
             54 => Ok(KeyType::Referral),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
