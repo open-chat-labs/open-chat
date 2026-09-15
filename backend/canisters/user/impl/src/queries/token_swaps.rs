@@ -14,9 +14,8 @@ fn token_swaps_impl(args: Args, state: &RuntimeState) -> Response {
     let swaps = state
         .data
         .token_swaps
-        .iter()
-        .skip(args.start as usize)
-        .take(args.max_results as usize)
+        .page(args.start as usize, args.max_results as usize)
+        .into_iter()
         .map(|s| TokenSwap {
             args: s.args.clone(),
             started: s.started,

@@ -89,6 +89,10 @@ impl GroupChats {
         self.group_chats.values()
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupChat> {
+        self.group_chats.values_mut()
+    }
+
     pub fn groups_created(&self) -> u32 {
         self.groups_created
     }
