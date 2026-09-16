@@ -537,7 +537,26 @@ fn all_events(env: &PocketIc, user: &User, them: UserId) -> Vec<EventSummary> {
     let mut events = Vec::new();
     let mut start_index = EventIndex::default();
     loop {
-        let response = client::user::happy_path::events(env, user, them, start_index, true, 100, 100);
+        // The prod wasm still reads the peer from `user_id` (the new wasm reads it from `them` and
+        // ignores `user_id`), so the peer is sent in both fields until the prod wasm has this change
+        let response = client::user::events(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::events::Args {
+                user_id: them,
+                them,
+                thread_root_message_index: None,
+                start_index,
+                ascending: true,
+                max_messages: 100,
+                max_events: 100,
+                latest_known_update: None,
+            },
+        );
+        let user_canister::events::Response::Success(response) = response else {
+            panic!("'events' error: {response:?}");
+        };
         let Some(last_index) = response.events.last().map(|e| e.index) else {
             break;
         };
