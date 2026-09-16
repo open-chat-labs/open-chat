@@ -344,13 +344,19 @@ fn range_map_class(start: &Bound<BaseKey>, end: &Bound<BaseKey>) -> MapClass {
 }
 
 pub fn garbage_collect(prefix: BaseKeyPrefix) -> Result<u32, u32> {
+    // Keep deleting while < 2B instructions have been used so far
+    garbage_collect_while(prefix, || ic_cdk::api::instruction_counter() < 2_000_000_000)
+}
+
+// Deletes the keys under the prefix in batches of 100, checking `keep_going` before each batch.
+// Returns `Ok(count)` once every key is deleted, or `Err(count)` if `keep_going` stopped it first
+fn garbage_collect_while(prefix: BaseKeyPrefix, keep_going: impl Fn() -> bool) -> Result<u32, u32> {
     let mut total_count = 0;
     with_map_mut(|m| {
         let (prefix, class) = scoped(BaseKey::from(prefix));
         let map = m.map_mut(class);
 
-        // If < 2B instructions have been used so far, delete another 100 keys, or exit if complete
-        while ic_cdk::api::instruction_counter() < 2_000_000_000 {
+        while keep_going() {
             let keys: Vec<_> = map
                 .range(prefix.clone()..)
                 .take_while(|e| e.key().as_slice().starts_with(prefix.as_slice()))
@@ -727,6 +733,48 @@ mod tests {
         init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
 
         assert_eq!(with_key_scope(user, || with_map(|m| m.get(default_key()))), Some(vec![1]));
+    }
+
+    #[test]
+    fn multi_user_garbage_collect_only_removes_the_current_scope() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        // More than one batch of keys under the prefix in every scope, plus a key with a different
+        // prefix in the scope being collected, which must survive
+        let scopes = [KeyScope::User(1), KeyScope::User(2), KeyScope::Canister];
+        for scope in scopes {
+            with_key_scope(scope, || {
+                with_map_mut(|m| m.insert_many((0..150).map(|i| (small_key(i), vec![i as u8]))));
+            });
+        }
+        with_key_scope(KeyScope::User(1), || with_map_mut(|m| m.insert(default_key(), vec![1])));
+
+        let prefix = || BaseKeyPrefix::from(TestSmallEntriesKeyPrefix::new());
+        let count_under_prefix = || with_map(|m| m.range(small_key(0)..).count());
+
+        // Stopping after the first batch reports the partial count and leaves the rest in place
+        let batches = std::cell::Cell::new(0);
+        let stopped_early = with_key_scope(KeyScope::User(1), || {
+            garbage_collect_while(prefix(), || {
+                batches.set(batches.get() + 1);
+                batches.get() == 1
+            })
+        });
+        assert_eq!(stopped_early, Err(100));
+        assert_eq!(with_key_scope(KeyScope::User(1), count_under_prefix), 50);
+
+        // Running to completion removes the rest of the scope's keys under the prefix and nothing else
+        let completed = with_key_scope(KeyScope::User(1), || garbage_collect_while(prefix(), || true));
+        assert_eq!(completed, Ok(50));
+        with_key_scope(KeyScope::User(1), || {
+            assert_eq!(count_under_prefix(), 0);
+            assert_eq!(with_map(|m| m.get(default_key())), Some(vec![1]));
+        });
+        for scope in [KeyScope::User(2), KeyScope::Canister] {
+            assert_eq!(with_key_scope(scope, count_under_prefix), 150);
+        }
+        with_map(|m| assert_eq!(m.small_entries_map.as_ref().unwrap().len(), 300));
     }
 
     #[test]
