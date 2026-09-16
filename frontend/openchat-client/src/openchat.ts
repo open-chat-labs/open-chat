@@ -3220,7 +3220,11 @@ export class OpenChat {
                 return false;
             }
         }
-        localUpdates.addUninitialisedDirectChat(chatId);
+        // The placeholder would shadow the real chat in allServerChatsStore, making it appear empty.
+        // This must be checked after the await above, since the chat may have arrived in the meantime.
+        if (!serverDirectChatsStore.value.has(chatId)) {
+            localUpdates.addUninitialisedDirectChat(chatId);
+        }
         return true;
     }
 
