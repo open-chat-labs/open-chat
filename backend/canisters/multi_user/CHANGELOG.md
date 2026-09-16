@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Initialise the stable memory map, alongside a second map with 256 byte pages for small entries ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Add an unimplemented stub for every User canister endpoint, sharing the User canister's API types ([#9400](https://github.com/open-chat-labs/open-chat/pull/9400))
 - Add the `Users` collection and per-user `User` state, `c2c_create_user` for the LocalUserIndex to add a user, and implement `bio` ([#9407](https://github.com/open-chat-labs/open-chat/pull/9407))
+- Implement `send_message_v2`, `events`, `events_by_index` and `events_window` for direct chats between users in the same canister, with the two users sharing one copy of the chat's events, plus a `direct_chat_cores` metric ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 
 ### Changed
 

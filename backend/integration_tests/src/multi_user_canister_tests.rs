@@ -7,8 +7,11 @@ use pocket_ic::PocketIc;
 use sha256::sha256;
 use std::collections::BTreeMap;
 use std::ops::Deref;
-use testing::rng::{random_principal, random_string};
-use types::{BuildVersion, CanisterId, CanisterWasm, UpgradesFilter, UserId};
+use testing::rng::{random_from_u128, random_principal, random_string};
+use types::{
+    BuildVersion, CanisterId, CanisterWasm, ChatEvent, EventsResponse, MessageContent, MessageContentInitial, MessageId,
+    TextContent, UpgradesFilter, UserId,
+};
 
 #[test]
 fn create_then_upgrade_multi_user_canister() {
@@ -133,6 +136,208 @@ fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
     assert_eq!(wasm_version(env, canister_id), BuildVersion::new(0, 0, 1));
     assert_eq!(user_count(env, canister_id), 2);
     assert!(matches!(bio(env, user_ids[1]), Ok(user_canister::bio::Response::Success(_))));
+}
+
+#[test]
+fn users_in_the_same_multi_user_canister_share_one_copy_of_their_direct_chat() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    // A's first message to B creates the chat for both of them, over a single core
+    let message_id = random_from_u128();
+    let sent = send_text_message(env, a_principal, canister_id, b, "hello", message_id);
+    assert_eq!(sent.chat_id, b.into());
+    assert_eq!(sent.message_index, 0.into());
+    assert_eq!(direct_chat_cores(env, canister_id), 1);
+
+    // B sees A's message without anything having been sent between canisters, and replies
+    let reply = send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
+    assert_eq!(reply.chat_id, a.into());
+    assert_eq!(reply.message_index, 1.into());
+    assert_eq!(direct_chat_cores(env, canister_id), 1);
+
+    // Both users read the same events, each from their own side of the chat
+    let expected = vec![(a, "hello".to_string()), (b, "hi".to_string())];
+    let a_events = events(env, a_principal, canister_id, a, b);
+    let b_events = events(env, b_principal, canister_id, b, a);
+    assert_eq!(messages(&a_events), expected);
+    assert_eq!(messages(&b_events), expected);
+    assert_eq!(a_events.latest_event_index, 2.into());
+    assert_eq!(b_events.latest_event_index, 2.into());
+    assert_eq!(a_events.chat_last_updated, b_events.chat_last_updated);
+
+    let by_index = client::multi_user::events_by_index(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::events_by_index::Args {
+            user_id: b,
+            them: a,
+            thread_root_message_index: None,
+            events: vec![2.into()],
+            latest_known_update: None,
+        },
+    );
+    let user_canister::events_by_index::Response::Success(by_index) = by_index else {
+        panic!("{by_index:?}");
+    };
+    assert_eq!(messages(&by_index), vec![(b, "hi".to_string())]);
+
+    let window = client::multi_user::events_window(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::events_window::Args {
+            user_id: a,
+            them: b,
+            thread_root_message_index: None,
+            mid_point: 0.into(),
+            max_messages: 10,
+            max_events: 10,
+            latest_known_update: None,
+        },
+    );
+    let user_canister::events_window::Response::Success(window) = window else {
+        panic!("{window:?}");
+    };
+    assert_eq!(messages(&window), expected);
+
+    // A message id can only be used once in a chat
+    let duplicate =
+        client::multi_user::send_message_v2(env, a_principal, canister_id, &send_message_args(b, "again", message_id));
+    assert!(
+        matches!(&duplicate, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::MessageIdAlreadyExists)),
+        "{duplicate:?}"
+    );
+
+    // A user's chats can only be read as that user by the user themselves or the LocalUserIndex
+    let as_b = client::multi_user::events(env, b_principal, canister_id, &events_args(a, b));
+    assert!(
+        matches!(&as_b, user_canister::events::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{as_b:?}"
+    );
+    assert!(matches!(
+        client::multi_user::events(env, local_user_index, canister_id, &events_args(a, b)),
+        user_canister::events::Response::Success(_)
+    ));
+    assert!(
+        env.query_call(
+            canister_id,
+            random_principal(),
+            "events_msgpack",
+            msgpack::serialize_then_unwrap(events_args(a, b)),
+        )
+        .is_err()
+    );
+
+    // A chat with yourself has a single user
+    let note = send_text_message(env, a_principal, canister_id, a, "note to self", random_from_u128());
+    assert_eq!(note.chat_id, a.into());
+    assert_eq!(note.message_index, 0.into());
+    assert_eq!(direct_chat_cores(env, canister_id), 2);
+    assert_eq!(
+        messages(&events(env, a_principal, canister_id, a, a)),
+        vec![(a, "note to self".to_string())]
+    );
+}
+
+fn create_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: CanisterId) -> (Principal, UserId) {
+    let principal = random_principal();
+    let response = client::multi_user::c2c_create_user(
+        env,
+        local_user_index,
+        canister_id,
+        &multi_user_canister::c2c_create_user::Args {
+            principal,
+            username: random_string(),
+            referred_by: None,
+        },
+    );
+    match response {
+        multi_user_canister::c2c_create_user::Response::Success(user_id) => (principal, user_id),
+        response => panic!("{response:?}"),
+    }
+}
+
+fn send_message_args(recipient: UserId, text: &str, message_id: MessageId) -> user_canister::send_message_v2::Args {
+    user_canister::send_message_v2::Args {
+        recipient,
+        thread_root_message_index: None,
+        message_id,
+        content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
+        replies_to: None,
+        forwarding: false,
+        block_level_markdown: false,
+        message_filter_failed: None,
+        pin: None,
+        og_previews: Vec::new(),
+    }
+}
+
+fn send_text_message(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    recipient: UserId,
+    text: &str,
+    message_id: MessageId,
+) -> user_canister::send_message_v2::SuccessResult {
+    let response =
+        client::multi_user::send_message_v2(env, sender, canister_id, &send_message_args(recipient, text, message_id));
+    match response {
+        user_canister::send_message_v2::Response::Success(result) => result,
+        response => panic!("{response:?}"),
+    }
+}
+
+fn events_args(user_id: UserId, them: UserId) -> user_canister::events::Args {
+    user_canister::events::Args {
+        user_id,
+        them,
+        thread_root_message_index: None,
+        start_index: 0.into(),
+        ascending: true,
+        max_messages: 50,
+        max_events: 50,
+        latest_known_update: None,
+    }
+}
+
+fn events(env: &PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId, them: UserId) -> EventsResponse {
+    match client::multi_user::events(env, sender, canister_id, &events_args(user_id, them)) {
+        user_canister::events::Response::Success(response) => response,
+        response => panic!("{response:?}"),
+    }
+}
+
+// The sender and text of each text message in the response, in order
+fn messages(response: &EventsResponse) -> Vec<(UserId, String)> {
+    response
+        .events
+        .iter()
+        .filter_map(|e| match &e.event {
+            ChatEvent::Message(m) => match &m.content {
+                MessageContent::Text(t) => Some((m.sender, t.text.clone())),
+                _ => None,
+            },
+            _ => None,
+        })
+        .collect()
+}
+
+fn direct_chat_cores(env: &PocketIc, canister_id: CanisterId) -> u32 {
+    serde_json::from_value(metrics(env, canister_id)["direct_chat_cores"].clone()).unwrap()
 }
 
 #[test]

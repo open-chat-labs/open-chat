@@ -7,13 +7,20 @@ use types::{EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Timest
 /// the core holds no user ids. In a User canister the first participant is the canister's user and
 /// the second is the other user. When a chat is shared by two users in one canister, the holder of
 /// the core maps each user id onto a position.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum Participant {
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Participant {
     First,
     Second,
 }
 
 impl Participant {
+    pub fn other(self) -> Participant {
+        match self {
+            Participant::First => Participant::Second,
+            Participant::Second => Participant::First,
+        }
+    }
+
     fn index(self) -> usize {
         match self {
             Participant::First => 0,
@@ -26,8 +33,12 @@ impl Participant {
 /// position. Everything a single user owns (whether they have muted or archived the chat, who the
 /// other user is to them) is held outside the core, so that a single core can be shared by two
 /// users in the same canister.
+///
+/// The core is opaque outside this crate: it is only read or modified through a `DirectChat`
+/// wrapping it, so that a message can never be pushed without the user's state alongside it
+/// being kept in step.
 #[derive(Serialize, Deserialize)]
-pub(crate) struct DirectChatCore {
+pub struct DirectChatCore {
     pub(crate) date_created: TimestampMillis,
     pub(crate) events: ChatEvents,
     // Indexed by `Participant`
@@ -35,9 +46,10 @@ pub(crate) struct DirectChatCore {
 }
 
 impl DirectChatCore {
-    // `my_user_id` is the first participant and `them` the second. The events are created from the
-    // first participant's perspective, so only their per-user metrics are kept.
-    pub(crate) fn new(
+    // A core held by one user alone. `my_user_id` is the first participant and `them` the second.
+    // The events are created from the first participant's perspective, so only their per-user
+    // metrics are kept.
+    pub fn new(
         my_user_id: UserId,
         them: UserId,
         key_id: u32,
@@ -45,9 +57,32 @@ impl DirectChatCore {
         anonymized_chat_id: u128,
         now: TimestampMillis,
     ) -> DirectChatCore {
+        Self::from_events(
+            ChatEvents::new_direct_chat(my_user_id, them, key_id, events_ttl, anonymized_chat_id, now),
+            now,
+        )
+    }
+
+    // A core shared by both users of a chat, so both users' per-user metrics are kept. `second` is
+    // the user in the second position, which only serves to label the events (see
+    // `ChatEvents::new_shared_direct_chat`).
+    pub fn new_shared(
+        second: UserId,
+        key_id: u32,
+        events_ttl: Option<Milliseconds>,
+        anonymized_chat_id: u128,
+        now: TimestampMillis,
+    ) -> DirectChatCore {
+        Self::from_events(
+            ChatEvents::new_shared_direct_chat(second, key_id, events_ttl, anonymized_chat_id, now),
+            now,
+        )
+    }
+
+    fn from_events(events: ChatEvents, now: TimestampMillis) -> DirectChatCore {
         DirectChatCore {
             date_created: now,
-            events: ChatEvents::new_direct_chat(my_user_id, them, key_id, events_ttl, anonymized_chat_id, now),
+            events,
             read_up_to: [Timestamped::new(None, now), Timestamped::new(None, now)],
         }
     }
@@ -186,11 +221,34 @@ mod tests {
         assert_eq!(core.last_updated(), 220);
     }
 
+    #[test]
+    fn a_shared_core_keeps_both_users_metrics() {
+        init_stable_memory_map();
+        let mut owned = DirectChatCore::new(ME, THEM, 1, None, 123, 1);
+        let mut shared = DirectChatCore::new_shared(THEM, 2, None, 456, 1);
+
+        for core in [&mut owned, &mut shared] {
+            core.push_message::<NullEventPusher>(message(ME, 1, 100), Participant::First, None);
+            core.push_message::<NullEventPusher>(message(THEM, 2, 200), Participant::Second, None);
+        }
+
+        let text_messages = |core: &DirectChatCore, user_id: UserId| {
+            core.events.user_metrics(&user_id, None).map(|m| m.hydrate().text_messages)
+        };
+        assert_eq!(text_messages(&owned, ME), Some(1));
+        assert_eq!(text_messages(&owned, THEM), None, "a core held by one user skips the other's");
+        assert_eq!(text_messages(&shared, ME), Some(1));
+        assert_eq!(text_messages(&shared, THEM), Some(1));
+    }
+
     fn setup() -> DirectChatCore {
+        init_stable_memory_map();
+        DirectChatCore::new(ME, THEM, 1, None, 123, 1)
+    }
+
+    fn init_stable_memory_map() {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
-
-        DirectChatCore::new(ME, THEM, 1, None, 123, 1)
     }
 
     fn message(sender: UserId, message_id: u128, now: TimestampMillis) -> PushMessageArgs {
