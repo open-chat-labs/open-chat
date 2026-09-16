@@ -76,46 +76,58 @@ pub(crate) async fn deposit_to_accept_p2p_swap(
     // to choose. For ICRC-2 it picks which approval is spent rather than which account is debited.
     let subaccount = icrc1::Account::for_user(my_user_id).subaccount;
 
-    let block_index = match from_account {
+    match from_account {
         // The allowance is what authorises this - the ledger only lets us pull from an account
         // which has approved this canister as spender - so there is nothing for us to check here.
-        Some(from) => icrc_ledger_canister_c2c_client::icrc2_transfer_from(
-            token1.ledger,
-            &TransferFromArgs {
-                spender_subaccount: subaccount,
-                from: from.into(),
-                to,
-                amount,
-                fee,
-                memo,
-                created_at_time,
-            },
-        )
+        Some(from) => {
+            icrc2_transfer_from(
+                token1.ledger,
+                &TransferFromArgs {
+                    spender_subaccount: subaccount,
+                    from: from.into(),
+                    to,
+                    amount,
+                    fee,
+                    memo,
+                    created_at_time,
+                },
+            )
+            .await
+        }
+        None => {
+            let block_index = icrc_ledger_canister_c2c_client::icrc1_transfer(
+                token1.ledger,
+                &TransferArg {
+                    from_subaccount: subaccount,
+                    to,
+                    fee,
+                    created_at_time,
+                    memo,
+                    amount,
+                },
+            )
+            .await?
+            .map_err(|error| match error {
+                TransferError::InsufficientFunds { .. } => OCErrorCode::InsufficientFunds.into(),
+                error => OCErrorCode::TransferFailed.with_json(&error),
+            })?;
+            Ok(block_index.0.try_into().unwrap())
+        }
+    }
+}
+
+// Pulls funds from an account OpenChat does not control, such as an external wallet, spending the
+// allowance that account granted to this canister. Returns the ledger block index.
+pub(crate) async fn icrc2_transfer_from(ledger: CanisterId, args: &TransferFromArgs) -> OCResult<u64> {
+    let block_index = icrc_ledger_canister_c2c_client::icrc2_transfer_from(ledger, args)
         .await?
         .map_err(|error| match error {
             TransferFromError::InsufficientFunds { .. } => OCErrorCode::InsufficientFunds.into(),
-            // The likeliest failure when funding from a wallet - the user approved too little, or
-            // the approval has already been spent - so it gets its own code to report on.
+            // The likeliest failure when paying from a wallet - the user approved too little, or the
+            // approval has already been spent - so it gets its own code to report on.
             TransferFromError::InsufficientAllowance { .. } => OCErrorCode::InsufficientAllowance.into(),
             error => OCErrorCode::TransferFailed.with_json(&error),
-        })?,
-        None => icrc_ledger_canister_c2c_client::icrc1_transfer(
-            token1.ledger,
-            &TransferArg {
-                from_subaccount: subaccount,
-                to,
-                fee,
-                created_at_time,
-                memo,
-                amount,
-            },
-        )
-        .await?
-        .map_err(|error| match error {
-            TransferError::InsufficientFunds { .. } => OCErrorCode::InsufficientFunds.into(),
-            error => OCErrorCode::TransferFailed.with_json(&error),
-        })?,
-    };
+        })?;
 
     Ok(block_index.0.try_into().unwrap())
 }

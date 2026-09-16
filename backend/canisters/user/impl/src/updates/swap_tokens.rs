@@ -1,3 +1,4 @@
+use crate::crypto::{icrc2_transfer_from, validate_from_account};
 use crate::guards::caller_is_owner;
 use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
@@ -10,9 +11,11 @@ use canister_tracing_macros::trace;
 use constants::{MEMO_SWAP, MEMO_SWAP_APPROVAL, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
+use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use oc_error_codes::OCErrorCode;
 use tracing::{error, info};
-use types::{Achievement, OCResult, TimestampMillis, Timestamped};
+use types::icrc1::Account;
+use types::{Achievement, OCResult, TimestampMillis, Timestamped, UserId};
 use user_canister::swap_tokens::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -32,6 +35,7 @@ async fn swap_tokens_impl(args: Args) -> Response {
 
 fn prepare(mut args: Args, state: &mut RuntimeState) -> OCResult<(TokenSwap, Box<dyn SwapClient>)> {
     state.data.verify_not_suspended()?;
+    validate_from_account(args.from_account, state.env.canister_id().into())?;
     let now = state.env.now();
     state.data.pin_number.verify(args.pin.as_mut(), now)?;
 
@@ -56,6 +60,52 @@ pub(crate) async fn process_token_swap(
 
     let args = token_swap.args.clone();
     let swap_client = swap_client.unwrap_or_else(|| read_state(|state| build_swap_client(&args, state)));
+
+    if let Some(from) = args.from_account
+        && extract_result(&token_swap.funded_from_wallet).is_none()
+    {
+        // Pull the input from the wallet into the user's own account, after which the swap runs
+        // exactly as if the funds had been there all along. Any refund therefore lands in the user's
+        // OpenChat wallet too.
+        let (my_user_id, now) = read_state(|state| (UserId::from(state.env.canister_id()), state.env.now()));
+        let my_account = Account::for_user(my_user_id);
+        // The allowance is what authorises this - the ledger only lets us pull from an account which
+        // has approved this canister as spender - so there is nothing for us to check here.
+        let result = icrc2_transfer_from(
+            args.input_token.ledger,
+            &TransferFromArgs {
+                spender_subaccount: my_account.subaccount,
+                from: from.into(),
+                to: my_account.into(),
+                fee: Some(args.input_token.fee.into()),
+                created_at_time: Some(now * NANOS_PER_MILLISECOND),
+                memo: Some(MEMO_SWAP.to_vec().into()),
+                amount: args.input_amount.into(),
+            },
+        )
+        .await;
+
+        match result {
+            Ok(index) => {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    token_swap.funded_from_wallet = Some(Timestamped::new(Ok(index), now));
+                    state.data.token_swaps.upsert(token_swap.clone());
+                });
+            }
+            Err(error) => {
+                let msg = format!("{error:?}");
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    token_swap.funded_from_wallet = Some(Timestamped::new(Err(msg.clone()), now));
+                    token_swap.success = Some(Timestamped::new(false, now));
+                    state.data.token_swaps.upsert(token_swap);
+                });
+                log_error("Failed to pull tokens from wallet", msg.as_str(), &args, attempt);
+                return Error(error);
+            }
+        }
+    }
 
     let icrc1_account = if token_swap.icrc2 {
         None

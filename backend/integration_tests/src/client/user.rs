@@ -6,6 +6,7 @@ generate_msgpack_query_call!(chit_events);
 generate_msgpack_query_call!(contacts);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
+generate_msgpack_query_call!(token_swap_status);
 generate_msgpack_query_call!(events_window);
 generate_msgpack_query_call!(initial_state);
 generate_msgpack_query_call!(message_activity_feed);
@@ -39,6 +40,7 @@ generate_msgpack_update_call!(mute_notifications);
 generate_msgpack_update_call!(c2c_game_chit);
 generate_msgpack_update_call!(c2c_pay_for_premium_item);
 generate_msgpack_update_call!(pay_for_streak_insurance);
+generate_msgpack_update_call!(swap_tokens);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(save_crypto_account);
 generate_msgpack_update_call!(send_message_v2);
@@ -618,6 +620,7 @@ pub mod happy_path {
             &user_canister::pay_for_streak_insurance::Args {
                 additional_days,
                 expected_price,
+                from_account: None,
                 pin: None,
             },
         );

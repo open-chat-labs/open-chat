@@ -1,7 +1,7 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{CanisterId, ExchangeId, PinNumberWrapper, TokenInfo};
+use types::{CanisterId, ExchangeId, PinNumberWrapper, TokenInfo, icrc1};
 
 #[ts_export(user, swap_tokens)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -12,6 +12,11 @@ pub struct Args {
     pub input_amount: u128,
     pub exchange_args: ExchangeArgs,
     pub min_output_amount: u128,
+    // The account to swap from, defaulting to this canister's own. Any other account must have
+    // approved this canister as spender for `input_amount` plus the transfer fee, since the input is
+    // then pulled via ICRC-2 into this canister's own account before the swap goes ahead.
+    #[serde(default)]
+    pub from_account: Option<icrc1::Account>,
     pub pin: Option<PinNumberWrapper>,
 }
 
