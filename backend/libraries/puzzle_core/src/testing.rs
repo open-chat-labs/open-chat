@@ -8,7 +8,7 @@
 //! puzzle fails the build instead of the canister.
 
 use crate::{GenerateError, Generated, Puzzle, PuzzleCheck, PuzzleError, Tier};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// Generate at every seed and check everything that is true of every
 /// game's output. Panics with the failing seed and parameters.
@@ -92,7 +92,7 @@ fn check_generated<P: Puzzle>(g: &Generated<P::Technique>, params: P::Params, se
 
     check_blank_grid::<P>(description, g.solution.len(), ctx);
     check_grid_length::<P>(description, g.solution.len(), ctx);
-    check_hints::<P>(g, keys, ctx);
+    check_hints::<P>(description, g, keys, ctx);
 
     let ascii = P::render_ascii(description, None).unwrap_or_else(|e| panic!("{ctx}: render_ascii: {e}"));
     assert!(!ascii.is_empty(), "{ctx}: render_ascii produced nothing");
@@ -134,12 +134,13 @@ fn check_grid_length<P: Puzzle>(description: &[u8], len: usize, ctx: &str) {
 }
 
 /// Every conclusion agrees with the solution, no key is decided twice,
-/// and each step points at keys it actually looked at.
+/// each step points at keys it actually looked at, and what it asks the
+/// player for includes something it concludes.
 ///
 /// `focus` is deliberately not checked against the solution keys: some
 /// games highlight things a solution never mentions, such as Slant's
 /// vertex clues or Loopy's dots.
-fn check_hints<P: Puzzle>(g: &Generated<P::Technique>, keys: usize, ctx: &str) {
+fn check_hints<P: Puzzle>(description: &[u8], g: &Generated<P::Technique>, keys: usize, ctx: &str) {
     let pairs: BTreeMap<u16, u8> = g.pairs.iter().copied().collect();
     assert_eq!(pairs.len(), keys, "{ctx}: pairs repeat a key");
 
@@ -158,6 +159,19 @@ fn check_hints<P: Puzzle>(g: &Generated<P::Technique>, keys: usize, ctx: &str) {
             }
             assert!(decided.insert(key, value).is_none(), "{where_}: decides {key} a second time");
         }
+        // Below level 3 the client asks the player for the focus less the target, and the
+        // engine withholds the target when it names a concluded key (hint_at_level). That
+        // remainder must hold a key the step settles, or the client retires the hint on
+        // the first edit anywhere and never on the answer (#9404 invariant 6).
+        let concluded: BTreeSet<u16> = hint.conclusions.iter().map(|(k, _)| *k).collect();
+        let withheld = hint.target.iter().any(|k| concluded.contains(k));
+        let settled: BTreeSet<u16> = concluded.iter().flat_map(|&k| P::display_keys(description, k)).collect();
+        assert!(
+            hint.focus
+                .iter()
+                .any(|k| (withheld || !hint.target.contains(k)) && settled.contains(k)),
+            "{where_}: nothing the step concludes is in focus outside its target"
+        );
     }
 }
 

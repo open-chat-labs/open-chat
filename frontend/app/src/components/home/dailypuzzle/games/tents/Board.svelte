@@ -7,6 +7,7 @@
         type TentsDescription,
     } from "@client";
     import GridSvg from "../GridSvg.svelte";
+    import NoMark from "../NoMark.svelte";
     import { CELL, elementCentre, elementRect, highlight, keysOf, outside } from "../gridSvg";
     import type { BoardProps } from "../types";
 
@@ -116,15 +117,7 @@
                     fill={t.stroke}
                     pointer-events="none" />
             {:else if marks.get(el.key) === "grass"}
-                <line
-                    x1={c.cx - 1.6}
-                    y1={c.cy}
-                    x2={c.cx + 1.6}
-                    y2={c.cy}
-                    stroke="#7a7a7a"
-                    stroke-width="0.9"
-                    stroke-linecap="round"
-                    pointer-events="none" />
+                <NoMark cx={c.cx} cy={c.cy} />
             {/if}
         {/if}
         {#if focus.has(el.key)}

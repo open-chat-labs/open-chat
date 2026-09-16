@@ -330,3 +330,18 @@ describe("lightUp DailyGame", () => {
         expect([...lit].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 10, 15, 20]);
     });
 });
+
+// #9404 invariant 3
+describe("hintKeyStatus", () => {
+    test("a lit cell is done, a marked cell is done, a dark empty cell is to do, a black cell is context", () => {
+        const d = desc([".#.", "...", "..."]);
+        let g = emptyGrid(d);
+        g = lightUp.apply(d, g, 0, 1); // bulb at 0 lights 3 and 6
+        g = lightUp.apply(d, g, 8, 0); // "no" at 8
+        expect(lightUp.hintKeyStatus!(d, g, 0)).toBe("done");
+        expect(lightUp.hintKeyStatus!(d, g, 3)).toBe("done");
+        expect(lightUp.hintKeyStatus!(d, g, 8)).toBe("done");
+        expect(lightUp.hintKeyStatus!(d, g, 4)).toBe("todo");
+        expect(lightUp.hintKeyStatus!(d, g, 1)).toBe("context");
+    });
+});
