@@ -158,8 +158,7 @@ impl Job for HardDeleteMessageContentJob {
         let mut p2p_swap_to_cancel = None;
         mutate_state(|state| {
             if let Some((content, sender)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
-                chat.events
-                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id, state.env.now())
+                chat.remove_deleted_message_content(self.thread_root_message_index, self.message_id, state.env.now())
             }) {
                 let my_user_id = state.env.canister_id().into();
                 if sender == my_user_id {
@@ -213,8 +212,7 @@ impl Job for MessageReminderJob {
         mutate_state(|state| {
             if let Some(chat) = state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
                 let now = state.env.now();
-                chat.events
-                    .mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now);
+                chat.mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now);
             }
             openchat_bot::send_message_with_reply(content, Some(replies_to), Vec::new(), false, state)
         });
@@ -307,9 +305,7 @@ impl Job for MarkP2PSwapExpiredJob {
     fn execute(self) {
         mutate_state(|state| {
             if let Some(chat) = state.data.direct_chats.get_mut(&self.chat_id) {
-                let _ = chat
-                    .events
-                    .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now());
+                let _ = chat.mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now());
             }
         });
     }

@@ -42,8 +42,8 @@ fn run() {
 // Returns true if every chat is done.
 pub(crate) fn run_batch(state: &mut RuntimeState, max_instructions: u64) -> bool {
     'chats: for chat in state.data.direct_chats.iter_mut() {
-        while chat.events.has_legacy_events() {
-            chat.events.migrate_legacy_events_batch();
+        while chat.events().has_legacy_events() {
+            chat.migrate_legacy_events_batch();
             if ic_cdk::api::instruction_counter() > max_instructions {
                 break 'chats;
             }
@@ -63,6 +63,6 @@ pub(crate) fn direct_chats_with_legacy_events(state: &RuntimeState) -> usize {
         .data
         .direct_chats
         .iter()
-        .filter(|c| c.events.has_legacy_events())
+        .filter(|c| c.events().has_legacy_events())
         .count()
 }

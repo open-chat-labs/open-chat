@@ -274,7 +274,7 @@ fn convert_reply_context(
                 .data
                 .direct_chats
                 .get(&chat_id)
-                .and_then(|chat| chat.events.main_events_reader().event_index(message_id.into()))
+                .and_then(|chat| chat.events().main_events_reader().event_index(message_id.into()))
                 .map(|event_index| ReplyContextInternal {
                     chat_if_other: None,
                     event_index,

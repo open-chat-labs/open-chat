@@ -36,7 +36,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             now,
         };
 
-        chat.events.edit_message(
+        chat.edit_message(
             edit_message_args,
             Some(UserEventPusher {
                 now,

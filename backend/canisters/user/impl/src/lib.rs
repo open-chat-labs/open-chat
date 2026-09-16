@@ -1,7 +1,6 @@
 use crate::model::chit_events::ChitEvents;
 use crate::model::communities::Communities;
 use crate::model::community::Community;
-use crate::model::direct_chats::DirectChats;
 use crate::model::game_chit_keys::GameChitKeys;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
@@ -15,8 +14,9 @@ use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, EventPusher};
+use chat_events::EventPusher;
 use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
+use direct_chat_core::DirectChats;
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
@@ -143,8 +143,8 @@ impl RuntimeState {
         let mut next_event_expiry = None;
         let mut files_to_delete = Vec::new();
         for chat in self.data.direct_chats.iter_mut() {
-            let result = chat.events.remove_expired_events(now);
-            if let Some(expiry) = chat.events.next_event_expiry()
+            let result = chat.remove_expired_events(now);
+            if let Some(expiry) = chat.events().next_event_expiry()
                 && next_event_expiry.is_none_or(|current| expiry < current)
             {
                 next_event_expiry = Some(expiry);
@@ -155,7 +155,7 @@ impl RuntimeState {
             for thread in result.threads {
                 self.data
                     .stable_memory_keys_to_garbage_collect
-                    .extend(chat.events.thread_stable_memory_key_prefixes(thread.root_message_index));
+                    .extend(chat.events().thread_stable_memory_key_prefixes(thread.root_message_index));
             }
         }
 
@@ -436,12 +436,7 @@ Your streak is now {new_streak} days!"
 
         self.data
             .stable_memory_keys_to_garbage_collect
-            .extend(chat.events.all_stable_memory_key_prefixes());
-        // Each chat has a unique `key_id`, so if a new chat is created with the same user before
-        // the job has run then its entries won't be removed
-        self.data
-            .stable_memory_keys_to_garbage_collect
-            .push(model::unread_message_index_map::prefix(chat.events.stable_memory_prefix()).into());
+            .extend(chat.stable_memory_key_prefixes());
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true
@@ -712,11 +707,11 @@ impl Data {
 
         // Push a chat event
         if let Some(updated_by) = updated_by {
-            chat.events.push_main_event(
-                ChatEventInternal::BotUpdated(Box::new(BotUpdated {
+            chat.push_bot_updated_event(
+                BotUpdated {
                     user_id: bot_id,
                     updated_by,
-                })),
+                },
                 now,
             );
         }
@@ -728,8 +723,7 @@ impl Data {
         let permitted_categories = permissions.permitted_chat_event_categories_to_read();
         let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
 
-        chat.events
-            .subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
+        chat.subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
     }
 }
 

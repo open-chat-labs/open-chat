@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner_or_local_user_index;
-use crate::model::direct_chat::DirectChat;
 use crate::queries::check_replica_up_to_date;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::{ChatEventsListReader, Reader};
+use direct_chat_core::DirectChat;
 use oc_error_codes::OCErrorCode;
 use types::{EventIndex, EventOrExpiredRange, EventsResponse, MessageIndex, OCResult, TimestampMillis, UserId};
 use user_canister::events::{Response::*, *};
@@ -74,7 +74,7 @@ fn prepare(
     let chat = state.data.direct_chats.get_or_err(&user_id.into())?;
 
     if let Some(events_reader) = chat
-        .events
+        .events()
         .events_reader(EventIndex::default(), thread_root_message_index, None)
     {
         Ok(PrepareResult {
@@ -89,7 +89,7 @@ fn prepare(
 
 fn process_events(events_response: Vec<EventOrExpiredRange>, chat: &DirectChat, latest_event_index: EventIndex) -> Response {
     let (events, expired_event_ranges, _) = EventOrExpiredRange::split(events_response);
-    let expired_message_ranges = chat.events.convert_to_message_ranges(&expired_event_ranges);
+    let expired_message_ranges = chat.events().convert_to_message_ranges(&expired_event_ranges);
     let chat_last_updated = chat.last_updated();
 
     Success(EventsResponse {

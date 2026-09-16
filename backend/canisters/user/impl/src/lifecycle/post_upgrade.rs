@@ -110,9 +110,7 @@ fn post_upgrade(args: Args) {
     // TODO: Remove this after next release
     let mut unread_message_indexes_migrated = 0;
     for direct_chat in data.direct_chats.iter_mut() {
-        unread_message_indexes_migrated += direct_chat
-            .unread_message_index_map
-            .migrate_to_stable_memory(direct_chat.events.stable_memory_prefix());
+        unread_message_indexes_migrated += direct_chat.migrate_unread_message_indexes_to_stable_memory();
     }
     info!(
         unread_message_indexes_migrated,
@@ -150,7 +148,7 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         let my_user_id = state.env.canister_id().into();
         for chat in state.data.direct_chats.iter_mut() {
-            chat.events.skip_their_metrics(my_user_id);
+            chat.skip_their_metrics(my_user_id);
         }
     });
 

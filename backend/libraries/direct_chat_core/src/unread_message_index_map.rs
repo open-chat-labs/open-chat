@@ -18,7 +18,7 @@ use types::MessageIndex;
 /// the chat's events prefix (which contains the chat's `key_id`), so that must be passed in to
 /// identify them.
 #[derive(Serialize, Deserialize, Default)]
-pub struct UnreadMessageIndexMap {
+pub(crate) struct UnreadMessageIndexMap {
     // The entries which were held on the heap, which are all moved into stable memory in
     // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
     // TODO: Remove this after next release
@@ -27,12 +27,12 @@ pub struct UnreadMessageIndexMap {
 }
 
 impl UnreadMessageIndexMap {
-    pub fn add(&mut self, events_prefix: &ChatEventKeyPrefix, ours: MessageIndex, theirs: MessageIndex) {
+    pub(crate) fn add(&mut self, events_prefix: &ChatEventKeyPrefix, ours: MessageIndex, theirs: MessageIndex) {
         let key = prefix(events_prefix).create_key(&ours);
         with_map_mut(|m| m.insert(key, u32::from(theirs).to_be_bytes().to_vec()));
     }
 
-    pub fn get_max_read_up_to_of_theirs(
+    pub(crate) fn get_max_read_up_to_of_theirs(
         &self,
         events_prefix: &ChatEventKeyPrefix,
         ours_read_up_to: &MessageIndex,
@@ -45,7 +45,7 @@ impl UnreadMessageIndexMap {
         })
     }
 
-    pub fn remove_up_to(&mut self, events_prefix: &ChatEventKeyPrefix, theirs: MessageIndex) {
+    pub(crate) fn remove_up_to(&mut self, events_prefix: &ChatEventKeyPrefix, theirs: MessageIndex) {
         with_map_mut(|m| {
             // Their message indexes aren't necessarily in the same order as ours, so every entry
             // must be checked
@@ -63,7 +63,7 @@ impl UnreadMessageIndexMap {
     // Moves the entries which were held on the heap into stable memory, returning how many were
     // moved
     // TODO: Remove this after next release
-    pub fn migrate_to_stable_memory(&mut self, events_prefix: &ChatEventKeyPrefix) -> usize {
+    pub(crate) fn migrate_to_stable_memory(&mut self, events_prefix: &ChatEventKeyPrefix) -> usize {
         if self.on_heap.is_empty() {
             return 0;
         }
@@ -85,7 +85,7 @@ impl UnreadMessageIndexMap {
 
 // Panics if the events prefix isn't for the main events list of a `key_id` based direct chat. Every
 // direct chat is assigned a `key_id` at the start of `post_upgrade`, so this always holds.
-pub fn prefix(events_prefix: &ChatEventKeyPrefix) -> DirectChatUnreadMessageIndexKeyPrefix {
+pub(crate) fn prefix(events_prefix: &ChatEventKeyPrefix) -> DirectChatUnreadMessageIndexKeyPrefix {
     DirectChatUnreadMessageIndexKeyPrefix::new_from_events_prefix(events_prefix)
 }
 

@@ -164,7 +164,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
 
 fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
-        if let Err(error) = chat.events.tip_message(
+        if let Err(error) = chat.tip_message(
             args.clone(),
             EventIndex::default(),
             Some(UserEventPusher {

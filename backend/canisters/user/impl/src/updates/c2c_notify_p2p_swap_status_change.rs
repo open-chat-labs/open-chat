@@ -27,7 +27,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
             match args.status {
                 SwapStatus::Expired(e) => {
                     if let Some(content) =
-                        chat.events
+                        chat.events()
                             .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
                     {
                         let token0_txn_out = e
@@ -39,7 +39,6 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         let status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out });
 
                         if chat
-                            .events
                             .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
                             .is_ok()
                         {
@@ -49,7 +48,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                 }
                 SwapStatus::Cancelled(c) => {
                     if let Some(content) =
-                        chat.events
+                        chat.events()
                             .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
                     {
                         let token0_txn_out = c
@@ -61,7 +60,6 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         let status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out });
 
                         if chat
-                            .events
                             .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
                             .is_ok()
                         {
@@ -71,7 +69,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                 }
                 SwapStatus::Completed(c) => {
                     let now = state.env.now();
-                    if let Ok(result) = chat.events.complete_p2p_swap(
+                    if let Ok(result) = chat.complete_p2p_swap(
                         c.accepted_by.into(),
                         m.thread_root_message_index,
                         m.message_id,

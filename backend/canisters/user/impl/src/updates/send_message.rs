@@ -218,7 +218,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
     // Check if a message with the same id already exists
     if let Some(chat) = state.data.direct_chats.get_mut(&bot_id.into())
         && let Some((message, _)) =
-            chat.events
+            chat.events()
                 .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
     {
         // If the message id of a bot message matches an existing unfinalised bot message
@@ -243,7 +243,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
 
             let Ok(EditMessageSuccess {
                 message_index, event, ..
-            }) = chat.events.edit_message::<UserEventPusher>(edit_message_args, None)
+            }) = chat.edit_message::<UserEventPusher>(edit_message_args, None)
             else {
                 // Shouldn't happen
                 return c2c_bot_send_message::Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
@@ -400,7 +400,7 @@ fn prepare(args: &Args, is_v2_bot: bool, state: &RuntimeState) -> OCResult<Prepa
     let my_user_id = state.env.canister_id().into();
     let maybe_recipient_type = if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
         if chat
-            .events
+            .events()
             .message_already_finalised(args.thread_root_message_index, args.message_id, is_v2_bot)
         {
             return Err(OCErrorCode::MessageIdAlreadyExists.into());
@@ -488,7 +488,7 @@ fn send_message_impl(
                 if let Some((chat, thread_root_message_index)) = r.chat_if_other {
                     Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
                 } else {
-                    chat.events
+                    chat.events()
                         .main_events_reader()
                         .message_internal(r.event_index.into())
                         .map(|m| m.message_id)

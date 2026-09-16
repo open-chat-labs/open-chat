@@ -101,7 +101,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         }
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                let _ = chat.events.set_video_call_presence(
+                let _ = chat.set_video_call_presence(
                     caller_user_id,
                     c.message_id,
                     VideoCallPresence::Default,
@@ -159,7 +159,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                 now,
             );
 
-            let last_updated_timestamp = chat.events.get_events_time_to_live().timestamp;
+            let last_updated_timestamp = chat.events().get_events_time_to_live().timestamp;
 
             // If this is a newly created chat, or the incoming timestamp is higher than the
             // existing one, update the TTL.
@@ -170,7 +170,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                 || last_updated_timestamp < args.timestamp
                 || (last_updated_timestamp == args.timestamp && caller_user_id.as_slice() < state.env.canister_id().as_slice())
             {
-                chat.events.set_events_time_to_live(caller_user_id, args.events_ttl, now);
+                chat.set_events_time_to_live(caller_user_id, args.events_ttl, now);
             }
         }
     }
@@ -185,7 +185,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
             let thread_root_message_index = message.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
             if chat
-                .events
+                .events()
                 .message_already_finalised(thread_root_message_index, message.message_id, false)
             {
                 continue;
@@ -224,7 +224,7 @@ fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, st
         let now = state.env.now();
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-        let _ = chat.events.edit_message::<UserEventPusher>(
+        let _ = chat.edit_message::<UserEventPusher>(
             EditMessageArgs {
                 sender: caller_user_id,
                 min_visible_event_index: EventIndex::default(),
@@ -247,7 +247,7 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
         let now = state.env.now();
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-        let delete_message_results = chat.events.delete_messages(DeleteUndeleteMessagesArgs {
+        let delete_message_results = chat.delete_messages(DeleteUndeleteMessagesArgs {
             caller: caller_user_id,
             is_admin: false,
             min_visible_event_index: EventIndex::default(),
@@ -277,7 +277,7 @@ fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_use
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-        chat.events.undelete_messages(DeleteUndeleteMessagesArgs {
+        chat.undelete_messages(DeleteUndeleteMessagesArgs {
             caller: caller_user_id,
             is_admin: false,
             min_visible_event_index: EventIndex::default(),
@@ -308,7 +308,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
         };
 
         if args.added {
-            if let Ok(result) = chat.events.add_reaction::<UserEventPusher>(add_remove_reaction_args, None) {
+            if let Ok(result) = chat.add_reaction::<UserEventPusher>(add_remove_reaction_args, None) {
                 let message = result.value;
 
                 // They may be reacting to their own message; in that case we should not generate any activity
@@ -348,7 +348,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                 }
             }
         } else {
-            let _ = chat.events.remove_reaction(add_remove_reaction_args);
+            let _ = chat.remove_reaction(add_remove_reaction_args);
         }
     }
 }
@@ -361,13 +361,10 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
     let now = state.env.now();
     let completed = matches!(args.status, P2PSwapStatus::Completed(_));
 
-    if chat
-        .events
-        .set_p2p_swap_status(None, args.message_id, args.status, now)
-        .is_ok()
+    if chat.set_p2p_swap_status(None, args.message_id, args.status, now).is_ok()
         && completed
         && let Some(message_event) = chat
-            .events
+            .events()
             .main_events_reader()
             .message_event_internal(args.message_id.into())
     {
@@ -407,12 +404,11 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
         };
 
         if chat
-            .events
             .tip_message::<UserEventPusher>(tip_message_args, EventIndex::default(), None)
             .is_ok()
         {
             if let Some(message_event) = chat
-                .events
+                .events()
                 .main_events_reader()
                 .message_event_internal(args.message_id.into())
             {

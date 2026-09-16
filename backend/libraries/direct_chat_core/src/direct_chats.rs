@@ -1,5 +1,5 @@
-use crate::model::direct_chat::DirectChat;
-use crate::model::{private_replies, removed_chats};
+use crate::direct_chat::DirectChat;
+use crate::{private_replies, removed_chats};
 use chat_events::{ChatInternal, ChatMetricsInternal};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
@@ -77,7 +77,7 @@ impl DirectChats {
     pub fn assign_key_ids(&mut self) -> usize {
         let mut count = 0;
         for chat in self.direct_chats.values_mut() {
-            if chat.events.assign_direct_chat_key_id(self.next_key_id + 1) {
+            if chat.assign_key_id(self.next_key_id + 1) {
                 self.next_key_id += 1;
                 count += 1;
             }
@@ -124,6 +124,10 @@ impl DirectChats {
         self.direct_chats.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.direct_chats.is_empty()
+    }
+
     pub fn mark_private_reply(&mut self, user_id: UserId, chat: ChatInternal, message_index: MessageIndex) {
         if let ChatInternal::Group(chat_id) = chat {
             private_replies::add(chat_id, user_id, message_index);
@@ -136,7 +140,7 @@ impl DirectChats {
             // stable memory map
             for (user_id, message_index) in private_replies::take(chat_id) {
                 if let Some(chat) = self.direct_chats.get_mut(&user_id.into()) {
-                    chat.events.migrate_reply(message_index, old, new, now);
+                    chat.migrate_reply(message_index, old, new, now);
                 }
             }
         }
@@ -146,7 +150,7 @@ impl DirectChats {
         let mut metrics = ChatMetricsInternal::default();
 
         for chat in self.direct_chats.values() {
-            metrics.merge(chat.events.metrics());
+            metrics.merge(chat.events().metrics());
         }
 
         self.metrics = metrics;
