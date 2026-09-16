@@ -12,10 +12,7 @@ use utils::env::canister::CanisterEnv;
 #[post_upgrade(msgpack = true)]
 #[trace]
 fn post_upgrade(args: Args) {
-    stable_memory_map::init_with_small_entries_map(
-        get_stable_memory_map_memory(),
-        get_stable_memory_map_small_entries_memory(),
-    );
+    stable_memory_map::init_multi_user(get_stable_memory_map_memory(), get_stable_memory_map_small_entries_memory());
 
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);

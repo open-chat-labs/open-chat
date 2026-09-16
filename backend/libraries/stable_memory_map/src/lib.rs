@@ -1,6 +1,9 @@
 //! If you want to store data in this map and be able to iterate over it in order, then the keys
 //! must maintain their ordering when represented as bytes, since the keys in the map are ordered
 //! by their bytes.
+//!
+//! In a canister which holds many users, every key is prefixed with the index of the user it
+//! belongs to as it crosses the boundary of the map (see `key_scope`).
 
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
@@ -8,9 +11,11 @@ use std::cell::{Cell, OnceCell, RefCell};
 use std::marker::PhantomData;
 use std::ops::{Bound, RangeBounds};
 
+mod key_scope;
 mod keys;
 
 pub use ic_stable_structures::btreemap::entry::{OccupiedEntry, VacantEntry};
+pub use key_scope::{KeyScope, with_key_scope};
 pub use keys::*;
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
@@ -66,34 +71,23 @@ thread_local! {
 }
 
 pub fn init(memory: Memory) {
-    init_inner(memory, None);
+    init_inner(memory, None, false);
 }
 
 pub fn init_with_small_entries_map(memory: Memory, small_entries_memory: Memory) {
-    init_inner(
-        memory,
-        Some(Map::init_with_page_size(small_entries_memory, SMALL_ENTRIES_MAP_PAGE_SIZE)),
-    );
+    init_inner(memory, Some(small_entries_memory), false);
 }
 
-fn init_inner(memory: Memory, small_entries_map: Option<Map>) {
+// For a canister which holds many users. Every key is scoped to a user (or to the canister
+// itself) via `with_key_scope`, and accessing the map outside of a scope panics.
+pub fn init_multi_user(memory: Memory, small_entries_memory: Memory) {
+    init_inner(memory, Some(small_entries_memory), true);
+}
+
+fn init_inner(memory: Memory, small_entries_memory: Option<Memory>, multi_user: bool) {
     let map = Map::init(memory);
-
-    // Guards against a key type's class being changed after data has been stored under it, which
-    // would otherwise leave that data in a map where it would never be found
-    for key_type in KeyType::all().filter(|kt| kt.map_class() == MapClass::SmallEntries) {
-        let prefix = BaseKeyPrefix::from_key_type(key_type);
-        let found = map
-            .range(BaseKey::from(prefix.clone())..)
-            .next()
-            .is_some_and(|e| e.key().matches_prefix(&prefix));
-
-        assert!(
-            !found,
-            "Found entries for {key_type:?} in the main map, but it is in the small entries map"
-        );
-    }
-
+    let small_entries_map = small_entries_memory.map(|m| Map::init_with_page_size(m, SMALL_ENTRIES_MAP_PAGE_SIZE));
+    key_scope::set_scoped(multi_user);
     MAP.set(Some(StableMemoryMapInner { map, small_entries_map }));
 }
 
@@ -239,18 +233,18 @@ pub fn with_map_mut<F: FnOnce(&mut StableMemoryMapInner) -> R, R>(f: F) -> R {
 
 impl StableMemoryMapInner {
     pub fn get<K: Key>(&self, key: K) -> Option<Vec<u8>> {
-        let key = key.into();
-        self.map(map_class(key.as_slice())).get(&key)
+        let (key, class) = scoped(key);
+        self.map(class).get(&key)
     }
 
     pub fn contains_key<K: Key>(&self, key: K) -> bool {
-        let key = key.into();
-        self.map(map_class(key.as_slice())).contains_key(&key)
+        let (key, class) = scoped(key);
+        self.map(class).contains_key(&key)
     }
 
     pub fn insert<K: Key>(&mut self, key: K, value: Vec<u8>) -> Option<Vec<u8>> {
-        let key = key.into();
-        self.map_mut(map_class(key.as_slice())).insert(key, value)
+        let (key, class) = scoped(key);
+        self.map_mut(class).insert(key, value)
     }
 
     // Inserts many entries, writing each modified node to stable memory at most once rather than
@@ -261,26 +255,26 @@ impl StableMemoryMapInner {
     pub fn insert_many<K: Key>(&mut self, entries: impl IntoIterator<Item = (K, Vec<u8>)>) {
         let mut entries = entries
             .into_iter()
-            .map(|(key, value)| -> (BaseKey, Vec<u8>) { (key.into(), value) })
+            .map(|(key, value)| {
+                let (key, class) = scoped(key);
+                (key, class, value)
+            })
             .peekable();
 
-        let Some((first, _)) = entries.peek() else {
+        let Some((_, class, _)) = entries.peek() else {
             return;
         };
-        let class = map_class(first.as_slice());
+        let class = *class;
 
-        self.map_mut(class).insert_many(entries.inspect(move |(key, _)| {
-            assert_eq!(
-                map_class(key.as_slice()),
-                class,
-                "Entries inserted together must be in the same map"
-            );
+        self.map_mut(class).insert_many(entries.map(move |(key, entry_class, value)| {
+            assert_eq!(entry_class, class, "Entries inserted together must be in the same map");
+            (key, value)
         }));
     }
 
     pub fn remove<K: Key>(&mut self, key: K) -> Option<Vec<u8>> {
-        let key = key.into();
-        self.map_mut(map_class(key.as_slice())).remove(&key)
+        let (key, class) = scoped(key);
+        self.map_mut(class).remove(&key)
     }
 
     // Looks up `key` once, returning an entry through which its value can be read and then
@@ -289,14 +283,15 @@ impl StableMemoryMapInner {
     // on the path to the key are split), even if the entry is only read, so use `get` or
     // `contains_key` when the value won't be written.
     pub fn entry<K: Key>(&mut self, key: K) -> Entry<'_> {
-        let key = key.into();
-        self.map_mut(map_class(key.as_slice())).entry(key)
+        let (key, class) = scoped(key);
+        self.map_mut(class).entry(key)
     }
 
     pub fn range<'a, K: Key + 'a, R: RangeBounds<K>>(&'a self, range: R) -> impl DoubleEndedIterator<Item = (K, Vec<u8>)> + 'a {
         let start = map_bound(range.start_bound());
         let end = map_bound(range.end_bound());
         let map = self.map(range_map_class(&start, &end));
+        let (start, end) = key_scope::scope_range(start, end);
 
         Iter {
             inner: map.range((start, end)).map(|e| e.into_pair()),
@@ -322,6 +317,14 @@ impl StableMemoryMapInner {
 const SMALL_ENTRIES_MAP_UNAVAILABLE: &str =
     "The small entries map is unavailable, initialise the stable memory map using `init_with_small_entries_map`";
 
+// The map a key belongs to is decided by its key type, which is only the first byte before the
+// key is scoped, so the class must be read before the scope is applied
+fn scoped<K: Into<BaseKey>>(key: K) -> (BaseKey, MapClass) {
+    let key: BaseKey = key.into();
+    let class = map_class(key.as_slice());
+    (key_scope::scope_key(key), class)
+}
+
 // Both bounds of a range must be of the same class, and at least one must be bounded, otherwise we
 // can't tell which map the range is over
 fn range_map_class(start: &Bound<BaseKey>, end: &Bound<BaseKey>) -> MapClass {
@@ -341,15 +344,22 @@ fn range_map_class(start: &Bound<BaseKey>, end: &Bound<BaseKey>) -> MapClass {
 }
 
 pub fn garbage_collect(prefix: BaseKeyPrefix) -> Result<u32, u32> {
+    // Keep deleting while < 2B instructions have been used so far
+    garbage_collect_while(prefix, || ic_cdk::api::instruction_counter() < 2_000_000_000)
+}
+
+// Deletes the keys under the prefix in batches of 100, checking `keep_going` before each batch.
+// Returns `Ok(count)` once every key is deleted, or `Err(count)` if `keep_going` stopped it first
+fn garbage_collect_while(prefix: BaseKeyPrefix, keep_going: impl Fn() -> bool) -> Result<u32, u32> {
     let mut total_count = 0;
     with_map_mut(|m| {
-        let map = m.map_mut(map_class(prefix.as_slice()));
+        let (prefix, class) = scoped(BaseKey::from(prefix));
+        let map = m.map_mut(class);
 
-        // If < 2B instructions have been used so far, delete another 100 keys, or exit if complete
-        while ic_cdk::api::instruction_counter() < 2_000_000_000 {
+        while keep_going() {
             let keys: Vec<_> = map
-                .range(BaseKey::from(prefix.clone())..)
-                .take_while(|e| e.key().matches_prefix(&prefix))
+                .range(prefix.clone()..)
+                .take_while(|e| e.key().as_slice().starts_with(prefix.as_slice()))
                 .take(100)
                 .map(|e| e.key().clone())
                 .collect();
@@ -396,7 +406,7 @@ impl<K: Key, I: DoubleEndedIterator<Item = (BaseKey, Vec<u8>)>> DoubleEndedItera
 }
 
 fn try_map_key_value<K: Key>((key, value): (BaseKey, Vec<u8>)) -> Option<(K, Vec<u8>)> {
-    K::try_from(key).ok().map(|k| (k, value))
+    K::try_from(key_scope::unscope_key(key)).ok().map(|k| (k, value))
 }
 
 #[cfg(test)]
@@ -406,6 +416,7 @@ mod tests {
     use ic_principal::Principal;
     use ic_stable_structures::Memory as _;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use types::MAX_USER_INDEX;
 
     const MAIN: MemoryId = MemoryId::new(0);
     const SMALL: MemoryId = MemoryId::new(1);
@@ -610,20 +621,178 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Found entries for TestSmallEntries in the main map")]
-    fn init_panics_if_main_map_contains_small_entries() {
-        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        let mut map = Map::init(memory_manager.get(MAIN));
-        map.insert(small_key(1).into(), vec![1]);
-        drop(map);
-
-        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
-    }
-
-    #[test]
     #[should_panic(expected = "Range bounds are in different maps")]
     fn range_across_maps_panics() {
         range_map_class(&Bound::Included(default_key().into()), &Bound::Excluded(small_key(1).into()));
+    }
+
+    #[test]
+    fn multi_user_entries_are_kept_apart_by_scope() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        // Every scope stores the same keys, via each way of inserting
+        let scopes = [
+            KeyScope::User(0),
+            KeyScope::User(1),
+            KeyScope::User(MAX_USER_INDEX),
+            KeyScope::Canister,
+        ];
+        for (i, scope) in scopes.into_iter().enumerate() {
+            let value = vec![i as u8];
+            with_key_scope(scope, || {
+                with_map_mut(|m| {
+                    m.insert(small_key(1), value.clone());
+                    m.insert(default_key(), value.clone());
+                    m.entry(small_key(2)).set(value.clone());
+                    m.insert_many([(small_key(3), value.clone()), (small_key(4), value.clone())]);
+                })
+            });
+        }
+
+        for (i, scope) in scopes.into_iter().enumerate() {
+            let value = vec![i as u8];
+            with_key_scope(scope, || {
+                with_map(|m| {
+                    assert_eq!(m.get(small_key(1)), Some(value.clone()));
+                    assert_eq!(m.get(default_key()), Some(value.clone()));
+                    assert_eq!(m.get(small_key(2)), Some(value.clone()));
+                    assert!(m.contains_key(small_key(3)));
+                    assert!(!m.contains_key(small_key(5)));
+
+                    // Ranges stay within the scope however they are bounded
+                    let unbounded_end: Vec<_> = m.range(small_key(0)..).map(|(k, v)| (suffix(&k), v)).collect();
+                    assert_eq!(unbounded_end, [1, 2, 3, 4].map(|s| (s, value.clone())));
+                    let unbounded_start: Vec<_> = m.range(..=small_key(3)).rev().map(|(k, _)| suffix(&k)).collect();
+                    assert_eq!(unbounded_start, vec![3, 2, 1]);
+                    let bounded: Vec<_> = m.range(small_key(2)..small_key(4)).map(|(k, _)| suffix(&k)).collect();
+                    assert_eq!(bounded, vec![2, 3]);
+                })
+            });
+        }
+
+        // Removing from one scope leaves the others untouched
+        with_key_scope(KeyScope::User(1), || {
+            with_map_mut(|m| {
+                assert_eq!(m.remove(small_key(1)), Some(vec![1]));
+                assert!(m.get(small_key(1)).is_none());
+                if let Entry::Occupied(e) = m.entry(default_key()) {
+                    assert_eq!(e.remove().into_value(), vec![1]);
+                }
+            })
+        });
+        with_key_scope(KeyScope::User(0), || {
+            with_map(|m| assert_eq!(m.get(small_key(1)), Some(vec![0])))
+        });
+        with_map(|m| {
+            assert_eq!(m.map.len(), 3);
+            assert_eq!(m.small_entries_map.as_ref().unwrap().len(), 15);
+        });
+
+        // Each scope's entries are contiguous and the canister's come last
+        let scope_bytes: Vec<[u8; 2]> = with_map(|m| {
+            m.small_entries_map
+                .as_ref()
+                .unwrap()
+                .iter()
+                .map(|e| e.key().as_slice()[..2].try_into().unwrap())
+                .collect()
+        });
+        let expected: Vec<[u8; 2]> = [[0, 0]; 4]
+            .into_iter()
+            .chain([[0, 1]; 3])
+            .chain([[0x7F, 0xFF]; 4])
+            .chain([[0xFF, 0xFF]; 4])
+            .collect();
+        assert_eq!(scope_bytes, expected);
+    }
+
+    #[test]
+    fn nested_key_scopes_restore_the_outer_scope() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        with_key_scope(KeyScope::User(1), || {
+            with_map_mut(|m| m.insert(small_key(1), vec![1]));
+            with_key_scope(KeyScope::User(2), || {
+                with_map_mut(|m| m.insert(small_key(1), vec![2]));
+                assert_eq!(with_map(|m| m.get(small_key(1))), Some(vec![2]));
+            });
+            assert_eq!(with_map(|m| m.get(small_key(1))), Some(vec![1]));
+        });
+    }
+
+    #[test]
+    fn multi_user_entries_survive_reload() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        let user = KeyScope::User(1);
+        with_key_scope(user, || with_map_mut(|m| m.insert(default_key(), vec![1])));
+
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        assert_eq!(with_key_scope(user, || with_map(|m| m.get(default_key()))), Some(vec![1]));
+    }
+
+    #[test]
+    fn multi_user_garbage_collect_only_removes_the_current_scope() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        // More than one batch of keys under the prefix in every scope, plus a key with a different
+        // prefix in the scope being collected, which must survive
+        let scopes = [KeyScope::User(1), KeyScope::User(2), KeyScope::Canister];
+        for scope in scopes {
+            with_key_scope(scope, || {
+                with_map_mut(|m| m.insert_many((0..150).map(|i| (small_key(i), vec![i as u8]))));
+            });
+        }
+        with_key_scope(KeyScope::User(1), || with_map_mut(|m| m.insert(default_key(), vec![1])));
+
+        let prefix = || BaseKeyPrefix::from(TestSmallEntriesKeyPrefix::new());
+        let count_under_prefix = || with_map(|m| m.range(small_key(0)..).count());
+
+        // Stopping after the first batch reports the partial count and leaves the rest in place
+        let batches = std::cell::Cell::new(0);
+        let stopped_early = with_key_scope(KeyScope::User(1), || {
+            garbage_collect_while(prefix(), || {
+                batches.set(batches.get() + 1);
+                batches.get() == 1
+            })
+        });
+        assert_eq!(stopped_early, Err(100));
+        assert_eq!(with_key_scope(KeyScope::User(1), count_under_prefix), 50);
+
+        // Running to completion removes the rest of the scope's keys under the prefix and nothing else
+        let completed = with_key_scope(KeyScope::User(1), || garbage_collect_while(prefix(), || true));
+        assert_eq!(completed, Ok(50));
+        with_key_scope(KeyScope::User(1), || {
+            assert_eq!(count_under_prefix(), 0);
+            assert_eq!(with_map(|m| m.get(default_key())), Some(vec![1]));
+        });
+        for scope in [KeyScope::User(2), KeyScope::Canister] {
+            assert_eq!(with_key_scope(scope, count_under_prefix), 150);
+        }
+        with_map(|m| assert_eq!(m.small_entries_map.as_ref().unwrap().len(), 300));
+    }
+
+    #[test]
+    #[should_panic(expected = "The stable memory map must be accessed within `with_key_scope`")]
+    fn accessing_multi_user_map_outside_key_scope_panics() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        with_map(|m| m.get(small_key(1)));
+    }
+
+    #[test]
+    #[should_panic(expected = "Keys are only scoped in a canister initialised with `init_multi_user`")]
+    fn key_scope_in_single_user_canister_panics() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        with_key_scope(KeyScope::User(1), || with_map(|m| m.get(small_key(1))));
     }
 
     // Moving a key type which already holds data to the other map would orphan that data, so the
