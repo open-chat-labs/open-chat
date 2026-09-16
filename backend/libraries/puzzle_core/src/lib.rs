@@ -382,6 +382,14 @@ pub trait Puzzle {
     /// values that hint conclusions use.
     fn solution_pairs(description: &[u8], solution: &[u8]) -> Result<Vec<(u16, u8)>, PuzzleError>;
 
+    /// The keys in `focus`/`target` space that a conclusion on `key` settles
+    /// on the board. Identity for every game that highlights what it
+    /// concludes; Bridges concludes on edges and highlights the water cells
+    /// they run over.
+    fn display_keys(_description: &[u8], key: u16) -> Vec<u16> {
+        vec![key]
+    }
+
     /// Number of solutions, counted by backtracking and capped at `cap`.
     /// A result equal to `cap` means "at least `cap`", which includes the
     /// case where the search stopped at [`MAX_SEARCH_DEPTH`] rather than
