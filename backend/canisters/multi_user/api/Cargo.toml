@@ -7,5 +7,6 @@ edition.workspace = true
 
 [dependencies]
 candid = { workspace = true }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 serde = { workspace = true }
 types = { path = "../../../libraries/types" }

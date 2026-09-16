@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{BuildVersion, CanisterId};
 
@@ -6,6 +6,10 @@ use types::{BuildVersion, CanisterId};
 pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
+    pub group_index_canister_id: CanisterId,
+    pub identity_canister_id: CanisterId,
+    pub escrow_canister_id: CanisterId,
+    pub video_call_operators: Vec<Principal>,
     pub wasm_version: BuildVersion,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,

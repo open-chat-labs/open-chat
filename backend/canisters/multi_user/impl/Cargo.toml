@@ -21,6 +21,7 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 multi_user_canister = { path = "../api" }
 rand = { workspace = true }
 serde = { workspace = true }

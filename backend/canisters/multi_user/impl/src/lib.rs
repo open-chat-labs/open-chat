@@ -1,12 +1,18 @@
+use crate::model::user::User;
+use crate::model::users::Users;
+use candid::Principal;
 use canister_state_macros::canister_state;
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, OCResult, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
 
+mod guards;
 mod lifecycle;
 mod memory;
+mod model;
 mod queries;
 mod updates;
 
@@ -26,6 +32,29 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
+    pub fn is_caller_local_user_index(&self) -> bool {
+        self.env.caller() == self.data.local_user_index_canister_id
+    }
+
+    // The id of the user at the given index within this canister
+    pub fn user_id(&self, index: u16) -> UserId {
+        UserId::new_indexed(self.env.canister_id(), index)
+    }
+
+    // Runs `f` against the user with the given id, within that user's key scope. Fails if the id
+    // does not belong to a user in this canister.
+    pub fn with_user<R>(&self, user_id: UserId, f: impl FnOnce(&User) -> R) -> OCResult<R> {
+        self.user_index(user_id)
+            .and_then(|index| self.data.users.with_user(index, f))
+            .ok_or_else(|| OCErrorCode::TargetUserNotFound.into())
+    }
+
+    // The index within this canister carried by the user id, or None if the id is for a user in a
+    // different canister. An id which carries no index maps to index 0, which is never assigned.
+    fn user_index(&self, user_id: UserId) -> Option<u16> {
+        (user_id.canister_id() == self.env.canister_id()).then(|| user_id.index())
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -36,9 +65,13 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             stable_memory_sizes: memory::memory_sizes(),
+            user_count: self.data.users.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                identity: self.data.identity_canister_id,
+                escrow: self.data.escrow_canister_id,
             },
         }
     }
@@ -46,22 +79,44 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
+    // The defaults below cover MultiUser canisters created before these fields existed. None of
+    // those hold any users.
+    #[serde(default)]
+    pub users: Users,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub group_index_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub identity_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub escrow_canister_id: CanisterId,
+    #[serde(default)]
+    pub video_call_operators: Vec<Principal>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
 impl Data {
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
+        group_index_canister_id: CanisterId,
+        identity_canister_id: CanisterId,
+        escrow_canister_id: CanisterId,
+        video_call_operators: Vec<Principal>,
         rng_seed: [u8; 32],
         test_mode: bool,
     ) -> Data {
         Data {
+            users: Users::default(),
             user_index_canister_id,
             local_user_index_canister_id,
+            group_index_canister_id,
+            identity_canister_id,
+            escrow_canister_id,
+            video_call_operators,
             rng_seed,
             test_mode,
         }
@@ -78,6 +133,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub user_count: u32,
     pub canister_ids: CanisterIds,
 }
 
@@ -85,4 +141,7 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub local_user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub identity: CanisterId,
+    pub escrow: CanisterId,
 }
