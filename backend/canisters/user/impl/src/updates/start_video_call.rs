@@ -133,11 +133,7 @@ pub fn handle_start_video_call(
     }
 
     state.data.timer_jobs.enqueue_job(
-        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(user_canister::end_video_call_v2::Args {
-            user_id: state.env.canister_id().into(),
-            them: other,
-            message_id,
-        })),
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob { them: other, message_id }),
         now + max_duration,
         now,
     );

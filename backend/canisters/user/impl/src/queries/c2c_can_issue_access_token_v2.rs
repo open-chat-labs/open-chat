@@ -2,16 +2,34 @@ use crate::RuntimeState;
 use crate::guards::caller_is_local_user_index;
 use crate::read_state;
 use canister_api_macros::query;
+use serde::Deserialize;
 use types::c2c_can_issue_access_token::AccessTypeArgs;
 use user_canister::c2c_can_issue_access_token_v2::*;
 
-#[query(guard = "caller_is_local_user_index", msgpack = true)]
-fn c2c_can_issue_access_token_v2(args: Args) -> Response {
-    read_state(|state| c2c_can_issue_access_token_impl(args, state))
+// The local user index sends the previous shape (the bare `AccessTypeArgs`) until every User
+// canister has been upgraded to accept the new one, since the previous wasm cannot read it
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum ArgsCompat {
+    Current(Args),
+    Legacy(AccessTypeArgs),
 }
 
-fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> Response {
-    let args_outer = args.args;
+impl ArgsCompat {
+    fn into_access_type_args(self) -> AccessTypeArgs {
+        match self {
+            ArgsCompat::Current(args) => args.args,
+            ArgsCompat::Legacy(args) => args,
+        }
+    }
+}
+
+#[query(guard = "caller_is_local_user_index", msgpack = true)]
+fn c2c_can_issue_access_token_v2(args: ArgsCompat) -> Response {
+    read_state(|state| c2c_can_issue_access_token_impl(args.into_access_type_args(), state))
+}
+
+fn c2c_can_issue_access_token_impl(args_outer: AccessTypeArgs, state: &RuntimeState) -> Response {
     if let AccessTypeArgs::BotActionByCommand(args) = &args_outer {
         // Get the permissions the user has granted to the bot
         let Some(granted) = state.data.bots.get(&args.bot_id).map(|b| &b.permissions) else {

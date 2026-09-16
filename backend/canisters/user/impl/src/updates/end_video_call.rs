@@ -15,11 +15,13 @@ fn end_video_call_v2(args: Args) -> Response {
 }
 
 pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.timer_jobs.cancel_job(
-        |job| {
-            if let TimerJob::MarkVideoCallEnded(vc) = job { vc.0 == args } else { false }
-        },
-    );
+    state.data.timer_jobs.cancel_job(|job| {
+        if let TimerJob::MarkVideoCallEnded(vc) = job {
+            vc.them == args.them && vc.message_id == args.message_id
+        } else {
+            false
+        }
+    });
 
     if let Some(chat) = state.data.direct_chats.get_mut(&args.them.into()) {
         let now = state.env.now();

@@ -393,9 +393,11 @@ export class UserClient
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
+        // User canisters on the previous wasm read the peer from `user_id`, so it is sent in both
+        // fields until they have all been upgraded to read it from `them`
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(this.userId),
+            user_id: principalStringToBytes(chatId.userId),
             them: principalStringToBytes(chatId.userId),
             events: eventIndexes,
             latest_known_update: latestKnownUpdate,
@@ -423,7 +425,7 @@ export class UserClient
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(this.userId),
+            user_id: principalStringToBytes(chatId.userId),
             them: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
@@ -453,7 +455,7 @@ export class UserClient
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(this.userId),
+            user_id: principalStringToBytes(chatId.userId),
             them: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,

@@ -245,14 +245,9 @@ impl ArgsInternal {
 async fn can_issue_access_token(scope: AutonomousBotScope, access_type_args: &AccessTypeArgs) -> Result<(), Response> {
     let c2c_response = match scope {
         AutonomousBotScope::Chat(Chat::Direct(chat_id)) => {
-            user_canister_c2c_client::c2c_can_issue_access_token_v2(
-                chat_id.into(),
-                &user_canister::c2c_can_issue_access_token_v2::Args {
-                    user_id: chat_id.into(),
-                    args: access_type_args.clone(),
-                },
-            )
-            .await
+            // TODO switch to `c2c_can_issue_access_token_v2` once every User canister accepts the
+            // new `{ user_id, args }` shape
+            user_canister_c2c_client::c2c_can_issue_access_token_v2_legacy(chat_id.into(), access_type_args).await
         }
         AutonomousBotScope::Chat(Chat::Group(chat_id)) => {
             group_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), access_type_args).await
