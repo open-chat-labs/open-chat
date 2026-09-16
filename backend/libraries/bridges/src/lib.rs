@@ -499,6 +499,18 @@ impl Puzzle for Bridges {
         solution_pairs(description, solution)
     }
 
+    fn display_keys(description: &[u8], key: u16) -> Vec<u16> {
+        let Ok(d) = parse_description(description) else {
+            return Vec::new();
+        };
+        let st = State::from_description(&d);
+        st.edges
+            .iter()
+            .find(|e| e.key == key)
+            .map(|e| e.cells.iter().map(|&c| c as u16).collect())
+            .unwrap_or_default()
+    }
+
     fn count_solutions(description: &[u8], cap: u32) -> Result<u32, PuzzleError> {
         count_solutions(description, cap)
     }
