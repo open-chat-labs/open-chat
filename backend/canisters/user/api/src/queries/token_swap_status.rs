@@ -22,6 +22,7 @@ pub struct TokenSwapStatus {
     pub started: TimestampMillis,
     pub icrc2: bool,
     pub auto_withdrawals: bool,
+    pub funded_from_wallet: Option<SwapSubtaskResult<u64>>, // Block Index
     pub deposit_account: Option<SwapSubtaskResult<()>>,
     pub transfer: Option<SwapSubtaskResult<u64>>,             // Block Index
     pub transfer_or_approval: Option<SwapSubtaskResult<u64>>, // Block Index
