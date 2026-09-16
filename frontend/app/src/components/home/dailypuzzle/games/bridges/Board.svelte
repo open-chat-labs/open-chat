@@ -9,6 +9,7 @@
         type BridgesHitShape,
     } from "@client";
     import GridSvg from "../GridSvg.svelte";
+    import NoMark from "../NoMark.svelte";
     import { CELL, elementCentre, highlight, hitQuarter, keysOf } from "../gridSvg";
     import type { BoardProps } from "../types";
 
@@ -101,25 +102,7 @@
                 />
             {/each}
         {:else if mark === "none"}
-            <!-- a small cross: the player's own "no bridge" decision -->
-            <line
-                x1={c.cx - 1}
-                y1={c.cy - 1}
-                x2={c.cx + 1}
-                y2={c.cy + 1}
-                stroke="#9a9a9a"
-                stroke-width="0.5"
-                pointer-events="none"
-            />
-            <line
-                x1={c.cx - 1}
-                y1={c.cy + 1}
-                x2={c.cx + 1}
-                y2={c.cy - 1}
-                stroke="#9a9a9a"
-                stroke-width="0.5"
-                pointer-events="none"
-            />
+            <NoMark cx={c.cx} cy={c.cy} />
         {/if}
     {/each}
     {#each islands as el (el.key)}

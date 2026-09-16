@@ -1,6 +1,7 @@
 <script lang="ts">
     import { lightUp, type LightUpCell, type LightUpDescription } from "@client";
     import GridSvg from "../GridSvg.svelte";
+    import NoMark from "../NoMark.svelte";
     import { CELL, elementCentre, elementRect, highlight, keysOf } from "../gridSvg";
     import type { BoardProps } from "../types";
 
@@ -83,7 +84,7 @@
                     pointer-events="none"
                 />
             {:else if marks.get(el.key) === "dot"}
-                <circle cx={c.cx} cy={c.cy} r="1" fill="#7a7a7a" pointer-events="none" />
+                <NoMark cx={c.cx} cy={c.cy} />
             {/if}
         {/if}
         {#if focus.has(el.key)}

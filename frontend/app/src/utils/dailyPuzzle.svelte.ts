@@ -70,6 +70,10 @@ function writeLocal(
     }
 }
 
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+    return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
 export function formatSolveTime(ms: number): string {
     const total = Math.max(0, Math.floor(ms / 1000));
     const h = Math.floor(total / 3600);
@@ -201,11 +205,25 @@ export class DailyPuzzleGame {
         const local = readLocal(this.userId, this.puzzle.number);
         const serverAt = userState.gridSavedAt !== undefined ? Number(userState.gridSavedAt) : 0;
         const localAt = local?.savedAt ?? 0;
-        if (local !== undefined && local.fingerprint === this.#fingerprint && localAt >= serverAt) {
-            this.#lastMistake = local.mistake;
-            return local.filled.reduce((s, [k, v]) => this.game.apply(this.model, s, k, v), empty);
+        const serverIsThis =
+            userState.gameId === this.puzzle.gameId && userState.number === this.puzzle.number;
+        if (local !== undefined && local.fingerprint === this.#fingerprint) {
+            const replayed = local.filled.reduce(
+                (s, [k, v]) => this.game.apply(this.model, s, k, v),
+                empty,
+            );
+            // The local copy is written on every edit and the server copy a few seconds after,
+            // stamped by the canister, so by timestamp the server always looks newer. Only the
+            // local copy keeps the "no" marks, so when the two hold the same board it is the
+            // same save seen from both ends, and the local copy is the fuller one.
+            const same =
+                serverIsThis && sameBytes(userState.grid, this.game.toBytes(this.model, replayed));
+            if (localAt >= serverAt || same) {
+                this.#lastMistake = local.mistake;
+                return replayed;
+            }
         }
-        if (userState.gameId === this.puzzle.gameId && userState.number === this.puzzle.number) {
+        if (serverIsThis) {
             return this.game.fromBytes(this.model, userState.grid) ?? empty;
         }
         return empty;
@@ -329,11 +347,10 @@ export class DailyPuzzleGame {
         const filled = new Set(this.#filled().map(([k]) => k));
         const last = this.lastHint;
         const status = (k: number) => this.#keyStatus(k, filled);
-        // What the player was asked to mark: the cells the sentence points at, or, when it points
-        // at something that takes no mark (a vertex, a clue), the cells the deduction looked at
-        const pointed = [...this.target].filter((k) => status(k) !== "context");
-        const asked =
-            pointed.length > 0 ? pointed : [...this.focus].filter((k) => status(k) !== "context");
+        // What the player was asked to mark: the cells the deduction looked at, less the subject
+        // the sentence points at (see #applyHint) and anything that takes no mark
+        const subject = new Set(last?.hint.target ?? []);
+        const asked = [...this.focus].filter((k) => !subject.has(k) && status(k) !== "context");
         const remaining = asked.filter((k) => status(k) === "todo");
         // A reveal has nothing left to ask for, so any edit after it, including undoing a cell it
         // filled, retires it: kept, its caption would describe a fill no longer on the board
@@ -344,7 +361,7 @@ export class DailyPuzzleGame {
             this.#caption = undefined;
             return;
         }
-        this.focus = new Set([...this.focus].filter((k) => status(k) !== "done"));
+        this.focus = new Set([...this.focus].filter((k) => subject.has(k) || status(k) !== "done"));
         this.target = new Set([...this.target].filter((k) => this.focus.has(k)));
     }
 
@@ -538,14 +555,18 @@ export class DailyPuzzleGame {
             this.#afterChange();
             return;
         }
-        // Cells the player has already marked are not shown: the hint is about what is left
+        // Cells the player has already marked are not shown: the hint is about what is left.
+        // The target is the sentence's subject ("this cell can only be lit from one place"),
+        // and below level 3 the server sends it only when it names no concluded key, so it is
+        // never the move asked for: it stays in the highlight whether marked or not, or the
+        // sentence would sit on the answer cell instead of the cell it describes.
         const filled = new Set(this.#filled().map(([k]) => k));
-        const show = (keys: number[]) => keys.filter((k) => this.#keyStatus(k, filled) !== "done");
-        this.focus = new Set(show(hint.hint.focus));
-        // legacy hints carry no target: point at everything in focus
-        this.target = new Set(
-            show(hint.hint.target.length > 0 ? hint.hint.target : hint.hint.focus),
-        );
+        const subject = new Set(hint.hint.target);
+        const show = (keys: number[]) =>
+            keys.filter((k) => subject.has(k) || this.#keyStatus(k, filled) !== "done");
+        this.focus = new Set([...show(hint.hint.focus), ...subject]);
+        // no target: point at everything in focus
+        this.target = subject.size > 0 ? subject : new Set(this.focus);
         this.#caption =
             hint.level >= 2
                 ? i18nKey(`${gameI18nPrefix(this.puzzle.gameId)}.technique.${hint.hint.technique}`)
