@@ -75,21 +75,18 @@ pub fn init(memory: Memory) {
 }
 
 pub fn init_with_small_entries_map(memory: Memory, small_entries_memory: Memory) {
-    init_inner(memory, Some(small_entries_map(small_entries_memory)), false);
+    init_inner(memory, Some(small_entries_memory), false);
 }
 
 // For a canister which holds many users. Every key is scoped to a user (or to the canister
 // itself) via `with_key_scope`, and accessing the map outside of a scope panics.
 pub fn init_multi_user(memory: Memory, small_entries_memory: Memory) {
-    init_inner(memory, Some(small_entries_map(small_entries_memory)), true);
+    init_inner(memory, Some(small_entries_memory), true);
 }
 
-fn small_entries_map(memory: Memory) -> Map {
-    Map::init_with_page_size(memory, SMALL_ENTRIES_MAP_PAGE_SIZE)
-}
-
-fn init_inner(memory: Memory, small_entries_map: Option<Map>, multi_user: bool) {
+fn init_inner(memory: Memory, small_entries_memory: Option<Memory>, multi_user: bool) {
     let map = Map::init(memory);
+    let small_entries_map = small_entries_memory.map(|m| Map::init_with_page_size(m, SMALL_ENTRIES_MAP_PAGE_SIZE));
     key_scope::set_scoped(multi_user);
     MAP.set(Some(StableMemoryMapInner { map, small_entries_map }));
 }
