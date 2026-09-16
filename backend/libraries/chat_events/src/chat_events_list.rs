@@ -146,16 +146,17 @@ impl ChatEventsList {
         event_key: EventKey,
         update_event_fn: F,
     ) -> Result<UpdateEventInternalSuccess<T>, UpdateEventError<E>> {
-        let event_index = self.event_index(event_key).ok_or(UpdateEventError::NotFound)?;
-
-        match self.events_map.update(event_index, update_event_fn) {
-            Some(Ok((event, value))) => Ok(UpdateEventInternalSuccess {
-                event_index: event.index,
-                event: event.event,
-                value,
-            }),
-            Some(Err(error)) => Err(error),
-            None => Err(UpdateEventError::NotFound),
+        if let Some(mut event) = self.get_event(event_key, EventIndex::default(), None) {
+            update_event_fn(&mut event).map(|result| {
+                self.events_map.insert(event.clone());
+                UpdateEventInternalSuccess {
+                    event_index: event.index,
+                    event: event.event,
+                    value: result,
+                }
+            })
+        } else {
+            Err(UpdateEventError::NotFound)
         }
     }
 

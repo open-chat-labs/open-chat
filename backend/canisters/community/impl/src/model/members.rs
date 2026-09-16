@@ -594,7 +594,16 @@ impl CommunityMembers {
         user_id: &UserId,
         update_fn: F,
     ) -> Option<bool> {
-        self.members_map.update(user_id, update_fn)
+        // `update_fn` comes from the caller and could read anything, including another value in the
+        // stable memory map, so the member is read and written in 2 separate lookups rather than
+        // via `StableMemoryMap::update`, which would hold the map borrowed while `update_fn` runs
+        let mut member = self.members_map.get(user_id)?;
+
+        let updated = update_fn(&mut member);
+        if updated {
+            self.members_map.insert(member.user_id, member);
+        }
+        Some(updated)
     }
 
     fn prune_then_insert_member_update(&mut self, user_id: UserId, update: MemberUpdate, now: TimestampMillis) {

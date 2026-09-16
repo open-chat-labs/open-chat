@@ -535,7 +535,7 @@ fn test_deserialization(bytes: &[u8]) -> MessageContentInternal {
 }
 
 fn generate_then_serialize_value<R: Rng>(content: MessageContentInternal, rng: &mut R) -> Vec<u8> {
-    event_to_bytes(&generate_value(content, rng))
+    event_to_bytes(generate_value(content, rng))
 }
 
 fn generate_value<R: Rng>(content: MessageContentInternal, rng: &mut R) -> EventWrapperInternal<ChatEventInternal> {

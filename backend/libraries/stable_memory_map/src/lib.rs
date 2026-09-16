@@ -142,7 +142,11 @@ pub trait StableMemoryMap<KeyPrefix: crate::KeyPrefix, Value> {
     // Applies `update_fn` to the value for `key`, then writes the value back if `update_fn` returns
     // true. Returns `None` if there is no value for `key`, otherwise whether the value was updated.
     // The key is only looked up once, rather than once to read the value and again to write it.
-    // The stable memory map is borrowed while `update_fn` runs, so `update_fn` must not access it.
+    //
+    // The stable memory map is borrowed while `update_fn` runs, so `update_fn` must not access it,
+    // whether directly or by reading any other value which is backed by it. Doing so panics. Only
+    // use this where `update_fn` is fixed and can be seen not to touch the map; if the closure
+    // comes from the caller, read the value and write it back in 2 separate lookups instead.
     fn update<F: FnOnce(&mut Value) -> bool>(&mut self, key: &KeyPrefix::Suffix, update_fn: F) -> Option<bool> {
         let existing_bytes = with_map_mut(|m| {
             let Entry::Occupied(e) = m.entry(self.prefix().create_key(key)) else {
