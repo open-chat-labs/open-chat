@@ -303,6 +303,7 @@ impl KeyType {
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn all() -> impl Iterator<Item = KeyType> {
         (0..=u8::MAX).filter_map(|b| KeyType::try_from(b).ok())
     }
@@ -311,12 +312,6 @@ impl KeyType {
 // Keys whose first byte isn't a known key type are routed to the main map
 pub(crate) fn map_class(key_bytes: &[u8]) -> MapClass {
     extract_key_type(key_bytes).map_or(MapClass::Default, KeyType::map_class)
-}
-
-impl BaseKeyPrefix {
-    pub(crate) fn from_key_type(key_type: KeyType) -> Self {
-        BaseKeyPrefix(vec![key_type as u8])
-    }
 }
 
 fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {

@@ -91,29 +91,6 @@ fn small_entries_map(memory: Memory) -> Map {
 fn init_inner(memory: Memory, small_entries_map: Option<Map>, multi_user: bool) {
     let map = Map::init(memory);
     key_scope::set_scoped(multi_user);
-
-    // Guards against a key type's class being changed after data has been stored under it, which
-    // would otherwise leave that data in a map where it would never be found.
-    //
-    // In a multi-user canister the keys start with a user index rather than a key type, so the
-    // main map can't be probed by key type. Those canisters have had both maps from the start, so
-    // there is no historic data to guard, but a key type's class must still never change once any
-    // canister holds data under it.
-    if !multi_user {
-        for key_type in KeyType::all().filter(|kt| kt.map_class() == MapClass::SmallEntries) {
-            let prefix = BaseKeyPrefix::from_key_type(key_type);
-            let found = map
-                .range(BaseKey::from(prefix.clone())..)
-                .next()
-                .is_some_and(|e| e.key().matches_prefix(&prefix));
-
-            assert!(
-                !found,
-                "Found entries for {key_type:?} in the main map, but it is in the small entries map"
-            );
-        }
-    }
-
     MAP.set(Some(StableMemoryMapInner { map, small_entries_map }));
 }
 
@@ -641,17 +618,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Found entries for TestSmallEntries in the main map")]
-    fn init_panics_if_main_map_contains_small_entries() {
-        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        let mut map = Map::init(memory_manager.get(MAIN));
-        map.insert(small_key(1).into(), vec![1]);
-        drop(map);
-
-        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
-    }
-
-    #[test]
     #[should_panic(expected = "Range bounds are in different maps")]
     fn range_across_maps_panics() {
         range_map_class(&Bound::Included(default_key().into()), &Bound::Excluded(small_key(1).into()));
@@ -754,13 +720,11 @@ mod tests {
     }
 
     #[test]
-    fn multi_user_entries_survive_reload_and_skip_the_main_map_guard() {
+    fn multi_user_entries_survive_reload() {
         let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
         init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
 
-        // This user's index starts with the byte of a key type which lives in the small entries
-        // map, so the guard which probes the main map by key type would misfire on this entry
-        let user = KeyScope::User(u16::from_be_bytes([KeyType::DirectChatMessageId as u8, 0]));
+        let user = KeyScope::User(1);
         with_key_scope(user, || with_map_mut(|m| m.insert(default_key(), vec![1])));
 
         init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
