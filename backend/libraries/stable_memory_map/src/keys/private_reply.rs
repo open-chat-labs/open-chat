@@ -33,6 +33,11 @@ impl KeyPrefix for PrivateReplyKeyPrefix {
     fn create_key(&self, (user_id, message_index): &(UserId, MessageIndex)) -> PrivateReplyKey {
         // Message index    4 bytes
         // User id bytes    The remaining bytes
+        //
+        // The message index comes first, even though the suffix is ordered the other way round,
+        // because user ids vary in length. That puts the message index at a fixed offset from the
+        // end of the prefix and leaves the user id as the remainder of the key, so `message_index`
+        // and `user_id` can both read their values back out. Swapping the two would break both.
         let user_id_bytes = user_id.as_slice();
         let mut bytes = Vec::with_capacity(self.0.len() + 4 + user_id_bytes.len());
         bytes.extend_from_slice(self.0.as_slice());
