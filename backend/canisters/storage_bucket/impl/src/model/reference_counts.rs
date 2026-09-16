@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{FileReferenceCountKeyPrefix, StableMemoryMap};
+use stable_memory_map::{Entry, FileReferenceCountKeyPrefix, KeyPrefix, StableMemoryMap, with_map_mut};
 use types::Hash;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -23,28 +23,38 @@ impl StableMemoryMap<FileReferenceCountKeyPrefix, u32> for ReferenceCountsStable
 
 impl ReferenceCountsStableMap {
     pub fn incr(&mut self, hash: Hash) -> u32 {
-        let count = self.get(&hash).unwrap_or_default().saturating_add(1);
-        self.set(hash, count);
-        count
+        self.update_count(hash, |count| count.saturating_add(1))
     }
 
     pub fn decr(&mut self, hash: Hash) -> u32 {
-        let count = self.get(&hash).unwrap_or_default().saturating_sub(1);
-        self.set(hash, count);
-        count
+        self.update_count(hash, |count| count.saturating_sub(1))
     }
 
-    pub fn set(&mut self, hash: Hash, count: u32) {
-        if count == 0 {
-            self.remove(&hash);
-        } else {
-            self.insert(hash, count);
-        }
+    // Sets the count to the result of `update_fn`, removing the entry if the new count is 0
+    fn update_count(&mut self, hash: Hash, update_fn: impl FnOnce(u32) -> u32) -> u32 {
+        with_map_mut(|m| match m.entry(self.prefix.create_key(&hash)) {
+            Entry::Occupied(e) => {
+                let count = update_fn(Self::bytes_to_value(&hash, e.get()));
+                if count == 0 {
+                    e.remove();
+                } else {
+                    e.insert(Self::value_to_bytes(count));
+                }
+                count
+            }
+            Entry::Vacant(e) => {
+                let count = update_fn(0);
+                if count > 0 {
+                    e.insert(Self::value_to_bytes(count));
+                }
+                count
+            }
+        })
     }
 
     #[cfg(test)]
     pub fn get_all(&self) -> std::collections::BTreeMap<Hash, u32> {
-        use stable_memory_map::{KeyPrefix, with_map};
+        use stable_memory_map::with_map;
 
         with_map(|m| {
             m.range(self.prefix.create_key(&[0; 32])..)

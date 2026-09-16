@@ -88,9 +88,7 @@ impl GlobalUserMap {
 
     pub fn remove(&mut self, user_id: &UserId) -> bool {
         if let Some(principal) = self.user_id_to_principal.remove(user_id) {
-            if self.principal_to_user_id.get(&principal) == Some(*user_id) {
-                self.principal_to_user_id.remove(&principal);
-            }
+            self.principal_to_user_id.remove_if(&principal, |u| u == user_id);
             self.platform_moderators.remove(user_id);
             self.legacy_bots.remove(user_id);
             self.diamond_membership_expiry_dates.remove(user_id);

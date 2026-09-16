@@ -80,12 +80,12 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
         .forward(caller, args.file_id, canister_id, file_id_seed, accessors, now)
     {
         ForwardFileResult::Success(f) => {
-            let user = state.data.users.get(&caller).unwrap();
             let file_id = f.file_id;
             state
                 .data
                 .users
-                .set_file_status(caller, user, file_id, FileStatusInternal::Complete(IndexSyncComplete::No));
+                .update_file_status(caller, file_id, FileStatusInternal::Complete(IndexSyncComplete::No))
+                .unwrap();
             state.data.push_event_to_index(EventToSync::FileAdded(f));
             crate::jobs::remove_expired_files::start_job_if_required(state);
             Success(file_id)
