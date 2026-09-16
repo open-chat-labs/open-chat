@@ -33,9 +33,13 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
                     .unwrap_or_default()
             && direct_chat.mark_read_up_to(read_up_to, true, now)
             && direct_chat.them != OPENCHAT_BOT_USER_ID
-            && let Some(read_up_to_of_theirs) = direct_chat.unread_message_index_map.get_max_read_up_to_of_theirs(&read_up_to)
+            && let Some(read_up_to_of_theirs) = direct_chat
+                .unread_message_index_map
+                .get_max_read_up_to_of_theirs(direct_chat.events.stable_memory_prefix(), &read_up_to)
         {
-            direct_chat.unread_message_index_map.remove_up_to(read_up_to_of_theirs);
+            direct_chat
+                .unread_message_index_map
+                .remove_up_to(direct_chat.events.stable_memory_prefix(), read_up_to_of_theirs);
 
             state.push_user_canister_event(
                 chat_messages_read.chat_id.into(),

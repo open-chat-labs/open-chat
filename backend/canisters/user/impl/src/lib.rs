@@ -15,7 +15,7 @@ use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatEvents, EventPusher};
+use chat_events::{ChatEventInternal, EventPusher};
 use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -23,9 +23,11 @@ use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use itertools::Itertools;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use model::blocked_users::BlockedUsers;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
+use model::profile_document::ProfileDocument;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use model::threads_read::ThreadsRead;
@@ -33,7 +35,7 @@ use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
+use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::cmp::Reverse;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -42,7 +44,7 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotDefinitionUpdate, BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, CanisterId,
-    Chat, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document,
+    Chat, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload,
     IdempotentEnvelope, MultiUserChat, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
     UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
@@ -148,7 +150,16 @@ impl RuntimeState {
                 next_event_expiry = Some(expiry);
             }
             files_to_delete.extend(result.files);
+            // Threads aren't currently enabled for direct chats, but if a thread's root message
+            // expires then its entries in stable memory must be garbage collected
+            for thread in result.threads {
+                self.data
+                    .stable_memory_keys_to_garbage_collect
+                    .extend(chat.events.thread_stable_memory_key_prefixes(thread.root_message_index));
+            }
         }
+
+        jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
 
         if !files_to_delete.is_empty() {
             let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
@@ -327,15 +338,13 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
     }
 
     pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
-        if self.data.blocked_users.value.insert(user_id) {
-            self.data.blocked_users.timestamp = now;
+        if self.data.blocked_users.block(user_id, now) {
             self.push_local_user_index_canister_event(LocalUserIndexEvent::UserBlocked(user_id), now);
         }
     }
 
     pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) {
-        if self.data.blocked_users.value.remove(&user_id) {
-            self.data.blocked_users.timestamp = now;
+        if self.data.blocked_users.unblock(user_id, now) {
             self.push_local_user_index_canister_event(LocalUserIndexEvent::UserUnblocked(user_id), now);
         }
     }
@@ -381,6 +390,10 @@ Your streak is now {new_streak} days!"
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             direct_chats: self.data.direct_chats.len() as u32,
+            // TODO: Remove this once every user canister has been migrated
+            direct_chats_with_legacy_events: jobs::migrate_direct_chat_events_to_key_id_keys::direct_chats_with_legacy_events(
+                self,
+            ) as u32,
             group_chats: self.data.group_chats.len() as u32,
             communities: self.data.communities.len() as u32,
             groups_created: self.data.group_chats.groups_created(),
@@ -423,17 +436,12 @@ Your streak is now {new_streak} days!"
 
         self.data
             .stable_memory_keys_to_garbage_collect
-            .extend(ChatEvents::stable_memory_key_prefixes(
-                ChatEventKeyPrefix::new_from_direct_chat(user_id, None),
-            ));
-
-        for message_index in chat.events.thread_keys() {
-            self.data
-                .stable_memory_keys_to_garbage_collect
-                .extend(ChatEvents::stable_memory_key_prefixes(
-                    ChatEventKeyPrefix::new_from_direct_chat(user_id, Some(message_index)),
-                ));
-        }
+            .extend(chat.events.all_stable_memory_key_prefixes());
+        // Each chat has a unique `key_id`, so if a new chat is created with the same user before
+        // the job has run then its entries won't be removed
+        self.data
+            .stable_memory_keys_to_garbage_collect
+            .push(model::unread_message_index_map::prefix(chat.events.stable_memory_prefix()).into());
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true
@@ -455,14 +463,14 @@ struct Data {
     pub group_chats: GroupChats,
     pub communities: Communities,
     pub favourite_chats: FavouriteChats,
-    pub blocked_users: Timestamped<HashSet<UserId>>,
+    pub blocked_users: BlockedUsers,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    pub avatar: Timestamped<Option<Document>>,
-    pub profile_background: Timestamped<Option<Document>>,
+    pub avatar: ProfileDocument,
+    pub profile_background: ProfileDocument,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
@@ -527,14 +535,14 @@ impl Data {
             group_chats: GroupChats::default(),
             communities: Communities::default(),
             favourite_chats: FavouriteChats::default(),
-            blocked_users: Timestamped::default(),
+            blocked_users: BlockedUsers::default(),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
             identity_canister_id,
             escrow_canister_id,
-            avatar: Timestamped::default(),
-            profile_background: Timestamped::default(),
+            avatar: ProfileDocument::default(),
+            profile_background: ProfileDocument::default(),
             test_mode,
             is_platform_moderator: false,
             hot_group_exclusions: HotGroupExclusions::default(),
@@ -751,6 +759,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub direct_chats: u32,
+    pub direct_chats_with_legacy_events: u32,
     pub group_chats: u32,
     pub communities: u32,
     pub groups_created: u32,

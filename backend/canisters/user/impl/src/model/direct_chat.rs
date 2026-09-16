@@ -25,6 +25,7 @@ impl DirectChat {
         my_user_id: UserId,
         them: UserId,
         user_type: UserType,
+        key_id: u32,
         events_ttl: Option<Milliseconds>,
         anonymized_chat_id: u128,
         now: TimestampMillis,
@@ -32,7 +33,7 @@ impl DirectChat {
         DirectChat {
             them,
             date_created: now,
-            events: ChatEvents::new_direct_chat(my_user_id, them, events_ttl, anonymized_chat_id, now),
+            events: ChatEvents::new_direct_chat(my_user_id, them, key_id, events_ttl, anonymized_chat_id, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),
@@ -72,8 +73,11 @@ impl DirectChat {
         self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 
         if let Some(their_message_index) = their_message_index {
-            self.unread_message_index_map
-                .add(message_event.event.message_index, their_message_index);
+            self.unread_message_index_map.add(
+                self.events.stable_memory_prefix(),
+                message_event.event.message_index,
+                their_message_index,
+            );
         }
 
         message_event

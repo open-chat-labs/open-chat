@@ -122,6 +122,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     expires_at: now + content.expires_in,
                     additional_admins: Vec::new(),
                     canister_to_notify: Some(args.recipient.canister_id()),
+                    user_to_notify: Some(args.recipient),
                     is_public: false,
                 };
                 match set_up_p2p_swap(escrow_canister_id, create_swap_args, content.from_account).await {
@@ -516,7 +517,7 @@ fn send_message_impl(
                     messages: vec![send_message_args],
                     sender_name,
                     sender_display_name,
-                    sender_avatar_id: state.data.avatar.value.as_ref().map(|d| d.id),
+                    sender_avatar_id: state.data.avatar.id(),
                 })),
             );
         }

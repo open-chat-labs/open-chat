@@ -170,6 +170,7 @@ fn remove_membership_from_user_canister(
     fire_and_forget_handler: &mut FireAndForgetHandler,
 ) {
     let args = c2c_remove_from_group::Args {
+        user_id: user_to_remove,
         removed_by,
         blocked,
         group_name,

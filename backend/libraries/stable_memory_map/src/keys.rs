@@ -3,9 +3,12 @@ use ic_stable_structures::storable::Bound;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+mod blocked_user;
 mod chat_event;
 mod chit_event;
 mod community_event;
+mod contact;
+mod direct_chat_unread_message_index;
 mod expiring_event;
 mod last_updated;
 mod macros;
@@ -14,7 +17,10 @@ mod message_event_indexes;
 mod message_id;
 mod p2p_swap;
 mod principal;
+mod private_reply;
+mod profile_document;
 mod referral;
+mod removed_chat;
 mod search_index;
 mod storage;
 mod streak_insurance;
@@ -23,9 +29,12 @@ mod token_swap;
 mod user_id;
 mod user_metrics;
 
+pub use blocked_user::*;
 pub use chat_event::*;
 pub use chit_event::*;
 pub use community_event::*;
+pub use contact::*;
+pub use direct_chat_unread_message_index::*;
 pub use expiring_event::*;
 pub use last_updated::*;
 pub use message_activity_event::*;
@@ -33,7 +42,10 @@ pub use message_event_indexes::*;
 pub use message_id::*;
 pub use p2p_swap::*;
 pub use principal::*;
+pub use private_reply::*;
+pub use profile_document::*;
 pub use referral::*;
+pub use removed_chat::*;
 pub use search_index::*;
 pub use storage::*;
 pub use streak_insurance::*;
@@ -112,10 +124,13 @@ fn validate_key<F: FnOnce(KeyType) -> bool>(key: &[u8], validator: F) -> Result<
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum KeyType {
-    DirectChatEvent = 1,
+    // The events of direct chats created before `key_id`s were introduced stay under these two
+    // `Legacy` key types until they have been moved across to `DirectChatEvent` and
+    // `DirectChatThreadEvent`. Both can be removed once every user canister has been migrated.
+    DirectChatEventLegacy = 1,
     GroupChatEvent = 2,
     ChannelEvent = 3,
-    DirectChatThreadEvent = 4,
+    DirectChatThreadEventLegacy = 4,
     GroupChatThreadEvent = 5,
     ChannelThreadEvent = 6,
     GroupMember = 7,
@@ -168,6 +183,20 @@ pub enum KeyType {
     Referral = 54,
     StreakInsurancePayment = 55,
     StreakInsuranceClaim = 56,
+    // Every direct chat key type other than the two `Legacy` ones uses the chat's `key_id` in place
+    // of the other user's id (see `ChatEventKeyPrefix::new_from_direct_chat_key_id`). The events
+    // need new key types since the legacy entries are still being migrated, whereas the other key
+    // types never held data in the legacy layout so they keep their original values.
+    DirectChatEvent = 57,
+    DirectChatThreadEvent = 58,
+    Contact = 59,
+    BlockedUser = 60,
+    DirectChatUnreadMessageIndex = 61,
+    DirectChatRemoved = 62,
+    GroupChatRemoved = 63,
+    CommunityRemoved = 64,
+    ProfileDocument = 65,
+    PrivateReplyToGroup = 66,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -190,12 +219,14 @@ impl KeyType {
     // stays within one map.
     pub const fn map_class(self) -> MapClass {
         match self {
-            KeyType::DirectChatEvent
+            KeyType::DirectChatEventLegacy
             | KeyType::GroupChatEvent
             | KeyType::ChannelEvent
-            | KeyType::DirectChatThreadEvent
+            | KeyType::DirectChatThreadEventLegacy
             | KeyType::GroupChatThreadEvent
             | KeyType::ChannelThreadEvent
+            | KeyType::DirectChatEvent
+            | KeyType::DirectChatThreadEvent
             | KeyType::GroupMember
             | KeyType::ChannelMember
             | KeyType::CommunityMember
@@ -216,7 +247,11 @@ impl KeyType {
             // Each entry is a token swap, which is too large for the small entries map
             | KeyType::TokenSwap
             // Each entry is a P2P swap, which is too large for the small entries map
-            | KeyType::P2PSwap => MapClass::Default,
+            | KeyType::P2PSwap
+            // Contacts are expected to gain more fields, so they use the main map to leave room to grow
+            | KeyType::Contact
+            // Each entry is an avatar or profile background, which can be up to 1MB
+            | KeyType::ProfileDocument => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -248,7 +283,13 @@ impl KeyType {
             | KeyType::ChannelThreadRead
             | KeyType::Referral
             | KeyType::StreakInsurancePayment
-            | KeyType::StreakInsuranceClaim => MapClass::SmallEntries,
+            | KeyType::StreakInsuranceClaim
+            | KeyType::BlockedUser
+            | KeyType::DirectChatUnreadMessageIndex
+            | KeyType::DirectChatRemoved
+            | KeyType::GroupChatRemoved
+            | KeyType::CommunityRemoved
+            | KeyType::PrivateReplyToGroup => MapClass::SmallEntries,
             #[cfg(test)]
             KeyType::TestSmallEntries => MapClass::SmallEntries,
         }
@@ -279,10 +320,10 @@ impl TryFrom<u8> for KeyType {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            1 => Ok(KeyType::DirectChatEvent),
+            1 => Ok(KeyType::DirectChatEventLegacy),
             2 => Ok(KeyType::GroupChatEvent),
             3 => Ok(KeyType::ChannelEvent),
-            4 => Ok(KeyType::DirectChatThreadEvent),
+            4 => Ok(KeyType::DirectChatThreadEventLegacy),
             5 => Ok(KeyType::GroupChatThreadEvent),
             6 => Ok(KeyType::ChannelThreadEvent),
             7 => Ok(KeyType::GroupMember),
@@ -335,6 +376,16 @@ impl TryFrom<u8> for KeyType {
             54 => Ok(KeyType::Referral),
             55 => Ok(KeyType::StreakInsurancePayment),
             56 => Ok(KeyType::StreakInsuranceClaim),
+            57 => Ok(KeyType::DirectChatEvent),
+            58 => Ok(KeyType::DirectChatThreadEvent),
+            59 => Ok(KeyType::Contact),
+            60 => Ok(KeyType::BlockedUser),
+            61 => Ok(KeyType::DirectChatUnreadMessageIndex),
+            62 => Ok(KeyType::DirectChatRemoved),
+            63 => Ok(KeyType::GroupChatRemoved),
+            64 => Ok(KeyType::CommunityRemoved),
+            65 => Ok(KeyType::ProfileDocument),
+            66 => Ok(KeyType::PrivateReplyToGroup),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

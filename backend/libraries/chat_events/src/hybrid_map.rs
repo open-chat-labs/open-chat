@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::{ChatEventKeyPrefix, StableMemoryMap};
 use std::collections::BTreeMap;
 use std::ops::RangeBounds;
-use types::{Chat, EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX, MessageIndex};
+use types::{EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
 
 #[cfg(test)]
 thread_local! {
@@ -33,23 +33,39 @@ impl<MSlow: EventsMap> HybridMap<MSlow> {
 }
 
 impl HybridMap<ChatEventsStableStorage> {
-    pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
-        self.slow = ChatEventsStableStorage::new(chat, thread_root_message_index);
+    pub fn set_stable_memory_prefix(&mut self, prefix: ChatEventKeyPrefix) {
+        self.slow = ChatEventsStableStorage::new(prefix);
     }
 
     pub fn stable_memory_prefix(&self) -> &ChatEventKeyPrefix {
         self.slow.prefix()
     }
+
+    pub fn legacy_stable_memory_prefix(&self) -> Option<&ChatEventKeyPrefix> {
+        self.slow.legacy_prefix()
+    }
+
+    pub fn has_legacy_events(&self) -> bool {
+        self.slow.has_legacy_events()
+    }
+
+    pub fn assign_key_id_prefix(&mut self, prefix: ChatEventKeyPrefix) {
+        self.slow.assign_key_id_prefix(prefix);
+    }
+
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        self.slow.migrate_legacy_events_batch()
+    }
 }
 
 impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
-    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
-        let disable_fast_map = matches!(chat, Chat::Direct(_)) || thread_root_message_index.is_some();
+    fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self {
+        let disable_fast_map = stable_memory_prefix.is_direct_chat() || stable_memory_prefix.is_thread();
         let max_events_in_fast_map = if disable_fast_map { 0 } else { 200 };
 
         HybridMap {
             fast: BTreeMap::new(),
-            slow: MSlow::new(chat, thread_root_message_index),
+            slow: MSlow::new(stable_memory_prefix),
             latest_event_index: EventIndex::default(),
             // Don't store thread events on the heap
             max_events_in_fast_map,

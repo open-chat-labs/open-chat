@@ -3,7 +3,7 @@ use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
+use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId, icrc1::CompletedCryptoTransaction};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Swaps {
@@ -68,6 +68,8 @@ pub struct Swap {
     pub refunds: Vec<CompletedCryptoTransaction>,
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
+    #[serde(default)]
+    pub user_to_notify: Option<UserId>,
     pub errors: Vec<String>,
 }
 
@@ -97,6 +99,7 @@ impl Swap {
             refunds: Vec::new(),
             additional_admins: args.additional_admins,
             canister_to_notify: args.canister_to_notify,
+            user_to_notify: args.user_to_notify,
             errors: Vec::new(),
         }
     }

@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{KeyPrefix, ReferralKey, ReferralKeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{Entry, KeyPrefix, ReferralKey, ReferralKeyPrefix, with_map, with_map_mut};
 use std::collections::HashMap;
 use std::ops::RangeInclusive;
 use types::{ReferralStatus, TimestampMillis, Timestamped, UserId};
@@ -22,13 +22,23 @@ pub struct Referrals {
 impl Referrals {
     pub fn set_status(&mut self, user_id: UserId, status: ReferralStatus, now: TimestampMillis) -> u32 {
         let key = ReferralKeyPrefix::new().create_key(&user_id);
-        let current_status = with_map(|m| m.get(key.clone())).map(|bytes| value_from_bytes(&bytes).value);
 
-        let current_chit_reward = current_status.map(|s| s.chit_reward()).unwrap_or_default();
-        let chit_reward_diff = status.chit_reward().saturating_sub(current_chit_reward);
+        let (chit_reward_diff, updated) = with_map_mut(|m| match m.entry(key) {
+            Entry::Occupied(e) => {
+                let current_chit_reward = value_from_bytes(&e.get()).value.chit_reward();
+                let chit_reward_diff = status.chit_reward().saturating_sub(current_chit_reward);
+                if chit_reward_diff > 0 {
+                    e.insert(value_to_bytes(status, now));
+                }
+                (chit_reward_diff, chit_reward_diff > 0)
+            }
+            Entry::Vacant(e) => {
+                e.insert(value_to_bytes(status, now));
+                (status.chit_reward(), true)
+            }
+        });
 
-        if chit_reward_diff > 0 || current_status.is_none() {
-            with_map_mut(|m| m.insert(key, value_to_bytes(status, now)));
+        if updated {
             self.last_updated = self.last_updated.max(now);
         }
 

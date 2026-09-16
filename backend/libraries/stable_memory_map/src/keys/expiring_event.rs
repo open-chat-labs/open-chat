@@ -16,7 +16,12 @@ key!(
 
 impl ExpiringEventKeyPrefix {
     pub fn new_from_chat(chat: Chat) -> Self {
-        Self::try_from(&ChatEventKeyPrefix::new_from_chat(chat, None)).unwrap()
+        Self::new_from_events_prefix(&ChatEventKeyPrefix::new_from_chat(chat, None))
+    }
+
+    // Panics if the events prefix is for a thread
+    pub fn new_from_events_prefix(events_prefix: &ChatEventKeyPrefix) -> Self {
+        Self::try_from(events_prefix).unwrap()
     }
 }
 
@@ -27,9 +32,9 @@ impl TryFrom<&ChatEventKeyPrefix> for ExpiringEventKeyPrefix {
     fn try_from(value: &ChatEventKeyPrefix) -> Result<Self, Self::Error> {
         let mut bytes = BaseKeyPrefix::from(value.clone()).0;
         bytes[0] = match extract_key_type(&bytes).unwrap() {
-            KeyType::DirectChatEvent => KeyType::DirectChatExpiringEvent,
             KeyType::GroupChatEvent => KeyType::GroupChatExpiringEvent,
             KeyType::ChannelEvent => KeyType::ChannelExpiringEvent,
+            KeyType::DirectChatEvent => KeyType::DirectChatExpiringEvent,
             _ => return Err(()),
         } as u8;
         Ok(ExpiringEventKeyPrefix(bytes))
@@ -67,32 +72,35 @@ mod tests {
     use super::*;
     use crate::{BaseKey, Key, MapClass};
     use ic_principal::Principal;
-    use rand::{Rng, RngExt, rng};
+    use rand::{Rng, rng};
     use types::{ChannelId, MessageIndex};
 
     #[test]
     fn expiring_event_key_e2e() {
         for _ in 0..100 {
-            let user_id_bytes: [u8; 10] = rng().random();
-            let user_id = Principal::from_slice(&user_id_bytes).into();
+            let key_id = rng().next_u32();
             let channel_id = ChannelId::from(rng().next_u32());
             let expires_at = rng().next_u64();
             let event_index = EventIndex::from(rng().next_u32());
 
-            for (chat, key_type, len) in [
-                (Chat::Direct(user_id), KeyType::DirectChatExpiringEvent, 24),
+            for (events_prefix, key_type, len) in [
                 (
-                    Chat::Group(Principal::anonymous().into()),
+                    ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id, None),
+                    KeyType::DirectChatExpiringEvent,
+                    17,
+                ),
+                (
+                    ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None),
                     KeyType::GroupChatExpiringEvent,
                     13,
                 ),
                 (
-                    Chat::Channel(Principal::anonymous().into(), channel_id),
+                    ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::anonymous().into(), channel_id), None),
                     KeyType::ChannelExpiringEvent,
                     17,
                 ),
             ] {
-                let prefix = ExpiringEventKeyPrefix::new_from_chat(chat);
+                let prefix = ExpiringEventKeyPrefix::new_from_events_prefix(&events_prefix);
                 let key = BaseKey::from(prefix.create_key(&(expires_at, event_index)));
                 let expiring_event_key = ExpiringEventKey::try_from(key.clone()).unwrap();
 
@@ -104,11 +112,10 @@ mod tests {
                 assert_eq!(expiring_event_key.event_index(), event_index);
 
                 // Other than the key type, the prefix matches the prefix of the chat's main events
-                let events_prefix = ChatEventKeyPrefix::new_from_chat(chat, None);
-                assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix).as_slice()[1..]);
+                assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix.clone()).as_slice()[1..]);
 
                 // Thread events never expire
-                let thread_events_prefix = ChatEventKeyPrefix::new_from_chat(chat, Some(MessageIndex::from(1)));
+                let thread_events_prefix = events_prefix.for_thread(MessageIndex::from(1));
                 assert!(ExpiringEventKeyPrefix::try_from(&thread_events_prefix).is_err());
 
                 let serialized = msgpack::serialize_then_unwrap(&expiring_event_key);

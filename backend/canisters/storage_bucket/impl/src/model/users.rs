@@ -12,12 +12,7 @@ pub struct Users {
 
 impl Users {
     pub fn add(&mut self, user_id: Principal) -> bool {
-        if !self.exists(&user_id) {
-            self.users.insert(user_id, UserRecord::default());
-            true
-        } else {
-            false
-        }
+        self.users.insert_if_absent(user_id, UserRecord::default())
     }
 
     pub fn remove(&mut self, user_id: &Principal) -> Option<UserRecord> {
@@ -42,6 +37,23 @@ impl Users {
         let previous = user_record.set_file_status(file_id, status);
         self.users.insert(user_id, user_record);
         previous
+    }
+
+    // Sets the status of the file in the user's record, returning `None` if the user doesn't exist,
+    // otherwise the file's previous status
+    pub fn update_file_status(
+        &mut self,
+        user_id: Principal,
+        file_id: FileId,
+        status: FileStatusInternal,
+    ) -> Option<Option<FileStatusInternal>> {
+        let mut previous = None;
+        self.users
+            .update(&user_id, |user_record| {
+                previous = user_record.set_file_status(file_id, status);
+                true
+            })
+            .map(|_| previous)
     }
 
     pub fn update_user_id(&mut self, old_user_id: Principal, new_user_id: Principal) -> bool {

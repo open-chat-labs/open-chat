@@ -32,3 +32,20 @@ generate_c2c_call!(c2c_withdraw_from_icpswap);
 generate_c2c_call!(events);
 generate_c2c_call!(events_by_index);
 generate_c2c_call!(events_window);
+
+// Sends the previous shape of the `c2c_can_issue_access_token_v2` args (the bare `AccessTypeArgs`),
+// which User canisters on the previous wasm require. Remove once they have all been upgraded.
+pub async fn c2c_can_issue_access_token_v2_legacy(
+    canister_id: types::CanisterId,
+    args: &types::c2c_can_issue_access_token::AccessTypeArgs,
+) -> Result<c2c_can_issue_access_token_v2::Response, types::C2CError> {
+    canister_client::make_c2c_call(
+        canister_id,
+        "c2c_can_issue_access_token_v2_msgpack",
+        args,
+        msgpack::serialize_to_vec,
+        |r| msgpack::deserialize(r),
+        None,
+    )
+    .await
+}

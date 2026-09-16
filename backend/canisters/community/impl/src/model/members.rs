@@ -221,32 +221,50 @@ impl CommunityMembers {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
-        let mut member = self
-            .members_map
-            .get(&target_user_id)
-            .ok_or(OCErrorCode::TargetUserNotInCommunity)?;
+        let mut result: OCResult<CommunityRole> = Err(OCErrorCode::TargetUserNotInCommunity.into());
+        let mut unlapsed = false;
 
-        // The initiator must be the same or senior to the target's current role, otherwise eg. an
-        // admin could demote an owner
-        if !initiator.role.is_same_or_senior(member.role) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+        // The member is validated and updated within a single lookup in stable memory
+        self.members_map.update(&target_user_id, |member| {
+            // The initiator must be the same or senior to the target's current role, otherwise eg. an
+            // admin could demote an owner
+            if !initiator.role.is_same_or_senior(member.role) {
+                result = Err(OCErrorCode::InitiatorNotAuthorized.into());
+                return false;
+            }
 
-        // It is not possible to change the role of the last owner
-        if member.role.is_owner() && self.owners.len() <= 1 {
-            return Err(OCErrorCode::CannotChangeRoleOfLastOwner.into());
-        }
+            // It is not possible to change the role of the last owner
+            if member.role.is_owner() && self.owners.len() <= 1 {
+                result = Err(OCErrorCode::CannotChangeRoleOfLastOwner.into());
+                return false;
+            }
 
-        // It is not currently possible to make a bot an owner
-        if member.user_type.is_3rd_party_bot() && new_role.is_owner() {
-            return Err(OCErrorCode::CannotMakeBotOwner.into());
-        }
+            // It is not currently possible to make a bot an owner
+            if member.user_type.is_3rd_party_bot() && new_role.is_owner() {
+                result = Err(OCErrorCode::CannotMakeBotOwner.into());
+                return false;
+            }
 
-        let prev_role = member.role;
+            let prev_role = member.role;
 
-        if prev_role == new_role {
-            return Err(OCErrorCode::NoChange.into());
-        }
+            if prev_role == new_role {
+                result = Err(OCErrorCode::NoChange.into());
+                return false;
+            }
+
+            member.role = new_role;
+
+            // Owners can't be lapsed
+            if new_role.is_owner() && member.lapsed.value {
+                member.lapsed = Timestamped::new(false, now);
+                unlapsed = true;
+            }
+
+            result = Ok(prev_role);
+            true
+        });
+
+        let prev_role = result?;
 
         match prev_role {
             CommunityRole::Owner => self.owners.remove(&target_user_id),
@@ -254,21 +272,16 @@ impl CommunityMembers {
             _ => false,
         };
 
-        member.role = new_role;
+        if unlapsed {
+            self.lapsed.remove(&target_user_id);
+        }
 
         match new_role {
-            CommunityRole::Owner => {
-                if member.lapsed.value {
-                    member.lapsed = Timestamped::new(false, now);
-                    self.lapsed.remove(&target_user_id);
-                }
-                self.owners.insert(target_user_id)
-            }
+            CommunityRole::Owner => self.owners.insert(target_user_id),
             CommunityRole::Admin => self.admins.insert(target_user_id),
             _ => false,
         };
 
-        self.members_map.insert(target_user_id, member);
         self.prune_then_insert_member_update(target_user_id, MemberUpdate::RoleChanged, now);
 
         Ok(ChangeRoleSuccess { prev_role })
@@ -581,6 +594,9 @@ impl CommunityMembers {
         user_id: &UserId,
         update_fn: F,
     ) -> Option<bool> {
+        // `update_fn` comes from the caller and could read anything, including another value in the
+        // stable memory map, so the member is read and written in 2 separate lookups rather than
+        // via `StableMemoryMap::update`, which would hold the map borrowed while `update_fn` runs
         let mut member = self.members_map.get(user_id)?;
 
         let updated = update_fn(&mut member);

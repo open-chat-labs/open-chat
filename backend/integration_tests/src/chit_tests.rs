@@ -1,13 +1,15 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
-use constants::{DAY_IN_MS, HOUR_IN_MS};
+use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, HOUR_IN_MS};
 use itertools::Itertools;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::cmp::max;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use test_case::test_case;
+use testing::rng::random_principal;
 use types::{ChitEventType, OptionUpdate, TimestampMillis};
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
@@ -335,6 +337,110 @@ fn pay_for_premium_item_succeeds() {
 
     assert_eq!(initial_state.premium_items, vec![1]);
     assert_eq!(initial_state.total_chit_earned - initial_state.chit_balance, 10_000)
+}
+
+// Insurance paid for from an account OpenChat does not control, pulled via ICRC-2 against an
+// allowance that account granted to the user's canister. This is how paying from an external wallet
+// works.
+#[test]
+fn streak_insurance_can_be_paid_from_approved_account() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    ensure_time_at_least_day0(env);
+
+    claim_then_check_result(env, &user, 1, 1);
+
+    let price = ONE_CHAT;
+    let wallet_balance = 10 * ONE_CHAT;
+    let external_wallet = random_principal();
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, external_wallet, wallet_balance);
+    // The allowance has to cover the transfer fee too, since that is charged to the `from` account.
+    client::ledger::happy_path::approve(
+        env,
+        external_wallet,
+        canister_ids.chat_ledger,
+        user.user_id,
+        price + CHAT_TRANSFER_FEE,
+    );
+
+    let response = client::user::pay_for_streak_insurance(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::pay_for_streak_insurance::Args {
+            additional_days: 1,
+            expected_price: price,
+            from_account: Some(external_wallet.into()),
+            pin: None,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
+        "{response:?}"
+    );
+
+    let result = client::user::happy_path::initial_state(env, &user);
+    assert_eq!(result.streak_insurance.map(|s| s.days_insured), Some(1));
+
+    // The wallet paid for the approval and the insurance, while the user's own balance is untouched
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, external_wallet),
+        wallet_balance - price - 2 * CHAT_TRANSFER_FEE
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user.user_id),
+        0
+    );
+}
+
+#[test]
+fn streak_insurance_from_account_without_allowance_fails() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    ensure_time_at_least_day0(env);
+
+    claim_then_check_result(env, &user, 1, 1);
+
+    let external_wallet = random_principal();
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, external_wallet, 10 * ONE_CHAT);
+
+    let response = client::user::pay_for_streak_insurance(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::pay_for_streak_insurance::Args {
+            additional_days: 1,
+            expected_price: ONE_CHAT,
+            from_account: Some(external_wallet.into()),
+            pin: None,
+        },
+    );
+    assert!(
+        matches!(
+            &response,
+            user_canister::pay_for_streak_insurance::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientAllowance)
+        ),
+        "{response:?}"
+    );
+
+    let result = client::user::happy_path::initial_state(env, &user);
+    assert!(result.streak_insurance.is_none());
+
+    // The payment lock was released, so paying from the user's own account still works
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 10 * ONE_CHAT);
+    client::user::happy_path::pay_for_streak_insurance(env, &user, 1, ONE_CHAT);
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {

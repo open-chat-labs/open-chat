@@ -11,7 +11,7 @@ fn events_by_index(args: Args) -> Response {
     read_state(|state| {
         read_events(
             args.latest_known_update,
-            args.user_id,
+            args.them,
             args.thread_root_message_index,
             args,
             events_by_index_impl,

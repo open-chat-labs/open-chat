@@ -16,7 +16,12 @@ key!(
 
 impl UserMetricsKeyPrefix {
     pub fn new_from_chat(chat: Chat) -> Self {
-        Self::try_from(&ChatEventKeyPrefix::new_from_chat(chat, None)).unwrap()
+        Self::new_from_events_prefix(&ChatEventKeyPrefix::new_from_chat(chat, None))
+    }
+
+    // Panics if the events prefix is for a thread, since metrics are stored per chat
+    pub fn new_from_events_prefix(events_prefix: &ChatEventKeyPrefix) -> Self {
+        Self::try_from(events_prefix).unwrap()
     }
 }
 
@@ -28,9 +33,9 @@ impl TryFrom<&ChatEventKeyPrefix> for UserMetricsKeyPrefix {
     fn try_from(value: &ChatEventKeyPrefix) -> Result<Self, Self::Error> {
         let mut bytes = BaseKeyPrefix::from(value.clone()).0;
         bytes[0] = match extract_key_type(&bytes).unwrap() {
-            KeyType::DirectChatEvent => KeyType::DirectChatUserMetrics,
             KeyType::GroupChatEvent => KeyType::GroupChatUserMetrics,
             KeyType::ChannelEvent => KeyType::ChannelUserMetrics,
+            KeyType::DirectChatEvent => KeyType::DirectChatUserMetrics,
             _ => return Err(()),
         } as u8;
         Ok(UserMetricsKeyPrefix(bytes))
@@ -54,11 +59,9 @@ impl UserMetricsKey {
     pub fn user_id(&self) -> UserId {
         // User ids vary in length, so the prefix length is determined by the key type
         let prefix_len = match extract_key_type(&self.0).unwrap() {
-            // Key type, then the other user's id preceded by its length
-            KeyType::DirectChatUserMetrics => 2 + self.0[1] as usize,
             KeyType::GroupChatUserMetrics => 1,
-            // Key type, then the channel id
-            KeyType::ChannelUserMetrics => 5,
+            // Key type, then the channel id (or the direct chat's key id)
+            KeyType::ChannelUserMetrics | KeyType::DirectChatUserMetrics => 5,
             _ => unreachable!(),
         };
         Principal::from_slice(&self.0[prefix_len..]).into()
@@ -75,24 +78,29 @@ mod tests {
     #[test]
     fn user_metrics_keys_e2e() {
         for _ in 0..100 {
-            let them_bytes: [u8; 10] = rng().random();
-            let them = Principal::from_slice(&them_bytes).into();
             let user_id_len = rng().random_range(0..=29);
             let user_id_bytes: Vec<u8> = (0..user_id_len).map(|_| rng().random()).collect();
             let user_id = Principal::from_slice(&user_id_bytes).into();
             let channel_id = ChannelId::from(rng().next_u32());
 
-            for (chat, key_type, prefix_len) in [
-                (Chat::Direct(them), KeyType::DirectChatUserMetrics, 12),
-                (Chat::Group(Principal::anonymous().into()), KeyType::GroupChatUserMetrics, 1),
+            for (events_prefix, key_type, prefix_len) in [
                 (
-                    Chat::Channel(Principal::anonymous().into(), channel_id),
+                    ChatEventKeyPrefix::new_from_direct_chat_key_id(rng().next_u32(), None),
+                    KeyType::DirectChatUserMetrics,
+                    5,
+                ),
+                (
+                    ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None),
+                    KeyType::GroupChatUserMetrics,
+                    1,
+                ),
+                (
+                    ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::anonymous().into(), channel_id), None),
                     KeyType::ChannelUserMetrics,
                     5,
                 ),
             ] {
-                let events_prefix = ChatEventKeyPrefix::new_from_chat(chat, None);
-                let prefix = UserMetricsKeyPrefix::new_from_chat(chat);
+                let prefix = UserMetricsKeyPrefix::new_from_events_prefix(&events_prefix);
                 let key = BaseKey::from(prefix.create_key(&user_id));
                 let metrics_key = UserMetricsKey::try_from(key).unwrap();
 
@@ -101,9 +109,9 @@ mod tests {
                 assert_eq!(metrics_key.0.len(), prefix_len + user_id_len);
                 assert!(metrics_key.matches_prefix(&prefix));
                 assert_eq!(metrics_key.user_id(), user_id);
-                assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix).as_slice()[1..]);
+                assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix.clone()).as_slice()[1..]);
 
-                let thread_events_prefix = ChatEventKeyPrefix::new_from_chat(chat, Some(1.into()));
+                let thread_events_prefix = events_prefix.for_thread(1.into());
                 assert!(UserMetricsKeyPrefix::try_from(&thread_events_prefix).is_err());
 
                 let serialized = msgpack::serialize_then_unwrap(&metrics_key);

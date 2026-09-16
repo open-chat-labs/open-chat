@@ -14,6 +14,7 @@ fn game_chit_rejected_at_ingress() {
     let starting_balance = client::user::happy_path::initial_state(env, &user).chit_balance;
 
     let args = Args {
+        user_id: user.user_id,
         game_id: "light_up".to_string(),
         key: "142:solve".to_string(),
         amount: 250,

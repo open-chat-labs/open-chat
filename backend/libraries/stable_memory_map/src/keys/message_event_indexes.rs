@@ -30,12 +30,12 @@ impl From<&ChatEventKeyPrefix> for MessageEventIndexesKeyPrefix {
     fn from(value: &ChatEventKeyPrefix) -> Self {
         let mut bytes = BaseKeyPrefix::from(value.clone()).0;
         bytes[0] = match extract_key_type(&bytes).unwrap() {
-            KeyType::DirectChatEvent => KeyType::DirectChatMessageEventIndexes,
             KeyType::GroupChatEvent => KeyType::GroupChatMessageEventIndexes,
             KeyType::ChannelEvent => KeyType::ChannelMessageEventIndexes,
-            KeyType::DirectChatThreadEvent => KeyType::DirectChatThreadMessageEventIndexes,
             KeyType::GroupChatThreadEvent => KeyType::GroupChatThreadMessageEventIndexes,
             KeyType::ChannelThreadEvent => KeyType::ChannelThreadMessageEventIndexes,
+            KeyType::DirectChatEvent => KeyType::DirectChatMessageEventIndexes,
+            KeyType::DirectChatThreadEvent => KeyType::DirectChatThreadMessageEventIndexes,
             key_type => unreachable!("Unexpected key type for a chat event: {key_type:?}"),
         } as u8;
         MessageEventIndexesKeyPrefix(bytes)
@@ -67,31 +67,33 @@ mod tests {
     use super::*;
     use crate::{BaseKey, Key, MapClass};
     use ic_principal::Principal;
-    use rand::{Rng, RngExt, rng};
+    use rand::{Rng, rng};
     use types::ChannelId;
 
     #[test]
     fn message_event_indexes_key_e2e() {
         for thread in [false, true] {
             for _ in 0..100 {
-                let user_id_bytes: [u8; 10] = rng().random();
-                let user_id = Principal::from_slice(&user_id_bytes).into();
+                let key_id = rng().next_u32();
                 let channel_id = ChannelId::from(rng().next_u32());
                 let thread_root_message_index = thread.then(|| MessageIndex::from(rng().next_u32()));
                 let chunk_index = rng().next_u32();
 
-                for (chat, key_type, len) in [
+                for (events_prefix, key_type, len) in [
                     (
-                        Chat::Direct(user_id),
+                        ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id, thread_root_message_index),
                         if thread {
                             KeyType::DirectChatThreadMessageEventIndexes
                         } else {
                             KeyType::DirectChatMessageEventIndexes
                         },
-                        16,
+                        9,
                     ),
                     (
-                        Chat::Group(Principal::anonymous().into()),
+                        ChatEventKeyPrefix::new_from_chat(
+                            Chat::Group(Principal::anonymous().into()),
+                            thread_root_message_index,
+                        ),
                         if thread {
                             KeyType::GroupChatThreadMessageEventIndexes
                         } else {
@@ -100,12 +102,15 @@ mod tests {
                         5,
                     ),
                     (
-                        Chat::Channel(Principal::anonymous().into(), channel_id),
+                        ChatEventKeyPrefix::new_from_chat(
+                            Chat::Channel(Principal::anonymous().into(), channel_id),
+                            thread_root_message_index,
+                        ),
                         if thread { KeyType::ChannelThreadMessageEventIndexes } else { KeyType::ChannelMessageEventIndexes },
                         9,
                     ),
                 ] {
-                    let prefix = MessageEventIndexesKeyPrefix::new_from_chat(chat, thread_root_message_index);
+                    let prefix = MessageEventIndexesKeyPrefix::from(&events_prefix);
                     let key = BaseKey::from(prefix.create_key(&chunk_index));
                     let message_event_indexes_key = MessageEventIndexesKey::try_from(key.clone()).unwrap();
 
@@ -116,7 +121,6 @@ mod tests {
                     assert_eq!(message_event_indexes_key.chunk_index(), chunk_index);
 
                     // Other than the key type, the prefix matches the prefix of the list's events
-                    let events_prefix = ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index);
                     assert_eq!(prefix.0[1..], BaseKeyPrefix::from(events_prefix).as_slice()[1..]);
 
                     let serialized = msgpack::serialize_then_unwrap(&message_event_indexes_key);

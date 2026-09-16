@@ -5,10 +5,10 @@ use search::simple::Document;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{
-    ChatEventKey, ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, MessageIdKeyPrefix, StableMemoryMap, with_map,
+    ChatEventKey, ChatEventKeyPrefix, ExpiringEventKeyPrefix, Key, KeyPrefix, MessageIdKeyPrefix, StableMemoryMap, with_map,
     with_map_mut,
 };
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::collections::VecDeque;
 use std::ops::RangeBounds;
 use types::{
@@ -19,19 +19,29 @@ use types::{
 mod tests;
 
 // Used to efficiently read all events from stable memory when migrating a group into a community
-pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: usize) -> Vec<(EventContext, ByteBuf)> {
+pub fn read_events_as_bytes(
+    main_events_prefix: &ChatEventKeyPrefix,
+    after: Option<EventContext>,
+    max_bytes: usize,
+) -> Vec<(EventContext, ByteBuf)> {
     let key = match after {
-        None => ChatEventKeyPrefix::new_from_chat(chat, None).create_key(&EventIndex::default()),
+        None => main_events_prefix.create_key(&EventIndex::default()),
         Some(EventContext {
-            thread_root_message_index,
+            thread_root_message_index: None,
             event_index,
-        }) => ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index).create_key(&event_index.incr()),
+        }) => main_events_prefix.create_key(&event_index.incr()),
+        Some(EventContext {
+            thread_root_message_index: Some(root_message_index),
+            event_index,
+        }) => main_events_prefix
+            .for_thread(root_message_index)
+            .create_key(&event_index.incr()),
     };
     with_map(|m| {
         let mut total_bytes = 0;
         m.range(key..)
             .take_while(|(k, v)| {
-                if !k.matches_chat(&chat) {
+                if !k.is_in_chat(main_events_prefix) {
                     return false;
                 }
                 if k.thread_root_message_index().is_some() {
@@ -65,7 +75,7 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
             // Only the main events list is indexed, and deleted messages are removed from the index
             if context.thread_root_message_index.is_none() && message.deleted_by.is_none() {
                 search_index_entries.extend(SearchIndex::entries(
-                    chat,
+                    &prefix,
                     message.message_index,
                     message.sender,
                     &Document::from(&message.content),
@@ -97,7 +107,23 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsStableStorage {
     prefix: ChatEventKeyPrefix,
+    // Set while the events of a direct chat created before `key_id`s were introduced are being
+    // moved from their legacy keys (based on the other user's id) to keys based on the `key_id`.
+    // This can be removed once every user canister has migrated.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    legacy: Option<LegacyEvents>,
 }
+
+#[derive(Serialize, Deserialize)]
+struct LegacyEvents {
+    prefix: ChatEventKeyPrefix,
+    // Events with an index below this have been moved to their new keys, the rest are still under
+    // the legacy keys. Events are moved in index order so that reads stay consistent throughout.
+    migrated_below: EventIndex,
+}
+
+// The maximum number of events moved by each call to `migrate_legacy_events_batch`
+const LEGACY_EVENTS_MIGRATION_BATCH_SIZE: usize = 100;
 
 impl StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>> for ChatEventsStableStorage {
     fn prefix(&self) -> &ChatEventKeyPrefix {
@@ -114,49 +140,132 @@ impl StableMemoryMap<ChatEventKeyPrefix, EventWrapperInternal<ChatEventInternal>
 }
 
 impl ChatEventsStableStorage {
-    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
-        ChatEventsStableStorage {
-            prefix: ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index),
+    pub fn new(prefix: ChatEventKeyPrefix) -> Self {
+        ChatEventsStableStorage { prefix, legacy: None }
+    }
+
+    // The prefix of the legacy keys whose events have not yet been moved to the new keys, if any
+    pub fn legacy_prefix(&self) -> Option<&ChatEventKeyPrefix> {
+        self.legacy.as_ref().map(|l| &l.prefix)
+    }
+
+    pub fn has_legacy_events(&self) -> bool {
+        self.legacy.is_some()
+    }
+
+    // Switches a direct chat whose events are stored under legacy keys over to the given `key_id`
+    // based prefix. The events stay readable under their legacy keys until `migrate_legacy_events_batch`
+    // has moved them across.
+    pub fn assign_key_id_prefix(&mut self, prefix: ChatEventKeyPrefix) {
+        assert!(self.legacy.is_none(), "events are already being migrated from legacy keys");
+        let legacy_prefix = std::mem::replace(&mut self.prefix, prefix);
+        assert!(
+            legacy_prefix.is_legacy_direct_chat(),
+            "only legacy direct chat keys can be migrated"
+        );
+        self.legacy = Some(LegacyEvents {
+            prefix: legacy_prefix,
+            migrated_below: MIN_EVENT_INDEX,
+        });
+    }
+
+    // Moves the next batch of events from their legacy keys to their new keys, returning true once
+    // every event has been moved. Each batch holds at most `LEGACY_EVENTS_MIGRATION_BATCH_SIZE`
+    // events, so callers can check their instruction usage between batches.
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        let Some(legacy) = &self.legacy else {
+            return true;
+        };
+        let batch: Vec<_> = with_map(|m| {
+            m.range(legacy.prefix.create_key(&legacy.migrated_below)..)
+                .take_while(|(k, _)| k.matches_prefix(&legacy.prefix))
+                .take(LEGACY_EVENTS_MIGRATION_BATCH_SIZE)
+                .map(|(k, v)| (k.event_index(), v))
+                .collect()
+        });
+        let complete = batch.len() < LEGACY_EVENTS_MIGRATION_BATCH_SIZE;
+        let migrated_below = batch.last().map(|(index, _)| index.incr());
+        with_map_mut(|m| {
+            for (index, _) in batch.iter() {
+                m.remove(legacy.prefix.create_key(index));
+            }
+            m.insert_many(
+                batch
+                    .into_iter()
+                    .map(|(index, bytes)| (self.prefix.create_key(&index), bytes)),
+            );
+        });
+        if complete {
+            self.legacy = None;
+        } else if let Some(migrated_below) = migrated_below {
+            self.legacy.as_mut().unwrap().migrated_below = migrated_below;
+        }
+        complete
+    }
+
+    // The prefix under which the event with the given index is stored
+    fn prefix_for(&self, event_index: EventIndex) -> &ChatEventKeyPrefix {
+        match &self.legacy {
+            Some(legacy) if event_index >= legacy.migrated_below => &legacy.prefix,
+            _ => &self.prefix,
         }
     }
 
-    fn iter_as_bytes(&self) -> Iter {
-        Iter::new(self.prefix.clone(), MIN_EVENT_INDEX, MAX_EVENT_INDEX)
+    fn iter_as_bytes(&self) -> RangeIter {
+        self.range_as_bytes(..)
     }
 
-    fn range_as_bytes<R: RangeBounds<EventIndex>>(&self, range: R) -> Iter {
-        let prefix = self.prefix.clone();
+    fn range_as_bytes<R: RangeBounds<EventIndex>>(&self, range: R) -> RangeIter {
         let start = match range.start_bound() {
             std::ops::Bound::Included(i) => *i,
-            std::ops::Bound::Excluded(i) if *i == MAX_EVENT_INDEX => return Iter::empty(prefix),
+            std::ops::Bound::Excluded(i) if *i == MAX_EVENT_INDEX => return empty_range_iter(),
             std::ops::Bound::Excluded(i) => i.incr(),
             std::ops::Bound::Unbounded => MIN_EVENT_INDEX,
         };
         let end = match range.end_bound() {
             std::ops::Bound::Included(i) => *i,
-            std::ops::Bound::Excluded(i) if *i == MIN_EVENT_INDEX => return Iter::empty(prefix),
+            std::ops::Bound::Excluded(i) if *i == MIN_EVENT_INDEX => return empty_range_iter(),
             std::ops::Bound::Excluded(i) => i.decr(),
             std::ops::Bound::Unbounded => MAX_EVENT_INDEX,
         };
-        Iter::new(prefix, start, end)
+        match &self.legacy {
+            // Events below the boundary are under the new keys, the rest are still under the legacy keys
+            Some(legacy) if legacy.migrated_below > MIN_EVENT_INDEX => {
+                let boundary = legacy.migrated_below;
+                Iter::new(self.prefix.clone(), start, min(end, boundary.decr())).chain(Iter::new(
+                    legacy.prefix.clone(),
+                    max(start, boundary),
+                    end,
+                ))
+            }
+            Some(legacy) => Iter::new(legacy.prefix.clone(), start, end).chain(Iter::empty()),
+            None => Iter::new(self.prefix.clone(), start, end).chain(Iter::empty()),
+        }
     }
 }
 
+type RangeIter = std::iter::Chain<Iter, Iter>;
+
+fn empty_range_iter() -> RangeIter {
+    Iter::empty().chain(Iter::empty())
+}
+
 impl EventsMap for ChatEventsStableStorage {
-    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
-        ChatEventsStableStorage::new(chat, thread_root_message_index)
+    fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self {
+        ChatEventsStableStorage::new(stable_memory_prefix)
     }
 
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        StableMemoryMap::get(self, &event_index)
+        with_map(|m| m.get(self.prefix_for(event_index).create_key(&event_index))).map(|v| bytes_to_event(&v))
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        StableMemoryMap::insert(self, event.index, event);
+        let key = self.prefix_for(event.index).create_key(&event.index);
+        with_map_mut(|m| m.insert(key, event_to_bytes(event)));
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        StableMemoryMap::remove(self, &event_index).map(|v| v.into_value())
+        with_map_mut(|m| m.remove(self.prefix_for(event_index).create_key(&event_index))).map(|v| bytes_to_event(&v))
     }
 
     fn range<R: RangeBounds<EventIndex>>(
@@ -211,6 +320,9 @@ struct Iter {
 
 impl Iter {
     fn new(prefix: ChatEventKeyPrefix, start: EventIndex, end: EventIndex) -> Self {
+        if start > end {
+            return Iter::empty();
+        }
         Iter {
             prefix,
             next: start,
@@ -222,9 +334,10 @@ impl Iter {
         }
     }
 
-    fn empty(prefix: ChatEventKeyPrefix) -> Iter {
+    fn empty() -> Iter {
         Iter {
-            prefix,
+            // Never read since the iterator is already finished
+            prefix: ChatEventKeyPrefix::new_from_group_chat(None),
             next: EventIndex::default(),
             next_back: EventIndex::default(),
             is_forward_buffer: true,
@@ -252,7 +365,7 @@ impl Iter {
 }
 
 struct EventIter {
-    iter: Iter,
+    iter: RangeIter,
 }
 
 impl Iterator for EventIter {

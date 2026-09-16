@@ -6,6 +6,7 @@ use super::send_message_v2::{self, SuccessResult};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub bot_id: UserId,
     pub initiator: BotInitiator,
     pub thread_root_message_index: Option<MessageIndex>,

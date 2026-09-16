@@ -41,6 +41,11 @@ cd ../..
 ./scripts/download-nns-canister-wasm.sh icrc_ledger ic-icrc1-ledger
 ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
 
+# The User canister wasm currently in production, for testing upgrades from it. The release tags are
+# needed to find it, but aren't included in shallow checkouts.
+git fetch --quiet --depth=1 origin "refs/tags/*-user:refs/tags/*-user" || exit 1
+./scripts/download-canister-wasm.sh user prod user_prod || exit 1
+
 function cleanup() {
   rm -rf ./backend/integration_tests/pocket_ic_state
 }

@@ -188,7 +188,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
                     decimals,
                     username: state.data.username.value.clone(),
                     display_name: state.data.display_name.value.clone(),
-                    user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
+                    user_avatar_id: state.data.avatar.id(),
                 })),
             );
             Success

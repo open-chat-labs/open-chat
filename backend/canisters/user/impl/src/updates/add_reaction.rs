@@ -52,7 +52,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             added: true,
             username: state.data.username.value.clone(),
             display_name: state.data.display_name.value.clone(),
-            user_avatar_id: state.data.avatar.value.as_ref().map(|d| d.id),
+            user_avatar_id: state.data.avatar.id(),
         })),
     );
 

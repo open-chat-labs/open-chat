@@ -3,11 +3,14 @@ use user_canister::*;
 
 // Queries
 generate_msgpack_query_call!(chit_events);
+generate_msgpack_query_call!(contacts);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
+generate_msgpack_query_call!(token_swap_status);
 generate_msgpack_query_call!(events_window);
 generate_msgpack_query_call!(initial_state);
 generate_msgpack_query_call!(message_activity_feed);
+generate_msgpack_query_call!(public_profile);
 generate_msgpack_query_call!(saved_crypto_accounts);
 generate_msgpack_query_call!(updates);
 
@@ -37,11 +40,14 @@ generate_msgpack_update_call!(mute_notifications);
 generate_msgpack_update_call!(c2c_game_chit);
 generate_msgpack_update_call!(c2c_pay_for_premium_item);
 generate_msgpack_update_call!(pay_for_streak_insurance);
+generate_msgpack_update_call!(swap_tokens);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(save_crypto_account);
 generate_msgpack_update_call!(send_message_v2);
 generate_msgpack_update_call!(send_message_with_transfer_to_channel);
 generate_msgpack_update_call!(send_message_with_transfer_to_group);
+generate_msgpack_update_call!(set_avatar);
+generate_msgpack_update_call!(set_contact);
 generate_msgpack_update_call!(set_message_reminder_v2);
 generate_msgpack_update_call!(set_pin_number);
 generate_msgpack_update_call!(set_profile_background);
@@ -268,7 +274,7 @@ pub mod happy_path {
     pub fn events(
         env: &PocketIc,
         sender: &User,
-        user_id: UserId,
+        them: UserId,
         start_index: EventIndex,
         ascending: bool,
         max_messages: u32,
@@ -279,7 +285,8 @@ pub mod happy_path {
             sender.principal,
             sender.canister(),
             &user_canister::events::Args {
-                user_id,
+                user_id: sender.user_id,
+                them,
                 thread_root_message_index: None,
                 start_index,
                 ascending,
@@ -295,13 +302,14 @@ pub mod happy_path {
         }
     }
 
-    pub fn events_by_index(env: &PocketIc, sender: &User, user_id: UserId, events: Vec<EventIndex>) -> EventsResponse {
+    pub fn events_by_index(env: &PocketIc, sender: &User, them: UserId, events: Vec<EventIndex>) -> EventsResponse {
         let response = super::events_by_index(
             env,
             sender.principal,
             sender.canister(),
             &user_canister::events_by_index::Args {
-                user_id,
+                user_id: sender.user_id,
+                them,
                 thread_root_message_index: None,
                 events,
                 latest_known_update: None,
@@ -317,7 +325,7 @@ pub mod happy_path {
     pub fn events_window(
         env: &PocketIc,
         sender: &User,
-        user_id: UserId,
+        them: UserId,
         mid_point: MessageIndex,
         max_messages: u32,
         max_events: u32,
@@ -327,7 +335,8 @@ pub mod happy_path {
             sender.principal,
             sender.canister(),
             &user_canister::events_window::Args {
-                user_id,
+                user_id: sender.user_id,
+                them,
                 thread_root_message_index: None,
                 mid_point,
                 max_messages,
@@ -448,6 +457,7 @@ pub mod happy_path {
             VIDEO_CALL_OPERATOR,
             recipient.canister_id(),
             &user_canister::start_video_call_v2::Args {
+                user_id: recipient,
                 message_id,
                 initiator: user.user_id,
                 initiator_username: user.username(),
@@ -481,7 +491,8 @@ pub mod happy_path {
             VIDEO_CALL_OPERATOR,
             recipient.canister_id(),
             &user_canister::end_video_call_v2::Args {
-                user_id: initiator,
+                user_id: recipient,
+                them: initiator,
                 message_id,
             },
         );
@@ -609,6 +620,7 @@ pub mod happy_path {
             &user_canister::pay_for_streak_insurance::Args {
                 additional_days,
                 expected_price,
+                from_account: None,
                 pin: None,
             },
         );
@@ -624,6 +636,20 @@ pub mod happy_path {
     pub fn update_chat_settings(env: &mut PocketIc, user: &User, args: &user_canister::update_chat_settings::Args) {
         let response = super::update_chat_settings(env, user.principal, user.canister(), args);
         assert!(matches!(response, user_canister::update_chat_settings::Response::Success));
+    }
+
+    pub fn set_avatar(env: &mut PocketIc, user: &User, avatar: Option<types::Document>) {
+        let response = super::set_avatar(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::set_avatar::Args { avatar },
+        );
+
+        assert!(
+            matches!(response, user_canister::set_avatar::Response::Success),
+            "{response:?}"
+        );
     }
 
     pub fn set_profile_background(env: &mut PocketIc, user: &User, args: &user_canister::set_profile_background::Args) {

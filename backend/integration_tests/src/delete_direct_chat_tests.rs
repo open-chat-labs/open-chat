@@ -5,11 +5,11 @@ use crate::{TestEnv, client};
 use constants::DAY_IN_MS;
 use ic_stable_structures::memory_manager::MemoryId;
 use pocket_ic::PocketIc;
-use stable_memory_map::{KeyPrefix, KeyType, UserMetricsKeyPrefix};
+use stable_memory_map::KeyType;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{CanisterId, Chat, ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
+use types::{CanisterId, ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
 
 #[test]
 fn delete_direct_chat_succeeds() {
@@ -123,10 +123,14 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     tick_many(env, 3);
 
     for (me, them) in [(&user1, &user2), (&user2, &user1)] {
-        let prefix = UserMetricsKeyPrefix::new_from_chat(Chat::Direct(them.user_id.into()));
-        let small_entries = get_stable_memory_map(env, me.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID);
-        assert!(small_entries.contains_key(&prefix.create_key(&me.user_id).as_ref().to_vec()));
-        assert!(!small_entries.contains_key(&prefix.create_key(&them.user_id).as_ref().to_vec()));
+        // The chat's keys use its `key_id` rather than the other user's id, so find the metrics
+        // entries by their key type and the user id they end with
+        let user_metrics_keys: Vec<_> = get_stable_memory_map(env, me.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID)
+            .keys()
+            .filter(|k| k[0] == KeyType::DirectChatUserMetrics as u8)
+            .collect();
+        assert!(user_metrics_keys.iter().any(|k| k.ends_with(me.user_id.as_slice())));
+        assert!(!user_metrics_keys.iter().any(|k| k.ends_with(them.user_id.as_slice())));
     }
 
     let delete_direct_chat_response = client::user::delete_direct_chat(
@@ -159,11 +163,12 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
 
 // Key types whose entries aren't tied to a chat, so aren't removed when a chat is deleted (eg. the
 // message activity event for a reaction, or the CHIT events for the achievements earned by sending
-// messages)
-const USER_KEY_TYPES: [u8; 3] = [
+// messages, or the record of the direct chat having been removed)
+const USER_KEY_TYPES: [u8; 4] = [
     KeyType::MessageActivityEvent as u8,
     KeyType::MessageActivityEventId as u8,
     KeyType::ChitEvent as u8,
+    KeyType::DirectChatRemoved as u8,
 ];
 
 // The number of entries in the small entries map, excluding those which belong to the user rather

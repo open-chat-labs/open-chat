@@ -9,7 +9,7 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
 use stable_memory_map::{BaseKey, BaseKeyPrefix, ChatEventKeyPrefix};
-use types::{ChannelId, EventContext, MessageId, MultiUserChat, TimestampMillis};
+use types::{ChannelId, Chat, EventContext, MessageId, MultiUserChat, TimestampMillis};
 
 const WORDS: &[&str] = &[
     "apple",
@@ -60,17 +60,18 @@ fn search_matches_model() {
     init_stable_memory_map();
     let mut rng = StdRng::seed_from_u64(1);
     let chats = [
-        Chat::Direct(user_id(100).into()),
-        Chat::Group(Principal::anonymous().into()),
-        Chat::Channel(Principal::anonymous().into(), ChannelId::from(1u32)),
-        Chat::Channel(Principal::anonymous().into(), ChannelId::from(2u32)),
+        ChatEventKeyPrefix::new_from_direct_chat_key_id(1, None),
+        ChatEventKeyPrefix::new_from_direct_chat_key_id(2, None),
+        ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None),
+        ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::anonymous().into(), ChannelId::from(1u32)), None),
+        ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::anonymous().into(), ChannelId::from(2u32)), None),
     ];
     let mut indexes: Vec<_> = chats.iter().map(|_| SearchIndex::default()).collect();
     let mut models: Vec<_> = chats.iter().map(|_| Model::new()).collect();
 
     for i in 0..2000u32 {
         let c = rng.random_range(0..chats.len());
-        let (chat, index, model) = (chats[c], &mut indexes[c], &mut models[c]);
+        let (chat, index, model) = (&chats[c], &mut indexes[c], &mut models[c]);
 
         match rng.random_range(0..10) {
             0 | 1 if !model.is_empty() => {
@@ -96,7 +97,7 @@ fn search_matches_model() {
 
         if i % 10 == 0 {
             for c in 0..chats.len() {
-                assert_random_search_matches_model(chats[c], &indexes[c], &models[c], &mut rng);
+                assert_random_search_matches_model(&chats[c], &indexes[c], &models[c], &mut rng);
             }
         }
     }
@@ -104,43 +105,43 @@ fn search_matches_model() {
     // Removing every message leaves no entries behind
     for c in 0..chats.len() {
         for (message_index, (sender, fields)) in std::mem::take(&mut models[c]) {
-            indexes[c].remove(chats[c], message_index, sender, &document(&fields));
+            indexes[c].remove(&chats[c], message_index, sender, &document(&fields));
         }
-        assert_eq!(stable_entry_count(chats[c]), 0);
+        assert_eq!(stable_entry_count(&chats[c]), 0);
     }
 }
 
 #[test]
 fn prefix_terms_are_expanded_into_a_limited_number_of_tokens() {
     init_stable_memory_map();
-    let chat = Chat::Group(Principal::anonymous().into());
+    let chat = ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None);
     let mut index = SearchIndex::default();
     let sender = user_id(1);
 
     for i in 0..(MAX_PREFIX_EXPANSIONS as u32 + 50) {
-        index.add(chat, i.into(), sender, &document(&[format!("word{i:03}")]));
+        index.add(&chat, i.into(), sender, &document(&[format!("word{i:03}")]));
     }
 
-    let results = index.search(chat, MessageIndex::default(), "word", &HashSet::new(), usize::MAX);
+    let results = index.search(&chat, MessageIndex::default(), "word", &HashSet::new(), usize::MAX);
     let expected: Vec<MessageIndex> = (0..MAX_PREFIX_EXPANSIONS as u32).rev().map(MessageIndex::from).collect();
     assert_eq!(results, expected);
 
     // An exact match always sorts first, so is always included
-    index.add(chat, 1000.into(), sender, &document(&["word".to_string()]));
-    let results = index.search(chat, MessageIndex::default(), "word", &HashSet::new(), 1);
+    index.add(&chat, 1000.into(), sender, &document(&["word".to_string()]));
+    let results = index.search(&chat, MessageIndex::default(), "word", &HashSet::new(), 1);
     assert_eq!(results, vec![MessageIndex::from(1000)]);
 }
 
 #[test]
 fn prefix_expansions_are_shared_between_terms() {
     init_stable_memory_map();
-    let chat = Chat::Group(Principal::anonymous().into());
+    let chat = ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None);
     let mut index = SearchIndex::default();
     let sender = user_id(1);
 
     for i in 0..50u32 {
         index.add(
-            chat,
+            &chat,
             i.into(),
             sender,
             &document(&[format!("a{i:02} b{i:02} c{i:02} d{i:02}")]),
@@ -148,7 +149,7 @@ fn prefix_expansions_are_shared_between_terms() {
     }
 
     // Each of the 4 terms is expanded into 25 tokens
-    let results = index.search(chat, MessageIndex::default(), "a b c d", &HashSet::new(), usize::MAX);
+    let results = index.search(&chat, MessageIndex::default(), "a b c d", &HashSet::new(), usize::MAX);
     let expected: Vec<MessageIndex> = (0..25u32).rev().map(MessageIndex::from).collect();
     assert_eq!(results, expected);
 }
@@ -156,48 +157,48 @@ fn prefix_expansions_are_shared_between_terms() {
 #[test]
 fn searches_stop_after_a_limited_number_of_seeks() {
     init_stable_memory_map();
-    let chat = Chat::Group(Principal::anonymous().into());
+    let chat = ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None);
     let mut index = SearchIndex::default();
     let sender = user_id(1);
 
     // Messages alternate between the two terms, so each step of the intersection skips one message
     // and only the oldest message matches both terms
     let count = MAX_CURSOR_SEEKS as u32;
-    index.add(chat, 0.into(), sender, &document(&["alpha beta".to_string()]));
+    index.add(&chat, 0.into(), sender, &document(&["alpha beta".to_string()]));
     for i in 1..count {
         let text = if i % 2 == 0 { "alpha" } else { "beta" };
-        index.add(chat, i.into(), sender, &document(&[text.to_string()]));
+        index.add(&chat, i.into(), sender, &document(&[text.to_string()]));
     }
 
-    let results = index.search(chat, MessageIndex::default(), "alpha beta", &HashSet::new(), 10);
+    let results = index.search(&chat, MessageIndex::default(), "alpha beta", &HashSet::new(), 10);
     assert!(results.is_empty());
 
     // Searching from a later message index means fewer seeks, so the match is found
     let min_visible = MessageIndex::from(count - (MAX_CURSOR_SEEKS as u32 / 4));
-    index.add(chat, min_visible, sender, &document(&["alpha beta".to_string()]));
-    let results = index.search(chat, min_visible, "alpha beta", &HashSet::new(), 10);
+    index.add(&chat, min_visible, sender, &document(&["alpha beta".to_string()]));
+    let results = index.search(&chat, min_visible, "alpha beta", &HashSet::new(), 10);
     assert_eq!(results, vec![min_visible]);
 }
 
 #[test]
 fn searches_with_no_terms_and_no_users_return_nothing() {
     init_stable_memory_map();
-    let chat = Chat::Group(Principal::anonymous().into());
+    let chat = ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::anonymous().into()), None);
     let mut index = SearchIndex::default();
-    index.add(chat, 1.into(), user_id(1), &document(&["hello".to_string()]));
+    index.add(&chat, 1.into(), user_id(1), &document(&["hello".to_string()]));
 
     assert!(
         index
-            .search(chat, MessageIndex::default(), "", &HashSet::new(), 10)
+            .search(&chat, MessageIndex::default(), "", &HashSet::new(), 10)
             .is_empty()
     );
     assert!(
         index
-            .search(chat, MessageIndex::default(), "?!.", &HashSet::new(), 10)
+            .search(&chat, MessageIndex::default(), "?!.", &HashSet::new(), 10)
             .is_empty()
     );
     assert_eq!(
-        index.search(chat, MessageIndex::default(), "?!.", &HashSet::from([user_id(1)]), 10),
+        index.search(&chat, MessageIndex::default(), "?!.", &HashSet::from([user_id(1)]), 10),
         vec![MessageIndex::from(1)]
     );
 }
@@ -246,7 +247,7 @@ fn chat_events_keep_search_index_up_to_date() {
 #[test]
 fn legacy_heap_entries_are_searchable_then_migrated() {
     let mut events = setup_group_events();
-    let chat = events.chat();
+    let chat = events.stable_memory_prefix().clone();
     let senders = [user_id(1), user_id(2), user_id(3)];
     let texts = ["hello world", "apple banana", "hello apple", "東京 tower", "banana split"];
 
@@ -270,11 +271,11 @@ fn legacy_heap_entries_are_searchable_then_migrated() {
     for (message_index, sender, text) in messages.iter().take(40) {
         events
             .search_index_mut()
-            .move_to_heap(chat, *message_index, *sender, document(&[text.to_string()]));
+            .move_to_heap(&chat, *message_index, *sender, document(&[text.to_string()]));
     }
     events
         .search_index_mut()
-        .move_to_heap(chat, 10_000.into(), senders[0], document(&["hello".to_string()]));
+        .move_to_heap(&chat, 10_000.into(), senders[0], document(&["hello".to_string()]));
     let expected_with_missing: Vec<_> = expected
         .iter()
         .enumerate()
@@ -334,18 +335,18 @@ fn imported_events_are_indexed() {
     delete(&mut events, bob, deleted, 14);
     // Legacy entries, which are re-indexed under the channel's prefix after the import, one of which
     // (as if imported by a version which didn't index imported events) has no entries in the index
-    let chat = events.chat();
+    let chat = events.stable_memory_prefix().clone();
     events
         .search_index_mut()
-        .move_to_heap(chat, hello, alice, document(&["hello world".to_string()]));
+        .move_to_heap(&chat, hello, alice, document(&["hello world".to_string()]));
     events
         .search_index_mut()
-        .move_to_heap(chat, tokyo, bob, document(&["東京タワー".to_string()]));
+        .move_to_heap(&chat, tokyo, bob, document(&["東京タワー".to_string()]));
 
     let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
     ChatEvents::import_events(channel, export_events(&events));
     let tokyo_document = document(&["東京タワー".to_string()]);
-    SearchIndex::default().remove(channel, tokyo, bob, &tokyo_document);
+    SearchIndex::default().remove(&ChatEventKeyPrefix::new_from_chat(channel, None), tokyo, bob, &tokyo_document);
 
     let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
     imported.set_chat(channel);
@@ -365,17 +366,17 @@ fn search_index_is_garbage_collected_with_the_chat() {
     let mut events = setup_group_events();
     push(&mut events, user_id(1), "hello world", 10);
 
-    let prefixes = ChatEvents::stable_memory_key_prefixes(ChatEventKeyPrefix::new_from_chat(events.chat(), None));
+    let prefixes = events.all_stable_memory_key_prefixes();
     let search_prefixes: Vec<BaseKeyPrefix> = vec![
-        SearchTokenKeyPrefix::new_from_chat(events.chat()).into(),
-        SearchSenderKeyPrefix::new_from_chat(events.chat()).into(),
+        SearchTokenKeyPrefix::new_from_events_prefix(events.stable_memory_prefix()).into(),
+        SearchSenderKeyPrefix::new_from_events_prefix(events.stable_memory_prefix()).into(),
     ];
     for prefix in search_prefixes {
         assert!(prefixes.contains(&prefix));
     }
 }
 
-fn assert_random_search_matches_model(chat: Chat, index: &SearchIndex, model: &Model, rng: &mut StdRng) {
+fn assert_random_search_matches_model(chat: &ChatEventKeyPrefix, index: &SearchIndex, model: &Model, rng: &mut StdRng) {
     let search_term = SEARCH_TERMS[rng.random_range(0..SEARCH_TERMS.len())];
     let users: HashSet<_> = (0..rng.random_range(0..3)).map(|_| user_id(rng.random_range(0..5))).collect();
     let min_visible_message_index = MessageIndex::from(if rng.random_bool(0.2) { rng.random_range(0..2000) } else { 0 });
@@ -438,9 +439,9 @@ fn document(fields: &[String]) -> Document {
     document
 }
 
-fn stable_entry_count(chat: Chat) -> usize {
-    let token_prefix = SearchTokenKeyPrefix::new_from_chat(chat);
-    let sender_prefix = SearchSenderKeyPrefix::new_from_chat(chat);
+fn stable_entry_count(chat: &ChatEventKeyPrefix) -> usize {
+    let token_prefix = SearchTokenKeyPrefix::new_from_events_prefix(chat);
+    let sender_prefix = SearchSenderKeyPrefix::new_from_events_prefix(chat);
     with_map(|m| {
         let token_start = SearchTokenKey::try_from(BaseKey::from(BaseKeyPrefix::from(token_prefix.clone()))).unwrap();
         let sender_start = SearchSenderKey::try_from(BaseKey::from(BaseKeyPrefix::from(sender_prefix.clone()))).unwrap();

@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
-use types::UnitResult;
+use types::{UnitResult, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub swap_id: u128,
     pub input_token: bool,
     pub amount: Option<u128>,

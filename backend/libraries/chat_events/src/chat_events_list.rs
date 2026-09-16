@@ -9,13 +9,13 @@ use crate::{
 };
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{KeyPrefix, StableMemoryMap, with_map_mut};
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, StableMemoryMap, with_map_mut};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::iter::Peekable;
 use std::ops::Deref;
 use types::{
-    Chat, ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
+    ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
     Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
@@ -34,13 +34,38 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
-    pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
-        self.events_map.set_stable_memory_prefix(chat, thread_root_message_index);
+    pub fn set_stable_memory_prefix(&mut self, prefix: ChatEventKeyPrefix) {
+        self.events_map.set_stable_memory_prefix(prefix);
     }
 
-    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+    pub fn stable_memory_prefix(&self) -> &ChatEventKeyPrefix {
+        self.events_map.stable_memory_prefix()
+    }
+
+    // The prefix of the legacy keys under which some of the events are still stored, if any
+    pub fn legacy_stable_memory_prefix(&self) -> Option<&ChatEventKeyPrefix> {
+        self.events_map.legacy_stable_memory_prefix()
+    }
+
+    pub fn has_legacy_events(&self) -> bool {
+        self.events_map.has_legacy_events()
+    }
+
+    // Switches a direct chat whose events are stored under legacy keys over to the given `key_id`
+    // based prefix, from which every other prefix is derived from then on. The events themselves are
+    // moved across by `migrate_legacy_events_batch`.
+    pub fn assign_key_id_prefix(&mut self, prefix: ChatEventKeyPrefix) {
+        self.events_map.assign_key_id_prefix(prefix);
+    }
+
+    // Moves the next batch of events from the legacy keys, returning true once every event has been moved
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        self.events_map.migrate_legacy_events_batch()
+    }
+
+    pub fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self {
         ChatEventsList {
-            events_map: HybridMap::new(chat, thread_root_message_index),
+            events_map: HybridMap::new(stable_memory_prefix),
             message_ids_on_heap: HashMap::new(),
             message_event_indexes: MessageEventIndexes::default(),
             latest_event_index: None,
@@ -366,7 +391,8 @@ impl ChatEventsList {
 }
 
 pub struct ChatEventsListReader<'r> {
-    chat: Chat,
+    // The prefix of the chat's main events list, used to look up when events were last updated
+    main_events_prefix: &'r ChatEventKeyPrefix,
     events_list: &'r ChatEventsList,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
@@ -383,22 +409,28 @@ impl Deref for ChatEventsListReader<'_> {
 
 impl<'r> ChatEventsListReader<'r> {
     pub(crate) fn new(
-        chat: Chat,
+        main_events_prefix: &'r ChatEventKeyPrefix,
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
     ) -> ChatEventsListReader<'r> {
-        Self::with_min_visible_event_index(chat, events_list, last_updated_timestamps, EventIndex::default(), None)
+        Self::with_min_visible_event_index(
+            main_events_prefix,
+            events_list,
+            last_updated_timestamps,
+            EventIndex::default(),
+            None,
+        )
     }
 
     pub(crate) fn with_min_visible_event_index(
-        chat: Chat,
+        main_events_prefix: &'r ChatEventKeyPrefix,
         events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
         bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
     ) -> ChatEventsListReader<'r> {
         ChatEventsListReader {
-            chat,
+            main_events_prefix,
             events_list,
             last_updated_timestamps,
             min_visible_event_index,
@@ -612,7 +644,7 @@ impl Reader for ChatEventsListReader<'_> {
                 || (self.last_updated_timestamps.latest_update().is_some_and(|ts| ts > since)
                     && self
                         .last_updated_timestamps
-                        .last_updated(self.chat, None, m.index)
+                        .last_updated(self.main_events_prefix, None, m.index)
                         .is_some_and(|ts| ts > since))
         })
     }
@@ -706,9 +738,9 @@ mod tests {
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
     use serde_bytes::ByteBuf;
-    use stable_memory_map::ChatEventKeyPrefix;
+    use stable_memory_map::{ChatEventKeyPrefix, Key, KeyPrefix, with_map, with_map_mut};
     use std::mem::size_of;
-    use types::{ChannelId, EventContext, Milliseconds, MultiUserChat};
+    use types::{ChannelId, Chat, EventContext, Milliseconds, MultiUserChat, UserId};
 
     #[test]
     fn enum_size() {
@@ -1274,6 +1306,196 @@ mod tests {
         events
     }
 
+    #[test]
+    fn thread_stable_memory_key_prefixes_can_be_built_after_thread_removed() {
+        let mut events = setup_events(None);
+        let root_message_index = MessageIndex::from(0);
+
+        events.push_message::<NullEventPusher>(
+            PushMessageArgs {
+                sender: Principal::from_slice(&[2]).into(),
+                thread_root_message_index: Some(root_message_index),
+                message_id: MessageId::from(1_000_000u128),
+                content: MessageContentInternal::Text(TextContentInternal {
+                    text: "hello".to_string(),
+                }),
+                sender_context: None,
+                mentioned: Vec::new(),
+                replies_to: None,
+                now: 200,
+                forwarded: false,
+                sender_is_bot: false,
+                block_level_markdown: false,
+                og_previews: Vec::new(),
+            },
+            None,
+        );
+
+        let thread_prefixes = events.thread_stable_memory_key_prefixes(root_message_index);
+        let all_prefixes = events.all_stable_memory_key_prefixes();
+        assert!(!thread_prefixes.is_empty());
+        assert!(thread_prefixes.iter().all(|p| all_prefixes.contains(p)));
+
+        let result = events.remove_old_events_batch(1000, 1000, 200);
+        assert!(result.threads.iter().any(|t| t.root_message_index == root_message_index));
+        assert!(events.thread_keys().next().is_none());
+
+        // The thread's list has been removed but its prefixes can still be built for garbage collection
+        assert_eq!(events.thread_stable_memory_key_prefixes(root_message_index), thread_prefixes);
+    }
+
+    #[test]
+    fn direct_chat_events_are_migrated_from_legacy_keys() {
+        let them: UserId = Principal::from_slice(&[1]).into();
+        let mut events = setup_events(None);
+        push_events(&mut events, 1000);
+        push_events(&mut events, 2000);
+        let root_message_index = MessageIndex::from(0);
+        for i in 0..5u128 {
+            events.push_message::<NullEventPusher>(
+                PushMessageArgs {
+                    sender: Principal::from_slice(&[2]).into(),
+                    thread_root_message_index: Some(root_message_index),
+                    message_id: MessageId::from(1_000_000 + i),
+                    content: MessageContentInternal::Text(TextContentInternal {
+                        text: "hello".to_string(),
+                    }),
+                    sender_context: None,
+                    mentioned: Vec::new(),
+                    replies_to: None,
+                    now: 3000 + i as u64,
+                    forwarded: false,
+                    sender_is_bot: false,
+                    block_level_markdown: false,
+                    og_previews: Vec::new(),
+                },
+                None,
+            );
+        }
+        let main_indexes = event_indexes(&events, None);
+        let thread_indexes = event_indexes(&events, Some(root_message_index));
+        assert_eq!(main_indexes.len(), 301);
+        assert_eq!(thread_indexes.len(), 5);
+
+        // Recreate the layout of a chat from before `key_id`s were introduced
+        let legacy_prefix = ChatEventKeyPrefix::new_from_direct_chat_legacy(them, None);
+        let legacy_thread_prefix = legacy_prefix.for_thread(root_message_index);
+        move_events_to_legacy_keys(events.main_events_list_mut(), legacy_prefix.clone());
+        move_events_to_legacy_keys(
+            events.thread_events_list_mut(root_message_index).unwrap(),
+            legacy_thread_prefix.clone(),
+        );
+        assert_eq!(events.stable_memory_prefix(), &legacy_prefix);
+        assert!(!events.has_legacy_events());
+        assert_eq!(keys_under(&legacy_prefix), main_indexes);
+        assert_eq!(keys_under(&legacy_thread_prefix), thread_indexes);
+
+        // The chat's other entries were written under the prefixes of `key_id` 1 when it was
+        // created, so it is assigned that `key_id` again. In production those entries are still on
+        // the heap when a chat is assigned its `key_id`, and are only written to stable memory
+        // afterwards.
+        let new_prefix = ChatEventKeyPrefix::new_from_direct_chat_key_id(1, None);
+        let new_thread_prefix = new_prefix.for_thread(root_message_index);
+        assert!(events.assign_direct_chat_key_id(1));
+        assert!(!events.assign_direct_chat_key_id(2));
+        assert!(events.has_legacy_events());
+        assert_eq!(events.stable_memory_prefix(), &new_prefix);
+        assert_eq!(event_indexes(&events, None), main_indexes);
+        assert_eq!(event_indexes(&events, Some(root_message_index)), thread_indexes);
+
+        // Until the migration is complete the legacy keys must be garbage collected if the chat is deleted
+        let all_prefixes = events.all_stable_memory_key_prefixes();
+        assert!(all_prefixes.contains(&legacy_prefix.clone().into()));
+        assert!(all_prefixes.contains(&legacy_thread_prefix.clone().into()));
+        assert!(all_prefixes.contains(&new_prefix.clone().into()));
+        assert!(all_prefixes.contains(&new_thread_prefix.clone().into()));
+        let thread_prefixes = events.thread_stable_memory_key_prefixes(root_message_index);
+        assert!(thread_prefixes.contains(&legacy_thread_prefix.clone().into()));
+        assert!(thread_prefixes.contains(&new_thread_prefix.clone().into()));
+
+        // Stop after every batch, checking the events remain readable and the state survives being
+        // serialized mid-migration
+        let mut rounds = 0;
+        while !events.migrate_legacy_events_batch() {
+            rounds += 1;
+            assert!(events.has_legacy_events());
+            events = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
+            assert!(events.has_legacy_events());
+            assert_eq!(event_indexes(&events, None), main_indexes);
+            assert_eq!(event_indexes(&events, Some(root_message_index)), thread_indexes);
+            assert_eq!(events.stable_memory_prefix(), &new_prefix);
+        }
+        // 3 full batches from the main events list, then the last event, then the thread's events
+        assert_eq!(rounds, 4);
+        assert!(!events.has_legacy_events());
+        events = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
+        assert!(!events.has_legacy_events());
+        assert_eq!(event_indexes(&events, None), main_indexes);
+        assert_eq!(event_indexes(&events, Some(root_message_index)), thread_indexes);
+        assert_eq!(events.stable_memory_prefix(), &new_prefix);
+        assert!(!events.assign_direct_chat_key_id(2));
+
+        // Every event is now under the new keys and nothing is left under the legacy keys
+        assert!(keys_under(&legacy_prefix).is_empty());
+        assert!(keys_under(&legacy_thread_prefix).is_empty());
+        assert_eq!(keys_under(&new_prefix), main_indexes);
+        assert_eq!(keys_under(&new_thread_prefix), thread_indexes);
+
+        // New events go straight to the new keys
+        push_events(&mut events, 4000);
+        assert_eq!(event_indexes(&events, None).len(), 401);
+        assert_eq!(keys_under(&new_prefix).len(), 401);
+        assert!(keys_under(&legacy_prefix).is_empty());
+    }
+
+    fn event_indexes(events: &ChatEvents, thread_root_message_index: Option<MessageIndex>) -> Vec<EventIndex> {
+        let reader = events
+            .events_reader(EventIndex::default(), thread_root_message_index, None)
+            .unwrap();
+        let ascending: Vec<_> = reader
+            .iter(None, true)
+            .filter_map(|e| e.into_event())
+            .map(|e| e.index)
+            .collect();
+        let mut descending: Vec<_> = reader
+            .iter(None, false)
+            .filter_map(|e| e.into_event())
+            .map(|e| e.index)
+            .collect();
+        descending.reverse();
+        assert_eq!(ascending, descending);
+        for index in ascending.iter() {
+            assert_eq!(reader.get_event(EventKey::EventIndex(*index)).map(|e| e.index), Some(*index));
+        }
+        assert_eq!(reader.latest_event_index(), ascending.last().copied());
+        ascending
+    }
+
+    fn move_events_to_legacy_keys(list: &mut ChatEventsList, legacy_prefix: ChatEventKeyPrefix) {
+        let prefix = list.stable_memory_prefix().clone();
+        with_map_mut(|m| {
+            let entries: Vec<_> = m
+                .range(prefix.create_key(&EventIndex::default())..)
+                .take_while(|(k, _)| k.matches_prefix(&prefix))
+                .map(|(k, v)| (k.event_index(), v))
+                .collect();
+            for (index, bytes) in entries {
+                m.remove(prefix.create_key(&index));
+                m.insert(legacy_prefix.create_key(&index), bytes);
+            }
+        });
+        list.set_stable_memory_prefix(legacy_prefix);
+    }
+
+    fn keys_under(prefix: &ChatEventKeyPrefix) -> Vec<EventIndex> {
+        with_map(|m| {
+            m.range(prefix.create_key(&EventIndex::default())..)
+                .take_while(|(k, _)| k.matches_prefix(prefix))
+                .map(|(k, _)| k.event_index())
+                .collect()
+        })
+    }
+
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
@@ -1281,6 +1503,7 @@ mod tests {
         let mut events = ChatEvents::new_direct_chat(
             Principal::from_slice(&[2]).into(),
             Principal::from_slice(&[1]).into(),
+            1,
             events_ttl,
             random(),
             1,
