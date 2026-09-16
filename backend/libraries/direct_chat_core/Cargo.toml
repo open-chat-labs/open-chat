@@ -17,4 +17,3 @@ types = { path = "../types" }
 [dev-dependencies]
 ic-stable-structures = { workspace = true }
 msgpack = { path = "../msgpack" }
-rand = { workspace = true }

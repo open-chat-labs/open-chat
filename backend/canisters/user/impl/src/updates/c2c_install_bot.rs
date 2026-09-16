@@ -46,7 +46,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     // Subscribe to permitted chat events
     if let (Some(subscriptions), Some(permissions)) = (args.default_subscriptions, args.granted_autonomous_permissions.clone())
     {
-        chat.core.events.subscribe_bot_to_events(
+        chat.subscribe_bot_to_events(
             args.bot_id,
             subscriptions.chat,
             &permissions.permitted_chat_event_categories_to_read(),

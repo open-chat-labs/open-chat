@@ -1,10 +1,16 @@
 use crate::direct_chat_core::{DirectChatCore, Participant};
 use crate::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::{ChatEvents, EventPusher, PushMessageArgs, Reader};
+use chat_events::{
+    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, DeleteMessageSuccess, DeleteUndeleteMessagesArgs, EditMessageArgs,
+    EditMessageSuccess, EventKey, EventPusher, MessageContentInternal, MessageInternal, PushEventResultInternal,
+    PushMessageArgs, Reader, RemoveEventsResult, TipMessageArgs, UpdateEventError, UpdateMessageSuccess,
+};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use types::{
-    DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageIndex, Milliseconds, OptionUpdate,
-    TimestampMillis, Timestamped, UserId, UserType,
+    BotNotification, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex, EventWrapper,
+    Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapStatus,
+    ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserType, VideoCallPresence,
 };
 
 /// A direct chat as held by one of its users: their own state for the chat plus a core. The user
@@ -18,8 +24,10 @@ pub struct DirectChat {
     pub archived: Timestamped<bool>,
     // Maps our message indexes onto theirs, which is only needed while each user's canister holds
     // its own copy of the chat with its own message indexes
-    pub unread_message_index_map: UnreadMessageIndexMap,
-    pub core: DirectChatCore,
+    unread_message_index_map: UnreadMessageIndexMap,
+    // Both of these are kept private so that every message pushed goes through `push_message`,
+    // which also records the message's index in the other user's copy of the chat
+    pub(crate) core: DirectChatCore,
 }
 
 impl DirectChat {
@@ -40,6 +48,14 @@ impl DirectChat {
             unread_message_index_map: UnreadMessageIndexMap::default(),
             core: DirectChatCore::new(my_user_id, them, key_id, events_ttl, anonymized_chat_id, now),
         }
+    }
+
+    pub fn events(&self) -> &ChatEvents {
+        &self.core.events
+    }
+
+    pub fn date_created(&self) -> TimestampMillis {
+        self.core.date_created
     }
 
     pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
@@ -88,8 +104,254 @@ impl DirectChat {
         self.core.read_up_to(Participant::First)
     }
 
+    // Returns the highest index (in the other user's copy of the chat) of the messages they sent
+    // which we have read, given the index we have read up to in our copy
+    pub fn max_read_up_to_of_theirs(&self, read_up_to: MessageIndex) -> Option<MessageIndex> {
+        self.unread_message_index_map
+            .get_max_read_up_to_of_theirs(self.core.events.stable_memory_prefix(), &read_up_to)
+    }
+
+    // Forgets the indexes of their messages up to and including `their_read_up_to` (in their copy
+    // of the chat), once we have told them we have read up to there
+    pub fn remove_unread_message_indexes_up_to(&mut self, their_read_up_to: MessageIndex) {
+        self.unread_message_index_map
+            .remove_up_to(self.core.events.stable_memory_prefix(), their_read_up_to);
+    }
+
+    // TODO: Remove this after next release
+    pub fn migrate_unread_message_indexes_to_stable_memory(&mut self) -> usize {
+        self.unread_message_index_map
+            .migrate_to_stable_memory(self.core.events.stable_memory_prefix())
+    }
+
     pub fn read_by_them_up_to(&self) -> &Timestamped<Option<MessageIndex>> {
         self.core.read_up_to(Participant::Second)
+    }
+
+    pub fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
+        self.core.main_message_id_to_index(message_id)
+    }
+
+    // The events are only exposed mutably via the methods below (there is deliberately no
+    // `events_mut`), so that a message can only be pushed via `push_message`, which also updates the
+    // state this struct keeps alongside the events.
+
+    pub fn push_main_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> PushEventResultInternal {
+        self.core.events.push_main_event(event, now)
+    }
+
+    pub fn edit_message<P: EventPusher>(
+        &mut self,
+        args: EditMessageArgs,
+        event_pusher: Option<P>,
+    ) -> OCResult<EditMessageSuccess> {
+        self.core.events.edit_message(args, event_pusher)
+    }
+
+    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
+        self.core.events.delete_messages(args)
+    }
+
+    pub fn undelete_messages(
+        &mut self,
+        args: DeleteUndeleteMessagesArgs,
+    ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
+        self.core.events.undelete_messages(args)
+    }
+
+    pub fn remove_deleted_message_content(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> Option<(MessageContentInternal, UserId)> {
+        self.core
+            .events
+            .remove_deleted_message_content(thread_root_message_index, message_id, now)
+    }
+
+    pub fn add_reaction<P: EventPusher>(
+        &mut self,
+        args: AddRemoveReactionArgs,
+        event_pusher: Option<P>,
+    ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
+        self.core.events.add_reaction(args, event_pusher)
+    }
+
+    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> OCResult<UpdateMessageSuccess> {
+        self.core.events.remove_reaction(args)
+    }
+
+    pub fn tip_message<P: EventPusher>(
+        &mut self,
+        args: TipMessageArgs,
+        min_visible_event_index: EventIndex,
+        event_pusher: Option<P>,
+    ) -> OCResult<UpdateMessageSuccess> {
+        self.core.events.tip_message(args, min_visible_event_index, event_pusher)
+    }
+
+    pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        self.core
+            .events
+            .mark_message_reminder_created_message_hidden(message_index, now)
+    }
+
+    pub fn reserve_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> OCResult<ReserveP2PSwapSuccess> {
+        self.core
+            .events
+            .reserve_p2p_swap(user_id, thread_root_message_index, message_id, min_visible_event_index, now)
+    }
+
+    pub fn unreserve_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) {
+        self.core
+            .events
+            .unreserve_p2p_swap(user_id, thread_root_message_index, message_id, now)
+    }
+
+    pub fn accept_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        token1_txn_in: u64,
+        now: TimestampMillis,
+    ) -> OCResult<UpdateMessageSuccess<P2PSwapAccepted>> {
+        self.core
+            .events
+            .accept_p2p_swap(user_id, thread_root_message_index, message_id, token1_txn_in, now)
+    }
+
+    #[expect(clippy::too_many_arguments)]
+    pub fn complete_p2p_swap<P: EventPusher>(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        token0_txn_out: u64,
+        token1_txn_out: u64,
+        now: TimestampMillis,
+        event_pusher: P,
+    ) -> OCResult<UpdateMessageSuccess<P2PSwapCompleted>> {
+        self.core.events.complete_p2p_swap(
+            user_id,
+            thread_root_message_index,
+            message_id,
+            token0_txn_out,
+            token1_txn_out,
+            now,
+            event_pusher,
+        )
+    }
+
+    pub fn cancel_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> OCResult<UpdateMessageSuccess<u32>> {
+        self.core
+            .events
+            .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
+    }
+
+    pub fn set_p2p_swap_status(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        status: P2PSwapStatus,
+        now: TimestampMillis,
+    ) -> Result<UpdateMessageSuccess, UpdateEventError> {
+        self.core
+            .events
+            .set_p2p_swap_status(thread_root_message_index, message_id, status, now)
+    }
+
+    pub fn mark_p2p_swap_expired(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> Result<UpdateMessageSuccess, UpdateEventError> {
+        self.core
+            .events
+            .mark_p2p_swap_expired(thread_root_message_index, message_id, now)
+    }
+
+    pub fn set_video_call_presence(
+        &mut self,
+        user_id: UserId,
+        message_id: MessageId,
+        presence: VideoCallPresence,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> OCResult<UpdateMessageSuccess> {
+        self.core
+            .events
+            .set_video_call_presence(user_id, message_id, presence, min_visible_event_index, now)
+    }
+
+    pub fn end_video_call<P: EventPusher>(
+        &mut self,
+        event_key: EventKey,
+        now: TimestampMillis,
+        event_pusher: Option<P>,
+    ) -> OCResult<UpdateMessageSuccess> {
+        self.core.events.end_video_call(event_key, now, event_pusher)
+    }
+
+    pub fn set_events_time_to_live(
+        &mut self,
+        user_id: UserId,
+        events_ttl: Option<Milliseconds>,
+        now: TimestampMillis,
+    ) -> Option<PushEventResultInternal> {
+        self.core.events.set_events_time_to_live(user_id, events_ttl, now)
+    }
+
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
+        self.core.events.remove_expired_events(now)
+    }
+
+    pub fn subscribe_bot_to_events(
+        &mut self,
+        bot_id: UserId,
+        event_types: HashSet<ChatEventType>,
+        permitted_categories: &HashSet<ChatEventCategory>,
+    ) {
+        self.core
+            .events
+            .subscribe_bot_to_events(bot_id, event_types, permitted_categories)
+    }
+
+    pub fn skip_their_metrics(&mut self, my_user_id: UserId) {
+        self.core.events.skip_their_metrics(my_user_id)
+    }
+
+    pub fn migrate_events_to_stable_memory(&mut self, max_count: usize) -> usize {
+        self.core.events.migrate_to_stable_memory(max_count)
+    }
+
+    pub fn migrate_legacy_events_batch(&mut self) -> bool {
+        self.core.events.migrate_legacy_events_batch()
+    }
+
+    pub fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {
+        self.core.main_message_index_to_id(message_index)
     }
 
     pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
@@ -210,7 +472,6 @@ mod tests {
     use chat_events::{MessageContentInternal, NullEventPusher, TextContentInternal};
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use types::MessageId;
 
     #[test]
     fn messages_are_read_by_their_sender_and_read_positions_are_kept_per_user() {
@@ -232,12 +493,7 @@ mod tests {
         assert_eq!(chat.last_updated(), 300);
 
         // The message they sent had index 7 in their copy of the chat
-        let events_prefix = chat.core.events.stable_memory_prefix();
-        assert_eq!(
-            chat.unread_message_index_map
-                .get_max_read_up_to_of_theirs(events_prefix, &1.into()),
-            Some(7.into())
-        );
+        assert_eq!(chat.max_read_up_to_of_theirs(1.into()), Some(7.into()));
 
         let summary = chat.to_summary(me);
         assert_eq!(summary.them, them);

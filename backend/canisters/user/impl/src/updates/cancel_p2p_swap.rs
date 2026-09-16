@@ -24,9 +24,7 @@ fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
 
-        chat.core
-            .events
-            .cancel_p2p_swap(my_user_id, None, args.message_id, now)
+        chat.cancel_p2p_swap(my_user_id, None, args.message_id, now)
             .map(|result| result.value)
     } else {
         Err(OCErrorCode::ChatNotFound.into())

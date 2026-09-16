@@ -164,7 +164,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
 
 fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
-        if let Err(error) = chat.core.events.tip_message(
+        if let Err(error) = chat.tip_message(
             args.clone(),
             EventIndex::default(),
             Some(UserEventPusher {
@@ -175,7 +175,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
         ) {
             Error(error)
         } else {
-            let thread_root_message_id = args.thread_root_message_index.map(|i| chat.core.main_message_index_to_id(i));
+            let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
             state.push_user_canister_event(
                 args.recipient.canister_id(),

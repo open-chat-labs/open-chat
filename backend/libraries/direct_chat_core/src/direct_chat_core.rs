@@ -83,8 +83,9 @@ impl DirectChatCore {
         .unwrap()
     }
 
-    // Pushes the message and marks it as read by its sender
-    pub fn push_message<P: EventPusher>(
+    // Pushes the message and marks it as read by its sender. Crate-private so that a message is
+    // only ever pushed via a wrapper which also maintains the state it keeps alongside the core
+    pub(crate) fn push_message<P: EventPusher>(
         &mut self,
         args: PushMessageArgs,
         sender: Participant,

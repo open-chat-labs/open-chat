@@ -74,8 +74,7 @@ fn prepare(
     let chat = state.data.direct_chats.get_or_err(&user_id.into())?;
 
     if let Some(events_reader) = chat
-        .core
-        .events
+        .events()
         .events_reader(EventIndex::default(), thread_root_message_index, None)
     {
         Ok(PrepareResult {
@@ -90,7 +89,7 @@ fn prepare(
 
 fn process_events(events_response: Vec<EventOrExpiredRange>, chat: &DirectChat, latest_event_index: EventIndex) -> Response {
     let (events, expired_event_ranges, _) = EventOrExpiredRange::split(events_response);
-    let expired_message_ranges = chat.core.events.convert_to_message_ranges(&expired_event_ranges);
+    let expired_message_ranges = chat.events().convert_to_message_ranges(&expired_event_ranges);
     let chat_last_updated = chat.last_updated();
 
     Success(EventsResponse {

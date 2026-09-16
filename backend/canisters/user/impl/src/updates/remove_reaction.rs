@@ -20,7 +20,7 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
 
-    chat.core.events.remove_reaction(AddRemoveReactionArgs {
+    chat.remove_reaction(AddRemoveReactionArgs {
         user_id: my_user_id,
         min_visible_event_index: EventIndex::default(),
         thread_root_message_index: args.thread_root_message_index,
@@ -29,7 +29,7 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         now,
     })?;
 
-    let thread_root_message_id = args.thread_root_message_index.map(|i| chat.core.main_message_index_to_id(i));
+    let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
     state.push_user_canister_event(
         args.user_id.canister_id(),

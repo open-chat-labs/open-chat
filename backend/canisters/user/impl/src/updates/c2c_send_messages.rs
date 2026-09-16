@@ -161,7 +161,7 @@ pub(crate) fn handle_message_impl(
         args.now,
     );
 
-    let thread_root_message_index = args.thread_root_message_id.map(|id| chat.core.main_message_id_to_index(id));
+    let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
     let chat_private_replying_to = if let Some((chat, None)) = replies_to.as_ref().and_then(|r| r.chat_if_other) {
         Some(chat)
@@ -274,7 +274,7 @@ fn convert_reply_context(
                 .data
                 .direct_chats
                 .get(&chat_id)
-                .and_then(|chat| chat.core.events.main_events_reader().event_index(message_id.into()))
+                .and_then(|chat| chat.events().main_events_reader().event_index(message_id.into()))
                 .map(|event_index| ReplyContextInternal {
                     chat_if_other: None,
                     event_index,

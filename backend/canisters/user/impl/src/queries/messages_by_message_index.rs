@@ -22,8 +22,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> OCResult<
 
     let chat = state.data.direct_chats.get_or_err(&args.user_id.into())?;
     let Some(events_reader) = chat
-        .core
-        .events
+        .events()
         .events_reader(EventIndex::default(), args.thread_root_message_index, None)
     else {
         return Err(OCErrorCode::ThreadNotFound.into());

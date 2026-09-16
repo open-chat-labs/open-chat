@@ -25,7 +25,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         let now = state.env.now();
         let my_user_id: UserId = state.env.canister_id().into();
 
-        chat.core.events.set_video_call_presence(
+        chat.set_video_call_presence(
             my_user_id,
             args.message_id,
             VideoCallPresence::Default,

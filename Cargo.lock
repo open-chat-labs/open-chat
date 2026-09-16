@@ -3156,7 +3156,6 @@ dependencies = [
  "ic_principal",
  "msgpack",
  "oc_error_codes",
- "rand 0.10.2",
  "serde",
  "stable_memory_map",
  "types",

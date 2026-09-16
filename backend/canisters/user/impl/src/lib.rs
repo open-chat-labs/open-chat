@@ -143,8 +143,8 @@ impl RuntimeState {
         let mut next_event_expiry = None;
         let mut files_to_delete = Vec::new();
         for chat in self.data.direct_chats.iter_mut() {
-            let result = chat.core.events.remove_expired_events(now);
-            if let Some(expiry) = chat.core.events.next_event_expiry()
+            let result = chat.remove_expired_events(now);
+            if let Some(expiry) = chat.events().next_event_expiry()
                 && next_event_expiry.is_none_or(|current| expiry < current)
             {
                 next_event_expiry = Some(expiry);
@@ -155,7 +155,7 @@ impl RuntimeState {
             for thread in result.threads {
                 self.data
                     .stable_memory_keys_to_garbage_collect
-                    .extend(chat.core.events.thread_stable_memory_key_prefixes(thread.root_message_index));
+                    .extend(chat.events().thread_stable_memory_key_prefixes(thread.root_message_index));
             }
         }
 
@@ -436,12 +436,12 @@ Your streak is now {new_streak} days!"
 
         self.data
             .stable_memory_keys_to_garbage_collect
-            .extend(chat.core.events.all_stable_memory_key_prefixes());
+            .extend(chat.events().all_stable_memory_key_prefixes());
         // Each chat has a unique `key_id`, so if a new chat is created with the same user before
         // the job has run then its entries won't be removed
         self.data
             .stable_memory_keys_to_garbage_collect
-            .push(direct_chat_core::unread_message_index_map::prefix(chat.core.events.stable_memory_prefix()).into());
+            .push(direct_chat_core::unread_message_index_map::prefix(chat.events().stable_memory_prefix()).into());
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true
@@ -712,7 +712,7 @@ impl Data {
 
         // Push a chat event
         if let Some(updated_by) = updated_by {
-            chat.core.events.push_main_event(
+            chat.push_main_event(
                 ChatEventInternal::BotUpdated(Box::new(BotUpdated {
                     user_id: bot_id,
                     updated_by,
@@ -728,9 +728,7 @@ impl Data {
         let permitted_categories = permissions.permitted_chat_event_categories_to_read();
         let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
 
-        chat.core
-            .events
-            .subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
+        chat.subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
     }
 }
 
