@@ -1,7 +1,7 @@
 use direct_chat_core::{DirectChatUserState, Participant};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChatId, TimestampMillis, UserId, UserType};
+use types::{ChatId, EventIndex, TimestampMillis, UserId, UserType};
 
 // One user's entry for a direct chat: their own state for the chat, plus which core holds its
 // events and which of the core's two positions is theirs. The cores live outside of any user, in
@@ -15,11 +15,18 @@ pub struct UserDirectChat {
 }
 
 impl UserDirectChat {
-    pub fn new(key_id: u32, me: Participant, them: UserId, user_type: UserType, now: TimestampMillis) -> UserDirectChat {
+    pub fn new(
+        key_id: u32,
+        me: Participant,
+        them: UserId,
+        user_type: UserType,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> UserDirectChat {
         UserDirectChat {
             key_id,
             me,
-            state: DirectChatUserState::new(them, user_type, now),
+            state: DirectChatUserState::new(them, user_type, min_visible_event_index, now),
         }
     }
 }
@@ -44,5 +51,9 @@ impl UserDirectChats {
     pub fn add(&mut self, chat: UserDirectChat) {
         let chat_id = chat.state.them.into();
         assert!(self.chats.insert(chat_id, chat).is_none(), "Direct chat already exists");
+    }
+
+    pub fn remove(&mut self, chat_id: &ChatId) -> Option<UserDirectChat> {
+        self.chats.remove(chat_id)
     }
 }

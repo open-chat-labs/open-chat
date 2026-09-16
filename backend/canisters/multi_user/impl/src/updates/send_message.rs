@@ -1,5 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::model::user_direct_chats::UserDirectChat;
+use crate::model::users::Users;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -10,7 +11,7 @@ use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat_core::{DirectChatCore, Participant};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
-use types::{OCResult, TimestampMillis, UserId, UserType};
+use types::{EventIndex, OCResult, TimestampMillis, UserId, UserType};
 use user_canister::c2c_bot_send_message;
 use user_canister::send_message_v2::{Response::*, *};
 
@@ -69,14 +70,7 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     let chat_id = args.recipient.into();
-    let chat_exists = state
-        .data
-        .users
-        .with_user(my_index, |user| user.direct_chats.get(&chat_id).is_some())
-        == Some(true);
-    if !chat_exists {
-        create_direct_chat(my_index, my_user_id, recipient, now, state);
-    }
+    ensure_direct_chat(my_index, my_user_id, recipient, now, state);
 
     // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
     let message_event = match state.with_direct_chat_mut(my_index, chat_id, |mut chat| {
@@ -161,57 +155,89 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
     })
 }
 
-// Creates the sender's entry for the chat with `recipient`, and its core. When the recipient is in
-// this canister the two users share one core: if the recipient already has an entry for the chat
-// (because the sender deleted their side of it) the sender takes the other position in that core,
-// otherwise a new core is created with an entry for each of them.
-fn create_direct_chat(my_index: u16, my_user_id: UserId, recipient: Recipient, now: TimestampMillis, state: &mut RuntimeState) {
+// Makes sure the sender and the recipient each have an entry for the chat between them before a
+// message is pushed to it. When the recipient is in this canister the two users share one core:
+// if neither has an entry a new core is created with an entry for each of them, and if only one
+// of them has an entry (because the other deleted their side of the chat) the other gets the chat
+// back by taking the other position in that core, seeing only the events from now on.
+fn ensure_direct_chat(my_index: u16, my_user_id: UserId, recipient: Recipient, now: TimestampMillis, state: &mut RuntimeState) {
     let anonymized_id: u128 = state.env.rng().random();
     let cores = &mut state.data.direct_chat_cores;
     let users = &mut state.data.users;
 
+    // The key id and position of a user's entry for their chat with `them`, if they have one
+    let entry = |users: &Users, user_index: u16, them: UserId| {
+        users
+            .with_user(user_index, |user| {
+                user.direct_chats.get(&them.into()).map(|chat| (chat.key_id, chat.me))
+            })
+            .flatten()
+    };
+
     match recipient {
         Recipient::Me => {
-            let key_id = cores.add(|key_id| DirectChatCore::new(my_user_id, my_user_id, key_id, None, anonymized_id, now));
-            users.with_user_mut(my_index, |user| {
-                user.direct_chats.add(UserDirectChat::new(
+            if entry(users, my_index, my_user_id).is_none() {
+                let key_id = cores.add(|key_id| DirectChatCore::new(my_user_id, my_user_id, key_id, None, anonymized_id, now));
+                add_entry(
+                    users,
+                    my_index,
                     key_id,
                     Participant::First,
                     my_user_id,
-                    UserType::User,
+                    EventIndex::default(),
                     now,
-                ))
-            });
+                );
+            }
         }
         Recipient::SameCanister(their_index) => {
             let them = UserId::new_indexed(my_user_id.canister_id(), their_index);
-            let their_entry = users
-                .with_user(their_index, |user| {
-                    user.direct_chats.get(&my_user_id.into()).map(|chat| (chat.key_id, chat.me))
-                })
-                .flatten();
-
-            let (key_id, me) = match their_entry {
-                Some((key_id, their_position)) => (key_id, their_position.other()),
-                None => {
+            match (entry(users, my_index, them), entry(users, their_index, my_user_id)) {
+                (Some(_), Some(_)) => {}
+                (None, None) => {
                     let key_id = cores.add(|key_id| DirectChatCore::new_shared(them, key_id, None, anonymized_id, now));
-                    users.with_user_mut(their_index, |user| {
-                        user.direct_chats.add(UserDirectChat::new(
-                            key_id,
-                            Participant::Second,
-                            my_user_id,
-                            UserType::User,
-                            now,
-                        ))
-                    });
-                    (key_id, Participant::First)
+                    add_entry(users, my_index, key_id, Participant::First, them, EventIndex::default(), now);
+                    add_entry(
+                        users,
+                        their_index,
+                        key_id,
+                        Participant::Second,
+                        my_user_id,
+                        EventIndex::default(),
+                        now,
+                    );
                 }
-            };
-
-            users.with_user_mut(my_index, |user| {
-                user.direct_chats
-                    .add(UserDirectChat::new(key_id, me, them, UserType::User, now))
-            });
+                (None, Some((key_id, their_position))) => {
+                    let position = their_position.other();
+                    let min_visible_event_index = cores.rejoin(key_id, position, now);
+                    add_entry(users, my_index, key_id, position, them, min_visible_event_index, now);
+                }
+                (Some((key_id, my_position)), None) => {
+                    let position = my_position.other();
+                    let min_visible_event_index = cores.rejoin(key_id, position, now);
+                    add_entry(users, their_index, key_id, position, my_user_id, min_visible_event_index, now);
+                }
+            }
         }
     }
+}
+
+fn add_entry(
+    users: &mut Users,
+    user_index: u16,
+    key_id: u32,
+    position: Participant,
+    them: UserId,
+    min_visible_event_index: EventIndex,
+    now: TimestampMillis,
+) {
+    users.with_user_mut(user_index, |user| {
+        user.direct_chats.add(UserDirectChat::new(
+            key_id,
+            position,
+            them,
+            UserType::User,
+            min_visible_event_index,
+            now,
+        ))
+    });
 }

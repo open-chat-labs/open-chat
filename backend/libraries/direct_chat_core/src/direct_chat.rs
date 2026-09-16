@@ -1,9 +1,9 @@
 use crate::direct_chat_core::{DirectChatCore, Participant};
 use crate::unread_message_index_map::{self, UnreadMessageIndexMap};
 use chat_events::{
-    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatInternal, DeleteMessageSuccess, DeleteUndeleteMessagesArgs,
-    EditMessageArgs, EditMessageSuccess, EventKey, EventPusher, MessageContentInternal, MessageInternal,
-    PushEventResultInternal, PushMessageArgs, Reader, RemoveEventsResult, TipMessageArgs, UpdateEventError,
+    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, ChatInternal, DeleteMessageSuccess,
+    DeleteUndeleteMessagesArgs, EditMessageArgs, EditMessageSuccess, EventKey, EventPusher, MessageContentInternal,
+    MessageInternal, PushEventResultInternal, PushMessageArgs, Reader, RemoveEventsResult, TipMessageArgs, UpdateEventError,
     UpdateMessageSuccess,
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -29,16 +29,28 @@ pub struct DirectChatUserState {
     // its own copy of the chat with its own message indexes. Private so that every message pushed
     // goes through `DirectChat::push_message`, which keeps it in step with the core.
     unread_message_index_map: UnreadMessageIndexMap,
+    // The first of the core's events this user can see. Zero unless the user deleted the chat and
+    // then got it back while the other user kept their side of it, in which case the events from
+    // before are hidden from them (see `DirectChatCore::rejoin`). A User canister deletes the
+    // events along with the chat, so there it is always zero.
+    #[serde(default)]
+    min_visible_event_index: EventIndex,
 }
 
 impl DirectChatUserState {
-    pub fn new(them: UserId, user_type: UserType, now: TimestampMillis) -> DirectChatUserState {
+    pub fn new(
+        them: UserId,
+        user_type: UserType,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> DirectChatUserState {
         DirectChatUserState {
             them,
             user_type,
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
+            min_visible_event_index,
         }
     }
 }
@@ -72,7 +84,7 @@ impl DirectChat {
     ) -> DirectChat {
         DirectChat {
             me: Participant::First,
-            state: DirectChatUserState::new(them, user_type, now),
+            state: DirectChatUserState::new(them, user_type, EventIndex::default(), now),
             core: DirectChatCore::new(my_user_id, them, key_id, events_ttl, anonymized_chat_id, now),
         }
     }
@@ -105,6 +117,21 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
 
     pub fn events(&self) -> &ChatEvents {
         &self.core().events
+    }
+
+    pub fn min_visible_event_index(&self) -> EventIndex {
+        self.state().min_visible_event_index
+    }
+
+    // Readers over the events this user can see. Prefer these to building a reader from `events()`
+    // directly, which would not hide the events from before the user's view of the chat starts.
+    pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {
+        self.events().visible_main_events_reader(self.min_visible_event_index())
+    }
+
+    pub fn events_reader(&self, thread_root_message_index: Option<MessageIndex>) -> Option<ChatEventsListReader<'_>> {
+        self.events()
+            .events_reader(self.min_visible_event_index(), thread_root_message_index, None)
     }
 
     pub fn date_created(&self) -> TimestampMillis {
@@ -164,7 +191,7 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
     pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
         let state = self.state();
         let events = &self.core().events;
-        let events_reader = events.main_events_reader();
+        let events_reader = self.main_events_reader();
         let events_ttl = events.get_events_time_to_live();
 
         DirectChatSummary {
@@ -192,7 +219,8 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
     pub fn to_summary_updates(&self, updates_since: TimestampMillis, my_user_id: UserId) -> DirectChatSummaryUpdates {
         let state = self.state();
         let events = &self.core().events;
-        let events_reader = events.main_events_reader();
+        let events_reader = self.main_events_reader();
+        let min_visible_event_index = state.min_visible_event_index;
 
         let has_new_events = events_reader.latest_event_timestamp().is_some_and(|ts| ts > updates_since);
         let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user_id));
@@ -204,6 +232,8 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
         let updated_events: Vec<_> = events
             .recently_updated_events(updates_since, usize::MAX)
             .into_iter()
+            // Events in the main chat from before the user's view of it starts are hidden from them
+            .filter(|(thread_root_message_index, e, _)| thread_root_message_index.is_some() || *e >= min_visible_event_index)
             .map(|(_, e, ts)| (e, ts))
             .collect();
 
@@ -549,6 +579,7 @@ impl Serialize for DirectChat {
             notifications_muted: &'a Timestamped<bool>,
             archived: &'a Timestamped<bool>,
             unread_message_index_map: &'a UnreadMessageIndexMap,
+            min_visible_event_index: EventIndex,
             core: &'a DirectChatCore,
         }
 
@@ -558,6 +589,7 @@ impl Serialize for DirectChat {
             notifications_muted: &self.state.notifications_muted,
             archived: &self.state.archived,
             unread_message_index_map: &self.state.unread_message_index_map,
+            min_visible_event_index: self.state.min_visible_event_index,
             core: &self.core,
         }
         .serialize(serializer)
@@ -580,6 +612,8 @@ struct DirectChatSerde {
     notifications_muted: Timestamped<bool>,
     archived: Timestamped<bool>,
     unread_message_index_map: UnreadMessageIndexMap,
+    #[serde(default)]
+    min_visible_event_index: EventIndex,
     #[serde(default)]
     core: Option<DirectChatCore>,
     #[serde(default)]
@@ -611,6 +645,7 @@ impl From<DirectChatSerde> for DirectChat {
                 notifications_muted: value.notifications_muted,
                 archived: value.archived,
                 unread_message_index_map: value.unread_message_index_map,
+                min_visible_event_index: value.min_visible_event_index,
             },
             core,
         }
@@ -677,8 +712,8 @@ mod tests {
         let a = user(1);
         let b = user(2);
         let mut core = DirectChatCore::new_shared(b, 1, None, 123, 1);
-        let mut a_state = DirectChatUserState::new(b, UserType::User, 1);
-        let mut b_state = DirectChatUserState::new(a, UserType::User, 1);
+        let mut a_state = DirectChatUserState::new(b, UserType::User, EventIndex::default(), 1);
+        let mut b_state = DirectChatUserState::new(a, UserType::User, EventIndex::default(), 1);
 
         DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
             message(a, 1, 100),
@@ -713,6 +748,65 @@ mod tests {
         a_state.notifications_muted = Timestamped::new(true, 300);
         assert_eq!(DirectChat::borrowed(Participant::First, &a_state, &core).last_updated(), 300);
         assert_eq!(DirectChat::borrowed(Participant::Second, &b_state, &core).last_updated(), 200);
+    }
+
+    #[test]
+    fn a_user_who_gets_a_chat_back_after_deleting_it_only_sees_the_events_from_then_on() {
+        init_stable_memory_map();
+        let a = user(1);
+        let b = user(2);
+        let mut core = DirectChatCore::new_shared(b, 1, None, 123, 1);
+        let mut a_state = DirectChatUserState::new(b, UserType::User, EventIndex::default(), 1);
+        let mut b_state = DirectChatUserState::new(a, UserType::User, EventIndex::default(), 1);
+
+        DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
+            message(a, 1, 100),
+            None,
+            None,
+        );
+        DirectChat::borrowed_mut(Participant::Second, &mut b_state, &mut core).push_message::<NullEventPusher>(
+            message(b, 2, 200),
+            None,
+            None,
+        );
+
+        // B deletes their side of the chat, then A's next message brings it back for them
+        drop(b_state);
+        let min_visible_event_index = core.rejoin(Participant::Second, 300);
+        let b_state = DirectChatUserState::new(a, UserType::User, min_visible_event_index, 300);
+        DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
+            message(a, 3, 300),
+            None,
+            None,
+        );
+
+        let b_view = DirectChat::borrowed(Participant::Second, &b_state, &core);
+        assert_eq!(b_view.min_visible_event_index(), 3.into());
+        assert!(b_view.main_events_reader().get(EventIndex::from(1).into()).is_none());
+        assert!(b_view.main_events_reader().get(EventIndex::from(3).into()).is_some());
+        assert!(b_view.events_reader(None).unwrap().get(EventIndex::from(2).into()).is_none());
+
+        let b_summary = b_view.to_summary(b);
+        assert_eq!(b_summary.latest_message.unwrap().event.message_index, 2.into());
+        assert_eq!(b_summary.latest_event_index, 3.into());
+        assert_eq!(
+            b_summary.read_by_me_up_to,
+            Some(1.into()),
+            "the hidden messages count as read"
+        );
+        assert!(
+            b_view
+                .to_summary_updates(50, b)
+                .updated_events
+                .iter()
+                .all(|(e, _)| *e >= 3.into())
+        );
+
+        // A still sees everything
+        let a_view = DirectChat::borrowed(Participant::First, &a_state, &core);
+        assert_eq!(a_view.min_visible_event_index(), 0.into());
+        assert!(a_view.main_events_reader().get(EventIndex::from(1).into()).is_some());
+        assert_eq!(a_view.to_summary(a).read_by_them_up_to, Some(1.into()));
     }
 
     #[test]

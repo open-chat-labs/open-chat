@@ -7,6 +7,7 @@ use pocket_ic::PocketIc;
 use sha256::sha256;
 use std::collections::BTreeMap;
 use std::ops::Deref;
+use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatEvent, EventsResponse, MessageContent, MessageContentInitial, MessageId,
@@ -252,6 +253,78 @@ fn users_in_the_same_multi_user_canister_share_one_copy_of_their_direct_chat() {
     );
 }
 
+#[test]
+fn a_user_who_deletes_a_shared_direct_chat_gets_it_back_without_the_old_events() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    send_text_message(env, a_principal, canister_id, b, "hello", random_from_u128());
+    send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
+
+    // Deleting a chat the user doesn't have fails
+    let missing = client::multi_user::delete_direct_chat(
+        env,
+        a_principal,
+        canister_id,
+        &delete_direct_chat_args(local_user_index.into()),
+    );
+    assert!(
+        matches!(&missing, user_canister::delete_direct_chat::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
+        "{missing:?}"
+    );
+
+    // A deletes their side of the chat. B still has theirs, so the core stays
+    delete_direct_chat(env, a_principal, canister_id, b);
+    assert_eq!(direct_chat_cores(env, canister_id), 1);
+    let deleted = client::multi_user::events(env, a_principal, canister_id, &events_args(a, b));
+    assert!(
+        matches!(&deleted, user_canister::events::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
+        "{deleted:?}"
+    );
+    assert_eq!(
+        messages(&events(env, b_principal, canister_id, b, a)),
+        vec![(a, "hello".to_string()), (b, "hi".to_string())]
+    );
+
+    // B's next message gives A the chat back, over the same core, but only from that message on
+    let again = send_text_message(env, b_principal, canister_id, a, "still there?", random_from_u128());
+    assert_eq!(again.message_index, 2.into());
+    assert_eq!(direct_chat_cores(env, canister_id), 1);
+    let a_events = events(env, a_principal, canister_id, a, b);
+    assert_eq!(messages(&a_events), vec![(b, "still there?".to_string())]);
+    assert_eq!(a_events.latest_event_index, 3.into());
+    assert_eq!(messages(&events(env, b_principal, canister_id, b, a)).len(), 3);
+
+    // Once both have deleted the chat the core goes too, and its stable memory entries with it
+    delete_direct_chat(env, a_principal, canister_id, b);
+    assert_eq!(direct_chat_cores(env, canister_id), 1);
+    delete_direct_chat(env, b_principal, canister_id, a);
+    assert_eq!(direct_chat_cores(env, canister_id), 0);
+    assert!(stable_memory_keys_to_garbage_collect(env, canister_id) > 0);
+    env.advance_time(Duration::from_secs(15));
+    tick_many(env, 3);
+    assert_eq!(stable_memory_keys_to_garbage_collect(env, canister_id), 0);
+
+    // A fresh chat between them starts from scratch for both
+    let fresh = send_text_message(env, a_principal, canister_id, b, "fresh start", random_from_u128());
+    assert_eq!(fresh.message_index, 0.into());
+    assert_eq!(direct_chat_cores(env, canister_id), 1);
+    let expected = vec![(a, "fresh start".to_string())];
+    assert_eq!(messages(&events(env, a_principal, canister_id, a, b)), expected);
+    assert_eq!(messages(&events(env, b_principal, canister_id, b, a)), expected);
+}
+
 fn create_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: CanisterId) -> (Principal, UserId) {
     let principal = random_principal();
     let response = client::multi_user::c2c_create_user(
@@ -336,8 +409,27 @@ fn messages(response: &EventsResponse) -> Vec<(UserId, String)> {
         .collect()
 }
 
+fn delete_direct_chat_args(user_id: UserId) -> user_canister::delete_direct_chat::Args {
+    user_canister::delete_direct_chat::Args {
+        user_id,
+        block_user: false,
+    }
+}
+
+fn delete_direct_chat(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, them: UserId) {
+    let response = client::multi_user::delete_direct_chat(env, sender, canister_id, &delete_direct_chat_args(them));
+    assert!(
+        matches!(response, user_canister::delete_direct_chat::Response::Success),
+        "{response:?}"
+    );
+}
+
 fn direct_chat_cores(env: &PocketIc, canister_id: CanisterId) -> u32 {
     serde_json::from_value(metrics(env, canister_id)["direct_chat_cores"].clone()).unwrap()
+}
+
+fn stable_memory_keys_to_garbage_collect(env: &PocketIc, canister_id: CanisterId) -> u32 {
+    serde_json::from_value(metrics(env, canister_id)["stable_memory_keys_to_garbage_collect"].clone()).unwrap()
 }
 
 #[test]

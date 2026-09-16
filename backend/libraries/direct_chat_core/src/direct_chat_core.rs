@@ -1,7 +1,7 @@
 use chat_events::{ChatEvents, EventPusher, PushMessageArgs, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
-use types::{EventWrapper, Message, MessageId, MessageIndex, Milliseconds, TimestampMillis, Timestamped, UserId};
+use types::{EventIndex, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, TimestampMillis, Timestamped, UserId};
 
 /// One of the two users in a direct chat, identified by position rather than by user id so that
 /// the core holds no user ids. In a User canister the first participant is the canister's user and
@@ -150,6 +150,21 @@ impl DirectChatCore {
         &self.read_up_to[participant.index()]
     }
 
+    // Prepares the core for `participant` getting the chat back after deleting their side of it
+    // while the other user kept theirs. Everything so far stays hidden from them: the index
+    // returned is the one their new state's view of the events starts from, and every message so
+    // far is marked as read by them so that only messages from here on count as unread. This is
+    // the one operation on a core made outside a `DirectChat`, since it comes before the user has
+    // any state for the chat.
+    pub fn rejoin(&mut self, participant: Participant, now: TimestampMillis) -> EventIndex {
+        let events_list = self.events.main_events_list();
+        let min_visible_event_index = events_list.next_event_index();
+        if let Some(latest_message_index) = events_list.latest_message_index() {
+            self.mark_read_up_to(participant, latest_message_index, now);
+        }
+        min_visible_event_index
+    }
+
     pub(crate) fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
         self.events
             .main_events_reader()
@@ -219,6 +234,25 @@ mod tests {
         );
         assert_eq!(core.read_up_to(Participant::Second).value, Some(1.into()));
         assert_eq!(core.last_updated(), 220);
+    }
+
+    #[test]
+    fn rejoining_hides_the_events_so_far_and_marks_the_messages_read() {
+        let mut core = setup();
+        assert_eq!(
+            core.rejoin(Participant::Second, 50),
+            1.into(),
+            "only the created event so far"
+        );
+        assert_eq!(core.read_up_to(Participant::Second).value, None);
+
+        core.push_message::<NullEventPusher>(message(ME, 1, 100), Participant::First, None);
+        core.push_message::<NullEventPusher>(message(ME, 2, 110), Participant::First, None);
+
+        assert_eq!(core.rejoin(Participant::Second, 200), 3.into());
+        assert_eq!(core.read_up_to(Participant::Second).value, Some(1.into()));
+        assert_eq!(core.read_up_to(Participant::Second).timestamp, 200);
+        assert_eq!(core.read_up_to(Participant::First).value, Some(1.into()));
     }
 
     #[test]

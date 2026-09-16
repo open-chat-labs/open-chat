@@ -6,12 +6,14 @@ use canister_state_macros::canister_state;
 use direct_chat_core::{DirectChatMut, DirectChatRef};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use types::{BuildVersion, CanisterId, ChatId, Cycles, OCResult, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -115,6 +117,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             user_count: self.data.users.len() as u32,
             direct_chat_cores: self.data.direct_chat_cores.len() as u32,
+            stable_memory_keys_to_garbage_collect: self.data.stable_memory_keys_to_garbage_collect.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -144,6 +147,9 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     #[serde(default)]
     pub video_call_operators: Vec<Principal>,
+    // The prefixes of deleted direct chat cores, whose entries are removed by a background job
+    #[serde(default)]
+    pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -169,6 +175,7 @@ impl Data {
             identity_canister_id,
             escrow_canister_id,
             video_call_operators,
+            stable_memory_keys_to_garbage_collect: Vec::new(),
             rng_seed,
             test_mode,
         }
@@ -187,6 +194,7 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_count: u32,
     pub direct_chat_cores: u32,
+    pub stable_memory_keys_to_garbage_collect: u32,
     pub canister_ids: CanisterIds,
 }
 

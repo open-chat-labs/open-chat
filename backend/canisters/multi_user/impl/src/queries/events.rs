@@ -55,10 +55,7 @@ pub(crate) fn read_events<A, F: FnOnce(A, UserId, ChatEventsListReader) -> Vec<E
     };
 
     let result = state.with_direct_chat(user_index, them.into(), |chat| {
-        let Some(events_reader) = chat
-            .events()
-            .events_reader(EventIndex::default(), thread_root_message_index, None)
-        else {
+        let Some(events_reader) = chat.events_reader(thread_root_message_index) else {
             return Error(OCErrorCode::ThreadNotFound.into());
         };
 

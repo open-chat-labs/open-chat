@@ -1,8 +1,9 @@
 use crate::model::user_direct_chats::UserDirectChat;
-use direct_chat_core::{DirectChat, DirectChatCore, DirectChatMut, DirectChatRef};
+use direct_chat_core::{DirectChat, DirectChatCore, DirectChatMut, DirectChatRef, Participant};
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{KeyScope, with_key_scope};
+use stable_memory_map::{BaseKeyPrefix, KeyScope, with_key_scope};
 use std::collections::BTreeMap;
+use types::{EventIndex, TimestampMillis};
 
 // The core of every direct chat held by the canister, keyed by the chat's `key_id`. A chat between
 // two users of this canister has a single core shared by both of their entries, so the cores sit
@@ -34,6 +35,22 @@ impl DirectChatCores {
         let core = with_key_scope(KeyScope::Canister, || f(key_id));
         self.cores.insert(key_id, core);
         key_id
+    }
+
+    // Prepares the core for a user taking `position` in it again after deleting their entry for
+    // the chat, returning the event index their new entry's view of the chat starts from (see
+    // `DirectChatCore::rejoin`)
+    pub fn rejoin(&mut self, key_id: u32, position: Participant, now: TimestampMillis) -> EventIndex {
+        let core = self.cores.get_mut(&key_id).expect("Direct chat core not found");
+        with_key_scope(KeyScope::Canister, || core.rejoin(position, now))
+    }
+
+    // Removes the core once no user's entry points at it any more, returning the stable memory
+    // key prefixes its entries were written under so that they can be garbage collected
+    pub fn remove(&mut self, chat: &UserDirectChat) -> Vec<BaseKeyPrefix> {
+        let prefixes = self.with_chat(chat, |chat| chat.stable_memory_key_prefixes());
+        self.cores.remove(&chat.key_id);
+        prefixes
     }
 
     // Views the chat from the side of the user whose entry `chat` is. A user's entry is only ever
