@@ -14,7 +14,7 @@ use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, EventPusher};
+use chat_events::EventPusher;
 use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use direct_chat_core::DirectChats;
 use event_store_types::{Event, EventBuilder};
@@ -707,11 +707,11 @@ impl Data {
 
         // Push a chat event
         if let Some(updated_by) = updated_by {
-            chat.push_main_event(
-                ChatEventInternal::BotUpdated(Box::new(BotUpdated {
+            chat.push_bot_updated_event(
+                BotUpdated {
                     user_id: bot_id,
                     updated_by,
-                })),
+                },
                 now,
             );
         }

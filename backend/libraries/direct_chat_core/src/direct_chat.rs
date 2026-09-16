@@ -10,9 +10,9 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::collections::HashSet;
 use types::{
-    BotNotification, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex, EventWrapper,
-    Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapStatus,
-    ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserType, VideoCallPresence,
+    BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex,
+    EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
+    P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserType, VideoCallPresence,
 };
 
 /// A direct chat as held by one of its users: their own state for the chat plus a core. The user
@@ -147,8 +147,10 @@ impl DirectChat {
     // `events_mut`), so that a message can only be pushed via `push_message`, which also updates the
     // state this struct keeps alongside the events.
 
-    pub fn push_main_event(&mut self, event: ChatEventInternal, now: TimestampMillis) -> PushEventResultInternal {
-        self.core.events.push_main_event(event, now)
+    pub fn push_bot_updated_event(&mut self, event: BotUpdated, now: TimestampMillis) -> PushEventResultInternal {
+        self.core
+            .events
+            .push_main_event(ChatEventInternal::BotUpdated(Box::new(event)), now)
     }
 
     pub fn edit_message<P: EventPusher>(
