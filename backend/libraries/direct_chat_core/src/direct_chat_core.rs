@@ -8,19 +8,12 @@ use types::{EventWrapper, Message, MessageId, MessageIndex, Milliseconds, Timest
 /// the second is the other user. When a chat is shared by two users in one canister, the holder of
 /// the core maps each user id onto a position.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Participant {
+pub(crate) enum Participant {
     First,
     Second,
 }
 
 impl Participant {
-    pub fn other(self) -> Participant {
-        match self {
-            Participant::First => Participant::Second,
-            Participant::Second => Participant::First,
-        }
-    }
-
     fn index(self) -> usize {
         match self {
             Participant::First => 0,
@@ -34,9 +27,9 @@ impl Participant {
 /// other user is to them) is held outside the core, so that a single core can be shared by two
 /// users in the same canister.
 #[derive(Serialize, Deserialize)]
-pub struct DirectChatCore {
-    pub date_created: TimestampMillis,
-    pub events: ChatEvents,
+pub(crate) struct DirectChatCore {
+    pub(crate) date_created: TimestampMillis,
+    pub(crate) events: ChatEvents,
     // Indexed by `Participant`
     read_up_to: [Timestamped<Option<MessageIndex>>; 2],
 }
@@ -44,7 +37,7 @@ pub struct DirectChatCore {
 impl DirectChatCore {
     // `my_user_id` is the first participant and `them` the second. The events are created from the
     // first participant's perspective, so only their per-user metrics are kept.
-    pub fn new(
+    pub(crate) fn new(
         my_user_id: UserId,
         them: UserId,
         key_id: u32,
@@ -72,7 +65,7 @@ impl DirectChatCore {
         }
     }
 
-    pub fn last_updated(&self) -> TimestampMillis {
+    pub(crate) fn last_updated(&self) -> TimestampMillis {
         [
             self.events.last_updated().unwrap_or_default(),
             self.read_up_to[0].timestamp,
@@ -101,7 +94,12 @@ impl DirectChatCore {
 
     // Moves the participant's read position forward to `message_index`, capped at the latest
     // message. Returns whether it moved.
-    pub fn mark_read_up_to(&mut self, participant: Participant, message_index: MessageIndex, now: TimestampMillis) -> bool {
+    pub(crate) fn mark_read_up_to(
+        &mut self,
+        participant: Participant,
+        message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> bool {
         if let Some(latest_message_index) = self.events.main_events_list().latest_message_index() {
             let val = &mut self.read_up_to[participant.index()];
             let read_up_to = min(message_index, latest_message_index);
@@ -113,11 +111,11 @@ impl DirectChatCore {
         false
     }
 
-    pub fn read_up_to(&self, participant: Participant) -> &Timestamped<Option<MessageIndex>> {
+    pub(crate) fn read_up_to(&self, participant: Participant) -> &Timestamped<Option<MessageIndex>> {
         &self.read_up_to[participant.index()]
     }
 
-    pub fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
+    pub(crate) fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
         self.events
             .main_events_reader()
             .message_internal(message_id.into())
@@ -125,7 +123,7 @@ impl DirectChatCore {
             .message_index
     }
 
-    pub fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {
+    pub(crate) fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {
         self.events
             .main_events_reader()
             .message_internal(message_index.into())
@@ -186,12 +184,6 @@ mod tests {
         );
         assert_eq!(core.read_up_to(Participant::Second).value, Some(1.into()));
         assert_eq!(core.last_updated(), 220);
-    }
-
-    #[test]
-    fn participants_are_each_others_other() {
-        assert_eq!(Participant::First.other(), Participant::Second);
-        assert_eq!(Participant::Second.other(), Participant::First);
     }
 
     fn setup() -> DirectChatCore {

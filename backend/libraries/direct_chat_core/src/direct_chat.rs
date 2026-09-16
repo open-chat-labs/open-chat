@@ -1,9 +1,10 @@
 use crate::direct_chat_core::{DirectChatCore, Participant};
 use crate::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::{
-    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, DeleteMessageSuccess, DeleteUndeleteMessagesArgs, EditMessageArgs,
-    EditMessageSuccess, EventKey, EventPusher, MessageContentInternal, MessageInternal, PushEventResultInternal,
-    PushMessageArgs, Reader, RemoveEventsResult, TipMessageArgs, UpdateEventError, UpdateMessageSuccess,
+    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatInternal, DeleteMessageSuccess, DeleteUndeleteMessagesArgs,
+    EditMessageArgs, EditMessageSuccess, EventKey, EventPusher, MessageContentInternal, MessageInternal,
+    PushEventResultInternal, PushMessageArgs, Reader, RemoveEventsResult, TipMessageArgs, UpdateEventError,
+    UpdateMessageSuccess,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -348,6 +349,21 @@ impl DirectChat {
 
     pub fn migrate_legacy_events_batch(&mut self) -> bool {
         self.core.events.migrate_legacy_events_batch()
+    }
+
+    // TODO: Remove this once every user canister has been migrated
+    pub(crate) fn assign_key_id(&mut self, key_id: u32) -> bool {
+        self.core.events.assign_direct_chat_key_id(key_id)
+    }
+
+    pub(crate) fn migrate_reply(
+        &mut self,
+        message_index: MessageIndex,
+        old: ChatInternal,
+        new: ChatInternal,
+        now: TimestampMillis,
+    ) {
+        self.core.events.migrate_reply(message_index, old, new, now)
     }
 
     pub fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {

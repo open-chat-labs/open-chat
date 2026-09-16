@@ -77,7 +77,7 @@ impl DirectChats {
     pub fn assign_key_ids(&mut self) -> usize {
         let mut count = 0;
         for chat in self.direct_chats.values_mut() {
-            if chat.core.events.assign_direct_chat_key_id(self.next_key_id + 1) {
+            if chat.assign_key_id(self.next_key_id + 1) {
                 self.next_key_id += 1;
                 count += 1;
             }
@@ -140,7 +140,7 @@ impl DirectChats {
             // stable memory map
             for (user_id, message_index) in private_replies::take(chat_id) {
                 if let Some(chat) = self.direct_chats.get_mut(&user_id.into()) {
-                    chat.core.events.migrate_reply(message_index, old, new, now);
+                    chat.migrate_reply(message_index, old, new, now);
                 }
             }
         }
@@ -150,7 +150,7 @@ impl DirectChats {
         let mut metrics = ChatMetricsInternal::default();
 
         for chat in self.direct_chats.values() {
-            metrics.merge(chat.core.events.metrics());
+            metrics.merge(chat.events().metrics());
         }
 
         self.metrics = metrics;
