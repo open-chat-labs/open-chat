@@ -234,6 +234,9 @@ impl GroupMembers {
         user_id: &UserId,
         update_fn: F,
     ) -> Option<bool> {
+        // `update_fn` comes from the caller and could read anything, including another value in the
+        // stable memory map, so the member is read and written in 2 separate lookups rather than
+        // via `StableMemoryMap::update`, which would hold the map borrowed while `update_fn` runs
         let mut member = self.members_map.get(user_id)?;
 
         let updated = update_fn(&mut member);
@@ -270,32 +273,50 @@ impl GroupMembers {
         new_role: GroupRoleInternal,
         now: TimestampMillis,
     ) -> OCResult<GroupRoleInternal> {
-        let member = match self.members_map.get(&user_id) {
-            Some(p) => p,
-            None => return Err(OCErrorCode::TargetUserNotFound.into()),
-        };
+        let mut result: OCResult<GroupRoleInternal> = Err(OCErrorCode::TargetUserNotFound.into());
+        let mut unlapsed = false;
 
-        // The caller must be the same or senior to the target's current role, otherwise eg. an
-        // admin could demote an owner. `None` means the change is not on behalf of a member (ie.
-        // an autonomous bot) in which case this check does not apply.
-        if changed_by_role.is_some_and(|role| !role.is_same_or_senior(member.role.value)) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+        // The member is validated and updated within a single lookup in stable memory
+        self.members_map.update(&user_id, |member| {
+            // The caller must be the same or senior to the target's current role, otherwise eg. an
+            // admin could demote an owner. `None` means the change is not on behalf of a member (ie.
+            // an autonomous bot) in which case this check does not apply.
+            if changed_by_role.is_some_and(|role| !role.is_same_or_senior(member.role.value)) {
+                result = Err(OCErrorCode::InitiatorNotAuthorized.into());
+                return false;
+            }
 
-        // It is not possible to change the role of the last owner
-        if member.role.is_owner() && self.owners.len() <= 1 {
-            return Err(OCErrorCode::InvalidRoleChange.into());
-        }
-        // It is not currently possible to make a bot an owner
-        if member.user_type.is_3rd_party_bot() && new_role.is_owner() {
-            return Err(OCErrorCode::InvalidRoleChange.into());
-        }
+            // It is not possible to change the role of the last owner
+            if member.role.is_owner() && self.owners.len() <= 1 {
+                result = Err(OCErrorCode::InvalidRoleChange.into());
+                return false;
+            }
+            // It is not currently possible to make a bot an owner
+            if member.user_type.is_3rd_party_bot() && new_role.is_owner() {
+                result = Err(OCErrorCode::InvalidRoleChange.into());
+                return false;
+            }
 
-        let prev_role = member.role.value;
+            let prev_role = member.role.value;
 
-        if prev_role == new_role {
-            return Err(OCErrorCode::NoChange.into());
-        }
+            if prev_role == new_role {
+                result = Err(OCErrorCode::NoChange.into());
+                return false;
+            }
+
+            member.role = Timestamped::new(new_role, now);
+
+            // Owners can't be lapsed
+            if new_role.is_owner() && member.lapsed.value && self.lapsed.contains(&user_id) {
+                member.set_lapsed(false, now);
+                unlapsed = true;
+            }
+
+            result = Ok(prev_role);
+            true
+        });
+
+        let prev_role = result?;
 
         match prev_role {
             GroupRoleInternal::Owner => self.owners.remove(&user_id),
@@ -304,18 +325,13 @@ impl GroupMembers {
             _ => false,
         };
 
-        self.update_member(&user_id, |m| {
-            m.role = Timestamped::new(new_role, now);
-            true
-        });
+        if unlapsed {
+            self.lapsed.remove(&user_id);
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Unlapsed, now);
+        }
 
         match new_role {
-            GroupRoleInternal::Owner => {
-                if member.lapsed.value {
-                    self.update_lapsed(user_id, false, now);
-                }
-                self.owners.insert(user_id)
-            }
+            GroupRoleInternal::Owner => self.owners.insert(user_id),
             GroupRoleInternal::Admin => self.admins.insert(user_id),
             GroupRoleInternal::Moderator => self.moderators.insert(user_id),
             _ => false,

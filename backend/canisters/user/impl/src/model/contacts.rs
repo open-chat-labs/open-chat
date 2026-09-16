@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{ContactKey, ContactKeyPrefix, KeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{ContactKey, ContactKeyPrefix, EntryExt, KeyPrefix, with_map, with_map_mut};
 use std::collections::HashMap;
 use std::ops::RangeInclusive;
 use types::{FieldTooLongResult, FieldTooShortResult, OptionUpdate, UserId};
@@ -69,9 +69,10 @@ impl Contacts {
                 }
 
                 with_map_mut(|m| {
-                    let mut value = m.get(key.clone()).map(|bytes| contact_from_bytes(&bytes)).unwrap_or_default();
+                    let entry = m.entry(key);
+                    let mut value = entry.value().map(|bytes| contact_from_bytes(&bytes)).unwrap_or_default();
                     value.nickname = Some(nickname);
-                    m.insert(key, contact_to_bytes(&value));
+                    entry.set(contact_to_bytes(&value));
                 });
 
                 SetContactResponse::Success
