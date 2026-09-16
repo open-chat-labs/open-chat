@@ -103,6 +103,10 @@ pub struct TokenSwap {
     pub started: TimestampMillis,
     pub icrc2: bool,
     pub auto_withdrawals: bool,
+    // Only set when swapping from an external wallet, whose funds are first pulled into the user's
+    // own account
+    #[serde(default)]
+    pub funded_from_wallet: SwapSubtask<u64>, // Block Index
     pub deposit_account: SwapSubtask<Account>,
     pub transfer_or_approval: SwapSubtask<u64>, // Block Index
     pub notified_dex_at: SwapSubtask,
@@ -120,6 +124,7 @@ impl TokenSwap {
             started: now,
             icrc2,
             auto_withdrawals,
+            funded_from_wallet: None,
             deposit_account: None,
             transfer_or_approval: None,
             notified_dex_at: None,
@@ -136,6 +141,7 @@ impl From<TokenSwap> for TokenSwapStatus {
             started: value.started,
             icrc2: value.icrc2,
             auto_withdrawals: value.auto_withdrawals,
+            funded_from_wallet: value.funded_from_wallet.map(|t| t.value),
             deposit_account: value.deposit_account.map(|a| a.value.map(|_| ())),
             transfer: value.transfer_or_approval.clone().map(|t| t.value),
             transfer_or_approval: value.transfer_or_approval.map(|t| t.value),
@@ -236,6 +242,7 @@ mod tests {
                 zero_for_one: true,
             }),
             min_output_amount: 500,
+            from_account: None,
             pin: None,
         }
     }

@@ -275,6 +275,16 @@ export const UserTokenSwapStatusTokenSwapStatus = /* @__PURE__ */ Type.Object({
     started: Type.BigInt(),
     icrc2: Type.Boolean(),
     auto_withdrawals: Type.Boolean(),
+    funded_from_wallet: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.BigInt(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
     deposit_account: Type.Optional(
         Type.Union([
             Type.Object({
@@ -4858,13 +4868,6 @@ export const UserWalletConfig = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type UserPayForStreakInsuranceArgs = Static<typeof UserPayForStreakInsuranceArgs>;
-export const UserPayForStreakInsuranceArgs = /* @__PURE__ */ Type.Object({
-    additional_days: Type.Number(),
-    expected_price: Type.BigInt(),
-    pin: Type.Optional(PinNumberWrapper),
-});
-
 export type UserChannelSummary = Static<typeof UserChannelSummary>;
 export const UserChannelSummary = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
@@ -7466,6 +7469,7 @@ export const UserSwapTokensArgs = /* @__PURE__ */ Type.Object({
     input_amount: Type.BigInt(),
     exchange_args: UserSwapTokensExchangeArgs,
     min_output_amount: Type.BigInt(),
+    from_account: Type.Optional(AccountICRC1),
     pin: Type.Optional(PinNumberWrapper),
 });
 
@@ -7564,6 +7568,14 @@ export const UserInitialStateFavouriteChatsInitial = /* @__PURE__ */ Type.Object
 export type UserHotGroupExclusionsResponse = Static<typeof UserHotGroupExclusionsResponse>;
 export const UserHotGroupExclusionsResponse = /* @__PURE__ */ Type.Object({
     Success: Type.Array(ChatId),
+});
+
+export type UserPayForStreakInsuranceArgs = Static<typeof UserPayForStreakInsuranceArgs>;
+export const UserPayForStreakInsuranceArgs = /* @__PURE__ */ Type.Object({
+    additional_days: Type.Number(),
+    expected_price: Type.BigInt(),
+    from_account: Type.Optional(AccountICRC1),
+    pin: Type.Optional(PinNumberWrapper),
 });
 
 export type UserUpdatesGroupChatsUpdates = Static<typeof UserUpdatesGroupChatsUpdates>;
