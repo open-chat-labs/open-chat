@@ -55,7 +55,10 @@ async fn push_notifications(notifications: Vec<(UserId, DeletedCommunityInfo)>) 
 }
 
 async fn push_notification(user_id: UserId, deleted_community: DeletedCommunityInfo) {
-    let args = user_canister::c2c_notify_community_deleted::Args { deleted_community };
+    let args = user_canister::c2c_notify_community_deleted::Args {
+        user_id,
+        deleted_community,
+    };
 
     if user_canister_c2c_client::c2c_notify_community_deleted(user_id.canister_id(), &args)
         .await

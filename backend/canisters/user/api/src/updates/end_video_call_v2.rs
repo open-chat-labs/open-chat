@@ -7,6 +7,7 @@ use types::{MessageId, UnitResult, UserId};
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct Args {
     pub user_id: UserId,
+    pub them: UserId,
     pub message_id: MessageId,
 }
 

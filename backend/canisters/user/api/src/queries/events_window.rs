@@ -6,6 +6,7 @@ use types::{MessageIndex, TimestampMillis, UserId};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
+    pub them: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub mid_point: MessageIndex,
     pub max_messages: u32,
