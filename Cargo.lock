@@ -7279,6 +7279,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "escrow_canister",
  "git_commit_id",
  "http_request",
  "ic-cdk 0.20.2",
@@ -7291,6 +7292,7 @@ dependencies = [
  "stable_memory_map",
  "tracing",
  "types",
+ "user_canister",
  "utils",
 ]
 

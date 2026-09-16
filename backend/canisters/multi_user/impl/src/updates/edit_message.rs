@@ -1,0 +1,9 @@
+use canister_api_macros::update;
+use canister_tracing_macros::trace;
+use user_canister::edit_message_v2::*;
+
+#[update(msgpack = true)]
+#[trace]
+fn edit_message_v2(_args: Args) -> Response {
+    unimplemented!()
+}
