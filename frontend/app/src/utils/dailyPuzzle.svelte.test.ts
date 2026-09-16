@@ -82,11 +82,32 @@ function build(state: DailyPuzzleUserState | undefined, client = fakeClient()): 
     return new DailyPuzzleGame(client, puzzle, state, USER, game);
 }
 
-function saveLocal(savedAt: number, fingerprint = puzzleFingerprint(puzzle)): void {
+function saveLocal(
+    savedAt: number,
+    fingerprint = puzzleFingerprint(puzzle),
+    filled: [number, number][] = [[0, 1]],
+): void {
     localStorage.setItem(
         `daily_puzzle_${USER}_${NUMBER}`,
-        JSON.stringify({ filled: [[0, 1]], savedAt, fingerprint }),
+        JSON.stringify({ filled, savedAt, fingerprint }),
     );
+}
+
+// A served hint as the engine shapes it below level 3: no conclusions, and a target only when
+// it names none of them (see hint_at_level in daily_puzzle_engine.rs)
+function served(focus: number[], target: number[] = [], level = 1): ServedHint {
+    return { hint: { technique: 1, focus, target, conclusions: [] }, level, mistake: false };
+}
+
+function hintClient(hint: ServedHint, state: Partial<DailyPuzzleUserState> = {}): OpenChat & Fake {
+    return fakeClient({
+        dailyPuzzleHint: vi.fn(async () => ({
+            kind: "success",
+            hint,
+            hintsUsed: 1,
+            state: userState({ ...state, hints: [hint] }),
+        })),
+    });
 }
 
 beforeEach(() => {
@@ -159,37 +180,98 @@ describe("DailyPuzzleGame", () => {
         expect(build(userState({ ...server, startedAt: undefined })).marks.size).toBe(0);
     });
 
+    // #9404 invariant 4
+    test('resume keeps the local "no" marks when the server copy is later but holds the same bulbs', () => {
+        const serverGrid = game.toBytes(model, game.apply(model, game.empty(model), 4, 1));
+        const server = { grid: serverGrid, gridSavedAt: 1000n };
+
+        // Same bulb, one "no" mark more, stamped before the canister stamped the save
+        saveLocal(500, puzzleFingerprint(puzzle), [
+            [4, 1],
+            [0, 0],
+        ]);
+        const marks = build(userState(server)).marks;
+        expect(marks.get(4)).toBe("bulb");
+        expect(marks.get(0)).toBe("dot");
+
+        // A different board saved earlier is older, not fuller: the server copy wins
+        saveLocal(500, puzzleFingerprint(puzzle), [
+            [8, 1],
+            [0, 0],
+        ]);
+        expect([...build(userState(server)).marks.keys()]).toEqual([4]);
+    });
+
     // #9332 invariant 43
     test("a hint clears itself once the player has made the move it pointed at", async () => {
-        const hint: ServedHint = {
-            hint: { technique: 1, focus: [0, 1, 2], target: [0], conclusions: [] },
-            level: 1,
-            mistake: false,
-        };
-        const client = fakeClient({
-            dailyPuzzleHint: vi.fn(async () => ({
-                kind: "success",
-                hint,
-                hintsUsed: 1,
-                state: userState({ hints: [hint] }),
-            })),
-        });
-        const g = build(userState(), client);
+        // No target: the hint points at everything in focus. The diagonal cells do not light
+        // one another, so each needs its own mark
+        const g = build(userState(), hintClient(served([0, 4, 8])));
         await g.hint();
-        expect([...g.focus]).toEqual([0, 1, 2]);
-        expect([...g.target]).toEqual([0]);
+        expect([...g.focus]).toEqual([0, 4, 8]);
+        expect([...g.target]).toEqual([0, 4, 8]);
 
-        // A mark elsewhere in the highlighted region is not the move the hint asked for: the
-        // hint stays, and the marked cell drops out of the highlight
-        g.tap(1);
-        expect([...g.focus].sort()).toEqual([0, 2]);
-        expect([...g.target]).toEqual([0]);
+        // One of the cells gets its mark: the hint stays for the rest, and the marked cell
+        // drops out of the highlight
+        g.tap(4);
+        expect([...g.focus].sort()).toEqual([0, 8]);
+        expect([...g.target].sort()).toEqual([0, 8]);
 
-        // The pointed-at cell gets its mark: acted on, so the hint goes
+        // The last of them: acted on, so the hint goes
         g.tap(0);
+        g.tap(8);
         expect(g.focus.size).toBe(0);
         expect(g.target.size).toBe(0);
         expect(g.caption).toBeUndefined();
+    });
+
+    // #9404 invariant 3
+    test("a lit cell with no mark is done: the bulb that lights the cells asked for retires the hint", async () => {
+        const g = build(userState(), hintClient(served([0, 1, 2])));
+        await g.hint();
+        // the bulb at 1 lights 0 and 2, so nothing in focus is left to do
+        g.tap(1);
+        expect(g.focus.size).toBe(0);
+        expect(g.caption).toBeUndefined();
+    });
+
+    // #9404 invariants 1 and 2: the target below level 3 is the sentence's subject ("this cell
+    // can only be lit from one place"), never the move asked for
+    describe("a hint whose target is a markable cell", () => {
+        // cell 0 is the subject, cell 4 is where the bulb goes (off its lines, so a stray bulb on
+        // the subject does not light it)
+        const step = served([0, 4], [0], 2);
+
+        test("keeps a target the player had already marked, so the sentence sits on the cell it describes", async () => {
+            const g = build(userState(), hintClient(step));
+            g.tap(0);
+            g.tap(0); // bulb, then "no"
+            expect(g.marks.get(0)).toBe("dot");
+            await g.hint();
+            expect([...g.focus].sort()).toEqual([0, 4]);
+            expect([...g.target]).toEqual([0]);
+            expect(g.caption).toBeDefined();
+        });
+
+        test("keeps a target the player marks after the hint, and does not retire on it", async () => {
+            const g = build(userState(), hintClient(step));
+            await g.hint();
+            g.tap(0);
+            g.tap(0);
+            expect([...g.focus].sort()).toEqual([0, 4]);
+            expect([...g.target]).toEqual([0]);
+        });
+
+        test("retires once the cell outside the target is done, and not on an edit elsewhere", async () => {
+            const g = build(userState(), hintClient(step));
+            await g.hint();
+            g.tap(8); // a bulb at 8 lights neither 0 nor 4
+            expect([...g.focus].sort()).toEqual([0, 4]);
+            g.tap(4);
+            expect(g.focus.size).toBe(0);
+            expect(g.target.size).toBe(0);
+            expect(g.caption).toBeUndefined();
+        });
     });
 
     // #9334 invariant 60
@@ -715,11 +797,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
         description: new Uint8Array([1, 3, 3, 2, 0, 2, 0, 0, 0, 2, 0, 2]),
     };
     const bridges = dailyPuzzleGame("bridges")!.game;
-    const hint: ServedHint = {
-        hint: { technique: 1, focus: [1, 2], target: [1], conclusions: [] },
-        level: 1,
-        mistake: false,
-    };
+    const hint = served([1, 2]);
     function buildBridges(committed: number[]): DailyPuzzleGame {
         const model = bridges.parse(bridgesPuzzle.description);
         let st = bridges.empty(model);
@@ -743,12 +821,12 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
         const g = buildBridges([]);
         await g.hint();
         expect([...g.focus].sort()).toEqual([1, 2]);
-        expect([...g.target]).toEqual([1]);
+        expect([...g.target].sort()).toEqual([1, 2]);
         // the colliding edge (key 1, over cell 3) is not the bridge the hint asked for
         g.tap(1);
-        expect([...g.target]).toEqual([1]);
+        expect([...g.target].sort()).toEqual([1, 2]);
         g.tap(12);
-        expect([...g.target]).toEqual([1]);
+        expect([...g.target].sort()).toEqual([1, 2]);
         // the bridge over cell 1 is edge key 0
         g.tap(0);
         expect(g.focus.size).toBe(0);
@@ -800,7 +878,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
         const g = buildBridges([0]);
         await g.hint();
         expect(g.focus.has(1)).toBe(false);
-        expect(g.target.size).toBe(0);
+        expect(g.target.has(1)).toBe(false);
         // the island stays as context
         expect(g.focus.has(2)).toBe(true);
     });

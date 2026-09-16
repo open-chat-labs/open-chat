@@ -9,6 +9,7 @@
         type LoopyEdge,
     } from "@client";
     import GridSvg from "../GridSvg.svelte";
+    import NoMark from "../NoMark.svelte";
     import { CELL, EDGE, elementCentre, elementRect, highlight, keysOf, vertex } from "../gridSvg";
     import type { BoardProps } from "../types";
 
@@ -30,7 +31,6 @@
     // the two edges meeting there never overlap.
     const HIT = 2.4;
     const INSET = 1.6;
-    const CROSS = 1.1;
 
     let elements = $derived(loopy.elements(model));
     let edges = $derived(elements.filter((el) => el.kind === "edge"));
@@ -107,24 +107,7 @@
                 stroke-width="0.3"
                 pointer-events="none" />
             {#if mark === "cross"}
-                <line
-                    x1={c.cx - CROSS}
-                    y1={c.cy - CROSS}
-                    x2={c.cx + CROSS}
-                    y2={c.cy + CROSS}
-                    stroke="#8a8a8a"
-                    stroke-width="0.5"
-                    stroke-linecap="round"
-                    pointer-events="none" />
-                <line
-                    x1={c.cx - CROSS}
-                    y1={c.cy + CROSS}
-                    x2={c.cx + CROSS}
-                    y2={c.cy - CROSS}
-                    stroke="#8a8a8a"
-                    stroke-width="0.5"
-                    stroke-linecap="round"
-                    pointer-events="none" />
+                <NoMark cx={c.cx} cy={c.cy} />
             {/if}
         {/if}
         {#if focus.has(el.key)}

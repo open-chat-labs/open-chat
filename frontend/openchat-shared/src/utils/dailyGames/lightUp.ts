@@ -5,7 +5,7 @@
 // Grid: width*height bytes row-major, 1 = bulb, 0 = no bulb. Cell key = y*width+x.
 
 import { LIGHT_UP_GAME_ID } from "../../domain/dailyPuzzle";
-import type { DailyGame, GameElement, Violation } from "./types";
+import type { DailyGame, GameElement, HintKeyStatus, Violation } from "./types";
 
 export type LightUpCell = "empty" | "bulb" | "dot";
 export type LightUpDescCell = { kind: "white" } | { kind: "black"; clue?: number };
@@ -265,6 +265,13 @@ export const lightUp: DailyGame<LightUpDescription, LightUpCell[]> = {
         const next = [...grid];
         next[key] = value === 1 ? "bulb" : "dot";
         return next;
+    },
+    // A lit cell can take no bulb, so a hint key there is settled by the beam as much as by a
+    // mark: a hint asking for the bulb that lights a cell retires once the cell is lit.
+    hintKeyStatus(desc, grid, key): HintKeyStatus {
+        if (desc.cells[key]?.kind !== "white") return "context";
+        if (grid[key] !== "empty") return "done";
+        return computeLighting(desc, grid)[key] ? "done" : "todo";
     },
     filled(_desc, grid) {
         const out: [number, number][] = [];
