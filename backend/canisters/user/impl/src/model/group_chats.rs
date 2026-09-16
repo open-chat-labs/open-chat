@@ -1,5 +1,5 @@
 use crate::model::group_chat::GroupChat;
-use crate::model::removed_chats;
+use direct_chat_core::removed_chats;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;
 use std::collections::HashMap;

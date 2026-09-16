@@ -58,8 +58,13 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                 });
                 if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
-                    if let Ok(result) = chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now) {
-                        let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+                    if let Ok(result) = chat
+                        .core
+                        .events
+                        .accept_p2p_swap(my_user_id, None, args.message_id, index, now)
+                    {
+                        let thread_root_message_id =
+                            args.thread_root_message_index.map(|i| chat.core.main_message_index_to_id(i));
                         state.push_user_canister_event(
                             args.user_id.canister_id(),
                             UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
@@ -79,7 +84,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
             mutate_state(|state| {
                 if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
-                    chat.events.unreserve_p2p_swap(my_user_id, None, args.message_id, now);
+                    chat.core.events.unreserve_p2p_swap(my_user_id, None, args.message_id, now);
                 }
             });
             Error(error)
@@ -102,9 +107,10 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult>
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
-        let reserve_success = chat
-            .events
-            .reserve_p2p_swap(my_user_id, None, args.message_id, EventIndex::default(), now)?;
+        let reserve_success =
+            chat.core
+                .events
+                .reserve_p2p_swap(my_user_id, None, args.message_id, EventIndex::default(), now)?;
 
         Ok(PrepareResult {
             my_user_id,

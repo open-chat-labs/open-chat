@@ -31,6 +31,7 @@ fn search_messages_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRes
     let direct_chat = state.data.direct_chats.get_or_err(&args.user_id.into())?;
     let matches =
         direct_chat
+            .core
             .events
             .search_messages(MessageIndex::default(), &args.search_term, &HashSet::new(), args.max_results);
 

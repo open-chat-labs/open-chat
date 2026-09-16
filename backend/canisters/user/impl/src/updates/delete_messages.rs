@@ -22,7 +22,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
 
-    let delete_message_results = chat.events.delete_messages(DeleteUndeleteMessagesArgs {
+    let delete_message_results = chat.core.events.delete_messages(DeleteUndeleteMessagesArgs {
         caller: my_user_id,
         is_admin: true,
         min_visible_event_index: EventIndex::default(),
@@ -63,7 +63,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 .collect();
 
             if !my_messages.is_empty() {
-                let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+                let thread_root_message_id = args.thread_root_message_index.map(|i| chat.core.main_message_index_to_id(i));
 
                 state.push_user_canister_event(
                     args.user_id.canister_id(),

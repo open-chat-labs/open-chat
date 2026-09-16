@@ -21,7 +21,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
             .data
             .direct_chats
             .iter()
-            .any(|c| c.events.heap_entries_to_migrate_count() > 0)
+            .any(|c| c.core.events.heap_entries_to_migrate_count() > 0)
     {
         let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         TIMER_ID.set(Some(timer_id));
@@ -36,7 +36,7 @@ fn run() {
     TIMER_ID.set(None);
     mutate_state(|state| {
         let mut count = 0;
-        'outer: for events in state.data.direct_chats.iter_mut().map(|c| &mut c.events) {
+        'outer: for events in state.data.direct_chats.iter_mut().map(|c| &mut c.core.events) {
             loop {
                 let moved = events.migrate_to_stable_memory(BATCH_SIZE);
                 count += moved;

@@ -25,7 +25,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
 
-    let delete_message_results = chat.events.undelete_messages(DeleteUndeleteMessagesArgs {
+    let delete_message_results = chat.core.events.undelete_messages(DeleteUndeleteMessagesArgs {
         caller: my_user_id,
         is_admin: false,
         min_visible_event_index: EventIndex::default(),
@@ -40,6 +40,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         .collect();
 
     let events_reader = chat
+        .core
         .events
         .events_reader(EventIndex::default(), args.thread_root_message_index, None)
         .ok_or(OCErrorCode::ThreadNotFound)?;
@@ -50,7 +51,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         .collect();
 
     if !deleted.is_empty() && args.user_id != OPENCHAT_BOT_USER_ID {
-        let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+        let thread_root_message_id = args.thread_root_message_index.map(|i| chat.core.main_message_index_to_id(i));
 
         state.push_user_canister_event(
             args.user_id.canister_id(),

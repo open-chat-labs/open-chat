@@ -3147,6 +3147,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "direct_chat_core"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "chat_events",
+ "ic-stable-structures",
+ "ic_principal",
+ "msgpack",
+ "oc_error_codes",
+ "rand 0.10.2",
+ "serde",
+ "stable_memory_map",
+ "types",
+]
+
+[[package]]
 name = "dirs"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12876,6 +12892,7 @@ dependencies = [
  "community_canister",
  "community_canister_c2c_client",
  "constants",
+ "direct_chat_core",
  "escrow_canister",
  "escrow_canister_c2c_client",
  "event_store_types",

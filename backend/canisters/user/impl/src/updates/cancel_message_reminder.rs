@@ -22,7 +22,8 @@ fn cancel_message_reminder_impl(reminder_id: u64, state: &mut RuntimeState) -> R
         if let Some(chat) = state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
             for job in cancelled {
                 if let TimerJob::MessageReminder(j) = job {
-                    chat.events
+                    chat.core
+                        .events
                         .mark_message_reminder_created_message_hidden(j.reminder_created_message_index, now);
                 }
             }

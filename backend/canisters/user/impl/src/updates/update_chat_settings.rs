@@ -38,7 +38,8 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
         if let Some(events_ttl) = args.events_ttl.expand() {
             let now = state.env.now();
 
-            chat.events
+            chat.core
+                .events
                 .set_events_time_to_live(state.env.canister_id().into(), events_ttl, now);
 
             state.push_user_canister_event(
