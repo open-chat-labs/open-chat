@@ -2,11 +2,13 @@ use crate::env::ENV;
 use crate::utils::{metrics, tick_many};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use sha256::sha256;
 use std::collections::BTreeMap;
 use std::ops::Deref;
-use types::{BuildVersion, CanisterId, CanisterWasm, UpgradesFilter};
+use testing::rng::{random_principal, random_string};
+use types::{BuildVersion, CanisterId, CanisterWasm, UpgradesFilter, UserId};
 
 #[test]
 fn create_then_upgrade_multi_user_canister() {
@@ -50,6 +52,87 @@ fn create_then_upgrade_multi_user_canister() {
 
     assert_eq!(wasm_version(env, canister_id), new_version);
     assert_stable_memory_maps_initialised(env, canister_id);
+}
+
+#[test]
+fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let create_user = |env: &mut PocketIc, principal: Principal| {
+        client::multi_user::c2c_create_user(
+            env,
+            local_user_index,
+            canister_id,
+            &multi_user_canister::c2c_create_user::Args {
+                principal,
+                username: random_string(),
+                referred_by: None,
+            },
+        )
+    };
+    let bio = |env: &PocketIc, user_id: UserId| {
+        env.query_call(
+            canister_id,
+            Principal::anonymous(),
+            "bio_msgpack",
+            msgpack::serialize_then_unwrap(user_canister::bio::Args { user_id }),
+        )
+        .map(|bytes| msgpack::deserialize_then_unwrap::<user_canister::bio::Response>(&bytes))
+    };
+
+    // Each user's id carries this canister's id plus their index, starting from 1
+    let principals = [random_principal(), random_principal()];
+    let user_ids: Vec<UserId> = principals
+        .iter()
+        .map(|principal| match create_user(env, *principal) {
+            multi_user_canister::c2c_create_user::Response::Success(user_id) => user_id,
+            response => panic!("{response:?}"),
+        })
+        .collect();
+    for (i, user_id) in user_ids.iter().enumerate() {
+        assert_eq!(user_id.canister_id(), canister_id);
+        assert_eq!(user_id.index() as usize, i + 1);
+        assert!(matches!(bio(env, *user_id), Ok(user_canister::bio::Response::Success(text)) if text.is_empty()));
+    }
+    assert_eq!(user_count(env, canister_id), 2);
+
+    // A principal can only be registered once
+    let duplicate = create_user(env, principals[0]);
+    assert!(
+        matches!(&duplicate, multi_user_canister::c2c_create_user::Response::Error(e) if e.matches_code(OCErrorCode::AlreadyRegistered)),
+        "{duplicate:?}"
+    );
+    assert_eq!(user_count(env, canister_id), 2);
+
+    // An index this canister has not assigned, another canister's user, or an id which carries no
+    // index (so maps to index 0) is rejected
+    assert!(bio(env, UserId::new_indexed(canister_id, 3)).is_err());
+    assert!(bio(env, UserId::new_indexed(canister_ids.user_index, 1)).is_err());
+    assert!(bio(env, canister_id.into()).is_err());
+
+    // The users survive an upgrade
+    client::user_index::happy_path::upgrade_multi_user_canister_wasm(
+        env,
+        *controller,
+        canister_ids.user_index,
+        CanisterWasm {
+            version: BuildVersion::new(0, 0, 1),
+            module: wasms::MULTI_USER.module.clone(),
+        },
+    );
+    tick_many(env, 20);
+    assert_eq!(wasm_version(env, canister_id), BuildVersion::new(0, 0, 1));
+    assert_eq!(user_count(env, canister_id), 2);
+    assert!(matches!(bio(env, user_ids[1]), Ok(user_canister::bio::Response::Success(_))));
 }
 
 #[test]
@@ -129,6 +212,10 @@ fn assert_stable_memory_maps_initialised(env: &PocketIc, canister_id: CanisterId
             "Stable memory map {memory_id} not initialised: {stable_memory_sizes:?}"
         );
     }
+}
+
+fn user_count(env: &PocketIc, canister_id: CanisterId) -> u32 {
+    serde_json::from_value(metrics(env, canister_id)["user_count"].clone()).unwrap()
 }
 
 fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {

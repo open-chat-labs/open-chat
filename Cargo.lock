@@ -6289,6 +6289,7 @@ dependencies = [
  "local_user_index_canister",
  "loopy",
  "msgpack",
+ "multi_user_canister",
  "notifications_index_canister",
  "oc_error_codes",
  "online_users_canister",
@@ -7266,6 +7267,7 @@ name = "multi_user_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "oc_error_codes",
  "serde",
  "types",
 ]
@@ -7286,6 +7288,7 @@ dependencies = [
  "ic-stable-structures",
  "msgpack",
  "multi_user_canister",
+ "oc_error_codes",
  "rand 0.10.2",
  "serde",
  "stable_memory",

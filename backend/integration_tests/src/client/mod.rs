@@ -24,6 +24,7 @@ pub mod group_index;
 pub mod identity;
 pub mod ledger;
 pub mod local_user_index;
+pub mod multi_user;
 pub mod notifications_index;
 pub mod online_users;
 pub mod openchat_installer;
