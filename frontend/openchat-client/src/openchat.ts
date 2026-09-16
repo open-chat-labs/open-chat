@@ -3214,6 +3214,10 @@ export class OpenChat {
     isUsernameValid = isUsernameValid;
 
     async createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
+        // The placeholder would shadow the real chat in allServerChatsStore, making it appear empty
+        if (serverDirectChatsStore.value.has(chatId)) {
+            return true;
+        }
         if (!userStore.has(chatId.userId)) {
             const user = await this.getUser(chatId.userId);
             if (user === undefined) {

@@ -25,6 +25,7 @@
         ANON_USER_ID,
         CURRENT_TERMS_VERSION,
         currentUserStore,
+        allChatsStore,
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
@@ -387,23 +388,15 @@
     function replyPrivatelyTo(context: EnhancedReplyContext) {
         if (context.sender === undefined) return;
 
-        const chat = $chatSummariesListStore.find((c) => {
-            return (
-                c.kind === "direct_chat" &&
-                chatIdentifiersEqual(c.them, {
-                    kind: "direct_chat",
-                    userId: context.sender!.userId,
-                })
-            );
-        });
-
-        const chatId = chat?.id ?? { kind: "direct_chat", userId: context.sender.userId };
+        const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: context.sender.userId };
         localUpdates.draftMessages.setTextContent({ chatId }, "");
         localUpdates.draftMessages.setReplyingTo({ chatId }, context);
-        if (chat) {
-            navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+        // Look the chat up across all scopes, since the message being replied to is usually in a
+        // group or channel, in which case the current scope won't include any direct chats
+        if ($allChatsStore.has(chatId)) {
+            navigate(routeForChatIdentifier("chats", chatId));
         } else {
-            createDirectChat(chatId as DirectChatIdentifier);
+            createDirectChat(chatId);
         }
     }
 
