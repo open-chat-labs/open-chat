@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Pass `user_to_notify` through to `SwapStatusChange` so that a canister hosting multiple users knows which user a swap belongs to ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 
 ### Fixed

@@ -4,6 +4,7 @@ use types::{P2PSwapLocation, PinNumberWrapper, TimestampMillis, TokenInfo, UserI
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub swap_id: u32,
     pub location: P2PSwapLocation,
     pub created: TimestampMillis,

@@ -3,6 +3,7 @@ use types::{SuccessOnly, UserId};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub removed_by: UserId,
     pub blocked: bool,
     pub group_name: String,

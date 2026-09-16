@@ -1,10 +1,12 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
+use types::UserId;
 
 #[ts_export(user, pay_for_premium_item)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub item_id: u32,
     pub pay_in_chat: bool,
     pub cost: u32,

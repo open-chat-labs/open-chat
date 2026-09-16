@@ -11,6 +11,7 @@ impl TimerJobItem for UserEventBatch {
         let response = user_canister_c2c_client::c2c_local_user_index(
             self.key.canister_id(),
             &user_canister::c2c_local_user_index::Args {
+                user_id: self.key,
                 events: self
                     .items
                     .iter()

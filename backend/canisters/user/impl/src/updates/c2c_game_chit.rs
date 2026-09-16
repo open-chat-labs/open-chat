@@ -70,9 +70,11 @@ fn validate_args(args: &Args) -> Result<(), &'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Principal;
 
     fn args(game_id: &str, key: &str, amount: i32) -> Args {
         Args {
+            user_id: Principal::anonymous().into(),
             game_id: game_id.to_string(),
             key: key.to_string(),
             amount,

@@ -6,6 +6,7 @@ use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
+    pub them: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub start_index: EventIndex,
     pub ascending: bool,
