@@ -13,7 +13,7 @@ fn events(args: Args) -> Response {
     read_state(|state| {
         read_events(
             args.latest_known_update,
-            args.user_id,
+            args.them,
             args.thread_root_message_index,
             args,
             events_impl,

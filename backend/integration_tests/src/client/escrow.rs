@@ -43,6 +43,7 @@ pub mod happy_path {
                 expires_at,
                 additional_admins: Vec::new(),
                 canister_to_notify: None,
+                user_to_notify: None,
                 is_public: false,
             },
         );

@@ -673,8 +673,12 @@ fn assert_document_served(env: &PocketIc, user: &User, path: &str, document: &Do
 }
 
 fn public_profile(env: &PocketIc, user: &User) -> user_canister::public_profile::PublicProfile {
-    let user_canister::public_profile::Response::Success(result) =
-        client::user::public_profile(env, user.principal, user.canister(), &Empty {});
+    let user_canister::public_profile::Response::Success(result) = client::user::public_profile(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::public_profile::Args { user_id: user.user_id },
+    );
     result
 }
 

@@ -325,6 +325,7 @@ fn prepare(
                 expires_at: now + p.expires_in,
                 additional_admins: vec![chat_canister_id],
                 canister_to_notify: Some(chat_canister_id),
+                user_to_notify: None,
                 is_public: false,
             };
             return Ok(P2PSwap(

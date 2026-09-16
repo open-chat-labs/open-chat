@@ -31,8 +31,9 @@ pub(crate) async fn make_c2c_call_to_get_events(
 ) -> EventsResponse {
     match events_args.context {
         EventsContext::Direct(them) => {
-            let (user_id, canister_id) =
-                if bot_initiator.is_some() { (user_id, them.canister_id()) } else { (them, user_id.canister_id()) };
+            // A bot reads the chat from the other user's canister, so the two roles swap
+            let (user_id, them) = if bot_initiator.is_some() { (them, user_id) } else { (user_id, them) };
+            let canister_id = user_id.canister_id();
 
             match events_args.args {
                 EventsSelectionCriteria::Page(args) => map_response(
@@ -40,6 +41,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                         canister_id,
                         &user_canister::events::Args {
                             user_id,
+                            them,
                             thread_root_message_index: None,
                             start_index: args.start_index,
                             ascending: args.ascending,
@@ -55,6 +57,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                         canister_id,
                         &user_canister::events_by_index::Args {
                             user_id,
+                            them,
                             thread_root_message_index: None,
                             events: args.events,
                             latest_known_update: events_args.latest_known_update,
@@ -67,6 +70,7 @@ pub(crate) async fn make_c2c_call_to_get_events(
                         canister_id,
                         &user_canister::events_window::Args {
                             user_id,
+                            them,
                             thread_root_message_index: None,
                             mid_point: args.mid_point,
                             max_messages: args.max_messages,

@@ -1,8 +1,10 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use types::UserId;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     // e.g. "light_up"
     pub game_id: String,
     // Idempotency key, unique per game_id. e.g. "142:solve", "142:hint:2"

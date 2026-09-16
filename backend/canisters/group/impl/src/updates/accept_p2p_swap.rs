@@ -106,6 +106,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2P
     Ok(ReserveP2PSwapResult {
         user_id,
         c2c_args: user_canister::c2c_accept_p2p_swap::Args {
+            user_id,
             swap_id: result.content.swap_id,
             location: P2PSwapLocation::from_message(
                 Chat::Group(state.env.canister_id().into()),

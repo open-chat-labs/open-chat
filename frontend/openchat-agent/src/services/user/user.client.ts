@@ -91,6 +91,7 @@ import {
     UserApproveTransferArgs,
     UserArchiveUnarchiveChatsArgs,
     UserArchiveUnarchiveChatsResponse,
+    UserBioArgs,
     UserBioResponse,
     UserBlockUserArgs,
     UserCancelMessageReminderArgs,
@@ -137,6 +138,7 @@ import {
     UserNamedAccount,
     UserPayForStreakInsuranceArgs,
     UserPinChatArgs,
+    UserPublicProfileArgs,
     UserPublicProfileResponse,
     UserRemoveReactionArgs,
     UserReportMessageArgs,
@@ -167,6 +169,7 @@ import {
     UserUndeleteMessagesResponse,
     UserUnpinChatArgs,
     UserUpdateBotArgs,
+    UserUpdateBtcBalanceArgs,
     UserUpdateChatSettingsArgs,
     UserUpdatesArgs,
     UserUpdatesResponse,
@@ -392,7 +395,8 @@ export class UserClient
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(chatId.userId),
+            user_id: principalStringToBytes(this.userId),
+            them: principalStringToBytes(chatId.userId),
             events: eventIndexes,
             latest_known_update: latestKnownUpdate,
             latest_client_event_index: undefined,
@@ -419,7 +423,8 @@ export class UserClient
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(chatId.userId),
+            user_id: principalStringToBytes(this.userId),
+            them: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
             mid_point: messageIndex,
@@ -448,7 +453,8 @@ export class UserClient
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(chatId.userId),
+            user_id: principalStringToBytes(this.userId),
+            them: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
             start_index: startIndex,
@@ -1078,7 +1084,13 @@ export class UserClient
     }
 
     getBio(): Promise<string> {
-        return this.query("bio", {}, (value) => value.Success, TEmpty, UserBioResponse);
+        return this.query(
+            "bio",
+            { user_id: principalStringToBytes(this.userId) },
+            (value) => value.Success,
+            UserBioArgs,
+            UserBioResponse,
+        );
     }
 
     getPublicProfile(): Stream<PublicProfile> {
@@ -1095,9 +1107,9 @@ export class UserClient
                 if (!isOffline) {
                     const liveProfile = await this.query(
                         "public_profile",
-                        {},
+                        { user_id: principalStringToBytes(this.userId) },
                         publicProfileResponse,
-                        TEmpty,
+                        UserPublicProfileArgs,
                         UserPublicProfileResponse,
                     );
                     this.chatsDb.setCachedPublicProfile(this.userId, liveProfile);
@@ -1572,7 +1584,13 @@ export class UserClient
     }
 
     updateBtcBalance(): Promise<boolean> {
-        return this.update("update_btc_balance", {}, isSuccess, TEmpty, UnitResult);
+        return this.update(
+            "update_btc_balance",
+            { user_id: principalStringToBytes(this.userId) },
+            isSuccess,
+            UserUpdateBtcBalanceArgs,
+            UnitResult,
+        );
     }
 
     withdrawBtc(

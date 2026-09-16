@@ -211,6 +211,7 @@ async fn handle_main_message_action(action: AirdropMessage) -> Result<(), Option
     };
 
     let args = user_canister::c2c_handle_bot_messages::Args {
+        user_id: action.recipient,
         bot_name: USERNAME.to_string(),
         bot_display_name: None,
         messages: vec![BotMessage {

@@ -1,3 +1,4 @@
+use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -5,7 +6,7 @@ use oc_error_codes::OCErrorCode;
 use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult};
 use user_canister::update_bot::*;
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn update_bot(args: Args) -> Response {
     execute_update(|state| update_bot_impl(args, state)).into()

@@ -46,6 +46,7 @@ pub async fn apply(credit: &GameChitCredit) -> GameChitOutcome {
     let response = user_canister_c2c_client::c2c_game_chit(
         credit.user_id.canister_id(),
         &Args {
+            user_id: credit.user_id,
             game_id: credit.game_id.clone(),
             key: credit.key.clone(),
             amount: credit.amount,

@@ -21,13 +21,13 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
         },
     );
 
-    if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+    if let Some(chat) = state.data.direct_chats.get_mut(&args.them.into()) {
         let now = state.env.now();
         let was_started_by_me = chat
             .events
             .main_events_reader()
             .message_internal(args.message_id.into())
-            .map(|m| m.sender != args.user_id)
+            .map(|m| m.sender != args.them)
             .unwrap_or_default();
 
         chat.events.end_video_call(

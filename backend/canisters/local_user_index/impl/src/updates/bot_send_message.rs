@@ -271,6 +271,7 @@ async fn send_message_to_user(
     match user_canister_c2c_client::c2c_bot_send_message(
         chat_id.into(),
         &user_canister::c2c_bot_send_message::Args {
+            user_id: chat_id.into(),
             bot_id,
             initiator,
             thread_root_message_index,
