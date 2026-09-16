@@ -4,6 +4,7 @@ use types::{BotInitiator, ChatSummaryDirect, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub bot_id: UserId,
     pub initiator: BotInitiator,
 }

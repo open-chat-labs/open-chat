@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
-use types::{ChatId, CommunityId, Empty};
+use types::{ChatId, CommunityId, UserId};
 
-pub type Args = Empty;
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Args {
+    pub user_id: UserId,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Response {

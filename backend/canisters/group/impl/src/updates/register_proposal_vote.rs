@@ -25,6 +25,7 @@ async fn register_proposal_vote_impl(args: Args) -> Response {
     };
 
     let c2c_args = user_canister::c2c_vote_on_proposal::Args {
+        user_id,
         is_nns,
         governance_canister_id,
         proposal_id,

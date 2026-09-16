@@ -15,6 +15,7 @@ async fn withdraw_from_icpswap(args: Args) -> Response {
     user_canister_c2c_client::c2c_withdraw_from_icpswap(
         args.user_id.canister_id(),
         &user_canister::c2c_withdraw_from_icpswap::Args {
+            user_id: args.user_id,
             swap_id: args.swap_id,
             input_token: args.input_token,
             amount: args.amount,

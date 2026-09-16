@@ -274,7 +274,7 @@ pub mod happy_path {
     pub fn events(
         env: &PocketIc,
         sender: &User,
-        user_id: UserId,
+        them: UserId,
         start_index: EventIndex,
         ascending: bool,
         max_messages: u32,
@@ -285,7 +285,8 @@ pub mod happy_path {
             sender.principal,
             sender.canister(),
             &user_canister::events::Args {
-                user_id,
+                user_id: sender.user_id,
+                them,
                 thread_root_message_index: None,
                 start_index,
                 ascending,
@@ -301,13 +302,14 @@ pub mod happy_path {
         }
     }
 
-    pub fn events_by_index(env: &PocketIc, sender: &User, user_id: UserId, events: Vec<EventIndex>) -> EventsResponse {
+    pub fn events_by_index(env: &PocketIc, sender: &User, them: UserId, events: Vec<EventIndex>) -> EventsResponse {
         let response = super::events_by_index(
             env,
             sender.principal,
             sender.canister(),
             &user_canister::events_by_index::Args {
-                user_id,
+                user_id: sender.user_id,
+                them,
                 thread_root_message_index: None,
                 events,
                 latest_known_update: None,
@@ -323,7 +325,7 @@ pub mod happy_path {
     pub fn events_window(
         env: &PocketIc,
         sender: &User,
-        user_id: UserId,
+        them: UserId,
         mid_point: MessageIndex,
         max_messages: u32,
         max_events: u32,
@@ -333,7 +335,8 @@ pub mod happy_path {
             sender.principal,
             sender.canister(),
             &user_canister::events_window::Args {
-                user_id,
+                user_id: sender.user_id,
+                them,
                 thread_root_message_index: None,
                 mid_point,
                 max_messages,
@@ -454,6 +457,7 @@ pub mod happy_path {
             VIDEO_CALL_OPERATOR,
             recipient.canister_id(),
             &user_canister::start_video_call_v2::Args {
+                user_id: recipient,
                 message_id,
                 initiator: user.user_id,
                 initiator_username: user.username(),
@@ -487,7 +491,8 @@ pub mod happy_path {
             VIDEO_CALL_OPERATOR,
             recipient.canister_id(),
             &user_canister::end_video_call_v2::Args {
-                user_id: initiator,
+                user_id: recipient,
+                them: initiator,
                 message_id,
             },
         );

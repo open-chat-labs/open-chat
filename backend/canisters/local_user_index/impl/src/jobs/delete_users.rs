@@ -4,7 +4,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{C2CError, CanisterId, Empty, Milliseconds};
+use types::{C2CError, CanisterId, Milliseconds};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -70,9 +70,12 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
     let user_id = user.user_id;
     let canister_id = user_id.canister_id();
 
-    let (groups, communities) = user_canister_c2c_client::c2c_groups_and_communities(canister_id, &Empty {})
-        .await
-        .map(|r| (r.groups, r.communities))?;
+    let (groups, communities) = user_canister_c2c_client::c2c_groups_and_communities(
+        canister_id,
+        &user_canister::c2c_groups_and_communities::Args { user_id },
+    )
+    .await
+    .map(|r| (r.groups, r.communities))?;
 
     utils::canister::uninstall(canister_id).await?;
 

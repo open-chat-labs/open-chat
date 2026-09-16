@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
-use types::{ChatId, CommunityId};
+use types::{ChatId, CommunityId, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub suspended: bool,
 }
 

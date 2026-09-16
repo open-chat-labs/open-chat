@@ -115,7 +115,12 @@ pub struct SendMessageToChannelJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call_v2::Args);
+pub struct MarkVideoCallEndedJob {
+    // Jobs enqueued by the previous wasm hold the `end_video_call_v2` args, whose peer was `user_id`
+    #[serde(alias = "user_id")]
+    pub them: UserId,
+    pub message_id: MessageId,
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClaimOrResetStreakInsuranceJob;
@@ -364,8 +369,16 @@ impl Job for SendMessageToChannelJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        if let Err(error) = mutate_state(|state| end_video_call_impl(self.0.clone(), state)) {
-            error!(?error, args = ?self.0, "Failed to mark video call ended");
+        let result = mutate_state(|state| {
+            let args = user_canister::end_video_call_v2::Args {
+                user_id: state.env.canister_id().into(),
+                them: self.them,
+                message_id: self.message_id,
+            };
+            end_video_call_impl(args, state)
+        });
+        if let Err(error) = result {
+            error!(?error, them = ?self.them, message_id = ?self.message_id, "Failed to mark video call ended");
         }
     }
 }
@@ -382,5 +395,35 @@ impl Job for ClaimOrResetStreakInsuranceJob {
                 state.data.streak.reset_streak_insurance(now);
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    // Jobs enqueued by the previous wasm were serialized as that wasm's `end_video_call_v2` args, a
+    // newtype around `{ user_id, message_id }` with the peer in `user_id`
+    #[test]
+    fn mark_video_call_ended_job_deserializes_from_previous_wasm() {
+        #[derive(Serialize)]
+        struct PreviousArgs {
+            user_id: UserId,
+            message_id: MessageId,
+        }
+        #[derive(Serialize)]
+        struct PreviousJob(PreviousArgs);
+
+        let them: UserId = Principal::from_slice(&[1, 2, 3]).into();
+        let message_id = MessageId::from(123u64);
+        let bytes = msgpack::serialize_then_unwrap(PreviousJob(PreviousArgs {
+            user_id: them,
+            message_id,
+        }));
+
+        let job: MarkVideoCallEndedJob = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(job.them, them);
+        assert_eq!(job.message_id, message_id);
     }
 }

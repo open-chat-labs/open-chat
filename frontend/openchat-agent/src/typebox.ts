@@ -4680,6 +4680,11 @@ export const UserSearchMessagesArgs = /* @__PURE__ */ Type.Object({
     max_results: Type.Number(),
 });
 
+export type UserUpdateBtcBalanceArgs = Static<typeof UserUpdateBtcBalanceArgs>;
+export const UserUpdateBtcBalanceArgs = /* @__PURE__ */ Type.Object({
+    user_id: UserId,
+});
+
 export type UserGenerateBtcAddressResponse = Static<typeof UserGenerateBtcAddressResponse>;
 export const UserGenerateBtcAddressResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
@@ -4699,6 +4704,11 @@ export const UserUpdateChatSettingsArgs = /* @__PURE__ */ Type.Object({
 export type UserSavedCryptoAccountsResponse = Static<typeof UserSavedCryptoAccountsResponse>;
 export const UserSavedCryptoAccountsResponse = /* @__PURE__ */ Type.Object({
     Success: Type.Array(UserNamedAccount),
+});
+
+export type UserBioArgs = Static<typeof UserBioArgs>;
+export const UserBioArgs = /* @__PURE__ */ Type.Object({
+    user_id: UserId,
 });
 
 export type UserJoinVideoCallArgs = Static<typeof UserJoinVideoCallArgs>;
@@ -4838,6 +4848,7 @@ export const UserContactsSuccessResult = /* @__PURE__ */ Type.Object({
 export type UserEventsWindowArgs = Static<typeof UserEventsWindowArgs>;
 export const UserEventsWindowArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,
+    them: UserId,
     thread_root_message_index: Type.Optional(MessageIndex),
     mid_point: MessageIndex,
     max_messages: Type.Number(),
@@ -4953,9 +4964,15 @@ export const UserPublicProfileResponse = /* @__PURE__ */ Type.Object({
     Success: UserPublicProfilePublicProfile,
 });
 
+export type UserPublicProfileArgs = Static<typeof UserPublicProfileArgs>;
+export const UserPublicProfileArgs = /* @__PURE__ */ Type.Object({
+    user_id: UserId,
+});
+
 export type UserEventsByIndexArgs = Static<typeof UserEventsByIndexArgs>;
 export const UserEventsByIndexArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,
+    them: UserId,
     thread_root_message_index: Type.Optional(MessageIndex),
     events: Type.Array(EventIndex),
     latest_known_update: Type.Optional(Type.BigInt()),
@@ -5005,6 +5022,7 @@ export const UserLocalUserIndexResponse = /* @__PURE__ */ Type.Object({
 export type UserEventsArgs = Static<typeof UserEventsArgs>;
 export const UserEventsArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,
+    them: UserId,
     thread_root_message_index: Type.Optional(MessageIndex),
     start_index: EventIndex,
     ascending: Type.Boolean(),

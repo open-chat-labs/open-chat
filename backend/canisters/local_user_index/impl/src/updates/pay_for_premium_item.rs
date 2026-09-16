@@ -15,6 +15,7 @@ async fn pay_for_premium_item(args: Args) -> Response {
             match user_canister_c2c_client::c2c_pay_for_premium_item(
                 user_id.canister_id(),
                 &user_canister::c2c_pay_for_premium_item::Args {
+                    user_id,
                     item_id: args.item_id,
                     pay_in_chat: args.pay_in_chat,
                     cost: args.expected_cost,

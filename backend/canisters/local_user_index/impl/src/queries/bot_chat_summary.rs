@@ -26,6 +26,7 @@ async fn bot_chat_summary(args: Args) -> Response {
         Chat::Direct(chat_id) => match user_canister_c2c_client::c2c_bot_chat_summary(
             chat_id.into(),
             &user_canister::c2c_bot_chat_summary::Args {
+                user_id: chat_id.into(),
                 bot_id: context.bot_id,
                 initiator: context.initiator,
             },
