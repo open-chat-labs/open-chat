@@ -70,6 +70,10 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
     let init_canister_args = multi_user_canister::init::Args {
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id: state.env.canister_id(),
+        group_index_canister_id: state.data.group_index_canister_id,
+        identity_canister_id: state.data.identity_canister_id,
+        escrow_canister_id: state.data.escrow_canister_id,
+        video_call_operators: state.data.video_call_operators.clone(),
         wasm_version: canister_wasm.version,
         rng_seed: state.env.rng().random(),
         test_mode: state.data.test_mode,

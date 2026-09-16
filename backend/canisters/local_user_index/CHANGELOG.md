@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add the `multi_user_canisters_enabled` flag, set by the UserIndex and surfaced in metrics ([#9314](https://github.com/open-chat-labs/open-chat/pull/9314))
 - Handle the `SetDailyPuzzleCanisterId` event from the UserIndex, the same path as the platform-operator `set_daily_puzzle_canister_id` endpoint ([#9345](https://github.com/open-chat-labs/open-chat/pull/9345))
 - Expose the user-event sync queue's in-flight batch count in metrics, alongside the existing queued length ([#9177](https://github.com/open-chat-labs/open-chat/pull/9177))
+- Pass the GroupIndex, Identity and Escrow canister ids and the video call operators when creating a MultiUser canister ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
 
 ### Changed
 
