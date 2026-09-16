@@ -59,12 +59,20 @@ pub use user_metrics::*;
 pub struct BaseKey(#[serde(with = "serde_bytes")] Vec<u8>);
 
 impl BaseKey {
+    pub(crate) fn new(bytes: Vec<u8>) -> BaseKey {
+        BaseKey(bytes)
+    }
+
     pub fn matches_prefix(&self, prefix: &BaseKeyPrefix) -> bool {
         self.0.starts_with(prefix.0.as_slice())
     }
 
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
+    }
+
+    pub(crate) fn into_vec(self) -> Vec<u8> {
+        self.0
     }
 }
 

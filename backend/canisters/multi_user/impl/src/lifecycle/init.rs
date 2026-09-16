@@ -11,10 +11,7 @@ use utils::env::canister::CanisterEnv;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
-    stable_memory_map::init_with_small_entries_map(
-        get_stable_memory_map_memory(),
-        get_stable_memory_map_small_entries_memory(),
-    );
+    stable_memory_map::init_multi_user(get_stable_memory_map_memory(), get_stable_memory_map_small_entries_memory());
 
     let env = Box::new(CanisterEnv::new(args.rng_seed));
     let data = Data::new(
