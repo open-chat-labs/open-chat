@@ -13,7 +13,7 @@ mod direct_chat_core;
 mod direct_chats;
 pub mod private_replies;
 pub mod removed_chats;
-pub mod unread_message_index_map;
+mod unread_message_index_map;
 
 pub use direct_chat::DirectChat;
 pub use direct_chats::DirectChats;

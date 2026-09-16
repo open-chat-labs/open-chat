@@ -1,5 +1,5 @@
 use crate::direct_chat_core::{DirectChatCore, Participant};
-use crate::unread_message_index_map::UnreadMessageIndexMap;
+use crate::unread_message_index_map::{self, UnreadMessageIndexMap};
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatInternal, DeleteMessageSuccess, DeleteUndeleteMessagesArgs,
     EditMessageArgs, EditMessageSuccess, EventKey, EventPusher, MessageContentInternal, MessageInternal,
@@ -7,6 +7,7 @@ use chat_events::{
     UpdateMessageSuccess,
 };
 use serde::{Deserialize, Serialize};
+use stable_memory_map::BaseKeyPrefix;
 use std::collections::HashSet;
 use types::{
     BotNotification, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex, EventWrapper,
@@ -24,10 +25,9 @@ pub struct DirectChat {
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
     // Maps our message indexes onto theirs, which is only needed while each user's canister holds
-    // its own copy of the chat with its own message indexes
+    // its own copy of the chat with its own message indexes. Private, like the core, so that every
+    // message pushed goes through `push_message`, which keeps the two in step.
     unread_message_index_map: UnreadMessageIndexMap,
-    // Both of these are kept private so that every message pushed goes through `push_message`,
-    // which also records the message's index in the other user's copy of the chat
     pub(crate) core: DirectChatCore,
 }
 
@@ -117,6 +117,16 @@ impl DirectChat {
     pub fn remove_unread_message_indexes_up_to(&mut self, their_read_up_to: MessageIndex) {
         self.unread_message_index_map
             .remove_up_to(self.core.events.stable_memory_prefix(), their_read_up_to);
+    }
+
+    // Every stable memory key prefix the chat writes under, so that its entries can be garbage
+    // collected once it has been deleted. Each chat has a unique `key_id`, so if a new chat is
+    // created with the same user before the job has run then its entries aren't removed with these.
+    pub fn stable_memory_key_prefixes(&self) -> Vec<BaseKeyPrefix> {
+        let events_prefix = self.core.events.stable_memory_prefix();
+        let mut prefixes = self.core.events.all_stable_memory_key_prefixes();
+        prefixes.push(unread_message_index_map::prefix(events_prefix).into());
+        prefixes
     }
 
     // TODO: Remove this after next release

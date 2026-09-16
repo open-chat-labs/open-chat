@@ -85,7 +85,7 @@ impl UnreadMessageIndexMap {
 
 // Panics if the events prefix isn't for the main events list of a `key_id` based direct chat. Every
 // direct chat is assigned a `key_id` at the start of `post_upgrade`, so this always holds.
-pub fn prefix(events_prefix: &ChatEventKeyPrefix) -> DirectChatUnreadMessageIndexKeyPrefix {
+pub(crate) fn prefix(events_prefix: &ChatEventKeyPrefix) -> DirectChatUnreadMessageIndexKeyPrefix {
     DirectChatUnreadMessageIndexKeyPrefix::new_from_events_prefix(events_prefix)
 }
 
