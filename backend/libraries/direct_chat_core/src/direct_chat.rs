@@ -310,9 +310,8 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
             .into_iter()
             // Events in the main chat from before the user's view of it starts are hidden from
             // them, as are the threads under those events
-            .filter(|(thread_root_message_index, e, _)| match thread_root_message_index {
-                Some(root) => events.is_accessible(min_visible_event_index, None, (*root).into()),
-                None => *e >= min_visible_event_index,
+            .filter(|(thread_root_message_index, e, _)| {
+                events.is_accessible(min_visible_event_index, *thread_root_message_index, (*e).into())
             })
             .map(|(_, e, ts)| (e, ts))
             .collect();

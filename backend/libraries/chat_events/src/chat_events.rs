@@ -2290,11 +2290,13 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
     ) -> bool {
-        if let Some(events_list) = self.events_reader(min_visible_event_index, thread_root_message_index, None) {
-            events_list.is_accessible(event_key, min_visible_event_index)
-        } else {
-            false
-        }
+        self.events_list(min_visible_event_index, thread_root_message_index)
+            .is_some_and(|l| {
+                l.is_accessible(
+                    event_key,
+                    Self::min_visible_event_index_in_list(min_visible_event_index, thread_root_message_index),
+                )
+            })
     }
 
     pub fn message_ids(
@@ -2812,12 +2814,23 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
     ) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
-        // The min visible index applies to the main list, which the thread root has been checked
-        // against above: a thread's own events are numbered from zero and are all visible
-        let min_visible_event_index =
-            if thread_root_message_index.is_some() { EventIndex::default() } else { min_visible_event_index };
-        events_list.get_event(event_key, min_visible_event_index, None)
+        self.events_list(min_visible_event_index, thread_root_message_index)
+            .and_then(|l| {
+                l.get_event(
+                    event_key,
+                    Self::min_visible_event_index_in_list(min_visible_event_index, thread_root_message_index),
+                    None,
+                )
+            })
+    }
+
+    // The min visible index applies to the main list, which `events_list` checks a thread's root
+    // against: a thread's own events are numbered from zero and are all visible
+    fn min_visible_event_index_in_list(
+        min_visible_event_index: EventIndex,
+        thread_root_message_index: Option<MessageIndex>,
+    ) -> EventIndex {
+        if thread_root_message_index.is_some() { EventIndex::default() } else { min_visible_event_index }
     }
 
     pub fn message_internal(
