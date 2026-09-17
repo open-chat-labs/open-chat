@@ -184,6 +184,27 @@ describe("mergeUpdatedEventStamps", () => {
         ]);
     });
 
+    test("drops stamps that have fallen far behind the version being written", () => {
+        const first = mergeUpdatedEventStamps(
+            [],
+            updatedEvents([[groupA, [{ eventIndex: 1, timestamp: 1n }]]]),
+            1,
+        );
+        const stillNear = mergeUpdatedEventStamps(
+            first,
+            updatedEvents([[groupA, [{ eventIndex: 2, timestamp: 1n }]]]),
+            400,
+        );
+        expect(stillNear.map((s) => s.eventIndex)).toEqual([1, 2]);
+
+        const farLater = mergeUpdatedEventStamps(
+            stillNear,
+            updatedEvents([[groupA, [{ eventIndex: 3, timestamp: 1n }]]]),
+            800,
+        );
+        expect(farLater.map((s) => s.eventIndex)).toEqual([2, 3]);
+    });
+
     test("returns the previous stamps untouched when there is nothing new", () => {
         const prev = mergeUpdatedEventStamps(
             [],

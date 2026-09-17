@@ -75,10 +75,19 @@ export type SyncTouched = {
 
 // A removal or an updated event is only interesting to a UI whose cursor is behind it, and every
 // UI pulls to the head within seconds of it moving. These bounds only matter for a tab that has
-// been wedged for thousands of versions, and the events are marked dirty in the cache anyway so a
+// been wedged for hundreds of versions, and the events are marked dirty in the cache anyway so a
 // re-read heals the display.
+//
+// The stamps record is rewritten whole on every pass, so the updated-event log is the one that
+// costs anything: each entry carries a chat identifier, and a busy account would otherwise sit
+// permanently at the cap. It is bounded twice - by how far behind the head an entry is, which is
+// what keeps the steady state small, and by count as a backstop. Tombstones are a string and a
+// number each, and dropping one loses a removal for good (nothing marks a removed chat dirty),
+// so they are bounded generously and by count alone.
 const MAX_TOMBSTONES = 1000;
-const MAX_UPDATED_EVENT_STAMPS = 5000;
+const MAX_UPDATED_EVENT_STAMPS = 1000;
+// ~500 passes behind the head, which no UI still folding answers can be
+const MAX_UPDATED_EVENT_VERSION_LAG = 500;
 const MAX_CHIT_EVENT_BATCHES = 20;
 
 /** The fields whose Updatable was marked updated by this pass */
@@ -239,7 +248,8 @@ export function mergeUpdatedEventStamps(
         }
     }
 
-    const all = [...byKey.values()];
+    const oldest = version - MAX_UPDATED_EVENT_VERSION_LAG;
+    const all = [...byKey.values()].filter((stamp) => stamp.version > oldest);
     if (all.length <= MAX_UPDATED_EVENT_STAMPS) return all;
     all.sort((a, b) => b.version - a.version);
     return all.slice(0, MAX_UPDATED_EVENT_STAMPS);

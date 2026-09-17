@@ -1067,6 +1067,11 @@ export class ChatsDb {
         return localUserIndex;
     }
 
+    // Deletes the whole database, which restarts the sync head at 0. Every caller must reload the
+    // page or sign out: a UI that kept running would hold a cursor above the restarted head and
+    // ignore every announcement from then on, so it would never pull again. If a caller that keeps
+    // the session alive is ever needed, wipe with `wipeKeepingSyncHead` instead, which takes a
+    // version of its own.
     async clearCache(): Promise<void> {
         const name = `openchat_db_${this.principalString}`;
         try {
