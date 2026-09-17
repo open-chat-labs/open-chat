@@ -1,9 +1,9 @@
 use crate::unread_message_index_map;
-use chat_events::{ChatEvents, EventPusher, PushMessageArgs, Reader};
+use chat_events::{ChatEvents, EventPusher, PushMessageArgs};
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cmp::min;
-use types::{EventIndex, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, TimestampMillis, Timestamped, UserId};
+use types::{EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, TimestampMillis, Timestamped, UserId};
 
 /// One of the two users in a direct chat, identified by position rather than by user id so that
 /// the core holds no user ids. In a User canister the first participant is the canister's user and
@@ -33,15 +33,19 @@ impl Participant {
 
 /// The part of a direct chat which both users see identically: the events and each user's read
 /// position. Everything a single user owns (whether they have muted or archived the chat, who the
-/// other user is to them) is held outside the core, so that a single core can be shared by two
-/// users in the same canister.
+/// other user is to them, when their entry for it was created) is held outside the core, so that a
+/// single core can be shared by two users in the same canister.
 ///
 /// The core is private to this crate: it is only read or modified through a `DirectChat` wrapping
 /// it, so that a message can never be pushed without the user's state alongside it being kept in
 /// step. A canister holding both users of a chat keeps the cores in a `DirectChatCores`.
 #[derive(Serialize, Deserialize)]
 pub struct DirectChatCore {
-    pub(crate) date_created: TimestampMillis,
+    // When the chat was created, which now lives in each user's state. Only read, from chats
+    // serialized before it moved there, so that it can be copied into the user's state.
+    // TODO: Remove this after next release
+    #[serde(rename = "date_created", default, skip_serializing)]
+    pub(crate) legacy_date_created: TimestampMillis,
     pub(crate) events: ChatEvents,
     // Indexed by `Participant`
     read_up_to: [Timestamped<Option<MessageIndex>>; 2],
@@ -83,20 +87,19 @@ impl DirectChatCore {
 
     fn from_events(events: ChatEvents, now: TimestampMillis) -> DirectChatCore {
         DirectChatCore {
-            date_created: now,
+            legacy_date_created: TimestampMillis::default(),
             events,
             read_up_to: [Timestamped::new(None, now), Timestamped::new(None, now)],
         }
     }
 
     pub(crate) fn from_parts(
-        date_created: TimestampMillis,
         events: ChatEvents,
         read_up_to_by_first: Timestamped<Option<MessageIndex>>,
         read_up_to_by_second: Timestamped<Option<MessageIndex>>,
     ) -> DirectChatCore {
         DirectChatCore {
-            date_created,
+            legacy_date_created: TimestampMillis::default(),
             events,
             read_up_to: [read_up_to_by_first, read_up_to_by_second],
         }
@@ -176,22 +179,6 @@ impl DirectChatCore {
         prefixes.push(unread_message_index_map::prefix(events_prefix).into());
         prefixes
     }
-
-    pub(crate) fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
-        self.events
-            .main_events_reader()
-            .message_internal(message_id.into())
-            .unwrap()
-            .message_index
-    }
-
-    pub(crate) fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {
-        self.events
-            .main_events_reader()
-            .message_internal(message_index.into())
-            .unwrap()
-            .message_id
-    }
 }
 
 #[cfg(test)]
@@ -201,6 +188,7 @@ mod tests {
     use chat_events::{MessageContentInternal, NullEventPusher, TextContentInternal};
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use types::MessageId;
 
     const ME: UserId = user(1);
     const THEM: UserId = user(2);

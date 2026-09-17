@@ -152,6 +152,14 @@ fn post_upgrade(args: Args) {
         }
     });
 
+    // Mark the user's chat with themselves as such, now that self chats are marked at creation
+    // TODO: Remove this after next release
+    mutate_state(|state| {
+        let my_user_id = state.env.canister_id().into();
+        let self_chat_migrated = state.data.direct_chats.migrate_self_chat(my_user_id);
+        info!(self_chat_migrated, "Marked the user's chat with themselves");
+    });
+
     // Move the events of existing direct chats to their `key_id` based keys, checking the
     // instruction usage as it goes and handing over to a timer job if the budget runs out.
     // TODO: Remove this after next release

@@ -217,9 +217,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
 
     // Check if a message with the same id already exists
     if let Some(chat) = state.data.direct_chats.get_mut(&bot_id.into())
-        && let Some((message, _)) =
-            chat.events()
-                .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+        && let Some((message, _)) = chat.message_internal(args.thread_root_message_index, args.message_id.into())
     {
         // If the message id of a bot message matches an existing unfinalised bot message
         // then edit this message instead of pushing a new one
@@ -323,7 +321,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
     let event_wrapper = handle_message_impl(
         HandleMessageArgs {
             sender: bot_id,
-            thread_root_message_id: None,
+            thread_root_message_index: None,
             message_id: Some(args.message_id),
             sender_message_index: None,
             sender_name: bot_name,
@@ -468,6 +466,12 @@ fn send_message_impl(
             .direct_chats
             .get_or_create(my_user_id, recipient, recipient_type.into(), || state.env.rng().random(), now);
 
+    // Checked before the message is pushed, since pushing a message to a thread creates the thread
+    let thread_root_message_id = match chat.thread_root_message_id(thread_root_message_index) {
+        Ok(id) => id,
+        Err(error) => return Error(error),
+    };
+
     let message_event = chat.push_message(
         push_message_args,
         None,
@@ -480,7 +484,7 @@ fn send_message_impl(
 
     if !recipient_type.is_self() {
         let send_message_args = SendMessageArgs {
-            thread_root_message_id: thread_root_message_index.map(|i| chat.main_message_index_to_id(i)),
+            thread_root_message_id,
             message_id,
             sender_message_index: message_event.event.message_index,
             content,
@@ -598,7 +602,7 @@ async fn send_to_bot_canister(
                         );
 
                         // Mark that the bot has read the message we just sent
-                        chat.mark_read_up_to(message_index, false, now);
+                        chat.mark_read_by_them_up_to(message_index, now);
                     }
                 }
             });

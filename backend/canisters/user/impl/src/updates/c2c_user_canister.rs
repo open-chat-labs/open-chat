@@ -1,5 +1,7 @@
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
-use crate::updates::c2c_send_messages::{HandleMessageArgs, get_sender_status, handle_message_impl, verify_user};
+use crate::updates::c2c_send_messages::{
+    HandleMessageArgs, get_sender_status, handle_message_impl, thread_root_message_index, verify_user,
+};
 use crate::updates::start_video_call::handle_start_video_call;
 use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
@@ -93,7 +95,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         }
         UserCanisterEvent::MarkMessagesRead(args) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                chat.mark_read_up_to(args.read_up_to, false, now);
+                chat.mark_read_by_them_up_to(args.read_up_to, now);
             }
         }
         UserCanisterEvent::P2PSwapStatusChange(c) => {
@@ -101,13 +103,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         }
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                let _ = chat.set_video_call_presence(
-                    caller_user_id,
-                    c.message_id,
-                    VideoCallPresence::Default,
-                    EventIndex::default(),
-                    now,
-                );
+                let _ = chat.set_video_call_presence(caller_user_id, c.message_id, VideoCallPresence::Default, now);
             }
         }
         UserCanisterEvent::StartVideoCall(args) => {
@@ -181,21 +177,21 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
     for message in args.messages {
         // Messages sent c2c can be retried so the same messageId may be received multiple
         // times, so here we skip any messages whose messageId already exists.
-        if let Some(chat) = state.data.direct_chats.get(&sender.into()) {
-            let thread_root_message_index = message.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
-
-            if chat
-                .events()
+        let chat = state.data.direct_chats.get(&sender.into());
+        let Ok(thread_root_message_index) = thread_root_message_index(chat, message.thread_root_message_id) else {
+            continue;
+        };
+        if chat.is_some_and(|chat| {
+            chat.events()
                 .message_already_finalised(thread_root_message_index, message.message_id, false)
-            {
-                continue;
-            }
+        }) {
+            continue;
         }
 
         handle_message_impl(
             HandleMessageArgs {
                 sender,
-                thread_root_message_id: message.thread_root_message_id,
+                thread_root_message_index,
                 message_id: Some(message.message_id),
                 sender_message_index: Some(message.sender_message_index),
                 sender_name: args.sender_name.clone(),
@@ -222,7 +218,9 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
 fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
-        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
+            return;
+        };
 
         let _ = chat.edit_message::<UserEventPusher>(
             EditMessageArgs {
@@ -245,7 +243,9 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
     let chat_id = caller_user_id.into();
     if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
         let now = state.env.now();
-        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
+            return;
+        };
 
         let delete_message_results = chat.delete_messages(DeleteUndeleteMessagesArgs {
             caller: caller_user_id,
@@ -275,7 +275,9 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
 
 fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
+            return;
+        };
 
         chat.undelete_messages(DeleteUndeleteMessagesArgs {
             caller: caller_user_id,
@@ -294,7 +296,9 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
     }
 
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
+            return;
+        };
 
         let now = state.env.now();
 
@@ -368,7 +372,9 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
             .main_events_reader()
             .message_event_internal(args.message_id.into())
     {
-        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
+            return;
+        };
 
         state.data.push_message_activity(
             MessageActivityEvent {
@@ -390,7 +396,9 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
-        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
+            return;
+        };
 
         let tip_message_args = TipMessageArgs {
             user_id: caller_user_id,
@@ -403,10 +411,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
             now,
         };
 
-        if chat
-            .tip_message::<UserEventPusher>(tip_message_args, EventIndex::default(), None)
-            .is_ok()
-        {
+        if chat.tip_message::<UserEventPusher>(tip_message_args, None).is_ok() {
             if let Some(message_event) = chat
                 .events()
                 .main_events_reader()

@@ -6,6 +6,7 @@ use chat_events::{
     MessageInternal, PushEventResultInternal, PushMessageArgs, Reader, RemoveEventsResult, TipMessageArgs, UpdateEventError,
     UpdateMessageSuccess,
 };
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use stable_memory_map::BaseKeyPrefix;
 use std::borrow::{Borrow, BorrowMut};
@@ -14,7 +15,7 @@ use std::ops::{Deref, DerefMut};
 use types::{
     BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex,
     EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserType, VideoCallPresence,
+    P2PSwapContent, P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserType, VideoCallPresence,
 };
 
 /// One user's own state for a direct chat: everything about the chat which is theirs alone rather
@@ -25,6 +26,9 @@ pub struct DirectChatUserState {
     pub user_type: UserType,
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
+    // When the user's entry for the chat was created. Held per user rather than in the core since
+    // a user who deletes a chat and then gets it back has a newer entry for the same core.
+    date_created: TimestampMillis,
     // Maps our message indexes onto theirs, which is only needed while each user's canister holds
     // its own copy of the chat with its own message indexes. Private so that every message pushed
     // goes through `DirectChat::push_message`, which keeps it in step with the core.
@@ -35,18 +39,19 @@ pub struct DirectChatUserState {
     // events along with the chat, so there it is always zero.
     #[serde(default)]
     min_visible_event_index: EventIndex,
+    // Whether the chat is the user's chat with themselves, in which case they are both of the
+    // core's participants, so the messages they send are read by "them" too
+    #[serde(default)]
+    self_chat: bool,
 }
 
 impl DirectChatUserState {
-    pub fn new(them: UserId, user_type: UserType, now: TimestampMillis) -> DirectChatUserState {
-        Self::new_with_min_visible_event_index(them, user_type, EventIndex::default(), now)
-    }
-
-    // The state for a user getting a chat back after deleting it, whose view of the events starts
-    // at `min_visible_event_index` (see `DirectChatCores::rejoin`)
-    pub(crate) fn new_with_min_visible_event_index(
+    // `min_visible_event_index` is where the user's view of the core's events starts: zero for a
+    // new chat, or the index returned by `DirectChatCore::rejoin` for a user getting a chat back
+    pub(crate) fn new(
         them: UserId,
         user_type: UserType,
+        self_chat: bool,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
     ) -> DirectChatUserState {
@@ -55,8 +60,10 @@ impl DirectChatUserState {
             user_type,
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
+            date_created: now,
             unread_message_index_map: UnreadMessageIndexMap::default(),
             min_visible_event_index,
+            self_chat,
         }
     }
 }
@@ -90,9 +97,14 @@ impl DirectChat {
     ) -> DirectChat {
         DirectChat {
             me: Participant::First,
-            state: DirectChatUserState::new(them, user_type, now),
+            state: DirectChatUserState::new(them, user_type, my_user_id == them, EventIndex::default(), now),
             core: DirectChatCore::new(my_user_id, them, key_id, events_ttl, anonymized_chat_id, now),
         }
+    }
+
+    // TODO: Remove this after next release
+    pub(crate) fn mark_as_self_chat(&mut self) -> bool {
+        !std::mem::replace(&mut self.state.self_chat, true)
     }
 }
 
@@ -123,6 +135,15 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
         self.core.borrow()
     }
 
+    // The other user's position in the core, which in a self chat is this user's own
+    fn them(&self) -> Participant {
+        if self.state().self_chat { self.me } else { self.me.other() }
+    }
+
+    // The events themselves, for the chat's settings and for the checks which must see every
+    // event whether or not this user can see it, such as whether a message id is already in use.
+    // Events must not be read through a reader built from this, which would show the user the
+    // events from before their view of the chat starts: use the readers below instead.
     pub fn events(&self) -> &ChatEvents {
         &self.core().events
     }
@@ -131,8 +152,7 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
         self.state().min_visible_event_index
     }
 
-    // Readers over the events this user can see. Prefer these to building a reader from `events()`
-    // directly, which would not hide the events from before the user's view of the chat starts.
+    // Readers over the events this user can see
     pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {
         self.events().visible_main_events_reader(self.min_visible_event_index())
     }
@@ -142,8 +162,26 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
             .events_reader(self.min_visible_event_index(), thread_root_message_index, None)
     }
 
+    pub fn message_internal(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        event_key: EventKey,
+    ) -> Option<(MessageInternal, EventIndex)> {
+        self.events()
+            .message_internal(self.min_visible_event_index(), thread_root_message_index, event_key)
+    }
+
+    pub fn get_p2p_swap(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> Option<P2PSwapContent> {
+        self.events()
+            .get_p2p_swap(thread_root_message_index, message_id, self.min_visible_event_index())
+    }
+
     pub fn date_created(&self) -> TimestampMillis {
-        self.core().date_created
+        self.state().date_created
     }
 
     pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
@@ -167,7 +205,7 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
     }
 
     pub fn read_by_them_up_to(&self) -> &Timestamped<Option<MessageIndex>> {
-        self.core().read_up_to(self.me.other())
+        self.core().read_up_to(self.them())
     }
 
     // Returns the highest index (in the other user's copy of the chat) of the messages they sent
@@ -184,12 +222,40 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
         self.core().stable_memory_key_prefixes()
     }
 
-    pub fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
-        self.core().main_message_id_to_index(message_id)
+    // The index of the message in the main chat with the given id, if the user can see it
+    pub fn main_message_id_to_index(&self, message_id: MessageId) -> Option<MessageIndex> {
+        self.main_events_reader()
+            .message_internal(message_id.into())
+            .map(|m| m.message_index)
     }
 
-    pub fn main_message_index_to_id(&self, message_index: MessageIndex) -> MessageId {
-        self.core().main_message_index_to_id(message_index)
+    pub fn main_message_index_to_id(&self, message_index: MessageIndex) -> Option<MessageId> {
+        self.main_events_reader()
+            .message_internal(message_index.into())
+            .map(|m| m.message_id)
+    }
+
+    // The id of the thread root with the given index, for telling the other user's canister which
+    // thread a message is in: message ids are the same in both users' copies of a chat while the
+    // indexes are not. Fails if there is no such message visible to the user.
+    pub fn thread_root_message_id(&self, thread_root_message_index: Option<MessageIndex>) -> OCResult<Option<MessageId>> {
+        thread_root_message_index
+            .map(|i| {
+                self.main_message_index_to_id(i)
+                    .ok_or_else(|| OCErrorCode::ThreadNotFound.into())
+            })
+            .transpose()
+    }
+
+    // The inverse of `thread_root_message_id`, for a thread root id received from the other user's
+    // canister
+    pub fn thread_root_message_index(&self, thread_root_message_id: Option<MessageId>) -> OCResult<Option<MessageIndex>> {
+        thread_root_message_id
+            .map(|id| {
+                self.main_message_id_to_index(id)
+                    .ok_or_else(|| OCErrorCode::ThreadNotFound.into())
+            })
+            .transpose()
     }
 
     pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
@@ -204,7 +270,7 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
             latest_message: events_reader.latest_message_event(Some(my_user_id)),
             latest_event_index: events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: events_reader.latest_message_index(),
-            date_created: self.core().date_created,
+            date_created: state.date_created,
             read_by_me_up_to: self.read_by_me_up_to().value,
             read_by_them_up_to: self.read_by_them_up_to().value,
             notifications_muted: state.notifications_muted.value,
@@ -264,6 +330,12 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
     }
 }
 
+// The events are only exposed mutably via the methods below (there is deliberately no
+// `events_mut`), so that a message can only be pushed via `push_message`, which also updates the
+// state kept alongside the events. Where an operation takes a `min_visible_event_index`, whether
+// as a parameter or as a field of its args, it is supplied here from the user's state, since only
+// the view knows where the user's view of the events starts: whatever a caller puts in the args'
+// field is replaced.
 impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat<S, C> {
     fn core_mut(&mut self) -> &mut DirectChatCore {
         self.core.borrow_mut()
@@ -282,7 +354,7 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
         their_message_index: Option<MessageIndex>,
         event_pusher: Option<P>,
     ) -> EventWrapper<Message> {
-        let sender = if args.sender != self.state().them { self.me } else { self.me.other() };
+        let sender = if args.sender == self.state().them { self.them() } else { self.me };
         let (state, core) = self.parts_mut();
         let message_event = core.push_message(args, sender, event_pusher);
 
@@ -297,9 +369,17 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
         message_event
     }
 
-    pub fn mark_read_up_to(&mut self, message_index: MessageIndex, me: bool, now: TimestampMillis) -> bool {
-        let participant = if me { self.me } else { self.me.other() };
-        self.core_mut().mark_read_up_to(participant, message_index, now)
+    // Returns whether the user's read position moved (see `DirectChatCore::mark_read_up_to`)
+    pub fn mark_read_by_me_up_to(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        let me = self.me;
+        self.core_mut().mark_read_up_to(me, message_index, now)
+    }
+
+    // Records how far the other user has read, as relayed from their canister. Only for a chat
+    // whose core is held by this user alone: when the core is shared each user marks their own.
+    pub fn mark_read_by_them_up_to(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        let them = self.them();
+        self.core_mut().mark_read_up_to(them, message_index, now)
     }
 
     // Forgets the indexes of their messages up to and including `their_read_up_to` (in their copy
@@ -319,10 +399,6 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
             .migrate_to_stable_memory(core.events.stable_memory_prefix())
     }
 
-    // The events are only exposed mutably via the methods below (there is deliberately no
-    // `events_mut`), so that a message can only be pushed via `push_message`, which also updates the
-    // state this struct keeps alongside the events.
-
     pub fn push_bot_updated_event(&mut self, event: BotUpdated, now: TimestampMillis) -> PushEventResultInternal {
         self.core_mut()
             .events
@@ -331,20 +407,26 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
 
     pub fn edit_message<P: EventPusher>(
         &mut self,
-        args: EditMessageArgs,
+        mut args: EditMessageArgs,
         event_pusher: Option<P>,
     ) -> OCResult<EditMessageSuccess> {
+        args.min_visible_event_index = self.min_visible_event_index();
         self.core_mut().events.edit_message(args, event_pusher)
     }
 
-    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
+    pub fn delete_messages(
+        &mut self,
+        mut args: DeleteUndeleteMessagesArgs,
+    ) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
+        args.min_visible_event_index = self.min_visible_event_index();
         self.core_mut().events.delete_messages(args)
     }
 
     pub fn undelete_messages(
         &mut self,
-        args: DeleteUndeleteMessagesArgs,
+        mut args: DeleteUndeleteMessagesArgs,
     ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
+        args.min_visible_event_index = self.min_visible_event_index();
         self.core_mut().events.undelete_messages(args)
     }
 
@@ -361,22 +443,24 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
 
     pub fn add_reaction<P: EventPusher>(
         &mut self,
-        args: AddRemoveReactionArgs,
+        mut args: AddRemoveReactionArgs,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
+        args.min_visible_event_index = self.min_visible_event_index();
         self.core_mut().events.add_reaction(args, event_pusher)
     }
 
-    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> OCResult<UpdateMessageSuccess> {
+    pub fn remove_reaction(&mut self, mut args: AddRemoveReactionArgs) -> OCResult<UpdateMessageSuccess> {
+        args.min_visible_event_index = self.min_visible_event_index();
         self.core_mut().events.remove_reaction(args)
     }
 
     pub fn tip_message<P: EventPusher>(
         &mut self,
         args: TipMessageArgs,
-        min_visible_event_index: EventIndex,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
+        let min_visible_event_index = self.min_visible_event_index();
         self.core_mut()
             .events
             .tip_message(args, min_visible_event_index, event_pusher)
@@ -393,9 +477,9 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        min_visible_event_index: EventIndex,
         now: TimestampMillis,
     ) -> OCResult<ReserveP2PSwapSuccess> {
+        let min_visible_event_index = self.min_visible_event_index();
         self.core_mut()
             .events
             .reserve_p2p_swap(user_id, thread_root_message_index, message_id, min_visible_event_index, now)
@@ -488,9 +572,9 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
         user_id: UserId,
         message_id: MessageId,
         presence: VideoCallPresence,
-        min_visible_event_index: EventIndex,
         now: TimestampMillis,
     ) -> OCResult<UpdateMessageSuccess> {
+        let min_visible_event_index = self.min_visible_event_index();
         self.core_mut()
             .events
             .set_video_call_presence(user_id, message_id, presence, min_visible_event_index, now)
@@ -582,8 +666,10 @@ impl Serialize for DirectChat {
             user_type: &'a UserType,
             notifications_muted: &'a Timestamped<bool>,
             archived: &'a Timestamped<bool>,
+            date_created: TimestampMillis,
             unread_message_index_map: &'a UnreadMessageIndexMap,
             min_visible_event_index: EventIndex,
+            self_chat: bool,
             core: &'a DirectChatCore,
         }
 
@@ -592,8 +678,10 @@ impl Serialize for DirectChat {
             user_type: &self.state.user_type,
             notifications_muted: &self.state.notifications_muted,
             archived: &self.state.archived,
+            date_created: self.state.date_created,
             unread_message_index_map: &self.state.unread_message_index_map,
             min_visible_event_index: self.state.min_visible_event_index,
+            self_chat: self.state.self_chat,
             core: &self.core,
         }
         .serialize(serializer)
@@ -606,8 +694,9 @@ impl<'de> Deserialize<'de> for DirectChat {
     }
 }
 
-// Reads a `DirectChat` in either its current shape or the shape from before the core was split out,
-// in which the core's fields sat directly on the chat.
+// Reads a `DirectChat` in its current shape or in either of the shapes before it: the one in which
+// the core's fields sat directly on the chat, and the one from before `date_created` moved from
+// the core to the user's state.
 // TODO: Remove the legacy fields after next release
 #[derive(Deserialize)]
 struct DirectChatSerde {
@@ -615,13 +704,16 @@ struct DirectChatSerde {
     user_type: UserType,
     notifications_muted: Timestamped<bool>,
     archived: Timestamped<bool>,
+    // Absent only for chats serialized with `date_created` on the core
+    #[serde(default)]
+    date_created: Option<TimestampMillis>,
     unread_message_index_map: UnreadMessageIndexMap,
     #[serde(default)]
     min_visible_event_index: EventIndex,
     #[serde(default)]
-    core: Option<DirectChatCore>,
+    self_chat: bool,
     #[serde(default)]
-    date_created: Option<TimestampMillis>,
+    core: Option<DirectChatCore>,
     #[serde(default)]
     events: Option<ChatEvents>,
     #[serde(default)]
@@ -634,7 +726,6 @@ impl From<DirectChatSerde> for DirectChat {
     fn from(value: DirectChatSerde) -> Self {
         let core = value.core.unwrap_or_else(|| {
             DirectChatCore::from_parts(
-                value.date_created.expect("date_created"),
                 value.events.expect("events"),
                 value.read_by_me_up_to.expect("read_by_me_up_to"),
                 value.read_by_them_up_to.expect("read_by_them_up_to"),
@@ -648,8 +739,10 @@ impl From<DirectChatSerde> for DirectChat {
                 user_type: value.user_type,
                 notifications_muted: value.notifications_muted,
                 archived: value.archived,
+                date_created: value.date_created.unwrap_or(core.legacy_date_created),
                 unread_message_index_map: value.unread_message_index_map,
                 min_visible_event_index: value.min_visible_event_index,
+                self_chat: value.self_chat,
             },
             core,
         }
@@ -679,7 +772,7 @@ mod tests {
         assert_eq!(chat.read_by_me_up_to().value, Some(0.into()));
         assert_eq!(chat.read_by_them_up_to().value, Some(1.into()));
 
-        assert!(chat.mark_read_up_to(1.into(), true, 300));
+        assert!(chat.mark_read_by_me_up_to(1.into(), 300));
         assert_eq!(chat.read_by_me_up_to().value, Some(1.into()));
         assert_eq!(chat.last_updated(), 300);
 
@@ -692,6 +785,21 @@ mod tests {
         assert_eq!(summary.read_by_them_up_to, Some(1.into()));
         assert_eq!(summary.latest_message_index, Some(1.into()));
         assert_eq!(summary.date_created, 1);
+    }
+
+    #[test]
+    fn messages_in_a_chat_with_yourself_are_read_on_both_sides() {
+        init_stable_memory_map();
+        let me = user(1);
+        let mut chat = DirectChat::new(me, me, UserType::User, 1, None, 123, 1);
+
+        chat.push_message::<NullEventPusher>(message(me, 1, 100), None, None);
+        assert_eq!(chat.read_by_me_up_to().value, Some(0.into()));
+        assert_eq!(chat.read_by_them_up_to().value, Some(0.into()));
+
+        chat.push_message::<NullEventPusher>(message(me, 2, 200), None, None);
+        assert!(!chat.mark_read_by_me_up_to(1.into(), 300), "already read on sending");
+        assert!(!chat.mark_read_by_them_up_to(1.into(), 300));
     }
 
     #[test]
@@ -716,8 +824,8 @@ mod tests {
         let a = user(1);
         let b = user(2);
         let mut core = DirectChatCore::new_shared(b, 1, None, 123, 1);
-        let mut a_state = DirectChatUserState::new(b, UserType::User, 1);
-        let mut b_state = DirectChatUserState::new(a, UserType::User, 1);
+        let mut a_state = DirectChatUserState::new(b, UserType::User, false, EventIndex::default(), 1);
+        let mut b_state = DirectChatUserState::new(a, UserType::User, false, EventIndex::default(), 1);
 
         DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
             message(a, 1, 100),
@@ -760,8 +868,8 @@ mod tests {
         let a = user(1);
         let b = user(2);
         let mut core = DirectChatCore::new_shared(b, 1, None, 123, 1);
-        let mut a_state = DirectChatUserState::new(b, UserType::User, 1);
-        let mut b_state = DirectChatUserState::new(a, UserType::User, 1);
+        let mut a_state = DirectChatUserState::new(b, UserType::User, false, EventIndex::default(), 1);
+        let mut b_state = DirectChatUserState::new(a, UserType::User, false, EventIndex::default(), 1);
 
         DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
             message(a, 1, 100),
@@ -777,7 +885,7 @@ mod tests {
         // B deletes their side of the chat, then A's next message brings it back for them
         drop(b_state);
         let min_visible_event_index = core.rejoin(Participant::Second, 300);
-        let b_state = DirectChatUserState::new_with_min_visible_event_index(a, UserType::User, min_visible_event_index, 300);
+        let b_state = DirectChatUserState::new(a, UserType::User, false, min_visible_event_index, 300);
         DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
             message(a, 3, 300),
             None,
@@ -786,6 +894,7 @@ mod tests {
 
         let b_view = DirectChat::borrowed(Participant::Second, &b_state, &core);
         assert_eq!(b_view.min_visible_event_index(), 3.into());
+        assert_eq!(b_view.date_created(), 300);
         assert!(b_view.main_events_reader().get(EventIndex::from(1).into()).is_none());
         assert!(b_view.main_events_reader().get(EventIndex::from(3).into()).is_some());
         assert!(b_view.events_reader(None).unwrap().get(EventIndex::from(2).into()).is_none());
@@ -793,6 +902,7 @@ mod tests {
         let b_summary = b_view.to_summary(b);
         assert_eq!(b_summary.latest_message.unwrap().event.message_index, 2.into());
         assert_eq!(b_summary.latest_event_index, 3.into());
+        assert_eq!(b_summary.date_created, 300);
         assert_eq!(
             b_summary.read_by_me_up_to,
             Some(1.into()),
@@ -806,21 +916,39 @@ mod tests {
                 .all(|(e, _)| *e >= 3.into())
         );
 
+        // The hidden messages cannot be thread roots for B, but the new one can
+        assert!(b_view.thread_root_message_id(Some(0.into())).is_err());
+        assert!(b_view.thread_root_message_index(Some(MessageId::from(2u128))).is_err());
+        assert_eq!(
+            b_view.thread_root_message_id(Some(2.into())).unwrap(),
+            Some(MessageId::from(3u128))
+        );
+        assert_eq!(b_view.thread_root_message_index(None).unwrap(), None);
+
         // A still sees everything
         let a_view = DirectChat::borrowed(Participant::First, &a_state, &core);
         assert_eq!(a_view.min_visible_event_index(), 0.into());
+        assert_eq!(a_view.date_created(), 1);
         assert!(a_view.main_events_reader().get(EventIndex::from(1).into()).is_some());
         assert_eq!(a_view.to_summary(a).read_by_them_up_to, Some(1.into()));
+        assert_eq!(
+            a_view.thread_root_message_id(Some(0.into())).unwrap(),
+            Some(MessageId::from(1u128))
+        );
+        assert_eq!(
+            a_view.thread_root_message_index(Some(MessageId::from(2u128))).unwrap(),
+            Some(1.into())
+        );
     }
 
     #[test]
-    fn chats_serialized_before_the_core_was_split_out_are_deserialized() {
+    fn chats_serialized_in_earlier_shapes_are_deserialized() {
         init_stable_memory_map();
         let me = user(1);
         let them = user(2);
         let mut chat = DirectChat::new(me, them, UserType::Bot, 1, None, 123, 1);
         chat.push_message::<NullEventPusher>(message(them, 1, 100), None, None);
-        chat.mark_read_up_to(0.into(), true, 150);
+        chat.mark_read_by_me_up_to(0.into(), 150);
         chat.notifications_muted = Timestamped::new(true, 200);
 
         // The shape `DirectChat` was serialized in with the core's fields directly on the chat
@@ -839,7 +967,7 @@ mod tests {
 
         let legacy = LegacyDirectChat {
             them,
-            date_created: chat.core.date_created,
+            date_created: chat.date_created(),
             events: &chat.core.events,
             unread_message_index_map: &chat.state.unread_message_index_map,
             read_by_me_up_to: chat.read_by_me_up_to(),
@@ -849,15 +977,49 @@ mod tests {
             user_type: UserType::Bot,
         };
 
+        // The shape from when the core had been split out but still held `date_created`
+        #[derive(Serialize)]
+        struct DirectChatWithDateCreatedOnCore<'a> {
+            them: UserId,
+            user_type: UserType,
+            notifications_muted: &'a Timestamped<bool>,
+            archived: &'a Timestamped<bool>,
+            unread_message_index_map: &'a UnreadMessageIndexMap,
+            core: CoreWithDateCreated<'a>,
+        }
+
+        #[derive(Serialize)]
+        struct CoreWithDateCreated<'a> {
+            date_created: TimestampMillis,
+            events: &'a ChatEvents,
+            read_up_to: [&'a Timestamped<Option<MessageIndex>>; 2],
+        }
+
+        let with_date_created_on_core = DirectChatWithDateCreatedOnCore {
+            them,
+            user_type: UserType::Bot,
+            notifications_muted: &chat.notifications_muted,
+            archived: &chat.archived,
+            unread_message_index_map: &chat.state.unread_message_index_map,
+            core: CoreWithDateCreated {
+                date_created: chat.date_created(),
+                events: &chat.core.events,
+                read_up_to: [chat.read_by_me_up_to(), chat.read_by_them_up_to()],
+            },
+        };
+
         let from_legacy: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
+        let from_date_created_on_core: DirectChat =
+            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&with_date_created_on_core));
         let round_tripped: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
 
-        for deserialized in [from_legacy, round_tripped] {
+        for deserialized in [from_legacy, from_date_created_on_core, round_tripped] {
             assert_eq!(deserialized.them, them);
             assert_eq!(deserialized.user_type, UserType::Bot);
             assert_eq!(deserialized.notifications_muted, chat.notifications_muted);
             assert_eq!(deserialized.archived, chat.archived);
-            assert_eq!(deserialized.core.date_created, 1);
+            assert_eq!(deserialized.date_created(), 1);
+            assert!(!deserialized.self_chat);
             assert_eq!(deserialized.read_by_me_up_to(), chat.read_by_me_up_to());
             assert_eq!(deserialized.read_by_them_up_to(), chat.read_by_them_up_to());
             assert_eq!(deserialized.last_updated(), chat.last_updated());

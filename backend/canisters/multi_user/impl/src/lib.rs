@@ -76,9 +76,7 @@ impl RuntimeState {
         self.data
             .users
             .with_user(user_index, |user| {
-                user.direct_chats
-                    .get(&chat_id)
-                    .map(|chat| cores.with_chat(chat.key_id, chat.me, &chat.state, f))
+                user.direct_chats.get(&chat_id).map(|chat| cores.with_chat(chat, f))
             })
             .ok_or(OCErrorCode::TargetUserNotFound)?
             .ok_or_else(|| OCErrorCode::ChatNotFound.into())
@@ -94,9 +92,7 @@ impl RuntimeState {
         self.data
             .users
             .with_user_mut(user_index, |user| {
-                user.direct_chats
-                    .get_mut(&chat_id)
-                    .map(|chat| cores.with_chat_mut(chat.key_id, chat.me, &mut chat.state, f))
+                user.direct_chats.get_mut(&chat_id).map(|chat| cores.with_chat_mut(chat, f))
             })
             .ok_or(OCErrorCode::TargetUserNotFound)?
             .ok_or_else(|| OCErrorCode::ChatNotFound.into())

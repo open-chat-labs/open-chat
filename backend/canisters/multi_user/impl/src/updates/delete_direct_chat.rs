@@ -43,13 +43,13 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
                 state.data.users.with_user(their_index, |user| {
                     user.direct_chats
                         .get(&my_user_id.into())
-                        .is_some_and(|their_chat| their_chat.key_id == chat.key_id)
+                        .is_some_and(|their_chat| their_chat.key_id() == chat.key_id())
                 })
             })
             .unwrap_or_default();
 
     if !core_still_in_use {
-        let prefixes = state.data.direct_chat_cores.remove(chat.key_id);
+        let prefixes = state.data.direct_chat_cores.remove(chat);
         state.data.stable_memory_keys_to_garbage_collect.extend(prefixes);
         jobs::garbage_collect_stable_memory::start_job_if_required(&state.data);
     }

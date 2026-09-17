@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use oc_error_codes::OCErrorCode;
-use types::{BotPermissions, ChatPermission, ChatSummaryDirect, EventIndex, OCResult};
+use types::{BotPermissions, ChatPermission, ChatSummaryDirect, OCResult};
 use user_canister::c2c_bot_chat_summary::*;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
@@ -29,7 +29,7 @@ fn c2c_bot_chat_summary_impl(args: Args, state: &RuntimeState) -> OCResult<ChatS
         .ok_or(OCErrorCode::ChatNotFound)?;
 
     let events_ttl = chat.events().get_events_time_to_live();
-    let main_events_reader = chat.events().visible_main_events_reader(EventIndex::default());
+    let main_events_reader = chat.main_events_reader();
 
     Ok(ChatSummaryDirect {
         last_updated: chat.last_updated(),

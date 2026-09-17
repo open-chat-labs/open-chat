@@ -3,7 +3,7 @@ use crate::{RuntimeState, UserEventPusher, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
-use types::{Chat, EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
+use types::{Chat, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 
 #[update(guard = "caller_is_escrow_canister", msgpack = true)]
@@ -26,10 +26,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
 
             match args.status {
                 SwapStatus::Expired(e) => {
-                    if let Some(content) =
-                        chat.events()
-                            .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
-                    {
+                    if let Some(content) = chat.get_p2p_swap(m.thread_root_message_index, m.message_id) {
                         let token0_txn_out = e
                             .refunds
                             .into_iter()
@@ -47,10 +44,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     }
                 }
                 SwapStatus::Cancelled(c) => {
-                    if let Some(content) =
-                        chat.events()
-                            .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
-                    {
+                    if let Some(content) = chat.get_p2p_swap(m.thread_root_message_index, m.message_id) {
                         let token0_txn_out = c
                             .refunds
                             .into_iter()
@@ -88,8 +82,9 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                 _ => {}
             }
 
-            if let Some(status) = status_to_push_c2c {
-                let thread_root_message_id = m.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+            if let Some(status) = status_to_push_c2c
+                && let Ok(thread_root_message_id) = chat.thread_root_message_id(m.thread_root_message_index)
+            {
                 state.push_user_canister_event(
                     chat_id.into(),
                     UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
