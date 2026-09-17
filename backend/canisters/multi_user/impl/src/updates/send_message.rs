@@ -70,6 +70,8 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     let chat_id = args.recipient.into();
+    // Drawn up front, whether or not the chat turns out to need creating, since the user is
+    // borrowed for the whole of the closure below
     let anonymized_id: u128 = state.env.rng().random();
 
     // Push the message to the sender's copy of the chat, creating the chat if they have none
@@ -269,7 +271,8 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
             None,
         );
 
-        // TODO: Notify the recipient, record replies to messages in other chats and message
-        // activity, and register the timer jobs for message expiry, as the User canister does
+        // TODO: Notify the recipient (muted if `message.message_filter_failed` is set), record
+        // replies to messages in other chats and message activity, and register the timer jobs
+        // for message expiry, as the User canister does
     });
 }

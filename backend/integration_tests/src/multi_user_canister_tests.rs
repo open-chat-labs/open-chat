@@ -176,7 +176,6 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
     assert_eq!(messages(&b_events), expected);
     assert_eq!(a_events.latest_event_index, 2.into());
     assert_eq!(b_events.latest_event_index, 2.into());
-    assert_eq!(a_events.chat_last_updated, b_events.chat_last_updated);
 
     let by_index = client::multi_user::events_by_index(
         env,

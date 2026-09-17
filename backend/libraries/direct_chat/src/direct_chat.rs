@@ -68,7 +68,28 @@ impl DirectChat {
 
     // TODO: Remove this after next release
     pub(crate) fn mark_as_self_chat(&mut self) -> bool {
-        !std::mem::replace(&mut self.self_chat, true)
+        if std::mem::replace(&mut self.self_chat, true) {
+            false
+        } else {
+            self.align_self_chat_read_positions();
+            true
+        }
+    }
+
+    // In a chat with yourself every message is read on both sides as it is sent, but a chat
+    // serialized before it was marked as a self chat only advanced one of the two read positions
+    // per message, and the split shape kept both of a self chat's positions in its first slot
+    // leaving the second unused. So on either being read, whichever position is further along
+    // is taken for both.
+    // TODO: Remove this after next release
+    fn align_self_chat_read_positions(&mut self) {
+        let furthest = if self.read_by_them_up_to.value > self.read_by_me_up_to.value {
+            self.read_by_them_up_to.clone()
+        } else {
+            self.read_by_me_up_to.clone()
+        };
+        self.read_by_me_up_to = furthest.clone();
+        self.read_by_them_up_to = furthest;
     }
 
     pub fn events(&self) -> &ChatEvents {
@@ -593,7 +614,7 @@ impl From<DirectChatSerde> for DirectChat {
             ),
         };
 
-        DirectChat {
+        let mut chat = DirectChat {
             them: value.them,
             user_type: value.user_type,
             notifications_muted: value.notifications_muted,
@@ -604,7 +625,11 @@ impl From<DirectChatSerde> for DirectChat {
             read_by_me_up_to,
             read_by_them_up_to,
             self_chat: value.self_chat,
+        };
+        if chat.self_chat {
+            chat.align_self_chat_read_positions();
         }
+        chat
     }
 }
 
@@ -686,6 +711,72 @@ mod tests {
         chat.push_message::<NullEventPusher>(message(me, 2, 200), None, None);
         assert!(!chat.mark_read_by_me_up_to(1.into(), 300), "already read on sending");
         assert!(!chat.mark_read_by_them_up_to(1.into(), 300));
+    }
+
+    #[test]
+    fn a_self_chat_serialized_in_earlier_shapes_has_both_read_positions_aligned() {
+        init_stable_memory_map();
+        let me = user(1);
+        let mut chat = DirectChat::new(me, me, UserType::User, 1, None, 123, 1);
+        chat.push_message::<NullEventPusher>(message(me, 1, 100), None, None);
+        chat.push_message::<NullEventPusher>(message(me, 2, 200), None, None);
+        chat.push_message::<NullEventPusher>(message(me, 3, 300), None, None);
+
+        // The split shape kept a self chat's live read position in the first slot, with the second
+        // holding whatever it had before the chat was marked as a self chat, or nothing
+        #[derive(Serialize)]
+        struct SplitSelfChat<'a> {
+            them: UserId,
+            user_type: UserType,
+            notifications_muted: &'a Timestamped<bool>,
+            archived: &'a Timestamped<bool>,
+            date_created: TimestampMillis,
+            unread_message_index_map: &'a UnreadMessageIndexMap,
+            min_visible_event_index: EventIndex,
+            self_chat: bool,
+            core: SplitSelfChatCore<'a>,
+        }
+
+        #[derive(Serialize)]
+        struct SplitSelfChatCore<'a> {
+            events: &'a ChatEvents,
+            read_up_to: [Timestamped<Option<MessageIndex>>; 2],
+        }
+
+        let split = |second_slot: Timestamped<Option<MessageIndex>>| SplitSelfChat {
+            them: me,
+            user_type: UserType::User,
+            notifications_muted: &chat.notifications_muted,
+            archived: &chat.archived,
+            date_created: 1,
+            unread_message_index_map: &chat.unread_message_index_map,
+            min_visible_event_index: EventIndex::default(),
+            self_chat: true,
+            core: SplitSelfChatCore {
+                events: &chat.events,
+                read_up_to: [Timestamped::new(Some(2.into()), 300), second_slot],
+            },
+        };
+        for second_slot in [Timestamped::new(None, 1), Timestamped::new(Some(0.into()), 100)] {
+            let deserialized: DirectChat =
+                msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(split(second_slot)));
+            assert!(deserialized.self_chat);
+            assert_eq!(deserialized.read_by_me_up_to().value, Some(2.into()));
+            assert_eq!(deserialized.read_by_them_up_to().value, Some(2.into()));
+        }
+
+        // Before a chat with yourself was marked as such, only the "them" position moved as each
+        // message was sent, and the "me" position when the user marked the chat as read
+        let mut unmarked = DirectChat {
+            self_chat: false,
+            read_by_me_up_to: Timestamped::new(Some(0.into()), 150),
+            read_by_them_up_to: Timestamped::new(Some(2.into()), 300),
+            ..msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat))
+        };
+        assert!(unmarked.mark_as_self_chat());
+        assert_eq!(unmarked.read_by_me_up_to(), &Timestamped::new(Some(2.into()), 300));
+        assert_eq!(unmarked.read_by_them_up_to(), &Timestamped::new(Some(2.into()), 300));
+        assert!(!unmarked.mark_as_self_chat(), "already marked");
     }
 
     #[test]
