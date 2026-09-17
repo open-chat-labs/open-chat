@@ -347,7 +347,10 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
     }
 
     // `their_message_index` is the index the message has in the other user's copy of the chat, if
-    // it was sent by them
+    // it was sent by them. It only applies to a core held by this user alone, whose other user
+    // numbers the chat's messages in their own canister: a shared core has a single numbering, so
+    // there is nothing to map and callers pass `None`. This matters because the map is keyed by
+    // the core's events prefix, so with a shared core both users' maps would write the same keys.
     pub fn push_message<P: EventPusher>(
         &mut self,
         args: PushMessageArgs,

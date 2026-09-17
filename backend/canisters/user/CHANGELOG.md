@@ -52,7 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Have `DirectChat` supply the minimum visible event index to every operation itself, read events only through its filtered readers, and move `date_created` from the chat's core to the user's state ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Fail with `ThreadNotFound` rather than trapping when a thread root is not found while translating it for the other user's canister, and check it before pushing a message ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Mark the user's chat with themselves as such, so that messages they send to themselves are read on both sides ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
-- Check the thread root of a P2P swap being accepted before making the transfer ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Check the thread root of a P2P swap being accepted before making the transfer, and look the swap up in that thread rather than in the main list ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 
 ### Fixed
 
