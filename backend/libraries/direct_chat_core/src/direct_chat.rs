@@ -946,7 +946,11 @@ mod tests {
                 .get(thread_event_index.into())
                 .is_some()
         );
-        assert!(b_view.message_internal(Some(0.into()), MessageId::from(4u128).into()).is_none());
+        assert!(
+            b_view
+                .message_internal(Some(0.into()), MessageId::from(4u128).into())
+                .is_none()
+        );
 
         // A still sees everything
         let a_view = DirectChat::borrowed(Participant::First, &a_state, &core);
