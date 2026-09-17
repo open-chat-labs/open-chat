@@ -2812,8 +2812,12 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
     ) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.events_list(min_visible_event_index, thread_root_message_index)
-            .and_then(|l| l.get_event(event_key, min_visible_event_index, None))
+        let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
+        // The min visible index applies to the main list, which the thread root has been checked
+        // against above: a thread's own events are numbered from zero and are all visible
+        let min_visible_event_index =
+            if thread_root_message_index.is_some() { EventIndex::default() } else { min_visible_event_index };
+        events_list.get_event(event_key, min_visible_event_index, None)
     }
 
     pub fn message_internal(

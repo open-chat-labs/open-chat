@@ -7,8 +7,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::{
-    AcceptSwapSuccess, Achievement, CanisterId, Chat, OCResult, P2PSwapLocation, P2PSwapStatus, ReserveP2PSwapSuccess,
-    TimestampMillis, UserId,
+    AcceptSwapSuccess, Achievement, CanisterId, Chat, MessageId, OCResult, P2PSwapLocation, P2PSwapStatus,
+    ReserveP2PSwapSuccess, TimestampMillis, UserId,
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
@@ -24,6 +24,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
         my_user_id,
         escrow_canister_id,
         reserve_success,
+        thread_root_message_id,
         now,
     } = match mutate_state(|state| prepare(&mut args, state)) {
         Ok(ok) => ok,
@@ -58,9 +59,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                 });
                 if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
-                    if let Ok(result) = chat.accept_p2p_swap(my_user_id, None, args.message_id, index, now)
-                        && let Ok(thread_root_message_id) = chat.thread_root_message_id(args.thread_root_message_index)
-                    {
+                    if let Ok(result) = chat.accept_p2p_swap(my_user_id, None, args.message_id, index, now) {
                         state.push_user_canister_event(
                             args.user_id.canister_id(),
                             UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
@@ -92,6 +91,7 @@ struct PrepareResult {
     my_user_id: UserId,
     escrow_canister_id: CanisterId,
     reserve_success: ReserveP2PSwapSuccess,
+    thread_root_message_id: Option<MessageId>,
     now: TimestampMillis,
 }
 
@@ -103,12 +103,16 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult>
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
+        // Translated before the transfer is made, so that a root the user cannot see fails the
+        // call rather than leaving the other user uninformed of the acceptance
+        let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
         let reserve_success = chat.reserve_p2p_swap(my_user_id, None, args.message_id, now)?;
 
         Ok(PrepareResult {
             my_user_id,
             escrow_canister_id: state.data.escrow_canister_id,
             reserve_success,
+            thread_root_message_id,
             now,
         })
     } else {

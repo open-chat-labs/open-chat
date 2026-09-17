@@ -891,6 +891,14 @@ mod tests {
             None,
             None,
         );
+        DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
+            PushMessageArgs {
+                thread_root_message_index: Some(2.into()),
+                ..message(a, 4, 400)
+            },
+            None,
+            None,
+        );
 
         let b_view = DirectChat::borrowed(Participant::Second, &b_state, &core);
         assert_eq!(b_view.min_visible_event_index(), 3.into());
@@ -924,6 +932,21 @@ mod tests {
             Some(MessageId::from(3u128))
         );
         assert_eq!(b_view.thread_root_message_index(None).unwrap(), None);
+
+        // The events of a thread B can see are numbered from zero, below B's main list boundary,
+        // and are all visible to B
+        let (_, thread_event_index) = b_view
+            .message_internal(Some(2.into()), MessageId::from(4u128).into())
+            .unwrap();
+        assert!(thread_event_index < b_view.min_visible_event_index());
+        assert!(
+            b_view
+                .events_reader(Some(2.into()))
+                .unwrap()
+                .get(thread_event_index.into())
+                .is_some()
+        );
+        assert!(b_view.message_internal(Some(0.into()), MessageId::from(4u128).into()).is_none());
 
         // A still sees everything
         let a_view = DirectChat::borrowed(Participant::First, &a_state, &core);

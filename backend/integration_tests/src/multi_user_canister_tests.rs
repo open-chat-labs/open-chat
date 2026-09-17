@@ -222,6 +222,21 @@ fn users_in_the_same_multi_user_canister_share_one_copy_of_their_direct_chat() {
         "{duplicate:?}"
     );
 
+    // A message to a thread whose root does not exist is rejected rather than creating the thread
+    let missing_thread = client::multi_user::send_message_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::send_message_v2::Args {
+            thread_root_message_index: Some(100.into()),
+            ..send_message_args(b, "in a thread", random_from_u128())
+        },
+    );
+    assert!(
+        matches!(&missing_thread, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::ThreadNotFound)),
+        "{missing_thread:?}"
+    );
+
     // A user's chats can only be read as that user by the user themselves or the LocalUserIndex
     let as_b = client::multi_user::events(env, b_principal, canister_id, &events_args(a, b));
     assert!(

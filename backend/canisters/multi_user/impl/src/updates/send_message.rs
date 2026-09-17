@@ -73,10 +73,12 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
     let message_event = match state.with_direct_chat_mut(my_index, chat_id, |mut chat| {
-        chat.push_message::<NullEventPusher>(push_message_args, None, None)
+        // Checked before the message is pushed, since pushing a message to a thread creates the thread
+        chat.thread_root_message_id(push_message_args.thread_root_message_index)?;
+        Ok(chat.push_message::<NullEventPusher>(push_message_args, None, None))
     }) {
-        Ok(event) => event,
-        Err(error) => return Error(error),
+        Ok(Ok(event)) => event,
+        Ok(Err(error)) | Err(error) => return Error(error),
     };
 
     // TODO: Notify the recipient, award achievements and register the timer jobs for message
