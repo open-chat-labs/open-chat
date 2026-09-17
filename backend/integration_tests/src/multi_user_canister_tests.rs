@@ -142,7 +142,7 @@ fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
 }
 
 #[test]
-fn users_in_the_same_multi_user_canister_share_one_copy_of_their_direct_chat() {
+fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -157,20 +157,18 @@ fn users_in_the_same_multi_user_canister_share_one_copy_of_their_direct_chat() {
     let (a_principal, a) = create_user(env, local_user_index, canister_id);
     let (b_principal, b) = create_user(env, local_user_index, canister_id);
 
-    // A's first message to B creates the chat for both of them, over a single core
+    // A's first message to B creates the chat for both of them, each with their own copy of it
     let message_id = random_from_u128();
     let sent = send_text_message(env, a_principal, canister_id, b, "hello", message_id);
     assert_eq!(sent.chat_id, b.into());
     assert_eq!(sent.message_index, 0.into());
-    assert_eq!(direct_chat_cores(env, canister_id), 1);
 
-    // B sees A's message without anything having been sent between canisters, and replies
+    // B's copy has A's message without anything having been sent between canisters, and B replies
     let reply = send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
     assert_eq!(reply.chat_id, a.into());
     assert_eq!(reply.message_index, 1.into());
-    assert_eq!(direct_chat_cores(env, canister_id), 1);
 
-    // Both users read the same events, each from their own side of the chat
+    // Both copies hold the same messages
     let expected = vec![(a, "hello".to_string()), (b, "hi".to_string())];
     let a_events = events(env, a_principal, canister_id, a, b);
     let b_events = events(env, b_principal, canister_id, b, a);
@@ -272,11 +270,10 @@ fn users_in_the_same_multi_user_canister_share_one_copy_of_their_direct_chat() {
         .is_err()
     );
 
-    // A chat with yourself has a single user
+    // A chat with yourself has a single copy
     let note = send_text_message(env, a_principal, canister_id, a, "note to self", random_from_u128());
     assert_eq!(note.chat_id, a.into());
     assert_eq!(note.message_index, 0.into());
-    assert_eq!(direct_chat_cores(env, canister_id), 2);
     assert_eq!(
         messages(&events(env, a_principal, canister_id, a, a)),
         vec![(a, "note to self".to_string())]
@@ -284,7 +281,7 @@ fn users_in_the_same_multi_user_canister_share_one_copy_of_their_direct_chat() {
 }
 
 #[test]
-fn a_user_who_deletes_a_shared_direct_chat_gets_it_back_without_the_old_events() {
+fn a_user_who_deletes_a_direct_chat_gets_a_fresh_copy_when_messaged_again() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -314,42 +311,42 @@ fn a_user_who_deletes_a_shared_direct_chat_gets_it_back_without_the_old_events()
         "{missing:?}"
     );
 
-    // A deletes their side of the chat. B still has theirs, so the core stays
+    // A deletes their copy of the chat, whose stable memory entries are garbage collected without
+    // touching B's copy
     delete_direct_chat(env, a_principal, canister_id, b);
-    assert_eq!(direct_chat_cores(env, canister_id), 1);
     let deleted = client::multi_user::events(env, a_principal, canister_id, &events_args(a, b));
     assert!(
         matches!(&deleted, user_canister::events::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
         "{deleted:?}"
     );
+    assert!(stable_memory_keys_to_garbage_collect(env, canister_id) > 0);
+    env.advance_time(Duration::from_secs(15));
+    tick_many(env, 3);
+    assert_eq!(stable_memory_keys_to_garbage_collect(env, canister_id), 0);
     assert_eq!(
         messages(&events(env, b_principal, canister_id, b, a)),
         vec![(a, "hello".to_string()), (b, "hi".to_string())]
     );
 
-    // B's next message gives A the chat back, over the same core, but only from that message on
+    // B's next message gives A a fresh copy of the chat holding only that message, whose index
+    // differs between the two copies
     let again = send_text_message(env, b_principal, canister_id, a, "still there?", random_from_u128());
     assert_eq!(again.message_index, 2.into());
-    assert_eq!(direct_chat_cores(env, canister_id), 1);
     let a_events = events(env, a_principal, canister_id, a, b);
     assert_eq!(messages(&a_events), vec![(b, "still there?".to_string())]);
-    assert_eq!(a_events.latest_event_index, 3.into());
+    assert_eq!(a_events.latest_event_index, 1.into());
     assert_eq!(messages(&events(env, b_principal, canister_id, b, a)).len(), 3);
 
-    // Once both have deleted the chat the core goes too, and its stable memory entries with it
-    delete_direct_chat(env, a_principal, canister_id, b);
-    assert_eq!(direct_chat_cores(env, canister_id), 1);
-    delete_direct_chat(env, b_principal, canister_id, a);
-    assert_eq!(direct_chat_cores(env, canister_id), 0);
-    assert!(stable_memory_keys_to_garbage_collect(env, canister_id) > 0);
-    env.advance_time(Duration::from_secs(15));
-    tick_many(env, 3);
-    assert_eq!(stable_memory_keys_to_garbage_collect(env, canister_id), 0);
+    // A reading the message in their copy is seen by B at the index it has in theirs
+    mark_read(env, a_principal, canister_id, b, 0.into());
+    let b_summary = single_direct_chat_summary(initial_state(env, b_principal, canister_id));
+    assert_eq!(b_summary.read_by_them_up_to, Some(2.into()));
 
-    // A fresh chat between them starts from scratch for both
+    // Once both have deleted the chat, a fresh one between them starts from scratch for both
+    delete_direct_chat(env, a_principal, canister_id, b);
+    delete_direct_chat(env, b_principal, canister_id, a);
     let fresh = send_text_message(env, a_principal, canister_id, b, "fresh start", random_from_u128());
     assert_eq!(fresh.message_index, 0.into());
-    assert_eq!(direct_chat_cores(env, canister_id), 1);
     let expected = vec![(a, "fresh start".to_string())];
     assert_eq!(messages(&events(env, a_principal, canister_id, a, b)), expected);
     assert_eq!(messages(&events(env, b_principal, canister_id, b, a)), expected);
@@ -405,7 +402,7 @@ fn initial_state_and_updates_track_a_users_direct_chats() {
     let after_message = b_updates.timestamp;
     assert!(updates(env, b_principal, canister_id, after_message).is_none());
 
-    // B reading the message is seen by A as B having read it, since the chat's core is shared
+    // B reading the message is passed on to A's copy of the chat, where A sees it as read by B
     env.advance_time(Duration::from_secs(1));
     mark_read(env, b_principal, canister_id, a, 0.into());
     let b_updates = single_direct_chat_update(updates(env, b_principal, canister_id, after_message).unwrap());
@@ -513,15 +510,15 @@ fn initial_state_and_updates_track_a_users_direct_chats() {
     assert!(initial_state(env, a_principal, canister_id).direct_chats.summaries.is_empty());
     assert!(updates(env, b_principal, canister_id, after_archive).is_none());
 
-    // The chat comes back as added when B messages A again, with the message from before counting
-    // as read and only the new one unread
+    // The chat comes back as added when B messages A again, as a fresh copy holding only the new
+    // message, which is unread
     env.advance_time(Duration::from_secs(1));
     send_text_message(env, b_principal, canister_id, a, "still there?", random_from_u128());
     let a_updates = updates(env, a_principal, canister_id, after_archive).unwrap();
     assert_eq!(a_updates.direct_chats.removed, vec![b.into()]);
     assert_eq!(a_updates.direct_chats.added.len(), 1);
-    assert_eq!(a_updates.direct_chats.added[0].read_by_me_up_to, Some(0.into()));
-    assert_eq!(a_updates.direct_chats.added[0].latest_message_index, Some(1.into()));
+    assert_eq!(a_updates.direct_chats.added[0].read_by_me_up_to, None);
+    assert_eq!(a_updates.direct_chats.added[0].latest_message_index, Some(0.into()));
 }
 
 #[test]
@@ -610,9 +607,8 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     let after_avatar_removed = a_updates.timestamp;
     assert_eq!(a_updates.avatar_id, OptionUpdate::SetToNone);
 
-    // Blocking B stops A messaging B, and is reported to A alone. B can still message A, unlike
-    // with the User canister, since the two share the chat's core.
-    // TODO: Drop B's messages on A's side once each user's entry for a chat can hide them
+    // Blocking B stops A messaging B, and is reported to A alone. A message from B goes into B's
+    // copy of the chat but is dropped rather than delivered to A, as it is between User canisters.
     env.advance_time(Duration::from_secs(1));
     block_user(env, a_principal, canister_id, b);
     block_user(env, a_principal, canister_id, b);
@@ -628,8 +624,15 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
         "{response:?}"
     );
     send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
+    assert_eq!(
+        messages(&events(env, b_principal, canister_id, b, a)),
+        vec![(b, "hi".to_string())]
+    );
+    assert!(initial_state(env, a_principal, canister_id).direct_chats.summaries.is_empty());
+    assert!(updates(env, a_principal, canister_id, after_block).is_none());
 
-    // Unblocking B is reported as the list of blocked users being empty
+    // Unblocking B is reported as the list of blocked users being empty, and A messaging B gives A
+    // a copy of the chat without the message dropped while B was blocked
     env.advance_time(Duration::from_secs(1));
     let response = client::multi_user::unblock_user(
         env,
@@ -642,6 +645,14 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     let after_unblock = a_updates.timestamp;
     assert_eq!(a_updates.blocked_users, Some(Vec::new()));
     send_text_message(env, a_principal, canister_id, b, "hi", random_from_u128());
+    assert_eq!(
+        messages(&events(env, a_principal, canister_id, a, b)),
+        vec![(a, "hi".to_string())]
+    );
+    assert_eq!(
+        messages(&events(env, b_principal, canister_id, b, a)),
+        vec![(b, "hi".to_string()), (a, "hi".to_string())]
+    );
 
     // Deleting a chat can block the other user at the same time, but not if there is no chat
     env.advance_time(Duration::from_secs(1));
@@ -968,10 +979,6 @@ fn delete_direct_chat(env: &mut PocketIc, sender: Principal, canister_id: Canist
         matches!(response, user_canister::delete_direct_chat::Response::Success),
         "{response:?}"
     );
-}
-
-fn direct_chat_cores(env: &PocketIc, canister_id: CanisterId) -> u32 {
-    serde_json::from_value(metrics(env, canister_id)["direct_chat_cores"].clone()).unwrap()
 }
 
 fn stable_memory_keys_to_garbage_collect(env: &PocketIc, canister_id: CanisterId) -> u32 {

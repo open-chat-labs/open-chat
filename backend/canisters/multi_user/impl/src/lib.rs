@@ -2,7 +2,7 @@ use crate::model::user::User;
 use crate::model::users::Users;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use direct_chat_core::{DirectChatCores, DirectChatMut, DirectChatRef};
+use direct_chat::DirectChat;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
@@ -96,14 +96,11 @@ impl RuntimeState {
     }
 
     // Runs `f` against the direct chat of the user at `user_index` with the user `chat_id` is the
-    // id of, as seen from that user's side. Fails if there is no such user or chat.
-    pub fn with_direct_chat<R>(&self, user_index: u16, chat_id: ChatId, f: impl FnOnce(DirectChatRef) -> R) -> OCResult<R> {
-        let cores = &self.data.direct_chat_cores;
+    // id of, within that user's key scope. Fails if there is no such user or chat.
+    pub fn with_direct_chat<R>(&self, user_index: u16, chat_id: ChatId, f: impl FnOnce(&DirectChat) -> R) -> OCResult<R> {
         self.data
             .users
-            .with_user(user_index, |user| {
-                user.direct_chats.get(&chat_id).map(|chat| cores.with_chat(chat, f))
-            })
+            .with_user(user_index, |user| user.direct_chats.get(&chat_id).map(f))
             .ok_or(OCErrorCode::TargetUserNotFound)?
             .ok_or_else(|| OCErrorCode::ChatNotFound.into())
     }
@@ -112,22 +109,34 @@ impl RuntimeState {
         &mut self,
         user_index: u16,
         chat_id: ChatId,
-        f: impl FnOnce(DirectChatMut) -> R,
+        f: impl FnOnce(&mut DirectChat) -> R,
     ) -> OCResult<R> {
-        let cores = &mut self.data.direct_chat_cores;
         self.data
             .users
-            .with_user_mut(user_index, |user| {
-                user.direct_chats.get_mut(&chat_id).map(|chat| cores.with_chat_mut(chat, f))
-            })
+            .with_user_mut(user_index, |user| user.direct_chats.get_mut(&chat_id).map(f))
             .ok_or(OCErrorCode::TargetUserNotFound)?
             .ok_or_else(|| OCErrorCode::ChatNotFound.into())
     }
 
     // The index within this canister carried by the user id, or None if the id is for a user in a
     // different canister. An id which carries no index maps to index 0, which is never assigned.
-    fn user_index(&self, user_id: UserId) -> Option<u16> {
+    pub fn user_index(&self, user_id: UserId) -> Option<u16> {
         (user_id.canister_id() == self.env.canister_id()).then(|| user_id.index())
+    }
+
+    // The index of the user with the given id, if they are one of this canister's users
+    pub fn local_user_index(&self, user_id: UserId) -> Option<u16> {
+        self.user_index(user_id).filter(|index| self.data.users.contains(*index))
+    }
+
+    // Queues the stable memory map entries of a chat deleted by the user at `user_index` for
+    // removal by the garbage collection job
+    pub fn garbage_collect_stable_memory_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
+        self.data
+            .stable_memory_keys_to_garbage_collect
+            .extend(prefixes.into_iter().map(|prefix| (user_index, prefix)));
+
+        jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -141,7 +150,6 @@ impl RuntimeState {
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             stable_memory_sizes: memory::memory_sizes(),
             user_count: self.data.users.len() as u32,
-            direct_chat_cores: self.data.direct_chat_cores.len() as u32,
             stable_memory_keys_to_garbage_collect: self.data.stable_memory_keys_to_garbage_collect.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -160,8 +168,6 @@ struct Data {
     // those hold any users.
     #[serde(default)]
     pub users: Users,
-    #[serde(default)]
-    pub direct_chat_cores: DirectChatCores,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     #[serde(default = "CanisterId::anonymous")]
@@ -172,9 +178,10 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     #[serde(default)]
     pub video_call_operators: Vec<Principal>,
-    // The prefixes of deleted direct chat cores, whose entries are removed by a background job
+    // The prefixes of deleted direct chats, whose entries are removed by a background job, each
+    // with the index of the user who held the chat since the entries are keyed under that user
     #[serde(default)]
-    pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
+    pub stable_memory_keys_to_garbage_collect: Vec<(u16, BaseKeyPrefix)>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -193,7 +200,6 @@ impl Data {
     ) -> Data {
         Data {
             users: Users::default(),
-            direct_chat_cores: DirectChatCores::default(),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
@@ -218,7 +224,6 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_count: u32,
-    pub direct_chat_cores: u32,
     pub stable_memory_keys_to_garbage_collect: u32,
     pub canister_ids: CanisterIds,
 }

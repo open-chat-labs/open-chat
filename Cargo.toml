@@ -123,7 +123,7 @@ members = [
     "backend/libraries/chat_events",
     "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
-    "backend/libraries/direct_chat_core",
+    "backend/libraries/direct_chat",
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/email_magic_links",
     "backend/libraries/email_utils",

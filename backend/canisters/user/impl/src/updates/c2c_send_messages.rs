@@ -2,7 +2,7 @@ use crate::updates::send_message::register_timer_jobs;
 use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state, read_state};
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult};
-use direct_chat_core::DirectChat;
+use direct_chat::DirectChat;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;

@@ -16,7 +16,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
 use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
-use direct_chat_core::DirectChats;
+use direct_chat::DirectChats;
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;

@@ -1,5 +1,5 @@
 [package]
-name = "direct_chat_core"
+name = "direct_chat"
 version.workspace = true
 edition.workspace = true
 
