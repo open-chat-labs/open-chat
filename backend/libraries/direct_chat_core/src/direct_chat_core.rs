@@ -1,5 +1,7 @@
+use crate::unread_message_index_map;
 use chat_events::{ChatEvents, EventPusher, PushMessageArgs, Reader};
 use serde::{Deserialize, Serialize};
+use stable_memory_map::BaseKeyPrefix;
 use std::cmp::min;
 use types::{EventIndex, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, TimestampMillis, Timestamped, UserId};
 
@@ -34,9 +36,9 @@ impl Participant {
 /// other user is to them) is held outside the core, so that a single core can be shared by two
 /// users in the same canister.
 ///
-/// The core is opaque outside this crate: it is only read or modified through a `DirectChat`
-/// wrapping it, so that a message can never be pushed without the user's state alongside it
-/// being kept in step.
+/// The core is private to this crate: it is only read or modified through a `DirectChat` wrapping
+/// it, so that a message can never be pushed without the user's state alongside it being kept in
+/// step. A canister holding both users of a chat keeps the cores in a `DirectChatCores`.
 #[derive(Serialize, Deserialize)]
 pub struct DirectChatCore {
     pub(crate) date_created: TimestampMillis,
@@ -49,7 +51,7 @@ impl DirectChatCore {
     // A core held by one user alone. `my_user_id` is the first participant and `them` the second.
     // The events are created from the first participant's perspective, so only their per-user
     // metrics are kept.
-    pub fn new(
+    pub(crate) fn new(
         my_user_id: UserId,
         them: UserId,
         key_id: u32,
@@ -66,7 +68,7 @@ impl DirectChatCore {
     // A core shared by both users of a chat, so both users' per-user metrics are kept. `second` is
     // the user in the second position, which only serves to label the events (see
     // `ChatEvents::new_shared_direct_chat`).
-    pub fn new_shared(
+    pub(crate) fn new_shared(
         second: UserId,
         key_id: u32,
         events_ttl: Option<Milliseconds>,
@@ -155,14 +157,24 @@ impl DirectChatCore {
     // returned is the one their new state's view of the events starts from, and every message so
     // far is marked as read by them so that only messages from here on count as unread. This is
     // the one operation on a core made outside a `DirectChat`, since it comes before the user has
-    // any state for the chat.
-    pub fn rejoin(&mut self, participant: Participant, now: TimestampMillis) -> EventIndex {
+    // any state for the chat, so it is reached via `DirectChatCores::rejoin`.
+    pub(crate) fn rejoin(&mut self, participant: Participant, now: TimestampMillis) -> EventIndex {
         let events_list = self.events.main_events_list();
         let min_visible_event_index = events_list.next_event_index();
         if let Some(latest_message_index) = events_list.latest_message_index() {
             self.mark_read_up_to(participant, latest_message_index, now);
         }
         min_visible_event_index
+    }
+
+    // Every stable memory key prefix the chat writes under, so that its entries can be garbage
+    // collected once it has been deleted. Each chat has a unique `key_id`, so if a new chat is
+    // created with the same user before the job has run then its entries aren't removed with these.
+    pub(crate) fn stable_memory_key_prefixes(&self) -> Vec<BaseKeyPrefix> {
+        let events_prefix = self.events.stable_memory_prefix();
+        let mut prefixes = self.events.all_stable_memory_key_prefixes();
+        prefixes.push(unread_message_index_map::prefix(events_prefix).into());
+        prefixes
     }
 
     pub(crate) fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {

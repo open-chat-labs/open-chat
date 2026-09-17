@@ -1,34 +1,17 @@
 use direct_chat_core::{DirectChatUserState, Participant};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChatId, EventIndex, TimestampMillis, UserId, UserType};
+use types::ChatId;
 
 // One user's entry for a direct chat: their own state for the chat, plus which core holds its
 // events and which of the core's two positions is theirs. The cores live outside of any user, in
-// `DirectChatCores`, since a chat between two users of this canister has a single core shared by
-// both of their entries.
+// the `DirectChatCores` held by the canister, since a chat between two users of this canister has
+// a single core shared by both of their entries.
 #[derive(Serialize, Deserialize)]
 pub struct UserDirectChat {
     pub key_id: u32,
     pub me: Participant,
     pub state: DirectChatUserState,
-}
-
-impl UserDirectChat {
-    pub fn new(
-        key_id: u32,
-        me: Participant,
-        them: UserId,
-        user_type: UserType,
-        min_visible_event_index: EventIndex,
-        now: TimestampMillis,
-    ) -> UserDirectChat {
-        UserDirectChat {
-            key_id,
-            me,
-            state: DirectChatUserState::new(them, user_type, min_visible_event_index, now),
-        }
-    }
 }
 
 // The direct chats of one user, keyed by the other user's id as in the User canister

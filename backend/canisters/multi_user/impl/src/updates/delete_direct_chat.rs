@@ -49,7 +49,7 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
             .unwrap_or_default();
 
     if !core_still_in_use {
-        let prefixes = state.data.direct_chat_cores.remove(&chat);
+        let prefixes = state.data.direct_chat_cores.remove(chat.key_id);
         state.data.stable_memory_keys_to_garbage_collect.extend(prefixes);
         jobs::garbage_collect_stable_memory::start_job_if_required(&state.data);
     }

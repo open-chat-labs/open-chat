@@ -1,9 +1,8 @@
-use crate::model::direct_chat_cores::DirectChatCores;
 use crate::model::user::User;
 use crate::model::users::Users;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use direct_chat_core::{DirectChatMut, DirectChatRef};
+use direct_chat_core::{DirectChatCores, DirectChatMut, DirectChatRef};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
@@ -77,7 +76,9 @@ impl RuntimeState {
         self.data
             .users
             .with_user(user_index, |user| {
-                user.direct_chats.get(&chat_id).map(|chat| cores.with_chat(chat, f))
+                user.direct_chats
+                    .get(&chat_id)
+                    .map(|chat| cores.with_chat(chat.key_id, chat.me, &chat.state, f))
             })
             .ok_or(OCErrorCode::TargetUserNotFound)?
             .ok_or_else(|| OCErrorCode::ChatNotFound.into())
@@ -93,7 +94,9 @@ impl RuntimeState {
         self.data
             .users
             .with_user_mut(user_index, |user| {
-                user.direct_chats.get_mut(&chat_id).map(|chat| cores.with_chat_mut(chat, f))
+                user.direct_chats
+                    .get_mut(&chat_id)
+                    .map(|chat| cores.with_chat_mut(chat.key_id, chat.me, &mut chat.state, f))
             })
             .ok_or(OCErrorCode::TargetUserNotFound)?
             .ok_or_else(|| OCErrorCode::ChatNotFound.into())

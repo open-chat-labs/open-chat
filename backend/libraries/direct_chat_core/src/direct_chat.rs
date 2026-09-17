@@ -1,5 +1,5 @@
 use crate::direct_chat_core::{DirectChatCore, Participant};
-use crate::unread_message_index_map::{self, UnreadMessageIndexMap};
+use crate::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, ChatInternal, DeleteMessageSuccess,
     DeleteUndeleteMessagesArgs, EditMessageArgs, EditMessageSuccess, EventKey, EventPusher, MessageContentInternal,
@@ -38,7 +38,13 @@ pub struct DirectChatUserState {
 }
 
 impl DirectChatUserState {
-    pub fn new(
+    pub fn new(them: UserId, user_type: UserType, now: TimestampMillis) -> DirectChatUserState {
+        Self::new_with_min_visible_event_index(them, user_type, EventIndex::default(), now)
+    }
+
+    // The state for a user getting a chat back after deleting it, whose view of the events starts
+    // at `min_visible_event_index` (see `DirectChatCores::rejoin`)
+    pub(crate) fn new_with_min_visible_event_index(
         them: UserId,
         user_type: UserType,
         min_visible_event_index: EventIndex,
@@ -84,20 +90,22 @@ impl DirectChat {
     ) -> DirectChat {
         DirectChat {
             me: Participant::First,
-            state: DirectChatUserState::new(them, user_type, EventIndex::default(), now),
+            state: DirectChatUserState::new(them, user_type, now),
             core: DirectChatCore::new(my_user_id, them, key_id, events_ttl, anonymized_chat_id, now),
         }
     }
 }
 
+// The borrowed forms are built by `DirectChatCores`, which holds the cores, so that a core is only
+// ever reached through a view from one user's side
 impl<'a> DirectChatRef<'a> {
-    pub fn borrowed(me: Participant, state: &'a DirectChatUserState, core: &'a DirectChatCore) -> DirectChatRef<'a> {
+    pub(crate) fn borrowed(me: Participant, state: &'a DirectChatUserState, core: &'a DirectChatCore) -> DirectChatRef<'a> {
         DirectChat { me, state, core }
     }
 }
 
 impl<'a> DirectChatMut<'a> {
-    pub fn borrowed_mut(
+    pub(crate) fn borrowed_mut(
         me: Participant,
         state: &'a mut DirectChatUserState,
         core: &'a mut DirectChatCore,
@@ -171,13 +179,9 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
     }
 
     // Every stable memory key prefix the chat writes under, so that its entries can be garbage
-    // collected once it has been deleted. Each chat has a unique `key_id`, so if a new chat is
-    // created with the same user before the job has run then its entries aren't removed with these.
+    // collected once it has been deleted
     pub fn stable_memory_key_prefixes(&self) -> Vec<BaseKeyPrefix> {
-        let events_prefix = self.core().events.stable_memory_prefix();
-        let mut prefixes = self.core().events.all_stable_memory_key_prefixes();
-        prefixes.push(unread_message_index_map::prefix(events_prefix).into());
-        prefixes
+        self.core().stable_memory_key_prefixes()
     }
 
     pub fn main_message_id_to_index(&self, message_id: MessageId) -> MessageIndex {
@@ -712,8 +716,8 @@ mod tests {
         let a = user(1);
         let b = user(2);
         let mut core = DirectChatCore::new_shared(b, 1, None, 123, 1);
-        let mut a_state = DirectChatUserState::new(b, UserType::User, EventIndex::default(), 1);
-        let mut b_state = DirectChatUserState::new(a, UserType::User, EventIndex::default(), 1);
+        let mut a_state = DirectChatUserState::new(b, UserType::User, 1);
+        let mut b_state = DirectChatUserState::new(a, UserType::User, 1);
 
         DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
             message(a, 1, 100),
@@ -756,8 +760,8 @@ mod tests {
         let a = user(1);
         let b = user(2);
         let mut core = DirectChatCore::new_shared(b, 1, None, 123, 1);
-        let mut a_state = DirectChatUserState::new(b, UserType::User, EventIndex::default(), 1);
-        let mut b_state = DirectChatUserState::new(a, UserType::User, EventIndex::default(), 1);
+        let mut a_state = DirectChatUserState::new(b, UserType::User, 1);
+        let mut b_state = DirectChatUserState::new(a, UserType::User, 1);
 
         DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
             message(a, 1, 100),
@@ -773,7 +777,7 @@ mod tests {
         // B deletes their side of the chat, then A's next message brings it back for them
         drop(b_state);
         let min_visible_event_index = core.rejoin(Participant::Second, 300);
-        let b_state = DirectChatUserState::new(a, UserType::User, min_visible_event_index, 300);
+        let b_state = DirectChatUserState::new_with_min_visible_event_index(a, UserType::User, min_visible_event_index, 300);
         DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
             message(a, 3, 300),
             None,
