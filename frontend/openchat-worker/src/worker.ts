@@ -24,6 +24,7 @@ import {
     shouldReportWorkerError,
     StorageUpdated,
     Stream,
+    SyncHeadMoved,
     UsersLoaded,
     type CorrelatedWorkerRequest,
     type CreateOpenChatIdentity,
@@ -145,6 +146,15 @@ function handleAgentEvent(ev: Event): void {
             event: {
                 subkind: "users_loaded",
                 users: ev.detail,
+            },
+        });
+    }
+    if (ev instanceof SyncHeadMoved) {
+        sendEvent({
+            event: {
+                subkind: "sync_head",
+                userId: ev.detail.userId,
+                version: ev.detail.version,
             },
         });
     }
@@ -381,6 +391,9 @@ function getAction(
 
         case "getUpdates":
             return agent.getUpdates(payload.initialLoad);
+
+        case "syncSince":
+            return agent.syncSince(payload.since, payload.windows);
 
         case "getBots":
             return agent.getBots(payload.initialLoad);
