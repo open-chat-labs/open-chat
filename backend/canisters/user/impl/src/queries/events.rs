@@ -73,10 +73,7 @@ fn prepare(
 
     let chat = state.data.direct_chats.get_or_err(&user_id.into())?;
 
-    if let Some(events_reader) = chat
-        .events()
-        .events_reader(EventIndex::default(), thread_root_message_index, None)
-    {
+    if let Some(events_reader) = chat.events_reader(thread_root_message_index) {
         Ok(PrepareResult {
             chat,
             events_reader,

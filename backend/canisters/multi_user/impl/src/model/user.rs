@@ -1,4 +1,6 @@
+use crate::model::user_direct_chats::UserDirectChats;
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use types::{TimestampMillis, Timestamped, UserId};
 
@@ -17,6 +19,7 @@ pub struct User {
     pub user_created: TimestampMillis,
     pub suspended: Timestamped<bool>,
     pub referred_by: Option<UserId>,
+    pub direct_chats: UserDirectChats,
 }
 
 impl User {
@@ -29,6 +32,11 @@ impl User {
             user_created: now,
             suspended: Timestamped::default(),
             referred_by,
+            direct_chats: UserDirectChats::default(),
         }
+    }
+
+    pub fn verify_not_suspended(&self) -> Result<(), OCErrorCode> {
+        if self.suspended.value { Err(OCErrorCode::InitiatorSuspended) } else { Ok(()) }
     }
 }

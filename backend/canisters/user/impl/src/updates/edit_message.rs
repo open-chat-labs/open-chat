@@ -46,7 +46,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         )?;
 
         if args.user_id != OPENCHAT_BOT_USER_ID {
-            let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+            let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
 
             state.push_user_canister_event(
                 args.user_id.canister_id(),

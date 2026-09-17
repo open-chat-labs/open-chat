@@ -193,6 +193,15 @@ impl DirectChats {
         private_replies::migrate_to_stable_memory(std::mem::take(&mut self.private_replies_on_heap))
     }
 
+    // Marks the user's chat with themselves as such, if they have one from before self chats were
+    // marked at creation. Returns whether it was marked.
+    // TODO: Remove this after next release
+    pub fn migrate_self_chat(&mut self, my_user_id: UserId) -> bool {
+        self.direct_chats
+            .get_mut(&my_user_id.into())
+            .is_some_and(|chat| chat.mark_as_self_chat())
+    }
+
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {
         if let Some(chat) = self.direct_chats.remove(&chat_id) {
             removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), chat_id.into(), now);

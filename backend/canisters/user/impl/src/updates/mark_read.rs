@@ -25,13 +25,8 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
             );
         } else if let Some(direct_chat) = state.data.direct_chats.get_mut(&chat_messages_read.chat_id)
             && let Some(read_up_to) = chat_messages_read.read_up_to
-            && read_up_to
-                <= direct_chat
-                    .events()
-                    .main_events_reader()
-                    .latest_message_index()
-                    .unwrap_or_default()
-            && direct_chat.mark_read_up_to(read_up_to, true, now)
+            && read_up_to <= direct_chat.main_events_reader().latest_message_index().unwrap_or_default()
+            && direct_chat.mark_read_by_me_up_to(read_up_to, now)
             && direct_chat.them != OPENCHAT_BOT_USER_ID
             && let Some(read_up_to_of_theirs) = direct_chat.max_read_up_to_of_theirs(read_up_to)
         {

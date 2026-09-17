@@ -3,7 +3,7 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, EventIndex, OCResult, UserId, VideoCallPresence};
+use types::{Achievement, OCResult, UserId, VideoCallPresence};
 use user_canister::{JoinVideoCall, UserCanisterEvent, join_video_call::*};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -25,13 +25,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         let now = state.env.now();
         let my_user_id: UserId = state.env.canister_id().into();
 
-        chat.set_video_call_presence(
-            my_user_id,
-            args.message_id,
-            VideoCallPresence::Default,
-            EventIndex::default(),
-            now,
-        )?;
+        chat.set_video_call_presence(my_user_id, args.message_id, VideoCallPresence::Default, now)?;
 
         state.push_user_canister_event(
             args.user_id.canister_id(),

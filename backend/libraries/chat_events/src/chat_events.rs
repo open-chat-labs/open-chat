@@ -106,9 +106,39 @@ impl ChatEvents {
         anonymized_id: u128,
         now: TimestampMillis,
     ) -> ChatEvents {
-        let chat = Chat::Direct(them.into());
-        let mut events = ChatEvents {
-            chat,
+        let mut events = Self::new_direct_chat_inner(them, key_id, events_ttl, anonymized_id, now);
+        events.skip_their_metrics(my_user_id);
+        events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
+        events
+    }
+
+    // The events of a direct chat held once for both of its users, so both users' per-user metrics
+    // are kept. Each user sees the chat under the other user's id and `chat_user_id` is the one the
+    // events are labelled with. Which of the two it is makes no difference: the label only feeds
+    // the source canister of event store events (both users share a canister), the chat of bot
+    // notifications (a bot is never one of two users sharing a chat) and the legacy key prefix
+    // (which only chats created before `key_id`s were introduced have).
+    pub fn new_shared_direct_chat(
+        chat_user_id: UserId,
+        key_id: u32,
+        events_ttl: Option<Milliseconds>,
+        anonymized_id: u128,
+        now: TimestampMillis,
+    ) -> ChatEvents {
+        let mut events = Self::new_direct_chat_inner(chat_user_id, key_id, events_ttl, anonymized_id, now);
+        events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
+        events
+    }
+
+    fn new_direct_chat_inner(
+        them: UserId,
+        key_id: u32,
+        events_ttl: Option<Milliseconds>,
+        anonymized_id: u128,
+        now: TimestampMillis,
+    ) -> ChatEvents {
+        ChatEvents {
+            chat: Chat::Direct(them.into()),
             main: ChatEventsList::new(ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id, None)),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
@@ -123,12 +153,7 @@ impl ChatEvents {
             bot_subscriptions: BTreeMap::new(),
             active_proposal_tallies: BTreeMap::new(),
             skip_their_metrics: false,
-        };
-
-        events.skip_their_metrics(my_user_id);
-        events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), now);
-
-        events
+        }
     }
 
     pub fn new_group_chat(
@@ -2265,11 +2290,13 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
     ) -> bool {
-        if let Some(events_list) = self.events_reader(min_visible_event_index, thread_root_message_index, None) {
-            events_list.is_accessible(event_key, min_visible_event_index)
-        } else {
-            false
-        }
+        self.events_list(min_visible_event_index, thread_root_message_index)
+            .is_some_and(|l| {
+                l.is_accessible(
+                    event_key,
+                    Self::min_visible_event_index_in_list(min_visible_event_index, thread_root_message_index),
+                )
+            })
     }
 
     pub fn message_ids(
@@ -2788,7 +2815,22 @@ impl ChatEvents {
         event_key: EventKey,
     ) -> Option<EventWrapperInternal<ChatEventInternal>> {
         self.events_list(min_visible_event_index, thread_root_message_index)
-            .and_then(|l| l.get_event(event_key, min_visible_event_index, None))
+            .and_then(|l| {
+                l.get_event(
+                    event_key,
+                    Self::min_visible_event_index_in_list(min_visible_event_index, thread_root_message_index),
+                    None,
+                )
+            })
+    }
+
+    // The min visible index applies to the main list, which `events_list` checks a thread's root
+    // against: a thread's own events are numbered from zero and are all visible
+    fn min_visible_event_index_in_list(
+        min_visible_event_index: EventIndex,
+        thread_root_message_index: Option<MessageIndex>,
+    ) -> EventIndex {
+        if thread_root_message_index.is_some() { EventIndex::default() } else { min_visible_event_index }
     }
 
     pub fn message_internal(

@@ -40,7 +40,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_mes
 
     let chat = state.data.direct_chats.get_or_err(&args.them.into())?;
     let user_id = state.env.canister_id().into();
-    let events_reader = chat.events().main_events_reader();
+    let events_reader = chat.main_events_reader();
 
     let message = events_reader
         .message(args.message_id.into(), Some(user_id))

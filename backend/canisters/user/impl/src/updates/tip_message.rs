@@ -8,8 +8,8 @@ use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{
-    Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, OCResult, PendingCryptoTransaction, TimestampNanos, UserId,
-    icrc1, icrc2,
+    Achievement, CanisterId, Chat, ChatId, CommunityId, OCResult, PendingCryptoTransaction, TimestampNanos, UserId, icrc1,
+    icrc2,
 };
 use user_canister::UserCanisterEvent;
 use user_canister::tip_message::{Response::*, *};
@@ -166,7 +166,6 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
         if let Err(error) = chat.tip_message(
             args.clone(),
-            EventIndex::default(),
             Some(UserEventPusher {
                 now: args.now,
                 rng: state.env.rng(),
@@ -175,7 +174,10 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
         ) {
             Error(error)
         } else {
-            let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+            let thread_root_message_id = match chat.thread_root_message_id(args.thread_root_message_index) {
+                Ok(id) => id,
+                Err(error) => return Error(error),
+            };
 
             state.push_user_canister_event(
                 args.recipient.canister_id(),

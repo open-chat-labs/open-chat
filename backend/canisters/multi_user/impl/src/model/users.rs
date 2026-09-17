@@ -64,6 +64,10 @@ impl Users {
         self.principal_to_index.get(principal).copied()
     }
 
+    pub fn contains(&self, index: u16) -> bool {
+        self.users.contains_key(&index)
+    }
+
     pub fn with_user<R>(&self, index: u16, f: impl FnOnce(&User) -> R) -> Option<R> {
         self.users
             .get(&index)

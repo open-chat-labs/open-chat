@@ -48,6 +48,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the private replies to groups into the stable memory map for small entries ([#9399](https://github.com/open-chat-labs/open-chat/pull/9399))
 - Add a `user_id` to the args of every endpoint which is not restricted to the owner, since a canister hosting multiple users cannot derive it from the caller, and rename the direct chat peer in `events`, `events_by_index`, `events_window` and `end_video_call_v2` to `them` ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Move the direct chat model into the `direct_chat_core` library and split each chat into a shareable core (events and both read positions) plus per-user state, so two users in one canister can share a chat ([#9408](https://github.com/open-chat-labs/open-chat/pull/9408))
+- Generalise `DirectChat` over owned or borrowed parts so a core can be shared between two users' views of a chat, each with its own minimum visible event index ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Have `DirectChat` supply the minimum visible event index to every operation itself, read events only through its filtered readers, and move `date_created` from the chat's core to the user's state ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Fail with `ThreadNotFound` rather than trapping when a thread root is not found while translating it for the other user's canister, and check it before pushing a message ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Mark the user's chat with themselves as such, so that messages they send to themselves are read on both sides ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Check the thread root of a P2P swap being accepted before making the transfer, and look the swap up in that thread rather than in the main list ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 
 ### Fixed
 
