@@ -308,8 +308,12 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
         let updated_events: Vec<_> = events
             .recently_updated_events(updates_since, usize::MAX)
             .into_iter()
-            // Events in the main chat from before the user's view of it starts are hidden from them
-            .filter(|(thread_root_message_index, e, _)| thread_root_message_index.is_some() || *e >= min_visible_event_index)
+            // Events in the main chat from before the user's view of it starts are hidden from
+            // them, as are the threads under those events
+            .filter(|(thread_root_message_index, e, _)| match thread_root_message_index {
+                Some(root) => events.is_accessible(min_visible_event_index, None, (*root).into()),
+                None => *e >= min_visible_event_index,
+            })
             .map(|(_, e, ts)| (e, ts))
             .collect();
 
@@ -766,6 +770,7 @@ mod tests {
     use chat_events::{MessageContentInternal, NullEventPusher, TextContentInternal};
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use types::Reaction;
 
     #[test]
     fn messages_are_read_by_their_sender_and_read_positions_are_kept_per_user() {
@@ -909,6 +914,30 @@ mod tests {
             None,
             None,
         );
+        // A also starts a thread under one of the messages B cannot see, and reacts in both threads
+        DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core).push_message::<NullEventPusher>(
+            PushMessageArgs {
+                thread_root_message_index: Some(0.into()),
+                ..message(a, 5, 400)
+            },
+            None,
+            None,
+        );
+        for (thread_root_message_index, message_id) in [(2, 4u128), (0, 5)] {
+            DirectChat::borrowed_mut(Participant::First, &mut a_state, &mut core)
+                .add_reaction::<NullEventPusher>(
+                    AddRemoveReactionArgs {
+                        user_id: a,
+                        min_visible_event_index: EventIndex::default(),
+                        thread_root_message_index: Some(thread_root_message_index.into()),
+                        message_id: MessageId::from(message_id),
+                        reaction: Reaction::new("👍".to_string()),
+                        now: 500,
+                    },
+                    None,
+                )
+                .unwrap();
+        }
 
         let b_view = DirectChat::borrowed(Participant::Second, &b_state, &core);
         assert_eq!(b_view.min_visible_event_index(), 3.into());
@@ -926,14 +955,6 @@ mod tests {
             Some(1.into()),
             "the hidden messages count as read"
         );
-        assert!(
-            b_view
-                .to_summary_updates(50, b)
-                .updated_events
-                .iter()
-                .all(|(e, _)| *e >= 3.into())
-        );
-
         // The hidden messages cannot be thread roots for B, but the new one can
         assert!(b_view.thread_root_message_id(Some(0.into())).is_err());
         assert!(b_view.thread_root_message_index(Some(MessageId::from(2u128))).is_err());
@@ -962,8 +983,16 @@ mod tests {
                 .is_none()
         );
 
+        // B is told of the reaction in the thread they can see and of that thread's root, but not
+        // of the thread under the message they cannot see
+        assert_eq!(
+            b_view.to_summary_updates(50, b).updated_events,
+            vec![(thread_event_index, 500), (3.into(), 400)]
+        );
+
         // A still sees everything
         let a_view = DirectChat::borrowed(Participant::First, &a_state, &core);
+        assert_eq!(a_view.to_summary_updates(50, a).updated_events.len(), 4);
         assert_eq!(a_view.min_visible_event_index(), 0.into());
         assert_eq!(a_view.date_created(), 1);
         assert!(a_view.main_events_reader().get(EventIndex::from(1).into()).is_some());

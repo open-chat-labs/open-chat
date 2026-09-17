@@ -237,6 +237,19 @@ fn users_in_the_same_multi_user_canister_share_one_copy_of_their_direct_chat() {
         "{missing_thread:?}"
     );
 
+    // A recipient in another canister is not supported yet, but is an error rather than a trap
+    let elsewhere: UserId = random_principal().into();
+    let unsupported = client::multi_user::send_message_v2(
+        env,
+        a_principal,
+        canister_id,
+        &send_message_args(elsewhere, "hello?", random_from_u128()),
+    );
+    assert!(
+        matches!(&unsupported, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{unsupported:?}"
+    );
+
     // A user's chats can only be read as that user by the user themselves or the LocalUserIndex
     let as_b = client::multi_user::events(env, b_principal, canister_id, &events_args(a, b));
     assert!(

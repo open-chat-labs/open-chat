@@ -44,7 +44,10 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
         // TODO: Crypto transfers need the user's pin number and the ledger calls, and P2P swaps the
         // escrow canister, as in the User canister
         ValidateNewMessageContentResult::SuccessCrypto(_) | ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
-            unimplemented!("Messages with transfers are not yet supported by the MultiUser canister")
+            return Error(
+                OCErrorCode::InvalidRequest
+                    .with_message("Messages with transfers are not yet supported by the MultiUser canister"),
+            );
         }
         ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
         ValidateNewMessageContentResult::Error(error) => {
@@ -130,7 +133,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
         // TODO: Users in other canisters, including bots, need the recipient looked up in the
         // LocalUserIndex when there is no chat with them yet, and the message sent on to their
         // canister
-        unimplemented!("Sending messages to users in other canisters is not yet supported by the MultiUser canister")
+        return Err(OCErrorCode::InvalidRequest
+            .with_message("Sending messages to users in other canisters is not yet supported by the MultiUser canister"));
     };
 
     let cores = &state.data.direct_chat_cores;
