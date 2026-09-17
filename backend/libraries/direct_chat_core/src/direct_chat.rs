@@ -66,6 +66,12 @@ impl DirectChatUserState {
             self_chat,
         }
     }
+
+    // The other user's position in the core, given this user's, which in a self chat is this
+    // user's own
+    fn their_position(&self, me: Participant) -> Participant {
+        if self.self_chat { me } else { me.other() }
+    }
 }
 
 /// A direct chat as seen by one of its users: their own state for the chat together with its core.
@@ -135,13 +141,9 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
         self.core.borrow()
     }
 
-    // The other user's position in the core, which in a self chat is this user's own
+    // The other user's position in the core
     fn them(&self) -> Participant {
-        Self::their_position(self.me, self.state())
-    }
-
-    fn their_position(me: Participant, state: &DirectChatUserState) -> Participant {
-        if state.self_chat { me } else { me.other() }
+        self.state().their_position(self.me)
     }
 
     // The events themselves, for the chat's settings and for the checks which must see every
@@ -363,7 +365,7 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
     ) -> EventWrapper<Message> {
         let me = self.me;
         let (state, core) = self.parts_mut();
-        let sender = if args.sender == state.them { Self::their_position(me, state) } else { me };
+        let sender = if args.sender == state.them { state.their_position(me) } else { me };
         let message_event = core.push_message(args, sender, event_pusher);
 
         if let Some(their_message_index) = their_message_index {
