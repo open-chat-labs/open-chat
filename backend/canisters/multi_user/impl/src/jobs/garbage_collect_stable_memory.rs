@@ -19,21 +19,23 @@ pub(crate) fn start_job_if_required(data: &Data) -> bool {
     }
 }
 
-// As in the User canister, except that the prefixes are those of direct chat cores, whose entries
-// are keyed under the canister rather than under a user
+// As in the User canister, except that each prefix is removed within the key scope of the user
+// whose chat it belonged to, since that is where its entries are keyed
 fn run() {
     trace!("'garbage_collect_stable_memory' job running");
     TIMER_ID.set(None);
     mutate_state(|state| {
-        while let Some(prefix) = state.data.stable_memory_keys_to_garbage_collect.pop() {
-            let result = with_key_scope(KeyScope::Canister, || stable_memory_map::garbage_collect(prefix.clone()));
+        while let Some((user_index, prefix)) = state.data.stable_memory_keys_to_garbage_collect.pop() {
+            let result = with_key_scope(KeyScope::User(user_index), || {
+                stable_memory_map::garbage_collect(prefix.clone())
+            });
             let (count, complete) = match result {
                 Ok(c) => (c, true),
                 Err(c) => (c, false),
             };
             info!(count, complete, "Garbage collected keys from stable memory");
             if !complete {
-                state.data.stable_memory_keys_to_garbage_collect.push(prefix);
+                state.data.stable_memory_keys_to_garbage_collect.push((user_index, prefix));
                 break;
             }
         }

@@ -17,7 +17,7 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
 constants = { path = "../../../libraries/constants" }
-direct_chat_core = { path = "../../../libraries/direct_chat_core" }
+direct_chat = { path = "../../../libraries/direct_chat" }
 escrow_canister = { path = "../../escrow/api" }
 git_commit_id = { path = "../../../libraries/git_commit_id" }
 http_request = { path = "../../../libraries/http_request" }

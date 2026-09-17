@@ -25,6 +25,13 @@ const SMALL_CHAT_MESSAGES: usize = 3;
 // Installs user canisters from the User canister wasm currently in production, fills them with
 // direct chats, contacts, blocked users, an avatar and a profile background, then upgrades them to
 // the new wasm and checks that everything still works.
+//
+// Production is at more than one version at a time while a release rolls out, so the test works
+// from whichever version `user_prod.wasm.gz` holds: one which still stores direct chat events under
+// keys based on the other user's id (which the upgrade migrates to the `key_id` based keys, in test
+// mode a single batch of events per call, so spread across `post_upgrade` and many runs of its
+// timer job), or one which already uses the `key_id` based keys.
+// TODO: Remove the migration specific checks once every user canister has been migrated
 #[test]
 fn user_canisters_survive_upgrade_from_prod() {
     // Installing the prod wasm would downgrade the user canisters of any other test drawing a pooled
@@ -201,7 +208,8 @@ fn user_canisters_survive_upgrade_from_prod() {
     );
 
     // User1 also has a chat with the OpenChat bot, whose events are included in the key counts
-    let total_keys = count_keys(env, user1.canister(), KeyType::DirectChatEvent);
+    let legacy_keys = count_keys(env, user1.canister(), KeyType::DirectChatEventLegacy);
+    let total_keys = legacy_keys + count_keys(env, user1.canister(), KeyType::DirectChatEvent);
     assert!(total_keys > total_events, "{total_keys} {total_events}");
 
     client::user_index::happy_path::upgrade_user_canister_wasm(
@@ -214,23 +222,50 @@ fn user_canisters_survive_upgrade_from_prod() {
         },
     );
 
-    // The canister is briefly stopped while being upgraded, during which queries are rejected
-    for _ in 0..100 {
+    // Tick one round at a time, checking that every event stays readable while any legacy events
+    // are being migrated
+    let mut chats_with_legacy_events = Vec::new();
+    for _ in 0..500 {
         env.tick();
-        if try_wasm_version(env, user1.canister()) == Some(new_version) {
+        // The canister is briefly stopped while being upgraded, during which queries are rejected
+        if try_wasm_version(env, user1.canister()) != Some(new_version) {
+            continue;
+        }
+        let remaining = direct_chats_with_legacy_events(env, user1.canister());
+        chats_with_legacy_events.push(remaining);
+        for (user, snapshot) in chat_partners.iter().zip(snapshots.iter()) {
+            assert_eq!(&all_events(env, &user1, user.user_id), snapshot, "remaining: {remaining}");
+        }
+        if remaining == 0 {
             break;
         }
     }
     assert_eq!(wasm_version(env, user1.canister()), new_version);
+    assert_eq!(chats_with_legacy_events.last(), Some(&0), "{chats_with_legacy_events:?}");
 
-    // Every event is still readable, and stored under the same keys
-    for (user, snapshot) in chat_partners.iter().zip(snapshots.iter()) {
-        assert_eq!(&all_events(env, &user1, user.user_id), snapshot);
+    if legacy_keys > 0 {
+        // `post_upgrade` only migrates a single batch in test mode, so every chat but at most one
+        // still has legacy events when the upgrade completes, and the rest are migrated by the
+        // timer job
+        assert!(
+            chats_with_legacy_events.first().is_some_and(|c| *c >= SMALL_CHATS),
+            "{chats_with_legacy_events:?}"
+        );
+        assert!(
+            chats_with_legacy_events.is_sorted_by(|a, b| a >= b),
+            "{chats_with_legacy_events:?}"
+        );
+        assert!(chats_with_legacy_events.len() > 2, "{chats_with_legacy_events:?}");
     }
+
+    // Every event is now stored under the `key_id` based keys
+    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatEventLegacy), 0);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatThreadEventLegacy), 0);
     assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatEvent), total_keys);
 
     tick_many(env, 10);
     assert_eq!(wasm_version(env, large_chat_user.canister()), new_version);
+    assert_eq!(direct_chats_with_legacy_events(env, large_chat_user.canister()), 0);
     assert_eq!(all_events(env, &large_chat_user, user1.user_id), large_chat_snapshot_for_them);
 
     // The records of the chats user1 was removed from survive the upgrade
@@ -678,6 +713,10 @@ fn count_keys(env: &PocketIc, canister_id: CanisterId, key_type: KeyType) -> usi
         .keys()
         .filter(|k| k[0] == key_type as u8)
         .count()
+}
+
+fn direct_chats_with_legacy_events(env: &PocketIc, canister_id: CanisterId) -> usize {
+    serde_json::from_value(metrics(env, canister_id)["direct_chats_with_legacy_events"].clone()).unwrap()
 }
 
 fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {

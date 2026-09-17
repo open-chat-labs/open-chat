@@ -3,7 +3,7 @@ use crate::queries::check_replica_up_to_date;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::{ChatEventsListReader, Reader};
-use direct_chat_core::DirectChat;
+use direct_chat::DirectChat;
 use oc_error_codes::OCErrorCode;
 use types::{EventIndex, EventOrExpiredRange, EventsResponse, MessageIndex, OCResult, TimestampMillis, UserId};
 use user_canister::events::{Response::*, *};

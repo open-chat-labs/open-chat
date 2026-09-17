@@ -1,18 +1,16 @@
 use crate::guards::caller_is_owner;
-use crate::model::users::Users;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
-    MessageContentInternal, NullEventPusher, PushMessageArgs, ReplyContextInternal, ValidateNewMessageContentResult,
+    MessageContentInternal, NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult,
 };
 use constants::OPENCHAT_BOT_USER_ID;
-use direct_chat_core::DirectChatEntry;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{OCResult, TimestampMillis, UserId, UserType};
-use user_canister::c2c_bot_send_message;
 use user_canister::send_message_v2::{Response::*, *};
+use user_canister::{C2CReplyContext, SendMessageArgs, c2c_bot_send_message};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -60,32 +58,74 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
         thread_root_message_index: args.thread_root_message_index,
         message_id: args.message_id,
         sender: my_user_id,
-        content,
+        content: content.clone(),
         mentioned: Vec::new(),
         replies_to: args.replies_to.as_ref().map(ReplyContextInternal::from),
         forwarded: args.forwarding,
         sender_is_bot: false,
         block_level_markdown: args.block_level_markdown,
-        og_previews: args.og_previews,
+        og_previews: args.og_previews.clone(),
         now,
         sender_context: None,
     };
 
     let chat_id = args.recipient.into();
-    ensure_direct_chat(my_index, my_user_id, recipient, now, state);
+    // Drawn up front, whether or not the chat turns out to need creating, since the user is
+    // borrowed for the whole of the closure below
+    let anonymized_id: u128 = state.env.rng().random();
 
-    // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
-    let message_event = match state.with_direct_chat_mut(my_index, chat_id, |mut chat| {
+    // Push the message to the sender's copy of the chat, creating the chat if they have none
+    let result = state.data.users.with_user_mut(my_index, |user| {
+        let chat = user
+            .direct_chats
+            .get_or_create(my_user_id, args.recipient, UserType::User, || anonymized_id, now);
+
         // Checked before the message is pushed, since pushing a message to a thread creates the thread
-        chat.thread_root_message_id(push_message_args.thread_root_message_index)?;
-        Ok(chat.push_message::<NullEventPusher>(push_message_args, None, None))
-    }) {
-        Ok(Ok(event)) => event,
-        Ok(Err(error)) | Err(error) => return Error(error),
+        let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
+
+        // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
+        let message_event = chat.push_message::<NullEventPusher>(push_message_args, None, None);
+
+        // The message as the recipient's copy of the chat receives it: message ids are the same in
+        // both copies while the indexes are not, so what the reply is to and which thread it is in
+        // are given by id (as in the User canister's `send_message`)
+        let replies_to = args.replies_to.and_then(|r| {
+            if let Some((chat, thread_root_message_index)) = r.chat_if_other {
+                Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
+            } else {
+                chat.main_events_reader()
+                    .message_internal(r.event_index.into())
+                    .map(|m| C2CReplyContext::ThisChat(m.message_id))
+            }
+        });
+        let message_for_recipient = SendMessageArgs {
+            thread_root_message_id,
+            message_id: args.message_id,
+            sender_message_index: message_event.event.message_index,
+            content,
+            replies_to,
+            forwarding: args.forwarding,
+            block_level_markdown: args.block_level_markdown,
+            message_filter_failed: args.message_filter_failed,
+            og_previews: args.og_previews,
+        };
+        Ok((message_event, message_for_recipient))
+    });
+
+    let (message_event, message_for_recipient) = match result {
+        Some(Ok(ok)) => ok,
+        Some(Err(error)) => return Error(error),
+        None => return Error(OCErrorCode::TargetUserNotFound.into()),
     };
 
-    // TODO: Notify the recipient, award achievements and register the timer jobs for message
-    // expiry, as the User canister does
+    // A recipient in this canister gets the message straight away, rather than via a call to their
+    // canister. A chat with yourself has a single copy, so there is nothing more to do.
+    if let Recipient::SameCanister(their_index) = recipient {
+        receive_message(their_index, my_user_id, message_for_recipient, now, state);
+    }
+
+    // TODO: Award achievements and register the timer jobs for message expiry, as the User
+    // canister does
 
     Success(SuccessResult {
         chat_id,
@@ -101,7 +141,7 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
 enum Recipient {
     // The sender's chat with themselves
     Me,
-    // Another user in this canister, whose entry for the chat shares the sender's core
+    // Another user in this canister
     SameCanister(u16),
 }
 
@@ -123,10 +163,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
 
     let recipient = if args.recipient == my_user_id {
         Recipient::Me
-    } else if let Some(index) = state
-        .user_index(args.recipient)
-        .filter(|index| state.data.users.contains(*index))
-    {
+    } else if let Some(index) = state.local_user_index(args.recipient) {
         Recipient::SameCanister(index)
     } else {
         // TODO: Users in other canisters, including bots, need the recipient looked up in the
@@ -136,7 +173,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
             .with_message("Sending messages to users in other canisters is not yet supported by the MultiUser canister"));
     };
 
-    let cores = &state.data.direct_chat_cores;
     state.with_user(my_user_id, |user| -> OCResult<()> {
         user.verify_not_suspended()?;
 
@@ -144,16 +180,10 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
             return Err(OCErrorCode::TargetUserBlocked.into());
         }
 
-        // TODO: A recipient in this canister who has blocked the sender shares the chat's core with
-        // them, so unlike the User canister, which drops the message on the recipient's side, the
-        // message is currently visible to them. Their entry for the chat needs a way to hide it.
-
-        if let Some(chat) = user.direct_chats.get(&args.recipient.into())
-            && cores.with_chat(chat, |chat| {
-                chat.events()
-                    .message_already_finalised(args.thread_root_message_index, args.message_id, false)
-            })
-        {
+        if user.direct_chats.get(&args.recipient.into()).is_some_and(|chat| {
+            chat.events()
+                .message_already_finalised(args.thread_root_message_index, args.message_id, false)
+        }) {
             return Err(OCErrorCode::MessageIdAlreadyExists.into());
         }
         Ok(())
@@ -167,54 +197,82 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
     })
 }
 
-// Makes sure the sender and the recipient each have an entry for the chat between them before a
-// message is pushed to it. When the recipient is in this canister the two users share one core:
-// if neither has an entry a new core is created with an entry for each of them, and if only one
-// of them has an entry (because the other deleted their side of the chat) the other gets the chat
-// back by taking the other position in that core, seeing only the events from now on.
-fn ensure_direct_chat(my_index: u16, my_user_id: UserId, recipient: Recipient, now: TimestampMillis, state: &mut RuntimeState) {
+// Pushes a message from `sender`, another user in this canister, to the recipient's copy of the
+// chat between them, creating the chat if they have none. This is the User canister's handling of
+// the `SendMessages` event it receives from the sender's canister, applied directly. As there, a
+// message the recipient doesn't receive (because they have blocked the sender, or it is in a
+// thread their copy of the chat doesn't have) stays on the sender's side alone.
+fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, now: TimestampMillis, state: &mut RuntimeState) {
+    let their_user_id = state.user_id(their_index);
+    let chat_id = sender.into();
     let anonymized_id: u128 = state.env.rng().random();
-    let cores = &mut state.data.direct_chat_cores;
-    let users = &mut state.data.users;
 
-    // The key id and position of a user's entry for their chat with `them`, if they have one
-    let entry = |users: &Users, user_index: u16, them: UserId| {
-        users
-            .with_user(user_index, |user| {
-                user.direct_chats.get(&them.into()).map(|chat| (chat.key_id(), chat.me()))
-            })
-            .flatten()
-    };
-
-    match recipient {
-        Recipient::Me => {
-            if entry(users, my_index, my_user_id).is_none() {
-                let chat = cores.add(my_user_id, my_user_id, UserType::User, None, anonymized_id, now);
-                add_entry(users, my_index, chat);
-            }
+    state.data.users.with_user_mut(their_index, |user| {
+        if user.blocked_users.contains(&sender) {
+            return;
         }
-        Recipient::SameCanister(their_index) => {
-            let them = UserId::new_indexed(my_user_id.canister_id(), their_index);
-            match (entry(users, my_index, them), entry(users, their_index, my_user_id)) {
-                (Some(_), Some(_)) => {}
-                (None, None) => {
-                    let (my_chat, their_chat) = cores.add_shared(my_user_id, them, None, anonymized_id, now);
-                    add_entry(users, my_index, my_chat);
-                    add_entry(users, their_index, their_chat);
-                }
-                (None, Some((key_id, their_position))) => {
-                    let chat = cores.rejoin(key_id, their_position.other(), them, now);
-                    add_entry(users, my_index, chat);
-                }
-                (Some((key_id, my_position)), None) => {
-                    let chat = cores.rejoin(key_id, my_position.other(), my_user_id, now);
-                    add_entry(users, their_index, chat);
-                }
-            }
-        }
-    }
-}
 
-fn add_entry(users: &mut Users, user_index: u16, chat: DirectChatEntry) {
-    users.with_user_mut(user_index, |user| user.direct_chats.add(chat));
+        let existing_chat = user.direct_chats.get(&chat_id);
+
+        // Which thread the message is in and what it replies to are translated from ids to the
+        // indexes they have in this copy of the chat
+        let thread_root_message_index = match existing_chat {
+            Some(chat) => chat.thread_root_message_index(message.thread_root_message_id),
+            None if message.thread_root_message_id.is_none() => Ok(None),
+            None => Err(OCErrorCode::ThreadNotFound.into()),
+        };
+        let Ok(thread_root_message_index) = thread_root_message_index else {
+            return;
+        };
+
+        // The sender can only reuse a message id in a chat they have deleted their copy of, in
+        // which case this copy may still hold the id
+        if existing_chat.is_some_and(|chat| {
+            chat.events()
+                .message_already_finalised(thread_root_message_index, message.message_id, false)
+        }) {
+            return;
+        }
+
+        let replies_to = match message.replies_to {
+            Some(C2CReplyContext::ThisChat(message_id)) => existing_chat
+                .and_then(|chat| chat.main_events_reader().event_index(message_id.into()))
+                .map(|event_index| ReplyContextInternal {
+                    chat_if_other: None,
+                    event_index,
+                }),
+            Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, event_index)) => Some(ReplyContextInternal {
+                chat_if_other: Some((chat.into(), thread_root_message_index)),
+                event_index,
+            }),
+            None => None,
+        };
+
+        let chat = user
+            .direct_chats
+            .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now);
+
+        chat.push_message::<NullEventPusher>(
+            PushMessageArgs {
+                thread_root_message_index,
+                message_id: message.message_id,
+                sender,
+                content: message.content,
+                mentioned: Vec::new(),
+                replies_to,
+                forwarded: message.forwarding,
+                sender_is_bot: false,
+                block_level_markdown: message.block_level_markdown,
+                og_previews: message.og_previews,
+                now,
+                sender_context: None,
+            },
+            Some(message.sender_message_index),
+            None,
+        );
+
+        // TODO: Notify the recipient (muted if `message.message_filter_failed` is set), record
+        // replies to messages in other chats and message activity, and register the timer jobs
+        // for message expiry, as the User canister does
+    });
 }

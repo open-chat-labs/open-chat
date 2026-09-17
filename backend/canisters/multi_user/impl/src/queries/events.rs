@@ -3,7 +3,7 @@ use crate::queries::check_replica_up_to_date;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::{ChatEventsListReader, Reader};
-use direct_chat_core::DirectChatRef;
+use direct_chat::DirectChat;
 use oc_error_codes::OCErrorCode;
 use types::{EventIndex, EventOrExpiredRange, EventsResponse, MessageIndex, TimestampMillis, UserId};
 use user_canister::events::{Response::*, *};
@@ -62,7 +62,7 @@ pub(crate) fn read_events<A, F: FnOnce(A, UserId, ChatEventsListReader) -> Vec<E
         let latest_event_index = events_reader.latest_event_index().unwrap_or_default();
         let events_response = get_events_fn(args, user_id, events_reader);
 
-        process_events(events_response, &chat, latest_event_index)
+        process_events(events_response, chat, latest_event_index)
     });
 
     match result {
@@ -71,7 +71,7 @@ pub(crate) fn read_events<A, F: FnOnce(A, UserId, ChatEventsListReader) -> Vec<E
     }
 }
 
-fn process_events(events_response: Vec<EventOrExpiredRange>, chat: &DirectChatRef, latest_event_index: EventIndex) -> Response {
+fn process_events(events_response: Vec<EventOrExpiredRange>, chat: &DirectChat, latest_event_index: EventIndex) -> Response {
     let (events, expired_event_ranges, _) = EventOrExpiredRange::split(events_response);
     let expired_message_ranges = chat.events().convert_to_message_ranges(&expired_event_ranges);
     let chat_last_updated = chat.last_updated();

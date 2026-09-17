@@ -12,17 +12,12 @@ fn initial_state(_args: Args) -> Response {
 
 fn initial_state_impl(state: &RuntimeState) -> Response {
     let now = state.env.now();
-    let cores = &state.data.direct_chat_cores;
 
     state.with_caller_user(|my_index, user| {
         let my_user_id = state.user_id(my_index);
 
         let direct_chats = DirectChatsInitial {
-            summaries: user
-                .direct_chats
-                .iter()
-                .map(|entry| cores.with_chat(entry, |chat| chat.to_summary(my_user_id)))
-                .collect(),
+            summaries: user.direct_chats.iter().map(|chat| chat.to_summary(my_user_id)).collect(),
         };
 
         let favourite_chats = FavouriteChatsInitial {
@@ -67,7 +62,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             one_sec_address: None,
             premium_items: Vec::new(),
             // Only direct and group chats are merged in here; pinned favourites are listed above
-            pinned_chats: user.direct_chats.pinned_chats(),
+            pinned_chats: sorted_pinned(&user.direct_chats.pinned_chats()),
         })
     })
 }

@@ -11,8 +11,6 @@ fn updates(args: Args) -> Response {
 }
 
 fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Response {
-    let cores = &state.data.direct_chat_cores;
-
     state.with_caller_user(|my_index, user| {
         let username = user.username.if_set_after(updates_since).cloned();
         let suspended = user.suspended.if_set_after(updates_since).copied();
@@ -34,11 +32,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             || suspended.is_some()
             || wallet_config.is_some()
             || user.favourite_chats.any_updated(updates_since)
-            || user.direct_chats.any_removed_or_pinned_since(updates_since)
-            || user
-                .direct_chats
-                .iter()
-                .any(|entry| cores.with_chat(entry, |chat| chat.has_updates_since(updates_since)));
+            || user.direct_chats.any_updated(updates_since);
 
         // Short circuit prior to calling `ic0.time()` so that caching works effectively
         if !has_any_updates {
@@ -51,16 +45,12 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         let mut direct_chats_added = Vec::new();
         let mut direct_chats_updated = Vec::new();
 
-        for entry in user.direct_chats.iter() {
-            cores.with_chat(entry, |chat| {
-                if chat.has_updates_since(updates_since) {
-                    if chat.date_created() > updates_since {
-                        direct_chats_added.push(chat.to_summary(my_user_id));
-                    } else {
-                        direct_chats_updated.push(chat.to_summary_updates(updates_since, my_user_id));
-                    }
-                }
-            });
+        for chat in user.direct_chats.updated_since(updates_since) {
+            if chat.date_created() > updates_since {
+                direct_chats_added.push(chat.to_summary(my_user_id));
+            } else {
+                direct_chats_updated.push(chat.to_summary_updates(updates_since, my_user_id));
+            }
         }
 
         let direct_chats = DirectChatsUpdates {
@@ -109,7 +99,10 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             btc_address: None,
             one_sec_address: None,
             premium_items: None,
-            pinned_chats: user.direct_chats.pinned_chats_if_updated(updates_since),
+            pinned_chats: user
+                .direct_chats
+                .pinned_chats_if_updated(updates_since)
+                .map(|pinned| sorted_pinned(&pinned)),
         })
     })
 }
