@@ -803,9 +803,9 @@ mod tests {
         };
 
         let from_flat: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&flat));
-        let from_split: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&split(false)));
+        let from_split: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(split(false)));
         let from_split_with_date_created_on_core: DirectChat =
-            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&split(true)));
+            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(split(true)));
         let round_tripped: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
 
         for deserialized in [from_flat, from_split, from_split_with_date_created_on_core, round_tripped] {
