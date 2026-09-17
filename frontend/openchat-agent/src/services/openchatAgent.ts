@@ -2132,8 +2132,9 @@ export class OpenChatAgent extends EventTarget {
 
             if (userId === ANON_USER_ID) {
                 // The anonymous user's state never reaches the cache (the cache may belong to a
-                // signed-in identity), so its snapshot is built from the pass itself and there
-                // is never anything to pull
+                // signed-in identity), so it never announces a head and can never be pulled.
+                // Every pass therefore resolves the whole state it just fetched: that snapshot is
+                // the anonymous session's only channel, so it cannot be limited to the first load.
                 try {
                     const state = await this._getUpdates(undefined, initialLoad);
                     resolve(
@@ -2157,8 +2158,9 @@ export class OpenChatAgent extends EventTarget {
             }
             if (!isOffline) {
                 let error: unknown = undefined;
+                let passState: ChatStateFull | undefined = undefined;
                 try {
-                    await this._getUpdates(cachedState, initialLoad);
+                    passState = await this._getUpdates(cachedState, initialLoad);
                 } catch (err) {
                     error = err;
                 }
@@ -2167,12 +2169,7 @@ export class OpenChatAgent extends EventTarget {
                 if (error !== undefined) {
                     reject(error);
                 } else if (initialLoad && !snapshotSent) {
-                    // Nothing was cached before the pass: the snapshot is what it wrote
-                    const { head, state } = await this._chatsDb.getChatsForSync();
-                    resolve(
-                        state === undefined ? undefined : this.#snapshot(userId, head, state),
-                        true,
-                    );
+                    resolve(await this.#coldSnapshot(userId, head, passState), true);
                 } else {
                     resolve(undefined, true);
                 }
@@ -2182,6 +2179,39 @@ export class OpenChatAgent extends EventTarget {
 
     #snapshot(userId: string, version: number, state: ChatStateFull): SyncSinceResponse {
         return { userId, version, updates: this.#hydrateUpdates(snapshotOf(state)) };
+    }
+
+    /**
+     * The boot snapshot for a load that found nothing cached: whatever the pass just wrote, read
+     * back as a pull since `since` (the head read before the pass started).
+     *
+     * A pull rather than `snapshotOf` because the pass also stamps things that are not part of the
+     * state - the chit events behind the achievement toasts, and a suspension change. `snapshotOf`
+     * reports none of those, and they are stamped at exactly the version the snapshot seeds the
+     * cursor with, so no later pull would carry them either and they would be lost. Windows are
+     * empty: nothing is on screen yet, so no updated events are owed.
+     */
+    async #coldSnapshot(
+        userId: string,
+        since: number,
+        passState: ChatStateFull | undefined,
+    ): Promise<SyncSinceResponse | undefined> {
+        const { head, state, stamps } = await this._chatsDb.getChatsForSync();
+        if (state !== undefined) {
+            return {
+                userId,
+                version: head,
+                updates: this.#hydrateUpdates(
+                    updatesSince(state, stamps ?? emptySyncStamps(), since, []),
+                ),
+            };
+        }
+        // Nothing to read back means the cache write failed (`_getUpdates` logs and continues).
+        // Fall back to the state the pass fetched so the app still boots - without this the UI
+        // never marks the chats initialised and sits on the loading screen for as long as the
+        // cache stays unwritable. Version 0 so the first head announcement after a successful
+        // write pulls everything.
+        return passState === undefined ? undefined : this.#snapshot(userId, 0, passState);
     }
 
     #hydrateUpdates(updates: UpdatesResult): UpdatesResult {

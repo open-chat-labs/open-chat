@@ -84,7 +84,6 @@ import {
     parseBigInt,
     pinNumberFailureFromError,
     publish,
-    subscribe,
     random64,
     removeEmailSignInSession,
     removeOpenGraphPreviews,
@@ -744,7 +743,6 @@ export class OpenChat {
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
-        this.#worker = new WorkerAgent(config);
         this.#logger = config.logger;
         this.#syncPuller = new SyncPuller({
             pull: (since, windows) => this.#worker.send({ kind: "syncSince", since, windows }),
@@ -752,7 +750,7 @@ export class OpenChat {
             windows: () => this.#syncWindows(),
             log: (message, err) => this.#logger.error(message, err as Error),
         });
-        subscribe("syncHead", (head) => this.#syncPuller.onHead(head));
+        this.#worker = new WorkerAgent(config, (head) => this.#syncPuller.onHead(head));
 
         this.#mobileLayout = config.mobileLayout;
         this.#vapidPublicKey = config.vapidPublicKey;

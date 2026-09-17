@@ -139,12 +139,10 @@ describe("SyncPuller", () => {
 
     test("a snapshot arriving while a pulled answer is folding waits for that fold", async () => {
         const order: string[] = [];
+        const pulled = deferred();
         let releaseFold!: () => void;
-        const { puller, pulls } = {
-            ...harness(),
-        };
-        const slowPuller = new SyncPuller({
-            pull: () => pulls[0].deferred.promise,
+        const puller = new SyncPuller({
+            pull: () => pulled.promise,
             fold: async () => {
                 order.push("fold:start");
                 await new Promise<void>((resolve) => (releaseFold = resolve));
@@ -152,15 +150,14 @@ describe("SyncPuller", () => {
             },
             windows: () => [],
         });
-        void puller;
-        pulls.push({ since: 0, deferred: deferred() });
-        await slowPuller.seed(answer(1), async () => {});
-        slowPuller.onHead({ userId: "u1", version: 2 });
-        pulls[0].deferred.resolve(answer(2));
+
+        await puller.seed(answer(1), async () => {});
+        puller.onHead({ userId: "u1", version: 2 });
+        pulled.resolve(answer(2));
         await settle();
         expect(order).toEqual(["fold:start"]);
 
-        const seeded = slowPuller.seed(answer(5), async () => {
+        const seeded = puller.seed(answer(5), async () => {
             order.push("snapshot");
         });
         await settle();
@@ -170,7 +167,7 @@ describe("SyncPuller", () => {
         await seeded;
         expect(order).toEqual(["fold:start", "fold:end", "snapshot"]);
         // the older answer did not move the cursor back
-        expect(slowPuller.cursor?.version).toBe(5);
+        expect(puller.cursor?.version).toBe(5);
     });
 
     test("a pull that fails waits for the next head rather than retrying at once", async () => {

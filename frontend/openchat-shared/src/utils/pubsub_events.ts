@@ -1,5 +1,4 @@
 import type { Readable } from "svelte/store";
-import type { SyncHead } from "../domain/sync";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
@@ -122,7 +121,6 @@ export type PubSubEvents = {
     reactionSelected: { messageId: bigint; kind: "add" | "remove" };
     userSuspensionChanged: undefined;
     sessionExpired: undefined;
-    syncHead: SyncHead;
     selectedChatInvalid: undefined;
     chitEarned: ChitEvent[];
     sendMessageFailed: boolean;
