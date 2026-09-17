@@ -18,7 +18,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Make `user_id` optional in `c2c_user_canister` args, since old User canisters don't send it ([#9410](https://github.com/open-chat-labs/open-chat/pull/9410))
 - Add a `user_id` to the args of every endpoint which is not restricted to the owner, since a canister hosting multiple users cannot derive it from the caller, and rename the direct chat peer in `events`, `events_by_index`, `events_window` and `end_video_call_v2` to `them` ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Move the direct chat model into the `direct_chat_core` library and split each chat into a shareable core (events and both read positions) plus per-user state, so two users in one canister can share a chat ([#9408](https://github.com/open-chat-labs/open-chat/pull/9408))
@@ -52,6 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Make `user_id` optional in `c2c_user_canister` args, since old User canisters don't send it ([#9410](https://github.com/open-chat-labs/open-chat/pull/9410))
 - Restrict `update_bot` to the canister owner ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Validate the whole recipient account rather than only its owner when sending crypto ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
