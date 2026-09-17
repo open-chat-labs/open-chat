@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Check the thread root before pushing a message and let a user who got a chat back read the threads under the roots they can see ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Leave the threads under the messages a user cannot see out of their summary updates ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Return an error rather than trapping for messages with transfers and recipients in other canisters, until they are supported ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Implement `initial_state` and `updates` for a user's direct chats, alongside `mark_read`, `mute_notifications`, `unmute_notifications`, `archive_unarchive_chats`, `pin_chat_v2` and `unpin_chat_v2`, and report deleted chats through `updates` ([#9413](https://github.com/open-chat-labs/open-chat/pull/9413))
+- Return an error rather than trapping when `delete_direct_chat` is asked to block the user, until blocking is supported ([#9413](https://github.com/open-chat-labs/open-chat/pull/9413))
 
 ### Changed
 

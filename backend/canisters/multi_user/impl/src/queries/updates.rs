@@ -1,7 +1,96 @@
+use crate::guards::caller_is_owner;
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
-use user_canister::updates::*;
+use types::{OptionUpdate, TimestampMillis};
+use user_canister::updates::{Response::*, *};
 
-#[query(msgpack = true)]
-fn updates(_args: Args) -> Response {
-    unimplemented!()
+#[query(guard = "caller_is_owner", msgpack = true)]
+fn updates(args: Args) -> Response {
+    read_state(|state| updates_impl(args.updates_since, state))
+}
+
+fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Response {
+    let cores = &state.data.direct_chat_cores;
+
+    state.with_caller_user(|my_index, user| {
+        let username = user.username.if_set_after(updates_since).cloned();
+        let suspended = user.suspended.if_set_after(updates_since).copied();
+        let display_name = user
+            .display_name
+            .if_set_after(updates_since)
+            .map_or(OptionUpdate::NoChange, |update| OptionUpdate::from_update(update.clone()));
+
+        let has_any_updates = username.is_some()
+            || display_name.has_update()
+            || suspended.is_some()
+            || user.direct_chats.any_removed_or_pinned_since(updates_since)
+            || user
+                .direct_chats
+                .iter()
+                .any(|entry| cores.with_chat(entry, |chat| chat.has_updates_since(updates_since)));
+
+        // Short circuit prior to calling `ic0.time()` so that caching works effectively
+        if !has_any_updates {
+            return SuccessNoUpdates;
+        }
+
+        let now = state.env.now();
+        let my_user_id = state.user_id(my_index);
+
+        let mut direct_chats_added = Vec::new();
+        let mut direct_chats_updated = Vec::new();
+
+        for entry in user.direct_chats.iter() {
+            cores.with_chat(entry, |chat| {
+                if chat.has_updates_since(updates_since) {
+                    if chat.date_created() > updates_since {
+                        direct_chats_added.push(chat.to_summary(my_user_id));
+                    } else {
+                        direct_chats_updated.push(chat.to_summary_updates(updates_since, my_user_id));
+                    }
+                }
+            });
+        }
+
+        let direct_chats = DirectChatsUpdates {
+            added: direct_chats_added,
+            updated: direct_chats_updated,
+            removed: user.direct_chats.removed_since(updates_since),
+        };
+
+        // TODO: Everything not filled in below is unchanged or default until the MultiUser
+        // canister holds it per user (see `initial_state`)
+        Success(SuccessResult {
+            timestamp: now,
+            username,
+            display_name,
+            direct_chats,
+            group_chats: GroupChatsUpdates::default(),
+            favourite_chats: FavouriteChatsUpdates::default(),
+            communities: CommunitiesUpdates::default(),
+            avatar_id: OptionUpdate::NoChange,
+            blocked_users: None,
+            suspended,
+            pin_number_settings: OptionUpdate::NoChange,
+            achievements: Vec::new(),
+            achievements_last_seen: None,
+            total_chit_earned: 0,
+            chit_balance: 0,
+            streak: 0,
+            streak_ends: 0,
+            max_streak: 0,
+            streak_insurance: OptionUpdate::NoChange,
+            next_daily_claim: 0,
+            is_unique_person: None,
+            wallet_config: None,
+            referrals: Vec::new(),
+            message_activity_summary: None,
+            bots_added_or_updated: Vec::new(),
+            bots_removed: Vec::new(),
+            btc_address: None,
+            one_sec_address: None,
+            premium_items: None,
+            pinned_chats: user.direct_chats.pinned_chats_if_updated(updates_since),
+        })
+    })
 }

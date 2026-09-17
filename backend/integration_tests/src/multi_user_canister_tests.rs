@@ -10,9 +10,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatEvent, EventsResponse, MessageContent, MessageContentInitial, MessageId,
-    TextContent, UpgradesFilter, UserId,
+    BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, DirectChatSummary, DirectChatSummaryUpdates, EventsResponse,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UpgradesFilter, UserId,
 };
+use user_canister::ChatInList;
 
 #[test]
 fn create_then_upgrade_multi_user_canister() {
@@ -351,6 +352,238 @@ fn a_user_who_deletes_a_shared_direct_chat_gets_it_back_without_the_old_events()
     let expected = vec![(a, "fresh start".to_string())];
     assert_eq!(messages(&events(env, a_principal, canister_id, a, b)), expected);
     assert_eq!(messages(&events(env, b_principal, canister_id, b, a)), expected);
+}
+
+#[test]
+fn initial_state_and_updates_track_a_users_direct_chats() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let a_chat = Chat::Direct(a.into());
+
+    // A new user has no chats and nothing else yet
+    let initial = initial_state(env, a_principal, canister_id);
+    assert!(initial.direct_chats.summaries.is_empty());
+    assert!(initial.pinned_chats.is_empty());
+    assert!(!initial.suspended);
+    assert_eq!(initial.local_user_index_canister_id, local_user_index);
+    assert!(updates(env, a_principal, canister_id, initial.timestamp).is_none());
+
+    // A's message to B shows up in both of their chat lists, read by A but not yet by B
+    let before_message = initial.timestamp;
+    env.advance_time(Duration::from_secs(1));
+    let sent = send_text_message(env, a_principal, canister_id, b, "hello", random_from_u128());
+    let a_summary = single_direct_chat_summary(initial_state(env, a_principal, canister_id));
+    assert_eq!(a_summary.them, b);
+    assert_eq!(a_summary.latest_event_index, sent.event_index);
+    assert_eq!(a_summary.latest_message_index, Some(0.into()));
+    assert_eq!(a_summary.read_by_me_up_to, Some(0.into()));
+    assert_eq!(a_summary.read_by_them_up_to, None);
+    assert!(a_summary.date_created >= before_message);
+    let b_summary = single_direct_chat_summary(initial_state(env, b_principal, canister_id));
+    assert_eq!(b_summary.them, a);
+    assert_eq!(b_summary.read_by_me_up_to, None);
+    assert_eq!(b_summary.read_by_them_up_to, Some(0.into()));
+    assert_eq!(b_summary.latest_message.as_ref().map(|m| m.event.sender), Some(a));
+
+    // A chat created since `updates_since` is reported as added, then nothing is until it changes
+    let b_updates = updates(env, b_principal, canister_id, before_message).unwrap();
+    assert_eq!(b_updates.direct_chats.added.len(), 1);
+    assert_eq!(b_updates.direct_chats.added[0].them, a);
+    assert!(b_updates.direct_chats.updated.is_empty());
+    let after_message = b_updates.timestamp;
+    assert!(updates(env, b_principal, canister_id, after_message).is_none());
+
+    // B reading the message is seen by A as B having read it, since the chat's core is shared
+    env.advance_time(Duration::from_secs(1));
+    mark_read(env, b_principal, canister_id, a, 0.into());
+    let b_updates = single_direct_chat_update(updates(env, b_principal, canister_id, after_message).unwrap());
+    assert_eq!(b_updates.chat_id, a.into());
+    assert_eq!(b_updates.read_by_me_up_to, Some(0.into()));
+    assert_eq!(b_updates.read_by_them_up_to, None);
+    let a_updates = updates(env, a_principal, canister_id, after_message).unwrap();
+    let after_read = a_updates.timestamp;
+    let a_chat_updates = single_direct_chat_update(a_updates);
+    assert_eq!(a_chat_updates.chat_id, b.into());
+    assert_eq!(a_chat_updates.read_by_me_up_to, None);
+    assert_eq!(a_chat_updates.read_by_them_up_to, Some(0.into()));
+
+    // Reading further than the latest message is ignored rather than capped
+    mark_read(env, b_principal, canister_id, a, 5.into());
+    assert!(updates(env, b_principal, canister_id, after_read).is_none());
+
+    // Muting, pinning and archiving are B's alone, and archiving a chat also unpins it
+    env.advance_time(Duration::from_secs(1));
+    let muted = client::multi_user::mute_notifications(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::mute_notifications::Args { chat_id: a.into() },
+    );
+    assert!(matches!(muted, user_canister::mute_notifications::Response::Success));
+    let pinned = client::multi_user::pin_chat_v2(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::pin_chat_v2::Args {
+            chat: ChatInList::Direct(a.into()),
+        },
+    );
+    assert!(matches!(pinned, user_canister::pin_chat_v2::Response::Success), "{pinned:?}");
+    let b_updates = updates(env, b_principal, canister_id, after_read).unwrap();
+    let after_pin = b_updates.timestamp;
+    assert_eq!(b_updates.pinned_chats, Some(vec![a_chat]));
+    assert_eq!(single_direct_chat_update(b_updates).notifications_muted, Some(true));
+    assert!(updates(env, a_principal, canister_id, after_read).is_none());
+    assert_eq!(initial_state(env, b_principal, canister_id).pinned_chats, vec![a_chat]);
+
+    env.advance_time(Duration::from_secs(1));
+    let archived = client::multi_user::archive_unarchive_chats(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::archive_unarchive_chats::Args {
+            to_archive: vec![a_chat, Chat::Direct(local_user_index.into())],
+            to_unarchive: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(&archived, user_canister::archive_unarchive_chats::Response::PartialSuccess(r) if r.chats_not_found == vec![Chat::Direct(local_user_index.into())]),
+        "{archived:?}"
+    );
+    let unmuted = client::multi_user::unmute_notifications(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::mute_notifications::Args { chat_id: a.into() },
+    );
+    assert!(matches!(unmuted, user_canister::unmute_notifications::Response::Success));
+    let b_updates = updates(env, b_principal, canister_id, after_pin).unwrap();
+    let after_archive = b_updates.timestamp;
+    assert_eq!(b_updates.pinned_chats, Some(Vec::new()));
+    let b_chat_updates = single_direct_chat_update(b_updates);
+    assert_eq!(b_chat_updates.archived, Some(true));
+    assert_eq!(b_chat_updates.notifications_muted, Some(false));
+    let b_summary = single_direct_chat_summary(initial_state(env, b_principal, canister_id));
+    assert!(b_summary.archived);
+    assert!(!b_summary.notifications_muted);
+
+    // Unpinning a chat which isn't pinned, or archiving nothing which exists, changes nothing
+    let unpinned = client::multi_user::unpin_chat_v2(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::unpin_chat_v2::Args {
+            chat: ChatInList::Direct(a.into()),
+        },
+    );
+    assert!(matches!(unpinned, user_canister::unpin_chat_v2::Response::Success));
+    let nothing = client::multi_user::archive_unarchive_chats(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::archive_unarchive_chats::Args {
+            to_archive: Vec::new(),
+            to_unarchive: vec![Chat::Direct(local_user_index.into())],
+        },
+    );
+    assert!(
+        matches!(&nothing, user_canister::archive_unarchive_chats::Response::Error(e) if e.matches_code(OCErrorCode::NoChange)),
+        "{nothing:?}"
+    );
+    assert!(updates(env, b_principal, canister_id, after_archive).is_none());
+
+    // A deleting the chat is reported to A as removed, and blocking is not supported yet
+    env.advance_time(Duration::from_secs(1));
+    let blocked = client::multi_user::delete_direct_chat(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::delete_direct_chat::Args {
+            user_id: b,
+            block_user: true,
+        },
+    );
+    assert!(
+        matches!(&blocked, user_canister::delete_direct_chat::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{blocked:?}"
+    );
+    delete_direct_chat(env, a_principal, canister_id, b);
+    let a_updates = updates(env, a_principal, canister_id, after_archive).unwrap();
+    assert_eq!(a_updates.direct_chats.removed, vec![b.into()]);
+    assert!(a_updates.direct_chats.added.is_empty() && a_updates.direct_chats.updated.is_empty());
+    assert!(initial_state(env, a_principal, canister_id).direct_chats.summaries.is_empty());
+    assert!(updates(env, b_principal, canister_id, after_archive).is_none());
+
+    // The chat comes back as added when B messages A again, with the message from before counting
+    // as read and only the new one unread
+    env.advance_time(Duration::from_secs(1));
+    send_text_message(env, b_principal, canister_id, a, "still there?", random_from_u128());
+    let a_updates = updates(env, a_principal, canister_id, after_archive).unwrap();
+    assert_eq!(a_updates.direct_chats.removed, vec![b.into()]);
+    assert_eq!(a_updates.direct_chats.added.len(), 1);
+    assert_eq!(a_updates.direct_chats.added[0].read_by_me_up_to, Some(0.into()));
+    assert_eq!(a_updates.direct_chats.added[0].latest_message_index, Some(1.into()));
+}
+
+fn initial_state(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> user_canister::initial_state::SuccessResult {
+    let user_canister::initial_state::Response::Success(result) =
+        client::multi_user::initial_state(env, sender, canister_id, &user_canister::initial_state::Args {});
+    result
+}
+
+fn updates(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    updates_since: TimestampMillis,
+) -> Option<user_canister::updates::SuccessResult> {
+    match client::multi_user::updates(env, sender, canister_id, &user_canister::updates::Args { updates_since }) {
+        user_canister::updates::Response::Success(result) => Some(result),
+        user_canister::updates::Response::SuccessNoUpdates => None,
+    }
+}
+
+fn single_direct_chat_summary(initial_state: user_canister::initial_state::SuccessResult) -> DirectChatSummary {
+    let Ok([summary]) = <[DirectChatSummary; 1]>::try_from(initial_state.direct_chats.summaries) else {
+        panic!("Expected a single direct chat");
+    };
+    summary
+}
+
+fn single_direct_chat_update(updates: user_canister::updates::SuccessResult) -> DirectChatSummaryUpdates {
+    assert!(updates.direct_chats.added.is_empty(), "{:?}", updates.direct_chats);
+    let Ok([update]) = <[DirectChatSummaryUpdates; 1]>::try_from(updates.direct_chats.updated) else {
+        panic!("Expected a single direct chat update");
+    };
+    update
+}
+
+fn mark_read(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, them: UserId, read_up_to: MessageIndex) {
+    let user_canister::mark_read::Response::Success = client::multi_user::mark_read(
+        env,
+        sender,
+        canister_id,
+        &user_canister::mark_read::Args {
+            messages_read: vec![user_canister::mark_read::ChatMessagesRead {
+                chat_id: them.into(),
+                read_up_to: Some(read_up_to),
+                threads: Vec::new(),
+                date_read_pinned: None,
+            }],
+            community_messages_read: Vec::new(),
+        },
+    );
 }
 
 fn create_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: CanisterId) -> (Principal, UserId) {
