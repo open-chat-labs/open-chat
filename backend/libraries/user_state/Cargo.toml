@@ -1,0 +1,18 @@
+[package]
+name = "user_state"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+itertools = { workspace = true }
+msgpack = { path = "../msgpack" }
+serde = { workspace = true }
+stable_memory_map = { path = "../stable_memory_map" }
+types = { path = "../types" }
+user_canister = { path = "../../canisters/user/api" }
+
+[dev-dependencies]
+ic-stable-structures = { workspace = true }

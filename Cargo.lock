@@ -7315,6 +7315,7 @@ dependencies = [
  "tracing",
  "types",
  "user_canister",
+ "user_state",
  "utils",
 ]
 
@@ -12952,6 +12953,7 @@ dependencies = [
  "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
+ "user_state",
  "utils",
 ]
 
@@ -13079,6 +13081,20 @@ dependencies = [
  "user_ids_set",
  "user_index_canister",
  "utils",
+]
+
+[[package]]
+name = "user_state"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-stable-structures",
+ "itertools 0.15.0",
+ "msgpack",
+ "serde",
+ "stable_memory_map",
+ "types",
+ "user_canister",
 ]
 
 [[package]]

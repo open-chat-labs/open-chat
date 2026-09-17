@@ -67,6 +67,10 @@ impl BlockedUsers {
         self.count as usize
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.count == 0
+    }
+
     // Moves the users which were held on the heap into stable memory, returning how many were moved
     // TODO: Remove this after next release
     pub fn migrate_to_stable_memory(&mut self) -> usize {

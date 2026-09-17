@@ -20,11 +20,13 @@ fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         ChatInList::Direct(chat_id) => {
             state.with_caller_user_mut(|_, user| user.direct_chats.pin(chat_id, now));
         }
-        // TODO: Groups, favourites and channels, once they are held per user
-        ChatInList::Group(_) | ChatInList::Favourite(_) | ChatInList::Community(..) => {
-            return Err(
-                OCErrorCode::InvalidRequest.with_message("Only direct chats can be pinned in the MultiUser canister so far")
-            );
+        ChatInList::Favourite(chat) => {
+            state.with_caller_user_mut(|_, user| user.favourite_chats.pin(chat, now));
+        }
+        // TODO: Groups and channels, once they are held per user
+        ChatInList::Group(_) | ChatInList::Community(..) => {
+            return Err(OCErrorCode::InvalidRequest
+                .with_message("Only direct and favourite chats can be pinned in the MultiUser canister so far"));
         }
     }
 

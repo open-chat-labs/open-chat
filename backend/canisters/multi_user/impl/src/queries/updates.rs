@@ -3,6 +3,7 @@ use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use types::{OptionUpdate, TimestampMillis};
 use user_canister::updates::{Response::*, *};
+use user_state::sorted_pinned;
 
 #[query(guard = "caller_is_owner", msgpack = true)]
 fn updates(args: Args) -> Response {
@@ -19,10 +20,20 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             .display_name
             .if_set_after(updates_since)
             .map_or(OptionUpdate::NoChange, |update| OptionUpdate::from_update(update.clone()));
+        let avatar_id = user
+            .avatar
+            .id_if_set_after(updates_since)
+            .map_or(OptionUpdate::NoChange, OptionUpdate::from_update);
+        let blocked_users = user.blocked_users.if_updated_since(updates_since);
+        let wallet_config = user.wallet_config.if_set_after(updates_since).cloned();
 
         let has_any_updates = username.is_some()
             || display_name.has_update()
+            || avatar_id.has_update()
+            || blocked_users.is_some()
             || suspended.is_some()
+            || wallet_config.is_some()
+            || user.favourite_chats.any_updated(updates_since)
             || user.direct_chats.any_removed_or_pinned_since(updates_since)
             || user
                 .direct_chats
@@ -58,6 +69,14 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             removed: user.direct_chats.removed_since(updates_since),
         };
 
+        let favourite_chats = FavouriteChatsUpdates {
+            chats: user.favourite_chats.chats_if_updated(updates_since),
+            pinned: user
+                .favourite_chats
+                .pinned_if_updated(updates_since)
+                .map(|pinned| sorted_pinned(&pinned)),
+        };
+
         // TODO: Everything not filled in below is unchanged or default until the MultiUser
         // canister holds it per user (see `initial_state`)
         Success(SuccessResult {
@@ -66,10 +85,10 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             display_name,
             direct_chats,
             group_chats: GroupChatsUpdates::default(),
-            favourite_chats: FavouriteChatsUpdates::default(),
+            favourite_chats,
             communities: CommunitiesUpdates::default(),
-            avatar_id: OptionUpdate::NoChange,
-            blocked_users: None,
+            avatar_id,
+            blocked_users,
             suspended,
             pin_number_settings: OptionUpdate::NoChange,
             achievements: Vec::new(),
@@ -82,7 +101,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             streak_insurance: OptionUpdate::NoChange,
             next_daily_claim: 0,
             is_unique_person: None,
-            wallet_config: None,
+            wallet_config,
             referrals: Vec::new(),
             message_activity_summary: None,
             bots_added_or_updated: Vec::new(),

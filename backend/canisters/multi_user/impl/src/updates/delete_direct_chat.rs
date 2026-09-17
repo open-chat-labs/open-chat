@@ -20,20 +20,19 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
     let Some(my_index) = state.caller_user_index() else {
         return Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
     };
-    if args.block_user {
-        // TODO: Block the user once blocked users are held per user
-        return Response::Error(
-            OCErrorCode::InvalidRequest.with_message("Blocking users is not yet supported by the MultiUser canister"),
-        );
-    }
-
     let my_user_id = state.user_id(my_index);
     let now = state.env.now();
     let chat_id = args.user_id.into();
     let Some(chat) = state
         .data
         .users
-        .with_user_mut(my_index, |user| user.direct_chats.remove(&chat_id, now))
+        .with_user_mut(my_index, |user| {
+            let chat = user.direct_chats.remove(&chat_id, now)?;
+            if args.block_user {
+                user.block_user(args.user_id, now);
+            }
+            Some(chat)
+        })
         .flatten()
     else {
         return Response::Error(OCErrorCode::ChatNotFound.into());
