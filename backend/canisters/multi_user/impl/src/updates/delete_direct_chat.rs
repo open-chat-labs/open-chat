@@ -22,15 +22,18 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
     if args.block_user {
         // TODO: Block the user once blocked users are held per user
-        unimplemented!("Blocking users is not yet supported by the MultiUser canister");
+        return Response::Error(
+            OCErrorCode::InvalidRequest.with_message("Blocking users is not yet supported by the MultiUser canister"),
+        );
     }
 
     let my_user_id = state.user_id(my_index);
+    let now = state.env.now();
     let chat_id = args.user_id.into();
     let Some(chat) = state
         .data
         .users
-        .with_user_mut(my_index, |user| user.direct_chats.remove(&chat_id))
+        .with_user_mut(my_index, |user| user.direct_chats.remove(&chat_id, now))
         .flatten()
     else {
         return Response::Error(OCErrorCode::ChatNotFound.into());
@@ -54,6 +57,5 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
         jobs::garbage_collect_stable_memory::start_job_if_required(&state.data);
     }
 
-    // TODO: Record the chat as removed so that `updates` reports it, as the User canister does
     Response::Success
 }
