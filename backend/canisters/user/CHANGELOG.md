@@ -18,7 +18,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Move the blocked users, contacts, favourite chats and profile document models into the `user_state` library, shared with the MultiUser canister ([#TODO](https://github.com/open-chat-labs/open-chat/pull/TODO))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Support P2P swaps for users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
@@ -54,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fail with `ThreadNotFound` rather than trapping when a thread root is not found while translating it for the other user's canister, and check it before pushing a message ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Mark the user's chat with themselves as such, so that messages they send to themselves are read on both sides ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Check the thread root of a P2P swap being accepted before making the transfer, and look the swap up in that thread rather than in the main list ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Move the blocked users, contacts, favourite chats and profile document models into the `user_state` library, shared with the MultiUser canister ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
 
 ### Fixed
 

@@ -19,9 +19,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Return an error rather than trapping for messages with transfers and recipients in other canisters, until they are supported ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Implement `initial_state` and `updates` for a user's direct chats, alongside `mark_read`, `mute_notifications`, `unmute_notifications`, `archive_unarchive_chats`, `pin_chat_v2` and `unpin_chat_v2`, and report deleted chats through `updates` ([#9413](https://github.com/open-chat-labs/open-chat/pull/9413))
 - Return an error rather than trapping when `delete_direct_chat` is asked to block the user, until blocking is supported ([#9413](https://github.com/open-chat-labs/open-chat/pull/9413))
-- Hold each user's avatar, profile background, blocked users, contacts, favourite chats and wallet config, and report them through `initial_state` and `updates` ([#TODO](https://github.com/open-chat-labs/open-chat/pull/TODO))
-- Implement `set_avatar`, `set_profile_background`, `set_bio`, `block_user`, `unblock_user`, `set_contact`, `contacts`, `manage_favourite_chats`, `configure_wallet` and `public_profile` ([#TODO](https://github.com/open-chat-labs/open-chat/pull/TODO))
-- Support pinning favourite chats, blocking the other user when deleting a direct chat, and reject messages to users the sender has blocked ([#TODO](https://github.com/open-chat-labs/open-chat/pull/TODO))
+- Hold each user's avatar, profile background, blocked users, contacts, favourite chats and wallet config, and report them through `initial_state` and `updates` ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
+- Implement `set_avatar`, `set_profile_background`, `set_bio`, `block_user`, `unblock_user`, `set_contact`, `contacts`, `manage_favourite_chats`, `configure_wallet` and `public_profile` ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
+- Support pinning favourite chats, blocking the other user when deleting a direct chat, and reject messages to users the sender has blocked ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
 
 ### Changed
 
