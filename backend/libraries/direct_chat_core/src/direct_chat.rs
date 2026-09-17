@@ -137,7 +137,11 @@ impl<S: Borrow<DirectChatUserState>, C: Borrow<DirectChatCore>> DirectChat<S, C>
 
     // The other user's position in the core, which in a self chat is this user's own
     fn them(&self) -> Participant {
-        if self.state().self_chat { self.me } else { self.me.other() }
+        Self::their_position(self.me, self.state())
+    }
+
+    fn their_position(me: Participant, state: &DirectChatUserState) -> Participant {
+        if state.self_chat { me } else { me.other() }
     }
 
     // The events themselves, for the chat's settings and for the checks which must see every
@@ -357,8 +361,9 @@ impl<S: BorrowMut<DirectChatUserState>, C: BorrowMut<DirectChatCore>> DirectChat
         their_message_index: Option<MessageIndex>,
         event_pusher: Option<P>,
     ) -> EventWrapper<Message> {
-        let sender = if args.sender == self.state().them { self.them() } else { self.me };
+        let me = self.me;
         let (state, core) = self.parts_mut();
+        let sender = if args.sender == state.them { Self::their_position(me, state) } else { me };
         let message_event = core.push_message(args, sender, event_pusher);
 
         if let Some(their_message_index) = their_message_index {
