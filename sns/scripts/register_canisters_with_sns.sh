@@ -9,7 +9,10 @@ cd $SCRIPT_DIR
 set -o allexport; source .env; set +o allexport
 ./utils/setup_env.sh
 
-for file in ./proposals/register_canisters_with_sns/*
+# Optional filename filter, e.g. '1018*' or 'daily_puzzle*', to propose a single entry
+FILTER=${1:-*}
+
+for file in ./proposals/register_canisters_with_sns/$FILTER
 do
     # Extract the CANISTER from the filename
     FILENAME="${file##*/}"
