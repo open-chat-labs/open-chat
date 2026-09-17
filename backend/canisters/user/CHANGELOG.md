@@ -12,19 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Return a distinct `InsufficientAllowance` error when an ICRC-2 transfer exceeds the approval ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Support paying for Diamond membership from external wallets using ICRC2 ([#9265](https://github.com/open-chat-labs/open-chat/pull/9265))
-- Support paying for streak insurance and swapping tokens from external wallets using ICRC2 ([#9402](https://github.com/open-chat-labs/open-chat/pull/9402))
 - Add `c2c_game_chit` endpoint for crediting and debiting CHIT from games, with per-key idempotency ([#9345](https://github.com/open-chat-labs/open-chat/pull/9345))
 - Bound the `c2c_game_chit` amount by range rather than `abs()`, which wraps for `i32::MIN` and let that one value past both the limit and the balance check ([#9345](https://github.com/open-chat-labs/open-chat/pull/9345))
+- Support paying for streak insurance and swapping tokens from external wallets using ICRC2 ([#9402](https://github.com/open-chat-labs/open-chat/pull/9402))
 
 ### Changed
 
-- Add a `user_id` to the args of every endpoint which is not restricted to the owner, since a canister hosting multiple users cannot derive it from the caller, and rename the direct chat peer in `events`, `events_by_index`, `events_window` and `end_video_call_v2` to `them` ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
-- Move the direct chat model into the `direct_chat_core` library and split each chat into a shareable core (events and both read positions) plus per-user state, so two users in one canister can share a chat ([#9408](https://github.com/open-chat-labs/open-chat/pull/9408))
-- Generalise `DirectChat` over owned or borrowed parts so a core can be shared between two users' views of a chat, each with its own minimum visible event index ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
-- Have `DirectChat` supply the minimum visible event index to every operation itself, read events only through its filtered readers, and move `date_created` from the chat's core to the user's state ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
-- Fail with `ThreadNotFound` rather than trapping when a thread root is not found while translating it for the other user's canister, and check it before pushing a message ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
-- Mark the user's chat with themselves as such, so that messages they send to themselves are read on both sides ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Support P2P swaps for users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
@@ -52,12 +46,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the lists of removed direct chats, groups and communities into stable memory ([#9395](https://github.com/open-chat-labs/open-chat/pull/9395))
 - Move the avatar and profile background into the main stable memory map ([#9397](https://github.com/open-chat-labs/open-chat/pull/9397))
 - Move the private replies to groups into the stable memory map for small entries ([#9399](https://github.com/open-chat-labs/open-chat/pull/9399))
+- Add a `user_id` to the args of every endpoint which is not restricted to the owner, since a canister hosting multiple users cannot derive it from the caller, and rename the direct chat peer in `events`, `events_by_index`, `events_window` and `end_video_call_v2` to `them` ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
+- Move the direct chat model into the `direct_chat_core` library and split each chat into a shareable core (events and both read positions) plus per-user state, so two users in one canister can share a chat ([#9408](https://github.com/open-chat-labs/open-chat/pull/9408))
+- Generalise `DirectChat` over owned or borrowed parts so a core can be shared between two users' views of a chat, each with its own minimum visible event index ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Have `DirectChat` supply the minimum visible event index to every operation itself, read events only through its filtered readers, and move `date_created` from the chat's core to the user's state ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Fail with `ThreadNotFound` rather than trapping when a thread root is not found while translating it for the other user's canister, and check it before pushing a message ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
+- Mark the user's chat with themselves as such, so that messages they send to themselves are read on both sides ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 
 ### Fixed
 
-- Restrict `update_bot` to the canister owner ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Validate the whole recipient account rather than only its owner when sending crypto ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
+- Restrict `update_bot` to the canister owner ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
+- Make `user_id` optional in `c2c_user_canister` args, since old User canisters don't send it ([#9410](https://github.com/open-chat-labs/open-chat/pull/9410))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-13
 
