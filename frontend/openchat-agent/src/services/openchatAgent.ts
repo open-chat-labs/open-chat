@@ -186,7 +186,6 @@ import type {
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
     UpdateUserGroupResponse,
-    UpdatedEvent,
     UpdatedRules,
     UpdatesResult,
     UpdatesSuccessResponse,
@@ -256,7 +255,13 @@ import {
     mergeGroupChats,
 } from "../utils/chat";
 import { ChatsDb } from "../utils/chatsDb";
-import { emptySyncStamps, emptyUpdatesResult, touchedFields, updatesSince } from "../utils/sync";
+import {
+    emptySyncStamps,
+    emptyUpdatesResult,
+    snapshotOf,
+    touchedFields,
+    updatesSince,
+} from "../utils/sync";
 import {
     isSuccessfulCommunitySummaryResponse,
     mergeCommunities,
@@ -1533,10 +1538,12 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    // Fetches the updates since `current`, writes the new state to the cache and returns it
+    // (undefined when nothing changed). The UI learns of the changes by pulling from the cache.
     private async _getUpdates(
         current: ChatStateFull | undefined,
         initialLoad: boolean,
-    ): Promise<UpdatesResult | undefined> {
+    ): Promise<ChatStateFull | undefined> {
         const start = performance.now();
         let totalQueryCount = 0;
 
@@ -1998,26 +2005,14 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        const directChatsAddedUpdated = directChats
-            .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
-            .map((c) => this.hydrateChatSummary(c));
-
-        const groupsAddedUpdated = groupChats
-            .filter((g) => groupsAddedUpdatedIds.has(g.id.groupId))
-            .map((c) => this.hydrateChatSummary(c));
-
-        const communitiesAddedUpdated = communities
-            .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
-            .map((c) => this.hydrateCommunity(c));
-
         if (!initialLoad && cachePrimer !== undefined) {
             if (cachePrimer.isFirstIteration) {
                 cachePrimer.processUpdates(directChats, groupChats, communities, updatedEvents);
             } else {
                 cachePrimer.processUpdates(
-                    directChatsAddedUpdated,
-                    groupsAddedUpdated,
-                    communitiesAddedUpdated,
+                    directChats.filter((c) => directChatsAddedUpdatedIds.has(c.id.userId)),
+                    groupChats.filter((g) => groupsAddedUpdatedIds.has(g.id.groupId)),
+                    communities.filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId)),
                     updatedEvents,
                     directChatsRemoved,
                     groupsRemoved,
@@ -2031,34 +2026,7 @@ export class OpenChatAgent extends EventTarget {
             `GetUpdates completed in ${duration}ms. Number of queries: ${totalQueryCount}`,
         );
 
-        return {
-            directChatsAddedUpdated,
-            directChatsRemoved,
-            groupsAddedUpdated,
-            groupsRemoved,
-            communitiesAddedUpdated,
-            communitiesRemoved,
-            updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
-            avatarId: avatarId.toOptionUpdate(),
-            blockedUsers: blockedUsers.valueIfUpdated(),
-            pinnedChats: pinnedChats.valueIfUpdated(),
-            pinnedChannels: pinnedChannels.valueIfUpdated(),
-            pinnedFavouriteChats: pinnedFavouriteChats.valueIfUpdated(),
-            favouriteChats: favouriteChats.valueIfUpdated(),
-            pinNumberSettings: pinNumberSettings.toOptionUpdate(),
-            achievements: achievements.valueIfUpdated(),
-            newAchievements: newAchievements.valueIfUpdated() ?? [],
-            chitState: chitState.valueIfUpdated(),
-            referrals: referrals.valueIfUpdated(),
-            walletConfig: walletConfig.valueIfUpdated(),
-            messageActivitySummary: messageActivitySummary.valueIfUpdated(),
-            installedBots: installedBots.valueIfUpdated(),
-            bitcoinAddress: bitcoinAddress.valueIfUpdated(),
-            oneSecAddress: oneSecAddress.valueIfUpdated(),
-            streakInsurance: streakInsurance.toOptionUpdate(),
-            suspensionChanged,
-            premiumItems: premiumItems.valueIfUpdated(),
-        };
+        return state;
     }
 
     // Called when this agent instance is replaced or discarded so that background timers do not keep it alive
@@ -2158,49 +2126,39 @@ export class OpenChatAgent extends EventTarget {
         return { success, errors };
     }
 
-    getUpdates(initialLoad: boolean): Stream<UpdatesResult | undefined> {
+    getUpdates(initialLoad: boolean): Stream<SyncSinceResponse | undefined> {
         return new Stream(async (resolve, reject) => {
+            const userId = this.userClient.userId;
+
+            if (userId === ANON_USER_ID) {
+                // The anonymous user's state never reaches the cache (the cache may belong to a
+                // signed-in identity), so its snapshot is built from the pass itself and there
+                // is never anything to pull
+                try {
+                    const state = await this._getUpdates(undefined, initialLoad);
+                    resolve(
+                        state === undefined ? undefined : this.#snapshot(userId, 0, state),
+                        true,
+                    );
+                } catch (err) {
+                    reject(err);
+                }
+                return;
+            }
+
+            // The head is read before the rows so the snapshot's version never overstates it
+            const head = await this._chatsDb.getSyncHead();
             const cachedState = await this._chatsDb.getCachedChats();
             const isOffline = offline();
+            let snapshotSent = false;
             if (cachedState && initialLoad) {
-                resolve(
-                    {
-                        ...cachedState,
-                        directChatsAddedUpdated: this.hydrateChatSummaries(cachedState.directChats),
-                        directChatsRemoved: [],
-                        groupsAddedUpdated: this.hydrateChatSummaries(cachedState.groupChats),
-                        groupsRemoved: [],
-                        communitiesAddedUpdated: cachedState.communities.map((c) =>
-                            this.hydrateCommunity(c),
-                        ),
-                        communitiesRemoved: [],
-                        updatedEvents: new Map(),
-                        suspensionChanged: undefined,
-                        newAchievements: [],
-                        avatarId:
-                            cachedState.avatarId !== undefined
-                                ? { value: cachedState.avatarId }
-                                : undefined,
-                        pinNumberSettings:
-                            cachedState.pinNumberSettings !== undefined
-                                ? { value: cachedState.pinNumberSettings }
-                                : undefined,
-                        streakInsurance:
-                            cachedState.streakInsurance !== undefined
-                                ? { value: cachedState.streakInsurance }
-                                : undefined,
-                    },
-                    isOffline,
-                );
+                resolve(this.#snapshot(userId, head, cachedState), isOffline);
+                snapshotSent = true;
             }
             if (!isOffline) {
-                // `updates` is undefined both for a failed pass and for a healthy pass that found
-                // nothing new, so the outcome is tracked separately: a quiet pass must resolve,
-                // or the UI would count it as a failed poll
-                let updates: UpdatesResult | undefined = undefined;
                 let error: unknown = undefined;
                 try {
-                    updates = await this._getUpdates(cachedState, initialLoad);
+                    await this._getUpdates(cachedState, initialLoad);
                 } catch (err) {
                     error = err;
                 }
@@ -2208,11 +2166,33 @@ export class OpenChatAgent extends EventTarget {
                 await this.#announceSyncHead();
                 if (error !== undefined) {
                     reject(error);
+                } else if (initialLoad && !snapshotSent) {
+                    // Nothing was cached before the pass: the snapshot is what it wrote
+                    const { head, state } = await this._chatsDb.getChatsForSync();
+                    resolve(
+                        state === undefined ? undefined : this.#snapshot(userId, head, state),
+                        true,
+                    );
                 } else {
-                    resolve(updates, true);
+                    resolve(undefined, true);
                 }
             }
         });
+    }
+
+    #snapshot(userId: string, version: number, state: ChatStateFull): SyncSinceResponse {
+        return { userId, version, updates: this.#hydrateUpdates(snapshotOf(state)) };
+    }
+
+    #hydrateUpdates(updates: UpdatesResult): UpdatesResult {
+        return {
+            ...updates,
+            directChatsAddedUpdated: this.hydrateChatSummaries(updates.directChatsAddedUpdated),
+            groupsAddedUpdated: this.hydrateChatSummaries(updates.groupsAddedUpdated),
+            communitiesAddedUpdated: updates.communitiesAddedUpdated.map((c) =>
+                this.hydrateCommunity(c),
+            ),
+        };
     }
 
     /**
@@ -2222,6 +2202,9 @@ export class OpenChatAgent extends EventTarget {
      */
     async syncSince(since: number, windows: SyncWindow[]): Promise<SyncSinceResponse> {
         const userId = this.userClient.userId;
+        if (userId === ANON_USER_ID) {
+            return { userId, version: 0, updates: emptyUpdatesResult() };
+        }
         const { head, state, stamps } = await this._chatsDb.getChatsForSync();
         if (state === undefined) {
             // Nothing to answer from, which is not the same as nothing having changed: a cache
@@ -2233,18 +2216,7 @@ export class OpenChatAgent extends EventTarget {
             return { userId, version: Math.min(since, head), updates: emptyUpdatesResult() };
         }
         const updates = updatesSince(state, stamps ?? emptySyncStamps(), since, windows);
-        return {
-            userId,
-            version: head,
-            updates: {
-                ...updates,
-                directChatsAddedUpdated: this.hydrateChatSummaries(updates.directChatsAddedUpdated),
-                groupsAddedUpdated: this.hydrateChatSummaries(updates.groupsAddedUpdated),
-                communitiesAddedUpdated: updates.communitiesAddedUpdated.map((c) =>
-                    this.hydrateCommunity(c),
-                ),
-            },
-        };
+        return { userId, version: head, updates: this.#hydrateUpdates(updates) };
     }
 
     // Tells the UI where the cache's version counter is so it can pull what it has not seen.

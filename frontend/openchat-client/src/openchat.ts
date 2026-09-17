@@ -84,6 +84,7 @@ import {
     parseBigInt,
     pinNumberFailureFromError,
     publish,
+    subscribe,
     random64,
     removeEmailSignInSession,
     removeOpenGraphPreviews,
@@ -321,6 +322,7 @@ import {
     type UpdatedEvent,
     type UpdatedRules,
     type UpdatesResult,
+    type SyncWindow,
     type User,
     type UserGroupDetails,
     type UserOrUserGroup,
@@ -616,6 +618,7 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
+import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
 import { indexIsInRanges } from "./utils/range";
@@ -709,6 +712,7 @@ export class OpenChat {
     #referralCode: string | undefined = undefined;
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
     #chatsPoller: Poller | undefined = undefined;
+    readonly #syncPuller: SyncPuller;
     #botsPoller: Poller | undefined = undefined;
     #dailyPuzzlePoller: Poller | undefined = undefined;
     #dailyPuzzleRolloverTimer: number | undefined = undefined;
@@ -742,6 +746,13 @@ export class OpenChat {
     constructor(private config: OpenChatConfig) {
         this.#worker = new WorkerAgent(config);
         this.#logger = config.logger;
+        this.#syncPuller = new SyncPuller({
+            pull: (since, windows) => this.#worker.send({ kind: "syncSince", since, windows }),
+            fold: (updates) => this.#handleChatsResponse(undefined, false, updates),
+            windows: () => this.#syncWindows(),
+            log: (message, err) => this.#logger.error(message, err as Error),
+        });
+        subscribe("syncHead", (head) => this.#syncPuller.onHead(head));
 
         this.#mobileLayout = config.mobileLayout;
         this.#vapidPublicKey = config.vapidPublicKey;
@@ -891,6 +902,7 @@ export class OpenChat {
         if (typeof window !== "undefined") window.clearTimeout(this.#dailyPuzzleRolloverTimer);
         currentUserStore.set(anonymousUser());
         chatsInitialisedStore.set(false);
+        this.#syncPuller.clear();
         const authPrincipal = identity.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
@@ -7312,6 +7324,33 @@ export class OpenChat {
                 });
         });
     }
+
+    // The timeline ranges on screen, which are the only events a sync pull needs to refresh
+    #syncWindows(): SyncWindow[] {
+        const chatId = selectedChatIdStore.value;
+        if (chatId === undefined) return [];
+
+        const windows: SyncWindow[] = eventIndexesLoaded(chatId)
+            .subranges()
+            .map((r) => ({ chatId, threadRootMessageIndex: undefined, from: r.low, to: r.high }));
+
+        const thread = selectedThreadIdStore.value;
+        if (thread !== undefined && chatIdentifiersEqual(thread.chatId, chatId)) {
+            for (const r of threadEventIndexesLoadedStore.value.subranges()) {
+                windows.push({
+                    chatId,
+                    threadRootMessageIndex: thread.threadRootMessageIndex,
+                    from: r.low,
+                    to: r.high,
+                });
+            }
+        }
+        return windows;
+    }
+
+    // Runs one pass of the updates loop in the worker. On an initial load the worker answers
+    // with a snapshot of its cache which seeds the sync cursor; everything after that reaches
+    // the UI by pulling (see SyncPuller), so the pass itself resolves nothing.
     async #loadChats() {
         const initialLoad = !chatsInitialisedStore.value;
 
@@ -7324,12 +7363,10 @@ export class OpenChat {
                     initialLoad,
                 })
                 .subscribe({
-                    onResult: async (resp) => {
-                        if (resp !== undefined) {
-                            await this.#handleChatsResponse(
-                                updateRegistryTask,
-                                initialLoad,
-                                resp as UpdatesResult,
+                    onResult: async (snapshot) => {
+                        if (snapshot !== undefined) {
+                            await this.#syncPuller.seed(snapshot, (updates) =>
+                                this.#handleChatsResponse(updateRegistryTask, initialLoad, updates),
                             );
                         }
                         latestSuccessfulUpdatesLoop.set(Date.now());

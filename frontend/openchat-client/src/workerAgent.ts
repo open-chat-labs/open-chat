@@ -57,6 +57,9 @@ export class WorkerAgent {
                 if (data.event.subkind === "users_loaded") {
                     userStore.addMany(data.event.users);
                 }
+                if (data.event.subkind === "sync_head") {
+                    publish("syncHead", { userId: data.event.userId, version: data.event.version });
+                }
             } else if (data.kind === "worker_response") {
                 console.debug("WORKER_CLIENT: response: ", ev);
                 this.#resolveResponse(data);

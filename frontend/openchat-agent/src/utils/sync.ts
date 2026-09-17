@@ -334,6 +334,35 @@ export function updatesSince(
     };
 }
 
+/** The whole cached state in the shape the UI folds: the boot snapshot */
+export function snapshotOf(state: ChatStateFull): UpdatesResult {
+    const option = <T>(value: T | undefined): OptionUpdate<T> =>
+        value === undefined ? undefined : { value };
+    return {
+        ...emptyUpdatesResult(),
+        directChatsAddedUpdated: state.directChats,
+        groupsAddedUpdated: state.groupChats,
+        communitiesAddedUpdated: state.communities,
+        avatarId: option(state.avatarId),
+        blockedUsers: state.blockedUsers,
+        pinnedChats: state.pinnedChats,
+        pinnedChannels: state.pinnedChannels,
+        pinnedFavouriteChats: state.pinnedFavouriteChats,
+        favouriteChats: state.favouriteChats,
+        pinNumberSettings: option(state.pinNumberSettings),
+        achievements: state.achievements,
+        chitState: state.chitState,
+        referrals: state.referrals,
+        walletConfig: state.walletConfig,
+        messageActivitySummary: state.messageActivitySummary,
+        installedBots: state.installedBots,
+        bitcoinAddress: state.bitcoinAddress,
+        oneSecAddress: state.oneSecAddress,
+        streakInsurance: option(state.streakInsurance),
+        premiumItems: state.premiumItems,
+    };
+}
+
 export function emptyUpdatesResult(): UpdatesResult {
     return {
         directChatsAddedUpdated: [],
