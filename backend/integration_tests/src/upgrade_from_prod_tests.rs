@@ -17,21 +17,14 @@ use types::{
 
 const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
 const STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID: MemoryId = MemoryId::new(4);
-// Enough messages for the chat's events to be migrated in several batches of 100
+// A chat with many messages, so that its events span several pages
 const LARGE_CHAT_MESSAGES: usize = 250;
 const SMALL_CHATS: usize = 8;
 const SMALL_CHAT_MESSAGES: usize = 3;
 
 // Installs user canisters from the User canister wasm currently in production, fills them with
-// direct chats, contacts, blocked users, an avatar and a profile background, then upgrades them to the new wasm and checks that everything still
-// works.
-//
-// This currently covers moving the contacts, blocked users, direct chats' unread message indexes, the records of the
-// chats the user has been removed from and the avatar and profile background from the heap into
-// stable memory, and moving the events of existing direct chats from their legacy stable memory
-// keys to their `key_id` based keys, which in test mode migrates a single batch of events per call,
-// so the migration is spread across `post_upgrade` and many runs of its timer job.
-// TODO: Remove the migration specific checks once every user canister has been migrated
+// direct chats, contacts, blocked users, an avatar and a profile background, then upgrades them to
+// the new wasm and checks that everything still works.
 #[test]
 fn user_canisters_survive_upgrade_from_prod() {
     // Installing the prod wasm would downgrade the user canisters of any other test drawing a pooled
@@ -207,11 +200,9 @@ fn user_canisters_survive_upgrade_from_prod() {
         )
     );
 
-    // The prod wasm stores direct chat events under keys based on the other user's id. User1 also has
-    // a chat with the OpenChat bot, whose events are included in the key counts.
-    let total_keys = count_keys(env, user1.canister(), KeyType::DirectChatEventLegacy);
+    // User1 also has a chat with the OpenChat bot, whose events are included in the key counts
+    let total_keys = count_keys(env, user1.canister(), KeyType::DirectChatEvent);
     assert!(total_keys > total_events, "{total_keys} {total_events}");
-    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatEvent), 0);
 
     client::user_index::happy_path::upgrade_user_canister_wasm(
         env,
@@ -223,48 +214,26 @@ fn user_canisters_survive_upgrade_from_prod() {
         },
     );
 
-    // Tick one round at a time, checking that every event stays readable while being migrated
-    let mut chats_with_legacy_events = Vec::new();
-    for _ in 0..500 {
+    // The canister is briefly stopped while being upgraded, during which queries are rejected
+    for _ in 0..100 {
         env.tick();
-        // The canister is briefly stopped while being upgraded, during which queries are rejected
-        if try_wasm_version(env, user1.canister()) != Some(new_version) {
-            continue;
-        }
-        let remaining = direct_chats_with_legacy_events(env, user1.canister());
-        chats_with_legacy_events.push(remaining);
-        for (user, snapshot) in chat_partners.iter().zip(snapshots.iter()) {
-            assert_eq!(&all_events(env, &user1, user.user_id), snapshot, "remaining: {remaining}");
-        }
-        if remaining == 0 {
+        if try_wasm_version(env, user1.canister()) == Some(new_version) {
             break;
         }
     }
+    assert_eq!(wasm_version(env, user1.canister()), new_version);
 
-    // `post_upgrade` only migrates a single batch in test mode, so every chat but at most one still
-    // has legacy events when the upgrade completes, and the rest are migrated by the timer job
-    assert!(
-        chats_with_legacy_events.first().is_some_and(|c| *c >= SMALL_CHATS),
-        "{chats_with_legacy_events:?}"
-    );
-    assert!(
-        chats_with_legacy_events.is_sorted_by(|a, b| a >= b),
-        "{chats_with_legacy_events:?}"
-    );
-    assert_eq!(chats_with_legacy_events.last(), Some(&0), "{chats_with_legacy_events:?}");
-    assert!(chats_with_legacy_events.len() > 2, "{chats_with_legacy_events:?}");
-
-    // Every event is now stored under the `key_id` based keys
-    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatEventLegacy), 0);
-    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatThreadEventLegacy), 0);
+    // Every event is still readable, and stored under the same keys
+    for (user, snapshot) in chat_partners.iter().zip(snapshots.iter()) {
+        assert_eq!(&all_events(env, &user1, user.user_id), snapshot);
+    }
     assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatEvent), total_keys);
 
     tick_many(env, 10);
     assert_eq!(wasm_version(env, large_chat_user.canister()), new_version);
-    assert_eq!(direct_chats_with_legacy_events(env, large_chat_user.canister()), 0);
     assert_eq!(all_events(env, &large_chat_user, user1.user_id), large_chat_snapshot_for_them);
 
-    // The records of the chats user1 was removed from were moved into stable memory
+    // The records of the chats user1 was removed from survive the upgrade
     assert_eq!(removed_chats(env, &user1, removed_since), removed_snapshot);
     assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatRemoved), 1);
     assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChatRemoved), 2);
@@ -279,7 +248,7 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(removed_chats(env, &user1, removed_since).1, removed_group_ids_sorted);
     assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChatRemoved), 3);
 
-    // Migrated messages can still be updated, and new messages sent
+    // Messages from before the upgrade can still be updated, and new messages sent
     client::user::happy_path::edit_text_message(
         env,
         &user1,
@@ -309,7 +278,7 @@ fn user_canisters_survive_upgrade_from_prod() {
     }
     assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChatEvent), total_keys + 1);
 
-    // Deleting a migrated chat garbage collects its events
+    // Deleting a chat garbage collects its events
     let deleted_chat_user = &small_chat_users[1];
     let response = client::user::delete_direct_chat(
         env,
@@ -331,8 +300,8 @@ fn user_canisters_survive_upgrade_from_prod() {
         total_keys + 1 - snapshots[2].len()
     );
 
-    // The unread message indexes were moved into stable memory. User1 hasn't read any of the messages
-    // sent by large_chat_user nor the messages sent in the two small chats.
+    // The unread message indexes survive the upgrade. User1 hasn't read any of the messages sent by
+    // large_chat_user nor the messages sent in the two small chats.
     let mut unread_message_indexes = LARGE_CHAT_MESSAGES / 10 + 2 * SMALL_CHAT_MESSAGES;
     assert_eq!(
         count_keys(env, user1.canister(), KeyType::DirectChatUnreadMessageIndex),
@@ -393,7 +362,7 @@ fn user_canisters_survive_upgrade_from_prod() {
         unread_message_indexes
     );
 
-    // The blocked users were moved into stable memory, and can still be blocked and unblocked
+    // The blocked users survive the upgrade, and users can still be blocked and unblocked
     assert_eq!(blocked_users(env, &user1), blocked_users_snapshot);
     assert_eq!(count_keys(env, user1.canister(), KeyType::BlockedUser), 3);
     assert_eq!(
@@ -407,7 +376,7 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(blocked_users(env, &user1), expected_blocked_users);
     assert_eq!(count_keys(env, user1.canister(), KeyType::BlockedUser), 3);
 
-    // The avatar and profile background were moved into stable memory, and can still be updated
+    // The avatar and profile background survive the upgrade, and can still be updated
     assert_eq!(count_keys(env, user1.canister(), KeyType::ProfileDocument), 2);
     assert_document_served(env, &user1, "avatar", &avatar);
     assert_document_served(env, &user1, "profile_background", &profile_background);
@@ -440,7 +409,7 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(profile.avatar_id, Some(new_avatar.id));
     assert_eq!(profile.profile_background_id, None);
 
-    // The contacts were moved into stable memory, and can still be updated
+    // The contacts survive the upgrade, and can still be updated
     assert_eq!(contacts(env, &user1), contacts_snapshot);
     assert_eq!(count_keys(env, user1.canister(), KeyType::Contact), contacts_snapshot.len());
     set_contact(
@@ -537,8 +506,7 @@ fn all_events(env: &PocketIc, user: &User, them: UserId) -> Vec<EventSummary> {
     let mut events = Vec::new();
     let mut start_index = EventIndex::default();
     loop {
-        // The prod wasm still reads the peer from `user_id` (the new wasm reads it from `them` and
-        // ignores `user_id`), so the peer is sent in both fields until the prod wasm has this change
+        // `user_id` is ignored in favour of `them`, but is still part of the args
         let response = client::user::events(
             env,
             user.principal,
@@ -734,8 +702,4 @@ fn try_wasm_version(env: &PocketIc, canister_id: CanisterId) -> Option<BuildVers
     let response: HttpResponse = candid::decode_one(&bytes).unwrap();
     let metrics: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
     Some(serde_json::from_value(metrics["wasm_version"].clone()).unwrap())
-}
-
-fn direct_chats_with_legacy_events(env: &PocketIc, canister_id: CanisterId) -> usize {
-    serde_json::from_value(metrics(env, canister_id)["direct_chats_with_legacy_events"].clone()).unwrap()
 }
