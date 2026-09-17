@@ -1,9 +1,6 @@
-pub mod blocked_users;
 pub mod chit_events;
 pub mod communities;
 pub mod community;
-pub mod contacts;
-pub mod favourite_chats;
 pub mod game_chit_keys;
 pub mod group_chat;
 pub mod group_chats;
@@ -13,7 +10,6 @@ pub mod message_activity_events;
 pub mod p2p_swaps;
 pub mod pin_number;
 pub mod premium_items;
-pub mod profile_document;
 pub mod referrals;
 pub mod streak;
 pub mod threads_read;

@@ -34,4 +34,5 @@ stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
+user_state = { path = "../../../libraries/user_state" }
 utils = { path = "../../../libraries/utils" }

@@ -117,7 +117,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
     let my_user_id = state.user_id(my_index);
     let now = state.env.now();
 
-    // TODO: Reject recipients the sender has blocked once blocked users are held per user
     if args.recipient == OPENCHAT_BOT_USER_ID {
         return Err(OCErrorCode::InvalidRequest.with_message("Messaging the OpenChat Bot is not currently supported"));
     }
@@ -140,6 +139,14 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
     let cores = &state.data.direct_chat_cores;
     state.with_user(my_user_id, |user| -> OCResult<()> {
         user.verify_not_suspended()?;
+
+        if user.blocked_users.contains(&args.recipient) {
+            return Err(OCErrorCode::TargetUserBlocked.into());
+        }
+
+        // TODO: A recipient in this canister who has blocked the sender shares the chat's core with
+        // them, so unlike the User canister, which drops the message on the recipient's side, the
+        // message is currently visible to them. Their entry for the chat needs a way to hide it.
 
         if let Some(chat) = user.direct_chats.get(&args.recipient.into())
             && cores.with_chat(chat, |chat| {

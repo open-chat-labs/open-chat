@@ -1,8 +1,9 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, merge_maps, read_state, sorted_pinned};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use types::{InstalledBotDetails, UserId};
 use user_canister::initial_state::{Response::*, *};
+use user_state::{merge_maps, sorted_pinned};
 
 #[query(guard = "caller_is_owner", msgpack = true)]
 fn initial_state(_args: Args) -> Response {

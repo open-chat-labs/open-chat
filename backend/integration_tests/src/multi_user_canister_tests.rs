@@ -10,10 +10,11 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, DirectChatSummary, DirectChatSummaryUpdates, EventsResponse,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, TextContent, TimestampMillis, UpgradesFilter, UserId,
+    BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, DirectChatSummary, DirectChatSummaryUpdates, Document,
+    EventsResponse, MessageContent, MessageContentInitial, MessageId, MessageIndex, OptionUpdate, TextContent, TimestampMillis,
+    UpgradesFilter, UserId,
 };
-use user_canister::ChatInList;
+use user_canister::{ChatInList, WalletConfig};
 
 #[test]
 fn create_then_upgrade_multi_user_canister() {
@@ -503,21 +504,8 @@ fn initial_state_and_updates_track_a_users_direct_chats() {
     );
     assert!(updates(env, b_principal, canister_id, after_archive).is_none());
 
-    // A deleting the chat is reported to A as removed, and blocking is not supported yet
+    // A deleting the chat is reported to A as removed
     env.advance_time(Duration::from_secs(1));
-    let blocked = client::multi_user::delete_direct_chat(
-        env,
-        a_principal,
-        canister_id,
-        &user_canister::delete_direct_chat::Args {
-            user_id: b,
-            block_user: true,
-        },
-    );
-    assert!(
-        matches!(&blocked, user_canister::delete_direct_chat::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
-        "{blocked:?}"
-    );
     delete_direct_chat(env, a_principal, canister_id, b);
     let a_updates = updates(env, a_principal, canister_id, after_archive).unwrap();
     assert_eq!(a_updates.direct_chats.removed, vec![b.into()]);
@@ -534,6 +522,303 @@ fn initial_state_and_updates_track_a_users_direct_chats() {
     assert_eq!(a_updates.direct_chats.added.len(), 1);
     assert_eq!(a_updates.direct_chats.added[0].read_by_me_up_to, Some(0.into()));
     assert_eq!(a_updates.direct_chats.added[0].latest_message_index, Some(1.into()));
+}
+
+#[test]
+fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_wallet() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (_, c) = create_user(env, local_user_index, canister_id);
+
+    let initial = initial_state(env, a_principal, canister_id);
+    assert_eq!(initial.avatar_id, None);
+    assert!(initial.blocked_users.is_empty());
+    assert!(initial.favourite_chats.chats.is_empty());
+    assert!(initial.favourite_chats.pinned.is_empty());
+    assert!(matches!(initial.wallet_config, WalletConfig::Auto(_)));
+    let start = initial.timestamp;
+
+    // A's avatar, profile background and bio are visible to B through `public_profile`, and the
+    // avatar id is reported through `updates`
+    env.advance_time(Duration::from_secs(1));
+    let avatar = document(100);
+    let profile_background = document(200);
+    set_avatar(env, a_principal, canister_id, Some(avatar.clone()));
+    let response = client::multi_user::set_profile_background(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_profile_background::Args {
+            profile_background: Some(profile_background.clone()),
+        },
+    );
+    assert!(matches!(response, user_canister::set_profile_background::Response::Success));
+    let response = client::multi_user::set_bio(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_bio::Args {
+            text: "Hello".to_string(),
+        },
+    );
+    assert!(matches!(response, user_canister::set_bio::Response::Success));
+
+    let user_canister::public_profile::Response::Success(profile) = client::multi_user::public_profile(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::public_profile::Args { user_id: a },
+    );
+    assert_eq!(profile.avatar_id, Some(avatar.id));
+    assert_eq!(profile.profile_background_id, Some(profile_background.id));
+    assert_eq!(profile.bio, "Hello");
+    assert!(profile.created <= start);
+    let a_updates = updates(env, a_principal, canister_id, start).unwrap();
+    let after_profile = a_updates.timestamp;
+    assert_eq!(a_updates.avatar_id, OptionUpdate::SetToSome(avatar.id));
+    assert_eq!(initial_state(env, a_principal, canister_id).avatar_id, Some(avatar.id));
+    assert!(updates(env, b_principal, canister_id, start).is_none());
+
+    // An oversized avatar is rejected, and removing the avatar is reported too
+    env.advance_time(Duration::from_secs(1));
+    let response = client::multi_user::set_avatar(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_avatar::Args {
+            avatar: Some(document(1024 * 800 + 1)),
+        },
+    );
+    assert!(
+        matches!(&response, user_canister::set_avatar::Response::Error(e) if e.matches_code(OCErrorCode::AvatarTooBig)),
+        "{response:?}"
+    );
+    assert!(updates(env, a_principal, canister_id, after_profile).is_none());
+    set_avatar(env, a_principal, canister_id, None);
+    let a_updates = updates(env, a_principal, canister_id, after_profile).unwrap();
+    let after_avatar_removed = a_updates.timestamp;
+    assert_eq!(a_updates.avatar_id, OptionUpdate::SetToNone);
+
+    // Blocking B stops A messaging B, and is reported to A alone. B can still message A, unlike
+    // with the User canister, since the two share the chat's core.
+    // TODO: Drop B's messages on A's side once each user's entry for a chat can hide them
+    env.advance_time(Duration::from_secs(1));
+    block_user(env, a_principal, canister_id, b);
+    block_user(env, a_principal, canister_id, b);
+    let a_updates = updates(env, a_principal, canister_id, after_avatar_removed).unwrap();
+    let after_block = a_updates.timestamp;
+    assert_eq!(a_updates.blocked_users, Some(vec![b]));
+    assert_eq!(initial_state(env, a_principal, canister_id).blocked_users, vec![b]);
+    assert!(updates(env, b_principal, canister_id, start).is_none());
+    let response =
+        client::multi_user::send_message_v2(env, a_principal, canister_id, &send_message_args(b, "hi", random_from_u128()));
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserBlocked)),
+        "{response:?}"
+    );
+    send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
+
+    // Unblocking B is reported as the list of blocked users being empty
+    env.advance_time(Duration::from_secs(1));
+    let response = client::multi_user::unblock_user(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::unblock_user::Args { user_id: b },
+    );
+    assert!(matches!(response, user_canister::unblock_user::Response::Success));
+    let a_updates = updates(env, a_principal, canister_id, after_block).unwrap();
+    let after_unblock = a_updates.timestamp;
+    assert_eq!(a_updates.blocked_users, Some(Vec::new()));
+    send_text_message(env, a_principal, canister_id, b, "hi", random_from_u128());
+
+    // Deleting a chat can block the other user at the same time, but not if there is no chat
+    env.advance_time(Duration::from_secs(1));
+    send_text_message(env, a_principal, canister_id, c, "hi", random_from_u128());
+    let block_args = user_canister::delete_direct_chat::Args {
+        user_id: c,
+        block_user: true,
+    };
+    let response = client::multi_user::delete_direct_chat(env, a_principal, canister_id, &block_args);
+    assert!(matches!(response, user_canister::delete_direct_chat::Response::Success));
+    let response = client::multi_user::delete_direct_chat(env, a_principal, canister_id, &block_args);
+    assert!(
+        matches!(&response, user_canister::delete_direct_chat::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
+        "{response:?}"
+    );
+    let a_updates = updates(env, a_principal, canister_id, after_unblock).unwrap();
+    let after_delete = a_updates.timestamp;
+    assert_eq!(a_updates.blocked_users, Some(vec![c]));
+    assert_eq!(a_updates.direct_chats.removed, vec![c.into()]);
+
+    // Favourite chats are added most recent first, and pinned favourites are reported separately
+    // from the pinned direct chats
+    env.advance_time(Duration::from_secs(1));
+    let b_chat = Chat::Direct(b.into());
+    let c_chat = Chat::Direct(c.into());
+    manage_favourite_chats(env, a_principal, canister_id, vec![b_chat, c_chat], Vec::new());
+    let a_updates = updates(env, a_principal, canister_id, after_delete).unwrap();
+    let after_favourites = a_updates.timestamp;
+    assert_eq!(a_updates.favourite_chats.chats, Some(vec![c_chat, b_chat]));
+    assert_eq!(a_updates.favourite_chats.pinned, None);
+
+    env.advance_time(Duration::from_secs(1));
+    let response = client::multi_user::pin_chat_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::pin_chat_v2::Args {
+            chat: ChatInList::Favourite(b_chat),
+        },
+    );
+    assert!(matches!(response, user_canister::pin_chat_v2::Response::Success));
+    let a_updates = updates(env, a_principal, canister_id, after_favourites).unwrap();
+    let after_pin = a_updates.timestamp;
+    assert_eq!(a_updates.favourite_chats.chats, None);
+    assert_eq!(a_updates.favourite_chats.pinned, Some(vec![b_chat]));
+    assert_eq!(a_updates.pinned_chats, None);
+    let initial = initial_state(env, a_principal, canister_id);
+    assert_eq!(initial.favourite_chats.chats, vec![c_chat, b_chat]);
+    assert_eq!(initial.favourite_chats.pinned, vec![b_chat]);
+    assert!(initial.pinned_chats.is_empty());
+
+    env.advance_time(Duration::from_secs(1));
+    let response = client::multi_user::unpin_chat_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::unpin_chat_v2::Args {
+            chat: ChatInList::Favourite(b_chat),
+        },
+    );
+    assert!(matches!(response, user_canister::unpin_chat_v2::Response::Success));
+    manage_favourite_chats(env, a_principal, canister_id, Vec::new(), vec![c_chat]);
+    let a_updates = updates(env, a_principal, canister_id, after_pin).unwrap();
+    let after_unpin = a_updates.timestamp;
+    assert_eq!(a_updates.favourite_chats.chats, Some(vec![b_chat]));
+    assert_eq!(a_updates.favourite_chats.pinned, Some(Vec::new()));
+
+    // Contacts are A's alone, and setting one to what it already is changes nothing
+    let set_contact = |env: &mut PocketIc, nickname: OptionUpdate<String>| {
+        client::multi_user::set_contact(
+            env,
+            a_principal,
+            canister_id,
+            &user_canister::set_contact::Args {
+                contact: user_canister::set_contact::OptionalContact { user_id: b, nickname },
+            },
+        )
+    };
+    let response = set_contact(env, OptionUpdate::SetToSome("Bee".to_string()));
+    assert!(
+        matches!(response, user_canister::set_contact::Response::Success),
+        "{response:?}"
+    );
+    let response = set_contact(env, OptionUpdate::NoChange);
+    assert!(
+        matches!(&response, user_canister::set_contact::Response::Error(e) if e.matches_code(OCErrorCode::NoChange)),
+        "{response:?}"
+    );
+    let response = set_contact(env, OptionUpdate::SetToSome("B".to_string()));
+    assert!(
+        matches!(&response, user_canister::set_contact::Response::Error(e) if e.matches_code(OCErrorCode::NameTooShort)),
+        "{response:?}"
+    );
+    assert_eq!(contacts(env, a_principal, canister_id), vec![(b, Some("Bee".to_string()))]);
+    assert!(contacts(env, b_principal, canister_id).is_empty());
+    let response = set_contact(env, OptionUpdate::SetToNone);
+    assert!(
+        matches!(response, user_canister::set_contact::Response::Success),
+        "{response:?}"
+    );
+    assert!(contacts(env, a_principal, canister_id).is_empty());
+    assert!(updates(env, a_principal, canister_id, after_unpin).is_none());
+
+    // The wallet config is reported once changed
+    env.advance_time(Duration::from_secs(1));
+    let response = client::multi_user::configure_wallet(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::configure_wallet::Args {
+            config: WalletConfig::Manual(user_canister::ManualWallet {
+                tokens: vec![canister_ids.icp_ledger],
+            }),
+        },
+    );
+    assert!(matches!(response, user_canister::configure_wallet::Response::Success));
+    let a_updates = updates(env, a_principal, canister_id, after_unpin).unwrap();
+    assert!(
+        matches!(&a_updates.wallet_config, Some(WalletConfig::Manual(w)) if w.tokens == vec![canister_ids.icp_ledger]),
+        "{:?}",
+        a_updates.wallet_config
+    );
+    assert!(matches!(
+        initial_state(env, a_principal, canister_id).wallet_config,
+        WalletConfig::Manual(_)
+    ));
+    assert!(updates(env, a_principal, canister_id, a_updates.timestamp).is_none());
+}
+
+fn document(len: usize) -> Document {
+    Document {
+        id: random_from_u128(),
+        mime_type: "image/png".to_string(),
+        data: (0..len).map(|i| i as u8).collect(),
+    }
+}
+
+fn set_avatar(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, avatar: Option<Document>) {
+    let response = client::multi_user::set_avatar(env, sender, canister_id, &user_canister::set_avatar::Args { avatar });
+    assert!(
+        matches!(response, user_canister::set_avatar::Response::Success),
+        "{response:?}"
+    );
+}
+
+fn block_user(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId) {
+    let response = client::multi_user::block_user(env, sender, canister_id, &user_canister::block_user::Args { user_id });
+    assert!(
+        matches!(response, user_canister::block_user::Response::Success),
+        "{response:?}"
+    );
+}
+
+fn manage_favourite_chats(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    to_add: Vec<Chat>,
+    to_remove: Vec<Chat>,
+) {
+    let response = client::multi_user::manage_favourite_chats(
+        env,
+        sender,
+        canister_id,
+        &user_canister::manage_favourite_chats::Args { to_add, to_remove },
+    );
+    assert!(
+        matches!(response, user_canister::manage_favourite_chats::Response::Success),
+        "{response:?}"
+    );
+}
+
+// The user id and nickname of each contact
+fn contacts(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<(UserId, Option<String>)> {
+    let user_canister::contacts::Response::Success(result) =
+        client::multi_user::contacts(env, sender, canister_id, &user_canister::contacts::Args {});
+    result.contacts.into_iter().map(|c| (c.user_id, c.nickname)).collect()
 }
 
 fn initial_state(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> user_canister::initial_state::SuccessResult {

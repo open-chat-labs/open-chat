@@ -1,8 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
+use user_canister::MessageActivitySummary;
 use user_canister::initial_state::{Response::*, *};
-use user_canister::{MessageActivitySummary, WalletConfig};
+use user_state::sorted_pinned;
 
 #[query(guard = "caller_is_owner", msgpack = true)]
 fn initial_state(_args: Args) -> Response {
@@ -24,21 +25,23 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
                 .collect(),
         };
 
-        // TODO: Everything below the direct chats is empty or default until the MultiUser
-        // canister holds it per user: groups, communities and favourites, blocked users, the
-        // avatar, the pin number, chit and achievements, the streak, the wallet config, referrals,
-        // the message activity feed, bots, the BTC and 1sec addresses and premium items
+        let favourite_chats = FavouriteChatsInitial {
+            chats: user.favourite_chats.chats().to_vec(),
+            pinned: sorted_pinned(user.favourite_chats.pinned()),
+        };
+
+        // TODO: Everything below which is empty or default stays so until the MultiUser canister
+        // holds it per user: groups and communities, the pin number, chit and achievements, the
+        // streak, referrals, the message activity feed, bots, the BTC and 1sec addresses and
+        // premium items
         Success(SuccessResult {
             timestamp: now,
             direct_chats,
             group_chats: GroupChatsInitial { summaries: Vec::new() },
-            favourite_chats: FavouriteChatsInitial {
-                chats: Vec::new(),
-                pinned: Vec::new(),
-            },
+            favourite_chats,
             communities: CommunitiesInitial { summaries: Vec::new() },
-            avatar_id: None,
-            blocked_users: Vec::new(),
+            avatar_id: user.avatar.id(),
+            blocked_users: user.blocked_users.all(),
             suspended: user.suspended.value,
             pin_number_settings: None,
             local_user_index_canister_id: state.data.local_user_index_canister_id,
@@ -52,7 +55,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             streak_insurance: None,
             next_daily_claim: 0,
             is_unique_person: false,
-            wallet_config: WalletConfig::default(),
+            wallet_config: user.wallet_config.value.clone(),
             referrals: Vec::new(),
             message_activity_summary: MessageActivitySummary {
                 read_up_to: 0,
@@ -63,6 +66,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             btc_address: None,
             one_sec_address: None,
             premium_items: Vec::new(),
+            // Only direct and group chats are merged in here; pinned favourites are listed above
             pinned_chats: user.direct_chats.pinned_chats(),
         })
     })

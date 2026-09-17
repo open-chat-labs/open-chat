@@ -1,10 +1,11 @@
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, merge_maps, read_state, sorted_pinned};
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use installed_bots::BotUpdate;
 use std::collections::HashSet;
 use types::{InstalledBotDetails, OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
+use user_state::{merge_maps, sorted_pinned};
 
 #[query(guard = "caller_is_owner", msgpack = true)]
 fn updates(args: Args) -> Response {
