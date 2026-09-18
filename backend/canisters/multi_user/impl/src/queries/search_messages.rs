@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use oc_error_codes::OCErrorCode;
@@ -9,7 +9,7 @@ use user_canister::search_messages::{Response::*, *};
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;
 
-#[query(guard = "caller_is_owner", msgpack = true)]
+#[query(guard = "caller_is_hosted_user", msgpack = true)]
 fn search_messages(args: Args) -> Response {
     match read_state(|state| search_messages_impl(args, state)) {
         Ok(result) => Success(result),

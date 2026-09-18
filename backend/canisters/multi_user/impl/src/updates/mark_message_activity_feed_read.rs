@@ -1,10 +1,10 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::mark_message_activity_feed_read::*;
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn mark_message_activity_feed_read(args: Args) -> Response {
     mutate_state(|state| mark_message_activity_feed_read_impl(args, state))

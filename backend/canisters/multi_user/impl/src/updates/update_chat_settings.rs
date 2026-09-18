@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -7,7 +7,7 @@ use rand::RngExt;
 use types::{Milliseconds, OCResult, TimestampMillis, UserId, UserType};
 use user_canister::update_chat_settings::*;
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn update_chat_settings(args: Args) -> Response {
     // TODO: This is async because the User canister looks up users it has no chat with in the
