@@ -1,11 +1,11 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use types::{OptionUpdate, TimestampMillis};
 use user_canister::updates::{Response::*, *};
 use user_state::sorted_pinned;
 
-#[query(guard = "caller_is_owner", msgpack = true)]
+#[query(guard = "caller_is_hosted_user", msgpack = true)]
 fn updates(args: Args) -> Response {
     read_state(|state| updates_impl(args.updates_since, state))
 }

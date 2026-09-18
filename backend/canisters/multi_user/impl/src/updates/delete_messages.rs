@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
@@ -9,7 +9,7 @@ use oc_error_codes::OCErrorCode;
 use types::{ChatId, EventIndex, MessageId, MessageIndex, OCResult};
 use user_canister::delete_messages::*;
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn delete_messages(args: Args) -> Response {
     mutate_state(|state| delete_messages_impl(args, state)).into()

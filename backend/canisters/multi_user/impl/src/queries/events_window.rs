@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner_or_local_user_index;
+use crate::guards::caller_is_hosted_user_or_local_user_index;
 use crate::queries::events::read_events;
 use crate::read_state;
 use canister_api_macros::query;
@@ -6,7 +6,7 @@ use chat_events::{ChatEventsListReader, Reader};
 use types::{EventOrExpiredRange, UserId};
 use user_canister::events_window::*;
 
-#[query(guard = "caller_is_owner_or_local_user_index", msgpack = true)]
+#[query(guard = "caller_is_hosted_user_or_local_user_index", msgpack = true)]
 fn events_window(args: Args) -> Response {
     read_state(|state| {
         read_events(
