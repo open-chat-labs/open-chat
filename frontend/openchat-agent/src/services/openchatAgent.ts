@@ -255,6 +255,8 @@ import {
 } from "../utils/chat";
 import { ChatsDb } from "../utils/chatsDb";
 import { mergeWaitAllResults, summaryUpdatesArgsByLocalUserIndex } from "../utils/summaryUpdates";
+import { CacheWriteQueue } from "../utils/cacheWriteQueue";
+import { applyRefresh, refreshArgs, refreshTarget } from "../utils/refreshChat";
 import {
     emptySyncStamps,
     emptyUpdatesResult,
@@ -351,6 +353,8 @@ export class OpenChatAgent extends EventTarget {
     private _registryValue: RegistryValue | undefined;
     private _logger: Logger;
     private _cachePrimer: CachePrimer | undefined = undefined;
+    #cacheWrites = new CacheWriteQueue();
+    #queuedRefreshes: Map<string, Promise<boolean>> = new Map();
     private _chatEventsReader: CachedChatEventsReader;
     private _chatsDb: ChatsDb;
     private _userDb: UserDb;
@@ -2136,34 +2140,100 @@ export class OpenChatAgent extends EventTarget {
                 return;
             }
 
-            // The head is read before the rows so the snapshot's version never overstates it
-            const head = await this.#syncHeadOrZero();
-            const cachedState = await this._chatsDb.getCachedChats();
-            const isOffline = offline();
-            let snapshotSent = false;
-            if (cachedState && initialLoad) {
-                resolve(this.#snapshot(userId, head, cachedState), isOffline);
-                snapshotSent = true;
-            }
-            if (!isOffline) {
-                let error: unknown = undefined;
-                let passState: ChatStateFull | undefined = undefined;
-                try {
-                    passState = await this._getUpdates(cachedState, initialLoad);
-                } catch (err) {
-                    error = err;
+            // Queued behind any other pass or single-chat refresh: each reads the cache, fetches
+            // and writes the result back, so one running across another would undo its write
+            await this.#cacheWrites.run(async () => {
+                // The head is read before the rows so the snapshot's version never overstates it
+                const head = await this.#syncHeadOrZero();
+                const cachedState = await this._chatsDb.getCachedChats();
+                const isOffline = offline();
+                let snapshotSent = false;
+                if (cachedState && initialLoad) {
+                    resolve(this.#snapshot(userId, head, cachedState), isOffline);
+                    snapshotSent = true;
                 }
-                // Announced after failed passes too: the head says nothing about reachability
-                await this.#announceSyncHead();
-                if (error !== undefined) {
-                    reject(error);
-                } else if (initialLoad && !snapshotSent) {
-                    resolve(await this.#coldSnapshot(userId, head, passState), true);
-                } else {
-                    resolve(undefined, true);
+                if (!isOffline) {
+                    let error: unknown = undefined;
+                    let passState: ChatStateFull | undefined = undefined;
+                    try {
+                        passState = await this._getUpdates(cachedState, initialLoad);
+                    } catch (err) {
+                        error = err;
+                    }
+                    // Announced after failed passes too: the head says nothing about reachability
+                    await this.#announceSyncHead();
+                    if (error !== undefined) {
+                        reject(error);
+                    } else if (initialLoad && !snapshotSent) {
+                        resolve(await this.#coldSnapshot(userId, head, passState), true);
+                    } else {
+                        resolve(undefined, true);
+                    }
                 }
-            }
+            });
         });
+    }
+
+    /**
+     * Brings one cached group, or the community holding a channel, up to date with a single
+     * summary-updates query, and writes just that chat back to the cache. Much cheaper than a full
+     * updates pass, which also asks the User canister and every other group and community.
+     *
+     * Resolves false when this can't be done on its own and a full pass is needed instead: the
+     * chat isn't cached, the cache is empty, or the answer is one only a full pass handles (the
+     * canister not found, an error, a full summary). Never rejects.
+     *
+     * Refreshes of the same chat that are waiting their turn share one query.
+     */
+    refreshChat(chatId: GroupChatIdentifier | ChannelIdentifier): Promise<boolean> {
+        if (this.userClient.userId === ANON_USER_ID) return Promise.resolve(false);
+        // Canister ids, so a group's and a community's never collide
+        const key = chatId.kind === "group_chat" ? chatId.groupId : chatId.communityId;
+        const queued = this.#queuedRefreshes.get(key);
+        if (queued !== undefined) return queued;
+        const refresh = this.#cacheWrites.run(() => {
+            // From here on a new request must queue again: this one may already have read
+            this.#queuedRefreshes.delete(key);
+            return this.#refreshChat(chatId);
+        });
+        this.#queuedRefreshes.set(key, refresh);
+        return refresh;
+    }
+
+    async #refreshChat(chatId: GroupChatIdentifier | ChannelIdentifier): Promise<boolean> {
+        try {
+            const state = await this._chatsDb.getCachedChats();
+            // `== null`: a corrupt IndexedDB has been seen returning null rather than undefined
+            if (state == null) return false;
+            const target = refreshTarget(state, chatId);
+            if (target === undefined) return false;
+
+            const batch = await this._localUserIndexClient.groupAndCommunitySummaryUpdates(
+                target.chat.localUserIndex,
+                [refreshArgs(target)],
+                1,
+            );
+            const result = applyRefresh(state, target, batch);
+            if (result.kind === "needs_full_pass") return false;
+            if (result.kind === "unchanged") return true;
+
+            const version = await this._chatsDb.setCachedChats(result.state, result.touched);
+            await this.#announceSyncHead(version);
+
+            const cachePrimer = this._cachePrimer;
+            if (cachePrimer !== undefined && !cachePrimer.isFirstIteration) {
+                cachePrimer.processUpdates(
+                    [],
+                    result.chat.kind === "group" ? [result.chat.chat] : [],
+                    result.chat.kind === "community" ? [result.chat.chat] : [],
+                    result.touched.updatedEvents,
+                );
+            }
+            return true;
+        } catch (err) {
+            this._logger.error("Failed to refresh a single chat", err);
+            return false;
+        }
     }
 
     // Never throws, for the reason `getCachedChats` never does: this runs inside a `Stream`

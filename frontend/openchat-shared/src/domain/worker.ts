@@ -358,6 +358,7 @@ export type WorkerRequest =
     | UnsuspendUser
     | GetUpdates
     | SyncSince
+    | RefreshChat
     | GetBots
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
@@ -1800,6 +1801,11 @@ type SyncSince = {
     since: number;
 };
 
+type RefreshChat = {
+    kind: "refreshChat";
+    chatId: GroupChatIdentifier | ChannelIdentifier;
+};
+
 type GetBots = {
     kind: "getBots";
     initialLoad: boolean;
@@ -2484,6 +2490,8 @@ export type WorkerResult<T> = T extends Init
     ? SyncSinceResponse | undefined
     : T extends SyncSince
     ? SyncSinceResponse
+    : T extends RefreshChat
+    ? boolean
     : T extends GetBots
     ? BotsResponse
     : T extends GetDeletedDirectMessage

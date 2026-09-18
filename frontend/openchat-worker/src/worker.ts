@@ -395,6 +395,9 @@ function getAction(
         case "syncSince":
             return agent.syncSince(payload.since);
 
+        case "refreshChat":
+            return agent.refreshChat(payload.chatId);
+
         case "getBots":
             return agent.getBots(payload.initialLoad);
 
