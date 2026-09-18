@@ -186,7 +186,6 @@ import type {
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
     UpdateUserGroupResponse,
-    UpdatedEvent,
     UpdatedRules,
     UpdatesResult,
     UpdatesSuccessResponse,
@@ -256,7 +255,13 @@ import {
     mergeGroupChats,
 } from "../utils/chat";
 import { ChatsDb } from "../utils/chatsDb";
-import { emptySyncStamps, emptyUpdatesResult, touchedFields, updatesSince } from "../utils/sync";
+import {
+    emptySyncStamps,
+    emptyUpdatesResult,
+    snapshotOf,
+    touchedFields,
+    updatesSince,
+} from "../utils/sync";
 import {
     isSuccessfulCommunitySummaryResponse,
     mergeCommunities,
@@ -1533,10 +1538,12 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    // Fetches the updates since `current`, writes the new state to the cache and returns it
+    // (undefined when nothing changed). The UI learns of the changes by pulling from the cache.
     private async _getUpdates(
         current: ChatStateFull | undefined,
         initialLoad: boolean,
-    ): Promise<UpdatesResult | undefined> {
+    ): Promise<ChatStateFull | undefined> {
         const start = performance.now();
         let totalQueryCount = 0;
 
@@ -1998,26 +2005,14 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        const directChatsAddedUpdated = directChats
-            .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
-            .map((c) => this.hydrateChatSummary(c));
-
-        const groupsAddedUpdated = groupChats
-            .filter((g) => groupsAddedUpdatedIds.has(g.id.groupId))
-            .map((c) => this.hydrateChatSummary(c));
-
-        const communitiesAddedUpdated = communities
-            .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
-            .map((c) => this.hydrateCommunity(c));
-
         if (!initialLoad && cachePrimer !== undefined) {
             if (cachePrimer.isFirstIteration) {
                 cachePrimer.processUpdates(directChats, groupChats, communities, updatedEvents);
             } else {
                 cachePrimer.processUpdates(
-                    directChatsAddedUpdated,
-                    groupsAddedUpdated,
-                    communitiesAddedUpdated,
+                    directChats.filter((c) => directChatsAddedUpdatedIds.has(c.id.userId)),
+                    groupChats.filter((g) => groupsAddedUpdatedIds.has(g.id.groupId)),
+                    communities.filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId)),
                     updatedEvents,
                     directChatsRemoved,
                     groupsRemoved,
@@ -2031,34 +2026,7 @@ export class OpenChatAgent extends EventTarget {
             `GetUpdates completed in ${duration}ms. Number of queries: ${totalQueryCount}`,
         );
 
-        return {
-            directChatsAddedUpdated,
-            directChatsRemoved,
-            groupsAddedUpdated,
-            groupsRemoved,
-            communitiesAddedUpdated,
-            communitiesRemoved,
-            updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
-            avatarId: avatarId.toOptionUpdate(),
-            blockedUsers: blockedUsers.valueIfUpdated(),
-            pinnedChats: pinnedChats.valueIfUpdated(),
-            pinnedChannels: pinnedChannels.valueIfUpdated(),
-            pinnedFavouriteChats: pinnedFavouriteChats.valueIfUpdated(),
-            favouriteChats: favouriteChats.valueIfUpdated(),
-            pinNumberSettings: pinNumberSettings.toOptionUpdate(),
-            achievements: achievements.valueIfUpdated(),
-            newAchievements: newAchievements.valueIfUpdated() ?? [],
-            chitState: chitState.valueIfUpdated(),
-            referrals: referrals.valueIfUpdated(),
-            walletConfig: walletConfig.valueIfUpdated(),
-            messageActivitySummary: messageActivitySummary.valueIfUpdated(),
-            installedBots: installedBots.valueIfUpdated(),
-            bitcoinAddress: bitcoinAddress.valueIfUpdated(),
-            oneSecAddress: oneSecAddress.valueIfUpdated(),
-            streakInsurance: streakInsurance.toOptionUpdate(),
-            suspensionChanged,
-            premiumItems: premiumItems.valueIfUpdated(),
-        };
+        return state;
     }
 
     // Called when this agent instance is replaced or discarded so that background timers do not keep it alive
@@ -2158,49 +2126,41 @@ export class OpenChatAgent extends EventTarget {
         return { success, errors };
     }
 
-    getUpdates(initialLoad: boolean): Stream<UpdatesResult | undefined> {
+    getUpdates(initialLoad: boolean): Stream<SyncSinceResponse | undefined> {
         return new Stream(async (resolve, reject) => {
+            const userId = this.userClient.userId;
+
+            if (userId === ANON_USER_ID) {
+                // The anonymous user's state never reaches the cache (the cache may belong to a
+                // signed-in identity), so it never announces a head and can never be pulled.
+                // Every pass therefore resolves the whole state it just fetched: that snapshot is
+                // the anonymous session's only channel, so it cannot be limited to the first load.
+                try {
+                    const state = await this._getUpdates(undefined, initialLoad);
+                    resolve(
+                        state === undefined ? undefined : this.#snapshot(userId, 0, state),
+                        true,
+                    );
+                } catch (err) {
+                    reject(err);
+                }
+                return;
+            }
+
+            // The head is read before the rows so the snapshot's version never overstates it
+            const head = await this.#syncHeadOrZero();
             const cachedState = await this._chatsDb.getCachedChats();
             const isOffline = offline();
+            let snapshotSent = false;
             if (cachedState && initialLoad) {
-                resolve(
-                    {
-                        ...cachedState,
-                        directChatsAddedUpdated: this.hydrateChatSummaries(cachedState.directChats),
-                        directChatsRemoved: [],
-                        groupsAddedUpdated: this.hydrateChatSummaries(cachedState.groupChats),
-                        groupsRemoved: [],
-                        communitiesAddedUpdated: cachedState.communities.map((c) =>
-                            this.hydrateCommunity(c),
-                        ),
-                        communitiesRemoved: [],
-                        updatedEvents: new Map(),
-                        suspensionChanged: undefined,
-                        newAchievements: [],
-                        avatarId:
-                            cachedState.avatarId !== undefined
-                                ? { value: cachedState.avatarId }
-                                : undefined,
-                        pinNumberSettings:
-                            cachedState.pinNumberSettings !== undefined
-                                ? { value: cachedState.pinNumberSettings }
-                                : undefined,
-                        streakInsurance:
-                            cachedState.streakInsurance !== undefined
-                                ? { value: cachedState.streakInsurance }
-                                : undefined,
-                    },
-                    isOffline,
-                );
+                resolve(this.#snapshot(userId, head, cachedState), isOffline);
+                snapshotSent = true;
             }
             if (!isOffline) {
-                // `updates` is undefined both for a failed pass and for a healthy pass that found
-                // nothing new, so the outcome is tracked separately: a quiet pass must resolve,
-                // or the UI would count it as a failed poll
-                let updates: UpdatesResult | undefined = undefined;
                 let error: unknown = undefined;
+                let passState: ChatStateFull | undefined = undefined;
                 try {
-                    updates = await this._getUpdates(cachedState, initialLoad);
+                    passState = await this._getUpdates(cachedState, initialLoad);
                 } catch (err) {
                     error = err;
                 }
@@ -2208,11 +2168,79 @@ export class OpenChatAgent extends EventTarget {
                 await this.#announceSyncHead();
                 if (error !== undefined) {
                     reject(error);
+                } else if (initialLoad && !snapshotSent) {
+                    resolve(await this.#coldSnapshot(userId, head, passState), true);
                 } else {
-                    resolve(updates, true);
+                    resolve(undefined, true);
                 }
             }
         });
+    }
+
+    // Never throws, for the reason `getCachedChats` never does: this runs inside a `Stream`
+    // initialiser, where a rejection reaches neither onResult nor onError and the load would hang.
+    // Zero is the safe answer for a head that cannot be read. A snapshot seeded at zero leaves the
+    // cursor behind everything, so the first pull carries the lot again - a duplicate, which the
+    // fold absorbs, where too high a version would be a hole.
+    async #syncHeadOrZero(): Promise<number> {
+        try {
+            return await this._chatsDb.getSyncHead();
+        } catch (err) {
+            this._logger.error("Failed to read the sync head, seeding from zero", err);
+            return 0;
+        }
+    }
+
+    #snapshot(userId: string, version: number, state: ChatStateFull): SyncSinceResponse {
+        return { userId, version, updates: this.#hydrateUpdates(snapshotOf(state)) };
+    }
+
+    /**
+     * The boot snapshot for a load that found nothing cached: whatever the pass just wrote, read
+     * back as a pull since `since` (the head read before the pass started).
+     *
+     * A pull rather than `snapshotOf` because the pass also stamps things that are not part of the
+     * state - the chit events behind the achievement toasts, and a suspension change. `snapshotOf`
+     * reports none of those, and they are stamped at exactly the version the snapshot seeds the
+     * cursor with, so no later pull would carry them either and they would be lost. Windows are
+     * empty: nothing is on screen yet, so no updated events are owed.
+     */
+    async #coldSnapshot(
+        userId: string,
+        since: number,
+        passState: ChatStateFull | undefined,
+    ): Promise<SyncSinceResponse | undefined> {
+        try {
+            const { head, state, stamps } = await this._chatsDb.getChatsForSync();
+            if (state !== undefined) {
+                return {
+                    userId,
+                    version: head,
+                    updates: this.#hydrateUpdates(
+                        updatesSince(state, stamps ?? emptySyncStamps(), since, []),
+                    ),
+                };
+            }
+        } catch (err) {
+            this._logger.error("Failed to read the chats cache back after a cold load", err);
+        }
+        // Nothing to read back, or the read failed, means the cache write failed (`_getUpdates`
+        // logs and continues) or the cache is unreadable. Fall back to the state the pass fetched
+        // so the app still boots - without this the UI never marks the chats initialised and
+        // sits on the loading screen for as long as the cache stays unusable. Version 0 so the
+        // first head announcement after a successful write pulls everything.
+        return passState === undefined ? undefined : this.#snapshot(userId, 0, passState);
+    }
+
+    #hydrateUpdates(updates: UpdatesResult): UpdatesResult {
+        return {
+            ...updates,
+            directChatsAddedUpdated: this.hydrateChatSummaries(updates.directChatsAddedUpdated),
+            groupsAddedUpdated: this.hydrateChatSummaries(updates.groupsAddedUpdated),
+            communitiesAddedUpdated: updates.communitiesAddedUpdated.map((c) =>
+                this.hydrateCommunity(c),
+            ),
+        };
     }
 
     /**
@@ -2222,6 +2250,9 @@ export class OpenChatAgent extends EventTarget {
      */
     async syncSince(since: number, windows: SyncWindow[]): Promise<SyncSinceResponse> {
         const userId = this.userClient.userId;
+        if (userId === ANON_USER_ID) {
+            return { userId, version: 0, updates: emptyUpdatesResult() };
+        }
         const { head, state, stamps } = await this._chatsDb.getChatsForSync();
         if (state === undefined) {
             // Nothing to answer from, which is not the same as nothing having changed: a cache
@@ -2233,18 +2264,7 @@ export class OpenChatAgent extends EventTarget {
             return { userId, version: Math.min(since, head), updates: emptyUpdatesResult() };
         }
         const updates = updatesSince(state, stamps ?? emptySyncStamps(), since, windows);
-        return {
-            userId,
-            version: head,
-            updates: {
-                ...updates,
-                directChatsAddedUpdated: this.hydrateChatSummaries(updates.directChatsAddedUpdated),
-                groupsAddedUpdated: this.hydrateChatSummaries(updates.groupsAddedUpdated),
-                communitiesAddedUpdated: updates.communitiesAddedUpdated.map((c) =>
-                    this.hydrateCommunity(c),
-                ),
-            },
-        };
+        return { userId, version: head, updates: this.#hydrateUpdates(updates) };
     }
 
     // Tells the UI where the cache's version counter is so it can pull what it has not seen.

@@ -25,6 +25,10 @@ export type SyncHead = {
     version: number;
 };
 
+/**
+ * A `syncSince` answer, and also the boot snapshot `getUpdates` resolves on an initial load:
+ * everything in the cache, read at `version`, which seeds the UI's cursor.
+ */
 export type SyncSinceResponse = {
     userId: string;
     /** The head as it was BEFORE the rows were read: the cursor the UI should move to */

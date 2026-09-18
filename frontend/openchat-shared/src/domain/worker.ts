@@ -89,7 +89,6 @@ import type {
     UnfreezeGroupResponse,
     UnpinMessageResponse,
     UpdateGroupResponse,
-    UpdatesResult,
     VideoCallParticipantsResponse,
     VideoCallPresence,
     WithdrawCryptocurrencyResponse,
@@ -2091,7 +2090,6 @@ export type WorkerResponseInner =
     | RemoveMessageFilter
     | SuspendUserResponse
     | UnsuspendUserResponse
-    | UpdatesResult
     | SyncSinceResponse
     | BotsResponse
     | DeletedDirectMessageResponse
@@ -2484,7 +2482,7 @@ export type WorkerResult<T> = T extends Init
     : T extends UnpinMessage
     ? UnpinMessageResponse
     : T extends GetUpdates
-    ? UpdatesResult | undefined
+    ? SyncSinceResponse | undefined
     : T extends SyncSince
     ? SyncSinceResponse
     : T extends GetBots
