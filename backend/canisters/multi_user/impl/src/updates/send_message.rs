@@ -8,7 +8,7 @@ use chat_events::{
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
-use types::{OCResult, TimestampMillis, UserId, UserType};
+use types::{DirectChatUserNotificationPayload, DirectMessageNotification, OCResult, TimestampMillis, UserId, UserType};
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, c2c_bot_send_message};
 
@@ -109,10 +109,15 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
             message_filter_failed: args.message_filter_failed,
             og_previews: args.og_previews,
         };
-        Ok((message_event, message_for_recipient))
+        let sender_details = SenderDetails {
+            name: user.username.value.clone(),
+            display_name: user.display_name.value.clone(),
+            avatar_id: user.avatar.id(),
+        };
+        Ok((message_event, message_for_recipient, sender_details))
     });
 
-    let (message_event, message_for_recipient) = match result {
+    let (message_event, message_for_recipient, sender_details) = match result {
         Some(Ok(ok)) => ok,
         Some(Err(error)) => return Error(error),
         None => return Error(OCErrorCode::TargetUserNotFound.into()),
@@ -121,7 +126,7 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     // A recipient in this canister gets the message straight away, rather than via a call to their
     // canister. A chat with yourself has a single copy, so there is nothing more to do.
     if let Recipient::SameCanister(their_index) = recipient {
-        receive_message(their_index, my_user_id, message_for_recipient, now, state);
+        receive_message(their_index, my_user_id, sender_details, message_for_recipient, now, state);
     }
 
     // TODO: Award achievements and register the timer jobs for message expiry, as the User
@@ -134,6 +139,13 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
         timestamp: now,
         expires_at: message_event.expires_at,
     })
+}
+
+// What the recipient's notification of a message shows of its sender
+struct SenderDetails {
+    name: String,
+    display_name: Option<String>,
+    avatar_id: Option<u128>,
 }
 
 // Who a message is to, relative to its sender
@@ -202,14 +214,22 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
 // the `SendMessages` event it receives from the sender's canister, applied directly. As there, a
 // message the recipient doesn't receive (because they have blocked the sender, or it is in a
 // thread their copy of the chat doesn't have) stays on the sender's side alone.
-fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, now: TimestampMillis, state: &mut RuntimeState) {
+fn receive_message(
+    their_index: u16,
+    sender: UserId,
+    sender_details: SenderDetails,
+    message: SendMessageArgs,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
     let their_user_id = state.user_id(their_index);
     let chat_id = sender.into();
     let anonymized_id: u128 = state.env.rng().random();
+    let mute_notification = message.message_filter_failed.is_some();
 
-    state.data.users.with_user_mut(their_index, |user| {
+    let notification = state.data.users.with_user_mut(their_index, |user| {
         if user.blocked_users.contains(&sender) {
-            return;
+            return None;
         }
 
         let existing_chat = user.direct_chats.get(&chat_id);
@@ -222,7 +242,7 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
             None => Err(OCErrorCode::ThreadNotFound.into()),
         };
         let Ok(thread_root_message_index) = thread_root_message_index else {
-            return;
+            return None;
         };
 
         // The sender can only reuse a message id in a chat they have deleted their copy of, in
@@ -231,7 +251,7 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
             chat.events()
                 .message_already_finalised(thread_root_message_index, message.message_id, false)
         }) {
-            return;
+            return None;
         }
 
         let replies_to = match message.replies_to {
@@ -252,7 +272,7 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
             .direct_chats
             .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now);
 
-        chat.push_message::<NullEventPusher>(
+        let message_event = chat.push_message::<NullEventPusher>(
             PushMessageArgs {
                 thread_root_message_index,
                 message_id: message.message_id,
@@ -271,8 +291,31 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
             None,
         );
 
-        // TODO: Notify the recipient (muted if `message.message_filter_failed` is set), record
-        // replies to messages in other chats and message activity, and register the timer jobs
-        // for message expiry, as the User canister does
+        // TODO: Record replies to messages in other chats and message activity, and register the
+        // timer jobs for message expiry, as the User canister does
+
+        if mute_notification || chat.notifications_muted.value || user.suspended.value {
+            return None;
+        }
+
+        let content = &message_event.event.content;
+        Some(DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
+            sender,
+            thread_root_message_index,
+            message_index: message_event.event.message_index,
+            event_index: message_event.index,
+            sender_name: sender_details.name,
+            sender_display_name: sender_details.display_name,
+            message_type: content.content_type().to_string(),
+            message_text: content.notification_text(&[], &[]),
+            image_url: content.notification_image_url(),
+            file_name: content.notification_file_name(),
+            sender_avatar_id: sender_details.avatar_id,
+            crypto_transfer: content.notification_crypto_transfer_details(&[]),
+        }))
     });
+
+    if let Some(notification) = notification.flatten() {
+        state.push_notification(Some(sender), their_index, notification, now);
+    }
 }

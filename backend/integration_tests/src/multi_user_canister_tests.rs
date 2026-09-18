@@ -1189,6 +1189,48 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     assert!(messages(&events(env, b_principal, canister_id, b, a)).contains(&(a, "hello".to_string())));
 }
 
+// The LocalUserIndex only keeps a notification for a user with a push subscription, which a user in
+// a MultiUser canister can't yet have as the UserIndex isn't told of them, so this checks that the
+// events are sent rather than what the LocalUserIndex does with them
+#[test]
+fn events_for_the_local_user_index_are_sent_from_a_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    // A notification of each message, blocking, unblocking and setting a profile background
+    send_text_message(env, a_principal, canister_id, b, "hello", random_from_u128());
+    send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
+    block_user(env, a_principal, canister_id, b);
+    unblock_user(env, a_principal, canister_id, b);
+    let background = client::multi_user::set_profile_background(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_profile_background::Args {
+            profile_background: Some(document(100)),
+        },
+    );
+    assert!(matches!(background, user_canister::set_profile_background::Response::Success));
+
+    tick_many(env, 3);
+    assert_eq!(queued_local_user_index_events(env, canister_id), 0);
+}
+
+fn queued_local_user_index_events(env: &PocketIc, canister_id: CanisterId) -> u32 {
+    serde_json::from_value(metrics(env, canister_id)["queued_local_user_index_events"].clone()).unwrap()
+}
+
 #[test]
 fn upgrade_filter_naming_unknown_canister_is_rejected() {
     let mut wrapper = ENV.deref().get();

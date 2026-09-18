@@ -1,3 +1,4 @@
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user::User;
 use crate::model::users::Users;
 use crate::timer_job_types::TimerJob;
@@ -5,12 +6,18 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use direct_chat::DirectChat;
+use local_user_index_canister::{MultiUserEvent, UserEvent as LocalUserIndexEvent};
 use oc_error_codes::OCErrorCode;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use types::{BuildVersion, CanisterId, ChatId, Cycles, OCResult, TimestampMillis, Timestamped, UserId};
+use timer_job_queues::BatchedTimerJobQueue;
+use types::{
+    BuildVersion, CanisterId, ChatId, Cycles, DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, OCResult,
+    TimestampMillis, Timestamped, UserId, UserNotification,
+};
 use utils::env::Environment;
 
 mod guards;
@@ -159,6 +166,42 @@ impl RuntimeState {
             .flatten()
     }
 
+    // Queues an event from the user at `user_index` for the LocalUserIndex, which it takes as being
+    // from that user
+    pub fn push_local_user_index_canister_event(
+        &mut self,
+        user_index: u16,
+        event: LocalUserIndexEvent<DirectChatUserNotificationPayload>,
+        now: TimestampMillis,
+    ) {
+        let user_id = self.user_id(user_index);
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: MultiUserEvent { user_id, event },
+        });
+    }
+
+    // Queues a notification for the user at `recipient_index`, as the User canister does for its user
+    pub fn push_notification(
+        &mut self,
+        sender: Option<UserId>,
+        recipient_index: u16,
+        notification: DirectChatUserNotificationPayload,
+        now: TimestampMillis,
+    ) {
+        let recipient = self.user_id(recipient_index);
+        self.push_local_user_index_canister_event(
+            recipient_index,
+            LocalUserIndexEvent::Notification(Box::new(Notification::User(UserNotification {
+                sender,
+                recipients: vec![recipient],
+                notification,
+            }))),
+            now,
+        );
+    }
+
     // Queues the stable memory map entries of a chat deleted by the user at `user_index` for
     // removal by the garbage collection job
     pub fn garbage_collect_stable_memory_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
@@ -182,6 +225,7 @@ impl RuntimeState {
             user_count: self.data.users.len() as u32,
             stable_memory_keys_to_garbage_collect: self.data.stable_memory_keys_to_garbage_collect.len() as u32,
             timer_jobs: self.data.timer_jobs.len() as u32,
+            queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -209,6 +253,10 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     #[serde(default)]
     pub video_call_operators: Vec<Principal>,
+    // Events for the LocalUserIndex, each naming the user it is from. The default covers canisters
+    // created before the queue existed, whose LocalUserIndex id is set after the upgrade.
+    #[serde(default = "local_user_index_event_sync_queue_default")]
+    pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     // The prefixes of deleted direct chats, whose entries are removed by a background job, each
     // with the index of the user who held the chat since the entries are keyed under that user
     #[serde(default)]
@@ -239,12 +287,17 @@ impl Data {
             identity_canister_id,
             escrow_canister_id,
             video_call_operators,
+            local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             timer_jobs: TimerJobs::default(),
             rng_seed,
             test_mode,
         }
     }
+}
+
+fn local_user_index_event_sync_queue_default() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), true)
 }
 
 #[derive(Serialize, Debug)]
@@ -260,6 +313,7 @@ pub struct Metrics {
     pub user_count: u32,
     pub stable_memory_keys_to_garbage_collect: u32,
     pub timer_jobs: u32,
+    pub queued_local_user_index_events: u32,
     pub canister_ids: CanisterIds,
 }
 
