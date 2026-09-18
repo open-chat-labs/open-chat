@@ -129,8 +129,11 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
         receive_message(their_index, my_user_id, sender_details, message_for_recipient, now, state);
     }
 
-    // TODO: Award achievements and register the timer jobs for message expiry, as the User
-    // canister does
+    if let Some(expiry) = message_event.expires_at {
+        state.handle_event_expiry(my_index, expiry);
+    }
+
+    // TODO: Award achievements, as the User canister does
 
     Success(SuccessResult {
         chat_id,
@@ -227,7 +230,7 @@ fn receive_message(
     let anonymized_id: u128 = state.env.rng().random();
     let mute_notification = message.message_filter_failed.is_some();
 
-    let notification = state.data.users.with_user_mut(their_index, |user| {
+    let received = state.data.users.with_user_mut(their_index, |user| {
         if user.blocked_users.contains(&sender) {
             return None;
         }
@@ -291,31 +294,43 @@ fn receive_message(
             None,
         );
 
-        // TODO: Record replies to messages in other chats and message activity, and register the
-        // timer jobs for message expiry, as the User canister does
+        // TODO: Record replies to messages in other chats and message activity, as the User
+        // canister does
 
-        if mute_notification || chat.notifications_muted.value || user.suspended.value {
-            return None;
-        }
+        let notification = if mute_notification || chat.notifications_muted.value || user.suspended.value {
+            None
+        } else {
+            let content = &message_event.event.content;
+            Some(DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
+                sender,
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+                event_index: message_event.index,
+                sender_name: sender_details.name,
+                sender_display_name: sender_details.display_name,
+                message_type: content.content_type().to_string(),
+                message_text: content.notification_text(&[], &[]),
+                image_url: content.notification_image_url(),
+                file_name: content.notification_file_name(),
+                sender_avatar_id: sender_details.avatar_id,
+                crypto_transfer: content.notification_crypto_transfer_details(&[]),
+            }))
+        };
 
-        let content = &message_event.event.content;
-        Some(DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
-            sender,
-            thread_root_message_index,
-            message_index: message_event.event.message_index,
-            event_index: message_event.index,
-            sender_name: sender_details.name,
-            sender_display_name: sender_details.display_name,
-            message_type: content.content_type().to_string(),
-            message_text: content.notification_text(&[], &[]),
-            image_url: content.notification_image_url(),
-            file_name: content.notification_file_name(),
-            sender_avatar_id: sender_details.avatar_id,
-            crypto_transfer: content.notification_crypto_transfer_details(&[]),
-        }))
+        Some((message_event.expires_at, notification))
     });
 
-    if let Some(notification) = notification.flatten() {
+    let Some((expires_at, notification)) = received.flatten() else {
+        return;
+    };
+
+    // The recipient's copy of the chat has its own time to live, so the message may expire at a
+    // different time in each copy
+    if let Some(expiry) = expires_at {
+        state.handle_event_expiry(their_index, expiry);
+    }
+
+    if let Some(notification) = notification {
         state.push_notification(Some(sender), their_index, notification, now);
     }
 }

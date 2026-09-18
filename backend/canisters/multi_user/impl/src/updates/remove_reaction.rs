@@ -2,11 +2,12 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{AddRemoveReactionArgs, NullEventPusher};
+use chat_events::{AddRemoveReactionArgs, MessageInternal, NullEventPusher, UpdateMessageSuccess};
 use direct_chat::DirectChat;
 use oc_error_codes::OCErrorCode;
-use types::{EventIndex, MessageId, MessageIndex, OCResult, Reaction, TimestampMillis, UserId};
+use types::{Chat, EventIndex, MessageId, MessageIndex, OCResult, Reaction, TimestampMillis, UserId};
 use user_canister::remove_reaction::*;
+use user_canister::{MessageActivity, MessageActivityEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -69,15 +70,37 @@ pub(crate) fn toggle_reaction(
     // Then in the other user's copy, where the thread is identified by the id of its root message
     // since message indexes differ between the copies
     // TODO: A user in another canister needs sending `ToggleReaction`, as the User canister does
-    state.with_their_direct_chat_mut(my_user_id, them, |chat| {
-        if let Ok(thread_root_message_index) = chat.thread_root_message_index(thread_root_message_id) {
-            let _ = apply(chat, thread_root_message_index);
-        }
-    });
+    let activity = state
+        .with_their_direct_chat_mut(my_user_id, them, |chat| {
+            let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;
+            let result = apply(chat, thread_root_message_index).ok()??;
+            let message = result.value;
 
-    // TODO: When a reaction is added to the other user's message, notify them, record it in their
-    // message activity and award them `HadMessageReactedTo`, and award the caller
-    // `ReactedToMessage`, as the User canister does
+            // A reaction to their own message generates no activity for them
+            (message.sender != my_user_id).then(|| MessageActivityEvent {
+                chat: Chat::Direct(my_user_id.into()),
+                thread_root_message_index,
+                message_index: message.message_index,
+                message_id: message.message_id,
+                event_index: result.event_index,
+                activity: MessageActivity::Reaction,
+                timestamp: now,
+                user_id: Some(my_user_id),
+            })
+        })
+        .flatten();
+
+    if let Some(activity) = activity
+        && let Some(their_index) = state.local_user_index(them)
+    {
+        state
+            .data
+            .users
+            .with_user_mut(their_index, |user| user.push_message_activity(activity, now));
+    }
+
+    // TODO: When a reaction is added to the other user's message, notify them and award them
+    // `HadMessageReactedTo`, and award the caller `ReactedToMessage`, as the User canister does
     Ok(())
 }
 
@@ -89,7 +112,7 @@ fn apply_reaction(
     reaction: Reaction,
     added: bool,
     now: TimestampMillis,
-) -> OCResult {
+) -> OCResult<Option<UpdateMessageSuccess<MessageInternal>>> {
     let args = AddRemoveReactionArgs {
         user_id,
         min_visible_event_index: EventIndex::default(),
@@ -100,8 +123,8 @@ fn apply_reaction(
     };
     if added {
         // TODO: Push the reaction to the event store (`UserEventPusher` in the User canister)
-        chat.add_reaction::<NullEventPusher>(args, None).map(|_| ())
+        chat.add_reaction::<NullEventPusher>(args, None).map(Some)
     } else {
-        chat.remove_reaction(args).map(|_| ())
+        chat.remove_reaction(args).map(|_| None)
     }
 }

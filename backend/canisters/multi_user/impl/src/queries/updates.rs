@@ -23,14 +23,19 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             .id_if_set_after(updates_since)
             .map_or(OptionUpdate::NoChange, OptionUpdate::from_update);
         let blocked_users = user.blocked_users.if_updated_since(updates_since);
+        let pin_number_updated = user.pin_number.last_updated() > updates_since;
         let wallet_config = user.wallet_config.if_set_after(updates_since).cloned();
+        let message_activity_summary =
+            (user.message_activity_events.last_updated() > updates_since).then(|| user.message_activity_events.summary());
 
         let has_any_updates = username.is_some()
             || display_name.has_update()
             || avatar_id.has_update()
             || blocked_users.is_some()
+            || pin_number_updated
             || suspended.is_some()
             || wallet_config.is_some()
+            || message_activity_summary.is_some()
             || user.favourite_chats.any_updated(updates_since)
             || user.direct_chats.any_updated(updates_since);
 
@@ -41,6 +46,14 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
 
         let now = state.env.now();
         let my_user_id = state.user_id(my_index);
+
+        let pin_number_settings = if !pin_number_updated {
+            OptionUpdate::NoChange
+        } else if user.pin_number.enabled() {
+            OptionUpdate::SetToSome(user.pin_number.settings(now))
+        } else {
+            OptionUpdate::SetToNone
+        };
 
         let mut direct_chats_added = Vec::new();
         let mut direct_chats_updated = Vec::new();
@@ -80,7 +93,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             avatar_id,
             blocked_users,
             suspended,
-            pin_number_settings: OptionUpdate::NoChange,
+            pin_number_settings,
             achievements: Vec::new(),
             achievements_last_seen: None,
             total_chit_earned: 0,
@@ -93,7 +106,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             is_unique_person: None,
             wallet_config,
             referrals: Vec::new(),
-            message_activity_summary: None,
+            message_activity_summary,
             bots_added_or_updated: Vec::new(),
             bots_removed: Vec::new(),
             btc_address: None,

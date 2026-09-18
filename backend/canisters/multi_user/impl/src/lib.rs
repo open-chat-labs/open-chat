@@ -1,7 +1,7 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user::User;
 use crate::model::users::Users;
-use crate::timer_job_types::TimerJob;
+use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
@@ -210,6 +210,74 @@ impl RuntimeState {
             .extend(prefixes.into_iter().map(|prefix| (user_index, prefix)));
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
+    }
+
+    // Registers that an event in a direct chat of the user at `user_index` expires at `expiry`,
+    // bringing forward the job to remove the user's expired events if it is due later than that
+    pub fn handle_event_expiry(&mut self, user_index: u16, expiry: TimestampMillis) {
+        let now = self.env.now();
+        let is_earliest = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| {
+                let is_earliest = user.next_event_expiry.is_none_or(|ex| expiry < ex);
+                if is_earliest {
+                    user.next_event_expiry = Some(expiry);
+                }
+                is_earliest
+            })
+            .unwrap_or_default();
+
+        if is_earliest {
+            let timer_jobs = &mut self.data.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(job) if job.user_index == user_index));
+            timer_jobs.enqueue_job(
+                TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob { user_index }),
+                expiry,
+                now,
+            );
+        }
+    }
+
+    // Removes the expired events from the direct chats of the user at `user_index`, then schedules
+    // the job to run again when their next event expires
+    pub fn run_event_expiry_job(&mut self, user_index: u16) {
+        let now = self.env.now();
+        let Some((next_event_expiry, thread_prefixes)) = self.data.users.with_user_mut(user_index, |user| {
+            let mut next_event_expiry = None;
+            let mut thread_prefixes = Vec::new();
+            for chat in user.direct_chats.iter_mut() {
+                let result = chat.remove_expired_events(now);
+                if let Some(expiry) = chat.events().next_event_expiry()
+                    && next_event_expiry.is_none_or(|current| expiry < current)
+                {
+                    next_event_expiry = Some(expiry);
+                }
+                // TODO: Delete the files referenced by the expired messages (`result.files`), as
+                // the User canister does
+                //
+                // Threads aren't currently enabled for direct chats, but if a thread's root message
+                // expires then its entries in stable memory must be garbage collected
+                for thread in result.threads {
+                    thread_prefixes.extend(chat.events().thread_stable_memory_key_prefixes(thread.root_message_index));
+                }
+            }
+            user.next_event_expiry = next_event_expiry;
+            (next_event_expiry, thread_prefixes)
+        }) else {
+            return;
+        };
+
+        if !thread_prefixes.is_empty() {
+            self.garbage_collect_stable_memory_keys(user_index, thread_prefixes);
+        }
+        if let Some(expiry) = next_event_expiry {
+            self.data.timer_jobs.enqueue_job(
+                TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob { user_index }),
+                expiry,
+                now,
+            );
+        }
     }
 
     pub fn metrics(&self) -> Metrics {

@@ -3,8 +3,11 @@ use direct_chat::DirectChats;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use types::{TimestampMillis, Timestamped, UserId};
-use user_canister::WalletConfig;
-use user_state::{BlockedUsers, Contacts, FavouriteChats, ProfileDocument};
+use user_canister::{MessageActivityEvent, WalletConfig};
+use user_state::{
+    BlockedUsers, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
+    SavedCryptoAccounts,
+};
 
 // The state of a single user within the canister. This mirrors the per-user fields of the User
 // canister's `Data`, using the same names and types, so that the logic of each endpoint can be
@@ -23,11 +26,23 @@ pub struct User {
     pub user_created: TimestampMillis,
     pub suspended: Timestamped<bool>,
     pub referred_by: Option<UserId>,
+    #[serde(default)]
+    pub hot_group_exclusions: HotGroupExclusions,
+    #[serde(default)]
+    pub saved_crypto_accounts: SavedCryptoAccounts,
+    #[serde(default)]
+    pub pin_number: PinNumber,
     pub direct_chats: DirectChats,
     pub favourite_chats: FavouriteChats,
     pub blocked_users: BlockedUsers,
     pub contacts: Contacts,
     pub wallet_config: Timestamped<WalletConfig>,
+    #[serde(default)]
+    pub message_activity_events: MessageActivityEvents,
+    // When the earliest event due to expire in any of the user's direct chats expires, which is
+    // when the job to remove the user's expired events next runs
+    #[serde(default)]
+    pub next_event_expiry: Option<TimestampMillis>,
 }
 
 impl User {
@@ -42,11 +57,16 @@ impl User {
             user_created: now,
             suspended: Timestamped::default(),
             referred_by,
+            hot_group_exclusions: HotGroupExclusions::default(),
+            saved_crypto_accounts: SavedCryptoAccounts::default(),
+            pin_number: PinNumber::default(),
             direct_chats: DirectChats::default(),
             favourite_chats: FavouriteChats::default(),
             blocked_users: BlockedUsers::default(),
             contacts: Contacts::default(),
             wallet_config: Timestamped::default(),
+            message_activity_events: MessageActivityEvents::default(),
+            next_event_expiry: None,
         }
     }
 
@@ -64,5 +84,13 @@ impl User {
     // the LocalUserIndex (`UserUnblocked`) if the user is newly unblocked.
     pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         self.blocked_users.unblock(user_id, now)
+    }
+
+    // Adds an event to the user's message activity feed, unless it was caused by a user they have
+    // blocked
+    pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {
+        if event.user_id.is_none_or(|user_id| !self.blocked_users.contains(&user_id)) {
+            self.message_activity_events.push(event, now);
+        }
     }
 }
