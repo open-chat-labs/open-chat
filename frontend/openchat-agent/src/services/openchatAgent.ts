@@ -1907,9 +1907,13 @@ export class OpenChatAgent extends EventTarget {
                     ),
             );
 
-        this.removeExpiredLatestMessages(directChats, start);
-        this.removeExpiredLatestMessages(groupChats, start);
-        communities.forEach((c) => this.removeExpiredLatestMessages(c.channels, start));
+        // The chats cache only rewrites the chats it is told were touched, so the chats it
+        // changes in place are counted as touched below
+        const expiredDirectChats = this.removeExpiredLatestMessages(directChats, start);
+        const expiredGroupChats = this.removeExpiredLatestMessages(groupChats, start);
+        const expiredCommunities = communities.filter(
+            (c) => this.removeExpiredLatestMessages(c.channels, start).length > 0,
+        );
 
         const state = {
             userCanisterLocalUserIndex,
@@ -1942,16 +1946,19 @@ export class OpenChatAgent extends EventTarget {
         const directChatsAddedUpdatedIds = new Set([
             ...directChatsAdded.map((c) => c.id.userId),
             ...directChatUpdates.map((c) => c.id.userId),
+            ...expiredDirectChats.map((c) => c.id.userId),
         ]);
         const groupsAddedUpdatedIds = new Set([
             ...groupsAdded.map((g) => g.id.groupId),
             ...groupUpdates.map((g) => g.id.groupId),
             ...userCanisterGroupUpdates.map((g) => g.id.groupId),
+            ...expiredGroupChats.map((g) => g.id.groupId),
         ]);
         const communitiesAddedUpdatedIds = new Set([
             ...communitiesAdded.map((c) => c.id.communityId),
             ...communityUpdates.map((c) => c.id.communityId),
             ...userCanisterCommunityUpdates.map((c) => c.id.communityId),
+            ...expiredCommunities.map((c) => c.id.communityId),
         ]);
 
         if (this.userClient.userId !== ANON_USER_ID) {
@@ -2188,13 +2195,13 @@ export class OpenChatAgent extends EventTarget {
         passState: ChatStateFull | undefined,
     ): Promise<SyncSinceResponse | undefined> {
         try {
-            const { head, state, stamps } = await this._chatsDb.getChatsForSync();
-            if (state !== undefined) {
+            const { head, chats, stamps } = await this._chatsDb.getChatsForSync(since);
+            if (chats !== undefined) {
                 return {
                     userId,
                     version: head,
                     updates: this.#hydrateUpdates(
-                        updatesSince(state, stamps ?? emptySyncStamps(), since),
+                        updatesSince(chats, stamps ?? emptySyncStamps(), since),
                     ),
                 };
             }
@@ -2230,17 +2237,17 @@ export class OpenChatAgent extends EventTarget {
         if (userId === ANON_USER_ID) {
             return { userId, version: 0, updates: emptyUpdatesResult() };
         }
-        const { head, state, stamps } = await this._chatsDb.getChatsForSync();
-        if (state === undefined) {
+        const { head, chats, stamps } = await this._chatsDb.getChatsForSync(since);
+        if (chats === undefined) {
             // Nothing to answer from, which is not the same as nothing having changed: a cache
-            // found unusable is cleared with its stamps left in place, so that the full load
-            // which follows can tombstone what has gone. Answering at `head` would carry the
+            // found unusable has its globals cleared with its rows left in place, so that the
+            // full load which follows can tombstone what has gone. Answering at `head` would carry the
             // UI's cursor past everything stamped since `since` with none of it delivered. The
             // cursor stays where it is instead, and the write that refills the cache announces
             // a head the UI then pulls to from here.
             return { userId, version: Math.min(since, head), updates: emptyUpdatesResult() };
         }
-        const updates = updatesSince(state, stamps ?? emptySyncStamps(), since);
+        const updates = updatesSince(chats, stamps ?? emptySyncStamps(), since);
         return { userId, version: head, updates: this.#hydrateUpdates(updates) };
     }
 
@@ -2255,18 +2262,23 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    private removeExpiredLatestMessages(
-        chats: { latestMessage?: EventWrapper<Message>; latestMessageIndex: number | undefined }[],
-        now: number,
-    ) {
+    // Returns the chats it changed
+    private removeExpiredLatestMessages<
+        T extends { latestMessage?: EventWrapper<Message>; latestMessageIndex: number | undefined },
+    >(chats: T[], now: number): T[] {
+        const changed: T[] = [];
         for (const chat of chats) {
             if (
-                chat.latestMessage?.event.messageIndex !== chat.latestMessageIndex ||
-                (chat.latestMessage?.expiresAt !== undefined && chat.latestMessage.expiresAt < now)
+                chat.latestMessage !== undefined &&
+                (chat.latestMessage.event.messageIndex !== chat.latestMessageIndex ||
+                    (chat.latestMessage.expiresAt !== undefined &&
+                        chat.latestMessage.expiresAt < now))
             ) {
                 chat.latestMessage = undefined;
+                changed.push(chat);
             }
         }
+        return changed;
     }
 
     async getCommunitySummary(communityId: string): Promise<CommunitySummaryResponse> {

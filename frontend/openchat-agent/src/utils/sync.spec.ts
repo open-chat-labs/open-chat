@@ -9,13 +9,18 @@ import type {
 import { ChatMap } from "@shared";
 import { describe, expect, test } from "vitest";
 import {
-    emptySyncStamps,
+    chatRowKey,
+    chatRowsToWrite,
     emptyTouched,
+    globalsOf,
     mergeUpdatedEventStamps,
     nextSyncStamps,
+    removedFromTombstones,
+    stateFromRows,
     SYNCED_FIELDS,
     updatesSince,
-    type SyncStamps,
+    type ChatsSince,
+    type RemovedChats,
     type SyncTouched,
 } from "./sync";
 
@@ -85,57 +90,96 @@ const chitEvent = (amount: number): ChitEvent => ({
 const groupA = group("a");
 const groupB = group("b");
 
-describe("nextSyncStamps", () => {
-    test("stamps touched and unknown chats with the version and keeps the rest", () => {
-        const prev: SyncStamps = {
-            ...emptySyncStamps(),
-            directChats: { u1: 3, u2: 3 },
-            groupChats: { a: 2 },
-        };
-        const next = nextSyncStamps(
-            prev,
+describe("chatRowsToWrite", () => {
+    const keys = (...ks: string[]) => new Set(ks);
+    const putKeys = (plan: ReturnType<typeof chatRowsToWrite>) => plan.put.map((p) => p.key);
+
+    test("writes touched and uncached chats and leaves the rest alone", () => {
+        const plan = chatRowsToWrite(
             state({
                 directChats: [direct("u1"), direct("u2"), direct("u3")],
                 groupChats: [groupA],
             }),
             touched({ directChats: new Set(["u2"]) }),
-            7,
+            keys("direct_chat|u1", "direct_chat|u2", "group_chat|a"),
+            false,
         );
-        expect(next.directChats).toEqual({ u1: 3, u2: 7, u3: 7 });
-        expect(next.groupChats).toEqual({ a: 2 });
+        expect(putKeys(plan)).toEqual(["direct_chat|u2", "direct_chat|u3"]);
+        expect(plan.put.map((p) => p.isNew)).toEqual([false, true]);
+        expect(plan.removed).toEqual([]);
     });
 
-    test("a chat that was stamped and is now gone gets a tombstone at the version", () => {
-        const prev: SyncStamps = {
-            ...emptySyncStamps(),
-            groupChats: { a: 2, b: 2 },
-            removedCommunities: { c9: 1 },
-        };
-        const next = nextSyncStamps(prev, state({ groupChats: [groupA] }), touched(), 5);
-        expect(next.groupChats).toEqual({ a: 2 });
-        expect(next.removedGroupChats).toEqual({ b: 5 });
-        // older tombstones for other kinds are carried
-        expect(next.removedCommunities).toEqual({ c9: 1 });
+    test("a cached chat that is gone is removed, keeping its kind and id", () => {
+        const plan = chatRowsToWrite(
+            state({ groupChats: [groupA] }),
+            touched(),
+            keys("group_chat|a", "group_chat|b", "community|c1"),
+            false,
+        );
+        expect(plan.put).toEqual([]);
+        expect(plan.removed).toEqual([
+            { key: "group_chat|b", kind: "group_chat", id: "b" },
+            { key: "community|c1", kind: "community", id: "c1" },
+        ]);
     });
 
-    test("a tombstone is dropped when its chat is back", () => {
-        const prev: SyncStamps = { ...emptySyncStamps(), removedGroupChats: { b: 4 } };
-        const next = nextSyncStamps(prev, state({ groupChats: [groupB] }), touched(), 6);
-        expect(next.removedGroupChats).toEqual({});
-        expect(next.groupChats).toEqual({ b: 6 });
+    test("a direct chat and a group chat with the same id are separate rows", () => {
+        expect(chatRowKey("direct_chat", "same")).not.toBe(chatRowKey("group_chat", "same"));
+        const plan = chatRowsToWrite(
+            state({ directChats: [direct("same")] }),
+            touched(),
+            keys("group_chat|same", "direct_chat|same"),
+            false,
+        );
+        expect(plan.put).toEqual([]);
+        expect(plan.removed.map((r) => r.key)).toEqual(["group_chat|same"]);
     });
 
+    test("rewriteAll writes every chat, and still removes the ones that are gone", () => {
+        const plan = chatRowsToWrite(
+            state({ groupChats: [groupA], communities: [community("c1")] }),
+            touched(),
+            keys("group_chat|a", "group_chat|b"),
+            true,
+        );
+        expect(putKeys(plan)).toEqual(["group_chat|a", "community|c1"]);
+        expect(plan.removed.map((r) => r.key)).toEqual(["group_chat|b"]);
+    });
+});
+
+describe("stateFromRows", () => {
+    test("puts the rows back into their lists beside the globals", () => {
+        const full = state({ avatarId: 5n });
+        const rebuilt = stateFromRows(globalsOf(full), [
+            { kind: "group_chat", version: 1, summary: groupA },
+            { kind: "direct_chat", version: 2, summary: direct("u1") },
+            { kind: "community", version: 3, summary: community("c1") },
+        ]);
+        expect(rebuilt.avatarId).toBe(5n);
+        expect(rebuilt.directChats).toEqual([direct("u1")]);
+        expect(rebuilt.groupChats).toEqual([groupA]);
+        expect(rebuilt.communities).toEqual([community("c1")]);
+        expect("directChats" in globalsOf(full)).toBe(false);
+    });
+
+    test("tombstones are sorted by kind", () => {
+        expect(
+            removedFromTombstones([
+                { kind: "community", id: "c", version: 1 },
+                { kind: "direct_chat", id: "u", version: 1 },
+                { kind: "group_chat", id: "g", version: 1 },
+            ]),
+        ).toEqual({ directChats: ["u"], groupChats: ["g"], communities: ["c"] });
+    });
+});
+
+describe("nextSyncStamps", () => {
     test("every field is stamped the first time and touched fields move to the version", () => {
-        const first = nextSyncStamps(undefined, state(), touched(), 1);
+        const first = nextSyncStamps(undefined, touched(), 1);
         for (const field of SYNCED_FIELDS) {
             expect(first.fields[field]).toBe(1);
         }
-        const second = nextSyncStamps(
-            first,
-            state(),
-            touched({ fields: new Set(["blockedUsers"]) }),
-            2,
-        );
+        const second = nextSyncStamps(first, touched({ fields: new Set(["blockedUsers"]) }), 2);
         expect(second.fields.blockedUsers).toBe(2);
         expect(second.fields.avatarId).toBe(1);
     });
@@ -144,14 +188,13 @@ describe("nextSyncStamps", () => {
         const events = [chitEvent(1)];
         const next = nextSyncStamps(
             undefined,
-            state(),
             touched({ chitEvents: events, suspensionChanged: true }),
             3,
         );
         expect(next.chitEvents).toEqual([{ version: 3, events }]);
         expect(next.suspension).toBe(3);
 
-        const later = nextSyncStamps(next, state(), touched(), 4);
+        const later = nextSyncStamps(next, touched(), 4);
         expect(later.chitEvents).toEqual([{ version: 3, events }]);
         expect(later.suspension).toBe(3);
     });
@@ -235,18 +278,17 @@ describe("updatesSince", () => {
         blockedUsers: ["x"],
         pinNumberSettings: undefined,
     });
+    const noneRemoved: RemovedChats = { directChats: [], groupChats: [], communities: [] };
+    const since = (s: ChatsSince["state"] = full, removed = noneRemoved): ChatsSince => ({
+        state: s,
+        removed,
+    });
 
-    test("returns only the records and removals stamped after since", () => {
-        const stamps: SyncStamps = {
-            ...emptySyncStamps(),
-            directChats: { u1: 1, u2: 5 },
-            groupChats: { a: 5, b: 2 },
-            communities: { c1: 1 },
-            removedDirectChats: { u9: 4 },
-            removedGroupChats: { g9: 3 },
-            removedCommunities: { c9: 6 },
-        };
-        const result = updatesSince(full, stamps, 3);
+    test("carries the chats and removals it is given as they are", () => {
+        const changed = state({ directChats: [direct("u2")], groupChats: [groupA] });
+        const removed = { directChats: ["u9"], groupChats: [], communities: ["c9"] };
+        const stamps = nextSyncStamps(undefined, touched(), 1);
+        const result = updatesSince(since(changed, removed), stamps, 3);
         expect(result.directChatsAddedUpdated.map((c) => c.id.userId)).toEqual(["u2"]);
         expect(result.groupsAddedUpdated.map((g) => g.id.groupId)).toEqual(["a"]);
         expect(result.communitiesAddedUpdated).toEqual([]);
@@ -255,38 +297,38 @@ describe("updatesSince", () => {
         expect(result.communitiesRemoved).toEqual(["c9"]);
     });
 
-    test("a record with no stamp is carried rather than skipped", () => {
-        const stamps: SyncStamps = { ...emptySyncStamps(), groupChats: { a: 1 } };
-        const result = updatesSince(full, stamps, 10);
-        expect(result.groupsAddedUpdated.map((g) => g.id.groupId)).toEqual(["b"]);
-        expect(result.directChatsAddedUpdated.map((c) => c.id.userId)).toEqual(["u1", "u2"]);
-    });
-
     test("fields stamped after since are returned, option fields as option updates", () => {
-        const stamps = nextSyncStamps(undefined, full, touched(), 1);
-        const before = updatesSince(full, stamps, 1);
+        const stamps = nextSyncStamps(undefined, touched(), 1);
+        const before = updatesSince(since(), stamps, 1);
         expect(before.avatarId).toBeUndefined();
         expect(before.blockedUsers).toBeUndefined();
         expect(before.pinNumberSettings).toBeUndefined();
 
-        const after = updatesSince(full, stamps, 0);
+        const after = updatesSince(since(), stamps, 0);
         expect(after.avatarId).toEqual({ value: 99n });
         expect(after.blockedUsers).toEqual(["x"]);
         expect(after.pinNumberSettings).toBe("set_to_none");
         expect(after.streakInsurance).toBe("set_to_none");
     });
 
+    test("a field with no stamp is carried rather than skipped", () => {
+        const result = updatesSince(
+            since(),
+            { ...nextSyncStamps(undefined, touched(), 1), fields: {} },
+            10,
+        );
+        expect(result.blockedUsers).toEqual(["x"]);
+    });
+
     test("updated events stamped after since come back for every chat, once each", () => {
         const stamps = nextSyncStamps(
             nextSyncStamps(
                 undefined,
-                full,
                 touched({
                     updatedEvents: updatedEvents([[groupA, [{ eventIndex: 5, timestamp: 1n }]]]),
                 }),
                 1,
             ),
-            full,
             touched({
                 updatedEvents: updatedEvents([
                     [
@@ -303,7 +345,7 @@ describe("updatesSince", () => {
             }),
             2,
         );
-        const result = new ChatMap(updatesSince(full, stamps, 1).updatedEvents);
+        const result = new ChatMap(updatesSince(since(), stamps, 1).updatedEvents);
         expect(result.get(groupA.id)).toEqual([
             { eventIndex: 5, threadRootMessageIndex: undefined, timestamp: 2n },
             { eventIndex: 20, threadRootMessageIndex: undefined, timestamp: 2n },
@@ -311,21 +353,20 @@ describe("updatesSince", () => {
         ]);
         expect(result.get(groupB.id)?.map((e) => e.eventIndex)).toEqual([20]);
 
-        expect(updatesSince(full, stamps, 2).updatedEvents.size).toBe(0);
+        expect(updatesSince(since(), stamps, 2).updatedEvents.size).toBe(0);
     });
 
     test("new achievements and a suspension change are carried while past since", () => {
         const stamps = nextSyncStamps(
             undefined,
-            full,
             touched({ chitEvents: [chitEvent(5)], suspensionChanged: true }),
             4,
         );
-        const fresh = updatesSince(full, stamps, 3);
+        const fresh = updatesSince(since(), stamps, 3);
         expect(fresh.newAchievements).toEqual([chitEvent(5)]);
         expect(fresh.suspensionChanged).toBe(true);
 
-        const seen = updatesSince(full, stamps, 4);
+        const seen = updatesSince(since(), stamps, 4);
         expect(seen.newAchievements).toEqual([]);
         expect(seen.suspensionChanged).toBeUndefined();
     });

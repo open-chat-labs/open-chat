@@ -2,6 +2,9 @@ import type {
     ChatIdentifier,
     ChatStateFull,
     ChitEvent,
+    CommunitySummary,
+    DirectChatSummary,
+    GroupChatSummary,
     OptionUpdate,
     UpdatedEvent,
     UpdatesResult,
@@ -11,10 +14,12 @@ import { ChatMap, chatIdentifierToKey } from "@shared";
 /**
  * The versioning behind the cache -> UI sync pull (see `domain/sync.ts` in openchat-shared).
  *
- * The chats blob is one record, so the per-item versions live beside it in a `SyncStamps`
- * record written in the same transaction: a version per chat, per removed chat (a tombstone,
- * so a pull can carry the removal), per global field, per updated event and per batch of chit
- * events. Both functions here are pure so the rules can be tested without IndexedDB.
+ * Each chat is a row of its own carrying the version it was last written at, and a removed chat
+ * leaves a tombstone row at the version it went, so a pull reads only the chats written since
+ * its cursor. Everything else is one record of global fields, and their versions live beside it
+ * in a `SyncStamps` record written in the same transaction: a version per global field, per
+ * updated event and per batch of chit events. The functions here are pure so the rules can be
+ * tested without IndexedDB.
  */
 
 export const SYNCED_FIELDS = [
@@ -48,12 +53,6 @@ export type UpdatedEventStamp = {
 };
 
 export type SyncStamps = {
-    directChats: Record<string, number>;
-    groupChats: Record<string, number>;
-    communities: Record<string, number>;
-    removedDirectChats: Record<string, number>;
-    removedGroupChats: Record<string, number>;
-    removedCommunities: Record<string, number>;
     fields: Partial<Record<SyncedField, number>>;
     updatedEvents: UpdatedEventStamp[];
     chitEvents: { version: number; events: ChitEvent[] }[];
@@ -72,6 +71,143 @@ export type SyncTouched = {
     suspensionChanged: boolean;
 };
 
+/** The chat state minus the chats, which live one per row */
+export type ChatGlobals = Omit<ChatStateFull, "directChats" | "groupChats" | "communities">;
+
+export type ChatRow =
+    | { kind: "direct_chat"; version: number; summary: DirectChatSummary }
+    | { kind: "group_chat"; version: number; summary: GroupChatSummary }
+    | { kind: "community"; version: number; summary: CommunitySummary };
+
+export type ChatRowKind = ChatRow["kind"];
+
+export type ChatTombstone = { kind: ChatRowKind; id: string; version: number };
+
+export type RemovedChats = { directChats: string[]; groupChats: string[]; communities: string[] };
+
+/** The globals, the chats written after a version and the chats removed after it */
+export type ChatsSince = { state: ChatStateFull; removed: RemovedChats };
+
+type ChatRowSummary = ChatRow["summary"];
+
+// A direct chat and a group chat can share an id, so the kind is part of the key
+export function chatRowKey(kind: ChatRowKind, id: string): string {
+    return `${kind}|${id}`;
+}
+
+function rowId(chat: ChatRowSummary): string {
+    switch (chat.kind) {
+        case "direct_chat":
+            return chat.id.userId;
+        case "group_chat":
+            return chat.id.groupId;
+        case "community":
+            return chat.id.communityId;
+    }
+}
+
+function touchedIds(touched: SyncTouched, kind: ChatRowKind): Set<string> {
+    switch (kind) {
+        case "direct_chat":
+            return touched.directChats;
+        case "group_chat":
+            return touched.groupChats;
+        case "community":
+            return touched.communities;
+    }
+}
+
+/**
+ * The rows a write of `state` has to touch, given the keys already cached. A chat the writer
+ * touched, or one with no row yet, is written; every other row is left as it is, which is what
+ * keeps a pass that changed one chat from rewriting them all. A cached row whose chat is not in
+ * `state` is removed and leaves a tombstone.
+ *
+ * `rewriteAll` is for a write with no cached globals (first write, or the cache was found
+ * unusable): the rows still there are not to be trusted, so every chat is written.
+ */
+export function chatRowsToWrite(
+    state: ChatStateFull,
+    touched: SyncTouched,
+    cachedKeys: Set<string>,
+    rewriteAll: boolean,
+): {
+    put: { key: string; isNew: boolean; summary: ChatRowSummary }[];
+    removed: { key: string; kind: ChatRowKind; id: string }[];
+} {
+    const put: { key: string; isNew: boolean; summary: ChatRowSummary }[] = [];
+    const present = new Set<string>();
+    const chats: ChatRowSummary[] = [
+        ...state.directChats,
+        ...state.groupChats,
+        ...state.communities,
+    ];
+    for (const summary of chats) {
+        const id = rowId(summary);
+        const key = chatRowKey(summary.kind, id);
+        present.add(key);
+        const isNew = !cachedKeys.has(key);
+        if (rewriteAll || isNew || touchedIds(touched, summary.kind).has(id)) {
+            put.push({ key, isNew, summary });
+        }
+    }
+    const removed: { key: string; kind: ChatRowKind; id: string }[] = [];
+    for (const key of cachedKeys) {
+        if (!present.has(key)) {
+            const separator = key.indexOf("|");
+            removed.push({
+                key,
+                kind: key.slice(0, separator) as ChatRowKind,
+                id: key.slice(separator + 1),
+            });
+        }
+    }
+    return { put, removed };
+}
+
+/** Puts the globals and the chat rows back together as the state the updates loop works on */
+export function stateFromRows(globals: ChatGlobals, rows: ChatRow[]): ChatStateFull {
+    const state: ChatStateFull = { ...globals, directChats: [], groupChats: [], communities: [] };
+    for (const row of rows) {
+        switch (row.kind) {
+            case "direct_chat":
+                state.directChats.push(row.summary);
+                break;
+            case "group_chat":
+                state.groupChats.push(row.summary);
+                break;
+            case "community":
+                state.communities.push(row.summary);
+                break;
+        }
+    }
+    return state;
+}
+
+export function removedFromTombstones(tombstones: ChatTombstone[]): RemovedChats {
+    const removed: RemovedChats = { directChats: [], groupChats: [], communities: [] };
+    for (const t of tombstones) {
+        switch (t.kind) {
+            case "direct_chat":
+                removed.directChats.push(t.id);
+                break;
+            case "group_chat":
+                removed.groupChats.push(t.id);
+                break;
+            case "community":
+                removed.communities.push(t.id);
+                break;
+        }
+    }
+    return removed;
+}
+
+export function globalsOf(state: ChatStateFull): ChatGlobals {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { directChats, groupChats, communities, ...globals } = state;
+    return globals;
+}
+
 // An updated event is only interesting to a UI whose cursor is behind it, and every UI pulls to
 // the head within seconds of it moving. These bounds only matter for a tab that has been wedged
 // for hundreds of versions, and the events are marked dirty in the cache anyway so a re-read
@@ -84,8 +220,8 @@ export type SyncTouched = {
 //
 // Tombstones are never dropped. Nothing marks a removed chat dirty, so a dropped tombstone would
 // leave a lagging UI showing that chat until it happened to change again, which for a deleted
-// chat is never. They are a string and a number each and go when the chat comes back, so the
-// record only grows by the chats the user has left and not rejoined.
+// chat is never. They are a small row each and go when the chat comes back, so the store only
+// grows by the chats the user has left and not rejoined.
 const MAX_UPDATED_EVENT_STAMPS = 1000;
 // ~500 passes behind the head, which no UI still folding answers can be
 const MAX_UPDATED_EVENT_VERSION_LAG = 500;
@@ -98,12 +234,6 @@ export function touchedFields(fields: Record<SyncedField, { updated: boolean }>)
 
 export function emptySyncStamps(): SyncStamps {
     return {
-        directChats: {},
-        groupChats: {},
-        communities: {},
-        removedDirectChats: {},
-        removedGroupChats: {},
-        removedCommunities: {},
         fields: {},
         updatedEvents: [],
         chitEvents: [],
@@ -124,41 +254,16 @@ export function emptyTouched(): SyncTouched {
 }
 
 /**
- * The stamps to store alongside `state`, which is about to be committed at `version`.
- *
- * A chat the writer touched, or one with no stamp yet, is stamped with `version`; every other
- * chat keeps its stamp. A chat that was stamped before but is not in `state` gets a tombstone at
- * `version`; a tombstone whose chat is back is dropped. Fields work the same way as chats.
+ * The stamps to store alongside a write committed at `version`. A touched field, or one with no
+ * stamp yet, is stamped with `version`; every other field keeps its stamp. The chats carry their
+ * versions in their own rows (see `chatRowsToWrite`).
  */
 export function nextSyncStamps(
     prev: SyncStamps | undefined,
-    state: ChatStateFull,
     touched: SyncTouched,
     version: number,
 ): SyncStamps {
     const p = prev ?? emptySyncStamps();
-
-    const [directChats, removedDirectChats] = stampList(
-        state.directChats.map((c) => c.id.userId),
-        p.directChats,
-        p.removedDirectChats,
-        touched.directChats,
-        version,
-    );
-    const [groupChats, removedGroupChats] = stampList(
-        state.groupChats.map((g) => g.id.groupId),
-        p.groupChats,
-        p.removedGroupChats,
-        touched.groupChats,
-        version,
-    );
-    const [communities, removedCommunities] = stampList(
-        state.communities.map((c) => c.id.communityId),
-        p.communities,
-        p.removedCommunities,
-        touched.communities,
-        version,
-    );
 
     const fields: Partial<Record<SyncedField, number>> = {};
     for (const field of SYNCED_FIELDS) {
@@ -167,12 +272,6 @@ export function nextSyncStamps(
     }
 
     return {
-        directChats,
-        groupChats,
-        communities,
-        removedDirectChats,
-        removedGroupChats,
-        removedCommunities,
         fields,
         updatedEvents: mergeUpdatedEventStamps(p.updatedEvents, touched.updatedEvents, version),
         chitEvents:
@@ -183,35 +282,6 @@ export function nextSyncStamps(
                 : p.chitEvents,
         suspension: touched.suspensionChanged ? version : p.suspension,
     };
-}
-
-function stampList(
-    ids: string[],
-    prevStamps: Record<string, number>,
-    prevRemoved: Record<string, number>,
-    touched: Set<string>,
-    version: number,
-): [Record<string, number>, Record<string, number>] {
-    const present = new Set(ids);
-    const stamps: Record<string, number> = {};
-    for (const id of ids) {
-        const previous = prevStamps[id];
-        stamps[id] = touched.has(id) || previous === undefined ? version : previous;
-    }
-
-    const removed: Record<string, number> = {};
-    for (const [id, v] of Object.entries(prevRemoved)) {
-        if (!present.has(id)) {
-            removed[id] = v;
-        }
-    }
-    for (const id of Object.keys(prevStamps)) {
-        if (!present.has(id)) {
-            removed[id] = version;
-        }
-    }
-
-    return [stamps, removed];
 }
 
 /**
@@ -260,18 +330,16 @@ function updatedEventKey({
 }
 
 /**
- * Everything in `state` stamped after `since`, in the shape the UI already folds, plus every
- * updated event stamped after `since`. The chat summaries are returned as cached, so the caller
- * hydrates them.
+ * Everything written after `since`, in the shape the UI already folds. The chats and removals
+ * come already filtered by their rows' versions; the fields and updated events are filtered
+ * here by their stamps. The chat summaries are returned as cached, so the caller hydrates them.
  */
 export function updatesSince(
-    state: ChatStateFull,
+    { state, removed }: ChatsSince,
     stamps: SyncStamps,
     since: number,
 ): UpdatesResult {
-    // A record with no stamp is carried rather than skipped: a duplicate is harmless, a hole never heals
-    const after = (record: Record<string, number>, id: string) =>
-        (record[id] ?? Number.MAX_SAFE_INTEGER) > since;
+    // A field with no stamp is carried rather than skipped: a duplicate is harmless, a hole never heals
     const field = (name: SyncedField) => (stamps.fields[name] ?? Number.MAX_SAFE_INTEGER) > since;
     const ifField = <T>(name: SyncedField, value: T): T | undefined =>
         field(name) ? value : undefined;
@@ -296,16 +364,12 @@ export function updatesSince(
     }
 
     return {
-        directChatsAddedUpdated: state.directChats.filter((c) =>
-            after(stamps.directChats, c.id.userId),
-        ),
-        directChatsRemoved: removedSince(stamps.removedDirectChats, since),
-        groupsAddedUpdated: state.groupChats.filter((g) => after(stamps.groupChats, g.id.groupId)),
-        groupsRemoved: removedSince(stamps.removedGroupChats, since),
-        communitiesAddedUpdated: state.communities.filter((c) =>
-            after(stamps.communities, c.id.communityId),
-        ),
-        communitiesRemoved: removedSince(stamps.removedCommunities, since),
+        directChatsAddedUpdated: state.directChats,
+        directChatsRemoved: removed.directChats,
+        groupsAddedUpdated: state.groupChats,
+        groupsRemoved: removed.groupChats,
+        communitiesAddedUpdated: state.communities,
+        communitiesRemoved: removed.communities,
         avatarId: ifOption("avatarId", state.avatarId),
         blockedUsers: ifField("blockedUsers", state.blockedUsers),
         pinnedChats: ifField("pinnedChats", state.pinnedChats),
@@ -390,10 +454,4 @@ export function emptyUpdatesResult(): UpdatesResult {
         suspensionChanged: undefined,
         newAchievements: [],
     };
-}
-
-function removedSince(removed: Record<string, number>, since: number): string[] {
-    return Object.entries(removed)
-        .filter(([, version]) => version > since)
-        .map(([id]) => id);
 }
