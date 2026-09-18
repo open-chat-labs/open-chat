@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
-use crate::model::contacts::SetContactResponse;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use user_canister::set_contact::*;
+use user_state::SetContactResponse;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

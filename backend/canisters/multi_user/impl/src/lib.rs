@@ -2,14 +2,17 @@ use crate::model::user::User;
 use crate::model::users::Users;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use direct_chat::DirectChat;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use types::{BuildVersion, CanisterId, Cycles, OCResult, TimestampMillis, Timestamped, UserId};
+use types::{BuildVersion, CanisterId, ChatId, Cycles, OCResult, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -36,6 +39,49 @@ impl RuntimeState {
         self.env.caller() == self.data.local_user_index_canister_id
     }
 
+    // The index of the user the caller owns, if the caller is one of this canister's users
+    pub fn caller_user_index(&self) -> Option<u16> {
+        self.data.users.index_by_principal(&self.env.caller())
+    }
+
+    // The index of the user the caller owns. Only for endpoints guarded by `caller_is_owner`, which
+    // has already checked that there is one, so a caller without a user is a bug rather than a
+    // condition to handle.
+    pub fn caller_user_index_or_trap(&self) -> u16 {
+        self.caller_user_index()
+            .unwrap_or_else(|| ic_cdk::trap("Caller is not one of this canister's users"))
+    }
+
+    // Runs `f` against the user the caller owns, and their index, for endpoints guarded by
+    // `caller_is_owner`
+    pub fn with_caller_user<R>(&self, f: impl FnOnce(u16, &User) -> R) -> R {
+        let index = self.caller_user_index_or_trap();
+        self.data
+            .users
+            .with_user(index, |user| f(index, user))
+            .expect("User not found")
+    }
+
+    pub fn with_caller_user_mut<R>(&mut self, f: impl FnOnce(u16, &mut User) -> R) -> R {
+        let index = self.caller_user_index_or_trap();
+        self.data
+            .users
+            .with_user_mut(index, |user| f(index, user))
+            .expect("User not found")
+    }
+
+    // The index within this canister of the user with the given id, provided the caller may act as
+    // that user: either the caller owns the user, or the caller is the LocalUserIndex, which acts
+    // for any user. The user is not looked up here, so acting on the index can still find no user.
+    pub fn authorized_user_index(&self, user_id: UserId) -> OCResult<u16> {
+        let index = self.user_index(user_id).ok_or(OCErrorCode::TargetUserNotFound)?;
+        if self.is_caller_local_user_index() || self.caller_user_index() == Some(index) {
+            Ok(index)
+        } else {
+            Err(OCErrorCode::InitiatorNotAuthorized.into())
+        }
+    }
+
     // The id of the user at the given index within this canister
     pub fn user_id(&self, index: u16) -> UserId {
         UserId::new_indexed(self.env.canister_id(), index)
@@ -49,10 +95,48 @@ impl RuntimeState {
             .ok_or_else(|| OCErrorCode::TargetUserNotFound.into())
     }
 
+    // Runs `f` against the direct chat of the user at `user_index` with the user `chat_id` is the
+    // id of, within that user's key scope. Fails if there is no such user or chat.
+    pub fn with_direct_chat<R>(&self, user_index: u16, chat_id: ChatId, f: impl FnOnce(&DirectChat) -> R) -> OCResult<R> {
+        self.data
+            .users
+            .with_user(user_index, |user| user.direct_chats.get(&chat_id).map(f))
+            .ok_or(OCErrorCode::TargetUserNotFound)?
+            .ok_or_else(|| OCErrorCode::ChatNotFound.into())
+    }
+
+    pub fn with_direct_chat_mut<R>(
+        &mut self,
+        user_index: u16,
+        chat_id: ChatId,
+        f: impl FnOnce(&mut DirectChat) -> R,
+    ) -> OCResult<R> {
+        self.data
+            .users
+            .with_user_mut(user_index, |user| user.direct_chats.get_mut(&chat_id).map(f))
+            .ok_or(OCErrorCode::TargetUserNotFound)?
+            .ok_or_else(|| OCErrorCode::ChatNotFound.into())
+    }
+
     // The index within this canister carried by the user id, or None if the id is for a user in a
     // different canister. An id which carries no index maps to index 0, which is never assigned.
-    fn user_index(&self, user_id: UserId) -> Option<u16> {
+    pub fn user_index(&self, user_id: UserId) -> Option<u16> {
         (user_id.canister_id() == self.env.canister_id()).then(|| user_id.index())
+    }
+
+    // The index of the user with the given id, if they are one of this canister's users
+    pub fn local_user_index(&self, user_id: UserId) -> Option<u16> {
+        self.user_index(user_id).filter(|index| self.data.users.contains(*index))
+    }
+
+    // Queues the stable memory map entries of a chat deleted by the user at `user_index` for
+    // removal by the garbage collection job
+    pub fn garbage_collect_stable_memory_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
+        self.data
+            .stable_memory_keys_to_garbage_collect
+            .extend(prefixes.into_iter().map(|prefix| (user_index, prefix)));
+
+        jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -66,6 +150,7 @@ impl RuntimeState {
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             stable_memory_sizes: memory::memory_sizes(),
             user_count: self.data.users.len() as u32,
+            stable_memory_keys_to_garbage_collect: self.data.stable_memory_keys_to_garbage_collect.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -93,6 +178,10 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     #[serde(default)]
     pub video_call_operators: Vec<Principal>,
+    // The prefixes of deleted direct chats, whose entries are removed by a background job, each
+    // with the index of the user who held the chat since the entries are keyed under that user
+    #[serde(default)]
+    pub stable_memory_keys_to_garbage_collect: Vec<(u16, BaseKeyPrefix)>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -117,6 +206,7 @@ impl Data {
             identity_canister_id,
             escrow_canister_id,
             video_call_operators,
+            stable_memory_keys_to_garbage_collect: Vec::new(),
             rng_seed,
             test_mode,
         }
@@ -134,6 +224,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_count: u32,
+    pub stable_memory_keys_to_garbage_collect: u32,
     pub canister_ids: CanisterIds,
 }
 

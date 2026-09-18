@@ -15,10 +15,14 @@ canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+chat_events = { path = "../../../libraries/chat_events" }
+constants = { path = "../../../libraries/constants" }
+direct_chat = { path = "../../../libraries/direct_chat" }
 escrow_canister = { path = "../../escrow/api" }
 git_commit_id = { path = "../../../libraries/git_commit_id" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 oc_error_codes = { path = "../../../libraries/error_codes" }
@@ -30,4 +34,5 @@ stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
+user_state = { path = "../../../libraries/user_state" }
 utils = { path = "../../../libraries/utils" }

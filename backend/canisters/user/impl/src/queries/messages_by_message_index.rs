@@ -4,7 +4,7 @@ use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::Reader;
 use oc_error_codes::OCErrorCode;
-use types::{EventIndex, MessagesResponse, OCResult};
+use types::{MessagesResponse, OCResult};
 use user_canister::messages_by_message_index::{Response::*, *};
 
 #[query(guard = "caller_is_owner", msgpack = true)]
@@ -21,10 +21,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> OCResult<
     }
 
     let chat = state.data.direct_chats.get_or_err(&args.user_id.into())?;
-    let Some(events_reader) = chat
-        .events()
-        .events_reader(EventIndex::default(), args.thread_root_message_index, None)
-    else {
+    let Some(events_reader) = chat.events_reader(args.thread_root_message_index) else {
         return Err(OCErrorCode::ThreadNotFound.into());
     };
 
