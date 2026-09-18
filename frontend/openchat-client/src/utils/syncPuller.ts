@@ -1,11 +1,10 @@
-import type { SyncHead, SyncSinceResponse, SyncWindow, UpdatesResult } from "@shared";
+import type { SyncHead, SyncSinceResponse, UpdatesResult } from "@shared";
 
 export const SYNC_PULL_TIMEOUT_MS = 60_000;
 
 export type SyncPullerDeps = {
-    pull: (since: number, windows: SyncWindow[]) => Promise<SyncSinceResponse>;
+    pull: (since: number) => Promise<SyncSinceResponse>;
     fold: (updates: UpdatesResult) => Promise<void>;
-    windows: () => SyncWindow[];
     timeoutMs?: number;
     log?: (message: string, err: unknown) => void;
 };
@@ -133,7 +132,7 @@ export class SyncPuller {
     async #pull(since: number, generation: number): Promise<void> {
         try {
             const answer = await withTimeout(
-                this.deps.pull(since, this.deps.windows()),
+                this.deps.pull(since),
                 this.deps.timeoutMs ?? SYNC_PULL_TIMEOUT_MS,
             );
             await this.#exclusive(async () => {

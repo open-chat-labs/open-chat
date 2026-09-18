@@ -47,6 +47,7 @@
     import Avatar from "../../Avatar.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
+    import { DragList } from "./dragList.svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import LighteningBolt from "./LighteningBolt.svelte";
     import MainMenu from "./MainMenu.svelte";
@@ -71,10 +72,10 @@
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
 
-    let communityItems = $state<CommunityItem[]>([]);
+    const communityList = new DragList<CommunityItem>();
 
     $effect(() => {
-        communityItems = $sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId }));
+        communityList.sync($sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId })));
     });
 
     onMount(() => {
@@ -86,11 +87,11 @@
     }
 
     function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
-        communityItems = e.detail.items;
+        communityList.consider(e.detail.items);
     }
 
     function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
-        client.updateCommunityIndexes(e.detail.items);
+        client.updateCommunityIndexes(communityList.finalize(e.detail.items));
     }
 
     function toggleNav(e: Event) {
@@ -213,7 +214,7 @@
 
     <div
         use:dndzone={{
-            items: communityItems,
+            items: communityList.items,
             flipDurationMs,
             dropTargetStyle: { outline: "var(--accent) solid 2px" },
             dragDisabled: isTouchDevice,
@@ -223,7 +224,7 @@
         onconsider={handleDndConsider}
         onfinalize={handleDndFinalize}
         class="middle">
-        {#each communityItems as community (community._id)}
+        {#each communityList.items as community (community._id)}
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
                     selected={community.id.communityId === selectedCommunityId &&
