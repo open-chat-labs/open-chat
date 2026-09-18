@@ -2183,10 +2183,8 @@ export class OpenChatAgent extends EventTarget {
      */
     refreshChat(chatId: GroupChatIdentifier | ChannelIdentifier): Promise<boolean> {
         if (this.userClient.userId === ANON_USER_ID) return Promise.resolve(false);
-        const key =
-            chatId.kind === "group_chat"
-                ? `group|${chatId.groupId}`
-                : `community|${chatId.communityId}`;
+        // Canister ids, so a group's and a community's never collide
+        const key = chatId.kind === "group_chat" ? chatId.groupId : chatId.communityId;
         const queued = this.#queuedRefreshes.get(key);
         if (queued !== undefined) return queued;
         const refresh = this.#cacheWrites.run(() => {
