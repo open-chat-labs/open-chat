@@ -5162,6 +5162,11 @@ export class OpenChat {
     }
 
     notificationReceived(notification: Notification): void {
+        // Every notification means some chat has changed on the server. Without this the chat
+        // list, unread counts and latest message wait for the next poll (up to a minute in the
+        // background), even though the event itself is fetched below straight away.
+        this.#chatsPoller?.triggerNow();
+
         let chatId: ChatIdentifier;
         let threadRootMessageIndex: number | undefined = undefined;
         let eventIndex: number;

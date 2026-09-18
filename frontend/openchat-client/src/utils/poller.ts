@@ -8,6 +8,9 @@ import { offlineStore } from "../stores/network";
 // nothing it does afterwards touches the poller.
 export const POLLER_RUN_TIMEOUT_MS = 2 * 60 * 1000;
 
+// The least time between the end of one run and a run started by `triggerNow()`
+export const POLLER_TRIGGER_MIN_GAP_MS = 1000;
+
 type PollerEnvironment = {
     background: boolean;
     offline: boolean;
@@ -15,6 +18,7 @@ type PollerEnvironment = {
 
 export class Poller {
     private timeoutId: number | undefined;
+    private timeoutDueAt: number | undefined;
     private lastExecutionTimestamp: number | undefined;
     private stopped = false;
     // At most one run at a time within this poller. A restart (the app going to the background
@@ -29,6 +33,8 @@ export class Poller {
     private currentRun: number | undefined = undefined;
     private runCount = 0;
     private runTimeoutId: number | undefined;
+    // `triggerNow()` was called during a run: run once more as soon as it allows
+    private rerunRequested = false;
     private unsubscribeStatus: Unsubscriber | undefined;
     private status: PollerEnvironment = { background: false, offline: false };
 
@@ -84,11 +90,13 @@ export class Poller {
 
     private schedule(delay: number): void {
         this.clearTimer();
+        this.timeoutDueAt = Date.now() + delay;
         this.timeoutId = window.setTimeout(() => this.run(), delay);
     }
 
     private run(): void {
         this.timeoutId = undefined;
+        this.timeoutDueAt = undefined;
         if (this.stopped || this.currentRun !== undefined) return;
 
         const runId = ++this.runCount;
@@ -113,11 +121,47 @@ export class Poller {
         window.clearTimeout(this.runTimeoutId);
         this.runTimeoutId = undefined;
         this.lastExecutionTimestamp = Date.now();
+        // Cleared whatever happens next, so that a request made before the poller stopped
+        // running (offline, say) does not fire a run on the far side of it
+        const rerun = this.rerunRequested;
+        this.rerunRequested = false;
         if (this.stopped) return;
         const interval = this.currentInterval();
         if (interval !== undefined) {
-            this.schedule(interval);
+            // a request made in the foreground is dropped if the app has gone to the background
+            this.schedule(rerun && !this.status.background ? this.triggerDelay() : interval);
         }
+    }
+
+    /**
+     * Runs the task now rather than waiting for the interval, for when something outside the
+     * poller says there is work (a push notification, say). A run already in flight may have
+     * started before that work existed, so it is followed by another once it finishes. Calls in
+     * quick succession collapse into one run, and a triggered run starts no sooner than
+     * `POLLER_TRIGGER_MIN_GAP_MS` after the previous one finished, so a burst of triggers cannot
+     * turn into back-to-back runs.
+     *
+     * Only in the foreground: a hidden app has no one to show the result to, and coming back to
+     * the foreground runs the task anyway if it is due. Does nothing offline either.
+     */
+    triggerNow(): void {
+        if (this.stopped || this.status.offline || this.status.background) return;
+        if (this.currentRun !== undefined) {
+            this.rerunRequested = true;
+            return;
+        }
+        // never later than a run already due
+        const due =
+            this.timeoutDueAt === undefined
+                ? Infinity
+                : Math.max(0, this.timeoutDueAt - Date.now());
+        this.schedule(Math.min(this.triggerDelay(), due));
+    }
+
+    private triggerDelay(): number {
+        return this.lastExecutionTimestamp === undefined
+            ? 0
+            : Math.max(0, this.lastExecutionTimestamp + POLLER_TRIGGER_MIN_GAP_MS - Date.now());
     }
 
     private clearTimer(): void {
@@ -125,6 +169,7 @@ export class Poller {
             window.clearTimeout(this.timeoutId);
             this.timeoutId = undefined;
         }
+        this.timeoutDueAt = undefined;
     }
 
     stop(): void {

@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { Poller, POLLER_RUN_TIMEOUT_MS } from "./poller";
+import { Poller, POLLER_RUN_TIMEOUT_MS, POLLER_TRIGGER_MIN_GAP_MS } from "./poller";
 
 let visibility: DocumentVisibilityState = "visible";
 
@@ -13,6 +13,10 @@ const pollers: Poller[] = [];
 function track(poller: Poller): Poller {
     pollers.push(poller);
     return poller;
+}
+
+function triggerLatest() {
+    pollers[pollers.length - 1].triggerNow();
 }
 
 function deferred() {
@@ -188,6 +192,108 @@ describe("Poller", () => {
         await vi.advanceTimersByTimeAsync(0);
         expect(fn).toHaveBeenCalledTimes(1);
         await vi.advanceTimersByTimeAsync(1000);
+        expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    test("triggerNow runs straight away and the interval restarts from that run", async () => {
+        const fn = vi.fn(() => Promise.resolve());
+        track(new Poller(fn, 5000, undefined, false));
+        await vi.advanceTimersByTimeAsync(400);
+        triggerLatest();
+        triggerLatest();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fn).toHaveBeenCalledTimes(1);
+
+        await vi.advanceTimersByTimeAsync(4999);
+        expect(fn).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    test("triggerNow during a run is followed by one more run, after the minimum gap", async () => {
+        const run = deferred();
+        const fn = vi.fn(() => (fn.mock.calls.length === 1 ? run.promise : Promise.resolve()));
+        track(new Poller(fn, 5000, undefined, true));
+        await vi.advanceTimersByTimeAsync(0);
+
+        triggerLatest();
+        triggerLatest();
+        await vi.advanceTimersByTimeAsync(500);
+        expect(fn).toHaveBeenCalledTimes(1);
+
+        run.resolve();
+        await vi.advanceTimersByTimeAsync(POLLER_TRIGGER_MIN_GAP_MS - 1);
+        expect(fn).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(fn).toHaveBeenCalledTimes(2);
+        await vi.advanceTimersByTimeAsync(4999);
+        expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    test("a burst of triggers never runs closer together than the minimum gap", async () => {
+        const fn = vi.fn(() => Promise.resolve());
+        track(new Poller(fn, 5000, undefined, true));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fn).toHaveBeenCalledTimes(1);
+
+        for (let i = 0; i < 10; i++) {
+            triggerLatest();
+            await vi.advanceTimersByTimeAsync(100);
+        }
+        // 1000ms elapsed: exactly one triggered run, at the gap
+        expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    test("triggerNow never delays a run that is already due sooner", async () => {
+        const fn = vi.fn(() => Promise.resolve());
+        track(new Poller(fn, 300, undefined, true));
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(100);
+        triggerLatest();
+        await vi.advanceTimersByTimeAsync(199);
+        expect(fn).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    test("triggerNow does nothing in the background, offline or once stopped", async () => {
+        const fn = vi.fn(() => Promise.resolve());
+        const poller = track(new Poller(fn, 5000, 60_000, false));
+        setVisibility("hidden");
+        poller.triggerNow();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fn).toHaveBeenCalledTimes(0);
+        setVisibility("visible");
+
+        window.dispatchEvent(new Event("offline"));
+        poller.triggerNow();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fn).toHaveBeenCalledTimes(0);
+        window.dispatchEvent(new Event("online"));
+
+        poller.stop();
+        poller.triggerNow();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fn).toHaveBeenCalledTimes(0);
+    });
+
+    test("a trigger during a run that ends in the background is dropped", async () => {
+        const run = deferred();
+        const fn = vi.fn(() => (fn.mock.calls.length === 1 ? run.promise : Promise.resolve()));
+        track(new Poller(fn, 5000, undefined, true));
+        await vi.advanceTimersByTimeAsync(0);
+
+        triggerLatest();
+        setVisibility("hidden");
+        run.resolve();
+        await vi.advanceTimersByTimeAsync(10_000);
+        expect(fn).toHaveBeenCalledTimes(1);
+
+        // back in the foreground: the overdue run, then the normal interval with no extra run
+        setVisibility("visible");
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fn).toHaveBeenCalledTimes(2);
+        await vi.advanceTimersByTimeAsync(4999);
         expect(fn).toHaveBeenCalledTimes(2);
     });
 });
