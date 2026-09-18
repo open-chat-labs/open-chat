@@ -71,7 +71,6 @@ import {
     isCompositeGate,
     isCredentialGate,
     isEditableContent,
-    isMessageNotification,
     isNeuronGate,
     isPaymentGate,
     isProposalsChat,
@@ -5174,15 +5173,16 @@ export class OpenChat {
     }
 
     /**
-     * Every notification means its chat has changed on the server. Without this the chat list,
-     * unread counts and latest message wait for the next poll (up to a minute in the background),
-     * even though the event itself is fetched straight away.
+     * Every notification means its chat has changed on the server, so the chat is brought up to
+     * date now rather than at the next poll (up to a minute in the background). Everything else
+     * follows from the updated summary as it would from a poll: the chat list, unread counts and
+     * latest message, a video call starting or ending, and the selected chat's new messages.
      *
      * A group or channel is refreshed on its own, with one query. A direct chat's summary comes
      * only from the User canister, and being added to a channel changes User canister state too,
      * so those, and a refresh that can't be done on its own, run a full updates pass instead.
      */
-    #refreshNotifiedChat(notification: Notification): void {
+    notificationReceived(notification: Notification): void {
         const chatId = notification.chatId;
         if (
             notification.kind === "added_to_channel_notification" ||
@@ -5196,89 +5196,6 @@ export class OpenChat {
             .catch(() => false)
             .then((refreshed) => {
                 if (!refreshed) this.#chatsPoller?.triggerNow();
-            });
-    }
-
-    notificationReceived(notification: Notification): void {
-        this.#refreshNotifiedChat(notification);
-
-        let chatId: ChatIdentifier;
-        let threadRootMessageIndex: number | undefined = undefined;
-        let eventIndex: number;
-        switch (notification.kind) {
-            case "direct_notification":
-            case "direct_reaction":
-            case "direct_message_tipped":
-            case "group_notification":
-            case "group_reaction":
-            case "group_message_tipped":
-            case "channel_notification":
-            case "channel_reaction":
-            case "channel_message_tipped": {
-                chatId = notification.chatId;
-                eventIndex = notification.messageEventIndex;
-                if ("threadRootMessageIndex" in notification) {
-                    threadRootMessageIndex = notification.threadRootMessageIndex;
-                }
-                break;
-            }
-
-            case "added_to_channel_notification":
-                return;
-        }
-
-        const serverChat = allServerChatsStore.value.get(chatId);
-        if (serverChat === undefined) {
-            return;
-        }
-
-        if (!isMessageNotification(notification)) {
-            // TODO first clear the existing cache entry
-            return;
-        }
-
-        const minVisibleEventIndex =
-            serverChat.kind === "direct_chat" ? 0 : serverChat.minVisibleEventIndex;
-        const latestEventIndex = Math.max(eventIndex, serverChat.latestEventIndex);
-
-        // Load the event
-        this.#worker
-            .stream({
-                kind: "chatEvents",
-                chatType: serverChat.kind,
-                chatId,
-                eventIndexRange: [minVisibleEventIndex, latestEventIndex],
-                startIndex: eventIndex,
-                ascending: false,
-                threadRootMessageIndex,
-                latestKnownUpdate: serverChat.lastUpdated,
-            })
-            .aggregate(mergeEventStreamResponses, emptyEventsResponse())
-            .toPromise()
-            .then((resp) => {
-                if (!isSuccessfulEventsResponse(resp)) return resp;
-                if (!this.isChatPrivate(serverChat)) return resp;
-
-                const ev = resp.events.find((e) => e.index === eventIndex);
-                if (ev !== undefined) {
-                    if (
-                        ev.event.kind === "message" &&
-                        ev.event.content.kind === "video_call_content"
-                    ) {
-                        this.#publishRemoteVideoCallStarted({
-                            chatId,
-                            userId: ev.event.sender,
-                            messageId: ev.event.messageId,
-                            currentUserIsParticipant: false,
-                            callType: ev.event.content.callType,
-                            timestamp: ev.timestamp,
-                        });
-                    }
-                }
-                return resp;
-            })
-            .catch(() => {
-                console.warn("Failed to load event from notification");
             });
     }
 
