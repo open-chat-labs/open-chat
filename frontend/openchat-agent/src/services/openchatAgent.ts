@@ -218,6 +218,8 @@ import type {
     DailyPuzzleStartResponse,
     DailyPuzzleSubmitResponse,
     PublicDailyPuzzle,
+    SyncSinceResponse,
+    SyncWindow,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -228,6 +230,7 @@ import {
     MAX_ACTIVITY_EVENTS,
     ONE_MINUTE_MILLIS,
     Stream,
+    SyncHeadMoved,
     UnsupportedValueError,
     applyOptionUpdate,
     chatIdentifiersEqual,
@@ -253,6 +256,7 @@ import {
     mergeGroupChats,
 } from "../utils/chat";
 import { ChatsDb } from "../utils/chatsDb";
+import { emptySyncStamps, emptyUpdatesResult, touchedFields, updatesSince } from "../utils/sync";
 import {
     isSuccessfulCommunitySummaryResponse,
     mergeCommunities,
@@ -1943,32 +1947,65 @@ export class OpenChatAgent extends EventTarget {
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
 
-        if (this.userClient.userId !== ANON_USER_ID) {
-            this._chatsDb.setCachedChats(state, updatedEvents);
-        }
-
         const directChatsAddedUpdatedIds = new Set([
             ...directChatsAdded.map((c) => c.id.userId),
             ...directChatUpdates.map((c) => c.id.userId),
         ]);
-        const directChatsAddedUpdated = directChats
-            .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
-            .map((c) => this.hydrateChatSummary(c));
-
         const groupsAddedUpdatedIds = new Set([
             ...groupsAdded.map((g) => g.id.groupId),
             ...groupUpdates.map((g) => g.id.groupId),
             ...userCanisterGroupUpdates.map((g) => g.id.groupId),
         ]);
-        const groupsAddedUpdated = groupChats
-            .filter((g) => groupsAddedUpdatedIds.has(g.id.groupId))
-            .map((c) => this.hydrateChatSummary(c));
-
         const communitiesAddedUpdatedIds = new Set([
             ...communitiesAdded.map((c) => c.id.communityId),
             ...communityUpdates.map((c) => c.id.communityId),
             ...userCanisterCommunityUpdates.map((c) => c.id.communityId),
         ]);
+
+        if (this.userClient.userId !== ANON_USER_ID) {
+            try {
+                await this._chatsDb.setCachedChats(state, {
+                    directChats: directChatsAddedUpdatedIds,
+                    groupChats: groupsAddedUpdatedIds,
+                    communities: communitiesAddedUpdatedIds,
+                    fields: touchedFields({
+                        avatarId,
+                        blockedUsers,
+                        pinnedChats,
+                        pinnedFavouriteChats,
+                        pinnedChannels,
+                        favouriteChats,
+                        pinNumberSettings,
+                        achievements,
+                        chitState,
+                        referrals,
+                        walletConfig,
+                        messageActivitySummary,
+                        installedBots,
+                        bitcoinAddress,
+                        oneSecAddress,
+                        streakInsurance,
+                        premiumItems,
+                    }),
+                    updatedEvents,
+                    chitEvents: newAchievements.value,
+                    suspensionChanged: suspensionChanged !== undefined,
+                });
+            } catch (err) {
+                // The cache still holds the previous state, so the next pass fetches these updates
+                // again and gets another go at writing them
+                this._logger.error("Failed to write the chats cache", err);
+            }
+        }
+
+        const directChatsAddedUpdated = directChats
+            .filter((c) => directChatsAddedUpdatedIds.has(c.id.userId))
+            .map((c) => this.hydrateChatSummary(c));
+
+        const groupsAddedUpdated = groupChats
+            .filter((g) => groupsAddedUpdatedIds.has(g.id.groupId))
+            .map((c) => this.hydrateChatSummary(c));
+
         const communitiesAddedUpdated = communities
             .filter((c) => communitiesAddedUpdatedIds.has(c.id.communityId))
             .map((c) => this.hydrateCommunity(c));
@@ -2157,14 +2194,68 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
             if (!isOffline) {
+                // `updates` is undefined both for a failed pass and for a healthy pass that found
+                // nothing new, so the outcome is tracked separately: a quiet pass must resolve,
+                // or the UI would count it as a failed poll
+                let updates: UpdatesResult | undefined = undefined;
+                let error: unknown = undefined;
                 try {
-                    const updates = await this._getUpdates(cachedState, initialLoad);
-                    resolve(updates, true);
+                    updates = await this._getUpdates(cachedState, initialLoad);
                 } catch (err) {
-                    reject(err);
+                    error = err;
+                }
+                // Announced after failed passes too: the head says nothing about reachability
+                await this.#announceSyncHead();
+                if (error !== undefined) {
+                    reject(error);
+                } else {
+                    resolve(updates, true);
                 }
             }
         });
+    }
+
+    /**
+     * Everything stamped in the cache after `since` (and the updated events inside `windows`),
+     * with the version it was read at. Answers come from the cache alone: a `sync_head` says
+     * only that there may be something past the UI's cursor.
+     */
+    async syncSince(since: number, windows: SyncWindow[]): Promise<SyncSinceResponse> {
+        const userId = this.userClient.userId;
+        const { head, state, stamps } = await this._chatsDb.getChatsForSync();
+        if (state === undefined) {
+            // Nothing to answer from, which is not the same as nothing having changed: a cache
+            // found unusable is cleared with its stamps left in place, so that the full load
+            // which follows can tombstone what has gone. Answering at `head` would carry the
+            // UI's cursor past everything stamped since `since` with none of it delivered. The
+            // cursor stays where it is instead, and the write that refills the cache announces
+            // a head the UI then pulls to from here.
+            return { userId, version: Math.min(since, head), updates: emptyUpdatesResult() };
+        }
+        const updates = updatesSince(state, stamps ?? emptySyncStamps(), since, windows);
+        return {
+            userId,
+            version: head,
+            updates: {
+                ...updates,
+                directChatsAddedUpdated: this.hydrateChatSummaries(updates.directChatsAddedUpdated),
+                groupsAddedUpdated: this.hydrateChatSummaries(updates.groupsAddedUpdated),
+                communitiesAddedUpdated: updates.communitiesAddedUpdated.map((c) =>
+                    this.hydrateCommunity(c),
+                ),
+            },
+        };
+    }
+
+    // Tells the UI where the cache's version counter is so it can pull what it has not seen.
+    // Called after every updates pass and by any request that moved the head.
+    async #announceSyncHead(version?: number): Promise<void> {
+        try {
+            const head = version ?? (await this._chatsDb.getSyncHead());
+            this.dispatchEvent(new SyncHeadMoved(this.userClient.userId, head));
+        } catch (err) {
+            console.warn("Unable to announce the sync head", err);
+        }
     }
 
     private removeExpiredLatestMessages(
@@ -4683,7 +4774,14 @@ export class OpenChatAgent extends EventTarget {
             return [];
         }
 
-        return await this._chatsDb.updateCachedProposalTallies(chatId, response);
+        const { messages, version } = await this._chatsDb.updateCachedProposalTallies(
+            chatId,
+            response,
+        );
+        if (version !== undefined) {
+            await this.#announceSyncHead(version);
+        }
+        return messages;
     }
 
     async #updateCachedProposalTallies(localUserIndex: string, chatIds: MultiUserChatIdentifier[]) {
@@ -4692,8 +4790,13 @@ export class OpenChatAgent extends EventTarget {
             chatIds,
         );
 
+        let head: number | undefined = undefined;
         for (const [chatId, tallies] of response) {
-            await this._chatsDb.updateCachedProposalTallies(chatId, tallies);
+            const { version } = await this._chatsDb.updateCachedProposalTallies(chatId, tallies);
+            head = version ?? head;
+        }
+        if (head !== undefined) {
+            await this.#announceSyncHead(head);
         }
     }
 
