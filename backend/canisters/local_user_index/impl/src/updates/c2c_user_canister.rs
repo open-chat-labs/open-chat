@@ -32,7 +32,7 @@ fn c2c_user_canister_impl(args: ArgsInternal, state: &mut RuntimeState) -> Respo
     Response::Success
 }
 
-fn handle_event<F: FnOnce() -> TimestampMillis>(
+pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
     user_id: UserId,
     event: UserEvent,
     now: &LazyCell<TimestampMillis, F>,

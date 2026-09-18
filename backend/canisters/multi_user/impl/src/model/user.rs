@@ -74,11 +74,16 @@ impl User {
         if self.suspended.value { Err(OCErrorCode::InitiatorSuspended) } else { Ok(()) }
     }
 
-    // Blocks the user with the given id, if they weren't already blocked
-    pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
-        // TODO: Tell the LocalUserIndex (`UserBlocked`), as the User canister does, once the
-        // MultiUser canister has a queue of events for it
-        self.blocked_users.block(user_id, now);
+    // Blocks the user with the given id, returning false if they were already blocked. The caller
+    // tells the LocalUserIndex (`UserBlocked`) if the user is newly blocked, as the User canister does.
+    pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        self.blocked_users.block(user_id, now)
+    }
+
+    // Unblocks the user with the given id, returning false if they weren't blocked. The caller tells
+    // the LocalUserIndex (`UserUnblocked`) if the user is newly unblocked.
+    pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        self.blocked_users.unblock(user_id, now)
     }
 
     // Adds an event to the user's message activity feed, unless it was caused by a user they have
@@ -87,10 +92,5 @@ impl User {
         if event.user_id.is_none_or(|user_id| !self.blocked_users.contains(&user_id)) {
             self.message_activity_events.push(event, now);
         }
-    }
-
-    pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) {
-        // TODO: Tell the LocalUserIndex (`UserUnblocked`), as above
-        self.blocked_users.unblock(user_id, now);
     }
 }

@@ -168,6 +168,11 @@ impl RuntimeState {
         self.data.local_users.contains(&caller.into())
     }
 
+    pub fn is_caller_local_multi_user_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_multi_users.contains(&caller)
+    }
+
     pub fn is_caller_local_group_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_groups.contains(&caller.into())

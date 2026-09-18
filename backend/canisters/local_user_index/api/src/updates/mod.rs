@@ -30,6 +30,7 @@ pub mod c2c_upgrade_group_canister_wasm;
 pub mod c2c_upgrade_multi_user_canister_wasm;
 pub mod c2c_upgrade_user_canister_wasm;
 pub mod c2c_user_canister;
+pub mod c2c_user_canister_v2;
 pub mod c2c_verify_sign_in_proof;
 pub mod claim_prize;
 pub mod daily_puzzle_hint;

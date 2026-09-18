@@ -333,6 +333,18 @@ pub enum UserEvent<T = UserNotificationPayload> {
     Notification(Box<Notification<T>>),
 }
 
+// An event along with the user it is from, as taken by `c2c_user_canister_v2`. A User canister
+// names itself, while a MultiUser canister, which hosts many users, names whichever of its users
+// the event is from
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(bound = "T: Serialize + DeserializeOwned")]
+pub struct UserEventWithUserId<T = UserNotificationPayload> {
+    #[serde(rename = "u")]
+    pub user_id: UserId,
+    #[serde(rename = "e")]
+    pub event: UserEvent<T>,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ChildCanisterType {
     User,
