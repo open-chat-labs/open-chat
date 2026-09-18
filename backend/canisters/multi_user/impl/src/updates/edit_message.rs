@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -7,7 +7,7 @@ use oc_error_codes::OCErrorCode;
 use types::{EventIndex, OCResult};
 use user_canister::edit_message_v2::*;
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn edit_message_v2(args: Args) -> Response {
     mutate_state(|state| edit_message_impl(args, state)).into()

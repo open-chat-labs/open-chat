@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -12,7 +12,7 @@ use types::{OCResult, TimestampMillis, UserId, UserType};
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, c2c_bot_send_message};
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn send_message_v2(args: Args) -> Response {
     // TODO: This is async because the User canister looks up recipients it has no chat with in

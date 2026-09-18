@@ -47,16 +47,16 @@ impl RuntimeState {
         self.data.users.index_by_principal(&self.env.caller())
     }
 
-    // The index of the user the caller owns. Only for endpoints guarded by `caller_is_owner`, which
-    // has already checked that there is one, so a caller without a user is a bug rather than a
-    // condition to handle.
+    // The index of the user the caller owns. Only for endpoints guarded by `caller_is_hosted_user`,
+    // which has already checked that there is one, so a caller without a user is a bug rather than
+    // a condition to handle.
     pub fn caller_user_index_or_trap(&self) -> u16 {
         self.caller_user_index()
             .unwrap_or_else(|| ic_cdk::trap("Caller is not one of this canister's users"))
     }
 
     // Runs `f` against the user the caller owns, and their index, for endpoints guarded by
-    // `caller_is_owner`
+    // `caller_is_hosted_user`
     pub fn with_caller_user<R>(&self, f: impl FnOnce(u16, &User) -> R) -> R {
         let index = self.caller_user_index_or_trap();
         self.data
