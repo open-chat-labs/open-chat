@@ -1696,6 +1696,10 @@ export class OpenChatAgent extends EventTarget {
                 summaryUpdatesArgsByLocalUserIndex(currentGroups, currentCommunities),
                 previousUpdatesTimestamp,
             );
+            // Nothing awaits this until the User canister has answered, so a rejection meanwhile
+            // would be reported as unhandled, and would stay unhandled if this pass threw before
+            // reaching the await. The await below still sees the rejection.
+            cachedSummaryUpdates.catch(() => undefined);
 
             try {
                 totalQueryCount++;
@@ -2059,14 +2063,7 @@ export class OpenChatAgent extends EventTarget {
             );
         }
 
-        const results = await Promise.all(promises);
-        const success: GroupAndCommunitySummaryUpdatesResponseBatch[] = [];
-        const errors = [];
-        for (const result of results) {
-            success.push(...result.success);
-            errors.push(...result.errors);
-        }
-        return { success, errors };
+        return mergeWaitAllResults(await Promise.all(promises));
     }
 
     async #getSummaryUpdatesFromLocalUserIndex(
