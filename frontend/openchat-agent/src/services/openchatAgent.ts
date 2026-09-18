@@ -1921,7 +1921,7 @@ export class OpenChatAgent extends EventTarget {
                     ),
             );
 
-        // The chats cache only rewrites the chats it is told were touched, so the chats this
+        // The chats cache only rewrites the chats it is told were touched, so the chats it
         // changes in place are counted as touched below
         const expiredDirectChats = this.removeExpiredLatestMessages(directChats, start);
         const expiredGroupChats = this.removeExpiredLatestMessages(groupChats, start);

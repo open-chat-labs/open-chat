@@ -524,24 +524,34 @@ export class ChatsDb {
     }
 
     /**
-     * One cached chat, read from its own row (a channel from its community's row). Never throws,
-     * and never wipes or clears anything: it is only a hint, for checking a replica is not behind.
+     * One cached chat, read from its own row (a channel from its community's row). Only while
+     * the cache is one the full read would use: rows outlive a stale wipe and an unusable cache,
+     * and those must not count here either. Never throws, and never wipes or clears anything: it
+     * is only a hint, for checking a replica is not behind.
      */
     async getCachedChatSummary(chatId: ChatIdentifier): Promise<ChatSummary | undefined> {
         try {
             const db = await this.getDb();
+            // One transaction, so the row is one the globals were written with
+            const tx = db.transaction(["chats", "chat_rows"], "readonly");
+            const globals = await tx.objectStore("chats").get(this.principalString);
+            if (globals == null || !globalsAreUsable(globals) || isStale(globals)) {
+                return undefined;
+            }
+            const rows = tx.objectStore("chat_rows");
             switch (chatId.kind) {
-                case "direct_chat":
-                    return (await db.get("chat_rows", chatRowKey("direct_chat", chatId.userId)))
-                        ?.summary as ChatSummary | undefined;
+                case "direct_chat": {
+                    const row = await rows.get(chatRowKey("direct_chat", chatId.userId));
+                    return row?.kind === "direct_chat" && directChatIsUsable(row.summary)
+                        ? row.summary
+                        : undefined;
+                }
                 case "group_chat":
-                    return (await db.get("chat_rows", chatRowKey("group_chat", chatId.groupId)))
-                        ?.summary as ChatSummary | undefined;
+                    return (await rows.get(chatRowKey("group_chat", chatId.groupId)))?.summary as
+                        | ChatSummary
+                        | undefined;
                 case "channel": {
-                    const row = await db.get(
-                        "chat_rows",
-                        chatRowKey("community", chatId.communityId),
-                    );
+                    const row = await rows.get(chatRowKey("community", chatId.communityId));
                     return row?.kind === "community"
                         ? row.summary.channels.find((c) => chatIdentifiersEqual(c.id, chatId))
                         : undefined;

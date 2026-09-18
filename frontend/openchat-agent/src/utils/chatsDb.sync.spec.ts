@@ -493,6 +493,7 @@ describe("getCachedChatSummary", () => {
             id: { kind: "channel", communityId: "c1", channelId: 7 },
         };
         const { chatsDb, log } = chatsDbWith({
+            chats: { principal: globals() },
             chat_rows: {
                 "group_chat|a": groupRow("a", 1),
                 "direct_chat|u1": directRow("u1", 1),
@@ -515,7 +516,28 @@ describe("getCachedChatSummary", () => {
             }),
         ).toBe(channel);
         expect(await chatsDb.getCachedChatSummary(group("missing").id)).toBeUndefined();
-        expect(log.filter((l) => !l.startsWith("get chat_rows"))).toEqual([]);
+        // reads only: nothing written, cleared or scanned
+        expect(log.filter((l) => !l.startsWith("get "))).toEqual([]);
+    });
+
+    test("rows kept past a stale wipe, or with no usable globals, are not used", async () => {
+        const rows = { "group_chat|a": groupRow("a", 1) };
+        const stale = chatsDbWith({
+            chats: { principal: globals({ latestUserCanisterUpdates: 0n }) },
+            chat_rows: rows,
+        });
+        expect(await stale.chatsDb.getCachedChatSummary(group("a").id)).toBeUndefined();
+        // the check itself wipes nothing
+        expect(stale.stores.chats.size).toBe(1);
+
+        const cleared = chatsDbWith({ chat_rows: rows });
+        expect(await cleared.chatsDb.getCachedChatSummary(group("a").id)).toBeUndefined();
+
+        const unusableDirect = chatsDbWith({
+            chats: { principal: globals() },
+            chat_rows: { "direct_chat|u1": directRow("u1", 1, false) },
+        });
+        expect(await unusableDirect.chatsDb.getCachedChatSummary(direct("u1").id)).toBeUndefined();
     });
 
     test("a failed read answers with nothing and wipes nothing", async () => {
