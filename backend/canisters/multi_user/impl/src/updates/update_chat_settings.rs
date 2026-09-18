@@ -75,16 +75,11 @@ fn set_their_events_ttl(
             return;
         }
 
-        let is_new_chat = !user.direct_chats.exists(&sender.into());
-        let chat = user
-            .direct_chats
-            .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now);
-
-        // If both users set the time to live at the same time, the one set by the user with the
-        // lower id wins, so that it is the same in both copies of the chat
-        let last_updated = chat.events().get_events_time_to_live().timestamp;
-        if is_new_chat || last_updated < now || (last_updated == now && sender.as_slice() < their_user_id.as_slice()) {
-            chat.set_events_time_to_live(sender, events_ttl, now);
-        }
+        // Unlike between User canisters, where each side applies the other's change some time
+        // after its own and so needs a rule to settle two changes made at the same time, both
+        // copies are updated here within the one call, so the latest call wins in both
+        user.direct_chats
+            .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now)
+            .set_events_time_to_live(sender, events_ttl, now);
     });
 }
