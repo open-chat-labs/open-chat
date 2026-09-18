@@ -26,7 +26,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         caller: my_user_id,
         is_admin: true,
         min_visible_event_index: EventIndex::default(),
-        thread_root_message_index: None,
+        thread_root_message_index: args.thread_root_message_index,
         message_ids: args.message_ids,
         now,
     });
@@ -46,7 +46,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             state.data.timer_jobs.enqueue_job(
                 TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                     chat_id: args.user_id.into(),
-                    thread_root_message_index: None,
+                    thread_root_message_index: args.thread_root_message_index,
                     message_id: *message_id,
                 })),
                 remove_deleted_message_content_at,
