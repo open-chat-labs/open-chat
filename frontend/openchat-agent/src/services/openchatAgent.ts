@@ -248,6 +248,7 @@ import {
     buildBlobUrl,
     buildUserAvatarUrl,
     getUpdatedEvents,
+    isExpired,
     mergeDirectChatUpdates,
     mergeGroupChatUpdates,
     mergeGroupChats,
@@ -1908,11 +1909,14 @@ export class OpenChatAgent extends EventTarget {
             );
 
         // The chats cache only rewrites the chats it is told were touched, so the chats it
-        // changes in place are counted as touched below
-        const expiredDirectChats = this.removeExpiredLatestMessages(directChats, start);
-        const expiredGroupChats = this.removeExpiredLatestMessages(groupChats, start);
+        // changes in place are counted as touched below. expiresAt is an epoch-millis
+        // timestamp, so compare against wall-clock time rather than `start`, which is a
+        // performance.now() reading used only for timing
+        const now = Date.now();
+        const expiredDirectChats = this.removeExpiredLatestMessages(directChats, now);
+        const expiredGroupChats = this.removeExpiredLatestMessages(groupChats, now);
         const expiredCommunities = communities.filter(
-            (c) => this.removeExpiredLatestMessages(c.channels, start).length > 0,
+            (c) => this.removeExpiredLatestMessages(c.channels, now).length > 0,
         );
 
         const state = {
@@ -2271,8 +2275,7 @@ export class OpenChatAgent extends EventTarget {
             if (
                 chat.latestMessage !== undefined &&
                 (chat.latestMessage.event.messageIndex !== chat.latestMessageIndex ||
-                    (chat.latestMessage.expiresAt !== undefined &&
-                        chat.latestMessage.expiresAt < now))
+                    isExpired(chat.latestMessage, now))
             ) {
                 chat.latestMessage = undefined;
                 changed.push(chat);
