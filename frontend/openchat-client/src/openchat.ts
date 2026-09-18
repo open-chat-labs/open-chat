@@ -5173,11 +5173,34 @@ export class OpenChat {
             });
     }
 
+    /**
+     * Every notification means its chat has changed on the server. Without this the chat list,
+     * unread counts and latest message wait for the next poll (up to a minute in the background),
+     * even though the event itself is fetched straight away.
+     *
+     * A group or channel is refreshed on its own, with one query. A direct chat's summary comes
+     * only from the User canister, and being added to a channel changes User canister state too,
+     * so those, and a refresh that can't be done on its own, run a full updates pass instead.
+     */
+    #refreshNotifiedChat(notification: Notification): void {
+        const chatId = notification.chatId;
+        if (
+            notification.kind === "added_to_channel_notification" ||
+            chatId.kind === "direct_chat"
+        ) {
+            this.#chatsPoller?.triggerNow();
+            return;
+        }
+        this.#worker
+            .send({ kind: "refreshChat", chatId })
+            .catch(() => false)
+            .then((refreshed) => {
+                if (!refreshed) this.#chatsPoller?.triggerNow();
+            });
+    }
+
     notificationReceived(notification: Notification): void {
-        // Every notification means some chat has changed on the server. Without this the chat
-        // list, unread counts and latest message wait for the next poll (up to a minute in the
-        // background), even though the event itself is fetched below straight away.
-        this.#chatsPoller?.triggerNow();
+        this.#refreshNotifiedChat(notification);
 
         let chatId: ChatIdentifier;
         let threadRootMessageIndex: number | undefined = undefined;
