@@ -1,4 +1,3 @@
-pub mod chit_events;
 pub mod communities;
 pub mod community;
 pub mod game_chit_keys;
@@ -8,7 +7,6 @@ pub mod local_user_index_event_batch;
 pub mod p2p_swaps;
 pub mod premium_items;
 pub mod referrals;
-pub mod streak;
 pub mod threads_read;
 pub mod token_swaps;
 pub mod user_canister_event_batch;
