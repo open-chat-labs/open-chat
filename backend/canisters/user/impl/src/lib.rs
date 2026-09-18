@@ -37,11 +37,9 @@ use types::{
     UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, UserCanisterEvent, WalletConfig};
-use user_state::ChitEvents;
-use user_state::Streak;
 use user_state::{
-    BlockedUsers, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
-    SavedCryptoAccounts,
+    BlockedUsers, ChitEvents, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
+    SavedCryptoAccounts, Streak,
 };
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
