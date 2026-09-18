@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
@@ -8,7 +8,7 @@ use oc_error_codes::OCErrorCode;
 use types::{EventIndex, OCResult};
 use user_canister::undelete_messages::{Response::*, *};
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn undelete_messages(args: Args) -> Response {
     match mutate_state(|state| undelete_messages_impl(args, state)) {

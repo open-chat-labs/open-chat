@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -9,7 +9,7 @@ use user_canister::set_bio::*;
 // The same limit as the User canister
 const MAX_BIO_LEN: u32 = 2000;
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn set_bio(args: Args) -> Response {
     mutate_state(|state| set_bio_impl(args, state)).into()
