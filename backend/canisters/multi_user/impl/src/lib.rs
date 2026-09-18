@@ -1,7 +1,9 @@
 use crate::model::user::User;
 use crate::model::users::Users;
+use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use direct_chat::DirectChat;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
@@ -17,6 +19,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 thread_local! {
@@ -129,6 +132,33 @@ impl RuntimeState {
         self.user_index(user_id).filter(|index| self.data.users.contains(*index))
     }
 
+    // Runs `f` against the copy of the chat with `my_user_id` held by `their_user_id`, provided they
+    // are a different user in this canister who has the chat and hasn't blocked `my_user_id`. This
+    // is how a change a user makes to their copy of a direct chat reaches the other copy when both
+    // users are in this canister, in place of the `UserCanisterEvent`s sent between User canisters
+    // (which a User canister ignores if its user has blocked the sender).
+    pub fn with_their_direct_chat_mut<R>(
+        &mut self,
+        my_user_id: UserId,
+        their_user_id: UserId,
+        f: impl FnOnce(&mut DirectChat) -> R,
+    ) -> Option<R> {
+        if their_user_id == my_user_id {
+            return None;
+        }
+        let their_index = self.local_user_index(their_user_id)?;
+        self.data
+            .users
+            .with_user_mut(their_index, |user| {
+                if user.blocked_users.contains(&my_user_id) {
+                    None
+                } else {
+                    user.direct_chats.get_mut(&my_user_id.into()).map(f)
+                }
+            })
+            .flatten()
+    }
+
     // Queues the stable memory map entries of a chat deleted by the user at `user_index` for
     // removal by the garbage collection job
     pub fn garbage_collect_stable_memory_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
@@ -151,6 +181,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             user_count: self.data.users.len() as u32,
             stable_memory_keys_to_garbage_collect: self.data.stable_memory_keys_to_garbage_collect.len() as u32,
+            timer_jobs: self.data.timer_jobs.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -182,6 +213,8 @@ struct Data {
     // with the index of the user who held the chat since the entries are keyed under that user
     #[serde(default)]
     pub stable_memory_keys_to_garbage_collect: Vec<(u16, BaseKeyPrefix)>,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -207,6 +240,7 @@ impl Data {
             escrow_canister_id,
             video_call_operators,
             stable_memory_keys_to_garbage_collect: Vec::new(),
+            timer_jobs: TimerJobs::default(),
             rng_seed,
             test_mode,
         }
@@ -225,6 +259,7 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_count: u32,
     pub stable_memory_keys_to_garbage_collect: u32,
+    pub timer_jobs: u32,
     pub canister_ids: CanisterIds,
 }
 
