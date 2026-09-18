@@ -1,7 +1,7 @@
 import type { ChatIdentifier, ChatStateFull, GroupChatIdentifier, Tally } from "@shared";
 import { ChatMap } from "@shared";
 import type { Principal } from "@icp-sdk/core/principal";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { ChatsDb, createCacheKey } from "./chatsDb";
 import { emptyTouched, type SyncStamps } from "./sync";
 
@@ -196,6 +196,17 @@ describe("getChatsForSync", () => {
         const result = await chatsDb.getChatsForSync();
 
         expect(result).toEqual({ head: 4, state: undefined, stamps: undefined });
+    });
+
+    test("a failed read throws rather than answering as an empty cache", async () => {
+        const { chatsDb, db } = chatsDbWith({ sync: { head: 4 } });
+        db.get = (name: string) =>
+            name === "chats" ? Promise.reject(new Error("idb")) : Promise.resolve(4);
+        vi.spyOn(console, "error").mockImplementation(() => {});
+
+        await expect(chatsDb.getChatsForSync()).rejects.toThrow("idb");
+        // the updates loop's read still falls back to a full load
+        await expect(chatsDb.getCachedChats()).resolves.toBeUndefined();
     });
 });
 

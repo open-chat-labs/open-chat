@@ -369,25 +369,34 @@ export class ChatsDb {
     // initial load; wedging the app costs everything.
     async getCachedChats(): Promise<ChatStateFull | undefined> {
         try {
-            const resolvedDb = await this.getDb();
-            const chats = await resolvedDb.get("chats", this.principalString);
-
-            // `== null`: a corrupt IndexedDB has been seen returning null rather than undefined
-            if (chats == null) return undefined;
-
-            if (chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
-                await wipeKeepingSyncHead(resolvedDb);
-                return undefined;
-            }
-            if (!cachedChatsAreUsable(chats)) {
-                await resolvedDb.clear("chats");
-                return undefined;
-            }
-            return chats;
+            return await this.readCachedChats();
         } catch (err) {
             console.error("CACHE: unable to read cached chats, falling back to a full load", err);
             return undefined;
         }
+    }
+
+    // Unlike `getCachedChats` this throws on a failed read, because the two callers want
+    // different things from a failure. The updates loop wants to carry on with a full load, for
+    // which "nothing cached" is the right answer. A sync pull must not be answered from it: an
+    // empty answer would move the UI's cursor past everything stamped since, and a transient
+    // IndexedDB failure would then lose those updates and removals for good.
+    private async readCachedChats(): Promise<ChatStateFull | undefined> {
+        const resolvedDb = await this.getDb();
+        const chats = await resolvedDb.get("chats", this.principalString);
+
+        // `== null`: a corrupt IndexedDB has been seen returning null rather than undefined
+        if (chats == null) return undefined;
+
+        if (chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
+            await wipeKeepingSyncHead(resolvedDb);
+            return undefined;
+        }
+        if (!cachedChatsAreUsable(chats)) {
+            await resolvedDb.clear("chats");
+            return undefined;
+        }
+        return chats;
     }
 
     /**
@@ -465,13 +474,17 @@ export class ChatsDb {
 
     // The head is read BEFORE the rows: a commit racing this read is then carried twice (the fold
     // upserts by key) rather than skipped, which would be a hole that never heals.
+    //
+    // Throws if the read fails, so the caller answers the pull with an error and the UI keeps its
+    // cursor where it is. `state` undefined means the cache genuinely holds nothing, in which case
+    // an empty answer at `head` is right: the next write stamps everything past it.
     async getChatsForSync(): Promise<{
         head: number;
         state: ChatStateFull | undefined;
         stamps: SyncStamps | undefined;
     }> {
         const head = await this.getSyncHead();
-        const state = await this.getCachedChats();
+        const state = await this.readCachedChats();
         const stamps = state === undefined ? undefined : await this.getSyncStamps();
         return { head, state, stamps };
     }

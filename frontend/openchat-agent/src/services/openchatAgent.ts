@@ -2194,6 +2194,9 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
             if (!isOffline) {
+                // `updates` is undefined both for a failed pass and for a healthy pass that found
+                // nothing new, so the outcome is tracked separately: a quiet pass must resolve,
+                // or the UI would count it as a failed poll
                 let updates: UpdatesResult | undefined = undefined;
                 let error: unknown = undefined;
                 try {
@@ -2203,10 +2206,10 @@ export class OpenChatAgent extends EventTarget {
                 }
                 // Announced after failed passes too: the head says nothing about reachability
                 await this.#announceSyncHead();
-                if (updates !== undefined) {
-                    resolve(updates, true);
-                } else {
+                if (error !== undefined) {
                     reject(error);
+                } else {
+                    resolve(updates, true);
                 }
             }
         });

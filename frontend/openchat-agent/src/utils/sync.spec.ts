@@ -205,6 +205,18 @@ describe("mergeUpdatedEventStamps", () => {
         expect(farLater.map((s) => s.eventIndex)).toEqual([2, 3]);
     });
 
+    test("a direct chat and a group chat with the same id are kept apart", () => {
+        const stamps = mergeUpdatedEventStamps(
+            [],
+            updatedEvents([
+                [direct("same"), [{ eventIndex: 1, timestamp: 1n }]],
+                [group("same"), [{ eventIndex: 1, timestamp: 1n }]],
+            ]),
+            1,
+        );
+        expect(stamps.map((s) => s.chatId.kind)).toEqual(["direct_chat", "group_chat"]);
+    });
+
     test("returns the previous stamps untouched when there is nothing new", () => {
         const prev = mergeUpdatedEventStamps(
             [],

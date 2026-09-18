@@ -7,7 +7,7 @@ import type {
     UpdatedEvent,
     UpdatesResult,
 } from "@shared";
-import { ChatMap, chatIdentifierToString, chatIdentifiersEqual } from "@shared";
+import { ChatMap, chatIdentifierToKey, chatIdentifiersEqual } from "@shared";
 
 /**
  * The versioning behind the cache -> UI sync pull (see `domain/sync.ts` in openchat-shared).
@@ -73,18 +73,20 @@ export type SyncTouched = {
     suspensionChanged: boolean;
 };
 
-// A removal or an updated event is only interesting to a UI whose cursor is behind it, and every
-// UI pulls to the head within seconds of it moving. These bounds only matter for a tab that has
-// been wedged for hundreds of versions, and the events are marked dirty in the cache anyway so a
-// re-read heals the display.
+// An updated event is only interesting to a UI whose cursor is behind it, and every UI pulls to
+// the head within seconds of it moving. These bounds only matter for a tab that has been wedged
+// for hundreds of versions, and the events are marked dirty in the cache anyway so a re-read
+// heals the display.
 //
 // The stamps record is rewritten whole on every pass, so the updated-event log is the one that
 // costs anything: each entry carries a chat identifier, and a busy account would otherwise sit
 // permanently at the cap. It is bounded twice - by how far behind the head an entry is, which is
-// what keeps the steady state small, and by count as a backstop. Tombstones are a string and a
-// number each, and dropping one loses a removal for good (nothing marks a removed chat dirty),
-// so they are bounded generously and by count alone.
-const MAX_TOMBSTONES = 1000;
+// what keeps the steady state small, and by count as a backstop.
+//
+// Tombstones are never dropped. Nothing marks a removed chat dirty, so a dropped tombstone would
+// leave a lagging UI showing that chat until it happened to change again, which for a deleted
+// chat is never. They are a string and a number each and go when the chat comes back, so the
+// record only grows by the chats the user has left and not rejoined.
 const MAX_UPDATED_EVENT_STAMPS = 1000;
 // ~500 passes behind the head, which no UI still folding answers can be
 const MAX_UPDATED_EVENT_VERSION_LAG = 500;
@@ -210,14 +212,7 @@ function stampList(
         }
     }
 
-    return [stamps, boundByVersion(removed, MAX_TOMBSTONES)];
-}
-
-function boundByVersion(stamps: Record<string, number>, max: number): Record<string, number> {
-    const entries = Object.entries(stamps);
-    if (entries.length <= max) return stamps;
-    entries.sort(([, a], [, b]) => b - a);
-    return Object.fromEntries(entries.slice(0, max));
+    return [stamps, removed];
 }
 
 /**
@@ -260,7 +255,9 @@ function updatedEventKey({
     threadRootMessageIndex,
     eventIndex,
 }: UpdatedEventStamp): string {
-    return `${chatIdentifierToString(chatId)}|${threadRootMessageIndex ?? ""}|${eventIndex}`;
+    // `chatIdentifierToKey` rather than `chatIdentifierToString`: the latter drops the kind, and a
+    // direct chat and a group chat are separate namespaces
+    return `${chatIdentifierToKey(chatId)}|${threadRootMessageIndex ?? ""}|${eventIndex}`;
 }
 
 /**
