@@ -40,6 +40,7 @@ export * from "./search/search";
 export * from "./serialisation";
 export * from "./stream";
 export * from "./structure";
+export * from "./sync";
 export * from "./toast";
 export * from "./unread";
 export * from "./user";

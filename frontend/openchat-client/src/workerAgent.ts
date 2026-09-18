@@ -2,6 +2,7 @@ import type {
     FromWorker,
     Init,
     Logger,
+    SyncHead,
     WorkerError,
     WorkerRequest,
     WorkerResponse,
@@ -22,7 +23,10 @@ export class WorkerAgent {
     #sessionExpired = false;
     nextCorrelationId: number = 0;
 
-    constructor(config: OpenChatConfig) {
+    // `onSyncHead` is passed in rather than published on the global pubsub because the only
+    // listener is the OpenChat instance that owns this agent: routing it globally would keep a
+    // discarded instance alive for the lifetime of the page.
+    constructor(config: OpenChatConfig, onSyncHead: (head: SyncHead) => void = () => {}) {
         console.debug("WORKER_CLIENT: loading worker with version: ", config.websiteVersion);
 
         const workerUrl = `/worker.js?v=${config.websiteVersion}`;
@@ -56,6 +60,9 @@ export class WorkerAgent {
                 }
                 if (data.event.subkind === "users_loaded") {
                     userStore.addMany(data.event.users);
+                }
+                if (data.event.subkind === "sync_head") {
+                    onSyncHead({ userId: data.event.userId, version: data.event.version });
                 }
             } else if (data.kind === "worker_response") {
                 console.debug("WORKER_CLIENT: response: ", ev);

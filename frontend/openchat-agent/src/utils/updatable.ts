@@ -34,12 +34,6 @@ export class Updatable<T> {
         fn(this.#value);
         this.#updated = true;
     }
-
-    valueIfUpdated(): T | undefined {
-        return this.#updated
-            ? this.#value
-            : undefined;
-    }
 }
 
 export class UpdatableOption<T> {
@@ -71,16 +65,6 @@ export class UpdatableOption<T> {
             } else {
                 this.value = update.value;
             }
-        }
-    }
-
-    toOptionUpdate(): OptionUpdate<T> {
-        if (!this.#updated) {
-            return undefined;
-        } else if (this.#value !== undefined) {
-            return { value: this.#value };
-        } else {
-            return "set_to_none";
         }
     }
 }

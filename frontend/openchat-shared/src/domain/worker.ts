@@ -89,11 +89,11 @@ import type {
     UnfreezeGroupResponse,
     UnpinMessageResponse,
     UpdateGroupResponse,
-    UpdatesResult,
     VideoCallParticipantsResponse,
     VideoCallPresence,
     WithdrawCryptocurrencyResponse,
 } from "./chat";
+import type { SyncSinceResponse, SyncWindow } from "./sync";
 import type {
     ChitEventsRequest,
     ChitEventsResponse,
@@ -357,6 +357,7 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | GetUpdates
+    | SyncSince
     | GetBots
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
@@ -1794,6 +1795,12 @@ type GetUpdates = {
     initialLoad: boolean;
 };
 
+type SyncSince = {
+    kind: "syncSince";
+    since: number;
+    windows: SyncWindow[];
+};
+
 type GetBots = {
     kind: "getBots";
     initialLoad: boolean;
@@ -2083,7 +2090,7 @@ export type WorkerResponseInner =
     | RemoveMessageFilter
     | SuspendUserResponse
     | UnsuspendUserResponse
-    | UpdatesResult
+    | SyncSinceResponse
     | BotsResponse
     | DeletedDirectMessageResponse
     | DeletedGroupMessageResponse
@@ -2196,7 +2203,8 @@ type WorkerEventCommon<T> = {
 export type WorkerEvent =
     | RelayedMessagesReadFromServer
     | RelayedStorageUpdated
-    | RelayedUsersLoaded;
+    | RelayedUsersLoaded
+    | RelayedSyncHead;
 
 export type RelayedMessagesReadFromServer = WorkerEventCommon<{
     subkind: "messages_read_from_server";
@@ -2212,6 +2220,11 @@ export type RelayedStorageUpdated = WorkerEventCommon<{
 export type RelayedUsersLoaded = WorkerEventCommon<{
     subkind: "users_loaded";
     users: UserSummary[];
+}>;
+export type RelayedSyncHead = WorkerEventCommon<{
+    subkind: "sync_head";
+    userId: string;
+    version: number;
 }>;
 
 type LoadFailedMessages = {
@@ -2469,7 +2482,9 @@ export type WorkerResult<T> = T extends Init
     : T extends UnpinMessage
     ? UnpinMessageResponse
     : T extends GetUpdates
-    ? UpdatesResult | undefined
+    ? SyncSinceResponse | undefined
+    : T extends SyncSince
+    ? SyncSinceResponse
     : T extends GetBots
     ? BotsResponse
     : T extends GetDeletedDirectMessage
