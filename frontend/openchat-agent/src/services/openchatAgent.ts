@@ -2148,7 +2148,7 @@ export class OpenChatAgent extends EventTarget {
             }
 
             // The head is read before the rows so the snapshot's version never overstates it
-            const head = await this._chatsDb.getSyncHead();
+            const head = await this.#syncHeadOrZero();
             const cachedState = await this._chatsDb.getCachedChats();
             const isOffline = offline();
             let snapshotSent = false;
@@ -2175,6 +2175,20 @@ export class OpenChatAgent extends EventTarget {
                 }
             }
         });
+    }
+
+    // Never throws, for the reason `getCachedChats` never does: this runs inside a `Stream`
+    // initialiser, where a rejection reaches neither onResult nor onError and the load would hang.
+    // Zero is the safe answer for a head that cannot be read. A snapshot seeded at zero leaves the
+    // cursor behind everything, so the first pull carries the lot again - a duplicate, which the
+    // fold absorbs, where too high a version would be a hole.
+    async #syncHeadOrZero(): Promise<number> {
+        try {
+            return await this._chatsDb.getSyncHead();
+        } catch (err) {
+            this._logger.error("Failed to read the sync head, seeding from zero", err);
+            return 0;
+        }
     }
 
     #snapshot(userId: string, version: number, state: ChatStateFull): SyncSinceResponse {

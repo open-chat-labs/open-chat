@@ -241,6 +241,64 @@ describe("SyncPuller", () => {
         expect(folded).toEqual(["v5", "v5-again"]);
     });
 
+    test("a snapshot whose fold throws puts the cursor back, so what it carried is still owed", async () => {
+        const { puller, pulls } = harness();
+        const boom = async () => {
+            throw new Error("boom");
+        };
+
+        await expect(puller.seed(answer(3), boom)).rejects.toThrow("boom");
+        expect(puller.cursor).toBeUndefined();
+
+        await puller.seed(answer(3), async () => {});
+        await expect(puller.seed(answer(6), boom)).rejects.toThrow("boom");
+        expect(puller.cursor?.version).toBe(3);
+
+        // the next head pulls from the old cursor, covering what the failed snapshot held
+        puller.onHead({ userId: "u1", version: 6 });
+        expect(pulls.map((p) => p.since)).toEqual([3]);
+    });
+
+    test("a snapshot queued behind a fold is dropped if clear() runs before its turn", async () => {
+        const pulled = deferred();
+        let releaseFold!: () => void;
+        const folded: string[] = [];
+        const puller = new SyncPuller({
+            pull: () => pulled.promise,
+            fold: () => new Promise<void>((resolve) => (releaseFold = resolve)),
+            windows: () => [],
+        });
+        await puller.seed(answer(1), async () => {});
+        puller.onHead({ userId: "u1", version: 2 });
+        pulled.resolve(answer(2));
+        await settle();
+
+        // passes the check on the way in, then waits for the pulled answer's fold
+        const seeded = puller.seed(answer(5), async () => {
+            folded.push("stale");
+        });
+        puller.clear();
+        releaseFold();
+        await seeded;
+
+        expect(folded).toEqual([]);
+        expect(puller.cursor).toBeUndefined();
+    });
+
+    test("a pull begun before clear() is dropped even when the same user signs back in", async () => {
+        const { puller, pulls, folded } = harness();
+        await puller.seed(answer(1), async () => {});
+        puller.onHead({ userId: "u1", version: 4 });
+
+        puller.clear();
+        await puller.seed(answer(2), async () => {});
+        pulls[0].deferred.resolve(answer(4));
+        await settle();
+
+        expect(folded).toEqual([]);
+        expect(puller.cursor?.version).toBe(2);
+    });
+
     test("clear drops the cursor and any in-flight answer", async () => {
         const { puller, pulls, folded } = harness();
         await puller.seed(answer(1), async () => {});
