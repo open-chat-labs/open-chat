@@ -6,7 +6,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use direct_chat::DirectChat;
-use local_user_index_canister::{MultiUserEvent, UserEvent as LocalUserIndexEvent};
+use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -178,7 +178,7 @@ impl RuntimeState {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: now,
             idempotency_id: self.env.rng().next_u64(),
-            value: MultiUserEvent { user_id, event },
+            value: UserEventWithUserId { user_id, event },
         });
     }
 
