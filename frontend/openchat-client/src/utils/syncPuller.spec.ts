@@ -38,7 +38,6 @@ function harness(timeoutMs?: number) {
         fold: async (u) => {
             folded.push((u as unknown as { tag: string }).tag);
         },
-        windows: () => [],
         timeoutMs,
         log: (message) => errors.push(message),
     });
@@ -148,7 +147,6 @@ describe("SyncPuller", () => {
                 await new Promise<void>((resolve) => (releaseFold = resolve));
                 order.push("fold:end");
             },
-            windows: () => [],
         });
 
         await puller.seed(answer(1), async () => {});
@@ -266,7 +264,6 @@ describe("SyncPuller", () => {
         const puller = new SyncPuller({
             pull: () => pulled.promise,
             fold: () => new Promise<void>((resolve) => (releaseFold = resolve)),
-            windows: () => [],
         });
         await puller.seed(answer(1), async () => {});
         puller.onHead({ userId: "u1", version: 2 });

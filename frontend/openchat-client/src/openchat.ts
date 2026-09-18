@@ -321,7 +321,6 @@ import {
     type UpdatedEvent,
     type UpdatedRules,
     type UpdatesResult,
-    type SyncWindow,
     type User,
     type UserGroupDetails,
     type UserOrUserGroup,
@@ -617,6 +616,7 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
+import { answerTouchesChat } from "./utils/answerTouchesChat";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -745,9 +745,8 @@ export class OpenChat {
     constructor(private config: OpenChatConfig) {
         this.#logger = config.logger;
         this.#syncPuller = new SyncPuller({
-            pull: (since, windows) => this.#worker.send({ kind: "syncSince", since, windows }),
+            pull: (since) => this.#worker.send({ kind: "syncSince", since }),
             fold: (updates) => this.#handleChatsResponse(undefined, false, updates),
-            windows: () => this.#syncWindows(),
             log: (message, err) => this.#logger.error(message, err as Error),
         });
         this.#worker = new WorkerAgent(config, (head) => this.#syncPuller.onHead(head));
@@ -843,6 +842,17 @@ export class OpenChat {
         } else {
             return Promise.resolve(false);
         }
+    }
+
+    // Whether the details held for this group or channel are missing or older than its summary
+    #chatDetailsBehind(serverChat: ChatSummary): boolean {
+        if (serverChat.kind === "direct_chat") return false;
+        const details = selectedServerChatStore.value;
+        return (
+            details === undefined ||
+            !chatIdentifiersEqual(details.chatId, serverChat.id) ||
+            details.timestamp < serverChat.lastUpdated
+        );
     }
 
     #chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -5164,6 +5174,11 @@ export class OpenChat {
     }
 
     notificationReceived(notification: Notification): void {
+        // Every notification means some chat has changed on the server. Without this the chat
+        // list, unread counts and latest message wait for the next poll (up to a minute in the
+        // background), even though the event itself is fetched below straight away.
+        this.#chatsPoller?.triggerNow();
+
         let chatId: ChatIdentifier;
         let threadRootMessageIndex: number | undefined = undefined;
         let eventIndex: number;
@@ -7032,6 +7047,9 @@ export class OpenChat {
 
         await this.getMissingUsers(userIds);
 
+        // Held so the fold's answer can be compared with it: see `answerTouchesChat`
+        const selectedBeforeFold = selectedServerChatSummaryStore.value;
+
         withPausedStores(() => {
             this.#updateReadUpToStore(chatsAddedUpdated);
 
@@ -7124,15 +7142,41 @@ export class OpenChat {
             );
         });
 
-        if (selectedChatIdStore.value !== undefined) {
-            if (chatSummariesStore.value.get(selectedChatIdStore.value) === undefined) {
+        const selectedChatId = selectedChatIdStore.value;
+        if (selectedChatId !== undefined) {
+            if (chatSummariesStore.value.get(selectedChatId) === undefined) {
                 publish("selectedChatInvalid");
             } else {
-                const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
-                this.#chatUpdated(
-                    selectedChatIdStore.value,
-                    updatedEvents.get(selectedChatIdStore.value) ?? [],
-                );
+                const updatedEvents =
+                    ChatMap.fromMap(chatsResponse.updatedEvents).get(selectedChatId) ?? [];
+                // An answer that did not change the selected chat (a CHIT balance, another
+                // chat's message, another channel in its community) has nothing new for it: no
+                // latest message to confirm, no events to refresh
+                if (
+                    answerTouchesChat(
+                        selectedChatId,
+                        selectedBeforeFold,
+                        chatsAddedUpdated,
+                        updatedEvents.length,
+                    )
+                ) {
+                    this.#chatUpdated(selectedChatId, updatedEvents);
+                } else {
+                    // Every answer used to reload the details, which is what retried a load that
+                    // failed (offline, say) or came from a lagging replica. Only a retry is
+                    // needed here, so only when the details held are not this chat's latest.
+                    const serverChat = selectedServerChatSummaryStore.value;
+                    if (serverChat !== undefined && this.#chatDetailsBehind(serverChat)) {
+                        this.#loadChatDetails(serverChat);
+                    }
+                    // Still published: the timeline answers it by loading any new messages it
+                    // is missing, and does nothing if there are none, so a load that failed
+                    // earlier gets another go
+                    publish("chatUpdated", {
+                        chatId: selectedChatId,
+                        threadRootMessageIndex: undefined,
+                    });
+                }
             }
         }
 
@@ -7323,29 +7367,6 @@ export class OpenChat {
         });
     }
 
-    // The timeline ranges on screen, which are the only events a sync pull needs to refresh
-    #syncWindows(): SyncWindow[] {
-        const chatId = selectedChatIdStore.value;
-        if (chatId === undefined) return [];
-
-        const windows: SyncWindow[] = eventIndexesLoaded(chatId)
-            .subranges()
-            .map((r) => ({ chatId, threadRootMessageIndex: undefined, from: r.low, to: r.high }));
-
-        const thread = selectedThreadIdStore.value;
-        if (thread !== undefined && chatIdentifiersEqual(thread.chatId, chatId)) {
-            for (const r of threadEventIndexesLoadedStore.value.subranges()) {
-                windows.push({
-                    chatId,
-                    threadRootMessageIndex: thread.threadRootMessageIndex,
-                    from: r.low,
-                    to: r.high,
-                });
-            }
-        }
-        return windows;
-    }
-
     // Runs one pass of the updates loop in the worker. On an initial load the worker answers
     // with a snapshot of its cache which seeds the sync cursor; everything after that reaches
     // the UI by pulling (see SyncPuller), so the pass itself resolves nothing.
@@ -7358,33 +7379,42 @@ export class OpenChat {
         const generation = this.#syncPuller.generation;
 
         return new Promise<void>((resolve) => {
+            // The stream ends without waiting for an async onResult, so the pass is only done
+            // once the snapshot it delivered has been folded. Otherwise the poller would count
+            // it finished, and could start the next, while the fold is still running.
+            let folding: Promise<void> = Promise.resolve();
+            const done = () => folding.then(resolve);
             this.#worker
                 .stream({
                     kind: "getUpdates",
                     initialLoad,
                 })
                 .subscribe({
-                    onResult: async (snapshot) => {
-                        if (snapshot !== undefined) {
-                            await this.#syncPuller.seed(
-                                snapshot,
-                                (updates) =>
-                                    this.#handleChatsResponse(
-                                        updateRegistryTask,
-                                        initialLoad,
-                                        updates,
-                                    ),
-                                generation,
-                            );
-                        }
-                        latestSuccessfulUpdatesLoop.set(Date.now());
+                    onResult: (snapshot) => {
+                        folding = folding
+                            .then(async () => {
+                                if (snapshot !== undefined) {
+                                    await this.#syncPuller.seed(
+                                        snapshot,
+                                        (updates) =>
+                                            this.#handleChatsResponse(
+                                                updateRegistryTask,
+                                                initialLoad,
+                                                updates,
+                                            ),
+                                        generation,
+                                    );
+                                }
+                                latestSuccessfulUpdatesLoop.set(Date.now());
+                            })
+                            .catch((err) => console.warn("Failed to fold the chats snapshot", err));
                     },
                     onError: (err) => {
                         console.warn("getUpdates threw an error: ", err);
-                        resolve();
+                        done();
                     },
                     onEnd: () => {
-                        resolve();
+                        done();
                     },
                 });
         });

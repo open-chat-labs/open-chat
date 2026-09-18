@@ -35,6 +35,12 @@ import {
 import { toRecord } from "./list";
 import { identity } from "./mapping";
 
+// `expiresAt` is an epoch-millis timestamp, so `now` must be wall-clock time (eg. Date.now()), not
+// performance.now()
+export function isExpired(event: { expiresAt?: number }, now: number): boolean {
+    return event.expiresAt !== undefined && event.expiresAt < now;
+}
+
 // this is used to merge both the overall list of chats with updates and also the list of participants
 // within a group chat
 function mergeThings<A, U>(
