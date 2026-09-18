@@ -846,6 +846,17 @@ export class OpenChat {
         }
     }
 
+    // Whether the details held for this group or channel are missing or older than its summary
+    #chatDetailsBehind(serverChat: ChatSummary): boolean {
+        if (serverChat.kind === "direct_chat") return false;
+        const details = selectedServerChatStore.value;
+        return (
+            details === undefined ||
+            !chatIdentifiersEqual(details.chatId, serverChat.id) ||
+            details.timestamp < serverChat.lastUpdated
+        );
+    }
+
     #chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
         if (
             selectedChatIdStore.value === undefined ||
@@ -7133,11 +7144,18 @@ export class OpenChat {
                 const updatedEvents =
                     ChatMap.fromMap(chatsResponse.updatedEvents).get(selectedChatId) ?? [];
                 // A pulled answer names only what changed, so an answer that did not touch the
-                // selected chat (a CHIT balance, another chat's message) has nothing for it: no
-                // details to reload, no latest message to confirm, no events to refresh
+                // selected chat (a CHIT balance, another chat's message) has nothing new for
+                // it: no latest message to confirm, no events to refresh
                 if (answerTouchesChat(selectedChatId, chatsAddedUpdated, updatedEvents.length)) {
                     this.#chatUpdated(selectedChatId, updatedEvents);
                 } else {
+                    // Every answer used to reload the details, which is what retried a load that
+                    // failed (offline, say) or came from a lagging replica. Only a retry is
+                    // needed here, so only when the details held are not this chat's latest.
+                    const serverChat = selectedServerChatSummaryStore.value;
+                    if (serverChat !== undefined && this.#chatDetailsBehind(serverChat)) {
+                        this.#loadChatDetails(serverChat);
+                    }
                     // Still published: the timeline answers it by loading any new messages it
                     // is missing, and does nothing if there are none, so a load that failed
                     // earlier gets another go
