@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `search_messages`, `update_chat_settings` (disappearing messages, with a per-user job to remove expired events), `message_activity_feed` and `mark_message_activity_feed_read`, recording reactions in the message sender's activity feed and reporting the feed's summary through `initial_state` and `updates` ([#9433](https://github.com/open-chat-labs/open-chat/pull/9433))
 - Implement `local_user_index`, `saved_crypto_accounts`, `save_crypto_account`, `delete_saved_crypto_account`, `hot_group_exclusions`, `add_hot_group_exclusions`, `add_recommended_group_exclusions` and `set_pin_number`, holding each user's saved crypto accounts, hot group exclusions and PIN number, and report the PIN number settings through `initial_state` and `updates` ([#9434](https://github.com/open-chat-labs/open-chat/pull/9434))
 - Send events to the LocalUserIndex over a queue, each naming the user it is from: notifications of direct messages, and blocking, unblocking and setting a profile background ([#9435](https://github.com/open-chat-labs/open-chat/pull/9435))
-- Hold CHIT, the daily claim streak and achievements per user, implementing `claim_daily_chit`, `chit_events` and `mark_achievements_seen`, awarding achievements as the User canister does, and telling the LocalUserIndex of each user's CHIT ([#TODO](https://github.com/open-chat-labs/open-chat/pull/TODO))
+- Hold CHIT, the daily claim streak and achievements per user, implementing `claim_daily_chit`, `chit_events` and `mark_achievements_seen`, awarding achievements as the User canister does, and telling the LocalUserIndex of each user's CHIT ([#9438](https://github.com/open-chat-labs/open-chat/pull/9438))
 
 ### Changed
 
