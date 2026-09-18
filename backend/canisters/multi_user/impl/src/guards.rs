@@ -1,8 +1,8 @@
 use crate::read_state;
 
-// The caller owns one of the users held by this canister. Which user is resolved from the caller
-// within the endpoint, via `RuntimeState::caller_user_index`.
-pub fn caller_is_owner() -> Result<(), String> {
+// The caller is the principal of one of the users hosted by this canister. Which user is resolved
+// from the caller within the endpoint, via `RuntimeState::caller_user_index`.
+pub fn caller_is_hosted_user() -> Result<(), String> {
     if read_state(|state| state.caller_user_index().is_some()) {
         Ok(())
     } else {
@@ -10,7 +10,7 @@ pub fn caller_is_owner() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_owner_or_local_user_index() -> Result<(), String> {
+pub fn caller_is_hosted_user_or_local_user_index() -> Result<(), String> {
     if read_state(|state| state.caller_user_index().is_some() || state.is_caller_local_user_index()) {
         Ok(())
     } else {

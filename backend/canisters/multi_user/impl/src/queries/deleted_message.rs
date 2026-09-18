@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use chat_events::{MessageContentInternal, Reader};
@@ -6,7 +6,7 @@ use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use user_canister::deleted_message::{Response::*, *};
 
-#[query(guard = "caller_is_owner", msgpack = true)]
+#[query(guard = "caller_is_hosted_user", msgpack = true)]
 fn deleted_message(args: Args) -> Response {
     match read_state(|state| deleted_message_impl(args, state)) {
         Ok(result) => Success(result),
