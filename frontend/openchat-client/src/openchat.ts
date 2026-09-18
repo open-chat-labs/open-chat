@@ -617,6 +617,7 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
+import { answerTouchesChat } from "./utils/answerTouchesChat";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -7124,15 +7125,27 @@ export class OpenChat {
             );
         });
 
-        if (selectedChatIdStore.value !== undefined) {
-            if (chatSummariesStore.value.get(selectedChatIdStore.value) === undefined) {
+        const selectedChatId = selectedChatIdStore.value;
+        if (selectedChatId !== undefined) {
+            if (chatSummariesStore.value.get(selectedChatId) === undefined) {
                 publish("selectedChatInvalid");
             } else {
-                const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
-                this.#chatUpdated(
-                    selectedChatIdStore.value,
-                    updatedEvents.get(selectedChatIdStore.value) ?? [],
-                );
+                const updatedEvents =
+                    ChatMap.fromMap(chatsResponse.updatedEvents).get(selectedChatId) ?? [];
+                // A pulled answer names only what changed, so an answer that did not touch the
+                // selected chat (a CHIT balance, another chat's message) has nothing for it: no
+                // details to reload, no latest message to confirm, no events to refresh
+                if (answerTouchesChat(selectedChatId, chatsAddedUpdated, updatedEvents.length)) {
+                    this.#chatUpdated(selectedChatId, updatedEvents);
+                } else {
+                    // Still published: the timeline answers it by loading any new messages it
+                    // is missing, and does nothing if there are none, so a load that failed
+                    // earlier gets another go
+                    publish("chatUpdated", {
+                        chatId: selectedChatId,
+                        threadRootMessageIndex: undefined,
+                    });
+                }
             }
         }
 
