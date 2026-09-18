@@ -16,3 +16,4 @@ user_canister = { path = "../../canisters/user/api" }
 
 [dev-dependencies]
 ic-stable-structures = { workspace = true }
+rand = { workspace = true }

@@ -1,7 +1,6 @@
 use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
-use user_canister::MessageActivitySummary;
 use user_canister::initial_state::{Response::*, *};
 use user_state::sorted_pinned;
 
@@ -27,7 +26,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
 
         // TODO: Everything below which is empty or default stays so until the MultiUser canister
         // holds it per user: groups and communities, the pin number, chit and achievements, the
-        // streak, referrals, the message activity feed, bots, the BTC and 1sec addresses and
+        // streak, referrals, bots, the BTC and 1sec addresses and
         // premium items
         Success(SuccessResult {
             timestamp: now,
@@ -52,11 +51,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             is_unique_person: false,
             wallet_config: user.wallet_config.value.clone(),
             referrals: Vec::new(),
-            message_activity_summary: MessageActivitySummary {
-                read_up_to: 0,
-                latest_event_timestamp: 0,
-                unread_count: 0,
-            },
+            message_activity_summary: user.message_activity_events.summary(),
             bots: Vec::new(),
             btc_address: None,
             one_sec_address: None,

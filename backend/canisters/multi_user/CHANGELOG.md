@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `set_avatar`, `set_profile_background`, `set_bio`, `block_user`, `unblock_user`, `set_contact`, `contacts`, `manage_favourite_chats`, `configure_wallet` and `public_profile` ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
 - Support pinning favourite chats, blocking the other user when deleting a direct chat, and reject messages to users the sender has blocked ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
 - Implement `edit_message_v2`, `delete_messages`, `undelete_messages`, `add_reaction`, `remove_reaction`, `deleted_message` and `messages_by_message_index` for direct chats between users in the same canister, applying each change to both copies of the chat, plus a timer job to hard delete deleted message content, which undeleting a message cancels, and a `timer_jobs` metric ([#9430](https://github.com/open-chat-labs/open-chat/pull/9430))
+- Implement `search_messages`, `update_chat_settings` (disappearing messages, with a per-user job to remove expired events), `message_activity_feed` and `mark_message_activity_feed_read`, recording reactions in the message sender's activity feed and reporting the feed's summary through `initial_state` and `updates` ([#9433](https://github.com/open-chat-labs/open-chat/pull/9433))
 
 ### Changed
 

@@ -124,8 +124,11 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
         receive_message(their_index, my_user_id, message_for_recipient, now, state);
     }
 
-    // TODO: Award achievements and register the timer jobs for message expiry, as the User
-    // canister does
+    if let Some(expiry) = message_event.expires_at {
+        state.handle_event_expiry(my_index, expiry);
+    }
+
+    // TODO: Award achievements, as the User canister does
 
     Success(SuccessResult {
         chat_id,
@@ -207,9 +210,9 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
     let chat_id = sender.into();
     let anonymized_id: u128 = state.env.rng().random();
 
-    state.data.users.with_user_mut(their_index, |user| {
+    let expires_at = state.data.users.with_user_mut(their_index, |user| {
         if user.blocked_users.contains(&sender) {
-            return;
+            return None;
         }
 
         let existing_chat = user.direct_chats.get(&chat_id);
@@ -222,7 +225,7 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
             None => Err(OCErrorCode::ThreadNotFound.into()),
         };
         let Ok(thread_root_message_index) = thread_root_message_index else {
-            return;
+            return None;
         };
 
         // The sender can only reuse a message id in a chat they have deleted their copy of, in
@@ -231,7 +234,7 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
             chat.events()
                 .message_already_finalised(thread_root_message_index, message.message_id, false)
         }) {
-            return;
+            return None;
         }
 
         let replies_to = match message.replies_to {
@@ -252,7 +255,7 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
             .direct_chats
             .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now);
 
-        chat.push_message::<NullEventPusher>(
+        let message_event = chat.push_message::<NullEventPusher>(
             PushMessageArgs {
                 thread_root_message_index,
                 message_id: message.message_id,
@@ -272,7 +275,13 @@ fn receive_message(their_index: u16, sender: UserId, message: SendMessageArgs, n
         );
 
         // TODO: Notify the recipient (muted if `message.message_filter_failed` is set), record
-        // replies to messages in other chats and message activity, and register the timer jobs
-        // for message expiry, as the User canister does
+        // replies to messages in other chats and message activity, as the User canister does
+        message_event.expires_at
     });
+
+    // The recipient's copy of the chat has its own time to live, so the message may expire at a
+    // different time in each copy
+    if let Some(expiry) = expires_at.flatten() {
+        state.handle_event_expiry(their_index, expiry);
+    }
 }

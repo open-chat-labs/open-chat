@@ -83,6 +83,10 @@ impl MessageActivityEvents {
         self.in_stable_memory_count
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.in_stable_memory_count == 0
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }
