@@ -321,7 +321,6 @@ import {
     type UpdatedEvent,
     type UpdatedRules,
     type UpdatesResult,
-    type SyncWindow,
     type User,
     type UserGroupDetails,
     type UserOrUserGroup,
@@ -745,9 +744,8 @@ export class OpenChat {
     constructor(private config: OpenChatConfig) {
         this.#logger = config.logger;
         this.#syncPuller = new SyncPuller({
-            pull: (since, windows) => this.#worker.send({ kind: "syncSince", since, windows }),
+            pull: (since) => this.#worker.send({ kind: "syncSince", since }),
             fold: (updates) => this.#handleChatsResponse(undefined, false, updates),
-            windows: () => this.#syncWindows(),
             log: (message, err) => this.#logger.error(message, err as Error),
         });
         this.#worker = new WorkerAgent(config, (head) => this.#syncPuller.onHead(head));
@@ -5164,6 +5162,11 @@ export class OpenChat {
     }
 
     notificationReceived(notification: Notification): void {
+        // Every notification means some chat has changed on the server. Without this the chat
+        // list, unread counts and latest message wait for the next poll (up to a minute in the
+        // background), even though the event itself is fetched below straight away.
+        this.#chatsPoller?.triggerNow();
+
         let chatId: ChatIdentifier;
         let threadRootMessageIndex: number | undefined = undefined;
         let eventIndex: number;
@@ -7323,29 +7326,6 @@ export class OpenChat {
         });
     }
 
-    // The timeline ranges on screen, which are the only events a sync pull needs to refresh
-    #syncWindows(): SyncWindow[] {
-        const chatId = selectedChatIdStore.value;
-        if (chatId === undefined) return [];
-
-        const windows: SyncWindow[] = eventIndexesLoaded(chatId)
-            .subranges()
-            .map((r) => ({ chatId, threadRootMessageIndex: undefined, from: r.low, to: r.high }));
-
-        const thread = selectedThreadIdStore.value;
-        if (thread !== undefined && chatIdentifiersEqual(thread.chatId, chatId)) {
-            for (const r of threadEventIndexesLoadedStore.value.subranges()) {
-                windows.push({
-                    chatId,
-                    threadRootMessageIndex: thread.threadRootMessageIndex,
-                    from: r.low,
-                    to: r.high,
-                });
-            }
-        }
-        return windows;
-    }
-
     // Runs one pass of the updates loop in the worker. On an initial load the worker answers
     // with a snapshot of its cache which seeds the sync cursor; everything after that reaches
     // the UI by pulling (see SyncPuller), so the pass itself resolves nothing.
@@ -7358,33 +7338,42 @@ export class OpenChat {
         const generation = this.#syncPuller.generation;
 
         return new Promise<void>((resolve) => {
+            // The stream ends without waiting for an async onResult, so the pass is only done
+            // once the snapshot it delivered has been folded. Otherwise the poller would count
+            // it finished, and could start the next, while the fold is still running.
+            let folding: Promise<void> = Promise.resolve();
+            const done = () => folding.then(resolve);
             this.#worker
                 .stream({
                     kind: "getUpdates",
                     initialLoad,
                 })
                 .subscribe({
-                    onResult: async (snapshot) => {
-                        if (snapshot !== undefined) {
-                            await this.#syncPuller.seed(
-                                snapshot,
-                                (updates) =>
-                                    this.#handleChatsResponse(
-                                        updateRegistryTask,
-                                        initialLoad,
-                                        updates,
-                                    ),
-                                generation,
-                            );
-                        }
-                        latestSuccessfulUpdatesLoop.set(Date.now());
+                    onResult: (snapshot) => {
+                        folding = folding
+                            .then(async () => {
+                                if (snapshot !== undefined) {
+                                    await this.#syncPuller.seed(
+                                        snapshot,
+                                        (updates) =>
+                                            this.#handleChatsResponse(
+                                                updateRegistryTask,
+                                                initialLoad,
+                                                updates,
+                                            ),
+                                        generation,
+                                    );
+                                }
+                                latestSuccessfulUpdatesLoop.set(Date.now());
+                            })
+                            .catch((err) => console.warn("Failed to fold the chats snapshot", err));
                     },
                     onError: (err) => {
                         console.warn("getUpdates threw an error: ", err);
-                        resolve();
+                        done();
                     },
                     onEnd: () => {
-                        resolve();
+                        done();
                     },
                 });
         });

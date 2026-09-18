@@ -393,7 +393,7 @@ function getAction(
             return agent.getUpdates(payload.initialLoad);
 
         case "syncSince":
-            return agent.syncSince(payload.since, payload.windows);
+            return agent.syncSince(payload.since);
 
         case "getBots":
             return agent.getBots(payload.initialLoad);

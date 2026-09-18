@@ -218,7 +218,6 @@ import type {
     DailyPuzzleSubmitResponse,
     PublicDailyPuzzle,
     SyncSinceResponse,
-    SyncWindow,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -2181,8 +2180,7 @@ export class OpenChatAgent extends EventTarget {
      * A pull rather than `snapshotOf` because the pass also stamps things that are not part of the
      * state - the chit events behind the achievement toasts, and a suspension change. `snapshotOf`
      * reports none of those, and they are stamped at exactly the version the snapshot seeds the
-     * cursor with, so no later pull would carry them either and they would be lost. Windows are
-     * empty: nothing is on screen yet, so no updated events are owed.
+     * cursor with, so no later pull would carry them either and they would be lost.
      */
     async #coldSnapshot(
         userId: string,
@@ -2196,7 +2194,7 @@ export class OpenChatAgent extends EventTarget {
                     userId,
                     version: head,
                     updates: this.#hydrateUpdates(
-                        updatesSince(state, stamps ?? emptySyncStamps(), since, []),
+                        updatesSince(state, stamps ?? emptySyncStamps(), since),
                     ),
                 };
             }
@@ -2223,11 +2221,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     /**
-     * Everything stamped in the cache after `since` (and the updated events inside `windows`),
-     * with the version it was read at. Answers come from the cache alone: a `sync_head` says
-     * only that there may be something past the UI's cursor.
+     * Everything stamped in the cache after `since`, with the version it was read at. Answers
+     * come from the cache alone: a `sync_head` says only that there may be something past the
+     * UI's cursor.
      */
-    async syncSince(since: number, windows: SyncWindow[]): Promise<SyncSinceResponse> {
+    async syncSince(since: number): Promise<SyncSinceResponse> {
         const userId = this.userClient.userId;
         if (userId === ANON_USER_ID) {
             return { userId, version: 0, updates: emptyUpdatesResult() };
@@ -2242,7 +2240,7 @@ export class OpenChatAgent extends EventTarget {
             // a head the UI then pulls to from here.
             return { userId, version: Math.min(since, head), updates: emptyUpdatesResult() };
         }
-        const updates = updatesSince(state, stamps ?? emptySyncStamps(), since, windows);
+        const updates = updatesSince(state, stamps ?? emptySyncStamps(), since);
         return { userId, version: head, updates: this.#hydrateUpdates(updates) };
     }
 
