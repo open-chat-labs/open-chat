@@ -3,30 +3,67 @@ import { isMainnet, offline } from "@shared";
 
 // How long a query may wait for its response to start arriving. Queries normally answer well
 // within a second, so a query still waiting after this is almost always stuck on a connection
-// which died while the device was asleep or changed networks. The browser can take a long time
-// to notice that on its own, and every query in an updates pass waits for it. Aborting lets the
-// agent's retry send the query again.
-export const QUERY_RESPONSE_TIMEOUT_MS = 10_000;
+// which died while the device was asleep or changed networks. Aborting lets the agent's retry
+// send the query again. Generous, because a heavy composite query (eg. summary updates for a
+// large batch of chats on a busy subnet) can legitimately take several seconds, and a limit it
+// cannot meet would fail every attempt where waiting would have succeeded. The common stuck case,
+// coming back after a suspension, is handled sooner by `abortInFlightQueries`.
+export const QUERY_RESPONSE_TIMEOUT_MS = 30_000;
+
+// A query sent at least this long ago may have passed its ingress expiry, which the agent sets
+// to between 4 and 5 minutes after sending (it rounds down to the minute). Kept below that so
+// clock drift cannot push a resend past the replica's check.
+export const QUERY_EXPIRY_SAFE_AGE_MS = 3 * 60 * 1000;
+
+// Recognised by the agent as an expired request, see `isIngressExpiryInvalidResponse` in
+// @icp-sdk/core
+const EXPIRED_QUERY_RESPONSE_TEXT =
+    "Invalid request expiry: sent before the app was suspended, so not resent";
+
+type InFlightQuery = {
+    controller: AbortController;
+    sentAt: number;
+    body: unknown;
+};
 
 // The queries in flight across every agent in this context, so that `abortInFlightQueries` can
 // abandon them all at once
-const inFlightQueries = new Set<AbortController>();
+const inFlightQueries = new Set<InFlightQuery>();
+
+// The bodies of aborted queries too old to resend. The agent retries an aborted query by
+// resending the same signed request, body object included, and once its ingress expiry has passed
+// the replica is certain to reject it. Answering those resends here with the same rejection makes
+// the agent rebuild the query with a fresh expiry straight away, without the wasted round trip.
+const expiredQueryBodies = new WeakSet<object>();
+
+function abortQuery(query: InFlightQuery, reason: DOMException, now: number) {
+    if (now - query.sentAt >= QUERY_EXPIRY_SAFE_AGE_MS && isObject(query.body)) {
+        expiredQueryBodies.add(query.body);
+    }
+    inFlightQueries.delete(query);
+    query.controller.abort(reason);
+}
+
+function isObject(value: unknown): value is object {
+    return typeof value === "object" && value !== null;
+}
 
 /**
  * Aborts every query in flight. Called when the app resumes after being suspended, since queries
  * sent before the suspension are likely to be waiting on a dead connection, and an updates pass
  * holding one of them would otherwise keep the next pass from starting. Each aborted query is
- * retried by the agent. Updates are left alone: resubmitting one is not always harmless.
+ * retried by the agent, rebuilt from scratch if it is old enough to have expired. Updates are left
+ * alone: resubmitting one is not always harmless.
  *
  * Returns the number of queries aborted.
  */
-export function abortInFlightQueries(): number {
-    const count = inFlightQueries.size;
-    for (const controller of inFlightQueries) {
-        controller.abort(new DOMException("Aborted after the app resumed", "AbortError"));
+export function abortInFlightQueries(now: number = Date.now()): number {
+    const queries = [...inFlightQueries];
+    const reason = new DOMException("Aborted after the app resumed", "AbortError");
+    for (const query of queries) {
+        abortQuery(query, reason, now);
     }
-    inFlightQueries.clear();
-    return count;
+    return queries.length;
 }
 
 function isQueryRequest(input: RequestInfo | URL): boolean {
@@ -53,31 +90,48 @@ export function createQueryAwareFetch(
             return baseFetch(input, init);
         }
 
+        const body = init?.body;
+        if (isObject(body) && expiredQueryBodies.has(body)) {
+            return new Response(EXPIRED_QUERY_RESPONSE_TEXT, {
+                status: 400,
+                statusText: "Bad Request",
+            });
+        }
+
         const controller = new AbortController();
         const callerSignal = init?.signal;
         if (callerSignal) {
             if (callerSignal.aborted) {
                 controller.abort(callerSignal.reason);
             } else {
-                callerSignal.addEventListener("abort", () => controller.abort(callerSignal.reason), {
-                    once: true,
-                });
+                callerSignal.addEventListener(
+                    "abort",
+                    () => controller.abort(callerSignal.reason),
+                    {
+                        once: true,
+                    },
+                );
             }
         }
 
+        const query: InFlightQuery = { controller, sentAt: Date.now(), body };
+        // After a suspension this can fire late, at the same time as the resume abort, so it
+        // applies the same expiry check
         const timer = setTimeout(
             () =>
-                controller.abort(
+                abortQuery(
+                    query,
                     new DOMException(`No response after ${timeoutMs}ms`, "TimeoutError"),
+                    Date.now(),
                 ),
             timeoutMs,
         );
-        inFlightQueries.add(controller);
+        inFlightQueries.add(query);
         try {
             return await baseFetch(input, { ...init, signal: controller.signal });
         } finally {
             clearTimeout(timer);
-            inFlightQueries.delete(controller);
+            inFlightQueries.delete(query);
         }
     };
 }

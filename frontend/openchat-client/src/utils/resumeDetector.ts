@@ -20,8 +20,7 @@ export function watchForResume(
     onResume: (reason: ResumeReason, suspendedMs: number) => void,
     now: () => number = Date.now,
 ): () => void {
-    let hiddenAt: number | undefined =
-        document.visibilityState === "hidden" ? now() : undefined;
+    let hiddenAt: number | undefined = document.visibilityState === "hidden" ? now() : undefined;
     let lastTick = now();
 
     const onVisibilityChange = () => {
