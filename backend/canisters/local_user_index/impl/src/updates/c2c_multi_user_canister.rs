@@ -19,7 +19,10 @@ fn c2c_multi_user_canister_impl(args: ArgsInternal, state: &mut RuntimeState) ->
     let caller = state.env.caller();
     let now = LazyCell::new(now_millis);
     for event in args.events {
-        if event.value.user_id.canister_id() != caller {
+        // The user must be one the calling canister hosts. Their id carries a non-zero index, which
+        // rules out the canister's own id (index 0).
+        let user_id = event.value.user_id;
+        if user_id.index() == 0 || user_id.canister_id() != caller {
             continue;
         }
         if state
