@@ -9,5 +9,5 @@ fn saved_crypto_accounts(_args: Args) -> Response {
 }
 
 fn saved_crypto_accounts_impl(state: &RuntimeState) -> Response {
-    Success(state.data.saved_crypto_accounts.clone())
+    Success(state.data.saved_crypto_accounts.all().to_vec())
 }

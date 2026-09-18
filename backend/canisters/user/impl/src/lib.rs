@@ -4,10 +4,8 @@ use crate::model::community::Community;
 use crate::model::game_chit_keys::GameChitKeys;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
-use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::p2p_swaps::P2PSwaps;
-use crate::model::pin_number::PinNumber;
 use crate::model::premium_items::PremiumItems;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
@@ -40,8 +38,11 @@ use types::{
     IdempotentEnvelope, MultiUserChat, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
     UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
-use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
-use user_state::{BlockedUsers, Contacts, FavouriteChats, MessageActivityEvents, ProfileDocument};
+use user_canister::{MessageActivityEvent, UserCanisterEvent, WalletConfig};
+use user_state::{
+    BlockedUsers, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
+    SavedCryptoAccounts,
+};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
@@ -473,7 +474,7 @@ struct Data {
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    pub saved_crypto_accounts: Vec<NamedAccount>,
+    pub saved_crypto_accounts: SavedCryptoAccounts,
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
@@ -545,7 +546,7 @@ impl Data {
             contacts: Contacts::default(),
             diamond_membership_expires_at: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
-            saved_crypto_accounts: Vec::new(),
+            saved_crypto_accounts: SavedCryptoAccounts::default(),
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),

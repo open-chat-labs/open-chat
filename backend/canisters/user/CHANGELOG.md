@@ -65,6 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Cancel the pending hard delete of a message's content when it is undeleted, so a message deleted again gets the full 5 minutes to be undeleted ([#9430](https://github.com/open-chat-labs/open-chat/pull/9430))
 - Apply `thread_root_message_index` to the sender's own copy of a direct chat when editing or deleting a thread reply ([#9431](https://github.com/open-chat-labs/open-chat/pull/9431))
 - Move the message activity feed model into the shared `user_state` library, so the MultiUser canister can hold one per user ([#9433](https://github.com/open-chat-labs/open-chat/pull/9433))
+- Move the PIN number, hot group exclusions and saved crypto accounts models into the shared `user_state` library, so the MultiUser canister can hold them per user ([#9434](https://github.com/open-chat-labs/open-chat/pull/9434))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-13
 

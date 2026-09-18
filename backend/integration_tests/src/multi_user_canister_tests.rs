@@ -10,11 +10,12 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, DirectChatSummary, DirectChatSummaryUpdates, Document,
-    EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate,
-    Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
+    BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, ChatId, DirectChatSummary, DirectChatSummaryUpdates, Document,
+    Empty, EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate,
+    PinNumberSettings, Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
-use user_canister::{ChatInList, MessageActivity, MessageActivityEvent, WalletConfig};
+use user_canister::set_pin_number::PinNumberVerification;
+use user_canister::{ChatInList, MessageActivity, MessageActivityEvent, NamedAccount, WalletConfig};
 
 #[test]
 fn create_then_upgrade_multi_user_canister() {
@@ -1673,4 +1674,185 @@ fn message_activity_feed(
         &user_canister::message_activity_feed::Args { since },
     );
     result
+}
+
+#[test]
+fn saved_crypto_accounts_and_hot_group_exclusions_are_held_per_user() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, _) = create_user(env, local_user_index, canister_id);
+    let (b_principal, _) = create_user(env, local_user_index, canister_id);
+
+    let user_canister::local_user_index::Response::Success(local_user_index_of_canister) =
+        client::multi_user::local_user_index(env, a_principal, canister_id, &Empty {});
+    assert_eq!(local_user_index_of_canister, local_user_index);
+
+    // Saved crypto accounts
+    let named = |name: &str, account: Principal| NamedAccount {
+        name: name.to_string(),
+        account: account.to_string(),
+    };
+    let first = random_principal();
+    let second = random_principal();
+    assert!(matches!(
+        client::multi_user::save_crypto_account(env, a_principal, canister_id, &named("Savings", first)),
+        UnitResult::Success
+    ));
+    let taken = client::multi_user::save_crypto_account(env, a_principal, canister_id, &named("SAVINGS", second));
+    assert!(
+        matches!(&taken, UnitResult::Error(e) if e.matches_code(OCErrorCode::NameTaken)),
+        "{taken:?}"
+    );
+    assert_eq!(
+        saved_crypto_accounts(env, a_principal, canister_id),
+        vec![named("Savings", first)]
+    );
+    assert!(saved_crypto_accounts(env, b_principal, canister_id).is_empty());
+
+    assert!(matches!(
+        client::multi_user::delete_saved_crypto_account(
+            env,
+            a_principal,
+            canister_id,
+            &user_canister::delete_saved_crypto_account::Args {
+                name: "savings".to_string()
+            },
+        ),
+        UnitResult::Success
+    ));
+    assert!(saved_crypto_accounts(env, a_principal, canister_id).is_empty());
+
+    // Hot group exclusions, which expire after the duration given
+    let group: ChatId = random_principal().into();
+    let expiring_group: ChatId = random_principal().into();
+    for (groups, duration) in [(vec![group], None), (vec![expiring_group], Some(1000))] {
+        client::multi_user::add_hot_group_exclusions(
+            env,
+            a_principal,
+            canister_id,
+            &user_canister::add_hot_group_exclusions::Args { groups, duration },
+        );
+    }
+    let mut exclusions = hot_group_exclusions(env, a_principal, canister_id);
+    exclusions.sort();
+    let mut expected = vec![group, expiring_group];
+    expected.sort();
+    assert_eq!(exclusions, expected);
+    assert!(hot_group_exclusions(env, b_principal, canister_id).is_empty());
+
+    env.advance_time(Duration::from_millis(1001));
+    env.tick();
+    assert_eq!(hot_group_exclusions(env, a_principal, canister_id), vec![group]);
+}
+
+#[test]
+fn pin_number_is_set_verified_and_reported() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, _) = create_user(env, local_user_index, canister_id);
+    let (b_principal, _) = create_user(env, local_user_index, canister_id);
+    assert!(initial_state(env, a_principal, canister_id).pin_number_settings.is_none());
+
+    // No verification is needed to set the first PIN, which must be of a valid length
+    let too_short = set_pin_number(env, a_principal, canister_id, Some("123"), PinNumberVerification::None);
+    assert!(
+        matches!(&too_short, UnitResult::Error(e) if e.matches_code(OCErrorCode::PinTooShort)),
+        "{too_short:?}"
+    );
+    let start = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    let response = set_pin_number(env, a_principal, canister_id, Some("1234"), PinNumberVerification::None);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    let settings = initial_state(env, a_principal, canister_id).pin_number_settings.unwrap();
+    assert_eq!(settings.length, 4);
+    assert!(matches!(
+        updates(env, a_principal, canister_id, start).map(|u| u.pin_number_settings),
+        Some(OptionUpdate::SetToSome(PinNumberSettings { length: 4, .. }))
+    ));
+    assert!(initial_state(env, b_principal, canister_id).pin_number_settings.is_none());
+
+    // Changing it then needs the current PIN
+    let unverified = set_pin_number(env, a_principal, canister_id, Some("5678"), PinNumberVerification::None);
+    assert!(
+        matches!(&unverified, UnitResult::Error(e) if e.matches_code(OCErrorCode::PinRequired)),
+        "{unverified:?}"
+    );
+    let incorrect = set_pin_number(env, a_principal, canister_id, Some("5678"), pin("0000"));
+    assert!(
+        matches!(&incorrect, UnitResult::Error(e) if e.matches_code(OCErrorCode::PinIncorrect)),
+        "{incorrect:?}"
+    );
+    let response = set_pin_number(env, a_principal, canister_id, Some("56789"), pin("1234"));
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(
+        initial_state(env, a_principal, canister_id)
+            .pin_number_settings
+            .unwrap()
+            .length,
+        5
+    );
+
+    // Removing it clears the settings
+    let after_change = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    let response = set_pin_number(env, a_principal, canister_id, None, pin("56789"));
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert!(initial_state(env, a_principal, canister_id).pin_number_settings.is_none());
+    assert!(matches!(
+        updates(env, a_principal, canister_id, after_change).map(|u| u.pin_number_settings),
+        Some(OptionUpdate::SetToNone)
+    ));
+}
+
+fn saved_crypto_accounts(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<NamedAccount> {
+    let user_canister::saved_crypto_accounts::Response::Success(accounts) =
+        client::multi_user::saved_crypto_accounts(env, sender, canister_id, &Empty {});
+    accounts
+}
+
+fn hot_group_exclusions(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<ChatId> {
+    let user_canister::hot_group_exclusions::Response::Success(exclusions) =
+        client::multi_user::hot_group_exclusions(env, sender, canister_id, &Empty {});
+    exclusions
+}
+
+fn pin(value: &str) -> PinNumberVerification {
+    PinNumberVerification::PIN(value.to_string().into())
+}
+
+fn set_pin_number(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    new: Option<&str>,
+    verification: PinNumberVerification,
+) -> UnitResult {
+    client::multi_user::set_pin_number(
+        env,
+        sender,
+        canister_id,
+        &user_canister::set_pin_number::Args {
+            new: new.map(|p| p.to_string().into()),
+            verification,
+        },
+    )
 }

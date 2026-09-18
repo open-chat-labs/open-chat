@@ -12,11 +12,6 @@ fn delete_saved_crypto_account(args: Args) -> Response {
 }
 
 fn delete_saved_crypto_account_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    let name_lowercase = args.name.to_lowercase();
-    state
-        .data
-        .saved_crypto_accounts
-        .retain(|named| named.name.to_lowercase() != name_lowercase);
-
+    state.data.saved_crypto_accounts.delete(&args.name);
     Ok(())
 }
