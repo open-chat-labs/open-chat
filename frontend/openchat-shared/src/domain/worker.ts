@@ -536,7 +536,13 @@ export type WorkerRequest =
     | OneSecForwardEvmToIcp
     | OneSecGetForwardingStatus
     | UpdateBlockedUsernamePatterns
-    | MarkNotificationSubscriptionActive;
+    | MarkNotificationSubscriptionActive
+    | AbortInFlightQueries;
+
+// Sent when the app resumes after being suspended, see `abortInFlightQueries` in openchat-agent
+type AbortInFlightQueries = {
+    kind: "abortInFlightQueries";
+};
 
 type MarkNotificationSubscriptionActive = {
     kind: "markNotificationSubscriptionActive";
@@ -3005,5 +3011,7 @@ export type WorkerResult<T> = T extends Init
     : T extends UpdateBlockedUsernamePatterns
     ? void
     : T extends MarkNotificationSubscriptionActive
+    ? void
+    : T extends AbortInFlightQueries
     ? void
     : never;

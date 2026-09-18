@@ -12,6 +12,10 @@ import { ReplicaNotUpToDateError, toCanisterResponseError } from "../error";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
+// The delay doubles with each retry but never exceeds this. Uncapped, the later retries slept for
+// up to 6.4s, so a query which failed while the network was down (eg. just after the device woke)
+// was often still asleep long after the network had recovered.
+const MAX_RETRY_DELAY = 1000;
 
 function debug(msg: string): void {
     console.log(msg);
@@ -51,7 +55,7 @@ export abstract class CanisterAgent {
                     !(responseErr instanceof TypeboxValidationError) &&
                     retries < MAX_RETRIES
                 ) {
-                    const delay = RETRY_DELAY * Math.pow(2, retries);
+                    const delay = Math.min(RETRY_DELAY * Math.pow(2, retries), MAX_RETRY_DELAY);
 
                     if (responseErr instanceof ReplicaNotUpToDateError) {
                         debug(
