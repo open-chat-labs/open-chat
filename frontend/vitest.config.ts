@@ -51,6 +51,7 @@ export default defineConfig({
             "openchat-shared/src/**/*.{test,spec}.ts",
             "openchat-client/src/**/*.{test,spec}.ts",
             "openchat-agent/src/**/*.{test,spec}.ts",
+            "src-tauri/tests/**/*.{test,spec}.ts",
         ],
         exclude: ["**/node_modules/**", "**/lib/**"],
         server: {
