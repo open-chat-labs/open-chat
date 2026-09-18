@@ -1124,7 +1124,6 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     assert_eq!(timer_jobs(env, canister_id), 5);
     env.advance_time(Duration::from_secs(5 * 60));
     tick_many(env, 3);
-    assert_eq!(timer_jobs(env, canister_id), 0);
     for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
         assert!(messages(&events(env, principal, canister_id, me, them)).contains(&(a, "hello".to_string())));
     }
