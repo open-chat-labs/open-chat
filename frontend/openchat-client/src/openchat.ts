@@ -7353,6 +7353,9 @@ export class OpenChat {
         const initialLoad = !chatsInitialisedStore.value;
 
         const updateRegistryTask = initialLoad ? this.#updateRegistry() : undefined;
+        // Taken before the load starts: if the identity changes while it is in flight, the
+        // snapshot it delivers belongs to the old session and the puller drops it
+        const generation = this.#syncPuller.generation;
 
         return new Promise<void>((resolve) => {
             this.#worker
@@ -7363,8 +7366,15 @@ export class OpenChat {
                 .subscribe({
                     onResult: async (snapshot) => {
                         if (snapshot !== undefined) {
-                            await this.#syncPuller.seed(snapshot, (updates) =>
-                                this.#handleChatsResponse(updateRegistryTask, initialLoad, updates),
+                            await this.#syncPuller.seed(
+                                snapshot,
+                                (updates) =>
+                                    this.#handleChatsResponse(
+                                        updateRegistryTask,
+                                        initialLoad,
+                                        updates,
+                                    ),
+                                generation,
                             );
                         }
                         latestSuccessfulUpdatesLoop.set(Date.now());

@@ -19,11 +19,17 @@ export type SyncPullerDeps = {
  * An answer for another user, or read at a version behind the cursor (a boot snapshot landed
  * mid-pull), is dropped. A pull that has not answered within the timeout is abandoned so a lost
  * answer cannot wedge the cursor: the next head pulls again from the same cursor.
+ *
+ * Snapshots are guarded the same way. `clear()` starts a new generation, and a snapshot from a
+ * load that began before it (an old identity's `getUpdates` stream answering late) is dropped
+ * rather than seeding the new session with the old user's chats; a snapshot behind the cursor
+ * for the same user never moves it backwards.
  */
 export class SyncPuller {
     #cursor: SyncHead | undefined = undefined;
     #pendingHead: number | undefined = undefined;
     #inFlight = false;
+    #generation = 0;
     // Folds run one at a time so a snapshot and a pulled answer can never interleave
     #folding: Promise<void> = Promise.resolve();
 
@@ -33,23 +39,41 @@ export class SyncPuller {
         return this.#cursor;
     }
 
+    /** Captured by a load before it starts, so a snapshot it delivers after a `clear()` is dropped */
+    get generation(): number {
+        return this.#generation;
+    }
+
     /**
      * Folds the boot snapshot and seeds the cursor from it. The cursor moves first so a head
      * announced during the fold is kept and pulled once the fold is done.
+     *
+     * Dropped if `generation` is not the current one (the load began before a `clear()`), or if
+     * a cursor for the same user is already past it (an out-of-order load); a snapshot for a
+     * different user while a cursor is set is stale too, since every identity change clears.
      */
     async seed(
         snapshot: SyncSinceResponse,
         fold: (updates: UpdatesResult) => Promise<void>,
+        generation: number = this.#generation,
     ): Promise<void> {
+        if (generation !== this.#generation || !this.#seedable(snapshot)) {
+            this.deps.log?.("Sync snapshot dropped", { snapshot: snapshot.version, generation });
+            return;
+        }
         this.#cursor = { userId: snapshot.userId, version: snapshot.version };
         await this.#exclusive(() => fold(snapshot.updates));
         this.#maybePull();
     }
 
-    /** Forgets the cursor (sign-out): heads are ignored and in-flight answers dropped until the next seed */
+    /**
+     * Forgets the cursor (sign-out) and starts a new generation: heads are ignored, in-flight
+     * answers dropped and snapshots from loads begun before this are dropped until the next seed
+     */
     clear(): void {
         this.#cursor = undefined;
         this.#pendingHead = undefined;
+        this.#generation++;
     }
 
     onHead({ userId, version }: SyncHead): void {
@@ -101,6 +125,13 @@ export class SyncPuller {
         } catch (err) {
             this.deps.log?.("Sync pull failed", err);
         }
+    }
+
+    #seedable(snapshot: SyncSinceResponse): boolean {
+        return (
+            this.#cursor === undefined ||
+            (this.#cursor.userId === snapshot.userId && snapshot.version >= this.#cursor.version)
+        );
     }
 
     #accepts(answer: SyncSinceResponse): boolean {

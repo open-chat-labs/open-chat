@@ -2196,21 +2196,25 @@ export class OpenChatAgent extends EventTarget {
         since: number,
         passState: ChatStateFull | undefined,
     ): Promise<SyncSinceResponse | undefined> {
-        const { head, state, stamps } = await this._chatsDb.getChatsForSync();
-        if (state !== undefined) {
-            return {
-                userId,
-                version: head,
-                updates: this.#hydrateUpdates(
-                    updatesSince(state, stamps ?? emptySyncStamps(), since, []),
-                ),
-            };
+        try {
+            const { head, state, stamps } = await this._chatsDb.getChatsForSync();
+            if (state !== undefined) {
+                return {
+                    userId,
+                    version: head,
+                    updates: this.#hydrateUpdates(
+                        updatesSince(state, stamps ?? emptySyncStamps(), since, []),
+                    ),
+                };
+            }
+        } catch (err) {
+            this._logger.error("Failed to read the chats cache back after a cold load", err);
         }
-        // Nothing to read back means the cache write failed (`_getUpdates` logs and continues).
-        // Fall back to the state the pass fetched so the app still boots - without this the UI
-        // never marks the chats initialised and sits on the loading screen for as long as the
-        // cache stays unwritable. Version 0 so the first head announcement after a successful
-        // write pulls everything.
+        // Nothing to read back, or the read failed, means the cache write failed (`_getUpdates`
+        // logs and continues) or the cache is unreadable. Fall back to the state the pass fetched
+        // so the app still boots - without this the UI never marks the chats initialised and
+        // sits on the loading screen for as long as the cache stays unusable. Version 0 so the
+        // first head announcement after a successful write pulls everything.
         return passState === undefined ? undefined : this.#snapshot(userId, 0, passState);
     }
 

@@ -210,6 +210,37 @@ describe("SyncPuller", () => {
         expect(puller.cursor?.version).toBe(3);
     });
 
+    test("a snapshot from a load begun before clear() is dropped", async () => {
+        const { puller, folded, errors } = harness();
+        const generation = puller.generation;
+
+        puller.clear();
+        await puller.seed(answer(4, "old-user"), async () => folded.push("stale"), generation);
+
+        expect(folded).toEqual([]);
+        expect(puller.cursor).toBeUndefined();
+        expect(errors).toEqual(["Sync snapshot dropped"]);
+
+        // the load begun after the clear seeds as normal
+        await puller.seed(answer(1), async () => folded.push("fresh"), puller.generation);
+        expect(folded).toEqual(["fresh"]);
+        expect(puller.cursor).toEqual({ userId: "u1", version: 1 });
+    });
+
+    test("a snapshot behind the cursor, or for another user, never seeds", async () => {
+        const { puller, folded } = harness();
+        await puller.seed(answer(5), async () => folded.push("v5"));
+
+        await puller.seed(answer(3), async () => folded.push("v3"));
+        await puller.seed(answer(9, "u2"), async () => folded.push("u2"));
+        expect(folded).toEqual(["v5"]);
+        expect(puller.cursor).toEqual({ userId: "u1", version: 5 });
+
+        // the same version is folded again: a duplicate is harmless, a hole is not
+        await puller.seed(answer(5), async () => folded.push("v5-again"));
+        expect(folded).toEqual(["v5", "v5-again"]);
+    });
+
     test("clear drops the cursor and any in-flight answer", async () => {
         const { puller, pulls, folded } = harness();
         await puller.seed(answer(1), async () => {});
