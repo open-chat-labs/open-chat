@@ -274,19 +274,26 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
 }
 
 fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
-    if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+    let chat_id = caller_user_id.into();
+    if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
         let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
             return;
         };
 
-        chat.undelete_messages(DeleteUndeleteMessagesArgs {
-            caller: caller_user_id,
-            is_admin: false,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index,
-            message_ids: args.message_ids,
-            now: state.env.now(),
-        });
+        let undeleted: Vec<_> = chat
+            .undelete_messages(DeleteUndeleteMessagesArgs {
+                caller: caller_user_id,
+                is_admin: false,
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index,
+                message_ids: args.message_ids,
+                now: state.env.now(),
+            })
+            .into_iter()
+            .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
+            .collect();
+
+        HardDeleteMessageContentJob::cancel(&mut state.data.timer_jobs, chat_id, thread_root_message_index, &undeleted);
     }
 }
 

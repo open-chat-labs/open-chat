@@ -1108,6 +1108,31 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     assert_eq!(undeleted.messages.len(), 1);
     assert_eq!(undeleted.messages[0].message_id, hello_id);
 
+    // Deleting the message again gives the full 5 minutes to undelete it, since undeleting it
+    // cancelled the removal of its content queued by the first deletion
+    env.advance_time(Duration::from_secs(3 * 60));
+    delete_messages(env, a_principal, canister_id, b, None, vec![hello_id]);
+    env.advance_time(Duration::from_secs(3 * 60));
+    tick_many(env, 3);
+    assert!(matches!(
+        deleted_message(env, a_principal, canister_id, b, hello_id),
+        user_canister::deleted_message::Response::Success(r) if matches!(&r.content, MessageContent::Text(t) if t.text == "hello")
+    ));
+    let undeleted = client::multi_user::undelete_messages(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::undelete_messages::Args {
+            user_id: b,
+            thread_root_message_index: None,
+            message_ids: vec![hello_id],
+        },
+    );
+    assert!(
+        matches!(&undeleted, user_canister::undelete_messages::Response::Success(r) if r.messages.len() == 1),
+        "{undeleted:?}"
+    );
+
     // B deleting A's message only removes it from B's copy
     delete_messages(env, b_principal, canister_id, a, None, vec![root_id]);
     assert!(matches!(
@@ -1121,7 +1146,9 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
 
     // Once the deleted messages can no longer be undeleted their content is removed, from both
     // copies, while the message which was undeleted is untouched
-    assert_eq!(timer_jobs(env, canister_id), 5);
+    // Only the job for B's deletion of A's message is left, since the jobs for the thread reply
+    // have run and cancelling jobs also clears out those which have run
+    assert_eq!(timer_jobs(env, canister_id), 1);
     env.advance_time(Duration::from_secs(5 * 60));
     tick_many(env, 3);
     for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {

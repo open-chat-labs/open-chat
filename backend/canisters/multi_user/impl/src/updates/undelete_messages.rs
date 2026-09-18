@@ -1,4 +1,5 @@
 use crate::guards::caller_is_owner;
+use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -62,22 +63,45 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         })
         .ok_or(OCErrorCode::TargetUserNotFound)??;
 
+    HardDeleteMessageContentJob::cancel(
+        &mut state.data.timer_jobs,
+        my_index,
+        args.user_id.into(),
+        args.thread_root_message_index,
+        &undeleted,
+    );
+
     // Then in the other user's copy, where the thread is identified by the id of its root message
     // since message indexes differ between the copies
     // TODO: A user in another canister needs sending `UndeleteMessages`, as the User canister does
-    if !undeleted.is_empty() {
-        state.with_their_direct_chat_mut(my_user_id, args.user_id, |chat| {
-            if let Ok(thread_root_message_index) = chat.thread_root_message_index(thread_root_message_id) {
-                chat.undelete_messages(DeleteUndeleteMessagesArgs {
-                    caller: my_user_id,
-                    is_admin: false,
-                    min_visible_event_index: EventIndex::default(),
-                    thread_root_message_index,
-                    message_ids: undeleted,
-                    now,
-                });
-            }
-        });
+    if !undeleted.is_empty()
+        && let Some(their_index) = state.local_user_index(args.user_id)
+        && let Some((thread_root_message_index, undeleted_in_theirs)) = state
+            .with_their_direct_chat_mut(my_user_id, args.user_id, |chat| {
+                let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;
+                let undeleted: Vec<_> = chat
+                    .undelete_messages(DeleteUndeleteMessagesArgs {
+                        caller: my_user_id,
+                        is_admin: false,
+                        min_visible_event_index: EventIndex::default(),
+                        thread_root_message_index,
+                        message_ids: undeleted,
+                        now,
+                    })
+                    .into_iter()
+                    .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
+                    .collect();
+                Some((thread_root_message_index, undeleted))
+            })
+            .flatten()
+    {
+        HardDeleteMessageContentJob::cancel(
+            &mut state.data.timer_jobs,
+            their_index,
+            my_user_id.into(),
+            thread_root_message_index,
+            &undeleted_in_theirs,
+        );
     }
 
     Ok(SuccessResult { messages })

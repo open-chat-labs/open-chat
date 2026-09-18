@@ -1,5 +1,5 @@
 use crate::mutate_state;
-use canister_timer_jobs::Job;
+use canister_timer_jobs::{Job, TimerJobs};
 use serde::{Deserialize, Serialize};
 use types::{ChatId, MessageId, MessageIndex};
 
@@ -17,6 +17,32 @@ pub struct HardDeleteMessageContentJob {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
+}
+
+impl HardDeleteMessageContentJob {
+    // Cancels the jobs to hard delete the content of messages which have been undeleted from the
+    // copy of a chat held by the user at `user_index`, so that a job queued by an earlier deletion
+    // can't remove the content of a message deleted again later before its time to be undeleted
+    // is up
+    pub fn cancel(
+        timer_jobs: &mut TimerJobs<TimerJob>,
+        user_index: u16,
+        chat_id: ChatId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_ids: &[MessageId],
+    ) {
+        if message_ids.is_empty() {
+            return;
+        }
+        timer_jobs.cancel_jobs(|job| match job {
+            TimerJob::HardDeleteMessageContent(j) => {
+                j.user_index == user_index
+                    && j.chat_id == chat_id
+                    && j.thread_root_message_index == thread_root_message_index
+                    && message_ids.contains(&j.message_id)
+            }
+        });
+    }
 }
 
 impl Job for TimerJob {
