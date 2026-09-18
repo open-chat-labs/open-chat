@@ -11,11 +11,11 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, ChatId, DirectChatSummary, DirectChatSummaryUpdates, Document,
-    Empty, EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, OptionUpdate,
+    Empty, EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate,
     PinNumberSettings, Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
 use user_canister::set_pin_number::PinNumberVerification;
-use user_canister::{ChatInList, NamedAccount, WalletConfig};
+use user_canister::{ChatInList, MessageActivity, MessageActivityEvent, NamedAccount, WalletConfig};
 
 #[test]
 fn create_then_upgrade_multi_user_canister() {
@@ -1437,6 +1437,243 @@ fn toggle_reaction(
 
 fn timer_jobs(env: &PocketIc, canister_id: CanisterId) -> u32 {
     serde_json::from_value(metrics(env, canister_id)["timer_jobs"].clone()).unwrap()
+}
+
+#[test]
+fn search_messages_finds_matching_messages_in_a_direct_chat() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (_, c) = create_user(env, local_user_index, canister_id);
+
+    send_text_message(env, a_principal, canister_id, b, "the quick brown fox", random_from_u128());
+    send_text_message(env, a_principal, canister_id, b, "jumps over", random_from_u128());
+    send_text_message(env, b_principal, canister_id, a, "a lazy fox", random_from_u128());
+
+    // Each user searches their own copy of the chat, whose message indexes are their own
+    let matches = |principal, them, term: &str| match search_messages(env, principal, canister_id, them, term) {
+        user_canister::search_messages::Response::Success(result) => {
+            let mut indexes: Vec<_> = result.matches.into_iter().map(|m| u32::from(m.message_index)).collect();
+            indexes.sort();
+            indexes
+        }
+        response => panic!("{response:?}"),
+    };
+    assert_eq!(matches(a_principal, b, "fox"), vec![0, 2]);
+    assert_eq!(matches(b_principal, a, "jumps"), vec![1]);
+    assert!(matches(b_principal, a, "wolf").is_empty());
+
+    for (them, term, code) in [
+        (b, "ox".to_string(), OCErrorCode::TermTooShort),
+        (b, "x".repeat(259), OCErrorCode::TermTooLong),
+        (c, "fox".to_string(), OCErrorCode::ChatNotFound),
+    ] {
+        let response = search_messages(env, a_principal, canister_id, them, &term);
+        assert!(
+            matches!(&response, user_canister::search_messages::Response::Error(e) if e.matches_code(code)),
+            "{response:?}"
+        );
+    }
+}
+
+#[test]
+fn disappearing_messages_expire_from_both_copies_of_a_direct_chat() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    send_text_message(env, a_principal, canister_id, b, "kept", random_from_u128());
+
+    // A sets a time to live on the chat, which reaches B's copy
+    let ttl = 60_000;
+    update_chat_settings(env, a_principal, canister_id, b, OptionUpdate::SetToSome(ttl));
+    for principal in [a_principal, b_principal] {
+        assert_eq!(
+            single_direct_chat_summary(initial_state(env, principal, canister_id)).events_ttl,
+            Some(ttl)
+        );
+    }
+
+    // A message sent now expires from both copies of the chat, each of which queues a job to remove
+    // it, while the message sent before the time to live was set is kept
+    let timer_jobs_before = timer_jobs(env, canister_id);
+    let expiring = send_text_message(env, a_principal, canister_id, b, "expiring", random_from_u128());
+    assert!(expiring.expires_at.is_some());
+    assert_eq!(timer_jobs(env, canister_id), timer_jobs_before + 2);
+    for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
+        assert_eq!(
+            messages(&events(env, principal, canister_id, me, them)),
+            vec![(a, "kept".to_string()), (a, "expiring".to_string())]
+        );
+    }
+
+    env.advance_time(Duration::from_millis(ttl + 1));
+    tick_many(env, 3);
+    for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
+        assert_eq!(
+            messages(&events(env, principal, canister_id, me, them)),
+            vec![(a, "kept".to_string())]
+        );
+    }
+
+    // B removes the time to live, which reaches A's copy, so messages no longer expire
+    update_chat_settings(env, b_principal, canister_id, a, OptionUpdate::SetToNone);
+    for principal in [a_principal, b_principal] {
+        assert_eq!(
+            single_direct_chat_summary(initial_state(env, principal, canister_id)).events_ttl,
+            None
+        );
+    }
+    let lasting = send_text_message(env, b_principal, canister_id, a, "lasting", random_from_u128());
+    assert!(lasting.expires_at.is_none());
+}
+
+#[test]
+fn reactions_to_a_users_messages_appear_in_their_message_activity_feed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    let a_message_id = random_from_u128();
+    send_text_message(env, a_principal, canister_id, b, "from a", a_message_id);
+    let b_message_id = random_from_u128();
+    send_text_message(env, b_principal, canister_id, a, "from b", b_message_id);
+    let start = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+
+    // B reacting to A's message is activity for A, while B reacting to their own message is not
+    let reaction = Reaction::new("👍".to_string());
+    toggle_reaction(env, b_principal, canister_id, a, None, a_message_id, &reaction, true);
+    toggle_reaction(env, b_principal, canister_id, a, None, b_message_id, &reaction, true);
+
+    let feed = message_activity_feed(env, a_principal, canister_id, 0);
+    assert_eq!(feed.total, 1);
+    let [event] = <[MessageActivityEvent; 1]>::try_from(feed.events).unwrap();
+    assert_eq!(event.chat, Chat::Direct(b.into()));
+    assert_eq!(event.message_id, a_message_id);
+    assert_eq!(event.message_index, 0.into());
+    assert_eq!(event.activity, MessageActivity::Reaction);
+    assert_eq!(event.user_id, Some(b));
+    assert_eq!(message_activity_feed(env, b_principal, canister_id, 0).total, 0);
+
+    let summary = initial_state(env, a_principal, canister_id).message_activity_summary;
+    assert_eq!(summary.unread_count, 1);
+    assert_eq!(summary.latest_event_timestamp, event.timestamp);
+    let summary = updates(env, a_principal, canister_id, start)
+        .and_then(|u| u.message_activity_summary)
+        .expect("Expected the message activity summary to have been updated");
+    assert_eq!(summary.unread_count, 1);
+
+    // Marking the feed read clears the unread count
+    let response = client::multi_user::mark_message_activity_feed_read(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::mark_message_activity_feed_read::Args {
+            read_up_to: event.timestamp,
+        },
+    );
+    assert!(matches!(
+        response,
+        user_canister::mark_message_activity_feed_read::Response::Success
+    ));
+    let summary = initial_state(env, a_principal, canister_id).message_activity_summary;
+    assert_eq!(summary.read_up_to, event.timestamp);
+    assert_eq!(summary.unread_count, 0);
+
+    // A reaction from a user A has blocked reaches neither A's copy of the chat nor A's feed
+    block_user(env, a_principal, canister_id, b);
+    toggle_reaction(
+        env,
+        b_principal,
+        canister_id,
+        a,
+        None,
+        a_message_id,
+        &Reaction::new("🎉".to_string()),
+        true,
+    );
+    assert_eq!(message_activity_feed(env, a_principal, canister_id, 0).total, 1);
+}
+
+fn search_messages(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    search_term: &str,
+) -> user_canister::search_messages::Response {
+    client::multi_user::search_messages(
+        env,
+        sender,
+        canister_id,
+        &user_canister::search_messages::Args {
+            user_id,
+            search_term: search_term.to_string(),
+            max_results: 10,
+        },
+    )
+}
+
+fn update_chat_settings(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    events_ttl: OptionUpdate<Milliseconds>,
+) {
+    let response = client::multi_user::update_chat_settings(
+        env,
+        sender,
+        canister_id,
+        &user_canister::update_chat_settings::Args { user_id, events_ttl },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+}
+
+fn message_activity_feed(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    since: TimestampMillis,
+) -> user_canister::message_activity_feed::SuccessResult {
+    let user_canister::message_activity_feed::Response::Success(result) = client::multi_user::message_activity_feed(
+        env,
+        sender,
+        canister_id,
+        &user_canister::message_activity_feed::Args { since },
+    );
+    result
 }
 
 #[test]

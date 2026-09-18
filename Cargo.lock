@@ -13096,6 +13096,7 @@ dependencies = [
  "itertools 0.15.0",
  "msgpack",
  "oc_error_codes",
+ "rand 0.10.2",
  "serde",
  "stable_memory_map",
  "types",

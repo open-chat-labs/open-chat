@@ -45,7 +45,6 @@ import type {
     UpdatedEvent,
 } from "@shared";
 import {
-    ChatMap,
     MAX_EVENTS,
     MAX_MESSAGES,
     MessageContextMap,
@@ -61,9 +60,8 @@ import { IndexedDbConnectionManager } from "./indexedDb";
 import {
     chatRowKey,
     chatRowsToWrite,
-    emptySyncStamps,
+    emptyTouched,
     globalsOf,
-    mergeUpdatedEventStamps,
     nextSyncStamps,
     removedFromTombstones,
     stateFromRows,
@@ -568,11 +566,6 @@ export class ChatsDb {
         return readSyncHead({ get: (key) => db.get("sync", key) });
     }
 
-    async getSyncStamps(): Promise<SyncStamps | undefined> {
-        const db = await this.getDb();
-        return readSyncStamps({ get: (key) => db.get("sync", key) });
-    }
-
     /**
      * The globals, and the chats written and removed after `since`, read through the rows'
      * version index so a pull costs what changed rather than every chat.
@@ -1025,10 +1018,9 @@ export class ChatsDb {
         let version: number | undefined = undefined;
         if (updatedEvents.length > 0) {
             version = (await readSyncHead(syncStore)) + 1;
-            const stamps = (await readSyncStamps(syncStore)) ?? emptySyncStamps();
-            const touched = new ChatMap<UpdatedEvent[]>();
-            touched.set(chatId, updatedEvents);
-            stamps.updatedEvents = mergeUpdatedEventStamps(stamps.updatedEvents, touched, version);
+            const touched = emptyTouched();
+            touched.updatedEvents.set(chatId, updatedEvents);
+            const stamps = nextSyncStamps(await readSyncStamps(syncStore), touched, version);
             await Promise.all([syncStore.put(stamps, "stamps"), syncStore.put(version, "head")]);
         }
 

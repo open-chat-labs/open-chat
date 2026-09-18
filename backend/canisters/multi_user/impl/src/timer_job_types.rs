@@ -6,6 +6,7 @@ use types::{ChatId, MessageId, MessageIndex};
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
+    RemoveExpiredEvents(RemoveExpiredEventsJob),
 }
 
 // Removes the content of a deleted message from one user's copy of a direct chat, once the time in
@@ -17,6 +18,13 @@ pub struct HardDeleteMessageContentJob {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
+}
+
+// Removes the expired events from the direct chats of one user, each user having their own job,
+// due when the earliest of their events expires
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveExpiredEventsJob {
+    pub user_index: u16,
 }
 
 impl HardDeleteMessageContentJob {
@@ -41,6 +49,7 @@ impl HardDeleteMessageContentJob {
                     && j.thread_root_message_index == thread_root_message_index
                     && message_ids.contains(&j.message_id)
             }
+            _ => false,
         });
     }
 }
@@ -49,6 +58,7 @@ impl Job for TimerJob {
     fn execute(self) {
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
+            TimerJob::RemoveExpiredEvents(job) => job.execute(),
         }
     }
 }
@@ -67,5 +77,11 @@ impl Job for HardDeleteMessageContentJob {
             // the chat references the same files, so they must only be deleted once, from the
             // sender's copy.
         });
+    }
+}
+
+impl Job for RemoveExpiredEventsJob {
+    fn execute(self) {
+        mutate_state(|state| state.run_event_expiry_job(self.user_index));
     }
 }

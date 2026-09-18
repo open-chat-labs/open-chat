@@ -5,7 +5,6 @@ pub mod game_chit_keys;
 pub mod group_chat;
 pub mod group_chats;
 pub mod local_user_index_event_batch;
-pub mod message_activity_events;
 pub mod p2p_swaps;
 pub mod premium_items;
 pub mod referrals;

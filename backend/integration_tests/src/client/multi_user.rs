@@ -3,10 +3,11 @@ use multi_user_canister::c2c_create_user;
 use user_canister::{
     add_hot_group_exclusions, add_reaction, archive_unarchive_chats, bio, block_user, configure_wallet, contacts,
     delete_direct_chat, delete_messages, delete_saved_crypto_account, deleted_message, edit_message_v2, events,
-    events_by_index, events_window, hot_group_exclusions, initial_state, local_user_index, manage_favourite_chats, mark_read,
-    messages_by_message_index, mute_notifications, pin_chat_v2, public_profile, remove_reaction, save_crypto_account,
-    saved_crypto_accounts, send_message_v2, set_avatar, set_bio, set_contact, set_pin_number, set_profile_background,
-    unblock_user, undelete_messages, unmute_notifications, unpin_chat_v2, updates,
+    events_by_index, events_window, hot_group_exclusions, initial_state, local_user_index, manage_favourite_chats,
+    mark_message_activity_feed_read, mark_read, message_activity_feed, messages_by_message_index, mute_notifications,
+    pin_chat_v2, public_profile, remove_reaction, save_crypto_account, saved_crypto_accounts, search_messages, send_message_v2,
+    set_avatar, set_bio, set_contact, set_pin_number, set_profile_background, unblock_user, undelete_messages,
+    unmute_notifications, unpin_chat_v2, update_chat_settings, updates,
 };
 
 // Queries
@@ -19,9 +20,11 @@ generate_msgpack_query_call!(events_window);
 generate_msgpack_query_call!(hot_group_exclusions);
 generate_msgpack_query_call!(initial_state);
 generate_msgpack_query_call!(local_user_index);
+generate_msgpack_query_call!(message_activity_feed);
 generate_msgpack_query_call!(messages_by_message_index);
 generate_msgpack_query_call!(public_profile);
 generate_msgpack_query_call!(saved_crypto_accounts);
+generate_msgpack_query_call!(search_messages);
 generate_msgpack_query_call!(updates);
 
 // Updates
@@ -36,6 +39,7 @@ generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(delete_saved_crypto_account);
 generate_msgpack_update_call!(edit_message_v2);
 generate_msgpack_update_call!(manage_favourite_chats);
+generate_msgpack_update_call!(mark_message_activity_feed_read);
 generate_msgpack_update_call!(mark_read);
 generate_msgpack_update_call!(mute_notifications);
 generate_msgpack_update_call!(pin_chat_v2);
@@ -51,3 +55,4 @@ generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
 generate_msgpack_update_call!(unmute_notifications);
 generate_msgpack_update_call!(unpin_chat_v2);
+generate_msgpack_update_call!(update_chat_settings);

@@ -20,7 +20,6 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use model::threads_read::ThreadsRead;
@@ -40,7 +39,10 @@ use types::{
     UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, UserCanisterEvent, WalletConfig};
-use user_state::{BlockedUsers, Contacts, FavouriteChats, HotGroupExclusions, PinNumber, ProfileDocument, SavedCryptoAccounts};
+use user_state::{
+    BlockedUsers, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
+    SavedCryptoAccounts,
+};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;

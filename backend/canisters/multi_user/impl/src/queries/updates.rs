@@ -25,6 +25,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         let blocked_users = user.blocked_users.if_updated_since(updates_since);
         let pin_number_updated = user.pin_number.last_updated() > updates_since;
         let wallet_config = user.wallet_config.if_set_after(updates_since).cloned();
+        let message_activity_summary =
+            (user.message_activity_events.last_updated() > updates_since).then(|| user.message_activity_events.summary());
 
         let has_any_updates = username.is_some()
             || display_name.has_update()
@@ -33,6 +35,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             || pin_number_updated
             || suspended.is_some()
             || wallet_config.is_some()
+            || message_activity_summary.is_some()
             || user.favourite_chats.any_updated(updates_since)
             || user.direct_chats.any_updated(updates_since);
 
@@ -103,7 +106,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             is_unique_person: None,
             wallet_config,
             referrals: Vec::new(),
-            message_activity_summary: None,
+            message_activity_summary,
             bots_added_or_updated: Vec::new(),
             bots_removed: Vec::new(),
             btc_address: None,
