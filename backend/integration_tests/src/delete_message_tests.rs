@@ -132,6 +132,91 @@ fn file_deleted_after_direct_message_deleted() {
 }
 
 #[test]
+fn delete_thread_reply_in_direct_chat_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    let root = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "ROOT", None);
+
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        user1.principal,
+        canister_ids.storage_index,
+        100,
+        vec![user1.canister()],
+    );
+
+    let message_id = random_from_u128();
+    client::user::happy_path::send_message(
+        env,
+        &user1,
+        user2.user_id,
+        Some(root.message_index),
+        MessageContentInitial::File(FileContent {
+            name: random_string(),
+            caption: None,
+            mime_type: random_string(),
+            file_size: 100,
+            blob_reference: Some(blob_reference.clone()),
+        }),
+        None,
+        Some(message_id),
+    );
+
+    tick_many(env, 3);
+
+    let delete_messages_response = client::user::delete_messages(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::delete_messages::Args {
+            user_id: user2.user_id,
+            thread_root_message_index: Some(root.message_index),
+            message_ids: vec![message_id],
+        },
+    );
+    assert!(
+        matches!(delete_messages_response, user_canister::delete_messages::Response::Success),
+        "{delete_messages_response:?}"
+    );
+
+    tick_many(env, 3);
+
+    for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
+        let message = client::user::happy_path::thread_message(env, user, them, root.message_index, message_id);
+        assert!(matches!(message.content, MessageContent::Deleted(_)));
+    }
+
+    // The root message must be unaffected
+    let root_events = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![root.event_index]);
+    let Some(ChatEvent::Message(root_message)) = root_events.events.first().map(|e| &e.event) else {
+        panic!("Unexpected response from `events_by_index`: {root_events:?}");
+    };
+    assert_eq!(root_message.content.text().unwrap(), "ROOT");
+
+    assert!(client::storage_bucket::happy_path::file_exists(
+        env,
+        user1.principal,
+        blob_reference.canister_id,
+        blob_reference.blob_id
+    ));
+
+    env.advance_time(Duration::from_secs(300));
+    tick_many(env, 3);
+
+    // The deleted content is hard deleted, which removes the file
+    assert!(!client::storage_bucket::happy_path::file_exists(
+        env,
+        user1.principal,
+        blob_reference.canister_id,
+        blob_reference.blob_id
+    ));
+}
+
+#[test]
 fn delete_their_direct_message_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();

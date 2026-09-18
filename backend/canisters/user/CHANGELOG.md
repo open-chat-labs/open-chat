@@ -62,6 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
 - Restrict `update_bot` to the canister owner ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Make `user_id` optional in `c2c_user_canister` args, since old User canisters don't send it ([#9410](https://github.com/open-chat-labs/open-chat/pull/9410))
+- Apply `thread_root_message_index` to the sender's own copy of a direct chat when editing or deleting a thread reply ([#TODO](https://github.com/open-chat-labs/open-chat/pull/TODO))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-13
 

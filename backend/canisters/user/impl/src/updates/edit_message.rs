@@ -27,7 +27,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         let edit_message_args = EditMessageArgs {
             sender: my_user_id,
             min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
+            thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             content: args.content.clone().into(),
             block_level_markdown: args.block_level_markdown,

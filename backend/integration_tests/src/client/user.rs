@@ -63,8 +63,9 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        CanisterId, Chat, ChatId, CommunityId, Empty, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
+        CanisterId, Chat, ChatEvent, ChatId, CommunityId, Empty, EventIndex, EventsResponse, Message, MessageContentInitial,
+        MessageId, MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId,
+        VideoCallType,
     };
     use user_canister::NamedAccount;
     use user_canister::set_pin_number::PinNumberVerification;
@@ -320,6 +321,43 @@ pub mod happy_path {
             user_canister::events_by_index::Response::Success(result) => result,
             response => panic!("'events_by_index' error: {response:?}"),
         }
+    }
+
+    pub fn thread_message(
+        env: &PocketIc,
+        sender: &User,
+        them: UserId,
+        thread_root_message_index: MessageIndex,
+        message_id: MessageId,
+    ) -> Message {
+        let response = super::events(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::events::Args {
+                user_id: sender.user_id,
+                them,
+                thread_root_message_index: Some(thread_root_message_index),
+                start_index: EventIndex::default(),
+                ascending: true,
+                max_messages: 100,
+                max_events: 100,
+                latest_known_update: None,
+            },
+        );
+
+        let user_canister::events::Response::Success(result) = response else {
+            panic!("'events' error: {response:?}");
+        };
+
+        result
+            .events
+            .into_iter()
+            .find_map(|e| match e.event {
+                ChatEvent::Message(m) if m.message_id == message_id => Some(*m),
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("Message {message_id:?} not found in thread"))
     }
 
     pub fn events_window(
