@@ -26,7 +26,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         };
 
         // TODO: Everything below which is empty or default stays so until the MultiUser canister
-        // holds it per user: groups and communities, the pin number, chit and achievements, the
+        // holds it per user: groups and communities, chit and achievements, the
         // streak, referrals, the message activity feed, bots, the BTC and 1sec addresses and
         // premium items
         Success(SuccessResult {
@@ -38,7 +38,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             avatar_id: user.avatar.id(),
             blocked_users: user.blocked_users.all(),
             suspended: user.suspended.value,
-            pin_number_settings: None,
+            pin_number_settings: user.pin_number.enabled().then(|| user.pin_number.settings(now)),
             local_user_index_canister_id: state.data.local_user_index_canister_id,
             achievements: Vec::new(),
             achievements_last_seen: 0,

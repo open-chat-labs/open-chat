@@ -1,7 +1,12 @@
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
-use user_canister::local_user_index::*;
+use user_canister::local_user_index::{Response::*, *};
 
 #[query(msgpack = true)]
 fn local_user_index(_args: Args) -> Response {
-    unimplemented!()
+    read_state(local_user_index_impl)
+}
+
+fn local_user_index_impl(state: &RuntimeState) -> Response {
+    Success(state.data.local_user_index_canister_id)
 }

@@ -1,15 +1,27 @@
+use crate::guards::caller_is_hosted_user;
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_canister::add_hot_group_exclusions;
+use user_canister::add_hot_group_exclusions::*;
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-fn add_hot_group_exclusions(_args: add_hot_group_exclusions::Args) -> add_hot_group_exclusions::Response {
-    unimplemented!()
+fn add_hot_group_exclusions(args: Args) -> Response {
+    mutate_state(|state| add_hot_group_exclusions_impl(args, state))
 }
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-fn add_recommended_group_exclusions(_args: add_hot_group_exclusions::Args) -> add_hot_group_exclusions::Response {
-    unimplemented!()
+fn add_recommended_group_exclusions(args: Args) -> Response {
+    mutate_state(|state| add_hot_group_exclusions_impl(args, state))
+}
+
+fn add_hot_group_exclusions_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
+    state.with_caller_user_mut(|_, user| {
+        for group in args.groups {
+            user.hot_group_exclusions.add(group, args.duration, now);
+        }
+    });
+    Response::Success
 }

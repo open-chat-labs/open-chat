@@ -4,7 +4,7 @@ use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use types::{TimestampMillis, Timestamped, UserId};
 use user_canister::WalletConfig;
-use user_state::{BlockedUsers, Contacts, FavouriteChats, ProfileDocument};
+use user_state::{BlockedUsers, Contacts, FavouriteChats, HotGroupExclusions, PinNumber, ProfileDocument, SavedCryptoAccounts};
 
 // The state of a single user within the canister. This mirrors the per-user fields of the User
 // canister's `Data`, using the same names and types, so that the logic of each endpoint can be
@@ -23,6 +23,12 @@ pub struct User {
     pub user_created: TimestampMillis,
     pub suspended: Timestamped<bool>,
     pub referred_by: Option<UserId>,
+    #[serde(default)]
+    pub hot_group_exclusions: HotGroupExclusions,
+    #[serde(default)]
+    pub saved_crypto_accounts: SavedCryptoAccounts,
+    #[serde(default)]
+    pub pin_number: PinNumber,
     pub direct_chats: DirectChats,
     pub favourite_chats: FavouriteChats,
     pub blocked_users: BlockedUsers,
@@ -42,6 +48,9 @@ impl User {
             user_created: now,
             suspended: Timestamped::default(),
             referred_by,
+            hot_group_exclusions: HotGroupExclusions::default(),
+            saved_crypto_accounts: SavedCryptoAccounts::default(),
+            pin_number: PinNumber::default(),
             direct_chats: DirectChats::default(),
             favourite_chats: FavouriteChats::default(),
             blocked_users: BlockedUsers::default(),

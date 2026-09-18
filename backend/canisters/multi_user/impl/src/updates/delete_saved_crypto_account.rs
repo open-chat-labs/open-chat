@@ -1,9 +1,17 @@
+use crate::guards::caller_is_hosted_user;
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use types::OCResult;
 use user_canister::delete_saved_crypto_account::*;
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-fn delete_saved_crypto_account(_args: Args) -> Response {
-    unimplemented!()
+fn delete_saved_crypto_account(args: Args) -> Response {
+    mutate_state(|state| delete_saved_crypto_account_impl(args, state)).into()
+}
+
+fn delete_saved_crypto_account_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.with_caller_user_mut(|_, user| user.saved_crypto_accounts.delete(&args.name));
+    Ok(())
 }
