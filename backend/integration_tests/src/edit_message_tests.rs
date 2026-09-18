@@ -102,3 +102,69 @@ fn update_block_level_markdown_succeeds(starting_value: bool) {
     assert!(m2.edited);
     assert_eq!(m2.block_level_markdown, new_value);
 }
+
+#[test]
+fn edit_thread_reply_in_direct_chat_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    let root = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "ROOT", None);
+
+    let message_id = random_from_u128();
+    client::user::happy_path::send_message(
+        env,
+        &user1,
+        user2.user_id,
+        Some(root.message_index),
+        MessageContentInitial::Text(TextContent {
+            text: "REPLY".to_string(),
+        }),
+        None,
+        Some(message_id),
+    );
+
+    tick_many(env, 3);
+
+    let new_text = "REPLY!";
+    let response = client::user::edit_message_v2(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::edit_message_v2::Args {
+            user_id: user2.user_id,
+            thread_root_message_index: Some(root.message_index),
+            message_id,
+            content: MessageContentInitial::Text(TextContent {
+                text: new_text.to_string(),
+            }),
+            block_level_markdown: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(response, user_canister::edit_message_v2::Response::Success),
+        "{response:?}"
+    );
+
+    tick_many(env, 3);
+
+    for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
+        let message = client::user::happy_path::thread_message(env, user, them, root.message_index, message_id);
+        assert!(message.edited);
+        assert_eq!(message.content.text().unwrap(), new_text);
+    }
+
+    // The root message must be unaffected
+    let root_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![root.event_index])
+        .events
+        .pop()
+        .unwrap();
+    let ChatEvent::Message(root_message) = root_event.event else {
+        panic!()
+    };
+    assert!(!root_message.edited);
+    assert_eq!(root_message.content.text().unwrap(), "ROOT");
+}
