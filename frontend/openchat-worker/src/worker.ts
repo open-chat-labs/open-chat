@@ -7,6 +7,7 @@ import {
 } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import {
+    abortInFlightQueries,
     getBotDefinition,
     IdentityAgent,
     OpenChatAgent,
@@ -261,6 +262,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         const config = agentConfig;
         if (config === undefined) {
             throw new Error("Worker not initialised");
+        }
+
+        // Needs no agent: the queries belong to whichever agents exist
+        if (kind === "abortInFlightQueries") {
+            const aborted = abortInFlightQueries();
+            logger.debug(`WORKER: aborted ${aborted} in-flight queries after resuming`);
+            sendResponse(kind, correlationId, undefined);
+            return;
         }
 
         if (kind === "setAuthIdentity") {

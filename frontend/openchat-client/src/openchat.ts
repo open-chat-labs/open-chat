@@ -616,6 +616,7 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
+import { watchForResume, type ResumeReason } from "./utils/resumeDetector";
 import { answerTouchesChat } from "./utils/answerTouchesChat";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
@@ -711,6 +712,7 @@ export class OpenChat {
     #referralCode: string | undefined = undefined;
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
     #chatsPoller: Poller | undefined = undefined;
+    #stopWatchingForResume: (() => void) | undefined = undefined;
     readonly #syncPuller: SyncPuller;
     #botsPoller: Poller | undefined = undefined;
     #dailyPuzzlePoller: Poller | undefined = undefined;
@@ -906,6 +908,8 @@ export class OpenChat {
               );
         // Stop the chats poller until we have finished loading the new identity
         this.#chatsPoller?.stop();
+        this.#stopWatchingForResume?.();
+        this.#stopWatchingForResume = undefined;
         this.#dailyPuzzlePoller?.stop();
         if (typeof window !== "undefined") window.clearTimeout(this.#dailyPuzzleRolloverTimer);
         currentUserStore.set(anonymousUser());
@@ -1280,6 +1284,9 @@ export class OpenChat {
         this.#startChatsPoller();
         this.#startBotsPoller();
         this.#startUserUpdatePoller();
+        this.#stopWatchingForResume ??= watchForResume((reason, suspendedMs) =>
+            this.#onResume(reason, suspendedMs),
+        );
         this.#worker.send({ kind: "getAllCachedUsers" }).then((u) => userStore.addMany(u));
 
         initNotificationStores();
@@ -1363,6 +1370,22 @@ export class OpenChat {
             BOT_UPDATE_IDLE_INTERVAL,
             true,
         );
+    }
+
+    // Coming back after the device slept or the tab sat in the background, queries sent before
+    // the suspension are often stuck on a connection that died meanwhile. The chats poller runs
+    // one pass at a time, so a pass holding such a query kept the next from starting until the
+    // browser gave up on the connection, which could take many seconds. Aborting the stuck
+    // queries makes the agent resend them, and the triggered run fetches anything that changed
+    // after the pass in flight had already read it.
+    #onResume(reason: ResumeReason, suspendedMs: number) {
+        console.debug(`Resumed (${reason}) after ${Math.round(suspendedMs / 1000)}s`);
+        this.#worker
+            .send({ kind: "abortInFlightQueries" })
+            .catch((err) => console.warn("Unable to abort in-flight queries", err));
+        // Deferred so that the poller has seen the visibility change first. A hidden app
+        // ignores triggers.
+        window.setTimeout(() => this.#chatsPoller?.triggerNow(), 0);
     }
 
     #startChatsPoller() {
