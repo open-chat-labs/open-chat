@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::{metrics, tick_many};
+use crate::utils::{metrics, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
@@ -53,10 +53,7 @@ fn create_then_upgrade_multi_user_canister() {
             module: wasms::MULTI_USER.module.clone(),
         },
     );
-    // The rolling upgrade stops, upgrades then restarts the canister across several rounds
-    tick_many(env, 20);
-
-    assert_eq!(wasm_version(env, canister_id), new_version);
+    wait_for_upgrade(env, canister_id, new_version);
     assert_stable_memory_maps_initialised(env, canister_id);
 }
 
@@ -135,8 +132,7 @@ fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
             module: wasms::MULTI_USER.module.clone(),
         },
     );
-    tick_many(env, 20);
-    assert_eq!(wasm_version(env, canister_id), BuildVersion::new(0, 0, 1));
+    wait_for_upgrade(env, canister_id, BuildVersion::new(0, 0, 1));
     assert_eq!(user_count(env, canister_id), 2);
     assert!(matches!(bio(env, user_ids[1]), Ok(user_canister::bio::Response::Success(_))));
 }
@@ -1274,6 +1270,21 @@ fn assert_stable_memory_maps_initialised(env: &PocketIc, canister_id: CanisterId
 
 fn user_count(env: &PocketIc, canister_id: CanisterId) -> u32 {
     serde_json::from_value(metrics(env, canister_id)["user_count"].clone()).unwrap()
+}
+
+// Ticks until the canister is running the given version. The rolling upgrade stops, upgrades then
+// restarts each MultiUser canister in turn, and the environment holds those of every test which has
+// run in it, so how many rounds it takes varies.
+fn wait_for_upgrade(env: &mut PocketIc, canister_id: CanisterId, version: BuildVersion) {
+    for _ in 0..200 {
+        let current: Option<BuildVersion> =
+            try_metrics(env, canister_id).and_then(|m| serde_json::from_value(m["wasm_version"].clone()).ok());
+        if current == Some(version) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("MultiUser canister {canister_id} was not upgraded to {version:?}");
 }
 
 fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
