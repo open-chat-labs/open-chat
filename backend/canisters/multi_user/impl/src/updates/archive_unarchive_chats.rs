@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::model::user::User;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
@@ -7,7 +7,7 @@ use oc_error_codes::OCErrorCode;
 use types::{Chat, TimestampMillis, Timestamped};
 use user_canister::archive_unarchive_chats::{Response::*, *};
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn archive_unarchive_chats(args: Args) -> Response {
     mutate_state(|state| archive_unarchive_chats_impl(args, state))

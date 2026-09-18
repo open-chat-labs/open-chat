@@ -1,4 +1,4 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -8,7 +8,7 @@ use types::OCResult;
 use user_canister::set_profile_background::*;
 use utils::document::validate_profile_background;
 
-#[update(guard = "caller_is_owner", msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn set_profile_background(args: Args) -> Response {
     mutate_state(|state| set_profile_background_impl(args, state)).into()
