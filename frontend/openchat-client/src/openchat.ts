@@ -321,7 +321,6 @@ import {
     type UpdatedEvent,
     type UpdatedRules,
     type UpdatesResult,
-    type SyncWindow,
     type User,
     type UserGroupDetails,
     type UserOrUserGroup,
@@ -745,9 +744,8 @@ export class OpenChat {
     constructor(private config: OpenChatConfig) {
         this.#logger = config.logger;
         this.#syncPuller = new SyncPuller({
-            pull: (since, windows) => this.#worker.send({ kind: "syncSince", since, windows }),
+            pull: (since) => this.#worker.send({ kind: "syncSince", since }),
             fold: (updates) => this.#handleChatsResponse(undefined, false, updates),
-            windows: () => this.#syncWindows(),
             log: (message, err) => this.#logger.error(message, err as Error),
         });
         this.#worker = new WorkerAgent(config, (head) => this.#syncPuller.onHead(head));
@@ -7321,29 +7319,6 @@ export class OpenChat {
                     },
                 });
         });
-    }
-
-    // The timeline ranges on screen, which are the only events a sync pull needs to refresh
-    #syncWindows(): SyncWindow[] {
-        const chatId = selectedChatIdStore.value;
-        if (chatId === undefined) return [];
-
-        const windows: SyncWindow[] = eventIndexesLoaded(chatId)
-            .subranges()
-            .map((r) => ({ chatId, threadRootMessageIndex: undefined, from: r.low, to: r.high }));
-
-        const thread = selectedThreadIdStore.value;
-        if (thread !== undefined && chatIdentifiersEqual(thread.chatId, chatId)) {
-            for (const r of threadEventIndexesLoadedStore.value.subranges()) {
-                windows.push({
-                    chatId,
-                    threadRootMessageIndex: thread.threadRootMessageIndex,
-                    from: r.low,
-                    to: r.high,
-                });
-            }
-        }
-        return windows;
     }
 
     // Runs one pass of the updates loop in the worker. On an initial load the worker answers

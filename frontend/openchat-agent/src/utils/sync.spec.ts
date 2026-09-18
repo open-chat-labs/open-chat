@@ -4,7 +4,6 @@ import type {
     CommunitySummary,
     DirectChatSummary,
     GroupChatSummary,
-    SyncWindow,
     UpdatedEvent,
 } from "@shared";
 import { ChatMap } from "@shared";
@@ -247,7 +246,7 @@ describe("updatesSince", () => {
             removedGroupChats: { g9: 3 },
             removedCommunities: { c9: 6 },
         };
-        const result = updatesSince(full, stamps, 3, []);
+        const result = updatesSince(full, stamps, 3);
         expect(result.directChatsAddedUpdated.map((c) => c.id.userId)).toEqual(["u2"]);
         expect(result.groupsAddedUpdated.map((g) => g.id.groupId)).toEqual(["a"]);
         expect(result.communitiesAddedUpdated).toEqual([]);
@@ -258,56 +257,61 @@ describe("updatesSince", () => {
 
     test("a record with no stamp is carried rather than skipped", () => {
         const stamps: SyncStamps = { ...emptySyncStamps(), groupChats: { a: 1 } };
-        const result = updatesSince(full, stamps, 10, []);
+        const result = updatesSince(full, stamps, 10);
         expect(result.groupsAddedUpdated.map((g) => g.id.groupId)).toEqual(["b"]);
         expect(result.directChatsAddedUpdated.map((c) => c.id.userId)).toEqual(["u1", "u2"]);
     });
 
     test("fields stamped after since are returned, option fields as option updates", () => {
         const stamps = nextSyncStamps(undefined, full, touched(), 1);
-        const before = updatesSince(full, stamps, 1, []);
+        const before = updatesSince(full, stamps, 1);
         expect(before.avatarId).toBeUndefined();
         expect(before.blockedUsers).toBeUndefined();
         expect(before.pinNumberSettings).toBeUndefined();
 
-        const after = updatesSince(full, stamps, 0, []);
+        const after = updatesSince(full, stamps, 0);
         expect(after.avatarId).toEqual({ value: 99n });
         expect(after.blockedUsers).toEqual(["x"]);
         expect(after.pinNumberSettings).toBe("set_to_none");
         expect(after.streakInsurance).toBe("set_to_none");
     });
 
-    test("updated events come back only inside the declared windows, once each", () => {
+    test("updated events stamped after since come back for every chat, once each", () => {
         const stamps = nextSyncStamps(
-            undefined,
+            nextSyncStamps(
+                undefined,
+                full,
+                touched({
+                    updatedEvents: updatedEvents([[groupA, [{ eventIndex: 5, timestamp: 1n }]]]),
+                }),
+                1,
+            ),
             full,
             touched({
                 updatedEvents: updatedEvents([
                     [
                         groupA,
                         [
-                            { eventIndex: 5, timestamp: 1n },
-                            { eventIndex: 20, timestamp: 1n },
-                            { eventIndex: 50, timestamp: 1n },
-                            { eventIndex: 21, timestamp: 1n, threadRootMessageIndex: 7 },
+                            // updated again: comes back once, at the newer version
+                            { eventIndex: 5, timestamp: 2n },
+                            { eventIndex: 20, timestamp: 2n },
+                            { eventIndex: 21, timestamp: 2n, threadRootMessageIndex: 7 },
                         ],
                     ],
-                    [groupB, [{ eventIndex: 20, timestamp: 1n }]],
+                    [groupB, [{ eventIndex: 20, timestamp: 2n }]],
                 ]),
             }),
             2,
         );
-        const windows: SyncWindow[] = [
-            { chatId: groupA.id, threadRootMessageIndex: undefined, from: 10, to: 30 },
-            // overlapping window: the same event must not come back twice
-            { chatId: groupA.id, threadRootMessageIndex: undefined, from: 15, to: undefined },
-            { chatId: groupA.id, threadRootMessageIndex: 7, from: 0, to: undefined },
-        ];
-        const result = new ChatMap(updatesSince(full, stamps, 1, windows).updatedEvents);
-        expect(result.get(groupA.id)?.map((e) => e.eventIndex)).toEqual([20, 50, 21]);
-        expect(result.has(groupB.id)).toBe(false);
+        const result = new ChatMap(updatesSince(full, stamps, 1).updatedEvents);
+        expect(result.get(groupA.id)).toEqual([
+            { eventIndex: 5, threadRootMessageIndex: undefined, timestamp: 2n },
+            { eventIndex: 20, threadRootMessageIndex: undefined, timestamp: 2n },
+            { eventIndex: 21, threadRootMessageIndex: 7, timestamp: 2n },
+        ]);
+        expect(result.get(groupB.id)?.map((e) => e.eventIndex)).toEqual([20]);
 
-        expect(updatesSince(full, stamps, 2, windows).updatedEvents.size).toBe(0);
+        expect(updatesSince(full, stamps, 2).updatedEvents.size).toBe(0);
     });
 
     test("new achievements and a suspension change are carried while past since", () => {
@@ -317,11 +321,11 @@ describe("updatesSince", () => {
             touched({ chitEvents: [chitEvent(5)], suspensionChanged: true }),
             4,
         );
-        const fresh = updatesSince(full, stamps, 3, []);
+        const fresh = updatesSince(full, stamps, 3);
         expect(fresh.newAchievements).toEqual([chitEvent(5)]);
         expect(fresh.suspensionChanged).toBe(true);
 
-        const seen = updatesSince(full, stamps, 4, []);
+        const seen = updatesSince(full, stamps, 4);
         expect(seen.newAchievements).toEqual([]);
         expect(seen.suspensionChanged).toBeUndefined();
     });

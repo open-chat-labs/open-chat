@@ -3,11 +3,10 @@ import type {
     ChatStateFull,
     ChitEvent,
     OptionUpdate,
-    SyncWindow,
     UpdatedEvent,
     UpdatesResult,
 } from "@shared";
-import { ChatMap, chatIdentifierToKey, chatIdentifiersEqual } from "@shared";
+import { ChatMap, chatIdentifierToKey } from "@shared";
 
 /**
  * The versioning behind the cache -> UI sync pull (see `domain/sync.ts` in openchat-shared).
@@ -261,15 +260,14 @@ function updatedEventKey({
 }
 
 /**
- * Everything in `state` stamped after `since`, in the shape the UI already folds, plus the
- * updated events stamped after `since` that fall inside `windows` (once each where windows
- * overlap). The chat summaries are returned as cached, so the caller hydrates them.
+ * Everything in `state` stamped after `since`, in the shape the UI already folds, plus every
+ * updated event stamped after `since`. The chat summaries are returned as cached, so the caller
+ * hydrates them.
  */
 export function updatesSince(
     state: ChatStateFull,
     stamps: SyncStamps,
     since: number,
-    windows: SyncWindow[],
 ): UpdatesResult {
     // A record with no stamp is carried rather than skipped: a duplicate is harmless, a hole never heals
     const after = (record: Record<string, number>, id: string) =>
@@ -282,7 +280,7 @@ export function updatesSince(
 
     const updatedEvents = new ChatMap<UpdatedEvent[]>();
     for (const stamp of stamps.updatedEvents) {
-        if (stamp.version > since && windows.some((w) => inWindow(stamp, w))) {
+        if (stamp.version > since) {
             const existing = updatedEvents.get(stamp.chatId);
             const event: UpdatedEvent = {
                 eventIndex: stamp.eventIndex,
@@ -398,13 +396,4 @@ function removedSince(removed: Record<string, number>, since: number): string[] 
     return Object.entries(removed)
         .filter(([, version]) => version > since)
         .map(([id]) => id);
-}
-
-function inWindow(stamp: UpdatedEventStamp, window: SyncWindow): boolean {
-    return (
-        chatIdentifiersEqual(stamp.chatId, window.chatId) &&
-        stamp.threadRootMessageIndex === window.threadRootMessageIndex &&
-        stamp.eventIndex >= window.from &&
-        (window.to === undefined || stamp.eventIndex <= window.to)
-    );
 }
