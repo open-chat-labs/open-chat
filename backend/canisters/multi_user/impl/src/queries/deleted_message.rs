@@ -1,7 +1,41 @@
+use crate::guards::caller_is_owner;
+use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
-use user_canister::deleted_message::*;
+use chat_events::{MessageContentInternal, Reader};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
+use user_canister::deleted_message::{Response::*, *};
 
-#[query(msgpack = true)]
-fn deleted_message(_args: Args) -> Response {
-    unimplemented!()
+#[query(guard = "caller_is_owner", msgpack = true)]
+fn deleted_message(args: Args) -> Response {
+    match read_state(|state| deleted_message_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
+}
+
+fn deleted_message_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
+    state.with_caller_user(|my_index, user| {
+        let my_user_id = state.user_id(my_index);
+        let chat = user.direct_chats.get_or_err(&args.user_id.into())?;
+
+        let message = chat
+            .main_events_reader()
+            .message_internal(args.message_id.into())
+            .ok_or(OCErrorCode::MessageNotFound)?;
+        let deleted_by = message.deleted_by.as_ref().map(|d| d.deleted_by);
+
+        match deleted_by {
+            Some(u) if u != my_user_id => Err(OCErrorCode::InitiatorNotAuthorized.into()),
+            _ => {
+                if matches!(message.content, MessageContentInternal::Deleted(_)) {
+                    Err(OCErrorCode::MessageHardDeleted.into())
+                } else {
+                    Ok(SuccessResult {
+                        content: message.content.hydrate(Some(my_user_id)),
+                    })
+                }
+            }
+        }
+    })
 }

@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::{metrics, tick_many};
+use crate::utils::{metrics, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
@@ -11,8 +11,8 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, DirectChatSummary, DirectChatSummaryUpdates, Document,
-    EventsResponse, MessageContent, MessageContentInitial, MessageId, MessageIndex, OptionUpdate, TextContent, TimestampMillis,
-    UpgradesFilter, UserId,
+    EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, OptionUpdate, Reaction,
+    TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
 use user_canister::{ChatInList, WalletConfig};
 
@@ -53,10 +53,7 @@ fn create_then_upgrade_multi_user_canister() {
             module: wasms::MULTI_USER.module.clone(),
         },
     );
-    // The rolling upgrade stops, upgrades then restarts the canister across several rounds
-    tick_many(env, 20);
-
-    assert_eq!(wasm_version(env, canister_id), new_version);
+    wait_for_upgrade(env, canister_id, new_version);
     assert_stable_memory_maps_initialised(env, canister_id);
 }
 
@@ -135,8 +132,7 @@ fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
             module: wasms::MULTI_USER.module.clone(),
         },
     );
-    tick_many(env, 20);
-    assert_eq!(wasm_version(env, canister_id), BuildVersion::new(0, 0, 1));
+    wait_for_upgrade(env, canister_id, BuildVersion::new(0, 0, 1));
     assert_eq!(user_count(env, canister_id), 2);
     assert!(matches!(bio(env, user_ids[1]), Ok(user_canister::bio::Response::Success(_))));
 }
@@ -985,6 +981,215 @@ fn stable_memory_keys_to_garbage_collect(env: &PocketIc, canister_id: CanisterId
 }
 
 #[test]
+fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    let hello_id = random_from_u128();
+    send_text_message(env, a_principal, canister_id, b, "hello", hello_id);
+
+    // A message B doesn't receive, because B has blocked A, leaves the message indexes of the two
+    // copies of the chat out of step, so that threads must be matched up between them by id
+    block_user(env, b_principal, canister_id, a);
+    send_text_message(env, a_principal, canister_id, b, "unseen", random_from_u128());
+    unblock_user(env, b_principal, canister_id, a);
+
+    let root_id = random_from_u128();
+    let root = send_text_message(env, a_principal, canister_id, b, "root", root_id);
+    assert_eq!(root.message_index, 2.into());
+    let a_root = Some(2.into());
+    let b_root = Some(1.into());
+
+    let reply_id = random_from_u128();
+    client::multi_user::send_message_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::send_message_v2::Args {
+            thread_root_message_index: a_root,
+            ..send_message_args(b, "reply", reply_id)
+        },
+    );
+    assert_eq!(
+        messages(&thread_events(env, b_principal, canister_id, b, a, b_root)),
+        vec![(a, "reply".to_string())]
+    );
+
+    // A's edits, in the main chat and in the thread, reach B's copy
+    edit_message(env, a_principal, canister_id, b, None, root_id, "root edited");
+    edit_message(env, a_principal, canister_id, b, a_root, reply_id, "reply edited");
+    for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
+        let main = events(env, principal, canister_id, me, them);
+        assert!(messages(&main).contains(&(a, "root edited".to_string())));
+        assert!(message(&main, root_id).edited);
+    }
+    assert_eq!(
+        messages(&thread_events(env, b_principal, canister_id, b, a, b_root)),
+        vec![(a, "reply edited".to_string())]
+    );
+
+    // A message can only be edited by its sender
+    let not_sender = client::multi_user::edit_message_v2(
+        env,
+        b_principal,
+        canister_id,
+        &edit_message_args(a, None, hello_id, "hijacked"),
+    );
+    assert!(matches!(not_sender, types::UnitResult::Error(_)), "{not_sender:?}");
+
+    // B's reactions, in the main chat and in the thread, reach A's copy, as does their removal
+    let reaction = Reaction::new("👍".to_string());
+    toggle_reaction(env, b_principal, canister_id, a, None, root_id, &reaction, true);
+    toggle_reaction(env, b_principal, canister_id, a, b_root, reply_id, &reaction, true);
+    for (principal, me, them, thread_root) in [(a_principal, a, b, a_root), (b_principal, b, a, b_root)] {
+        let main = events(env, principal, canister_id, me, them);
+        assert_eq!(message(&main, root_id).reactions, vec![(reaction.clone(), vec![b])]);
+        let thread = thread_events(env, principal, canister_id, me, them, thread_root);
+        assert_eq!(message(&thread, reply_id).reactions, vec![(reaction.clone(), vec![b])]);
+    }
+    toggle_reaction(env, b_principal, canister_id, a, None, root_id, &reaction, false);
+    for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
+        assert!(
+            message(&events(env, principal, canister_id, me, them), root_id)
+                .reactions
+                .is_empty()
+        );
+    }
+
+    // A's deletions, in the main chat and in the thread, reach B's copy. A can still see what they
+    // deleted, but B can't.
+    delete_messages(env, a_principal, canister_id, b, None, vec![hello_id]);
+    delete_messages(env, a_principal, canister_id, b, a_root, vec![reply_id]);
+    for (principal, me, them, thread_root) in [(a_principal, a, b, a_root), (b_principal, b, a, b_root)] {
+        let main = events(env, principal, canister_id, me, them);
+        assert!(matches!(message(&main, hello_id).content, MessageContent::Deleted(_)));
+        let thread = thread_events(env, principal, canister_id, me, them, thread_root);
+        assert!(matches!(message(&thread, reply_id).content, MessageContent::Deleted(_)));
+    }
+    assert!(matches!(
+        deleted_message(env, a_principal, canister_id, b, hello_id),
+        user_canister::deleted_message::Response::Success(r) if matches!(&r.content, MessageContent::Text(t) if t.text == "hello")
+    ));
+    let not_deleter = deleted_message(env, b_principal, canister_id, a, hello_id);
+    assert!(
+        matches!(&not_deleter, user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{not_deleter:?}"
+    );
+
+    // Undeleting the message restores it in both copies
+    let undeleted = client::multi_user::undelete_messages(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::undelete_messages::Args {
+            user_id: b,
+            thread_root_message_index: None,
+            message_ids: vec![hello_id],
+        },
+    );
+    let user_canister::undelete_messages::Response::Success(undeleted) = undeleted else {
+        panic!("{undeleted:?}");
+    };
+    assert_eq!(undeleted.messages.len(), 1);
+    assert_eq!(undeleted.messages[0].message_id, hello_id);
+
+    // Deleting the message again gives the full 5 minutes to undelete it, since undeleting it
+    // cancelled the removal of its content queued by the first deletion
+    env.advance_time(Duration::from_secs(3 * 60));
+    delete_messages(env, a_principal, canister_id, b, None, vec![hello_id]);
+    env.advance_time(Duration::from_secs(3 * 60));
+    tick_many(env, 3);
+    assert!(matches!(
+        deleted_message(env, a_principal, canister_id, b, hello_id),
+        user_canister::deleted_message::Response::Success(r) if matches!(&r.content, MessageContent::Text(t) if t.text == "hello")
+    ));
+    let undeleted = client::multi_user::undelete_messages(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::undelete_messages::Args {
+            user_id: b,
+            thread_root_message_index: None,
+            message_ids: vec![hello_id],
+        },
+    );
+    assert!(
+        matches!(&undeleted, user_canister::undelete_messages::Response::Success(r) if r.messages.len() == 1),
+        "{undeleted:?}"
+    );
+
+    // B deleting A's message only removes it from B's copy
+    delete_messages(env, b_principal, canister_id, a, None, vec![root_id]);
+    assert!(matches!(
+        message(&events(env, b_principal, canister_id, b, a), root_id).content,
+        MessageContent::Deleted(_)
+    ));
+    assert!(matches!(
+        message(&events(env, a_principal, canister_id, a, b), root_id).content,
+        MessageContent::Text(_)
+    ));
+
+    // Once the deleted messages can no longer be undeleted their content is removed, from both
+    // copies, while the message which was undeleted is untouched
+    // Only the job for B's deletion of A's message is left, since the jobs for the thread reply
+    // have run and cancelling jobs also clears out those which have run
+    assert_eq!(timer_jobs(env, canister_id), 1);
+    env.advance_time(Duration::from_secs(5 * 60));
+    tick_many(env, 3);
+    for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
+        assert!(messages(&events(env, principal, canister_id, me, them)).contains(&(a, "hello".to_string())));
+    }
+    let hard_deleted = client::multi_user::deleted_message(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::deleted_message::Args {
+            user_id: a,
+            message_id: root_id,
+        },
+    );
+    assert!(
+        matches!(&hard_deleted, user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageHardDeleted)),
+        "{hard_deleted:?}"
+    );
+
+    // Messages can be looked up by their index in the caller's copy
+    let by_index = client::multi_user::messages_by_message_index(
+        env,
+        b_principal,
+        canister_id,
+        &user_canister::messages_by_message_index::Args {
+            user_id: a,
+            thread_root_message_index: None,
+            messages: vec![0.into(), 1.into(), 5.into()],
+            latest_known_update: None,
+        },
+    );
+    let user_canister::messages_by_message_index::Response::Success(by_index) = by_index else {
+        panic!("{by_index:?}");
+    };
+    let ids: Vec<_> = by_index.messages.iter().map(|m| m.event.message_id).collect();
+    assert_eq!(ids, vec![hello_id, root_id]);
+
+    // While B has blocked A, A's changes don't reach B's copy
+    block_user(env, b_principal, canister_id, a);
+    edit_message(env, a_principal, canister_id, b, None, hello_id, "hello edited");
+    assert!(messages(&events(env, a_principal, canister_id, a, b)).contains(&(a, "hello edited".to_string())));
+    assert!(messages(&events(env, b_principal, canister_id, b, a)).contains(&(a, "hello".to_string())));
+}
+
+#[test]
 fn upgrade_filter_naming_unknown_canister_is_rejected() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -1067,10 +1272,168 @@ fn user_count(env: &PocketIc, canister_id: CanisterId) -> u32 {
     serde_json::from_value(metrics(env, canister_id)["user_count"].clone()).unwrap()
 }
 
+// Ticks until the canister is running the given version. The rolling upgrade stops, upgrades then
+// restarts each MultiUser canister in turn, and the environment holds those of every test which has
+// run in it, so how many rounds it takes varies.
+fn wait_for_upgrade(env: &mut PocketIc, canister_id: CanisterId, version: BuildVersion) {
+    for _ in 0..200 {
+        let current: Option<BuildVersion> =
+            try_metrics(env, canister_id).and_then(|m| serde_json::from_value(m["wasm_version"].clone()).ok());
+        if current == Some(version) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("MultiUser canister {canister_id} was not upgraded to {version:?}");
+}
+
 fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
     serde_json::from_value(metrics(env, canister_id)["wasm_version"].clone()).unwrap()
 }
 
 fn multi_user_canisters(env: &PocketIc, user_index_canister_id: CanisterId) -> Vec<(CanisterId, CanisterId)> {
     serde_json::from_value(metrics(env, user_index_canister_id)["multi_user_canisters"].clone()).unwrap()
+}
+
+fn unblock_user(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId) {
+    let response = client::multi_user::unblock_user(env, sender, canister_id, &user_canister::unblock_user::Args { user_id });
+    assert!(
+        matches!(response, user_canister::unblock_user::Response::Success),
+        "{response:?}"
+    );
+}
+
+fn thread_events(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    them: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+) -> EventsResponse {
+    let args = user_canister::events::Args {
+        thread_root_message_index,
+        ..events_args(user_id, them)
+    };
+    match client::multi_user::events(env, sender, canister_id, &args) {
+        user_canister::events::Response::Success(response) => response,
+        response => panic!("{response:?}"),
+    }
+}
+
+// The message with the given id in the response
+fn message(response: &EventsResponse, message_id: MessageId) -> Message {
+    response
+        .events
+        .iter()
+        .find_map(|e| match &e.event {
+            ChatEvent::Message(m) if m.message_id == message_id => Some(m.deref().clone()),
+            _ => None,
+        })
+        .unwrap_or_else(|| panic!("Message {message_id:?} not found"))
+}
+
+fn edit_message_args(
+    user_id: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    text: &str,
+) -> user_canister::edit_message_v2::Args {
+    user_canister::edit_message_v2::Args {
+        user_id,
+        thread_root_message_index,
+        message_id,
+        content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
+        block_level_markdown: None,
+        og_previews: Vec::new(),
+    }
+}
+
+fn edit_message(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    text: &str,
+) {
+    let args = edit_message_args(user_id, thread_root_message_index, message_id, text);
+    let response = client::multi_user::edit_message_v2(env, sender, canister_id, &args);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+}
+
+fn delete_messages(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_ids: Vec<MessageId>,
+) {
+    let args = user_canister::delete_messages::Args {
+        user_id,
+        thread_root_message_index,
+        message_ids,
+    };
+    let response = client::multi_user::delete_messages(env, sender, canister_id, &args);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+}
+
+fn deleted_message(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    message_id: MessageId,
+) -> user_canister::deleted_message::Response {
+    client::multi_user::deleted_message(
+        env,
+        sender,
+        canister_id,
+        &user_canister::deleted_message::Args { user_id, message_id },
+    )
+}
+
+#[expect(clippy::too_many_arguments)]
+fn toggle_reaction(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    reaction: &Reaction,
+    added: bool,
+) {
+    let response = if added {
+        client::multi_user::add_reaction(
+            env,
+            sender,
+            canister_id,
+            &user_canister::add_reaction::Args {
+                user_id,
+                thread_root_message_index,
+                message_id,
+                reaction: reaction.clone(),
+            },
+        )
+    } else {
+        client::multi_user::remove_reaction(
+            env,
+            sender,
+            canister_id,
+            &user_canister::remove_reaction::Args {
+                user_id,
+                thread_root_message_index,
+                message_id,
+                reaction: reaction.clone(),
+            },
+        )
+    };
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+}
+
+fn timer_jobs(env: &PocketIc, canister_id: CanisterId) -> u32 {
+    serde_json::from_value(metrics(env, canister_id)["timer_jobs"].clone()).unwrap()
 }

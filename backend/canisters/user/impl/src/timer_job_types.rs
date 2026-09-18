@@ -2,7 +2,7 @@ use crate::model::token_swaps::TokenSwap;
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::updates::swap_tokens::process_token_swap;
 use crate::{can_borrow_state, flush_pending_events, mutate_state, openchat_bot, read_state, run_regular_jobs};
-use canister_timer_jobs::Job;
+use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
@@ -150,6 +150,31 @@ impl Job for TimerJob {
         if can_borrow_state {
             flush_pending_events();
         }
+    }
+}
+
+impl HardDeleteMessageContentJob {
+    // Cancels the jobs to hard delete the content of messages which have been undeleted, so that a
+    // job queued by an earlier deletion can't remove the content of a message deleted again later
+    // before its time to be undeleted is up
+    pub fn cancel(
+        timer_jobs: &mut TimerJobs<TimerJob>,
+        chat_id: ChatId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_ids: &[MessageId],
+    ) {
+        if message_ids.is_empty() {
+            return;
+        }
+        timer_jobs.cancel_jobs(|job| {
+            if let TimerJob::HardDeleteMessageContent(j) = job {
+                j.chat_id == chat_id
+                    && j.thread_root_message_index == thread_root_message_index
+                    && message_ids.contains(&j.message_id)
+            } else {
+                false
+            }
+        });
     }
 }
 

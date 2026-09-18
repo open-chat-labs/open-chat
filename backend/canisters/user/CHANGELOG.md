@@ -53,8 +53,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fail with `ThreadNotFound` rather than trapping when a thread root is not found while translating it for the other user's canister, and check it before pushing a message ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Mark the user's chat with themselves as such, so that messages they send to themselves are read on both sides ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Check the thread root of a P2P swap being accepted before making the transfer, and look the swap up in that thread rather than in the main list ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
-- Collapse `DirectChat` back into a single struct holding its events and both read positions ([#9415](https://github.com/open-chat-labs/open-chat/pull/9415))
 - Move the blocked users, contacts, favourite chats and profile document models into the `user_state` library, shared with the MultiUser canister ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
+- Collapse `DirectChat` back into a single struct holding its events and both read positions ([#9415](https://github.com/open-chat-labs/open-chat/pull/9415))
 
 ### Fixed
 
@@ -62,6 +62,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
 - Restrict `update_bot` to the canister owner ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Make `user_id` optional in `c2c_user_canister` args, since old User canisters don't send it ([#9410](https://github.com/open-chat-labs/open-chat/pull/9410))
+- Cancel the pending hard delete of a message's content when it is undeleted, so a message deleted again gets the full 5 minutes to be undeleted ([#9430](https://github.com/open-chat-labs/open-chat/pull/9430))
+- Apply `thread_root_message_index` to the sender's own copy of a direct chat when editing or deleting a thread reply ([#9431](https://github.com/open-chat-labs/open-chat/pull/9431))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-13
 
