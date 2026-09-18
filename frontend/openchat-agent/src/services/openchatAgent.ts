@@ -249,6 +249,7 @@ import {
     buildBlobUrl,
     buildUserAvatarUrl,
     getUpdatedEvents,
+    isExpired,
     mergeDirectChatUpdates,
     mergeGroupChatUpdates,
     mergeGroupChats,
@@ -1921,9 +1922,12 @@ export class OpenChatAgent extends EventTarget {
                     ),
             );
 
-        this.removeExpiredLatestMessages(directChats, start);
-        this.removeExpiredLatestMessages(groupChats, start);
-        communities.forEach((c) => this.removeExpiredLatestMessages(c.channels, start));
+        // expiresAt is an epoch-millis timestamp, so compare against wall-clock time rather than
+        // `start`, which is a performance.now() reading used only for timing
+        const now = Date.now();
+        this.removeExpiredLatestMessages(directChats, now);
+        this.removeExpiredLatestMessages(groupChats, now);
+        communities.forEach((c) => this.removeExpiredLatestMessages(c.channels, now));
 
         const state = {
             userCanisterLocalUserIndex,
@@ -2283,7 +2287,7 @@ export class OpenChatAgent extends EventTarget {
         for (const chat of chats) {
             if (
                 chat.latestMessage?.event.messageIndex !== chat.latestMessageIndex ||
-                (chat.latestMessage?.expiresAt !== undefined && chat.latestMessage.expiresAt < now)
+                (chat.latestMessage !== undefined && isExpired(chat.latestMessage, now))
             ) {
                 chat.latestMessage = undefined;
             }
