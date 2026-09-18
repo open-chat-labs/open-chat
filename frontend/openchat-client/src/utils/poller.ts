@@ -128,8 +128,7 @@ export class Poller {
         if (this.stopped) return;
         const interval = this.currentInterval();
         if (interval !== undefined) {
-            // a request made in the foreground is dropped if the app has gone to the background
-            this.schedule(rerun && !this.status.background ? this.triggerDelay() : interval);
+            this.schedule(rerun ? this.triggerDelay() : interval);
         }
     }
 
@@ -141,11 +140,12 @@ export class Poller {
      * `POLLER_TRIGGER_MIN_GAP_MS` after the previous one finished, so a burst of triggers cannot
      * turn into back-to-back runs.
      *
-     * Only in the foreground: a hidden app has no one to show the result to, and coming back to
-     * the foreground runs the task anyway if it is due. Does nothing offline either.
+     * Works in the background too, so long as the job runs there at all (it has an idle
+     * interval): a hidden tab still needs to hear promptly about things like an incoming call.
+     * Does nothing offline, or in the background for a job with no idle interval.
      */
     triggerNow(): void {
-        if (this.stopped || this.status.offline || this.status.background) return;
+        if (this.stopped || this.currentInterval() === undefined) return;
         if (this.currentRun !== undefined) {
             this.rerunRequested = true;
             return;
