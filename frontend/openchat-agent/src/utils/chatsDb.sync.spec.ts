@@ -31,6 +31,11 @@ const chatId: GroupChatIdentifier = { kind: "group_chat", groupId: "gid" };
  * state, and so on).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function sortedKeys(store: Map<string, any>): string[] {
+    return [...store.keys()].sort();
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function fakeDb(initial: Record<string, Record<string, any>> = {}) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stores: Record<string, Map<string, any>> = {};
@@ -59,21 +64,25 @@ function fakeDb(initial: Record<string, Record<string, any>> = {}) {
                 log.push(`get ${name} ${key}`);
                 return read(name, () => store.get(key));
             },
+            // IndexedDB returns a store in key order, and an index in index then key order
             getAll: () => {
                 log.push(`getAll ${name}`);
-                return read(name, () => [...store.values()]);
+                return read(name, () => sortedKeys(store).map((k) => store.get(k)));
             },
             getAllKeys: () => {
                 log.push(`getAllKeys ${name}`);
-                return read(name, () => [...store.keys()]);
+                return read(name, () => sortedKeys(store));
             },
             index: (index: string) => ({
                 getAll: (range: { lower: number; open: boolean }) => {
                     log.push(`getAll ${name}.${index} ${range.lower}`);
                     return read(name, () =>
-                        [...store.values()].filter((v) =>
-                            range.open ? v[index] > range.lower : v[index] >= range.lower,
-                        ),
+                        sortedKeys(store)
+                            .map((k) => store.get(k))
+                            .filter((v) =>
+                                range.open ? v[index] > range.lower : v[index] >= range.lower,
+                            )
+                            .sort((a, b) => a[index] - b[index]),
                     );
                 },
             }),
@@ -406,7 +415,7 @@ describe("getCachedChats", () => {
         expect(stores.chat_rows.size).toBe(2);
     });
 
-    test("the 30 day wipe clears every store but moves the head on", async () => {
+    test("the 30 day wipe clears every store but the rows, and moves the head on", async () => {
         const { chatsDb, stores } = chatsDbWith({
             chats: { principal: globals({ latestUserCanisterUpdates: 0n }) },
             chat_rows: { "group_chat|a": groupRow("a", 1) },
@@ -418,9 +427,10 @@ describe("getCachedChats", () => {
         expect(await chatsDb.getCachedChats()).toBeUndefined();
 
         expect(stores.chats.size).toBe(0);
-        expect(stores.chat_rows.size).toBe(0);
-        expect(stores.chat_tombstones.size).toBe(0);
         expect(stores.chat_events.size).toBe(0);
+        // kept, so the full load that follows can still tombstone what has gone
+        expect(stores.chat_rows.size).toBe(1);
+        expect(stores.chat_tombstones.size).toBe(1);
         expect(stores.sync.get("stamps")).toBeUndefined();
         expect(stores.sync.get("head")).toBe(8);
     });
@@ -456,5 +466,66 @@ describe("updateCachedProposalTallies", () => {
         expect(version).toBeUndefined();
         expect(stores.sync.get("head")).toBe(2);
         expect(stores.sync.get("stamps")).toBeUndefined();
+    });
+});
+
+describe("across a 30 day wipe", () => {
+    test("a chat removed meanwhile still reaches a UI that kept running", async () => {
+        const { chatsDb } = chatsDbWith({
+            chats: { principal: globals({ latestUserCanisterUpdates: 0n }) },
+            chat_rows: { "group_chat|a": groupRow("a", 1), "group_chat|gone": groupRow("gone", 1) },
+            sync: { head: 1 },
+        });
+
+        expect(await chatsDb.getCachedChats()).toBeUndefined();
+        await chatsDb.setCachedChats(state({ groupChats: [group("a")] }), emptyTouched());
+
+        const { chats } = await chatsDb.getChatsForSync(1);
+        expect(chats?.state.groupChats.map((g) => g.id.groupId)).toEqual(["a"]);
+        expect(chats?.removed.groupChats).toEqual(["gone"]);
+    });
+});
+
+describe("getCachedChatSummary", () => {
+    test("reads one chat's row, and a channel from its community's row", async () => {
+        const channel = {
+            kind: "channel",
+            id: { kind: "channel", communityId: "c1", channelId: 7 },
+        };
+        const { chatsDb, log } = chatsDbWith({
+            chat_rows: {
+                "group_chat|a": groupRow("a", 1),
+                "direct_chat|u1": directRow("u1", 1),
+                "community|c1": {
+                    kind: "community",
+                    version: 1,
+                    summary: { kind: "community", id: { communityId: "c1" }, channels: [channel] },
+                },
+            },
+        });
+
+        expect((await chatsDb.getCachedChatSummary(group("a").id))?.id).toEqual(group("a").id);
+        expect((await chatsDb.getCachedChatSummary(direct("u1").id))?.id).toEqual(direct("u1").id);
+        // a different object with the same value
+        expect(
+            await chatsDb.getCachedChatSummary({
+                kind: "channel",
+                communityId: "c1",
+                channelId: 7,
+            }),
+        ).toBe(channel);
+        expect(await chatsDb.getCachedChatSummary(group("missing").id)).toBeUndefined();
+        expect(log.filter((l) => !l.startsWith("get chat_rows"))).toEqual([]);
+    });
+
+    test("a failed read answers with nothing and wipes nothing", async () => {
+        const { chatsDb, stores, failing } = chatsDbWith({
+            chats: { principal: globals({ latestUserCanisterUpdates: 0n }) },
+        });
+        failing.add("chat_rows");
+        vi.spyOn(console, "error").mockImplementation(() => {});
+
+        expect(await chatsDb.getCachedChatSummary(group("a").id)).toBeUndefined();
+        expect(stores.chats.size).toBe(1);
     });
 });

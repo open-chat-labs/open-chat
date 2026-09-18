@@ -59,6 +59,7 @@ import {
 } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 import {
+    chatRowKey,
     chatRowsToWrite,
     emptySyncStamps,
     globalsOf,
@@ -520,6 +521,36 @@ export class ChatsDb {
         await Promise.all(promises);
         await tx.done;
         return version;
+    }
+
+    /**
+     * One cached chat, read from its own row (a channel from its community's row). Never throws,
+     * and never wipes or clears anything: it is only a hint, for checking a replica is not behind.
+     */
+    async getCachedChatSummary(chatId: ChatIdentifier): Promise<ChatSummary | undefined> {
+        try {
+            const db = await this.getDb();
+            switch (chatId.kind) {
+                case "direct_chat":
+                    return (await db.get("chat_rows", chatRowKey("direct_chat", chatId.userId)))
+                        ?.summary as ChatSummary | undefined;
+                case "group_chat":
+                    return (await db.get("chat_rows", chatRowKey("group_chat", chatId.groupId)))
+                        ?.summary as ChatSummary | undefined;
+                case "channel": {
+                    const row = await db.get(
+                        "chat_rows",
+                        chatRowKey("community", chatId.communityId),
+                    );
+                    return row?.kind === "community"
+                        ? row.summary.channels.find((c) => chatIdentifiersEqual(c.id, chatId))
+                        : undefined;
+                }
+            }
+        } catch (err) {
+            console.error("CACHE: unable to read a cached chat", err);
+            return undefined;
+        }
     }
 
     async getSyncHead(): Promise<number> {
@@ -1429,24 +1460,18 @@ function makeCommunitySerializable(community: CommunitySummary): CommunitySummar
     };
 }
 
-// The cache is the one place a chat summary enters the agent without a mapper having built it:
-// every other route comes from candid. A record written by an older build (or a partial write)
-// can therefore be missing fields the type says are always there, and the app then dies reading
-// `them.userId` or `membership.readByMeUpTo` seconds after load.
-//
-// There is no safe local repair. `membership` cannot be invented - the role, read-up-to and mute
-// state are the server's to say. Dropping just the bad record is worse than it looks: the cached
-// list is the base `mergeDirectChatUpdates` applies deltas to, so a chat removed from it stays
-// gone until the server happens to send an update mentioning it. Treat the whole cache as
-// unusable instead and let `getUpdates` fall through to `getInitialState`, which is what the
-// staleness check above already does.
-// Clears every store but keeps the sync head moving: the wipe takes a version of its own, so a
-// sync answer read before it can never pass the UI's cursor check afterwards.
+// Stores the wipe leaves alone. The sync head keeps moving: the wipe takes a version of its own,
+// so a sync answer read before it can never pass the UI's cursor check afterwards. The chat rows
+// and tombstones stay so that a UI still running across the wipe hears about the chats removed
+// in the meantime: with the globals gone the full load that follows rewrites every row and
+// tombstones the rows whose chats it no longer finds.
+const KEPT_BY_WIPE: string[] = ["sync", "chat_rows", "chat_tombstones"];
+
 async function wipeKeepingSyncHead(db: IDBPDatabase<ChatSchema>): Promise<void> {
     const storeNames: StoreNames<ChatSchema>[] = [];
     for (let i = 0; i < db.objectStoreNames.length; i++) {
         const name = db.objectStoreNames[i];
-        if (name !== "sync") {
+        if (!KEPT_BY_WIPE.includes(name)) {
             storeNames.push(name);
         }
     }
@@ -1465,6 +1490,17 @@ function isStale(globals: ChatGlobals): boolean {
     return globals.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY);
 }
 
+// The cache is the one place a chat summary enters the agent without a mapper having built it:
+// every other route comes from candid. A record written by an older build (or a partial write)
+// can therefore be missing fields the type says are always there, and the app then dies reading
+// `them.userId` or `membership.readByMeUpTo` seconds after load.
+//
+// There is no safe local repair. `membership` cannot be invented - the role, read-up-to and mute
+// state are the server's to say. Dropping just the bad record is worse than it looks: the cached
+// list is the base `mergeDirectChatUpdates` applies deltas to, so a chat removed from it stays
+// gone until the server happens to send an update mentioning it. Treat the whole cache as
+// unusable instead and let `getUpdates` fall through to `getInitialState`, which is what the
+// staleness check already does.
 function cachedChatsAreUsable(chats: ChatStateFull): boolean {
     return globalsAreUsable(chats) && chats.directChats.every(directChatIsUsable);
 }
