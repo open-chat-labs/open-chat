@@ -1,4 +1,5 @@
 use crate::guards::caller_is_owner;
+use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -47,6 +48,13 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         .iter()
         .filter_map(|&message_id| events_reader.message(message_id.into(), Some(my_user_id)))
         .collect();
+
+    HardDeleteMessageContentJob::cancel(
+        &mut state.data.timer_jobs,
+        args.user_id.into(),
+        args.thread_root_message_index,
+        &deleted,
+    );
 
     if !deleted.is_empty() && args.user_id != OPENCHAT_BOT_USER_ID {
         let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;

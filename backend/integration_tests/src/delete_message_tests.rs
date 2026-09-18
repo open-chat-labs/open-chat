@@ -378,6 +378,71 @@ fn delete_then_undelete_direct_message(delay: bool) {
     }
 }
 
+#[test]
+fn deleting_an_undeleted_direct_message_again_gives_a_full_undelete_window() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    let message_id = random_from_u128();
+    let send_message_response =
+        client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
+
+    let delete = |env: &mut pocket_ic::PocketIc| {
+        let response = client::user::delete_messages(
+            env,
+            user1.principal,
+            user1.user_id.canister_id(),
+            &user_canister::delete_messages::Args {
+                user_id: user2.user_id,
+                thread_root_message_index: None,
+                message_ids: vec![message_id],
+            },
+        );
+        assert!(matches!(response, user_canister::delete_messages::Response::Success));
+        tick_many(env, 3);
+    };
+    let undelete = |env: &mut pocket_ic::PocketIc| {
+        let response = client::user::undelete_messages(
+            env,
+            user1.principal,
+            user1.user_id.canister_id(),
+            &user_canister::undelete_messages::Args {
+                user_id: user2.user_id,
+                thread_root_message_index: None,
+                message_ids: vec![message_id],
+            },
+        );
+        tick_many(env, 3);
+        match response {
+            user_canister::undelete_messages::Response::Success(result) => result.messages.len(),
+            response => panic!("Unexpected response from `undelete_messages`: {response:?}"),
+        }
+    };
+
+    delete(env);
+    assert_eq!(undelete(env), 1);
+
+    // The job queued by the first deletion is cancelled by the undelete, so it doesn't remove the
+    // content of the message deleted again, which can still be undeleted for the full 5 minutes
+    env.advance_time(Duration::from_millis(3 * MINUTE_IN_MS));
+    delete(env);
+    env.advance_time(Duration::from_millis(3 * MINUTE_IN_MS));
+    tick_many(env, 3);
+    assert_eq!(undelete(env), 1);
+
+    for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
+        let events_response =
+            client::user::happy_path::events_by_index(env, user, them, vec![send_message_response.event_index]);
+        let Some(ChatEvent::Message(m)) = events_response.events.first().map(|e| &e.event) else {
+            panic!("Unexpected response from `events_by_index`: {events_response:?}");
+        };
+        assert!(matches!(m.content, MessageContent::Text(_)), "{:?}", m.content);
+    }
+}
+
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn delete_then_undelete_group_message(delay: bool) {

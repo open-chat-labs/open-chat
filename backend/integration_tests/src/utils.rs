@@ -7,7 +7,7 @@ use pocket_ic::PocketIc;
 use rand::{RngExt, SeedableRng, rngs::StdRng};
 use std::time::SystemTime;
 use std::{path::PathBuf, time::UNIX_EPOCH};
-use types::{CanisterId, Hash, HttpRequest, TimestampMillis, TimestampNanos, TokenInfo};
+use types::{CanisterId, Hash, HttpRequest, HttpResponse, TimestampMillis, TimestampNanos, TokenInfo};
 
 pub fn principal_to_username(principal: Principal) -> String {
     principal.to_string()[0..5].to_string()
@@ -55,6 +55,26 @@ pub fn icp_token_info() -> TokenInfo {
         decimals: 8,
         fee: ICP_TRANSFER_FEE,
     }
+}
+
+// The canister's metrics, or None if it can't currently be queried, eg. while it is stopped for an upgrade
+pub fn try_metrics(env: &PocketIc, canister_id: CanisterId) -> Option<serde_json::Value> {
+    let args = HttpRequest {
+        method: "GET".to_string(),
+        url: "/metrics".to_string(),
+        headers: Vec::new(),
+        body: Vec::new(),
+    };
+    let bytes = env
+        .query_call(
+            canister_id,
+            Principal::anonymous(),
+            "http_request",
+            candid::encode_one(args).ok()?,
+        )
+        .ok()?;
+    let response: HttpResponse = candid::decode_one(&bytes).ok()?;
+    serde_json::from_slice(&response.body).ok()
 }
 
 pub fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {
