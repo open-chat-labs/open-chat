@@ -616,6 +616,7 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
+import { answerTouchesChat } from "./utils/answerTouchesChat";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -841,6 +842,17 @@ export class OpenChat {
         } else {
             return Promise.resolve(false);
         }
+    }
+
+    // Whether the details held for this group or channel are missing or older than its summary
+    #chatDetailsBehind(serverChat: ChatSummary): boolean {
+        if (serverChat.kind === "direct_chat") return false;
+        const details = selectedServerChatStore.value;
+        return (
+            details === undefined ||
+            !chatIdentifiersEqual(details.chatId, serverChat.id) ||
+            details.timestamp < serverChat.lastUpdated
+        );
     }
 
     #chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -7035,6 +7047,9 @@ export class OpenChat {
 
         await this.getMissingUsers(userIds);
 
+        // Held so the fold's answer can be compared with it: see `answerTouchesChat`
+        const selectedBeforeFold = selectedServerChatSummaryStore.value;
+
         withPausedStores(() => {
             this.#updateReadUpToStore(chatsAddedUpdated);
 
@@ -7127,15 +7142,41 @@ export class OpenChat {
             );
         });
 
-        if (selectedChatIdStore.value !== undefined) {
-            if (chatSummariesStore.value.get(selectedChatIdStore.value) === undefined) {
+        const selectedChatId = selectedChatIdStore.value;
+        if (selectedChatId !== undefined) {
+            if (chatSummariesStore.value.get(selectedChatId) === undefined) {
                 publish("selectedChatInvalid");
             } else {
-                const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
-                this.#chatUpdated(
-                    selectedChatIdStore.value,
-                    updatedEvents.get(selectedChatIdStore.value) ?? [],
-                );
+                const updatedEvents =
+                    ChatMap.fromMap(chatsResponse.updatedEvents).get(selectedChatId) ?? [];
+                // An answer that did not change the selected chat (a CHIT balance, another
+                // chat's message, another channel in its community) has nothing new for it: no
+                // latest message to confirm, no events to refresh
+                if (
+                    answerTouchesChat(
+                        selectedChatId,
+                        selectedBeforeFold,
+                        chatsAddedUpdated,
+                        updatedEvents.length,
+                    )
+                ) {
+                    this.#chatUpdated(selectedChatId, updatedEvents);
+                } else {
+                    // Every answer used to reload the details, which is what retried a load that
+                    // failed (offline, say) or came from a lagging replica. Only a retry is
+                    // needed here, so only when the details held are not this chat's latest.
+                    const serverChat = selectedServerChatSummaryStore.value;
+                    if (serverChat !== undefined && this.#chatDetailsBehind(serverChat)) {
+                        this.#loadChatDetails(serverChat);
+                    }
+                    // Still published: the timeline answers it by loading any new messages it
+                    // is missing, and does nothing if there are none, so a load that failed
+                    // earlier gets another go
+                    publish("chatUpdated", {
+                        chatId: selectedChatId,
+                        threadRootMessageIndex: undefined,
+                    });
+                }
             }
         }
 
