@@ -7333,33 +7333,42 @@ export class OpenChat {
         const generation = this.#syncPuller.generation;
 
         return new Promise<void>((resolve) => {
+            // The stream ends without waiting for an async onResult, so the pass is only done
+            // once the snapshot it delivered has been folded. Otherwise the poller would count
+            // it finished, and could start the next, while the fold is still running.
+            let folding: Promise<void> = Promise.resolve();
+            const done = () => folding.then(resolve);
             this.#worker
                 .stream({
                     kind: "getUpdates",
                     initialLoad,
                 })
                 .subscribe({
-                    onResult: async (snapshot) => {
-                        if (snapshot !== undefined) {
-                            await this.#syncPuller.seed(
-                                snapshot,
-                                (updates) =>
-                                    this.#handleChatsResponse(
-                                        updateRegistryTask,
-                                        initialLoad,
-                                        updates,
-                                    ),
-                                generation,
-                            );
-                        }
-                        latestSuccessfulUpdatesLoop.set(Date.now());
+                    onResult: (snapshot) => {
+                        folding = folding
+                            .then(async () => {
+                                if (snapshot !== undefined) {
+                                    await this.#syncPuller.seed(
+                                        snapshot,
+                                        (updates) =>
+                                            this.#handleChatsResponse(
+                                                updateRegistryTask,
+                                                initialLoad,
+                                                updates,
+                                            ),
+                                        generation,
+                                    );
+                                }
+                                latestSuccessfulUpdatesLoop.set(Date.now());
+                            })
+                            .catch((err) => console.warn("Failed to fold the chats snapshot", err));
                     },
                     onError: (err) => {
                         console.warn("getUpdates threw an error: ", err);
-                        resolve();
+                        done();
                     },
                     onEnd: () => {
-                        resolve();
+                        done();
                     },
                 });
         });

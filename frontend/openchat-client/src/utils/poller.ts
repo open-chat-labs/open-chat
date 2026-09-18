@@ -2,6 +2,12 @@ import { derived, type Unsubscriber } from "svelte/store";
 import { background } from "../stores/background";
 import { offlineStore } from "../stores/network";
 
+// How long a run may take before the poller stops waiting for it. A run that never settles (a
+// lost worker response, say) would otherwise hold the poller forever, since the next run is only
+// scheduled when the previous one finishes. The abandoned run is left to finish on its own and
+// nothing it does afterwards touches the poller.
+export const POLLER_RUN_TIMEOUT_MS = 2 * 60 * 1000;
+
 type PollerEnvironment = {
     background: boolean;
     offline: boolean;
@@ -11,12 +17,18 @@ export class Poller {
     private timeoutId: number | undefined;
     private lastExecutionTimestamp: number | undefined;
     private stopped = false;
-    // At most one run at a time. A restart (the app going to the background and back, or coming
-    // back online) used to start a fresh run straight away even while one was still in flight,
-    // because the last execution is only recorded when a run finishes. Two overlapping chat
-    // updates passes both start from the same cached state and the one that finishes last wins,
-    // even when its answer is the older one.
-    private running = false;
+    // At most one run at a time within this poller. A restart (the app going to the background
+    // and back, or coming back online) used to start a fresh run straight away even while one
+    // was still in flight, because the last execution is only recorded when a run finishes. Two
+    // overlapping chat updates passes both start from the same cached state and the one that
+    // finishes last wins, even when its answer is the older one. Runs of two different pollers
+    // for the same task can still overlap: a caller that replaces its poller while a run is in
+    // flight has to handle that itself.
+    //
+    // The id of the run in flight, so that a run abandoned by the timeout cannot finish again
+    private currentRun: number | undefined = undefined;
+    private runCount = 0;
+    private runTimeoutId: number | undefined;
     private unsubscribeStatus: Unsubscriber | undefined;
     private status: PollerEnvironment = { background: false, offline: false };
 
@@ -50,7 +62,7 @@ export class Poller {
 
         // A run in flight schedules the next one when it finishes, using whatever environment
         // is current by then
-        if (this.running) return;
+        if (this.currentRun !== undefined) return;
 
         const interval = this.currentInterval();
         if (interval === undefined) {
@@ -77,20 +89,35 @@ export class Poller {
 
     private run(): void {
         this.timeoutId = undefined;
-        if (this.stopped || this.running) return;
+        if (this.stopped || this.currentRun !== undefined) return;
 
-        this.running = true;
-        this.fn()
+        const runId = ++this.runCount;
+        this.currentRun = runId;
+        this.runTimeoutId = window.setTimeout(() => {
+            console.warn(`Poller: task still running after ${POLLER_RUN_TIMEOUT_MS}ms, moving on`);
+            this.finish(runId);
+        }, POLLER_RUN_TIMEOUT_MS);
+
+        // Called inside the chain so that a task which throws rather than rejecting still
+        // finishes the run
+        Promise.resolve()
+            .then(() => this.fn())
             .catch((err) => console.warn("Poller: task failed", err))
-            .finally(() => {
-                this.running = false;
-                this.lastExecutionTimestamp = Date.now();
-                if (this.stopped) return;
-                const interval = this.currentInterval();
-                if (interval !== undefined) {
-                    this.schedule(interval);
-                }
-            });
+            .finally(() => this.finish(runId));
+    }
+
+    private finish(runId: number): void {
+        // already finished, by the timeout or by the task itself
+        if (this.currentRun !== runId) return;
+        this.currentRun = undefined;
+        window.clearTimeout(this.runTimeoutId);
+        this.runTimeoutId = undefined;
+        this.lastExecutionTimestamp = Date.now();
+        if (this.stopped) return;
+        const interval = this.currentInterval();
+        if (interval !== undefined) {
+            this.schedule(interval);
+        }
     }
 
     private clearTimer(): void {
@@ -102,6 +129,8 @@ export class Poller {
 
     stop(): void {
         this.clearTimer();
+        window.clearTimeout(this.runTimeoutId);
+        this.runTimeoutId = undefined;
         if (this.unsubscribeStatus) {
             try {
                 this.unsubscribeStatus();
