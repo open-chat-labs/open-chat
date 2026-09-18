@@ -93,7 +93,7 @@ import type {
     VideoCallPresence,
     WithdrawCryptocurrencyResponse,
 } from "./chat";
-import type { SyncSinceResponse, SyncWindow } from "./sync";
+import type { SyncSinceResponse } from "./sync";
 import type {
     ChitEventsRequest,
     ChitEventsResponse,
@@ -1798,7 +1798,6 @@ type GetUpdates = {
 type SyncSince = {
     kind: "syncSince";
     since: number;
-    windows: SyncWindow[];
 };
 
 type GetBots = {
