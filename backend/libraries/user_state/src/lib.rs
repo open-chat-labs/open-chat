@@ -11,11 +11,13 @@ use types::TimestampMillis;
 mod blocked_users;
 mod contacts;
 mod favourite_chats;
+mod message_activity_events;
 mod profile_document;
 
 pub use blocked_users::BlockedUsers;
 pub use contacts::{Contact, Contacts, SetContactResponse};
 pub use favourite_chats::FavouriteChats;
+pub use message_activity_events::MessageActivityEvents;
 pub use profile_document::ProfileDocument;
 
 // The keys of `map`, whose values are when each was pinned, most recently pinned first

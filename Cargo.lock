@@ -13092,6 +13092,7 @@ dependencies = [
  "ic-stable-structures",
  "itertools 0.15.0",
  "msgpack",
+ "rand 0.10.2",
  "serde",
  "stable_memory_map",
  "types",
