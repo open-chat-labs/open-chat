@@ -4,9 +4,9 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::DeleteUndeleteMessagesArgs;
-use constants::MINUTE_IN_MS;
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
-use types::{ChatId, EventIndex, MessageId, MessageIndex, OCResult};
+use types::{Achievement, ChatId, EventIndex, MessageId, MessageIndex, OCResult};
 use user_canister::delete_messages::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -58,6 +58,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         })
         .ok_or(OCErrorCode::TargetUserNotFound)??;
 
+    let any_deleted = !deleted.is_empty();
     enqueue_hard_delete_jobs(my_index, args.user_id.into(), args.thread_root_message_index, deleted, state);
 
     // Only the caller's own messages are deleted in the other user's copy, where the thread is
@@ -93,7 +94,9 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         );
     }
 
-    // TODO: Award the `DeletedMessage` achievement, as the User canister does
+    if any_deleted && args.user_id != OPENCHAT_BOT_USER_ID {
+        state.award_achievement_and_notify(my_index, Achievement::DeletedMessage, now);
+    }
     Ok(())
 }
 

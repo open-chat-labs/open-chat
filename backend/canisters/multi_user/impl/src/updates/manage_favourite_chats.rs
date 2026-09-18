@@ -2,6 +2,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use types::Achievement;
 use user_canister::manage_favourite_chats::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -13,7 +14,9 @@ fn manage_favourite_chats(args: Args) -> Response {
 fn manage_favourite_chats_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
-    state.with_caller_user_mut(|_, user| {
+    let adding = !args.to_add.is_empty();
+
+    let my_index = state.with_caller_user_mut(|my_index, user| {
         for chat in args.to_add {
             user.favourite_chats.add(chat, now);
         }
@@ -21,9 +24,12 @@ fn manage_favourite_chats_impl(args: Args, state: &mut RuntimeState) -> Response
         for chat in args.to_remove {
             user.favourite_chats.remove(&chat, now);
         }
+        my_index
     });
 
-    // TODO: Award the `FavouritedChat` achievement once achievements are held per user
+    if adding {
+        state.award_achievement_and_notify(my_index, Achievement::FavouritedChat, now);
+    }
 
     Response::Success
 }

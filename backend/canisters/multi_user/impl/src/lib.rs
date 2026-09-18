@@ -15,8 +15,8 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChatId, Cycles, DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, OCResult,
-    TimestampMillis, Timestamped, UserId, UserNotification,
+    Achievement, BuildVersion, CanisterId, ChatId, Cycles, DirectChatUserNotificationPayload, IdempotentEnvelope, Notification,
+    NotifyChit, OCResult, TimestampMillis, Timestamped, UserId, UserNotification,
 };
 use utils::env::Environment;
 
@@ -200,6 +200,49 @@ impl RuntimeState {
             }))),
             now,
         );
+    }
+
+    // Awards the achievements to the user at `user_index`, telling the LocalUserIndex of their new
+    // CHIT balance if any were newly awarded
+    pub fn award_achievements_and_notify(
+        &mut self,
+        user_index: u16,
+        achievements: impl IntoIterator<Item = Achievement>,
+        now: TimestampMillis,
+    ) {
+        let awarded = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| {
+                achievements.into_iter().fold(false, |awarded, achievement| {
+                    user.award_achievement(achievement, now) | awarded
+                })
+            })
+            .unwrap_or_default();
+
+        if awarded {
+            self.notify_user_index_of_chit(user_index, now);
+        }
+    }
+
+    pub fn award_achievement_and_notify(&mut self, user_index: u16, achievement: Achievement, now: TimestampMillis) {
+        self.award_achievements_and_notify(user_index, [achievement], now);
+    }
+
+    // Tells the LocalUserIndex the CHIT balance and streak of the user at `user_index`, which it
+    // passes on to the UserIndex
+    pub fn notify_user_index_of_chit(&mut self, user_index: u16, now: TimestampMillis) {
+        let Some(notify_chit) = self.data.users.with_user(user_index, |user| NotifyChit {
+            timestamp: now,
+            total_chit_earned: user.chit_events.total_chit_earned(),
+            chit_balance: user.chit_events.balance_for_month_by_timestamp(now),
+            chit_balance_v2: user.chit_events.chit_balance(),
+            streak: user.streak.days(now),
+            streak_ends: user.streak.ends(),
+        }) else {
+            return;
+        };
+        self.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyChit(notify_chit), now);
     }
 
     // Queues the stable memory map entries of a chat deleted by the user at `user_index` for

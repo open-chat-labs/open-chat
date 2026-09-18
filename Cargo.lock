@@ -7301,6 +7301,7 @@ dependencies = [
  "constants",
  "direct_chat",
  "escrow_canister",
+ "event_store_types",
  "git_commit_id",
  "http_request",
  "ic-cdk 0.20.2",

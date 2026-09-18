@@ -25,9 +25,8 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         };
 
         // TODO: Everything below which is empty or default stays so until the MultiUser canister
-        // holds it per user: groups and communities, chit and achievements, the
-        // streak, referrals, bots, the BTC and 1sec addresses and
-        // premium items
+        // holds it per user: groups and communities, streak insurance, referrals, bots, the BTC
+        // and 1sec addresses and premium items
         Success(SuccessResult {
             timestamp: now,
             direct_chats,
@@ -39,15 +38,15 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             suspended: user.suspended.value,
             pin_number_settings: user.pin_number.enabled().then(|| user.pin_number.settings(now)),
             local_user_index_canister_id: state.data.local_user_index_canister_id,
-            achievements: Vec::new(),
-            achievements_last_seen: 0,
-            total_chit_earned: 0,
-            chit_balance: 0,
-            streak: 0,
-            streak_ends: 0,
-            max_streak: 0,
-            streak_insurance: None,
-            next_daily_claim: 0,
+            achievements: user.chit_events.achievements(None),
+            achievements_last_seen: user.achievements_last_seen,
+            total_chit_earned: user.chit_events.total_chit_earned(),
+            chit_balance: user.chit_events.chit_balance(),
+            streak: user.streak.days(now),
+            streak_ends: user.streak.ends(),
+            max_streak: user.streak.max_streak(),
+            streak_insurance: user.streak.streak_insurance(now),
+            next_daily_claim: user.streak.next_claim(),
             is_unique_person: false,
             wallet_config: user.wallet_config.value.clone(),
             referrals: Vec::new(),

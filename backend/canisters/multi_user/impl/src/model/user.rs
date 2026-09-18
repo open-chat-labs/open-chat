@@ -2,11 +2,12 @@ use candid::Principal;
 use direct_chat::DirectChats;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
-use types::{TimestampMillis, Timestamped, UserId};
+use std::collections::HashSet;
+use types::{Achievement, ChitEvent, ChitEventType, TimestampMillis, Timestamped, UserId};
 use user_canister::{MessageActivityEvent, WalletConfig};
 use user_state::{
-    BlockedUsers, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
-    SavedCryptoAccounts,
+    BlockedUsers, ChitEvents, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
+    SavedCryptoAccounts, Streak,
 };
 
 // The state of a single user within the canister. This mirrors the per-user fields of the User
@@ -43,6 +44,14 @@ pub struct User {
     // when the job to remove the user's expired events next runs
     #[serde(default)]
     pub next_event_expiry: Option<TimestampMillis>,
+    #[serde(default)]
+    pub chit_events: ChitEvents,
+    #[serde(default)]
+    pub streak: Streak,
+    #[serde(default)]
+    pub achievements: HashSet<Achievement>,
+    #[serde(default)]
+    pub achievements_last_seen: TimestampMillis,
 }
 
 impl User {
@@ -67,6 +76,10 @@ impl User {
             wallet_config: Timestamped::default(),
             message_activity_events: MessageActivityEvents::default(),
             next_event_expiry: None,
+            chit_events: ChitEvents::default(),
+            streak: Streak::default(),
+            achievements: HashSet::new(),
+            achievements_last_seen: 0,
         }
     }
 
@@ -84,6 +97,21 @@ impl User {
     // the LocalUserIndex (`UserUnblocked`) if the user is newly unblocked.
     pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         self.blocked_users.unblock(user_id, now)
+    }
+
+    // Awards the achievement along with its CHIT, returning false if the user already had it. The
+    // caller tells the LocalUserIndex of the user's new CHIT balance, as the User canister does.
+    pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
+        if self.achievements.insert(achievement) {
+            self.chit_events.push(ChitEvent {
+                amount: achievement.chit_reward() as i32,
+                timestamp: now,
+                reason: ChitEventType::Achievement(achievement),
+            });
+            true
+        } else {
+            false
+        }
     }
 
     // Adds an event to the user's message activity feed, unless it was caused by a user they have

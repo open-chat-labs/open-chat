@@ -443,7 +443,7 @@ fn streak_insurance_from_account_without_allowance_fails() {
     client::user::happy_path::pay_for_streak_insurance(env, &user, 1, ONE_CHAT);
 }
 
-fn ensure_time_at_least_day0(env: &mut PocketIc) {
+pub(crate) fn ensure_time_at_least_day0(env: &mut PocketIc) {
     if now_millis(env) < DAY_ZERO {
         env.set_time(SystemTime::now().into());
     }
