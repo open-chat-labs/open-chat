@@ -234,7 +234,6 @@ import {
     applyOptionUpdate,
     chatIdentifiersEqual,
     emptyEventsResponse,
-    getOrAdd,
     isError,
     isSuccessfulEventsResponse,
     mergeEventStreamResponses,
@@ -255,6 +254,7 @@ import {
     mergeGroupChats,
 } from "../utils/chat";
 import { ChatsDb } from "../utils/chatsDb";
+import { mergeWaitAllResults, summaryUpdatesArgsByLocalUserIndex } from "../utils/summaryUpdates";
 import {
     emptySyncStamps,
     emptyUpdatesResult,
@@ -1608,6 +1608,15 @@ export class OpenChatAgent extends EventTarget {
             }
         };
 
+        const previousUpdatesTimestamp = mapOptional(current?.latestUserCanisterUpdates, Number);
+        // Summary updates for the groups and communities already cached, started before the User
+        // canister call rather than after it: they only need what is cached, and waiting for the
+        // User canister first put a whole extra round trip in front of every pass. Chats the User
+        // canister reports as added are fetched once it has answered.
+        let cachedSummaryUpdates:
+            | Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>>
+            | undefined = undefined;
+
         // `== null`: a corrupt IndexedDB has been seen returning null rather than undefined
         if (current == null) {
             totalQueryCount++;
@@ -1680,6 +1689,13 @@ export class OpenChatAgent extends EventTarget {
             oneSecAddress = new Updatable(current.oneSecAddress);
             streakInsurance = new UpdatableOption(current.streakInsurance);
             premiumItems = new Updatable(current.premiumItems);
+
+            // A chat the User canister goes on to report as removed is queried for nothing, as it
+            // was before; the removal filter below drops whatever comes back for it
+            cachedSummaryUpdates = this.#getSummaryUpdatesFromLocalUserIndexes(
+                summaryUpdatesArgsByLocalUserIndex(currentGroups, currentCommunities),
+                previousUpdatesTimestamp,
+            );
 
             try {
                 totalQueryCount++;
@@ -1782,49 +1798,13 @@ export class OpenChatAgent extends EventTarget {
             );
         }
 
-        const byLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]> = new Map();
-
-        for (const group of groupsAdded) {
-            getOrAdd(byLocalUserIndex, group.localUserIndex, []).push({
-                canisterId: group.id.groupId,
-                isCommunity: false,
-                inviteCode: undefined,
-                updatesSince: undefined,
-            });
-        }
-
-        for (const community of communitiesAdded) {
-            getOrAdd(byLocalUserIndex, community.localUserIndex, []).push({
-                canisterId: community.id.communityId,
-                isCommunity: true,
-                inviteCode: undefined,
-                updatesSince: undefined,
-            });
-        }
-
-        for (const group of currentGroups) {
-            getOrAdd(byLocalUserIndex, group.localUserIndex, []).push({
-                canisterId: group.id.groupId,
-                isCommunity: false,
-                inviteCode: undefined,
-                updatesSince: group.lastUpdated,
-            });
-        }
-
-        for (const community of currentCommunities) {
-            getOrAdd(byLocalUserIndex, community.localUserIndex, []).push({
-                canisterId: community.id.communityId,
-                isCommunity: true,
-                inviteCode: undefined,
-                updatesSince: community.lastUpdated,
-            });
-        }
-
-        const previousUpdatesTimestamp = mapOptional(current?.latestUserCanisterUpdates, Number);
-        const summaryUpdatesResponsePromises = this.#getSummaryUpdatesFromLocalUserIndexes(
-            byLocalUserIndex,
-            previousUpdatesTimestamp,
-        );
+        const addedSummaryUpdates =
+            groupsAdded.length > 0 || communitiesAdded.length > 0
+                ? this.#getSummaryUpdatesFromLocalUserIndexes(
+                      summaryUpdatesArgsByLocalUserIndex(groupsAdded, communitiesAdded),
+                      previousUpdatesTimestamp,
+                  )
+                : undefined;
 
         if (initialLoad) {
             // Set up the cache primer on the first iteration but don't process anything until the
@@ -1833,7 +1813,9 @@ export class OpenChatAgent extends EventTarget {
             this.#initializeCachePrimer(userCanisterLocalUserIndex);
         }
 
-        const summaryUpdatesResponses = await summaryUpdatesResponsePromises;
+        const summaryUpdatesResponses = mergeWaitAllResults(
+            await Promise.all([cachedSummaryUpdates, addedSummaryUpdates]),
+        );
 
         totalQueryCount += summaryUpdatesResponses.success.length;
         totalQueryCount += summaryUpdatesResponses.errors.length;
