@@ -256,14 +256,33 @@ describe("Poller", () => {
         expect(fn).toHaveBeenCalledTimes(2);
     });
 
-    test("triggerNow does nothing in the background, offline or once stopped", async () => {
+    test("triggerNow runs in the background for a job with an idle interval", async () => {
+        const fn = vi.fn(() => Promise.resolve());
+        track(new Poller(fn, 5000, 60_000, false));
+        setVisibility("hidden");
+        triggerLatest();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fn).toHaveBeenCalledTimes(1);
+
+        // and the idle interval restarts from that run
+        await vi.advanceTimersByTimeAsync(59_999);
+        expect(fn).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    test("triggerNow does nothing in the background for a job with no idle interval", async () => {
+        const fn = vi.fn(() => Promise.resolve());
+        track(new Poller(fn, 5000, undefined, false));
+        setVisibility("hidden");
+        triggerLatest();
+        await vi.advanceTimersByTimeAsync(10_000);
+        expect(fn).toHaveBeenCalledTimes(0);
+    });
+
+    test("triggerNow does nothing offline or once stopped", async () => {
         const fn = vi.fn(() => Promise.resolve());
         const poller = track(new Poller(fn, 5000, 60_000, false));
-        setVisibility("hidden");
-        poller.triggerNow();
-        await vi.advanceTimersByTimeAsync(0);
-        expect(fn).toHaveBeenCalledTimes(0);
-        setVisibility("visible");
 
         window.dispatchEvent(new Event("offline"));
         poller.triggerNow();
@@ -277,7 +296,27 @@ describe("Poller", () => {
         expect(fn).toHaveBeenCalledTimes(0);
     });
 
-    test("a trigger during a run that ends in the background is dropped", async () => {
+    test("a trigger during a run that ends in the background still reruns, if the job runs there", async () => {
+        const run = deferred();
+        const fn = vi.fn(() => (fn.mock.calls.length === 1 ? run.promise : Promise.resolve()));
+        track(new Poller(fn, 5000, 60_000, true));
+        await vi.advanceTimersByTimeAsync(0);
+
+        triggerLatest();
+        setVisibility("hidden");
+        run.resolve();
+        await vi.advanceTimersByTimeAsync(POLLER_TRIGGER_MIN_GAP_MS - 1);
+        expect(fn).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(fn).toHaveBeenCalledTimes(2);
+        // then back to the idle interval
+        await vi.advanceTimersByTimeAsync(59_999);
+        expect(fn).toHaveBeenCalledTimes(2);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(fn).toHaveBeenCalledTimes(3);
+    });
+
+    test("a trigger during a run that ends in the background is dropped if the job stops there", async () => {
         const run = deferred();
         const fn = vi.fn(() => (fn.mock.calls.length === 1 ? run.promise : Promise.resolve()));
         track(new Poller(fn, 5000, undefined, true));
