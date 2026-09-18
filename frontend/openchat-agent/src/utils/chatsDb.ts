@@ -476,8 +476,9 @@ export class ChatsDb {
     // upserts by key) rather than skipped, which would be a hole that never heals.
     //
     // Throws if the read fails, so the caller answers the pull with an error and the UI keeps its
-    // cursor where it is. `state` undefined means the cache genuinely holds nothing, in which case
-    // an empty answer at `head` is right: the next write stamps everything past it.
+    // cursor where it is. `state` undefined means the cache holds nothing to answer from - never
+    // written, wiped as stale or cleared as unusable - and the caller must not move the UI's
+    // cursor on the strength of it: the stamps may still name changes the UI has not seen.
     async getChatsForSync(): Promise<{
         head: number;
         state: ChatStateFull | undefined;

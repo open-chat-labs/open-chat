@@ -2224,7 +2224,13 @@ export class OpenChatAgent extends EventTarget {
         const userId = this.userClient.userId;
         const { head, state, stamps } = await this._chatsDb.getChatsForSync();
         if (state === undefined) {
-            return { userId, version: head, updates: emptyUpdatesResult() };
+            // Nothing to answer from, which is not the same as nothing having changed: a cache
+            // found unusable is cleared with its stamps left in place, so that the full load
+            // which follows can tombstone what has gone. Answering at `head` would carry the
+            // UI's cursor past everything stamped since `since` with none of it delivered. The
+            // cursor stays where it is instead, and the write that refills the cache announces
+            // a head the UI then pulls to from here.
+            return { userId, version: Math.min(since, head), updates: emptyUpdatesResult() };
         }
         const updates = updatesSince(state, stamps ?? emptySyncStamps(), since, windows);
         return {
