@@ -7044,6 +7044,9 @@ export class OpenChat {
 
         await this.getMissingUsers(userIds);
 
+        // Held so the fold's answer can be compared with it: see `answerTouchesChat`
+        const selectedBeforeFold = selectedServerChatSummaryStore.value;
+
         withPausedStores(() => {
             this.#updateReadUpToStore(chatsAddedUpdated);
 
@@ -7143,10 +7146,17 @@ export class OpenChat {
             } else {
                 const updatedEvents =
                     ChatMap.fromMap(chatsResponse.updatedEvents).get(selectedChatId) ?? [];
-                // A pulled answer names only what changed, so an answer that did not touch the
-                // selected chat (a CHIT balance, another chat's message) has nothing new for
-                // it: no latest message to confirm, no events to refresh
-                if (answerTouchesChat(selectedChatId, chatsAddedUpdated, updatedEvents.length)) {
+                // An answer that did not change the selected chat (a CHIT balance, another
+                // chat's message, another channel in its community) has nothing new for it: no
+                // latest message to confirm, no events to refresh
+                if (
+                    answerTouchesChat(
+                        selectedChatId,
+                        selectedBeforeFold,
+                        chatsAddedUpdated,
+                        updatedEvents.length,
+                    )
+                ) {
                     this.#chatUpdated(selectedChatId, updatedEvents);
                 } else {
                     // Every answer used to reload the details, which is what retried a load that
