@@ -1,4 +1,4 @@
-import type { ChatIdentifier, UpdatesResult } from "./chat";
+import type { UpdatesResult } from "./chat";
 
 /**
  * Cache -> UI sync as a versioned pull.
@@ -10,15 +10,11 @@ import type { ChatIdentifier, UpdatesResult } from "./chat";
  * after the cursor. The answer comes from the cache, not from the writer, so nothing the UI
  * missed (a fold that threw, a listener registered late) is ever lost: it is still stamped past
  * the cursor and comes back on the next pull.
+ *
+ * The answer carries every updated event stamped after the cursor, for every chat: the UI
+ * already keeps only those for the chat on screen and inside its loaded ranges, and the log is
+ * bounded on the worker side, so the worker never needs to know what the UI is showing.
  */
-
-/** A range of a chat's timeline that the UI is currently showing, in event indexes. `to` absent = to the end. */
-export type SyncWindow = {
-    chatId: ChatIdentifier;
-    threadRootMessageIndex: number | undefined;
-    from: number;
-    to: number | undefined;
-};
 
 export type SyncHead = {
     userId: string;
