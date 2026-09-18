@@ -11,8 +11,12 @@ export class Poller {
     private timeoutId: number | undefined;
     private lastExecutionTimestamp: number | undefined;
     private stopped = false;
-    // Used to ensure each Poller instance runs exactly one instance of its task
-    private runnerId: symbol | undefined;
+    // At most one run at a time. A restart (the app going to the background and back, or coming
+    // back online) used to start a fresh run straight away even while one was still in flight,
+    // because the last execution is only recorded when a run finishes. Two overlapping chat
+    // updates passes both start from the same cached state and the one that finishes last wins,
+    // even when its answer is the older one.
+    private running = false;
     private unsubscribeStatus: Unsubscriber | undefined;
     private status: PollerEnvironment = { background: false, offline: false };
 
@@ -35,19 +39,20 @@ export class Poller {
         });
     }
 
+    // The interval for the current environment, or undefined if the job should not run in it
+    private currentInterval(): number | undefined {
+        if (this.status.offline) return undefined;
+        return this.status.background ? this.idleInterval : this.interval;
+    }
+
     private start(): void {
-        const runnerId = Symbol();
-        this.runnerId = runnerId;
+        this.clearTimer();
 
-        if (this.timeoutId !== undefined) {
-            window.clearTimeout(this.timeoutId);
-            this.timeoutId = undefined;
-        }
+        // A run in flight schedules the next one when it finishes, using whatever environment
+        // is current by then
+        if (this.running) return;
 
-        // if we are offline, bail out
-        if (this.status.offline) return;
-
-        const interval = this.status.background ? this.idleInterval : this.interval;
+        const interval = this.currentInterval();
         if (interval === undefined) {
             return;
         }
@@ -61,25 +66,42 @@ export class Poller {
                   ? 0
                   : interval;
 
-        const runThenLoop = () => {
-            if (this.stopped || this.runnerId !== runnerId) return;
-
-            this.fn()
-                .catch((err) => console.warn("Poller: task failed", err))
-                .finally(() => {
-                    this.lastExecutionTimestamp = Date.now();
-                    this.timeoutId = window.setTimeout(runThenLoop, interval);
-                });
-        };
-
         this.immediate = false;
-        this.timeoutId = window.setTimeout(runThenLoop, firstInterval);
+        this.schedule(firstInterval);
+    }
+
+    private schedule(delay: number): void {
+        this.clearTimer();
+        this.timeoutId = window.setTimeout(() => this.run(), delay);
+    }
+
+    private run(): void {
+        this.timeoutId = undefined;
+        if (this.stopped || this.running) return;
+
+        this.running = true;
+        this.fn()
+            .catch((err) => console.warn("Poller: task failed", err))
+            .finally(() => {
+                this.running = false;
+                this.lastExecutionTimestamp = Date.now();
+                if (this.stopped) return;
+                const interval = this.currentInterval();
+                if (interval !== undefined) {
+                    this.schedule(interval);
+                }
+            });
+    }
+
+    private clearTimer(): void {
+        if (this.timeoutId !== undefined) {
+            window.clearTimeout(this.timeoutId);
+            this.timeoutId = undefined;
+        }
     }
 
     stop(): void {
-        if (this.timeoutId !== undefined) {
-            window.clearTimeout(this.timeoutId);
-        }
+        this.clearTimer();
         if (this.unsubscribeStatus) {
             try {
                 this.unsubscribeStatus();
