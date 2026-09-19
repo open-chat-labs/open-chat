@@ -108,10 +108,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     validate_from_account(args.from_account, state.env.canister_id())?;
 
     let now = state.env.now();
-    let my_index = state.caller_user_index_or_trap();
-    let my_user_id = state.user_id(my_index);
-
-    state.with_caller_user_mut(|_, user| {
+    let (my_index, days_currently_insured) = state.with_caller_user_mut(|my_index, user| {
         if user.streak.days(now) == 0 {
             return Err(OCErrorCode::NoActiveStreak.into());
         }
@@ -127,11 +124,13 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         } else if !user.streak.acquire_payment_lock() {
             Err(OCErrorCode::AlreadyInProgress.into())
         } else {
-            Ok(PrepareOk {
-                my_index,
-                my_user_id,
-                days_currently_insured,
-            })
+            Ok((my_index, days_currently_insured))
         }
+    })?;
+
+    Ok(PrepareOk {
+        my_index,
+        my_user_id: state.user_id(my_index),
+        days_currently_insured,
     })
 }

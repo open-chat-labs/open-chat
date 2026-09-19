@@ -2424,34 +2424,64 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
     );
     assert!(initial_state(env, b_principal, canister_id).streak_insurance.is_none());
 
-    // Missing a day uses up the day of insurance, keeping the streak, and the OpenChat bot says so
-    env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
-    env.tick();
-    let a_state = initial_state(env, a_principal, canister_id);
-    assert_eq!(a_state.streak, 2);
-    assert_eq!(
-        a_state.streak_insurance.map(|s| (s.days_insured, s.days_missed)),
-        Some((1, 1))
+    // Paying from an approved account spends only an approval given to the paying user's own
+    // subaccount of the canister, so an approval given to another user of the canister is no use
+    claim_daily_chit(env, b_principal, canister_id);
+    let wallet_balance = 10 * ONE_CHAT;
+    let external_wallet = random_principal();
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, external_wallet, wallet_balance);
+    // The allowance has to cover the transfer fee too, since that is charged to the `from` account
+    let allowance = ONE_CHAT + constants::CHAT_TRANSFER_FEE;
+    client::ledger::happy_path::approve(env, external_wallet, canister_ids.chat_ledger, a, allowance);
+    assert_pay_for_streak_insurance_error(
+        env,
+        b_principal,
+        canister_id,
+        1,
+        ONE_CHAT,
+        Some(external_wallet.into()),
+        OCErrorCode::InsufficientAllowance,
     );
-    let a_chit_events = chit_events(env, a_principal, canister_id);
-    assert!(
-        a_chit_events
-            .events
-            .iter()
-            .any(|e| matches!(e.reason, types::ChitEventType::StreakInsuranceClaim))
-    );
-    let messages = bot_messages(env, a_principal, canister_id, a);
-    assert!(matches!(
-        &messages.last().unwrap().content,
-        MessageContent::Text(t) if t.text.contains("One day of streak insurance was just used up")
-    ));
 
-    // Missing another day, with the insurance used up, loses the streak and resets the insurance
+    client::ledger::happy_path::approve(env, external_wallet, canister_ids.chat_ledger, b, allowance);
+    let response = pay_for_streak_insurance(env, b_principal, canister_id, 1, ONE_CHAT, Some(external_wallet.into()));
+    assert!(matches!(response, user_canister::pay_for_streak_insurance::Response::Success));
+    // The wallet paid for both approvals and the insurance, while the user's own balance is untouched
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, external_wallet),
+        wallet_balance - ONE_CHAT - 3 * constants::CHAT_TRANSFER_FEE
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, b), 0);
+
+    // Missing a day uses up each user's day of insurance, keeping their streaks, B setting up their
+    // job having left A's in place. The OpenChat bot tells each of them.
     env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
     env.tick();
-    let a_state = initial_state(env, a_principal, canister_id);
-    assert_eq!(a_state.streak, 0);
-    assert!(a_state.streak_insurance.is_none());
+    for (principal, user_id) in [(a_principal, a), (b_principal, b)] {
+        let state = initial_state(env, principal, canister_id);
+        assert_eq!(state.streak, 2);
+        assert_eq!(state.streak_insurance.map(|s| (s.days_insured, s.days_missed)), Some((1, 1)));
+        assert!(
+            chit_events(env, principal, canister_id)
+                .events
+                .iter()
+                .any(|e| matches!(e.reason, types::ChitEventType::StreakInsuranceClaim))
+        );
+        let messages = bot_messages(env, principal, canister_id, user_id);
+        assert!(matches!(
+            &messages.last().unwrap().content,
+            MessageContent::Text(t) if t.text.contains("One day of streak insurance was just used up")
+        ));
+    }
+
+    // Missing another day, with the insurance used up, loses each streak and resets the insurance
+    env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
+    env.tick();
+    for principal in [a_principal, b_principal] {
+        let state = initial_state(env, principal, canister_id);
+        assert_eq!(state.streak, 0);
+        assert!(state.streak_insurance.is_none());
+    }
 }
 
 fn pay_for_streak_insurance(
