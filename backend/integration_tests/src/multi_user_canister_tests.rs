@@ -2361,3 +2361,132 @@ fn set_user_suspended(env: &mut PocketIc, sender: Principal, canister_id: Canist
     let user_canister::c2c_set_user_suspended::Response::Success(result) = response;
     assert!(result.groups.is_empty() && result.communities.is_empty());
 }
+
+#[test]
+fn streak_insurance_is_paid_for_and_used_per_user() {
+    const ONE_CHAT: u128 = 100_000_000;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    crate::chit_tests::ensure_time_at_least_day0(env);
+
+    // Each user's funds are held in their own subaccount of the canister
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, a, 10 * ONE_CHAT);
+
+    // Without a streak there is nothing to insure
+    assert_pay_for_streak_insurance_error(env, b_principal, canister_id, 1, ONE_CHAT, None, OCErrorCode::NoActiveStreak);
+
+    claim_daily_chit(env, a_principal, canister_id);
+
+    assert_pay_for_streak_insurance_error(
+        env,
+        a_principal,
+        canister_id,
+        1,
+        2 * ONE_CHAT,
+        None,
+        OCErrorCode::PriceMismatch,
+    );
+    // Nor can a user pay from the account of another user of the canister
+    assert_pay_for_streak_insurance_error(
+        env,
+        a_principal,
+        canister_id,
+        1,
+        ONE_CHAT,
+        Some(types::icrc1::Account::for_user(b)),
+        OCErrorCode::InvalidRequest,
+    );
+
+    let response = pay_for_streak_insurance(env, a_principal, canister_id, 1, ONE_CHAT, None);
+    assert!(matches!(response, user_canister::pay_for_streak_insurance::Response::Success));
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, a),
+        10 * ONE_CHAT - ONE_CHAT - constants::CHAT_TRANSFER_FEE
+    );
+    assert_eq!(
+        initial_state(env, a_principal, canister_id)
+            .streak_insurance
+            .map(|s| s.days_insured),
+        Some(1)
+    );
+    assert!(initial_state(env, b_principal, canister_id).streak_insurance.is_none());
+
+    // Missing a day uses up the day of insurance, keeping the streak, and the OpenChat bot says so
+    env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
+    env.tick();
+    let a_state = initial_state(env, a_principal, canister_id);
+    assert_eq!(a_state.streak, 2);
+    assert_eq!(
+        a_state.streak_insurance.map(|s| (s.days_insured, s.days_missed)),
+        Some((1, 1))
+    );
+    let a_chit_events = chit_events(env, a_principal, canister_id);
+    assert!(
+        a_chit_events
+            .events
+            .iter()
+            .any(|e| matches!(e.reason, types::ChitEventType::StreakInsuranceClaim))
+    );
+    let messages = bot_messages(env, a_principal, canister_id, a);
+    assert!(matches!(
+        &messages.last().unwrap().content,
+        MessageContent::Text(t) if t.text.contains("One day of streak insurance was just used up")
+    ));
+
+    // Missing another day, with the insurance used up, loses the streak and resets the insurance
+    env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
+    env.tick();
+    let a_state = initial_state(env, a_principal, canister_id);
+    assert_eq!(a_state.streak, 0);
+    assert!(a_state.streak_insurance.is_none());
+}
+
+fn pay_for_streak_insurance(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    additional_days: u8,
+    expected_price: u128,
+    from_account: Option<types::icrc1::Account>,
+) -> user_canister::pay_for_streak_insurance::Response {
+    client::multi_user::pay_for_streak_insurance(
+        env,
+        sender,
+        canister_id,
+        &user_canister::pay_for_streak_insurance::Args {
+            additional_days,
+            expected_price,
+            from_account,
+            pin: None,
+        },
+    )
+}
+
+fn assert_pay_for_streak_insurance_error(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    additional_days: u8,
+    expected_price: u128,
+    from_account: Option<types::icrc1::Account>,
+    code: OCErrorCode,
+) {
+    let expected = code as u16;
+    match pay_for_streak_insurance(env, sender, canister_id, additional_days, expected_price, from_account) {
+        user_canister::pay_for_streak_insurance::Response::Error(error) => assert_eq!(error.code(), expected),
+        response => panic!("{response:?}"),
+    }
+}

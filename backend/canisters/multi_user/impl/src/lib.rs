@@ -1,11 +1,12 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user::User;
 use crate::model::users::Users;
-use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use direct_chat::DirectChat;
+use event_store_types::EventBuilder;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
@@ -15,11 +16,13 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    Achievement, BuildVersion, CanisterId, ChatId, Cycles, DirectChatUserNotificationPayload, IdempotentEnvelope, Notification,
-    NotifyChit, OCResult, TimestampMillis, Timestamped, UserId, UserNotification,
+    Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, Cycles, DirectChatUserNotificationPayload,
+    IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use utils::env::Environment;
 
+mod crypto;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -248,6 +251,104 @@ impl RuntimeState {
             return;
         };
         self.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyChit(notify_chit), now);
+    }
+
+    // Records a payment for streak insurance by the user at `user_index`, as the User canister's
+    // `mark_streak_insurance_payment`
+    pub fn mark_streak_insurance_payment(&mut self, user_index: u16, payment: UserCanisterStreakInsurancePayment) {
+        if self
+            .data
+            .users
+            .with_user_mut(user_index, |user| user.streak.mark_streak_insurance_payment(payment.clone()))
+            .is_none()
+        {
+            return;
+        }
+        self.set_up_streak_insurance_timer_job(user_index);
+
+        let user_id = self.user_id(user_index);
+        let now = self.env.now();
+        self.push_local_user_index_canister_event(
+            user_index,
+            LocalUserIndexEvent::EventStoreEvent(
+                EventBuilder::new("user_streak_insurance_payment", payment.timestamp)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(user_id.to_string(), true)
+                    .with_json_payload(&payment)
+                    .build(),
+            ),
+            now,
+        );
+        self.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyStreakInsurancePayment(payment), now);
+    }
+
+    // Records a day of streak insurance being used up to keep the streak of the user at
+    // `user_index`, as the User canister's `mark_streak_insurance_claim`
+    pub fn mark_streak_insurance_claim(&mut self, user_index: u16, claim: UserCanisterStreakInsuranceClaim) {
+        if self
+            .data
+            .users
+            .with_user_mut(user_index, |user| {
+                user.chit_events.push(ChitEvent {
+                    amount: 0,
+                    timestamp: claim.timestamp,
+                    reason: ChitEventType::StreakInsuranceClaim,
+                })
+            })
+            .is_none()
+        {
+            return;
+        }
+
+        let user_id = self.user_id(user_index);
+        let now = self.env.now();
+        self.push_local_user_index_canister_event(
+            user_index,
+            LocalUserIndexEvent::EventStoreEvent(
+                EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(user_id.to_string(), true)
+                    .with_json_payload(&claim)
+                    .build(),
+            ),
+            now,
+        );
+        let new_streak = claim.streak_length;
+        let days_remaining = claim.insured_days_remaining;
+        self.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim), now);
+
+        let days_remaining_text = if days_remaining == 1 { "1 day".to_string() } else { format!("{days_remaining} days") };
+        openchat_bot::send_text_message(
+            user_index,
+            format!(
+                "One day of streak insurance was just used up to protect your streak from being lost. \
+Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
+            ),
+            false,
+            self,
+        );
+    }
+
+    // Queues the job which, when the streak of the user at `user_index` is due to end, uses up a day
+    // of their streak insurance to keep it, or resets their insurance if the streak has been lost,
+    // replacing any such job already queued for them. Each user has their own job.
+    pub fn set_up_streak_insurance_timer_job(&mut self, user_index: u16) {
+        let Some((days_insured, ends)) = self
+            .data
+            .users
+            .with_user(user_index, |user| (user.streak.days_insured(), user.streak.ends()))
+        else {
+            return;
+        };
+        if days_insured > 0 {
+            let timer_jobs = &mut self.data.timer_jobs;
+            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::ClaimOrResetStreakInsurance(job) if job.user_index == user_index));
+            timer_jobs.enqueue_job(
+                TimerJob::ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob { user_index }),
+                ends,
+                self.env.now(),
+            );
+        }
     }
 
     // Queues the stable memory map entries of a chat deleted by the user at `user_index` for

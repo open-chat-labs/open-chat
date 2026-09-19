@@ -23,9 +23,12 @@ escrow_canister = { path = "../../escrow/api" }
 event_store_types = { workspace = true, features = ["json"] }
 git_commit_id = { path = "../../../libraries/git_commit_id" }
 http_request = { path = "../../../libraries/http_request" }
+icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
+icrc-ledger-types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
