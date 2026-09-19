@@ -3,6 +3,7 @@ use crate::updates::remove_reaction::toggle_reaction;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use types::Achievement;
 use user_canister::add_reaction::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -19,5 +20,10 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> types::OCResult {
         args.reaction,
         true,
         state,
-    )
+    )?;
+
+    let my_index = state.caller_user_index_or_trap();
+    let now = state.env.now();
+    state.award_achievement_and_notify(my_index, Achievement::ReactedToMessage, now);
+    Ok(())
 }

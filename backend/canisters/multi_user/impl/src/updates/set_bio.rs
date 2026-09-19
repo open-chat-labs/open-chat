@@ -3,7 +3,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::{FieldTooLongResult, OCResult, Timestamped};
+use types::{Achievement, FieldTooLongResult, OCResult, Timestamped};
 use user_canister::set_bio::*;
 
 // The same limit as the User canister
@@ -25,13 +25,13 @@ fn set_bio_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     }
 
     let now = state.env.now();
-    state.with_caller_user_mut(|_, user| -> OCResult<()> {
+    let my_index = state.with_caller_user_mut(|my_index, user| -> OCResult<u16> {
         user.verify_not_suspended()?;
         user.bio = Timestamped::new(args.text, now);
-        Ok(())
+        Ok(my_index)
     })?;
 
-    // TODO: Award the `SetBio` achievement once achievements are held per user
+    state.award_achievement_and_notify(my_index, Achievement::SetBio, now);
 
     Ok(())
 }

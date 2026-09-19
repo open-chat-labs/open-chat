@@ -20,6 +20,7 @@ chat_events = { path = "../../../libraries/chat_events" }
 constants = { path = "../../../libraries/constants" }
 direct_chat = { path = "../../../libraries/direct_chat" }
 escrow_canister = { path = "../../escrow/api" }
+event_store_types = { workspace = true, features = ["json"] }
 git_commit_id = { path = "../../../libraries/git_commit_id" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }

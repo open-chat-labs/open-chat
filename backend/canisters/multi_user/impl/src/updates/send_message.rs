@@ -127,13 +127,14 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     // canister. A chat with yourself has a single copy, so there is nothing more to do.
     if let Recipient::SameCanister(their_index) = recipient {
         receive_message(their_index, my_user_id, sender_details, message_for_recipient, now, state);
+
+        // As in the User canister, messages sent to yourself earn no achievements
+        state.award_achievements_and_notify(my_index, message_event.event.achievements(true, false), now);
     }
 
     if let Some(expiry) = message_event.expires_at {
         state.handle_event_expiry(my_index, expiry);
     }
-
-    // TODO: Award achievements, as the User canister does
 
     Success(SuccessResult {
         chat_id,
