@@ -6,8 +6,8 @@ use std::collections::HashSet;
 use types::{Achievement, ChitEvent, ChitEventType, TimestampMillis, Timestamped, UserId};
 use user_canister::{MessageActivityEvent, WalletConfig};
 use user_state::{
-    BlockedUsers, ChitEvents, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
-    SavedCryptoAccounts, Streak,
+    BlockedUsers, ChitEvents, Contacts, FavouriteChats, GameChitKeys, HotGroupExclusions, MessageActivityEvents, PinNumber,
+    ProfileDocument, SavedCryptoAccounts, Streak,
 };
 
 // The state of a single user within the canister. This mirrors the per-user fields of the User
@@ -52,6 +52,8 @@ pub struct User {
     pub achievements: HashSet<Achievement>,
     #[serde(default)]
     pub achievements_last_seen: TimestampMillis,
+    #[serde(default)]
+    pub game_chit_keys: GameChitKeys,
 }
 
 impl User {
@@ -80,6 +82,7 @@ impl User {
             streak: Streak::default(),
             achievements: HashSet::new(),
             achievements_last_seen: 0,
+            game_chit_keys: GameChitKeys::default(),
         }
     }
 

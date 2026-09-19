@@ -2035,3 +2035,162 @@ fn chit_events(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> us
     );
     result
 }
+
+#[test]
+fn game_chit_and_suspension_are_applied_per_user() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    // A credit is applied once per key, and each user has their own keys
+    for user_id in [a, b] {
+        let result = game_chit(env, local_user_index, canister_id, user_id, "1:solve", 100).unwrap();
+        assert_eq!(result.chit_balance, 100);
+        assert_eq!(result.total_chit_earned, 100);
+    }
+    assert_game_chit_error(
+        env,
+        local_user_index,
+        canister_id,
+        a,
+        "1:solve",
+        100,
+        OCErrorCode::AlreadyAdded,
+    );
+
+    // A debit the user can't afford is refused, without using up its key, while one they can
+    // afford reduces their balance but not the total they have earned
+    assert_game_chit_error(
+        env,
+        local_user_index,
+        canister_id,
+        a,
+        "1:hint",
+        -500,
+        OCErrorCode::InsufficientFunds,
+    );
+    let result = game_chit(env, local_user_index, canister_id, a, "1:hint", -40).unwrap();
+    assert_eq!(result.chit_balance, 60);
+    assert_eq!(result.total_chit_earned, 100);
+    assert_eq!(initial_state(env, a_principal, canister_id).chit_balance, 60);
+    assert_eq!(initial_state(env, b_principal, canister_id).chit_balance, 100);
+    let reasons: Vec<_> = chit_events(env, a_principal, canister_id)
+        .events
+        .into_iter()
+        .map(|event| (event.amount, event.reason))
+        .collect();
+    assert!(matches!(
+        reasons.as_slice(),
+        [
+            (100, types::ChitEventType::Game { .. }),
+            (-40, types::ChitEventType::Game { .. })
+        ] | [
+            (-40, types::ChitEventType::Game { .. }),
+            (100, types::ChitEventType::Game { .. })
+        ]
+    ));
+
+    // Out of range amounts and users who aren't in the canister are refused
+    assert_game_chit_error(
+        env,
+        local_user_index,
+        canister_id,
+        a,
+        "2:solve",
+        0,
+        OCErrorCode::InvalidRequest,
+    );
+    let missing = UserId::new_indexed(canister_id, 1000);
+    assert_game_chit_error(
+        env,
+        local_user_index,
+        canister_id,
+        missing,
+        "1:solve",
+        100,
+        OCErrorCode::TargetUserNotFound,
+    );
+
+    // Suspending a user affects them alone, and a suspended user can't earn CHIT from games
+    set_user_suspended(env, canister_ids.user_index, canister_id, a, true);
+    assert!(initial_state(env, a_principal, canister_id).suspended);
+    assert!(!initial_state(env, b_principal, canister_id).suspended);
+    assert_game_chit_error(
+        env,
+        local_user_index,
+        canister_id,
+        a,
+        "2:solve",
+        100,
+        OCErrorCode::InitiatorSuspended,
+    );
+    assert!(game_chit(env, local_user_index, canister_id, b, "2:solve", 100).is_ok());
+
+    let since = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    set_user_suspended(env, canister_ids.user_index, canister_id, a, false);
+    assert_eq!(updates(env, a_principal, canister_id, since).unwrap().suspended, Some(false));
+    assert!(game_chit(env, local_user_index, canister_id, a, "2:solve", 100).is_ok());
+}
+
+fn game_chit(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    key: &str,
+    amount: i32,
+) -> Result<user_canister::c2c_game_chit::SuccessResult, oc_error_codes::OCError> {
+    let response = client::multi_user::c2c_game_chit(
+        env,
+        sender,
+        canister_id,
+        &user_canister::c2c_game_chit::Args {
+            user_id,
+            game_id: "light_up".to_string(),
+            key: key.to_string(),
+            amount,
+        },
+    );
+    match response {
+        user_canister::c2c_game_chit::Response::Success(result) => Ok(result),
+        user_canister::c2c_game_chit::Response::Error(error) => Err(error),
+    }
+}
+
+fn assert_game_chit_error(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+    key: &str,
+    amount: i32,
+    code: OCErrorCode,
+) {
+    let expected = code as u16;
+    match game_chit(env, sender, canister_id, user_id, key, amount) {
+        Err(error) if error.code() == expected => {}
+        result => panic!("Expected error code {expected}, got {result:?}"),
+    }
+}
+
+fn set_user_suspended(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId, suspended: bool) {
+    let response = client::multi_user::c2c_set_user_suspended(
+        env,
+        sender,
+        canister_id,
+        &user_canister::c2c_set_user_suspended::Args { user_id, suspended },
+    );
+    let user_canister::c2c_set_user_suspended::Response::Success(result) = response;
+    assert!(result.groups.is_empty() && result.communities.is_empty());
+}
