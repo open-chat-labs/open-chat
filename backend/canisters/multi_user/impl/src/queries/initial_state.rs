@@ -25,8 +25,8 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         };
 
         // TODO: Everything below which is empty or default stays so until the MultiUser canister
-        // holds it per user: groups and communities, streak insurance, referrals, bots, the BTC
-        // and 1sec addresses and premium items
+        // holds it per user: groups and communities, referrals, bots, the BTC and 1sec addresses
+        // and premium items
         Success(SuccessResult {
             timestamp: now,
             direct_chats,
