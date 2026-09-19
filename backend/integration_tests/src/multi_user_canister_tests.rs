@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::{metrics, now_millis, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
+use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use sha256::sha256;
@@ -2034,6 +2035,141 @@ fn chit_events(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> us
         },
     );
     result
+}
+
+#[test]
+fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    let now = now_millis(env);
+    let notes = random_string();
+    let reminder1 = set_message_reminder(
+        env,
+        a_principal,
+        canister_id,
+        Chat::Direct(b.into()),
+        Some(notes.clone()),
+        now + 1000,
+    );
+    let reminder2 = set_message_reminder(env, a_principal, canister_id, Chat::Direct(b.into()), None, now + 1000);
+
+    // Reminders can't be set for times which have passed
+    let response = client::multi_user::set_message_reminder_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_message_reminder_v2::Args {
+            chat: Chat::Direct(b.into()),
+            thread_root_message_index: None,
+            event_index: 10.into(),
+            notes: None,
+            remind_at: now,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::set_message_reminder_v2::Response::Error(e) if e.matches_code(OCErrorCode::DateInThePast))
+    );
+
+    // Another user in the canister can't cancel a user's reminder, while the user can
+    for (principal, reminder_id) in [(b_principal, reminder1), (a_principal, reminder2)] {
+        let response = client::multi_user::cancel_message_reminder(
+            env,
+            principal,
+            canister_id,
+            &user_canister::cancel_message_reminder::Args { reminder_id },
+        );
+        assert!(matches!(response, user_canister::cancel_message_reminder::Response::Success));
+    }
+
+    env.advance_time(Duration::from_millis(999));
+    env.tick();
+    assert_eq!(bot_messages(env, a_principal, canister_id, a).len(), 2);
+
+    env.advance_time(Duration::from_millis(1));
+    env.tick();
+
+    // The OpenChat bot sent a message when each reminder was set, both of which are now hidden (the
+    // first as its reminder has been sent and the second as its reminder was cancelled), followed by
+    // the one reminder which wasn't cancelled
+    let [created1, created2, reminder]: [Message; 3] = bot_messages(env, a_principal, canister_id, a).try_into().unwrap();
+    for (message, reminder_id) in [(created1, reminder1), (created2, reminder2)] {
+        assert_eq!(message.sender, OPENCHAT_BOT_USER_ID);
+        let MessageContent::MessageReminderCreated(created) = message.content else {
+            panic!("{:?}", message.content);
+        };
+        assert_eq!(created.reminder_id, reminder_id);
+        assert!(created.hidden);
+    }
+    let MessageContent::MessageReminder(content) = reminder.content else {
+        panic!("{:?}", reminder.content);
+    };
+    assert_eq!(content.reminder_id, reminder1);
+    assert_eq!(content.notes, Some(notes));
+    let replies_to = reminder.replies_to.unwrap();
+    assert_eq!(replies_to.chat_if_other, Some((Chat::Direct(b.into()), None)));
+    assert_eq!(replies_to.event_index, 10.into());
+
+    // Setting a reminder earns an achievement
+    let a_state = initial_state(env, a_principal, canister_id);
+    assert!(
+        a_state
+            .achievements
+            .iter()
+            .any(|event| matches!(event.reason, types::ChitEventType::Achievement(Achievement::SentReminder)))
+    );
+
+    // The other user has no chat with the OpenChat bot
+    assert!(initial_state(env, b_principal, canister_id).direct_chats.summaries.is_empty());
+}
+
+fn set_message_reminder(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    chat: Chat,
+    notes: Option<String>,
+    remind_at: TimestampMillis,
+) -> u64 {
+    let response = client::multi_user::set_message_reminder_v2(
+        env,
+        sender,
+        canister_id,
+        &user_canister::set_message_reminder_v2::Args {
+            chat,
+            thread_root_message_index: None,
+            event_index: 10.into(),
+            notes,
+            remind_at,
+        },
+    );
+    match response {
+        user_canister::set_message_reminder_v2::Response::Success(reminder_id) => reminder_id,
+        response => panic!("{response:?}"),
+    }
+}
+
+// The messages in the chat with the OpenChat bot of the user with the given id
+fn bot_messages(env: &PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId) -> Vec<Message> {
+    events(env, sender, canister_id, user_id, OPENCHAT_BOT_USER_ID)
+        .events
+        .into_iter()
+        .filter_map(|e| match e.event {
+            ChatEvent::Message(m) => Some(*m),
+            _ => None,
+        })
+        .collect()
 }
 
 #[test]

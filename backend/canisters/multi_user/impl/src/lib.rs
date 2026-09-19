@@ -25,6 +25,7 @@ mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
+mod openchat_bot;
 mod queries;
 mod timer_job_types;
 mod updates;

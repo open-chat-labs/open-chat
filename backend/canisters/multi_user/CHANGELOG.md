@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `local_user_index`, `saved_crypto_accounts`, `save_crypto_account`, `delete_saved_crypto_account`, `hot_group_exclusions`, `add_hot_group_exclusions`, `add_recommended_group_exclusions` and `set_pin_number`, holding each user's saved crypto accounts, hot group exclusions and PIN number, and report the PIN number settings through `initial_state` and `updates` ([#9434](https://github.com/open-chat-labs/open-chat/pull/9434))
 - Send events to the LocalUserIndex over a queue, each naming the user it is from: notifications of direct messages, and blocking, unblocking and setting a profile background ([#9435](https://github.com/open-chat-labs/open-chat/pull/9435))
 - Hold CHIT, the daily claim streak and achievements per user, implementing `claim_daily_chit`, `chit_events` and `mark_achievements_seen`, awarding achievements as the User canister does, and telling the LocalUserIndex of each user's CHIT ([#9438](https://github.com/open-chat-labs/open-chat/pull/9438))
+- Send messages from the OpenChat bot to each user's chat with it, and implement `set_message_reminder_v2` and `cancel_message_reminder`, with a timer job which sends each reminder, plus the OpenChat bot's message when streak insurance is claimed ([#9439](https://github.com/open-chat-labs/open-chat/pull/9439))
 - Implement `c2c_game_chit` and `c2c_set_user_suspended`, holding each user's game CHIT keys ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
 
 ### Changed

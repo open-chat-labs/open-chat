@@ -1,14 +1,14 @@
 use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
 use multi_user_canister::c2c_create_user;
 use user_canister::{
-    add_hot_group_exclusions, add_reaction, archive_unarchive_chats, bio, block_user, chit_events, claim_daily_chit,
-    configure_wallet, contacts, delete_direct_chat, delete_messages, delete_saved_crypto_account, deleted_message,
-    edit_message_v2, events, events_by_index, events_window, hot_group_exclusions, initial_state, local_user_index,
-    manage_favourite_chats, mark_achievements_seen, mark_message_activity_feed_read, mark_read, message_activity_feed,
-    messages_by_message_index, mute_notifications, pin_chat_v2, public_profile, remove_reaction, save_crypto_account,
-    saved_crypto_accounts, search_messages, send_message_v2, set_avatar, set_bio, set_contact, set_pin_number,
-    set_profile_background, unblock_user, undelete_messages, unmute_notifications, unpin_chat_v2, update_chat_settings,
-    updates,
+    add_hot_group_exclusions, add_reaction, archive_unarchive_chats, bio, block_user, cancel_message_reminder, chit_events,
+    claim_daily_chit, configure_wallet, contacts, delete_direct_chat, delete_messages, delete_saved_crypto_account,
+    deleted_message, edit_message_v2, events, events_by_index, events_window, hot_group_exclusions, initial_state,
+    local_user_index, manage_favourite_chats, mark_achievements_seen, mark_message_activity_feed_read, mark_read,
+    message_activity_feed, messages_by_message_index, mute_notifications, pin_chat_v2, public_profile, remove_reaction,
+    save_crypto_account, saved_crypto_accounts, search_messages, send_message_v2, set_avatar, set_bio, set_contact,
+    set_message_reminder_v2, set_pin_number, set_profile_background, unblock_user, undelete_messages, unmute_notifications,
+    unpin_chat_v2, update_chat_settings, updates,
 };
 use user_canister::{c2c_game_chit, c2c_set_user_suspended};
 
@@ -35,6 +35,7 @@ generate_msgpack_update_call!(add_hot_group_exclusions);
 generate_msgpack_update_call!(add_reaction);
 generate_msgpack_update_call!(archive_unarchive_chats);
 generate_msgpack_update_call!(block_user);
+generate_msgpack_update_call!(cancel_message_reminder);
 generate_msgpack_update_call!(c2c_create_user);
 generate_msgpack_update_call!(c2c_game_chit);
 generate_msgpack_update_call!(c2c_set_user_suspended);
@@ -56,6 +57,7 @@ generate_msgpack_update_call!(send_message_v2);
 generate_msgpack_update_call!(set_avatar);
 generate_msgpack_update_call!(set_bio);
 generate_msgpack_update_call!(set_contact);
+generate_msgpack_update_call!(set_message_reminder_v2);
 generate_msgpack_update_call!(set_pin_number);
 generate_msgpack_update_call!(set_profile_background);
 generate_msgpack_update_call!(unblock_user);
