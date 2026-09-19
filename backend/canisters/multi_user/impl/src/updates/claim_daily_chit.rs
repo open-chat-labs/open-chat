@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
@@ -107,8 +107,7 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     Success(result)
 }
 
-// As the User canister's `mark_streak_insurance_claim`, other than the message from the OpenChat
-// bot, which the MultiUser canister can't send yet
+// As the User canister's `mark_streak_insurance_claim`
 fn push_streak_insurance_claim_events(user_index: u16, claim: UserCanisterStreakInsuranceClaim, state: &mut RuntimeState) {
     let user_id = state.user_id(user_index);
     let now = state.env.now();
@@ -123,7 +122,20 @@ fn push_streak_insurance_claim_events(user_index: u16, claim: UserCanisterStreak
         ),
         now,
     );
+    let new_streak = claim.streak_length;
+    let days_remaining = claim.insured_days_remaining;
     state.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim), now);
+
+    let days_remaining_text = if days_remaining == 1 { "1 day".to_string() } else { format!("{days_remaining} days") };
+    openchat_bot::send_text_message(
+        user_index,
+        format!(
+            "One day of streak insurance was just used up to protect your streak from being lost. \
+Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
+        ),
+        false,
+        state,
+    );
 }
 
 // The same amounts as the User canister

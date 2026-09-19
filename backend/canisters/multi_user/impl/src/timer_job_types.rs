@@ -1,12 +1,15 @@
-use crate::mutate_state;
+use crate::{mutate_state, openchat_bot};
 use canister_timer_jobs::{Job, TimerJobs};
+use chat_events::{MessageContentInternal, MessageReminderContentInternal, ReplyContextInternal};
+use constants::OPENCHAT_BOT_USER_ID;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, MessageId, MessageIndex};
+use types::{Chat, ChatId, EventIndex, MessageId, MessageIndex};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
+    MessageReminder(Box<MessageReminderJob>),
 }
 
 // Removes the content of a deleted message from one user's copy of a direct chat, once the time in
@@ -25,6 +28,19 @@ pub struct HardDeleteMessageContentJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RemoveExpiredEventsJob {
     pub user_index: u16,
+}
+
+// Sends a user the reminder they set about a message, from the OpenChat bot, hiding the message
+// the bot sent when the reminder was set
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MessageReminderJob {
+    pub user_index: u16,
+    pub reminder_id: u64,
+    pub chat: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub event_index: EventIndex,
+    pub notes: Option<String>,
+    pub reminder_created_message_index: MessageIndex,
 }
 
 impl HardDeleteMessageContentJob {
@@ -59,6 +75,7 @@ impl Job for TimerJob {
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
+            TimerJob::MessageReminder(job) => job.execute(),
         }
     }
 }
@@ -83,5 +100,27 @@ impl Job for HardDeleteMessageContentJob {
 impl Job for RemoveExpiredEventsJob {
     fn execute(self) {
         mutate_state(|state| state.run_event_expiry_job(self.user_index));
+    }
+}
+
+impl Job for MessageReminderJob {
+    fn execute(self) {
+        let replies_to = ReplyContextInternal {
+            chat_if_other: Some((self.chat.into(), self.thread_root_message_index)),
+            event_index: self.event_index,
+        };
+        let content = MessageContentInternal::MessageReminder(MessageReminderContentInternal {
+            reminder_id: self.reminder_id,
+            notes: self.notes,
+        });
+
+        mutate_state(|state| {
+            let now = state.env.now();
+            let _ = state.with_direct_chat_mut(self.user_index, OPENCHAT_BOT_USER_ID.into(), |chat| {
+                chat.mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now)
+            });
+            // Does nothing if the user no longer exists
+            openchat_bot::send_message_with_reply(self.user_index, content, Some(replies_to), false, state);
+        });
     }
 }
