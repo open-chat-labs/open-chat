@@ -18,16 +18,14 @@ fn c2c_game_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
         return Error(OCErrorCode::TargetUserNotFound.into());
     };
 
-    if let Err(message) = validate_game_chit_args(&args) {
-        return Error(OCErrorCode::InvalidRequest.with_message(message));
-    }
-
     let now = state.env.now();
     let result = state
         .data
         .users
         .with_user_mut(user_index, |user| -> Result<SuccessResult, OCError> {
             user.verify_not_suspended()?;
+
+            validate_game_chit_args(&args).map_err(|message| OCErrorCode::InvalidRequest.with_message(message))?;
 
             // Checked before the balance so that a repeated key always returns AlreadyAdded, even if
             // the balance has since dropped

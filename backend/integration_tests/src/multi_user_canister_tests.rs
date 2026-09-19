@@ -2094,9 +2094,6 @@ fn game_chit_and_suspension_are_applied_per_user() {
         [
             (100, types::ChitEventType::Game { .. }),
             (-40, types::ChitEventType::Game { .. })
-        ] | [
-            (-40, types::ChitEventType::Game { .. }),
-            (100, types::ChitEventType::Game { .. })
         ]
     ));
 
@@ -2120,6 +2117,40 @@ fn game_chit_and_suspension_are_applied_per_user() {
         100,
         OCErrorCode::TargetUserNotFound,
     );
+
+    // Only the LocalUserIndex may add game CHIT, and only the UserIndex may suspend users, who must
+    // be in the canister
+    let game_chit_args = user_canister::c2c_game_chit::Args {
+        user_id: a,
+        game_id: "light_up".to_string(),
+        key: "3:solve".to_string(),
+        amount: 100,
+    };
+    assert!(
+        env.update_call(
+            canister_id,
+            a_principal,
+            "c2c_game_chit",
+            msgpack::serialize_then_unwrap(&game_chit_args)
+        )
+        .is_err()
+    );
+    for (sender, user_id) in [(local_user_index, a), (canister_ids.user_index, missing)] {
+        let args = user_canister::c2c_set_user_suspended::Args {
+            user_id,
+            suspended: true,
+        };
+        assert!(
+            env.update_call(
+                canister_id,
+                sender,
+                "c2c_set_user_suspended",
+                msgpack::serialize_then_unwrap(&args)
+            )
+            .is_err()
+        );
+    }
+    assert!(!initial_state(env, a_principal, canister_id).suspended);
 
     // Suspending a user affects them alone, and a suspended user can't earn CHIT from games
     set_user_suspended(env, canister_ids.user_index, canister_id, a, true);
