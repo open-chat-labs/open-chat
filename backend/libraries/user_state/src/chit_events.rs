@@ -136,6 +136,10 @@ impl ChitEvents {
         self.in_stable_memory_count
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.in_stable_memory_count == 0
+    }
+
     // Moves the events which were held on the heap into stable memory, returning how many were
     // moved
     // TODO: Remove this after next release

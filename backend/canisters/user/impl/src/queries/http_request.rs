@@ -1,10 +1,10 @@
-use crate::model::streak::Streak;
 use crate::{RuntimeState, read_state};
 use http_request::{AvatarRoute, Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
 use itertools::Itertools;
 use stable_memory_map::ProfileDocumentType;
 use types::{ChitEventType, HttpRequest, HttpResponse, TimestampMillis};
+use user_state::Streak;
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
