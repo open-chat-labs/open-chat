@@ -13102,8 +13102,10 @@ dependencies = [
  "rand 0.10.2",
  "serde",
  "stable_memory_map",
+ "tracing",
  "types",
  "user_canister",
+ "utils",
 ]
 
 [[package]]

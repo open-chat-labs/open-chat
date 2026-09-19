@@ -1,4 +1,3 @@
-use crate::model::chit_events::ChitEvents;
 use crate::model::communities::Communities;
 use crate::model::community::Community;
 use crate::model::game_chit_keys::GameChitKeys;
@@ -21,7 +20,6 @@ use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::referrals::Referrals;
-use model::streak::Streak;
 use model::threads_read::ThreadsRead;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
@@ -40,8 +38,8 @@ use types::{
 };
 use user_canister::{MessageActivityEvent, UserCanisterEvent, WalletConfig};
 use user_state::{
-    BlockedUsers, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
-    SavedCryptoAccounts,
+    BlockedUsers, ChitEvents, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
+    SavedCryptoAccounts, Streak,
 };
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;

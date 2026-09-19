@@ -9,6 +9,7 @@ use std::hash::Hash;
 use types::TimestampMillis;
 
 mod blocked_users;
+mod chit_events;
 mod contacts;
 mod favourite_chats;
 mod hot_group_exclusions;
@@ -16,8 +17,10 @@ mod message_activity_events;
 mod pin_number;
 mod profile_document;
 mod saved_crypto_accounts;
+mod streak;
 
 pub use blocked_users::BlockedUsers;
+pub use chit_events::ChitEvents;
 pub use contacts::{Contact, Contacts, SetContactResponse};
 pub use favourite_chats::FavouriteChats;
 pub use hot_group_exclusions::HotGroupExclusions;
@@ -25,6 +28,7 @@ pub use message_activity_events::MessageActivityEvents;
 pub use pin_number::{PinNumber, VerifyPinError};
 pub use profile_document::ProfileDocument;
 pub use saved_crypto_accounts::SavedCryptoAccounts;
+pub use streak::Streak;
 
 // The keys of `map`, whose values are when each was pinned, most recently pinned first
 pub fn sorted_pinned<T: Clone>(map: &HashMap<T, TimestampMillis>) -> Vec<T> {
