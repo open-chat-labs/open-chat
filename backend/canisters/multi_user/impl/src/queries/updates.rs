@@ -27,6 +27,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         let wallet_config = user.wallet_config.if_set_after(updates_since).cloned();
         let message_activity_summary =
             (user.message_activity_events.last_updated() > updates_since).then(|| user.message_activity_events.summary());
+        let streak_insurance_updated = user.streak.insurance_last_updated() > updates_since;
 
         let has_any_updates = username.is_some()
             || display_name.has_update()
@@ -36,6 +37,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             || suspended.is_some()
             || wallet_config.is_some()
             || message_activity_summary.is_some()
+            || streak_insurance_updated
+            || user.chit_events.last_updated() > updates_since
+            || user.achievements_last_seen > updates_since
             || user.favourite_chats.any_updated(updates_since)
             || user.direct_chats.any_updated(updates_since);
 
@@ -94,15 +98,19 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             blocked_users,
             suspended,
             pin_number_settings,
-            achievements: Vec::new(),
-            achievements_last_seen: None,
-            total_chit_earned: 0,
-            chit_balance: 0,
-            streak: 0,
-            streak_ends: 0,
-            max_streak: 0,
-            streak_insurance: OptionUpdate::NoChange,
-            next_daily_claim: 0,
+            achievements: user.chit_events.achievements(Some(updates_since)),
+            achievements_last_seen: (user.achievements_last_seen > updates_since).then_some(user.achievements_last_seen),
+            total_chit_earned: user.chit_events.total_chit_earned(),
+            chit_balance: user.chit_events.chit_balance(),
+            streak: user.streak.days(now),
+            streak_ends: user.streak.ends(),
+            max_streak: user.streak.max_streak(),
+            streak_insurance: if streak_insurance_updated {
+                OptionUpdate::from_update(user.streak.streak_insurance(now))
+            } else {
+                OptionUpdate::NoChange
+            },
+            next_daily_claim: user.streak.next_claim(),
             is_unique_person: None,
             wallet_config,
             referrals: Vec::new(),

@@ -3,7 +3,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{Achievement, OCResult};
 use user_canister::ChatInList;
 use user_canister::pin_chat_v2::*;
 
@@ -15,6 +15,7 @@ fn pin_chat_v2(args: Args) -> Response {
 
 fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
+    let my_index = state.caller_user_index_or_trap();
 
     match args.chat {
         ChatInList::Direct(chat_id) => {
@@ -30,7 +31,7 @@ fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     }
 
-    // TODO: Award the `PinnedChat` achievement, once achievements are held per user
+    state.award_achievement_and_notify(my_index, Achievement::PinnedChat, now);
 
     Ok(())
 }

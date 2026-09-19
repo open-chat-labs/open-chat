@@ -10,9 +10,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, ChatId, DirectChatSummary, DirectChatSummaryUpdates, Document,
-    Empty, EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate,
-    PinNumberSettings, Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
+    Achievement, BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, ChatId, DirectChatSummary, DirectChatSummaryUpdates,
+    Document, Empty, EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    OptionUpdate, PinNumberSettings, Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{ChatInList, MessageActivity, MessageActivityEvent, NamedAccount, WalletConfig};
@@ -1897,4 +1897,141 @@ fn set_pin_number(
             verification,
         },
     )
+}
+
+#[test]
+fn chit_streaks_and_achievements_are_held_per_user_in_a_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, _) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    // Streaks count days from the start of 2024
+    crate::chit_tests::ensure_time_at_least_day0(env);
+
+    // The first claim starts a streak of 1 day, and a second claim on the same day is rejected
+    let first_claim = claim_daily_chit(env, a_principal, canister_id);
+    assert_eq!(first_claim.streak, 1);
+    assert_eq!(first_claim.chit_earned, 200);
+    assert_eq!(first_claim.chit_balance, 200);
+    assert!(matches!(
+        client::multi_user::claim_daily_chit(
+            env,
+            a_principal,
+            canister_id,
+            &user_canister::claim_daily_chit::Args { utc_offset_mins: None },
+        ),
+        user_canister::claim_daily_chit::Response::AlreadyClaimed(next_claim) if next_claim == first_claim.next_claim
+    ));
+
+    // Setting a bio and sending a text message to another user earn achievements, once only
+    for _ in 0..2 {
+        let response = client::multi_user::set_bio(
+            env,
+            a_principal,
+            canister_id,
+            &user_canister::set_bio::Args { text: "bio".to_string() },
+        );
+        assert!(matches!(response, user_canister::set_bio::Response::Success));
+        send_text_message(env, a_principal, canister_id, b, "hello", random_from_u128());
+    }
+
+    let expected_achievements = [Achievement::SentDirectMessage, Achievement::SentText, Achievement::SetBio];
+    let expected_balance = 200 + expected_achievements.iter().map(|a| a.chit_reward() as i32).sum::<i32>();
+    let a_state = initial_state(env, a_principal, canister_id);
+    assert_eq!(a_state.chit_balance, expected_balance);
+    assert_eq!(a_state.total_chit_earned, expected_balance);
+    assert_eq!(a_state.streak, 1);
+    assert_eq!(a_state.max_streak, 1);
+    assert_eq!(a_state.next_daily_claim, first_claim.next_claim);
+    let mut achievements: Vec<_> = a_state
+        .achievements
+        .iter()
+        .filter_map(|event| match event.reason {
+            types::ChitEventType::Achievement(achievement) => Some(achievement),
+            _ => None,
+        })
+        .collect();
+    achievements.sort_by_key(|achievement| format!("{achievement:?}"));
+    assert_eq!(achievements, expected_achievements);
+
+    // The daily claim and one event per achievement
+    let a_chit_events = chit_events(env, a_principal, canister_id);
+    assert_eq!(a_chit_events.total, 4);
+
+    // The other user, in the same canister, has none of it
+    let b_state = initial_state(env, b_principal, canister_id);
+    assert_eq!(b_state.chit_balance, 0);
+    assert_eq!(b_state.streak, 0);
+    assert!(b_state.achievements.is_empty());
+    assert_eq!(chit_events(env, b_principal, canister_id).total, 0);
+
+    // Claiming on the next day extends the streak
+    env.advance_time(Duration::from_millis(
+        first_claim.next_claim.saturating_sub(now_millis(env)) + 1,
+    ));
+    let second_claim = claim_daily_chit(env, a_principal, canister_id);
+    assert_eq!(second_claim.streak, 2);
+    assert_eq!(second_claim.chit_balance, expected_balance + 200);
+
+    // Marking the achievements as seen shows up in the user's updates
+    let before_marking = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    let last_seen = now_millis(env);
+    let response = client::multi_user::mark_achievements_seen(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::mark_achievements_seen::Args { last_seen },
+    );
+    assert!(matches!(response, user_canister::mark_achievements_seen::Response::Success));
+    let a_updates = updates(env, a_principal, canister_id, before_marking).expect("Expected updates");
+    assert_eq!(a_updates.achievements_last_seen, Some(last_seen));
+    assert_eq!(a_updates.streak, 2);
+    assert_eq!(initial_state(env, a_principal, canister_id).achievements_last_seen, last_seen);
+
+    // The CHIT updates for the LocalUserIndex are all sent
+    tick_many(env, 3);
+    assert_eq!(queued_local_user_index_events(env, canister_id), 0);
+}
+
+fn claim_daily_chit(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+) -> user_canister::claim_daily_chit::SuccessResult {
+    match client::multi_user::claim_daily_chit(
+        env,
+        sender,
+        canister_id,
+        &user_canister::claim_daily_chit::Args { utc_offset_mins: None },
+    ) {
+        user_canister::claim_daily_chit::Response::Success(result) => result,
+        response => panic!("'claim_daily_chit' error: {response:?}"),
+    }
+}
+
+fn chit_events(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> user_canister::chit_events::SuccessResult {
+    let user_canister::chit_events::Response::Success(result) = client::multi_user::chit_events(
+        env,
+        sender,
+        canister_id,
+        &user_canister::chit_events::Args {
+            from: None,
+            to: None,
+            skip: None,
+            max: 100,
+            ascending: true,
+        },
+    );
+    result
 }

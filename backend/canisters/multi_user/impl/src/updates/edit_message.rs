@@ -3,8 +3,9 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, NullEventPusher};
+use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
-use types::{EventIndex, OCResult};
+use types::{Achievement, EventIndex, OCResult};
 use user_canister::edit_message_v2::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -59,6 +60,9 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     });
 
-    // TODO: Award the `EditedMessage` achievement, as the User canister does
+    // As in the User canister, which doesn't award it for the chat with the OpenChat bot
+    if args.user_id != OPENCHAT_BOT_USER_ID {
+        state.award_achievement_and_notify(my_index, Achievement::EditedMessage, now);
+    }
     Ok(())
 }
