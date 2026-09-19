@@ -38,6 +38,10 @@ pub struct Streak {
 }
 
 impl Streak {
+    // The most days a user can have insured at once, matching the limit in the UI. The price doubles
+    // with each day, so without a limit it overflows, as does the count of days insured.
+    pub const MAX_DAYS_INSURED: u8 = 30;
+
     pub fn days(&self, now: TimestampMillis) -> u16 {
         if let Some(today) = self.timestamp_to_day(now)
             && !self.is_new_streak(today)

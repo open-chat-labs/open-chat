@@ -2399,6 +2399,8 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
         None,
         OCErrorCode::PriceMismatch,
     );
+    // More days than can be insured at once are rejected before the price is checked
+    assert_pay_for_streak_insurance_error(env, a_principal, canister_id, 31, ONE_CHAT, None, OCErrorCode::InvalidRequest);
     // Nor can a user pay from the account of another user of the canister
     assert_pay_for_streak_insurance_error(
         env,

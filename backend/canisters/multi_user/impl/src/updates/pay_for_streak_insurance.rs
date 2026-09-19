@@ -11,6 +11,7 @@ use ledger_utils::icrc1::make_transfer;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserCanisterStreakInsurancePayment, UserId, icrc1};
 use user_canister::pay_for_streak_insurance::*;
+use user_state::Streak;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -114,6 +115,12 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         }
 
         let days_currently_insured = user.streak.streak_insurance(now).map(|s| s.days_insured).unwrap_or_default();
+
+        if days_currently_insured.saturating_add(args.additional_days) > Streak::MAX_DAYS_INSURED {
+            return Err(
+                OCErrorCode::InvalidRequest.with_message(format!("At most {} days can be insured", Streak::MAX_DAYS_INSURED))
+            );
+        }
 
         let price = user.streak.insurance_price(days_currently_insured, args.additional_days);
 

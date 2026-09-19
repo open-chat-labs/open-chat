@@ -69,6 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Apply `thread_root_message_index` to the sender's own copy of a direct chat when editing or deleting a thread reply ([#9431](https://github.com/open-chat-labs/open-chat/pull/9431))
 - Move the message activity feed model into the shared `user_state` library, so the MultiUser canister can hold one per user ([#9433](https://github.com/open-chat-labs/open-chat/pull/9433))
 - Move the PIN number, hot group exclusions and saved crypto accounts models into the shared `user_state` library, so the MultiUser canister can hold them per user ([#9434](https://github.com/open-chat-labs/open-chat/pull/9434))
+- Reject paying for streak insurance which would take the days insured over 30, the most the UI allows, since the price and the count of days overflow otherwise ([#9441](https://github.com/open-chat-labs/open-chat/pull/9441))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-13
 
