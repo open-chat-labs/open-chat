@@ -1,6 +1,5 @@
 use crate::model::communities::Communities;
 use crate::model::community::Community;
-use crate::model::game_chit_keys::GameChitKeys;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
@@ -38,8 +37,8 @@ use types::{
 };
 use user_canister::{MessageActivityEvent, UserCanisterEvent, WalletConfig};
 use user_state::{
-    BlockedUsers, ChitEvents, Contacts, FavouriteChats, HotGroupExclusions, MessageActivityEvents, PinNumber, ProfileDocument,
-    SavedCryptoAccounts, Streak,
+    BlockedUsers, ChitEvents, Contacts, FavouriteChats, GameChitKeys, HotGroupExclusions, MessageActivityEvents, PinNumber,
+    ProfileDocument, SavedCryptoAccounts, Streak,
 };
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;

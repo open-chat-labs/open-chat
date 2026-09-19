@@ -10,6 +10,7 @@ use user_canister::{
     set_message_reminder_v2, set_pin_number, set_profile_background, unblock_user, undelete_messages, unmute_notifications,
     unpin_chat_v2, update_chat_settings, updates,
 };
+use user_canister::{c2c_game_chit, c2c_set_user_suspended};
 
 // Queries
 generate_msgpack_query_call!(bio);
@@ -36,6 +37,8 @@ generate_msgpack_update_call!(archive_unarchive_chats);
 generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(cancel_message_reminder);
 generate_msgpack_update_call!(c2c_create_user);
+generate_msgpack_update_call!(c2c_game_chit);
+generate_msgpack_update_call!(c2c_set_user_suspended);
 generate_msgpack_update_call!(claim_daily_chit);
 generate_msgpack_update_call!(configure_wallet);
 generate_msgpack_update_call!(delete_direct_chat);

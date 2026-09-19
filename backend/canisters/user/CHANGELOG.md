@@ -57,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Collapse `DirectChat` back into a single struct holding its events and both read positions ([#9415](https://github.com/open-chat-labs/open-chat/pull/9415))
 - Send events to the LocalUserIndex over `c2c_user_canister_v2`, the endpoint the MultiUser canister also uses, rather than `c2c_user_canister` ([#9436](https://github.com/open-chat-labs/open-chat/pull/9436))
 - Move the CHIT events and streak models into the `user_state` library, shared with the MultiUser canister ([#9437](https://github.com/open-chat-labs/open-chat/pull/9437))
+- Move the game CHIT keys model and `c2c_game_chit` argument validation into the `user_state` library, shared with the MultiUser canister ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
 
 ### Fixed
 
