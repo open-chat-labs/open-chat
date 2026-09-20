@@ -9,7 +9,7 @@ use sha256::sha256;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::{random_from_u128, random_principal, random_string};
+use testing::rng::{random_from_u32, random_from_u128, random_principal, random_string};
 use types::{
     Achievement, BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, ChatId, DirectChatSummary, DirectChatSummaryUpdates,
     Document, Empty, EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
@@ -2521,4 +2521,161 @@ fn assert_pay_for_streak_insurance_error(
         user_canister::pay_for_streak_insurance::Response::Error(error) => assert_eq!(error.code(), expected),
         response => panic!("{response:?}"),
     }
+}
+
+#[test]
+fn local_user_index_events_are_applied_to_the_user_they_name() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let referred_user = random_principal().into();
+
+    let events = vec![
+        user_canister::LocalUserIndexEvent::UsernameChanged(Box::new(user_canister::UsernameChanged {
+            username: "new_username".to_string(),
+        })),
+        user_canister::LocalUserIndexEvent::DisplayNameChanged(Box::new(user_canister::DisplayNameChanged {
+            display_name: Some("New display name".to_string()),
+        })),
+        user_canister::LocalUserIndexEvent::NotifyUniquePersonProof(Box::new(types::UniquePersonProof {
+            timestamp: now_millis(env),
+            provider: types::UniquePersonProofProvider::DecideAI,
+        })),
+        user_canister::LocalUserIndexEvent::ReferredUserRegistered(Box::new(user_canister::ReferredUserRegistered {
+            user_id: referred_user,
+            username: "referred".to_string(),
+        })),
+        user_canister::LocalUserIndexEvent::ExternalAchievementAwarded(Box::new(user_canister::ExternalAchievementAwarded {
+            name: "Played a game".to_string(),
+            chit_reward: 500,
+        })),
+        user_canister::LocalUserIndexEvent::UserSuspended(Box::new(user_canister::UserSuspended {
+            timestamp: now_millis(env),
+            duration: types::SuspensionDuration::Duration(3 * constants::DAY_IN_MS),
+            reason: "Spam".to_string(),
+            suspended_by: b,
+        })),
+    ];
+    let envelopes = idempotent_envelopes(env, events);
+    local_user_index_events(env, local_user_index, canister_id, a, envelopes.clone());
+
+    let a_state = initial_state(env, a_principal, canister_id);
+    assert!(a_state.is_unique_person);
+    assert_eq!(
+        a_state.referrals.iter().map(|r| r.user_id).collect::<Vec<_>>(),
+        vec![referred_user]
+    );
+    let profile = public_profile(env, a_principal, canister_id, a);
+    assert_eq!(profile.username, "new_username");
+    assert_eq!(profile.display_name.as_deref(), Some("New display name"));
+
+    // The achievements and the external achievement are all worth CHIT
+    let a_chit_events = chit_events(env, a_principal, canister_id);
+    assert!(
+        a_chit_events
+            .events
+            .iter()
+            .any(|e| matches!(&e.reason, types::ChitEventType::ExternalAchievement(name) if name == "Played a game"))
+    );
+    let achievements: Vec<_> = a_chit_events
+        .events
+        .iter()
+        .filter_map(|e| match e.reason {
+            types::ChitEventType::Achievement(achievement) => Some(achievement),
+            _ => None,
+        })
+        .collect();
+    assert!(achievements.contains(&Achievement::SetDisplayName));
+    assert!(achievements.contains(&Achievement::ProvedUniquePersonhood));
+    let chit_balance = a_chit_events.events.iter().map(|e| e.amount).sum::<i32>();
+    assert_eq!(a_state.chit_balance, chit_balance);
+
+    // The OpenChat bot told the user about the referral and the suspension
+    let messages = bot_messages(env, a_principal, canister_id, a);
+    let texts: Vec<_> = messages
+        .iter()
+        .filter_map(|m| match &m.content {
+            MessageContent::Text(t) => Some(t.text.clone()),
+            _ => None,
+        })
+        .collect();
+    assert!(texts.iter().any(|t| t.contains("registered with your referral code")));
+    assert!(texts.iter().any(|t| t.contains("Your account has been suspended")));
+
+    // The same events again are ignored, since each has already been processed
+    local_user_index_events(env, local_user_index, canister_id, a, envelopes);
+    assert_eq!(bot_messages(env, a_principal, canister_id, a).len(), messages.len());
+    assert_eq!(chit_events(env, a_principal, canister_id).total, a_chit_events.total);
+
+    // The other user in the canister is untouched by any of it
+    let b_state = initial_state(env, b_principal, canister_id);
+    assert!(!b_state.is_unique_person);
+    assert!(b_state.referrals.is_empty());
+    assert_eq!(b_state.chit_balance, 0);
+    // The bot has no chat with them at all, so none of the messages reached them
+    assert!(b_state.direct_chats.summaries.is_empty());
+
+    // Events naming a user this canister doesn't hold are dropped
+    let events = idempotent_envelopes(
+        env,
+        vec![user_canister::LocalUserIndexEvent::UsernameChanged(Box::new(
+            user_canister::UsernameChanged {
+                username: "elsewhere".to_string(),
+            },
+        ))],
+    );
+    local_user_index_events(env, local_user_index, canister_id, random_principal().into(), events);
+    assert_eq!(public_profile(env, a_principal, canister_id, a).username, "new_username");
+}
+
+fn idempotent_envelopes(
+    env: &PocketIc,
+    events: Vec<user_canister::LocalUserIndexEvent>,
+) -> Vec<types::IdempotentEnvelope<user_canister::LocalUserIndexEvent>> {
+    let now = now_millis(env);
+    events
+        .into_iter()
+        .map(|value| types::IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: random_from_u32::<u64>(),
+            value,
+        })
+        .collect()
+}
+
+fn local_user_index_events(
+    env: &mut PocketIc,
+    local_user_index: CanisterId,
+    canister_id: CanisterId,
+    user_id: UserId,
+    events: Vec<types::IdempotentEnvelope<user_canister::LocalUserIndexEvent>>,
+) {
+    let response = client::multi_user::c2c_local_user_index(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_local_user_index::Args { user_id, events },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success), "{response:?}");
+}
+
+fn public_profile(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+) -> user_canister::public_profile::PublicProfile {
+    let user_canister::public_profile::Response::Success(profile) =
+        client::multi_user::public_profile(env, sender, canister_id, &user_canister::public_profile::Args { user_id });
+    profile
 }

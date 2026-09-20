@@ -14,9 +14,11 @@ mod contacts;
 mod favourite_chats;
 mod game_chit_keys;
 mod hot_group_exclusions;
+mod membership;
 mod message_activity_events;
 mod pin_number;
 mod profile_document;
+mod referrals;
 mod saved_crypto_accounts;
 mod streak;
 
@@ -26,9 +28,11 @@ pub use contacts::{Contact, Contacts, SetContactResponse};
 pub use favourite_chats::FavouriteChats;
 pub use game_chit_keys::{GameChitKeys, validate_game_chit_args};
 pub use hot_group_exclusions::HotGroupExclusions;
+pub use membership::Membership;
 pub use message_activity_events::MessageActivityEvents;
 pub use pin_number::{PinNumber, VerifyPinError};
 pub use profile_document::ProfileDocument;
+pub use referrals::Referrals;
 pub use saved_crypto_accounts::SavedCryptoAccounts;
 pub use streak::Streak;
 

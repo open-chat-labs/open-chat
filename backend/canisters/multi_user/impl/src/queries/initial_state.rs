@@ -25,8 +25,8 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         };
 
         // TODO: Everything below which is empty or default stays so until the MultiUser canister
-        // holds it per user: groups and communities, referrals, bots, the BTC and 1sec addresses
-        // and premium items
+        // holds it per user: groups and communities, bots, the BTC and 1sec addresses and premium
+        // items
         Success(SuccessResult {
             timestamp: now,
             direct_chats,
@@ -47,9 +47,9 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             max_streak: user.streak.max_streak(),
             streak_insurance: user.streak.streak_insurance(now),
             next_daily_claim: user.streak.next_claim(),
-            is_unique_person: false,
+            is_unique_person: user.unique_person_proof.is_some(),
             wallet_config: user.wallet_config.value.clone(),
-            referrals: Vec::new(),
+            referrals: user.referrals.list(),
             message_activity_summary: user.message_activity_events.summary(),
             bots: Vec::new(),
             btc_address: None,

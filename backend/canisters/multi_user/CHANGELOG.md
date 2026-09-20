@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Send messages from the OpenChat bot to each user's chat with it, and implement `set_message_reminder_v2` and `cancel_message_reminder`, with a timer job which sends each reminder, plus the OpenChat bot's message when streak insurance is claimed ([#9439](https://github.com/open-chat-labs/open-chat/pull/9439))
 - Implement `c2c_game_chit` and `c2c_set_user_suspended`, holding each user's game CHIT keys ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
 - Implement `pay_for_streak_insurance`, paying from the user's subaccount of the canister or an approved account, and the per-user job which uses up a day of streak insurance or resets it when a streak ends ([#9441](https://github.com/open-chat-labs/open-chat/pull/9441))
+- Handle the events the LocalUserIndex sends about each user, holding their referrals, unique person proof, Diamond membership, external achievements, storage limit and verified phone number ([#TODO](https://github.com/open-chat-labs/open-chat/pull/TODO))
 
 ### Changed
 

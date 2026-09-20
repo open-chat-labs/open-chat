@@ -129,7 +129,7 @@ impl Job for MessageReminderJob {
                 chat.mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now)
             });
             // Does nothing if the user no longer exists
-            openchat_bot::send_message_with_reply(self.user_index, content, Some(replies_to), false, state);
+            openchat_bot::send_message_with_reply(self.user_index, content, Some(replies_to), Vec::new(), false, state);
         });
     }
 }

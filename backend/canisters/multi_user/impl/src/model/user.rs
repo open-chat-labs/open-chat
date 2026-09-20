@@ -3,11 +3,11 @@ use direct_chat::DirectChats;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use types::{Achievement, ChitEvent, ChitEventType, TimestampMillis, Timestamped, UserId};
+use types::{Achievement, ChitEvent, ChitEventType, TimestampMillis, Timestamped, UniquePersonProof, UserId};
 use user_canister::{MessageActivityEvent, WalletConfig};
 use user_state::{
     BlockedUsers, ChitEvents, Contacts, FavouriteChats, GameChitKeys, HotGroupExclusions, MessageActivityEvents, PinNumber,
-    ProfileDocument, SavedCryptoAccounts, Streak,
+    ProfileDocument, Referrals, SavedCryptoAccounts, Streak,
 };
 
 // The state of a single user within the canister. This mirrors the per-user fields of the User
@@ -54,6 +54,18 @@ pub struct User {
     pub achievements_last_seen: TimestampMillis,
     #[serde(default)]
     pub game_chit_keys: GameChitKeys,
+    #[serde(default)]
+    pub phone_is_verified: bool,
+    #[serde(default)]
+    pub storage_limit: u64,
+    #[serde(default)]
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(default)]
+    pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(default)]
+    pub external_achievements: HashSet<String>,
+    #[serde(default)]
+    pub referrals: Referrals,
 }
 
 impl User {
@@ -83,6 +95,12 @@ impl User {
             achievements: HashSet::new(),
             achievements_last_seen: 0,
             game_chit_keys: GameChitKeys::default(),
+            phone_is_verified: false,
+            storage_limit: 0,
+            diamond_membership_expires_at: None,
+            unique_person_proof: None,
+            external_achievements: HashSet::new(),
+            referrals: Referrals::default(),
         }
     }
 

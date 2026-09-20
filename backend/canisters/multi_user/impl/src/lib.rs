@@ -21,6 +21,7 @@ use types::{
     UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod crypto;
 mod guards;
@@ -253,6 +254,63 @@ impl RuntimeState {
         self.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyChit(notify_chit), now);
     }
 
+    // Awards the external achievement to the user at `user_index`, as the User canister's
+    // `award_external_achievement`
+    pub fn award_external_achievement(&mut self, user_index: u16, name: String, chit_reward: u32, now: TimestampMillis) {
+        let awarded = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| {
+                if user.external_achievements.insert(name.clone()) {
+                    user.chit_events.push(ChitEvent {
+                        amount: chit_reward as i32,
+                        timestamp: now,
+                        reason: ChitEventType::ExternalAchievement(name),
+                    });
+                    true
+                } else {
+                    false
+                }
+            })
+            .unwrap_or_default();
+
+        if awarded {
+            self.notify_user_index_of_chit(user_index, now);
+        }
+    }
+
+    // Reinstates the daily claims the user at `user_index` missed, as the User canister's
+    // `reinstate_missed_daily_claims`
+    pub fn reinstate_missed_daily_claims(&mut self, user_index: u16, days_to_reinstate: Vec<u16>) {
+        let now = self.env.now();
+        let Some((count, new_streak)) = self.data.users.with_user_mut(user_index, |user| {
+            let daily_claims = user.chit_events.daily_claims();
+            let new_events = user
+                .streak
+                .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
+            let count = new_events.len();
+            for event in new_events {
+                user.chit_events.push(event);
+            }
+            (count, user.streak.days(now))
+        }) else {
+            return;
+        };
+
+        let first_line = if count == 1 {
+            "missed daily claim has been reinstated."
+        } else {
+            "missed daily claims have been reinstated."
+        };
+        let message = format!(
+            "{count} {first_line}
+Your streak is now {new_streak} days!"
+        );
+
+        openchat_bot::send_text_message(user_index, message, Vec::new(), false, self);
+        self.notify_user_index_of_chit(user_index, now);
+    }
+
     // Records a payment for streak insurance by the user at `user_index`, as the User canister's
     // `mark_streak_insurance_payment`
     pub fn mark_streak_insurance_payment(&mut self, user_index: u16, payment: UserCanisterStreakInsurancePayment) {
@@ -324,6 +382,7 @@ impl RuntimeState {
                 "One day of streak insurance was just used up to protect your streak from being lost. \
 Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
             ),
+            Vec::new(),
             false,
             self,
         );
@@ -480,6 +539,11 @@ struct Data {
     pub stable_memory_keys_to_garbage_collect: Vec<(u16, BaseKeyPrefix)>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    // Filters out the events already processed from those the LocalUserIndex sends, which it
+    // retries until they are acknowledged. The events of every user of this canister share one
+    // checker, since they all come from the same canister.
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -507,6 +571,7 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             timer_jobs: TimerJobs::default(),
+            idempotency_checker: IdempotencyChecker::default(),
             rng_seed,
             test_mode,
         }

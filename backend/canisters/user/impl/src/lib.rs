@@ -11,14 +11,13 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
-use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
+use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use direct_chat::DirectChats;
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use model::referrals::Referrals;
 use model::threads_read::ThreadsRead;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
@@ -37,8 +36,8 @@ use types::{
 };
 use user_canister::{MessageActivityEvent, UserCanisterEvent, WalletConfig};
 use user_state::{
-    BlockedUsers, ChitEvents, Contacts, FavouriteChats, GameChitKeys, HotGroupExclusions, MessageActivityEvents, PinNumber,
-    ProfileDocument, SavedCryptoAccounts, Streak,
+    BlockedUsers, ChitEvents, Contacts, FavouriteChats, GameChitKeys, HotGroupExclusions, Membership, MessageActivityEvents,
+    PinNumber, ProfileDocument, Referrals, SavedCryptoAccounts, Streak,
 };
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -573,11 +572,7 @@ impl Data {
     }
 
     pub fn membership(&self, now: TimestampMillis) -> Membership {
-        match self.diamond_membership_expires_at {
-            Some(ts) if ts > LIFETIME_DIAMOND_TIMESTAMP => Membership::LifetimeDiamond,
-            Some(ts) if ts > now => Membership::Diamond,
-            _ => Membership::Basic,
-        }
+        Membership::new(self.diamond_membership_expires_at, now)
     }
 
     pub fn verify_not_suspended(&self) -> Result<(), OCErrorCode> {
@@ -800,24 +795,4 @@ pub struct CanisterIds {
     pub identity: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
-}
-
-pub enum Membership {
-    Basic,
-    Diamond,
-    LifetimeDiamond,
-}
-
-impl Membership {
-    pub fn is_diamond_member(&self) -> bool {
-        matches!(self, Membership::Diamond | Membership::LifetimeDiamond)
-    }
-
-    pub fn group_creation_limit(&self) -> u32 {
-        match self {
-            Membership::Basic => 5,
-            Membership::Diamond => 40,
-            Membership::LifetimeDiamond => 100,
-        }
-    }
 }

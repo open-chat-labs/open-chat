@@ -28,6 +28,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         let message_activity_summary =
             (user.message_activity_events.last_updated() > updates_since).then(|| user.message_activity_events.summary());
         let streak_insurance_updated = user.streak.insurance_last_updated() > updates_since;
+        let is_unique_person_updated = user.unique_person_proof.as_ref().is_some_and(|p| p.timestamp > updates_since);
+        let referrals = user.referrals.updated_since(updates_since);
 
         let has_any_updates = username.is_some()
             || display_name.has_update()
@@ -38,6 +40,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             || wallet_config.is_some()
             || message_activity_summary.is_some()
             || streak_insurance_updated
+            || is_unique_person_updated
+            || !referrals.is_empty()
             || user.chit_events.last_updated() > updates_since
             || user.achievements_last_seen > updates_since
             || user.favourite_chats.any_updated(updates_since)
@@ -111,9 +115,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
                 OptionUpdate::NoChange
             },
             next_daily_claim: user.streak.next_claim(),
-            is_unique_person: None,
+            is_unique_person: is_unique_person_updated.then_some(true),
             wallet_config,
-            referrals: Vec::new(),
+            referrals,
             message_activity_summary,
             bots_added_or_updated: Vec::new(),
             bots_removed: Vec::new(),
