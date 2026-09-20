@@ -5,10 +5,10 @@ use user_canister::{
     claim_daily_chit, configure_wallet, contacts, delete_direct_chat, delete_messages, delete_saved_crypto_account,
     deleted_message, edit_message_v2, events, events_by_index, events_window, hot_group_exclusions, initial_state,
     local_user_index, manage_favourite_chats, mark_achievements_seen, mark_message_activity_feed_read, mark_read,
-    message_activity_feed, messages_by_message_index, mute_notifications, pin_chat_v2, public_profile, remove_reaction,
-    save_crypto_account, saved_crypto_accounts, search_messages, send_message_v2, set_avatar, set_bio, set_contact,
-    set_message_reminder_v2, set_pin_number, set_profile_background, unblock_user, undelete_messages, unmute_notifications,
-    unpin_chat_v2, update_chat_settings, updates,
+    message_activity_feed, messages_by_message_index, mute_notifications, pay_for_streak_insurance, pin_chat_v2,
+    public_profile, remove_reaction, save_crypto_account, saved_crypto_accounts, search_messages, send_message_v2, set_avatar,
+    set_bio, set_contact, set_message_reminder_v2, set_pin_number, set_profile_background, unblock_user, undelete_messages,
+    unmute_notifications, unpin_chat_v2, update_chat_settings, updates,
 };
 use user_canister::{c2c_game_chit, c2c_set_user_suspended};
 
@@ -50,6 +50,7 @@ generate_msgpack_update_call!(mark_achievements_seen);
 generate_msgpack_update_call!(mark_message_activity_feed_read);
 generate_msgpack_update_call!(mark_read);
 generate_msgpack_update_call!(mute_notifications);
+generate_msgpack_update_call!(pay_for_streak_insurance);
 generate_msgpack_update_call!(pin_chat_v2);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(save_crypto_account);

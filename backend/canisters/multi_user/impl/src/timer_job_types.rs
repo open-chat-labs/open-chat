@@ -10,6 +10,7 @@ pub enum TimerJob {
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     MessageReminder(Box<MessageReminderJob>),
+    ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
 }
 
 // Removes the content of a deleted message from one user's copy of a direct chat, once the time in
@@ -41,6 +42,13 @@ pub struct MessageReminderJob {
     pub event_index: EventIndex,
     pub notes: Option<String>,
     pub reminder_created_message_index: MessageIndex,
+}
+
+// When a user's streak is due to end, uses up a day of their streak insurance to keep it, or resets
+// their insurance if the streak has been lost. Each insured user has their own job.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ClaimOrResetStreakInsuranceJob {
+    pub user_index: u16,
 }
 
 impl HardDeleteMessageContentJob {
@@ -76,6 +84,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
+            TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
         }
     }
 }
@@ -121,6 +130,29 @@ impl Job for MessageReminderJob {
             });
             // Does nothing if the user no longer exists
             openchat_bot::send_message_with_reply(self.user_index, content, Some(replies_to), false, state);
+        });
+    }
+}
+
+impl Job for ClaimOrResetStreakInsuranceJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            // Does nothing if the user no longer exists
+            let Some(insurance_claim) = state.data.users.with_user_mut(self.user_index, |user| {
+                let insurance_claim = user.streak.claim_via_insurance(now);
+                if insurance_claim.is_none() && user.streak.days(now) == 0 {
+                    user.streak.reset_streak_insurance(now);
+                }
+                insurance_claim
+            }) else {
+                return;
+            };
+            if let Some(insurance_claim) = insurance_claim {
+                state.mark_streak_insurance_claim(self.user_index, insurance_claim);
+                state.notify_user_index_of_chit(self.user_index, now);
+                state.set_up_streak_insurance_timer_job(self.user_index);
+            }
         });
     }
 }

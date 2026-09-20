@@ -1,11 +1,11 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state, openchat_bot};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use serde::Serialize;
-use types::{Achievement, ChitEvent, ChitEventType, UserCanisterStreakInsuranceClaim};
+use types::{Achievement, ChitEvent, ChitEventType};
 use user_canister::claim_daily_chit::{Response::*, *};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -22,14 +22,6 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
             Ok(insurance_claim) => insurance_claim,
             Err(next_claim) => return Err(AlreadyClaimed(next_claim)),
         };
-        if let Some(claim) = &insurance_claim {
-            user.chit_events.push(ChitEvent {
-                amount: 0,
-                timestamp: claim.timestamp,
-                reason: ChitEventType::StreakInsuranceClaim,
-            });
-        }
-
         let mut utc_offset_updated = false;
         if let Some(utc_offset_mins) = args.utc_offset_mins {
             utc_offset_updated = user.streak.set_utc_offset_mins(utc_offset_mins, now);
@@ -81,11 +73,9 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     if let Some(claim) = insurance_claim {
-        push_streak_insurance_claim_events(my_index, claim, state);
+        state.mark_streak_insurance_claim(my_index, claim);
     }
-
-    // TODO: Set up the job which claims or resets a user's streak insurance when their streak ends,
-    // once streak insurance can be paid for in the MultiUser canister. Until then no user is insured.
+    state.set_up_streak_insurance_timer_job(my_index);
 
     let user_id = state.user_id(my_index);
     state.notify_user_index_of_chit(my_index, now);
@@ -105,37 +95,6 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     );
 
     Success(result)
-}
-
-// As the User canister's `mark_streak_insurance_claim`
-fn push_streak_insurance_claim_events(user_index: u16, claim: UserCanisterStreakInsuranceClaim, state: &mut RuntimeState) {
-    let user_id = state.user_id(user_index);
-    let now = state.env.now();
-    state.push_local_user_index_canister_event(
-        user_index,
-        LocalUserIndexEvent::EventStoreEvent(
-            EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
-                .with_user(user_id.to_string(), true)
-                .with_source(user_id.to_string(), true)
-                .with_json_payload(&claim)
-                .build(),
-        ),
-        now,
-    );
-    let new_streak = claim.streak_length;
-    let days_remaining = claim.insured_days_remaining;
-    state.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim), now);
-
-    let days_remaining_text = if days_remaining == 1 { "1 day".to_string() } else { format!("{days_remaining} days") };
-    openchat_bot::send_text_message(
-        user_index,
-        format!(
-            "One day of streak insurance was just used up to protect your streak from being lost. \
-Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
-        ),
-        false,
-        state,
-    );
 }
 
 // The same amounts as the User canister
