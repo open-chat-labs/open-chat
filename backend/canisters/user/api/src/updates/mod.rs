@@ -15,6 +15,7 @@ pub mod c2c_group_canister;
 pub mod c2c_handle_bot_messages;
 pub mod c2c_install_bot;
 pub mod c2c_local_user_index;
+pub mod c2c_local_user_index_v2;
 pub mod c2c_notify_achievement;
 pub mod c2c_notify_community_deleted;
 pub mod c2c_notify_group_deleted;

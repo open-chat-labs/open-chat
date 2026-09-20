@@ -12,7 +12,7 @@ mod c2c_game_chit;
 mod c2c_grant_super_admin;
 mod c2c_group_canister;
 mod c2c_install_bot;
-mod c2c_local_user_index;
+mod c2c_local_user_index_v2;
 mod c2c_notify_achievement;
 mod c2c_notify_community_deleted;
 mod c2c_notify_group_deleted;

@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `c2c_game_chit` and `c2c_set_user_suspended`, holding each user's game CHIT keys ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
 - Implement `pay_for_streak_insurance`, paying from the user's subaccount of the canister or an approved account, and the per-user job which uses up a day of streak insurance or resets it when a streak ends ([#9441](https://github.com/open-chat-labs/open-chat/pull/9441))
 - Handle the events the LocalUserIndex sends about each user, holding their referrals, unique person proof, Diamond membership, external achievements, storage limit and verified phone number ([#9442](https://github.com/open-chat-labs/open-chat/pull/9442))
+- Take a batch of events from the LocalUserIndex via `c2c_local_user_index_v2`, each naming the user it is for, filtering out those already processed with a single idempotency checker, since the LocalUserIndex queues the events for this canister's users against the canister ([#9442](https://github.com/open-chat-labs/open-chat/pull/9442))
 
 ### Changed
 

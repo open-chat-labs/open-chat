@@ -4,29 +4,30 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{Achievement, DiamondMembershipPlanDuration, ReferralStatus, Timestamped};
 use user_canister::LocalUserIndexEvent;
-use user_canister::c2c_local_user_index::*;
+use user_canister::c2c_local_user_index_v2::*;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_local_user_index(args: Args) -> Response {
-    mutate_state(|state| c2c_local_user_index_impl(args, state))
+fn c2c_local_user_index_v2(args: Args) -> Response {
+    mutate_state(|state| c2c_local_user_index_v2_impl(args, state))
 }
 
-fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
-    // Every event is for a single user of this canister, but the idempotency checker is shared,
-    // since each event id is unique across the events the LocalUserIndex sends
-    let Some(user_index) = state.user_index(args.user_id) else {
-        // The events of a user this canister doesn't hold are dropped rather than retried forever
-        return Response::Success;
-    };
+fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let local_user_index_canister_id = state.data.local_user_index_canister_id;
 
+    // The LocalUserIndex groups the events it sends by canister, so those of every user of this
+    // canister arrive over a single queue in the order they were created, which is what the
+    // idempotency checker they share requires. Each names the user it is for, since this canister
+    // holds many.
     for event in args.events {
-        if state.data.idempotency_checker.check(
-            state.data.local_user_index_canister_id,
-            event.created_at,
-            event.idempotency_id,
-        ) {
-            process_event(user_index, event.value, state);
+        if state
+            .data
+            .idempotency_checker
+            .check(local_user_index_canister_id, event.created_at, event.idempotency_id)
+            // The events of a user this canister doesn't hold are dropped rather than retried forever
+            && let Some(user_index) = state.local_user_index(event.value.user_id)
+        {
+            process_event(user_index, event.value.event, state);
         }
     }
     Response::Success

@@ -6331,6 +6331,7 @@ dependencies = [
  "unruly",
  "user_canister",
  "user_index_canister",
+ "user_state",
  "utils",
 ]
 

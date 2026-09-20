@@ -541,7 +541,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     // Filters out the events already processed from those the LocalUserIndex sends, which it
     // retries until they are acknowledged. The events of every user of this canister share one
-    // checker, since they all come from the same canister.
+    // checker, since the LocalUserIndex groups them by canister, so they all arrive over a single
+    // queue in the order they were created.
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],

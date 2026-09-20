@@ -15,6 +15,7 @@ use types::{
     Document, Empty, EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
     OptionUpdate, PinNumberSettings, Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
+use user_canister::c2c_local_user_index_v2::LocalUserIndexEventForUser;
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{ChatInList, MessageActivity, MessageActivityEvent, NamedAccount, WalletConfig};
 
@@ -2566,8 +2567,8 @@ fn local_user_index_events_are_applied_to_the_user_they_name() {
             suspended_by: b,
         })),
     ];
-    let envelopes = idempotent_envelopes(env, events);
-    local_user_index_events(env, local_user_index, canister_id, a, envelopes.clone());
+    let envelopes = idempotent_envelopes(env, a, events);
+    local_user_index_events(env, local_user_index, canister_id, envelopes.clone());
 
     let a_state = initial_state(env, a_principal, canister_id);
     assert!(a_state.is_unique_person);
@@ -2613,7 +2614,7 @@ fn local_user_index_events_are_applied_to_the_user_they_name() {
     assert!(texts.iter().any(|t| t.contains("Your account has been suspended")));
 
     // The same events again are ignored, since each has already been processed
-    local_user_index_events(env, local_user_index, canister_id, a, envelopes);
+    local_user_index_events(env, local_user_index, canister_id, envelopes);
     assert_eq!(bot_messages(env, a_principal, canister_id, a).len(), messages.len());
     assert_eq!(chit_events(env, a_principal, canister_id).total, a_chit_events.total);
 
@@ -2628,27 +2629,179 @@ fn local_user_index_events_are_applied_to_the_user_they_name() {
     // Events naming a user this canister doesn't hold are dropped
     let events = idempotent_envelopes(
         env,
+        random_principal().into(),
         vec![user_canister::LocalUserIndexEvent::UsernameChanged(Box::new(
             user_canister::UsernameChanged {
                 username: "elsewhere".to_string(),
             },
         ))],
     );
-    local_user_index_events(env, local_user_index, canister_id, random_principal().into(), events);
+    local_user_index_events(env, local_user_index, canister_id, events);
     assert_eq!(public_profile(env, a_principal, canister_id, a).username, "new_username");
+
+    // A second batch covering the remaining events. Daily claims are counted from the start of
+    // 2024, so a claim can only be reinstated once the time is past then.
+    crate::chit_tests::ensure_time_at_least_day0(env);
+    let now = now_millis(env);
+    let events = idempotent_envelopes(
+        env,
+        a,
+        vec![
+            user_canister::LocalUserIndexEvent::DiamondMembershipPaymentReceived(Box::new(
+                user_canister::DiamondMembershipPaymentReceived {
+                    timestamp: now,
+                    expires_at: now + 365 * constants::DAY_IN_MS,
+                    ledger: canister_ids.chat_ledger,
+                    token_symbol: "CHAT".to_string(),
+                    token: None,
+                    amount_e8s: 1,
+                    block_index: 1,
+                    duration: types::DiamondMembershipPlanDuration::Lifetime,
+                    recurring: false,
+                    send_bot_message: true,
+                },
+            )),
+            user_canister::LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(user_canister::OpenChatBotMessageV2 {
+                thread_root_message_id: None,
+                content: MessageContentInitial::Text(TextContent {
+                    text: "A message from the bot".to_string(),
+                }),
+                mentioned: Vec::new(),
+            })),
+            user_canister::LocalUserIndexEvent::StorageUpgraded(Box::new(user_canister::StorageUpgraded {
+                cost: types::nns::CryptoAmount {
+                    token_symbol: "ICP".to_string(),
+                    amount: types::nns::Tokens::from_e8s(100_000_000),
+                },
+                storage_added: 1024 * 1024 * 1024,
+                new_storage_limit: 1024 * 1024 * 1024,
+            })),
+            user_canister::LocalUserIndexEvent::ReinstateMissedDailyClaims(vec![
+                user_state::Streak::timestamp_to_offset_day(now, 0).unwrap(),
+            ]),
+        ],
+    );
+    local_user_index_events(env, local_user_index, canister_id, events);
+
+    let a_chit_events = chit_events(env, a_principal, canister_id);
+    let achievements: Vec<_> = a_chit_events
+        .events
+        .iter()
+        .filter_map(|e| match e.reason {
+            types::ChitEventType::Achievement(achievement) => Some(achievement),
+            _ => None,
+        })
+        .collect();
+    assert!(achievements.contains(&Achievement::UpgradedToDiamond));
+    assert!(achievements.contains(&Achievement::UpgradedToGoldDiamond));
+    assert!(
+        a_chit_events
+            .events
+            .iter()
+            .any(|e| matches!(e.reason, types::ChitEventType::DailyClaimReinstated))
+    );
+
+    let texts: Vec<_> = bot_messages(env, a_principal, canister_id, a)
+        .into_iter()
+        .filter_map(|m| match m.content {
+            MessageContent::Text(t) => Some(t.text),
+            _ => None,
+        })
+        .collect();
+    assert!(texts.iter().any(|t| t == "Payment received for Diamond membership!"));
+    assert!(texts.iter().any(|t| t == "A message from the bot"));
+    assert!(texts.iter().any(|t| t.contains("You paid 1 ICP for 1 GB of storage")));
+    assert!(texts.iter().any(|t| t.contains("1 missed daily claim has been reinstated")));
+
+    // Buying storage makes the user premium
+    let profile = public_profile(env, a_principal, canister_id, a);
+    assert!(profile.is_premium);
+    assert!(!profile.phone_is_verified);
+
+    // Confirming a phone number marks the user as verified and adds to their storage
+    let events = idempotent_envelopes(
+        env,
+        a,
+        vec![user_canister::LocalUserIndexEvent::PhoneNumberConfirmed(Box::new(
+            user_canister::PhoneNumberConfirmed {
+                phone_number: types::PhoneNumber::new(44, "07887123456".to_string()),
+                storage_added: 1024 * 1024 * 1024,
+                new_storage_limit: 2 * 1024 * 1024 * 1024,
+            },
+        ))],
+    );
+    local_user_index_events(env, local_user_index, canister_id, events);
+
+    assert!(public_profile(env, a_principal, canister_id, a).phone_is_verified);
+    assert!(
+        bot_messages(env, a_principal, canister_id, a).iter().any(
+            |m| matches!(&m.content, MessageContent::Text(t) if t.text.contains("verifying ownership of your phone number"))
+        )
+    );
+}
+
+// The LocalUserIndex groups the events it sends by canister, so one batch can hold the events of
+// any of the canister's users, each of which is applied to the user it names
+#[test]
+fn one_batch_of_events_can_name_more_than_one_user() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+
+    let now = now_millis(env);
+    let username_changed = |username: &str| {
+        vec![user_canister::LocalUserIndexEvent::UsernameChanged(Box::new(
+            user_canister::UsernameChanged {
+                username: username.to_string(),
+            },
+        ))]
+    };
+
+    let mut events = envelopes_created_at(now, a, username_changed("a_renamed"));
+    events.extend(envelopes_created_at(now + 1000, b, username_changed("b_renamed")));
+    // The events of a user in another canister are dropped, leaving the rest to be applied
+    events.extend(envelopes_created_at(
+        now + 2000,
+        random_principal().into(),
+        username_changed("elsewhere"),
+    ));
+    local_user_index_events(env, local_user_index, canister_id, events);
+
+    assert_eq!(public_profile(env, a_principal, canister_id, a).username, "a_renamed");
+    assert_eq!(public_profile(env, b_principal, canister_id, b).username, "b_renamed");
 }
 
 fn idempotent_envelopes(
     env: &PocketIc,
+    user_id: UserId,
     events: Vec<user_canister::LocalUserIndexEvent>,
-) -> Vec<types::IdempotentEnvelope<user_canister::LocalUserIndexEvent>> {
-    let now = now_millis(env);
+) -> Vec<types::IdempotentEnvelope<LocalUserIndexEventForUser>> {
+    envelopes_created_at(now_millis(env), user_id, events)
+}
+
+fn envelopes_created_at(
+    created_at: TimestampMillis,
+    user_id: UserId,
+    events: Vec<user_canister::LocalUserIndexEvent>,
+) -> Vec<types::IdempotentEnvelope<LocalUserIndexEventForUser>> {
     events
         .into_iter()
-        .map(|value| types::IdempotentEnvelope {
-            created_at: now,
+        .map(|event| types::IdempotentEnvelope {
+            created_at,
             idempotency_id: random_from_u32::<u64>(),
-            value,
+            // The LocalUserIndex names the user each of the events it sends to a MultiUser canister
+            // is for, since that canister holds many
+            value: LocalUserIndexEventForUser { user_id, event },
         })
         .collect()
 }
@@ -2657,14 +2810,13 @@ fn local_user_index_events(
     env: &mut PocketIc,
     local_user_index: CanisterId,
     canister_id: CanisterId,
-    user_id: UserId,
-    events: Vec<types::IdempotentEnvelope<user_canister::LocalUserIndexEvent>>,
+    events: Vec<types::IdempotentEnvelope<LocalUserIndexEventForUser>>,
 ) {
-    let response = client::multi_user::c2c_local_user_index(
+    let response = client::multi_user::c2c_local_user_index_v2(
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_local_user_index::Args { user_id, events },
+        &user_canister::c2c_local_user_index_v2::Args { events },
     );
     assert!(matches!(response, types::SuccessOnly::Success), "{response:?}");
 }

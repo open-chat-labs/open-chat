@@ -8,6 +8,7 @@ use crate::model::local_group_map::LocalGroupMap;
 use crate::model::local_multi_user_map::LocalMultiUserMap;
 use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
+use crate::model::multi_user_event_batch::MultiUserEventBatch;
 use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
@@ -48,6 +49,7 @@ use types::{
     UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
+use user_canister::c2c_local_user_index_v2::LocalUserIndexEventForUser;
 use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
@@ -246,7 +248,20 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) -> bool {
-        if self.data.local_users.contains(&user_id) {
+        let canister_id = user_id.canister_id();
+        if self.data.local_multi_users.contains(&canister_id) {
+            // The events for the users of a MultiUser canister are queued against the canister, so
+            // that they reach it in the order they were created, and each names the user it is for
+            self.data.multi_user_event_sync_queue.push(
+                canister_id,
+                IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: LocalUserIndexEventForUser { user_id, event },
+                },
+            );
+            true
+        } else if self.data.local_users.contains(&user_id) {
             self.data.user_event_sync_queue.push(
                 user_id,
                 IdempotentEnvelope {
@@ -560,6 +575,8 @@ impl RuntimeState {
             recent_multi_user_upgrades: multi_user_upgrades_metrics.recently_competed,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             user_events_queue_in_progress: self.data.user_event_sync_queue.in_progress(),
+            multi_user_events_queue_length: self.data.multi_user_event_sync_queue.len(),
+            multi_user_events_queue_in_progress: self.data.multi_user_event_sync_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
@@ -614,6 +631,12 @@ impl RuntimeState {
     }
 }
 
+// The MultiUser event queue was added after this canister was first released, so it is absent from
+// the state of a canister upgrading from an earlier version
+fn multi_user_event_sync_queue() -> GroupedTimerJobQueue<MultiUserEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
+}
+
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub local_users: LocalUserMap,
@@ -643,6 +666,8 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub user_index_event_sync_queue: BatchedTimerJobQueue<UserIndexEventBatch>,
     pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    #[serde(default = "multi_user_event_sync_queue")]
+    pub multi_user_event_sync_queue: GroupedTimerJobQueue<MultiUserEventBatch>,
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
     pub test_mode: bool,
@@ -757,6 +782,7 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
             user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            multi_user_event_sync_queue: multi_user_event_sync_queue(),
             group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             user_index_event_sync_queue: BatchedTimerJobQueue::new(user_index_canister_id, true),
@@ -850,6 +876,8 @@ pub struct Metrics {
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply
     pub user_events_queue_in_progress: usize,
+    pub multi_user_events_queue_length: usize,
+    pub multi_user_events_queue_in_progress: usize,
     pub users_to_delete_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,

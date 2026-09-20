@@ -19,6 +19,7 @@ generate_candid_c2c_call!(c2c_handle_bot_messages);
 generate_c2c_call!(c2c_install_bot);
 generate_c2c_call!(c2c_notify_community_deleted);
 generate_c2c_call!(c2c_local_user_index, 300);
+generate_c2c_call!(c2c_local_user_index_v2, 300);
 generate_c2c_call!(c2c_notify_group_deleted);
 generate_c2c_call!(c2c_pay_for_premium_item);
 generate_c2c_call!(c2c_remove_from_community);
