@@ -21,7 +21,7 @@ fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response 
     let now = state.env.now();
     let mut awarded_achievement = BTreeSet::new();
 
-    for (user_id, event) in args.events {
+    for event in args.events {
         if !state
             .data
             .idempotency_checker
@@ -29,6 +29,7 @@ fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response 
         {
             continue;
         }
+        let (user_id, event) = event.value;
         let Some(user_index) = state.index_of_local_user(user_id) else {
             continue;
         };
@@ -37,7 +38,7 @@ fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response 
             if !user.group_chats.exists(&caller.into()) {
                 return;
             }
-            match event.value {
+            match event {
                 GroupCanisterEvent::MessageActivity(event) => user.push_message_activity(event, now),
                 GroupCanisterEvent::Achievement(achievement) => {
                     if user.award_achievement(achievement, now) {

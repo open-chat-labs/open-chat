@@ -2683,14 +2683,11 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
     // Only a group Bob is in can send him events. Those from any other caller are dropped.
     let now = now_millis(env);
     let achievement_event = |id, achievement| user_canister::c2c_group_canister_v2::Args {
-        events: vec![(
-            bob_id,
-            IdempotentEnvelope {
-                created_at: now,
-                idempotency_id: id,
-                value: user_canister::GroupCanisterEvent::Achievement(achievement),
-            },
-        )],
+        events: vec![IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: id,
+            value: (bob_id, user_canister::GroupCanisterEvent::Achievement(achievement)),
+        }],
     };
     client::multi_user::c2c_group_canister_v2(
         env,
@@ -3024,7 +3021,7 @@ fn send_local_user_index_events(
         local_user_index,
         canister_id,
         &user_canister::c2c_local_user_index_v2::Args {
-            events: events.into_iter().map(|event| (user_id, event)).collect(),
+            events: events.into_iter().map(|event| paired(user_id, event)).collect(),
         },
     );
     assert!(matches!(response, types::SuccessOnly::Success));
@@ -3242,11 +3239,11 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         canister_id,
         &user_canister::c2c_local_user_index_v2::Args {
             events: vec![
-                (alice_id, joined_group(env, 1, group1)),
-                (bob_id, joined_group(env, 2, group2)),
-                (UserId::new_indexed(canister_id, 99), joined_group(env, 3, group3)),
-                (alice_id, joined_group(env, 4, group3)),
-                (
+                paired(alice_id, joined_group(env, 1, group1)),
+                paired(bob_id, joined_group(env, 2, group2)),
+                paired(UserId::new_indexed(canister_id, 99), joined_group(env, 3, group3)),
+                paired(alice_id, joined_group(env, 4, group3)),
+                paired(
                     bob_id,
                     local_user_index_event(
                         env,
@@ -3285,7 +3282,7 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         group2.into(),
         canister_id,
         &user_canister::c2c_group_canister_v2::Args {
-            events: vec![(alice_id, achievement(1)), (bob_id, achievement(2))],
+            events: vec![paired(alice_id, achievement(1)), paired(bob_id, achievement(2))],
         },
     );
     assert!(!has_achievement(
@@ -3308,7 +3305,10 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         community.into(),
         canister_id,
         &user_canister::c2c_community_canister_v2::Args {
-            events: vec![(alice_id, community_achievement(1)), (bob_id, community_achievement(2))],
+            events: vec![
+                paired(alice_id, community_achievement(1)),
+                paired(bob_id, community_achievement(2)),
+            ],
         },
     );
     assert!(!has_achievement(
@@ -3338,7 +3338,10 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         local_user_index,
         canister_id,
         &user_canister::c2c_local_user_index_v2::Args {
-            events: vec![(bob_id, joined_at(10, now, group4)), (bob_id, joined_at(11, now - 1, group5))],
+            events: vec![
+                paired(bob_id, joined_at(10, now, group4)),
+                paired(bob_id, joined_at(11, now - 1, group5)),
+            ],
         },
     );
     assert!(matches!(response, types::SuccessOnly::Success));
@@ -3347,4 +3350,13 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
     let mut expected = vec![group2, group4];
     expected.sort();
     assert_eq!(bobs_groups, expected);
+}
+
+// Pairs an event with the user it is for, as the v2 endpoints take them
+fn paired<E>(user_id: UserId, event: IdempotentEnvelope<E>) -> IdempotentEnvelope<(UserId, E)> {
+    IdempotentEnvelope {
+        created_at: event.created_at,
+        idempotency_id: event.idempotency_id,
+        value: (user_id, event.value),
+    }
 }
