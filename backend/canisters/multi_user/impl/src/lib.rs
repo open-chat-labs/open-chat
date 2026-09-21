@@ -34,6 +34,19 @@ mod queries;
 mod timer_job_types;
 mod updates;
 
+// Splits events paired with the user each is for into each user's events, keeping each user's in
+// the order they were sent, and the users in the order they first appear
+fn group_events_by_user<E>(events: Vec<(UserId, IdempotentEnvelope<E>)>) -> Vec<(UserId, Vec<IdempotentEnvelope<E>>)> {
+    let mut grouped: Vec<(UserId, Vec<IdempotentEnvelope<E>>)> = Vec::new();
+    for (user_id, event) in events {
+        match grouped.iter_mut().find(|(u, _)| *u == user_id) {
+            Some((_, user_events)) => user_events.push(event),
+            None => grouped.push((user_id, vec![event])),
+        }
+    }
+    grouped
+}
+
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }

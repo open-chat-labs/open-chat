@@ -3195,3 +3195,121 @@ fn delete_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: Ca
 fn deleted_users_to_garbage_collect(env: &PocketIc, canister_id: CanisterId) -> u32 {
     serde_json::from_value(metrics(env, canister_id)["deleted_users_to_garbage_collect"].clone()).unwrap()
 }
+
+#[test]
+fn v2_events_are_applied_to_the_user_each_is_paired_with() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let [group1, group2, group3]: [ChatId; 3] = [
+        random_principal().into(),
+        random_principal().into(),
+        random_principal().into(),
+    ];
+    let community: CommunityId = random_principal().into();
+
+    let joined_group = |env: &PocketIc, id: u64, chat_id: ChatId| {
+        local_user_index_event(
+            env,
+            id,
+            LocalUserIndexEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
+                chat_id,
+                local_user_index_canister_id: local_user_index,
+                latest_message_index: None,
+                group_canister_timestamp: now_millis(env),
+            })),
+        )
+    };
+
+    // One call from the LocalUserIndex carries events for both users, interleaved, plus one for a
+    // user who isn't in this canister, which is dropped
+    let response = client::multi_user::c2c_local_user_index_v2(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_local_user_index_v2::Args {
+            events: vec![
+                (alice_id, joined_group(env, 1, group1)),
+                (bob_id, joined_group(env, 2, group2)),
+                (UserId::new_indexed(canister_id, 99), joined_group(env, 3, group3)),
+                (alice_id, joined_group(env, 4, group3)),
+                (
+                    bob_id,
+                    local_user_index_event(
+                        env,
+                        5,
+                        LocalUserIndexEvent::UserJoinedCommunityOrChannel(Box::new(UserJoinedCommunityOrChannel {
+                            community_id: community,
+                            local_user_index_canister_id: local_user_index,
+                            channels: Vec::new(),
+                            community_canister_timestamp: now_millis(env),
+                        })),
+                    ),
+                ),
+            ],
+        },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+
+    let mut alices_groups = group_ids(&initial_state(env, alice, canister_id));
+    alices_groups.sort();
+    let mut expected = vec![group1, group3];
+    expected.sort();
+    assert_eq!(alices_groups, expected);
+    let bobs_state = initial_state(env, bob, canister_id);
+    assert_eq!(group_ids(&bobs_state), vec![group2]);
+    assert_eq!(community_ids(&bobs_state), vec![community]);
+
+    // A group's events only reach the users who are in it
+    let now = now_millis(env);
+    let achievement = |id| IdempotentEnvelope {
+        created_at: now,
+        idempotency_id: id,
+        value: user_canister::GroupCanisterEvent::Achievement(Achievement::ReactedToMessage),
+    };
+    client::multi_user::c2c_group_canister_v2(
+        env,
+        group2.into(),
+        canister_id,
+        &user_canister::c2c_group_canister_v2::Args {
+            events: vec![(alice_id, achievement(1)), (bob_id, achievement(2))],
+        },
+    );
+    assert!(!has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::ReactedToMessage
+    ));
+    assert!(has_achievement(
+        &initial_state(env, bob, canister_id),
+        Achievement::ReactedToMessage
+    ));
+
+    // Likewise for a community's
+    let community_achievement = |id| IdempotentEnvelope {
+        created_at: now,
+        idempotency_id: id,
+        value: user_canister::CommunityCanisterEvent::Achievement(Achievement::SentGiphy),
+    };
+    client::multi_user::c2c_community_canister_v2(
+        env,
+        community.into(),
+        canister_id,
+        &user_canister::c2c_community_canister_v2::Args {
+            events: vec![(alice_id, community_achievement(1)), (bob_id, community_achievement(2))],
+        },
+    );
+    assert!(!has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::SentGiphy
+    ));
+    assert!(has_achievement(&initial_state(env, bob, canister_id), Achievement::SentGiphy));
+}

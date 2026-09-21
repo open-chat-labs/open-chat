@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, DiamondMembershipPlanDuration, Timestamped};
+use types::{Achievement, DiamondMembershipPlanDuration, IdempotentEnvelope, Timestamped, UserId};
 use user_canister::LocalUserIndexEvent;
 use user_canister::c2c_local_user_index::*;
 use user_canister::mark_read::ChannelMessagesRead;
@@ -10,18 +10,22 @@ use user_canister::mark_read::ChannelMessagesRead;
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_local_user_index(args: Args) -> Response {
-    mutate_state(|state| c2c_local_user_index_impl(args, state))
+    mutate_state(|state| handle_user_events(args.user_id, args.events, state))
 }
 
-fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn handle_user_events(
+    user_id: UserId,
+    events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>,
+    state: &mut RuntimeState,
+) -> Response {
     // Events for a user who isn't in this canister can never be applied, so are dropped rather
     // than failing the batch, which the LocalUserIndex would otherwise retry
-    let Some(user_index) = state.index_of_local_user(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(user_id) else {
         return Response::Success;
     };
     let caller = state.env.caller();
 
-    for event in args.events {
+    for event in events {
         let is_new = state
             .data
             .users

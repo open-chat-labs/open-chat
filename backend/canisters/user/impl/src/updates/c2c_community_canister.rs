@@ -2,21 +2,22 @@ use crate::guards::caller_is_known_community_canister;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use types::IdempotentEnvelope;
 use user_canister::CommunityCanisterEvent;
 use user_canister::c2c_community_canister::*;
 
 #[update(guard = "caller_is_known_community_canister", msgpack = true)]
 #[trace]
 fn c2c_community_canister(args: Args) -> Response {
-    execute_update(|state| c2c_notify_community_canister_events_impl(args, state))
+    execute_update(|state| handle_events(args.events, state))
 }
 
-fn c2c_notify_community_canister_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn handle_events(events: Vec<IdempotentEnvelope<CommunityCanisterEvent>>, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
     let mut awarded_achievement = false;
 
-    for event in args.events {
+    for event in events {
         if state
             .data
             .idempotency_checker
