@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Delete a user held in a MultiUser canister via its `c2c_delete_user` rather than skipping them. MultiUser canisters must be upgraded first ([#9451](https://github.com/open-chat-labs/open-chat/pull/9451))
 - Queue user events per canister, and send a MultiUser canister's in a single call via the v2 endpoint, while User canisters are still sent theirs via the original endpoint ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
+- Stop filtering out `BotUpdated` events for User canisters, which all now handle them ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
 
 ### Fixed
 
