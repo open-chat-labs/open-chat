@@ -59,6 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the CHIT events and streak models into the `user_state` library, shared with the MultiUser canister ([#9437](https://github.com/open-chat-labs/open-chat/pull/9437))
 - Move the game CHIT keys model and `c2c_game_chit` argument validation into the `user_state` library, shared with the MultiUser canister ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
 - Move the group and community models (`GroupChats`, `Communities` and `ThreadsRead`) into the `user_state` library, shared with the MultiUser canister ([#9447](https://github.com/open-chat-labs/open-chat/pull/9447))
+- Move `Membership` and `COMMUNITY_CREATION_LIMIT` into the `user_state` library, shared with the MultiUser canister ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
 
 ### Fixed
 
