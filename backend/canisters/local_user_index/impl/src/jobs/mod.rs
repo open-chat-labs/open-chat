@@ -2,6 +2,7 @@ use crate::{RuntimeState, read_state};
 use ic_cdk_management_canister::ClearChunkStoreArgs;
 use tracing::info;
 
+pub mod aggregate_top_ups;
 pub mod check_media_scan_stall;
 pub mod delete_users;
 pub mod moderate_messages;
@@ -14,6 +15,7 @@ pub mod upgrade_multi_users;
 pub mod upgrade_users;
 
 pub(crate) fn start(state: &RuntimeState) {
+    aggregate_top_ups::start_job();
     check_media_scan_stall::start_job();
     delete_users::start_job_if_required(state, None);
     moderate_messages::start_job_if_required(state);

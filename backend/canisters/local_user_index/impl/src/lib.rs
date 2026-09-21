@@ -10,6 +10,7 @@ use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
+use crate::model::top_up_leaderboards::TopUpLeaderboards;
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use crate::model::web_push_subscriptions::WebPushSubscriptions;
@@ -693,6 +694,9 @@ struct Data {
     // Solve rewards whose credit call failed after the solve was recorded
     #[serde(default = "new_retry_queue")]
     pub game_chit_credit_retry_queue: GameChitCreditRetryQueue,
+    // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
+    #[serde(skip)]
+    pub top_up_leaderboards: TopUpLeaderboards,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -799,6 +803,7 @@ impl Data {
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_results_queue: None,
             game_chit_credit_retry_queue: new_retry_queue(),
+            top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
 }

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Aggregate child canister cycle top ups every 5 minutes and expose the 100 most topped up canisters over the last 7, 30, 90 and 365 days via `http_request` at `/top_up_leaderboard`
 - Add the daily puzzle game engine: `daily_puzzle_fetch`, `daily_puzzle_start`, `daily_puzzle_submit`, `daily_puzzle_hint` and `daily_puzzle_save_grid` for users, `c2c_daily_puzzle_push` for the daily_puzzle canister, `set_daily_puzzle_canister_id` for platform operators, with CHIT entry fees, hints and rewards settled via `c2c_game_chit` and solves relayed to the daily_puzzle canister
 - Hold the daily puzzles as a set keyed by game: `c2c_daily_puzzle_push` takes `puzzles`, `daily_puzzle_fetch` returns `puzzles` and `states`, streaks are series-level (a day counts once however many games were solved), CHIT keys are `{game_id}:{number}:...`, and today's set is pulled via `c2c_pull_puzzles`
 - Drop a user's daily puzzle record per game when a push for the same number replaces that game's puzzle (new description, or the game is no longer in the set), so a `regenerate_today` does not show the old puzzle's start or solve against the new one; solved days stay credited
