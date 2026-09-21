@@ -140,6 +140,10 @@ pub struct ActiveUsers {
     last_day: u32,
     last_7_days: u32,
     last_30_days: u32,
+    #[serde(default)]
+    last_90_days: u32,
+    #[serde(default)]
+    last_year: u32,
 }
 
 #[derive(Serialize, Debug)]
