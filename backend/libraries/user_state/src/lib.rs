@@ -10,27 +10,37 @@ use types::TimestampMillis;
 
 mod blocked_users;
 mod chit_events;
+mod communities;
+mod community;
 mod contacts;
 mod favourite_chats;
 mod game_chit_keys;
+mod group_chat;
+mod group_chats;
 mod hot_group_exclusions;
 mod message_activity_events;
 mod pin_number;
 mod profile_document;
 mod saved_crypto_accounts;
 mod streak;
+mod threads_read;
 
 pub use blocked_users::BlockedUsers;
 pub use chit_events::ChitEvents;
+pub use communities::Communities;
+pub use community::{Channel, Community};
 pub use contacts::{Contact, Contacts, SetContactResponse};
 pub use favourite_chats::FavouriteChats;
 pub use game_chit_keys::{GameChitKeys, validate_game_chit_args};
+pub use group_chat::{GroupChat, GroupMessagesRead};
+pub use group_chats::GroupChats;
 pub use hot_group_exclusions::HotGroupExclusions;
 pub use message_activity_events::MessageActivityEvents;
 pub use pin_number::{PinNumber, VerifyPinError};
 pub use profile_document::ProfileDocument;
 pub use saved_crypto_accounts::SavedCryptoAccounts;
 pub use streak::Streak;
+pub use threads_read::ThreadsRead;
 
 // The keys of `map`, whose values are when each was pinned, most recently pinned first
 pub fn sorted_pinned<T: Clone>(map: &HashMap<T, TimestampMillis>) -> Vec<T> {
