@@ -2682,15 +2682,17 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
 
     // Only a group Bob is in can send him events. Those from any other caller are dropped.
     let now = now_millis(env);
-    let achievement_event = |id, achievement| user_canister::c2c_group_canister::Args {
-        user_id: bob_id,
-        events: vec![IdempotentEnvelope {
-            created_at: now,
-            idempotency_id: id,
-            value: user_canister::GroupCanisterEvent::Achievement(achievement),
-        }],
+    let achievement_event = |id, achievement| user_canister::c2c_group_canister_v2::Args {
+        events: vec![(
+            bob_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: id,
+                value: user_canister::GroupCanisterEvent::Achievement(achievement),
+            },
+        )],
     };
-    client::multi_user::c2c_group_canister(
+    client::multi_user::c2c_group_canister_v2(
         env,
         random_principal(),
         canister_id,
@@ -2700,7 +2702,7 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
         &initial_state(env, bob, canister_id),
         Achievement::ReactedToMessage
     ));
-    client::multi_user::c2c_group_canister(
+    client::multi_user::c2c_group_canister_v2(
         env,
         group.into(),
         canister_id,
@@ -2740,7 +2742,7 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
     );
 
     // Events the group had queued for Bob before removing him are dropped
-    client::multi_user::c2c_group_canister(env, group.into(), canister_id, &achievement_event(3, Achievement::SentGiphy));
+    client::multi_user::c2c_group_canister_v2(env, group.into(), canister_id, &achievement_event(3, Achievement::SentGiphy));
     assert!(!has_achievement(
         &initial_state(env, bob, canister_id),
         Achievement::SentGiphy
@@ -3017,13 +3019,15 @@ fn send_local_user_index_events(
     user_id: UserId,
     events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>,
 ) {
-    let response = client::multi_user::c2c_local_user_index(
+    let response = client::multi_user::c2c_local_user_index_v2(
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_local_user_index::Args { user_id, events },
+        &user_canister::c2c_local_user_index_v2::Args {
+            events: events.into_iter().map(|event| (user_id, event)).collect(),
+        },
     );
-    assert!(matches!(response, user_canister::c2c_local_user_index::Response::Success));
+    assert!(matches!(response, types::SuccessOnly::Success));
 }
 
 // Whether the canister rejects the call, eg. because the caller fails its guard
@@ -3313,8 +3317,8 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
     ));
     assert!(has_achievement(&initial_state(env, bob, canister_id), Achievement::SentGiphy));
 
-    // v1 and v2 share each user's idempotency: an event already applied via v1 isn't applied again
-    // via v2, nor is one older than the latest applied
+    // Each user's events are idempotent: an event already applied isn't applied again, nor is one
+    // older than the latest applied
     let group4: ChatId = random_principal().into();
     let group5: ChatId = random_principal().into();
     let now = now_millis(env);

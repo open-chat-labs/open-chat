@@ -11,9 +11,9 @@ use user_canister::{
     unmute_notifications, unpin_chat_v2, update_chat_settings, updates,
 };
 use user_canister::{
-    c2c_community_canister_v2, c2c_game_chit, c2c_group_canister, c2c_group_canister_v2, c2c_groups_and_communities,
-    c2c_local_user_index, c2c_local_user_index_v2, c2c_notify_community_deleted, c2c_notify_group_deleted,
-    c2c_remove_from_group, c2c_set_user_suspended, set_community_indexes,
+    c2c_community_canister_v2, c2c_game_chit, c2c_group_canister_v2, c2c_groups_and_communities, c2c_local_user_index_v2,
+    c2c_notify_community_deleted, c2c_notify_group_deleted, c2c_remove_from_group, c2c_set_user_suspended,
+    set_community_indexes,
 };
 
 // Queries
@@ -45,9 +45,7 @@ generate_msgpack_update_call!(c2c_create_user);
 generate_msgpack_update_call!(c2c_community_canister_v2);
 generate_msgpack_update_call!(c2c_delete_user);
 generate_msgpack_update_call!(c2c_game_chit);
-generate_msgpack_update_call!(c2c_group_canister);
 generate_msgpack_update_call!(c2c_group_canister_v2);
-generate_msgpack_update_call!(c2c_local_user_index);
 generate_msgpack_update_call!(c2c_local_user_index_v2);
 generate_msgpack_update_call!(c2c_notify_community_deleted);
 generate_msgpack_update_call!(c2c_notify_group_deleted);
