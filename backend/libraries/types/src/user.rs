@@ -234,6 +234,10 @@ mod tests {
         assert_eq!(UserId::acting_as(canister_id(), Some(hosted)), Some(hosted));
         assert_eq!(UserId::acting_as(other_canister_id, Some(hosted)), None);
         assert_eq!(UserId::acting_as(canister_id(), Some(UserId::new(canister_id()))), None);
+        assert_eq!(
+            UserId::acting_as(canister_id(), Some(UserId::new_indexed(canister_id(), 0))),
+            None
+        );
     }
 
     #[test]

@@ -9,3 +9,15 @@ pub struct Args {
 }
 
 pub type Response = UnitResult;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use types::Empty;
+
+    #[test]
+    fn deserializes_from_the_previous_empty_args() {
+        let args: Args = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(Empty {}));
+        assert!(args.user_id.is_none());
+    }
+}

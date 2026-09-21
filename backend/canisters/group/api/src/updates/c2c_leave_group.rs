@@ -16,3 +16,21 @@ pub enum Response {
     Success(Empty),
     Error(OCError),
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserializes_from_the_previous_args() {
+        #[derive(Serialize)]
+        struct PreviousArgs {
+            principal: Principal,
+        }
+
+        let principal = Principal::from_slice(&[1]);
+        let args: Args = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(PreviousArgs { principal }));
+        assert_eq!(args.principal, principal);
+        assert!(args.user_id.is_none());
+    }
+}
