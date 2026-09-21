@@ -102,7 +102,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
 // Queues the removal of the content of messages deleted from the copy of a chat held by the user at
 // `user_index`, once the time in which they can be undeleted has passed
-fn enqueue_hard_delete_jobs(
+pub(crate) fn enqueue_hard_delete_jobs(
     user_index: u16,
     chat_id: ChatId,
     thread_root_message_index: Option<MessageIndex>,

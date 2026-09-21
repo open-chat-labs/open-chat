@@ -516,7 +516,7 @@ fn send_message_impl(
             ));
         } else {
             state.push_user_canister_event(
-                recipient.canister_id(),
+                recipient,
                 UserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
                     messages: vec![send_message_args],
                     sender_name,

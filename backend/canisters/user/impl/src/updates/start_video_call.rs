@@ -59,7 +59,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     }
 
     state.push_user_canister_event(
-        sender.canister_id(),
+        sender,
         UserCanisterEvent::StartVideoCall(Box::new(StartVideoCallArgs {
             message_id: args.message_id,
             message_index: message_event.event.message_index,

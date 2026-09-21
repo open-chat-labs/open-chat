@@ -143,6 +143,8 @@ fn post_upgrade(args: Args) {
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
 
+    mutate_state(|state| state.data.drain_legacy_user_canister_events_queue());
+
     // Stop storing the other user's metrics in existing direct chats, deleting any already stored.
     // TODO: Remove this after next release
     mutate_state(|state| {

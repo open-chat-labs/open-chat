@@ -146,10 +146,10 @@ fn send_message_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 // What the recipient's notification of a message shows of its sender
-struct SenderDetails {
-    name: String,
-    display_name: Option<String>,
-    avatar_id: Option<u128>,
+pub(crate) struct SenderDetails {
+    pub name: String,
+    pub display_name: Option<String>,
+    pub avatar_id: Option<u128>,
 }
 
 // Who a message is to, relative to its sender
@@ -218,7 +218,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
 // the `SendMessages` event it receives from the sender's canister, applied directly. As there, a
 // message the recipient doesn't receive (because they have blocked the sender, or it is in a
 // thread their copy of the chat doesn't have) stays on the sender's side alone.
-fn receive_message(
+pub(crate) fn receive_message(
     their_index: u16,
     sender: UserId,
     sender_details: SenderDetails,

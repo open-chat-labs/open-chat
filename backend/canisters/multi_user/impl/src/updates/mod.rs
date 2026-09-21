@@ -25,7 +25,7 @@ mod c2c_revoke_super_admin;
 mod c2c_send_messages;
 mod c2c_set_user_suspended;
 mod c2c_uninstall_bot;
-mod c2c_user_canister;
+mod c2c_user_canister_v2;
 mod c2c_vote_on_proposal;
 mod c2c_withdraw_from_icpswap;
 mod cancel_message_reminder;

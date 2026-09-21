@@ -49,7 +49,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
 
             state.push_user_canister_event(
-                args.user_id.canister_id(),
+                args.user_id,
                 UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
                     thread_root_message_id,
                     message_id: args.message_id,

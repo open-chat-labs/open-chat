@@ -57,7 +57,7 @@ fn c2c_notify_user_canister_events_impl(args: Args, caller_user_id: UserId, stat
     Success
 }
 
-fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut RuntimeState) {
+pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
 
     match event {
