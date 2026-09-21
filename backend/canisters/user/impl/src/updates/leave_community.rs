@@ -24,7 +24,10 @@ async fn leave_community_impl(args: Args) -> Response {
         Err(error) => return Response::Error(error),
     };
 
-    let c2c_args = c2c_leave_community::Args { principal };
+    let c2c_args = c2c_leave_community::Args {
+        principal,
+        user_id: None,
+    };
 
     match community_canister_c2c_client::c2c_leave_community(args.community_id.into(), &c2c_args).await {
         Ok(result) => {

@@ -1,7 +1,7 @@
 use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{AccessGateConfig, CanisterId, ChannelId, CommunityId, CommunityPermissions, Document, Rules};
+use types::{AccessGateConfig, CanisterId, ChannelId, CommunityId, CommunityPermissions, Document, Rules, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -17,6 +17,9 @@ pub struct Args {
     pub default_channels: Vec<String>,
     pub default_channel_rules: Option<Rules>,
     pub primary_language: String,
+    // The user being acted for when the caller holds many users, which must be one of its users
+    #[serde(default)]
+    pub user_id: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

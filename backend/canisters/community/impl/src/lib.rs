@@ -125,6 +125,19 @@ impl RuntimeState {
         Ok(member)
     }
 
+    // The calling member, or the member the caller names when it holds many users
+    pub fn get_calling_member_acting_as(
+        &self,
+        user_id: Option<UserId>,
+        verify: bool,
+    ) -> Result<CommunityMemberInternal, OCErrorCode> {
+        let Some(user_id) = user_id else {
+            return self.get_calling_member(verify);
+        };
+        UserId::acting_as(self.env.caller(), Some(user_id)).ok_or(OCErrorCode::InitiatorNotAuthorized)?;
+        self.get_member(verify, user_id.as_principal())
+    }
+
     pub fn get_calling_member(&self, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
         let caller = self.env.caller();
         self.get_member(verify, caller)

@@ -115,6 +115,7 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
             default_channels: args.default_channels,
             default_channel_rules: args.default_channel_rules,
             primary_language: args.primary_language,
+            user_id: None,
         };
         Ok(PrepareResult {
             group_index_canister_id: state.data.group_index_canister_id,

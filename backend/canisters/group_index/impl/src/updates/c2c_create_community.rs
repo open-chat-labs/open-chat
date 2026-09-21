@@ -4,12 +4,13 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community::{Response::*, *};
+use oc_error_codes::OCErrorCode;
 use types::{CanisterId, CommunityId, Document, UserId};
 
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_create_community(args: Args) -> Response {
-    let (user_id, principal) = match validate_caller().await {
+    let (user_id, principal) = match validate_caller(args.user_id).await {
         Ok((u, p)) => (u, p),
         Err(response) => return response,
     };
@@ -73,9 +74,11 @@ pub(crate) async fn create_community_impl(
     }
 }
 
-async fn validate_caller() -> Result<(UserId, Principal), Response> {
-    let (caller, user_index_canister_id): (UserId, CanisterId) =
-        read_state(|state| (state.env.caller().into(), state.data.user_index_canister_id));
+async fn validate_caller(user_id: Option<UserId>) -> Result<(UserId, Principal), Response> {
+    let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
+    let Some(caller) = UserId::acting_as(caller, user_id) else {
+        return Err(Error(OCErrorCode::InitiatorNotAuthorized.into()));
+    };
 
     match user_index_canister_c2c_client::c2c_lookup_user(
         user_index_canister_id,

@@ -115,6 +115,23 @@ impl RuntimeState {
             .ok_or(OCErrorCode::InitiatorNotInChat)
     }
 
+    // The calling member, or the member the caller names when it holds many users
+    pub fn get_calling_member_acting_as(
+        &self,
+        user_id: Option<UserId>,
+        verify: bool,
+    ) -> Result<GroupMemberInternal, OCErrorCode> {
+        let Some(user_id) = user_id else {
+            return self.get_calling_member(verify);
+        };
+        UserId::acting_as(self.env.caller(), Some(user_id)).ok_or(OCErrorCode::InitiatorNotAuthorized)?;
+        let member = self.data.chat.members.get(&user_id).ok_or(OCErrorCode::InitiatorNotInChat)?;
+        if verify {
+            member.verify()?;
+        }
+        Ok(member)
+    }
+
     pub fn get_calling_member(&self, verify: bool) -> Result<GroupMemberInternal, OCErrorCode> {
         let caller = self.env.caller();
         let member = self.data.get_member(caller).ok_or(OCErrorCode::InitiatorNotInChat)?;

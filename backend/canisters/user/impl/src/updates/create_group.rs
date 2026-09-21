@@ -110,6 +110,7 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
             permissions_v2: args.permissions_v2,
             events_ttl: args.events_ttl,
             gate_config: args.gate_config,
+            user_id: None,
         };
         Ok(PrepareResult {
             group_index_canister_id: state.data.group_index_canister_id,
