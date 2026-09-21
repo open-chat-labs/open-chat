@@ -135,7 +135,15 @@ impl RuntimeState {
             return self.get_calling_member(verify);
         };
         UserId::acting_as(self.env.caller(), Some(user_id)).ok_or(OCErrorCode::InitiatorNotAuthorized)?;
-        self.get_member(verify, user_id.as_principal())
+        let member = self
+            .data
+            .members
+            .get_by_user_id(&user_id)
+            .ok_or(OCErrorCode::InitiatorNotInCommunity)?;
+        if verify {
+            member.verify()?;
+        }
+        Ok(member)
     }
 
     pub fn get_calling_member(&self, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
