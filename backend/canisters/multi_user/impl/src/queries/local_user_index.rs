@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use user_canister::local_user_index::{Response::*, *};
 
 #[query(msgpack = true)]
-fn index_of_local_user(_args: Args) -> Response {
+fn local_user_index(_args: Args) -> Response {
     read_state(local_user_index_impl)
 }
 
