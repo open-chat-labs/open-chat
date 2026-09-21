@@ -122,4 +122,48 @@ mod tests {
         assert_eq!(summary(&leaderboards.last_90_days), vec![(b, 101, 2), (a, 15, 2)]);
         assert_eq!(summary(&leaderboards.last_year), vec![(b, 101, 2), (a, 65, 3)]);
     }
+
+    #[test]
+    fn window_boundaries_are_inclusive() {
+        let now = 1000 * DAY_IN_MS;
+        let a = Principal::from_slice(&[1]);
+        let top_ups = vec![
+            CyclesTopUp {
+                date: now - 365 * DAY_IN_MS - 1,
+                amount: 1000,
+            },
+            CyclesTopUp {
+                date: now - 7 * DAY_IN_MS,
+                amount: 1,
+            },
+        ];
+
+        let leaderboards = TopUpLeaderboards::build([(a, ChildCanisterType::User, top_ups.as_slice())].into_iter(), now);
+
+        assert_eq!(leaderboards.last_7_days[0].total, 1);
+        assert_eq!(leaderboards.last_year[0].total, 1);
+    }
+
+    #[test]
+    fn only_the_top_entries_are_kept() {
+        let now = 1000 * DAY_IN_MS;
+        let top_ups: Vec<_> = (1..=150u8)
+            .map(|i| {
+                (
+                    Principal::from_slice(&[i]),
+                    vec![CyclesTopUp {
+                        date: now,
+                        amount: i as Cycles,
+                    }],
+                )
+            })
+            .collect();
+
+        let leaderboards =
+            TopUpLeaderboards::build(top_ups.iter().map(|(c, t)| (*c, ChildCanisterType::User, t.as_slice())), now);
+
+        assert_eq!(leaderboards.last_7_days.len(), MAX_ENTRIES);
+        assert_eq!(leaderboards.last_7_days.first().unwrap().total, 150);
+        assert_eq!(leaderboards.last_7_days.last().unwrap().total, 51);
+    }
 }
