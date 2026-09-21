@@ -28,7 +28,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         chat.set_video_call_presence(my_user_id, args.message_id, VideoCallPresence::Default, now)?;
 
         state.push_user_canister_event(
-            args.user_id.canister_id(),
+            args.user_id,
             UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {
                 message_id: args.message_id,
             })),

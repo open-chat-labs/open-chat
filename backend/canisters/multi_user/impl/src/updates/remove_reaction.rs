@@ -104,7 +104,7 @@ pub(crate) fn toggle_reaction(
     Ok(())
 }
 
-fn apply_reaction(
+pub(crate) fn apply_reaction(
     chat: &mut DirectChat,
     user_id: UserId,
     thread_root_message_index: Option<MessageIndex>,

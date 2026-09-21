@@ -19,8 +19,8 @@ use types::{
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
-    ChatInList, LocalUserIndexEvent, MessageActivity, MessageActivityEvent, NamedAccount, UserJoinedCommunityOrChannel,
-    UserJoinedGroup, WalletConfig,
+    ChatInList, LocalUserIndexEvent, MessageActivity, MessageActivityEvent, NamedAccount, UserCanisterEvent,
+    UserJoinedCommunityOrChannel, UserJoinedGroup, WalletConfig,
 };
 
 #[test]
@@ -3359,4 +3359,179 @@ fn paired<E>(user_id: UserId, event: IdempotentEnvelope<E>) -> IdempotentEnvelop
         idempotency_id: event.idempotency_id,
         value: (user_id, event.value),
     }
+}
+
+#[test]
+fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let alice = client::register_user(env, canister_ids);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let mut next_id = 0;
+    let mut send = |env: &mut PocketIc, caller: Principal, sender: UserId, event: UserCanisterEvent| {
+        next_id += 1;
+        let response = client::multi_user::c2c_user_canister_v2(
+            env,
+            caller,
+            canister_id,
+            &user_canister::c2c_user_canister_v2::Args {
+                events: vec![IdempotentEnvelope {
+                    created_at: now_millis(env),
+                    idempotency_id: next_id,
+                    value: user_canister::c2c_user_canister_v2::Event {
+                        sender,
+                        recipient: bob_id,
+                        event,
+                    },
+                }],
+            },
+        );
+        assert!(matches!(response, types::SuccessOnly::Success));
+    };
+    let send_text = |message_id: MessageId, sender_message_index: u32, text: &str| {
+        UserCanisterEvent::SendMessages(Box::new(user_canister::SendMessagesArgs {
+            messages: vec![user_canister::SendMessageArgs {
+                thread_root_message_id: None,
+                message_id,
+                sender_message_index: sender_message_index.into(),
+                content: chat_events::MessageContentInternal::Text(chat_events::TextContentInternal { text: text.to_string() }),
+                replies_to: None,
+                forwarding: false,
+                block_level_markdown: false,
+                message_filter_failed: None,
+                og_previews: Vec::new(),
+            }],
+            sender_name: "alice".to_string(),
+            sender_display_name: None,
+            sender_avatar_id: None,
+        }))
+    };
+    let chat = |env: &PocketIc| events(env, bob, canister_id, bob_id, alice.user_id);
+
+    // Alice, a user in a User canister, messages Bob, creating his copy of their chat
+    let message_id: MessageId = random_from_u128();
+    send(env, alice.canister(), alice.user_id, send_text(message_id, 0, "hello"));
+    assert_eq!(messages(&chat(env)), vec![(alice.user_id, "hello".to_string())]);
+    assert!(has_achievement(
+        &initial_state(env, bob, canister_id),
+        Achievement::ReceivedDirectMessage
+    ));
+
+    // She edits it, reacts to it, marks Bob's messages read and sets the chat's time to live
+    send(
+        env,
+        alice.canister(),
+        alice.user_id,
+        UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
+            thread_root_message_id: None,
+            message_id,
+            content: MessageContent::Text(TextContent {
+                text: "edited".to_string(),
+            }),
+            block_level_markdown: None,
+            og_previews: Vec::new(),
+        })),
+    );
+    assert_eq!(messages(&chat(env)), vec![(alice.user_id, "edited".to_string())]);
+
+    send(
+        env,
+        alice.canister(),
+        alice.user_id,
+        UserCanisterEvent::ToggleReaction(Box::new(user_canister::ToggleReactionArgs {
+            thread_root_message_id: None,
+            message_id,
+            reaction: Reaction::new("👍".to_string()),
+            added: true,
+            username: "alice".to_string(),
+            display_name: None,
+            user_avatar_id: None,
+        })),
+    );
+    assert_eq!(message(&chat(env), message_id).reactions.len(), 1);
+
+    send(
+        env,
+        alice.canister(),
+        alice.user_id,
+        UserCanisterEvent::MarkMessagesRead(user_canister::MarkMessagesReadArgs { read_up_to: 0.into() }),
+    );
+    // Set after the chat was created, otherwise the two timestamps tie
+    env.advance_time(Duration::from_millis(1));
+    send(
+        env,
+        alice.canister(),
+        alice.user_id,
+        UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
+            events_ttl: Some(3_600_000),
+            timestamp: now_millis(env),
+        })),
+    );
+    let summary = single_direct_chat_summary(initial_state(env, bob, canister_id));
+    assert_eq!(summary.read_by_them_up_to, Some(0.into()));
+    assert_eq!(summary.events_ttl, Some(3_600_000));
+
+    // She deletes the message, then undeletes it
+    let delete_args = || {
+        Box::new(user_canister::DeleteUndeleteMessagesArgs {
+            thread_root_message_id: None,
+            message_ids: vec![message_id],
+        })
+    };
+    send(
+        env,
+        alice.canister(),
+        alice.user_id,
+        UserCanisterEvent::DeleteMessages(delete_args()),
+    );
+    assert!(matches!(message(&chat(env), message_id).content, MessageContent::Deleted(_)));
+    send(
+        env,
+        alice.canister(),
+        alice.user_id,
+        UserCanisterEvent::UndeleteMessages(delete_args()),
+    );
+    assert_eq!(messages(&chat(env)), vec![(alice.user_id, "edited".to_string())]);
+
+    // A canister can't send events from a user it doesn't hold, and a canister which isn't an
+    // OpenChat user can't send any
+    send(
+        env,
+        random_principal(),
+        alice.user_id,
+        send_text(random_from_u128(), 1, "not from alice"),
+    );
+    let impostor = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+    send(
+        env,
+        impostor,
+        impostor.into(),
+        send_text(random_from_u128(), 0, "from nobody"),
+    );
+    assert_eq!(messages(&chat(env)), vec![(alice.user_id, "edited".to_string())]);
+    assert!(
+        initial_state(env, bob, canister_id)
+            .direct_chats
+            .summaries
+            .iter()
+            .all(|c| c.them == alice.user_id)
+    );
+
+    // Once Bob blocks Alice her messages no longer reach him
+    block_user(env, bob, canister_id, alice.user_id);
+    send(
+        env,
+        alice.canister(),
+        alice.user_id,
+        send_text(random_from_u128(), 1, "blocked"),
+    );
+    assert_eq!(messages(&chat(env)), vec![(alice.user_id, "edited".to_string())]);
 }

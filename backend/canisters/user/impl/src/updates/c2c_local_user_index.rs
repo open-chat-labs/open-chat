@@ -129,10 +129,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
                 } else {
                     ReferralStatus::Diamond
                 };
-                state.push_user_canister_event(
-                    referred_by.canister_id(),
-                    UserCanisterEvent::SetReferralStatus(Box::new(status)),
-                )
+                state.push_user_canister_event(referred_by, UserCanisterEvent::SetReferralStatus(Box::new(status)))
             }
         }
         LocalUserIndexEvent::NotifyUniquePersonProof(proof) => {
@@ -141,7 +138,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
 
             if let Some(referred_by) = state.data.referred_by {
                 state.push_user_canister_event(
-                    referred_by.canister_id(),
+                    referred_by,
                     UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::UniquePerson)),
                 )
             }

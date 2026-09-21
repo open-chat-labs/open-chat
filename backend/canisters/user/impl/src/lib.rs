@@ -1,3 +1,4 @@
+use crate::model::legacy_user_canister_event_batch::LegacyUserCanisterEventBatch;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::premium_items::PremiumItems;
@@ -158,14 +159,15 @@ impl RuntimeState {
         }
     }
 
-    pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
-        if canister_id != OPENCHAT_BOT_USER_ID.canister_id() && canister_id != self.env.canister_id() {
-            self.data.user_canister_events_queue.push(
-                canister_id.into(),
+    // Queues an event for `recipient`, batched with the others for the canister holding them
+    pub fn push_user_canister_event(&mut self, recipient: UserId, event: UserCanisterEvent) {
+        if recipient != OPENCHAT_BOT_USER_ID && recipient != self.env.canister_id().into() {
+            self.data.user_canister_events_by_canister.push(
+                recipient.canister_id(),
                 IdempotentEnvelope {
                     created_at: self.env.now(),
                     idempotency_id: self.env.rng().next_u64(),
-                    value: event,
+                    value: (recipient, event),
                 },
             );
         }
@@ -387,7 +389,7 @@ Your streak is now {new_streak} days!"
             direct_chat_metrics: self.data.direct_chats.metrics().hydrate(),
             video_call_operators: self.data.video_call_operators.clone(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            queued_user_events: self.data.user_canister_events_queue.len() as u32,
+            queued_user_events: self.data.user_canister_events_by_canister.len() as u32,
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             total_chit_earned: self.data.chit_events.total_chit_earned(),
             chit_balance: self.data.chit_events.chit_balance(),
@@ -469,7 +471,11 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
-    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
+    // Events queued before they were batched per canister, which `post_upgrade` moves into
+    // `user_canister_events_by_canister`
+    pub user_canister_events_queue: GroupedTimerJobQueue<LegacyUserCanisterEventBatch>,
+    #[serde(default = "new_user_canister_events_by_canister")]
+    pub user_canister_events_by_canister: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
     pub pin_number: PinNumber,
     pub btc_address: Option<Timestamped<String>>,
@@ -495,6 +501,25 @@ struct Data {
 }
 
 impl Data {
+    // Moves the events queued before they were batched per canister into the queue which does so,
+    // pairing each with the user it was queued for
+    // TODO: Remove this, along with `user_canister_events_queue`, once it has run in every canister
+    pub fn drain_legacy_user_canister_events_queue(&mut self) {
+        for (recipient, events) in self.user_canister_events_queue.take_all() {
+            self.user_canister_events_by_canister.push_many(
+                recipient.canister_id(),
+                events
+                    .into_iter()
+                    .map(|event| IdempotentEnvelope {
+                        created_at: event.created_at,
+                        idempotency_id: event.idempotency_id,
+                        value: (recipient, event.value),
+                    })
+                    .collect(),
+            );
+        }
+    }
+
     #[expect(clippy::too_many_arguments)]
     pub fn new(
         owner: Principal,
@@ -542,6 +567,7 @@ impl Data {
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
             user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
+            user_canister_events_by_canister: new_user_canister_events_by_canister(),
             video_call_operators,
             pin_number: PinNumber::default(),
             btc_address: None,
@@ -653,7 +679,7 @@ impl Data {
     }
 
     pub fn flush_pending_events(&mut self) {
-        self.user_canister_events_queue.flush();
+        self.user_canister_events_by_canister.flush();
         self.local_user_index_event_sync_queue.flush();
     }
 
@@ -790,4 +816,8 @@ pub struct CanisterIds {
     pub identity: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
+}
+
+fn new_user_canister_events_by_canister() -> GroupedTimerJobQueue<UserCanisterEventBatch> {
+    GroupedTimerJobQueue::new(10, true)
 }

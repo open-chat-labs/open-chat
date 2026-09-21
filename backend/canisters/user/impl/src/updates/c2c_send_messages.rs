@@ -138,8 +138,10 @@ pub(crate) enum SenderStatus {
 }
 
 pub(crate) fn get_sender_status(state: &RuntimeState) -> SenderStatus {
-    let sender = state.env.caller().into();
+    get_status_of_sender(state.env.caller().into(), state)
+}
 
+pub(crate) fn get_status_of_sender(sender: UserId, state: &RuntimeState) -> SenderStatus {
     if state.data.blocked_users.contains(&sender) {
         SenderStatus::Blocked
     } else if let Some(user_type) = state.data.direct_chats.get(&sender.into()).map(|c| c.user_type) {

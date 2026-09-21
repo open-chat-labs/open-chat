@@ -180,7 +180,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
             };
 
             state.push_user_canister_event(
-                args.recipient.canister_id(),
+                args.recipient,
                 UserCanisterEvent::TipMessage(Box::new(user_canister::TipMessageArgs {
                     thread_root_message_id,
                     message_id: args.message_id,
