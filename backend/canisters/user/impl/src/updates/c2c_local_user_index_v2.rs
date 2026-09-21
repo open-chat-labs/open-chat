@@ -2,6 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use types::IdempotentEnvelope;
 use user_canister::c2c_local_user_index_v2::*;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -16,8 +17,12 @@ fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Respons
     let events = args
         .events
         .into_iter()
-        .filter(|(user_id, _)| *user_id == my_user_id)
-        .map(|(_, event)| event)
+        .filter(|event| event.value.0 == my_user_id)
+        .map(|event| IdempotentEnvelope {
+            created_at: event.created_at,
+            idempotency_id: event.idempotency_id,
+            value: event.value.1,
+        })
         .collect();
 
     super::c2c_local_user_index::handle_events(events, state)

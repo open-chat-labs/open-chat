@@ -17,7 +17,7 @@ fn c2c_local_user_index_v2(args: Args) -> Response {
 fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    for (user_id, event) in args.events {
+    for event in args.events {
         if !state
             .data
             .idempotency_checker
@@ -25,10 +25,11 @@ fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Respons
         {
             continue;
         }
+        let (user_id, event) = event.value;
         // Events for a user who isn't in this canister can never be applied, so are dropped rather
         // than failing the batch, which the LocalUserIndex would otherwise retry
         if let Some(user_index) = state.index_of_local_user(user_id) {
-            process_event(user_index, event.value, state);
+            process_event(user_index, event, state);
         }
     }
     Response::Success

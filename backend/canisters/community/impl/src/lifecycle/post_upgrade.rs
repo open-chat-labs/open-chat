@@ -1,7 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
-use crate::{Data, read_state};
+use crate::{Data, mutate_state, read_state};
 use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -29,6 +29,8 @@ fn post_upgrade(args: Args) {
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
+
+    mutate_state(|state| state.data.drain_legacy_user_event_queue());
 
     let completed_imports = read_state(|state| state.data.groups_being_imported.completed_imports());
 

@@ -71,6 +71,18 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         self.within_lock(|i| i.items_map.values().map(|v| v.len()).sum())
     }
 
+    // Removes and returns every queued item, grouped by key. Items in a batch which is already
+    // being processed are unaffected.
+    pub fn take_all(&mut self) -> Vec<(T::Key, Vec<T::Item>)> {
+        self.within_lock(|i| {
+            i.queue.clear();
+            std::mem::take(&mut i.items_map)
+                .into_iter()
+                .map(|(key, items)| (key, items.into()))
+                .collect()
+        })
+    }
+
     // Removes the queued items for which `f` returns false. Items in a batch which is already
     // being processed are unaffected.
     pub fn retain(&mut self, f: impl Fn(&T::Item) -> bool) {

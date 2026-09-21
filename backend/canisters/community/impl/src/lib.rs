@@ -22,6 +22,7 @@ use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::events::CommunityEventInternal;
+use model::legacy_user_event_batch::LegacyUserEventBatch;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use oc_error_codes::OCErrorCode;
@@ -38,8 +39,8 @@ use types::{
     BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, PendingCryptoTransaction,
-    QueuedUserEvent, Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserType,
+    IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, PendingCryptoTransaction, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -459,16 +460,13 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: CommunityCanisterEvent, now: TimestampMillis) {
-        self.data.user_event_sync_queue.push(
+        self.data.user_events_queue.push(
             user_id.canister_id(),
-            QueuedUserEvent::new(
-                user_id,
-                IdempotentEnvelope {
-                    created_at: now,
-                    idempotency_id: self.env.rng().next_u64(),
-                    value: event,
-                },
-            ),
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: (user_id, event),
+            },
         );
     }
 
@@ -499,7 +497,7 @@ impl RuntimeState {
             groups_being_imported: self.data.groups_being_imported.summaries(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            queued_user_events: self.data.user_event_sync_queue.len() as u32,
+            queued_user_events: self.data.user_events_queue.len() as u32,
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
@@ -609,7 +607,11 @@ struct Data {
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
-    user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    // Events queued before they were batched per canister, which `post_upgrade` moves into
+    // `user_events_queue`
+    user_event_sync_queue: GroupedTimerJobQueue<LegacyUserEventBatch>,
+    #[serde(default = "new_user_events_queue")]
+    user_events_queue: GroupedTimerJobQueue<UserEventBatch>,
     local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     bots: InstalledBots,
@@ -621,6 +623,25 @@ struct Data {
 }
 
 impl Data {
+    // Moves the events queued before they were batched per canister into the queue which does so,
+    // pairing each with the user it was queued for
+    // TODO: Remove this, along with `user_event_sync_queue`, once it has run in every canister
+    pub fn drain_legacy_user_event_queue(&mut self) {
+        for (user_id, events) in self.user_event_sync_queue.take_all() {
+            self.user_events_queue.push_many(
+                user_id.canister_id(),
+                events
+                    .into_iter()
+                    .map(|event| IdempotentEnvelope {
+                        created_at: event.created_at,
+                        idempotency_id: event.idempotency_id,
+                        value: (user_id, event.value),
+                    })
+                    .collect(),
+            );
+        }
+    }
+
     #[expect(clippy::too_many_arguments)]
     fn new(
         community_id: CommunityId,
@@ -722,6 +743,7 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
+            user_events_queue: new_user_events_queue(),
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             bots: InstalledBots::default(),
@@ -1283,7 +1305,7 @@ impl Data {
     }
 
     pub fn flush_pending_events(&mut self) {
-        self.user_event_sync_queue.flush();
+        self.user_events_queue.flush();
         self.local_user_index_event_sync_queue.flush();
     }
 }
@@ -1381,4 +1403,8 @@ pub enum CallerResult {
     NotFound,
     Suspended,
     Lapsed,
+}
+
+fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
+    GroupedTimerJobQueue::new(5, true)
 }
