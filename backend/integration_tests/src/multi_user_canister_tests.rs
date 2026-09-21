@@ -39,6 +39,12 @@ fn create_then_upgrade_multi_user_canister() {
 
     let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
     assert_eq!(status.module_hash, Some(sha256(&wasms::MULTI_USER.module).to_vec()));
+    let multi_user_canister_count: u64 =
+        serde_json::from_value(metrics(env, local_user_index)["multi_user_canister_count"].clone()).unwrap();
+    assert!(
+        multi_user_canister_count >= 1,
+        "The LocalUserIndex doesn't record its MultiUser canister"
+    );
     assert_eq!(wasm_version(env, canister_id), BuildVersion::min());
     assert_stable_memory_maps_initialised(env, canister_id);
 

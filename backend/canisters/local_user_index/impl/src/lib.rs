@@ -6,7 +6,7 @@ use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::legacy_user_event_batch::LegacyUserEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
-use crate::model::local_multi_user_map::LocalMultiUserMap;
+use crate::model::local_multi_user_canister_map::LocalMultiUserCanisterMap;
 use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
@@ -172,7 +172,7 @@ impl RuntimeState {
 
     pub fn is_caller_local_multi_user_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.local_multi_users.contains(&caller)
+        self.data.local_multi_user_canisters.contains(&caller)
     }
 
     pub fn is_caller_local_group_canister(&self) -> bool {
@@ -190,7 +190,7 @@ impl RuntimeState {
         self.data.local_users.contains(&caller.into())
             || self.data.local_groups.contains(&caller.into())
             || self.data.local_communities.contains(&caller.into())
-            || self.data.local_multi_users.contains(&caller)
+            || self.data.local_multi_user_canisters.contains(&caller)
     }
 
     pub fn is_caller_notification_pusher(&self) -> bool {
@@ -499,8 +499,9 @@ impl RuntimeState {
             local_user_count: self.data.local_users.len() as u64,
             local_group_count: self.data.local_groups.len() as u64,
             local_community_count: self.data.local_communities.len() as u64,
-            local_multi_user_count: self.data.local_multi_users.len() as u64,
+            local_multi_user_count: self.data.local_multi_user_canisters.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
+            multi_user_canister_count: self.data.global_users.multi_user_canisters().len() as u64,
             bot_user_count: self.data.global_users.legacy_bots().len() as u64,
             oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
             platform_moderators: self.data.global_users.platform_moderators().len() as u32,
@@ -548,7 +549,7 @@ impl RuntimeState {
                 .count_per_value(),
             multi_user_versions: self
                 .data
-                .local_multi_users
+                .local_multi_user_canisters
                 .iter()
                 .map(|u| u.1.wasm_version.to_string())
                 .count_per_value(),
@@ -621,8 +622,8 @@ struct Data {
     pub local_users: LocalUserMap,
     pub local_groups: LocalGroupMap,
     pub local_communities: LocalCommunityMap,
-    #[serde(default)]
-    pub local_multi_users: LocalMultiUserMap,
+    #[serde(default, alias = "local_multi_users")]
+    pub local_multi_user_canisters: LocalMultiUserCanisterMap,
     pub global_users: GlobalUserMap,
     pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
@@ -774,7 +775,7 @@ impl Data {
             local_users: LocalUserMap::default(),
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
-            local_multi_users: LocalMultiUserMap::default(),
+            local_multi_user_canisters: LocalMultiUserCanisterMap::default(),
             global_users: GlobalUserMap::default(),
             child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
@@ -857,6 +858,7 @@ pub struct Metrics {
     pub local_community_count: u64,
     pub local_multi_user_count: u64,
     pub global_user_count: u64,
+    pub multi_user_canister_count: u64,
     pub bot_user_count: u64,
     pub oc_controlled_bots: Vec<UserId>,
     pub platform_moderators: u32,
