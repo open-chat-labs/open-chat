@@ -9,12 +9,12 @@ use types::{CanisterId, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
-async fn c2c_delete_group(_args: Args) -> Response {
-    execute_update_async(c2c_delete_group_impl).await
+async fn c2c_delete_group(args: Args) -> Response {
+    execute_update_async(|| c2c_delete_group_impl(args)).await
 }
 
-async fn c2c_delete_group_impl() -> Response {
-    let prepare_result = match read_state(prepare) {
+async fn c2c_delete_group_impl(args: Args) -> Response {
+    let prepare_result = match read_state(|state| prepare(args.user_id, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),
     };
@@ -36,10 +36,10 @@ struct PrepareResult {
     members: Vec<UserId>,
 }
 
-fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
+fn prepare(user_id: Option<UserId>, state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member_acting_as(user_id, true)?;
     if !member.role().can_delete_group() {
         Err(OCErrorCode::InitiatorNotAuthorized.into())
     } else {

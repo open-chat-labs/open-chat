@@ -24,7 +24,10 @@ async fn leave_group_impl(args: Args) -> Response {
         Err(error) => return Response::Error(error),
     };
 
-    let c2c_args = c2c_leave_group::Args { principal };
+    let c2c_args = c2c_leave_group::Args {
+        principal,
+        user_id: None,
+    };
 
     match group_canister_c2c_client::c2c_leave_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => match result {
