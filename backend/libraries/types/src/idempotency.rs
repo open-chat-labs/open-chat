@@ -1,5 +1,9 @@
 use crate::{CanisterId, TimestampMillis, UserId};
-use serde::{Deserialize, Serialize};
+use serde::de::value::MapAccessDeserializer;
+use serde::de::{self, MapAccess, SeqAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt;
+use std::marker::PhantomData;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct IdempotentEnvelope<T> {
@@ -26,11 +30,49 @@ impl<T> From<T> for IdempotentEnvelope<T> {
 // queued against a User canister's user, whose id is the id of that canister, which is how the
 // queue was then keyed, so `user_id` takes it from there.
 // TODO: Remove `Unpaired` once every queue holding them has been drained
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(untagged)]
+//
+// It isn't `#[serde(untagged)]`, since that buffers the input before trying each variant, which
+// fails for values which aren't self describing (eg. a u128 in msgpack). Instead it is told apart
+// by its shape: `Paired` is serialized as a 2 element sequence, whereas an envelope is a map.
+#[derive(Clone, Debug)]
 pub enum QueuedUserEvent<T> {
     Paired(UserId, IdempotentEnvelope<T>),
     Unpaired(IdempotentEnvelope<T>),
+}
+
+impl<T: Serialize> Serialize for QueuedUserEvent<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            QueuedUserEvent::Paired(user_id, event) => (user_id, event).serialize(serializer),
+            QueuedUserEvent::Unpaired(event) => event.serialize(serializer),
+        }
+    }
+}
+
+impl<'de, T: Deserialize<'de>> Deserialize<'de> for QueuedUserEvent<T> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct QueuedUserEventVisitor<T>(PhantomData<T>);
+
+        impl<'de, T: Deserialize<'de>> Visitor<'de> for QueuedUserEventVisitor<T> {
+            type Value = QueuedUserEvent<T>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a (user id, event) pair or an event")
+            }
+
+            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+                let user_id = seq.next_element()?.ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let event = seq.next_element()?.ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                Ok(QueuedUserEvent::Paired(user_id, event))
+            }
+
+            fn visit_map<A: MapAccess<'de>>(self, map: A) -> Result<Self::Value, A::Error> {
+                IdempotentEnvelope::deserialize(MapAccessDeserializer::new(map)).map(QueuedUserEvent::Unpaired)
+            }
+        }
+
+        deserializer.deserialize_any(QueuedUserEventVisitor(PhantomData))
+    }
 }
 
 impl<T> QueuedUserEvent<T> {
@@ -98,5 +140,41 @@ mod tests {
             assert!(matches!(event, QueuedUserEvent::Unpaired(e) if e.idempotency_id == i as u64 + 1));
             assert_eq!(event.user_id(canister_id()), user_id);
         }
+    }
+
+    #[test]
+    fn events_with_non_self_describing_values_round_trip() {
+        #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+        struct Awkward {
+            amount: u128,
+            #[serde(with = "serde_bytes")]
+            bytes: Vec<u8>,
+            principal: CanisterId,
+            nested: Option<Box<Awkward>>,
+        }
+        let value = Awkward {
+            amount: u128::MAX,
+            bytes: vec![1, 2, 3],
+            principal: canister_id(),
+            nested: Some(Box::new(Awkward {
+                amount: 5,
+                bytes: Vec::new(),
+                principal: canister_id(),
+                nested: None,
+            })),
+        };
+        let event = IdempotentEnvelope {
+            created_at: 1,
+            idempotency_id: 2,
+            value: value.clone(),
+        };
+
+        let paired: QueuedUserEvent<Awkward> = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(
+            QueuedUserEvent::new(canister_id().into(), event.clone()),
+        ));
+        assert!(matches!(paired, QueuedUserEvent::Paired(_, e) if e.value == value));
+
+        let unpaired: QueuedUserEvent<Awkward> = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(event));
+        assert!(matches!(unpaired, QueuedUserEvent::Unpaired(e) if e.value == value));
     }
 }
