@@ -1,5 +1,5 @@
 use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
-use multi_user_canister::c2c_create_user;
+use multi_user_canister::{c2c_create_user, c2c_delete_user};
 use user_canister::{
     add_hot_group_exclusions, add_reaction, archive_unarchive_chats, bio, block_user, cancel_message_reminder, chit_events,
     claim_daily_chit, configure_wallet, contacts, delete_direct_chat, delete_messages, delete_saved_crypto_account,
@@ -41,6 +41,7 @@ generate_msgpack_update_call!(archive_unarchive_chats);
 generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(cancel_message_reminder);
 generate_msgpack_update_call!(c2c_create_user);
+generate_msgpack_update_call!(c2c_delete_user);
 generate_msgpack_update_call!(c2c_game_chit);
 generate_msgpack_update_call!(c2c_group_canister);
 generate_msgpack_update_call!(c2c_local_user_index);

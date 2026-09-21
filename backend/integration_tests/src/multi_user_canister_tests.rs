@@ -3090,3 +3090,108 @@ fn last_bot_message(env: &PocketIc, sender: Principal, canister_id: CanisterId, 
         content => panic!("{content:?}"),
     }
 }
+
+#[test]
+fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+
+    // Alice and Bob exchange messages, and each sets a reminder
+    send_text_message(env, alice, canister_id, bob_id, "hello", random_from_u128());
+    send_text_message(env, bob, canister_id, alice_id, "hi", random_from_u128());
+    let remind_at = now_millis(env) + 60_000;
+    set_message_reminder(env, alice, canister_id, Chat::Direct(bob_id.into()), None, remind_at);
+    set_message_reminder(env, bob, canister_id, Chat::Direct(alice_id.into()), None, remind_at);
+    let timer_jobs_before = timer_jobs(env, canister_id);
+
+    // Only the LocalUserIndex can delete a user
+    assert!(is_rejected(
+        env,
+        alice,
+        canister_id,
+        "c2c_delete_user",
+        &multi_user_canister::c2c_delete_user::Args { user_id: alice_id }
+    ));
+
+    delete_user(env, local_user_index, canister_id, alice_id);
+
+    // Alice is gone, along with her reminder, while Bob keeps his copy of their chat
+    assert_eq!(user_count(env, canister_id), 1);
+    assert!(
+        env.query_call(
+            canister_id,
+            alice,
+            "initial_state_msgpack",
+            msgpack::serialize_then_unwrap(user_canister::initial_state::Args {}),
+        )
+        .is_err()
+    );
+    assert_eq!(timer_jobs(env, canister_id), timer_jobs_before - 1);
+    assert_eq!(
+        messages(&events(env, bob, canister_id, bob_id, alice_id)),
+        vec![(alice_id, "hello".to_string()), (bob_id, "hi".to_string())]
+    );
+
+    // Her entries in stable memory are garbage collected
+    assert_eq!(deleted_users_to_garbage_collect(env, canister_id), 1);
+    env.advance_time(Duration::from_secs(20));
+    tick_many(env, 5);
+    assert_eq!(deleted_users_to_garbage_collect(env, canister_id), 0);
+    assert_eq!(
+        messages(&events(env, bob, canister_id, bob_id, alice_id)),
+        vec![(alice_id, "hello".to_string()), (bob_id, "hi".to_string())]
+    );
+
+    // Deleting her again (eg. when the LocalUserIndex retries) succeeds without effect, and she is
+    // in no groups or communities, which the LocalUserIndex looks up first
+    let response = client::multi_user::c2c_groups_and_communities(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_groups_and_communities::Args { user_id: alice_id },
+    );
+    assert!(response.groups.is_empty() && response.communities.is_empty());
+    delete_user(env, local_user_index, canister_id, alice_id);
+    assert_eq!(user_count(env, canister_id), 1);
+
+    // Her principal can register again, as a new user with a new index
+    let response = client::multi_user::c2c_create_user(
+        env,
+        local_user_index,
+        canister_id,
+        &multi_user_canister::c2c_create_user::Args {
+            principal: alice,
+            username: random_string(),
+            referred_by: None,
+        },
+    );
+    let multi_user_canister::c2c_create_user::Response::Success(new_alice_id) = response else {
+        panic!("{response:?}");
+    };
+    assert_eq!(new_alice_id.index(), 3);
+    assert!(initial_state(env, alice, canister_id).direct_chats.summaries.is_empty());
+}
+
+fn delete_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: CanisterId, user_id: UserId) {
+    let response = client::multi_user::c2c_delete_user(
+        env,
+        local_user_index,
+        canister_id,
+        &multi_user_canister::c2c_delete_user::Args { user_id },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+}
+
+fn deleted_users_to_garbage_collect(env: &PocketIc, canister_id: CanisterId) -> u32 {
+    serde_json::from_value(metrics(env, canister_id)["deleted_users_to_garbage_collect"].clone()).unwrap()
+}

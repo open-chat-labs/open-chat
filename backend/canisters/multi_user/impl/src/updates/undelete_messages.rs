@@ -75,7 +75,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     // since message indexes differ between the copies
     // TODO: A user in another canister needs sending `UndeleteMessages`, as the User canister does
     if !undeleted.is_empty()
-        && let Some(their_index) = state.local_user_index(args.user_id)
+        && let Some(their_index) = state.index_of_local_user(args.user_id)
         && let Some((thread_root_message_index, undeleted_in_theirs)) = state
             .with_their_direct_chat_mut(my_user_id, args.user_id, |chat| {
                 let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;

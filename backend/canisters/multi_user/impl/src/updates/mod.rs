@@ -8,6 +8,7 @@ mod c2c_accept_p2p_swap;
 mod c2c_charge_user_account;
 mod c2c_community_canister;
 mod c2c_create_user;
+mod c2c_delete_user;
 mod c2c_game_chit;
 mod c2c_grant_super_admin;
 mod c2c_group_canister;

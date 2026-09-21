@@ -128,6 +128,13 @@ pub(crate) fn scope_range(start: Bound<BaseKey>, end: Bound<BaseKey>) -> (Bound<
     (start, end)
 }
 
+// The first key in the scope of the user at `index`, and the first key after it
+pub(crate) fn user_scope_bounds(index: u16) -> (BaseKey, BaseKey) {
+    let scope = KeyScope::User(index);
+    let end = scope.end_bytes().expect("A user's scope is always followed by another");
+    (BaseKey::new(scope.to_bytes().to_vec()), BaseKey::new(end.to_vec()))
+}
+
 fn prepend(scope_bytes: [u8; SCOPE_LEN], key: BaseKey) -> BaseKey {
     let key_bytes = key.into_vec();
     let mut bytes = Vec::with_capacity(SCOPE_LEN + key_bytes.len());

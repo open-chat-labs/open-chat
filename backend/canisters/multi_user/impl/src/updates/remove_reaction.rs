@@ -91,7 +91,7 @@ pub(crate) fn toggle_reaction(
         .flatten();
 
     if let Some(activity) = activity
-        && let Some(their_index) = state.local_user_index(them)
+        && let Some(their_index) = state.index_of_local_user(them)
     {
         state
             .data

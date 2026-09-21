@@ -24,7 +24,7 @@ fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     // The other user, if they are a different user in this canister
     let their_index = if them == my_user_id {
         None
-    } else if let Some(index) = state.local_user_index(them) {
+    } else if let Some(index) = state.index_of_local_user(them) {
         Some(index)
     } else {
         // TODO: Users in other canisters need looking up in the LocalUserIndex when there is no

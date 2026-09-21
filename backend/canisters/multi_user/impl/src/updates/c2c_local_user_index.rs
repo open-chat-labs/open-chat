@@ -16,7 +16,7 @@ fn c2c_local_user_index(args: Args) -> Response {
 fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     // Events for a user who isn't in this canister can never be applied, so are dropped rather
     // than failing the batch, which the LocalUserIndex would otherwise retry
-    let Some(user_index) = state.local_user_index(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Response::Success;
     };
     let caller = state.env.caller();

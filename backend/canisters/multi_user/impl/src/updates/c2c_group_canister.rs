@@ -17,7 +17,7 @@ fn c2c_group_canister(args: Args) -> Response {
 fn c2c_group_canister_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
-    let Some(user_index) = state.local_user_index(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Response::Success;
     };
 

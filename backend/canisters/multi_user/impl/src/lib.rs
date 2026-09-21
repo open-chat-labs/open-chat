@@ -148,7 +148,7 @@ impl RuntimeState {
     }
 
     // The index of the user with the given id, if they are one of this canister's users
-    pub fn local_user_index(&self, user_id: UserId) -> Option<u16> {
+    pub fn index_of_local_user(&self, user_id: UserId) -> Option<u16> {
         self.user_index(user_id).filter(|index| self.data.users.contains(*index))
     }
 
@@ -166,7 +166,7 @@ impl RuntimeState {
         if their_user_id == my_user_id {
             return None;
         }
-        let their_index = self.local_user_index(their_user_id)?;
+        let their_index = self.index_of_local_user(their_user_id)?;
         self.data
             .users
             .with_user_mut(their_index, |user| {
@@ -490,6 +490,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             stable_memory_sizes: memory::memory_sizes(),
             user_count: self.data.users.len() as u32,
             stable_memory_keys_to_garbage_collect: self.data.stable_memory_keys_to_garbage_collect.len() as u32,
+            deleted_users_to_garbage_collect: self.data.deleted_users_to_garbage_collect.len() as u32,
             timer_jobs: self.data.timer_jobs.len() as u32,
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             canister_ids: CanisterIds {
@@ -527,6 +528,10 @@ struct Data {
     // with the index of the user who held the chat since the entries are keyed under that user
     #[serde(default)]
     pub stable_memory_keys_to_garbage_collect: Vec<(u16, BaseKeyPrefix)>,
+    // The indexes of deleted users, all of whose entries in the stable memory map are yet to be
+    // removed by the garbage collection job
+    #[serde(default)]
+    pub deleted_users_to_garbage_collect: Vec<u16>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
     pub rng_seed: [u8; 32],
@@ -555,6 +560,7 @@ impl Data {
             video_call_operators,
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
+            deleted_users_to_garbage_collect: Vec::new(),
             timer_jobs: TimerJobs::default(),
             rng_seed,
             test_mode,
@@ -578,6 +584,7 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_count: u32,
     pub stable_memory_keys_to_garbage_collect: u32,
+    pub deleted_users_to_garbage_collect: u32,
     pub timer_jobs: u32,
     pub queued_local_user_index_events: u32,
     pub canister_ids: CanisterIds,

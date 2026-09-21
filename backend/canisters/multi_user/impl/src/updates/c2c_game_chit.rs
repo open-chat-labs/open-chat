@@ -14,7 +14,7 @@ fn c2c_game_chit(args: Args) -> Response {
 }
 
 fn c2c_game_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let Some(user_index) = state.local_user_index(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Error(OCErrorCode::TargetUserNotFound.into());
     };
 

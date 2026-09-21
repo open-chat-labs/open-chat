@@ -6931,6 +6931,7 @@ dependencies = [
  "local_user_index_canister",
  "msgpack",
  "multi_user_canister",
+ "multi_user_canister_c2c_client",
  "notifications_index_canister",
  "oc_error_codes",
  "online_users_canister",
@@ -7286,6 +7287,19 @@ dependencies = [
  "candid",
  "oc_error_codes",
  "serde",
+ "types",
+]
+
+[[package]]
+name = "multi_user_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.20.2",
+ "msgpack",
+ "multi_user_canister",
+ "tracing",
  "types",
 ]
 
