@@ -31,6 +31,7 @@ async fn c2c_user_canister_v2(args: Args) -> Response {
         args.events
             .iter()
             .filter(|e| is_sender_held_by(e.value.sender, caller))
+            .filter(|e| state.index_of_local_user(e.value.recipient).is_some())
             .filter(|e| !has_chat_with(e.value.recipient, e.value.sender, state))
             .map(|e| e.value.sender)
             .collect()

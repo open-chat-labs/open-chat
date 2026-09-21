@@ -56,7 +56,9 @@ async fn c2c_user_canister_v2_impl(args: Args) -> Response {
                 recipient,
                 event,
             } = event.value;
-            if recipient == my_user_id && accepted_senders.contains(&sender) {
+            // Blocking is checked again in case the sender was blocked while any senders were
+            // being looked up
+            if recipient == my_user_id && accepted_senders.contains(&sender) && !state.data.blocked_users.contains(&sender) {
                 process_event(event, sender, state);
             }
         }

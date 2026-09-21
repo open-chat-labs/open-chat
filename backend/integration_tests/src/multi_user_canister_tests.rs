@@ -3525,13 +3525,74 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
             .all(|c| c.them == alice.user_id)
     );
 
-    // Once Bob blocks Alice her messages no longer reach him
+    // A retried event isn't applied twice
+    let retried = IdempotentEnvelope {
+        created_at: now_millis(env),
+        idempotency_id: 1_000,
+        value: user_canister::c2c_user_canister_v2::Event {
+            sender: alice.user_id,
+            recipient: bob_id,
+            event: send_text(random_from_u128(), 1, "once"),
+        },
+    };
+    for _ in 0..2 {
+        client::multi_user::c2c_user_canister_v2(
+            env,
+            alice.canister(),
+            canister_id,
+            &user_canister::c2c_user_canister_v2::Args {
+                events: vec![retried.clone()],
+            },
+        );
+    }
+    assert_eq!(
+        messages(&chat(env)),
+        vec![(alice.user_id, "edited".to_string()), (alice.user_id, "once".to_string())]
+    );
+
+    // An event for a user who isn't in this canister is dropped
+    let response = client::multi_user::c2c_user_canister_v2(
+        env,
+        alice.canister(),
+        canister_id,
+        &user_canister::c2c_user_canister_v2::Args {
+            events: vec![IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: 1_001,
+                value: user_canister::c2c_user_canister_v2::Event {
+                    sender: alice.user_id,
+                    recipient: UserId::new_indexed(canister_id, 99),
+                    event: send_text(random_from_u128(), 2, "nobody"),
+                },
+            }],
+        },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+
+    // Once Bob blocks Alice her messages and edits no longer reach him
     block_user(env, bob, canister_id, alice.user_id);
     send(
         env,
         alice.canister(),
         alice.user_id,
-        send_text(random_from_u128(), 1, "blocked"),
+        send_text(random_from_u128(), 3, "blocked"),
     );
-    assert_eq!(messages(&chat(env)), vec![(alice.user_id, "edited".to_string())]);
+    send(
+        env,
+        alice.canister(),
+        alice.user_id,
+        UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
+            thread_root_message_id: None,
+            message_id,
+            content: MessageContent::Text(TextContent {
+                text: "edited while blocked".to_string(),
+            }),
+            block_level_markdown: None,
+            og_previews: Vec::new(),
+        })),
+    );
+    assert_eq!(
+        messages(&chat(env)),
+        vec![(alice.user_id, "edited".to_string()), (alice.user_id, "once".to_string())]
+    );
 }
