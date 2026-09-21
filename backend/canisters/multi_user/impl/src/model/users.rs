@@ -60,6 +60,14 @@ impl Users {
         Ok(index)
     }
 
+    // Removes the user, whose index is never reused. The caller garbage collects their entries in
+    // the stable memory map.
+    pub fn remove(&mut self, index: u16) -> Option<User> {
+        let user = self.users.remove(&index)?;
+        self.principal_to_index.remove(&user.principal);
+        Some(user)
+    }
+
     pub fn index_by_principal(&self, principal: &Principal) -> Option<u16> {
         self.principal_to_index.get(principal).copied()
     }
@@ -122,6 +130,21 @@ mod tests {
             users.add(principal(1), "b".to_string(), None, 2),
             Err(AddUserError::PrincipalAlreadyRegistered)
         );
+        assert_eq!(users.len(), 1);
+    }
+
+    #[test]
+    fn removed_users_indexes_are_not_reused() {
+        let mut users = Users::default();
+
+        assert_eq!(users.add(principal(1), "a".to_string(), None, 1), Ok(1));
+        assert!(users.remove(1).is_some());
+        assert!(users.remove(1).is_none());
+        assert!(!users.contains(1));
+        assert_eq!(users.index_by_principal(&principal(1)), None);
+
+        // The principal can register again, and is given a new index
+        assert_eq!(users.add(principal(1), "a".to_string(), None, 2), Ok(2));
         assert_eq!(users.len(), 1);
     }
 

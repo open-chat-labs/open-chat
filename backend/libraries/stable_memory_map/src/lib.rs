@@ -378,6 +378,48 @@ fn garbage_collect_while(prefix: BaseKeyPrefix, keep_going: impl Fn() -> bool) -
     })
 }
 
+// Deletes every entry of the user at `index` from both maps, in a canister which holds many users,
+// which is how a deleted user's data is removed. As with `garbage_collect`, returns `Ok(count)`
+// once every entry is deleted, or `Err(count)` if it ran out of instructions first, in which case
+// it should be called again. Must be called outside of `with_key_scope`.
+pub fn garbage_collect_user(index: u16) -> Result<u32, u32> {
+    garbage_collect_user_while(index, || ic_cdk::api::instruction_counter() < 2_000_000_000)
+}
+
+fn garbage_collect_user_while(index: u16, keep_going: impl Fn() -> bool) -> Result<u32, u32> {
+    let (start, end) = key_scope::user_scope_bounds(index);
+    let mut total_count = 0;
+    with_map_mut(|m| {
+        for class in [MapClass::Default, MapClass::SmallEntries] {
+            if matches!(class, MapClass::SmallEntries) && m.small_entries_map.is_none() {
+                continue;
+            }
+            let map = m.map_mut(class);
+            loop {
+                if !keep_going() {
+                    return Err(total_count);
+                }
+                let keys: Vec<_> = map
+                    .range(start.clone()..end.clone())
+                    .take(100)
+                    .map(|e| e.key().clone())
+                    .collect();
+
+                let batch_count = keys.len() as u32;
+                total_count += batch_count;
+                for key in keys {
+                    map.remove(&key);
+                }
+                // If batch count < 100 then this map is finished
+                if batch_count < 100 {
+                    break;
+                }
+            }
+        }
+        Ok(total_count)
+    })
+}
+
 fn map_bound<K: Key>(bound: Bound<&K>) -> Bound<BaseKey> {
     match bound {
         Bound::Included(k) => Bound::Included(k.clone().into()),
@@ -624,6 +666,51 @@ mod tests {
     #[should_panic(expected = "Range bounds are in different maps")]
     fn range_across_maps_panics() {
         range_map_class(&Bound::Included(default_key().into()), &Bound::Excluded(small_key(1).into()));
+    }
+
+    #[test]
+    fn garbage_collecting_a_user_removes_only_their_entries() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        let scopes = [KeyScope::User(1), KeyScope::User(2), KeyScope::User(3), KeyScope::Canister];
+        for scope in scopes {
+            with_key_scope(scope, || {
+                with_map_mut(|m| {
+                    for i in 0..250 {
+                        m.insert(small_key(i), vec![1]);
+                    }
+                    m.insert(default_key(), vec![1]);
+                })
+            });
+        }
+
+        // Stopped after two batches (the user's one entry in the main map, then 100 of their 250 in
+        // the small entries map), then finished off
+        let calls = std::cell::Cell::new(0);
+        assert_eq!(
+            garbage_collect_user_while(2, || {
+                calls.set(calls.get() + 1);
+                calls.get() <= 2
+            }),
+            Err(101)
+        );
+        assert_eq!(garbage_collect_user_while(2, || true), Ok(150));
+
+        with_key_scope(KeyScope::User(2), || {
+            with_map(|m| {
+                assert!(m.range(small_key(0)..).next().is_none());
+                assert!(m.get(default_key()).is_none());
+            })
+        });
+        for scope in [KeyScope::User(1), KeyScope::User(3), KeyScope::Canister] {
+            with_key_scope(scope, || {
+                with_map(|m| {
+                    assert_eq!(m.range(small_key(0)..).count(), 250);
+                    assert!(m.get(default_key()).is_some());
+                })
+            });
+        }
     }
 
     #[test]

@@ -51,6 +51,18 @@ pub struct ClaimOrResetStreakInsuranceJob {
     pub user_index: u16,
 }
 
+impl TimerJob {
+    // The index of the user the job is for
+    pub fn user_index(&self) -> u16 {
+        match self {
+            TimerJob::HardDeleteMessageContent(job) => job.user_index,
+            TimerJob::RemoveExpiredEvents(job) => job.user_index,
+            TimerJob::MessageReminder(job) => job.user_index,
+            TimerJob::ClaimOrResetStreakInsurance(job) => job.user_index,
+        }
+    }
+}
+
 impl HardDeleteMessageContentJob {
     // Cancels the jobs to hard delete the content of messages which have been undeleted from the
     // copy of a chat held by the user at `user_index`, so that a job queued by an earlier deletion
