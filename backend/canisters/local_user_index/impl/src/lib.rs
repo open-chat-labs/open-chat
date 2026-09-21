@@ -45,8 +45,8 @@ use types::{
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DailyPuzzleResult,
     DiamondMembershipDetails, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds,
-    ModerationReferralConfig, Notification, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId,
-    UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    ModerationReferralConfig, Notification, NotificationEnvelope, QueuedUserEvent, ReferralType, TimestampMillis, Timestamped,
+    UserId, UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -249,12 +249,15 @@ impl RuntimeState {
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) -> bool {
         if self.data.local_users.contains(&user_id) {
             self.data.user_event_sync_queue.push(
-                user_id,
-                IdempotentEnvelope {
-                    created_at: now,
-                    idempotency_id: self.env.rng().next_u64(),
-                    value: event,
-                },
+                user_id.canister_id(),
+                QueuedUserEvent::new(
+                    user_id,
+                    IdempotentEnvelope {
+                        created_at: now,
+                        idempotency_id: self.env.rng().next_u64(),
+                        value: event,
+                    },
+                ),
             );
             true
         } else {
