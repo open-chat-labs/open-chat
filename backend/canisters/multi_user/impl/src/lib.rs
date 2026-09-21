@@ -22,6 +22,7 @@ use types::{
 };
 use user_state::{Community, GroupChat};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod crypto;
 mod guards;
@@ -532,6 +533,10 @@ struct Data {
     // removed by the garbage collection job
     #[serde(default)]
     pub deleted_users_to_garbage_collect: Vec<u16>,
+    // Events from other canisters are checked against this, as in the User canister. Each sender
+    // batches its events for this canister's users together, so one checker covers them all.
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
     pub rng_seed: [u8; 32],
@@ -561,6 +566,7 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             deleted_users_to_garbage_collect: Vec::new(),
+            idempotency_checker: IdempotencyChecker::default(),
             timer_jobs: TimerJobs::default(),
             rng_seed,
             test_mode,

@@ -13,7 +13,6 @@ use user_state::{
     HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, SavedCryptoAccounts, Streak,
     ThreadsRead,
 };
-use utils::idempotency_checker::IdempotencyChecker;
 
 // The state of a single user within the canister. This mirrors the per-user fields of the User
 // canister's `Data`, using the same names and types, so that the logic of each endpoint can be
@@ -65,10 +64,6 @@ pub struct User {
     pub communities: Communities,
     #[serde(default)]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
-    // Per user rather than per canister because senders batch their events per user, so a batch
-    // for one user can arrive after a later batch for another
-    #[serde(default)]
-    pub idempotency_checker: IdempotencyChecker,
 }
 
 impl User {
@@ -101,7 +96,6 @@ impl User {
             group_chats: GroupChats::default(),
             communities: Communities::default(),
             diamond_membership_expires_at: None,
-            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 

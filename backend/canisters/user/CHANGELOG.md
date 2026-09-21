@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_game_chit` endpoint for crediting and debiting CHIT from games, with per-key idempotency ([#9345](https://github.com/open-chat-labs/open-chat/pull/9345))
 - Bound the `c2c_game_chit` amount by range rather than `abs()`, which wraps for `i32::MIN` and let that one value past both the limit and the balance check ([#9345](https://github.com/open-chat-labs/open-chat/pull/9345))
 - Support paying for streak insurance and swapping tokens from external wallets using ICRC2 ([#9402](https://github.com/open-chat-labs/open-chat/pull/9402))
+- Add `c2c_group_canister_v2`, `c2c_community_canister_v2` and `c2c_local_user_index_v2`, which take each event paired with the user it is for, applying only those for this canister's user ([#9452](https://github.com/open-chat-labs/open-chat/pull/9452))
 
 ### Changed
 
