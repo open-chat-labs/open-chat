@@ -18,7 +18,8 @@ pub struct GlobalUserMap {
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
     #[serde(default)]
     chit: HashMap<UserId, ChitBalance>,
-    // Every MultiUser canister, on this LocalUserIndex or any other
+    // This LocalUserIndex's MultiUser canisters, plus those on other LocalUserIndexes which hold at
+    // least one registered user
     #[serde(default)]
     multi_user_canisters: BTreeSet<CanisterId>,
 }

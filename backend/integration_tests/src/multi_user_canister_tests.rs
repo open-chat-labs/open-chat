@@ -34,16 +34,16 @@ fn create_then_upgrade_multi_user_canister() {
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
 
+    let multi_user_canister_count_before = multi_user_canister_count(env, local_user_index);
+
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
     let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
     assert_eq!(status.module_hash, Some(sha256(&wasms::MULTI_USER.module).to_vec()));
-    let multi_user_canister_count: u64 =
-        serde_json::from_value(metrics(env, local_user_index)["multi_user_canister_count"].clone()).unwrap();
-    assert!(
-        multi_user_canister_count >= 1,
-        "The LocalUserIndex doesn't record its MultiUser canister"
+    assert_eq!(
+        multi_user_canister_count(env, local_user_index),
+        multi_user_canister_count_before + 1
     );
     assert_eq!(wasm_version(env, canister_id), BuildVersion::min());
     assert_stable_memory_maps_initialised(env, canister_id);
@@ -3601,4 +3601,8 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         messages(&chat(env)),
         vec![(alice.user_id, "edited".to_string()), (alice.user_id, "once".to_string())]
     );
+}
+
+fn multi_user_canister_count(env: &PocketIc, local_user_index: CanisterId) -> u64 {
+    serde_json::from_value(metrics(env, local_user_index)["multi_user_canister_count"].clone()).unwrap()
 }
