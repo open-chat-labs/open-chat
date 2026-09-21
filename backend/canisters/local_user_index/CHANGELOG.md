@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_user_canister_v2`, taking events from both User and MultiUser canisters, each naming the user it is from, which must be the calling User canister or one of the users hosted by the calling MultiUser canister ([#9435](https://github.com/open-chat-labs/open-chat/pull/9435))
 - Aggregate child canister cycle top ups every 5 minutes and expose the 100 most topped up canisters over the last 7, 30, 90 and 365 days via `http_request` at `/top_up_leaderboard` ([#9444](https://github.com/open-chat-labs/open-chat/pull/9444))
 
+### Fixed
+
+- Don't uninstall a MultiUser canister when deleting one of its users, which would delete every user it holds ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
+
 ## [[2.0.2059](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2059-local_user_index)] - 2026-09-18
 
 ### Added

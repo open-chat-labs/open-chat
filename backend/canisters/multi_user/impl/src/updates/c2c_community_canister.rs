@@ -11,12 +11,14 @@ fn c2c_community_canister(args: Args) -> Response {
 }
 
 // Handles the events a community sends one of this canister's users, as the User canister does. As
-// there, only a community the user is in may send them.
+// there, only a community the user is in may send them. Events which can't be applied (the user is not
+// here, or has left the community) are dropped rather than rejected with a trap, which the community would
+// keep retrying, just as the User canister's guard rejection causes them to be dropped.
 fn c2c_community_canister_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
     let Some(user_index) = state.local_user_index(args.user_id) else {
-        ic_cdk::trap("User not found");
+        return Response::Success;
     };
 
     let awarded_achievement = state
@@ -24,7 +26,7 @@ fn c2c_community_canister_impl(args: Args, state: &mut RuntimeState) -> Response
         .users
         .with_user_mut(user_index, |user| {
             if !user.communities.exists(&caller.into()) {
-                ic_cdk::trap("Caller is not a known community canister");
+                return false;
             }
 
             let mut awarded_achievement = false;

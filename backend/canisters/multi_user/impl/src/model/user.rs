@@ -112,6 +112,9 @@ impl User {
     // Removes the group, returning the prefix of its entries in the stable memory map, which the
     // caller garbage collects, as the User canister's `remove_group` does
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<(GroupChat, BaseKeyPrefix)> {
+        if !self.group_chats.exists(&chat_id) {
+            return None;
+        }
         self.favourite_chats.remove(&Chat::Group(chat_id), now);
         self.hot_group_exclusions.add(chat_id, None, now);
         let group = self.group_chats.remove(chat_id, now)?;

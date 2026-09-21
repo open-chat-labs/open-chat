@@ -2680,28 +2680,40 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
     assert!(bobs_state.group_chats.summaries[0].archived);
     assert!(bobs_state.pinned_chats.is_empty());
 
-    // Only a group Bob is in can send him events
+    // Only a group Bob is in can send him events. Those from any other caller are dropped.
     let now = now_millis(env);
-    let achievement_event = |id| user_canister::c2c_group_canister::Args {
+    let achievement_event = |id, achievement| user_canister::c2c_group_canister::Args {
         user_id: bob_id,
         events: vec![IdempotentEnvelope {
             created_at: now,
             idempotency_id: id,
-            value: user_canister::GroupCanisterEvent::Achievement(Achievement::ReactedToMessage),
+            value: user_canister::GroupCanisterEvent::Achievement(achievement),
         }],
     };
-    assert!(is_rejected(
+    client::multi_user::c2c_group_canister(
         env,
         random_principal(),
         canister_id,
-        "c2c_group_canister",
-        &achievement_event(1)
+        &achievement_event(1, Achievement::ReactedToMessage),
+    );
+    assert!(!has_achievement(
+        &initial_state(env, bob, canister_id),
+        Achievement::ReactedToMessage
     ));
-    client::multi_user::c2c_group_canister(env, group.into(), canister_id, &achievement_event(2));
+    client::multi_user::c2c_group_canister(
+        env,
+        group.into(),
+        canister_id,
+        &achievement_event(2, Achievement::ReactedToMessage),
+    );
     assert!(has_achievement(
         &initial_state(env, bob, canister_id),
         Achievement::ReactedToMessage
     ));
+
+    // Bob marks a thread in the group read
+    mark_thread_read(env, bob, canister_id, group, 1, 3);
+    assert_eq!(threads_read(env, bob, canister_id, group), vec![(1.into(), 3.into())]);
 
     // When the group removes Bob, it is removed from his state and the OpenChat bot tells him
     let response = client::multi_user::c2c_remove_from_group(
@@ -2726,6 +2738,77 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
         last_bot_message(env, bob, canister_id, bob_id),
         format!("You were removed from the public group \"Group\" by @UserId({alice_id})")
     );
+
+    // Events the group had queued for Bob before removing him are dropped
+    client::multi_user::c2c_group_canister(env, group.into(), canister_id, &achievement_event(3, Achievement::SentGiphy));
+    assert!(!has_achievement(
+        &initial_state(env, bob, canister_id),
+        Achievement::SentGiphy
+    ));
+
+    // Bob rejoins straight away and marks a thread read, which isn't lost to the garbage collection
+    // of the group's entries from when he was removed
+    let rejoined = local_user_index_event(
+        env,
+        4,
+        LocalUserIndexEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
+            chat_id: group,
+            local_user_index_canister_id: local_user_index,
+            latest_message_index: None,
+            group_canister_timestamp: now_millis(env),
+        })),
+    );
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![rejoined]);
+    assert!(threads_read(env, bob, canister_id, group).is_empty());
+    mark_thread_read(env, bob, canister_id, group, 2, 5);
+    env.advance_time(Duration::from_secs(60));
+    tick_many(env, 5);
+    assert_eq!(threads_read(env, bob, canister_id, group), vec![(2.into(), 5.into())]);
+}
+
+fn mark_thread_read(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    group: ChatId,
+    root_message_index: u32,
+    read_up_to: u32,
+) {
+    let response = client::multi_user::mark_read(
+        env,
+        sender,
+        canister_id,
+        &user_canister::mark_read::Args {
+            messages_read: vec![user_canister::mark_read::ChatMessagesRead {
+                chat_id: group,
+                read_up_to: None,
+                threads: vec![user_canister::mark_read::ThreadRead {
+                    root_message_index: root_message_index.into(),
+                    read_up_to: read_up_to.into(),
+                }],
+                date_read_pinned: None,
+            }],
+            community_messages_read: Vec::new(),
+        },
+    );
+    assert!(matches!(response, user_canister::mark_read::Response::Success));
+}
+
+fn threads_read(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    group: ChatId,
+) -> Vec<(MessageIndex, MessageIndex)> {
+    let mut threads: Vec<_> = initial_state(env, sender, canister_id)
+        .group_chats
+        .summaries
+        .into_iter()
+        .find(|g| g.chat_id == group)
+        .map(|g| g.threads_read.into_iter().collect())
+        .unwrap_or_default();
+    threads.sort();
+    threads
 }
 
 #[test]

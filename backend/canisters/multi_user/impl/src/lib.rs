@@ -363,7 +363,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             .users
             .with_user_mut(user_index, |user| user.remove_group(chat_id, now))
             .flatten()?;
-        self.garbage_collect_stable_memory_keys(user_index, vec![prefix]);
+        self.garbage_collect_removed_chat_keys(user_index, vec![prefix]);
         Some(group)
     }
 
@@ -375,8 +375,29 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             .users
             .with_user_mut(user_index, |user| user.remove_community(community_id, now))
             .flatten()?;
-        self.garbage_collect_stable_memory_keys(user_index, prefixes);
+        self.garbage_collect_removed_chat_keys(user_index, prefixes);
         Some(community)
+    }
+
+    // A removed group or community only has a small number of entries, so they are removed
+    // immediately, as in the User canister, so that none are left to be wiped by a later garbage
+    // collection if the user rejoins. Any which can't be removed within this message are left for
+    // the garbage collection job.
+    fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
+        let remaining: Vec<_> = self
+            .data
+            .users
+            .with_user_mut(user_index, |_| {
+                prefixes
+                    .into_iter()
+                    .filter(|prefix| stable_memory_map::garbage_collect(prefix.clone()).is_err())
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        if !remaining.is_empty() {
+            self.garbage_collect_stable_memory_keys(user_index, remaining);
+        }
     }
 
     // Queues the stable memory map entries of a chat deleted by the user at `user_index` for

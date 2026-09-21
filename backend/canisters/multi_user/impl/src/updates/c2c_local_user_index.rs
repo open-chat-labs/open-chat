@@ -145,7 +145,8 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
         // TODO: Handle these once the MultiUser canister holds the state they apply to (storage,
         // referrals, unique person proofs, external achievements, bots) or can send what they need
         // (OpenChat bot messages with mentions, reinstated daily claims). Until then they are
-        // dropped, since failing the batch would also hold up the events above.
+        // dropped, since failing the batch would also hold up the events above, so these must all
+        // be handled before users are registered into MultiUser canisters.
         LocalUserIndexEvent::PhoneNumberConfirmed(_)
         | LocalUserIndexEvent::StorageUpgraded(_)
         | LocalUserIndexEvent::ReferredUserRegistered(_)

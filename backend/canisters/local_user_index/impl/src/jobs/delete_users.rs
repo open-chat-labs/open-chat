@@ -3,7 +3,7 @@ use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
+use tracing::{error, trace};
 use types::{C2CError, CanisterId, Milliseconds};
 
 thread_local! {
@@ -77,7 +77,14 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
     .await
     .map(|r| (r.groups, r.communities))?;
 
-    utils::canister::uninstall(canister_id).await?;
+    // A user held in a MultiUser canister shares it with other users, so uninstalling it would
+    // delete them all
+    // TODO: Remove just this user from their MultiUser canister, once it supports that
+    if user_id.index() == 0 {
+        utils::canister::uninstall(canister_id).await?;
+    } else {
+        error!(%user_id, "Deleting a user held in a MultiUser canister is not supported yet");
+    }
 
     Ok(DeleteUserSuccess::Deleted(
         groups
