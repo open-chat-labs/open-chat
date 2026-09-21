@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hold each user's groups and communities: implement `create_group`, `create_community`, `leave_group`, `leave_community`, `delete_group`, `delete_community`, `set_community_indexes`, `c2c_group_canister`, `c2c_community_canister`, `c2c_remove_from_group`, `c2c_remove_from_community`, `c2c_notify_group_deleted`, `c2c_notify_community_deleted`, `c2c_groups_and_communities` and the join and Diamond membership events of `c2c_local_user_index`, and include groups and channels in `initial_state`, `updates`, pinning, archiving and `mark_read` ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
 - Add `c2c_delete_user` for the LocalUserIndex to delete a single user, removing their timer jobs and garbage collecting all of their stable memory map entries ([#9451](https://github.com/open-chat-labs/open-chat/pull/9451))
 - Replace `c2c_group_canister`, `c2c_community_canister` and `c2c_local_user_index` with `c2c_group_canister_v2`, `c2c_community_canister_v2` and `c2c_local_user_index_v2`, which take each event paired with the user it is for, so that one call can carry the events for many users ([#9452](https://github.com/open-chat-labs/open-chat/pull/9452))
+- Implement `c2c_user_canister_v2`, applying direct chat events from users in other canisters: messages, edits, deletions, reactions, messages read and disappearing message settings ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
 
 ### Changed
 

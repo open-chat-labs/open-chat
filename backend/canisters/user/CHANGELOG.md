@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bound the `c2c_game_chit` amount by range rather than `abs()`, which wraps for `i32::MIN` and let that one value past both the limit and the balance check ([#9345](https://github.com/open-chat-labs/open-chat/pull/9345))
 - Support paying for streak insurance and swapping tokens from external wallets using ICRC2 ([#9402](https://github.com/open-chat-labs/open-chat/pull/9402))
 - Add `c2c_group_canister_v2`, `c2c_community_canister_v2` and `c2c_local_user_index_v2`, which take each event paired with the user it is for, applying only those for this canister's user ([#9452](https://github.com/open-chat-labs/open-chat/pull/9452))
+- Add `c2c_user_canister_v2`, taking events which each name their sender and recipient, so that a MultiUser canister can send direct chat events on behalf of its users ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
 
 ### Changed
 
@@ -61,6 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the game CHIT keys model and `c2c_game_chit` argument validation into the `user_state` library, shared with the MultiUser canister ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
 - Move the group and community models (`GroupChats`, `Communities` and `ThreadsRead`) into the `user_state` library, shared with the MultiUser canister ([#9447](https://github.com/open-chat-labs/open-chat/pull/9447))
 - Move `Membership` and `COMMUNITY_CREATION_LIMIT` into the `user_state` library, shared with the MultiUser canister ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
+- Queue direct chat events per canister, paired with their recipient, and send those for users in a MultiUser canister via its `c2c_user_canister_v2` ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
 
 ### Fixed
 
