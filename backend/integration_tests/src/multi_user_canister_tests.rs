@@ -3317,8 +3317,8 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
     ));
     assert!(has_achievement(&initial_state(env, bob, canister_id), Achievement::SentGiphy));
 
-    // Each user's events are idempotent: an event already applied isn't applied again, nor is one
-    // older than the latest applied
+    // Events are idempotent: an event already applied isn't applied again, nor is one older than
+    // the latest applied from the same sender
     let group4: ChatId = random_principal().into();
     let group5: ChatId = random_principal().into();
     let now = now_millis(env);

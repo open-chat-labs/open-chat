@@ -13,8 +13,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
-use std::collections::hash_map::Entry;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
@@ -23,6 +22,7 @@ use types::{
 };
 use user_state::{Community, GroupChat};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod crypto;
 mod guards;
@@ -34,23 +34,6 @@ mod openchat_bot;
 mod queries;
 mod timer_job_types;
 mod updates;
-
-// Splits events paired with the user each is for into each user's events, keeping each user's in
-// the order they were sent, and the users in the order they first appear
-fn group_events_by_user<E>(events: Vec<(UserId, IdempotentEnvelope<E>)>) -> Vec<(UserId, Vec<IdempotentEnvelope<E>>)> {
-    let mut grouped: Vec<(UserId, Vec<IdempotentEnvelope<E>>)> = Vec::new();
-    let mut positions: HashMap<UserId, usize> = HashMap::new();
-    for (user_id, event) in events {
-        match positions.entry(user_id) {
-            Entry::Occupied(e) => grouped[*e.get()].1.push(event),
-            Entry::Vacant(e) => {
-                e.insert(grouped.len());
-                grouped.push((user_id, vec![event]));
-            }
-        }
-    }
-    grouped
-}
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -550,6 +533,10 @@ struct Data {
     // removed by the garbage collection job
     #[serde(default)]
     pub deleted_users_to_garbage_collect: Vec<u16>,
+    // Events from other canisters are checked against this, as in the User canister. Each sender
+    // batches its events for this canister's users together, so one checker covers them all.
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
     pub rng_seed: [u8; 32],
@@ -579,6 +566,7 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             deleted_users_to_garbage_collect: Vec::new(),
+            idempotency_checker: IdempotencyChecker::default(),
             timer_jobs: TimerJobs::default(),
             rng_seed,
             test_mode,

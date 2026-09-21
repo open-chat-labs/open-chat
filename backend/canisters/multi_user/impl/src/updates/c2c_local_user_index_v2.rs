@@ -1,8 +1,8 @@
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, group_events_by_user, mutate_state, openchat_bot};
+use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, DiamondMembershipPlanDuration, IdempotentEnvelope, Timestamped, UserId};
+use types::{Achievement, DiamondMembershipPlanDuration, Timestamped};
 use user_canister::LocalUserIndexEvent;
 use user_canister::c2c_local_user_index_v2::*;
 use user_canister::mark_read::ChannelMessagesRead;
@@ -13,35 +13,21 @@ fn c2c_local_user_index_v2(args: Args) -> Response {
     mutate_state(|state| c2c_local_user_index_v2_impl(args, state))
 }
 
+// Applies the events to the users they are for, in order
 fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
-    for (user_id, events) in group_events_by_user(args.events) {
-        handle_user_events(user_id, events, state);
-    }
-    Response::Success
-}
-
-fn handle_user_events(
-    user_id: UserId,
-    events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>,
-    state: &mut RuntimeState,
-) -> Response {
-    // Events for a user who isn't in this canister can never be applied, so are dropped rather
-    // than failing the batch, which the LocalUserIndex would otherwise retry
-    let Some(user_index) = state.index_of_local_user(user_id) else {
-        return Response::Success;
-    };
     let caller = state.env.caller();
 
-    for event in events {
-        let is_new = state
+    for (user_id, event) in args.events {
+        if !state
             .data
-            .users
-            .with_user_mut(user_index, |user| {
-                user.idempotency_checker.check(caller, event.created_at, event.idempotency_id)
-            })
-            .unwrap_or_default();
-
-        if is_new {
+            .idempotency_checker
+            .check(caller, event.created_at, event.idempotency_id)
+        {
+            continue;
+        }
+        // Events for a user who isn't in this canister can never be applied, so are dropped rather
+        // than failing the batch, which the LocalUserIndex would otherwise retry
+        if let Some(user_index) = state.index_of_local_user(user_id) {
             process_event(user_index, event.value, state);
         }
     }
