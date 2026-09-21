@@ -3312,4 +3312,35 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         Achievement::SentGiphy
     ));
     assert!(has_achievement(&initial_state(env, bob, canister_id), Achievement::SentGiphy));
+
+    // v1 and v2 share each user's idempotency: an event already applied via v1 isn't applied again
+    // via v2, nor is one older than the latest applied
+    let group4: ChatId = random_principal().into();
+    let group5: ChatId = random_principal().into();
+    let now = now_millis(env);
+    let joined_at = |id: u64, created_at: TimestampMillis, chat_id: ChatId| IdempotentEnvelope {
+        created_at,
+        idempotency_id: id,
+        value: LocalUserIndexEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
+            chat_id,
+            local_user_index_canister_id: local_user_index,
+            latest_message_index: None,
+            group_canister_timestamp: now,
+        })),
+    };
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![joined_at(10, now, group4)]);
+    let response = client::multi_user::c2c_local_user_index_v2(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_local_user_index_v2::Args {
+            events: vec![(bob_id, joined_at(10, now, group4)), (bob_id, joined_at(11, now - 1, group5))],
+        },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+    let mut bobs_groups = group_ids(&initial_state(env, bob, canister_id));
+    bobs_groups.sort();
+    let mut expected = vec![group2, group4];
+    expected.sort();
+    assert_eq!(bobs_groups, expected);
 }

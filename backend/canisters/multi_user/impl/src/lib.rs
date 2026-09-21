@@ -13,7 +13,8 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::hash_map::Entry;
+use std::collections::{BTreeMap, HashMap};
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
@@ -38,10 +39,14 @@ mod updates;
 // the order they were sent, and the users in the order they first appear
 fn group_events_by_user<E>(events: Vec<(UserId, IdempotentEnvelope<E>)>) -> Vec<(UserId, Vec<IdempotentEnvelope<E>>)> {
     let mut grouped: Vec<(UserId, Vec<IdempotentEnvelope<E>>)> = Vec::new();
+    let mut positions: HashMap<UserId, usize> = HashMap::new();
     for (user_id, event) in events {
-        match grouped.iter_mut().find(|(u, _)| *u == user_id) {
-            Some((_, user_events)) => user_events.push(event),
-            None => grouped.push((user_id, vec![event])),
+        match positions.entry(user_id) {
+            Entry::Occupied(e) => grouped[*e.get()].1.push(event),
+            Entry::Vacant(e) => {
+                e.insert(grouped.len());
+                grouped.push((user_id, vec![event]));
+            }
         }
     }
     grouped
