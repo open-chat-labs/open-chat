@@ -17,7 +17,7 @@ fn c2c_notify_group_deleted(args: Args) -> Response {
 // As in the User canister: the group is removed, and if it was imported into a community then the
 // user is added to the community in its place, carrying over their read state and references to it
 fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let Some(user_index) = state.local_user_index(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Response::Success;
     };
     let now = state.env.now();

@@ -148,7 +148,7 @@ impl RuntimeState {
     }
 
     // The index of the user with the given id, if they are one of this canister's users
-    pub fn local_user_index(&self, user_id: UserId) -> Option<u16> {
+    pub fn index_of_local_user(&self, user_id: UserId) -> Option<u16> {
         self.user_index(user_id).filter(|index| self.data.users.contains(*index))
     }
 
@@ -166,7 +166,7 @@ impl RuntimeState {
         if their_user_id == my_user_id {
             return None;
         }
-        let their_index = self.local_user_index(their_user_id)?;
+        let their_index = self.index_of_local_user(their_user_id)?;
         self.data
             .users
             .with_user_mut(their_index, |user| {

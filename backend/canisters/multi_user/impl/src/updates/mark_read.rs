@@ -64,7 +64,7 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
         // TODO: A user in another canister needs telling via `MarkMessagesRead`, as the User
         // canister does, once the MultiUser canister has a queue of events for other canisters
         if let Some(read_up_to_of_theirs) = read_up_to_of_theirs
-            && let Some(their_index) = state.local_user_index(chat_id.into())
+            && let Some(their_index) = state.index_of_local_user(chat_id.into())
         {
             state.data.users.with_user_mut(their_index, |user| {
                 if !user.blocked_users.contains(&my_user_id)

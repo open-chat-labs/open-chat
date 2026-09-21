@@ -20,7 +20,7 @@ fn c2c_delete_user(args: Args) -> Response {
 // them) is treated as deleted, as `c2c_groups_and_communities`, which the LocalUserIndex calls
 // first, also does.
 fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let Some(user_index) = state.local_user_index(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Response::Success;
     };
 

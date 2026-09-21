@@ -179,7 +179,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
 
     let recipient = if args.recipient == my_user_id {
         Recipient::Me
-    } else if let Some(index) = state.local_user_index(args.recipient) {
+    } else if let Some(index) = state.index_of_local_user(args.recipient) {
         Recipient::SameCanister(index)
     } else {
         // TODO: Users in other canisters, including bots, need the recipient looked up in the

@@ -11,7 +11,7 @@ fn c2c_notify_community_deleted(args: Args) -> Response {
 }
 
 fn c2c_notify_community_deleted_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let Some(user_index) = state.local_user_index(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Response::Success;
     };
     let now = state.env.now();

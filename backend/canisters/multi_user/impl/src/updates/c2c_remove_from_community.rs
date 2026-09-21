@@ -12,7 +12,7 @@ fn c2c_remove_from_community(args: Args) -> Response {
 // Called by the community the user was removed from, so, as in the User canister, the caller is the
 // community to remove
 fn c2c_remove_from_community_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let Some(user_index) = state.local_user_index(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Response::Success;
     };
     let now = state.env.now();

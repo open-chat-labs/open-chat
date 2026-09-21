@@ -15,7 +15,7 @@ fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response
     // Traps for a user who isn't in this canister, rather than letting the UserIndex go on to
     // record a suspension which was never applied
     let user_index = state
-        .local_user_index(args.user_id)
+        .index_of_local_user(args.user_id)
         .unwrap_or_else(|| ic_cdk::trap("User not found"));
 
     let now = state.env.now();
