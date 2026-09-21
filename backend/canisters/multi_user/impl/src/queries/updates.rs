@@ -3,7 +3,7 @@ use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use types::{OptionUpdate, TimestampMillis};
 use user_canister::updates::{Response::*, *};
-use user_state::sorted_pinned;
+use user_state::{merge_maps, sorted_pinned};
 
 #[query(guard = "caller_is_hosted_user", msgpack = true)]
 fn updates(args: Args) -> Response {
@@ -41,7 +41,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             || user.chit_events.last_updated() > updates_since
             || user.achievements_last_seen > updates_since
             || user.favourite_chats.any_updated(updates_since)
-            || user.direct_chats.any_updated(updates_since);
+            || user.direct_chats.any_updated(updates_since)
+            || user.group_chats.any_updated(updates_since)
+            || user.communities.any_updated(updates_since);
 
         // Short circuit prior to calling `ic0.time()` so that caching works effectively
         if !has_any_updates {
@@ -76,6 +78,48 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             removed: user.direct_chats.removed_since(updates_since),
         };
 
+        let mut group_chats_added = Vec::new();
+        let mut group_chats_updated = Vec::new();
+        for group_chat in user.group_chats.updated_since(updates_since) {
+            if group_chat.date_joined > updates_since {
+                group_chats_added.push(group_chat.to_summary());
+            } else {
+                group_chats_updated.push(group_chat.to_summary_updates(updates_since));
+            }
+        }
+
+        let group_chats = GroupChatsUpdates {
+            added: group_chats_added,
+            updated: group_chats_updated,
+            removed: user.group_chats.removed_since(updates_since),
+        };
+
+        let mut communities_added = Vec::new();
+        let mut communities_updated = Vec::new();
+        for community in user.communities.updated_since(updates_since) {
+            if community.date_joined > updates_since {
+                communities_added.push(community.to_summary());
+            } else {
+                communities_updated.push(community.to_summary_updates(updates_since));
+            }
+        }
+
+        let communities = CommunitiesUpdates {
+            added: communities_added,
+            updated: communities_updated,
+            removed: user.communities.removed_since(updates_since),
+        };
+
+        // Direct and group chats are pinned in the one list, as in the User canister
+        let direct_pinned = user.direct_chats.pinned_chats_if_updated(updates_since);
+        let group_pinned = user.group_chats.pinned_chats_if_updated(updates_since);
+        let pinned_chats = match (&direct_pinned, &group_pinned) {
+            (Some(direct), Some(group)) => Some(sorted_pinned(&merge_maps(direct, group))),
+            (Some(direct), None) => Some(sorted_pinned(&merge_maps(direct, &user.group_chats.pinned_chats()))),
+            (None, Some(group)) => Some(sorted_pinned(&merge_maps(&user.direct_chats.pinned_chats(), group))),
+            (None, None) => None,
+        };
+
         let favourite_chats = FavouriteChatsUpdates {
             chats: user.favourite_chats.chats_if_updated(updates_since),
             pinned: user
@@ -91,9 +135,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             username,
             display_name,
             direct_chats,
-            group_chats: GroupChatsUpdates::default(),
+            group_chats,
             favourite_chats,
-            communities: CommunitiesUpdates::default(),
+            communities,
             avatar_id,
             blocked_users,
             suspended,
@@ -120,10 +164,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             btc_address: None,
             one_sec_address: None,
             premium_items: None,
-            pinned_chats: user
-                .direct_chats
-                .pinned_chats_if_updated(updates_since)
-                .map(|pinned| sorted_pinned(&pinned)),
+            pinned_chats,
         })
     })
 }

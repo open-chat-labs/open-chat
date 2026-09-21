@@ -2,7 +2,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use user_canister::initial_state::{Response::*, *};
-use user_state::sorted_pinned;
+use user_state::{merge_maps, sorted_pinned};
 
 #[query(guard = "caller_is_hosted_user", msgpack = true)]
 fn initial_state(_args: Args) -> Response {
@@ -24,15 +24,22 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             pinned: sorted_pinned(user.favourite_chats.pinned()),
         };
 
+        let group_chats = GroupChatsInitial {
+            summaries: user.group_chats.iter().map(|g| g.to_summary()).collect(),
+        };
+
+        let communities = CommunitiesInitial {
+            summaries: user.communities.iter().map(|c| c.to_summary()).collect(),
+        };
+
         // TODO: Everything below which is empty or default stays so until the MultiUser canister
-        // holds it per user: groups and communities, referrals, bots, the BTC and 1sec addresses
-        // and premium items
+        // holds it per user: referrals, bots, the BTC and 1sec addresses and premium items
         Success(SuccessResult {
             timestamp: now,
             direct_chats,
-            group_chats: GroupChatsInitial { summaries: Vec::new() },
+            group_chats,
             favourite_chats,
-            communities: CommunitiesInitial { summaries: Vec::new() },
+            communities,
             avatar_id: user.avatar.id(),
             blocked_users: user.blocked_users.all(),
             suspended: user.suspended.value,
@@ -56,7 +63,10 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             one_sec_address: None,
             premium_items: Vec::new(),
             // Only direct and group chats are merged in here; pinned favourites are listed above
-            pinned_chats: sorted_pinned(&user.direct_chats.pinned_chats()),
+            pinned_chats: sorted_pinned(&merge_maps(
+                &user.direct_chats.pinned_chats(),
+                &user.group_chats.pinned_chats(),
+            )),
         })
     })
 }

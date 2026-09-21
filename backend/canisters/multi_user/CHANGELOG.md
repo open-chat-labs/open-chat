@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Send messages from the OpenChat bot to each user's chat with it, and implement `set_message_reminder_v2` and `cancel_message_reminder`, with a timer job which sends each reminder, plus the OpenChat bot's message when streak insurance is claimed ([#9439](https://github.com/open-chat-labs/open-chat/pull/9439))
 - Implement `c2c_game_chit` and `c2c_set_user_suspended`, holding each user's game CHIT keys ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
 - Implement `pay_for_streak_insurance`, paying from the user's subaccount of the canister or an approved account, and the per-user job which uses up a day of streak insurance or resets it when a streak ends ([#9441](https://github.com/open-chat-labs/open-chat/pull/9441))
+- Hold each user's groups and communities: implement `create_group`, `create_community`, `leave_group`, `leave_community`, `delete_group`, `delete_community`, `set_community_indexes`, `c2c_group_canister`, `c2c_community_canister`, `c2c_remove_from_group`, `c2c_remove_from_community`, `c2c_notify_group_deleted`, `c2c_notify_community_deleted`, `c2c_groups_and_communities` and the join and Diamond membership events of `c2c_local_user_index`, and include groups and channels in `initial_state`, `updates`, pinning, archiving and `mark_read` ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
 
 ### Changed
 

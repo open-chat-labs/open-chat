@@ -16,10 +16,11 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, Cycles, DirectChatUserNotificationPayload,
-    IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis, Timestamped,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
+use user_state::{Community, GroupChat};
 use utils::env::Environment;
 
 mod crypto;
@@ -55,6 +56,10 @@ impl RuntimeState {
 
     pub fn is_caller_user_index(&self) -> bool {
         self.env.caller() == self.data.user_index_canister_id
+    }
+
+    pub fn is_caller_group_index(&self) -> bool {
+        self.env.caller() == self.data.group_index_canister_id
     }
 
     // The index of the user the caller owns, if the caller is one of this canister's users
@@ -348,6 +353,50 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
                 ends,
                 self.env.now(),
             );
+        }
+    }
+
+    // Removes the group from the user at `user_index`, garbage collecting its entries in stable memory
+    pub fn remove_group(&mut self, user_index: u16, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
+        let (group, prefix) = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| user.remove_group(chat_id, now))
+            .flatten()?;
+        self.garbage_collect_removed_chat_keys(user_index, vec![prefix]);
+        Some(group)
+    }
+
+    // Removes the community from the user at `user_index`, garbage collecting its channels' entries
+    // in stable memory
+    pub fn remove_community(&mut self, user_index: u16, community_id: CommunityId, now: TimestampMillis) -> Option<Community> {
+        let (community, prefixes) = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| user.remove_community(community_id, now))
+            .flatten()?;
+        self.garbage_collect_removed_chat_keys(user_index, prefixes);
+        Some(community)
+    }
+
+    // A removed group or community only has a small number of entries, so they are removed
+    // immediately, as in the User canister, so that none are left to be wiped by a later garbage
+    // collection if the user rejoins. Any which can't be removed within this message are left for
+    // the garbage collection job.
+    fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
+        let remaining: Vec<_> = self
+            .data
+            .users
+            .with_user_mut(user_index, |_| {
+                prefixes
+                    .into_iter()
+                    .filter(|prefix| stable_memory_map::garbage_collect(prefix.clone()).is_err())
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        if !remaining.is_empty() {
+            self.garbage_collect_stable_memory_keys(user_index, remaining);
         }
     }
 

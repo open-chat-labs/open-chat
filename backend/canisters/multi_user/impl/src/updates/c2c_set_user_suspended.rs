@@ -22,12 +22,14 @@ fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response
     state
         .data
         .users
-        .with_user_mut(user_index, |user| user.suspended = Timestamped::new(args.suspended, now));
+        .with_user_mut(user_index, |user| {
+            user.suspended = Timestamped::new(args.suspended, now);
 
-    // TODO: Return the user's groups and communities, which the UserIndex suspends them in, once
-    // they are held per user
-    Success(SuccessResult {
-        groups: Vec::new(),
-        communities: Vec::new(),
-    })
+            // The user's groups and communities, which the UserIndex suspends them in
+            Success(SuccessResult {
+                groups: user.group_chats.iter().map(|g| g.chat_id).collect(),
+                communities: user.communities.iter().map(|c| c.community_id).collect(),
+            })
+        })
+        .unwrap_or_else(|| ic_cdk::trap("User not found"))
 }
