@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `last_90_days` and `last_year` to the active users metrics
+- Add `last_90_days`, `last_year` and `last_2_years` to the active users metrics ([#9443](https://github.com/open-chat-labs/open-chat/pull/9443), [#9445](https://github.com/open-chat-labs/open-chat/pull/9445))
 
 ### Changed
 
