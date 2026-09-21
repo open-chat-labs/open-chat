@@ -17,7 +17,8 @@ fn c2c_delete_user(args: Args) -> Response {
 // map are queued for garbage collection. Their index is never reused, so nothing left over can be
 // mistaken for another user's. Other users' copies of direct chats with them are kept, as when a
 // User canister is uninstalled. A user who isn't here (eg. because a retried call already deleted
-// them) is treated as deleted.
+// them) is treated as deleted, as `c2c_groups_and_communities`, which the LocalUserIndex calls
+// first, also does.
 fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     let Some(user_index) = state.local_user_index(args.user_id) else {
         return Response::Success;
@@ -25,6 +26,12 @@ fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     state.data.users.remove(user_index);
     state.data.timer_jobs.cancel_jobs(|job| job.user_index() == user_index);
+    // Nor are any events from them still waiting to be sent to the LocalUserIndex, as when a User
+    // canister is uninstalled
+    state
+        .data
+        .local_user_index_event_sync_queue
+        .retain(|event| event.value.user_id != args.user_id);
     // The user's whole scope is garbage collected, so there is no need to remove these separately
     state
         .data

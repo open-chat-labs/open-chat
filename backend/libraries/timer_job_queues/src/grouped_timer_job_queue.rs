@@ -71,6 +71,19 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         self.within_lock(|i| i.items_map.values().map(|v| v.len()).sum())
     }
 
+    // Removes the queued items for which `f` returns false. Items in a batch which is already
+    // being processed are unaffected.
+    pub fn retain(&mut self, f: impl Fn(&T::Item) -> bool) {
+        self.within_lock(|i| {
+            i.items_map.retain(|_, items| {
+                items.retain(|item| f(item));
+                !items.is_empty()
+            });
+            let items_map = &i.items_map;
+            i.queue.retain(|key| items_map.contains_key(key));
+        })
+    }
+
     pub fn is_empty(&self) -> bool {
         self.within_lock(|i| i.queue.is_empty())
     }

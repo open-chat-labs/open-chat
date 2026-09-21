@@ -3152,7 +3152,15 @@ fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
         vec![(alice_id, "hello".to_string()), (bob_id, "hi".to_string())]
     );
 
-    // Deleting her again (eg. when the LocalUserIndex retries) succeeds without effect
+    // Deleting her again (eg. when the LocalUserIndex retries) succeeds without effect, and she is
+    // in no groups or communities, which the LocalUserIndex looks up first
+    let response = client::multi_user::c2c_groups_and_communities(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_groups_and_communities::Args { user_id: alice_id },
+    );
+    assert!(response.groups.is_empty() && response.communities.is_empty());
     delete_user(env, local_user_index, canister_id, alice_id);
     assert_eq!(user_count(env, canister_id), 1);
 

@@ -381,7 +381,7 @@ fn garbage_collect_while(prefix: BaseKeyPrefix, keep_going: impl Fn() -> bool) -
 // Deletes every entry of the user at `index` from both maps, in a canister which holds many users,
 // which is how a deleted user's data is removed. As with `garbage_collect`, returns `Ok(count)`
 // once every entry is deleted, or `Err(count)` if it ran out of instructions first, in which case
-// it should be called again. Must be called outside of `with_key_scope`.
+// it should be called again. It works on the raw keys, so ignores any current key scope.
 pub fn garbage_collect_user(index: u16) -> Result<u32, u32> {
     garbage_collect_user_while(index, || ic_cdk::api::instruction_counter() < 2_000_000_000)
 }
