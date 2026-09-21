@@ -13,6 +13,7 @@ pub mod media_scan_job_log;
 pub mod moderation_queue;
 pub mod premium_items;
 pub mod referral_codes;
+pub mod top_up_leaderboards;
 pub mod user_event_batch;
 pub mod user_index_event_batch;
 pub mod web_push_subscriptions;
