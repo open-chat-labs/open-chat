@@ -1,4 +1,4 @@
-use crate::model::community::Community;
+use crate::community::Community;
 use direct_chat::removed_chats;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;
@@ -103,6 +103,10 @@ impl Communities {
 
     pub fn len(&self) -> usize {
         self.communities.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.communities.is_empty()
     }
 
     fn next_index(&self) -> u32 {
