@@ -2,12 +2,16 @@ use candid::Principal;
 use direct_chat::DirectChats;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::BaseKeyPrefix;
 use std::collections::HashSet;
-use types::{Achievement, ChitEvent, ChitEventType, TimestampMillis, Timestamped, UserId};
+use types::{
+    Achievement, Chat, ChatId, ChitEvent, ChitEventType, CommunityId, MultiUserChat, TimestampMillis, Timestamped, UserId,
+};
 use user_canister::{MessageActivityEvent, WalletConfig};
 use user_state::{
-    BlockedUsers, ChitEvents, Contacts, FavouriteChats, GameChitKeys, HotGroupExclusions, MessageActivityEvents, PinNumber,
-    ProfileDocument, SavedCryptoAccounts, Streak,
+    BlockedUsers, ChitEvents, Communities, Community, Contacts, FavouriteChats, GameChitKeys, GroupChat, GroupChats,
+    HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, SavedCryptoAccounts, Streak,
+    ThreadsRead,
 };
 
 // The state of a single user within the canister. This mirrors the per-user fields of the User
@@ -54,6 +58,12 @@ pub struct User {
     pub achievements_last_seen: TimestampMillis,
     #[serde(default)]
     pub game_chit_keys: GameChitKeys,
+    #[serde(default)]
+    pub group_chats: GroupChats,
+    #[serde(default)]
+    pub communities: Communities,
+    #[serde(default)]
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
 }
 
 impl User {
@@ -83,7 +93,42 @@ impl User {
             achievements: HashSet::new(),
             achievements_last_seen: 0,
             game_chit_keys: GameChitKeys::default(),
+            group_chats: GroupChats::default(),
+            communities: Communities::default(),
+            diamond_membership_expires_at: None,
         }
+    }
+
+    pub fn membership(&self, now: TimestampMillis) -> Membership {
+        Membership::new(self.diamond_membership_expires_at, now)
+    }
+
+    // Removes the group, returning the prefix of its entries in the stable memory map, which the
+    // caller garbage collects, as the User canister's `remove_group` does
+    pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<(GroupChat, BaseKeyPrefix)> {
+        self.favourite_chats.remove(&Chat::Group(chat_id), now);
+        self.hot_group_exclusions.add(chat_id, None, now);
+        let group = self.group_chats.remove(chat_id, now)?;
+        Some((group, ThreadsRead::stable_memory_key_prefix(MultiUserChat::Group(chat_id))))
+    }
+
+    // Removes the community, returning the prefixes of its channels' entries in the stable memory
+    // map, which the caller garbage collects, as the User canister's `remove_community` does
+    pub fn remove_community(
+        &mut self,
+        community_id: CommunityId,
+        now: TimestampMillis,
+    ) -> Option<(Community, Vec<BaseKeyPrefix>)> {
+        let community = self.communities.remove(community_id, now)?;
+        let mut prefixes = Vec::new();
+        for channel_id in community.channels.keys() {
+            self.favourite_chats.remove(&Chat::Channel(community_id, *channel_id), now);
+            prefixes.push(ThreadsRead::stable_memory_key_prefix(MultiUserChat::Channel(
+                community_id,
+                *channel_id,
+            )));
+        }
+        Some((community, prefixes))
     }
 
     pub fn verify_not_suspended(&self) -> Result<(), OCErrorCode> {

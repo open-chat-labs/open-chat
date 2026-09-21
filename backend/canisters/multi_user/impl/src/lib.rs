@@ -16,10 +16,11 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, Cycles, DirectChatUserNotificationPayload,
-    IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis, Timestamped,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
+use user_state::{Community, GroupChat};
 use utils::env::Environment;
 
 mod crypto;
@@ -349,6 +350,29 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
                 self.env.now(),
             );
         }
+    }
+
+    // Removes the group from the user at `user_index`, garbage collecting its entries in stable memory
+    pub fn remove_group(&mut self, user_index: u16, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
+        let (group, prefix) = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| user.remove_group(chat_id, now))
+            .flatten()?;
+        self.garbage_collect_stable_memory_keys(user_index, vec![prefix]);
+        Some(group)
+    }
+
+    // Removes the community from the user at `user_index`, garbage collecting its channels' entries
+    // in stable memory
+    pub fn remove_community(&mut self, user_index: u16, community_id: CommunityId, now: TimestampMillis) -> Option<Community> {
+        let (community, prefixes) = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| user.remove_community(community_id, now))
+            .flatten()?;
+        self.garbage_collect_stable_memory_keys(user_index, prefixes);
+        Some(community)
     }
 
     // Queues the stable memory map entries of a chat deleted by the user at `user_index` for
