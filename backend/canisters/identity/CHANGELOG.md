@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off WebAuthn key repair now that it has run in production ([#9323](https://github.com/open-chat-labs/open-chat/pull/9323))
 
-## [[2.0.2053](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2053-identity)] - 2026-09-04
+## [[2.0.2053](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2053-identity)] - 2026-09-07
 
 ### Fixed
 
