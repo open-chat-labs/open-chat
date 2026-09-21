@@ -1,8 +1,104 @@
 use crate::RuntimeState;
 use chat_events::{MessageContentInternal, NullEventPusher, PushMessageArgs, ReplyContextInternal, TextContentInternal};
-use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
+use constants::{DAY_IN_MS, HOUR_IN_MS, OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
 use rand::RngExt;
-use types::{DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, UserType};
+use types::{
+    ChannelId, CommunityId, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message,
+    SuspensionDuration, UserId, UserType,
+};
+use user_canister::UserSuspended;
+
+// The texts below match the User canister's `openchat_bot` messages of the same names
+
+pub(crate) fn send_community_deleted_message(
+    user_index: u16,
+    deleted_by: UserId,
+    name: String,
+    public: bool,
+    state: &mut RuntimeState,
+) {
+    let visibility = if public { "public" } else { "private" };
+    let text = format!("The {visibility} community \"{name}\" was deleted by @UserId({deleted_by})");
+
+    send_text_message(user_index, text, false, state);
+}
+
+pub(crate) fn send_group_deleted_message(
+    user_index: u16,
+    deleted_by: UserId,
+    group_name: String,
+    public: bool,
+    state: &mut RuntimeState,
+) {
+    let visibility = if public { "public" } else { "private" };
+    let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
+
+    send_text_message(user_index, text, false, state);
+}
+
+pub(crate) fn send_group_imported_into_community_message(
+    user_index: u16,
+    group_name: String,
+    public: bool,
+    community_name: String,
+    community_id: CommunityId,
+    channel_id: ChannelId,
+    state: &mut RuntimeState,
+) {
+    let visibility = if public { "public" } else { "private" };
+    let text = format!(
+        "The {visibility} group \"{group_name}\" was deleted because it was imported into the [\"{community_name}\"](/community/{community_id}/channel/{channel_id}) community"
+    );
+
+    send_text_message(user_index, text, false, state);
+}
+
+pub(crate) fn send_removed_from_group_or_community_message(
+    user_index: u16,
+    is_group: bool,
+    removed_by: UserId,
+    group_or_community_name: String,
+    public: bool,
+    blocked: bool,
+    state: &mut RuntimeState,
+) {
+    let visibility = if public { "public" } else { "private" };
+    let action = if blocked { "blocked" } else { "removed" };
+    let group_or_community = if is_group { "group" } else { "community" };
+    let text = format!(
+        "You were {action} from the {visibility} {group_or_community} \"{group_or_community_name}\" by @UserId({removed_by})"
+    );
+
+    send_text_message(user_index, text, false, state);
+}
+
+pub(crate) fn send_user_suspended_message(user_index: u16, event: &UserSuspended, state: &mut RuntimeState) {
+    let action = match event.duration {
+        SuspensionDuration::Duration(ms) => {
+            if ms < 2 * DAY_IN_MS {
+                let hours = ms / HOUR_IN_MS;
+                format!("unsuspended in {hours} hours")
+            } else {
+                let days = ms / DAY_IN_MS;
+                format!("unsuspended in {days} days")
+            }
+        }
+        SuspensionDuration::Indefinitely => "deleted in 90 days".to_string(),
+    };
+
+    let reason = &event.reason;
+
+    let text = format!(
+        "Your account has been suspended.
+
+Reason:
+\"{reason}\"
+
+You can appeal this suspension by emailing safety@openchatlabs.org otherwise your account will be {action}."
+    );
+
+    send_text_message(user_index, text, false, state);
+}
 
 pub(crate) fn send_text_message(user_index: u16, text: String, mute_notification: bool, state: &mut RuntimeState) {
     let content = MessageContentInternal::Text(TextContentInternal { text });

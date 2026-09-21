@@ -10,10 +10,14 @@ use user_canister::{
     set_bio, set_contact, set_message_reminder_v2, set_pin_number, set_profile_background, unblock_user, undelete_messages,
     unmute_notifications, unpin_chat_v2, update_chat_settings, updates,
 };
-use user_canister::{c2c_game_chit, c2c_set_user_suspended};
+use user_canister::{
+    c2c_game_chit, c2c_group_canister, c2c_groups_and_communities, c2c_local_user_index, c2c_notify_community_deleted,
+    c2c_notify_group_deleted, c2c_remove_from_group, c2c_set_user_suspended, set_community_indexes,
+};
 
 // Queries
 generate_msgpack_query_call!(bio);
+generate_msgpack_query_call!(c2c_groups_and_communities);
 generate_msgpack_query_call!(chit_events);
 generate_msgpack_query_call!(contacts);
 generate_msgpack_query_call!(deleted_message);
@@ -38,6 +42,11 @@ generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(cancel_message_reminder);
 generate_msgpack_update_call!(c2c_create_user);
 generate_msgpack_update_call!(c2c_game_chit);
+generate_msgpack_update_call!(c2c_group_canister);
+generate_msgpack_update_call!(c2c_local_user_index);
+generate_msgpack_update_call!(c2c_notify_community_deleted);
+generate_msgpack_update_call!(c2c_notify_group_deleted);
+generate_msgpack_update_call!(c2c_remove_from_group);
 generate_msgpack_update_call!(c2c_set_user_suspended);
 generate_msgpack_update_call!(claim_daily_chit);
 generate_msgpack_update_call!(configure_wallet);
@@ -57,6 +66,7 @@ generate_msgpack_update_call!(save_crypto_account);
 generate_msgpack_update_call!(send_message_v2);
 generate_msgpack_update_call!(set_avatar);
 generate_msgpack_update_call!(set_bio);
+generate_msgpack_update_call!(set_community_indexes);
 generate_msgpack_update_call!(set_contact);
 generate_msgpack_update_call!(set_message_reminder_v2);
 generate_msgpack_update_call!(set_pin_number);

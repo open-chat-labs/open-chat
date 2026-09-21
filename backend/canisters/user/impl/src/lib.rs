@@ -54,7 +54,6 @@ mod timer_job_types;
 mod token_swaps;
 mod updates;
 
-pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();

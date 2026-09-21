@@ -11,12 +11,17 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    Achievement, BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, ChatId, DirectChatSummary, DirectChatSummaryUpdates,
-    Document, Empty, EventsResponse, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, PinNumberSettings, Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
+    Achievement, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat, ChatEvent, ChatId,
+    ChitEventType, CommunityId, CommunityImportedInto, DeletedCommunityInfo, DeletedGroupInfoInternal,
+    DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty, EventsResponse,
+    IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate,
+    PinNumberSettings, Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
 use user_canister::set_pin_number::PinNumberVerification;
-use user_canister::{ChatInList, MessageActivity, MessageActivityEvent, NamedAccount, WalletConfig};
+use user_canister::{
+    ChatInList, LocalUserIndexEvent, MessageActivity, MessageActivityEvent, NamedAccount, UserJoinedCommunityOrChannel,
+    UserJoinedGroup, WalletConfig,
+};
 
 #[test]
 fn create_then_upgrade_multi_user_canister() {
@@ -2520,5 +2525,485 @@ fn assert_pay_for_streak_insurance_error(
     match pay_for_streak_insurance(env, sender, canister_id, additional_days, expected_price, from_account) {
         user_canister::pay_for_streak_insurance::Response::Error(error) => assert_eq!(error.code(), expected),
         response => panic!("{response:?}"),
+    }
+}
+
+#[test]
+fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let group: ChatId = random_principal().into();
+    let community: CommunityId = random_principal().into();
+    let channels: [ChannelId; 2] = [1u32.into(), 2u32.into()];
+
+    // The LocalUserIndex tells Bob he has joined a group and a community. Repeating an event has
+    // no further effect.
+    let joined_group = local_user_index_event(
+        env,
+        1,
+        LocalUserIndexEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
+            chat_id: group,
+            local_user_index_canister_id: local_user_index,
+            latest_message_index: Some(4.into()),
+            group_canister_timestamp: now_millis(env),
+        })),
+    );
+    let joined_community = local_user_index_event(
+        env,
+        2,
+        LocalUserIndexEvent::UserJoinedCommunityOrChannel(Box::new(UserJoinedCommunityOrChannel {
+            community_id: community,
+            local_user_index_canister_id: local_user_index,
+            channels: channels
+                .iter()
+                .map(|channel_id| ChannelLatestMessageIndex {
+                    channel_id: *channel_id,
+                    latest_message_index: None,
+                })
+                .collect(),
+            community_canister_timestamp: now_millis(env),
+        })),
+    );
+    send_local_user_index_events(
+        env,
+        local_user_index,
+        canister_id,
+        bob_id,
+        vec![joined_group.clone(), joined_community],
+    );
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![joined_group]);
+
+    let bobs_state = initial_state(env, bob, canister_id);
+    assert_eq!(group_ids(&bobs_state), vec![group]);
+    assert_eq!(bobs_state.group_chats.summaries[0].read_by_me_up_to, Some(4.into()));
+    assert_eq!(community_ids(&bobs_state), vec![community]);
+    assert_eq!(bobs_state.communities.summaries[0].channels.len(), 2);
+    assert!(has_achievement(&bobs_state, Achievement::JoinedGroup));
+    assert!(has_achievement(&bobs_state, Achievement::JoinedCommunity));
+    let alices_state = initial_state(env, alice, canister_id);
+    assert!(group_ids(&alices_state).is_empty() && community_ids(&alices_state).is_empty());
+
+    // The LocalUserIndex and the UserIndex are told of Bob's groups and communities
+    let response = client::multi_user::c2c_groups_and_communities(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_groups_and_communities::Args { user_id: bob_id },
+    );
+    assert_eq!((response.groups, response.communities), (vec![group], vec![community]));
+    let user_canister::c2c_set_user_suspended::Response::Success(result) = client::multi_user::c2c_set_user_suspended(
+        env,
+        canister_ids.user_index,
+        canister_id,
+        &user_canister::c2c_set_user_suspended::Args {
+            user_id: bob_id,
+            suspended: false,
+        },
+    );
+    assert_eq!((result.groups, result.communities), (vec![group], vec![community]));
+
+    // Bob pins the group and a channel, marks them read, and orders his communities
+    let since = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    for chat in [ChatInList::Group(group), ChatInList::Community(community, channels[0])] {
+        let response = client::multi_user::pin_chat_v2(env, bob, canister_id, &user_canister::pin_chat_v2::Args { chat });
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    }
+    let response = client::multi_user::mark_read(
+        env,
+        bob,
+        canister_id,
+        &user_canister::mark_read::Args {
+            messages_read: vec![user_canister::mark_read::ChatMessagesRead {
+                chat_id: group,
+                read_up_to: Some(6.into()),
+                threads: Vec::new(),
+                date_read_pinned: None,
+            }],
+            community_messages_read: vec![user_canister::mark_read::CommunityMessagesRead {
+                community_id: community,
+                channels_read: vec![user_canister::mark_read::ChannelMessagesRead {
+                    channel_id: channels[1],
+                    read_up_to: Some(2.into()),
+                    threads: Vec::new(),
+                    date_read_pinned: None,
+                }],
+            }],
+        },
+    );
+    assert!(matches!(response, user_canister::mark_read::Response::Success));
+    let response = client::multi_user::set_community_indexes(
+        env,
+        bob,
+        canister_id,
+        &user_canister::set_community_indexes::Args {
+            indexes: vec![(community, 3)],
+        },
+    );
+    assert!(matches!(response, user_canister::set_community_indexes::Response::Success));
+
+    let bobs_updates = updates(env, bob, canister_id, since).unwrap();
+    assert_eq!(bobs_updates.pinned_chats, Some(vec![Chat::Group(group)]));
+    assert_eq!(bobs_updates.group_chats.updated[0].read_by_me_up_to, Some(6.into()));
+    let community_updates = &bobs_updates.communities.updated[0];
+    assert_eq!(community_updates.index, Some(3));
+    assert_eq!(community_updates.pinned, Some(vec![channels[0]]));
+    let channel_read = community_updates
+        .channels
+        .iter()
+        .find(|c| c.channel_id == channels[1])
+        .unwrap();
+    assert_eq!(channel_read.read_by_me_up_to, Some(2.into()));
+
+    // Archiving the group also unpins it
+    let response = client::multi_user::archive_unarchive_chats(
+        env,
+        bob,
+        canister_id,
+        &user_canister::archive_unarchive_chats::Args {
+            to_archive: vec![Chat::Group(group)],
+            to_unarchive: Vec::new(),
+        },
+    );
+    assert!(matches!(response, user_canister::archive_unarchive_chats::Response::Success));
+    let bobs_state = initial_state(env, bob, canister_id);
+    assert!(bobs_state.group_chats.summaries[0].archived);
+    assert!(bobs_state.pinned_chats.is_empty());
+
+    // Only a group Bob is in can send him events
+    let now = now_millis(env);
+    let achievement_event = |id| user_canister::c2c_group_canister::Args {
+        user_id: bob_id,
+        events: vec![IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: id,
+            value: user_canister::GroupCanisterEvent::Achievement(Achievement::ReactedToMessage),
+        }],
+    };
+    assert!(is_rejected(
+        env,
+        random_principal(),
+        canister_id,
+        "c2c_group_canister",
+        &achievement_event(1)
+    ));
+    client::multi_user::c2c_group_canister(env, group.into(), canister_id, &achievement_event(2));
+    assert!(has_achievement(
+        &initial_state(env, bob, canister_id),
+        Achievement::ReactedToMessage
+    ));
+
+    // When the group removes Bob, it is removed from his state and the OpenChat bot tells him
+    let response = client::multi_user::c2c_remove_from_group(
+        env,
+        group.into(),
+        canister_id,
+        &user_canister::c2c_remove_from_group::Args {
+            user_id: bob_id,
+            removed_by: alice_id,
+            blocked: false,
+            group_name: "Group".to_string(),
+            public: true,
+        },
+    );
+    assert!(matches!(response, user_canister::c2c_remove_from_group::Response::Success));
+    assert!(group_ids(&initial_state(env, bob, canister_id)).is_empty());
+    assert_eq!(
+        updates(env, bob, canister_id, since).unwrap().group_chats.removed,
+        vec![group]
+    );
+    assert_eq!(
+        last_bot_message(env, bob, canister_id, bob_id),
+        format!("You were removed from the public group \"Group\" by @UserId({alice_id})")
+    );
+}
+
+#[test]
+fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let deleted_by: UserId = random_principal().into();
+    let [deleted_group, imported_group]: [ChatId; 2] = [random_principal().into(), random_principal().into()];
+    let community: CommunityId = random_principal().into();
+
+    let events = [deleted_group, imported_group]
+        .into_iter()
+        .enumerate()
+        .map(|(i, chat_id)| {
+            local_user_index_event(
+                env,
+                i as u64,
+                LocalUserIndexEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
+                    chat_id,
+                    local_user_index_canister_id: local_user_index,
+                    latest_message_index: None,
+                    group_canister_timestamp: now_millis(env),
+                })),
+            )
+        })
+        .collect();
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, events);
+    manage_favourite_chats(env, bob, canister_id, vec![Chat::Group(imported_group)], Vec::new());
+
+    let now = now_millis(env);
+    let group_deleted_args = |chat_id: ChatId, community_imported_into: Option<CommunityImportedInto>| {
+        user_canister::c2c_notify_group_deleted::Args {
+            user_id: bob_id,
+            deleted_group: DeletedGroupInfoInternal {
+                id: chat_id,
+                timestamp: now,
+                deleted_by,
+                group_name: "Group".to_string(),
+                name: "Group".to_string(),
+                public: false,
+                community_imported_into,
+            },
+        }
+    };
+
+    // Only the GroupIndex can say a group has been deleted
+    assert!(is_rejected(
+        env,
+        random_principal(),
+        canister_id,
+        "c2c_notify_group_deleted",
+        &group_deleted_args(deleted_group, None)
+    ));
+
+    client::multi_user::c2c_notify_group_deleted(
+        env,
+        canister_ids.group_index,
+        canister_id,
+        &group_deleted_args(deleted_group, None),
+    );
+    assert_eq!(group_ids(&initial_state(env, bob, canister_id)), vec![imported_group]);
+    assert_eq!(
+        last_bot_message(env, bob, canister_id, bob_id),
+        format!("The private group \"Group\" was deleted by @UserId({deleted_by})")
+    );
+
+    // A group imported into a community is replaced by its channel, which takes its place in the
+    // user's favourites
+    let channel_id: ChannelId = 7u32.into();
+    client::multi_user::c2c_notify_group_deleted(
+        env,
+        canister_ids.group_index,
+        canister_id,
+        &group_deleted_args(
+            imported_group,
+            Some(CommunityImportedInto {
+                community_name: "Community".to_string(),
+                community_id: community,
+                local_user_index_canister_id: local_user_index,
+                channel: ChannelLatestMessageIndex {
+                    channel_id,
+                    latest_message_index: None,
+                },
+                other_default_channels: Vec::new(),
+            }),
+        ),
+    );
+    let bobs_state = initial_state(env, bob, canister_id);
+    assert!(group_ids(&bobs_state).is_empty());
+    assert_eq!(community_ids(&bobs_state), vec![community]);
+    assert!(
+        bobs_state.communities.summaries[0]
+            .channels
+            .iter()
+            .any(|c| c.channel_id == channel_id)
+    );
+    assert_eq!(bobs_state.favourite_chats.chats, vec![Chat::Channel(community, channel_id)]);
+    assert!(last_bot_message(env, bob, canister_id, bob_id).contains("was deleted because it was imported into"));
+
+    // Then the community is deleted
+    client::multi_user::c2c_notify_community_deleted(
+        env,
+        canister_ids.group_index,
+        canister_id,
+        &user_canister::c2c_notify_community_deleted::Args {
+            user_id: bob_id,
+            deleted_community: DeletedCommunityInfo {
+                id: community,
+                timestamp: now_millis(env),
+                deleted_by,
+                name: "Community".to_string(),
+                public: true,
+            },
+        },
+    );
+    let bobs_state = initial_state(env, bob, canister_id);
+    assert!(community_ids(&bobs_state).is_empty());
+    assert!(bobs_state.favourite_chats.chats.is_empty());
+    assert_eq!(
+        last_bot_message(env, bob, canister_id, bob_id),
+        format!("The public community \"Community\" was deleted by @UserId({deleted_by})")
+    );
+}
+
+#[test]
+fn creating_a_community_requires_diamond_membership_in_a_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+
+    let create_community = |env: &mut PocketIc| {
+        client::user::create_community(
+            env,
+            alice,
+            canister_id,
+            &user_canister::create_community::Args {
+                is_public: false,
+                name: random_string(),
+                description: random_string(),
+                avatar: None,
+                banner: None,
+                history_visible_to_new_joiners: false,
+                permissions: None,
+                rules: Default::default(),
+                gate_config: None,
+                default_channels: vec!["general".to_string()],
+                default_channel_rules: None,
+                primary_language: "en".to_string(),
+            },
+        )
+    };
+
+    let response = create_community(env);
+    assert!(
+        matches!(&response, user_canister::create_community::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        "{response:?}"
+    );
+
+    // Once Alice is a Diamond member her request passes validation and is sent to the GroupIndex,
+    // which doesn't know of her since users aren't yet registered into MultiUser canisters
+    diamond_membership_payment_received(env, local_user_index, canister_id, alice_id);
+    assert!(has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::UpgradedToDiamond
+    ));
+    let response = create_community(env);
+    assert!(
+        matches!(&response, user_canister::create_community::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotFound)),
+        "{response:?}"
+    );
+}
+
+fn local_user_index_event(
+    env: &PocketIc,
+    idempotency_id: u64,
+    event: LocalUserIndexEvent,
+) -> IdempotentEnvelope<LocalUserIndexEvent> {
+    IdempotentEnvelope {
+        created_at: now_millis(env),
+        idempotency_id,
+        value: event,
+    }
+}
+
+fn send_local_user_index_events(
+    env: &mut PocketIc,
+    local_user_index: CanisterId,
+    canister_id: CanisterId,
+    user_id: UserId,
+    events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>,
+) {
+    let response = client::multi_user::c2c_local_user_index(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_local_user_index::Args { user_id, events },
+    );
+    assert!(matches!(response, user_canister::c2c_local_user_index::Response::Success));
+}
+
+// Whether the canister rejects the call, eg. because the caller fails its guard
+fn is_rejected<A: serde::Serialize>(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    args: &A,
+) -> bool {
+    env.update_call(
+        canister_id,
+        sender,
+        &format!("{method_name}_msgpack"),
+        msgpack::serialize_then_unwrap(args),
+    )
+    .is_err()
+}
+
+fn has_achievement(initial_state: &user_canister::initial_state::SuccessResult, achievement: Achievement) -> bool {
+    initial_state
+        .achievements
+        .iter()
+        .any(|e| matches!(&e.reason, ChitEventType::Achievement(a) if *a == achievement))
+}
+
+fn diamond_membership_payment_received(
+    env: &mut PocketIc,
+    local_user_index: CanisterId,
+    canister_id: CanisterId,
+    user_id: UserId,
+) {
+    let now = now_millis(env);
+    let event = local_user_index_event(
+        env,
+        1,
+        LocalUserIndexEvent::DiamondMembershipPaymentReceived(Box::new(user_canister::DiamondMembershipPaymentReceived {
+            timestamp: now,
+            expires_at: now + 30 * 24 * 60 * 60 * 1000,
+            ledger: Principal::anonymous(),
+            token_symbol: "CHAT".to_string(),
+            token: None,
+            amount_e8s: 0,
+            block_index: 0,
+            duration: DiamondMembershipPlanDuration::OneMonth,
+            recurring: false,
+            send_bot_message: false,
+        })),
+    );
+    send_local_user_index_events(env, local_user_index, canister_id, user_id, vec![event]);
+}
+
+fn group_ids(initial_state: &user_canister::initial_state::SuccessResult) -> Vec<ChatId> {
+    initial_state.group_chats.summaries.iter().map(|g| g.chat_id).collect()
+}
+
+fn community_ids(initial_state: &user_canister::initial_state::SuccessResult) -> Vec<CommunityId> {
+    initial_state.communities.summaries.iter().map(|c| c.community_id).collect()
+}
+
+fn last_bot_message(env: &PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId) -> String {
+    match bot_messages(env, sender, canister_id, user_id).pop().map(|m| m.content) {
+        Some(MessageContent::Text(text)) => text.text,
+        content => panic!("{content:?}"),
     }
 }

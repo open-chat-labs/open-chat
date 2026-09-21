@@ -36,7 +36,7 @@ pub use game_chit_keys::{GameChitKeys, validate_game_chit_args};
 pub use group_chat::{GroupChat, GroupMessagesRead};
 pub use group_chats::GroupChats;
 pub use hot_group_exclusions::HotGroupExclusions;
-pub use membership::Membership;
+pub use membership::{COMMUNITY_CREATION_LIMIT, Membership};
 pub use message_activity_events::MessageActivityEvents;
 pub use pin_number::{PinNumber, VerifyPinError};
 pub use profile_document::ProfileDocument;

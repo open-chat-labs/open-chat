@@ -1,9 +1,44 @@
+use crate::guards::caller_is_hosted_user;
+use crate::{RuntimeState, mutate_state, read_state};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use community_canister::c2c_leave_community;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, UserId};
 use user_canister::leave_community::*;
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-async fn leave_community(_args: Args) -> Response {
-    unimplemented!()
+async fn leave_community(args: Args) -> Response {
+    let (my_index, principal, my_user_id) = match read_state(prepare) {
+        Ok(ok) => ok,
+        Err(error) => return Response::Error(error),
+    };
+
+    let c2c_args = c2c_leave_community::Args {
+        principal,
+        user_id: Some(my_user_id),
+    };
+
+    // As in the User canister, the community is removed if the user has left it or was not in it
+    match community_canister_c2c_client::c2c_leave_community(args.community_id.into(), &c2c_args).await {
+        Ok(result) => {
+            if matches!(result, Response::Success)
+                || matches!(&result, Response::Error(error) if error.matches_code(OCErrorCode::InitiatorNotInCommunity))
+            {
+                mutate_state(|state| state.remove_community(my_index, args.community_id, state.env.now()));
+            }
+            result
+        }
+        Err(error) => Response::Error(error.into()),
+    }
+}
+
+// The caller's index and principal, and their user id, provided they aren't suspended
+fn prepare(state: &RuntimeState) -> OCResult<(u16, Principal, UserId)> {
+    state.with_caller_user(|my_index, user| {
+        user.verify_not_suspended()?;
+        Ok((my_index, user.principal, state.user_id(my_index)))
+    })
 }

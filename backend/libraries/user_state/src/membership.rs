@@ -1,6 +1,8 @@
 use constants::LIFETIME_DIAMOND_TIMESTAMP;
 use types::TimestampMillis;
 
+pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
+
 pub enum Membership {
     Basic,
     Diamond,

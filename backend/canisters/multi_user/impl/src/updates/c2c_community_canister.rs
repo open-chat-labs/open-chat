@@ -1,9 +1,50 @@
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use user_canister::CommunityCanisterEvent;
 use user_canister::c2c_community_canister::*;
 
 #[update(msgpack = true)]
 #[trace]
-fn c2c_community_canister(_args: Args) -> Response {
-    unimplemented!()
+fn c2c_community_canister(args: Args) -> Response {
+    mutate_state(|state| c2c_community_canister_impl(args, state))
+}
+
+// Handles the events a community sends one of this canister's users, as the User canister does. As
+// there, only a community the user is in may send them.
+fn c2c_community_canister_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let now = state.env.now();
+    let Some(user_index) = state.local_user_index(args.user_id) else {
+        ic_cdk::trap("User not found");
+    };
+
+    let awarded_achievement = state
+        .data
+        .users
+        .with_user_mut(user_index, |user| {
+            if !user.communities.exists(&caller.into()) {
+                ic_cdk::trap("Caller is not a known community canister");
+            }
+
+            let mut awarded_achievement = false;
+            for event in args.events {
+                if user.idempotency_checker.check(caller, event.created_at, event.idempotency_id) {
+                    match event.value {
+                        CommunityCanisterEvent::MessageActivity(event) => user.push_message_activity(event, now),
+                        CommunityCanisterEvent::Achievement(achievement) => {
+                            awarded_achievement |= user.award_achievement(achievement, now);
+                        }
+                    }
+                }
+            }
+            awarded_achievement
+        })
+        .unwrap_or_default();
+
+    if awarded_achievement {
+        state.notify_user_index_of_chit(user_index, now);
+    }
+
+    Response::Success
 }
