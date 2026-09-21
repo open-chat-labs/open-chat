@@ -8,6 +8,7 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 constants = { path = "../constants" }
+direct_chat = { path = "../direct_chat" }
 ic-ledger-types = { workspace = true }
 icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }

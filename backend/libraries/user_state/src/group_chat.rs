@@ -1,4 +1,4 @@
-use crate::model::threads_read::ThreadsRead;
+use crate::threads_read::ThreadsRead;
 use constants::HOUR_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
