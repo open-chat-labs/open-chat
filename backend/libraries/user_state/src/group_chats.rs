@@ -1,4 +1,4 @@
-use crate::model::group_chat::GroupChat;
+use crate::group_chat::GroupChat;
 use direct_chat::removed_chats;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;
@@ -110,6 +110,10 @@ impl GroupChats {
 
     pub fn len(&self) -> usize {
         self.group_chats.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.group_chats.is_empty()
     }
 
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {

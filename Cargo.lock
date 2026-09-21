@@ -13097,6 +13097,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "constants",
+ "direct_chat",
  "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",

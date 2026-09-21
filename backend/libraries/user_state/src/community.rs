@@ -1,4 +1,4 @@
-use crate::model::group_chat::{GroupChat, GroupMessagesRead};
+use crate::group_chat::{GroupChat, GroupMessagesRead};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{CanisterId, ChannelId, CommunityId, MultiUserChat, TimestampMillis, Timestamped};
