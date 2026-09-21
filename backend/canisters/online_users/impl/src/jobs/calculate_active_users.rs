@@ -12,6 +12,7 @@ const SEVEN_DAYS: Milliseconds = 7 * DAY_IN_MS;
 const THIRTY_DAYS: Milliseconds = 30 * DAY_IN_MS;
 const NINETY_DAYS: Milliseconds = 90 * DAY_IN_MS;
 const ONE_YEAR: Milliseconds = 365 * DAY_IN_MS;
+const TWO_YEARS: Milliseconds = 2 * ONE_YEAR;
 
 pub fn start_job() {
     run_now_then_interval(Duration::from_millis(ACTIVE_USERS_REFRESH_INTERVAL), run);
@@ -31,9 +32,14 @@ fn run_impl(state: &mut RuntimeState) {
     let mut last_30_days = 0;
     let mut last_90_days = 0;
     let mut last_year = 0;
+    let mut last_2_years = 0;
 
     for (_, last_online) in state.data.last_online_dates.iter() {
         let interval_since_last_online = now.saturating_sub(last_online);
+        if interval_since_last_online > TWO_YEARS {
+            continue;
+        }
+        last_2_years += 1;
         if interval_since_last_online > ONE_YEAR {
             continue;
         }
@@ -73,5 +79,6 @@ fn run_impl(state: &mut RuntimeState) {
         last_30_days,
         last_90_days,
         last_year,
+        last_2_years,
     };
 }

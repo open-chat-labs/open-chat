@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `last_90_days` and `last_year` to the active users metrics
+- Add `last_90_days`, `last_year` and `last_2_years` to the active users metrics
 
 ### Changed
 
