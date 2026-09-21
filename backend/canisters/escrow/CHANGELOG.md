@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2056](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2056-escrow)] - 2026-09-18
+
 ### Changed
 
 - Pass `user_to_notify` through to `SwapStatusChange` so that a canister hosting multiple users knows which user a swap belongs to ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
