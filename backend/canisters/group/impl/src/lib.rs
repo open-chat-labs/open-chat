@@ -125,7 +125,9 @@ impl RuntimeState {
         let Some(user_id) = user_id else {
             return self.get_calling_member(verify);
         };
-        UserId::acting_as(self.env.caller(), Some(user_id)).ok_or(OCErrorCode::InitiatorNotAuthorized)?;
+        if user_id.canister_id() != self.env.caller() {
+            return Err(OCErrorCode::InitiatorNotAuthorized);
+        }
         let member = self.data.chat.members.get(&user_id).ok_or(OCErrorCode::InitiatorNotInChat)?;
         if verify {
             member.verify()?;

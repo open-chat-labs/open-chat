@@ -102,18 +102,6 @@ impl UserId {
         }
     }
 
-    // The user a call from `caller` acts as. A canister holding many users names the user it is
-    // acting for, which is only accepted if that user is one it holds (a non-zero index rules out
-    // the canister's own id). A canister holding a single user acts as itself, whether it names
-    // itself or no one.
-    pub fn acting_as(caller: Principal, user_id: Option<UserId>) -> Option<UserId> {
-        match user_id {
-            Some(user_id) if user_id.0 == caller => Some(user_id),
-            Some(user_id) => (user_id.index() != 0 && user_id.canister_id() == caller).then_some(user_id),
-            None => Some(UserId(caller)),
-        }
-    }
-
     // A UserId carries an index iff it is canister id length and its final byte is tagged. Every
     // canister id ends in the opaque class tag, and so do the vanity principals behind
     // `OPENCHAT_BOT_USER_ID` and `DELETED_USER_ID`; bot and webhook ids are 8 bytes. So all of
@@ -225,25 +213,6 @@ mod tests {
 
     fn canister_id() -> CanisterId {
         CanisterId::from_text("dfdal-2uaaa-aaaaa-qaama-cai").unwrap()
-    }
-
-    #[test]
-    fn acting_as_accepts_the_caller_and_users_it_holds() {
-        let other_canister_id = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
-        let hosted = UserId::new_indexed(canister_id(), 7);
-
-        assert_eq!(UserId::acting_as(canister_id(), None), Some(UserId::new(canister_id())));
-        assert_eq!(
-            UserId::acting_as(canister_id(), Some(UserId::new(canister_id()))),
-            Some(UserId::new(canister_id()))
-        );
-        assert_eq!(UserId::acting_as(canister_id(), Some(hosted)), Some(hosted));
-        assert_eq!(UserId::acting_as(other_canister_id, Some(hosted)), None);
-        assert_eq!(UserId::acting_as(other_canister_id, Some(UserId::new(canister_id()))), None);
-        assert_eq!(
-            UserId::acting_as(canister_id(), Some(UserId::new_indexed(canister_id(), 0))),
-            None
-        );
     }
 
     #[test]

@@ -107,7 +107,7 @@ fn known_caller_kind(caller: CanisterId, state: &RuntimeState) -> Option<Caniste
 fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bool {
     match kind {
         CanisterKind::UserCanister => sender == UserId::from(caller),
-        CanisterKind::MultiUserCanister => sender.index() != 0 && UserId::acting_as(caller, Some(sender)).is_some(),
+        CanisterKind::MultiUserCanister => sender.index() != 0 && sender.canister_id() == caller,
         CanisterKind::Neither => false,
     }
 }
