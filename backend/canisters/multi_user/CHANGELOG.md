@@ -49,4 +49,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Rename the `caller_is_owner` guards to `caller_is_hosted_user`, since the canister hosts many users ([#9432](https://github.com/open-chat-labs/open-chat/pull/9432))
 - Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, which must be upgraded first, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
 - Move `User` into the `user_state` library, shared with the User canister ([#9467](https://github.com/open-chat-labs/open-chat/pull/9467))
+- Build `initial_state` and `updates` from the shared `User`, as the User canister does, so they now include the user's bots ([#9469](https://github.com/open-chat-labs/open-chat/pull/9469))
 

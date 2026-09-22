@@ -30,6 +30,7 @@ mod streak;
 mod threads_read;
 mod token_swaps;
 mod user;
+mod user_queries;
 
 pub use blocked_users::BlockedUsers;
 pub use chit_events::ChitEvents;
@@ -55,7 +56,7 @@ pub use token_swaps::{SwapSuccess, TokenSwap, TokenSwaps};
 pub use user::User;
 
 // The keys of `map`, whose values are when each was pinned, most recently pinned first
-pub fn sorted_pinned<T: Clone>(map: &HashMap<T, TimestampMillis>) -> Vec<T> {
+pub(crate) fn sorted_pinned<T: Clone>(map: &HashMap<T, TimestampMillis>) -> Vec<T> {
     use itertools::Itertools;
 
     map.iter()
@@ -65,7 +66,7 @@ pub fn sorted_pinned<T: Clone>(map: &HashMap<T, TimestampMillis>) -> Vec<T> {
         .collect()
 }
 
-pub fn merge_maps<K, V>(a: &HashMap<K, V>, b: &HashMap<K, V>) -> HashMap<K, V>
+pub(crate) fn merge_maps<K, V>(a: &HashMap<K, V>, b: &HashMap<K, V>) -> HashMap<K, V>
 where
     K: Eq + Hash + Clone,
     V: Clone,
