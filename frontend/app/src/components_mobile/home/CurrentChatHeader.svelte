@@ -21,7 +21,6 @@
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import Video from "svelte-material-icons/VideoOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { now } from "../../stores/time";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
@@ -29,6 +28,7 @@
     import ChatSubtext from "./ChatSubtext.svelte";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import Badges from "./profile/Badges.svelte";
+    import CallButton from "./video/CallButton.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -138,14 +138,6 @@
         }
     }
 
-    function startVideoCall() {
-        publish("startVideoCall", {
-            chatId: selectedChatSummary.id,
-            callType: isPublic ? "broadcast" : "default",
-            join: videoCallInProgress,
-        });
-    }
-
     function navigateToCommunity(e: Event) {
         if ($selectedCommunitySummaryStore !== undefined) {
             navigate(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
@@ -174,15 +166,17 @@
     {/if}
 {/snippet}
 
-{#snippet action(color: string)}
-    <Video {color} />
-{/snippet}
-
 <SectionHeader
-    onAction={canStartOrJoinVideoCall ? startVideoCall : undefined}
-    action={canStartOrJoinVideoCall ? action : undefined}
     menu={!readonly && !$anonUserStore ? menu : undefined}
     onBack={$restrictToSelectedChat ? undefined : clearSelection}>
+    {#if canStartOrJoinVideoCall}
+        <CallButton
+            chatId={selectedChatSummary.id}
+            {isPublic}
+            {videoCallInProgress}
+            size={"lg"}
+            padding={["sm", "zero"]} />
+    {/if}
     {#snippet avatar()}
         <Avatar onClick={openUserProfile} url={chat.avatarUrl} size={"lg"} name={chat.name} />
     {/snippet}

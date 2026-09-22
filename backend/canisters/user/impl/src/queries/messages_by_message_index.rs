@@ -20,7 +20,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> OCResult<
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }
 
-    let chat = state.data.direct_chats.get_or_err(&args.user_id.into())?;
+    let chat = state.data.user.direct_chats.get_or_err(&args.user_id.into())?;
     let Some(events_reader) = chat.events_reader(args.thread_root_message_index) else {
         return Err(OCErrorCode::ThreadNotFound.into());
     };

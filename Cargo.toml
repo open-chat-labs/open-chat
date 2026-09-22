@@ -36,6 +36,7 @@ members = [
     "backend/canisters/market_maker/client",
     "backend/canisters/market_maker/impl",
     "backend/canisters/multi_user/api",
+    "backend/canisters/multi_user/c2c_client",
     "backend/canisters/multi_user/impl",
     "backend/canisters/neuron_controller/api",
     "backend/canisters/neuron_controller/impl",
@@ -165,8 +166,8 @@ members = [
     "backend/libraries/ts_export_macros",
     "backend/libraries/types",
     "backend/libraries/unruly",
+    "backend/libraries/user_core",
     "backend/libraries/user_ids_set",
-    "backend/libraries/user_state",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
@@ -301,6 +302,7 @@ twox-hash = { version = "2", default-features = false, features = [
     "xxhash3_128",
 ] }
 url = "2"
+wat = "1"
 web-push = { version = "0.11", default-features = false, features = [
     "hyper-client",
 ] }

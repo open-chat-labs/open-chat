@@ -42,6 +42,12 @@ impl<T: TimerJobItemBatch> BatchedTimerJobQueue<T> {
         self.0.len()
     }
 
+    // Removes the queued items for which `f` returns false. Items in a batch which is already
+    // being processed are unaffected.
+    pub fn retain(&mut self, f: impl Fn(&T::Item) -> bool) {
+        self.0.retain(f)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

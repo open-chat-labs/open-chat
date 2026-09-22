@@ -4,12 +4,13 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community::{Response::*, *};
+use oc_error_codes::OCErrorCode;
 use types::{CanisterId, CommunityId, Document, UserId};
 
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_create_community(args: Args) -> Response {
-    let (user_id, principal) = match validate_caller().await {
+    let (user_id, principal) = match validate_caller(args.user_id).await {
         Ok((u, p)) => (u, p),
         Err(response) => return response,
     };
@@ -73,19 +74,22 @@ pub(crate) async fn create_community_impl(
     }
 }
 
-async fn validate_caller() -> Result<(UserId, Principal), Response> {
-    let (caller, user_index_canister_id): (UserId, CanisterId) =
-        read_state(|state| (state.env.caller().into(), state.data.user_index_canister_id));
+async fn validate_caller(user_id: Option<UserId>) -> Result<(UserId, Principal), Response> {
+    let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
+    let user_id = user_id.unwrap_or(caller.into());
+    if user_id.canister_id() != caller {
+        return Err(Error(OCErrorCode::InitiatorNotAuthorized.into()));
+    }
 
     match user_index_canister_c2c_client::c2c_lookup_user(
         user_index_canister_id,
         &user_index_canister::c2c_lookup_user::Args {
-            user_id_or_principal: caller.as_principal(),
+            user_id_or_principal: user_id.as_principal(),
         },
     )
     .await
     {
-        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((user_id, r.principal)),
         Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
         Ok(user_index_canister::c2c_lookup_user::Response::Error(error)) => Err(Error(error)),
         Err(error) => Err(InternalError(format!("{error:?}"))),

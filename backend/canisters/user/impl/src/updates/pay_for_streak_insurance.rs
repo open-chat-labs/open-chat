@@ -11,7 +11,7 @@ use ledger_utils::icrc1::make_transfer;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserCanisterStreakInsurancePayment, UserId, icrc1};
 use user_canister::pay_for_streak_insurance::*;
-use user_state::Streak;
+use user_core::Streak;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -77,7 +77,7 @@ async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
     };
 
     mutate_state(|state| {
-        state.data.streak.release_payment_lock();
+        state.data.user.streak.release_payment_lock();
 
         match transfer_result {
             Ok(transaction_index) => {
@@ -106,12 +106,13 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     validate_from_account(args.from_account, my_user_id)?;
 
     let now = state.env.now();
-    if state.data.streak.days(now) == 0 {
+    if state.data.user.streak.days(now) == 0 {
         return Err(OCErrorCode::NoActiveStreak.into());
     }
 
     let days_currently_insured = state
         .data
+        .user
         .streak
         .streak_insurance(now)
         .map(|s| s.days_insured)
@@ -125,14 +126,15 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
 
     let price = state
         .data
+        .user
         .streak
         .insurance_price(days_currently_insured, args.additional_days);
 
     if price != args.expected_price {
         Err(OCErrorCode::PriceMismatch.with_message(price))
-    } else if let Err(error) = state.data.pin_number.verify(args.pin.as_mut(), now) {
+    } else if let Err(error) = state.data.user.pin_number.verify(args.pin.as_mut(), now) {
         Err(error.into())
-    } else if !state.data.streak.acquire_payment_lock() {
+    } else if !state.data.user.streak.acquire_payment_lock() {
         Err(OCErrorCode::AlreadyInProgress.into())
     } else {
         Ok(PrepareOk {

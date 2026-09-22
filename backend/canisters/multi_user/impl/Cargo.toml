@@ -17,11 +17,17 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
+community_canister = { path = "../../community/api" }
+community_canister_c2c_client = { path = "../../community/c2c_client" }
 constants = { path = "../../../libraries/constants" }
 direct_chat = { path = "../../../libraries/direct_chat" }
 escrow_canister = { path = "../../escrow/api" }
 event_store_types = { workspace = true, features = ["json"] }
 git_commit_id = { path = "../../../libraries/git_commit_id" }
+group_canister = { path = "../../group/api" }
+group_canister_c2c_client = { path = "../../group/c2c_client" }
+group_index_canister = { path = "../../group_index/api" }
+group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
@@ -42,5 +48,6 @@ timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
-user_state = { path = "../../../libraries/user_state" }
+user_canister_c2c_client = { path = "../../user/c2c_client" }
+user_core = { path = "../../../libraries/user_core" }
 utils = { path = "../../../libraries/utils" }

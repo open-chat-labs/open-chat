@@ -90,12 +90,15 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
 }
 
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) {
-    state.data.local_multi_users.add(canister_id, wasm_version);
+    let now = state.env.now();
+    state.data.local_multi_user_canisters.add(canister_id, wasm_version, now);
+    // The UserIndex doesn't send this LocalUserIndex the registrations of its own users, so its
+    // MultiUser canisters are added to the global set here
+    state.data.global_users.add_multi_user_canister(canister_id);
 
     // Tell the UserIndex via the event queue rather than relying on the reply to this call. The
     // queue retries until acked, so the mapping still lands if the reply is dropped, eg. because
     // the UserIndex is upgraded while the call is in flight
-    let now = state.env.now();
     state.push_event_to_user_index(UserIndexEvent::MultiUserCanisterCreated(canister_id), now);
 }
 

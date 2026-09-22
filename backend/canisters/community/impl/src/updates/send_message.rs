@@ -14,13 +14,12 @@ use group_chat_core::SendMessageSuccess;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use oc_error_codes::OCErrorCode;
-use rand::Rng;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, ChannelUserNotificationPayload,
-    Chat, CommunityId, EventIndex, EventWrapper, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult,
-    TimestampMillis, User, UserId, Version,
+    Chat, CommunityId, EventIndex, EventWrapper, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User,
+    UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -343,22 +342,19 @@ fn process_send_message_result(
         }
 
         for (user_id, activity) in activity_events {
-            state.data.user_event_sync_queue.push(
+            state.push_event_to_user(
                 user_id,
-                IdempotentEnvelope {
-                    created_at: now,
-                    idempotency_id: state.env.rng().next_u64(),
-                    value: CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                        chat: Chat::Channel(community_id, channel_id),
-                        thread_root_message_index,
-                        message_index,
-                        message_id,
-                        event_index,
-                        activity,
-                        timestamp: now,
-                        user_id: Some(sender),
-                    }),
-                },
+                CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                    chat: Chat::Channel(community_id, channel_id),
+                    thread_root_message_index,
+                    message_index,
+                    message_id,
+                    event_index,
+                    activity,
+                    timestamp: now,
+                    user_id: Some(sender),
+                }),
+                now,
             );
         }
     }

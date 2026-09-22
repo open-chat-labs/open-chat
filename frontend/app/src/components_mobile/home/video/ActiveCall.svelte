@@ -7,10 +7,12 @@
         communitiesStore,
         currentUserIdStore,
         currentUserStore,
+        joinedCallType,
         NoMeetingToJoin,
         OpenChat,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        startVideoOff,
         type AccessTokenType,
         type ChatIdentifier,
         type VideoCallType,
@@ -105,6 +107,13 @@
     ) {
         if (iframeContainer === undefined) return;
 
+        if (join) {
+            callType = joinedCallType(
+                callType,
+                client.lookupChatSummary(chatId)?.videoCallInProgress?.callType,
+            );
+        }
+
         try {
             if ($activeVideoCall !== undefined) {
                 confirmSwitchTo = { chatId, callType, join };
@@ -140,7 +149,7 @@
                 activeSpeakerMode: callType === "broadcast" ? true : $videoSpeakerView,
                 showLeaveButton: false,
                 showFullscreenButton: false,
-                startVideoOff: !$videoCameraOn,
+                startVideoOff: startVideoOff(callType, $videoCameraOn),
                 startAudioOff: !$videoMicOn,
                 iframeStyle: {
                     width: "100%",

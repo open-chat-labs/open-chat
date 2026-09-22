@@ -503,6 +503,7 @@ pub mod happy_path {
                 initiator_avatar_id: None,
                 max_duration,
                 call_type: VideoCallType::Default,
+                audio_only: None,
             },
         );
 

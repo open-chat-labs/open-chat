@@ -7,7 +7,7 @@ use direct_chat::DirectChat;
 use oc_error_codes::OCErrorCode;
 use types::{Chat, EventIndex, MessageId, MessageIndex, OCResult, Reaction, TimestampMillis, UserId};
 use user_canister::remove_reaction::*;
-use user_canister::{MessageActivity, MessageActivityEvent};
+use user_canister::{MessageActivity, MessageActivityEvent, ToggleReactionArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -68,8 +68,28 @@ pub(crate) fn toggle_reaction(
         .ok_or(OCErrorCode::TargetUserNotFound)??;
 
     // Then in the other user's copy, where the thread is identified by the id of its root message
-    // since message indexes differ between the copies
-    // TODO: A user in another canister needs sending `ToggleReaction`, as the User canister does
+    // since message indexes differ between the copies. A user in another canister is sent the
+    // reaction, along with who it is from for their notification (not needed when it is removed).
+    if state.user_index(them).is_none() {
+        let (username, display_name, user_avatar_id) = if added {
+            state.with_caller_user(|_, user| (user.username.value.clone(), user.display_name.value.clone(), user.avatar.id()))
+        } else {
+            (String::new(), None, None)
+        };
+        state.push_user_canister_event(
+            my_index,
+            them,
+            UserCanisterEvent::ToggleReaction(Box::new(ToggleReactionArgs {
+                thread_root_message_id,
+                message_id,
+                reaction: reaction.clone(),
+                added,
+                username,
+                display_name,
+                user_avatar_id,
+            })),
+        );
+    }
     let activity = state
         .with_their_direct_chat_mut(my_user_id, them, |chat| {
             let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;
@@ -91,7 +111,7 @@ pub(crate) fn toggle_reaction(
         .flatten();
 
     if let Some(activity) = activity
-        && let Some(their_index) = state.local_user_index(them)
+        && let Some(their_index) = state.index_of_local_user(them)
     {
         state
             .data
@@ -104,7 +124,7 @@ pub(crate) fn toggle_reaction(
     Ok(())
 }
 
-fn apply_reaction(
+pub(crate) fn apply_reaction(
     chat: &mut DirectChat,
     user_id: UserId,
     thread_root_message_index: Option<MessageIndex>,

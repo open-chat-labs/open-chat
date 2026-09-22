@@ -1,7 +1,7 @@
 use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{AccessGateConfig, CanisterId, ChatId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules};
+use types::{AccessGateConfig, CanisterId, ChatId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -16,6 +16,9 @@ pub struct Args {
     pub permissions_v2: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
     pub gate_config: Option<AccessGateConfig>,
+    // The user being acted for when the caller holds many users, which must be one of its users
+    #[serde(default)]
+    pub user_id: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

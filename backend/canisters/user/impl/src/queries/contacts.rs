@@ -9,6 +9,7 @@ fn contacts(_args: Args) -> Response {
         Success(SuccessResult {
             contacts: state
                 .data
+                .user
                 .contacts
                 .all()
                 .into_iter()

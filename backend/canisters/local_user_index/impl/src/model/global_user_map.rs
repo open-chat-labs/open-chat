@@ -3,8 +3,8 @@ use local_user_index_canister::{ChitBalance, GlobalUser};
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
-use std::collections::{HashMap, HashSet};
-use types::{TimestampMillis, UniquePersonProof, UserId, UserType};
+use std::collections::{BTreeSet, HashMap, HashSet};
+use types::{CanisterId, TimestampMillis, UniquePersonProof, UserId, UserType};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GlobalUserMap {
@@ -18,12 +18,22 @@ pub struct GlobalUserMap {
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
     #[serde(default)]
     chit: HashMap<UserId, ChitBalance>,
+    // This LocalUserIndex's MultiUser canisters, plus those on other LocalUserIndexes which hold at
+    // least one registered user
+    #[serde(default)]
+    multi_user_canisters: BTreeSet<CanisterId>,
 }
 
 impl GlobalUserMap {
     pub fn add(&mut self, principal: Principal, user_id: UserId, user_type: UserType) {
         self.user_id_to_principal.insert(user_id, principal);
         self.principal_to_user_id.insert(principal, user_id);
+
+        // A user in a MultiUser canister carries an index, and is how this LocalUserIndex learns of
+        // the MultiUser canisters on other LocalUserIndexes
+        if user_id.index() != 0 {
+            self.multi_user_canisters.insert(user_id.canister_id());
+        }
 
         if user_type.is_bot() {
             self.legacy_bots.insert(user_id);
@@ -32,6 +42,14 @@ impl GlobalUserMap {
                 self.oc_controlled_bot_users.insert(user_id);
             }
         }
+    }
+
+    pub fn add_multi_user_canister(&mut self, canister_id: CanisterId) {
+        self.multi_user_canisters.insert(canister_id);
+    }
+
+    pub fn multi_user_canisters(&self) -> &BTreeSet<CanisterId> {
+        &self.multi_user_canisters
     }
 
     pub fn set_platform_operator(&mut self, user_id: UserId, is_platform_operator: bool) {
@@ -153,5 +171,40 @@ impl GlobalUserMap {
             user_type,
             chit: self.chit.get(&user_id).cloned().unwrap_or_default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    #[test]
+    fn multi_user_canisters_learnt_from_indexed_users() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_canister = CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
+        let multi_user_canister = CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
+        let mut map = GlobalUserMap::default();
+
+        map.add(Principal::from_slice(&[1]), user_canister.into(), UserType::User);
+        assert!(map.multi_user_canisters().is_empty());
+
+        map.add(
+            Principal::from_slice(&[2]),
+            UserId::new_indexed(multi_user_canister, 1),
+            UserType::User,
+        );
+        map.add(
+            Principal::from_slice(&[3]),
+            UserId::new_indexed(multi_user_canister, 2),
+            UserType::User,
+        );
+        assert_eq!(
+            map.multi_user_canisters().iter().copied().collect::<Vec<_>>(),
+            vec![multi_user_canister]
+        );
     }
 }

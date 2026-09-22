@@ -9,7 +9,7 @@ use serde_bytes::ByteBuf;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::icrc1::{Account, CryptoAccount};
 use types::{
-    AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction, ContentValidationError,
+    AudioContent, BlobReference, CallKind, CallParticipant, CanisterId, CompletedCryptoTransaction, ContentValidationError,
     ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, Cryptocurrency, CustomContent,
     EncryptedContent, EncryptedContentEventPayload, EncryptedMessageContentType, EncryptionKey, FileContent,
     FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
@@ -21,7 +21,7 @@ use types::{
     PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
     ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
-    UserType, VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation, is_default,
+    UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -1968,7 +1968,7 @@ impl From<P2PSwapContent> for P2PSwapContentInternal {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContentInternal {
     #[serde(rename = "t", default, skip_serializing_if = "is_default")]
-    pub call_type: VideoCallType,
+    pub call_type: CallKind,
     #[serde(rename = "e", default, skip_serializing_if = "is_default")]
     pub ended: Option<TimestampMillis>,
     #[serde(rename = "p", default)]
@@ -1991,7 +1991,8 @@ impl VideoCallContentInternal {
         }
 
         VideoCallContent {
-            call_type: self.call_type,
+            call_type: self.call_type.call_type(),
+            audio_only: self.call_type.audio_only(),
             ended: self.ended,
             participants,
             hidden_participants,
@@ -2194,6 +2195,46 @@ impl From<TokenInfoCombined> for TokenInfo {
             ledger: value.ledger,
             decimals: value.decimals,
             fee: value.fee,
+        }
+    }
+}
+
+#[cfg(test)]
+mod video_call_tests {
+    use super::*;
+    use types::VideoCallType;
+
+    // The call content exactly as it was stored before audio calls existed (#9455). Frozen on
+    // purpose. Do not update it when VideoCallContentInternal changes.
+    #[derive(Serialize)]
+    struct PreviousVideoCallContentInternal {
+        #[serde(rename = "t", default, skip_serializing_if = "is_default")]
+        call_type: VideoCallType,
+        #[serde(rename = "e", default, skip_serializing_if = "is_default")]
+        ended: Option<TimestampMillis>,
+        #[serde(rename = "p", default)]
+        participants: BTreeMap<UserId, CallParticipantInternal>,
+    }
+
+    // #9455 invariant 6: stable state written before this change decodes unchanged, with every
+    // existing call read as video or broadcast as before. A video call was stored with no "t"
+    // key at all, so what it reads back as is decided by the default of the stored type.
+    #[test]
+    fn invariant_6_a_call_stored_before_audio_calls_reads_back_as_the_same_kind() {
+        for (old, expected) in [
+            (VideoCallType::Default, CallKind::Video),
+            (VideoCallType::Broadcast, CallKind::Broadcast),
+        ] {
+            let bytes = msgpack::serialize_then_unwrap(PreviousVideoCallContentInternal {
+                call_type: old,
+                ended: Some(1),
+                participants: BTreeMap::new(),
+            });
+            let decoded: VideoCallContentInternal = msgpack::deserialize_then_unwrap(&bytes);
+
+            assert_eq!(decoded.call_type, expected);
+            assert_eq!(decoded.hydrate().call_type, old);
+            assert!(!decoded.hydrate().audio_only);
         }
     }
 }

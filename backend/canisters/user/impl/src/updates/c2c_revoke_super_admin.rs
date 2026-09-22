@@ -11,6 +11,6 @@ fn c2c_revoke_super_admin(_args: Args) -> Response {
 }
 
 fn c2c_revoke_super_admin_impl(state: &mut RuntimeState) -> Response {
-    state.data.is_platform_moderator = false;
+    state.data.user.is_platform_moderator = false;
     Response::Success
 }

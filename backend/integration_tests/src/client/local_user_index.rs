@@ -8,6 +8,7 @@ generate_query_call!(bot_community_events);
 generate_msgpack_query_call!(chat_events);
 generate_msgpack_query_call!(daily_puzzle_fetch);
 generate_msgpack_query_call!(group_and_community_summary_updates_v2);
+generate_msgpack_query_call!(is_user_or_multi_user_canister);
 generate_query_call!(latest_notification_index);
 generate_query_call!(media_scan_jobs);
 generate_query_call!(notifications);

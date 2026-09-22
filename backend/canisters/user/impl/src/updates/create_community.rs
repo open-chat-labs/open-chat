@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{COMMUNITY_CREATION_LIMIT, RuntimeState, execute_update_async, mutate_state, read_state};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
@@ -7,6 +7,7 @@ use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
 use types::{CanisterId, CommunityId, OCResult};
 use user_canister::create_community::{Response::*, *};
+use user_core::COMMUNITY_CREATION_LIMIT;
 use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
     NameValidationError, RulesValidationError, validate_channel_name, validate_community_name, validate_description,
@@ -59,7 +60,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many communities in succession
@@ -67,11 +68,11 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     }
 
     let now = state.env.now();
-    let is_diamond_member = state.data.membership(now).is_diamond_member();
+    let is_diamond_member = state.data.user.membership(now).is_diamond_member();
 
     if !is_diamond_member {
         Err(OCErrorCode::NotDiamondMember.into())
-    } else if state.data.communities.communities_created() >= COMMUNITY_CREATION_LIMIT {
+    } else if state.data.user.communities.communities_created() >= COMMUNITY_CREATION_LIMIT {
         Err(OCErrorCode::MaxCommunitiesCreated.with_message(COMMUNITY_CREATION_LIMIT))
     } else if is_throttled() {
         Err(OCErrorCode::Throttled.into())
@@ -115,6 +116,7 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
             default_channels: args.default_channels,
             default_channel_rules: args.default_channel_rules,
             primary_language: args.primary_language,
+            user_id: None,
         };
         Ok(PrepareResult {
             group_index_canister_id: state.data.group_index_canister_id,
@@ -139,5 +141,9 @@ fn default_channels_valid(default_channels: &[String]) -> bool {
 
 fn commit(community_id: CommunityId, local_user_index_canister_id: CanisterId, state: &mut RuntimeState) {
     let now = state.env.now();
-    state.data.communities.create(community_id, local_user_index_canister_id, now);
+    state
+        .data
+        .user
+        .communities
+        .create(community_id, local_user_index_canister_id, now);
 }

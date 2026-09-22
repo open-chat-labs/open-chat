@@ -1,4 +1,4 @@
-use crate::group_chat::GroupChat;
+use crate::model::group_chat::GroupChat;
 use direct_chat::removed_chats;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;

@@ -1,9 +1,9 @@
-use crate::model::user::User;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{KeyScope, with_key_scope};
 use std::collections::{BTreeMap, HashMap};
 use types::{MAX_USER_INDEX, TimestampMillis, UserId};
+use user_core::User;
 
 // Index 0 is never assigned, since `UserId::index` returns 0 for a user id which carries no
 // index, and indexes are never reused, so a deleted user's stable memory map entries can never be
@@ -58,6 +58,14 @@ impl Users {
         self.principal_to_index.insert(principal, index);
         self.users.insert(index, User::new(principal, username, referred_by, now));
         Ok(index)
+    }
+
+    // Removes the user, whose index is never reused. The caller garbage collects their entries in
+    // the stable memory map.
+    pub fn remove(&mut self, index: u16) -> Option<User> {
+        let user = self.users.remove(&index)?;
+        self.principal_to_index.remove(&user.principal);
+        Some(user)
     }
 
     pub fn index_by_principal(&self, principal: &Principal) -> Option<u16> {
@@ -122,6 +130,21 @@ mod tests {
             users.add(principal(1), "b".to_string(), None, 2),
             Err(AddUserError::PrincipalAlreadyRegistered)
         );
+        assert_eq!(users.len(), 1);
+    }
+
+    #[test]
+    fn removed_users_indexes_are_not_reused() {
+        let mut users = Users::default();
+
+        assert_eq!(users.add(principal(1), "a".to_string(), None, 1), Ok(1));
+        assert!(users.remove(1).is_some());
+        assert!(users.remove(1).is_none());
+        assert!(!users.contains(1));
+        assert_eq!(users.index_by_principal(&principal(1)), None);
+
+        // The principal can register again, and is given a new index
+        assert_eq!(users.add(principal(1), "a".to_string(), None, 2), Ok(2));
         assert_eq!(users.len(), 1);
     }
 

@@ -62,9 +62,10 @@ async fn c2c_handle_bot_messages_impl(
     mutate_state(|state| {
         let now = state.env.now();
         for (message, content) in messages {
-            let Ok(thread_root_message_index) =
-                thread_root_message_index(state.data.direct_chats.get(&sender.into()), message.thread_root_message_id)
-            else {
+            let Ok(thread_root_message_index) = thread_root_message_index(
+                state.data.user.direct_chats.get(&sender.into()),
+                message.thread_root_message_id,
+            ) else {
                 continue;
             };
             handle_message_impl(
@@ -138,11 +139,13 @@ pub(crate) enum SenderStatus {
 }
 
 pub(crate) fn get_sender_status(state: &RuntimeState) -> SenderStatus {
-    let sender = state.env.caller().into();
+    get_status_of_sender(state.env.caller().into(), state)
+}
 
-    if state.data.blocked_users.contains(&sender) {
+pub(crate) fn get_status_of_sender(sender: UserId, state: &RuntimeState) -> SenderStatus {
+    if state.data.user.blocked_users.contains(&sender) {
         SenderStatus::Blocked
-    } else if let Some(user_type) = state.data.direct_chats.get(&sender.into()).map(|c| c.user_type) {
+    } else if let Some(user_type) = state.data.user.direct_chats.get(&sender.into()).map(|c| c.user_type) {
         SenderStatus::Ok(sender, user_type)
     } else {
         SenderStatus::UnknownUser(state.data.local_user_index_canister_id, sender)
@@ -174,7 +177,7 @@ pub(crate) fn handle_message_impl(
     let replies_to = convert_reply_context(args.replies_to, args.sender, state);
     let files = args.content.blob_references();
 
-    let chat = state.data.direct_chats.get_or_create(
+    let chat = state.data.user.direct_chats.get_or_create(
         state.env.canister_id().into(),
         args.sender,
         args.sender_user_type,
@@ -223,7 +226,7 @@ pub(crate) fn handle_message_impl(
         chat.mark_read_by_them_up_to(message_event.event.message_index, args.now);
     }
 
-    if !args.mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
+    if !args.mute_notification && !chat.notifications_muted.value && !state.data.user.suspended.value {
         let message_type = content.content_type().to_string();
         let message_text = content.notification_text(&args.mentioned, &[]);
         let image_url = content.notification_image_url();
@@ -248,7 +251,7 @@ pub(crate) fn handle_message_impl(
     }
 
     if matches!(content, MessageContent::Crypto(_)) {
-        state.data.push_message_activity(
+        state.data.user.push_message_activity(
             MessageActivityEvent {
                 chat: Chat::Direct(chat_id),
                 thread_root_message_index,
@@ -276,6 +279,7 @@ pub(crate) fn handle_message_impl(
     if let Some(chat) = chat_private_replying_to {
         state
             .data
+            .user
             .direct_chats
             .mark_private_reply(args.sender, chat, message_event.event.message_index);
     }
@@ -293,6 +297,7 @@ fn convert_reply_context(
             let chat_id = sender.into();
             state
                 .data
+                .user
                 .direct_chats
                 .get(&chat_id)
                 .and_then(|chat| chat.main_events_reader().event_index(message_id.into()))

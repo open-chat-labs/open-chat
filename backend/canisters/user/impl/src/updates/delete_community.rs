@@ -13,11 +13,11 @@ async fn delete_community(args: Args) -> Response {
 }
 
 async fn delete_community_impl(args: Args) -> Response {
-    if read_state(|state| state.data.suspended.value) {
+    if read_state(|state| state.data.user.suspended.value) {
         return Response::Error(OCErrorCode::InitiatorSuspended.into());
     }
 
-    let c2c_args = c2c_delete_community::Args {};
+    let c2c_args = c2c_delete_community::Args { user_id: None };
 
     match community_canister_c2c_client::c2c_delete_community(args.community_id.into(), &c2c_args).await {
         Ok(result) => {

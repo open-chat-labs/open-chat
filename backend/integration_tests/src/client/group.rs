@@ -446,6 +446,7 @@ pub mod happy_path {
                 initiator_display_name: None,
                 max_duration,
                 call_type: VideoCallType::Broadcast,
+                audio_only: None,
             },
         );
 

@@ -1,4 +1,4 @@
-use crate::community::Community;
+use crate::model::community::Community;
 use direct_chat::removed_chats;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;

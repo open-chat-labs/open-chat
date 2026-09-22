@@ -436,6 +436,9 @@ pub struct VideoCall {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
     pub call_type: VideoCallType,
+    #[serde(default)]
+    #[ts(as = "Option<bool>", optional)]
+    pub audio_only: bool,
     pub joined_by_current_user: bool,
 }
 
@@ -445,6 +448,43 @@ pub enum VideoCallType {
     Broadcast,
     #[default]
     Default,
+}
+
+// The kind of a call as the canisters hold it. On the wire a call is a `VideoCallType` plus an
+// optional `audio_only` flag, so that clients which predate audio calls still decode it. That
+// pair can say "audio only broadcast", which does not exist, so it is converted to this type
+// at the edge and only this type is stored.
+#[derive(Serialize, Deserialize, Clone, Debug, Copy, Default, Eq, PartialEq)]
+pub enum CallKind {
+    Broadcast,
+    // Stored under the name video calls had before audio calls existed
+    #[default]
+    #[serde(rename = "Default")]
+    Video,
+    Audio,
+}
+
+impl CallKind {
+    // None if the pair describes an audio only broadcast
+    pub fn from_wire(call_type: VideoCallType, audio_only: bool) -> Option<CallKind> {
+        match (call_type, audio_only) {
+            (VideoCallType::Default, false) => Some(CallKind::Video),
+            (VideoCallType::Default, true) => Some(CallKind::Audio),
+            (VideoCallType::Broadcast, false) => Some(CallKind::Broadcast),
+            (VideoCallType::Broadcast, true) => None,
+        }
+    }
+
+    pub fn call_type(&self) -> VideoCallType {
+        match self {
+            CallKind::Broadcast => VideoCallType::Broadcast,
+            CallKind::Video | CallKind::Audio => VideoCallType::Default,
+        }
+    }
+
+    pub fn audio_only(&self) -> bool {
+        matches!(self, CallKind::Audio)
+    }
 }
 
 #[ts_export]
@@ -489,4 +529,45 @@ pub struct ChatSummaryDirect {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub video_call_in_progress: Option<VideoCall>,
+}
+
+#[cfg(test)]
+mod call_kind_tests {
+    use super::*;
+
+    // #9455 invariant 2: no call is ever emitted as an audio only broadcast. The wire pair is
+    // generated from a CallKind, so it is enough that no CallKind produces that pair.
+    #[test]
+    fn invariant_2_no_call_kind_is_emitted_as_an_audio_only_broadcast() {
+        for kind in [CallKind::Broadcast, CallKind::Video, CallKind::Audio] {
+            assert!(!(kind.call_type() == VideoCallType::Broadcast && kind.audio_only()));
+            assert_eq!(CallKind::from_wire(kind.call_type(), kind.audio_only()), Some(kind));
+        }
+    }
+
+    // #9455 invariant 1, the shared half: the pair that names an audio only broadcast converts
+    // to nothing, which is what every start and token endpoint rejects on.
+    #[test]
+    fn invariant_1_an_audio_only_broadcast_converts_to_nothing() {
+        assert_eq!(CallKind::from_wire(VideoCallType::Broadcast, true), None);
+    }
+
+    // #9455 invariant 6: state written before audio calls existed stored a VideoCallType under
+    // the same key, so every old value must still decode and mean what it meant.
+    #[test]
+    fn invariant_6_a_stored_video_call_type_decodes_as_the_same_call_kind() {
+        for (old, expected) in [
+            (VideoCallType::Default, CallKind::Video),
+            (VideoCallType::Broadcast, CallKind::Broadcast),
+        ] {
+            let bytes = msgpack::serialize_then_unwrap(old);
+            let kind: CallKind = msgpack::deserialize_then_unwrap(&bytes);
+            assert_eq!(kind, expected);
+
+            // and a canister rolled back before any audio call was made can still read what we wrote
+            let bytes = msgpack::serialize_then_unwrap(expected);
+            let round_tripped: VideoCallType = msgpack::deserialize_then_unwrap(&bytes);
+            assert_eq!(round_tripped, old);
+        }
+    }
 }

@@ -2131,6 +2131,7 @@ dependencies = [
  "candid",
  "chat_events",
  "ic_principal",
+ "msgpack",
  "oc_error_codes",
  "serde",
  "serde_bytes",
@@ -4523,6 +4524,7 @@ dependencies = [
  "candid",
  "chat_events",
  "ic_principal",
+ "msgpack",
  "oc_error_codes",
  "serde",
  "serde_bytes",
@@ -6332,6 +6334,7 @@ dependencies = [
  "user_canister",
  "user_index_canister",
  "utils",
+ "wat",
 ]
 
 [[package]]
@@ -6694,6 +6697,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c83bff1d572d6b9aeef67ddfc8448e4a3737909cb28e81f97c791b9018703e52"
 
 [[package]]
+name = "leb128fmt"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
+
+[[package]]
 name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
@@ -6929,6 +6938,7 @@ dependencies = [
  "local_user_index_canister",
  "msgpack",
  "multi_user_canister",
+ "multi_user_canister_c2c_client",
  "notifications_index_canister",
  "oc_error_codes",
  "online_users_canister",
@@ -7288,6 +7298,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "multi_user_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.20.2",
+ "msgpack",
+ "multi_user_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "multi_user_canister_impl"
 version = "0.1.0"
 dependencies = [
@@ -7298,11 +7321,17 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
+ "community_canister",
+ "community_canister_c2c_client",
  "constants",
  "direct_chat",
  "escrow_canister",
  "event_store_types",
  "git_commit_id",
+ "group_canister",
+ "group_canister_c2c_client",
+ "group_index_canister",
+ "group_index_canister_c2c_client",
  "http_request",
  "ic-cdk 0.20.2",
  "ic-cdk-timers",
@@ -7323,7 +7352,8 @@ dependencies = [
  "tracing",
  "types",
  "user_canister",
- "user_state",
+ "user_canister_c2c_client",
+ "user_core",
  "utils",
 ]
 
@@ -12959,9 +12989,32 @@ dependencies = [
  "types",
  "user_canister",
  "user_canister_c2c_client",
+ "user_core",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "user_state",
+ "utils",
+]
+
+[[package]]
+name = "user_core"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "constants",
+ "direct_chat",
+ "ic-ledger-types",
+ "ic-stable-structures",
+ "icrc-ledger-types",
+ "installed_bots",
+ "itertools 0.15.0",
+ "msgpack",
+ "oc_error_codes",
+ "rand 0.10.2",
+ "serde",
+ "stable_memory_map",
+ "tracing",
+ "types",
+ "user_canister",
  "utils",
 ]
 
@@ -13088,28 +13141,6 @@ dependencies = [
  "user_canister_c2c_client",
  "user_ids_set",
  "user_index_canister",
- "utils",
-]
-
-[[package]]
-name = "user_state"
-version = "0.1.0"
-dependencies = [
- "candid",
- "constants",
- "direct_chat",
- "ic-ledger-types",
- "ic-stable-structures",
- "icrc-ledger-types",
- "itertools 0.15.0",
- "msgpack",
- "oc_error_codes",
- "rand 0.10.2",
- "serde",
- "stable_memory_map",
- "tracing",
- "types",
- "user_canister",
  "utils",
 ]
 
@@ -13338,6 +13369,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasm-encoder"
+version = "0.259.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1d0246511d901aacf25d2dc9111f0054947de5e093fe662099e709ff7530dc3"
+dependencies = [
+ "leb128fmt",
+ "wasmparser",
+]
+
+[[package]]
 name = "wasm-streams"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13361,6 +13402,39 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.259.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f7c12eac7bb587801590f6a67ff0bc84d0748513864b71108e4b311cc3df694"
+dependencies = [
+ "bitflags 2.13.1",
+ "indexmap 2.14.0",
+ "semver",
+]
+
+[[package]]
+name = "wast"
+version = "259.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c69beba8d9da07af9a0971b559149a2ac4729895b55144de4fddbf5a02660648"
+dependencies = [
+ "bumpalo",
+ "leb128fmt",
+ "memchr",
+ "unicode-width 0.2.2",
+ "wasm-encoder",
+]
+
+[[package]]
+name = "wat"
+version = "1.259.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6eec44b0c80391b20fb7ad9ea440c72c5d382385bdf74444bb18321c425017e"
+dependencies = [
+ "wast",
 ]
 
 [[package]]

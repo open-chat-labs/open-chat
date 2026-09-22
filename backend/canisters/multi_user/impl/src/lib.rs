@@ -1,10 +1,11 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
-use crate::model::user::User;
+use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::users::Users;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChat;
 use event_store_types::EventBuilder;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
@@ -13,14 +14,18 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
-use std::collections::BTreeMap;
-use timer_job_queues::BatchedTimerJobQueue;
+use std::collections::{BTreeMap, HashSet};
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, Cycles, DirectChatUserNotificationPayload,
-    IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, OCResult, ReferralStatus, TimestampMillis,
+    Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
 };
+use user_canister::UserCanisterEvent;
+use user_core::User;
+use user_core::{Community, GroupChat};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod crypto;
 mod guards;
@@ -32,6 +37,20 @@ mod openchat_bot;
 mod queries;
 mod timer_job_types;
 mod updates;
+
+// Checks that `user_id` is a user who can be sent direct messages, by looking them up in the
+// LocalUserIndex. Bots can't be messaged from a MultiUser canister yet.
+async fn look_up_direct_chat_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> OCResult {
+    match local_user_index_canister_c2c_client::lookup_user(user_id.as_principal(), local_user_index_canister_id).await? {
+        // The lookup also resolves the principal a user signs in with, which isn't their user id
+        Some(user) if user.user_id != user_id => Err(OCErrorCode::TargetUserNotFound.into()),
+        Some(user) if user.user_type == UserType::User => Ok(()),
+        Some(_) => {
+            Err(OCErrorCode::InvalidRequest.with_message("Chats with bots are not yet supported by the MultiUser canister"))
+        }
+        None => Err(OCErrorCode::TargetUserNotFound.into()),
+    }
+}
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -55,6 +74,10 @@ impl RuntimeState {
 
     pub fn is_caller_user_index(&self) -> bool {
         self.env.caller() == self.data.user_index_canister_id
+    }
+
+    pub fn is_caller_group_index(&self) -> bool {
+        self.env.caller() == self.data.group_index_canister_id
     }
 
     // The index of the user the caller owns, if the caller is one of this canister's users
@@ -143,7 +166,7 @@ impl RuntimeState {
     }
 
     // The index of the user with the given id, if they are one of this canister's users
-    pub fn local_user_index(&self, user_id: UserId) -> Option<u16> {
+    pub fn index_of_local_user(&self, user_id: UserId) -> Option<u16> {
         self.user_index(user_id).filter(|index| self.data.users.contains(*index))
     }
 
@@ -161,7 +184,7 @@ impl RuntimeState {
         if their_user_id == my_user_id {
             return None;
         }
-        let their_index = self.local_user_index(their_user_id)?;
+        let their_index = self.index_of_local_user(their_user_id)?;
         self.data
             .users
             .with_user_mut(their_index, |user| {
@@ -188,6 +211,28 @@ impl RuntimeState {
             idempotency_id: self.env.rng().next_u64(),
             value: UserEventWithUserId { user_id, event },
         });
+    }
+
+    // Queues a direct chat event from the user at `sender_index` for `recipient`, a user in another
+    // canister, as the User canister does for its user. A user in this canister is updated directly
+    // instead, and the OpenChat bot is never sent events.
+    pub fn push_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
+        if recipient == OPENCHAT_BOT_USER_ID || self.user_index(recipient).is_some() {
+            return;
+        }
+        let sender = self.user_id(sender_index);
+        self.data.user_canister_events_queue.push(
+            recipient.canister_id(),
+            IdempotentEnvelope {
+                created_at: self.env.now(),
+                idempotency_id: self.env.rng().next_u64(),
+                value: user_canister::c2c_user_canister_v2::Event {
+                    sender,
+                    recipient,
+                    event,
+                },
+            },
+        );
     }
 
     // Queues a notification for the user at `recipient_index`, as the User canister does for its user
@@ -235,6 +280,80 @@ impl RuntimeState {
 
     pub fn award_achievement_and_notify(&mut self, user_index: u16, achievement: Achievement, now: TimestampMillis) {
         self.award_achievements_and_notify(user_index, [achievement], now);
+    }
+
+    // Tells whoever referred the user at `user_index` of the status the user has reached, so they
+    // earn the CHIT for it. A referrer in another canister is sent it as the User canister does,
+    // while one in this canister is updated directly, unless they have blocked the user, as their
+    // canister would skip the event from a blocked sender.
+    pub fn set_referral_status_of_referrer(&mut self, user_index: u16, status: ReferralStatus, now: TimestampMillis) {
+        let Some(Some(referred_by)) = self.data.users.with_user(user_index, |user| user.referred_by) else {
+            return;
+        };
+        if let Some(referrer_index) = self.index_of_local_user(referred_by) {
+            let referred = self.user_id(user_index);
+            let blocked = self
+                .data
+                .users
+                .with_user(referrer_index, |user| user.blocked_users.contains(&referred))
+                .unwrap_or(true);
+            if !blocked {
+                self.set_referral_status(referrer_index, referred, status, now);
+            }
+        } else {
+            self.push_user_canister_event(
+                user_index,
+                referred_by,
+                UserCanisterEvent::SetReferralStatus(Box::new(status)),
+            );
+        }
+    }
+
+    // Records the status `referred` has reached for the user at `referrer_index` who referred them,
+    // telling the LocalUserIndex of their CHIT if it earned them any. This is the User canister's
+    // handling of the `SetReferralStatus` event.
+    pub fn set_referral_status(&mut self, referrer_index: u16, referred: UserId, status: ReferralStatus, now: TimestampMillis) {
+        let rewarded = self
+            .data
+            .users
+            .with_user_mut(referrer_index, |user| user.set_referral_status(referred, status, now))
+            .unwrap_or_default();
+        if rewarded {
+            self.notify_user_index_of_chit(referrer_index, now);
+        }
+    }
+
+    // Reinstates the daily claims the user at `user_index` missed, as the User canister's
+    // `reinstate_missed_daily_claims`
+    pub fn reinstate_missed_daily_claims(&mut self, user_index: u16, days_to_reinstate: Vec<u16>) {
+        let now = self.env.now();
+
+        let Some((count, new_streak)) = self.data.users.with_user_mut(user_index, |user| {
+            let daily_claims = user.chit_events.daily_claims();
+            let new_events = user
+                .streak
+                .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
+            let count = new_events.len();
+            for event in new_events {
+                user.chit_events.push(event);
+            }
+            (count, user.streak.days(now))
+        }) else {
+            return;
+        };
+
+        let first_line = if count == 1 {
+            "missed daily claim has been reinstated."
+        } else {
+            "missed daily claims have been reinstated."
+        };
+        let message = format!(
+            "{count} {first_line}
+Your streak is now {new_streak} days!"
+        );
+
+        openchat_bot::send_text_message(user_index, message, Vec::new(), false, self);
+        self.notify_user_index_of_chit(user_index, now);
     }
 
     // Tells the LocalUserIndex the CHIT balance and streak of the user at `user_index`, which it
@@ -324,6 +443,7 @@ impl RuntimeState {
                 "One day of streak insurance was just used up to protect your streak from being lost. \
 Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
             ),
+            Vec::new(),
             false,
             self,
         );
@@ -348,6 +468,50 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
                 ends,
                 self.env.now(),
             );
+        }
+    }
+
+    // Removes the group from the user at `user_index`, garbage collecting its entries in stable memory
+    pub fn remove_group(&mut self, user_index: u16, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
+        let (group, prefix) = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| user.remove_group(chat_id, now))
+            .flatten()?;
+        self.garbage_collect_removed_chat_keys(user_index, vec![prefix]);
+        Some(group)
+    }
+
+    // Removes the community from the user at `user_index`, garbage collecting its channels' entries
+    // in stable memory
+    pub fn remove_community(&mut self, user_index: u16, community_id: CommunityId, now: TimestampMillis) -> Option<Community> {
+        let (community, prefixes) = self
+            .data
+            .users
+            .with_user_mut(user_index, |user| user.remove_community(community_id, now))
+            .flatten()?;
+        self.garbage_collect_removed_chat_keys(user_index, prefixes);
+        Some(community)
+    }
+
+    // A removed group or community only has a small number of entries, so they are removed
+    // immediately, as in the User canister, so that none are left to be wiped by a later garbage
+    // collection if the user rejoins. Any which can't be removed within this message are left for
+    // the garbage collection job.
+    fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
+        let remaining: Vec<_> = self
+            .data
+            .users
+            .with_user_mut(user_index, |_| {
+                prefixes
+                    .into_iter()
+                    .filter(|prefix| stable_memory_map::garbage_collect(prefix.clone()).is_err())
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        if !remaining.is_empty() {
+            self.garbage_collect_stable_memory_keys(user_index, remaining);
         }
     }
 
@@ -441,8 +605,11 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             stable_memory_sizes: memory::memory_sizes(),
             user_count: self.data.users.len() as u32,
             stable_memory_keys_to_garbage_collect: self.data.stable_memory_keys_to_garbage_collect.len() as u32,
+            deleted_users_to_garbage_collect: self.data.deleted_users_to_garbage_collect.len() as u32,
             timer_jobs: self.data.timer_jobs.len() as u32,
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
+            queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
+            known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -474,10 +641,24 @@ struct Data {
     // created before the queue existed, whose LocalUserIndex id is set after the upgrade.
     #[serde(default = "local_user_index_event_sync_queue_default")]
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+    #[serde(default = "new_user_canister_events_queue")]
+    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     // The prefixes of deleted direct chats, whose entries are removed by a background job, each
     // with the index of the user who held the chat since the entries are keyed under that user
     #[serde(default)]
     pub stable_memory_keys_to_garbage_collect: Vec<(u16, BaseKeyPrefix)>,
+    // The indexes of deleted users, all of whose entries in the stable memory map are yet to be
+    // removed by the garbage collection job
+    #[serde(default)]
+    pub deleted_users_to_garbage_collect: Vec<u16>,
+    // Events from other canisters are checked against this, as in the User canister. Each sender
+    // batches its events for this canister's users together, so one checker covers them all.
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
+    // The MultiUser canisters the UserIndex has confirmed, which may send events on behalf of any of
+    // their users
+    #[serde(default)]
+    pub known_multi_user_canisters: HashSet<CanisterId>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
     pub rng_seed: [u8; 32],
@@ -505,12 +686,20 @@ impl Data {
             escrow_canister_id,
             video_call_operators,
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
+            user_canister_events_queue: new_user_canister_events_queue(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
+            deleted_users_to_garbage_collect: Vec::new(),
+            idempotency_checker: IdempotencyChecker::default(),
+            known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
             rng_seed,
             test_mode,
         }
     }
+}
+
+fn new_user_canister_events_queue() -> GroupedTimerJobQueue<UserCanisterEventBatch> {
+    GroupedTimerJobQueue::new(10, true)
 }
 
 fn local_user_index_event_sync_queue_default() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
@@ -529,8 +718,11 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_count: u32,
     pub stable_memory_keys_to_garbage_collect: u32,
+    pub deleted_users_to_garbage_collect: u32,
     pub timer_jobs: u32,
     pub queued_local_user_index_events: u32,
+    pub queued_user_canister_events: u32,
+    pub known_multi_user_canisters: u32,
     pub canister_ids: CanisterIds,
 }
 

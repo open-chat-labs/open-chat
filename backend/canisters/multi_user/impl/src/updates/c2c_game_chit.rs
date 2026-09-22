@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{ChitEvent, ChitEventType};
 use user_canister::c2c_game_chit::{Response::*, *};
-use user_state::validate_game_chit_args;
+use user_core::validate_game_chit_args;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -14,7 +14,7 @@ fn c2c_game_chit(args: Args) -> Response {
 }
 
 fn c2c_game_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let Some(user_index) = state.local_user_index(args.user_id) else {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Error(OCErrorCode::TargetUserNotFound.into());
     };
 
