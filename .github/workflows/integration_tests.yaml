@@ -1,5 +1,6 @@
 # Runs on every push to master. On other branches (eg. PRs) they can be triggered manually via
-# "Run workflow" on the Actions tab.
+# "Run workflow" on the Actions tab. Manual runs test the branch head as-is (not merged with
+# master), so re-run after rebasing if master has moved on.
 on:
   push:
     branches:
