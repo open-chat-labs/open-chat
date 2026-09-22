@@ -126,7 +126,7 @@ fn is_blocked(recipient_index: u16, sender: UserId, state: &RuntimeState) -> boo
 fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bool {
     match kind {
         CanisterKind::UserCanister => sender == UserId::from(caller),
-        CanisterKind::MultiUserCanister => sender.index() != 0 && UserId::acting_as(caller, Some(sender)).is_some(),
+        CanisterKind::MultiUserCanister => sender.index() != 0 && sender.canister_id() == caller,
         CanisterKind::Neither => false,
     }
 }
