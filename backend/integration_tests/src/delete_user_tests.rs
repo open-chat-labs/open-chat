@@ -112,7 +112,7 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
         &user_index_canister::refund_deleted_user_cycles::Args {},
     );
     assert!(
-        matches!(response, user_index_canister::refund_deleted_user_cycles::Response::Success(count) if count >= 1),
+        matches!(response, user_index_canister::refund_deleted_user_cycles::Response::Success(ref r) if r.canisters >= 1),
         "{response:?}"
     );
 
@@ -123,6 +123,43 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
     // The refunder is uninstalled again afterwards
     let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
     assert!(canister_status.module_hash.is_none());
+
+    wrapper.discard();
+}
+
+#[test]
+fn cycles_refund_tops_up_canisters_with_too_few_cycles_to_install_code() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+    let operator = register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+
+    delete_user(env, &user_auth, canister_ids.identity);
+    wait_for_cycles_to_be_refunded(env, &user);
+
+    // ~200B is worth refunding but not enough to run install_code
+    env.add_cycles(user.canister(), 120_000_000_000);
+    let balance_before = env.cycle_balance(user.canister());
+    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
+
+    client::user_index::refund_deleted_user_cycles(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user_index_canister::refund_deleted_user_cycles::Args {},
+    );
+    wait_for_cycles_to_be_refunded(env, &user);
+
+    // The top-up is refunded along with what the canister held
+    let refunded = cycles_refunded_metric(env, user.local_user_index) - refunded_before;
+    assert!(refunded > balance_before, "{refunded}");
 
     wrapper.discard();
 }

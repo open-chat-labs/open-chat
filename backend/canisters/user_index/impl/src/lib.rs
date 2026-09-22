@@ -49,6 +49,7 @@ mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
+mod nns_registry;
 mod no_inline_anchor;
 mod queries;
 mod timer_job_types;

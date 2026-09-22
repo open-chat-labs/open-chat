@@ -1,4 +1,5 @@
 use crate::{CanisterToRefund, RuntimeState, mutate_state, read_state};
+use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE};
 use ic_cdk_management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -19,10 +20,14 @@ const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../../../cycles_refunder/
 // before the user was deleted) is rate limited from running another for several minutes
 const MAX_ATTEMPTS: usize = 10;
 
-// `install_code` needs ~300B cycles up front and ~80B can never be recovered (see the refunder's
-// README), so below this there is nothing worth refunding. This also makes it cheap to queue a
-// canister which has already been refunded.
-const MIN_CYCLES_TO_REFUND: Cycles = 400_000_000_000;
+// ~80B cycles can never be recovered (see the refunder's README), so below this there is nothing
+// worth refunding. This also makes it cheap to queue a canister which has already been refunded.
+const MIN_CYCLES_TO_REFUND: Cycles = 100 * B;
+
+// `install_code` needs ~300B cycles up front, so canisters with less are topped up first. The
+// top-up comes back along with the rest, so its size barely matters, but this margin covers the
+// shortfall reported by the IC being a lower bound.
+const TOP_UP_MARGIN: Cycles = 50 * B;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -139,19 +144,18 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
     }
     match status.module_hash {
         None => {
-            // `Install` mode fails if the canister has code, so a live canister can never be
-            // overwritten even if the status check above is somehow stale
-            utils::canister::install(CanisterToInstall {
-                canister_id,
-                current_wasm_version: BuildVersion::default(),
-                new_wasm_version: BuildVersion::default(),
-                args: candid::encode_one(Some(cycles_dispenser_canister_id)).unwrap(),
-                new_wasm: WasmToInstall::Default(wasm),
-                deposit_cycles_if_needed: false,
-                mode: CanisterInstallMode::Install,
-                stop_start_canister: false,
-            })
-            .await?;
+            let init_arg = candid::encode_one(Some(cycles_dispenser_canister_id)).unwrap();
+            if let Err(error) = install_refunder(canister_id, wasm.clone(), init_arg.clone()).await {
+                if !is_out_of_cycles_error(error.reject_code(), error.message()) {
+                    return Err(error.into());
+                }
+                // The canister has too few cycles to run `install_code`, which prepays for its
+                // execution, so top it up. The top-up is sent back along with the rest.
+                let top_up = cycles_shortfall(error.message()).unwrap_or(CYCLES_REQUIRED_FOR_UPGRADE) + TOP_UP_MARGIN;
+                utils::canister::deposit_cycles(canister_id, top_up).await?;
+                mutate_state(|state| state.data.cycles_topped_up_for_refunds += top_up);
+                install_refunder(canister_id, wasm, init_arg).await?;
+            }
         }
         // A previous attempt installed the refunder but failed before uninstalling it
         Some(hash) if hash == wasm.hash() => {}
@@ -171,4 +175,41 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
     utils::canister::uninstall(canister_id).await?;
 
     Ok(cycles.into())
+}
+
+// `Install` mode fails if the canister has code, so a live canister can never be overwritten
+// even if the status check above is somehow stale
+async fn install_refunder(canister_id: CanisterId, wasm: CanisterWasmBytes, init_arg: Vec<u8>) -> Result<(), C2CError> {
+    utils::canister::install(CanisterToInstall {
+        canister_id,
+        current_wasm_version: BuildVersion::default(),
+        new_wasm_version: BuildVersion::default(),
+        args: init_arg,
+        new_wasm: WasmToInstall::Default(wasm),
+        deposit_cycles_if_needed: false,
+        mode: CanisterInstallMode::Install,
+        stop_start_canister: false,
+    })
+    .await
+    .map(|_| ())
+}
+
+// Parses the shortfall from an out of cycles reject message, eg. "Canister abc is out of cycles:
+// please top up the canister with at least 217_884_065_722 additional cycles"
+fn cycles_shortfall(message: &str) -> Option<Cycles> {
+    let (_, rest) = message.split_once("at least ")?;
+    let number = rest.split_whitespace().next()?;
+    number.replace('_', "").parse().ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_cycles_shortfall() {
+        let message = "Canister qjjka-fx777-77776-aaajq-cai is out of cycles: please top up the canister with at least 217_884_065_722 additional cycles.\nTop up the canister with more cycles.";
+        assert_eq!(cycles_shortfall(message), Some(217_884_065_722));
+        assert_eq!(cycles_shortfall("something else"), None);
+    }
 }

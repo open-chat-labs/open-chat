@@ -566,6 +566,7 @@ impl RuntimeState {
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
+            cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
             notification_pushers: self.data.notification_pushers.iter().copied().collect(),
@@ -673,6 +674,8 @@ struct Data {
     pub cycles_refund_queue: VecDeque<CanisterToRefund>,
     #[serde(default)]
     pub cycles_refunded_from_deleted_users: Cycles,
+    #[serde(default)]
+    pub cycles_topped_up_for_refunds: Cycles,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -833,6 +836,7 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             cycles_refund_queue: VecDeque::new(),
             cycles_refunded_from_deleted_users: 0,
+            cycles_topped_up_for_refunds: 0,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
             bots: BotsMap::default(),
@@ -910,6 +914,7 @@ pub struct Metrics {
     pub users_to_delete_queue_length: usize,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
+    pub cycles_topped_up_for_refunds: Cycles,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
     pub user_versions: BTreeMap<String, u32>,

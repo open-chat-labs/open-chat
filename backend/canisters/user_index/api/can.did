@@ -221,7 +221,10 @@ type RemoveBotArgs = record {
 };
 
 type RefundDeletedUserCyclesResponse = variant {
-    Success : nat32;
+    Success : record {
+        canisters : nat32;
+        canisters_not_routed : nat32;
+    };
 };
 
 type RemoveBotResponse = variant {
