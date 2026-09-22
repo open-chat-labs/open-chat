@@ -157,7 +157,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
         LocalUserIndexEvent::ReinstateMissedDailyClaims(days) => state.reinstate_missed_daily_claims(days),
         LocalUserIndexEvent::BotRemoved(bot_id) => state.uninstall_bot(bot_id),
         LocalUserIndexEvent::BotUpdated(ev) => {
-            state.data.handle_bot_definition_updated(*ev, now);
+            state.data.user.handle_bot_definition_updated(*ev, now);
         }
     }
 }

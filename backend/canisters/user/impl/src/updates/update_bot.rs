@@ -17,7 +17,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let now = state.env.now();
 
-    if !state.data.update_bot_permissions(
+    if !state.data.user.update_bot_permissions(
         args.bot_id,
         args.granted_permissions.clone(),
         args.granted_autonomous_permissions.clone(),

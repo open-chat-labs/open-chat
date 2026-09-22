@@ -1,6 +1,5 @@
 use crate::crypto::validate_from_account;
 use crate::guards::caller_is_owner;
-use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
@@ -18,6 +17,7 @@ use types::{
 };
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
+use user_state::P2PSwap;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -384,7 +384,7 @@ pub(crate) async fn set_up_p2p_swap(
         let my_user_id = UserId::from(state.env.canister_id());
         let now = state.env.now();
 
-        state.data.p2p_swaps.add(P2PSwap {
+        state.data.user.p2p_swaps.add(P2PSwap {
             id,
             location: args.location,
             created_by: my_user_id,

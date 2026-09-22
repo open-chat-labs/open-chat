@@ -19,7 +19,7 @@ fn c2c_pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> Respon
     }
 
     let now = state.env.now();
-    if !state.data.premium_items.add(args.item_id, args.cost, now) {
+    if !state.data.user.premium_items.add(args.item_id, args.cost, now) {
         return Error(OCErrorCode::AlreadyAdded.into());
     }
 

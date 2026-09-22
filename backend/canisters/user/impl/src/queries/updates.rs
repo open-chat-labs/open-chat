@@ -50,17 +50,19 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let streak_insurance_updated = state.data.user.streak.insurance_last_updated() > updates_since;
     let btc_address_if_updated = state
         .data
+        .user
         .btc_address
         .as_ref()
         .filter(|a| a.timestamp > updates_since)
         .map(|a| a.value.clone());
     let one_sec_address_if_updated = state
         .data
+        .user
         .one_sec_address
         .as_ref()
         .filter(|a| a.timestamp > updates_since)
         .map(|a| a.value.clone());
-    let premium_items_updated = state.data.premium_items.last_updated() > updates_since;
+    let premium_items_updated = state.data.user.premium_items.last_updated() > updates_since;
 
     let has_any_updates = username.is_some()
         || display_name.has_update()
@@ -83,7 +85,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || state.data.user.chit_events.last_updated() > updates_since
         || state.data.user.achievements_last_seen > updates_since
         || state.data.user.message_activity_events.last_updated() > updates_since
-        || state.data.bots.last_updated() > updates_since;
+        || state.data.user.bots.last_updated() > updates_since;
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -193,17 +195,17 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     } else {
         OptionUpdate::NoChange
     };
-    let premium_items = premium_items_updated.then(|| state.data.premium_items.item_ids());
+    let premium_items = premium_items_updated.then(|| state.data.user.premium_items.item_ids());
 
     let mut bots_changed = HashSet::new();
     let mut bots_added_or_updated = Vec::new();
     let mut bots_removed = Vec::new();
 
-    for (user_id, update) in state.data.bots.iter_latest_updates(updates_since) {
+    for (user_id, update) in state.data.user.bots.iter_latest_updates(updates_since) {
         match update {
             BotUpdate::Added | BotUpdate::Updated => {
                 if bots_changed.insert(user_id)
-                    && let Some(bot) = state.data.bots.get(&user_id)
+                    && let Some(bot) = state.data.user.bots.get(&user_id)
                 {
                     bots_added_or_updated.push(InstalledBotDetails {
                         user_id,

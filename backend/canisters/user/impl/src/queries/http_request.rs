@@ -48,6 +48,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_swaps(state: &RuntimeState) -> HttpResponse {
         let swaps: Vec<_> = state
             .data
+            .user
             .token_swaps
             .all()
             .into_iter()

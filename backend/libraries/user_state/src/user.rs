@@ -1,17 +1,19 @@
 use crate::{
     BlockedUsers, ChitEvents, Communities, Community, Contacts, FavouriteChats, GameChitKeys, GroupChat, GroupChats,
-    HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, Referrals, SavedCryptoAccounts, Streak,
-    ThreadsRead,
+    HotGroupExclusions, Membership, MessageActivityEvents, P2PSwaps, PinNumber, PremiumItems, ProfileDocument, Referrals,
+    SavedCryptoAccounts, Streak, ThreadsRead, TokenSwaps,
 };
 use candid::Principal;
+use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChats;
+use installed_bots::InstalledBots;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::collections::HashSet;
 use types::{
-    Achievement, Chat, ChatId, ChitEvent, ChitEventType, CommunityId, MultiUserChat, ReferralStatus, TimestampMillis,
-    Timestamped, UniquePersonProof, UserId,
+    Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, Chat, ChatId, ChitEvent, ChitEventType,
+    CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{MessageActivityEvent, WalletConfig};
 
@@ -23,8 +25,6 @@ use user_canister::{MessageActivityEvent, WalletConfig};
 // index, so there a `User` must only be accessed within its key scope, which `Users` takes care of.
 #[derive(Serialize, Deserialize)]
 pub struct User {
-    // The User canister serialized this as `owner`
-    #[serde(alias = "owner")]
     pub principal: Principal,
     pub username: Timestamped<String>,
     pub display_name: Timestamped<Option<String>>,
@@ -77,6 +77,20 @@ pub struct User {
     pub external_achievements: HashSet<String>,
     #[serde(default)]
     pub referrals: Referrals,
+    #[serde(default)]
+    pub is_platform_moderator: bool,
+    #[serde(default)]
+    pub token_swaps: TokenSwaps,
+    #[serde(default)]
+    pub p2p_swaps: P2PSwaps,
+    #[serde(default)]
+    pub btc_address: Option<Timestamped<String>>,
+    #[serde(default)]
+    pub one_sec_address: Option<Timestamped<String>>,
+    #[serde(default)]
+    pub bots: InstalledBots,
+    #[serde(default)]
+    pub premium_items: PremiumItems,
 }
 
 impl User {
@@ -114,7 +128,85 @@ impl User {
             unique_person_proof: None,
             external_achievements: HashSet::new(),
             referrals: Referrals::default(),
+            is_platform_moderator: false,
+            token_swaps: TokenSwaps::default(),
+            p2p_swaps: P2PSwaps::default(),
+            btc_address: None,
+            one_sec_address: None,
+            bots: InstalledBots::default(),
+            premium_items: PremiumItems::default(),
         }
+    }
+
+    pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: BotPermissions) -> bool {
+        // Try to get the installed bot
+        let Some(bot) = self.bots.get(bot_id) else {
+            return false;
+        };
+
+        // Get the granted permissions when initiated by command or API key
+        let granted = match initiator {
+            BotInitiator::Command(_) => {
+                &BotPermissions::union(&bot.permissions, &bot.autonomous_permissions.clone().unwrap_or_default())
+            }
+            BotInitiator::Autonomous => match bot.autonomous_permissions.as_ref() {
+                Some(permissions) => permissions,
+                None => return false,
+            },
+        };
+
+        // The permissions required must be a subset of the permissions granted to the bot
+        required.is_subset(granted)
+    }
+
+    pub fn handle_bot_definition_updated(&mut self, update: BotDefinitionUpdate, now: TimestampMillis) {
+        let bot_id = update.bot_id;
+
+        if self.bots.update_from_definition(update, now) {
+            self.apply_bot_update(bot_id, Some(OPENCHAT_BOT_USER_ID), now);
+        }
+    }
+
+    pub fn update_bot_permissions(
+        &mut self,
+        bot_id: UserId,
+        command_permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if self
+            .bots
+            .update_permissions(bot_id, command_permissions, autonomous_permissions, now)
+        {
+            self.apply_bot_update(bot_id, None, now);
+            true
+        } else {
+            false
+        }
+    }
+
+    fn apply_bot_update(&mut self, bot_id: UserId, updated_by: Option<UserId>, now: TimestampMillis) {
+        let chat = self.direct_chats.get_mut(&bot_id.into()).unwrap();
+
+        // Push a chat event
+        if let Some(updated_by) = updated_by {
+            chat.push_bot_updated_event(
+                BotUpdated {
+                    user_id: bot_id,
+                    updated_by,
+                },
+                now,
+            );
+        }
+
+        // Re-apply event subscriptions given the changes to permissions and/or subscriptions
+        let bot = self.bots.get(&bot_id).unwrap();
+
+        let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
+        let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
+
+        chat.subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
     }
 
     pub fn membership(&self, now: TimestampMillis) -> Membership {

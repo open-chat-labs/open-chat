@@ -32,7 +32,7 @@ fn c2c_can_issue_access_token_v2(args: ArgsCompat) -> Response {
 fn c2c_can_issue_access_token_impl(args_outer: AccessTypeArgs, state: &RuntimeState) -> Response {
     if let AccessTypeArgs::BotActionByCommand(args) = &args_outer {
         // Get the permissions the user has granted to the bot
-        let Some(granted) = state.data.bots.get(&args.bot_id).map(|b| &b.permissions) else {
+        let Some(granted) = state.data.user.bots.get(&args.bot_id).map(|b| &b.permissions) else {
             return Response::Failure;
         };
 

@@ -23,7 +23,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let now = state.env.now();
 
-    if !state.data.bots.add(
+    if !state.data.user.bots.add(
         args.bot_id,
         args.caller,
         args.granted_permissions.clone(),

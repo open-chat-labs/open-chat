@@ -14,7 +14,7 @@ fn c2c_bot_chat_summary(args: Args) -> Response {
 }
 
 fn c2c_bot_chat_summary_impl(args: Args, state: &RuntimeState) -> OCResult<ChatSummaryDirect> {
-    if !state.data.is_bot_permitted(
+    if !state.data.user.is_bot_permitted(
         &args.bot_id,
         &args.initiator,
         BotPermissions::from_chat_permission(ChatPermission::ReadSummary),

@@ -1,11 +1,11 @@
 use crate::crypto::{deposit_to_accept_p2p_swap, validate_from_account};
 use crate::guards::caller_is_known_group_or_community_canister;
-use crate::model::p2p_swaps::P2PSwap;
 use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{CanisterId, OCResult, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
+use user_state::P2PSwap;
 
 #[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
 #[trace]
@@ -36,7 +36,7 @@ async fn c2c_accept_p2p_swap_impl(mut args: Args) -> Response {
     {
         Ok(block_index) => {
             mutate_state(|state| {
-                state.data.p2p_swaps.add(P2PSwap {
+                state.data.user.p2p_swaps.add(P2PSwap {
                     id: args.swap_id,
                     location: args.location,
                     created_by: args.created_by,

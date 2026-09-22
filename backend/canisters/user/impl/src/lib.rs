@@ -1,8 +1,5 @@
 use crate::model::legacy_user_canister_event_batch::LegacyUserCanisterEventBatch;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
-use crate::model::p2p_swaps::P2PSwaps;
-use crate::model::premium_items::PremiumItems;
-use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use canister_state_macros::canister_state;
@@ -12,7 +9,6 @@ use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
-use installed_bots::InstalledBots;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use rand::Rng;
 use rand::prelude::StdRng;
@@ -23,10 +19,9 @@ use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BotDefinitionUpdate, BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, CanisterId,
-    ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, IdempotentEnvelope,
-    Notification, NotifyChit, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    Achievement, BotNotification, BuildVersion, CanisterId, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, TimestampMillis, Timestamped,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::UserCanisterEvent;
 use user_state::{Community, GroupChat, User};
@@ -427,7 +422,7 @@ Your streak is now {new_streak} days!"
     pub fn uninstall_bot(&mut self, bot_id: UserId) {
         let now = self.env.now();
 
-        self.data.bots.remove(bot_id, now);
+        self.data.user.bots.remove(bot_id, now);
 
         self.delete_direct_chat(bot_id, false, now);
     }
@@ -444,19 +439,14 @@ struct Data {
     pub identity_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub test_mode: bool,
-    pub is_platform_moderator: bool,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    pub token_swaps: TokenSwaps,
-    pub p2p_swaps: P2PSwaps,
     // Events queued before they were batched per canister, which `post_upgrade` moves into
     // `user_canister_events_by_canister`
     pub user_canister_events_queue: GroupedTimerJobQueue<LegacyUserCanisterEventBatch>,
     #[serde(default = "new_user_canister_events_by_canister")]
     pub user_canister_events_by_canister: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
-    pub btc_address: Option<Timestamped<String>>,
-    pub one_sec_address: Option<Timestamped<String>>,
     pub rng_seed: [u8; 32],
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
@@ -465,8 +455,6 @@ struct Data {
     // their users
     #[serde(default)]
     pub known_multi_user_canisters: HashSet<CanisterId>,
-    pub bots: InstalledBots,
-    pub premium_items: PremiumItems,
 }
 
 impl Data {
@@ -511,23 +499,16 @@ impl Data {
             identity_canister_id,
             escrow_canister_id,
             test_mode,
-            is_platform_moderator: false,
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
-            token_swaps: TokenSwaps::default(),
-            p2p_swaps: P2PSwaps::default(),
             user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
             user_canister_events_by_canister: new_user_canister_events_by_canister(),
             video_call_operators,
-            btc_address: None,
-            one_sec_address: None,
             rng_seed: [0; 32],
             stable_memory_keys_to_garbage_collect: Vec::new(),
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             known_multi_user_canisters: HashSet::new(),
-            bots: InstalledBots::default(),
-            premium_items: PremiumItems::default(),
         }
     }
 
@@ -564,80 +545,9 @@ impl Data {
         }
     }
 
-    pub fn is_bot_permitted(&self, bot_id: &UserId, initiator: &BotInitiator, required: BotPermissions) -> bool {
-        // Try to get the installed bot
-        let Some(bot) = self.bots.get(bot_id) else {
-            return false;
-        };
-
-        // Get the granted permissions when initiated by command or API key
-        let granted = match initiator {
-            BotInitiator::Command(_) => {
-                &BotPermissions::union(&bot.permissions, &bot.autonomous_permissions.clone().unwrap_or_default())
-            }
-            BotInitiator::Autonomous => match bot.autonomous_permissions.as_ref() {
-                Some(permissions) => permissions,
-                None => return false,
-            },
-        };
-
-        // The permissions required must be a subset of the permissions granted to the bot
-        required.is_subset(granted)
-    }
-
     pub fn flush_pending_events(&mut self) {
         self.user_canister_events_by_canister.flush();
         self.local_user_index_event_sync_queue.flush();
-    }
-
-    pub fn handle_bot_definition_updated(&mut self, update: BotDefinitionUpdate, now: TimestampMillis) {
-        let bot_id = update.bot_id;
-
-        if self.bots.update_from_definition(update, now) {
-            self.apply_bot_update(bot_id, Some(OPENCHAT_BOT_USER_ID), now);
-        }
-    }
-
-    pub fn update_bot_permissions(
-        &mut self,
-        bot_id: UserId,
-        command_permissions: BotPermissions,
-        autonomous_permissions: Option<BotPermissions>,
-        now: TimestampMillis,
-    ) -> bool {
-        if self
-            .bots
-            .update_permissions(bot_id, command_permissions, autonomous_permissions, now)
-        {
-            self.apply_bot_update(bot_id, None, now);
-            true
-        } else {
-            false
-        }
-    }
-
-    fn apply_bot_update(&mut self, bot_id: UserId, updated_by: Option<UserId>, now: TimestampMillis) {
-        let chat = self.user.direct_chats.get_mut(&bot_id.into()).unwrap();
-
-        // Push a chat event
-        if let Some(updated_by) = updated_by {
-            chat.push_bot_updated_event(
-                BotUpdated {
-                    user_id: bot_id,
-                    updated_by,
-                },
-                now,
-            );
-        }
-
-        // Re-apply event subscriptions given the changes to permissions and/or subscriptions
-        let bot = self.bots.get(&bot_id).unwrap();
-
-        let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
-        let permitted_categories = permissions.permitted_chat_event_categories_to_read();
-        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
-
-        chat.subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
     }
 }
 

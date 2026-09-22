@@ -1,4 +1,4 @@
-use crate::data_previous::DataPrevious;
+use crate::data_previous::{DataPrevious, data_is_current_layout};
 use crate::jobs::migrate_direct_chat_events_to_key_id_keys;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
@@ -27,16 +27,17 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
 
     // A canister upgraded from a version which held the user's fields directly in `Data` holds the
-    // previous layout, which is read on its own once the current layout fails to parse
-    // TODO: Remove the fallback once every user canister has been upgraded past it
+    // previous layout. Which layout it is must be settled before parsing, rather than by trying one
+    // and falling back to the other, since deserializing the timer jobs and event queues sets
+    // their timers, which a failed parse would leave set as well.
+    // TODO: Remove the previous layout once every user canister has been upgraded past it
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
-        match msgpack::deserialize(get_reader(&memory)) {
-            Ok(state) => state,
-            Err(_) => {
-                let (data, errors, logs, traces): (DataPrevious, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
-                    msgpack::deserialize(get_reader(&memory)).unwrap();
-                (data.into(), errors, logs, traces)
-            }
+        if data_is_current_layout(get_reader(&memory)) {
+            msgpack::deserialize(get_reader(&memory)).unwrap()
+        } else {
+            let (data, errors, logs, traces): (DataPrevious, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+                msgpack::deserialize(get_reader(&memory)).unwrap();
+            (data.into(), errors, logs, traces)
         };
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
@@ -84,7 +85,7 @@ fn post_upgrade(args: Args) {
 
     // Move the token swaps into stable memory
     // TODO: Remove this after next release
-    let token_swaps_migrated = data.token_swaps.migrate_to_stable_memory();
+    let token_swaps_migrated = data.user.token_swaps.migrate_to_stable_memory();
     info!(token_swaps_migrated, "Migrated token swaps to stable memory");
 
     // Move the referrals into stable memory
@@ -94,7 +95,7 @@ fn post_upgrade(args: Args) {
 
     // Move the P2P swaps into stable memory
     // TODO: Remove this after next release
-    let p2p_swaps_migrated = data.p2p_swaps.migrate_to_stable_memory();
+    let p2p_swaps_migrated = data.user.p2p_swaps.migrate_to_stable_memory();
     info!(p2p_swaps_migrated, "Migrated P2P swaps to stable memory");
 
     // Move the streak insurance payments and claims into stable memory

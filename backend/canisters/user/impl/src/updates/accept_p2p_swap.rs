@@ -1,6 +1,5 @@
 use crate::crypto::{deposit_to_accept_p2p_swap, validate_from_account};
 use crate::guards::caller_is_owner;
-use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
@@ -12,6 +11,7 @@ use types::{
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
+use user_state::P2PSwap;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -46,7 +46,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
     match transfer_result {
         Ok(index) => {
             mutate_state(|state| {
-                state.data.p2p_swaps.add(P2PSwap {
+                state.data.user.p2p_swaps.add(P2PSwap {
                     id: content.swap_id,
                     location: P2PSwapLocation::from_message(
                         Chat::Direct(args.user_id.into()),

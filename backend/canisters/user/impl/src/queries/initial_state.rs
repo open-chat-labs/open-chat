@@ -45,6 +45,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
 
     let bots = state
         .data
+        .user
         .bots
         .iter()
         .map(|(user_id, bot)| InstalledBotDetails {
@@ -85,9 +86,9 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         referrals: state.data.user.referrals.list(),
         message_activity_summary: state.data.user.message_activity_events.summary(),
         bots,
-        btc_address: state.data.btc_address.as_ref().map(|a| a.value.clone()),
-        one_sec_address: state.data.one_sec_address.as_ref().map(|a| a.value.clone()),
-        premium_items: state.data.premium_items.item_ids(),
+        btc_address: state.data.user.btc_address.as_ref().map(|a| a.value.clone()),
+        one_sec_address: state.data.user.one_sec_address.as_ref().map(|a| a.value.clone()),
+        premium_items: state.data.user.premium_items.item_ids(),
         pinned_chats: merged_pinned,
     })
 }

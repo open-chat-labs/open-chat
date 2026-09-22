@@ -189,7 +189,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
     let args: Args = args.into();
     let message_content: MessageContent = args.content.clone().into();
 
-    if !state.data.is_bot_permitted(
+    if !state.data.user.is_bot_permitted(
         &bot_id,
         &bot_caller.initiator,
         BotPermissions::from_message_permission((&args.content).into()),
