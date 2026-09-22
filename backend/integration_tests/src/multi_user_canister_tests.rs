@@ -277,17 +277,17 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
         "{missing_thread:?}"
     );
 
-    // A recipient in another canister is not supported yet, but is an error rather than a trap
+    // A recipient in another canister who isn't an OpenChat user is not found
     let elsewhere: UserId = random_principal().into();
-    let unsupported = client::multi_user::send_message_v2(
+    let unknown = client::multi_user::send_message_v2(
         env,
         a_principal,
         canister_id,
         &send_message_args(elsewhere, "hello?", random_from_u128()),
     );
     assert!(
-        matches!(&unsupported, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
-        "{unsupported:?}"
+        matches!(&unknown, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        "{unknown:?}"
     );
 
     // A user's chats can only be read as that user by the user themselves or the LocalUserIndex
@@ -3633,6 +3633,133 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         messages(&chat(env)),
         vec![(alice.user_id, "edited".to_string()), (alice.user_id, "once".to_string())]
     );
+}
+
+#[test]
+fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let alice = client::register_user(env, canister_ids);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+
+    // A recipient in another canister is looked up in the LocalUserIndex
+    let unknown: UserId = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap().into();
+    let response = client::multi_user::send_message_v2(
+        env,
+        bob,
+        canister_id,
+        &send_message_args(unknown, "hello", random_from_u128()),
+    );
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        "{response:?}"
+    );
+
+    // So is a user in another canister whom Bob sets a time to live for before they have a chat,
+    // which creates the chat. The principal a user signs in with isn't their user id.
+    let carol = client::register_user(env, canister_ids);
+    update_chat_settings(env, bob, canister_id, carol.user_id, OptionUpdate::SetToSome(60_000));
+    assert!(
+        initial_state(env, bob, canister_id)
+            .direct_chats
+            .summaries
+            .iter()
+            .any(|c| c.them == carol.user_id && c.events_ttl == Some(60_000))
+    );
+    for them in [unknown, carol.principal.into()] {
+        let response = client::multi_user::update_chat_settings(
+            env,
+            bob,
+            canister_id,
+            &user_canister::update_chat_settings::Args {
+                user_id: them,
+                events_ttl: OptionUpdate::SetToSome(60_000),
+            },
+        );
+        assert!(
+            matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+            "{response:?}"
+        );
+    }
+    let response = client::multi_user::send_message_v2(
+        env,
+        bob,
+        canister_id,
+        &send_message_args(carol.principal.into(), "hello", random_from_u128()),
+    );
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        "{response:?}"
+    );
+
+    // Bob messages Alice, a user in a User canister, then edits, reacts to, deletes and undeletes
+    // the message and sets the chat's time to live, each of which is held in his copy of the chat
+    // and sent to Alice's canister
+    let message_id: MessageId = random_from_u128();
+    send_text_message(env, bob, canister_id, alice.user_id, "hello", message_id);
+    edit_message(env, bob, canister_id, alice.user_id, None, message_id, "edited");
+    toggle_reaction(
+        env,
+        bob,
+        canister_id,
+        alice.user_id,
+        None,
+        message_id,
+        &Reaction::new("👍".to_string()),
+        true,
+    );
+    delete_messages(env, bob, canister_id, alice.user_id, None, vec![message_id]);
+    let response = client::multi_user::undelete_messages(
+        env,
+        bob,
+        canister_id,
+        &user_canister::undelete_messages::Args {
+            user_id: alice.user_id,
+            thread_root_message_index: None,
+            message_ids: vec![message_id],
+        },
+    );
+    assert!(matches!(response, user_canister::undelete_messages::Response::Success(_)));
+    update_chat_settings(env, bob, canister_id, alice.user_id, OptionUpdate::SetToSome(3_600_000));
+
+    let bobs_chat = events(env, bob, canister_id, bob_id, alice.user_id);
+    assert_eq!(messages(&bobs_chat), vec![(bob_id, "edited".to_string())]);
+    assert_eq!(message(&bobs_chat, message_id).reactions.len(), 1);
+    assert!(
+        initial_state(env, bob, canister_id)
+            .direct_chats
+            .summaries
+            .iter()
+            .any(|c| c.them == alice.user_id && c.events_ttl == Some(3_600_000))
+    );
+
+    // The events are sent: a call which failed in a way which may succeed later would leave them
+    // queued to be retried
+    tick_many(env, 10);
+    assert_eq!(queued_user_canister_events(env, canister_id), 0);
+
+    // Alice's canister verifies a sender it has no chat with via the LocalUserIndex, which doesn't
+    // yet know of users in MultiUser canisters, so for now it drops Bob's events
+    // TODO: Check that Alice receives them once users can be registered into MultiUser canisters
+    assert!(
+        client::user::happy_path::initial_state(env, &alice)
+            .direct_chats
+            .summaries
+            .iter()
+            .all(|c| c.them != bob_id)
+    );
+}
+
+fn queued_user_canister_events(env: &PocketIc, canister_id: CanisterId) -> u32 {
+    serde_json::from_value(metrics(env, canister_id)["queued_user_canister_events"].clone()).unwrap()
 }
 
 fn multi_user_canister_count(env: &PocketIc, local_user_index: CanisterId) -> u64 {

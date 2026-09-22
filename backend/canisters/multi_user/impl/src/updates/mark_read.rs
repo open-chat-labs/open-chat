@@ -4,6 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use user_canister::mark_read::*;
+use user_canister::{MarkMessagesReadArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -59,10 +60,17 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
             .flatten();
 
         // Tell the other user how far this user has read, which for a user in this canister means
-        // updating their copy of the chat directly. As between User canisters, a user who has
-        // blocked this one isn't told.
-        // TODO: A user in another canister needs telling via `MarkMessagesRead`, as the User
-        // canister does, once the MultiUser canister has a queue of events for other canisters
+        // updating their copy of the chat directly, and for one in another canister sending it to
+        // them. As between User canisters, a user who has blocked this one isn't told.
+        if let Some(read_up_to_of_theirs) = read_up_to_of_theirs {
+            state.push_user_canister_event(
+                my_index,
+                chat_id.into(),
+                UserCanisterEvent::MarkMessagesRead(MarkMessagesReadArgs {
+                    read_up_to: read_up_to_of_theirs,
+                }),
+            );
+        }
         if let Some(read_up_to_of_theirs) = read_up_to_of_theirs
             && let Some(their_index) = state.index_of_local_user(chat_id.into())
         {
