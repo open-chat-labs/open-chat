@@ -45,6 +45,7 @@ fn access_token_valid() {
         &local_user_index_canister::access_token_v2::Args::StartVideoCall(StartVideoCallArgs {
             chat: Chat::Channel(community_id, channel_id),
             call_type: VideoCallType::Broadcast,
+            audio_only: false,
         }),
     );
 
@@ -82,4 +83,47 @@ struct TestData {
     user1: User,
     community_id: CommunityId,
     channel_id: ChannelId,
+}
+
+// #9455 invariant 12: the start token the local user index signs names the kind of call that
+// was asked for. The video bridge learns that a call is audio only from this claim and from
+// nowhere else, so without it every audio call would silently become a video call.
+#[test]
+fn invariant_12_start_token_claims_carry_the_call_kind() {
+    let seed = generate_seed();
+    let mut wrapper = ENV.deref().get_with_seed(seed);
+
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.set_time(SystemTime::now().into());
+
+    let TestData { user1, community_id, .. } = init_test_data(env, canister_ids, *controller);
+    let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, false, random_string());
+
+    tick_many(env, 10);
+
+    let public_key = user_index::happy_path::public_key(env, canister_ids.user_index);
+
+    for audio_only in [true, false] {
+        let token = local_user_index::happy_path::access_token(
+            env,
+            &user1,
+            canister_ids.local_user_index(env, community_id),
+            &local_user_index_canister::access_token_v2::Args::StartVideoCall(StartVideoCallArgs {
+                chat: Chat::Channel(community_id, channel_id),
+                call_type: VideoCallType::Default,
+                audio_only,
+            }),
+        );
+
+        let claims = decode_and_verify_token(token, public_key.clone()).expect("Expected to decode the token");
+
+        assert_eq!(claims.audio_only, audio_only);
+        assert_eq!(claims.call_type, VideoCallType::Default);
+    }
 }

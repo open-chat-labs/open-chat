@@ -44,6 +44,8 @@
     );
 
     let chat = $derived(normaliseChatSummary($activeVideoCall?.chatId));
+    // an audio call has no camera and no screen share to toggle
+    let audioCall = $derived($activeVideoCall?.callType === "audio");
 
     function goToCall() {
         if ($activeVideoCall) {
@@ -153,18 +155,20 @@
                         {/snippet}
                     </Tooltip>
                 {:else}
-                    <Tooltip position={"top"} align={"middle"}>
-                        <div role="button" tabindex="0" class="cam" onclick={toggleCamera}>
+                    {#if !audioCall}
+                        <Tooltip position={"top"} align={"middle"}>
+                            <div role="button" tabindex="0" class="cam" onclick={toggleCamera}>
                             {#if $camera}
                                 <Video size={"1.6em"} color={"var(--toast-success-txt)"} />
                             {:else}
                                 <VideoOff size={"1.6em"} color={"var(--toast-success-txt)"} />
                             {/if}
-                        </div>
-                        {#snippet popupTemplate()}
-                            <Translatable resourceKey={i18nKey("videoCall.toggleCam")} />
-                        {/snippet}
-                    </Tooltip>
+                            </div>
+                            {#snippet popupTemplate()}
+                                <Translatable resourceKey={i18nKey("videoCall.toggleCam")} />
+                            {/snippet}
+                        </Tooltip>
+                    {/if}
                     <Tooltip position={"top"} align={"middle"}>
                         <div role="button" tabindex="0" class="mic" onclick={toggleMic}>
                             {#if $microphone}
@@ -177,18 +181,20 @@
                             <Translatable resourceKey={i18nKey("videoCall.toggleMic")} />
                         {/snippet}
                     </Tooltip>
-                    <Tooltip position={"top"} align={"middle"}>
-                        <div role="button" tabindex="0" class="mic" onclick={toggleShare}>
-                            {#if $sharing}
-                                <MonitorOff size={"1.6em"} color={"var(--toast-success-txt)"} />
-                            {:else}
-                                <MonitorShare size={"1.6em"} color={"var(--toast-success-txt)"} />
-                            {/if}
-                        </div>
-                        {#snippet popupTemplate()}
-                            <Translatable resourceKey={i18nKey("videoCall.toggleShare")} />
-                        {/snippet}
-                    </Tooltip>
+                    {#if !audioCall}
+                        <Tooltip position={"top"} align={"middle"}>
+                            <div role="button" tabindex="0" class="mic" onclick={toggleShare}>
+                                {#if $sharing}
+                                    <MonitorOff size={"1.6em"} color={"var(--toast-success-txt)"} />
+                                {:else}
+                                    <MonitorShare size={"1.6em"} color={"var(--toast-success-txt)"} />
+                                {/if}
+                            </div>
+                            {#snippet popupTemplate()}
+                                <Translatable resourceKey={i18nKey("videoCall.toggleShare")} />
+                            {/snippet}
+                        </Tooltip>
+                    {/if}
                 {/if}
                 <Tooltip position={"top"} align={"middle"}>
                     <div role="button" tabindex="0" class="hangup" onclick={hangup}>

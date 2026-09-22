@@ -8,8 +8,8 @@ use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Milliseconds,
-    OCResult, UserId, UserType, VideoCallPresence, VideoCallType,
+    CallKind, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex,
+    Milliseconds, OCResult, UserId, UserType, VideoCallPresence, VideoCallType,
 };
 use user_canister::start_video_call_v2::*;
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
@@ -32,12 +32,17 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
+    // Broadcasts are refused above, so this only fails for a pair that names one
+    let Some(call_kind) = CallKind::from_wire(args.call_type, args.audio_only.unwrap_or_default()) else {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    };
+
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
 
     let StartVideoCallResult {
         message_event,
         mute_notification,
-    } = handle_start_video_call(args.message_id, None, sender, sender, max_duration, state);
+    } = handle_start_video_call(args.message_id, None, sender, sender, call_kind, max_duration, state);
 
     if !mute_notification {
         let notification = DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
@@ -64,6 +69,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             message_id: args.message_id,
             message_index: message_event.event.message_index,
             max_duration: args.max_duration,
+            audio_only: call_kind.audio_only(),
         })),
     );
 
@@ -75,6 +81,7 @@ pub fn handle_start_video_call(
     their_message_index: Option<MessageIndex>,
     sender: UserId,
     other: UserId,
+    call_kind: CallKind,
     max_duration: Milliseconds,
     state: &mut RuntimeState,
 ) -> StartVideoCallResult {
@@ -85,7 +92,7 @@ pub fn handle_start_video_call(
         message_id,
         sender,
         content: MessageContentInternal::VideoCall(VideoCallContentInternal {
-            call_type: VideoCallType::Default,
+            call_type: call_kind,
             ended: None,
             participants: [(
                 sender,

@@ -74,6 +74,9 @@
         {:else if missed}
             <Translatable
                 resourceKey={i18nKey("videoCall.missedCall", { username: displayName })} />
+        {:else if content.callType === "audio"}
+            <Translatable
+                resourceKey={i18nKey("videoCall.audioStartedBy", { username: displayName })} />
         {:else}
             <Translatable resourceKey={i18nKey("videoCall.startedBy", { username: displayName })} />
         {/if}

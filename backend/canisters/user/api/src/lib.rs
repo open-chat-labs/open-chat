@@ -291,6 +291,9 @@ pub struct StartVideoCallArgs {
     pub message_id: MessageId,
     pub message_index: MessageIndex,
     pub max_duration: Option<Milliseconds>,
+    // Absent when the other user's canister predates audio calls
+    #[serde(default)]
+    pub audio_only: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

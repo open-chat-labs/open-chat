@@ -18,6 +18,7 @@
         platformModeratorStore,
         publish,
         setRightPanelHistory,
+        type VideoCallType,
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -36,6 +37,7 @@
     import Import from "svelte-material-icons/Import.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
+    import Phone from "svelte-material-icons/Phone.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
     import Webhook from "svelte-material-icons/Webhook.svelte";
@@ -119,11 +121,18 @@
 
     let videoMenuText = $derived(
         videoCallInProgress
-            ? i18nKey("videoCall.joinVideo")
+            ? i18nKey(
+                  selectedChatSummary.videoCallInProgress?.callType === "audio"
+                      ? "videoCall.joinAudio"
+                      : "videoCall.joinVideo",
+              )
             : isPublic
               ? i18nKey("videoCall.startBroadcast")
               : i18nKey("videoCall.startVideo"),
     );
+
+    // a new call that is not a broadcast is offered as an audio call or a video call
+    let canChooseCallType = $derived(!videoCallInProgress && !isPublic);
 
     let canRegisterWebhook = $derived(client.canRegisterWebhook(selectedChatSummary.id));
 
@@ -289,10 +298,10 @@
         }
     }
 
-    function startVideoCall() {
+    function startVideoCall(callType: VideoCallType = isPublic ? "broadcast" : "default") {
         publish("startVideoCall", {
             chatId: selectedChatSummary.id,
-            callType: isPublic ? "broadcast" : "default",
+            callType,
             join: videoCallInProgress,
         });
     }
@@ -376,8 +385,18 @@
         {/snippet}
         {#snippet menuItems()}
             <Menu>
+                {#if canStartOrJoinVideoCall && canChooseCallType}
+                    <MenuItem onclick={() => startVideoCall("audio")}>
+                        {#snippet icon()}
+                            <Phone size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <Translatable resourceKey={i18nKey("videoCall.startAudio")} />
+                        {/snippet}
+                    </MenuItem>
+                {/if}
                 {#if canStartOrJoinVideoCall}
-                    <MenuItem onclick={startVideoCall}>
+                    <MenuItem onclick={() => startVideoCall()}>
                         {#snippet icon()}
                             <Headphones size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}

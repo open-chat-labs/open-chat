@@ -26,6 +26,9 @@ pub enum Response {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StartVideoCallArgs {
     pub call_type: VideoCallType,
+    #[serde(default)]
+    #[ts(as = "Option<bool>", optional)]
+    pub audio_only: bool,
     pub chat: Chat,
 }
 

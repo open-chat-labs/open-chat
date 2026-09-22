@@ -36,6 +36,8 @@ pub enum Response {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StartVideoCallArgs {
     pub call_type: VideoCallType,
+    #[serde(default)]
+    pub audio_only: bool,
     pub initiator: UserId,
     pub is_diamond: bool,
 }

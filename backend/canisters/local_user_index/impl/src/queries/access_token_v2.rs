@@ -12,7 +12,7 @@ use types::c2c_can_issue_access_token::{
 };
 use types::{
     AutonomousBotScope, BotActionByCommandClaims, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, CLAIM_TYPE_JOIN_VIDEO_CALL,
-    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, Chat, JoinOrEndVideoCallClaims, Milliseconds,
+    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, CallKind, Chat, JoinOrEndVideoCallClaims, Milliseconds,
     StartVideoCallClaims, TranslateClaims,
 };
 
@@ -68,6 +68,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                     user_id: args.initiator,
                     chat_id: chat.unwrap(),
                     call_type: args.call_type,
+                    audio_only: args.audio_only,
                     is_diamond: args.is_diamond,
                 };
                 build_token(token_type_name, custom_claims, DEFAULT_TOKEN_VALIDITY, state)
@@ -130,14 +131,22 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
     let is_diamond = state.data.global_users.is_diamond_member(&user_id, state.env.now());
 
     let result = match args_outer {
-        ArgsInternal::StartVideoCall(args) => PrepareResult {
-            scope: AutonomousBotScope::Chat(args.chat),
-            access_type_args: AccessTypeArgs::StartVideoCall(StartVideoCallArgs {
-                initiator: user_id,
-                call_type: args.call_type,
-                is_diamond,
-            }),
-        },
+        ArgsInternal::StartVideoCall(args) => {
+            // There is no such thing as an audio only broadcast
+            if CallKind::from_wire(args.call_type, args.audio_only).is_none() {
+                return Err(Response::NotAuthorized);
+            }
+
+            PrepareResult {
+                scope: AutonomousBotScope::Chat(args.chat),
+                access_type_args: AccessTypeArgs::StartVideoCall(StartVideoCallArgs {
+                    initiator: user_id,
+                    call_type: args.call_type,
+                    audio_only: args.audio_only,
+                    is_diamond,
+                }),
+            }
+        }
         ArgsInternal::JoinVideoCall(args) => PrepareResult {
             scope: AutonomousBotScope::Chat(args.chat),
             access_type_args: AccessTypeArgs::JoinVideoCall(JoinVideoCallArgs {
