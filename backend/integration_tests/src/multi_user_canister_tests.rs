@@ -3285,6 +3285,94 @@ fn bot_message_texts(env: &PocketIc, sender: Principal, canister_id: CanisterId,
         .collect()
 }
 
+#[test]
+fn premium_items_are_paid_for_from_the_users_chit() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+
+    // An external achievement gives Alice some CHIT to spend
+    let event = local_user_index_event(
+        env,
+        1,
+        LocalUserIndexEvent::ExternalAchievementAwarded(Box::new(user_canister::ExternalAchievementAwarded {
+            name: "Played a game".to_string(),
+            chit_reward: 1000,
+        })),
+    );
+    send_local_user_index_events(env, local_user_index, canister_id, alice_id, vec![event]);
+    assert_eq!(initial_state(env, alice, canister_id).chit_balance, 1000);
+
+    let pay = |env: &mut PocketIc, item_id: u32, cost: u32| {
+        client::multi_user::c2c_pay_for_premium_item(
+            env,
+            local_user_index,
+            canister_id,
+            &user_canister::c2c_pay_for_premium_item::Args {
+                user_id: alice_id,
+                item_id,
+                pay_in_chat: false,
+                cost,
+            },
+        )
+    };
+
+    // Too expensive
+    let response = pay(env, 1, 1001);
+    assert!(
+        matches!(&response, user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientFunds)),
+        "{response:?}"
+    );
+
+    // Bought, and reported in the user's state along with the CHIT spent
+    let response = pay(env, 1, 400);
+    assert!(
+        matches!(&response, user_canister::c2c_pay_for_premium_item::Response::Success(r) if r.chit_balance == 600),
+        "{response:?}"
+    );
+    let state = initial_state(env, alice, canister_id);
+    assert_eq!(state.premium_items, vec![1]);
+    assert_eq!(state.chit_balance, 600);
+    assert!(
+        chit_events(env, alice, canister_id)
+            .events
+            .iter()
+            .any(|e| matches!(e.reason, ChitEventType::PurchasedPremiumItem(1)) && e.amount == -400)
+    );
+
+    // Only once
+    let response = pay(env, 1, 400);
+    assert!(
+        matches!(&response, user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::AlreadyAdded)),
+        "{response:?}"
+    );
+
+    // A user this canister doesn't hold
+    let response = client::multi_user::c2c_pay_for_premium_item(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_pay_for_premium_item::Args {
+            user_id: random_principal().into(),
+            item_id: 2,
+            pay_in_chat: false,
+            cost: 1,
+        },
+    );
+    assert!(
+        matches!(&response, user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        "{response:?}"
+    );
+}
+
 fn local_user_index_event(
     env: &PocketIc,
     idempotency_id: u64,

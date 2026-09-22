@@ -2,8 +2,6 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use oc_error_codes::OCErrorCode;
-use types::{ChitEvent, ChitEventType};
 use user_canister::c2c_pay_for_premium_item::{Response::*, *};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -13,26 +11,12 @@ fn c2c_pay_for_premium_item(args: Args) -> Response {
 }
 
 fn c2c_pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let chit_balance = state.data.user.chit_events.chit_balance();
-    if chit_balance < (args.cost as i32) {
-        return Error(OCErrorCode::InsufficientFunds.with_message(chit_balance));
-    }
-
     let now = state.env.now();
-    if !state.data.user.premium_items.add(args.item_id, args.cost, now) {
-        return Error(OCErrorCode::AlreadyAdded.into());
+    match user_core::updates::c2c_pay_for_premium_item(&mut state.data.user, args, now) {
+        Ok(result) => {
+            state.notify_user_index_of_chit(now);
+            Success(result)
+        }
+        Err(error) => Error(error),
     }
-
-    state.data.user.chit_events.push(ChitEvent {
-        timestamp: now,
-        amount: -(args.cost as i32),
-        reason: ChitEventType::PurchasedPremiumItem(args.item_id),
-    });
-
-    state.notify_user_index_of_chit(now);
-
-    Success(SuccessResult {
-        total_chit_earned: state.data.user.chit_events.total_chit_earned(),
-        chit_balance: state.data.user.chit_events.chit_balance(),
-    })
 }

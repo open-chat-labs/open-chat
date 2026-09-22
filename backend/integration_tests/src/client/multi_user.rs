@@ -1,14 +1,15 @@
 use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
 use multi_user_canister::{c2c_create_user, c2c_delete_user};
 use user_canister::{
-    add_hot_group_exclusions, add_reaction, archive_unarchive_chats, bio, block_user, cancel_message_reminder, chit_events,
-    claim_daily_chit, configure_wallet, contacts, delete_direct_chat, delete_messages, delete_saved_crypto_account,
-    deleted_message, edit_message_v2, events, events_by_index, events_window, hot_group_exclusions, initial_state,
-    local_user_index, manage_favourite_chats, mark_achievements_seen, mark_message_activity_feed_read, mark_read,
-    message_activity_feed, messages_by_message_index, mute_notifications, pay_for_streak_insurance, pin_chat_v2,
-    public_profile, remove_reaction, save_crypto_account, saved_crypto_accounts, search_messages, send_message_v2, set_avatar,
-    set_bio, set_contact, set_message_reminder_v2, set_pin_number, set_profile_background, unblock_user, undelete_messages,
-    unmute_notifications, unpin_chat_v2, update_chat_settings, updates,
+    add_hot_group_exclusions, add_reaction, archive_unarchive_chats, bio, block_user, c2c_pay_for_premium_item,
+    cancel_message_reminder, chit_events, claim_daily_chit, configure_wallet, contacts, delete_direct_chat, delete_messages,
+    delete_saved_crypto_account, deleted_message, edit_message_v2, events, events_by_index, events_window,
+    hot_group_exclusions, initial_state, local_user_index, manage_favourite_chats, mark_achievements_seen,
+    mark_message_activity_feed_read, mark_read, message_activity_feed, messages_by_message_index, mute_notifications,
+    pay_for_streak_insurance, pin_chat_v2, public_profile, remove_reaction, save_crypto_account, saved_crypto_accounts,
+    search_messages, send_message_v2, set_avatar, set_bio, set_contact, set_message_reminder_v2, set_pin_number,
+    set_profile_background, unblock_user, undelete_messages, unmute_notifications, unpin_chat_v2, update_chat_settings,
+    updates,
 };
 use user_canister::{
     c2c_community_canister_v2, c2c_game_chit, c2c_group_canister_v2, c2c_groups_and_communities, c2c_local_user_index_v2,
@@ -47,6 +48,7 @@ generate_msgpack_update_call!(c2c_delete_user);
 generate_msgpack_update_call!(c2c_game_chit);
 generate_msgpack_update_call!(c2c_group_canister_v2);
 generate_msgpack_update_call!(c2c_local_user_index_v2);
+generate_msgpack_update_call!(c2c_pay_for_premium_item);
 generate_msgpack_update_call!(c2c_notify_community_deleted);
 generate_msgpack_update_call!(c2c_notify_group_deleted);
 generate_msgpack_update_call!(c2c_remove_from_group);
