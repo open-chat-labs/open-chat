@@ -1,0 +1,7 @@
+// Sends all cycles above what the canister needs to make the call to the CyclesDispenser and
+// returns the number of cycles sent. The target defaults to the production CyclesDispenser
+// (gonut-hqaaa-aaaaf-aby7a-cai), pass `(opt principal "...")` as the init arg to target another,
+// eg. on ic_test.
+service : (opt principal) -> {
+    refund : () -> (nat64);
+}

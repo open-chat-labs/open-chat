@@ -302,6 +302,7 @@ twox-hash = { version = "2", default-features = false, features = [
     "xxhash3_128",
 ] }
 url = "2"
+wat = "1"
 web-push = { version = "0.11", default-features = false, features = [
     "hyper-client",
 ] }
