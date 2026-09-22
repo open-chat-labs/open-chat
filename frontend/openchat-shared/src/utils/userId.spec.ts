@@ -1,8 +1,10 @@
 import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
+import { ANON_USER_ID } from "../domain/user/user";
 import {
     indexedUserId,
     isMultiUserCanisterUser,
+    MAX_USER_INDEX,
     userCanisterId,
     userIndexWithinCanister,
 } from "./userId";
@@ -25,6 +27,17 @@ describe("indexed user ids", () => {
         expect(indexedUserId(Principal.fromText(canisterId), index)).toBe(userId);
         expect(userCanisterId(userId).toText()).toBe(canisterId);
         expect(userIndexWithinCanister(userId)).toBe(index);
+    });
+
+    test("building an id rejects a principal which is not a canister id", () => {
+        expect(() => indexedUserId(Principal.fromText(botId), 1)).toThrow();
+    });
+
+    test("building an id rejects an index which does not fit", () => {
+        const canister = Principal.fromText(canisterId);
+        expect(() => indexedUserId(canister, -1)).toThrow();
+        expect(() => indexedUserId(canister, MAX_USER_INDEX + 1)).toThrow();
+        expect(() => indexedUserId(canister, 1.5)).toThrow();
     });
 
     test("a User canister user is held by the canister their id names, at index 0", () => {
@@ -51,5 +64,10 @@ describe("isMultiUserCanisterUser", () => {
 
     test("a bot or webhook id is not", () => {
         expect(isMultiUserCanisterUser(botId)).toBe(false);
+    });
+
+    test("anything which is not a principal, such as the anonymous user id, is not", () => {
+        expect(isMultiUserCanisterUser(ANON_USER_ID)).toBe(false);
+        expect(isMultiUserCanisterUser("")).toBe(false);
     });
 });

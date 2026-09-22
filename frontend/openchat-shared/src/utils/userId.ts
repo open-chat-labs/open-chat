@@ -18,9 +18,16 @@ const INDEXED_TAG = 0x80;
 export const MAX_USER_INDEX = (1 << 15) - 1;
 
 // Whether the user's data is held in a MultiUser canister alongside other users', rather than in
-// a User canister of their own. Mirrors `UserId::is_indexed`.
+// a User canister of their own. Mirrors `UserId::is_indexed`. False for anything which is not a
+// principal, such as the anonymous user's id, so it is safe on any value the current user id holds.
 export function isMultiUserCanisterUser(userId: string): boolean {
-    return isIndexed(Principal.fromText(userId).toUint8Array());
+    let bytes: Uint8Array;
+    try {
+        bytes = Principal.fromText(userId).toUint8Array();
+    } catch {
+        return false;
+    }
+    return isIndexed(bytes);
 }
 
 // The id of the canister which holds the user's data. Mirrors `UserId::canister_id`.
@@ -46,6 +53,13 @@ export function userIndexWithinCanister(userId: string): number {
 // Mirrors `UserId::new_indexed`: the index takes the place of the canister id's two trailing tag
 // bytes, which is what `userCanisterId` reverses.
 export function indexedUserId(canisterId: Principal, index: number): string {
+    if (!isCanisterId(canisterId)) {
+        throw new Error(`Not a canister id: ${canisterId.toText()}`);
+    }
+    if (!Number.isInteger(index) || index < 0 || index > MAX_USER_INDEX) {
+        throw new Error(`Index ${index} is out of range`);
+    }
+
     const bytes = new Uint8Array(CANISTER_ID_LENGTH);
     bytes.set(canisterId.toUint8Array().subarray(0, 8));
     bytes[8] = index & 0xff;
