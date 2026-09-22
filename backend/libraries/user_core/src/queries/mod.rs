@@ -8,6 +8,8 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use types::{Chat, EventOrExpiredRange, EventsResponse, MessageIndex, OCResult, TimestampMillis, UserId};
 
+mod c2c_bot_chat_summary;
+mod c2c_can_issue_access_token;
 mod c2c_groups_and_communities;
 mod chit_events;
 mod contacts;
@@ -20,8 +22,12 @@ mod initial_state;
 mod message_activity_feed;
 mod messages_by_message_index;
 mod public_profile;
+mod token_swap_status;
+mod token_swaps;
 mod updates;
 
+pub use c2c_bot_chat_summary::c2c_bot_chat_summary;
+pub use c2c_can_issue_access_token::c2c_can_issue_access_token;
 pub use c2c_groups_and_communities::c2c_groups_and_communities;
 pub use chit_events::chit_events;
 pub use contacts::contacts;
@@ -34,6 +40,8 @@ pub use initial_state::initial_state;
 pub use message_activity_feed::message_activity_feed;
 pub use messages_by_message_index::messages_by_message_index;
 pub use public_profile::public_profile;
+pub use token_swap_status::token_swap_status;
+pub use token_swaps::token_swaps;
 pub use updates::updates;
 
 // Reads events from the user's chat with `them`, or a thread in it, with `read` choosing which,
