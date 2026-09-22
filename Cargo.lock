@@ -13000,6 +13000,7 @@ name = "user_core"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "chat_events",
  "constants",
  "direct_chat",
  "group_index_canister",

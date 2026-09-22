@@ -53,4 +53,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Rename the `user_state` library to `user_core`, with the state under `model` and one module per shared endpoint under `queries` and `updates` ([#9470](https://github.com/open-chat-labs/open-chat/pull/9470))
 - Take the texts of the OpenChat bot's messages from `user_core`, shared with the User canister ([#9471](https://github.com/open-chat-labs/open-chat/pull/9471))
 - Validate `create_group` and `create_community` via `user_core`, shared with the User canister ([#9472](https://github.com/open-chat-labs/open-chat/pull/9472))
+- Implement `archive_unarchive_chats`, `pin_chat_v2`, `unpin_chat_v2`, `set_contact`, `public_profile`, `contacts`, `chit_events`, `deleted_message` and `messages_by_message_index` via `user_core`, shared with the User canister ([#9473](https://github.com/open-chat-labs/open-chat/pull/9473))
 

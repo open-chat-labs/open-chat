@@ -2,10 +2,8 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use user_canister::set_contact::*;
-use user_core::SetContactResponse;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -14,12 +12,5 @@ fn set_contact(args: Args) -> Response {
 }
 
 fn set_contact_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.user.verify_not_suspended()?;
-
-    match state.data.user.contacts.set_contact(args.contact) {
-        SetContactResponse::Success => Ok(()),
-        SetContactResponse::NoChange => Err(OCErrorCode::NoChange.into()),
-        SetContactResponse::NicknameTooLong(n) => Err(OCErrorCode::NameTooLong.with_json(&n)),
-        SetContactResponse::NicknameTooShort(n) => Err(OCErrorCode::NameTooShort.with_json(&n)),
-    }
+    user_core::updates::set_contact::set_contact(&mut state.data.user, args)
 }
