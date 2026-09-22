@@ -42,8 +42,12 @@ async fn process_user(user: UserToDelete) {
         match result {
             Ok(DeleteUserSuccess::Deleted(canisters_to_notify)) => {
                 state.data.global_users.remove(&user_id);
-                state.data.local_users.remove(&user_id);
+                let removed = state.data.local_users.remove(&user_id);
                 state.data.daily_puzzle_engine.remove_user(user_id);
+                // Only decrement once, even if a duplicate DeleteUser event queued the user twice
+                if removed && user_id.index() != 0 {
+                    state.data.local_multi_user_canisters.on_user_removed(&user_id.canister_id());
+                }
 
                 let now = state.env.now();
                 for canister_id in canisters_to_notify {

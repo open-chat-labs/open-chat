@@ -20,9 +20,9 @@ fn undelete_messages(args: Args) -> Response {
 }
 
 fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
-    let chat = state.data.direct_chats.get_mut_or_err(&args.user_id.into())?;
+    let chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
     let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
 
@@ -60,7 +60,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
 
         state.push_user_canister_event(
-            args.user_id.canister_id(),
+            args.user_id,
             UserCanisterEvent::UndeleteMessages(Box::new(user_canister::DeleteUndeleteMessagesArgs {
                 thread_root_message_id,
                 message_ids: deleted,

@@ -17,13 +17,13 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     };
 
-    if state.data.suspended.value {
+    if state.data.user.suspended.value {
         return Err(OCErrorCode::InitiatorSuspended.into());
     }
 
     let now = state.env.now();
 
-    if !state.data.bots.add(
+    if !state.data.user.bots.add(
         args.bot_id,
         args.caller,
         args.granted_permissions.clone(),
@@ -35,7 +35,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     }
 
     // If there isn't already a direct chat with the bot, create one now
-    let chat = state.data.direct_chats.get_or_create(
+    let chat = state.data.user.direct_chats.get_or_create(
         state.env.canister_id().into(),
         args.bot_id,
         UserType::BotV2,

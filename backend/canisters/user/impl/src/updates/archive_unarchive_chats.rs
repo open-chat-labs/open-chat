@@ -43,11 +43,11 @@ fn update_chat(chat: &Chat, archive: bool, now: TimestampMillis, state: &mut Run
 
     let success = match chat {
         Chat::Direct(chat_id) => {
-            if let Some(dc) = state.data.direct_chats.get_mut(chat_id) {
+            if let Some(dc) = state.data.user.direct_chats.get_mut(chat_id) {
                 dc.archived = Timestamped::new(archive, now);
 
                 if archive {
-                    state.data.direct_chats.unpin(chat_id, now);
+                    state.data.user.direct_chats.unpin(chat_id, now);
                 }
 
                 true
@@ -56,11 +56,11 @@ fn update_chat(chat: &Chat, archive: bool, now: TimestampMillis, state: &mut Run
             }
         }
         Chat::Group(chat_id) => {
-            if let Some(gc) = state.data.group_chats.get_mut(chat_id) {
+            if let Some(gc) = state.data.user.group_chats.get_mut(chat_id) {
                 gc.archived = Timestamped::new(archive, now);
 
                 if archive {
-                    state.data.group_chats.unpin(chat_id, now);
+                    state.data.user.group_chats.unpin(chat_id, now);
                 }
 
                 true
@@ -69,7 +69,7 @@ fn update_chat(chat: &Chat, archive: bool, now: TimestampMillis, state: &mut Run
             }
         }
         Chat::Channel(community_id, channel_id) => {
-            if let Some(community) = state.data.communities.get_mut(community_id) {
+            if let Some(community) = state.data.user.communities.get_mut(community_id) {
                 if let Some(channel) = community.channels.get_mut(channel_id) {
                     channel.archived = Timestamped::new(archive, now);
 
@@ -88,7 +88,7 @@ fn update_chat(chat: &Chat, archive: bool, now: TimestampMillis, state: &mut Run
     };
 
     if success && archive {
-        state.data.favourite_chats.unpin(chat, now);
+        state.data.user.favourite_chats.unpin(chat, now);
     }
 
     success

@@ -74,7 +74,7 @@ tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }
 user_canister = { path = "../api" }
-user_state = { path = "../../../libraries/user_state" }
+user_core = { path = "../../../libraries/user_core" }
 user_canister_c2c_client = { path = "../c2c_client" }
 user_index_canister = { path = "../../user_index/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }

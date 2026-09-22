@@ -17,11 +17,11 @@ fn manage_favourite_chats_impl(args: Args, state: &mut RuntimeState) -> Response
     let adding = !args.to_add.is_empty();
 
     for chat in args.to_add {
-        state.data.favourite_chats.add(chat, now);
+        state.data.user.favourite_chats.add(chat, now);
     }
 
     for chat in args.to_remove {
-        state.data.favourite_chats.remove(&chat, now);
+        state.data.user.favourite_chats.remove(&chat, now);
     }
 
     if adding {

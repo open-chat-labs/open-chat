@@ -24,8 +24,8 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let sender = args.initiator;
     let my_user_id = state.env.canister_id().into();
 
-    if state.data.suspended.value
-        || state.data.blocked_users.contains(&sender)
+    if state.data.user.suspended.value
+        || state.data.user.blocked_users.contains(&sender)
         || sender == my_user_id
         || matches!(args.call_type, VideoCallType::Broadcast)
     {
@@ -64,7 +64,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     }
 
     state.push_user_canister_event(
-        sender.canister_id(),
+        sender,
         UserCanisterEvent::StartVideoCall(Box::new(StartVideoCallArgs {
             message_id: args.message_id,
             message_index: message_event.event.message_index,
@@ -115,7 +115,7 @@ pub fn handle_start_video_call(
         sender_context: None,
     };
 
-    let chat = state.data.direct_chats.get_or_create(
+    let chat = state.data.user.direct_chats.get_or_create(
         state.env.canister_id().into(),
         other,
         UserType::User,

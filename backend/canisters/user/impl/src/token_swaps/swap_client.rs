@@ -1,7 +1,7 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use types::icrc1::Account;
 use types::{C2CError, CanisterId};
+pub use user_core::SwapSuccess;
 
 #[async_trait]
 pub trait SwapClient {
@@ -21,10 +21,4 @@ pub trait SwapClient {
         deposit_block_index: Option<u64>,
     ) -> Result<Result<SwapSuccess, String>, C2CError>;
     async fn withdraw(&self, successful_swap: bool, amount: u128) -> Result<u128, C2CError>;
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SwapSuccess {
-    pub amount_out: u128,
-    pub withdrawal_success: Option<bool>,
 }

@@ -9,7 +9,7 @@ fn chit_events(args: Args) -> Response {
 }
 
 fn chit_events_impl(args: Args, state: &RuntimeState) -> Response {
-    let (events, total) = state.data.chit_events.events(
+    let (events, total) = state.data.user.chit_events.events(
         args.from,
         args.to,
         args.skip.unwrap_or_default() as usize,

@@ -1,6 +1,5 @@
 use crate::crypto::{deposit_to_accept_p2p_swap, validate_from_account};
 use crate::guards::caller_is_owner;
-use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
@@ -12,6 +11,7 @@ use types::{
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
+use user_core::P2PSwap;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -46,7 +46,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
     match transfer_result {
         Ok(index) => {
             mutate_state(|state| {
-                state.data.p2p_swaps.add(P2PSwap {
+                state.data.user.p2p_swaps.add(P2PSwap {
                     id: content.swap_id,
                     location: P2PSwapLocation::from_message(
                         Chat::Direct(args.user_id.into()),
@@ -61,13 +61,13 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                     token1_amount: content.token1_amount,
                     expires_at: content.expires_at,
                 });
-                if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+                if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
                     if let Ok(result) =
                         chat.accept_p2p_swap(my_user_id, args.thread_root_message_index, args.message_id, index, now)
                     {
                         state.push_user_canister_event(
-                            args.user_id.canister_id(),
+                            args.user_id,
                             UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
                                 thread_root_message_id,
                                 message_id: args.message_id,
@@ -83,7 +83,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
         }
         Err(error) => {
             mutate_state(|state| {
-                if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+                if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
                     chat.unreserve_p2p_swap(my_user_id, args.thread_root_message_index, args.message_id, now);
                 }
@@ -102,11 +102,11 @@ struct PrepareResult {
 }
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_suspended()?;
-    state.data.pin_number.verify(args.pin.as_mut(), state.env.now())?;
+    state.data.user.verify_not_suspended()?;
+    state.data.user.pin_number.verify(args.pin.as_mut(), state.env.now())?;
     validate_from_account(args.from_account, state.env.canister_id().into())?;
 
-    if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
         // Translated before the transfer is made, so that a root the user cannot see fails the

@@ -95,7 +95,7 @@ enum PrepareResult {
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult, TimestampNanos)> {
     let my_user_id: UserId = state.env.canister_id().into();
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     if args.amount == 0 {
         Err(OCErrorCode::TransferCannotBeZero.into())
@@ -106,10 +106,10 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
 
         let now = state.env.now();
         let now_nanos = now * NANOS_PER_MILLISECOND;
-        state.data.pin_number.verify(args.pin.as_mut(), now)?;
+        state.data.user.pin_number.verify(args.pin.as_mut(), now)?;
 
         match args.chat {
-            Chat::Direct(chat_id) if state.data.direct_chats.exists(&chat_id) => Ok((
+            Chat::Direct(chat_id) if state.data.user.direct_chats.exists(&chat_id) => Ok((
                 PrepareResult::Direct(TipMessageArgs {
                     user_id: my_user_id,
                     recipient: args.recipient,
@@ -122,7 +122,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
                 }),
                 now_nanos,
             )),
-            Chat::Group(group_id) if state.data.group_chats.exists(&group_id) => Ok((
+            Chat::Group(group_id) if state.data.user.group_chats.exists(&group_id) => Ok((
                 PrepareResult::Group(
                     group_id,
                     group_canister::c2c_tip_message::Args {
@@ -133,13 +133,13 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
                         token_symbol: args.token_symbol.clone(),
                         amount: args.amount,
                         decimals: args.decimals,
-                        username: state.data.username.value.clone(),
-                        display_name: state.data.display_name.value.clone(),
+                        username: state.data.user.username.value.clone(),
+                        display_name: state.data.user.display_name.value.clone(),
                     },
                 ),
                 now_nanos,
             )),
-            Chat::Channel(community_id, channel_id) if state.data.communities.exists(&community_id) => Ok((
+            Chat::Channel(community_id, channel_id) if state.data.user.communities.exists(&community_id) => Ok((
                 PrepareResult::Channel(
                     community_id,
                     community_canister::c2c_tip_message::Args {
@@ -151,8 +151,8 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
                         token_symbol: args.token_symbol.clone(),
                         amount: args.amount,
                         decimals: args.decimals,
-                        username: state.data.username.value.clone(),
-                        display_name: state.data.display_name.value.clone(),
+                        username: state.data.user.username.value.clone(),
+                        display_name: state.data.user.display_name.value.clone(),
                     },
                 ),
                 now_nanos,
@@ -163,7 +163,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
 }
 
 fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
-    if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&args.recipient.into()) {
         if let Err(error) = chat.tip_message(
             args.clone(),
             Some(UserEventPusher {
@@ -180,7 +180,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
             };
 
             state.push_user_canister_event(
-                args.recipient.canister_id(),
+                args.recipient,
                 UserCanisterEvent::TipMessage(Box::new(user_canister::TipMessageArgs {
                     thread_root_message_id,
                     message_id: args.message_id,
@@ -188,9 +188,9 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
                     token_symbol: args.token_symbol,
                     amount: args.amount,
                     decimals,
-                    username: state.data.username.value.clone(),
-                    display_name: state.data.display_name.value.clone(),
-                    user_avatar_id: state.data.avatar.id(),
+                    username: state.data.user.username.value.clone(),
+                    display_name: state.data.user.display_name.value.clone(),
+                    user_avatar_id: state.data.user.avatar.id(),
                 })),
             );
             Success

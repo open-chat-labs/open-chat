@@ -3,9 +3,10 @@ use crate::model::daily_puzzle_engine::{DailyPuzzleEngine, DailyPuzzleEngineMetr
 use crate::model::daily_puzzle_result_batch::DailyPuzzleResultBatch;
 use crate::model::game_chit_credit::{GameChitCreditRetryQueue, new_retry_queue};
 use crate::model::group_event_batch::GroupEventBatch;
+use crate::model::legacy_user_event_batch::LegacyUserEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
-use crate::model::local_multi_user_map::LocalMultiUserMap;
+use crate::model::local_multi_user_canister_map::LocalMultiUserCanisterMap;
 use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
@@ -171,7 +172,7 @@ impl RuntimeState {
 
     pub fn is_caller_local_multi_user_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.local_multi_users.contains(&caller)
+        self.data.local_multi_user_canisters.contains(&caller)
     }
 
     pub fn is_caller_local_group_canister(&self) -> bool {
@@ -189,7 +190,7 @@ impl RuntimeState {
         self.data.local_users.contains(&caller.into())
             || self.data.local_groups.contains(&caller.into())
             || self.data.local_communities.contains(&caller.into())
-            || self.data.local_multi_users.contains(&caller)
+            || self.data.local_multi_user_canisters.contains(&caller)
     }
 
     pub fn is_caller_notification_pusher(&self) -> bool {
@@ -248,12 +249,12 @@ impl RuntimeState {
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) -> bool {
         if self.data.local_users.contains(&user_id) {
-            self.data.user_event_sync_queue.push(
-                user_id,
+            self.data.user_events_queue.push(
+                user_id.canister_id(),
                 IdempotentEnvelope {
                     created_at: now,
                     idempotency_id: self.env.rng().next_u64(),
-                    value: event,
+                    value: (user_id, event),
                 },
             );
             true
@@ -498,8 +499,9 @@ impl RuntimeState {
             local_user_count: self.data.local_users.len() as u64,
             local_group_count: self.data.local_groups.len() as u64,
             local_community_count: self.data.local_communities.len() as u64,
-            local_multi_user_count: self.data.local_multi_users.len() as u64,
+            local_multi_user_count: self.data.local_multi_user_canisters.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
+            multi_user_canister_count: self.data.global_users.multi_user_canisters().len() as u64,
             bot_user_count: self.data.global_users.legacy_bots().len() as u64,
             oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
             platform_moderators: self.data.global_users.platform_moderators().len() as u32,
@@ -547,7 +549,7 @@ impl RuntimeState {
                 .count_per_value(),
             multi_user_versions: self
                 .data
-                .local_multi_users
+                .local_multi_user_canisters
                 .iter()
                 .map(|u| u.1.wasm_version.to_string())
                 .count_per_value(),
@@ -559,8 +561,8 @@ impl RuntimeState {
             recent_group_upgrades: group_upgrades_metrics.recently_competed,
             recent_community_upgrades: community_upgrades_metrics.recently_competed,
             recent_multi_user_upgrades: multi_user_upgrades_metrics.recently_competed,
-            user_events_queue_length: self.data.user_event_sync_queue.len(),
-            user_events_queue_in_progress: self.data.user_event_sync_queue.in_progress(),
+            user_events_queue_length: self.data.user_events_queue.len(),
+            user_events_queue_in_progress: self.data.user_events_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
@@ -620,8 +622,8 @@ struct Data {
     pub local_users: LocalUserMap,
     pub local_groups: LocalGroupMap,
     pub local_communities: LocalCommunityMap,
-    #[serde(default)]
-    pub local_multi_users: LocalMultiUserMap,
+    #[serde(default, alias = "local_multi_users")]
+    pub local_multi_user_canisters: LocalMultiUserCanisterMap,
     pub global_users: GlobalUserMap,
     pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
@@ -643,7 +645,11 @@ struct Data {
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub user_index_event_sync_queue: BatchedTimerJobQueue<UserIndexEventBatch>,
-    pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    // Events queued before they were batched per canister, which `post_upgrade` moves into
+    // `user_events_queue`
+    pub user_event_sync_queue: GroupedTimerJobQueue<LegacyUserEventBatch>,
+    #[serde(default = "new_user_events_queue")]
+    pub user_events_queue: GroupedTimerJobQueue<UserEventBatch>,
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
     pub test_mode: bool,
@@ -715,6 +721,34 @@ pub struct UserToDelete {
 }
 
 impl Data {
+    // Moves the events queued before they were batched per canister into the queue which does so,
+    // pairing each with the user it was queued for
+    // TODO: Remove this, along with `user_event_sync_queue`, once it has run in every canister
+    //
+    // Processing is deferred while they are moved, since the queue otherwise flushes as soon as
+    // events are pushed, and `post_upgrade` can't make calls, so they are sent by a timer instead
+    pub fn drain_legacy_user_event_queue(&mut self) {
+        let legacy_events = self.user_event_sync_queue.take_all();
+        if legacy_events.is_empty() {
+            return;
+        }
+        self.user_events_queue.set_defer_processing(true);
+        for (user_id, events) in legacy_events {
+            self.user_events_queue.push_many(
+                user_id.canister_id(),
+                events
+                    .into_iter()
+                    .map(|event| IdempotentEnvelope {
+                        created_at: event.created_at,
+                        idempotency_id: event.idempotency_id,
+                        value: (user_id, event.value),
+                    })
+                    .collect(),
+            );
+        }
+        self.user_events_queue.set_defer_processing(false);
+    }
+
     #[expect(clippy::too_many_arguments)]
     pub fn new(
         user_index_canister_id: CanisterId,
@@ -741,7 +775,7 @@ impl Data {
             local_users: LocalUserMap::default(),
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
-            local_multi_users: LocalMultiUserMap::default(),
+            local_multi_user_canisters: LocalMultiUserCanisterMap::default(),
             global_users: GlobalUserMap::default(),
             child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
@@ -761,6 +795,7 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
             user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            user_events_queue: new_user_events_queue(),
             group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             user_index_event_sync_queue: BatchedTimerJobQueue::new(user_index_canister_id, true),
@@ -823,6 +858,7 @@ pub struct Metrics {
     pub local_community_count: u64,
     pub local_multi_user_count: u64,
     pub global_user_count: u64,
+    pub multi_user_canister_count: u64,
     pub bot_user_count: u64,
     pub oc_controlled_bots: Vec<UserId>,
     pub platform_moderators: u32,
@@ -921,4 +957,8 @@ pub struct BotMetrics {
     pub user_id: UserId,
     pub name: String,
     pub commands: Vec<String>,
+}
+
+fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
 }

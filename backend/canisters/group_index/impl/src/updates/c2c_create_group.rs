@@ -74,19 +74,20 @@ async fn c2c_create_group(args: Args) -> Response {
 
 async fn validate_caller(user_id: Option<UserId>) -> Result<(UserId, Principal), Response> {
     let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
-    let Some(caller) = UserId::acting_as(caller, user_id) else {
+    let user_id = user_id.unwrap_or(caller.into());
+    if user_id.canister_id() != caller {
         return Err(Error(OCErrorCode::InitiatorNotAuthorized.into()));
-    };
+    }
 
     match user_index_canister_c2c_client::c2c_lookup_user(
         user_index_canister_id,
         &user_index_canister::c2c_lookup_user::Args {
-            user_id_or_principal: caller.as_principal(),
+            user_id_or_principal: user_id.as_principal(),
         },
     )
     .await
     {
-        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((user_id, r.principal)),
         Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
         Ok(user_index_canister::c2c_lookup_user::Response::Error(error)) => Err(Error(error)),
         Err(_) => Err(InternalError),

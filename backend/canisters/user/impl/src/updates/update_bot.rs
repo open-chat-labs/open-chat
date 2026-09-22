@@ -13,11 +13,11 @@ fn update_bot(args: Args) -> Response {
 }
 
 fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     let now = state.env.now();
 
-    if !state.data.update_bot_permissions(
+    if !state.data.user.update_bot_permissions(
         args.bot_id,
         args.granted_permissions.clone(),
         args.granted_autonomous_permissions.clone(),

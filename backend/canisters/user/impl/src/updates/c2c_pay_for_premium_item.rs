@@ -13,17 +13,17 @@ fn c2c_pay_for_premium_item(args: Args) -> Response {
 }
 
 fn c2c_pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let chit_balance = state.data.chit_events.chit_balance();
+    let chit_balance = state.data.user.chit_events.chit_balance();
     if chit_balance < (args.cost as i32) {
         return Error(OCErrorCode::InsufficientFunds.with_message(chit_balance));
     }
 
     let now = state.env.now();
-    if !state.data.premium_items.add(args.item_id, args.cost, now) {
+    if !state.data.user.premium_items.add(args.item_id, args.cost, now) {
         return Error(OCErrorCode::AlreadyAdded.into());
     }
 
-    state.data.chit_events.push(ChitEvent {
+    state.data.user.chit_events.push(ChitEvent {
         timestamp: now,
         amount: -(args.cost as i32),
         reason: ChitEventType::PurchasedPremiumItem(args.item_id),
@@ -32,7 +32,7 @@ fn c2c_pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> Respon
     state.notify_user_index_of_chit(now);
 
     Success(SuccessResult {
-        total_chit_earned: state.data.chit_events.total_chit_earned(),
-        chit_balance: state.data.chit_events.chit_balance(),
+        total_chit_earned: state.data.user.chit_events.total_chit_earned(),
+        chit_balance: state.data.user.chit_events.chit_balance(),
     })
 }

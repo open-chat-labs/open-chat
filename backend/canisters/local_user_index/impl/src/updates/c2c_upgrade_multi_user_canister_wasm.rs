@@ -60,7 +60,7 @@ fn commit(args: Args, wasm: CanisterWasm, chunks: Vec<Hash>, state: &mut Runtime
 
     for canister_id in state
         .data
-        .local_multi_users
+        .local_multi_user_canisters
         .iter()
         .filter(|(canister_id, canister)| {
             should_perform_upgrade(**canister_id, canister.wasm_version, version, &filter, state.data.test_mode)
@@ -83,5 +83,5 @@ fn commit(args: Args, wasm: CanisterWasm, chunks: Vec<Hash>, state: &mut Runtime
 }
 
 fn min_canister_version(data: &Data) -> Option<BuildVersion> {
-    data.local_multi_users.iter().map(|(_, c)| c.wasm_version).min()
+    data.local_multi_user_canisters.iter().map(|(_, c)| c.wasm_version).min()
 }

@@ -1,5 +1,4 @@
 use crate::guards::caller_is_hosted_user;
-use crate::model::user::User;
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -8,7 +7,8 @@ use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
 use types::{CanisterId, CommunityId, OCResult};
 use user_canister::create_community::{Response::*, *};
-use user_state::COMMUNITY_CREATION_LIMIT;
+use user_core::COMMUNITY_CREATION_LIMIT;
+use user_core::User;
 use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
     NameValidationError, RulesValidationError, validate_channel_name, validate_community_name, validate_description,

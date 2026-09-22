@@ -1,5 +1,4 @@
 use crate::guards::caller_is_local_user_index;
-use crate::model::token_swaps::TokenSwap;
 use crate::updates::swap_tokens::mark_withdrawal_success;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state, token_swaps};
 use canister_api_macros::update;
@@ -8,6 +7,7 @@ use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, Timestamped};
 use user_canister::c2c_withdraw_from_icpswap::*;
 use user_canister::swap_tokens::ExchangeArgs;
+use user_core::TokenSwap;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -39,6 +39,7 @@ struct PrepareOk {
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
     let Some(swap) = state
         .data
+        .user
         .token_swaps
         .get(args.swap_id)
         .filter(|s| matches!(s.args.exchange_args, ExchangeArgs::ICPSwap(_)))

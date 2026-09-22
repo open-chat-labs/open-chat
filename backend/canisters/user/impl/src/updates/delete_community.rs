@@ -13,7 +13,7 @@ async fn delete_community(args: Args) -> Response {
 }
 
 async fn delete_community_impl(args: Args) -> Response {
-    if read_state(|state| state.data.suspended.value) {
+    if read_state(|state| state.data.user.suspended.value) {
         return Response::Error(OCErrorCode::InitiatorSuspended.into());
     }
 

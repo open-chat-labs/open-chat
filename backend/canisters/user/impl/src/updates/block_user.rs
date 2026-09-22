@@ -12,7 +12,7 @@ fn block_user(args: Args) -> Response {
 }
 
 fn block_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     let now = state.env.now();
     state.block_user(args.user_id, now);

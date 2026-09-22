@@ -1,9 +1,9 @@
-use crate::model::user::User;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{KeyScope, with_key_scope};
 use std::collections::{BTreeMap, HashMap};
 use types::{MAX_USER_INDEX, TimestampMillis, UserId};
+use user_core::User;
 
 // Index 0 is never assigned, since `UserId::index` returns 0 for a user id which carries no
 // index, and indexes are never reused, so a deleted user's stable memory map entries can never be

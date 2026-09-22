@@ -5,7 +5,7 @@ use constants::{DAY_IN_MS, HOUR_IN_MS, OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNA
 use types::nns::Tokens;
 use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, User, UserId, UserType};
 use user_canister::{C2CReplyContext, PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
-use user_state::Membership;
+use user_core::Membership;
 use utils::format::format_to_decimal_places;
 
 pub(crate) fn send_community_deleted_message(deleted_by: UserId, name: String, public: bool, state: &mut RuntimeState) {

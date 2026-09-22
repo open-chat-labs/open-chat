@@ -16,11 +16,11 @@ fn edit_message_v2(args: Args) -> Response {
 }
 
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
-    if state.data.blocked_users.contains(&args.user_id) {
+    if state.data.user.blocked_users.contains(&args.user_id) {
         Err(OCErrorCode::TargetUserBlocked.into())
-    } else if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+    } else if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
 
@@ -49,7 +49,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
 
             state.push_user_canister_event(
-                args.user_id.canister_id(),
+                args.user_id,
                 UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
                     thread_root_message_id,
                     message_id: args.message_id,

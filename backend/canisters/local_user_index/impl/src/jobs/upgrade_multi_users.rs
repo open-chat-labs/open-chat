@@ -68,7 +68,7 @@ fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToInstall> {
 }
 
 fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToInstall> {
-    let canister = state.data.local_multi_users.get_mut(&canister_id)?;
+    let canister = state.data.local_multi_user_canisters.get_mut(&canister_id)?;
     let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::MultiUser);
     let current_wasm_version = canister.wasm_version;
     let new_wasm_version = canister_wasm.wasm.version;
@@ -127,7 +127,7 @@ fn on_success(canister_id: CanisterId, to_version: BuildVersion, top_up: Option<
     mark_upgrade_complete(canister_id, Some(to_version), state);
 
     if let Some(top_up) = top_up {
-        state.data.local_multi_users.mark_cycles_top_up(
+        state.data.local_multi_user_canisters.mark_cycles_top_up(
             &canister_id,
             CyclesTopUp {
                 amount: top_up,
@@ -150,7 +150,7 @@ fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: B
 }
 
 fn mark_upgrade_complete(canister_id: CanisterId, new_wasm_version: Option<BuildVersion>, state: &mut RuntimeState) {
-    if let Some(canister) = state.data.local_multi_users.get_mut(&canister_id) {
+    if let Some(canister) = state.data.local_multi_user_canisters.get_mut(&canister_id) {
         canister.set_canister_upgrade_status(false, new_wasm_version);
     }
 }

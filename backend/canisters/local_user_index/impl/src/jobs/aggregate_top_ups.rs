@@ -33,7 +33,7 @@ fn run_impl(state: &mut RuntimeState) {
         .iter()
         .map(|(c, l)| (CanisterId::from(*c), ChildCanisterType::Community, l.cycle_top_ups.as_slice()));
     let multi_users = data
-        .local_multi_users
+        .local_multi_user_canisters
         .iter()
         .map(|(c, l)| (*c, ChildCanisterType::MultiUser, l.cycle_top_ups.as_slice()));
 
