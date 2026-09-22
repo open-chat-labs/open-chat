@@ -13076,6 +13076,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_time",
