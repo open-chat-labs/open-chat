@@ -23,6 +23,11 @@ pub const MAX_CERTIFICATE_TIME_OFFSET: TimestampMillis = 5 * MINUTE_IN_MS;
 // to stop the transfer being used twice.
 pub const MAX_TRANSFER_AGE: TimestampMillis = 5 * MINUTE_IN_MS;
 
+// How far ahead of now the transfer's `created_at_time` may be. The ledger rejects anything further
+// ahead of its own time than this, and without a limit a transfer from any other canister could
+// claim a time far in the future, making it one whose block index must be remembered indefinitely.
+pub const MAX_TRANSFER_CREATED_AHEAD: TimestampMillis = 2 * MINUTE_IN_MS;
+
 // Checks the certificate proves the ledger replied to the `sender`'s call to `icrc1_transfer`
 // with a block index, and that the transfer is the one described by `transaction`. The memo must
 // be `required_memo`, so that a transfer made for one canister can't be used in another. It is
@@ -37,8 +42,12 @@ pub fn verify_certified_transfer(
 ) -> Result<CompletedCryptoTransaction, OCError> {
     let from = verify_transfer_arg(&transaction, sender, required_memo)?;
 
-    if (now * NANOS_PER_MILLISECOND).saturating_sub(transaction.created) > MAX_TRANSFER_AGE * NANOS_PER_MILLISECOND {
+    let now_nanos = now * NANOS_PER_MILLISECOND;
+    if now_nanos.saturating_sub(transaction.created) > MAX_TRANSFER_AGE * NANOS_PER_MILLISECOND {
         return Err(OCErrorCode::InvalidRequest.with_message("Transfer is too old"));
+    }
+    if transaction.created.saturating_sub(now_nanos) > MAX_TRANSFER_CREATED_AHEAD * NANOS_PER_MILLISECOND {
+        return Err(OCErrorCode::InvalidRequest.with_message("Transfer was created in the future"));
     }
 
     let request_id = request_id(sender, transaction.ledger, TRANSFER_METHOD_NAME, &transaction.call);
@@ -299,6 +308,15 @@ mod tests {
     fn old_transfer_with_fresh_certificate_fails() {
         let test = TestTransfer::build(TestOptions {
             created: NOW_NANOS - (MAX_TRANSFER_AGE + 1) * NANOS_PER_MILLISECOND,
+            ..Default::default()
+        });
+        assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidRequest as u16);
+    }
+
+    #[test]
+    fn transfer_created_in_the_future_fails() {
+        let test = TestTransfer::build(TestOptions {
+            created: NOW_NANOS + (MAX_TRANSFER_CREATED_AHEAD + 1) * NANOS_PER_MILLISECOND,
             ..Default::default()
         });
         assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidRequest as u16);
