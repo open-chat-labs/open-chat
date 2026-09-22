@@ -13,7 +13,7 @@ use types::c2c_can_issue_access_token::{
 use types::{
     AutonomousBotScope, BotActionByCommandClaims, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, CLAIM_TYPE_JOIN_VIDEO_CALL,
     CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, CallKind, Chat, JoinOrEndVideoCallClaims, Milliseconds,
-    StartVideoCallClaims, TranslateClaims,
+    StartVideoCallClaims, TranslateClaims, UserId,
 };
 
 const DEFAULT_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
@@ -255,8 +255,13 @@ async fn can_issue_access_token(scope: AutonomousBotScope, access_type_args: &Ac
     let c2c_response = match scope {
         AutonomousBotScope::Chat(Chat::Direct(chat_id)) => {
             // TODO switch to `c2c_can_issue_access_token_v2` once every User canister accepts the
-            // new `{ user_id, args }` shape
-            user_canister_c2c_client::c2c_can_issue_access_token_v2_legacy(chat_id.into(), access_type_args).await
+            // new `{ user_id, args }` shape. Until then a user in a MultiUser canister can't be
+            // asked, since the legacy shape carries no user id.
+            user_canister_c2c_client::c2c_can_issue_access_token_v2_legacy(
+                UserId::from(chat_id).canister_id(),
+                access_type_args,
+            )
+            .await
         }
         AutonomousBotScope::Chat(Chat::Group(chat_id)) => {
             group_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), access_type_args).await

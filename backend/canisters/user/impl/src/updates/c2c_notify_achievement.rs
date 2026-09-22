@@ -13,22 +13,15 @@ fn c2c_notify_achievement(args: Args) -> Response {
 
 fn c2c_notify_achievement_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
-
-    if !state.data.user.communities.exists(&caller.into()) && !state.data.user.group_chats.exists(&caller.into()) {
-        return CallerNotFound;
-    }
-
     let now = state.env.now();
 
-    let mut awarded = false;
-
-    for achievement in args.achievements {
-        awarded |= state.data.user.award_achievement(achievement, now);
+    match user_core::updates::c2c_notify_achievement(&mut state.data.user, caller, args.achievements, now) {
+        Some(awarded) => {
+            if awarded {
+                state.notify_user_index_of_chit(now);
+            }
+            Success
+        }
+        None => CallerNotFound,
     }
-
-    if awarded {
-        state.notify_user_index_of_chit(now);
-    }
-
-    Success
 }

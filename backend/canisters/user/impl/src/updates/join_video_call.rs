@@ -2,11 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use oc_error_codes::OCErrorCode;
-use types::{
-    Achievement, CallDismissalKind, DirectCallDismissedNotification, DirectChatUserNotificationPayload, OCResult, UserId,
-    VideoCallPresence,
-};
+use types::{Achievement, OCResult};
 use user_canister::{JoinVideoCall, UserCanisterEvent, join_video_call::*};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -16,40 +12,21 @@ fn join_video_call(args: Args) -> Response {
 }
 
 fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if state.data.user.suspended.value {
-        return Err(OCErrorCode::InitiatorSuspended.into());
+    let my_user_id = state.env.canister_id().into();
+    let now = state.env.now();
+    user_core::updates::join_video_call(&mut state.data.user, &args, my_user_id, now)?;
+
+    // this user has answered: any other device of theirs that is still ringing should stop
+    if let Some(dismissal) = user_core::updates::answered_dismissal(&state.data.user, &args) {
+        state.push_notification(None, my_user_id, dismissal);
     }
 
-    if state.data.user.blocked_users.contains(&args.user_id) {
-        return Err(OCErrorCode::TargetUserBlocked.into());
-    }
-
-    if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
-        let now = state.env.now();
-        let my_user_id: UserId = state.env.canister_id().into();
-
-        chat.set_video_call_presence(my_user_id, args.message_id, VideoCallPresence::Default, now)?;
-
-        // this user has answered: any other device of theirs that is still ringing should stop
-        if !chat.notifications_muted.value {
-            let dismissal = DirectChatUserNotificationPayload::DirectCallDismissed(DirectCallDismissedNotification {
-                them: args.user_id,
-                message_id: args.message_id,
-                kind: CallDismissalKind::AnsweredElsewhere,
-            });
-            state.push_notification(None, my_user_id, dismissal);
-        }
-
-        state.push_user_canister_event(
-            args.user_id,
-            UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {
-                message_id: args.message_id,
-            })),
-        );
-
-        state.award_achievement_and_notify(Achievement::JoinedCall, now);
-        Ok(())
-    } else {
-        Err(OCErrorCode::ChatNotFound.into())
-    }
+    state.push_user_canister_event(
+        args.user_id,
+        UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {
+            message_id: args.message_id,
+        })),
+    );
+    state.award_achievement_and_notify(Achievement::JoinedCall, now);
+    Ok(())
 }

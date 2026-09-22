@@ -24,22 +24,23 @@ direct_chat = { path = "../../../libraries/direct_chat" }
 escrow_canister = { path = "../../escrow/api" }
 event_store_types = { workspace = true, features = ["json"] }
 git_commit_id = { path = "../../../libraries/git_commit_id" }
+governance_clients = { path = "../../../libraries/governance_clients" }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
-icrc-ledger-types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+icrc-ledger-types = { workspace = true }
+icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
-oc_error_codes = { path = "../../../libraries/error_codes" }
 multi_user_canister = { path = "../api" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 rand = { workspace = true }
 serde = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
@@ -50,4 +51,6 @@ types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
 user_core = { path = "../../../libraries/user_core" }
+user_index_canister = { path = "../../user_index/api" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }

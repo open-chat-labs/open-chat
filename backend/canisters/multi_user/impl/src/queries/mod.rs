@@ -1,5 +1,6 @@
 use crate::RuntimeState;
-use types::TimestampMillis;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, TimestampMillis};
 
 mod bio;
 mod c2c_bot_chat_summary;
@@ -24,11 +25,11 @@ mod token_swap_status;
 mod token_swaps;
 mod updates;
 
-fn check_replica_up_to_date(latest_known_update: Option<TimestampMillis>, state: &RuntimeState) -> Result<(), TimestampMillis> {
+fn check_replica_up_to_date(latest_known_update: Option<TimestampMillis>, state: &RuntimeState) -> OCResult {
     if let Some(ts) = latest_known_update {
         let now = state.env.now();
         if now < ts {
-            return Err(now);
+            return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
         }
     }
     Ok(())

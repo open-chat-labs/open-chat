@@ -83,6 +83,11 @@ impl RuntimeState {
         self.data.users.get_by_user_id(&caller.into()).is_some()
     }
 
+    // A MultiUser canister acts for any of the users it holds
+    pub fn is_caller_multi_user_canister(&self) -> bool {
+        self.data.multi_user_canisters.contains_key(&self.env.caller())
+    }
+
     pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
         self.data.governance_principals.contains(&caller)

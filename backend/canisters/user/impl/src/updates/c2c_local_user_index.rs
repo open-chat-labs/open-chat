@@ -2,9 +2,8 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, DiamondMembershipPlanDuration, IdempotentEnvelope, ReferralStatus, Timestamped};
+use types::IdempotentEnvelope;
 use user_canister::c2c_local_user_index::*;
-use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::{LocalUserIndexEvent, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -28,136 +27,16 @@ pub(crate) fn handle_events(events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>
 
 fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
     let now = state.env.now();
+    let effects = user_core::updates::c2c_local_user_index::apply(&mut state.data.user, event, now);
 
-    match event {
-        LocalUserIndexEvent::UsernameChanged(ev) => {
-            state.data.user.username = Timestamped::new(ev.username, now);
-        }
-        LocalUserIndexEvent::DisplayNameChanged(ev) => {
-            state.data.user.display_name = Timestamped::new(ev.display_name, now);
-            state.award_achievement_and_notify(Achievement::SetDisplayName, now);
-        }
-        LocalUserIndexEvent::PhoneNumberConfirmed(ev) => {
-            state.data.user.phone_is_verified = true;
-            state.data.user.storage_limit = ev.new_storage_limit;
-            openchat_bot::send_phone_number_confirmed_bot_message(&ev, state);
-        }
-        LocalUserIndexEvent::StorageUpgraded(ev) => {
-            state.data.user.storage_limit = ev.new_storage_limit;
-            openchat_bot::send_storage_ugraded_bot_message(&ev, state);
-        }
-        LocalUserIndexEvent::ReferredUserRegistered(ev) => {
-            state
-                .data
-                .user
-                .referrals
-                .set_status(ev.user_id, ReferralStatus::Registered, now);
-            openchat_bot::send_referred_user_joined_message(ev.user_id, ev.username, state);
-        }
-        LocalUserIndexEvent::UserSuspended(ev) => {
-            openchat_bot::send_user_suspended_message(&ev, state);
-        }
-        LocalUserIndexEvent::OpenChatBotMessageV2(message) => {
-            openchat_bot::send_message(message.content.into(), message.mentioned, false, state);
-        }
-        LocalUserIndexEvent::UserJoinedGroup(ev) => {
-            // Check that the user didn't already leave the group before this event arrived
-            if !state
-                .data
-                .user
-                .group_chats
-                .removed_since(ev.group_canister_timestamp)
-                .contains(&ev.chat_id)
-            {
-                state
-                    .data
-                    .user
-                    .group_chats
-                    .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
-
-                state.data.user.hot_group_exclusions.remove(&ev.chat_id, now);
-                state.award_achievement_and_notify(Achievement::JoinedGroup, now);
-            }
-        }
-        LocalUserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
-            // Check that the user didn't already leave the community before this event arrived
-            if !state
-                .data
-                .user
-                .communities
-                .removed_since(ev.community_canister_timestamp)
-                .contains(&ev.community_id)
-            {
-                let (community, _) = state
-                    .data
-                    .user
-                    .communities
-                    .join(ev.community_id, ev.local_user_index_canister_id, now);
-
-                community.mark_read(
-                    ev.channels
-                        .into_iter()
-                        .map(|c| ChannelMessagesRead {
-                            channel_id: c.channel_id,
-                            read_up_to: c.latest_message_index,
-                            threads: Vec::new(),
-                            date_read_pinned: None,
-                        })
-                        .collect(),
-                    now,
-                );
-                state.award_achievement_and_notify(Achievement::JoinedCommunity, now);
-            }
-        }
-        LocalUserIndexEvent::DiamondMembershipPaymentReceived(ev) => {
-            let mut awarded = state.data.user.award_achievement(Achievement::UpgradedToDiamond, now);
-
-            if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
-                awarded |= state.data.user.award_achievement(Achievement::UpgradedToGoldDiamond, now);
-            }
-
-            if awarded {
-                state.notify_user_index_of_chit(now);
-            }
-
-            state.data.user.diamond_membership_expires_at = Some(ev.expires_at);
-
-            if ev.send_bot_message {
-                openchat_bot::send_text_message(
-                    user_core::openchat_bot::DIAMOND_MEMBERSHIP_PAYMENT_RECEIVED_TEXT.to_string(),
-                    Vec::new(),
-                    false,
-                    state,
-                );
-            }
-
-            if let Some(referred_by) = state.data.user.referred_by {
-                let status = if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
-                    ReferralStatus::LifetimeDiamond
-                } else {
-                    ReferralStatus::Diamond
-                };
-                state.push_user_canister_event(referred_by, UserCanisterEvent::SetReferralStatus(Box::new(status)))
-            }
-        }
-        LocalUserIndexEvent::NotifyUniquePersonProof(proof) => {
-            state.award_achievement_and_notify(Achievement::ProvedUniquePersonhood, now);
-            state.data.user.unique_person_proof = Some(*proof);
-
-            if let Some(referred_by) = state.data.user.referred_by {
-                state.push_user_canister_event(
-                    referred_by,
-                    UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::UniquePerson)),
-                )
-            }
-        }
-        LocalUserIndexEvent::ExternalAchievementAwarded(ev) => {
-            state.award_external_achievement(ev.name, ev.chit_reward, now);
-        }
-        LocalUserIndexEvent::ReinstateMissedDailyClaims(days) => state.reinstate_missed_daily_claims(days),
-        LocalUserIndexEvent::BotRemoved(bot_id) => state.uninstall_bot(bot_id),
-        LocalUserIndexEvent::BotUpdated(ev) => {
-            state.data.user.handle_bot_definition_updated(*ev, now);
-        }
+    if effects.chit_changed {
+        state.notify_user_index_of_chit(now);
     }
+    for message in effects.bot_messages {
+        openchat_bot::send_message(message.content, message.mentioned, false, state);
+    }
+    if let Some((referred_by, status)) = effects.referral_status {
+        state.push_user_canister_event(referred_by, UserCanisterEvent::SetReferralStatus(Box::new(status)));
+    }
+    state.garbage_collect_stable_memory_keys(effects.garbage_collect);
 }

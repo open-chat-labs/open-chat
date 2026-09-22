@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{ChatId, Timestamped};
+use types::ChatId;
 use user_canister::mute_notifications::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -18,9 +18,7 @@ fn unmute_notifications(args: Args) -> Response {
 }
 
 fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool, state: &mut RuntimeState) -> Response {
-    if let Some(direct_chat) = state.data.user.direct_chats.get_mut(&chat_id) {
-        direct_chat.notifications_muted = Timestamped::new(mute, state.env.now());
-    }
-
+    let now = state.env.now();
+    user_core::updates::toggle_mute_notifications(&mut state.data.user, chat_id, mute, now);
     Response::Success
 }

@@ -4,7 +4,7 @@ use canister_api_macros::{query, update};
 use canister_tracing_macros::trace;
 use local_user_index_canister::bot_chat_summary::*;
 use oc_error_codes::OCErrorCode;
-use types::Chat;
+use types::{Chat, UserId};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -23,8 +23,10 @@ async fn bot_chat_summary(args: Args) -> Response {
     let chat = context.scope.chat(None).unwrap();
 
     match chat {
+        // The chat is read from the user's canister, which for a user in a MultiUser canister is not
+        // the user's id
         Chat::Direct(chat_id) => match user_canister_c2c_client::c2c_bot_chat_summary(
-            chat_id.into(),
+            UserId::from(chat_id).canister_id(),
             &user_canister::c2c_bot_chat_summary::Args {
                 user_id: chat_id.into(),
                 bot_id: context.bot_id,

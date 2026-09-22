@@ -1031,7 +1031,7 @@ impl ChatEvents {
         ) {
             Ok(success) => Ok(success),
             Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
-            Err(UpdateEventError::NotFound) => Err(OCErrorCode::PollNotFound.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::ProposalNotFound.into()),
         }
     }
 

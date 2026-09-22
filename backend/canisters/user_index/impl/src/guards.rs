@@ -81,10 +81,12 @@ pub fn caller_is_authority_reporter() -> Result<(), String> {
 }
 
 pub fn caller_is_user_canister_or_group_index() -> Result<(), String> {
-    if read_state(|state| state.is_caller_group_index_canister() || state.is_caller_user_canister()) {
+    if read_state(|state| {
+        state.is_caller_group_index_canister() || state.is_caller_user_canister() || state.is_caller_multi_user_canister()
+    }) {
         Ok(())
     } else {
-        Err("Caller is not a user canister or the group index canister".to_string())
+        Err("Caller is not a user canister, a MultiUser canister or the group index canister".to_string())
     }
 }
 
