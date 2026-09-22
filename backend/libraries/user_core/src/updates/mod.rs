@@ -10,6 +10,7 @@ mod c2c_notify_achievement;
 mod c2c_pay_for_premium_item;
 mod c2c_set_user_suspended;
 mod c2c_uninstall_bot;
+pub mod claim_daily_chit;
 pub mod create_community;
 pub mod create_group;
 pub mod generate_btc_address;
