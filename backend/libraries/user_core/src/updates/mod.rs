@@ -8,6 +8,7 @@ mod c2c_charge_user_account;
 mod c2c_install_bot;
 pub mod c2c_local_user_index;
 mod c2c_notify_achievement;
+pub mod c2c_notify_group_deleted;
 mod c2c_pay_for_premium_item;
 mod c2c_set_user_suspended;
 mod c2c_uninstall_bot;

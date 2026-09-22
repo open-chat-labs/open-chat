@@ -80,6 +80,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement the BTC and OneSec address, balance, approval and withdrawal endpoints via `user_core`, which derives the account from the user id, shared with the MultiUser canister ([#9481](https://github.com/open-chat-labs/open-chat/pull/9481))
 - Implement `claim_daily_chit` via `user_core`, shared with the MultiUser canister ([#9482](https://github.com/open-chat-labs/open-chat/pull/9482))
 - Apply LocalUserIndex events via `user_core`, shared with the MultiUser canister, which hands back the side effects to perform ([#9483](https://github.com/open-chat-labs/open-chat/pull/9483))
+- Handle `c2c_notify_group_deleted` via `user_core`, shared with the MultiUser canister ([#9484](https://github.com/open-chat-labs/open-chat/pull/9484))
 
 ### Fixed
 
