@@ -1,6 +1,6 @@
 use crate::chit_tests::DAY_ZERO;
 use crate::env::ENV;
-use crate::utils::{metrics, now_millis, tick_many, try_metrics};
+use crate::utils::{metrics, now_millis, now_nanos, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
@@ -13,11 +13,11 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex,
-    Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, DeletedCommunityInfo,
-    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
-    EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter,
-    UserId,
+    Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent,
+    CryptoTransaction, DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary,
+    DirectChatSummaryUpdates, Document, Empty, EventsResponse, IdempotentEnvelope, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate, PendingCryptoTransaction, PinNumberSettings,
+    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -4631,4 +4631,106 @@ fn tips_are_paid_from_the_tippers_own_subaccount() {
     assert_eq!(balance_of(env, alice_id), 9 * tip - 2 * ICP_TRANSFER_FEE);
     assert_eq!(balance_of(env, bob_id), tip);
     assert_eq!(balance_of(env, carol.user_id), 10 * tip - ICP_TRANSFER_FEE);
+}
+
+#[test]
+fn messages_with_transfers_are_paid_from_the_senders_own_subaccount() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let carol = client::register_user(env, canister_ids);
+
+    let amount = 1_000_000;
+    let fee = ICP_TRANSFER_FEE;
+    let ledger = canister_ids.icp_ledger;
+    client::ledger::happy_path::transfer(env, *controller, ledger, alice_id, 1_000_000_000);
+    tick_many(env, 3);
+
+    // A message from Alice to `recipient` paying `amount` into `to`'s account
+    let crypto_message = |env: &mut PocketIc, recipient: UserId, to: UserId, message_id| {
+        client::multi_user::send_message_v2(
+            env,
+            alice,
+            canister_id,
+            &user_canister::send_message_v2::Args {
+                recipient,
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInitial::Crypto(CryptoContent {
+                    recipient,
+                    transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(
+                        types::icrc1::PendingCryptoTransaction {
+                            ledger,
+                            fee,
+                            token_symbol: ICP_SYMBOL.to_string(),
+                            amount,
+                            to: types::icrc1::Account::for_user(to),
+                            memo: None,
+                            created: now_nanos(env),
+                        },
+                    )),
+                    caption: None,
+                }),
+                replies_to: None,
+                forwarding: false,
+                block_level_markdown: false,
+                message_filter_failed: None,
+                pin: None,
+                og_previews: Vec::new(),
+            },
+        )
+    };
+    let balance_of = |env: &PocketIc, user_id: UserId| client::ledger::happy_path::balance_of(env, ledger, user_id);
+    let assert_completed = |message: Message| {
+        assert!(
+            matches!(&message.content, MessageContent::Crypto(c) if matches!(c.transfer, CryptoTransaction::Completed(_))),
+            "{:?}",
+            message.content
+        );
+    };
+
+    // Alice pays Bob, who is in this canister: both copies of the chat hold the completed transfer,
+    // and the ICP moved between their subaccounts
+    let message_id = random_from_u128();
+    let response = crypto_message(env, bob_id, bob_id, message_id);
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    assert_completed(message(&events(env, alice, canister_id, alice_id, bob_id), message_id));
+    assert_completed(message(&events(env, bob, canister_id, bob_id, alice_id), message_id));
+    assert_eq!(balance_of(env, bob_id), amount);
+
+    // Alice pays Carol, who is in a User canister, which is told
+    let message_id = random_from_u128();
+    let response = crypto_message(env, carol.user_id, carol.user_id, message_id);
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    assert_completed(message(&events(env, alice, canister_id, alice_id, carol.user_id), message_id));
+    let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 10, 10);
+    assert_completed(message(&carols_events, message_id));
+    assert_eq!(balance_of(env, carol.user_id), amount);
+
+    // The transfer must be to the recipient's account
+    let response = crypto_message(env, bob_id, carol.user_id, random_from_u128());
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+
+    // Alice paid from her own subaccount, and the refused message moved nothing
+    assert_eq!(balance_of(env, alice_id), 1_000_000_000 - 2 * (amount + fee));
+    assert_eq!(balance_of(env, bob_id), amount);
 }

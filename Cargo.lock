@@ -13032,6 +13032,7 @@ dependencies = [
  "community_canister",
  "constants",
  "direct_chat",
+ "escrow_canister",
  "group_canister",
  "group_index_canister",
  "ic-cdk 0.20.2",

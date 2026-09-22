@@ -1,3 +1,4 @@
+use crate::crypto::process_transaction;
 use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
 use canister_api_macros::update;
@@ -5,12 +6,12 @@ use canister_tracing_macros::trace;
 use chat_events::{
     MessageContentInternal, NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult,
 };
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    CanisterId, DirectChatUserNotificationPayload, DirectMessageNotification, MessageId, MessageIndex, OCResult, OgPreview,
-    ReplyContext, TimestampMillis, UserId, UserType,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, DirectChatUserNotificationPayload, DirectMessageNotification,
+    MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview, ReplyContext, TimestampMillis, UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
@@ -21,7 +22,7 @@ async fn send_message_v2(args: Args) -> Response {
     send_message_v2_impl(args).await
 }
 
-async fn send_message_v2_impl(args: Args) -> Response {
+async fn send_message_v2_impl(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
         my_user_id,
@@ -44,21 +45,60 @@ async fn send_message_v2_impl(args: Args) -> Response {
         }
     };
 
-    let content = match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
-        ValidateNewMessageContentResult::Success(content) => content,
-        // TODO: Crypto transfers need the user's pin number and the ledger calls, and P2P swaps the
-        // escrow canister, as in the User canister
-        ValidateNewMessageContentResult::SuccessCrypto(_) | ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
-            return Error(
-                OCErrorCode::InvalidRequest
-                    .with_message("Messages with transfers are not yet supported by the MultiUser canister"),
-            );
-        }
-        ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
-        ValidateNewMessageContentResult::Error(error) => {
-            return Error(OCErrorCode::InvalidMessageContent.with_json(&error));
-        }
-    };
+    let (content, completed_transfer) =
+        match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
+            ValidateNewMessageContentResult::Success(content) => (content, None),
+            ValidateNewMessageContentResult::SuccessCrypto(content) => {
+                let pending_transfer = match &content.transfer {
+                    CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
+                    _ => unreachable!(),
+                };
+                if !pending_transfer.validate_recipient(args.recipient) {
+                    return Error(OCErrorCode::InvalidRequest.with_message("Transaction is not to the user's account"));
+                }
+
+                // The sender is the user found before the lookup, since the caller can't be read after it
+                let verified = mutate_state(|state| {
+                    state
+                        .data
+                        .users
+                        .with_user_mut(my_index, |user| user.pin_number.verify(args.pin.as_mut(), now))
+                });
+                match verified {
+                    Some(Ok(())) => {}
+                    Some(Err(error)) => return Error(error.into()),
+                    None => return Error(OCErrorCode::InitiatorNotFound.into()),
+                }
+
+                // Bots can't be messaged from here yet, so unlike the User canister there is no transfer
+                // to a bot's subaccount for the user to arrange. The transfer is from the user's account,
+                // one of this canister's subaccounts.
+                match process_transaction(pending_transfer, my_user_id).await {
+                    Ok(Ok(completed)) => {
+                        let now = read_state(|state| state.env.now());
+                        let content = MessageContentInternal::new_with_transfer(
+                            MessageContentInitial::Crypto(content),
+                            completed.clone().into(),
+                            None,
+                            now,
+                        );
+                        (content, Some(completed))
+                    }
+                    Ok(Err((_, error))) => return Error(error),
+                    Err(error) => return Error(error.into()),
+                }
+            }
+            // TODO: P2P swaps need the escrow canister, as in the User canister
+            ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
+                return Error(
+                    OCErrorCode::InvalidRequest.with_message("P2P swaps are not yet supported by the MultiUser canister"),
+                );
+            }
+            ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
+            ValidateNewMessageContentResult::Error(error) => {
+                return Error(OCErrorCode::InvalidMessageContent.with_json(&error));
+            }
+        };
 
     mutate_state(|state| {
         send_message_impl(
@@ -73,6 +113,7 @@ async fn send_message_v2_impl(args: Args) -> Response {
             args.block_level_markdown,
             args.message_filter_failed,
             recipient,
+            completed_transfer,
             args.og_previews,
             state,
         )
@@ -152,6 +193,7 @@ fn send_message_impl(
     block_level_markdown: bool,
     message_filter_failed: Option<u64>,
     recipient_kind: Recipient,
+    completed_transfer: Option<CompletedCryptoTransaction>,
     og_previews: Vec<OgPreview>,
     state: &mut RuntimeState,
 ) -> Response {
@@ -259,13 +301,24 @@ fn send_message_impl(
         state.handle_event_expiry(my_index, expiry);
     }
 
-    Success(SuccessResult {
-        chat_id,
-        event_index: message_event.index,
-        message_index: message_event.event.message_index,
-        timestamp: now,
-        expires_at: message_event.expires_at,
-    })
+    if let Some(transfer) = completed_transfer {
+        TransferSuccessV2(TransferSuccessV2Result {
+            chat_id,
+            event_index: message_event.index,
+            message_index: message_event.event.message_index,
+            timestamp: now,
+            expires_at: message_event.expires_at,
+            transfer,
+        })
+    } else {
+        Success(SuccessResult {
+            chat_id,
+            event_index: message_event.index,
+            message_index: message_event.event.message_index,
+            timestamp: now,
+            expires_at: message_event.expires_at,
+        })
+    }
 }
 
 // What the recipient's notification of a message shows of its sender

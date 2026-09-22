@@ -1,23 +1,21 @@
-use crate::crypto::validate_from_account;
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
-use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT, SECOND_IN_MS};
+use constants::{MEMO_P2P_SWAP_CREATE, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use escrow_canister::deposit_subaccount;
 use oc_error_codes::{OCError, OCErrorCode};
-use tracing::error;
 use types::icrc1::Account;
 use types::{
-    Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MAX_TEXT_LENGTH,
-    MAX_TEXT_LENGTH_USIZE, MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction,
-    PinNumberWrapper, TimestampMillis, UserId, icrc1, icrc2,
+    Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, MessageContentInitial, MessageId, MessageIndex,
+    OCResult, PendingCryptoTransaction, PinNumberWrapper, TimestampMillis, UserId, icrc1, icrc2,
 };
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
 use user_core::P2PSwap;
+use user_core::updates::send_message_with_transfer::Prepared;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -51,8 +49,9 @@ async fn send_message_with_transfer_to_channel_impl(
             state,
         )
     }) {
-        Ok(PrepareResult::Success(t)) => (t, None),
-        Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
+        Ok(Prepared::Transfer(t)) => (t, None),
+        Ok(Prepared::P2PSwap(create_swap_args, from_account)) => {
+            let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
             match set_up_p2p_swap(escrow_canister_id, *create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
                 Err(error) => return Error(error.into()),
@@ -161,8 +160,9 @@ async fn send_message_with_transfer_to_group_impl(
             state,
         )
     }) {
-        Ok(PrepareResult::Success(t)) => (t, None),
-        Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
+        Ok(Prepared::Transfer(t)) => (t, None),
+        Ok(Prepared::P2PSwap(create_swap_args, from_account)) => {
+            let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
             match set_up_p2p_swap(escrow_canister_id, *create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
                 Err(error) => return Error(error.into()),
@@ -236,114 +236,26 @@ async fn send_message_with_transfer_to_group_impl(
     }
 }
 
-enum PrepareResult {
-    Success(PendingCryptoTransaction),
-    P2PSwap(CanisterId, Box<escrow_canister::create_swap::Args>, Option<icrc1::Account>),
-}
-
 fn prepare(
     chat: Chat,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     content: &MessageContentInitial,
-    mut pin: Option<PinNumberWrapper>,
+    pin: Option<PinNumberWrapper>,
     now: TimestampMillis,
     state: &mut RuntimeState,
-) -> OCResult<PrepareResult> {
-    use PrepareResult::*;
-
-    state.data.user.verify_not_suspended()?;
-
-    if content.text_length() > MAX_TEXT_LENGTH_USIZE {
-        return Err(OCErrorCode::TextTooLong.with_message(MAX_TEXT_LENGTH));
-    }
-
-    if let Err(error) = state.data.user.pin_number.verify(pin.as_mut(), now) {
-        return Err(error.into());
-    }
-
-    let pending_transaction = match &content {
-        MessageContentInitial::Crypto(c) => {
-            let my_user_id = state.env.canister_id().into();
-            if c.recipient == my_user_id {
-                return Err(OCErrorCode::TransferCannotBeToSelf.into());
-            }
-            if state.data.user.blocked_users.contains(&c.recipient) {
-                return Err(OCErrorCode::TargetUserBlocked.into());
-            }
-            match &c.transfer {
-                CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
-                _ => return Err(OCErrorCode::InvalidRequest.with_message("Transaction must be of type 'Pending'")),
-            }
-        }
-        MessageContentInitial::Prize(c) => {
-            if thread_root_message_index.is_some() {
-                return Err(OCErrorCode::InvalidRequest.with_message("Prize messages cannot be sent within threads"));
-            }
-            if c.end_date <= now {
-                return Err(OCErrorCode::InvalidRequest.with_message("Prize end date must be in the future"));
-            }
-            match &c.transfer {
-                CryptoTransaction::Pending(t) => {
-                    let total_prizes = c.prizes_v2.iter().sum::<u128>();
-                    let total_transfer_fees = c.prizes_v2.len() as u128 * t.fee();
-                    let oc_fee = (total_prizes * PRIZE_FEE_PERCENT as u128) / 100;
-                    let total_amount_to_send_old = total_prizes + total_transfer_fees;
-                    let total_amount_to_send = total_prizes + total_transfer_fees + oc_fee;
-                    let transaction_amount = t.units();
-
-                    if transaction_amount != total_amount_to_send && transaction_amount != total_amount_to_send_old {
-                        error!(
-                            ?total_amount_to_send,
-                            ?transaction_amount,
-                            "Expected vs Actual prize transfer"
-                        );
-                        return Err(
-                            OCErrorCode::InvalidRequest.with_message("Transaction amount must equal total prizes + total fees")
-                        );
-                    }
-
-                    t.clone().set_memo(&MEMO_PRIZE)
-                }
-                _ => return Err(OCErrorCode::InvalidRequest.with_message("Transaction must be of type 'Pending'")),
-            }
-        }
-        MessageContentInitial::P2PSwap(p) => {
-            if !state.data.user.membership(now).is_diamond_member() {
-                return Err(OCErrorCode::NotDiamondMember.into());
-            }
-            let my_user_id = UserId::from(state.env.canister_id());
-            validate_from_account(p.from_account, my_user_id)?;
-
-            let chat_canister_id = chat.canister_id();
-            let create_swap_args = escrow_canister::create_swap::Args {
-                location: P2PSwapLocation::from_message(chat, thread_root_message_index, message_id),
-                token0: p.token0.clone(),
-                token0_amount: p.token0_amount,
-                token0_principal: Some(my_user_id.as_principal()),
-                token1: p.token1.clone(),
-                token1_amount: p.token1_amount,
-                token1_principal: None,
-                expires_at: now + p.expires_in,
-                additional_admins: vec![chat_canister_id],
-                canister_to_notify: Some(chat_canister_id),
-                user_to_notify: None,
-                is_public: false,
-            };
-            return Ok(P2PSwap(
-                state.data.escrow_canister_id,
-                Box::new(create_swap_args),
-                p.from_account,
-            ));
-        }
-        _ => return Err(OCErrorCode::InvalidRequest.with_message("Message must include a crypto transfer")),
-    };
-
-    if !pending_transaction.is_zero() {
-        Ok(Success(pending_transaction))
-    } else {
-        Err(OCErrorCode::TransferCannotBeZero.into())
-    }
+) -> OCResult<Prepared> {
+    let my_user_id = UserId::from(state.env.canister_id());
+    user_core::updates::send_message_with_transfer::prepare(
+        &mut state.data.user,
+        my_user_id,
+        chat,
+        thread_root_message_index,
+        message_id,
+        content,
+        pin,
+        now,
+    )
 }
 
 async fn process_transaction(
@@ -453,17 +365,11 @@ fn award_achievements(
     quote_reply: bool,
     state: &mut RuntimeState,
 ) {
-    let mut achievements = Vec::new();
-
-    if let Some(achievement) = message_type_achievement {
-        achievements.push(achievement);
-    }
-
-    if quote_reply {
-        achievements.push(Achievement::QuoteReplied);
-    } else if in_thread && message_index == MessageIndex::from(0) {
-        achievements.push(Achievement::RepliedInThread);
-    }
-
+    let achievements = user_core::updates::send_message_with_transfer::achievements(
+        message_type_achievement,
+        message_index,
+        in_thread,
+        quote_reply,
+    );
     state.award_achievements_and_notify(achievements, state.env.now());
 }

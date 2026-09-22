@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `generate_btc_address`, `generate_one_sec_address`, `update_btc_balance`, `approve_transfer`, `withdraw_btc` and `withdraw_via_one_sec`, each acting on the subaccount of the user, sharing the logic with the User canister via `user_core` ([#9481](https://github.com/open-chat-labs/open-chat/pull/9481))
 - Apply LocalUserIndex events via `user_core`, shared with the User canister, which hands back the side effects to perform ([#9483](https://github.com/open-chat-labs/open-chat/pull/9483))
 - Implement `tip_message`, paid from the user's subaccount, and apply tips received from other users ([#9497](https://github.com/open-chat-labs/open-chat/pull/9497))
+- Implement `send_message_with_transfer_to_group` and `send_message_with_transfer_to_channel`, and crypto transfers in direct messages, paid from the user's subaccount ([#9498](https://github.com/open-chat-labs/open-chat/pull/9498))
 
 ### Changed
 

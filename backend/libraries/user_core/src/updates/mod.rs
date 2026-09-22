@@ -26,6 +26,7 @@ pub mod pay_for_streak_insurance;
 mod pin_chat_v2;
 pub mod report_message;
 mod save_crypto_account;
+pub mod send_message_with_transfer;
 mod set_bio;
 mod set_community_indexes;
 mod set_contact;
