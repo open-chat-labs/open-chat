@@ -1,4 +1,19 @@
 export const idlFactory = ({ IDL }) => {
+  const NeuronId = IDL.Record({ 'id' : IDL.Vec(IDL.Nat8) });
+  const ListNeurons = IDL.Record({
+    'of_principal' : IDL.Opt(IDL.Principal),
+    'limit' : IDL.Nat32,
+    'start_page_at' : IDL.Opt(NeuronId),
+  });
+  const DissolveState = IDL.Variant({
+    'DissolveDelaySeconds' : IDL.Nat64,
+    'WhenDissolvedTimestampSeconds' : IDL.Nat64,
+  });
+  const Neuron = IDL.Record({
+    'id' : IDL.Opt(NeuronId),
+    'dissolve_state' : IDL.Opt(DissolveState),
+  });
+  const ListNeuronsResponse = IDL.Record({ 'neurons' : IDL.Vec(Neuron) });
   const GenericNervousSystemFunction = IDL.Record({
     'validator_canister_id' : IDL.Opt(IDL.Principal),
     'target_canister_id' : IDL.Opt(IDL.Principal),
@@ -66,6 +81,7 @@ export const idlFactory = ({ IDL }) => {
         [ListNervousSystemFunctionsResponse],
         ['query'],
       ),
+    'list_neurons' : IDL.Func([ListNeurons], [ListNeuronsResponse], ['query']),
     'list_proposals' : IDL.Func(
         [ListProposals],
         [ListProposalsResponse],

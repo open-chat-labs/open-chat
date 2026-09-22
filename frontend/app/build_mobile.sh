@@ -18,6 +18,7 @@ export OC_MOBILE_LAYOUT=v2
 export OC_ALCHEMY_API_KEY=6pSBD1eOqwyGDI1xFfV-p
 export OC_BITCOIN_MAINNET_ENABLED=false
 export OC_ACCOUNT_LINKING_CODES_ENABLED=false
+export OC_FRONTEND_PROPOSAL_VOTING_ENABLED=false
 export OC_ACHIEVEMENT_URL_PATH=http://{canisterId}.localhost:8080
 export OC_BLOB_URL_PATTERN=http://{canisterId}.raw.localhost:8080/{blobType}
 export OC_BUILD_ENV=$NODE_ENV

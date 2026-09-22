@@ -61,6 +61,16 @@
     let showNeuronInfo = $state(false);
     let showPayload = $state(false);
 
+    function noEligibleNeuronsMessage(): string {
+        return client.frontendProposalVotingEnabled()
+            ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
+                  values: { principal: client.AuthPrincipal },
+              })
+            : $_("proposal.noEligibleNeuronsMessage", {
+                  values: { userId: $currentUserIdStore },
+              });
+    }
+
     function toggleSummary() {
         if (!showFullSummary) {
             summaryExpanded = !summaryExpanded;
@@ -77,7 +87,14 @@
 
         let success = false;
         client
-            .registerProposalVote(chatId, messageIndex, adopt)
+            .registerProposalVote(
+                chatId,
+                messageIndex,
+                content.governanceCanisterId,
+                proposal.id,
+                isNns,
+                adopt,
+            )
             .then((resp) => {
                 if (resp.kind === "success") {
                     success = true;
@@ -292,10 +309,7 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             {/snippet}
             {#snippet body()}
-                <Markdown
-                    text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: $currentUserIdStore },
-                    })} />
+                <Markdown text={noEligibleNeuronsMessage()} />
             {/snippet}
         </ModalContent>
     </Overlay>

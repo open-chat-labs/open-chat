@@ -123,6 +123,16 @@
 
     let showDetails = $state(false);
 
+    function noEligibleNeuronsMessage(): string {
+        return client.frontendProposalVotingEnabled()
+            ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
+                  values: { principal: client.AuthPrincipal },
+              })
+            : $_("proposal.noEligibleNeuronsMessage", {
+                  values: { userId: $currentUserIdStore },
+              });
+    }
+
     function onVote(adopt: boolean) {
         if (votingDisabled || (chatId.kind !== "group_chat" && chatId.kind !== "channel")) {
             return;
@@ -133,7 +143,14 @@
 
         let success = false;
         client
-            .registerProposalVote(chatId, messageIndex, adopt)
+            .registerProposalVote(
+                chatId,
+                messageIndex,
+                content.governanceCanisterId,
+                proposal.id,
+                isNns,
+                adopt,
+            )
             .then((resp) => {
                 if (resp.kind === "success") {
                     success = true;
@@ -494,11 +511,7 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             </Title>
             <Body colour="textSecondary">
-                <Markdown
-                    inline={true}
-                    text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: $currentUserIdStore },
-                    })} />
+                <Markdown inline={true} text={noEligibleNeuronsMessage()} />
             </Body>
         </Column>
     </Sheet>

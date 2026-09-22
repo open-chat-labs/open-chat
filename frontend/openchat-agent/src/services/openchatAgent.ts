@@ -134,6 +134,7 @@ import type {
     RehydratedMessagePreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
+    ManageNeuronResponse,
     RegisterUserResponse,
     RegistryValue,
     RemoveHotGroupExclusionResponse,
@@ -224,6 +225,7 @@ import {
     ChatMap,
     CommonResponses,
     DestinationInvalidError,
+    ErrorCode,
     Lazy,
     MAX_ACTIVITY_EVENTS,
     ONE_MINUTE_MILLIS,
@@ -3359,18 +3361,100 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.unarchiveChat(chatId);
     }
 
-    registerProposalVote(
+    async registerProposalVote(
         chatId: MultiUserChatIdentifier,
         messageIndex: number,
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        if (offline()) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return CommonResponses.offline();
+
+        if (this.config.frontendProposalVotingEnabled) {
+            // Vote with the user's neurons directly, then record the vote against the message
+            const voteResponse = await this.voteWithNeurons(
+                governanceCanisterId,
+                proposalId,
+                isNns,
+                adopt,
+            );
+            if (voteResponse.kind !== "success") return voteResponse;
+
+            switch (chatId.kind) {
+                case "group_chat":
+                    return this._groupClient.registerProposalVoteV2(
+                        chatId.groupId,
+                        messageIndex,
+                        adopt,
+                    );
+                case "channel":
+                    return this._communityClient.registerProposalVoteV2(
+                        chatId,
+                        messageIndex,
+                        adopt,
+                    );
+            }
+        }
 
         switch (chatId.kind) {
             case "group_chat":
                 return this._groupClient.registerProposalVote(chatId.groupId, messageIndex, adopt);
             case "channel":
                 return this._communityClient.registerProposalVote(chatId, messageIndex, adopt);
+        }
+    }
+
+    // Lists the neurons the user's principal controls or is hot-keyed to, then votes with each of
+    // them in parallel. Succeeds if any neuron's vote is accepted, since the others will typically
+    // have failed because they had already voted or are not eligible for this proposal.
+    private async voteWithNeurons(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean,
+        adopt: boolean,
+    ): Promise<RegisterProposalVoteResponse> {
+        let votes: PromiseSettledResult<ManageNeuronResponse>[];
+        if (isNns) {
+            const client = new NnsGovernanceClient(
+                this.identity,
+                this._agent,
+                governanceCanisterId,
+            );
+            const neuronIds = await client.listNeurons();
+            if (neuronIds.length === 0) return noEligibleNeurons();
+            votes = await Promise.allSettled(
+                neuronIds.map((id) => client.registerVote(id, proposalId, adopt)),
+            );
+        } else {
+            const client = new SnsGovernanceClient(
+                this.identity,
+                this._agent,
+                governanceCanisterId,
+            );
+            const neuronIds = await client.listNeurons();
+            if (neuronIds.length === 0) return noEligibleNeurons();
+            votes = await Promise.allSettled(
+                neuronIds.map((id) => client.registerVote(id, proposalId, adopt)),
+            );
+        }
+
+        if (votes.some((v) => v.status === "fulfilled" && v.value.kind === "success")) {
+            return CommonResponses.success();
+        }
+
+        const failures = votes.map((v) =>
+            v.status === "fulfilled" ? v.value : { kind: "error", message: String(v.reason) },
+        );
+        this.config.logger.error("Failed to vote with any neuron", failures);
+        return {
+            kind: "error",
+            code: ErrorCode.Unknown,
+            message: failures.find((f) => "message" in f)?.message,
+        };
+
+        function noEligibleNeurons(): RegisterProposalVoteResponse {
+            return { kind: "error", code: ErrorCode.NoEligibleNeurons, message: undefined };
         }
     }
 

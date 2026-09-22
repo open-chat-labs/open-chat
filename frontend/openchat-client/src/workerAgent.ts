@@ -107,6 +107,7 @@ export class WorkerAgent {
             bitcoinMainnetEnabled: config.bitcoinMainnetEnabled,
             groupInvite: config.groupInvite,
             accountLinkingCodesEnabled: config.accountLinkingCodesEnabled,
+            frontendProposalVotingEnabled: config.frontendProposalVotingEnabled,
         };
 
         this.send(initArgs);

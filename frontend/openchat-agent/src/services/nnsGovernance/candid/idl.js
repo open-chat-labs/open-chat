@@ -1,5 +1,25 @@
 export const idlFactory = ({ IDL }) => {
+  const ListNeurons = IDL.Record({
+    'neuron_ids' : IDL.Vec(IDL.Nat64),
+    'include_neurons_readable_by_caller' : IDL.Bool,
+    'include_empty_neurons_readable_by_caller' : IDL.Opt(IDL.Bool),
+    'include_public_neurons_in_full_neurons' : IDL.Opt(IDL.Bool),
+    'page_number' : IDL.Opt(IDL.Nat64),
+    'page_size' : IDL.Opt(IDL.Nat64),
+  });
   const NeuronId = IDL.Record({ 'id' : IDL.Nat64 });
+  const DissolveState = IDL.Variant({
+    'DissolveDelaySeconds' : IDL.Nat64,
+    'WhenDissolvedTimestampSeconds' : IDL.Nat64,
+  });
+  const Neuron = IDL.Record({
+    'id' : IDL.Opt(NeuronId),
+    'dissolve_state' : IDL.Opt(DissolveState),
+  });
+  const ListNeuronsResponse = IDL.Record({
+    'full_neurons' : IDL.Vec(Neuron),
+    'total_pages_available' : IDL.Opt(IDL.Nat64),
+  });
   const ListProposalInfo = IDL.Record({
     'include_reward_status' : IDL.Vec(IDL.Int32),
     'before_proposal' : IDL.Opt(NeuronId),
@@ -41,6 +61,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ManageNeuronResponse = IDL.Record({ 'command' : IDL.Opt(Command_1) });
   return IDL.Service({
+    'list_neurons' : IDL.Func([ListNeurons], [ListNeuronsResponse], ['query']),
     'list_proposals' : IDL.Func(
         [ListProposalInfo],
         [ListProposalInfoResponse],

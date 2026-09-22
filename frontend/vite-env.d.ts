@@ -12,6 +12,7 @@ interface ImportMetaEnv {
     readonly OC_BUILD_ENV: string;
     readonly OC_CANISTER_URL_PATH: string;
     readonly OC_DFX_NETWORK: string;
+    readonly OC_FRONTEND_PROPOSAL_VOTING_ENABLED: string;
     readonly OC_GROUP_INDEX_CANISTER: string;
     readonly OC_IC_URL: string;
     readonly OC_IDENTITY_CANISTER: string;

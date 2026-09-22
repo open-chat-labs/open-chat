@@ -1311,6 +1311,9 @@ type GetRecommendedGroups = {
 type RegisterProposalVote = {
     chatId: MultiUserChatIdentifier;
     messageIndex: number;
+    governanceCanisterId: string;
+    proposalId: bigint;
+    isNns: boolean;
     adopt: boolean;
     kind: "registerProposalVote";
 };

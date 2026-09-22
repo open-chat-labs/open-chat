@@ -30,4 +30,6 @@ export type AgentConfig = {
     groupInvite?: GroupInvite;
     logger: Logger;
     accountLinkingCodesEnabled: boolean;
+    // Vote on proposals with the user's neurons from the frontend rather than via their User canister
+    frontendProposalVotingEnabled: boolean;
 };
