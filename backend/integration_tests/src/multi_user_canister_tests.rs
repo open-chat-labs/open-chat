@@ -13,11 +13,11 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex,
-    Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, DeletedCommunityInfo,
-    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
-    EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter,
-    UserId,
+    Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent,
+    CryptoTransaction, DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary,
+    DirectChatSummaryUpdates, Document, Empty, EventsResponse, IdempotentEnvelope, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate, PendingCryptoTransaction, PinNumberSettings,
+    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -4499,4 +4499,127 @@ fn known_multi_user_canisters(env: &PocketIc, canister_id: CanisterId) -> u32 {
 
 fn multi_user_canister_count(env: &PocketIc, local_user_index: CanisterId) -> u64 {
     serde_json::from_value(metrics(env, local_user_index)["multi_user_canister_count"].clone()).unwrap()
+}
+
+#[test]
+fn only_certified_transfers_to_the_recipients_wallet_are_accepted() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let b_message_id = random_from_u128();
+    send_text_message(env, b_principal, canister_id, a, "hello", b_message_id);
+
+    let ledger = canister_ids.chat_ledger;
+    let now = now_nanos(env);
+    let icrc1_transfer = |to: types::icrc1::Account| {
+        PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
+            ledger,
+            token_symbol: "CHAT".to_string(),
+            amount: 1000,
+            to,
+            fee: 100,
+            memo: None,
+            created: now,
+        })
+    };
+    // Its certificate is not a real one, so it can only fail verification
+    let certified_transfer = |to: types::icrc1::Account| {
+        PendingCryptoTransaction::Certified(types::certified::PendingCryptoTransaction {
+            ledger,
+            token_symbol: "CHAT".to_string(),
+            amount: 1000,
+            to,
+            fee: 100,
+            memo: Some(canister_id.as_slice().to_vec().into()),
+            created: now,
+            call: types::certified::CertifiedCall {
+                arg: Vec::new(),
+                ingress_expiry: 0,
+                nonce: None,
+                certificate: vec![1, 2, 3],
+            },
+        })
+    };
+    let send_crypto = |env: &mut PocketIc, transfer: PendingCryptoTransaction| {
+        let args = user_canister::send_message_v2::Args {
+            content: MessageContentInitial::Crypto(CryptoContent {
+                recipient: b,
+                transfer: CryptoTransaction::Pending(transfer),
+                caption: None,
+            }),
+            ..send_message_args(b, "", random_from_u128())
+        };
+        match client::multi_user::send_message_v2(env, a_principal, canister_id, &args) {
+            user_canister::send_message_v2::Response::Error(error) => error.code(),
+            response => panic!("{response:?}"),
+        }
+    };
+
+    // B's wallet is their principal's account, not their account of the canister
+    let b_wallet = types::icrc1::Account::from(b_principal);
+    let b_canister_account = types::icrc1::Account::for_user(b);
+
+    assert_eq!(send_crypto(env, icrc1_transfer(b_wallet)), OCErrorCode::InvalidRequest as u16);
+    assert_eq!(
+        send_crypto(env, certified_transfer(b_canister_account)),
+        OCErrorCode::InvalidRequest as u16
+    );
+    // A transfer to B's wallet gets as far as being verified
+    assert_eq!(
+        send_crypto(env, certified_transfer(b_wallet)),
+        OCErrorCode::InvalidRequest as u16
+    );
+
+    let tip = |env: &mut PocketIc, transfer: Option<PendingCryptoTransaction>| {
+        let args = user_canister::tip_message::Args {
+            chat: Chat::Direct(b.into()),
+            recipient: b,
+            thread_root_message_index: None,
+            message_id: b_message_id,
+            ledger,
+            token_symbol: "CHAT".to_string(),
+            amount: 1000,
+            fee: 100,
+            decimals: 8,
+            from_account: None,
+            pin: None,
+            transfer,
+        };
+        match client::multi_user::tip_message(env, a_principal, canister_id, &args) {
+            user_canister::tip_message::Response::Error(error) => (error.code(), error.message().map(|m| m.to_string())),
+            response => panic!("{response:?}"),
+        }
+    };
+    assert_eq!(tip(env, None).0, OCErrorCode::InvalidRequest as u16);
+    assert_eq!(tip(env, Some(icrc1_transfer(b_wallet))).0, OCErrorCode::InvalidRequest as u16);
+    assert_eq!(
+        tip(env, Some(certified_transfer(b_canister_account))),
+        (
+            OCErrorCode::InvalidRequest as u16,
+            Some("Transaction is not to the user's account".to_string())
+        )
+    );
+
+    let withdraw = |env: &mut PocketIc, withdrawal: PendingCryptoTransaction| {
+        let args = user_canister::withdraw_crypto_v2::Args { withdrawal, pin: None };
+        match client::multi_user::withdraw_crypto_v2(env, a_principal, canister_id, &args) {
+            user_canister::withdraw_crypto_v2::Response::Error(error) => error.code(),
+            response => panic!("{response:?}"),
+        }
+    };
+    assert_eq!(withdraw(env, icrc1_transfer(b_wallet)), OCErrorCode::InvalidRequest as u16);
+}
+
+fn now_nanos(env: &PocketIc) -> u64 {
+    now_millis(env) * 1_000_000
 }

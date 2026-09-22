@@ -1,5 +1,6 @@
 use crate::crypto::{release_transfer, use_transfer, verify_recipient, wallet_account};
 use crate::guards::caller_is_hosted_user;
+use crate::timer_job_types::{TipMessageInChannelJob, TipMessageInGroupJob};
 use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -73,8 +74,18 @@ async fn tip_message(args: Args) -> Response {
             match group_canister_c2c_client::c2c_tip_message(group_id.into(), &c2c_args).await {
                 Ok(Response::Success) => tipped(my_index),
                 Ok(Response::Error(error)) => not_tipped(&completed, error),
-                // The outcome isn't known, so the transfer stays used
-                Err(error) => Error(error.into()),
+                // The tip has been transferred, so the call is retried until it is recorded
+                Err(error) => {
+                    TipMessageInGroupJob {
+                        user_index: my_index,
+                        chat_id: group_id,
+                        args: c2c_args,
+                        attempt: 0,
+                    }
+                    .enqueue();
+                    tipped(my_index);
+                    Retrying(format!("{error:?}"))
+                }
             }
         }
         TipChat::Channel(community_id, channel_id, username, display_name) => {
@@ -99,8 +110,18 @@ async fn tip_message(args: Args) -> Response {
             match community_canister_c2c_client::c2c_tip_message(community_id.into(), &c2c_args).await {
                 Ok(Response::Success) => tipped(my_index),
                 Ok(Response::Error(error)) => not_tipped(&completed, error),
-                // The outcome isn't known, so the transfer stays used
-                Err(error) => Error(error.into()),
+                // The tip has been transferred, so the call is retried until it is recorded
+                Err(error) => {
+                    TipMessageInChannelJob {
+                        user_index: my_index,
+                        community_id,
+                        args: c2c_args,
+                        attempt: 0,
+                    }
+                    .enqueue();
+                    tipped(my_index);
+                    Retrying(format!("{error:?}"))
+                }
             }
         }
     }

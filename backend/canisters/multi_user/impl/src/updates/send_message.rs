@@ -102,10 +102,23 @@ async fn send_message_v2_impl(args: Args) -> Response {
             args.og_previews,
             state,
         );
-        if let (Error(_), Some(transfer)) = (&response, transfer) {
-            release_transfer(&transfer, state);
+        match (response, transfer) {
+            // As in the User canister, the completed transfer is returned so the sender's copy of
+            // the message can be updated with it
+            (Success(result), Some(transfer)) => TransferSuccessV2(TransferSuccessV2Result {
+                chat_id: result.chat_id,
+                event_index: result.event_index,
+                message_index: result.message_index,
+                timestamp: result.timestamp,
+                expires_at: result.expires_at,
+                transfer: CompletedCryptoTransaction::ICRC1(transfer),
+            }),
+            (Error(error), Some(transfer)) => {
+                release_transfer(&transfer, state);
+                Error(error)
+            }
+            (response, _) => response,
         }
-        response
     })
 }
 

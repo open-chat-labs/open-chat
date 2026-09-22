@@ -14,6 +14,8 @@ pub enum TimerJob {
     ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
+    TipMessageInGroup(Box<TipMessageInGroupJob>),
+    TipMessageInChannel(Box<TipMessageInChannelJob>),
 }
 
 // Retries sending a message with a transfer to a group, after the call to send it failed. The
@@ -35,6 +37,27 @@ pub struct SendMessageToChannelJob {
     pub user_index: u16,
     pub community_id: CommunityId,
     pub args: community_canister::c2c_send_message::Args,
+    pub attempt: u32,
+}
+
+// Retries recording a tip in a group, after the call to record it failed. The tip has already been
+// transferred, so it is recorded even though the user has been told it is being retried.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct TipMessageInGroupJob {
+    // The index of the user giving the tip
+    pub user_index: u16,
+    pub chat_id: ChatId,
+    pub args: group_canister::c2c_tip_message::Args,
+    pub attempt: u32,
+}
+
+// As `TipMessageInGroupJob`, for a channel
+#[derive(Serialize, Deserialize, Clone)]
+pub struct TipMessageInChannelJob {
+    // The index of the user giving the tip
+    pub user_index: u16,
+    pub community_id: CommunityId,
+    pub args: community_canister::c2c_tip_message::Args,
     pub attempt: u32,
 }
 
@@ -86,6 +109,8 @@ impl TimerJob {
             TimerJob::ClaimOrResetStreakInsurance(job) => job.user_index,
             TimerJob::SendMessageToGroup(job) => job.user_index,
             TimerJob::SendMessageToChannel(job) => job.user_index,
+            TimerJob::TipMessageInGroup(job) => job.user_index,
+            TimerJob::TipMessageInChannel(job) => job.user_index,
         }
     }
 }
@@ -126,22 +151,23 @@ impl Job for TimerJob {
             TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
             TimerJob::SendMessageToGroup(job) => job.execute(),
             TimerJob::SendMessageToChannel(job) => job.execute(),
+            TimerJob::TipMessageInGroup(job) => job.execute(),
+            TimerJob::TipMessageInChannel(job) => job.execute(),
         }
     }
 }
 
-const SEND_MESSAGE_RETRY_INTERVAL: u64 = 10 * SECOND_IN_MS;
-const SEND_MESSAGE_MAX_ATTEMPTS: u32 = 20;
+const RETRY_INTERVAL: u64 = 10 * SECOND_IN_MS;
+const MAX_ATTEMPTS: u32 = 20;
 
 impl SendMessageToGroupJob {
     pub fn enqueue(self) {
         mutate_state(|state| {
             let now = state.env.now();
-            state.data.timer_jobs.enqueue_job(
-                TimerJob::SendMessageToGroup(Box::new(self)),
-                now + SEND_MESSAGE_RETRY_INTERVAL,
-                now,
-            );
+            state
+                .data
+                .timer_jobs
+                .enqueue_job(TimerJob::SendMessageToGroup(Box::new(self)), now + RETRY_INTERVAL, now);
         });
     }
 }
@@ -151,7 +177,7 @@ impl Job for SendMessageToGroupJob {
         ic_cdk::futures::spawn_migratory(async move {
             match group_canister_c2c_client::c2c_send_message(self.chat_id.into(), &self.args).await {
                 Ok(group_canister::c2c_send_message::Response::Success(_)) => {}
-                Err(_) if self.attempt < SEND_MESSAGE_MAX_ATTEMPTS => SendMessageToGroupJob {
+                Err(_) if self.attempt < MAX_ATTEMPTS => SendMessageToGroupJob {
                     attempt: self.attempt + 1,
                     ..self
                 }
@@ -166,11 +192,10 @@ impl SendMessageToChannelJob {
     pub fn enqueue(self) {
         mutate_state(|state| {
             let now = state.env.now();
-            state.data.timer_jobs.enqueue_job(
-                TimerJob::SendMessageToChannel(Box::new(self)),
-                now + SEND_MESSAGE_RETRY_INTERVAL,
-                now,
-            );
+            state
+                .data
+                .timer_jobs
+                .enqueue_job(TimerJob::SendMessageToChannel(Box::new(self)), now + RETRY_INTERVAL, now);
         });
     }
 }
@@ -180,7 +205,7 @@ impl Job for SendMessageToChannelJob {
         ic_cdk::futures::spawn_migratory(async move {
             match community_canister_c2c_client::c2c_send_message(self.community_id.into(), &self.args).await {
                 Ok(community_canister::c2c_send_message::Response::Success(_)) => {}
-                Err(_) if self.attempt < SEND_MESSAGE_MAX_ATTEMPTS => SendMessageToChannelJob {
+                Err(_) if self.attempt < MAX_ATTEMPTS => SendMessageToChannelJob {
                     attempt: self.attempt + 1,
                     ..self
                 }
@@ -256,5 +281,61 @@ impl Job for ClaimOrResetStreakInsuranceJob {
                 state.set_up_streak_insurance_timer_job(self.user_index);
             }
         });
+    }
+}
+
+impl TipMessageInGroupJob {
+    pub fn enqueue(self) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            state
+                .data
+                .timer_jobs
+                .enqueue_job(TimerJob::TipMessageInGroup(Box::new(self)), now + RETRY_INTERVAL, now);
+        });
+    }
+}
+
+impl Job for TipMessageInGroupJob {
+    fn execute(self) {
+        ic_cdk::futures::spawn_migratory(async move {
+            match group_canister_c2c_client::c2c_tip_message(self.chat_id.into(), &self.args).await {
+                Ok(group_canister::c2c_tip_message::Response::Success) => {}
+                Err(_) if self.attempt < MAX_ATTEMPTS => TipMessageInGroupJob {
+                    attempt: self.attempt + 1,
+                    ..self
+                }
+                .enqueue(),
+                response => error!(?response, "Failed to tip message in group"),
+            }
+        })
+    }
+}
+
+impl TipMessageInChannelJob {
+    pub fn enqueue(self) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            state
+                .data
+                .timer_jobs
+                .enqueue_job(TimerJob::TipMessageInChannel(Box::new(self)), now + RETRY_INTERVAL, now);
+        });
+    }
+}
+
+impl Job for TipMessageInChannelJob {
+    fn execute(self) {
+        ic_cdk::futures::spawn_migratory(async move {
+            match community_canister_c2c_client::c2c_tip_message(self.community_id.into(), &self.args).await {
+                Ok(community_canister::c2c_tip_message::Response::Success) => {}
+                Err(_) if self.attempt < MAX_ATTEMPTS => TipMessageInChannelJob {
+                    attempt: self.attempt + 1,
+                    ..self
+                }
+                .enqueue(),
+                response => error!(?response, "Failed to tip message in channel"),
+            }
+        })
     }
 }

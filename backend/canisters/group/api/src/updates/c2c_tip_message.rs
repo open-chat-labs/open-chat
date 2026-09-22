@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, MessageId, MessageIndex, UnitResult, UserId};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub recipient: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
