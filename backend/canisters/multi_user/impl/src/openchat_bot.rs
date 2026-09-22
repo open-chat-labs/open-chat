@@ -6,7 +6,6 @@ use types::{
     ChannelId, CommunityId, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, User, UserId,
     UserType,
 };
-
 use user_core::openchat_bot;
 
 pub(crate) fn send_community_deleted_message(

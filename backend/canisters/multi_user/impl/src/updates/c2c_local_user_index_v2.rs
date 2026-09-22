@@ -48,6 +48,8 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
     for message in effects.bot_messages {
         openchat_bot::send_message(user_index, message.content, message.mentioned, false, state);
     }
+    // The referrer's id is resolved again from the user's index, since the referrer may be a local
+    // user who has since blocked them
     if let Some((_, status)) = effects.referral_status {
         state.set_referral_status_of_referrer(user_index, status, now);
     }

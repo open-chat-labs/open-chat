@@ -154,7 +154,7 @@ pub fn apply(user: &mut User, event: LocalUserIndexEvent, now: TimestampMillis) 
                 .push(BotMessage::text(openchat_bot::missed_daily_claims_reinstated_text(
                     count, new_streak,
                 )));
-            effects.chit_changed = true;
+            effects.chit_changed |= true;
         }
         LocalUserIndexEvent::BotRemoved(bot_id) => {
             effects.garbage_collect = user.uninstall_bot(bot_id, now);
