@@ -3,7 +3,7 @@ use crate::env::ENV;
 use crate::utils::{metrics, now_millis, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use sha256::sha256;
@@ -4499,4 +4499,136 @@ fn known_multi_user_canisters(env: &PocketIc, canister_id: CanisterId) -> u32 {
 
 fn multi_user_canister_count(env: &PocketIc, local_user_index: CanisterId) -> u64 {
     serde_json::from_value(metrics(env, local_user_index)["multi_user_canister_count"].clone()).unwrap()
+}
+
+#[test]
+fn tips_are_paid_from_the_tippers_own_subaccount() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let carol = client::register_user(env, canister_ids);
+
+    let tip = 1_0000_0000;
+    let ledger = canister_ids.icp_ledger;
+    client::ledger::happy_path::transfer(env, *controller, ledger, alice_id, 10 * tip);
+    client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 10 * tip);
+    tick_many(env, 3);
+
+    let tip_message = |env: &mut PocketIc, sender: Principal, sender_canister: CanisterId, recipient: UserId, message_id| {
+        client::user::tip_message(
+            env,
+            sender,
+            sender_canister,
+            &user_canister::tip_message::Args {
+                chat: Chat::Direct(recipient.into()),
+                recipient,
+                thread_root_message_index: None,
+                message_id,
+                ledger,
+                token_symbol: ICP_SYMBOL.to_string(),
+                amount: tip,
+                fee: ICP_TRANSFER_FEE,
+                decimals: 8,
+                from_account: None,
+                pin: None,
+            },
+        )
+    };
+    let balance_of = |env: &PocketIc, user_id: UserId| client::ledger::happy_path::balance_of(env, ledger, user_id);
+    let tipped_by = |user_id: UserId| vec![(ledger, vec![(user_id, tip)])];
+    let tips_on = |message: Message| message.tips.iter().cloned().collect::<Vec<_>>();
+
+    // Alice tips Bob's message. Both are in this canister, so both copies of the chat are updated
+    // directly, and the tip moves between their subaccounts.
+    let message_id = random_from_u128();
+    send_text_message(env, bob, canister_id, alice_id, "tip me", message_id);
+    let response = tip_message(env, alice, canister_id, bob_id, message_id);
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Success),
+        "{response:?}"
+    );
+    assert_eq!(
+        tips_on(message(&events(env, alice, canister_id, alice_id, bob_id), message_id)),
+        tipped_by(alice_id)
+    );
+    assert_eq!(
+        tips_on(message(&events(env, bob, canister_id, bob_id, alice_id), message_id)),
+        tipped_by(alice_id)
+    );
+    assert!(has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::TippedMessage
+    ));
+    assert!(has_achievement(
+        &initial_state(env, bob, canister_id),
+        Achievement::HadMessageTipped
+    ));
+    assert_eq!(balance_of(env, bob_id), tip);
+
+    // Alice tips Carol's message, and Carol's canister is told. Alice messages Carol first, since a
+    // User canister can't yet look up a MultiUser user it has no chat with.
+    send_text_message(env, alice, canister_id, carol.user_id, "hello", random_from_u128());
+    tick_many(env, 3);
+    let message_id = random_from_u128();
+    client::user::happy_path::send_text_message(env, &carol, alice_id, "tip me too", Some(message_id));
+    tick_many(env, 3);
+    let response = tip_message(env, alice, canister_id, carol.user_id, message_id);
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    assert_eq!(
+        tips_on(message(&events(env, alice, canister_id, alice_id, carol.user_id), message_id)),
+        tipped_by(alice_id)
+    );
+    let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 10, 10);
+    assert_eq!(tips_on(message(&carols_events, message_id)), tipped_by(alice_id));
+    assert_eq!(balance_of(env, carol.user_id), 11 * tip);
+
+    // Carol tips Alice's message, and this canister is told
+    let message_id = random_from_u128();
+    send_text_message(env, alice, canister_id, carol.user_id, "tip me back", message_id);
+    tick_many(env, 3);
+    let response = tip_message(env, carol.principal, carol.canister(), alice_id, message_id);
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    assert_eq!(
+        tips_on(message(&events(env, alice, canister_id, alice_id, carol.user_id), message_id)),
+        tipped_by(carol.user_id)
+    );
+    assert!(has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::HadMessageTipped
+    ));
+
+    // A tip can't be to oneself, and needs a chat with the recipient
+    let response = tip_message(env, alice, canister_id, alice_id, message_id);
+    assert!(
+        matches!(&response, user_canister::tip_message::Response::Error(e) if e.matches_code(OCErrorCode::CannotTipSelf)),
+        "{response:?}"
+    );
+    let response = tip_message(env, bob, canister_id, carol.user_id, message_id);
+    assert!(
+        matches!(&response, user_canister::tip_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
+        "{response:?}"
+    );
+
+    // Alice's tips came out of her own subaccount, not Bob's, Carol's went into it, and the refused
+    // tips moved nothing
+    assert_eq!(balance_of(env, alice_id), 9 * tip - 2 * ICP_TRANSFER_FEE);
+    assert_eq!(balance_of(env, bob_id), tip);
+    assert_eq!(balance_of(env, carol.user_id), 10 * tip - ICP_TRANSFER_FEE);
 }

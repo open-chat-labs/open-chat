@@ -1,18 +1,15 @@
-use crate::crypto::{process_transaction, validate_from_account};
+use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
-use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
-use types::{
-    Achievement, CanisterId, Chat, ChatId, CommunityId, OCResult, PendingCryptoTransaction, TimestampNanos, UserId, icrc1,
-    icrc2,
-};
+use types::{Achievement, CanisterId, OCResult, TimestampNanos, UserId};
 use user_canister::UserCanisterEvent;
 use user_canister::tip_message::{Response::*, *};
+use user_core::updates::tip_message::Prepared;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -26,29 +23,8 @@ async fn tip_message_impl(mut args: Args) -> Response {
         Err(response) => return Error(response),
     };
 
-    let pending_transfer = match args.from_account {
-        // The allowance is what authorises this - the ledger only lets us pull from an account which
-        // has approved this canister as spender - so there is nothing for us to check here.
-        Some(from) => PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
-            ledger: args.ledger,
-            token_symbol: args.token_symbol.clone(),
-            amount: args.amount,
-            from,
-            to: icrc1::Account::for_user(args.recipient),
-            fee: args.fee,
-            memo: Some(MEMO_TIP.to_vec().into()),
-            created: now_nanos,
-        }),
-        None => PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-            ledger: args.ledger,
-            token_symbol: args.token_symbol.clone(),
-            amount: args.amount,
-            to: icrc1::Account::for_user(args.recipient),
-            fee: args.fee,
-            memo: Some(MEMO_TIP.to_vec().into()),
-            created: now_nanos,
-        }),
-    };
+    let pending_transfer = user_core::updates::tip_message::pending_transfer(&args, now_nanos);
+
     // Make the crypto transfer
     match process_transaction(pending_transfer).await {
         Ok(Ok(_)) => {}
@@ -59,10 +35,10 @@ async fn tip_message_impl(mut args: Args) -> Response {
     mutate_state(|state| state.award_achievement_and_notify(Achievement::TippedMessage, state.env.now()));
 
     match prepare_result {
-        PrepareResult::Direct(tip_message_args) => {
+        Prepared::Direct(tip_message_args) => {
             mutate_state(|state| tip_direct_chat_message(tip_message_args, args.decimals, state))
         }
-        PrepareResult::Group(group_id, c2c_args) => {
+        Prepared::Group(group_id, c2c_args) => {
             use group_canister::c2c_tip_message::Response;
             match group_canister_c2c_client::c2c_tip_message(group_id.into(), &c2c_args).await {
                 Ok(Response::Success) => Success,
@@ -73,7 +49,7 @@ async fn tip_message_impl(mut args: Args) -> Response {
                 }
             }
         }
-        PrepareResult::Channel(community_id, c2c_args) => {
+        Prepared::Channel(community_id, c2c_args) => {
             use community_canister::c2c_tip_message::Response;
             match community_canister_c2c_client::c2c_tip_message(community_id.into(), &c2c_args).await {
                 Ok(Response::Success) => Success,
@@ -87,81 +63,10 @@ async fn tip_message_impl(mut args: Args) -> Response {
     }
 }
 
-enum PrepareResult {
-    Direct(TipMessageArgs),
-    Group(ChatId, group_canister::c2c_tip_message::Args),
-    Channel(CommunityId, community_canister::c2c_tip_message::Args),
-}
-
-fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult, TimestampNanos)> {
+fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(Prepared, TimestampNanos)> {
     let my_user_id: UserId = state.env.canister_id().into();
-    state.data.user.verify_not_suspended()?;
-
-    if args.amount == 0 {
-        Err(OCErrorCode::TransferCannotBeZero.into())
-    } else if my_user_id == args.recipient {
-        Err(OCErrorCode::CannotTipSelf.into())
-    } else {
-        validate_from_account(args.from_account, my_user_id)?;
-
-        let now = state.env.now();
-        let now_nanos = now * NANOS_PER_MILLISECOND;
-        state.data.user.pin_number.verify(args.pin.as_mut(), now)?;
-
-        match args.chat {
-            Chat::Direct(chat_id) if state.data.user.direct_chats.exists(&chat_id) => Ok((
-                PrepareResult::Direct(TipMessageArgs {
-                    user_id: my_user_id,
-                    recipient: args.recipient,
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_id: args.message_id,
-                    ledger: args.ledger,
-                    token_symbol: args.token_symbol.clone(),
-                    amount: args.amount,
-                    now,
-                }),
-                now_nanos,
-            )),
-            Chat::Group(group_id) if state.data.user.group_chats.exists(&group_id) => Ok((
-                PrepareResult::Group(
-                    group_id,
-                    group_canister::c2c_tip_message::Args {
-                        recipient: args.recipient,
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_id: args.message_id,
-                        ledger: args.ledger,
-                        token_symbol: args.token_symbol.clone(),
-                        amount: args.amount,
-                        decimals: args.decimals,
-                        username: state.data.user.username.value.clone(),
-                        display_name: state.data.user.display_name.value.clone(),
-                        sender: None,
-                    },
-                ),
-                now_nanos,
-            )),
-            Chat::Channel(community_id, channel_id) if state.data.user.communities.exists(&community_id) => Ok((
-                PrepareResult::Channel(
-                    community_id,
-                    community_canister::c2c_tip_message::Args {
-                        recipient: args.recipient,
-                        channel_id,
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_id: args.message_id,
-                        ledger: args.ledger,
-                        token_symbol: args.token_symbol.clone(),
-                        amount: args.amount,
-                        decimals: args.decimals,
-                        username: state.data.user.username.value.clone(),
-                        display_name: state.data.user.display_name.value.clone(),
-                        sender: None,
-                    },
-                ),
-                now_nanos,
-            )),
-            _ => Err(OCErrorCode::ChatNotFound.into()),
-        }
-    }
+    let now = state.env.now();
+    user_core::updates::tip_message::prepare(&mut state.data.user, my_user_id, args, now)
 }
 
 fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
