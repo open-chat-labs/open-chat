@@ -1,5 +1,16 @@
+# Runs on every push to master. On PRs the tests are opt in: add the `integration-tests` label to
+# run them, after which they re-run on every new commit until the label is removed.
 on:
+  push:
+    branches:
+      - master
+    paths:
+      - "**.rs"
+      - "**.toml"
+      - "**/Cargo.lock"
+      - ".github/workflows/integration_tests.yaml"
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches:
       - master
     paths:
@@ -10,13 +21,26 @@ on:
 
 name: Integration tests
 
+# Runs that won't execute the tests (PRs without the label, or labelling a PR with some other
+# label) get a unique group so they can't cancel a real run. Master pushes also get a unique
+# group so that every commit to master is tested.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >-
+    ${{ github.workflow }}-${{
+      (github.event_name == 'pull_request'
+        && ((github.event.action == 'labeled' && github.event.label.name == 'integration-tests')
+          || (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'integration-tests'))))
+      && github.event.pull_request.number
+      || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   integration_tests:
     name: run integration tests
+    if: >-
+      github.event_name == 'push'
+      || (github.event.action == 'labeled' && github.event.label.name == 'integration-tests')
+      || (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'integration-tests'))
     runs-on:
       - runs-on
       - cpu=16
