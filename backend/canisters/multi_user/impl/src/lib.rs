@@ -1,10 +1,12 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user::User;
+use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::users::Users;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChat;
 use event_store_types::EventBuilder;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
@@ -14,12 +16,13 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
-use timer_job_queues::BatchedTimerJobQueue;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
     DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis, Timestamped,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
 };
+use user_canister::UserCanisterEvent;
 use user_state::{Community, GroupChat};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -34,6 +37,20 @@ mod openchat_bot;
 mod queries;
 mod timer_job_types;
 mod updates;
+
+// Checks that `user_id` is a user who can be sent direct messages, by looking them up in the
+// LocalUserIndex. Bots can't be messaged from a MultiUser canister yet.
+async fn look_up_direct_chat_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> OCResult {
+    match local_user_index_canister_c2c_client::lookup_user(user_id.as_principal(), local_user_index_canister_id).await? {
+        // The lookup also resolves the principal a user signs in with, which isn't their user id
+        Some(user) if user.user_id != user_id => Err(OCErrorCode::TargetUserNotFound.into()),
+        Some(user) if user.user_type == UserType::User => Ok(()),
+        Some(_) => {
+            Err(OCErrorCode::InvalidRequest.with_message("Chats with bots are not yet supported by the MultiUser canister"))
+        }
+        None => Err(OCErrorCode::TargetUserNotFound.into()),
+    }
+}
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -194,6 +211,28 @@ impl RuntimeState {
             idempotency_id: self.env.rng().next_u64(),
             value: UserEventWithUserId { user_id, event },
         });
+    }
+
+    // Queues a direct chat event from the user at `sender_index` for `recipient`, a user in another
+    // canister, as the User canister does for its user. A user in this canister is updated directly
+    // instead, and the OpenChat bot is never sent events.
+    pub fn push_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
+        if recipient == OPENCHAT_BOT_USER_ID || self.user_index(recipient).is_some() {
+            return;
+        }
+        let sender = self.user_id(sender_index);
+        self.data.user_canister_events_queue.push(
+            recipient.canister_id(),
+            IdempotentEnvelope {
+                created_at: self.env.now(),
+                idempotency_id: self.env.rng().next_u64(),
+                value: user_canister::c2c_user_canister_v2::Event {
+                    sender,
+                    recipient,
+                    event,
+                },
+            },
+        );
     }
 
     // Queues a notification for the user at `recipient_index`, as the User canister does for its user
@@ -494,6 +533,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             deleted_users_to_garbage_collect: self.data.deleted_users_to_garbage_collect.len() as u32,
             timer_jobs: self.data.timer_jobs.len() as u32,
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
+            queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -525,6 +565,8 @@ struct Data {
     // created before the queue existed, whose LocalUserIndex id is set after the upgrade.
     #[serde(default = "local_user_index_event_sync_queue_default")]
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+    #[serde(default = "new_user_canister_events_queue")]
+    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     // The prefixes of deleted direct chats, whose entries are removed by a background job, each
     // with the index of the user who held the chat since the entries are keyed under that user
     #[serde(default)]
@@ -564,6 +606,7 @@ impl Data {
             escrow_canister_id,
             video_call_operators,
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
+            user_canister_events_queue: new_user_canister_events_queue(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             deleted_users_to_garbage_collect: Vec::new(),
             idempotency_checker: IdempotencyChecker::default(),
@@ -572,6 +615,10 @@ impl Data {
             test_mode,
         }
     }
+}
+
+fn new_user_canister_events_queue() -> GroupedTimerJobQueue<UserCanisterEventBatch> {
+    GroupedTimerJobQueue::new(10, true)
 }
 
 fn local_user_index_event_sync_queue_default() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
@@ -593,6 +640,7 @@ pub struct Metrics {
     pub deleted_users_to_garbage_collect: u32,
     pub timer_jobs: u32,
     pub queued_local_user_index_events: u32,
+    pub queued_user_canister_events: u32,
     pub canister_ids: CanisterIds,
 }
 
