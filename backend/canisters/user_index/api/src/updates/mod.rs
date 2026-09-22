@@ -28,6 +28,7 @@ pub mod propose_protected_action;
 pub mod publish_bot;
 pub mod record_authority_report_attempt;
 pub mod record_authority_report_filed;
+pub mod refund_deleted_user_cycles;
 pub mod register_bot;
 pub mod register_external_achievement;
 pub mod remove_bot;

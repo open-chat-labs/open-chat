@@ -8,6 +8,9 @@ use types::CanisterId;
 
 const CYCLES_REFUNDER_WAT: &str = include_str!("../../canisters/cycles_refunder/cycles_refunder.wat");
 
+// The wasm embedded in the LocalUserIndex, built from the wat above
+const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../canisters/cycles_refunder/cycles_refunder.wasm");
+
 // The canister ID baked into the wat
 const PROD_CYCLES_DISPENSER_CANISTER_ID: &str = "gonut-hqaaa-aaaaf-aby7a-cai";
 
@@ -129,14 +132,33 @@ fn cycles_refunder_rejects_invalid_init_arg() {
 
     let canister_id = create_canister(env, *controller);
 
-    let error = env
-        .reinstall_canister(canister_id, wasm(), candid::encode_one(123u32).unwrap(), Some(*controller))
-        .unwrap_err();
-    assert!(error.reject_message.contains("init arg must be (opt principal)"), "{error:?}");
+    for arg in [candid::encode_one(123u32).unwrap(), vec![1, 2, 3], b"DIDL\x00\x01".to_vec()] {
+        let error = env
+            .reinstall_canister(canister_id, wasm(), arg, Some(*controller))
+            .unwrap_err();
+        assert!(error.reject_message.contains("init arg must be (opt principal)"), "{error:?}");
+    }
+
+    // Whereas `()` is accepted
+    env.reinstall_canister(canister_id, wasm(), candid::encode_args(()).unwrap(), Some(*controller))
+        .unwrap();
+}
+
+#[test]
+fn committed_cycles_refunder_wasm_matches_the_wat() {
+    let from_wat = wat::parse_str(CYCLES_REFUNDER_WAT).unwrap();
+
+    // The `wat` crate appends a "name" custom section (id 0) which `wat2wasm` doesn't emit,
+    // otherwise the two are identical
+    assert!(
+        from_wat.starts_with(CYCLES_REFUNDER_WASM),
+        "cycles_refunder.wasm is out of date, rebuild it from the wat"
+    );
+    assert_eq!(from_wat.get(CYCLES_REFUNDER_WASM.len()), Some(&0));
 }
 
 fn wasm() -> Vec<u8> {
-    wat::parse_str(CYCLES_REFUNDER_WAT).unwrap()
+    CYCLES_REFUNDER_WASM.to_vec()
 }
 
 fn refund(env: &PocketIc, canister_id: CanisterId) -> Result<u128, RejectResponse> {
