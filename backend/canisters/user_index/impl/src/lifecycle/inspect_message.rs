@@ -42,6 +42,7 @@ fn accept_if_valid(state: &RuntimeState) {
         "propose_protected_action"
         | "confirm_protected_action"
         | "cancel_protected_action"
+        | "refund_deleted_user_cycles"
         | "set_vault_legal_hold"
         | "set_diamond_membership_fees"
         | "set_moderation_referral_config"

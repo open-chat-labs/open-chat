@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{CommunityEvent, GroupEvent, RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
+use crate::{CanisterToRefund, CommunityEvent, GroupEvent, RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
@@ -249,6 +249,19 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::UpdateChitBalance(user_id, chit_record) => {
             state.data.global_users.insert_chit_record(user_id, chit_record);
+        }
+        UserIndexEvent::RefundDeletedUserCycles(canister_ids) => {
+            for canister_id in canister_ids {
+                // Belt and braces, the job also refuses to touch any canister with code installed
+                if !state.data.local_users.contains(&canister_id.into()) {
+                    state.data.cycles_refund_queue.push_back(CanisterToRefund {
+                        canister_id,
+                        attempt: 0,
+                        retry_after: 0,
+                    });
+                }
+            }
+            jobs::refund_cycles::start_job_if_required(state, None);
         }
         UserIndexEvent::AddCanisterToPool(canister_id) => {
             if !state.data.canister_pool.contains(&canister_id) {

@@ -1,7 +1,7 @@
-use crate::client::register_user_and_include_auth;
+use crate::client::{register_user, register_user_and_include_auth};
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{TestEnv, client};
+use crate::{T, TestEnv, User, UserAuth, client};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
@@ -62,6 +62,11 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
     let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
     assert_eq!(canister_status.module_hash.is_none(), should_delete_user);
 
+    if should_delete_user {
+        // The uninstalled canister's cycles are sent to the CyclesDispenser
+        wait_for_cycles_to_be_refunded(env, &user);
+    }
+
     // The identity canister should no longer know the auth principal of a deleted user
     let check_auth_principal_response =
         client::identity::check_auth_principal_v2(env, user_auth.auth_principal(), canister_ids.identity, &Empty {});
@@ -71,6 +76,106 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
             identity_canister::check_auth_principal_v2::Response::NotFound
         ),
         should_delete_user
+    );
+
+    if should_delete_user {
+        // Waiting for the refund advanced the clock significantly
+        wrapper.discard();
+    }
+}
+
+#[test]
+fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+    let operator = register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+
+    delete_user(env, &user_auth, canister_ids.identity);
+    wait_for_cycles_to_be_refunded(env, &user);
+
+    // Simulate a user deleted before cycles were refunded on deletion
+    env.add_cycles(user.canister(), T);
+    let dispenser_balance_before = env.cycle_balance(canister_ids.cycles_dispenser);
+
+    let response = client::user_index::refund_deleted_user_cycles(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user_index_canister::refund_deleted_user_cycles::Args {},
+    );
+    assert!(
+        matches!(response, user_index_canister::refund_deleted_user_cycles::Response::Success(count) if count >= 1),
+        "{response:?}"
+    );
+
+    wait_for_cycles_to_be_refunded(env, &user);
+    let refunded = env.cycle_balance(canister_ids.cycles_dispenser) - dispenser_balance_before;
+    assert!(refunded > T - MAX_RESIDUAL_CYCLES, "{refunded}");
+
+    // The refunder is uninstalled again afterwards
+    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
+    assert!(canister_status.module_hash.is_none());
+
+    wrapper.discard();
+}
+
+// See backend/canisters/cycles_refunder/README.md for why ~80B cycles can't be recovered
+const MAX_RESIDUAL_CYCLES: u128 = 100_000_000_000;
+
+// Refunding takes a handful of rounds: canister_status, install_code, the refund call (which
+// deposits into the CyclesDispenser via the management canister), then uninstall_code. The user
+// canister was itself installed only moments ago though, so the IC's install_code rate limit
+// applies and the LocalUserIndex has to retry after a delay, hence time is advanced too.
+fn wait_for_cycles_to_be_refunded(env: &mut pocket_ic::PocketIc, user: &User) {
+    for _ in 0..200 {
+        if env.cycle_balance(user.canister()) < MAX_RESIDUAL_CYCLES {
+            return;
+        }
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
+    let metrics = crate::utils::metrics(env, user.local_user_index);
+    let errors = client::http_request(
+        env,
+        candid::Principal::anonymous(),
+        user.local_user_index,
+        &types::HttpRequest {
+            method: "GET".to_string(),
+            url: "/errors".to_string(),
+            headers: Vec::new(),
+            body: Vec::new(),
+        },
+    );
+    panic!(
+        "Cycles not refunded, balance: {}, queue: {}, refunded: {}, errors: {}",
+        env.cycle_balance(user.canister()),
+        metrics["cycles_refund_queue_length"],
+        metrics["cycles_refunded_from_deleted_users"],
+        String::from_utf8_lossy(&errors.body)
+    );
+}
+
+fn delete_user(env: &mut pocket_ic::PocketIc, user_auth: &UserAuth, identity_canister_id: types::CanisterId) {
+    let response = client::identity::delete_user(
+        env,
+        user_auth.auth_principal(),
+        identity_canister_id,
+        &identity_canister::delete_user::Args {
+            public_key: user_auth.auth_public_key.clone(),
+            delegation: user_auth.auth_delegation.clone(),
+        },
+    );
+    assert!(
+        matches!(response, identity_canister::delete_user::Response::Success),
+        "{response:?}"
     );
 }
 
