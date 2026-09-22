@@ -224,7 +224,8 @@ fn send_message_impl(
     let (message_event, message_for_recipient, sender_details) = match result {
         Some(Ok(ok)) => ok,
         Some(Err(error)) => return Error(error),
-        None => return Error(OCErrorCode::TargetUserNotFound.into()),
+        // The sender was deleted while the recipient was being looked up
+        None => return Error(OCErrorCode::InitiatorNotFound.into()),
     };
 
     // A recipient in this canister gets the message straight away, while one in another canister is
