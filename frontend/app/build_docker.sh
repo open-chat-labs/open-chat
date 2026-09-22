@@ -5,7 +5,6 @@ export NODE_ENV=development
 
 # OC specific env variables
 export OC_ACCOUNT_LINKING_CODES_ENABLED=true
-export OC_FRONTEND_PROPOSAL_VOTING_ENABLED=false
 export OC_ALCHEMY_API_KEY=6pSBD1eOqwyGDI1xFfV-p
 export OC_BITCOIN_MAINNET_ENABLED=false
 export OC_BLOB_URL_PATTERN=http://{canisterId}.raw.localhost:8080/{blobType}

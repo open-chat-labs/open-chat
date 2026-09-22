@@ -22,7 +22,7 @@
         currentUserIdStore,
         proposalTopicsStore,
     } from "@client";
-    import { ErrorCode, type ReadonlyMap } from "@shared";
+    import { ErrorCode, isMultiUserCanisterUser, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -124,7 +124,9 @@
     let showDetails = $state(false);
 
     function noEligibleNeuronsMessage(): string {
-        return client.frontendProposalVotingEnabled()
+        // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
+        // everyone else with those hot-keyed to their User canister, ie. their user id
+        return isMultiUserCanisterUser($currentUserIdStore)
             ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
                   values: { principal: client.OcIdentityPrincipal },
               })

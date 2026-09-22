@@ -34,6 +34,4 @@ export type AgentConfig = {
     bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
     accountLinkingCodesEnabled: boolean;
-    // Vote on proposals with the user's neurons from the frontend rather than via their User canister
-    frontendProposalVotingEnabled: boolean;
 };

@@ -236,6 +236,7 @@ import {
     chatIdentifiersEqual,
     emptyEventsResponse,
     isError,
+    isMultiUserCanisterUser,
     isSuccessfulEventsResponse,
     mergeEventStreamResponses,
     messageContextToString,
@@ -3373,8 +3374,10 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<RegisterProposalVoteResponse> {
         if (offline()) return CommonResponses.offline();
 
-        if (this.config.frontendProposalVotingEnabled) {
-            // Vote with the user's neurons directly, then record the vote against the message
+        // A User canister votes with the neurons hot-keyed to it. A MultiUser canister can't, since
+        // its users share its principal, so for them vote with the neurons hot-keyed to their own
+        // principal from here, then record the vote against the message.
+        if (isMultiUserCanisterUser(this._userClient.userId)) {
             const voteResponse = await this.voteWithNeurons(
                 governanceCanisterId,
                 proposalId,

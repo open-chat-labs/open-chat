@@ -833,12 +833,6 @@ export class OpenChat {
         return this.config.accountLinkingCodesEnabled;
     }
 
-    // When enabled, proposal votes are cast with the user's principal (which they hot-key to their
-    // neurons) rather than by their User canister
-    frontendProposalVotingEnabled() {
-        return this.config.frontendProposalVotingEnabled;
-    }
-
     deleteCurrentUser(
         identityKey: CryptoKeyPair,
         delegation: JsonnableDelegationChain,
