@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{CanisterId, OCResult, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
-use user_state::P2PSwap;
+use user_core::P2PSwap;
 
 #[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
 #[trace]

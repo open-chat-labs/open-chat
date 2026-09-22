@@ -12,6 +12,11 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
     let now = state.env.now();
 
     state.with_caller_user(|my_index, user| {
-        Success(user.initial_state(state.user_id(my_index), state.data.local_user_index_canister_id, now))
+        Success(user_core::queries::initial_state(
+            user,
+            state.user_id(my_index),
+            state.data.local_user_index_canister_id,
+            now,
+        ))
     })
 }

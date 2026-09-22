@@ -16,7 +16,7 @@ use tracing::{error, info};
 use types::icrc1::Account;
 use types::{Achievement, OCResult, TimestampMillis, Timestamped, UserId};
 use user_canister::swap_tokens::{Response::*, *};
-use user_state::TokenSwap;
+use user_core::TokenSwap;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

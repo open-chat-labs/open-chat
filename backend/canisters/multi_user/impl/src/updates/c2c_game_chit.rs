@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{ChitEvent, ChitEventType};
 use user_canister::c2c_game_chit::{Response::*, *};
-use user_state::validate_game_chit_args;
+use user_core::validate_game_chit_args;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]

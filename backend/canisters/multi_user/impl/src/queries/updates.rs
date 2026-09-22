@@ -12,7 +12,7 @@ fn updates(args: Args) -> Response {
 fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Response {
     state.with_caller_user(|my_index, user| {
         // `now` is only read if there are updates, so that caching works effectively
-        match user.updates(updates_since, state.user_id(my_index), || state.env.now()) {
+        match user_core::queries::updates(user, updates_since, state.user_id(my_index), || state.env.now()) {
             Some(result) => Success(result),
             None => SuccessNoUpdates,
         }

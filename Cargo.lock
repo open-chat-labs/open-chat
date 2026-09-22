@@ -7346,7 +7346,7 @@ dependencies = [
  "types",
  "user_canister",
  "user_canister_c2c_client",
- "user_state",
+ "user_core",
  "utils",
 ]
 
@@ -12982,9 +12982,32 @@ dependencies = [
  "types",
  "user_canister",
  "user_canister_c2c_client",
+ "user_core",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "user_state",
+ "utils",
+]
+
+[[package]]
+name = "user_core"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "constants",
+ "direct_chat",
+ "ic-ledger-types",
+ "ic-stable-structures",
+ "icrc-ledger-types",
+ "installed_bots",
+ "itertools 0.15.0",
+ "msgpack",
+ "oc_error_codes",
+ "rand 0.10.2",
+ "serde",
+ "stable_memory_map",
+ "tracing",
+ "types",
+ "user_canister",
  "utils",
 ]
 
@@ -13111,29 +13134,6 @@ dependencies = [
  "user_canister_c2c_client",
  "user_ids_set",
  "user_index_canister",
- "utils",
-]
-
-[[package]]
-name = "user_state"
-version = "0.1.0"
-dependencies = [
- "candid",
- "constants",
- "direct_chat",
- "ic-ledger-types",
- "ic-stable-structures",
- "icrc-ledger-types",
- "installed_bots",
- "itertools 0.15.0",
- "msgpack",
- "oc_error_codes",
- "rand 0.10.2",
- "serde",
- "stable_memory_map",
- "tracing",
- "types",
- "user_canister",
  "utils",
 ]
 

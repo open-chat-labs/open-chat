@@ -392,10 +392,10 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
 
     // Check user_a has received expected CHIT reward, achievement and referral
     //
-    let user_state = client::user::happy_path::initial_state(env, &user_a);
+    let user_core = client::user::happy_path::initial_state(env, &user_a);
 
     assert!(
-        user_state
+        user_core
             .achievements
             .iter()
             .any(|ev| if let ChitEventType::Achievement(a) = &ev.reason {
@@ -405,12 +405,12 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
             })
     );
 
-    assert_eq!(user_state.referrals.len(), 1);
-    assert_eq!(user_state.referrals[0].user_id, user_b.user_id);
-    assert!(matches!(user_state.referrals[0].status, ReferralStatus::Diamond));
+    assert_eq!(user_core.referrals.len(), 1);
+    assert_eq!(user_core.referrals[0].user_id, user_b.user_id);
+    assert!(matches!(user_core.referrals[0].status, ReferralStatus::Diamond));
 
     assert_eq!(
-        user_state.chit_balance as u32,
+        user_core.chit_balance as u32,
         Achievement::UpgradedToDiamond.chit_reward()
             + Achievement::Referred1stUser.chit_reward()
             + ReferralStatus::Diamond.chit_reward()
@@ -430,14 +430,14 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
 
     // Check user_a has received expected CHIT reward and referral status has been updated
     //
-    let user_state = client::user::happy_path::initial_state(env, &user_a);
+    let user_core = client::user::happy_path::initial_state(env, &user_a);
 
-    assert_eq!(user_state.referrals.len(), 1);
-    assert_eq!(user_state.referrals[0].user_id, user_b.user_id);
-    assert!(matches!(user_state.referrals[0].status, ReferralStatus::LifetimeDiamond));
+    assert_eq!(user_core.referrals.len(), 1);
+    assert_eq!(user_core.referrals[0].user_id, user_b.user_id);
+    assert!(matches!(user_core.referrals[0].status, ReferralStatus::LifetimeDiamond));
 
     assert_eq!(
-        user_state.chit_balance as u32,
+        user_core.chit_balance as u32,
         Achievement::UpgradedToDiamond.chit_reward()
             + Achievement::Referred1stUser.chit_reward()
             + ReferralStatus::LifetimeDiamond.chit_reward()

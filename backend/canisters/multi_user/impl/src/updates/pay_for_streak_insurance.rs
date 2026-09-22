@@ -11,7 +11,7 @@ use ledger_utils::icrc1::make_transfer;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserCanisterStreakInsurancePayment, UserId, icrc1};
 use user_canister::pay_for_streak_insurance::*;
-use user_state::Streak;
+use user_core::Streak;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

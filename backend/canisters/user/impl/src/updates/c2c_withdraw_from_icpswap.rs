@@ -7,7 +7,7 @@ use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, Timestamped};
 use user_canister::c2c_withdraw_from_icpswap::*;
 use user_canister::swap_tokens::ExchangeArgs;
-use user_state::TokenSwap;
+use user_core::TokenSwap;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]

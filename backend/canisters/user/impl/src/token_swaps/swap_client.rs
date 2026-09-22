@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use types::icrc1::Account;
 use types::{C2CError, CanisterId};
-pub use user_state::SwapSuccess;
+pub use user_core::SwapSuccess;
 
 #[async_trait]
 pub trait SwapClient {

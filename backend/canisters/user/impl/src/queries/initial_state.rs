@@ -9,7 +9,8 @@ fn initial_state(_args: Args) -> Response {
 }
 
 fn initial_state_impl(state: &RuntimeState) -> Response {
-    Success(state.data.user.initial_state(
+    Success(user_core::queries::initial_state(
+        &state.data.user,
         state.env.canister_id().into(),
         state.data.local_user_index_canister_id,
         state.env.now(),

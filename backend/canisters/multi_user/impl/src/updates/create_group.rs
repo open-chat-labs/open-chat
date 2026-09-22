@@ -7,7 +7,7 @@ use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{CanisterId, ChatId, OCResult};
 use user_canister::create_group::{Response::*, *};
-use user_state::User;
+use user_core::User;
 use utils::document::validate_avatar;
 use utils::text_validation::{
     NameValidationError, RulesValidationError, validate_description, validate_group_name, validate_rules,

@@ -167,7 +167,7 @@ members = [
     "backend/libraries/types",
     "backend/libraries/unruly",
     "backend/libraries/user_ids_set",
-    "backend/libraries/user_state",
+    "backend/libraries/user_core",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",

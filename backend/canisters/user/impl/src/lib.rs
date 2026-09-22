@@ -24,7 +24,7 @@ use types::{
     UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::UserCanisterEvent;
-use user_state::{Community, GroupChat, User};
+use user_core::{Community, GroupChat, User};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;

@@ -8,7 +8,7 @@ use types::{
     SuspensionDuration, User, UserId, UserType,
 };
 use user_canister::{PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
-use user_state::Membership;
+use user_core::Membership;
 use utils::format::format_to_decimal_places;
 
 // The texts below match the User canister's `openchat_bot` messages of the same names

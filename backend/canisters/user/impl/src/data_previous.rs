@@ -14,7 +14,7 @@ use std::collections::HashSet;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{Achievement, CanisterId, TimestampMillis, Timestamped, UniquePersonProof, UserId};
 use user_canister::WalletConfig;
-use user_state::{
+use user_core::{
     BlockedUsers, ChitEvents, Communities, Contacts, FavouriteChats, GameChitKeys, GroupChats, HotGroupExclusions,
     MessageActivityEvents, P2PSwaps, PinNumber, PremiumItems, ProfileDocument, Referrals, SavedCryptoAccounts, Streak,
     TokenSwaps, User,

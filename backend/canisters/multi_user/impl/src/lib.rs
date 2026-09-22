@@ -22,8 +22,8 @@ use types::{
     Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
 };
 use user_canister::UserCanisterEvent;
-use user_state::User;
-use user_state::{Community, GroupChat};
+use user_core::User;
+use user_core::{Community, GroupChat};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 
