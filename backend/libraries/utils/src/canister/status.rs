@@ -14,9 +14,32 @@ use types::{C2CError, CanisterId};
 #[derive(CandidType, Deserialize, Debug)]
 pub struct CanisterStatusMinimal {
     pub status: CanisterStatusType,
+    pub settings: CanisterSettingsMinimal,
     pub module_hash: Option<Vec<u8>>,
     pub cycles: Nat,
     pub idle_cycles_burned_per_day: Nat,
+}
+
+#[derive(CandidType, Deserialize, Debug)]
+pub struct CanisterSettingsMinimal {
+    pub controllers: Vec<Principal>,
+    // In seconds
+    pub freezing_threshold: Nat,
+}
+
+impl CanisterStatusMinimal {
+    pub fn cycles(&self) -> u128 {
+        nat_to_u128(&self.cycles)
+    }
+
+    // The balance below which the canister is frozen, which it can't spend
+    pub fn freezing_threshold_cycles(&self) -> u128 {
+        nat_to_u128(&self.idle_cycles_burned_per_day) * nat_to_u128(&self.settings.freezing_threshold) / (24 * 60 * 60)
+    }
+}
+
+fn nat_to_u128(nat: &Nat) -> u128 {
+    u128::try_from(nat.0.clone()).unwrap_or(u128::MAX)
 }
 
 pub async fn canister_status(canister_id: CanisterId) -> Result<CanisterStatusMinimal, C2CError> {
