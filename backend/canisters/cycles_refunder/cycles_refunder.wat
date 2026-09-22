@@ -62,9 +62,19 @@
     (local $size i32)
     (local.set $size (call $msg_arg_data_size))
 
-    ;; No arg, ie. `()`, means use the default
-    (if (i32.lt_u (local.get $size) (i32.const 7))
+    ;; No arg at all means use the default
+    (if (i32.eqz (local.get $size))
       (then (return)))
+
+    ;; As does `()`, which is exactly "DIDL\00\00"
+    (if (i32.eq (local.get $size) (i32.const 6))
+      (then
+        (call $msg_arg_data_copy (i32.const 1024) (i32.const 0) (i32.const 6))
+        (if (i32.or
+              (i32.ne (i32.load (i32.const 1024)) (i32.const 0x4c444944))
+              (i32.ne (i32.load16_u (i32.const 1028)) (i32.const 0)))
+          (then (call $trap (i32.const 208) (i32.const 32))))
+        (return)))
 
     ;; Otherwise expect the 9 byte header "DIDL\01\6e\68\01\00" followed by either \00 for
     ;; null, or \01 followed by the principal value

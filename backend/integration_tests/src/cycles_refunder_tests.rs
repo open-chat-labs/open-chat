@@ -132,10 +132,16 @@ fn cycles_refunder_rejects_invalid_init_arg() {
 
     let canister_id = create_canister(env, *controller);
 
-    let error = env
-        .reinstall_canister(canister_id, wasm(), candid::encode_one(123u32).unwrap(), Some(*controller))
-        .unwrap_err();
-    assert!(error.reject_message.contains("init arg must be (opt principal)"), "{error:?}");
+    for arg in [candid::encode_one(123u32).unwrap(), vec![1, 2, 3], b"DIDL\x00\x01".to_vec()] {
+        let error = env
+            .reinstall_canister(canister_id, wasm(), arg, Some(*controller))
+            .unwrap_err();
+        assert!(error.reject_message.contains("init arg must be (opt principal)"), "{error:?}");
+    }
+
+    // Whereas `()` is accepted
+    env.reinstall_canister(canister_id, wasm(), candid::encode_args(()).unwrap(), Some(*controller))
+        .unwrap();
 }
 
 #[test]
