@@ -13,6 +13,7 @@ pub mod c2c_verify_signature;
 pub mod chat_events;
 pub mod daily_puzzle_fetch;
 pub mod group_and_community_summary_updates_v2;
+pub mod is_user_or_multi_user_canister;
 pub mod latest_notification_index;
 pub mod media_scan_jobs;
 pub mod notifications;
