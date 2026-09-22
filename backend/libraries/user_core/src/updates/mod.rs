@@ -6,9 +6,6 @@ mod add_hot_group_exclusions;
 mod archive_unarchive_chats;
 mod c2c_notify_achievement;
 mod c2c_pay_for_premium_item;
-
-mod add_hot_group_exclusions;
-mod archive_unarchive_chats;
 mod c2c_set_user_suspended;
 pub mod create_community;
 pub mod create_group;
