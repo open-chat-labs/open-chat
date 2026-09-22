@@ -2,7 +2,6 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::Timestamped;
 use user_canister::set_community_indexes::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -13,10 +12,6 @@ fn set_community_indexes(args: Args) -> Response {
 
 fn set_community_indexes_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    for (community_id, index) in args.indexes {
-        if let Some(community) = state.data.user.communities.get_mut(&community_id) {
-            community.index = Timestamped::new(index, now);
-        }
-    }
+    user_core::updates::set_community_indexes(&mut state.data.user, args, now);
     Response::Success
 }

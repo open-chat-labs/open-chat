@@ -18,10 +18,6 @@ fn add_recommended_group_exclusions(args: Args) -> Response {
 
 fn add_hot_group_exclusions_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    state.with_caller_user_mut(|_, user| {
-        for group in args.groups {
-            user.hot_group_exclusions.add(group, args.duration, now);
-        }
-    });
+    state.with_caller_user_mut(|_, user| user_core::updates::add_hot_group_exclusions(user, args, now));
     Response::Success
 }

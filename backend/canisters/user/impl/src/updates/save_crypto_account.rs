@@ -12,6 +12,5 @@ fn save_crypto_account(args: Args) -> Response {
 }
 
 fn save_crypto_account_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.user.verify_not_suspended()?;
-    state.data.user.saved_crypto_accounts.save(args)
+    user_core::updates::save_crypto_account(&mut state.data.user, args)
 }

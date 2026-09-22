@@ -12,5 +12,5 @@ fn set_contact(args: Args) -> Response {
 }
 
 fn set_contact_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.with_caller_user_mut(|_, user| user_core::updates::set_contact::set_contact(user, args))
+    state.with_caller_user_mut(|_, user| user_core::updates::set_contact(user, args))
 }

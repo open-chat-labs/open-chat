@@ -5,10 +5,5 @@ use user_canister::c2c_groups_and_communities::*;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_groups_and_communities(_args: Args) -> Response {
-    read_state(|state| {
-        let groups = state.data.user.group_chats.iter().map(|g| g.chat_id).collect();
-        let communities = state.data.user.communities.iter().map(|c| c.community_id).collect();
-
-        Response { groups, communities }
-    })
+    read_state(|state| user_core::queries::c2c_groups_and_communities(&state.data.user))
 }
