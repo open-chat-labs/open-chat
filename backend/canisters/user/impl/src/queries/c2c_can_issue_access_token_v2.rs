@@ -46,7 +46,7 @@ fn c2c_can_issue_access_token_impl(args_outer: AccessTypeArgs, state: &RuntimeSt
         _ => unreachable!(),
     };
 
-    if state.data.blocked_users.contains(&initiator) {
+    if state.data.user.blocked_users.contains(&initiator) {
         return Response::Failure;
     }
 

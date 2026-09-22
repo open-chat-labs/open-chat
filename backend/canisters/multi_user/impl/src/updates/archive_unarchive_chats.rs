@@ -1,11 +1,11 @@
 use crate::guards::caller_is_hosted_user;
-use crate::model::user::User;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::{Chat, TimestampMillis, Timestamped};
 use user_canister::archive_unarchive_chats::{Response::*, *};
+use user_state::User;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

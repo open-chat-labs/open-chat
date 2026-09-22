@@ -19,6 +19,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none()
         && state
             .data
+            .user
             .direct_chats
             .iter()
             .any(|c| c.events().heap_entries_to_migrate_count() > 0)
@@ -36,7 +37,7 @@ fn run() {
     TIMER_ID.set(None);
     mutate_state(|state| {
         let mut count = 0;
-        'outer: for chat in state.data.direct_chats.iter_mut() {
+        'outer: for chat in state.data.user.direct_chats.iter_mut() {
             loop {
                 let moved = chat.migrate_events_to_stable_memory(BATCH_SIZE);
                 count += moved;

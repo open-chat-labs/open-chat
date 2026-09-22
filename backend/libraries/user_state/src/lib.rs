@@ -26,6 +26,7 @@ mod referrals;
 mod saved_crypto_accounts;
 mod streak;
 mod threads_read;
+mod user;
 
 pub use blocked_users::BlockedUsers;
 pub use chit_events::ChitEvents;
@@ -45,6 +46,7 @@ pub use referrals::Referrals;
 pub use saved_crypto_accounts::SavedCryptoAccounts;
 pub use streak::Streak;
 pub use threads_read::ThreadsRead;
+pub use user::User;
 
 // The keys of `map`, whose values are when each was pinned, most recently pinned first
 pub fn sorted_pinned<T: Clone>(map: &HashMap<T, TimestampMillis>) -> Vec<T> {

@@ -1,5 +1,4 @@
 use crate::guards::caller_is_hosted_user;
-use crate::model::user::User;
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -8,6 +7,7 @@ use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{CanisterId, ChatId, OCResult};
 use user_canister::create_group::{Response::*, *};
+use user_state::User;
 use utils::document::validate_avatar;
 use utils::text_validation::{
     NameValidationError, RulesValidationError, validate_description, validate_group_name, validate_rules,

@@ -68,7 +68,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     return Error(OCErrorCode::InvalidRequest.with_message("Transaction is not to the user's account"));
                 }
 
-                if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_mut(), now)) {
+                if let Err(error) = mutate_state(|state| state.data.user.pin_number.verify(args.pin.as_mut(), now)) {
                     return Error(error.into());
                 }
 
@@ -101,7 +101,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     (
                         state.data.escrow_canister_id,
                         now,
-                        state.data.membership(now).is_diamond_member(),
+                        state.data.user.membership(now).is_diamond_member(),
                         UserId::from(state.env.canister_id()),
                     )
                 });
@@ -216,7 +216,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
     };
 
     // Check if a message with the same id already exists
-    if let Some(chat) = state.data.direct_chats.get_mut(&bot_id.into())
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&bot_id.into())
         && let Some((message, _)) = chat.message_internal(args.thread_root_message_index, args.message_id.into())
     {
         // If the message id of a bot message matches an existing unfinalised bot message
@@ -291,10 +291,12 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
             user_message_id,
         )
     {
-        let chat = state
-            .data
-            .direct_chats
-            .get_or_create(my_user_id, bot_id, UserType::BotV2, || state.env.rng().random(), now);
+        let chat =
+            state
+                .data
+                .user
+                .direct_chats
+                .get_or_create(my_user_id, bot_id, UserType::BotV2, || state.env.rng().random(), now);
 
         chat.push_message::<UserEventPusher>(
             PushMessageArgs {
@@ -385,9 +387,9 @@ struct PrepareOk {
 }
 
 fn prepare(args: &Args, is_v2_bot: bool, state: &RuntimeState) -> OCResult<PrepareOk> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
-    if state.data.blocked_users.contains(&args.recipient) {
+    if state.data.user.blocked_users.contains(&args.recipient) {
         return Err(OCErrorCode::TargetUserBlocked.into());
     }
 
@@ -396,7 +398,7 @@ fn prepare(args: &Args, is_v2_bot: bool, state: &RuntimeState) -> OCResult<Prepa
     }
 
     let my_user_id = state.env.canister_id().into();
-    let maybe_recipient_type = if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
+    let maybe_recipient_type = if let Some(chat) = state.data.user.direct_chats.get(&args.recipient.into()) {
         if chat
             .events()
             .message_already_finalised(args.thread_root_message_index, args.message_id, is_v2_bot)
@@ -460,11 +462,13 @@ fn send_message_impl(
         sender_context: None,
     };
 
-    let chat =
-        state
-            .data
-            .direct_chats
-            .get_or_create(my_user_id, recipient, recipient_type.into(), || state.env.rng().random(), now);
+    let chat = state.data.user.direct_chats.get_or_create(
+        my_user_id,
+        recipient,
+        recipient_type.into(),
+        || state.env.rng().random(),
+        now,
+    );
 
     // Checked before the message is pushed, since pushing a message to a thread creates the thread
     let thread_root_message_id = match chat.thread_root_message_id(thread_root_message_index) {
@@ -505,8 +509,8 @@ fn send_message_impl(
             og_previews,
         };
 
-        let sender_name = state.data.username.value.clone();
-        let sender_display_name = state.data.display_name.value.clone();
+        let sender_name = state.data.user.username.value.clone();
+        let sender_display_name = state.data.user.display_name.value.clone();
 
         if recipient_type.user_type().is_bot() {
             ic_cdk::futures::spawn_migratory(send_to_bot_canister(
@@ -521,7 +525,7 @@ fn send_message_impl(
                     messages: vec![send_message_args],
                     sender_name,
                     sender_display_name,
-                    sender_avatar_id: state.data.avatar.id(),
+                    sender_avatar_id: state.data.user.avatar.id(),
                 })),
             );
         }
@@ -542,6 +546,7 @@ fn send_message_impl(
     if let Some(chat) = chat_private_replying_to {
         state
             .data
+            .user
             .direct_chats
             .mark_private_reply(recipient, chat, message_event.event.message_index);
     }
@@ -574,7 +579,7 @@ async fn send_to_bot_canister(
     match legacy_bot_c2c_client::handle_direct_message(recipient.canister_id(), &args).await {
         Ok(legacy_bot_api::handle_direct_message::Response::Success(result)) => {
             mutate_state(|state| {
-                if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
+                if let Some(chat) = state.data.user.direct_chats.get_mut(&recipient.into()) {
                     let now = state.env.now();
                     for message in result.messages {
                         let push_message_args = PushMessageArgs {

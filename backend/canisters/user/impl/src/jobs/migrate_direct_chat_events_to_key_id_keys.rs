@@ -41,7 +41,7 @@ fn run() {
 // after every batch. At least one batch is always migrated, so the migration always progresses.
 // Returns true if every chat is done.
 pub(crate) fn run_batch(state: &mut RuntimeState, max_instructions: u64) -> bool {
-    'chats: for chat in state.data.direct_chats.iter_mut() {
+    'chats: for chat in state.data.user.direct_chats.iter_mut() {
         while chat.events().has_legacy_events() {
             chat.migrate_legacy_events_batch();
             if ic_cdk::api::instruction_counter() > max_instructions {
@@ -61,6 +61,7 @@ pub(crate) fn max_instructions(state: &RuntimeState, max_instructions: u64) -> u
 pub(crate) fn direct_chats_with_legacy_events(state: &RuntimeState) -> usize {
     state
         .data
+        .user
         .direct_chats
         .iter()
         .filter(|c| c.events().has_legacy_events())

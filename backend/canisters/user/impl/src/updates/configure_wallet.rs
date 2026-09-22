@@ -12,6 +12,6 @@ fn configure_wallet(args: Args) -> Response {
 }
 
 fn configure_wallet_impl(args: Args, state: &mut RuntimeState) -> Response {
-    state.data.wallet_config = Timestamped::new(args.config, state.env.now());
+    state.data.user.wallet_config = Timestamped::new(args.config, state.env.now());
     Response::Success
 }

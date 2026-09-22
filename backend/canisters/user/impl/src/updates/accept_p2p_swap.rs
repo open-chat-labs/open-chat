@@ -61,7 +61,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                     token1_amount: content.token1_amount,
                     expires_at: content.expires_at,
                 });
-                if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+                if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
                     if let Ok(result) =
                         chat.accept_p2p_swap(my_user_id, args.thread_root_message_index, args.message_id, index, now)
@@ -83,7 +83,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
         }
         Err(error) => {
             mutate_state(|state| {
-                if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+                if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
                     chat.unreserve_p2p_swap(my_user_id, args.thread_root_message_index, args.message_id, now);
                 }
@@ -102,11 +102,11 @@ struct PrepareResult {
 }
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_suspended()?;
-    state.data.pin_number.verify(args.pin.as_mut(), state.env.now())?;
+    state.data.user.verify_not_suspended()?;
+    state.data.user.pin_number.verify(args.pin.as_mut(), state.env.now())?;
     validate_from_account(args.from_account, state.env.canister_id().into())?;
 
-    if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
         // Translated before the transfer is made, so that a root the user cannot see fails the

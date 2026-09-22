@@ -62,7 +62,7 @@ struct PrepareResult {
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let now = state.env.now();
-    state.data.pin_number.verify(args.pin.as_mut(), now)?;
+    state.data.user.pin_number.verify(args.pin.as_mut(), now)?;
     validate_from_account(args.from_account, state.env.canister_id().into())?;
 
     Ok(PrepareResult {

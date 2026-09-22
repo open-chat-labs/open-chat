@@ -32,7 +32,7 @@ async fn send_message_with_transfer_to_channel_impl(
 ) -> send_message_with_transfer_to_channel::Response {
     use send_message_with_transfer_to_channel::Response::*;
     // Check that the user is a member of the community
-    let (exists, now) = read_state(|state| (state.data.communities.exists(&args.community_id), state.env.now()));
+    let (exists, now) = read_state(|state| (state.data.user.communities.exists(&args.community_id), state.env.now()));
     if !exists {
         return UserNotInCommunity(None);
     }
@@ -141,7 +141,7 @@ async fn send_message_with_transfer_to_group_impl(
     use send_message_with_transfer_to_group::Response::*;
 
     // Check that the user is a member of the group
-    let (exists, now) = read_state(|state| (state.data.group_chats.exists(&args.group_id), state.env.now()));
+    let (exists, now) = read_state(|state| (state.data.user.group_chats.exists(&args.group_id), state.env.now()));
     if !exists {
         return CallerNotInGroup(None);
     }
@@ -250,13 +250,13 @@ fn prepare(
 ) -> OCResult<PrepareResult> {
     use PrepareResult::*;
 
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     if content.text_length() > MAX_TEXT_LENGTH_USIZE {
         return Err(OCErrorCode::TextTooLong.with_message(MAX_TEXT_LENGTH));
     }
 
-    if let Err(error) = state.data.pin_number.verify(pin.as_mut(), now) {
+    if let Err(error) = state.data.user.pin_number.verify(pin.as_mut(), now) {
         return Err(error.into());
     }
 
@@ -266,7 +266,7 @@ fn prepare(
             if c.recipient == my_user_id {
                 return Err(OCErrorCode::TransferCannotBeToSelf.into());
             }
-            if state.data.blocked_users.contains(&c.recipient) {
+            if state.data.user.blocked_users.contains(&c.recipient) {
                 return Err(OCErrorCode::TargetUserBlocked.into());
             }
             match &c.transfer {
@@ -307,7 +307,7 @@ fn prepare(
             }
         }
         MessageContentInitial::P2PSwap(p) => {
-            if !state.data.membership(now).is_diamond_member() {
+            if !state.data.user.membership(now).is_diamond_member() {
                 return Err(OCErrorCode::NotDiamondMember.into());
             }
             let my_user_id = UserId::from(state.env.canister_id());

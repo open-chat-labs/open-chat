@@ -11,7 +11,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(route: AvatarRoute, state: &RuntimeState) -> HttpResponse {
         get_document(
             route.blob_id,
-            state.data.avatar.get(ProfileDocumentType::Avatar).as_ref(),
+            state.data.user.avatar.get(ProfileDocumentType::Avatar).as_ref(),
             "avatar",
         )
     }
@@ -21,6 +21,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             id,
             state
                 .data
+                .user
                 .profile_background
                 .get(ProfileDocumentType::ProfileBackground)
                 .as_ref(),
@@ -57,7 +58,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn daily_claims(state: &RuntimeState) -> HttpResponse {
-        let (chit_events, _) = state.data.chit_events.events(None, None, 0, 500, false);
+        let (chit_events, _) = state.data.user.chit_events.events(None, None, 0, 500, false);
         let claims: Vec<_> = chit_events
             .into_iter()
             .filter_map(|e| match e.reason {
@@ -67,7 +68,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 _ => None,
             })
             .map(|(ts, claim_type)| {
-                let offset = state.data.streak.utc_offset_mins_at_ts(ts);
+                let offset = state.data.user.streak.utc_offset_mins_at_ts(ts);
                 (Streak::timestamp_to_offset_day(ts, offset), claim_type, ts, offset)
             })
             .collect();

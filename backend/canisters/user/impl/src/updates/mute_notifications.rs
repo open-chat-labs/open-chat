@@ -18,7 +18,7 @@ fn unmute_notifications(args: Args) -> Response {
 }
 
 fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool, state: &mut RuntimeState) -> Response {
-    if let Some(direct_chat) = state.data.direct_chats.get_mut(&chat_id) {
+    if let Some(direct_chat) = state.data.user.direct_chats.get_mut(&chat_id) {
         direct_chat.notifications_muted = Timestamped::new(mute, state.env.now());
     }
 

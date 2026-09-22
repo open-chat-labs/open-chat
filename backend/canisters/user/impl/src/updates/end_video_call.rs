@@ -23,7 +23,7 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
         }
     });
 
-    if let Some(chat) = state.data.direct_chats.get_mut(&args.them.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&args.them.into()) {
         let now = state.env.now();
         let was_started_by_me = chat
             .events()

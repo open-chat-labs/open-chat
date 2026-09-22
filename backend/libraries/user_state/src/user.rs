@@ -1,3 +1,8 @@
+use crate::{
+    BlockedUsers, ChitEvents, Communities, Community, Contacts, FavouriteChats, GameChitKeys, GroupChat, GroupChats,
+    HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, Referrals, SavedCryptoAccounts, Streak,
+    ThreadsRead,
+};
 use candid::Principal;
 use direct_chat::DirectChats;
 use oc_error_codes::OCErrorCode;
@@ -9,20 +14,17 @@ use types::{
     Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{MessageActivityEvent, WalletConfig};
-use user_state::{
-    BlockedUsers, ChitEvents, Communities, Community, Contacts, FavouriteChats, GameChitKeys, GroupChat, GroupChats,
-    HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, Referrals, SavedCryptoAccounts, Streak,
-    ThreadsRead,
-};
 
-// The state of a single user within the canister. This mirrors the per-user fields of the User
-// canister's `Data`, using the same names and types, so that the logic of each endpoint can be
-// shared and a user could later be moved between the two kinds of canister.
+// The state of a single user, shared by the User canister, which holds one, and the MultiUser
+// canister, which holds many, so that the logic of each endpoint can be shared and a user could
+// later be moved between the two kinds of canister.
 //
-// Any stable memory map entries a user holds are keyed under that user's index, so a `User` must
-// only be accessed within its key scope, which `Users` takes care of.
+// In the MultiUser canister any stable memory map entries a user holds are keyed under that user's
+// index, so there a `User` must only be accessed within its key scope, which `Users` takes care of.
 #[derive(Serialize, Deserialize)]
 pub struct User {
+    // The User canister serialized this as `owner`
+    #[serde(alias = "owner")]
     pub principal: Principal,
     pub username: Timestamped<String>,
     pub display_name: Timestamped<Option<String>>,
@@ -120,11 +122,8 @@ impl User {
     }
 
     // Removes the group, returning the prefix of its entries in the stable memory map, which the
-    // caller garbage collects, as the User canister's `remove_group` does
+    // caller garbage collects
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<(GroupChat, BaseKeyPrefix)> {
-        if !self.group_chats.exists(&chat_id) {
-            return None;
-        }
         self.favourite_chats.remove(&Chat::Group(chat_id), now);
         self.hot_group_exclusions.add(chat_id, None, now);
         let group = self.group_chats.remove(chat_id, now)?;
@@ -132,7 +131,7 @@ impl User {
     }
 
     // Removes the community, returning the prefixes of its channels' entries in the stable memory
-    // map, which the caller garbage collects, as the User canister's `remove_community` does
+    // map, which the caller garbage collects
     pub fn remove_community(
         &mut self,
         community_id: CommunityId,

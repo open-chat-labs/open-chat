@@ -24,6 +24,7 @@ fn c2c_bot_chat_summary_impl(args: Args, state: &RuntimeState) -> OCResult<ChatS
 
     let chat = &state
         .data
+        .user
         .direct_chats
         .get(&args.bot_id.into())
         .ok_or(OCErrorCode::ChatNotFound)?;

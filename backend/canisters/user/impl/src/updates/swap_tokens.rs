@@ -34,10 +34,10 @@ async fn swap_tokens_impl(args: Args) -> Response {
 }
 
 fn prepare(mut args: Args, state: &mut RuntimeState) -> OCResult<(TokenSwap, Box<dyn SwapClient>)> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
     validate_from_account(args.from_account, state.env.canister_id().into())?;
     let now = state.env.now();
-    state.data.pin_number.verify(args.pin.as_mut(), now)?;
+    state.data.user.pin_number.verify(args.pin.as_mut(), now)?;
 
     let swap_client = build_swap_client(&args, state);
     let token_swap = state

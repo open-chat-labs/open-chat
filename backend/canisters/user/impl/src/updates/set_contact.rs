@@ -14,9 +14,9 @@ fn set_contact(args: Args) -> Response {
 }
 
 fn set_contact_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
-    match state.data.contacts.set_contact(args.contact) {
+    match state.data.user.contacts.set_contact(args.contact) {
         SetContactResponse::Success => Ok(()),
         SetContactResponse::NoChange => Err(OCErrorCode::NoChange.into()),
         SetContactResponse::NicknameTooLong(n) => Err(OCErrorCode::NameTooLong.with_json(&n)),
