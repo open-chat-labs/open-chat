@@ -3286,6 +3286,55 @@ fn bot_message_texts(env: &PocketIc, sender: Principal, canister_id: CanisterId,
 }
 
 #[test]
+fn reporting_a_message_deletes_it_from_the_reporters_copy_only() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+
+    let message_id = random_from_u128();
+    let response = client::multi_user::send_message_v2(env, bob, canister_id, &send_message_args(alice_id, "rude", message_id));
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::Success(_)),
+        "{response:?}"
+    );
+
+    let response = client::multi_user::report_message(
+        env,
+        alice,
+        canister_id,
+        &user_canister::report_message::Args {
+            them: bob_id,
+            thread_root_message_index: None,
+            message_id,
+            delete: true,
+            csam: false,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // The report is made as Alice, and deleting removes the message from her copy of the chat only
+    assert!(
+        events(env, alice, canister_id, alice_id, bob_id)
+            .events
+            .iter()
+            .all(|e| !matches!(&e.event, ChatEvent::Message(m) if matches!(m.content, MessageContent::Text(_))))
+    );
+    assert_eq!(
+        messages(&events(env, bob, canister_id, bob_id, alice_id)),
+        vec![(bob_id, "rude".to_string())]
+    );
+}
+
+#[test]
 fn premium_items_are_paid_for_from_the_users_chit() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -3298,8 +3347,9 @@ fn premium_items_are_paid_for_from_the_users_chit() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
     let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
 
-    // An external achievement gives Alice some CHIT to spend
+    // An external achievement gives Alice and Bob some CHIT to spend
     let event = local_user_index_event(
         env,
         1,
@@ -3308,8 +3358,10 @@ fn premium_items_are_paid_for_from_the_users_chit() {
             chit_reward: 1000,
         })),
     );
-    send_local_user_index_events(env, local_user_index, canister_id, alice_id, vec![event]);
+    send_local_user_index_events(env, local_user_index, canister_id, alice_id, vec![event.clone()]);
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![event]);
     assert_eq!(initial_state(env, alice, canister_id).chit_balance, 1000);
+    assert_eq!(initial_state(env, bob, canister_id).chit_balance, 1000);
 
     let pay = |env: &mut PocketIc, item_id: u32, cost: u32| {
         client::multi_user::c2c_pay_for_premium_item(
@@ -3347,6 +3399,11 @@ fn premium_items_are_paid_for_from_the_users_chit() {
             .iter()
             .any(|e| matches!(e.reason, ChitEventType::PurchasedPremiumItem(1)) && e.amount == -400)
     );
+
+    // Bob's CHIT and items are untouched
+    let bob_state = initial_state(env, bob, canister_id);
+    assert!(bob_state.premium_items.is_empty());
+    assert_eq!(bob_state.chit_balance, 1000);
 
     // Only once
     let response = pay(env, 1, 400);

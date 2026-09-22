@@ -12,6 +12,7 @@ fn c2c_pay_for_premium_item(args: Args) -> Response {
 }
 
 fn c2c_pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> Response {
+    // The LocalUserIndex passes the error on to the buyer as it would any other
     let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Error(OCErrorCode::TargetUserNotFound.into());
     };
