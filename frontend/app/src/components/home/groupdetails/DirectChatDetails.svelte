@@ -12,7 +12,12 @@
     import { activeVideoCall } from "@src/stores/video";
     import { currentTheme } from "@src/theme/themes";
     import { darkenHexColour } from "@src/theme/utils";
-    import type { DirectChatSummary, OptionUpdate, PublicProfile } from "@client";
+    import type {
+        DirectChatSummary,
+        OptionUpdate,
+        PublicProfile,
+        VideoCallType,
+    } from "@client";
     import {
         allUsersStore,
         blockedUsersStore,
@@ -28,7 +33,9 @@
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Headphones from "svelte-material-icons/Headphones.svelte";
+    import Phone from "svelte-material-icons/Phone.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
+    import Video from "svelte-material-icons/Video.svelte";
     import DurationPicker from "../DurationPicker.svelte";
     import UserProfileCard from "../profile/UserProfileCard.svelte";
 
@@ -59,7 +66,11 @@
             chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
     );
     let videoMenuText = $derived(
-        videoCallInProgress ? (inCall ? i18nKey("Leave") : i18nKey("Join")) : i18nKey("Start"),
+        videoCallInProgress
+            ? inCall
+                ? i18nKey("Leave")
+                : i18nKey("Join")
+            : i18nKey("videoCall.defaultType"),
     );
 
     onMount(() => {
@@ -121,13 +132,13 @@
         client.removeFromFavourites(chat.id);
     }
 
-    function startVideoCall() {
+    function startVideoCall(callType: VideoCallType = "default") {
         if (inCall) {
             publish("hangup");
         } else {
             publish("startVideoCall", {
                 chatId: chat.id,
-                callType: "default",
+                callType,
                 join: videoCallInProgress,
             });
         }
@@ -195,11 +206,19 @@
             {/if}
             <div style={`--darkened-call: ${darkenedCall}`} class="controls">
                 <ButtonGroup align={"fill"}>
-                    <Button onClick={startVideoCall} cls="call-user icon-button">
+                    {#if !videoCallInProgress}
+                        <Button onClick={() => startVideoCall("audio")} cls="call-user icon-button">
+                            <Phone size={$iconSize} color={"var(--button-txt)"} />
+                            <Translatable resourceKey={i18nKey("videoCall.audioType")} />
+                        </Button>
+                    {/if}
+                    <Button onClick={() => startVideoCall()} cls="call-user icon-button">
                         {#if inCall}
                             <PhoneHangup size={$iconSize} color={"var(--button-txt)"} />
-                        {:else}
+                        {:else if videoCallInProgress}
                             <Headphones size={$iconSize} color={"var(--button-txt)"} />
+                        {:else}
+                            <Video size={$iconSize} color={"var(--button-txt)"} />
                         {/if}
                         <Translatable resourceKey={videoMenuText} />
                     </Button>

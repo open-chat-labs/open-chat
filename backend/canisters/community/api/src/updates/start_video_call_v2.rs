@@ -11,6 +11,9 @@ pub struct Args {
     pub initiator_display_name: Option<String>,
     pub max_duration: Option<Milliseconds>,
     pub call_type: VideoCallType,
+    // None from a video bridge that predates audio calls
+    #[serde(default)]
+    pub audio_only: Option<bool>,
 }
 
 pub type Response = UnitResult;

@@ -13,7 +13,7 @@ use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
 use rand::RngExt;
 use types::{
-    Achievement, Chat, ChitEvent, ChitEventType, DirectChatUserNotificationPayload, DirectMessageTipped,
+    Achievement, CallKind, Chat, ChitEvent, ChitEventType, DirectChatUserNotificationPayload, DirectMessageTipped,
     DirectReactionAddedNotification, EventIndex, MessageContentInitial, P2PSwapStatus, UserId, UserType, VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
@@ -112,6 +112,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                 Some(args.message_index),
                 state.env.canister_id().into(),
                 caller_user_id,
+                if args.audio_only { CallKind::Audio } else { CallKind::Video },
                 args.max_duration.unwrap_or(HOUR_IN_MS),
                 state,
             );

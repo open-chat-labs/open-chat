@@ -45,7 +45,6 @@
     import Exit from "svelte-material-icons/Logout.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
-    import Video from "svelte-material-icons/VideoOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import ImportToCommunity from "../communities/Import.svelte";
@@ -55,6 +54,7 @@
     import MembersSummary from "../membership/MembersSummary.svelte";
     import Separator from "../Separator.svelte";
     import Stats from "../Stats.svelte";
+    import CallButton from "../video/CallButton.svelte";
     import DisappearingMessagesSummary from "./DisappearingMessagesSummary.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
 
@@ -179,18 +179,6 @@
             level: chat.level,
         });
     }
-
-    function startVideoCall() {
-        if (inCall) {
-            publish("hangup");
-        } else {
-            publish("startVideoCall", {
-                chatId: chat.id,
-                callType: "default",
-                join: videoCallInProgress,
-            });
-        }
-    }
 </script>
 
 {#if importToCommunities !== undefined}
@@ -222,11 +210,12 @@
                     {/snippet}
                 </IconButton>
                 {#if canStartVideoCalls}
-                    <IconButton onclick={startVideoCall} size={"md"} mode={"dark"}>
-                        {#snippet icon(color)}
-                            <Video {color} />
-                        {/snippet}
-                    </IconButton>
+                    <CallButton
+                        chatId={chat.id}
+                        isPublic={chat.public}
+                        {videoCallInProgress}
+                        {inCall}
+                        mode={"dark"} />
                 {/if}
                 {#if canEdit}
                     <IconButton onclick={editGroup} size={"md"} mode={"dark"}>

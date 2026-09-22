@@ -22,7 +22,7 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    AuthorityReportState, BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEvent,
+    AuthorityReportState, BlobReference, BotChatEvent, BotNotification, CallKind, CallParticipant, CanisterId, Chat, ChatEvent,
     ChatEventCategory, ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated,
     EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
@@ -31,7 +31,7 @@ use types::{
     P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
     PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
     ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
-    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation, is_default,
+    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation, is_default,
 };
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -2642,7 +2642,8 @@ impl ChatEvents {
             event_index: event.index,
             message_index,
             message_id: message.message_id,
-            call_type: vc.call_type,
+            call_type: vc.call_type.call_type(),
+            audio_only: vc.call_type.audio_only(),
             joined_by_current_user: caller.is_some_and(|u| vc.participants.contains_key(&u)),
         })
     }
@@ -2667,7 +2668,8 @@ impl ChatEvents {
                     event_index: event.index,
                     message_index,
                     message_id: message.message_id,
-                    call_type: vc.call_type,
+                    call_type: vc.call_type.call_type(),
+                    audio_only: vc.call_type.audio_only(),
                     joined_by_current_user: current_user_joined_at.is_some(),
                 })
             } else {
@@ -3209,5 +3211,5 @@ pub enum UpdateEventError<E = ()> {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallInternal {
     pub message_index: MessageIndex,
-    pub call_type: VideoCallType,
+    pub call_type: CallKind,
 }

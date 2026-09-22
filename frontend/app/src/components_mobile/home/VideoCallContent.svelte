@@ -74,6 +74,10 @@
                 return "videoCall.startedBroadcast";
             }
 
+            if (content.callType === "audio") {
+                return "videoCall.audioStarted";
+            }
+
             return "videoCall.started";
         } else {
             if (missed) {
@@ -116,7 +120,7 @@
                 <ChatCaption colour={me ? "secondaryAccent" : "primaryAccent"}>
                     <Translatable
                         resourceKey={i18nKey(
-                            `videoCall.${content.callType === "broadcast" ? "broadcastType" : "defaultType"}`,
+                            `videoCall.${content.callType}Type`,
                         )} />
                 </ChatCaption>
             </Row>

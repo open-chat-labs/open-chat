@@ -29,6 +29,8 @@ pub struct StartVideoCallClaims {
     pub user_id: UserId,
     pub chat_id: Chat,
     pub call_type: VideoCallType,
+    #[serde(default)]
+    pub audio_only: bool,
     pub is_diamond: bool,
 }
 

@@ -96,9 +96,12 @@
                     <Subtitle fontWeight={"bold"}>{chat.name}</Subtitle>
                     <Body colour={"textSecondary"}>
                         <Translatable
-                            resourceKey={i18nKey("videoCall.remoteStart", {
-                                name: chat.initiator,
-                            })} />
+                            resourceKey={i18nKey(
+                                $incomingVideoCall?.callType === "audio"
+                                    ? "videoCall.audioRemoteStart"
+                                    : "videoCall.remoteStart",
+                                { name: chat.initiator },
+                            )} />
                     </Body>
                 </Column>
             </Row>

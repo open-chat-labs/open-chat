@@ -9,8 +9,8 @@ use community_canister::start_video_call_v2::*;
 use constants::HOUR_IN_MS;
 use oc_error_codes::OCErrorCode;
 use types::{
-    Caller, ChannelMessageNotification, ChannelUserNotificationPayload, CommunityId, OCResult, UserId, VideoCallPresence,
-    VideoCallType,
+    CallKind, Caller, ChannelMessageNotification, ChannelUserNotificationPayload, CommunityId, OCResult, UserId,
+    VideoCallPresence, VideoCallType,
 };
 
 #[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
@@ -31,6 +31,11 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Video call type not allowed"));
     }
 
+    // There is no such thing as an audio only broadcast
+    let Some(call_kind) = CallKind::from_wire(args.call_type, args.audio_only.unwrap_or_default()) else {
+        return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Video call type not allowed"));
+    };
+
     let sender = args.initiator;
     let now = state.env.now();
 
@@ -39,7 +44,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         None,
         args.message_id,
         MessageContentInternal::VideoCall(VideoCallContentInternal {
-            call_type: args.call_type,
+            call_type: call_kind,
             ended: None,
             participants: [(
                 sender,

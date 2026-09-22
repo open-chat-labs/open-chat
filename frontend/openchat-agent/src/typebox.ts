@@ -5478,6 +5478,7 @@ export const VideoCall = /* @__PURE__ */ Type.Object({
     message_index: MessageIndex,
     message_id: MessageId,
     call_type: VideoCallType,
+    audio_only: Type.Optional(Type.Boolean()),
     joined_by_current_user: Type.Boolean(),
 });
 
@@ -5692,6 +5693,7 @@ export const GateCheckFailedReason = /* @__PURE__ */ Type.Union([
 export type StartVideoCallArgs = Static<typeof StartVideoCallArgs>;
 export const StartVideoCallArgs = /* @__PURE__ */ Type.Object({
     call_type: VideoCallType,
+    audio_only: Type.Optional(Type.Boolean()),
     chat: Chat,
 });
 
@@ -7790,6 +7792,7 @@ export const GroupPermissions = /* @__PURE__ */ Type.Object({
 export type VideoCallContent = Static<typeof VideoCallContent>;
 export const VideoCallContent = /* @__PURE__ */ Type.Object({
     call_type: VideoCallType,
+    audio_only: Type.Optional(Type.Boolean()),
     ended: Type.Optional(Type.BigInt()),
     participants: Type.Array(CallParticipant),
     hidden_participants: Type.Number(),
