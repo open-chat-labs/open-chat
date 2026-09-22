@@ -90,9 +90,16 @@ impl<I: IndexStore> Reader<I> {
                     let base64 = Base64NoPadding::encode_to_string(notification.notification_bytes)?;
                     let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
+                    // A call dismissal tells a phone to stop ringing. It has no web push form:
+                    // an open web client learns the same facts from chat updates.
+                    let fcm_only = notification.fcm_data.as_ref().is_some_and(|d| d.is_call_dismissal());
+
                     for user_id in notification.recipients {
                         if let Some(subscriptions) = ic_response.subscriptions.get(&user_id) {
                             for subscription in subscriptions.iter().cloned() {
+                                if !subscription_wanted(fcm_only, &subscription) {
+                                    continue;
+                                }
                                 let metadata = NotificationMetadata {
                                     notifications_canister: self.notifications_canister_id,
                                     index: indexed_notification.index,
@@ -193,5 +200,35 @@ impl<I: IndexStore> Reader<I> {
         }
 
         Ok(())
+    }
+}
+
+// A call dismissal has no web push form, so it goes only to FCM subscriptions
+fn subscription_wanted(fcm_only: bool, subscription: &types::NotificationSubscription) -> bool {
+    !fcm_only || !matches!(subscription, types::NotificationSubscription::WebPush(_))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use types::{FcmToken, NotificationSubscription, SubscriptionInfo, SubscriptionKeys};
+
+    // #9456 invariant 6: a dismissal kind is never sent to a web push subscription
+    #[test]
+    fn invariant_6_a_dismissal_never_goes_to_a_web_push_subscription() {
+        let web = NotificationSubscription::WebPush(SubscriptionInfo {
+            endpoint: "e".to_string(),
+            keys: SubscriptionKeys {
+                p256dh: "p".to_string(),
+                auth: "a".to_string(),
+            },
+        });
+        let fcm = NotificationSubscription::FcmPush(FcmToken("t".to_string()));
+
+        assert!(!subscription_wanted(true, &web));
+        assert!(subscription_wanted(true, &fcm));
+        // an ordinary notification still goes to both
+        assert!(subscription_wanted(false, &web));
+        assert!(subscription_wanted(false, &fcm));
     }
 }

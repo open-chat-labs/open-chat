@@ -35,16 +35,36 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotDefinitionUpdate, BotEventsCaller, BotInitiator, BotNotification,
-    BotPermissions, BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics,
-    CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
-    GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope,
-    MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules,
-    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
+    BotPermissions, BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, CallDismissalKind, Caller, CanisterId, ChatId,
+    ChatMetrics, CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCallDismissedNotification,
+    GroupCanisterGroupChatSummary, GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype,
+    IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult,
+    Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
+
+// A group larger than this never rings, so its call dismissals would be recipient lists the
+// local user index throws away. A Daily room holds 20.
+const MAX_GROUP_SIZE_FOR_CALL_DISMISSALS: u32 = 50;
+
+fn call_dismissals_wanted(member_count: u32) -> bool {
+    member_count <= MAX_GROUP_SIZE_FOR_CALL_DISMISSALS
+}
+
+#[cfg(test)]
+mod call_dismissal_tests {
+    use super::*;
+
+    // #9456 invariant 11: a group with more than 50 members emits no dismissal
+    #[test]
+    fn invariant_11_a_group_over_the_ceiling_emits_no_dismissals() {
+        assert!(call_dismissals_wanted(MAX_GROUP_SIZE_FOR_CALL_DISMISSALS));
+        assert!(!call_dismissals_wanted(MAX_GROUP_SIZE_FOR_CALL_DISMISSALS + 1));
+    }
+}
 
 mod activity_notifications;
 mod guards;
@@ -142,6 +162,23 @@ impl RuntimeState {
             member.verify()?;
         }
         Ok(member)
+    }
+
+    // Tells the named users' phones to stop ringing for a call (#9456). The local user index
+    // decides which groups ring; this canister only refuses to ship a recipient list for a
+    // group so large that no policy would ever ring it.
+    pub fn push_call_dismissal(&mut self, message_id: MessageId, kind: CallDismissalKind, recipients: Vec<UserId>) {
+        if !call_dismissals_wanted(self.data.chat.members.len()) {
+            return;
+        }
+        let notification = GroupChatUserNotificationPayload::GroupCallDismissed(GroupCallDismissedNotification {
+            chat_id: self.env.canister_id().into(),
+            message_id,
+            kind,
+            is_public: self.data.chat.is_public.value,
+            member_count: self.data.chat.members.len(),
+        });
+        self.push_notification(None, recipients, notification);
     }
 
     pub fn push_notification(

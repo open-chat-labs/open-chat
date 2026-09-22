@@ -3,7 +3,10 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, OCResult, UserId, VideoCallPresence};
+use types::{
+    Achievement, CallDismissalKind, DirectCallDismissedNotification, DirectChatUserNotificationPayload, OCResult, UserId,
+    VideoCallPresence,
+};
 use user_canister::{JoinVideoCall, UserCanisterEvent, join_video_call::*};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -26,6 +29,16 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         let my_user_id: UserId = state.env.canister_id().into();
 
         chat.set_video_call_presence(my_user_id, args.message_id, VideoCallPresence::Default, now)?;
+
+        // this user has answered: any other device of theirs that is still ringing should stop
+        if !chat.notifications_muted.value {
+            let dismissal = DirectChatUserNotificationPayload::DirectCallDismissed(DirectCallDismissedNotification {
+                them: args.user_id,
+                message_id: args.message_id,
+                kind: CallDismissalKind::AnsweredElsewhere,
+            });
+            state.push_notification(None, my_user_id, dismissal);
+        }
 
         state.push_user_canister_event(
             args.user_id,

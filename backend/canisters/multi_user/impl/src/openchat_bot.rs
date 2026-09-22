@@ -189,6 +189,7 @@ pub(crate) fn send_message_with_reply(
                 file_name: content.notification_file_name(),
                 sender_avatar_id: None,
                 crypto_transfer: content.notification_crypto_transfer_details(&[]),
+                call: None,
             }))
         };
 

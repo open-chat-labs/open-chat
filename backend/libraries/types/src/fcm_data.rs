@@ -1,4 +1,7 @@
-use crate::{ChannelId, Chat, ChatId, CommunityId, MessageIndex, UserId, UserNotificationPayload};
+use crate::{
+    CallDismissalKind, CallFacts, ChannelId, Chat, ChatId, CommunityId, MessageId, MessageIndex, TimestampMillis, UserId,
+    UserNotificationPayload, VideoCallType,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -51,6 +54,33 @@ pub struct FcmData {
     pub sender_name: Option<String>,
     #[serde(rename = "a")]
     pub sender_avatar_id: Option<u128>,
+    // Present only when the local user index has decided this call should ring the device.
+    // Absent, the data is exactly what a message notification carried before native calls.
+    #[serde(rename = "vc", default)]
+    pub call: Option<FcmCallData>,
+    // Present only for a "stop ringing" push. Such a push is never shown to the user.
+    #[serde(rename = "cd", default)]
+    pub call_dismissal: Option<FcmCallDismissal>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+pub struct FcmCallData {
+    #[serde(rename = "id")]
+    pub message_id: MessageId,
+    #[serde(rename = "ct")]
+    pub call_type: VideoCallType,
+    #[serde(rename = "ao")]
+    pub audio_only: bool,
+    #[serde(rename = "st")]
+    pub started: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+pub struct FcmCallDismissal {
+    #[serde(rename = "id")]
+    pub message_id: MessageId,
+    #[serde(rename = "k")]
+    pub kind: CallDismissalKind,
 }
 
 impl FcmData {
@@ -72,6 +102,35 @@ impl FcmData {
             sender_id: None,
             sender_name: None,
             sender_avatar_id: None,
+            call: None,
+            call_dismissal: None,
+        }
+    }
+
+    // The data for a push that tells a device to stop ringing for one call. It carries no
+    // `senderId` on purpose: the Android shell's decoder treats any unknown `type` that has a
+    // `senderId` as a direct message and would show it.
+    pub fn call_dismissal(chat: Chat, message_id: MessageId, kind: CallDismissalKind) -> Self {
+        Self {
+            call_dismissal: Some(FcmCallDismissal { message_id, kind }),
+            ..Self::default(chat)
+        }
+    }
+
+    pub fn is_call_dismissal(&self) -> bool {
+        self.call_dismissal.is_some()
+    }
+
+    // Marks the push as one that should ring the device for this call
+    pub fn set_call(self, facts: &CallFacts) -> Self {
+        Self {
+            call: Some(FcmCallData {
+                message_id: facts.message_id,
+                call_type: facts.call_type,
+                audio_only: facts.audio_only,
+                started: facts.started,
+            }),
+            ..self
         }
     }
 
@@ -207,6 +266,37 @@ impl FcmData {
             }
         };
 
+        if let Some(dismissal) = self.call_dismissal {
+            add_to_map("type", Some("call_dismissed".into()));
+            match self.chat_id {
+                Chat::Direct(user_id) => {
+                    add_to_map("chatType", Some("direct".into()));
+                    add_to_map("chatId", Some(user_id.to_string()));
+                }
+                Chat::Group(group_id) => {
+                    add_to_map("chatType", Some("group".into()));
+                    add_to_map("chatId", Some(group_id.to_string()));
+                }
+                Chat::Channel(community_id, channel_id) => {
+                    add_to_map("chatType", Some("channel".into()));
+                    add_to_map("communityId", Some(community_id.to_string()));
+                    add_to_map("chatId", Some(channel_id.to_string()));
+                }
+            }
+            add_to_map("callMessageId", Some(dismissal.message_id.to_string()));
+            add_to_map(
+                "dismissalKind",
+                Some(
+                    match dismissal.kind {
+                        CallDismissalKind::Ended => "ended",
+                        CallDismissalKind::AnsweredElsewhere => "answered_elsewhere",
+                    }
+                    .into(),
+                ),
+            );
+            return map;
+        }
+
         match self.chat_id {
             Chat::Direct(sender_id) => {
                 add_to_map("type", Some("direct".into()));
@@ -240,6 +330,21 @@ impl FcmData {
         add_to_map("messageType", self.message_type);
         add_to_map("fileName", self.file_name);
         add_to_map("body", self.body);
+        if let Some(call) = self.call {
+            add_to_map("callMessageId", Some(call.message_id.to_string()));
+            add_to_map(
+                "callType",
+                Some(
+                    match call.call_type {
+                        VideoCallType::Default => "default",
+                        VideoCallType::Broadcast => "broadcast",
+                    }
+                    .into(),
+                ),
+            );
+            add_to_map("callAudioOnly", Some(call.audio_only.to_string()));
+            add_to_map("callStarted", Some(call.started.to_string()));
+        }
         add_to_map(
             "bodyType",
             Some(
@@ -346,6 +451,96 @@ impl From<UserNotificationPayload> for FcmData {
                 .set_sender_name(n.tipped_by_display_name, n.tipped_by_name)
                 .set_thread(n.thread_root_message_index)
                 .set_tip(n.tip),
+
+            // Dismissals. The local user index only lets these through when the call rang.
+            UserNotificationPayload::DirectCallDismissed(n) => {
+                FcmData::call_dismissal(Chat::Direct(n.them.into()), n.message_id, n.kind)
+            }
+            UserNotificationPayload::GroupCallDismissed(n) => {
+                FcmData::call_dismissal(Chat::Group(n.chat_id), n.message_id, n.kind)
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{DirectMessageNotification, EventIndex};
+    use candid::Principal;
+
+    fn user(n: u8) -> UserId {
+        Principal::from_slice(&[n]).into()
+    }
+
+    fn facts() -> CallFacts {
+        CallFacts {
+            message_id: 7u64.into(),
+            call_type: VideoCallType::Default,
+            audio_only: true,
+            started: 1000,
+            is_public: false,
+            member_count: 2,
+        }
+    }
+
+    fn direct_message(call: Option<CallFacts>) -> UserNotificationPayload {
+        UserNotificationPayload::DirectMessage(DirectMessageNotification {
+            sender: user(1),
+            thread_root_message_index: None,
+            message_index: 3.into(),
+            event_index: EventIndex::from(4),
+            sender_name: "a".to_string(),
+            sender_display_name: None,
+            message_type: "VideoCall".to_string(),
+            message_text: None,
+            image_url: None,
+            file_name: None,
+            sender_avatar_id: None,
+            crypto_transfer: None,
+            call,
+        })
+    }
+
+    // #9456 invariants 1 and 3, the mapping half: the facts a canister sends never reach the
+    // device by themselves. Only the local user index, having decided the call rings, adds the
+    // call fields. So a call start that does not ring maps to exactly what it mapped to before.
+    #[test]
+    fn invariants_1_and_3_call_facts_alone_change_nothing_in_the_fcm_data() {
+        let with = FcmData::from(direct_message(Some(facts()))).as_data();
+        let without = FcmData::from(direct_message(None)).as_data();
+        assert_eq!(with, without);
+        assert!(!with.contains_key("callMessageId"));
+    }
+
+    // #9456 invariant 9: when the call rings, the device is told which call
+    #[test]
+    fn invariant_9_a_ringing_push_names_the_call() {
+        let data = FcmData::from(direct_message(Some(facts()))).set_call(&facts()).as_data();
+        assert_eq!(data["callMessageId"], "7");
+        assert_eq!(data["callType"], "default");
+        assert_eq!(data["callAudioOnly"], "true");
+        assert_eq!(data["callStarted"], "1000");
+        // and it is still a direct message notification underneath
+        assert_eq!(data["type"], "direct");
+        assert_eq!(data["senderId"], user(1).to_string());
+    }
+
+    // #9456 invariant 7: a dismissal's data has a type the field decoder does not know and no
+    // senderId, because that decoder treats any unknown type with a senderId as a direct
+    // message and would show it (NotificationDecoder.kt:85)
+    #[test]
+    fn invariant_7_a_dismissal_is_unknown_to_the_field_decoder() {
+        for (chat, chat_type) in [
+            (Chat::Direct(user(1).into()), "direct"),
+            (Chat::Group(user(2).into()), "group"),
+        ] {
+            let data = FcmData::call_dismissal(chat, 7u64.into(), CallDismissalKind::AnsweredElsewhere).as_data();
+            assert_eq!(data["type"], "call_dismissed");
+            assert!(!data.contains_key("senderId"), "{data:?}");
+            assert_eq!(data["chatType"], chat_type);
+            assert_eq!(data["callMessageId"], "7");
+            assert_eq!(data["dismissalKind"], "answered_elsewhere");
         }
     }
 }
