@@ -317,7 +317,8 @@ debug = false
 
 # The puzzle generators and solvers are search-heavy, and their tests generate hundreds of puzzles
 # each: unoptimised they take minutes, optimised seconds. This applies to `cargo test` too, since
-# the test profile inherits from dev.
+# the test profile inherits from dev. Add an entry here when adding a game crate; nothing warns if
+# one is missing, its tests just run slowly.
 [profile.dev.package.puzzle_core]
 opt-level = 3
 [profile.dev.package.unruly]

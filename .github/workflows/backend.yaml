@@ -76,7 +76,8 @@ jobs:
         with:
           cache: read
       # `--tests` skips the doc tests: there are none (the single doc example is `ignore`d), but
-      # without the flag cargo still runs rustdoc for every crate, about 15 seconds
+      # without the flag cargo still runs rustdoc for every crate, about 15 seconds. This means no
+      # CI job runs doc tests; if a real doc example is ever added, drop the flag.
       - uses: actions-rs/cargo@v1
         with:
           command: test
