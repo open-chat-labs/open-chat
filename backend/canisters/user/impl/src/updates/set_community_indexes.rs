@@ -14,7 +14,7 @@ fn set_community_indexes(args: Args) -> Response {
 fn set_community_indexes_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     for (community_id, index) in args.indexes {
-        if let Some(community) = state.data.communities.get_mut(&community_id) {
+        if let Some(community) = state.data.user.communities.get_mut(&community_id) {
             community.index = Timestamped::new(index, now);
         }
     }

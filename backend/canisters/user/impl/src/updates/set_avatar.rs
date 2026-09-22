@@ -15,7 +15,7 @@ fn set_avatar(args: Args) -> Response {
 }
 
 fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     if let Err(error) = validate_avatar(args.avatar.as_ref()) {
         return Err(OCErrorCode::AvatarTooBig.with_json(&error));
@@ -24,7 +24,7 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let id = args.avatar.as_ref().map(|a| a.id);
     let now = state.env.now();
 
-    state.data.avatar.set(ProfileDocumentType::Avatar, args.avatar, now);
+    state.data.user.avatar.set(ProfileDocumentType::Avatar, args.avatar, now);
     state.award_achievement_and_notify(Achievement::SetAvatar, now);
 
     ic_cdk::futures::spawn_migratory(update_index_canister(state.data.user_index_canister_id, id));

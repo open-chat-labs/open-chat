@@ -30,7 +30,9 @@ async fn generate_one_sec_address_impl() -> Response {
     .await
     {
         Ok(Ok(one_sec_address)) => {
-            mutate_state(|state| state.data.one_sec_address = Some(Timestamped::new(one_sec_address.clone(), state.env.now())));
+            mutate_state(|state| {
+                state.data.user.one_sec_address = Some(Timestamped::new(one_sec_address.clone(), state.env.now()))
+            });
             Success(one_sec_address)
         }
         Ok(Err(error)) => Error(OCErrorCode::Unknown.with_message(error)),
@@ -39,7 +41,7 @@ async fn generate_one_sec_address_impl() -> Response {
 }
 
 fn try_get_cached(state: &RuntimeState) -> Result<String, Principal> {
-    if let Some(address) = state.data.one_sec_address.as_ref() {
+    if let Some(address) = state.data.user.one_sec_address.as_ref() {
         Ok(address.to_string())
     } else {
         Err(state.env.canister_id())

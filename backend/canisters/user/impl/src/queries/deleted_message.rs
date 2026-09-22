@@ -17,7 +17,7 @@ fn deleted_message(args: Args) -> Response {
 fn deleted_message_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
     let my_user_id = state.env.canister_id().into();
 
-    let chat = state.data.direct_chats.get_or_err(&args.user_id.into())?;
+    let chat = state.data.user.direct_chats.get_or_err(&args.user_id.into())?;
     let events_reader = chat.main_events_reader();
 
     let message = events_reader

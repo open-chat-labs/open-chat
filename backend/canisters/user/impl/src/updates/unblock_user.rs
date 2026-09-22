@@ -12,7 +12,7 @@ fn unblock_user(args: Args) -> Response {
 }
 
 fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     let now = state.env.now();
     state.unblock_user(args.user_id, now);

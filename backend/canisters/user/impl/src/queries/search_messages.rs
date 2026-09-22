@@ -28,7 +28,7 @@ fn search_messages_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRes
         return Err(OCErrorCode::TermTooLong.with_message(MAX_TERM_LENGTH));
     }
 
-    let direct_chat = state.data.direct_chats.get_or_err(&args.user_id.into())?;
+    let direct_chat = state.data.user.direct_chats.get_or_err(&args.user_id.into())?;
     let matches =
         direct_chat
             .events()

@@ -1,5 +1,4 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
-use crate::model::user::User;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::users::Users;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
@@ -23,6 +22,7 @@ use types::{
     Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
 };
 use user_canister::UserCanisterEvent;
+use user_state::User;
 use user_state::{Community, GroupChat};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;

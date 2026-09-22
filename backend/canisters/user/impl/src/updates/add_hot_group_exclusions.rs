@@ -19,7 +19,7 @@ fn add_recommended_group_exclusions(args: Args) -> Response {
 fn add_hot_group_exclusions_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     for group in args.groups {
-        state.data.hot_group_exclusions.add(group, args.duration, now);
+        state.data.user.hot_group_exclusions.add(group, args.duration, now);
     }
     user_index_canister::set_moderation_flags::Response::Success
 }

@@ -12,6 +12,6 @@ fn delete_saved_crypto_account(args: Args) -> Response {
 }
 
 fn delete_saved_crypto_account_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.saved_crypto_accounts.delete(&args.name);
+    state.data.user.saved_crypto_accounts.delete(&args.name);
     Ok(())
 }

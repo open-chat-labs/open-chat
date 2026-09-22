@@ -1,4 +1,3 @@
-use crate::token_swaps::swap_client::SwapSuccess;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{KeyPrefix, TokenSwapKey, TokenSwapKeyPrefix, with_map, with_map_mut};
 use std::collections::HashMap;
@@ -6,6 +5,13 @@ use std::ops::RangeInclusive;
 use types::icrc1::Account;
 use types::{TimestampMillis, Timestamped};
 use user_canister::token_swap_status::TokenSwapStatus;
+
+// The result of a swap the User canister's swap clients perform
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SwapSuccess {
+    pub amount_out: u128,
+    pub withdrawal_success: Option<bool>,
+}
 
 // The user's token swaps, stored in the main stable memory map keyed by swap id
 #[derive(Serialize, Deserialize, Default)]
@@ -56,6 +62,10 @@ impl TokenSwaps {
 
     pub fn all(&self) -> Vec<TokenSwap> {
         self.page(0, usize::MAX)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn len(&self) -> usize {

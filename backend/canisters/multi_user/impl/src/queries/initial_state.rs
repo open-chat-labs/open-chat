@@ -32,8 +32,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             summaries: user.communities.iter().map(|c| c.to_summary()).collect(),
         };
 
-        // TODO: Everything below which is empty or default stays so until the MultiUser canister
-        // holds it per user: bots, the BTC and 1sec addresses and premium items
+        // TODO: Report the user's bots once the MultiUser canister installs them
         Success(SuccessResult {
             timestamp: now,
             direct_chats,
@@ -59,9 +58,9 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
             referrals: user.referrals.list(),
             message_activity_summary: user.message_activity_events.summary(),
             bots: Vec::new(),
-            btc_address: None,
-            one_sec_address: None,
-            premium_items: Vec::new(),
+            btc_address: user.btc_address.as_ref().map(|a| a.value.clone()),
+            one_sec_address: user.one_sec_address.as_ref().map(|a| a.value.clone()),
+            premium_items: user.premium_items.item_ids(),
             // Only direct and group chats are merged in here; pinned favourites are listed above
             pinned_chats: sorted_pinned(&merge_maps(
                 &user.direct_chats.pinned_chats(),

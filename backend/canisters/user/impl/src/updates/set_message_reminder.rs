@@ -22,7 +22,7 @@ fn set_message_reminder_v2(args: Args) -> Response {
 }
 
 fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> OCResult<u64> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     let now = state.env.now();
     if args.remind_at <= now {

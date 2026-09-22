@@ -11,5 +11,5 @@ fn hot_group_exclusions(_args: Args) -> Response {
 fn hot_group_exclusions_impl(state: &RuntimeState) -> Response {
     let now = state.env.now();
 
-    Success(state.data.hot_group_exclusions.get_all(now).copied().collect())
+    Success(state.data.user.hot_group_exclusions.get_all(now).copied().collect())
 }

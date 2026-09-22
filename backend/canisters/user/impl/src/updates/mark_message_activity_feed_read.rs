@@ -12,6 +12,6 @@ fn mark_message_activity_feed_read(args: Args) -> Response {
 
 fn mark_message_activity_feed_read_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    state.data.message_activity_events.mark_read_up_to(args.read_up_to, now);
+    state.data.user.message_activity_events.mark_read_up_to(args.read_up_to, now);
     Response::Success
 }

@@ -40,9 +40,9 @@ pub(crate) async fn approve_transfer_impl(mut args: Args) -> OCResult {
 }
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<TimestampNanos> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
     let now = state.env.now();
-    state.data.pin_number.verify(args.pin.as_mut(), now)?;
+    state.data.user.pin_number.verify(args.pin.as_mut(), now)?;
 
     Ok(now * NANOS_PER_MILLISECOND)
 }

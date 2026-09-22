@@ -15,7 +15,7 @@ fn set_bio(args: Args) -> Response {
 }
 
 fn set_bio_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     let length_provided = args.text.chars().count() as u32;
     if length_provided > MAX_BIO_LEN {
@@ -26,7 +26,7 @@ fn set_bio_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     }
 
     let now = state.env.now();
-    state.data.bio = Timestamped::new(args.text, now);
+    state.data.user.bio = Timestamped::new(args.text, now);
     state.award_achievement_and_notify(Achievement::SetBio, now);
 
     Ok(())

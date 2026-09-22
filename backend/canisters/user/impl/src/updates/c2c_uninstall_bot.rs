@@ -19,7 +19,7 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         };
 
-        if state.data.suspended.value {
+        if state.data.user.suspended.value {
             return Err(OCErrorCode::InitiatorSuspended.into());
         }
     }
