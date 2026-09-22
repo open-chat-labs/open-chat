@@ -5322,7 +5322,7 @@ dependencies = [
  "candid",
  "hex",
  "ic-certification",
- "ic-representation-independent-hash 3.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ic-representation-independent-hash",
  "ic0",
  "lazy_static",
  "serde",
@@ -5518,7 +5518,7 @@ dependencies = [
  "candid",
  "http 1.4.2",
  "ic-certification",
- "ic-representation-independent-hash 3.2.0 (git+https://github.com/dfinity/response-verification?rev=85dd37f54b882dc5c490a02f467023470ac6faf4)",
+ "ic-representation-independent-hash",
  "serde",
  "serde_cbor",
  "thiserror 1.0.69",
@@ -5571,16 +5571,6 @@ dependencies = [
  "candid",
  "serde",
  "serde_bytes",
-]
-
-[[package]]
-name = "ic-representation-independent-hash"
-version = "3.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c80c46e399bcce51c531237e1111ced114dec295cff22b0996099a6168814b03"
-dependencies = [
- "leb128",
- "sha2 0.10.9",
 ]
 
 [[package]]
@@ -6732,12 +6722,21 @@ dependencies = [
  "candid",
  "constants",
  "escrow_canister",
+ "hex",
+ "ic-cbor",
  "ic-cdk 0.20.2",
+ "ic-certificate-verification",
+ "ic-certification",
  "ic-ledger-types",
+ "ic-representation-independent-hash",
+ "ic-verify-bls-signature",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "oc_error_codes",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
  "sha2 0.11.0",
  "test-case",
  "tracing",
