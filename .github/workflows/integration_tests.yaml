@@ -8,6 +8,9 @@ on:
       - "**.rs"
       - "**.toml"
       - "**/Cargo.lock"
+      - "scripts/run-integration-tests.sh"
+      - "scripts/generate-all-canister-wasms.sh"
+      - ".github/workflows/setup-rust/**"
       - ".github/workflows/integration_tests.yaml"
   pull_request:
     types: [opened, synchronize, reopened, labeled]
@@ -17,6 +20,9 @@ on:
       - "**.rs"
       - "**.toml"
       - "**/Cargo.lock"
+      - "scripts/run-integration-tests.sh"
+      - "scripts/generate-all-canister-wasms.sh"
+      - ".github/workflows/setup-rust/**"
       - ".github/workflows/integration_tests.yaml"
 
 name: Integration tests
@@ -28,7 +34,7 @@ concurrency:
   group: >-
     ${{ github.workflow }}-${{
       (github.event_name == 'pull_request'
-        && ((github.event.action == 'labeled' && github.event.label.name == 'integration-tests')
+        && ((github.event.action == 'labeled' && github.event.label.name == 'integration-tests' && github.event.pull_request.state == 'open')
           || (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'integration-tests'))))
       && github.event.pull_request.number
       || github.run_id }}
@@ -39,7 +45,7 @@ jobs:
     name: run integration tests
     if: >-
       github.event_name == 'push'
-      || (github.event.action == 'labeled' && github.event.label.name == 'integration-tests')
+      || (github.event.action == 'labeled' && github.event.label.name == 'integration-tests' && github.event.pull_request.state == 'open')
       || (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'integration-tests'))
     runs-on:
       - runs-on
