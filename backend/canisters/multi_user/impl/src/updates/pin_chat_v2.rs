@@ -2,9 +2,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use oc_error_codes::OCErrorCode;
 use types::{Achievement, OCResult};
-use user_canister::ChatInList;
 use user_canister::pin_chat_v2::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -15,29 +13,9 @@ fn pin_chat_v2(args: Args) -> Response {
 
 fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
-    let my_index = state.caller_user_index_or_trap();
-
-    match args.chat {
-        ChatInList::Direct(chat_id) => {
-            state.with_caller_user_mut(|_, user| user.direct_chats.pin(chat_id, now));
-        }
-        ChatInList::Favourite(chat) => {
-            state.with_caller_user_mut(|_, user| user.favourite_chats.pin(chat, now));
-        }
-        ChatInList::Group(chat_id) => {
-            state.with_caller_user_mut(|_, user| user.group_chats.pin(chat_id, now));
-        }
-        ChatInList::Community(community_id, channel_id) => {
-            state.with_caller_user_mut(|_, user| {
-                user.communities
-                    .get_mut(&community_id)
-                    .map(|community| community.pin(channel_id, now))
-                    .ok_or(OCErrorCode::ChatNotFound)
-            })?;
-        }
-    }
-
+    let my_index = state.with_caller_user_mut(|my_index, user| {
+        user_core::updates::pin_chat_v2::pin_chat_v2(user, args, now).map(|()| my_index)
+    })?;
     state.award_achievement_and_notify(my_index, Achievement::PinnedChat, now);
-
     Ok(())
 }

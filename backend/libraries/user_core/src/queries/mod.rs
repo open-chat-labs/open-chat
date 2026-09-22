@@ -6,10 +6,20 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use types::{Chat, TimestampMillis};
 
+mod chit_events;
+mod contacts;
+mod deleted_message;
 mod initial_state;
+mod messages_by_message_index;
+mod public_profile;
 mod updates;
 
+pub use chit_events::chit_events;
+pub use contacts::contacts;
+pub use deleted_message::deleted_message;
 pub use initial_state::initial_state;
+pub use messages_by_message_index::messages_by_message_index;
+pub use public_profile::public_profile;
 pub use updates::updates;
 
 // The user's pinned direct and group chats, most recently pinned first, which are pinned in the
