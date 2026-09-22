@@ -143,7 +143,7 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
             } else {
                 ReferralStatus::Diamond
             };
-            state.set_referral_status_of_referrer(user_index, status);
+            state.set_referral_status_of_referrer(user_index, status, now);
         }
         LocalUserIndexEvent::PhoneNumberConfirmed(ev) => {
             state.data.users.with_user_mut(user_index, |user| {
@@ -172,7 +172,7 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
             state.data.users.with_user_mut(user_index, |user| {
                 user.unique_person_proof = Some(*proof);
             });
-            state.set_referral_status_of_referrer(user_index, ReferralStatus::UniquePerson);
+            state.set_referral_status_of_referrer(user_index, ReferralStatus::UniquePerson, now);
         }
         LocalUserIndexEvent::ExternalAchievementAwarded(ev) => {
             let awarded = state
