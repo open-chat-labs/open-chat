@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Refund a deposit whose swap was cancelled, expired or accepted by someone else while the deposit was being checked, rather than recording it ([#9503](https://github.com/open-chat-labs/open-chat/pull/9503))
+
 ## [[2.0.2056](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2056-escrow)] - 2026-09-18
 
 ### Changed

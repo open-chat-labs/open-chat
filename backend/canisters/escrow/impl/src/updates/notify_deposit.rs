@@ -45,7 +45,38 @@ async fn process_swap(
         .map(|b| u128::try_from(b.0).unwrap())
     {
         Ok(balance) => mutate_state(|state| {
+            let now = state.env.now();
             let swap = state.data.swaps.get_mut(swap_id).unwrap();
+
+            // The swap may have been cancelled, have expired or been accepted by someone else while
+            // the balance was being checked, in which case the deposit is refunded rather than
+            // recorded. Recording it would leave it with nothing to refund it, or take the swap over
+            // from its acceptor.
+            let unavailable = if swap.cancelled_at.is_some() {
+                Some(SwapCancelled)
+            } else if now > swap.expires_at {
+                Some(SwapExpired)
+            } else if principal != swap.offered_by && swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by != principal)
+            {
+                Some(SwapAlreadyAccepted)
+            } else {
+                None
+            };
+            if let Some(response) = unavailable {
+                if balance > token_info.fee {
+                    state.data.pending_payments_queue.push(PendingPayment {
+                        user_id: principal.into(),
+                        timestamp: now,
+                        amount: balance - token_info.fee,
+                        token_info,
+                        swap_id,
+                        reason: PendingPaymentReason::Refund,
+                    });
+                    crate::jobs::make_pending_payments::start_job_if_required(state);
+                }
+                return response;
+            }
+
             if balance < balance_required {
                 if balance > token_info.fee {
                     state.data.pending_payments_queue.push(PendingPayment {
@@ -63,7 +94,6 @@ async fn process_swap(
                     balance_required,
                 })
             } else {
-                let now = state.env.now();
                 if principal == swap.offered_by {
                     swap.token0_received = true;
                 } else {
