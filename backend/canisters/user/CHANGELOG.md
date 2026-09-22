@@ -74,6 +74,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement the `events`, `events_window` and `events_by_index` queries via `user_core`, shared with the MultiUser canister ([#9474](https://github.com/open-chat-labs/open-chat/pull/9474))
 - Implement `hot_group_exclusions`, `message_activity_feed`, `c2c_groups_and_communities`, `mute_notifications`, `save_crypto_account`, `add_hot_group_exclusions`, `set_community_indexes` and `c2c_set_user_suspended` via `user_core`, shared with the MultiUser canister ([#9475](https://github.com/open-chat-labs/open-chat/pull/9475))
 - Implement `c2c_pay_for_premium_item`, `c2c_notify_achievement` and `report_message` via `user_core`, shared with the MultiUser canister ([#9477](https://github.com/open-chat-labs/open-chat/pull/9477))
+- Implement `token_swap_status`, `token_swaps`, `c2c_bot_chat_summary` and `c2c_can_issue_access_token_v2` via `user_core`, shared with the MultiUser canister ([#9478](https://github.com/open-chat-labs/open-chat/pull/9478))
 
 ### Fixed
 
