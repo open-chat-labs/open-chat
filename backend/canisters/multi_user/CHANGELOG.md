@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Replace `c2c_group_canister`, `c2c_community_canister` and `c2c_local_user_index` with `c2c_group_canister_v2`, `c2c_community_canister_v2` and `c2c_local_user_index_v2`, which take each event paired with the user it is for, so that one call can carry the events for many users ([#9452](https://github.com/open-chat-labs/open-chat/pull/9452))
 - Implement `c2c_user_canister_v2`, applying direct chat events from users in other canisters: messages, edits, deletions, reactions, messages read and disappearing message settings ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
 - Send direct chat events to users in other canisters via their `c2c_user_canister_v2`, looking up recipients the sender has no chat with in the LocalUserIndex: messages, edits, deletions, reactions, messages read and disappearing message settings ([#9458](https://github.com/open-chat-labs/open-chat/pull/9458))
+- Hold each user's phone verification, storage limit, unique person proof, external achievements and referrals, applying the `PhoneNumberConfirmed`, `StorageUpgraded`, `ReferredUserRegistered`, `OpenChatBotMessageV2`, `NotifyUniquePersonProof`, `ExternalAchievementAwarded` and `ReinstateMissedDailyClaims` events with their OpenChat bot messages, telling a user's referrer when they reach Diamond or prove personhood, and applying `SetReferralStatus` from referred users, as the User canister does ([#9464](https://github.com/open-chat-labs/open-chat/pull/9464))
 
 ### Changed
 
@@ -47,3 +48,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Garbage collect a deleted chat's stable memory entries within the scope of the user who deleted it, and remove the `direct_chat_cores` metric ([#9415](https://github.com/open-chat-labs/open-chat/pull/9415))
 - Rename the `caller_is_owner` guards to `caller_is_hosted_user`, since the canister hosts many users ([#9432](https://github.com/open-chat-labs/open-chat/pull/9432))
 - Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, which must be upgraded first, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
+- Move `User` into the `user_state` library, shared with the User canister ([#9467](https://github.com/open-chat-labs/open-chat/pull/9467))
+- Build `initial_state` and `updates` from the shared `User`, as the User canister does, so they now include the user's bots ([#9469](https://github.com/open-chat-labs/open-chat/pull/9469))
+

@@ -1,6 +1,5 @@
 use crate::crypto::{icrc2_transfer_from, validate_from_account};
 use crate::guards::caller_is_owner;
-use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::icpswap::ICPSwapClient;
 use crate::token_swaps::swap_client::SwapClient;
@@ -17,6 +16,7 @@ use tracing::{error, info};
 use types::icrc1::Account;
 use types::{Achievement, OCResult, TimestampMillis, Timestamped, UserId};
 use user_canister::swap_tokens::{Response::*, *};
+use user_state::TokenSwap;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -34,14 +34,15 @@ async fn swap_tokens_impl(args: Args) -> Response {
 }
 
 fn prepare(mut args: Args, state: &mut RuntimeState) -> OCResult<(TokenSwap, Box<dyn SwapClient>)> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
     validate_from_account(args.from_account, state.env.canister_id().into())?;
     let now = state.env.now();
-    state.data.pin_number.verify(args.pin.as_mut(), now)?;
+    state.data.user.pin_number.verify(args.pin.as_mut(), now)?;
 
     let swap_client = build_swap_client(&args, state);
     let token_swap = state
         .data
+        .user
         .token_swaps
         .push_new(args, swap_client.use_icrc2(), swap_client.auto_withdrawals(), now);
 
@@ -90,7 +91,7 @@ pub(crate) async fn process_token_swap(
                 mutate_state(|state| {
                     let now = state.env.now();
                     token_swap.funded_from_wallet = Some(Timestamped::new(Ok(index), now));
-                    state.data.token_swaps.upsert(token_swap.clone());
+                    state.data.user.token_swaps.upsert(token_swap.clone());
                 });
             }
             Err(error) => {
@@ -99,7 +100,7 @@ pub(crate) async fn process_token_swap(
                     let now = state.env.now();
                     token_swap.funded_from_wallet = Some(Timestamped::new(Err(msg.clone()), now));
                     token_swap.success = Some(Timestamped::new(false, now));
-                    state.data.token_swaps.upsert(token_swap);
+                    state.data.user.token_swaps.upsert(token_swap);
                 });
                 log_error("Failed to pull tokens from wallet", msg.as_str(), &args, attempt);
                 return Error(error);
@@ -117,7 +118,7 @@ pub(crate) async fn process_token_swap(
                 mutate_state(|state| {
                     let now = state.env.now();
                     token_swap.deposit_account = Some(Timestamped::new(Ok(a), now));
-                    state.data.token_swaps.upsert(token_swap.clone());
+                    state.data.user.token_swaps.upsert(token_swap.clone());
                 });
                 Some(a)
             }
@@ -127,7 +128,7 @@ pub(crate) async fn process_token_swap(
                     let now = state.env.now();
                     token_swap.deposit_account = Some(Timestamped::new(Err(msg.clone()), now));
                     token_swap.success = Some(Timestamped::new(false, now));
-                    state.data.token_swaps.upsert(token_swap);
+                    state.data.user.token_swaps.upsert(token_swap);
                 });
                 log_error("Failed to get deposit account", msg.as_str(), &args, attempt);
                 return Error(error.into());
@@ -184,7 +185,7 @@ pub(crate) async fn process_token_swap(
                 mutate_state(|state| {
                     let now = state.env.now();
                     token_swap.transfer_or_approval = Some(Timestamped::new(Ok(index.0.try_into().unwrap()), now));
-                    state.data.token_swaps.upsert(token_swap.clone());
+                    state.data.user.token_swaps.upsert(token_swap.clone());
                 });
             }
             Err(error) => {
@@ -193,7 +194,7 @@ pub(crate) async fn process_token_swap(
                     let now = state.env.now();
                     token_swap.transfer_or_approval = Some(Timestamped::new(Err(msg.clone()), now));
                     token_swap.success = Some(Timestamped::new(false, now));
-                    state.data.token_swaps.upsert(token_swap);
+                    state.data.user.token_swaps.upsert(token_swap);
                 });
                 log_error("Failed to transfer tokens", msg.as_str(), &args, attempt);
                 return Error(error);
@@ -207,7 +208,7 @@ pub(crate) async fn process_token_swap(
             mutate_state(|state| {
                 let now = state.env.now();
                 token_swap.notified_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
-                state.data.token_swaps.upsert(token_swap.clone());
+                state.data.user.token_swaps.upsert(token_swap.clone());
                 enqueue_token_swap(token_swap, attempt, now, &mut state.data);
             });
             log_error("Failed to deposit tokens", msg.as_str(), &args, attempt);
@@ -216,7 +217,7 @@ pub(crate) async fn process_token_swap(
             mutate_state(|state| {
                 let now = state.env.now();
                 token_swap.notified_dex_at = Some(Timestamped::new(Ok(()), now));
-                state.data.token_swaps.upsert(token_swap.clone());
+                state.data.user.token_swaps.upsert(token_swap.clone());
             });
         }
     }
@@ -242,7 +243,7 @@ pub(crate) async fn process_token_swap(
                     {
                         token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(swap_success.amount_out), now));
                     }
-                    state.data.token_swaps.upsert(token_swap.clone());
+                    state.data.user.token_swaps.upsert(token_swap.clone());
                 });
                 r
             }
@@ -251,7 +252,7 @@ pub(crate) async fn process_token_swap(
                 mutate_state(|state| {
                     let now = state.env.now();
                     token_swap.swap_result = Some(Timestamped::new(Err(msg.clone()), now));
-                    state.data.token_swaps.upsert(token_swap.clone());
+                    state.data.user.token_swaps.upsert(token_swap.clone());
                     enqueue_token_swap(token_swap, attempt, now, &mut state.data);
                 });
                 log_error("Failed to swap tokens", msg.as_str(), &args, attempt);
@@ -274,7 +275,7 @@ pub(crate) async fn process_token_swap(
             mutate_state(|state| {
                 let now = state.env.now();
                 token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
-                state.data.token_swaps.upsert(token_swap.clone());
+                state.data.user.token_swaps.upsert(token_swap.clone());
                 enqueue_token_swap(token_swap, attempt, now, &mut state.data);
             });
             log_error("Failed to withdraw tokens", msg.as_str(), &args, attempt);
@@ -337,7 +338,7 @@ pub(crate) fn mark_withdrawal_success(
         info!(swap_id = %token_swap.args.swap_id, "Swap succeeded");
     }
 
-    state.data.token_swaps.upsert(token_swap);
+    state.data.user.token_swaps.upsert(token_swap);
 }
 
 fn enqueue_token_swap(token_swap: TokenSwap, attempt: u32, now: TimestampMillis, data: &mut Data) {

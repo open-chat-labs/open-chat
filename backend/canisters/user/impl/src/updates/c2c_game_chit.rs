@@ -14,7 +14,7 @@ fn c2c_game_chit(args: Args) -> Response {
 }
 
 fn c2c_game_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if let Err(error) = state.data.verify_not_suspended() {
+    if let Err(error) = state.data.user.verify_not_suspended() {
         return Error(error.into());
     }
 
@@ -24,20 +24,20 @@ fn c2c_game_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     // Checked before the balance so that a repeated key always returns AlreadyAdded, even if the
     // balance has since dropped.
-    if state.data.game_chit_keys.contains(&args.game_id, &args.key) {
+    if state.data.user.game_chit_keys.contains(&args.game_id, &args.key) {
         return Error(OCErrorCode::AlreadyAdded.into());
     }
 
-    let chit_balance = state.data.chit_events.chit_balance();
+    let chit_balance = state.data.user.chit_events.chit_balance();
     if args.amount < 0 && chit_balance < -args.amount {
         // The key is deliberately not recorded here, so the debit can be retried once affordable
         return Error(OCErrorCode::InsufficientFunds.with_message(chit_balance));
     }
 
     let now = state.env.now();
-    state.data.game_chit_keys.insert(&args.game_id, &args.key, now);
+    state.data.user.game_chit_keys.insert(&args.game_id, &args.key, now);
 
-    state.data.chit_events.push(ChitEvent {
+    state.data.user.chit_events.push(ChitEvent {
         timestamp: now,
         amount: args.amount,
         reason: ChitEventType::Game {
@@ -49,7 +49,7 @@ fn c2c_game_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.notify_user_index_of_chit(now);
 
     Success(SuccessResult {
-        chit_balance: state.data.chit_events.chit_balance(),
-        total_chit_earned: state.data.chit_events.total_chit_earned(),
+        chit_balance: state.data.user.chit_events.chit_balance(),
+        total_chit_earned: state.data.user.chit_events.total_chit_earned(),
     })
 }

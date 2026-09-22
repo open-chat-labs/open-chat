@@ -58,7 +58,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many groups in succession
@@ -66,12 +66,12 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     }
 
     let now = state.env.now();
-    let membership = state.data.membership(now);
+    let membership = state.data.user.membership(now);
     let group_creation_limit = membership.group_creation_limit();
 
     if !membership.is_diamond_member() && args.is_public {
         Err(OCErrorCode::NotDiamondMember.into())
-    } else if state.data.group_chats.groups_created() >= group_creation_limit {
+    } else if state.data.user.group_chats.groups_created() >= group_creation_limit {
         Err(OCErrorCode::MaxGroupsCreated.with_message(group_creation_limit))
     } else if is_throttled() {
         Err(OCErrorCode::Throttled.into())
@@ -121,5 +121,5 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
 
 fn commit(chat_id: ChatId, local_user_index_canister_id: CanisterId, state: &mut RuntimeState) {
     let now = state.env.now();
-    state.data.group_chats.create(chat_id, local_user_index_canister_id, now);
+    state.data.user.group_chats.create(chat_id, local_user_index_canister_id, now);
 }

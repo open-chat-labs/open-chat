@@ -1,3 +1,4 @@
+use crate::chit_tests::DAY_ZERO;
 use crate::env::ENV;
 use crate::utils::{metrics, now_millis, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
@@ -15,7 +16,7 @@ use types::{
     ChitEventType, CommunityId, CommunityImportedInto, DeletedCommunityInfo, DeletedGroupInfoInternal,
     DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty, EventsResponse,
     IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate,
-    PinNumberSettings, Reaction, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
+    PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -923,21 +924,7 @@ fn mark_read(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, the
 }
 
 fn create_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: CanisterId) -> (Principal, UserId) {
-    let principal = random_principal();
-    let response = client::multi_user::c2c_create_user(
-        env,
-        local_user_index,
-        canister_id,
-        &multi_user_canister::c2c_create_user::Args {
-            principal,
-            username: random_string(),
-            referred_by: None,
-        },
-    );
-    match response {
-        multi_user_canister::c2c_create_user::Response::Success(user_id) => (principal, user_id),
-        response => panic!("{response:?}"),
-    }
+    create_user_referred_by(env, local_user_index, canister_id, None)
 }
 
 fn send_message_args(recipient: UserId, text: &str, message_id: MessageId) -> user_canister::send_message_v2::Args {
@@ -3033,6 +3020,269 @@ fn creating_a_community_requires_diamond_membership_in_a_multi_user_canister() {
         matches!(&response, user_canister::create_community::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotFound)),
         "{response:?}"
     );
+}
+
+#[test]
+fn local_user_index_events_update_the_state_each_user_holds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    // Alice referred Bob, both in this canister, and Carol, a User canister user, referred Alice
+    let carol = client::register_user(env, canister_ids);
+    let (alice, alice_id) = create_user_referred_by(env, local_user_index, canister_id, Some(carol.user_id));
+    let (bob, bob_id) = create_user_referred_by(env, local_user_index, canister_id, Some(alice_id));
+    let referred_elsewhere: UserId = random_principal().into();
+
+    let events = vec![
+        LocalUserIndexEvent::NotifyUniquePersonProof(Box::new(types::UniquePersonProof {
+            timestamp: now_millis(env),
+            provider: types::UniquePersonProofProvider::DecideAI,
+        })),
+        LocalUserIndexEvent::ReferredUserRegistered(Box::new(user_canister::ReferredUserRegistered {
+            user_id: referred_elsewhere,
+            username: "referred".to_string(),
+        })),
+        LocalUserIndexEvent::ExternalAchievementAwarded(Box::new(user_canister::ExternalAchievementAwarded {
+            name: "Played a game".to_string(),
+            chit_reward: 500,
+        })),
+        LocalUserIndexEvent::StorageUpgraded(Box::new(user_canister::StorageUpgraded {
+            cost: types::nns::CryptoAmount {
+                token_symbol: "ICP".to_string(),
+                amount: types::nns::Tokens::from_e8s(100_000_000),
+            },
+            storage_added: 1024 * 1024 * 1024,
+            new_storage_limit: 1024 * 1024 * 1024,
+        })),
+        LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(user_canister::OpenChatBotMessageV2 {
+            thread_root_message_id: None,
+            content: MessageContentInitial::Text(TextContent {
+                text: "A message from the bot".to_string(),
+            }),
+            mentioned: Vec::new(),
+        })),
+    ];
+    let envelopes: Vec<_> = events
+        .into_iter()
+        .enumerate()
+        .map(|(i, e)| local_user_index_event(env, i as u64 + 1, e))
+        .collect();
+    send_local_user_index_events(env, local_user_index, canister_id, alice_id, envelopes.clone());
+
+    let alice_state = initial_state(env, alice, canister_id);
+    assert!(alice_state.is_unique_person);
+    assert_eq!(
+        alice_state.referrals.iter().map(|r| r.user_id).collect::<Vec<_>>(),
+        vec![referred_elsewhere]
+    );
+    assert!(has_achievement(&alice_state, Achievement::ProvedUniquePersonhood));
+    assert!(
+        alice_state
+            .achievements
+            .iter()
+            .any(|e| matches!(&e.reason, ChitEventType::ExternalAchievement(name) if name == "Played a game"))
+    );
+    let profile = public_profile(env, alice, canister_id, alice_id);
+    assert!(profile.is_premium);
+    assert!(!profile.phone_is_verified);
+
+    let texts = bot_message_texts(env, alice, canister_id, alice_id);
+    assert!(
+        texts.iter().any(|t| t.contains("registered with your referral code")),
+        "{texts:?}"
+    );
+    assert!(
+        texts.iter().any(|t| t.contains("You paid 1 ICP for 1 GB of storage")),
+        "{texts:?}"
+    );
+    assert!(texts.iter().any(|t| t == "A message from the bot"), "{texts:?}");
+
+    // Proving personhood told Carol, Alice's referrer in another canister, so she earned the CHIT
+    tick_many(env, 5);
+    let carol_state = client::user::happy_path::initial_state(env, &carol);
+    assert_eq!(carol_state.referrals.len(), 1);
+    assert_eq!(carol_state.referrals[0].user_id, alice_id);
+    assert!(matches!(carol_state.referrals[0].status, ReferralStatus::UniquePerson));
+    assert!(carol_state.chit_balance > 0);
+
+    // The same events again are ignored, since each has already been processed
+    send_local_user_index_events(env, local_user_index, canister_id, alice_id, envelopes);
+    assert_eq!(bot_message_texts(env, alice, canister_id, alice_id), texts);
+    assert_eq!(initial_state(env, alice, canister_id).chit_balance, alice_state.chit_balance);
+
+    // Bob is untouched by any of it
+    let bob_state = initial_state(env, bob, canister_id);
+    assert!(!bob_state.is_unique_person);
+    assert!(bob_state.referrals.is_empty());
+    assert!(bob_state.chit_balance == 0);
+    assert!(bob_state.direct_chats.summaries.is_empty());
+
+    // A referred user in another canister reaching a status is sent as a `SetReferralStatus`
+    // event from their canister, as the User canister sends it
+    let response = client::multi_user::c2c_user_canister_v2(
+        env,
+        carol.canister(),
+        canister_id,
+        &user_canister::c2c_user_canister_v2::Args {
+            events: vec![IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: 1,
+                value: user_canister::c2c_user_canister_v2::Event {
+                    sender: carol.user_id,
+                    recipient: alice_id,
+                    event: UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::Diamond)),
+                },
+            }],
+        },
+    );
+    assert!(
+        matches!(response, user_canister::c2c_user_canister_v2::Response::Success),
+        "{response:?}"
+    );
+    let alice_state_after = initial_state(env, alice, canister_id);
+    assert!(
+        alice_state_after
+            .referrals
+            .iter()
+            .any(|r| r.user_id == carol.user_id && matches!(r.status, ReferralStatus::Diamond)),
+        "{:?}",
+        alice_state_after.referrals
+    );
+    assert!(has_achievement(&alice_state_after, Achievement::Referred1stUser));
+    assert!(alice_state_after.chit_balance > alice_state.chit_balance);
+    let alice_state = alice_state_after;
+
+    // Bob buying Diamond tells Alice, his referrer in this canister, so she earns the CHIT
+    let now = now_millis(env);
+    // Ids distinct from Alice's, since nothing advances the time between the calls
+    let event = local_user_index_event(
+        env,
+        11,
+        LocalUserIndexEvent::DiamondMembershipPaymentReceived(Box::new(user_canister::DiamondMembershipPaymentReceived {
+            timestamp: now,
+            expires_at: now + 365 * constants::DAY_IN_MS,
+            ledger: Principal::anonymous(),
+            token_symbol: "CHAT".to_string(),
+            token: None,
+            amount_e8s: 0,
+            block_index: 0,
+            duration: DiamondMembershipPlanDuration::Lifetime,
+            recurring: false,
+            send_bot_message: true,
+        })),
+    );
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![event]);
+
+    let bob_state = initial_state(env, bob, canister_id);
+    assert!(has_achievement(&bob_state, Achievement::UpgradedToDiamond));
+    assert!(has_achievement(&bob_state, Achievement::UpgradedToGoldDiamond));
+    assert!(
+        bot_message_texts(env, bob, canister_id, bob_id)
+            .iter()
+            .any(|t| t == "Payment received for Diamond membership!")
+    );
+    let alice_state_after = initial_state(env, alice, canister_id);
+    assert!(
+        alice_state_after
+            .referrals
+            .iter()
+            .any(|r| r.user_id == bob_id && matches!(r.status, ReferralStatus::LifetimeDiamond)),
+        "{:?}",
+        alice_state_after.referrals
+    );
+    assert!(alice_state_after.chit_balance > alice_state.chit_balance);
+
+    // Confirming a phone number marks the user as verified
+    let event = local_user_index_event(
+        env,
+        12,
+        LocalUserIndexEvent::PhoneNumberConfirmed(Box::new(user_canister::PhoneNumberConfirmed {
+            phone_number: types::PhoneNumber::new(44, "07887123456".to_string()),
+            storage_added: 1024 * 1024 * 1024,
+            new_storage_limit: 2 * 1024 * 1024 * 1024,
+        })),
+    );
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![event]);
+    assert!(public_profile(env, bob, canister_id, bob_id).phone_is_verified);
+    assert!(
+        bot_message_texts(env, bob, canister_id, bob_id)
+            .iter()
+            .any(|t| t.contains("verifying ownership of your phone number"))
+    );
+
+    // Daily claims are counted from the start of 2024, so one can only be reinstated once the
+    // time is past then
+    crate::chit_tests::ensure_time_at_least_day0(env);
+    let now = now_millis(env);
+    let event = local_user_index_event(
+        env,
+        13,
+        LocalUserIndexEvent::ReinstateMissedDailyClaims(vec![((now - DAY_ZERO) / constants::DAY_IN_MS) as u16]),
+    );
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![event]);
+    assert!(
+        chit_events(env, bob, canister_id)
+            .events
+            .iter()
+            .any(|e| matches!(e.reason, ChitEventType::DailyClaimReinstated))
+    );
+    assert!(
+        bot_message_texts(env, bob, canister_id, bob_id)
+            .iter()
+            .any(|t| t.contains("1 missed daily claim has been reinstated"))
+    );
+}
+
+fn create_user_referred_by(
+    env: &mut PocketIc,
+    local_user_index: CanisterId,
+    canister_id: CanisterId,
+    referred_by: Option<UserId>,
+) -> (Principal, UserId) {
+    let principal = random_principal();
+    let response = client::multi_user::c2c_create_user(
+        env,
+        local_user_index,
+        canister_id,
+        &multi_user_canister::c2c_create_user::Args {
+            principal,
+            username: random_string(),
+            referred_by,
+        },
+    );
+    match response {
+        multi_user_canister::c2c_create_user::Response::Success(user_id) => (principal, user_id),
+        response => panic!("{response:?}"),
+    }
+}
+
+fn public_profile(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    user_id: UserId,
+) -> user_canister::public_profile::PublicProfile {
+    let user_canister::public_profile::Response::Success(profile) =
+        client::multi_user::public_profile(env, sender, canister_id, &user_canister::public_profile::Args { user_id });
+    profile
+}
+
+fn bot_message_texts(env: &PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId) -> Vec<String> {
+    bot_messages(env, sender, canister_id, user_id)
+        .into_iter()
+        .filter_map(|m| match m.content {
+            MessageContent::Text(t) => Some(t.text),
+            _ => None,
+        })
+        .collect()
 }
 
 fn local_user_index_event(

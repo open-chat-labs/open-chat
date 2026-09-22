@@ -22,7 +22,7 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
 
         mutate_state(|state| {
             let now = state.env.now();
-            state.data.direct_chats.get_or_create(
+            state.data.user.direct_chats.get_or_create(
                 state.env.canister_id().into(),
                 args.user_id,
                 user.user_type,
@@ -33,7 +33,7 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
     }
 
     mutate_state(|state| {
-        let chat = state.data.direct_chats.get_mut(&args.user_id.into()).unwrap();
+        let chat = state.data.user.direct_chats.get_mut(&args.user_id.into()).unwrap();
 
         if let Some(events_ttl) = args.events_ttl.expand() {
             let now = state.env.now();
@@ -54,7 +54,7 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
 }
 
 fn check_chat_exists(user_id: UserId, state: &RuntimeState) -> Result<(), CanisterId> {
-    if state.data.direct_chats.exists(&user_id.into()) {
+    if state.data.user.direct_chats.exists(&user_id.into()) {
         Ok(())
     } else {
         Err(state.data.local_user_index_canister_id)

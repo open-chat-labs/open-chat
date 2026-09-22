@@ -21,7 +21,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
         let my_user_id = state.env.canister_id();
         let chat_id = if args.offered_by == my_user_id { chat_id } else { args.offered_by.into() };
 
-        if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
+        if let Some(chat) = state.data.user.direct_chats.get_mut(&chat_id) {
             let mut status_to_push_c2c = None;
 
             match args.status {

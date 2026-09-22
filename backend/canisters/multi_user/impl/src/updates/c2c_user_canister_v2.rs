@@ -148,13 +148,12 @@ fn process_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16,
             state.with_their_direct_chat_mut(sender, recipient, |chat| chat.mark_read_by_them_up_to(args.read_up_to, now));
         }
         UserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient, recipient_index, now, state),
-        // TODO: Handle these once the MultiUser canister supports tips, P2P swaps, video calls and
-        // referrals
+        UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, *status, now),
+        // TODO: Handle these once the MultiUser canister supports tips, P2P swaps and video calls
         UserCanisterEvent::TipMessage(_)
         | UserCanisterEvent::P2PSwapStatusChange(_)
         | UserCanisterEvent::StartVideoCall(_)
-        | UserCanisterEvent::JoinVideoCall(_)
-        | UserCanisterEvent::SetReferralStatus(_) => {}
+        | UserCanisterEvent::JoinVideoCall(_) => {}
     }
 }
 

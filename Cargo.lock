@@ -13131,6 +13131,7 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
+ "installed_bots",
  "itertools 0.15.0",
  "msgpack",
  "oc_error_codes",

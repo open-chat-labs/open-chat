@@ -17,7 +17,7 @@ async fn withdraw_btc(args: Args) -> Response {
 }
 
 async fn withdraw_btc_impl(mut args: Args) -> Response {
-    if let Err(error) = mutate_state(|state| state.data.pin_number.verify(args.pin.as_mut(), state.env.now())) {
+    if let Err(error) = mutate_state(|state| state.data.user.pin_number.verify(args.pin.as_mut(), state.env.now())) {
         return Error(error.into());
     }
 

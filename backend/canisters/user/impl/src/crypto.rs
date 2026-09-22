@@ -33,7 +33,7 @@ async fn process_transaction_internal(
     check_caller: bool,
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     let my_user_id = read_state(|state| {
-        if check_caller && state.env.caller() != state.data.owner {
+        if check_caller && state.env.caller() != state.data.user.principal {
             panic!("Only the owner can transfer cryptocurrency");
         }
 

@@ -24,9 +24,9 @@ pub(crate) fn handle_events(events: Vec<IdempotentEnvelope<GroupCanisterEvent>>,
             .check(caller, event.created_at, event.idempotency_id)
         {
             match event.value {
-                GroupCanisterEvent::MessageActivity(event) => state.data.push_message_activity(event, now),
+                GroupCanisterEvent::MessageActivity(event) => state.data.user.push_message_activity(event, now),
                 GroupCanisterEvent::Achievement(achievement) => {
-                    awarded_achievement |= state.data.award_achievement(achievement, now);
+                    awarded_achievement |= state.data.user.award_achievement(achievement, now);
                 }
             }
         }

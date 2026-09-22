@@ -40,7 +40,7 @@ async fn c2c_user_canister_v2_impl(args: Args) -> Response {
             } = event.value;
             if recipient == my_user_id
                 && can_act_for(caller_kind, sender, caller)
-                && !state.data.blocked_users.contains(&sender)
+                && !state.data.user.blocked_users.contains(&sender)
             {
                 process_event(event, sender, state);
             }
@@ -91,6 +91,7 @@ fn known_caller_kind(caller: CanisterId, state: &RuntimeState) -> Option<Caniste
         Some(CanisterKind::MultiUserCanister)
     } else if state
         .data
+        .user
         .direct_chats
         .get(&UserId::from(caller).into())
         .is_some_and(|chat| chat.user_type == UserType::User)

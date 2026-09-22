@@ -1,4 +1,3 @@
-use crate::model::token_swaps::TokenSwap;
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::updates::swap_tokens::process_token_swap;
 use crate::{can_borrow_state, flush_pending_events, mutate_state, openchat_bot, read_state, run_regular_jobs};
@@ -9,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::C2CReplyContext;
+use user_state::TokenSwap;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -182,7 +182,7 @@ impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
         let mut p2p_swap_to_cancel = None;
         mutate_state(|state| {
-            if let Some((content, sender)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
+            if let Some((content, sender)) = state.data.user.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
                 chat.remove_deleted_message_content(self.thread_root_message_index, self.message_id, state.env.now())
             }) {
                 let my_user_id = state.env.canister_id().into();
@@ -235,7 +235,7 @@ impl Job for MessageReminderJob {
         });
 
         mutate_state(|state| {
-            if let Some(chat) = state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
+            if let Some(chat) = state.data.user.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
                 let now = state.env.now();
                 chat.mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now);
             }
@@ -329,7 +329,7 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
 impl Job for MarkP2PSwapExpiredJob {
     fn execute(self) {
         mutate_state(|state| {
-            if let Some(chat) = state.data.direct_chats.get_mut(&self.chat_id) {
+            if let Some(chat) = state.data.user.direct_chats.get_mut(&self.chat_id) {
                 let _ = chat.mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now());
             }
         });
@@ -408,12 +408,12 @@ impl Job for ClaimOrResetStreakInsuranceJob {
     fn execute(self) {
         mutate_state(|state| {
             let now = state.env.now();
-            if let Some(insurance_claim) = state.data.streak.claim_via_insurance(now) {
+            if let Some(insurance_claim) = state.data.user.streak.claim_via_insurance(now) {
                 state.mark_streak_insurance_claim(insurance_claim);
                 state.notify_user_index_of_chit(now);
                 state.set_up_streak_insurance_timer_job();
-            } else if state.data.streak.days(now) == 0 {
-                state.data.streak.reset_streak_insurance(now);
+            } else if state.data.user.streak.days(now) == 0 {
+                state.data.user.streak.reset_streak_insurance(now);
             }
         });
     }
