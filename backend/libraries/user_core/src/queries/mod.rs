@@ -1,16 +1,76 @@
 //! The query endpoints shared by the User and MultiUser canisters, one function per endpoint
 
 use crate::User;
+use chat_events::ChatEventsListReader;
+use oc_error_codes::OCErrorCode;
 use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::hash::Hash;
-use types::{Chat, TimestampMillis};
+use types::{Chat, EventOrExpiredRange, EventsResponse, MessageIndex, OCResult, TimestampMillis, UserId};
 
+mod c2c_bot_chat_summary;
+mod c2c_can_issue_access_token;
+mod c2c_groups_and_communities;
+mod chit_events;
+mod contacts;
+mod deleted_message;
+mod events;
+mod events_by_index;
+mod events_window;
+mod hot_group_exclusions;
 mod initial_state;
+mod message_activity_feed;
+mod messages_by_message_index;
+mod public_profile;
+mod token_swap_status;
+mod token_swaps;
 mod updates;
 
+pub use c2c_bot_chat_summary::c2c_bot_chat_summary;
+pub use c2c_can_issue_access_token::c2c_can_issue_access_token;
+pub use c2c_groups_and_communities::c2c_groups_and_communities;
+pub use chit_events::chit_events;
+pub use contacts::contacts;
+pub use deleted_message::deleted_message;
+pub use events::events;
+pub use events_by_index::events_by_index;
+pub use events_window::events_window;
+pub use hot_group_exclusions::hot_group_exclusions;
 pub use initial_state::initial_state;
+pub use message_activity_feed::message_activity_feed;
+pub use messages_by_message_index::messages_by_message_index;
+pub use public_profile::public_profile;
+pub use token_swap_status::token_swap_status;
+pub use token_swaps::token_swaps;
 pub use updates::updates;
+
+// Reads events from the user's chat with `them`, or a thread in it, with `read` choosing which,
+// and packages them as the events queries all respond. The caller checks the replica is up to date
+// first, as for every events query.
+fn read_events(
+    user: &User,
+    them: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    read: impl FnOnce(ChatEventsListReader) -> Vec<EventOrExpiredRange>,
+) -> OCResult<EventsResponse> {
+    let chat = user.direct_chats.get_or_err(&them.into())?;
+    let events_reader = chat
+        .events_reader(thread_root_message_index)
+        .ok_or(OCErrorCode::ThreadNotFound)?;
+
+    let latest_event_index = events_reader.latest_event_index().unwrap_or_default();
+    let (events, expired_event_ranges, _) = EventOrExpiredRange::split(read(events_reader));
+    let expired_message_ranges = chat.events().convert_to_message_ranges(&expired_event_ranges);
+
+    Ok(EventsResponse {
+        events,
+        unauthorized: Vec::new(),
+        expired_event_ranges,
+        expired_message_ranges,
+        latest_event_index,
+        chat_last_updated: chat.last_updated(),
+    })
+}
 
 // The user's pinned direct and group chats, most recently pinned first, which are pinned in the
 // one list

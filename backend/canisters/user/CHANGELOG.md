@@ -68,6 +68,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, which must be upgraded first, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
 - Move the referrals model into the `user_state` library, shared with the MultiUser canister ([#9464](https://github.com/open-chat-labs/open-chat/pull/9464))
 - Rename the `user_state` library to `user_core`, with the state under `model` and one module per shared endpoint under `queries` and `updates` ([#9470](https://github.com/open-chat-labs/open-chat/pull/9470))
+- Take the texts of the OpenChat bot's messages from `user_core`, shared with the MultiUser canister, which adds the missing space after the first sentence of the streak insurance message ([#9471](https://github.com/open-chat-labs/open-chat/pull/9471))
+- Validate `create_group` and `create_community` via `user_core`, shared with the MultiUser canister ([#9472](https://github.com/open-chat-labs/open-chat/pull/9472))
+- Implement `archive_unarchive_chats`, `pin_chat_v2`, `unpin_chat_v2`, `set_contact`, `public_profile`, `contacts`, `chit_events`, `deleted_message` and `messages_by_message_index` via `user_core`, shared with the MultiUser canister ([#9473](https://github.com/open-chat-labs/open-chat/pull/9473))
+- Implement the `events`, `events_window` and `events_by_index` queries via `user_core`, shared with the MultiUser canister ([#9474](https://github.com/open-chat-labs/open-chat/pull/9474))
+- Implement `hot_group_exclusions`, `message_activity_feed`, `c2c_groups_and_communities`, `mute_notifications`, `save_crypto_account`, `add_hot_group_exclusions`, `set_community_indexes` and `c2c_set_user_suspended` via `user_core`, shared with the MultiUser canister ([#9475](https://github.com/open-chat-labs/open-chat/pull/9475))
+- Implement `c2c_pay_for_premium_item`, `c2c_notify_achievement` and `report_message` via `user_core`, shared with the MultiUser canister ([#9477](https://github.com/open-chat-labs/open-chat/pull/9477))
+- Implement `token_swap_status`, `token_swaps`, `c2c_bot_chat_summary` and `c2c_can_issue_access_token_v2` via `user_core`, shared with the MultiUser canister ([#9478](https://github.com/open-chat-labs/open-chat/pull/9478))
+- Implement `c2c_install_bot`, `c2c_uninstall_bot`, `update_bot` and `join_video_call` via `user_core`, shared with the MultiUser canister ([#9479](https://github.com/open-chat-labs/open-chat/pull/9479))
+- Move the NNS and SNS governance clients into the `governance_clients` library and the P2P swap deposit and `from_account` validation into `ledger_utils`, shared with the MultiUser canister, and charge user accounts via `user_core` ([#9480](https://github.com/open-chat-labs/open-chat/pull/9480))
+- Implement the BTC and OneSec address, balance, approval and withdrawal endpoints via `user_core`, which derives the account from the user id, shared with the MultiUser canister ([#9481](https://github.com/open-chat-labs/open-chat/pull/9481))
+- Implement `claim_daily_chit` via `user_core`, shared with the MultiUser canister ([#9482](https://github.com/open-chat-labs/open-chat/pull/9482))
+- Apply LocalUserIndex events via `user_core`, shared with the MultiUser canister, which hands back the side effects to perform ([#9483](https://github.com/open-chat-labs/open-chat/pull/9483))
 
 ### Fixed
 

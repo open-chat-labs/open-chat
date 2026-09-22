@@ -31,7 +31,6 @@ use utils::regular_jobs::RegularJobs;
 
 mod crypto;
 mod data_previous;
-mod governance_clients;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -199,12 +198,8 @@ impl RuntimeState {
             LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim),
         ];
         self.push_local_user_index_canister_events(events, self.env.now());
-        let days_remaining_text = if days_remaining == 1 { "1 day".to_string() } else { format!("{days_remaining} days") };
         openchat_bot::send_text_message(
-            format!(
-                "One day of streak insurance was just used up to protect your streak from being lost.\
-Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
-            ),
+            user_core::openchat_bot::streak_insurance_claimed_text(new_streak, days_remaining),
             Vec::new(),
             false,
             self,
@@ -283,22 +278,6 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         }
     }
 
-    pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
-        if self.data.user.external_achievements.insert(name.clone()) {
-            self.data.user.chit_events.push(ChitEvent {
-                amount: chit_reward as i32,
-                timestamp: now,
-                reason: ChitEventType::ExternalAchievement(name),
-            });
-
-            self.notify_user_index_of_chit(now);
-
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
         self.push_local_user_index_canister_event(
             LocalUserIndexEvent::NotifyChit(NotifyChit {
@@ -323,37 +302,6 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         if self.data.user.blocked_users.unblock(user_id, now) {
             self.push_local_user_index_canister_event(LocalUserIndexEvent::UserUnblocked(user_id), now);
         }
-    }
-
-    pub fn reinstate_missed_daily_claims(&mut self, days_to_reinstate: Vec<u16>) {
-        let now = self.env.now();
-
-        let daily_claims = self.data.user.chit_events.daily_claims();
-
-        let new_events = self
-            .data
-            .user
-            .streak
-            .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
-
-        let count = new_events.len();
-        for event in new_events {
-            self.data.user.chit_events.push(event);
-        }
-        let new_streak = self.data.user.streak.days(now);
-
-        let first_line = if count == 1 {
-            "missed daily claim has been reinstated."
-        } else {
-            "missed daily claims have been reinstated."
-        };
-        let message = format!(
-            "{count} {first_line}
-Your streak is now {new_streak} days!"
-        );
-
-        openchat_bot::send_text_message(message, Vec::new(), false, self);
-        self.notify_user_index_of_chit(now);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -419,12 +367,10 @@ Your streak is now {new_streak} days!"
         true
     }
 
-    pub fn uninstall_bot(&mut self, bot_id: UserId) {
-        let now = self.env.now();
-
-        self.data.user.bots.remove(bot_id, now);
-
-        self.delete_direct_chat(bot_id, false, now);
+    // Queues the entries under the prefixes for removal from the stable memory map
+    pub fn garbage_collect_stable_memory_keys(&mut self, prefixes: Vec<BaseKeyPrefix>) {
+        self.data.stable_memory_keys_to_garbage_collect.extend(prefixes);
+        jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
     }
 }
 
