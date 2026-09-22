@@ -11,7 +11,6 @@ chat_events = { path = "../chat_events" }
 constants = { path = "../constants" }
 direct_chat = { path = "../direct_chat" }
 group_index_canister = { path = "../../canisters/group_index/api" }
-user_index_canister = { path = "../../canisters/user_index/api" }
 ic-ledger-types = { workspace = true }
 icrc-ledger-types = { workspace = true }
 installed_bots = { path = "../installed_bots" }
@@ -23,6 +22,7 @@ stable_memory_map = { path = "../stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../types" }
 user_canister = { path = "../../canisters/user/api" }
+user_index_canister = { path = "../../canisters/user_index/api" }
 utils = { path = "../utils" }
 
 [dev-dependencies]
