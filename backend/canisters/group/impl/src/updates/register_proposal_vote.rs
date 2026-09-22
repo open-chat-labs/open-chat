@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, Reader};
 use group_canister::register_proposal_vote::*;
 use oc_error_codes::OCErrorCode;
-use types::{CanisterId, EventIndex, OCResult, ProposalId, UserId};
+use types::{CanisterId, OCResult, ProposalId, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -77,13 +77,16 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
 }
 
 fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
+    // Re-resolve the member as their state may have changed during the c2c call
+    let member = state.data.chat.members.get_verified_member(user_id)?;
+    let min_visible_event_index = member.min_visible_event_index();
     let now = state.env.now();
 
     state
         .data
         .chat
         .events
-        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt, now)?;
+        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)?;
 
     state
         .data
