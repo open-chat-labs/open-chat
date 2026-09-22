@@ -7,6 +7,7 @@ on:
     paths:
       - "**.rs"
       - "**.toml"
+      - "**.did"
       - "**/Cargo.lock"
       - "scripts/generate-all-canister-wasms.sh"
       - "scripts/build-benchmarks-wasm.sh"
