@@ -461,7 +461,7 @@ impl RuntimeState {
     // immediately, as in the User canister, so that none are left to be wiped by a later garbage
     // collection if the user rejoins. Any which can't be removed within this message are left for
     // the garbage collection job.
-    fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
+    pub fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
         let remaining: Vec<_> = self
             .data
             .users

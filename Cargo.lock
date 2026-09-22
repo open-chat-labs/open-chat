@@ -13031,6 +13031,7 @@ dependencies = [
  "installed_bots",
  "itertools 0.15.0",
  "ledger_utils",
+ "local_user_index_canister",
  "msgpack",
  "oc_error_codes",
  "one_sec_minter_canister",
@@ -13103,6 +13104,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_time",

@@ -12,7 +12,7 @@ pub struct BotMessage {
 }
 
 impl BotMessage {
-    fn text(text: String) -> BotMessage {
+    pub(crate) fn text(text: String) -> BotMessage {
         BotMessage {
             content: MessageContentInternal::Text(TextContentInternal { text }),
             mentioned: Vec::new(),

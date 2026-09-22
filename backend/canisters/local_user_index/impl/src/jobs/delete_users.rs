@@ -1,4 +1,4 @@
-use crate::{RuntimeState, UserIndexEvent, UserToDelete, mutate_state};
+use crate::{CanisterToRefund, RuntimeState, UserIndexEvent, UserToDelete, jobs, mutate_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -47,6 +47,16 @@ async fn process_user(user: UserToDelete) {
                 // Only decrement once, even if a duplicate DeleteUser event queued the user twice
                 if removed && user_id.index() != 0 {
                     state.data.local_multi_user_canisters.on_user_removed(&user_id.canister_id());
+                }
+
+                // The user's canister has been uninstalled but still holds its cycles
+                if removed && user_id.index() == 0 {
+                    state.data.cycles_refund_queue.push_back(CanisterToRefund {
+                        canister_id: user_id.canister_id(),
+                        attempt: 0,
+                        retry_after: 0,
+                    });
+                    jobs::refund_cycles::start_job_if_required(state, None);
                 }
 
                 let now = state.env.now();

@@ -49,6 +49,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_user_upgrade_concurrency"
         | "update_blocked_username_patterns" => state.is_caller_platform_operator(),
         "record_authority_report_filed" => state.is_caller_platform_operator() || state.is_caller_authority_reporter(),
+        "refund_deleted_user_cycles" => state.is_caller_platform_operator(),
         "upload_wasm_chunk" => state.can_caller_upload_wasm_chunks(),
         "add_platform_moderator"
         | "add_platform_operator"

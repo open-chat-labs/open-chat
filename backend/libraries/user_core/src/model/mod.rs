@@ -29,7 +29,7 @@ pub use communities::Communities;
 pub use community::{Channel, Community};
 pub use contacts::{Contact, Contacts, SetContactResponse};
 pub use favourite_chats::FavouriteChats;
-pub use game_chit_keys::{GameChitKeys, validate_game_chit_args};
+pub use game_chit_keys::GameChitKeys;
 pub use group_chat::{GroupChat, GroupMessagesRead};
 pub use group_chats::GroupChats;
 pub use hot_group_exclusions::HotGroupExclusions;
