@@ -12,7 +12,7 @@ use test_case::test_case;
 use testing::rng::random_principal;
 use types::{ChitEventType, OptionUpdate, TimestampMillis};
 
-const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
+pub(crate) const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
 const ONE_CHAT: u128 = 100_000_000;
 
 #[test]

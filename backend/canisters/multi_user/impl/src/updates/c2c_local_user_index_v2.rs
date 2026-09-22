@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, DiamondMembershipPlanDuration, Timestamped};
+use types::{Achievement, DiamondMembershipPlanDuration, ReferralStatus, Timestamped};
 use user_canister::LocalUserIndexEvent;
 use user_canister::c2c_local_user_index_v2::*;
 use user_canister::mark_read::ChannelMessagesRead;
@@ -132,27 +132,63 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
                 openchat_bot::send_text_message(
                     user_index,
                     "Payment received for Diamond membership!".to_string(),
+                    Vec::new(),
                     false,
                     state,
                 );
             }
 
-            // TODO: Update the referrer's referral status, as the User canister does, once the
-            // MultiUser canister can send events to other User canisters
+            let status = if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
+                ReferralStatus::LifetimeDiamond
+            } else {
+                ReferralStatus::Diamond
+            };
+            state.set_referral_status_of_referrer(user_index, status);
         }
-        // TODO: Handle these once the MultiUser canister holds the state they apply to (storage,
-        // referrals, unique person proofs, external achievements, bots) or can send what they need
-        // (OpenChat bot messages with mentions, reinstated daily claims). Until then they are
-        // dropped, since failing the batch would also hold up the events above, so these must all
-        // be handled before users are registered into MultiUser canisters.
-        LocalUserIndexEvent::PhoneNumberConfirmed(_)
-        | LocalUserIndexEvent::StorageUpgraded(_)
-        | LocalUserIndexEvent::ReferredUserRegistered(_)
-        | LocalUserIndexEvent::OpenChatBotMessageV2(_)
-        | LocalUserIndexEvent::NotifyUniquePersonProof(_)
-        | LocalUserIndexEvent::ExternalAchievementAwarded(_)
-        | LocalUserIndexEvent::ReinstateMissedDailyClaims(_)
-        | LocalUserIndexEvent::BotUpdated(_)
-        | LocalUserIndexEvent::BotRemoved(_) => {}
+        LocalUserIndexEvent::PhoneNumberConfirmed(ev) => {
+            state.data.users.with_user_mut(user_index, |user| {
+                user.phone_is_verified = true;
+                user.storage_limit = ev.new_storage_limit;
+            });
+            openchat_bot::send_phone_number_confirmed_bot_message(user_index, &ev, state);
+        }
+        LocalUserIndexEvent::StorageUpgraded(ev) => {
+            state.data.users.with_user_mut(user_index, |user| {
+                user.storage_limit = ev.new_storage_limit;
+            });
+            openchat_bot::send_storage_ugraded_bot_message(user_index, &ev, state);
+        }
+        LocalUserIndexEvent::ReferredUserRegistered(ev) => {
+            state.data.users.with_user_mut(user_index, |user| {
+                user.referrals.set_status(ev.user_id, ReferralStatus::Registered, now);
+            });
+            openchat_bot::send_referred_user_joined_message(user_index, ev.user_id, ev.username, state);
+        }
+        LocalUserIndexEvent::OpenChatBotMessageV2(message) => {
+            openchat_bot::send_message(user_index, message.content.into(), message.mentioned, false, state);
+        }
+        LocalUserIndexEvent::NotifyUniquePersonProof(proof) => {
+            state.award_achievement_and_notify(user_index, Achievement::ProvedUniquePersonhood, now);
+            state.data.users.with_user_mut(user_index, |user| {
+                user.unique_person_proof = Some(*proof);
+            });
+            state.set_referral_status_of_referrer(user_index, ReferralStatus::UniquePerson);
+        }
+        LocalUserIndexEvent::ExternalAchievementAwarded(ev) => {
+            let awarded = state
+                .data
+                .users
+                .with_user_mut(user_index, |user| {
+                    user.award_external_achievement(ev.name, ev.chit_reward, now)
+                })
+                .unwrap_or_default();
+            if awarded {
+                state.notify_user_index_of_chit(user_index, now);
+            }
+        }
+        LocalUserIndexEvent::ReinstateMissedDailyClaims(days) => state.reinstate_missed_daily_claims(user_index, days),
+        // TODO: Handle these once the MultiUser canister holds each user's bots. Until then a user
+        // has none, so there is nothing to update.
+        LocalUserIndexEvent::BotUpdated(_) | LocalUserIndexEvent::BotRemoved(_) => {}
     }
 }

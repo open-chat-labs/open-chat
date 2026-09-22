@@ -5,12 +5,13 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::collections::HashSet;
 use types::{
-    Achievement, Chat, ChatId, ChitEvent, ChitEventType, CommunityId, MultiUserChat, TimestampMillis, Timestamped, UserId,
+    Achievement, Chat, ChatId, ChitEvent, ChitEventType, CommunityId, MultiUserChat, ReferralStatus, TimestampMillis,
+    Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{MessageActivityEvent, WalletConfig};
 use user_state::{
     BlockedUsers, ChitEvents, Communities, Community, Contacts, FavouriteChats, GameChitKeys, GroupChat, GroupChats,
-    HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, SavedCryptoAccounts, Streak,
+    HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, Referrals, SavedCryptoAccounts, Streak,
     ThreadsRead,
 };
 
@@ -64,6 +65,16 @@ pub struct User {
     pub communities: Communities,
     #[serde(default)]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(default)]
+    pub phone_is_verified: bool,
+    #[serde(default)]
+    pub storage_limit: u64,
+    #[serde(default)]
+    pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(default)]
+    pub external_achievements: HashSet<String>,
+    #[serde(default)]
+    pub referrals: Referrals,
 }
 
 impl User {
@@ -96,6 +107,11 @@ impl User {
             group_chats: GroupChats::default(),
             communities: Communities::default(),
             diamond_membership_expires_at: None,
+            phone_is_verified: false,
+            storage_limit: 0,
+            unique_person_proof: None,
+            external_achievements: HashSet::new(),
+            referrals: Referrals::default(),
         }
     }
 
@@ -163,6 +179,49 @@ impl User {
         } else {
             false
         }
+    }
+
+    // As the User canister's `award_external_achievement`, returning whether it was newly awarded
+    pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
+        if self.external_achievements.insert(name.clone()) {
+            self.chit_events.push(ChitEvent {
+                amount: chit_reward as i32,
+                timestamp: now,
+                reason: ChitEventType::ExternalAchievement(name),
+            });
+            true
+        } else {
+            false
+        }
+    }
+
+    // Records the status a user this user referred has reached, as the User canister does on a
+    // `SetReferralStatus` event, returning whether CHIT was awarded for it
+    pub fn set_referral_status(&mut self, user_id: UserId, status: ReferralStatus, now: TimestampMillis) -> bool {
+        let chit_reward = self.referrals.set_status(user_id, status, now);
+        let mut rewarded = false;
+
+        if chit_reward > 0 {
+            self.chit_events.push(ChitEvent {
+                amount: chit_reward as i32,
+                timestamp: now,
+                reason: ChitEventType::Referral(status),
+            });
+            rewarded = true;
+        }
+
+        if let Some(achievement) = match self.referrals.total_verified() {
+            1 => Some(Achievement::Referred1stUser),
+            3 => Some(Achievement::Referred3rdUser),
+            10 => Some(Achievement::Referred10thUser),
+            20 => Some(Achievement::Referred20thUser),
+            50 => Some(Achievement::Referred50thUser),
+            _ => None,
+        } {
+            rewarded |= self.award_achievement(achievement, now);
+        }
+
+        rewarded
     }
 
     // Adds an event to the user's message activity feed, unless it was caused by a user they have
