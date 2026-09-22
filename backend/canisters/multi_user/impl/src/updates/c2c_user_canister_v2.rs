@@ -6,8 +6,8 @@ use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{DeleteUndeleteMessagesArgs, EditMessageArgs, MessageContentInternal, NullEventPusher};
+use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use rand::RngExt;
-use std::collections::BTreeSet;
 use types::{
     Achievement, CanisterId, Chat, DirectChatUserNotificationPayload, DirectReactionAddedNotification, EventIndex,
     MessageContentInitial, TimestampMillis, UserId, UserType,
@@ -21,29 +21,16 @@ use user_canister::{
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_user_canister_v2(args: Args) -> Response {
-    let (caller, local_user_index_canister_id) =
-        read_state(|state| (state.env.caller(), state.data.local_user_index_canister_id));
-
-    // As in the User canister, a sender is only accepted if the caller holds them and they are a
-    // known OpenChat user. A sender one of the recipients already has a chat with is known, and any
-    // other is looked up in the LocalUserIndex before any of the events are applied.
-    let unverified_senders: BTreeSet<UserId> = read_state(|state| {
-        args.events
-            .iter()
-            .filter(|e| is_sender_held_by(e.value.sender, caller))
-            .filter(|e| state.index_of_local_user(e.value.recipient).is_some())
-            .filter(|e| !has_chat_with(e.value.recipient, e.value.sender, state))
-            .map(|e| e.value.sender)
-            .collect()
-    });
-    let mut rejected_senders = BTreeSet::new();
-    for sender in unverified_senders {
-        if !is_user(local_user_index_canister_id, sender).await {
-            rejected_senders.insert(sender);
-        }
+    // As in the User canister, the caller must be a User or MultiUser canister, and each event is
+    // only applied if it is from a user that kind of canister can act for. A sender the recipient
+    // has blocked is skipped when the event is applied.
+    let caller_kind = verify_caller(&args).await;
+    if caller_kind == CanisterKind::Neither {
+        return Response::Success;
     }
 
     mutate_state(|state| {
+        let caller = state.env.caller();
         for event in args.events {
             if !state
                 .data
@@ -57,11 +44,13 @@ async fn c2c_user_canister_v2(args: Args) -> Response {
                 recipient,
                 event,
             } = event.value;
-            if !is_sender_held_by(sender, caller) || rejected_senders.contains(&sender) {
+            if !can_act_for(caller_kind, sender, caller) {
                 continue;
             }
             // Events for a user who isn't in this canister can never be applied, so are dropped
-            if let Some(recipient_index) = state.index_of_local_user(recipient) {
+            if let Some(recipient_index) = state.index_of_local_user(recipient)
+                && !is_blocked(recipient_index, sender, state)
+            {
                 process_event(event, sender, recipient_index, state);
             }
         }
@@ -70,31 +59,74 @@ async fn c2c_user_canister_v2(args: Args) -> Response {
     Response::Success
 }
 
-// Whether the sender is the calling canister's user, either as the user a User canister holds, or
-// as one of the users a MultiUser canister holds
-fn is_sender_held_by(sender: UserId, caller: CanisterId) -> bool {
-    sender == UserId::from(caller) || UserId::acting_as(caller, Some(sender)).is_some()
-}
+// Which kind of canister the caller is. A MultiUser canister the UserIndex has already confirmed is
+// cached, and a User canister whose user one of the recipients has a chat with is known.
+// Any other caller is checked with the UserIndex, and cached if it is a MultiUser canister. A user
+// who has only just registered may not be known to the UserIndex yet, since it learns of them via an
+// event from their LocalUserIndex, so a caller the UserIndex doesn't know is then looked up in the
+// LocalUserIndex, which knows users as soon as they register.
+async fn verify_caller(args: &Args) -> CanisterKind {
+    let (caller, local_user_index_canister_id, known) = read_state(|state| {
+        let caller = state.env.caller();
+        (
+            caller,
+            state.data.local_user_index_canister_id,
+            known_caller_kind(caller, args, state),
+        )
+    });
+    if let Some(kind) = known {
+        return kind;
+    }
 
-fn has_chat_with(recipient: UserId, sender: UserId, state: &RuntimeState) -> bool {
-    state
-        .with_user(recipient, |user| {
-            user.direct_chats
-                .get(&sender.into())
-                .is_some_and(|chat| chat.user_type == UserType::User)
-        })
-        .unwrap_or_default()
-}
-
-async fn is_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> bool {
-    let args = local_user_index_canister::c2c_lookup_user::Args {
-        user_id_or_principal: user_id.as_principal(),
+    // Every LocalUserIndex holds all users, so asking this canister's own avoids a cross-subnet call
+    let kind = match local_user_index_canister_c2c_client::is_user_or_multi_user_canister(
+        local_user_index_canister_id,
+        &local_user_index_canister::is_user_or_multi_user_canister::Args { canister_id: caller },
+    )
+    .await
+    {
+        Ok(kind) => kind,
+        // Failing the call means the sender retries it
+        Err(_) => ic_cdk::trap("Failed to call local_user_index to verify the caller"),
     };
-    match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
-        Ok(local_user_index_canister::c2c_lookup_user::Response::Success(user)) => user.user_type == UserType::User,
-        Ok(_) => false,
-        // Failing the call means the sender retries it, as the User canister does
-        Err(_) => ic_cdk::trap("Failed to call local_user_index to verify user"),
+    if kind == CanisterKind::MultiUserCanister {
+        mutate_state(|state| state.data.known_multi_user_canisters.insert(caller));
+    }
+    kind
+}
+
+fn known_caller_kind(caller: CanisterId, args: &Args, state: &RuntimeState) -> Option<CanisterKind> {
+    if state.data.known_multi_user_canisters.contains(&caller) {
+        return Some(CanisterKind::MultiUserCanister);
+    }
+    let caller_user_id = UserId::from(caller);
+    let has_chat_with_caller = args.events.iter().any(|e| {
+        state
+            .with_user(e.value.recipient, |user| {
+                user.direct_chats
+                    .get(&caller_user_id.into())
+                    .is_some_and(|chat| chat.user_type == UserType::User)
+            })
+            .unwrap_or_default()
+    });
+    has_chat_with_caller.then_some(CanisterKind::UserCanister)
+}
+
+fn is_blocked(recipient_index: u16, sender: UserId, state: &RuntimeState) -> bool {
+    state
+        .data
+        .users
+        .with_user(recipient_index, |user| user.blocked_users.contains(&sender))
+        .unwrap_or(true)
+}
+
+// Whether a sender is one a canister of this kind can act for: a User canister acts only for its
+// own user, whose id is the canister's id, and a MultiUser canister only for the users it holds
+fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bool {
+    match kind {
+        CanisterKind::UserCanister => sender == UserId::from(caller),
+        CanisterKind::MultiUserCanister => UserId::acting_as(caller, Some(sender)).is_some(),
+        CanisterKind::Neither => false,
     }
 }
 

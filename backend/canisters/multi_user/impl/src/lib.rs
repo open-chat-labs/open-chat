@@ -15,7 +15,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
@@ -534,6 +534,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             timer_jobs: self.data.timer_jobs.len() as u32,
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
+            known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -579,6 +580,10 @@ struct Data {
     // batches its events for this canister's users together, so one checker covers them all.
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
+    // The MultiUser canisters the UserIndex has confirmed, which may send events on behalf of any of
+    // their users
+    #[serde(default)]
+    pub known_multi_user_canisters: HashSet<CanisterId>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
     pub rng_seed: [u8; 32],
@@ -610,6 +615,7 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             deleted_users_to_garbage_collect: Vec::new(),
             idempotency_checker: IdempotencyChecker::default(),
+            known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
             rng_seed,
             test_mode,
@@ -641,6 +647,7 @@ pub struct Metrics {
     pub timer_jobs: u32,
     pub queued_local_user_index_events: u32,
     pub queued_user_canister_events: u32,
+    pub known_multi_user_canisters: u32,
     pub canister_ids: CanisterIds,
 }
 

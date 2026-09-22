@@ -3746,20 +3746,182 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
     tick_many(env, 10);
     assert_eq!(queued_user_canister_events(env, canister_id), 0);
 
-    // Alice's canister verifies a sender it has no chat with via the LocalUserIndex, which doesn't
-    // yet know of users in MultiUser canisters, so for now it drops Bob's events
-    // TODO: Check that Alice receives them once users can be registered into MultiUser canisters
+    // Alice's canister accepts Bob, whom it has no chat with yet, since the UserIndex confirms the
+    // caller is a MultiUser canister, which only sends on behalf of the users it holds. Her copy of
+    // the chat has his message, edited, undeleted and with his reaction, and the time to live.
+    let alices_chat = client::user::happy_path::initial_state(env, &alice)
+        .direct_chats
+        .summaries
+        .into_iter()
+        .find(|c| c.them == bob_id)
+        .expect("Alice has no chat with Bob");
+    assert_eq!(alices_chat.events_ttl, Some(3_600_000));
+    let alices_events = client::user::happy_path::events(env, &alice, bob_id, 0.into(), true, 10, 10);
+    assert_eq!(messages(&alices_events), vec![(bob_id, "edited".to_string())]);
+    assert_eq!(message(&alices_events, message_id).reactions.len(), 1);
+
+    // A canister which isn't a User or MultiUser canister can't send as one of its "users"
+    let impostor = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+    let response = client::multi_user::c2c_user_canister_v2(
+        env,
+        impostor,
+        canister_id,
+        &user_canister::c2c_user_canister_v2::Args {
+            events: vec![IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: 1,
+                value: user_canister::c2c_user_canister_v2::Event {
+                    sender: UserId::new_indexed(impostor, 1),
+                    recipient: bob_id,
+                    event: UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
+                        events_ttl: Some(1),
+                        timestamp: now_millis(env),
+                    })),
+                },
+            }],
+        },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
     assert!(
-        client::user::happy_path::initial_state(env, &alice)
+        initial_state(env, bob, canister_id)
             .direct_chats
             .summaries
             .iter()
-            .all(|c| c.them != bob_id)
+            .all(|c| c.them != UserId::new_indexed(impostor, 1))
+    );
+
+    // Nor can a canister whose user id is its canister id but which is a bot rather than a user
+    let response = client::multi_user::c2c_user_canister_v2(
+        env,
+        canister_ids.proposals_bot,
+        canister_id,
+        &user_canister::c2c_user_canister_v2::Args {
+            events: vec![IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: 1,
+                value: user_canister::c2c_user_canister_v2::Event {
+                    sender: canister_ids.proposals_bot.into(),
+                    recipient: bob_id,
+                    event: UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
+                        events_ttl: Some(1),
+                        timestamp: now_millis(env),
+                    })),
+                },
+            }],
+        },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+    assert!(
+        initial_state(env, bob, canister_id)
+            .direct_chats
+            .summaries
+            .iter()
+            .all(|c| c.them != UserId::from(canister_ids.proposals_bot))
     );
 }
 
 fn queued_user_canister_events(env: &PocketIc, canister_id: CanisterId) -> u32 {
     serde_json::from_value(metrics(env, canister_id)["queued_user_canister_events"].clone()).unwrap()
+}
+
+#[test]
+fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let first =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let second =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    tick_many(env, 5);
+    let (_, alice_id) = create_user(env, local_user_index, first);
+    let (_, bob_id) = create_user(env, local_user_index, first);
+    let (carol, carol_id) = create_user(env, local_user_index, second);
+
+    let message_from = |env: &PocketIc, id: u64, sender: UserId, text: &str| IdempotentEnvelope {
+        created_at: now_millis(env),
+        idempotency_id: id,
+        value: user_canister::c2c_user_canister_v2::Event {
+            sender,
+            recipient: carol_id,
+            event: UserCanisterEvent::SendMessages(Box::new(user_canister::SendMessagesArgs {
+                messages: vec![user_canister::SendMessageArgs {
+                    thread_root_message_id: None,
+                    message_id: random_from_u128(),
+                    sender_message_index: 0.into(),
+                    content: chat_events::MessageContentInternal::Text(chat_events::TextContentInternal {
+                        text: text.to_string(),
+                    }),
+                    replies_to: None,
+                    forwarding: false,
+                    block_level_markdown: false,
+                    message_filter_failed: None,
+                    og_previews: Vec::new(),
+                }],
+                sender_name: "sender".to_string(),
+                sender_display_name: None,
+                sender_avatar_id: None,
+            })),
+        },
+    };
+
+    // The second MultiUser canister confirms the first with the UserIndex, then caches it, so that
+    // any of its users can message Carol, but it can't send as its own canister id
+    assert_eq!(known_multi_user_canisters(env, second), 0);
+    let first_batch = vec![
+        message_from(env, 1, alice_id, "from alice"),
+        message_from(env, 2, bob_id, "from bob"),
+        message_from(env, 3, first.into(), "from the canister"),
+    ];
+    let response = client::multi_user::c2c_user_canister_v2(
+        env,
+        first,
+        second,
+        &user_canister::c2c_user_canister_v2::Args { events: first_batch },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+    assert_eq!(known_multi_user_canisters(env, second), 1);
+    assert_eq!(
+        messages(&events(env, carol, second, carol_id, alice_id)),
+        vec![(alice_id, "from alice".to_string())]
+    );
+    assert_eq!(
+        messages(&events(env, carol, second, carol_id, bob_id)),
+        vec![(bob_id, "from bob".to_string())]
+    );
+    assert_eq!(initial_state(env, carol, second).direct_chats.summaries.len(), 2);
+
+    // Once Carol blocks Bob his messages are skipped, while Alice's still arrive
+    block_user(env, carol, second, bob_id);
+    let response = client::multi_user::c2c_user_canister_v2(
+        env,
+        first,
+        second,
+        &user_canister::c2c_user_canister_v2::Args {
+            events: vec![
+                message_from(env, 4, bob_id, "blocked"),
+                message_from(env, 5, alice_id, "again"),
+            ],
+        },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+    assert_eq!(
+        messages(&events(env, carol, second, carol_id, alice_id)),
+        vec![(alice_id, "from alice".to_string()), (alice_id, "again".to_string())]
+    );
+    assert_eq!(
+        messages(&events(env, carol, second, carol_id, bob_id)),
+        vec![(bob_id, "from bob".to_string())]
+    );
+}
+
+fn known_multi_user_canisters(env: &PocketIc, canister_id: CanisterId) -> u32 {
+    serde_json::from_value(metrics(env, canister_id)["known_multi_user_canisters"].clone()).unwrap()
 }
 
 fn multi_user_canister_count(env: &PocketIc, local_user_index: CanisterId) -> u64 {

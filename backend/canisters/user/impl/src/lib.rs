@@ -494,6 +494,10 @@ struct Data {
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     pub idempotency_checker: IdempotencyChecker,
+    // The MultiUser canisters the UserIndex has confirmed, which may send events on behalf of any of
+    // their users
+    #[serde(default)]
+    pub known_multi_user_canisters: HashSet<CanisterId>,
     pub bots: InstalledBots,
     pub premium_items: PremiumItems,
     #[serde(default)]
@@ -586,6 +590,7 @@ impl Data {
             stable_memory_keys_to_garbage_collect: Vec::new(),
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
+            known_multi_user_canisters: HashSet::new(),
             bots: InstalledBots::default(),
             premium_items: PremiumItems::default(),
             game_chit_keys: GameChitKeys::default(),
