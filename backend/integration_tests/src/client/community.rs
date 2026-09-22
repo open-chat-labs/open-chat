@@ -38,6 +38,7 @@ generate_msgpack_update_call!(enable_invite_code);
 generate_msgpack_update_call!(import_group);
 generate_msgpack_update_call!(leave_channel);
 generate_msgpack_update_call!(register_poll_vote);
+generate_msgpack_update_call!(register_proposal_vote_v2);
 generate_msgpack_update_call!(register_webhook);
 generate_msgpack_update_call!(remove_member);
 generate_msgpack_update_call!(remove_member_from_channel);
