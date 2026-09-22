@@ -10,6 +10,11 @@ cycles. To recover them, for each such canister:
 2. call `refund`, which replies with the number of cycles sent,
 3. uninstall it again.
 
+The LocalUserIndex embeds `cycles_refunder.wasm` and does exactly this (see its `refund_cycles`
+job), both as part of deleting a user and, for users deleted before that was the case, when a
+platform operator calls `refund_deleted_user_cycles` on the UserIndex. It passes its own
+CyclesDispenser canister ID as the init arg, so works on any network.
+
 The target defaults to the production CyclesDispenser (`gonut-hqaaa-aaaaf-aby7a-cai`). **On
 any other network pass the CyclesDispenser's principal as the init arg**, eg.
 `(opt principal "mq2tp-baaaa-aaaaf-aucva-cai")` on ic_test, otherwise the cycles are silently
@@ -42,9 +47,9 @@ installed a second time without first topping the canister up.
 wat2wasm cycles_refunder.wat -o cycles_refunder.wasm
 ```
 
-`wat2wasm` is part of [wabt](https://github.com/WebAssembly/wabt) (`brew install wabt`).
-`wasm-tools parse` works too. The integration tests compile the `.wat` themselves, so no build
-step is needed to run them:
+`wat2wasm` is part of [wabt](https://github.com/WebAssembly/wabt) (`brew install wabt`). The
+built `cycles_refunder.wasm` is committed alongside the `.wat` since the LocalUserIndex embeds it
+at compile time, and an integration test checks the two match:
 
 ```
 cargo test --package integration_tests cycles_refunder

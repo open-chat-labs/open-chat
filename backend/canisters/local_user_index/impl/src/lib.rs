@@ -564,6 +564,8 @@ impl RuntimeState {
             user_events_queue_length: self.data.user_events_queue.len(),
             user_events_queue_in_progress: self.data.user_events_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
+            cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
+            cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
             notification_pushers: self.data.notification_pushers.iter().copied().collect(),
@@ -667,6 +669,10 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub users_to_delete_queue: VecDeque<UserToDelete>,
+    #[serde(default)]
+    pub cycles_refund_queue: VecDeque<CanisterToRefund>,
+    #[serde(default)]
+    pub cycles_refunded_from_deleted_users: Cycles,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -718,6 +724,14 @@ pub struct UserToDelete {
     #[deprecated]
     pub triggered_by_user: bool,
     pub attempt: usize,
+}
+
+// A deleted user's uninstalled canister whose cycles are to be sent to the CyclesDispenser
+#[derive(Serialize, Deserialize)]
+pub struct CanisterToRefund {
+    pub canister_id: CanisterId,
+    pub attempt: usize,
+    pub retry_after: TimestampMillis,
 }
 
 impl Data {
@@ -817,6 +831,8 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
+            cycles_refund_queue: VecDeque::new(),
+            cycles_refunded_from_deleted_users: 0,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
             bots: BotsMap::default(),
@@ -892,6 +908,8 @@ pub struct Metrics {
     // whose last batch is still awaiting its reply
     pub user_events_queue_in_progress: usize,
     pub users_to_delete_queue_length: usize,
+    pub cycles_refund_queue_length: usize,
+    pub cycles_refunded_from_deleted_users: Cycles,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
     pub user_versions: BTreeMap<String, u32>,

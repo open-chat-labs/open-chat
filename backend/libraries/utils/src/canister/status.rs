@@ -14,6 +14,7 @@ use types::{C2CError, CanisterId};
 #[derive(CandidType, Deserialize, Debug)]
 pub struct CanisterStatusMinimal {
     pub status: CanisterStatusType,
+    pub module_hash: Option<Vec<u8>>,
     pub cycles: Nat,
     pub idle_cycles_burned_per_day: Nat,
 }
