@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Extract `deep_message_links` into its own library and drop the direct dependency on `chat_events` ([#9493](https://github.com/open-chat-labs/open-chat/pull/9493))
+
 ## [[2.0.2058](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2058-user_index)] - 2026-09-18
 
 ### Added

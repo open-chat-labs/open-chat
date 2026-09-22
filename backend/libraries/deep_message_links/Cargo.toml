@@ -1,0 +1,10 @@
+[package]
+name = "deep_message_links"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+types = { path = "../types" }
+
+[dev-dependencies]
+candid = { workspace = true }
