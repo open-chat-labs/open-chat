@@ -108,9 +108,12 @@
                             </div>
                             <div class="msg">
                                 <Translatable
-                                    resourceKey={i18nKey("videoCall.remoteStart", {
-                                        name: chat.initiator,
-                                    })} />
+                                    resourceKey={i18nKey(
+                                        $incomingVideoCall?.callType === "audio"
+                                            ? "videoCall.audioRemoteStart"
+                                            : "videoCall.remoteStart",
+                                        { name: chat.initiator },
+                                    )} />
                             </div>
                         </div>
                     </div>

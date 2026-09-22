@@ -111,9 +111,9 @@ import type {
     VideoCallParticipant,
     VideoCallParticipantsResponse,
     VideoCallPresence,
-    VideoCallType,
     VideoContent,
     WebhookDetails,
+    WireVideoCallType,
 } from "@shared";
 import {
     ErrorCode,
@@ -140,6 +140,7 @@ import {
     nullMembership,
     toBigInt32,
     toBigInt64,
+    videoCallTypeFromWire,
 } from "@shared";
 import type {
     AcceptSwapSuccess,
@@ -958,7 +959,7 @@ function videoCallContent(value: TVideoCallContent): VideoCallContent {
         kind: "video_call_content",
         ended: value.ended,
         participants: value.participants.map(videoCallParticipant),
-        callType: videoCallType(value.call_type),
+        callType: videoCallTypeFromWire(videoCallType(value.call_type), value.audio_only),
     };
 }
 
@@ -969,7 +970,7 @@ function videoCallParticipant(value: TCallParticipant): VideoCallParticipant {
     };
 }
 
-function videoCallType(value: TVideoCallType): VideoCallType {
+function videoCallType(value: TVideoCallType): WireVideoCallType {
     if (value === "Default") {
         return "default";
     }
@@ -3150,7 +3151,7 @@ export function videoCallInProgress(value: VideoCall): VideoCallInProgress {
         startedBy: principalBytesToString(value.started_by),
         messageIndex: value.message_index,
         messageId: value.message_id,
-        callType: value.call_type === "Default" ? "default" : "broadcast",
+        callType: videoCallTypeFromWire(videoCallType(value.call_type), value.audio_only),
         joinedByCurrentUser: value.joined_by_current_user,
     };
 }

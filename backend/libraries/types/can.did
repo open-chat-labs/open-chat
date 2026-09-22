@@ -1576,6 +1576,7 @@ type VideoCallContentInitial = record {
 
 type VideoCallContent = record {
     call_type : VideoCallType;
+    audio_only : bool;
     ended : opt TimestampMillis;
     participants : vec CallParticipant;
     hidden_participants : nat32;
@@ -1702,6 +1703,7 @@ type VideoCall = record {
     message_index : MessageIndex;
     message_id : MessageId;
     call_type : VideoCallType;
+    audio_only : bool;
     joined_by_current_user : bool;
 };
 

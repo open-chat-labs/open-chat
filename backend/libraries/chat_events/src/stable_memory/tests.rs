@@ -30,8 +30,9 @@ use rand::{Rng, RngExt, SeedableRng};
 use stable_memory_map::{ChatEventKeyPrefix, Key, KeyPrefix, with_map};
 use testing::rng::deterministic::{random_from_principal, random_from_u32, random_from_u128, random_principal, random_string};
 use types::{
-    EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal, ProposalDecisionStatus,
-    ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo, VideoCallPresence, VideoCallType,
+    CallKind, EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal,
+    ProposalDecisionStatus, ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo,
+    VideoCallPresence,
 };
 
 mod test_values;
@@ -470,7 +471,7 @@ fn p2p_swap_content() {
 fn video_call_content() {
     let mut rng = get_deterministic_rng();
     let content = MessageContentInternal::VideoCall(VideoCallContentInternal {
-        call_type: VideoCallType::Broadcast,
+        call_type: CallKind::Broadcast,
         ended: Some(rng.next_u64()),
         participants: [
             (

@@ -16,7 +16,7 @@ import type {
     RegisterUserResponse,
     Tally,
     VerifiedCredentialArgs,
-    VideoCallType,
+    WireVideoCallType,
 } from "@shared";
 import {
     CommonResponses,
@@ -25,6 +25,7 @@ import {
     UnsupportedValueError,
     isSuccessfulEventsResponse,
     toBigInt32,
+    videoCallTypeToWire,
 } from "@shared";
 import type {
     BotActionScope as ApiBotActionScope,
@@ -90,13 +91,16 @@ export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAcces
     switch (domain.kind) {
         case "join_video_call":
             return { JoinVideoCall: { chat: apiChatIdentifier(domain.chatId) } };
-        case "start_video_call":
+        case "start_video_call": {
+            const { callType, audioOnly } = videoCallTypeToWire(domain.callType);
             return {
                 StartVideoCall: {
-                    call_type: apiCallType(domain.callType),
+                    call_type: apiCallType(callType),
+                    audio_only: audioOnly,
                     chat: apiChatIdentifier(domain.chatId),
                 },
             };
+        }
         case "mark_video_call_ended":
             return { MarkVideoCallAsEnded: { chat: apiChatIdentifier(domain.chatId) } };
 
@@ -185,7 +189,7 @@ export function apiBotCommandArgValue(domain: CommandArg): BotCommandArgValue {
     }
 }
 
-export function apiCallType(domain: VideoCallType): TVideoCallType {
+export function apiCallType(domain: WireVideoCallType): TVideoCallType {
     if (domain === "broadcast") return "Broadcast";
     if (domain === "default") return "Default";
     throw new UnsupportedValueError("Unexpected VideoCallType received", domain);

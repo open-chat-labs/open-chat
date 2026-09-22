@@ -930,6 +930,9 @@ pub struct VideoCallContentInitial {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContent {
     pub call_type: VideoCallType,
+    #[serde(default)]
+    #[ts(as = "Option<bool>", optional)]
+    pub audio_only: bool,
     pub ended: Option<TimestampMillis>,
     pub participants: Vec<CallParticipant>,
     pub hidden_participants: u32,
