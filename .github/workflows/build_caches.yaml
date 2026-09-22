@@ -9,12 +9,18 @@ on:
       - "**.toml"
       - "**/Cargo.lock"
       - "scripts/generate-all-canister-wasms.sh"
+      - "scripts/build-benchmarks-wasm.sh"
+      - "canbench.yml"
       - ".github/workflows/setup-rust/**"
       - ".github/workflows/build_caches.yaml"
 
 name: Build caches
 
 jobs:
+  # Warms the cache the PR checks restore (backend.yaml, candid.yaml, benchmarks.yaml). Each step
+  # below matches the command a PR job runs, because cargo only reuses an artifact when the
+  # command that produced it had the same profile, target and flags. The cache keeps the
+  # dependencies only: workspace crates are always rebuilt by the PR jobs.
   build_all_debug:
     name: Build all in debug mode
     runs-on: ubuntu-latest
@@ -23,10 +29,26 @@ jobs:
       - uses: ./.github/workflows/setup-rust
         with:
           cache: write
+
+      # The unit tests
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --workspace --exclude open-chat --exclude tauri-plugin-oc --tests
+
+      # Clippy checks the dependencies in `check` mode, whose artifacts are separate from the
+      # `build` ones above; without this step it re-checks every dependency on every PR
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --workspace --exclude open-chat --exclude tauri-plugin-oc --tests
+
+      # The benchmarks: `canbench` itself (built from source, so a couple of minutes if it is not
+      # already in the cached ~/.cargo/bin) and the wasm dependencies it builds
+      - name: Install canbench
+        run: cargo install canbench --version 0.6.0
+      - name: Build benchmarks wasm
+        run: ./scripts/build-benchmarks-wasm.sh
 
   # Warms the cache the integration tests restore: the canister wasms, `ic-wasm`, and the debug
   # build of the test crate. Uses the same runner spec as the integration tests so the cached
