@@ -1020,10 +1020,6 @@ impl ChatEvents {
         adopt: bool,
         now: TimestampMillis,
     ) -> OCResult<UpdateMessageSuccess> {
-        if !self.main.is_accessible(message_index.into(), min_visible_event_index) {
-            return Err(OCErrorCode::ProposalNotFound.into());
-        }
-
         match self.update_message(
             None,
             message_index.into(),
@@ -2859,7 +2855,12 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
-        let result = event_list.update_event(event_key, update_event_fn);
+        // `min_visible_event_index` refers to the main events list. Thread events are indexed from
+        // zero, and access to the thread has already been checked via its root message above.
+        let min_visible_event_index =
+            if thread_root_message_index.is_some() { EventIndex::default() } else { min_visible_event_index };
+
+        let result = event_list.update_event(event_key, min_visible_event_index, update_event_fn);
         let latest_event_index = event_list.latest_event_index().unwrap_or_default();
 
         if let Some(now) = now_if_should_mark_updated
