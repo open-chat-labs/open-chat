@@ -5,3 +5,6 @@ edition.workspace = true
 
 [dependencies]
 types = { path = "../types" }
+
+[dev-dependencies]
+candid = { workspace = true }
