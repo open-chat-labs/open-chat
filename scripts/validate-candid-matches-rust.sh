@@ -2,35 +2,23 @@
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
-cd $SCRIPT_DIR/..
+cd "$SCRIPT_DIR/.." || exit 1
 
-CANDID_FILES=()
-PACKAGES=()
-for canister_path in ./backend/*canisters/*/
-do
-  canister_path=${canister_path%*/}
-  canister_name=${canister_path##*/}
-  candid=${canister_path}/api/can.did
+# Build every generator in one go (see the comments in the script). Sets CANDID_FILES and TARGET_DIR.
+source ./scripts/build-candid-generators.sh || exit 1
 
-  if test -f "$candid"; then
-    CANDID_FILES+=("$candid")
-    PACKAGES+=(--package "${canister_name}_canister")
-  fi
-done
-
-# Build every generator in one go: it lets cargo compile the packages in parallel, where running
-# them one at a time below would build each one's dependencies serially
-cargo build "${PACKAGES[@]}" || exit 1
-
+# Run the binaries directly rather than via `cargo run -p`: cargo resolves dependency features per
+# invocation, so a single-package `cargo run` would want a different build of the shared
+# dependencies from the one the batched build just produced, and rebuild them.
 for candid in "${CANDID_FILES[@]}"
 do
   canister_path=$(dirname "$(dirname "$candid")")
   canister_name=${canister_path##*/}
 
   echo validating ${candid}
-  cargo run -p ${canister_name}_canister > temp.did
-  didc check --strict ${candid} temp.did || exit 1
-  didc check --strict temp.did ${candid} || exit 1
+  "${TARGET_DIR}/debug/${canister_name}_canister" > temp.did || exit 1
+  didc check --strict "${candid}" temp.did || exit 1
+  didc check --strict temp.did "${candid}" || exit 1
 done
 
 rm temp.did

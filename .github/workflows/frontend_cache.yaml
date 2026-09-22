@@ -1,0 +1,28 @@
+# Populates the npm cache the frontend PR jobs restore. A cache saved by a PR run is only visible
+# to that PR, so it has to be saved from master to be shared, and only the lockfile affects it.
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "frontend/package-lock.json"
+      - ".github/workflows/frontend_cache.yaml"
+
+name: Frontend cache
+
+jobs:
+  npm_cache:
+    name: Populate the npm cache
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.20.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      # Fills ~/.npm; setup-node saves it to the cache when the job ends
+      - run: npm ci
