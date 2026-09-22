@@ -333,6 +333,8 @@ function emptyResolvedMessagePreviews(): ResolvedMessagePreviews {
     return { messages: new AsyncMessageContextMap(), previews: new Map() };
 }
 
+const NNS_ERROR_TYPE_NEURON_ALREADY_VOTED = 19;
+
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
     private _userIndexClient: UserIndexClient;
@@ -3406,8 +3408,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // Lists the neurons the user's principal controls or is hot-keyed to, then votes with each of
-    // them in parallel. Succeeds if any neuron's vote is accepted, since the others will typically
-    // have failed because they had already voted or are not eligible for this proposal.
+    // them in parallel. The vote counts as cast if any neuron's vote is accepted, or if any neuron
+    // had already voted (eg. via the NNS dapp), so that the vote still gets recorded in OpenChat.
+    // Other neurons will typically have failed because they are not eligible for this proposal.
     private async voteWithNeurons(
         governanceCanisterId: string,
         proposalId: bigint,
@@ -3439,22 +3442,45 @@ export class OpenChatAgent extends EventTarget {
             );
         }
 
-        if (votes.some((v) => v.status === "fulfilled" && v.value.kind === "success")) {
+        const outcomes: ManageNeuronResponse[] = votes.map((v) =>
+            v.status === "fulfilled"
+                ? v.value
+                : { kind: "error", type: -1, message: String(v.reason) },
+        );
+
+        if (outcomes.some((o) => o.kind === "success" || isAlreadyVoted(o, isNns))) {
             return CommonResponses.success();
         }
 
-        const failures = votes.map((v) =>
-            v.status === "fulfilled" ? v.value : { kind: "error", message: String(v.reason) },
-        );
-        this.config.logger.error("Failed to vote with any neuron", failures);
+        this.config.logger.error("Failed to vote with any neuron", outcomes);
+        const first = outcomes.find((o) => o.kind === "error");
         return {
             kind: "error",
-            code: ErrorCode.Unknown,
-            message: failures.find((f) => "message" in f)?.message,
+            code:
+                first !== undefined && isNotAcceptingVotes(first)
+                    ? ErrorCode.ProposalNotAcceptingVotes
+                    : ErrorCode.Unknown,
+            message: first?.kind === "error" ? first.message : undefined,
         };
 
         function noEligibleNeurons(): RegisterProposalVoteResponse {
             return { kind: "error", code: ErrorCode.NoEligibleNeurons, message: undefined };
+        }
+
+        // NNS governance has a dedicated error type for this, SNS governance reports it as a
+        // precondition failure, so fall back to the message both of them use
+        function isAlreadyVoted(outcome: ManageNeuronResponse, isNns: boolean): boolean {
+            if (outcome.kind !== "error") return false;
+            if (isNns && outcome.type === NNS_ERROR_TYPE_NEURON_ALREADY_VOTED) return true;
+            return /already voted/i.test(outcome.message);
+        }
+
+        // Best effort: both canisters report a closed proposal as a precondition failure whose
+        // message mentions the deadline
+        function isNotAcceptingVotes(outcome: ManageNeuronResponse): boolean {
+            return (
+                outcome.kind === "error" && /deadline|not accepting votes/i.test(outcome.message)
+            );
         }
     }
 

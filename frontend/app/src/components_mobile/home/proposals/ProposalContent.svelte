@@ -126,7 +126,7 @@
     function noEligibleNeuronsMessage(): string {
         return client.frontendProposalVotingEnabled()
             ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
-                  values: { principal: client.AuthPrincipal },
+                  values: { principal: client.OcIdentityPrincipal },
               })
             : $_("proposal.noEligibleNeuronsMessage", {
                   values: { userId: $currentUserIdStore },
