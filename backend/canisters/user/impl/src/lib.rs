@@ -278,22 +278,6 @@ impl RuntimeState {
         }
     }
 
-    pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
-        if self.data.user.external_achievements.insert(name.clone()) {
-            self.data.user.chit_events.push(ChitEvent {
-                amount: chit_reward as i32,
-                timestamp: now,
-                reason: ChitEventType::ExternalAchievement(name),
-            });
-
-            self.notify_user_index_of_chit(now);
-
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
         self.push_local_user_index_canister_event(
             LocalUserIndexEvent::NotifyChit(NotifyChit {
@@ -318,29 +302,6 @@ impl RuntimeState {
         if self.data.user.blocked_users.unblock(user_id, now) {
             self.push_local_user_index_canister_event(LocalUserIndexEvent::UserUnblocked(user_id), now);
         }
-    }
-
-    pub fn reinstate_missed_daily_claims(&mut self, days_to_reinstate: Vec<u16>) {
-        let now = self.env.now();
-
-        let daily_claims = self.data.user.chit_events.daily_claims();
-
-        let new_events = self
-            .data
-            .user
-            .streak
-            .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
-
-        let count = new_events.len();
-        for event in new_events {
-            self.data.user.chit_events.push(event);
-        }
-        let new_streak = self.data.user.streak.days(now);
-
-        let message = user_core::openchat_bot::missed_daily_claims_reinstated_text(count, new_streak);
-
-        openchat_bot::send_text_message(message, Vec::new(), false, self);
-        self.notify_user_index_of_chit(now);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -404,12 +365,6 @@ impl RuntimeState {
 
         jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
         true
-    }
-
-    pub fn uninstall_bot(&mut self, bot_id: UserId) {
-        let now = self.env.now();
-        let prefixes = self.data.user.uninstall_bot(bot_id, now);
-        self.garbage_collect_stable_memory_keys(prefixes);
     }
 
     // Queues the entries under the prefixes for removal from the stable memory map
