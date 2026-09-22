@@ -67,6 +67,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Queue direct chat events per canister, paired with their recipient, and send those for users in a MultiUser canister via its `c2c_user_canister_v2` ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
 - Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, which must be upgraded first, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
 - Move the referrals model into the `user_state` library, shared with the MultiUser canister ([#9464](https://github.com/open-chat-labs/open-chat/pull/9464))
+- Rename the `user_state` library to `user_core`, with the state under `model` and one module per shared endpoint under `queries` and `updates` ([#9470](https://github.com/open-chat-labs/open-chat/pull/9470))
 
 ### Fixed
 
@@ -79,7 +80,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the message activity feed model into the shared `user_state` library, so the MultiUser canister can hold one per user ([#9433](https://github.com/open-chat-labs/open-chat/pull/9433))
 - Move the PIN number, hot group exclusions and saved crypto accounts models into the shared `user_state` library, so the MultiUser canister can hold them per user ([#9434](https://github.com/open-chat-labs/open-chat/pull/9434))
 - Reject paying for streak insurance which would take the days insured over 30, the most the UI allows, since the price and the count of days overflow otherwise ([#9441](https://github.com/open-chat-labs/open-chat/pull/9441))
-- Rename the `user_state` library to `user_core`, with the state under `model` and one module per shared endpoint under `queries` and `updates` ([#9470](https://github.com/open-chat-labs/open-chat/pull/9470))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-12
 
