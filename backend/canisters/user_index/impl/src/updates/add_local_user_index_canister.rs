@@ -148,6 +148,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 moderation_referral_config: state.data.moderation_referral_config.clone(),
                 media_scan_config: state.data.media_scan_config.clone(),
                 multi_user_canisters_enabled: state.data.multi_user_canisters_enabled,
+                call_push_enabled: state.data.call_push_enabled,
                 test_mode: state.data.test_mode,
             },
         })

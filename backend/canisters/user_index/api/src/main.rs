@@ -62,6 +62,7 @@ fn main() {
     generate_ts_method!(user_index, register_bot);
     generate_ts_method!(user_index, remove_bot);
     generate_ts_method!(user_index, set_diamond_membership_fees);
+    generate_ts_method!(user_index, set_call_push_enabled);
     generate_ts_method!(user_index, set_display_name);
     generate_ts_method!(user_index, set_hide_online_status);
     generate_ts_method!(user_index, set_premium_item_cost);
@@ -81,6 +82,7 @@ fn main() {
     generate_ts_method!(user_index, propose_protected_action);
     generate_ts_method!(user_index, confirm_protected_action);
     generate_ts_method!(user_index, cancel_protected_action);
+    generate_ts_method!(user_index, call_push_enabled);
     generate_ts_method!(user_index, moderation_config);
     generate_ts_method!(user_index, contest_moderation_sanction);
     generate_ts_method!(user_index, record_authority_report_filed);

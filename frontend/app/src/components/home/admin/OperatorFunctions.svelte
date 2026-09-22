@@ -88,6 +88,9 @@
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     let openAiKeySet = $state(false);
+    // The native call push kill switch (#9456): what the user index holds, and what the toggle shows
+    let callPushEnabled = $state(false);
+    let currentCallPush: boolean | undefined = $state(undefined);
     let mediaScanEnabled = $state(false);
     let mediaScanScanners = $state("");
     let currentMediaScan = $state("");
@@ -117,7 +120,41 @@
         );
     }
 
+    function refreshCallPush() {
+        client
+            .callPushEnabled()
+            .then((enabled) => {
+                currentCallPush = enabled;
+                callPushEnabled = enabled;
+            })
+            .catch(() => (currentCallPush = undefined));
+    }
+
+    // Flips the switch on the user index, which fans it out to every local user index
+    function applyCallPush(): Promise<void> {
+        busy.add(20);
+        return client
+            .setCallPushEnabled(callPushEnabled)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast(
+                        i18nKey(`Native call push ${callPushEnabled ? "enabled" : "disabled"}`),
+                    );
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey(`Failed to update native call push: ${resp.message ?? `code ${resp.code}`}`),
+                    );
+                }
+            })
+            .catch((err) => toastStore.showFailureToast(i18nKey("Failed to update native call push"), err))
+            .finally(() => {
+                busy.delete(20);
+                refreshCallPush();
+            });
+    }
+
     onMount(() => {
+        refreshCallPush();
         // Pre-fill the moderation config so the forms show what is actually set rather than
         // being write-only
         client.moderationConfig().then((config) => {
@@ -943,6 +980,33 @@
                 disabled={busy.has(11)}
                 loading={busy.has(11)}
                 onClick={() => setVaultLegalHold(false)}>Clear hold</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Native call push</div>
+        <div class="name-value">
+            <div class="label">Current:</div>
+            <div class="value">
+                <Input
+                    disabled
+                    value={currentCallPush === undefined
+                        ? "unknown"
+                        : currentCallPush
+                          ? "Enabled"
+                          : "Disabled"} />
+            </div>
+        </div>
+        <div class="name-value">
+            <div class="label">Enabled:</div>
+            <div class="value">
+                <Toggle small id="call-push-enabled" bind:checked={callPushEnabled} />
+            </div>
+        </div>
+        <ButtonGroup align="end">
+            <Button tiny loading={busy.has(20)} disabled={busy.has(20)} onClick={applyCallPush}>
+                Apply
+            </Button>
         </ButtonGroup>
     </section>
 

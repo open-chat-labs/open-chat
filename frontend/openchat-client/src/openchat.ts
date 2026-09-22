@@ -10920,6 +10920,15 @@ export class OpenChat {
     dailyPuzzleSetEnabled(enabled: boolean): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleSetEnabled", enabled });
     }
+
+    // The native call push kill switch (#9456), platform operators only
+    callPushEnabled(): Promise<boolean> {
+        return this.#worker.send({ kind: "callPushEnabled" });
+    }
+
+    setCallPushEnabled(enabled: boolean): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setCallPushEnabled", enabled });
+    }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });
     }

@@ -1572,6 +1572,10 @@ function getAction(
 
         case "dailyPuzzleSetEnabled":
             return agent.dailyPuzzleSetEnabled(payload.enabled);
+        case "callPushEnabled":
+            return agent.callPushEnabled();
+        case "setCallPushEnabled":
+            return agent.setCallPushEnabled(payload.enabled);
 
         case "dailyPuzzleRegenerateToday":
             return agent.dailyPuzzleRegenerateToday(payload.gameId);

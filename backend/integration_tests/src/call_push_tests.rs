@@ -40,20 +40,20 @@ impl Feed {
     }
 
     // Test envs are pooled and a switch flipped by one test stays flipped for the next, so a
-    // test that needs a state sets it rather than assuming it
+    // test that needs a state sets it rather than assuming it. The switch is flipped the way
+    // the admin page flips it: on the user index, which fans it out to every local user index.
     fn set_call_push(&self, env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, enabled: bool) {
         let operator = client::register_user(env, canister_ids);
         user_index::happy_path::add_platform_operator(env, controller, canister_ids.user_index, operator.user_id);
         tick_many(env, 3);
-        for lui in &self.luis {
-            let response = local_user_index::set_call_push_enabled(
-                env,
-                operator.principal,
-                *lui,
-                &local_user_index_canister::set_call_push_enabled::Args { enabled },
-            );
-            assert!(matches!(response, UnitResult::Success));
-        }
+        let response = user_index::set_call_push_enabled(
+            env,
+            operator.principal,
+            canister_ids.user_index,
+            &user_index_canister::set_call_push_enabled::Args { enabled },
+        );
+        assert!(matches!(response, UnitResult::Success));
+        tick_many(env, 3);
     }
 
     fn snapshot(&self, env: &PocketIc, controller: Principal) -> Vec<u64> {
@@ -562,4 +562,35 @@ fn invariant_15_a_call_that_times_out_dismisses_the_same_as_one_that_is_ended() 
     let pushes = feed.pushes_since(env, *controller, &index);
     assert_eq!(dismissal_kinds(&pushes, callee.user_id), vec!["ended"]);
     assert_eq!(dismissal_kinds(&pushes, caller.user_id), vec!["answered_elsewhere"]);
+}
+
+// #9456 invariant 16: only a platform operator can flip the switch, on the user index and on
+// a local user index, and the user index reports what it holds
+#[test]
+fn invariant_16_only_a_platform_operator_can_flip_the_switch() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    let lui = canister_ids.local_user_index(env, user.canister());
+    let args = msgpack::serialize_then_unwrap(user_index_canister::set_call_push_enabled::Args { enabled: true });
+
+    // an ordinary user is refused at the door, before the endpoint runs
+    for canister in [canister_ids.user_index, lui] {
+        let response = env.update_call(canister, user.principal, "set_call_push_enabled_msgpack", args.clone());
+        assert!(response.is_err(), "{canister} accepted the call");
+    }
+
+    let feed = Feed::new(env, canister_ids, &[user.canister()]);
+    for enabled in [true, false] {
+        feed.set_call_push(env, canister_ids, *controller, enabled);
+        let user_index_canister::call_push_enabled::Response::Success(reported) =
+            client::user_index::call_push_enabled(env, user.principal, canister_ids.user_index, &types::Empty {});
+        assert_eq!(reported, enabled);
+    }
 }

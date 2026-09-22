@@ -2339,6 +2339,11 @@ export const UserIndexAuthorityReportTokenArgs = /* @__PURE__ */ Type.Object({
     ooh_call_acknowledged: Type.Boolean(),
 });
 
+export type UserIndexSetCallPushEnabledArgs = Static<typeof UserIndexSetCallPushEnabledArgs>;
+export const UserIndexSetCallPushEnabledArgs = /* @__PURE__ */ Type.Object({
+    enabled: Type.Boolean(),
+});
+
 export type UserIndexPayForDiamondMembershipSuccessResult = Static<
     typeof UserIndexPayForDiamondMembershipSuccessResult
 >;
@@ -2513,6 +2518,11 @@ export const UserIndexClearAuthorityReportAttemptAuthorityReportFailure =
             }),
         }),
     ]);
+
+export type UserIndexCallPushEnabledResponse = Static<typeof UserIndexCallPushEnabledResponse>;
+export const UserIndexCallPushEnabledResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Boolean(),
+});
 
 export type UserIndexSubmitProofOfUniquePersonhoodResponse = Static<
     typeof UserIndexSubmitProofOfUniquePersonhoodResponse

@@ -800,6 +800,7 @@ impl Data {
         moderation_referral_config: Option<ModerationReferralConfig>,
         media_scan_config: MediaScanConfig,
         multi_user_canisters_enabled: bool,
+        call_push_enabled: bool,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -865,7 +866,7 @@ impl Data {
             media_scan_config,
             media_scan_job_log: MediaScanJobLog::default(),
             multi_user_canisters_enabled,
-            call_push_enabled: false,
+            call_push_enabled,
             daily_puzzle_canister_id: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_results_queue: None,
