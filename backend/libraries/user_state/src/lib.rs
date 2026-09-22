@@ -30,6 +30,7 @@ mod streak;
 mod threads_read;
 mod token_swaps;
 mod user;
+mod user_queries;
 
 pub use blocked_users::BlockedUsers;
 pub use chit_events::ChitEvents;
