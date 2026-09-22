@@ -199,12 +199,8 @@ impl RuntimeState {
             LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim),
         ];
         self.push_local_user_index_canister_events(events, self.env.now());
-        let days_remaining_text = if days_remaining == 1 { "1 day".to_string() } else { format!("{days_remaining} days") };
         openchat_bot::send_text_message(
-            format!(
-                "One day of streak insurance was just used up to protect your streak from being lost.\
-Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
-            ),
+            user_core::openchat_bot::streak_insurance_claimed_text(new_streak, days_remaining),
             Vec::new(),
             false,
             self,
@@ -342,15 +338,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         }
         let new_streak = self.data.user.streak.days(now);
 
-        let first_line = if count == 1 {
-            "missed daily claim has been reinstated."
-        } else {
-            "missed daily claims have been reinstated."
-        };
-        let message = format!(
-            "{count} {first_line}
-Your streak is now {new_streak} days!"
-        );
+        let message = user_core::openchat_bot::missed_daily_claims_reinstated_text(count, new_streak);
 
         openchat_bot::send_text_message(message, Vec::new(), false, self);
         self.notify_user_index_of_chit(now);

@@ -1,25 +1,27 @@
 use crate::RuntimeState;
 use crate::updates::c2c_send_messages::{HandleMessageArgs, handle_message_impl};
 use chat_events::{MessageContentInternal, TextContentInternal};
-use constants::{DAY_IN_MS, HOUR_IN_MS, OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
-use types::nns::Tokens;
-use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, User, UserId, UserType};
+use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
+use types::{ChannelId, CommunityId, EventWrapper, Message, User, UserId, UserType};
 use user_canister::{C2CReplyContext, PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
-use user_core::Membership;
-use utils::format::format_to_decimal_places;
+use user_core::openchat_bot;
 
 pub(crate) fn send_community_deleted_message(deleted_by: UserId, name: String, public: bool, state: &mut RuntimeState) {
-    let visibility = if public { "public" } else { "private" };
-    let text = format!("The {visibility} community \"{name}\" was deleted by @UserId({deleted_by})");
-
-    send_text_message(text, Vec::new(), false, state);
+    send_text_message(
+        openchat_bot::community_deleted_text(deleted_by, &name, public),
+        Vec::new(),
+        false,
+        state,
+    );
 }
 
 pub(crate) fn send_group_deleted_message(deleted_by: UserId, group_name: String, public: bool, state: &mut RuntimeState) {
-    let visibility = if public { "public" } else { "private" };
-    let text = format!("The {visibility} group \"{group_name}\" was deleted by @UserId({deleted_by})");
-
-    send_text_message(text, Vec::new(), false, state);
+    send_text_message(
+        openchat_bot::group_deleted_text(deleted_by, &group_name, public),
+        Vec::new(),
+        false,
+        state,
+    );
 }
 
 pub(crate) fn send_group_imported_into_community_message(
@@ -30,11 +32,7 @@ pub(crate) fn send_group_imported_into_community_message(
     channel_id: ChannelId,
     state: &mut RuntimeState,
 ) {
-    let visibility = if public { "public" } else { "private" };
-    let text = format!(
-        "The {visibility} group \"{group_name}\" was deleted because it was imported into the [\"{community_name}\"](/community/{community_id}/channel/{channel_id}) community"
-    );
-
+    let text = openchat_bot::group_imported_into_community_text(&group_name, public, &community_name, community_id, channel_id);
     send_text_message(text, Vec::new(), false, state);
 }
 
@@ -46,80 +44,26 @@ pub(crate) fn send_removed_from_group_or_community_message(
     blocked: bool,
     state: &mut RuntimeState,
 ) {
-    let visibility = if public { "public" } else { "private" };
-    let action = if blocked { "blocked" } else { "removed" };
-    let group_or_community = if is_group { "group" } else { "community" };
-    let text = format!(
-        "You were {action} from the {visibility} {group_or_community} \"{group_or_community_name}\" by @UserId({removed_by})"
-    );
-
+    let text =
+        openchat_bot::removed_from_group_or_community_text(is_group, removed_by, &group_or_community_name, public, blocked);
     send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirmed, state: &mut RuntimeState) {
-    let storage_added = to_gb(event.storage_added);
-    let new_group_limit = Membership::Diamond.group_creation_limit().to_string();
-    let old_group_limit = Membership::Basic.group_creation_limit().to_string();
-    let text = format!(
-        "Thank you for [verifying ownership of your phone number](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit})."
-    );
-
-    send_text_message(text, Vec::new(), false, state);
+    send_text_message(openchat_bot::phone_number_confirmed_text(event), Vec::new(), false, state);
 }
 
 pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, state: &mut RuntimeState) {
-    let amount_paid = to_tokens(event.cost.amount);
-    let token = &event.cost.token_symbol;
-    let storage_added = to_gb(event.storage_added);
-    let storage_total = to_gb(event.new_storage_limit);
-    let new_group_limit = Membership::Diamond.group_creation_limit().to_string();
-    let old_group_limit = Membership::Basic.group_creation_limit().to_string();
-
-    let text = if event.storage_added == event.new_storage_limit {
-        format!(
-            "Thank you for [buying storage](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). You paid {amount_paid} {token} for {storage_added} GB of storage. This will allow you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit})."
-        )
-    } else {
-        format!(
-            "Thank you for buying more storage. You paid {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total."
-        )
-    };
-
-    send_text_message(text, Vec::new(), false, state);
+    send_text_message(openchat_bot::storage_upgraded_text(event), Vec::new(), false, state);
 }
 
 pub(crate) fn send_referred_user_joined_message(user_id: UserId, username: String, state: &mut RuntimeState) {
-    let text = format!("User @UserId({user_id}) has just registered with your referral code!");
-
+    let text = openchat_bot::referred_user_joined_text(user_id);
     send_text_message(text, vec![User { user_id, username }], false, state);
 }
 
 pub(crate) fn send_user_suspended_message(event: &UserSuspended, state: &mut RuntimeState) {
-    let action = match event.duration {
-        SuspensionDuration::Duration(ms) => {
-            if ms < 2 * DAY_IN_MS {
-                let hours = ms / HOUR_IN_MS;
-                format!("unsuspended in {hours} hours")
-            } else {
-                let days = ms / DAY_IN_MS;
-                format!("unsuspended in {days} days")
-            }
-        }
-        SuspensionDuration::Indefinitely => "deleted in 90 days".to_string(),
-    };
-
-    let reason = &event.reason;
-
-    let text = format!(
-        "Your account has been suspended.
-
-Reason:
-\"{reason}\"
-
-You can appeal this suspension by emailing safety@openchatlabs.org otherwise your account will be {action}."
-    );
-
-    send_text_message(text, Vec::new(), false, state);
+    send_text_message(openchat_bot::user_suspended_text(event), Vec::new(), false, state);
 }
 
 pub(crate) fn send_message(
@@ -169,14 +113,4 @@ pub(crate) fn send_message_with_reply(
     };
 
     handle_message_impl(args, None, false, state)
-}
-
-fn to_gb(bytes: u64) -> String {
-    const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
-    format_to_decimal_places(bytes as f64 / BYTES_PER_1GB as f64, 2)
-}
-
-fn to_tokens(tokens: Tokens) -> String {
-    const E8S_PER_TOKEN: u64 = 100_000_000;
-    format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 8)
 }
