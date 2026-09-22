@@ -3,7 +3,6 @@ use event_store_types::Event;
 mod chat_event_internal;
 mod chat_events;
 mod chat_events_list;
-pub mod deep_message_links;
 mod events_map;
 mod expiring_events;
 mod hybrid_map;
