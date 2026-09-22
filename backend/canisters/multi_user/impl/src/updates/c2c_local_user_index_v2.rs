@@ -131,7 +131,7 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
             if ev.send_bot_message {
                 openchat_bot::send_text_message(
                     user_index,
-                    "Payment received for Diamond membership!".to_string(),
+                    user_core::openchat_bot::DIAMOND_MEMBERSHIP_PAYMENT_RECEIVED_TEXT.to_string(),
                     Vec::new(),
                     false,
                     state,
