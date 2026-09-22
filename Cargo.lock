@@ -13002,6 +13002,7 @@ dependencies = [
  "candid",
  "constants",
  "direct_chat",
+ "group_index_canister",
  "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
