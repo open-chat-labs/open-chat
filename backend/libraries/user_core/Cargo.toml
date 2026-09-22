@@ -22,6 +22,7 @@ stable_memory_map = { path = "../stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../types" }
 user_canister = { path = "../../canisters/user/api" }
+user_index_canister = { path = "../../canisters/user_index/api" }
 utils = { path = "../utils" }
 
 [dev-dependencies]
