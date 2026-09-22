@@ -1,6 +1,6 @@
 // Runs the npm scripts named on the command line concurrently (`node build-ci.mjs typecheck test`)
-// and exits non-zero if any of them fails. Used by `npm run build:ci`: the checks and the
-// production build are independent, so running them one after another wasted most of the CI job.
+// and exits non-zero if any of them fails. Used by `npm run check:ci` to run the type checks and
+// the tests at the same time, since they are independent.
 //
 // Each script's output is held back and printed as a block when it finishes, so the logs of the
 // concurrent scripts don't interleave.
@@ -46,6 +46,7 @@ const results = await Promise.all(
 const failed = results.filter((r) => r.code !== 0).map((r) => r.script);
 if (failed.length > 0) {
     console.error(`Failed: ${failed.join(", ")}`);
-    process.exit(1);
+    // Not process.exit(): that can drop buffered output when stdout is a pipe
+    process.exitCode = 1;
 }
 console.log(`Passed: ${scripts.join(", ")}`);

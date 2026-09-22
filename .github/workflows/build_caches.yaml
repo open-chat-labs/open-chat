@@ -10,6 +10,7 @@ on:
       - "**/Cargo.lock"
       - "scripts/generate-all-canister-wasms.sh"
       - "scripts/build-benchmarks-wasm.sh"
+      - "scripts/build-candid-generators.sh"
       - "canbench.yml"
       - ".github/workflows/setup-rust/**"
       - ".github/workflows/build_caches.yaml"
@@ -42,6 +43,11 @@ jobs:
         with:
           command: check
           args: --workspace --exclude open-chat --exclude tauri-plugin-oc --tests
+
+      # The candid check builds the generator binaries as a set of their own, which unifies the
+      # dependency features differently from the workspace-wide builds above
+      - name: Build candid generators
+        run: ./scripts/build-candid-generators.sh
 
       # The benchmarks: `canbench` itself (built from source, so a couple of minutes if it is not
       # already in the cached ~/.cargo/bin) and the wasm dependencies it builds
