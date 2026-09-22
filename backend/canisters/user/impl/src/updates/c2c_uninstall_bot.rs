@@ -2,8 +2,6 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::OPENCHAT_BOT_USER_ID;
-use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use types::c2c_uninstall_bot::*;
 
@@ -14,17 +12,9 @@ fn c2c_uninstall_bot(args: Args) -> Response {
 }
 
 fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if args.caller != OPENCHAT_BOT_USER_ID {
-        if args.caller != state.env.canister_id().into() {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        };
-
-        if state.data.user.suspended.value {
-            return Err(OCErrorCode::InitiatorSuspended.into());
-        }
-    }
-
-    state.uninstall_bot(args.bot_id);
-
+    let my_user_id = state.env.canister_id().into();
+    let now = state.env.now();
+    let prefixes = user_core::updates::c2c_uninstall_bot(&mut state.data.user, &args, my_user_id, now)?;
+    state.garbage_collect_stable_memory_keys(prefixes);
     Ok(())
 }

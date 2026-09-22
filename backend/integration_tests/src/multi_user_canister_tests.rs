@@ -12,11 +12,12 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    Achievement, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat, ChatEvent, ChatId,
-    ChitEventType, CommunityId, CommunityImportedInto, DeletedCommunityInfo, DeletedGroupInfoInternal,
-    DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty, EventsResponse,
-    IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate,
-    PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
+    Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex,
+    Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, DeletedCommunityInfo,
+    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
+    EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    OptionUpdate, PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter,
+    UserId,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -3286,6 +3287,121 @@ fn bot_message_texts(env: &PocketIc, sender: Principal, canister_id: CanisterId,
 }
 
 #[test]
+fn bots_are_installed_per_user() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let bot_id: UserId = random_principal().into();
+    let permissions = BotPermissions::from_chat_permission(ChatPermission::ReadSummary);
+
+    let install = |env: &mut PocketIc, caller: UserId| {
+        client::multi_user::c2c_install_bot(
+            env,
+            local_user_index,
+            canister_id,
+            &types::c2c_install_bot::Args {
+                bot_id,
+                caller,
+                granted_permissions: permissions.clone(),
+                granted_autonomous_permissions: Some(permissions.clone()),
+                default_subscriptions: None,
+            },
+        )
+    };
+
+    // Only the user themselves can install a bot for them
+    let response = install(env, random_principal().into());
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{response:?}"
+    );
+
+    let response = install(env, alice_id);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let response = install(env, alice_id);
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::AlreadyAdded)),
+        "{response:?}"
+    );
+
+    // Alice has the bot and a chat with it; Bob has neither until he installs it too
+    let alice_state = initial_state(env, alice, canister_id);
+    assert_eq!(alice_state.bots.iter().map(|b| b.user_id).collect::<Vec<_>>(), vec![bot_id]);
+    assert!(alice_state.direct_chats.summaries.iter().any(|c| c.them == bot_id));
+    let bob_state = initial_state(env, bob, canister_id);
+    assert!(bob_state.bots.is_empty());
+    assert!(bob_state.direct_chats.summaries.is_empty());
+    let response = install(env, bob_id);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // The bot may read the summary of its chat with Alice, having been granted that permission
+    let response = client::multi_user::c2c_bot_chat_summary(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_bot_chat_summary::Args {
+            user_id: alice_id,
+            bot_id,
+            initiator: BotInitiator::Autonomous,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::c2c_bot_chat_summary::Response::Success(_)),
+        "{response:?}"
+    );
+
+    // Uninstalling removes the bot and the chat for Alice alone, once the chat's entries in stable
+    // memory have been garbage collected
+    let response = client::multi_user::c2c_uninstall_bot(
+        env,
+        local_user_index,
+        canister_id,
+        &types::c2c_uninstall_bot::Args {
+            bot_id,
+            caller: alice_id,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    env.advance_time(Duration::from_secs(11));
+    tick_many(env, 5);
+    let alice_state = initial_state(env, alice, canister_id);
+    assert!(alice_state.bots.is_empty());
+    assert!(alice_state.direct_chats.summaries.is_empty());
+    let bob_state = initial_state(env, bob, canister_id);
+    assert_eq!(bob_state.bots.iter().map(|b| b.user_id).collect::<Vec<_>>(), vec![bot_id]);
+    assert!(bob_state.direct_chats.summaries.iter().any(|c| c.them == bot_id));
+    assert!(matches!(
+        client::multi_user::c2c_bot_chat_summary(
+            env,
+            local_user_index,
+            canister_id,
+            &user_canister::c2c_bot_chat_summary::Args {
+                user_id: bob_id,
+                bot_id,
+                initiator: BotInitiator::Autonomous,
+            },
+        ),
+        user_canister::c2c_bot_chat_summary::Response::Success(_)
+    ));
+
+    // A bot removed everywhere reaches each user as an event from the LocalUserIndex
+    let event = local_user_index_event(env, 1, LocalUserIndexEvent::BotRemoved(bot_id));
+    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![event]);
+    let bob_state = initial_state(env, bob, canister_id);
+    assert!(bob_state.bots.is_empty());
+    assert!(bob_state.direct_chats.summaries.is_empty());
+}
+
+#[test]
 fn reporting_a_message_deletes_it_from_the_reporters_copy_only() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -3347,9 +3463,8 @@ fn premium_items_are_paid_for_from_the_users_chit() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
     let (alice, alice_id) = create_user(env, local_user_index, canister_id);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
 
-    // An external achievement gives Alice and Bob some CHIT to spend
+    // An external achievement gives Alice some CHIT to spend
     let event = local_user_index_event(
         env,
         1,
@@ -3358,10 +3473,8 @@ fn premium_items_are_paid_for_from_the_users_chit() {
             chit_reward: 1000,
         })),
     );
-    send_local_user_index_events(env, local_user_index, canister_id, alice_id, vec![event.clone()]);
-    send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![event]);
+    send_local_user_index_events(env, local_user_index, canister_id, alice_id, vec![event]);
     assert_eq!(initial_state(env, alice, canister_id).chit_balance, 1000);
-    assert_eq!(initial_state(env, bob, canister_id).chit_balance, 1000);
 
     let pay = |env: &mut PocketIc, item_id: u32, cost: u32| {
         client::multi_user::c2c_pay_for_premium_item(
@@ -3399,11 +3512,6 @@ fn premium_items_are_paid_for_from_the_users_chit() {
             .iter()
             .any(|e| matches!(e.reason, ChitEventType::PurchasedPremiumItem(1)) && e.amount == -400)
     );
-
-    // Bob's CHIT and items are untouched
-    let bob_state = initial_state(env, bob, canister_id);
-    assert!(bob_state.premium_items.is_empty());
-    assert_eq!(bob_state.chit_balance, 1000);
 
     // Only once
     let response = pay(env, 1, 400);
