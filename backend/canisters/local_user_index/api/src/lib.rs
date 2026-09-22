@@ -62,6 +62,7 @@ pub enum UserIndexEvent {
     SetMediaScanConfig(types::MediaScanConfig),
     SetMultiUserCanistersEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
+    RefundDeletedUserCycles(Vec<CanisterId>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

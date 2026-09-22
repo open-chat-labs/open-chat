@@ -22,6 +22,7 @@ generate_msgpack_query_call!(explore_bots);
 generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
+generate_update_call!(refund_deleted_user_cycles);
 generate_update_call!(create_multi_user_canister);
 generate_update_call!(set_multi_user_canisters_enabled);
 generate_update_call!(assign_platform_moderators_group);

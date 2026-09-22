@@ -220,6 +220,13 @@ type RemoveBotArgs = record {
     bot_id : UserId;
 };
 
+type RefundDeletedUserCyclesResponse = variant {
+    Success : record {
+        canisters : nat32;
+        canisters_not_routed : nat32;
+    };
+};
+
 type RemoveBotResponse = variant {
     Success;
     BotNotFound;
@@ -375,6 +382,9 @@ service : {
     // Only callable by SNS governance canister
     publish_bot: (PublishBotArgs) -> (PublishBotResponse);
     register_external_achievement : (RegisterExternalAchievementArgs) -> (RegisterExternalAchievementResponse);
+
+    // Only callable by platform operators
+    refund_deleted_user_cycles : (EmptyArgs) -> (RefundDeletedUserCyclesResponse);
 
     // Only callable by whitelisted canisters
     award_external_achievement : (AwardExternalAchievementArgs) -> (AwardExternalAchievementResponse);
