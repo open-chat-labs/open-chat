@@ -9,11 +9,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# The lint/type check/test job and the production build job run on separate runners because they
+# are independent and each takes minutes, so running them one after another (or concurrently on
+# one 4-core runner, where they contend for CPU) roughly doubles the wall-clock time.
+# `install-and-test` at the bottom is the required status check; it gates on both.
 jobs:
   # Backend-only PRs have nothing here to check. `install-and-test` is a required status check,
   # so it must still run on every PR (a workflow-level `paths:` filter would leave the check
-  # pending and the PR unmergeable); instead it skips itself when nothing it depends on changed.
-  # A skipped job satisfies branch protection. This mirrors the `changes` job in backend.yaml.
+  # pending and the PR unmergeable); instead the jobs skip themselves when nothing they depend on
+  # changed, and the gate passes. This mirrors the `changes` job in backend.yaml.
   changes:
     name: detect frontend changes
     runs-on: ubuntu-latest
@@ -30,7 +34,8 @@ jobs:
               - ".prettierignore"
               - ".github/workflows/**"
 
-  install-and-test:
+  checks:
+    name: lint, type check and test
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -39,16 +44,45 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      - name: Restore dependencies from cache
-        uses: actions/cache/restore@v3
-        with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: npm-
-
       - uses: actions/setup-node@v4
         with:
           node-version: "20.20.0"
+          # The npm cache is populated on pushes to master (frontend_cache.yaml)
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+        # This acts as a safety net if a Mac-generated lockfile stripped the Linux binary
+      - name: Ensure Rollup Linux Binary
+        run: npm install @rollup/rollup-linux-x64-gnu
+
+      - name: Lint, type check and test
+        run: npm run check:ci
+        env:
+          NODE_ENV: ci
+          OC_USERGEEK_APIKEY: DUMMY_USERGEEK_APIKEY
+          OC_ROLLBAR_ACCESS_TOKEN: DUMMY_ROLLBAR_ACCESS_TOKEN
+          OC_WEBSITE_VERSION: 1.0.0
+          OC_METERED_APIKEY: DUMMY_METERED_APIKEY
+          OC_VAPID_PUBLIC_KEY: DUMMY_VAPID_PUBLIC_KEY
+
+  build:
+    name: production build
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.20.0"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -58,7 +92,7 @@ jobs:
         run: npm install @rollup/rollup-linux-x64-gnu
 
       - name: Build frontend
-        run: npm run build:ci
+        run: npm run build:prod
         env:
           NODE_ENV: ci
           OC_USERGEEK_APIKEY: DUMMY_USERGEEK_APIKEY
@@ -67,9 +101,26 @@ jobs:
           OC_METERED_APIKEY: DUMMY_METERED_APIKEY
           OC_VAPID_PUBLIC_KEY: DUMMY_VAPID_PUBLIC_KEY
 
-      - name: Save dependencies to cache
-        if: ${{ github.ref == 'refs/heads/master' }}
-        uses: actions/cache/save@v3
-        with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('frontend/package-lock.json') }}
+  # The required status check. It runs even when the jobs above fail or are skipped (`always()`),
+  # because a skipped job satisfies branch protection and this one must not be skipped just
+  # because a check failed.
+  install-and-test:
+    needs: [changes, checks, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the results
+        run: |
+          if [ "${{ needs.changes.result }}" != "success" ]; then
+            echo "The change detection job did not succeed (${{ needs.changes.result }})"
+            exit 1
+          fi
+          if [ "${{ needs.changes.outputs.frontend }}" != "true" ]; then
+            echo "No frontend changes"
+            exit 0
+          fi
+          if [ "${{ needs.checks.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ]; then
+            echo "checks: ${{ needs.checks.result }}, build: ${{ needs.build.result }}"
+            exit 1
+          fi
+          echo "checks and build passed"
