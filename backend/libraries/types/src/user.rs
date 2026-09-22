@@ -106,6 +106,11 @@ impl UserId {
     // canister id ends in the opaque class tag, and so do the vanity principals behind
     // `OPENCHAT_BOT_USER_ID` and `DELETED_USER_ID`; bot and webhook ids are 8 bytes. So all of
     // those read back as index 0, which is what keeps this backwards compatible.
+    // Bots and MultiUser canister users have UserIds which are not canister IDs
+    pub fn is_canister(&self) -> bool {
+        is_canister_id(&self.0)
+    }
+
     fn is_indexed(&self) -> bool {
         let bytes = self.0.as_slice();
         bytes.len() == CANISTER_ID_LEN && bytes[CANISTER_ID_LEN - 1] & INDEXED_TAG != 0

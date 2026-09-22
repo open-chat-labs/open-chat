@@ -13,7 +13,8 @@ cycles. To recover them, for each such canister:
 The LocalUserIndex embeds `cycles_refunder.wasm` and does exactly this (see its `refund_cycles`
 job), both as part of deleting a user and, for users deleted before that was the case, when a
 platform operator calls `refund_deleted_user_cycles` on the UserIndex. It passes its own
-CyclesDispenser canister ID as the init arg, so works on any network.
+CyclesDispenser canister ID as the init arg, so works on any network, and skips canisters
+holding under 400B cycles since `install_code` alone needs ~300B up front.
 
 The target defaults to the production CyclesDispenser (`gonut-hqaaa-aaaaf-aby7a-cai`). **On
 any other network pass the CyclesDispenser's principal as the init arg**, eg.
