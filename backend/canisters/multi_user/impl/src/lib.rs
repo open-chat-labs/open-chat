@@ -323,31 +323,6 @@ impl RuntimeState {
         }
     }
 
-    // Reinstates the daily claims the user at `user_index` missed, as the User canister's
-    // `reinstate_missed_daily_claims`
-    pub fn reinstate_missed_daily_claims(&mut self, user_index: u16, days_to_reinstate: Vec<u16>) {
-        let now = self.env.now();
-
-        let Some((count, new_streak)) = self.data.users.with_user_mut(user_index, |user| {
-            let daily_claims = user.chit_events.daily_claims();
-            let new_events = user
-                .streak
-                .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
-            let count = new_events.len();
-            for event in new_events {
-                user.chit_events.push(event);
-            }
-            (count, user.streak.days(now))
-        }) else {
-            return;
-        };
-
-        let message = user_core::openchat_bot::missed_daily_claims_reinstated_text(count, new_streak);
-
-        openchat_bot::send_text_message(user_index, message, Vec::new(), false, self);
-        self.notify_user_index_of_chit(user_index, now);
-    }
-
     // Tells the LocalUserIndex the CHIT balance and streak of the user at `user_index`, which it
     // passes on to the UserIndex
     pub fn notify_user_index_of_chit(&mut self, user_index: u16, now: TimestampMillis) {
@@ -486,7 +461,7 @@ impl RuntimeState {
     // immediately, as in the User canister, so that none are left to be wiped by a later garbage
     // collection if the user rejoins. Any which can't be removed within this message are left for
     // the garbage collection job.
-    fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
+    pub fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
         let remaining: Vec<_> = self
             .data
             .users

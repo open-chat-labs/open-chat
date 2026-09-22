@@ -1,4 +1,3 @@
-use chat_events::deep_message_links;
 use constants::{DAY_IN_MS, HOUR_IN_MS};
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};

@@ -128,6 +128,7 @@ import {
     CommunityRegisterPollVoteArgs,
     CommunityRegisterPollVoteResponse,
     CommunityRegisterProposalVoteArgs,
+    CommunityRegisterProposalVoteV2Args,
     CommunityRegisterWebhookArgs,
     CommunityRegisterWebhookResponse,
     CommunityRemoveMemberArgs,
@@ -1199,6 +1200,25 @@ export class CommunityClient
             },
             unitResult,
             CommunityRegisterProposalVoteArgs,
+            UnitResult,
+        );
+    }
+
+    registerProposalVoteV2(
+        chatId: ChannelIdentifier,
+        messageIdx: number,
+        adopt: boolean,
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.update(
+            chatId.communityId,
+            "register_proposal_vote_v2",
+            {
+                channel_id: toBigInt32(chatId.channelId),
+                adopt,
+                message_index: messageIdx,
+            },
+            unitResult,
+            CommunityRegisterProposalVoteV2Args,
             UnitResult,
         );
     }

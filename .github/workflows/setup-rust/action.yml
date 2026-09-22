@@ -27,6 +27,10 @@ runs:
       if: ${{ inputs.cache == 'read' || inputs.cache == 'write' }}
       uses: Swatinem/rust-cache@v2
       with:
+        # Bump this when the cache-warming workflow starts producing new artifacts: the action only
+        # saves when the key changed, and the key covers the manifests, lockfile and toolchain but
+        # not what the workflow builds
+        prefix-key: v1-rust
         shared-key: ${{ inputs.shared-key }}
         save-if: ${{ inputs.cache == 'write' }}
 

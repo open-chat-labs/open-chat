@@ -1031,7 +1031,7 @@ impl ChatEvents {
         ) {
             Ok(success) => Ok(success),
             Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
-            Err(UpdateEventError::NotFound) => Err(OCErrorCode::PollNotFound.into()),
+            Err(UpdateEventError::NotFound) => Err(OCErrorCode::ProposalNotFound.into()),
         }
     }
 
@@ -2855,7 +2855,12 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
-        let result = event_list.update_event(event_key, update_event_fn);
+        // `min_visible_event_index` refers to the main events list. Thread events are indexed from
+        // zero, and access to the thread has already been checked via its root message above.
+        let min_visible_event_index =
+            if thread_root_message_index.is_some() { EventIndex::default() } else { min_visible_event_index };
+
+        let result = event_list.update_event(event_key, min_visible_event_index, update_event_fn);
         let latest_event_index = event_list.latest_event_index().unwrap_or_default();
 
         if let Some(now) = now_if_should_mark_updated
@@ -3212,4 +3217,168 @@ pub enum UpdateEventError<E = ()> {
 pub struct VideoCallInternal {
     pub message_index: MessageIndex,
     pub call_type: CallKind,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{NullEventPusher, TextContentInternal};
+    use candid::Principal;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use types::{MultiUserChat, NnsProposal, Proposal, ProposalDecisionStatus, ProposalRewardStatus, Tally};
+
+    #[test]
+    fn record_proposal_vote_records_one_vote_per_user() {
+        let (mut events, proposal_message_index, _) = setup_events();
+        let user1: UserId = Principal::from_slice(&[10]).into();
+        let user2: UserId = Principal::from_slice(&[11]).into();
+
+        events
+            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, true, 100)
+            .unwrap();
+        assert_eq!(votes(&events, proposal_message_index), BTreeMap::from([(user1, true)]));
+
+        let error = events
+            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, false, 101)
+            .err()
+            .unwrap();
+        assert!(error.matches_code(OCErrorCode::NoChange));
+        assert_eq!(votes(&events, proposal_message_index), BTreeMap::from([(user1, true)]));
+
+        events
+            .record_proposal_vote(user2, EventIndex::default(), proposal_message_index, false, 102)
+            .unwrap();
+        assert_eq!(
+            votes(&events, proposal_message_index),
+            BTreeMap::from([(user1, true), (user2, false)])
+        );
+    }
+
+    #[test]
+    fn record_proposal_vote_does_not_mark_message_updated() {
+        let (mut events, proposal_message_index, _) = setup_events();
+        let user1: UserId = Principal::from_slice(&[10]).into();
+
+        events
+            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, true, 100)
+            .unwrap();
+
+        // The vote is only visible to the voter so the message must not be returned to everyone
+        assert!(events.recently_updated_events(50, 100).is_empty());
+    }
+
+    #[test]
+    fn record_proposal_vote_fails_if_message_is_not_a_proposal() {
+        let (mut events, proposal_message_index, text_message_index) = setup_events();
+        let user1: UserId = Principal::from_slice(&[10]).into();
+
+        let error = events
+            .record_proposal_vote(user1, EventIndex::default(), text_message_index, true, 100)
+            .err()
+            .unwrap();
+        assert!(error.matches_code(OCErrorCode::ProposalNotFound));
+
+        let error = events
+            .record_proposal_vote(user1, EventIndex::default(), text_message_index.incr(), true, 100)
+            .err()
+            .unwrap();
+        assert!(error.matches_code(OCErrorCode::ProposalNotFound));
+
+        // The message must be visible to the voter
+        let error = events
+            .record_proposal_vote(user1, EventIndex::from(100), proposal_message_index, true, 100)
+            .err()
+            .unwrap();
+        assert!(error.matches_code(OCErrorCode::ProposalNotFound));
+    }
+
+    fn votes(events: &ChatEvents, message_index: MessageIndex) -> BTreeMap<UserId, bool> {
+        let (message, _) = events
+            .message_internal(EventIndex::default(), None, message_index.into())
+            .unwrap();
+        let MessageContentInternal::GovernanceProposal(p) = message.content else {
+            panic!("Expected a governance proposal");
+        };
+        p.votes
+    }
+
+    fn setup_events() -> (ChatEvents, MessageIndex, MessageIndex) {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+
+        let sender: UserId = Principal::from_slice(&[2]).into();
+        let mut events = ChatEvents::new_group_chat(
+            MultiUserChat::Group(Principal::from_slice(&[1]).into()),
+            "name".to_string(),
+            "description".to_string(),
+            sender,
+            None,
+            1,
+            1,
+        );
+
+        let proposal = ProposalContentInternal {
+            governance_canister_id: Principal::from_slice(&[3]),
+            proposal: Proposal::NNS(NnsProposal {
+                id: 1,
+                topic: 1,
+                proposer: 1,
+                created: 1,
+                title: "title".to_string(),
+                summary: "summary".to_string(),
+                url: String::new(),
+                status: ProposalDecisionStatus::Open,
+                reward_status: ProposalRewardStatus::AcceptVotes,
+                tally: Tally {
+                    yes: 0,
+                    no: 0,
+                    total: 0,
+                    timestamp: 1,
+                },
+                deadline: 1000,
+                payload_text_rendering: None,
+                last_updated: 1,
+            }),
+            votes: BTreeMap::new(),
+        };
+
+        let proposal_message_index = push_message(&mut events, sender, 1, MessageContentInternal::GovernanceProposal(proposal));
+        let text_message_index = push_message(
+            &mut events,
+            sender,
+            2,
+            MessageContentInternal::Text(TextContentInternal {
+                text: "hello".to_string(),
+            }),
+        );
+
+        (events, proposal_message_index, text_message_index)
+    }
+
+    fn push_message(
+        events: &mut ChatEvents,
+        sender: UserId,
+        message_id: u128,
+        content: MessageContentInternal,
+    ) -> MessageIndex {
+        let (message, _) = events.push_message::<NullEventPusher>(
+            PushMessageArgs {
+                sender,
+                thread_root_message_index: None,
+                message_id: MessageId::from(message_id),
+                content,
+                sender_context: None,
+                mentioned: Vec::new(),
+                replies_to: None,
+                forwarded: false,
+                sender_is_bot: false,
+                block_level_markdown: false,
+                og_previews: Vec::new(),
+                now: 10,
+            },
+            None,
+        );
+        message.event.message_index
+    }
 }

@@ -39,8 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `c2c_grant_super_admin` and `c2c_revoke_super_admin`, and `c2c_pay_for_premium_item`, `c2c_notify_achievement` and `report_message` with their logic shared with the User canister via `user_core` ([#9477](https://github.com/open-chat-labs/open-chat/pull/9477))
 - Implement `token_swap_status`, `token_swaps`, `c2c_bot_chat_summary` and `c2c_can_issue_access_token_v2`, sharing their logic with the User canister via `user_core` ([#9478](https://github.com/open-chat-labs/open-chat/pull/9478))
 - Install, update and uninstall bots per user (`c2c_install_bot`, `update_bot`, `c2c_uninstall_bot`, and the `BotUpdated` and `BotRemoved` events), and implement `join_video_call`, sharing the logic with the User canister via `user_core` ([#9479](https://github.com/open-chat-labs/open-chat/pull/9479))
-- Implement `c2c_charge_user_account` and `withdraw_crypto_v2`, sharing the ledger helpers and charging logic with the User canister, and answer `c2c_vote_on_proposal` with an error, since the canister's neurons can't be tied to one of its users ([#9480](https://github.com/open-chat-labs/open-chat/pull/9480))
+- Implement `c2c_charge_user_account` and `withdraw_crypto_v2`, sharing the ledger helpers and charging logic with the User canister ([#9480](https://github.com/open-chat-labs/open-chat/pull/9480))
 - Implement `generate_btc_address`, `generate_one_sec_address`, `update_btc_balance`, `approve_transfer`, `withdraw_btc` and `withdraw_via_one_sec`, each acting on the subaccount of the user, sharing the logic with the User canister via `user_core` ([#9481](https://github.com/open-chat-labs/open-chat/pull/9481))
+- Apply LocalUserIndex events via `user_core`, shared with the User canister, which hands back the side effects to perform ([#9483](https://github.com/open-chat-labs/open-chat/pull/9483))
 
 ### Changed
 
@@ -62,4 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement the `events`, `events_window` and `events_by_index` queries via `user_core`, shared with the User canister ([#9474](https://github.com/open-chat-labs/open-chat/pull/9474))
 - Implement `hot_group_exclusions`, `message_activity_feed`, `c2c_groups_and_communities`, `mute_notifications`, `save_crypto_account`, `add_hot_group_exclusions`, `set_community_indexes` and `c2c_set_user_suspended` via `user_core`, shared with the User canister ([#9475](https://github.com/open-chat-labs/open-chat/pull/9475))
 - Implement `claim_daily_chit` via `user_core`, shared with the User canister ([#9482](https://github.com/open-chat-labs/open-chat/pull/9482))
+- Handle `c2c_notify_group_deleted` via `user_core`, shared with the User canister ([#9484](https://github.com/open-chat-labs/open-chat/pull/9484))
+- Share `c2c_game_chit`, `set_bio`, `set_profile_background`, `manage_favourite_chats` and `pay_for_streak_insurance` with the User canister via `user_core` ([#9486](https://github.com/open-chat-labs/open-chat/pull/9486))
+- Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the User canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
 

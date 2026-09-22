@@ -144,9 +144,10 @@ impl ChatEventsList {
     >(
         &mut self,
         event_key: EventKey,
+        min_visible_event_index: EventIndex,
         update_event_fn: F,
     ) -> Result<UpdateEventInternalSuccess<T>, UpdateEventError<E>> {
-        if let Some(mut event) = self.get_event(event_key, EventIndex::default(), None) {
+        if let Some(mut event) = self.get_event(event_key, min_visible_event_index, None) {
             update_event_fn(&mut event).map(|result| {
                 self.events_map.insert(event.clone());
                 UpdateEventInternalSuccess {

@@ -1,12 +1,10 @@
 use crate::guards::caller_is_group_index;
 use crate::timer_job_types::TimerJob;
-use crate::{Data, RuntimeState, execute_update, openchat_bot};
+use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::ChatInternal;
-use types::{ChannelId, Chat, ChatId, CommunityId, CommunityImportedInto, MultiUserChat, TimestampMillis};
+use types::Chat;
 use user_canister::c2c_notify_group_deleted::*;
-use user_canister::mark_read::ChannelMessagesRead;
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
@@ -17,111 +15,24 @@ fn c2c_notify_group_deleted(args: Args) -> Response {
 fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let chat_id = args.deleted_group.id;
-    let was_favourite = state.data.user.favourite_chats.remove(&Chat::Group(chat_id), now);
+    let deleted =
+        user_core::updates::c2c_notify_group_deleted::c2c_notify_group_deleted(&mut state.data.user, args.deleted_group, now);
 
-    // Removing the group deletes how far the user has read each of its threads from stable memory,
-    // so if the group has been imported into a community, move those entries to the channel first
-    if let Some(imported_into) = &args.deleted_group.community_imported_into
-        && let Some(group) = state.data.user.group_chats.get_mut(&chat_id)
-    {
-        group.messages_read.threads_read.move_entries(
-            MultiUserChat::Group(chat_id),
-            MultiUserChat::Channel(imported_into.community_id, imported_into.channel.channel_id),
-        );
+    for prefix in deleted.garbage_collect {
+        state.data.garbage_collect_now_or_later(prefix);
     }
 
-    let group_removed = state.data.remove_group(chat_id, now);
-
-    if let Some(CommunityImportedInto {
-        community_name,
-        community_id,
-        local_user_index_canister_id,
-        channel,
-        other_default_channels,
-    }) = args.deleted_group.community_imported_into
-    {
-        migrate_group_references_to_channel_references(chat_id, community_id, channel.channel_id, now, &mut state.data);
-
-        openchat_bot::send_group_imported_into_community_message(
-            args.deleted_group.group_name,
-            args.deleted_group.public,
-            community_name,
-            community_id,
-            channel.channel_id,
-            state,
-        );
-
-        let (community, newly_joined) = state
-            .data
-            .user
-            .communities
-            .join(community_id, local_user_index_canister_id, now);
-
-        if let Some(group) = group_removed {
-            community.import_group(channel.channel_id, group, now);
-        } else {
-            community.mark_read(
-                vec![ChannelMessagesRead {
-                    channel_id: channel.channel_id,
-                    read_up_to: channel.latest_message_index,
-                    threads: Vec::new(),
-                    date_read_pinned: None,
-                }],
-                now,
-            );
+    // Point the user's reminders of messages in the group at the channel instead
+    if let Some((community_id, channel_id)) = deleted.imported_into {
+        for (_, job) in state.data.timer_jobs.iter() {
+            if let Some(TimerJob::MessageReminder(mr)) = job.borrow_mut().as_mut()
+                && mr.chat == Chat::Group(chat_id)
+            {
+                mr.chat = Chat::Channel(community_id, channel_id);
+            }
         }
-
-        if newly_joined {
-            community.mark_read(
-                other_default_channels
-                    .into_iter()
-                    .map(|c| ChannelMessagesRead {
-                        channel_id: c.channel_id,
-                        read_up_to: c.latest_message_index,
-                        threads: Vec::new(),
-                        date_read_pinned: None,
-                    })
-                    .collect(),
-                now,
-            )
-        }
-
-        if was_favourite {
-            state
-                .data
-                .user
-                .favourite_chats
-                .add(Chat::Channel(community_id, channel.channel_id), now);
-        }
-    } else {
-        openchat_bot::send_group_deleted_message(
-            args.deleted_group.deleted_by,
-            args.deleted_group.group_name,
-            args.deleted_group.public,
-            state,
-        );
     }
+
+    openchat_bot::send_message(deleted.bot_message.content, deleted.bot_message.mentioned, false, state);
     Response::Success
-}
-
-fn migrate_group_references_to_channel_references(
-    group_id: ChatId,
-    community_id: CommunityId,
-    channel_id: ChannelId,
-    now: TimestampMillis,
-    data: &mut Data,
-) {
-    data.user.direct_chats.migrate_replies(
-        ChatInternal::Group(group_id),
-        ChatInternal::Channel(community_id, channel_id),
-        now,
-    );
-
-    for (_, job) in data.timer_jobs.iter() {
-        if let Some(TimerJob::MessageReminder(mr)) = job.borrow_mut().as_mut()
-            && mr.chat == Chat::Group(group_id)
-        {
-            mr.chat = Chat::Channel(community_id, channel_id);
-        }
-    }
 }

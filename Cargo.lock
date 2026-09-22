@@ -2936,6 +2936,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "deep_message_links"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "types",
+]
+
+[[package]]
 name = "deflate64"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13031,6 +13039,7 @@ dependencies = [
  "installed_bots",
  "itertools 0.15.0",
  "ledger_utils",
+ "local_user_index_canister",
  "msgpack",
  "oc_error_codes",
  "one_sec_minter_canister",
@@ -13103,17 +13112,18 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_time",
  "canister_timer_jobs",
  "canister_tracing_macros",
- "chat_events",
  "community_canister",
  "community_canister_c2c_client",
  "constants",
  "cycles_dispenser_canister",
  "dataurl",
+ "deep_message_links",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "fire_and_forget_handler",
