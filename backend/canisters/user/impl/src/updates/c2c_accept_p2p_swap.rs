@@ -1,11 +1,11 @@
-use crate::crypto::{deposit_to_accept_p2p_swap, validate_from_account};
+use crate::crypto::deposit_to_accept_p2p_swap;
 use crate::guards::caller_is_known_group_or_community_canister;
 use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{CanisterId, OCResult, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
-use user_core::P2PSwap;
+use user_core::updates::c2c_accept_p2p_swap::{deposited, prepare as prepare_acceptance};
 
 #[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
 #[trace]
@@ -35,19 +35,7 @@ async fn c2c_accept_p2p_swap_impl(mut args: Args) -> Response {
     .await
     {
         Ok(block_index) => {
-            mutate_state(|state| {
-                state.data.user.p2p_swaps.add(P2PSwap {
-                    id: args.swap_id,
-                    location: args.location,
-                    created_by: args.created_by,
-                    created: args.created,
-                    token0: args.token0,
-                    token0_amount: args.token0_amount,
-                    token1: args.token1,
-                    token1_amount: args.token1_amount,
-                    expires_at: args.expires_at,
-                });
-            });
+            mutate_state(|state| deposited(&mut state.data.user, args));
             Success(block_index)
         }
         Err(error) => Error(error),
@@ -61,12 +49,11 @@ struct PrepareResult {
 }
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
+    let my_user_id: UserId = state.env.canister_id().into();
     let now = state.env.now();
-    state.data.user.pin_number.verify(args.pin.as_mut(), now)?;
-    validate_from_account(args.from_account, state.env.canister_id().into())?;
-
+    prepare_acceptance(&mut state.data.user, my_user_id, args, now)?;
     Ok(PrepareResult {
-        my_user_id: state.env.canister_id().into(),
+        my_user_id,
         escrow_canister_id: state.data.escrow_canister_id,
         now,
     })

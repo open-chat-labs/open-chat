@@ -1,10 +1,11 @@
-use crate::User;
-use constants::{MEMO_MESSAGE, MEMO_PRIZE, PRIZE_FEE_PERCENT};
-use oc_error_codes::OCErrorCode;
+use crate::{P2PSwap, User};
+use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT};
+use escrow_canister::deposit_subaccount;
+use oc_error_codes::{OCError, OCErrorCode};
 use tracing::error;
 use types::{
-    Achievement, Chat, CryptoTransaction, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContentInitial, MessageId,
-    MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction, PinNumberWrapper, TimestampMillis, UserId, icrc1,
+    Achievement, CanisterId, Chat, CryptoTransaction, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE, MessageContentInitial, MessageId,
+    MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction, PinNumberWrapper, TimestampMillis, UserId, icrc1, icrc2,
 };
 
 // What must happen before the message can be sent: the transfer it carries, or the P2P swap to set
@@ -131,4 +132,84 @@ pub fn achievements(
         achievements.push(Achievement::RepliedInThread);
     }
     achievements
+}
+
+pub enum SetUpP2PSwapError {
+    InvalidSwap(String),
+    InternalError(String),
+    Error(OCError),
+}
+
+impl From<SetUpP2PSwapError> for OCError {
+    fn from(value: SetUpP2PSwapError) -> Self {
+        match value {
+            SetUpP2PSwapError::InvalidSwap(message) => OCErrorCode::InvalidRequest.with_message(message),
+            SetUpP2PSwapError::InternalError(error) => OCErrorCode::Unknown.with_message(error),
+            SetUpP2PSwapError::Error(error) => error,
+        }
+    }
+}
+
+// Creates the swap in the escrow canister, returning its id
+pub async fn create_p2p_swap(
+    escrow_canister_id: CanisterId,
+    args: &escrow_canister::create_swap::Args,
+) -> Result<u32, SetUpP2PSwapError> {
+    use SetUpP2PSwapError::*;
+    match escrow_canister_c2c_client::create_swap(escrow_canister_id, args).await {
+        Ok(escrow_canister::create_swap::Response::Success(result)) => Ok(result.id),
+        Ok(escrow_canister::create_swap::Response::Error(error)) => Err(Error(error)),
+        Ok(escrow_canister::create_swap::Response::InvalidSwap(message)) => Err(InvalidSwap(message)),
+        Err(error) => Err(InternalError(format!("{error:?}"))),
+    }
+}
+
+// The swap to record against the user who offered it, and their deposit of token0 into the escrow
+// canister: from the account they approved (the allowance is what authorises this, so there is
+// nothing to check here) or else their own
+pub fn p2p_swap_deposit(
+    escrow_canister_id: CanisterId,
+    my_user_id: UserId,
+    id: u32,
+    args: escrow_canister::create_swap::Args,
+    from_account: Option<icrc1::Account>,
+    now: TimestampMillis,
+) -> (P2PSwap, PendingCryptoTransaction) {
+    let swap = P2PSwap {
+        id,
+        location: args.location,
+        created_by: my_user_id,
+        created: now,
+        token0: args.token0.clone(),
+        token0_amount: args.token0_amount,
+        token1: args.token1,
+        token1_amount: args.token1_amount,
+        expires_at: args.expires_at,
+    };
+    let to = icrc1::Account {
+        owner: escrow_canister_id,
+        subaccount: Some(deposit_subaccount(my_user_id.as_principal(), id)),
+    };
+    let deposit = match from_account {
+        Some(from) => PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+            ledger: args.token0.ledger,
+            token_symbol: args.token0.symbol,
+            amount: args.token0_amount + args.token0.fee,
+            from,
+            to,
+            fee: args.token0.fee,
+            memo: Some(MEMO_P2P_SWAP_CREATE.to_vec().into()),
+            created: now * NANOS_PER_MILLISECOND,
+        }),
+        None => PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+            ledger: args.token0.ledger,
+            token_symbol: args.token0.symbol,
+            amount: args.token0_amount + args.token0.fee,
+            to,
+            fee: args.token0.fee,
+            memo: Some(MEMO_P2P_SWAP_CREATE.to_vec().into()),
+            created: now * NANOS_PER_MILLISECOND,
+        }),
+    };
+    (swap, deposit)
 }

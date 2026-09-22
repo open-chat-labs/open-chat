@@ -1,4 +1,5 @@
 use crate::guards::caller_is_local_user_index;
+use crate::timer_job_types::TimerJob;
 use crate::{RuntimeState, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -25,7 +26,15 @@ fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     state.data.users.remove(user_index);
-    state.data.timer_jobs.cancel_jobs(|job| job.user_index() == user_index);
+    // The jobs telling the escrow canister of the user's deposit into a P2P swap, or their cancelling
+    // one, are kept so that the swap still settles and nobody's tokens are left in escrow
+    state.data.timer_jobs.cancel_jobs(|job| {
+        job.user_index() == user_index
+            && !matches!(
+                job,
+                TimerJob::NotifyEscrowCanisterOfDeposit(_) | TimerJob::CancelP2PSwapInEscrowCanister(_)
+            )
+    });
     // Nor are any events from them still waiting to be sent to the LocalUserIndex or to other
     // users' canisters, as when a User canister is uninstalled
     state

@@ -1,9 +1,9 @@
 use crate::chit_tests::DAY_ZERO;
 use crate::env::ENV;
-use crate::utils::{metrics, now_millis, now_nanos, tick_many, try_metrics};
+use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, now_nanos, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
-use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
+use constants::{DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use sha256::sha256;
@@ -16,8 +16,9 @@ use types::{
     Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent,
     CryptoTransaction, DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary,
     DirectChatSummaryUpdates, Document, Empty, EventsResponse, IdempotentEnvelope, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate, PendingCryptoTransaction, PinNumberSettings,
-    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus,
+    PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult,
+    UpgradesFilter, UserId,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -4733,4 +4734,213 @@ fn messages_with_transfers_are_paid_from_the_senders_own_subaccount() {
     // Alice paid from her own subaccount, and the refused message moved nothing
     assert_eq!(balance_of(env, alice_id), 1_000_000_000 - 2 * (amount + fee));
     assert_eq!(balance_of(env, bob_id), amount);
+}
+
+#[test]
+fn p2p_swaps_are_settled_between_the_users_own_subaccounts() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let carol = client::register_diamond_user(env, canister_ids, *controller);
+    // Offering a swap needs Diamond. The events are timestamped apart, else the second is taken as
+    // a repeat of the first.
+    diamond_membership_payment_received(env, local_user_index, canister_id, alice_id);
+    env.advance_time(Duration::from_millis(1));
+    diamond_membership_payment_received(env, local_user_index, canister_id, bob_id);
+
+    let icp_ledger = canister_ids.icp_ledger;
+    let chat_ledger = canister_ids.chat_ledger;
+    client::ledger::happy_path::transfer(env, *controller, icp_ledger, alice_id, 1_300_000_000);
+    client::ledger::happy_path::transfer(env, *controller, icp_ledger, bob_id, 600_000_000);
+    client::ledger::happy_path::transfer(env, *controller, chat_ledger, carol.user_id, 11_000_000_000);
+    tick_many(env, 3);
+
+    // A message from `sender`, in the canister at `sender_canister`, offering `icp` for `chat`
+    let offer =
+        |env: &mut PocketIc, sender: Principal, sender_canister: CanisterId, recipient: UserId, icp: u128, chat: u128| {
+            let message_id = random_from_u128();
+            let response = client::user::send_message_v2(
+                env,
+                sender,
+                sender_canister,
+                &user_canister::send_message_v2::Args {
+                    recipient,
+                    thread_root_message_index: None,
+                    message_id,
+                    content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+                        token0: icp_token_info(),
+                        token0_amount: icp,
+                        token1: chat_token_info(),
+                        token1_amount: chat,
+                        expires_in: DAY_IN_MS,
+                        caption: None,
+                        from_account: None,
+                    }),
+                    replies_to: None,
+                    forwarding: false,
+                    block_level_markdown: false,
+                    message_filter_failed: None,
+                    pin: None,
+                    og_previews: Vec::new(),
+                },
+            );
+            assert!(
+                matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+                "{response:?}"
+            );
+            message_id
+        };
+    let accept = |env: &mut PocketIc, sender: Principal, sender_canister: CanisterId, offered_by: UserId, message_id| {
+        let response = client::user::accept_p2p_swap(
+            env,
+            sender,
+            sender_canister,
+            &user_canister::accept_p2p_swap::Args {
+                user_id: offered_by,
+                thread_root_message_index: None,
+                message_id,
+                pin: None,
+                from_account: None,
+            },
+        );
+        assert!(
+            matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+            "{response:?}"
+        );
+    };
+    let status_in_copy = |env: &PocketIc, viewer: Principal, user_id: UserId, them: UserId, message_id| match message(
+        &events(env, viewer, canister_id, user_id, them),
+        message_id,
+    )
+    .content
+    {
+        MessageContent::P2PSwap(c) => c.status,
+        content => panic!("{content:?}"),
+    };
+    // The escrow canister settles swaps via its own queued jobs, which other tests sharing this
+    // environment may have left work in, so each settlement is waited for rather than timed
+    let settled = |env: &PocketIc, pairs: &[(Principal, UserId, UserId)], message_id| {
+        pairs.iter().all(|&(viewer, user_id, them)| {
+            matches!(
+                status_in_copy(env, viewer, user_id, them, message_id),
+                P2PSwapStatus::Completed(_) | P2PSwapStatus::Cancelled(_) | P2PSwapStatus::Expired(_)
+            )
+        })
+    };
+    let balance_of =
+        |env: &PocketIc, ledger: CanisterId, user_id: UserId| client::ledger::happy_path::balance_of(env, ledger, user_id);
+
+    // Alice offers Carol, in a User canister, 10 ICP for 100 CHAT, which Carol accepts: the escrow
+    // canister pays Alice's subaccount the CHAT and Carol the ICP, and tells both copies
+    let carols_icp = balance_of(env, icp_ledger, carol.user_id);
+    let message_id = offer(env, alice, canister_id, carol.user_id, 1_000_000_000, 10_000_000_000);
+    tick_many(env, 3);
+    accept(env, carol.principal, carol.canister(), alice_id, message_id);
+    tick_until(env, |env| settled(env, &[(alice, alice_id, carol.user_id)], message_id));
+    assert_eq!(balance_of(env, chat_ledger, alice_id), 10_000_000_000);
+    assert_eq!(balance_of(env, icp_ledger, carol.user_id), carols_icp + 1_000_000_000);
+    assert!(matches!(
+        status_in_copy(env, alice, alice_id, carol.user_id, message_id),
+        P2PSwapStatus::Completed(c) if c.accepted_by == carol.user_id
+    ));
+    let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 10, 10);
+    assert!(matches!(
+        message(&carols_events, message_id).content,
+        MessageContent::P2PSwap(c) if matches!(c.status, P2PSwapStatus::Completed(_))
+    ));
+
+    // Bob, in this canister, offers Alice 5 ICP for 50 CHAT, which Alice accepts: both copies are
+    // updated directly
+    let message_id = offer(env, bob, canister_id, alice_id, 500_000_000, 5_000_000_000);
+    accept(env, alice, canister_id, bob_id, message_id);
+    tick_until(env, |env| {
+        settled(env, &[(alice, alice_id, bob_id), (bob, bob_id, alice_id)], message_id)
+    });
+    assert_eq!(balance_of(env, chat_ledger, bob_id), 5_000_000_000);
+    for (viewer, user_id, them) in [(alice, alice_id, bob_id), (bob, bob_id, alice_id)] {
+        assert!(matches!(
+            status_in_copy(env, viewer, user_id, them, message_id),
+            P2PSwapStatus::Completed(c) if c.accepted_by == alice_id
+        ));
+    }
+    assert!(has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::AcceptedP2PSwapOffer
+    ));
+
+    // Alice offers Bob 1 ICP then cancels, and the escrow canister refunds her subaccount
+    let icp_before = balance_of(env, icp_ledger, alice_id);
+    let message_id = offer(env, alice, canister_id, bob_id, 100_000_000, 1_000_000_000);
+    // The escrow canister records the deposit first, else there is nothing yet to refund
+    tick_many(env, 5);
+    let response = client::user::cancel_p2p_swap(
+        env,
+        alice,
+        canister_id,
+        &user_canister::cancel_p2p_swap::Args {
+            user_id: bob_id,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::cancel_p2p_swap::Response::Success),
+        "{response:?}"
+    );
+    tick_until(env, |env| {
+        settled(env, &[(alice, alice_id, bob_id), (bob, bob_id, alice_id)], message_id)
+    });
+    for (viewer, user_id, them) in [(alice, alice_id, bob_id), (bob, bob_id, alice_id)] {
+        assert!(matches!(
+            status_in_copy(env, viewer, user_id, them, message_id),
+            P2PSwapStatus::Cancelled(_)
+        ));
+    }
+    // The deposit and its refund each cost a fee
+    assert_eq!(balance_of(env, icp_ledger, alice_id), icp_before - 2 * ICP_TRANSFER_FEE);
+
+    // An offer nobody accepts expires in both copies, and the escrow canister refunds it
+    let icp_before = balance_of(env, icp_ledger, alice_id);
+    let message_id = offer(env, alice, canister_id, bob_id, 100_000_000, 1_000_000_000);
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    // Each copy marks the swap expired itself when its time is up, and is told of the refund by
+    // the escrow canister later
+    tick_until(env, |env| {
+        [(alice, alice_id, bob_id), (bob, bob_id, alice_id)]
+            .into_iter()
+            .all(|(viewer, user_id, them)| {
+                matches!(
+                    status_in_copy(env, viewer, user_id, them, message_id),
+                    P2PSwapStatus::Expired(e) if e.token0_txn_out.is_some()
+                )
+            })
+    });
+    for (viewer, user_id, them) in [(alice, alice_id, bob_id), (bob, bob_id, alice_id)] {
+        assert!(matches!(
+            status_in_copy(env, viewer, user_id, them, message_id),
+            P2PSwapStatus::Expired(e) if e.token0_txn_out.is_some()
+        ));
+    }
+    assert_eq!(balance_of(env, icp_ledger, alice_id), icp_before - 2 * ICP_TRANSFER_FEE);
+}
+
+// Ticks until `done` holds, for work other canisters complete in their own time, failing if it
+// never does
+#[track_caller]
+fn tick_until(env: &mut PocketIc, done: impl Fn(&PocketIc) -> bool) {
+    for _ in 0..100 {
+        if done(env) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("Timed out waiting for the condition to hold");
 }

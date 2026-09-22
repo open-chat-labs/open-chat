@@ -14,6 +14,7 @@ community_canister = { path = "../../canisters/community/api" }
 constants = { path = "../constants" }
 direct_chat = { path = "../direct_chat" }
 escrow_canister = { path = "../../canisters/escrow/api" }
+escrow_canister_c2c_client = { path = "../../canisters/escrow/c2c_client" }
 group_canister = { path = "../../canisters/group/api" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 ic-cdk = { workspace = true }

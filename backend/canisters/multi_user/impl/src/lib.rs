@@ -81,6 +81,10 @@ impl RuntimeState {
         self.env.caller() == self.data.group_index_canister_id
     }
 
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id
+    }
+
     // The index of the user the caller owns, if the caller is one of this canister's users
     pub fn caller_user_index(&self) -> Option<u16> {
         self.data.users.index_by_principal(&self.env.caller())

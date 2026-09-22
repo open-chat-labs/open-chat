@@ -6,14 +6,12 @@ use crate::updates::start_video_call::handle_start_video_call;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, Reader};
+use chat_events::MessageContentInternal;
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use rand::RngExt;
-use types::{Achievement, CallKind, Chat, P2PSwapStatus, UserId, UserType, VideoCallPresence};
+use types::{Achievement, CallKind, UserId, UserType, VideoCallPresence};
 use user_canister::c2c_user_canister::{Response::*, *};
-use user_canister::{
-    MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent,
-};
+use user_canister::{P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
 
 #[update(msgpack = true)]
 #[trace]
@@ -242,37 +240,15 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
 }
 
 fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, state: &mut RuntimeState) {
-    let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) else {
-        return;
-    };
-
     let now = state.env.now();
-    let completed = matches!(args.status, P2PSwapStatus::Completed(_));
-
-    if chat.set_p2p_swap_status(None, args.message_id, args.status, now).is_ok()
-        && completed
-        && let Some(message_event) = chat
-            .events()
-            .main_events_reader()
-            .message_event_internal(args.message_id.into())
+    if let Some(activity) = state
+        .data
+        .user
+        .direct_chats
+        .get_mut(&caller_user_id.into())
+        .and_then(|chat| user_core::updates::c2c_user_canister::p2p_swap_change_status(chat, caller_user_id, args, now))
     {
-        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
-            return;
-        };
-
-        state.data.user.push_message_activity(
-            MessageActivityEvent {
-                chat: Chat::Direct(caller_user_id.into()),
-                thread_root_message_index,
-                message_index: message_event.event.message_index,
-                message_id: message_event.event.message_id,
-                event_index: message_event.index,
-                activity: MessageActivity::P2PSwapAccepted,
-                timestamp: now,
-                user_id: Some(caller_user_id),
-            },
-            now,
-        );
+        state.data.user.push_message_activity(activity, now);
     }
 }
 

@@ -10,8 +10,8 @@ use rand::RngExt;
 use types::{Achievement, CanisterId, TimestampMillis, UserId, UserType};
 use user_canister::c2c_user_canister_v2::*;
 use user_canister::{
-    DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, SendMessagesArgs,
-    SetEventsTtl, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs, UserCanisterEvent,
+    DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, P2PSwapStatusChange,
+    SendMessagesArgs, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs, UserCanisterEvent,
 };
 use user_core::updates::c2c_user_canister::{self, can_act_for};
 
@@ -136,10 +136,11 @@ fn process_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16,
         UserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient, recipient_index, now, state),
         UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, *status, now),
         UserCanisterEvent::TipMessage(args) => receive_tip(*args, sender, recipient, recipient_index, now, state),
-        // TODO: Handle these once the MultiUser canister supports P2P swaps and video calls
-        UserCanisterEvent::P2PSwapStatusChange(_)
-        | UserCanisterEvent::StartVideoCall(_)
-        | UserCanisterEvent::JoinVideoCall(_) => {}
+        UserCanisterEvent::P2PSwapStatusChange(args) => {
+            p2p_swap_status_changed(*args, sender, recipient, recipient_index, now, state)
+        }
+        // TODO: Handle these once the MultiUser canister supports video calls
+        UserCanisterEvent::StartVideoCall(_) | UserCanisterEvent::JoinVideoCall(_) => {}
     }
 }
 
@@ -281,6 +282,46 @@ pub(crate) fn receive_tip(
             .with_user_mut(recipient_index, |user| user.push_message_activity(activity, now));
     }
     state.award_achievement_and_notify(recipient_index, Achievement::HadMessageTipped, now);
+}
+
+// Tells the other user of a change to the status of a P2P swap between them: directly if they are
+// in this canister, else via their canister
+pub(crate) fn send_p2p_swap_status_change(
+    my_index: u16,
+    recipient: UserId,
+    change: P2PSwapStatusChange,
+    state: &mut RuntimeState,
+) {
+    if let Some(their_index) = state.index_of_local_user(recipient) {
+        let my_user_id = state.user_id(my_index);
+        let now = state.env.now();
+        p2p_swap_status_changed(change, my_user_id, recipient, their_index, now, state);
+    } else {
+        state.push_user_canister_event(my_index, recipient, UserCanisterEvent::P2PSwapStatusChange(Box::new(change)));
+    }
+}
+
+// As in the User canister, a swap completed with the recipient appears in their message activity feed
+fn p2p_swap_status_changed(
+    args: P2PSwapStatusChange,
+    sender: UserId,
+    recipient: UserId,
+    recipient_index: u16,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
+    let Some(activity) = state
+        .with_their_direct_chat_mut(sender, recipient, |chat| {
+            c2c_user_canister::p2p_swap_change_status(chat, sender, args, now)
+        })
+        .flatten()
+    else {
+        return;
+    };
+    state
+        .data
+        .users
+        .with_user_mut(recipient_index, |user| user.push_message_activity(activity, now));
 }
 
 fn set_events_ttl(

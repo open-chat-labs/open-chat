@@ -1,5 +1,7 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_hosted_user;
+use crate::timer_job_types::{MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, TimerJob};
+use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -10,8 +12,9 @@ use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    CanisterId, CompletedCryptoTransaction, CryptoTransaction, DirectChatUserNotificationPayload, DirectMessageNotification,
-    MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview, ReplyContext, TimestampMillis, UserId, UserType,
+    CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, DirectChatUserNotificationPayload,
+    DirectMessageNotification, MessageContent, MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview,
+    P2PSwapLocation, ReplyContext, TimestampMillis, UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
@@ -88,11 +91,67 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     Err(error) => return Error(error.into()),
                 }
             }
-            // TODO: P2P swaps need the escrow canister, as in the User canister
-            ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
-                return Error(
-                    OCErrorCode::InvalidRequest.with_message("P2P swaps are not yet supported by the MultiUser canister"),
-                );
+            ValidateNewMessageContentResult::SuccessP2PSwap(content) => {
+                // The time is read again, as in the User canister, since the lookup may have taken
+                // a while
+                let (escrow_canister_id, now, is_diamond) = read_state(|state| {
+                    let now = state.env.now();
+                    (
+                        state.data.escrow_canister_id,
+                        now,
+                        state
+                            .data
+                            .users
+                            .with_user(my_index, |user| user.membership(now).is_diamond_member())
+                            .unwrap_or_default(),
+                    )
+                });
+                if !is_diamond {
+                    return Error(OCErrorCode::NotDiamondMember.into());
+                }
+                if let Err(error) = ledger_utils::validate_from_account(content.from_account, my_user_id.canister_id()) {
+                    return Error(error);
+                }
+                let create_swap_args = escrow_canister::create_swap::Args {
+                    location: P2PSwapLocation::from_message(Chat::Direct(args.recipient.into()), None, args.message_id),
+                    token0: content.token0.clone(),
+                    token0_amount: content.token0_amount,
+                    token0_principal: Some(my_user_id.as_principal()),
+                    token1: content.token1.clone(),
+                    token1_amount: content.token1_amount,
+                    token1_principal: None,
+                    expires_at: now + content.expires_in,
+                    additional_admins: Vec::new(),
+                    canister_to_notify: Some(args.recipient.canister_id()),
+                    user_to_notify: Some(args.recipient),
+                    is_public: false,
+                };
+                match set_up_p2p_swap(
+                    my_index,
+                    my_user_id,
+                    escrow_canister_id,
+                    create_swap_args,
+                    content.from_account,
+                )
+                .await
+                {
+                    Ok((swap_id, pending_transaction)) => match process_transaction(pending_transaction, my_user_id).await {
+                        Ok(Ok(completed)) => {
+                            NotifyEscrowCanisterOfDepositJob::run(my_index, swap_id, my_user_id);
+                            let now = read_state(|state| state.env.now());
+                            let content = MessageContentInternal::new_with_transfer(
+                                MessageContentInitial::P2PSwap(content),
+                                completed.clone().into(),
+                                Some(swap_id),
+                                now,
+                            );
+                            (content, Some(completed))
+                        }
+                        Ok(Err((_, error))) => return Error(error),
+                        Err(error) => return Error(error.into()),
+                    },
+                    Err(error) => return Error(error.into()),
+                }
             }
             ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
             ValidateNewMessageContentResult::Error(error) => {
@@ -301,6 +360,20 @@ fn send_message_impl(
         state.handle_event_expiry(my_index, expiry);
     }
 
+    // As in the User canister, a swap offered in the message is marked expired when its time is up
+    if let MessageContent::P2PSwap(c) = &message_event.event.content {
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
+                user_index: my_index,
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            })),
+            c.expires_at,
+            now,
+        );
+    }
+
     if let Some(transfer) = completed_transfer {
         TransferSuccessV2(TransferSuccessV2Result {
             chat_id,
@@ -356,6 +429,7 @@ pub(crate) fn receive_message(
     let chat_id = sender.into();
     let anonymized_id: u128 = state.env.rng().random();
     let mute_notification = message.message_filter_failed.is_some();
+    let message_id = message.message_id;
 
     let received = state.data.users.with_user_mut(their_index, |user| {
         if user.blocked_users.contains(&sender) {
@@ -424,6 +498,10 @@ pub(crate) fn receive_message(
         // TODO: Record replies to messages in other chats and message activity, as the User
         // canister does
 
+        let swap_expires_at = match &message_event.event.content {
+            MessageContent::P2PSwap(c) => Some(c.expires_at),
+            _ => None,
+        };
         let notification = if mute_notification || chat.notifications_muted.value || user.suspended.value {
             None
         } else {
@@ -444,10 +522,15 @@ pub(crate) fn receive_message(
             }))
         };
 
-        Some((message_event.expires_at, notification))
+        Some((
+            message_event.expires_at,
+            swap_expires_at,
+            thread_root_message_index,
+            notification,
+        ))
     });
 
-    let Some((expires_at, notification)) = received.flatten() else {
+    let Some((expires_at, swap_expires_at, thread_root_message_index, notification)) = received.flatten() else {
         return;
     };
 
@@ -455,6 +538,20 @@ pub(crate) fn receive_message(
     // different time in each copy
     if let Some(expiry) = expires_at {
         state.handle_event_expiry(their_index, expiry);
+    }
+
+    // The swap is marked expired in this copy of the message too
+    if let Some(expires_at) = swap_expires_at {
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
+                user_index: their_index,
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            })),
+            expires_at,
+            now,
+        );
     }
 
     if let Some(notification) = notification {

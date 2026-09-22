@@ -22,6 +22,7 @@ community_canister_c2c_client = { path = "../../community/c2c_client" }
 constants = { path = "../../../libraries/constants" }
 direct_chat = { path = "../../../libraries/direct_chat" }
 escrow_canister = { path = "../../escrow/api" }
+escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 event_store_types = { workspace = true, features = ["json"] }
 git_commit_id = { path = "../../../libraries/git_commit_id" }
