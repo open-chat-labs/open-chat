@@ -45,6 +45,20 @@ fn cycles_refunder_sends_all_spare_cycles_to_the_prod_cycles_dispenser_by_defaul
     // The canister can be uninstalled again afterwards
     env.uninstall_canister(canister_id, Some(*controller)).unwrap();
 
+    // An explicit `null` init arg also means the default target. Note that installing code
+    // needs a few hundred billion cycles up front, so a drained canister can't be reinstalled.
+    env.add_cycles(canister_id, T);
+    env.install_canister(
+        canister_id,
+        wasm(),
+        candid::encode_one(None::<Principal>).unwrap(),
+        Some(*controller),
+    );
+    let dispenser_balance_before = env.cycle_balance(cycles_dispenser);
+    let refunded = refund(env, canister_id).unwrap();
+    assert!(refunded > 0);
+    assert_eq!(env.cycle_balance(cycles_dispenser), dispenser_balance_before + refunded);
+
     // Don't return the env to the pool with the prod canister ID taken
     wrapper.discard();
 }
@@ -66,7 +80,7 @@ fn cycles_refunder_target_can_be_overridden_by_init_arg() {
     env.install_canister(
         canister_id,
         wasm(),
-        candid::encode_one(canister_ids.cycles_dispenser).unwrap(),
+        candid::encode_one(Some(canister_ids.cycles_dispenser)).unwrap(),
         Some(*controller),
     );
 
@@ -90,7 +104,12 @@ fn cycles_refunder_forwards_reject_and_keeps_cycles_if_deposit_fails() {
 
     // A canister which doesn't exist in the test env (the prod UserIndex)
     let target = Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap();
-    env.install_canister(canister_id, wasm(), candid::encode_one(target).unwrap(), Some(*controller));
+    env.install_canister(
+        canister_id,
+        wasm(),
+        candid::encode_one(Some(target)).unwrap(),
+        Some(*controller),
+    );
 
     let reject = refund(env, canister_id).unwrap_err();
     assert!(reject.reject_message.contains(&target.to_string()), "{reject:?}");
@@ -113,7 +132,7 @@ fn cycles_refunder_rejects_invalid_init_arg() {
     let error = env
         .reinstall_canister(canister_id, wasm(), candid::encode_one(123u32).unwrap(), Some(*controller))
         .unwrap_err();
-    assert!(error.reject_message.contains("init arg must be (principal)"), "{error:?}");
+    assert!(error.reject_message.contains("init arg must be (opt principal)"), "{error:?}");
 }
 
 fn wasm() -> Vec<u8> {

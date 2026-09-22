@@ -8,7 +8,7 @@
 ;; with the number of cycles sent (`nat64`).
 ;;
 ;; The target defaults to the production CyclesDispenser (gonut-hqaaa-aaaaf-aby7a-cai) and
-;; can be overridden by passing `(principal "...")` as the init arg, eg. for ic_test.
+;; can be overridden by passing `(opt principal "...")` as the init arg, eg. for ic_test.
 ;;
 ;; Build with: wat2wasm cycles_refunder.wat -o cycles_refunder.wasm
 (module
@@ -48,7 +48,7 @@
   (data (i32.const 112) "call_perform failed")
   (data (i32.const 144) "refund already in progress")
   (data (i32.const 176) "cycle balance exceeds 2^64")
-  (data (i32.const 208) "init arg must be (principal)")
+  (data (i32.const 208) "init arg must be (opt principal)")
 
   ;; Length of the candid encoded deposit_cycles arg at offset 32
   (global $payload_len (mut i32) (i32.const 27))
@@ -57,23 +57,42 @@
   ;; amount from memory shared by all messages
   (global $in_flight (mut i32) (i32.const 0))
 
-  ;; Optional init arg `(principal)`, whose value replaces the default target
+  ;; Optional init arg `(opt principal)`, whose value (if any) replaces the default target
   (func $init
     (local $size i32)
     (local.set $size (call $msg_arg_data_size))
-    (if (i32.gt_u (local.get $size) (i32.const 6))
+
+    ;; No arg, ie. `()`, means use the default
+    (if (i32.lt_u (local.get $size) (i32.const 7))
+      (then (return)))
+
+    ;; Otherwise expect the 9 byte header "DIDL\01\6e\68\01\00" followed by either \00 for
+    ;; null, or \01 followed by the principal value
+    (if (i32.lt_u (local.get $size) (i32.const 10))
+      (then (call $trap (i32.const 208) (i32.const 32))))
+    (call $msg_arg_data_copy (i32.const 1024) (i32.const 0) (i32.const 10))
+    (if (i32.or
+          (i32.or
+            (i32.ne (i32.load (i32.const 1024)) (i32.const 0x4c444944))
+            (i32.ne (i32.load (i32.const 1028)) (i32.const 0x01686e01)))
+          (i32.ne (i32.load8_u (i32.const 1032)) (i32.const 0)))
+      (then (call $trap (i32.const 208) (i32.const 32))))
+
+    (if (i32.eqz (i32.load8_u (i32.const 1033)))
       (then
-        ;; Check for the 7 byte header "DIDL\00\01\68" and that the value fits
-        (call $msg_arg_data_copy (i32.const 1024) (i32.const 0) (i32.const 7))
-        (if (i32.or
-              (i32.or
-                (i32.ne (i32.load (i32.const 1024)) (i32.const 0x4c444944))
-                (i32.ne (i32.load (i32.const 1027)) (i32.const 0x6801004c)))
-              (i32.gt_u (local.get $size) (i32.const 38)))
-          (then (call $trap (i32.const 208) (i32.const 28))))
-        (local.set $size (i32.sub (local.get $size) (i32.const 7)))
-        (call $msg_arg_data_copy (i32.const 47) (i32.const 7) (local.get $size))
-        (global.set $payload_len (i32.add (i32.const 15) (local.get $size))))))
+        ;; null, so use the default, but don't allow trailing bytes
+        (if (i32.ne (local.get $size) (i32.const 10))
+          (then (call $trap (i32.const 208) (i32.const 32))))
+        (return)))
+
+    ;; Check the tag is \01 and that the value fits (a principal is at most 29 bytes)
+    (if (i32.or
+          (i32.ne (i32.load8_u (i32.const 1033)) (i32.const 1))
+          (i32.gt_u (local.get $size) (i32.const 41)))
+      (then (call $trap (i32.const 208) (i32.const 32))))
+    (local.set $size (i32.sub (local.get $size) (i32.const 10)))
+    (call $msg_arg_data_copy (i32.const 47) (i32.const 10) (local.get $size))
+    (global.set $payload_len (i32.add (i32.const 15) (local.get $size))))
 
   (func $refund
     (local $balance i64)
@@ -101,7 +120,7 @@
     (block $sent
       (loop $retry
         (local.set $keep (i64.add (i64.load (i32.const 96)) (local.get $slack)))
-        (if (i64.lt_u (local.get $balance) (local.get $keep))
+        (if (i64.le_u (local.get $balance) (local.get $keep))
           (then
             ;; Nothing worth sending, reply with 0
             (i64.store (i32.const 87) (i64.const 0))

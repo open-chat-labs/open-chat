@@ -12,8 +12,8 @@ cycles. To recover them, for each such canister:
 
 The target defaults to the production CyclesDispenser (`gonut-hqaaa-aaaaf-aby7a-cai`). **On
 any other network pass the CyclesDispenser's principal as the init arg**, eg.
-`(principal "mq2tp-baaaa-aaaaf-aucva-cai")` on ic_test, otherwise the cycles are silently sent
-to production.
+`(opt principal "mq2tp-baaaa-aaaaf-aucva-cai")` on ic_test, otherwise the cycles are silently
+sent to production.
 
 `refund` keeps back only what the canister needs in order to make the `deposit_cycles` call,
 as reported by `ic0.cost_call`, plus a little slack. The slack starts at 16M cycles and is
@@ -32,7 +32,9 @@ Note that a floor of roughly 80B cycles is left in each canister regardless. The
 the execution prepayment for the update (~40B) and the reservation for the call's response and
 callback (~42B) until after they complete, so they cannot be attached to the call, and any call
 made later would need the same reservations again. Deleting a canister discards its cycles, so
-leaving them uninstalled costs nothing more.
+leaving them uninstalled costs nothing more. Also note that once drained a canister no longer
+has enough cycles for `install_code`, which prepays for its execution, so the wasm cannot be
+installed a second time without first topping the canister up.
 
 ## Building
 
