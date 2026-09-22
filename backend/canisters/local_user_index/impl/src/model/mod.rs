@@ -8,7 +8,7 @@ pub mod group_event_batch;
 pub mod legacy_user_event_batch;
 pub mod local_community_map;
 pub mod local_group_map;
-pub mod local_multi_user_map;
+pub mod local_multi_user_canister_map;
 pub mod local_user_map;
 pub mod media_scan_job_log;
 pub mod moderation_queue;

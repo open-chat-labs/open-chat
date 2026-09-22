@@ -37,7 +37,7 @@ fn populate_canisters() {
             state
                 .data
                 .cycles_balance_check_queue
-                .extend(state.data.local_multi_users.iter().map(|(c, _)| *c));
+                .extend(state.data.local_multi_user_canisters.iter().map(|(c, _)| *c));
         }
     });
 
@@ -79,7 +79,13 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
                     .get(&canister_id.into())
                     .map(|c| &c.cycle_top_ups)
             })
-            .or_else(|| state.data.local_multi_users.get(&canister_id).map(|c| &c.cycle_top_ups));
+            .or_else(|| {
+                state
+                    .data
+                    .local_multi_user_canisters
+                    .get(&canister_id)
+                    .map(|c| &c.cycle_top_ups)
+            });
 
         if let Some(cycle_top_ups) = cycle_top_ups {
             let most_recent_top_up = cycle_top_ups.last().map(|c| c.date).unwrap_or_default();
