@@ -61,4 +61,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `archive_unarchive_chats`, `pin_chat_v2`, `unpin_chat_v2`, `set_contact`, `public_profile`, `contacts`, `chit_events`, `deleted_message` and `messages_by_message_index` via `user_core`, shared with the User canister ([#9473](https://github.com/open-chat-labs/open-chat/pull/9473))
 - Implement the `events`, `events_window` and `events_by_index` queries via `user_core`, shared with the User canister ([#9474](https://github.com/open-chat-labs/open-chat/pull/9474))
 - Implement `hot_group_exclusions`, `message_activity_feed`, `c2c_groups_and_communities`, `mute_notifications`, `save_crypto_account`, `add_hot_group_exclusions`, `set_community_indexes` and `c2c_set_user_suspended` via `user_core`, shared with the User canister ([#9475](https://github.com/open-chat-labs/open-chat/pull/9475))
+- Implement `claim_daily_chit` via `user_core`, shared with the User canister ([#9482](https://github.com/open-chat-labs/open-chat/pull/9482))
 
