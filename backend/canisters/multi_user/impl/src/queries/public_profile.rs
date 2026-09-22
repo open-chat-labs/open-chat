@@ -13,9 +13,8 @@ fn public_profile(args: Args) -> Response {
             avatar_id: user.avatar.id(),
             profile_background_id: user.profile_background.id(),
             bio: user.bio.value.clone(),
-            // These two are legacy fields which are never set for new users
-            is_premium: false,
-            phone_is_verified: false,
+            is_premium: user.phone_is_verified || user.storage_limit > 0,
+            phone_is_verified: user.phone_is_verified,
             created: user.user_created,
         })
     });

@@ -51,6 +51,7 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> OCResult<u
             chat_if_other: Some((args.chat.into(), args.thread_root_message_index)),
             event_index: args.event_index,
         }),
+        Vec::new(),
         true,
         state,
     )

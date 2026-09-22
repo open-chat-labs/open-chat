@@ -15,7 +15,6 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use model::referrals::Referrals;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
@@ -34,7 +33,7 @@ use types::{
 use user_canister::{MessageActivityEvent, UserCanisterEvent, WalletConfig};
 use user_state::{
     BlockedUsers, ChitEvents, Communities, Community, Contacts, FavouriteChats, GameChitKeys, GroupChat, GroupChats,
-    HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, SavedCryptoAccounts, Streak,
+    HotGroupExclusions, Membership, MessageActivityEvents, PinNumber, ProfileDocument, Referrals, SavedCryptoAccounts, Streak,
     ThreadsRead,
 };
 use utils::env::Environment;

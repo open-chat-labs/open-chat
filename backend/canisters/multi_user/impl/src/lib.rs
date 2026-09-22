@@ -19,8 +19,8 @@ use std::collections::{BTreeMap, HashSet};
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis, Timestamped,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, OCResult, ReferralStatus, TimestampMillis,
+    Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
 };
 use user_canister::UserCanisterEvent;
 use user_state::{Community, GroupChat};
@@ -282,6 +282,72 @@ impl RuntimeState {
         self.award_achievements_and_notify(user_index, [achievement], now);
     }
 
+    // Tells whoever referred the user at `user_index` of the status the user has reached, so they
+    // earn the CHIT for it. A referrer in another canister is sent it as the User canister does,
+    // while one in this canister is updated directly.
+    pub fn set_referral_status_of_referrer(&mut self, user_index: u16, status: ReferralStatus) {
+        let Some(Some(referred_by)) = self.data.users.with_user(user_index, |user| user.referred_by) else {
+            return;
+        };
+        if let Some(referrer_index) = self.index_of_local_user(referred_by) {
+            let now = self.env.now();
+            self.set_referral_status(referrer_index, self.user_id(user_index), status, now);
+        } else {
+            self.push_user_canister_event(
+                user_index,
+                referred_by,
+                UserCanisterEvent::SetReferralStatus(Box::new(status)),
+            );
+        }
+    }
+
+    // Records the status `referred` has reached for the user at `referrer_index` who referred them,
+    // telling the LocalUserIndex of their CHIT if it earned them any. This is the User canister's
+    // handling of the `SetReferralStatus` event.
+    pub fn set_referral_status(&mut self, referrer_index: u16, referred: UserId, status: ReferralStatus, now: TimestampMillis) {
+        let rewarded = self
+            .data
+            .users
+            .with_user_mut(referrer_index, |user| user.set_referral_status(referred, status, now))
+            .unwrap_or_default();
+        if rewarded {
+            self.notify_user_index_of_chit(referrer_index, now);
+        }
+    }
+
+    // Reinstates the daily claims the user at `user_index` missed, as the User canister's
+    // `reinstate_missed_daily_claims`
+    pub fn reinstate_missed_daily_claims(&mut self, user_index: u16, days_to_reinstate: Vec<u16>) {
+        let now = self.env.now();
+
+        let Some((count, new_streak)) = self.data.users.with_user_mut(user_index, |user| {
+            let daily_claims = user.chit_events.daily_claims();
+            let new_events = user
+                .streak
+                .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
+            let count = new_events.len();
+            for event in new_events {
+                user.chit_events.push(event);
+            }
+            (count, user.streak.days(now))
+        }) else {
+            return;
+        };
+
+        let first_line = if count == 1 {
+            "missed daily claim has been reinstated."
+        } else {
+            "missed daily claims have been reinstated."
+        };
+        let message = format!(
+            "{count} {first_line}
+Your streak is now {new_streak} days!"
+        );
+
+        openchat_bot::send_text_message(user_index, message, Vec::new(), false, self);
+        self.notify_user_index_of_chit(user_index, now);
+    }
+
     // Tells the LocalUserIndex the CHIT balance and streak of the user at `user_index`, which it
     // passes on to the UserIndex
     pub fn notify_user_index_of_chit(&mut self, user_index: u16, now: TimestampMillis) {
@@ -369,6 +435,7 @@ impl RuntimeState {
                 "One day of streak insurance was just used up to protect your streak from being lost. \
 Your streak is now {new_streak} days and you have {days_remaining_text} of streak insurance remaining."
             ),
+            Vec::new(),
             false,
             self,
         );
