@@ -31,6 +31,10 @@ const TOP_UP_MARGIN: Cycles = 50 * B;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+    // Set while a canister is being processed. It lives on the heap rather than in `Data` so that
+    // an upgrade clears it, whereupon the canister, still at the front of the queue, is picked up
+    // again and resumed from wherever it got to.
+    static IN_PROGRESS: Cell<bool> = Cell::default();
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Milliseconds>) -> bool {
@@ -47,11 +51,15 @@ fn run() {
     trace!("'refund_cycles' running");
     TIMER_ID.set(None);
 
+    if IN_PROGRESS.get() {
+        return;
+    }
+
     match mutate_state(get_next) {
-        // As with the other jobs, if the canister is upgraded mid-way through the canister is
-        // simply dropped. Re-queueing it (eg. via `refund_deleted_user_cycles`) picks up from
-        // wherever it got to.
-        Ok(canister) => ic_cdk::futures::spawn_migratory(process_canister(canister)),
+        Ok(canister) => {
+            IN_PROGRESS.set(true);
+            ic_cdk::futures::spawn_migratory(process_canister(canister));
+        }
         Err(Some(delay)) => {
             read_state(|state| start_job_if_required(state, Some(delay)));
         }
@@ -59,17 +67,21 @@ fn run() {
     }
 }
 
-// Returns the next canister whose retry delay (if any) has elapsed, rotating those which are
-// not yet due to the back of the queue, else how long until the first of them is due
+// Returns the next canister whose retry delay (if any) has elapsed, having rotated it to the
+// front of the queue where it stays until it has been processed, else how long until the first
+// of them is due
 fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Milliseconds>> {
     let now = state.env.now();
     let queue = &mut state.data.cycles_refund_queue;
     for _ in 0..queue.len() {
-        let Some(front) = queue.pop_front() else { break };
-        if front.retry_after <= now {
-            return Ok(front);
+        if let Some(front) = queue.front()
+            && front.retry_after <= now
+        {
+            return Ok(front.clone());
         }
-        queue.push_back(front);
+        if let Some(front) = queue.pop_front() {
+            queue.push_back(front);
+        }
     }
     Err(queue.iter().map(|c| c.retry_after.saturating_sub(now)).min())
 }
@@ -79,6 +91,16 @@ async fn process_canister(canister: CanisterToRefund) {
     let result = refund_cycles(canister_id).await;
 
     mutate_state(|state| {
+        IN_PROGRESS.set(false);
+        if state
+            .data
+            .cycles_refund_queue
+            .front()
+            .is_some_and(|c| c.canister_id == canister_id)
+        {
+            state.data.cycles_refund_queue.pop_front();
+        }
+
         match result {
             Ok(cycles) => {
                 state.data.cycles_refunded_from_deleted_users += cycles;

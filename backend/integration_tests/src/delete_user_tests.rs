@@ -165,6 +165,61 @@ fn cycles_refund_tops_up_canisters_with_too_few_cycles_to_install_code() {
 }
 
 #[test]
+fn cycles_refund_resumes_after_the_local_user_index_is_upgraded_mid_way() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+    let operator = register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+
+    delete_user(env, &user_auth, canister_ids.identity);
+    wait_for_cycles_to_be_refunded(env, &user);
+
+    env.add_cycles(user.canister(), T);
+    client::user_index::refund_deleted_user_cycles(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user_index_canister::refund_deleted_user_cycles::Args {},
+    );
+
+    // Wait until the refunder has been installed but not yet uninstalled
+    let mut refunder_installed = false;
+    for _ in 0..100 {
+        env.tick();
+        let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
+        if canister_status.module_hash.is_some() {
+            refunder_installed = true;
+            break;
+        }
+    }
+    assert!(refunder_installed);
+
+    // Upgrading the LocalUserIndex drops whatever it was in the middle of
+    let wasm = crate::wasms::LOCAL_USER_INDEX.clone();
+    let args = candid::encode_one(local_user_index_canister::post_upgrade::Args {
+        wasm_version: wasm.version,
+    })
+    .unwrap();
+    client::stop_canister(env, canister_ids.user_index, user.local_user_index);
+    env.upgrade_canister(user.local_user_index, wasm.module.into(), args, Some(canister_ids.user_index))
+        .unwrap();
+    client::start_canister(env, canister_ids.user_index, user.local_user_index);
+
+    // The canister is still queued, so the refund is picked up again and completed
+    wait_for_cycles_to_be_refunded(env, &user);
+    wait_for_refund_queue_to_empty(env, user.local_user_index);
+
+    wrapper.discard();
+}
+
+#[test]
 fn cycles_refund_leaves_a_canister_with_other_code_untouched() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

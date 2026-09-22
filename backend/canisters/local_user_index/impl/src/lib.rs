@@ -730,7 +730,7 @@ pub struct UserToDelete {
 }
 
 // A deleted user's uninstalled canister whose cycles are to be sent to the CyclesDispenser
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CanisterToRefund {
     pub canister_id: CanisterId,
     pub attempt: usize,
