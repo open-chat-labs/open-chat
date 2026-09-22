@@ -4484,6 +4484,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "governance_clients"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "ic_principal",
+ "nns_governance_canister",
+ "nns_governance_canister_c2c_client",
+ "oc_error_codes",
+ "sns_governance_canister",
+ "sns_governance_canister_c2c_client",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "group"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6707,6 +6722,8 @@ name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "constants",
+ "escrow_canister",
  "ic-cdk 0.20.2",
  "ic-ledger-types",
  "icp_ledger_canister_c2c_client",
@@ -7328,6 +7345,7 @@ dependencies = [
  "escrow_canister",
  "event_store_types",
  "git_commit_id",
+ "governance_clients",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
@@ -12946,6 +12964,7 @@ dependencies = [
  "fire_and_forget_handler",
  "futures",
  "git_commit_id",
+ "governance_clients",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
@@ -12969,8 +12988,6 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
- "nns_governance_canister",
- "nns_governance_canister_c2c_client",
  "oc_error_codes",
  "one_sec_minter_canister",
  "one_sec_minter_canister_c2c_client",
@@ -12978,8 +12995,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha256",
- "sns_governance_canister",
- "sns_governance_canister_c2c_client",
  "stable_memory",
  "stable_memory_map",
  "storage_bucket_client",
@@ -13006,11 +13021,14 @@ dependencies = [
  "constants",
  "direct_chat",
  "group_index_canister",
+ "ic-cdk 0.20.2",
  "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "installed_bots",
  "itertools 0.15.0",
+ "ledger_utils",
  "msgpack",
  "oc_error_codes",
  "rand 0.10.2",

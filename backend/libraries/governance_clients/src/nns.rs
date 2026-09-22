@@ -1,4 +1,4 @@
-use super::nns::manage_neuron::RegisterVote;
+use nns_governance_canister::types::manage_neuron::RegisterVote;
 use nns_governance_canister::types::{
     GovernanceError, ListProposalInfo, ManageNeuronRegisterVoteOnly, manage_neuron, manage_neuron_response,
 };
