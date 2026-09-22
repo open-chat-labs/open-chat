@@ -19,7 +19,7 @@ fn create_user_group(args: Args) -> Response {
 fn create_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
 
     if !member.role().can_manage_user_groups(&state.data.permissions) {
         Err(OCErrorCode::InitiatorNotAuthorized.into())
