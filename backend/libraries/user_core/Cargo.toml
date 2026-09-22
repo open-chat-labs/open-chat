@@ -9,6 +9,7 @@ edition.workspace = true
 candid = { workspace = true }
 constants = { path = "../constants" }
 direct_chat = { path = "../direct_chat" }
+group_index_canister = { path = "../../canisters/group_index/api" }
 ic-ledger-types = { workspace = true }
 icrc-ledger-types = { workspace = true }
 installed_bots = { path = "../installed_bots" }
