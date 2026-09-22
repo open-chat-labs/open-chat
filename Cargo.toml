@@ -132,6 +132,7 @@ members = [
     "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
     "backend/libraries/git_commit_id",
+    "backend/libraries/governance_clients",
     "backend/libraries/group_chat_core",
     "backend/libraries/group_community_common",
     "backend/libraries/http_request",

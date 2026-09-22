@@ -2394,6 +2394,49 @@ fn set_user_suspended(env: &mut PocketIc, sender: Principal, canister_id: Canist
 }
 
 #[test]
+fn approvals_are_granted_from_the_users_own_subaccount() {
+    const ONE_CHAT: u128 = 100_000_000;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (_, b) = create_user(env, local_user_index, canister_id);
+
+    // Each user's funds are held in their own subaccount of the canister
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, a, 10 * ONE_CHAT);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, b, 10 * ONE_CHAT);
+    let balance = |env: &PocketIc, user: UserId| client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user);
+
+    let spender: types::icrc1::Account = random_principal().into();
+    let response = client::multi_user::approve_transfer(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::approve_transfer::Args {
+            spender,
+            ledger_canister_id: canister_ids.chat_ledger,
+            amount: ONE_CHAT,
+            expires_in: None,
+            pin: None,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // The ledger charges the approval's fee to the account it was granted from, so A paid and B
+    // didn't
+    assert!(balance(env, a) < 10 * ONE_CHAT);
+    assert_eq!(balance(env, b), 10 * ONE_CHAT);
+}
+
+#[test]
 fn streak_insurance_is_paid_for_and_used_per_user() {
     const ONE_CHAT: u128 = 100_000_000;
 

@@ -7,6 +7,8 @@ edition.workspace = true
 
 [dependencies]
 candid = { workspace = true }
+constants = { path = "../constants" }
+escrow_canister = { path = "../../canisters/escrow/api" }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../external_canisters/icp_ledger/c2c_client" }

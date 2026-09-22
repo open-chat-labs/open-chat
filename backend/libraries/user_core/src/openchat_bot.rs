@@ -127,6 +127,20 @@ Your streak is now {new_streak} days!"
     )
 }
 
+pub fn btc_deposit_received_text(formatted_amount: &str) -> String {
+    format!(
+        "BTC deposit received!
+Your account has been credited with {formatted_amount} BTC."
+    )
+}
+
+pub fn btc_deposit_failed_text(error: &str) -> String {
+    format!(
+        "Failed to credit account with BTC:
+Error: {error:?}",
+    )
+}
+
 fn visibility(public: bool) -> &'static str {
     if public { "public" } else { "private" }
 }

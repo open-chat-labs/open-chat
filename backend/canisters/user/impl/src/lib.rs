@@ -31,7 +31,6 @@ use utils::regular_jobs::RegularJobs;
 
 mod crypto;
 mod data_previous;
-mod governance_clients;
 mod guards;
 mod jobs;
 mod lifecycle;

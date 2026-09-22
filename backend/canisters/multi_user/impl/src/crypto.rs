@@ -1,28 +1,13 @@
-use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
-use oc_error_codes::OCErrorCode;
-use types::icrc2::TransferFromError;
-use types::{CanisterId, OCResult, icrc1};
+use oc_error_codes::OCError;
+use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserId};
 
-// Rejects a `from_account` held by this canister. The user's own account is always rejected, as the
-// User canister does, and so is that of any other user of this canister, whose funds a user should
-// only ever reach through that user.
-pub(crate) fn validate_from_account(from_account: Option<icrc1::Account>, this_canister_id: CanisterId) -> OCResult {
-    if from_account.is_some_and(|a| a.owner == this_canister_id) {
-        Err(OCErrorCode::InvalidRequest.with_message("`from_account` cannot be an account held by this canister"))
-    } else {
-        Ok(())
-    }
-}
+pub use ledger_utils::{icrc2_transfer_from, validate_from_account};
 
-// As the User canister's `icrc2_transfer_from`. Returns the ledger block index.
-pub(crate) async fn icrc2_transfer_from(ledger: CanisterId, args: &TransferFromArgs) -> OCResult<u64> {
-    let block_index = icrc_ledger_canister_c2c_client::icrc2_transfer_from(ledger, args)
-        .await?
-        .map_err(|error| match error {
-            TransferFromError::InsufficientFunds { .. } => OCErrorCode::InsufficientFunds.into(),
-            TransferFromError::InsufficientAllowance { .. } => OCErrorCode::InsufficientAllowance.into(),
-            error => OCErrorCode::TransferFailed.with_json(&error),
-        })?;
-
-    Ok(block_index.0.try_into().unwrap())
+// Makes the transfer from the account of the user at `my_user_id`, one of this canister's
+// subaccounts. The caller has already checked the caller may act as that user.
+pub async fn process_transaction(
+    transaction: PendingCryptoTransaction,
+    my_user_id: UserId,
+) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
+    ledger_utils::process_transaction(transaction, Some(my_user_id), false).await
 }
