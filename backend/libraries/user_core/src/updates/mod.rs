@@ -13,6 +13,7 @@ pub mod c2c_notify_group_deleted;
 mod c2c_pay_for_premium_item;
 mod c2c_set_user_suspended;
 mod c2c_uninstall_bot;
+pub mod c2c_user_canister;
 pub mod claim_daily_chit;
 pub mod create_community;
 pub mod create_group;
