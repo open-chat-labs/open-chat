@@ -14,7 +14,7 @@ pub fn token_swaps(user: &User, args: Args) -> SuccessResult {
             icrc2: s.icrc2,
             transfer_or_approval: extract_inner(&s.transfer_or_approval),
             notified_dex: extract_inner(&s.notified_dex_at),
-            amount_swapped: map_inner(&s.swap_result, |r| r.clone().map(|i| i.amount_out)),
+            amount_swapped: map_inner(&s.swap_result, |r| r.map(|i| i.amount_out)),
             withdrawn_from_dex: extract_inner(&s.withdrawn_from_dex_at),
             success: s.success.as_ref().map(|v| v.value),
         })

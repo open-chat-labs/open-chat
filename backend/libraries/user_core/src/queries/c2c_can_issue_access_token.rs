@@ -3,8 +3,8 @@ use types::c2c_can_issue_access_token::AccessTypeArgs;
 
 // Whether the LocalUserIndex may issue the access token: a bot acting by command must have been
 // granted the permissions it requests, and the initiator of a video call must not be blocked
-pub fn c2c_can_issue_access_token(user: &User, args: AccessTypeArgs) -> bool {
-    match &args {
+pub fn c2c_can_issue_access_token(user: &User, args: &AccessTypeArgs) -> bool {
+    match args {
         AccessTypeArgs::BotActionByCommand(args) => user
             .bots
             .get(&args.bot_id)

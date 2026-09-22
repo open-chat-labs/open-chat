@@ -26,6 +26,6 @@ impl ArgsCompat {
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token_v2(args: ArgsCompat) -> Response {
     let can_issue =
-        read_state(|state| user_core::queries::c2c_can_issue_access_token(&state.data.user, args.into_access_type_args()));
+        read_state(|state| user_core::queries::c2c_can_issue_access_token(&state.data.user, &args.into_access_type_args()));
     if can_issue { Response::Success } else { Response::Failure }
 }

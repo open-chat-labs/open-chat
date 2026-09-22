@@ -9,7 +9,7 @@ fn c2c_can_issue_access_token_v2(args: Args) -> Response {
     let can_issue = read_state(|state| {
         state
             .with_user(args.user_id, |user| {
-                user_core::queries::c2c_can_issue_access_token(user, args.args)
+                user_core::queries::c2c_can_issue_access_token(user, &args.args)
             })
             .unwrap_or(false)
     });
