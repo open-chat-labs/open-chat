@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{Empty, OCResult, UserId};
+use types::{Empty, OCResult};
 
 // Called via the user's user canister
 #[update(msgpack = true)]
@@ -20,7 +20,11 @@ fn c2c_leave_group(args: Args) -> Response {
 fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let user_id = UserId::acting_as(state.env.caller(), args.user_id).ok_or(OCErrorCode::InitiatorNotAuthorized)?;
+    let caller = state.env.caller();
+    let user_id = args.user_id.unwrap_or(caller.into());
+    if user_id.canister_id() != caller {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    }
     let now = state.env.now();
 
     let result = state.data.chat.leave(user_id, now)?;

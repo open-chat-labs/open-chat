@@ -121,11 +121,12 @@ fn is_blocked(recipient_index: u16, sender: UserId, state: &RuntimeState) -> boo
 }
 
 // Whether a sender is one a canister of this kind can act for: a User canister acts only for its
-// own user, whose id is the canister's id, and a MultiUser canister only for the users it holds
+// own user, whose id is the canister's id, and a MultiUser canister only for the users it holds,
+// whose ids carry an index, never as its own canister id
 fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bool {
     match kind {
         CanisterKind::UserCanister => sender == UserId::from(caller),
-        CanisterKind::MultiUserCanister => UserId::acting_as(caller, Some(sender)).is_some(),
+        CanisterKind::MultiUserCanister => sender.index() != 0 && sender.canister_id() == caller,
         CanisterKind::Neither => false,
     }
 }
