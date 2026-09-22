@@ -170,13 +170,13 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
         return Err(RefundError::NotController);
     }
 
-    let balance = status.cycles();
-    if balance < MIN_CYCLES_TO_REFUND {
-        return Err(RefundError::TooFewCycles(balance));
-    }
-
     match status.module_hash {
         None => {
+            let balance = status.cycles();
+            if balance < MIN_CYCLES_TO_REFUND {
+                return Err(RefundError::TooFewCycles(balance));
+            }
+
             let required = status.freezing_threshold_cycles() + CYCLES_REQUIRED_FOR_INSTALL;
             if balance < required {
                 let top_up = required - balance;
@@ -185,7 +185,9 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
             }
             install_refunder(canister_id, wasm.clone(), cycles_dispenser_canister_id).await?;
         }
-        // A previous attempt installed the refunder but was interrupted before uninstalling it
+        // A previous attempt installed the refunder but was interrupted before uninstalling it.
+        // It may already have sent the cycles, leaving too few to be worth a fresh attempt, so
+        // the balance isn't checked here: `refund` simply replies 0 and the uninstall completes.
         Some(hash) if hash == wasm.hash() => {}
         Some(_) => return Err(RefundError::CanisterHasCode),
     }
