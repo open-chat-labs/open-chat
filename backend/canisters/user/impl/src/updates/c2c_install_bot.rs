@@ -2,9 +2,8 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use oc_error_codes::OCErrorCode;
 use rand::RngExt;
-use types::{OCResult, UserType, c2c_install_bot::*};
+use types::{OCResult, c2c_install_bot::*};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -13,45 +12,8 @@ fn c2c_install_bot(args: Args) -> Response {
 }
 
 fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if args.caller != state.env.canister_id().into() {
-        return Err(OCErrorCode::InitiatorNotAuthorized.into());
-    };
-
-    if state.data.user.suspended.value {
-        return Err(OCErrorCode::InitiatorSuspended.into());
-    }
-
+    let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
-
-    if !state.data.user.bots.add(
-        args.bot_id,
-        args.caller,
-        args.granted_permissions.clone(),
-        args.granted_autonomous_permissions.clone(),
-        args.default_subscriptions.clone(),
-        now,
-    ) {
-        return Err(OCErrorCode::AlreadyAdded.into());
-    }
-
-    // If there isn't already a direct chat with the bot, create one now
-    let chat = state.data.user.direct_chats.get_or_create(
-        state.env.canister_id().into(),
-        args.bot_id,
-        UserType::BotV2,
-        || state.env.rng().random(),
-        now,
-    );
-
-    // Subscribe to permitted chat events
-    if let (Some(subscriptions), Some(permissions)) = (args.default_subscriptions, args.granted_autonomous_permissions.clone())
-    {
-        chat.subscribe_bot_to_events(
-            args.bot_id,
-            subscriptions.chat,
-            &permissions.permitted_chat_event_categories_to_read(),
-        );
-    }
-
-    Ok(())
+    let anonymized_id: u128 = state.env.rng().random();
+    user_core::updates::c2c_install_bot(&mut state.data.user, args, my_user_id, anonymized_id, now)
 }

@@ -187,8 +187,18 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
             }
         }
         LocalUserIndexEvent::ReinstateMissedDailyClaims(days) => state.reinstate_missed_daily_claims(user_index, days),
-        // TODO: Handle these once the MultiUser canister holds each user's bots. Until then a user
-        // has none, so there is nothing to update.
-        LocalUserIndexEvent::BotUpdated(_) | LocalUserIndexEvent::BotRemoved(_) => {}
+        LocalUserIndexEvent::BotUpdated(ev) => {
+            state.data.users.with_user_mut(user_index, |user| {
+                user.handle_bot_definition_updated(*ev, now);
+            });
+        }
+        LocalUserIndexEvent::BotRemoved(bot_id) => {
+            let prefixes = state
+                .data
+                .users
+                .with_user_mut(user_index, |user| user.uninstall_bot(bot_id, now))
+                .unwrap_or_default();
+            state.garbage_collect_stable_memory_keys(user_index, prefixes);
+        }
     }
 }

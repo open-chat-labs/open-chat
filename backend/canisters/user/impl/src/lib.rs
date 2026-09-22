@@ -409,10 +409,14 @@ impl RuntimeState {
 
     pub fn uninstall_bot(&mut self, bot_id: UserId) {
         let now = self.env.now();
+        let prefixes = self.data.user.uninstall_bot(bot_id, now);
+        self.garbage_collect_stable_memory_keys(prefixes);
+    }
 
-        self.data.user.bots.remove(bot_id, now);
-
-        self.delete_direct_chat(bot_id, false, now);
+    // Queues the entries under the prefixes for removal from the stable memory map
+    pub fn garbage_collect_stable_memory_keys(&mut self, prefixes: Vec<BaseKeyPrefix>) {
+        self.data.stable_memory_keys_to_garbage_collect.extend(prefixes);
+        jobs::garbage_collect_stable_memory::start_job_if_required(&self.data);
     }
 }
 

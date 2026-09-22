@@ -185,8 +185,21 @@ impl User {
         }
     }
 
+    // Removes the bot and the user's chat with it, returning the chat's stable memory prefixes for
+    // the caller to garbage collect
+    pub fn uninstall_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> Vec<BaseKeyPrefix> {
+        self.bots.remove(bot_id, now);
+        self.direct_chats
+            .remove(bot_id.into(), now)
+            .map(|chat| chat.stable_memory_key_prefixes())
+            .unwrap_or_default()
+    }
+
     fn apply_bot_update(&mut self, bot_id: UserId, updated_by: Option<UserId>, now: TimestampMillis) {
-        let chat = self.direct_chats.get_mut(&bot_id.into()).unwrap();
+        // The user may have deleted their chat with the bot while keeping it installed
+        let Some(chat) = self.direct_chats.get_mut(&bot_id.into()) else {
+            return;
+        };
 
         // Push a chat event
         if let Some(updated_by) = updated_by {
