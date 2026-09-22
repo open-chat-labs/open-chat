@@ -11,8 +11,12 @@ chat_events = { path = "../chat_events" }
 constants = { path = "../constants" }
 direct_chat = { path = "../direct_chat" }
 group_index_canister = { path = "../../canisters/group_index/api" }
-ic-ledger-types = { workspace = true }
+ic-cdk = { workspace = true }
+icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
+ledger_utils = { path = "../ledger_utils" }
+user_index_canister = { path = "../../canisters/user_index/api" }
+ic-ledger-types = { workspace = true }
 installed_bots = { path = "../installed_bots" }
 itertools = { workspace = true }
 msgpack = { path = "../msgpack" }
@@ -22,7 +26,6 @@ stable_memory_map = { path = "../stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../types" }
 user_canister = { path = "../../canisters/user/api" }
-user_index_canister = { path = "../../canisters/user_index/api" }
 utils = { path = "../utils" }
 
 [dev-dependencies]

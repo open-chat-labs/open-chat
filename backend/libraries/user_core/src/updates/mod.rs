@@ -4,6 +4,7 @@
 
 mod add_hot_group_exclusions;
 mod archive_unarchive_chats;
+mod c2c_charge_user_account;
 mod c2c_install_bot;
 mod c2c_notify_achievement;
 mod c2c_pay_for_premium_item;
@@ -23,6 +24,7 @@ mod update_bot;
 
 pub use add_hot_group_exclusions::add_hot_group_exclusions;
 pub use archive_unarchive_chats::archive_unarchive_chats;
+pub use c2c_charge_user_account::c2c_charge_user_account;
 pub use c2c_install_bot::c2c_install_bot;
 pub use c2c_notify_achievement::c2c_notify_achievement;
 pub use c2c_pay_for_premium_item::c2c_pay_for_premium_item;

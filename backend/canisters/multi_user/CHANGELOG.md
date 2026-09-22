@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `c2c_grant_super_admin` and `c2c_revoke_super_admin`, and `c2c_pay_for_premium_item`, `c2c_notify_achievement` and `report_message` with their logic shared with the User canister via `user_core` ([#9477](https://github.com/open-chat-labs/open-chat/pull/9477))
 - Implement `token_swap_status`, `token_swaps`, `c2c_bot_chat_summary` and `c2c_can_issue_access_token_v2`, sharing their logic with the User canister via `user_core` ([#9478](https://github.com/open-chat-labs/open-chat/pull/9478))
 - Install, update and uninstall bots per user (`c2c_install_bot`, `update_bot`, `c2c_uninstall_bot`, and the `BotUpdated` and `BotRemoved` events), and implement `join_video_call`, sharing the logic with the User canister via `user_core` ([#9479](https://github.com/open-chat-labs/open-chat/pull/9479))
+- Implement `c2c_charge_user_account` and `withdraw_crypto_v2`, sharing the ledger helpers and charging logic with the User canister, and answer `c2c_vote_on_proposal` with an error, since the canister's neurons can't be tied to one of its users ([#9480](https://github.com/open-chat-labs/open-chat/pull/9480))
 
 ### Changed
 
