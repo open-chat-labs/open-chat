@@ -2,10 +2,7 @@ use crate::RuntimeState;
 use chat_events::{MessageContentInternal, NullEventPusher, PushMessageArgs, ReplyContextInternal, TextContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
 use rand::RngExt;
-use types::{
-    ChannelId, CommunityId, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, User, UserId,
-    UserType,
-};
+use types::{DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, User, UserId, UserType};
 use user_core::openchat_bot;
 
 pub(crate) fn send_community_deleted_message(
@@ -22,35 +19,6 @@ pub(crate) fn send_community_deleted_message(
         false,
         state,
     );
-}
-
-pub(crate) fn send_group_deleted_message(
-    user_index: u16,
-    deleted_by: UserId,
-    group_name: String,
-    public: bool,
-    state: &mut RuntimeState,
-) {
-    send_text_message(
-        user_index,
-        openchat_bot::group_deleted_text(deleted_by, &group_name, public),
-        Vec::new(),
-        false,
-        state,
-    );
-}
-
-pub(crate) fn send_group_imported_into_community_message(
-    user_index: u16,
-    group_name: String,
-    public: bool,
-    community_name: String,
-    community_id: CommunityId,
-    channel_id: ChannelId,
-    state: &mut RuntimeState,
-) {
-    let text = openchat_bot::group_imported_into_community_text(&group_name, public, &community_name, community_id, channel_id);
-    send_text_message(user_index, text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_removed_from_group_or_community_message(
