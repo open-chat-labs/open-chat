@@ -1,6 +1,6 @@
 use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
-use types::{GroupReplyContext, MessageId, MessageIndex, OgPreview, User, Version};
+use types::{GroupReplyContext, MessageId, MessageIndex, OgPreview, User, UserId, Version};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -17,6 +17,10 @@ pub struct Args {
     pub message_filter_failed: Option<u64>,
     #[serde(default)]
     pub og_previews: Vec<OgPreview>,
+    // Set by a MultiUser canister to say which of its users is sending, since the caller alone
+    // doesn't identify them. A User canister leaves it unset.
+    #[serde(default)]
+    pub sender: Option<UserId>,
 }
 
 pub type Response = crate::send_message_v2::Response;

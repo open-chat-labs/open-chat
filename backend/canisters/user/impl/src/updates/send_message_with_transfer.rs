@@ -89,6 +89,7 @@ async fn send_message_with_transfer_to_channel_impl(
         channel_rules_accepted: args.channel_rules_accepted,
         message_filter_failed: args.message_filter_failed,
         og_previews: args.og_previews,
+        sender: None,
     };
 
     // Send the message to the community
@@ -196,6 +197,7 @@ async fn send_message_with_transfer_to_group_impl(
         rules_accepted: args.rules_accepted,
         message_filter_failed: args.message_filter_failed,
         og_previews: args.og_previews,
+        sender: None,
     };
 
     // Send the message to the group

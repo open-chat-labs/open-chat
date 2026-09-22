@@ -13,6 +13,10 @@ pub struct Args {
     pub decimals: u8,
     pub username: String,
     pub display_name: Option<String>,
+    // Set by a MultiUser canister to say which of its users is tipping, since the caller alone
+    // doesn't identify them. A User canister leaves it unset.
+    #[serde(default)]
+    pub sender: Option<UserId>,
 }
 
 pub type Response = UnitResult;

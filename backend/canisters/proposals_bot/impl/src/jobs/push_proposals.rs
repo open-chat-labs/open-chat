@@ -104,6 +104,7 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
         rules_accepted: None,
         message_filter_failed: None,
         og_previews: Vec::new(),
+        sender: None,
     };
 
     let canister_id = group_id.into();
@@ -142,6 +143,7 @@ async fn push_channel_proposal(
         channel_rules_accepted: None,
         message_filter_failed: None,
         og_previews: Vec::new(),
+        sender: None,
     };
 
     let canister_id = community_id.into();

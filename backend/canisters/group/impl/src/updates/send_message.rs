@@ -125,7 +125,13 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
         return Err(OCErrorCode::ChatFrozen.into());
     }
 
-    let caller = state.verified_caller(None)?;
+    let caller = match args.sender {
+        // A MultiUser canister names which of its users is sending. Only its users carry an index,
+        // so a canister acting as itself, such as a bot, takes the usual path and its checks.
+        Some(sender) if sender.index() != 0 => Caller::User(state.get_calling_member(Some(sender), true)?.user_id()),
+        Some(_) => return Err(OCErrorCode::InitiatorNotAuthorized.into()),
+        None => state.verified_caller(None)?,
+    };
 
     // Bots can't call this c2c endpoint since it skips the validation
     if matches!(caller, Caller::Bot(_) | Caller::BotV2(_)) {
