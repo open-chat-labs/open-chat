@@ -48,5 +48,6 @@ if (failed.length > 0) {
     console.error(`Failed: ${failed.join(", ")}`);
     // Not process.exit(): that can drop buffered output when stdout is a pipe
     process.exitCode = 1;
+} else {
+    console.log(`Passed: ${scripts.join(", ")}`);
 }
-console.log(`Passed: ${scripts.join(", ")}`);

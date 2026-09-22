@@ -108,19 +108,26 @@ jobs:
     needs: [changes, checks, build]
     if: always()
     runs-on: ubuntu-latest
+    env:
+      CHANGES_RESULT: ${{ needs.changes.result }}
+      FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+      # Every job this one needs, so that a job added above is gated without touching this one
+      ALL_RESULTS: ${{ join(needs.*.result, ' ') }}
     steps:
       - name: Check the results
         run: |
-          if [ "${{ needs.changes.result }}" != "success" ]; then
-            echo "The change detection job did not succeed (${{ needs.changes.result }})"
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "The change detection job did not succeed ($CHANGES_RESULT)"
             exit 1
           fi
-          if [ "${{ needs.changes.outputs.frontend }}" != "true" ]; then
+          if [ "$FRONTEND_CHANGED" != "true" ]; then
             echo "No frontend changes"
             exit 0
           fi
-          if [ "${{ needs.checks.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ]; then
-            echo "checks: ${{ needs.checks.result }}, build: ${{ needs.build.result }}"
-            exit 1
-          fi
-          echo "checks and build passed"
+          for result in $ALL_RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "Not every job succeeded: $ALL_RESULTS"
+              exit 1
+            fi
+          done
+          echo "All jobs passed"
