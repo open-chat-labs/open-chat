@@ -315,6 +315,24 @@ opt-level = "z"
 codegen-units = 1
 debug = false
 
+# The puzzle generators and solvers are search-heavy, and their tests generate hundreds of puzzles
+# each: unoptimised they take minutes, optimised seconds. This applies to `cargo test` too, since
+# the test profile inherits from dev.
+[profile.dev.package.puzzle_core]
+opt-level = 3
+[profile.dev.package.unruly]
+opt-level = 3
+[profile.dev.package.loopy]
+opt-level = 3
+[profile.dev.package.light_up]
+opt-level = 3
+[profile.dev.package.slant]
+opt-level = 3
+[profile.dev.package.tents]
+opt-level = 3
+[profile.dev.package.bridges]
+opt-level = 3
+
 [patch.crates-io]
 aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }
 ic-cbor = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }

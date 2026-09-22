@@ -75,7 +75,9 @@ jobs:
       - uses: ./.github/workflows/setup-rust
         with:
           cache: read
+      # `--tests` skips the doc tests: there are none (the single doc example is `ignore`d), but
+      # without the flag cargo still runs rustdoc for every crate, about 15 seconds
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --workspace --exclude integration_tests --exclude open-chat --exclude tauri-plugin-oc
+          args: --workspace --exclude integration_tests --exclude open-chat --exclude tauri-plugin-oc --tests
