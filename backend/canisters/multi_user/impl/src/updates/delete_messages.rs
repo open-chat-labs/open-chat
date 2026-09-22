@@ -8,6 +8,7 @@ use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, ChatId, EventIndex, MessageId, MessageIndex, OCResult};
 use user_canister::delete_messages::*;
+use user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -62,8 +63,18 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     enqueue_hard_delete_jobs(my_index, args.user_id.into(), args.thread_root_message_index, deleted, state);
 
     // Only the caller's own messages are deleted in the other user's copy, where the thread is
-    // identified by the id of its root message since message indexes differ between the copies
-    // TODO: A user in another canister needs sending `DeleteMessages`, as the User canister does
+    // identified by the id of its root message since message indexes differ between the copies. A
+    // user in another canister is sent the deletion.
+    if !my_messages.is_empty() {
+        state.push_user_canister_event(
+            my_index,
+            args.user_id,
+            UserCanisterEvent::DeleteMessages(Box::new(C2CDeleteUndeleteMessagesArgs {
+                thread_root_message_id,
+                message_ids: my_messages.clone(),
+            })),
+        );
+    }
     if !my_messages.is_empty()
         && let Some(their_index) = state.index_of_local_user(args.user_id)
         && let Some((thread_root_message_index, deleted_in_theirs)) = state
