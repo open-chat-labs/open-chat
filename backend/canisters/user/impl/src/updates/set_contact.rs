@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use user_canister::set_contact::*;
-use user_state::SetContactResponse;
+use user_core::SetContactResponse;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

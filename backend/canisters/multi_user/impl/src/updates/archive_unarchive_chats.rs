@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::{Chat, TimestampMillis, Timestamped};
 use user_canister::archive_unarchive_chats::{Response::*, *};
-use user_state::User;
+use user_core::User;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

@@ -11,7 +11,7 @@ use types::{
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
-use user_state::P2PSwap;
+use user_core::P2PSwap;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

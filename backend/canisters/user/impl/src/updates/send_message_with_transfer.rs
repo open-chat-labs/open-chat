@@ -17,7 +17,7 @@ use types::{
 };
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
-use user_state::P2PSwap;
+use user_core::P2PSwap;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
