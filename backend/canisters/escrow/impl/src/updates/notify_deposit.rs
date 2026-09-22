@@ -48,16 +48,27 @@ async fn process_swap(
             let now = state.env.now();
             let swap = state.data.swaps.get_mut(swap_id).unwrap();
 
-            // The swap may have been cancelled, have expired or been accepted by someone else while
-            // the balance was being checked, in which case the deposit is refunded rather than
+            // Another call for the same deposit may have recorded it while the balance was being
+            // checked, in which case it is left as it is: refunding it would take back funds the
+            // swap still holds for its payouts
+            let offered_by_depositor = principal == swap.offered_by;
+            if (offered_by_depositor && swap.token0_received)
+                || (swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by == principal) && swap.token1_received)
+            {
+                return Success(SuccessResult {
+                    complete: swap.token0_received && swap.token1_received,
+                });
+            }
+
+            // The swap may have expired, been cancelled or been accepted by someone else while the
+            // balance was being checked, in which case the deposit is refunded rather than
             // recorded. Recording it would leave it with nothing to refund it, or take the swap over
             // from its acceptor.
-            let unavailable = if swap.cancelled_at.is_some() {
-                Some(SwapCancelled)
-            } else if now > swap.expires_at {
+            let unavailable = if now >= swap.expires_at {
                 Some(SwapExpired)
-            } else if principal != swap.offered_by && swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by != principal)
-            {
+            } else if swap.cancelled_at.is_some() {
+                Some(SwapCancelled)
+            } else if !offered_by_depositor && swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by != principal) {
                 Some(SwapAlreadyAccepted)
             } else {
                 None
@@ -178,7 +189,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
     };
 
     let now = state.env.now();
-    let expired = now > swap.expires_at;
+    let expired = now >= swap.expires_at;
 
     let principal = args.deposited_by.unwrap_or_else(|| state.env.caller());
     let escrow_canister_id = state.env.canister_id();

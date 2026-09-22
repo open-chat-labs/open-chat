@@ -258,9 +258,9 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
 // A deposit is checked against the ledger before it is recorded, so the swap can end while the
 // check is in flight. The deposit must then be refunded rather than recorded against a swap which
-// has nothing left to refund it. Expiry is used to end the swap since its timer runs ahead of the
-// ledger's reply; a cancellation arriving as a new message is handled after the reply, but takes
-// the same path when it does land in between.
+// has nothing left to refund it. The swap is ended by expiry, since the test can move the clock
+// while the check waits; a `cancel_swap` sent from the test was found to be handled only once the
+// check had finished, but a cancellation landing in between takes the same path.
 #[test]
 fn deposit_is_refunded_if_swap_expires_while_it_is_checked() {
     let mut wrapper = ENV.deref().get();
