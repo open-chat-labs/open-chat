@@ -18,7 +18,7 @@ fn register_poll_vote(args: Args) -> Response {
 fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<PollVotes> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let user_id = member.user_id;
     let now = state.env.now();

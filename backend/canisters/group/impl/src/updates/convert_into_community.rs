@@ -74,7 +74,7 @@ struct PrepareResult {
 }
 
 fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     if !member.role().is_owner() {
         Err(OCErrorCode::InitiatorNotAuthorized.into())
     } else {

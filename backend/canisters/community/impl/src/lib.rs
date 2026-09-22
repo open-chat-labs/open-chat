@@ -126,16 +126,14 @@ impl RuntimeState {
         Ok(member)
     }
 
-    // The calling member, or the member the caller names when it holds many users
-    pub fn get_calling_member_acting_as(
-        &self,
-        user_id: Option<UserId>,
-        verify: bool,
-    ) -> Result<CommunityMemberInternal, OCErrorCode> {
+    // The calling member, or when `user_id` is given, that member, whom the caller must hold (a
+    // MultiUser canister acting for one of its users, or a User canister for its own user)
+    pub fn get_calling_member(&self, user_id: Option<UserId>, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
+        let caller = self.env.caller();
         let Some(user_id) = user_id else {
-            return self.get_calling_member(verify);
+            return self.get_member(verify, caller);
         };
-        if user_id.canister_id() != self.env.caller() {
+        if user_id.canister_id() != caller {
             return Err(OCErrorCode::InitiatorNotAuthorized);
         }
         let member = self
@@ -147,11 +145,6 @@ impl RuntimeState {
             member.verify()?;
         }
         Ok(member)
-    }
-
-    pub fn get_calling_member(&self, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
-        let caller = self.env.caller();
-        self.get_member(verify, caller)
     }
 
     pub fn push_notification(

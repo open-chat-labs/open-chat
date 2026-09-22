@@ -56,7 +56,7 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
     let channel_member = channel.chat.members.get_verified_member(member.user_id)?;
     let min_visible_event_index = channel_member.min_visible_event_index();

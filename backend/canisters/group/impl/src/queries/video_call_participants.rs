@@ -13,7 +13,7 @@ fn video_call_participants(args: Args) -> Response {
 }
 
 fn video_call_participants_impl(args: Args, state: &RuntimeState) -> OCResult<VideoCallParticipants> {
-    let member = state.get_calling_member(false)?;
+    let member = state.get_calling_member(None, false)?;
 
     if let Some(participants) = state.data.chat.events.video_call_participants(
         args.message_id,
