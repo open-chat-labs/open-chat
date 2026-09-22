@@ -3121,14 +3121,51 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     // Bob is untouched by any of it
     let bob_state = initial_state(env, bob, canister_id);
     assert!(!bob_state.is_unique_person);
+    assert!(bob_state.referrals.is_empty());
     assert!(bob_state.chit_balance == 0);
     assert!(bob_state.direct_chats.summaries.is_empty());
 
+    // A referred user in another canister reaching a status is sent as a `SetReferralStatus`
+    // event from their canister, as the User canister sends it
+    let response = client::multi_user::c2c_user_canister_v2(
+        env,
+        carol.canister(),
+        canister_id,
+        &user_canister::c2c_user_canister_v2::Args {
+            events: vec![IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: 1,
+                value: user_canister::c2c_user_canister_v2::Event {
+                    sender: carol.user_id,
+                    recipient: alice_id,
+                    event: UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::Diamond)),
+                },
+            }],
+        },
+    );
+    assert!(
+        matches!(response, user_canister::c2c_user_canister_v2::Response::Success),
+        "{response:?}"
+    );
+    let alice_state_after = initial_state(env, alice, canister_id);
+    assert!(
+        alice_state_after
+            .referrals
+            .iter()
+            .any(|r| r.user_id == carol.user_id && matches!(r.status, ReferralStatus::Diamond)),
+        "{:?}",
+        alice_state_after.referrals
+    );
+    assert!(has_achievement(&alice_state_after, Achievement::Referred1stUser));
+    assert!(alice_state_after.chit_balance > alice_state.chit_balance);
+    let alice_state = alice_state_after;
+
     // Bob buying Diamond tells Alice, his referrer in this canister, so she earns the CHIT
     let now = now_millis(env);
+    // Ids distinct from Alice's, since nothing advances the time between the calls
     let event = local_user_index_event(
         env,
-        1,
+        11,
         LocalUserIndexEvent::DiamondMembershipPaymentReceived(Box::new(user_canister::DiamondMembershipPaymentReceived {
             timestamp: now,
             expires_at: now + 365 * constants::DAY_IN_MS,
@@ -3161,13 +3198,12 @@ fn local_user_index_events_update_the_state_each_user_holds() {
         "{:?}",
         alice_state_after.referrals
     );
-    assert!(has_achievement(&alice_state_after, Achievement::Referred1stUser));
     assert!(alice_state_after.chit_balance > alice_state.chit_balance);
 
     // Confirming a phone number marks the user as verified
     let event = local_user_index_event(
         env,
-        2,
+        12,
         LocalUserIndexEvent::PhoneNumberConfirmed(Box::new(user_canister::PhoneNumberConfirmed {
             phone_number: types::PhoneNumber::new(44, "07887123456".to_string()),
             storage_added: 1024 * 1024 * 1024,
@@ -3188,13 +3224,13 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     let now = now_millis(env);
     let event = local_user_index_event(
         env,
-        3,
+        13,
         LocalUserIndexEvent::ReinstateMissedDailyClaims(vec![((now - DAY_ZERO) / constants::DAY_IN_MS) as u16]),
     );
     send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![event]);
     assert!(
-        initial_state(env, bob, canister_id)
-            .achievements
+        chit_events(env, bob, canister_id)
+            .events
             .iter()
             .any(|e| matches!(e.reason, ChitEventType::DailyClaimReinstated))
     );

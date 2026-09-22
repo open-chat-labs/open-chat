@@ -284,14 +284,22 @@ impl RuntimeState {
 
     // Tells whoever referred the user at `user_index` of the status the user has reached, so they
     // earn the CHIT for it. A referrer in another canister is sent it as the User canister does,
-    // while one in this canister is updated directly.
-    pub fn set_referral_status_of_referrer(&mut self, user_index: u16, status: ReferralStatus) {
+    // while one in this canister is updated directly, unless they have blocked the user, as their
+    // canister would skip the event from a blocked sender.
+    pub fn set_referral_status_of_referrer(&mut self, user_index: u16, status: ReferralStatus, now: TimestampMillis) {
         let Some(Some(referred_by)) = self.data.users.with_user(user_index, |user| user.referred_by) else {
             return;
         };
         if let Some(referrer_index) = self.index_of_local_user(referred_by) {
-            let now = self.env.now();
-            self.set_referral_status(referrer_index, self.user_id(user_index), status, now);
+            let referred = self.user_id(user_index);
+            let blocked = self
+                .data
+                .users
+                .with_user(referrer_index, |user| user.blocked_users.contains(&referred))
+                .unwrap_or(true);
+            if !blocked {
+                self.set_referral_status(referrer_index, referred, status, now);
+            }
         } else {
             self.push_user_canister_event(
                 user_index,
