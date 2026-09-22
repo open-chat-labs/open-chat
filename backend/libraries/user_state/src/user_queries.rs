@@ -1,7 +1,7 @@
 use crate::{User, merge_maps, sorted_pinned};
 use installed_bots::BotUpdate;
 use std::collections::HashSet;
-use types::{CanisterId, InstalledBotDetails, OptionUpdate, TimestampMillis, UserId};
+use types::{CanisterId, Chat, InstalledBotDetails, OptionUpdate, TimestampMillis, UserId};
 use user_canister::{initial_state, updates};
 
 // The `initial_state` and `updates` queries, shared by the User and MultiUser canisters
@@ -69,11 +69,17 @@ impl User {
             one_sec_address: self.one_sec_address.as_ref().map(|a| a.value.clone()),
             premium_items: self.premium_items.item_ids(),
             // Only direct and group chats are merged in here; pinned favourites are listed above
-            pinned_chats: sorted_pinned(&merge_maps(
-                &self.direct_chats.pinned_chats(),
-                &self.group_chats.pinned_chats(),
-            )),
+            pinned_chats: self.pinned_direct_and_group_chats(),
         }
+    }
+
+    // The user's pinned direct and group chats, most recently pinned first, which are pinned in the
+    // one list
+    fn pinned_direct_and_group_chats(&self) -> Vec<Chat> {
+        sorted_pinned(&merge_maps(
+            &self.direct_chats.pinned_chats(),
+            &self.group_chats.pinned_chats(),
+        ))
     }
 
     // None if nothing has changed since `updates_since`. `now` is only read once something has,
@@ -198,15 +204,10 @@ impl User {
             removed: self.communities.removed_since(updates_since),
         };
 
-        // Direct and group chats are pinned in the one list
-        let direct_pinned = self.direct_chats.pinned_chats_if_updated(updates_since);
-        let group_pinned = self.group_chats.pinned_chats_if_updated(updates_since);
-        let pinned_chats = match (&direct_pinned, &group_pinned) {
-            (Some(direct), Some(group)) => Some(sorted_pinned(&merge_maps(direct, group))),
-            (Some(direct), None) => Some(sorted_pinned(&merge_maps(direct, &self.group_chats.pinned_chats()))),
-            (None, Some(group)) => Some(sorted_pinned(&merge_maps(&self.direct_chats.pinned_chats(), group))),
-            (None, None) => None,
-        };
+        // A change to either is reported as the whole merged list
+        let pinned_chats = (self.direct_chats.pinned_chats_if_updated(updates_since).is_some()
+            || self.group_chats.pinned_chats_if_updated(updates_since).is_some())
+        .then(|| self.pinned_direct_and_group_chats());
 
         let favourite_chats = updates::FavouriteChatsUpdates {
             chats: self.favourite_chats.chats_if_updated(updates_since),
@@ -277,5 +278,31 @@ impl User {
             premium_items: premium_items_updated.then(|| self.premium_items.item_ids()),
             pinned_chats,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    // Reading the time marks a query's response as uncacheable, so a user with nothing new must
+    // be told so without it
+    #[test]
+    fn updates_leaves_the_clock_alone_when_there_is_nothing_new() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+
+        let my_user_id: UserId = Principal::from_slice(&[1, 2, 3]).into();
+        let user = User::new(Principal::from_slice(&[9]), "username".to_string(), None, 100);
+
+        assert!(
+            user.updates(100, my_user_id, || panic!("The clock was read with nothing to report"))
+                .is_none()
+        );
+        // Registering set the username, so there is something to report from before then
+        assert!(user.updates(99, my_user_id, || 200).is_some_and(|r| r.timestamp == 200));
     }
 }
