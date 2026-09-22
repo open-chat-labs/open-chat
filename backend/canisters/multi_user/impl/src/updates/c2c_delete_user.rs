@@ -26,12 +26,16 @@ fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     state.data.users.remove(user_index);
     state.data.timer_jobs.cancel_jobs(|job| job.user_index() == user_index);
-    // Nor are any events from them still waiting to be sent to the LocalUserIndex, as when a User
-    // canister is uninstalled
+    // Nor are any events from them still waiting to be sent to the LocalUserIndex or to other
+    // users' canisters, as when a User canister is uninstalled
     state
         .data
         .local_user_index_event_sync_queue
         .retain(|event| event.value.user_id != args.user_id);
+    state
+        .data
+        .user_canister_events_queue
+        .retain(|event| event.value.sender != args.user_id);
     // The user's whole scope is garbage collected, so there is no need to remove these separately
     state
         .data
