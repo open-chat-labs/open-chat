@@ -27,11 +27,11 @@ pub fn join_video_call(user: &mut User, args: &Args, my_user_id: UserId, now: Ti
 // #9456). None when the chat is muted, since a muted chat never rang.
 pub fn answered_dismissal(user: &User, args: &Args) -> Option<DirectChatUserNotificationPayload> {
     let chat = user.direct_chats.get(&args.user_id.into())?;
-    (!chat.notifications_muted.value).then(|| {
-        DirectChatUserNotificationPayload::DirectCallDismissed(DirectCallDismissedNotification {
+    (!chat.notifications_muted.value).then_some(DirectChatUserNotificationPayload::DirectCallDismissed(
+        DirectCallDismissedNotification {
             them: args.user_id,
             message_id: args.message_id,
             kind: CallDismissalKind::AnsweredElsewhere,
-        })
-    })
+        },
+    ))
 }
