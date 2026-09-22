@@ -1,22 +1,19 @@
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::updates::delete_messages::enqueue_hard_delete_jobs;
-use crate::updates::remove_reaction::apply_reaction;
 use crate::updates::send_message::{SenderDetails, receive_message};
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{DeleteUndeleteMessagesArgs, EditMessageArgs, MessageContentInternal, NullEventPusher};
+use chat_events::MessageContentInternal;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use rand::RngExt;
-use types::{
-    Achievement, CanisterId, Chat, DirectChatUserNotificationPayload, DirectReactionAddedNotification, EventIndex,
-    MessageContentInitial, TimestampMillis, UserId, UserType,
-};
+use types::{Achievement, CanisterId, TimestampMillis, UserId, UserType};
 use user_canister::c2c_user_canister_v2::*;
 use user_canister::{
-    DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, MessageActivity,
-    MessageActivityEvent, SendMessagesArgs, SetEventsTtl, ToggleReactionArgs, UserCanisterEvent,
+    DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, SendMessagesArgs,
+    SetEventsTtl, ToggleReactionArgs, UserCanisterEvent,
 };
+use user_core::updates::c2c_user_canister::{self, can_act_for};
 
 #[update(msgpack = true)]
 #[trace]
@@ -120,17 +117,6 @@ fn is_blocked(recipient_index: u16, sender: UserId, state: &RuntimeState) -> boo
         .unwrap_or(true)
 }
 
-// Whether a sender is one a canister of this kind can act for: a User canister acts only for its
-// own user, whose id is the canister's id, and a MultiUser canister only for the users it holds,
-// whose ids carry an index, never as its own canister id
-fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bool {
-    match kind {
-        CanisterKind::UserCanister => sender == UserId::from(caller),
-        CanisterKind::MultiUserCanister => sender.index() != 0 && sender.canister_id() == caller,
-        CanisterKind::Neither => false,
-    }
-}
-
 // Applies an event from `sender`, who is in another canister, to the copy of their chat held by the
 // user at `recipient_index`, as the User canister's `c2c_user_canister` does. Events for features the
 // MultiUser canister doesn't support yet are dropped.
@@ -158,15 +144,6 @@ fn process_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16,
 }
 
 fn send_messages(args: SendMessagesArgs, sender: UserId, recipient_index: u16, now: TimestampMillis, state: &mut RuntimeState) {
-    let blocked = state
-        .data
-        .users
-        .with_user(recipient_index, |user| user.blocked_users.contains(&sender))
-        .unwrap_or(true);
-    if blocked {
-        return;
-    }
-
     let mut achievements = vec![Achievement::ReceivedDirectMessage];
     if args
         .messages
@@ -189,24 +166,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, recipient_index: u16, n
 
 fn edit_message(args: C2CEditMessageArgs, sender: UserId, recipient: UserId, now: TimestampMillis, state: &mut RuntimeState) {
     state.with_their_direct_chat_mut(sender, recipient, |chat| {
-        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
-            return;
-        };
-        // TODO: Push the edit to the event store (`UserEventPusher` in the User canister)
-        let _ = chat.edit_message::<NullEventPusher>(
-            EditMessageArgs {
-                sender,
-                min_visible_event_index: EventIndex::default(),
-                thread_root_message_index,
-                message_id: args.message_id,
-                content: MessageContentInitial::from(args.content).into(),
-                block_level_markdown: args.block_level_markdown,
-                og_previews: args.og_previews,
-                finalise_bot_message: false,
-                now,
-            },
-            None,
-        );
+        c2c_user_canister::edit_message(chat, sender, args, now)
     });
 }
 
@@ -220,20 +180,7 @@ fn delete_messages(
 ) {
     let Some((thread_root_message_index, deleted)) = state
         .with_their_direct_chat_mut(sender, recipient, |chat| {
-            let thread_root_message_index = chat.thread_root_message_index(args.thread_root_message_id).ok()?;
-            let deleted: Vec<_> = chat
-                .delete_messages(DeleteUndeleteMessagesArgs {
-                    caller: sender,
-                    is_admin: false,
-                    min_visible_event_index: EventIndex::default(),
-                    thread_root_message_index,
-                    message_ids: args.message_ids,
-                    now,
-                })
-                .into_iter()
-                .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
-                .collect();
-            Some((thread_root_message_index, deleted))
+            c2c_user_canister::delete_messages(chat, sender, args, now)
         })
         .flatten()
     else {
@@ -253,20 +200,7 @@ fn undelete_messages(
 ) {
     let Some((thread_root_message_index, undeleted)) = state
         .with_their_direct_chat_mut(sender, recipient, |chat| {
-            let thread_root_message_index = chat.thread_root_message_index(args.thread_root_message_id).ok()?;
-            let undeleted: Vec<_> = chat
-                .undelete_messages(DeleteUndeleteMessagesArgs {
-                    caller: sender,
-                    is_admin: false,
-                    min_visible_event_index: EventIndex::default(),
-                    thread_root_message_index,
-                    message_ids: args.message_ids,
-                    now,
-                })
-                .into_iter()
-                .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
-                .collect();
-            Some((thread_root_message_index, undeleted))
+            c2c_user_canister::undelete_messages(chat, sender, args, now)
         })
         .flatten()
     else {
@@ -292,55 +226,12 @@ fn toggle_reaction(
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) {
-    if !args.reaction.is_valid() {
-        return;
-    }
-
-    let reacted_to = state
+    let Some(reaction) = state
         .with_their_direct_chat_mut(sender, recipient, |chat| {
-            let thread_root_message_index = chat.thread_root_message_index(args.thread_root_message_id).ok()?;
-            let result = apply_reaction(
-                chat,
-                sender,
-                thread_root_message_index,
-                args.message_id,
-                args.reaction.clone(),
-                args.added,
-                now,
-            )
-            .ok()??;
-            let message = result.value;
-            if message.sender == sender {
-                return None;
-            }
-
-            let notification = (!args.username.is_empty() && !chat.notifications_muted.value).then(|| {
-                DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
-                    them: chat.them,
-                    thread_root_message_index,
-                    message_index: message.message_index,
-                    message_event_index: result.event_index,
-                    username: args.username.clone(),
-                    display_name: args.display_name.clone(),
-                    reaction: args.reaction.clone(),
-                    user_avatar_id: args.user_avatar_id,
-                })
-            });
-            let activity = MessageActivityEvent {
-                chat: Chat::Direct(sender.into()),
-                thread_root_message_index,
-                message_index: message.message_index,
-                message_id: message.message_id,
-                event_index: result.event_index,
-                activity: MessageActivity::Reaction,
-                timestamp: now,
-                user_id: Some(sender),
-            };
-            Some((notification, activity))
+            c2c_user_canister::toggle_reaction(chat, sender, args, now)
         })
-        .flatten();
-
-    let Some((notification, activity)) = reacted_to else {
+        .flatten()
+    else {
         return;
     };
 
@@ -348,12 +239,11 @@ fn toggle_reaction(
         .data
         .users
         .with_user_mut(recipient_index, |user| {
-            user.push_message_activity(activity, now);
+            user.push_message_activity(reaction.activity, now);
             user.suspended.value
         })
         .unwrap_or_default();
-
-    if let Some(notification) = notification
+    if let Some(notification) = reaction.notification
         && !suspended
     {
         state.push_notification(Some(sender), recipient_index, notification, now);
@@ -361,9 +251,6 @@ fn toggle_reaction(
     state.award_achievement_and_notify(recipient_index, Achievement::HadMessageReactedTo, now);
 }
 
-// As in the User canister, the chat is created if the recipient doesn't have it, and the change is
-// applied if it is the latest. Two changes made at the same time are settled in favour of whichever
-// user's id has the lower bytes, so that both copies agree.
 fn set_events_ttl(
     args: SetEventsTtl,
     sender: UserId,
@@ -372,24 +259,8 @@ fn set_events_ttl(
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) {
-    let anonymized_id: u128 = state.env.rng().random();
-
+    let anonymized_chat_id: u128 = state.env.rng().random();
     state.data.users.with_user_mut(recipient_index, |user| {
-        if user.blocked_users.contains(&sender) {
-            return;
-        }
-
-        let is_new_chat = user.direct_chats.get(&sender.into()).is_none();
-        let chat = user
-            .direct_chats
-            .get_or_create(recipient, sender, UserType::User, || anonymized_id, now);
-
-        let last_updated_timestamp = chat.events().get_events_time_to_live().timestamp;
-        if is_new_chat
-            || last_updated_timestamp < args.timestamp
-            || (last_updated_timestamp == args.timestamp && sender.as_slice() < recipient.as_slice())
-        {
-            chat.set_events_time_to_live(sender, args.events_ttl, now);
-        }
+        c2c_user_canister::set_events_ttl(user, recipient, sender, args, || anonymized_chat_id, now)
     });
 }
