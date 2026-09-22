@@ -62,14 +62,14 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
 
     match event {
         UserCanisterEvent::SendMessages(args) => {
-            let mut awarded = state.data.award_achievement(Achievement::ReceivedDirectMessage, now);
+            let mut awarded = state.data.user.award_achievement(Achievement::ReceivedDirectMessage, now);
 
             if args
                 .messages
                 .iter()
                 .any(|m| matches!(m.content, MessageContentInternal::Crypto(_)))
             {
-                awarded |= state.data.award_achievement(Achievement::ReceivedCrypto, now);
+                awarded |= state.data.user.award_achievement(Achievement::ReceivedCrypto, now);
             }
 
             if awarded {
@@ -94,7 +94,7 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             tip_message(*args, caller_user_id, state);
         }
         UserCanisterEvent::MarkMessagesRead(args) => {
-            if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+            if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
                 chat.mark_read_by_them_up_to(args.read_up_to, now);
             }
         }
@@ -102,7 +102,7 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             p2p_swap_change_status(*c, caller_user_id, state);
         }
         UserCanisterEvent::JoinVideoCall(c) => {
-            if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+            if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
                 let _ = chat.set_video_call_presence(caller_user_id, c.message_id, VideoCallPresence::Default, now);
             }
         }
@@ -117,11 +117,11 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             );
         }
         UserCanisterEvent::SetReferralStatus(status) => {
-            let chit_reward = state.data.referrals.set_status(caller_user_id, *status, now);
+            let chit_reward = state.data.user.referrals.set_status(caller_user_id, *status, now);
             let mut rewarded = false;
 
             if chit_reward > 0 {
-                state.data.chit_events.push(ChitEvent {
+                state.data.user.chit_events.push(ChitEvent {
                     amount: chit_reward as i32,
                     timestamp: now,
                     reason: ChitEventType::Referral(*status),
@@ -130,7 +130,7 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
                 rewarded = true;
             }
 
-            if let Some(achievement) = match state.data.referrals.total_verified() {
+            if let Some(achievement) = match state.data.user.referrals.total_verified() {
                 1 => Some(Achievement::Referred1stUser),
                 3 => Some(Achievement::Referred3rdUser),
                 10 => Some(Achievement::Referred10thUser),
@@ -138,7 +138,7 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
                 50 => Some(Achievement::Referred50thUser),
                 _ => None,
             } {
-                rewarded |= state.data.award_achievement(achievement, now);
+                rewarded |= state.data.user.award_achievement(achievement, now);
             }
 
             if rewarded {
@@ -146,8 +146,8 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             }
         }
         UserCanisterEvent::SetEventsTtl(args) => {
-            let is_new_chat = !state.data.direct_chats.exists(&caller_user_id.into());
-            let chat = state.data.direct_chats.get_or_create(
+            let is_new_chat = !state.data.user.direct_chats.exists(&caller_user_id.into());
+            let chat = state.data.user.direct_chats.get_or_create(
                 state.env.canister_id().into(),
                 caller_user_id,
                 UserType::User,
@@ -177,7 +177,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
     for message in args.messages {
         // Messages sent c2c can be retried so the same messageId may be received multiple
         // times, so here we skip any messages whose messageId already exists.
-        let chat = state.data.direct_chats.get(&sender.into());
+        let chat = state.data.user.direct_chats.get(&sender.into());
         let Ok(thread_root_message_index) = thread_root_message_index(chat, message.thread_root_message_id) else {
             continue;
         };
@@ -216,7 +216,7 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
 }
 
 fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
-    if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
         let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
             return;
@@ -241,7 +241,7 @@ fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, st
 
 fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let chat_id = caller_user_id.into();
-    if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&chat_id) {
         let now = state.env.now();
         let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
             return;
@@ -275,7 +275,7 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
 
 fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let chat_id = caller_user_id.into();
-    if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&chat_id) {
         let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
             return;
         };
@@ -302,7 +302,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
         return;
     }
 
-    if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
         let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
             return;
         };
@@ -325,7 +325,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                 // They may be reacting to their own message; in that case we should not generate any activity
                 // for the other user (push notification, activity-feed event, or achievement progress).
                 if message.sender != caller_user_id {
-                    if !state.data.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
+                    if !state.data.user.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
                         let notification =
                             DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
                                 them: chat.them,
@@ -341,7 +341,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                         state.push_notification(Some(caller_user_id), message.sender, notification);
                     }
 
-                    state.data.push_message_activity(
+                    state.data.user.push_message_activity(
                         MessageActivityEvent {
                             chat: Chat::Direct(caller_user_id.into()),
                             thread_root_message_index,
@@ -365,7 +365,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
 }
 
 fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, state: &mut RuntimeState) {
-    let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) else {
+    let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) else {
         return;
     };
 
@@ -383,7 +383,7 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
             return;
         };
 
-        state.data.push_message_activity(
+        state.data.user.push_message_activity(
             MessageActivityEvent {
                 chat: Chat::Direct(caller_user_id.into()),
                 thread_root_message_index,
@@ -400,7 +400,7 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
 }
 
 fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
-    if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
         let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
@@ -437,7 +437,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 });
                 state.push_notification(Some(caller_user_id), my_user_id, notification);
 
-                state.data.push_message_activity(
+                state.data.user.push_message_activity(
                     MessageActivityEvent {
                         chat: Chat::Direct(caller_user_id.into()),
                         thread_root_message_index,

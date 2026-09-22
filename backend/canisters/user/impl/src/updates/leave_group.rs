@@ -14,10 +14,10 @@ async fn leave_group(args: Args) -> Response {
 
 async fn leave_group_impl(args: Args) -> Response {
     let principal = match read_state(|state| {
-        if state.data.suspended.value {
+        if state.data.user.suspended.value {
             Err(OCErrorCode::InitiatorSuspended.into())
         } else {
-            Ok(state.data.owner)
+            Ok(state.data.user.principal)
         }
     }) {
         Ok(ok) => ok,

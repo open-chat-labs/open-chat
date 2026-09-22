@@ -18,5 +18,5 @@ fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
 }
 
 fn aggregate_direct_chat_metrics(_: &dyn Environment, data: &mut Data) {
-    data.direct_chats.aggregate_metrics();
+    data.user.direct_chats.aggregate_metrics();
 }

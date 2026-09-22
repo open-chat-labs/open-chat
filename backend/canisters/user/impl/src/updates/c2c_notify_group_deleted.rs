@@ -17,12 +17,12 @@ fn c2c_notify_group_deleted(args: Args) -> Response {
 fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let chat_id = args.deleted_group.id;
-    let was_favourite = state.data.favourite_chats.remove(&Chat::Group(chat_id), now);
+    let was_favourite = state.data.user.favourite_chats.remove(&Chat::Group(chat_id), now);
 
     // Removing the group deletes how far the user has read each of its threads from stable memory,
     // so if the group has been imported into a community, move those entries to the channel first
     if let Some(imported_into) = &args.deleted_group.community_imported_into
-        && let Some(group) = state.data.group_chats.get_mut(&chat_id)
+        && let Some(group) = state.data.user.group_chats.get_mut(&chat_id)
     {
         group.messages_read.threads_read.move_entries(
             MultiUserChat::Group(chat_id),
@@ -51,7 +51,11 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
             state,
         );
 
-        let (community, newly_joined) = state.data.communities.join(community_id, local_user_index_canister_id, now);
+        let (community, newly_joined) = state
+            .data
+            .user
+            .communities
+            .join(community_id, local_user_index_canister_id, now);
 
         if let Some(group) = group_removed {
             community.import_group(channel.channel_id, group, now);
@@ -85,6 +89,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
         if was_favourite {
             state
                 .data
+                .user
                 .favourite_chats
                 .add(Chat::Channel(community_id, channel.channel_id), now);
         }
@@ -106,7 +111,7 @@ fn migrate_group_references_to_channel_references(
     now: TimestampMillis,
     data: &mut Data,
 ) {
-    data.direct_chats.migrate_replies(
+    data.user.direct_chats.migrate_replies(
         ChatInternal::Group(group_id),
         ChatInternal::Channel(community_id, channel_id),
         now,

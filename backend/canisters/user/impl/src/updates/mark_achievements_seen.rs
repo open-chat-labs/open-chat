@@ -11,6 +11,6 @@ fn mark_achievements_seen(args: Args) -> Response {
 }
 
 fn mark_achievements_seen_impl(args: Args, state: &mut RuntimeState) -> Response {
-    state.data.achievements_last_seen = args.last_seen;
+    state.data.user.achievements_last_seen = args.last_seen;
     Response::Success
 }

@@ -16,7 +16,7 @@ fn set_profile_background(args: Args) -> Response {
 }
 
 fn set_profile_background_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
     validate_profile_background(args.profile_background.as_ref())
         .map_err(|e| OCErrorCode::ProfileBackgroundTooBig.with_json(&e))?;
@@ -26,6 +26,7 @@ fn set_profile_background_impl(args: Args, state: &mut RuntimeState) -> OCResult
 
     state
         .data
+        .user
         .profile_background
         .set(ProfileDocumentType::ProfileBackground, args.profile_background, now);
     state.push_local_user_index_canister_event(LocalUserIndexEvent::UserSetProfileBackground(id), now);

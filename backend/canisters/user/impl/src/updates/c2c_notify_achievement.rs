@@ -14,7 +14,7 @@ fn c2c_notify_achievement(args: Args) -> Response {
 fn c2c_notify_achievement_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if !state.data.communities.exists(&caller.into()) && !state.data.group_chats.exists(&caller.into()) {
+    if !state.data.user.communities.exists(&caller.into()) && !state.data.user.group_chats.exists(&caller.into()) {
         return CallerNotFound;
     }
 
@@ -23,7 +23,7 @@ fn c2c_notify_achievement_impl(args: Args, state: &mut RuntimeState) -> Response
     let mut awarded = false;
 
     for achievement in args.achievements {
-        awarded |= state.data.award_achievement(achievement, now);
+        awarded |= state.data.user.award_achievement(achievement, now);
     }
 
     if awarded {

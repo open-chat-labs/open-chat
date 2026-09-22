@@ -71,7 +71,7 @@ fn prepare(
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }
 
-    let chat = state.data.direct_chats.get_or_err(&user_id.into())?;
+    let chat = state.data.user.direct_chats.get_or_err(&user_id.into())?;
 
     if let Some(events_reader) = chat.events_reader(thread_root_message_index) {
         Ok(PrepareResult {

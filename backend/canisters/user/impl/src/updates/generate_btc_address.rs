@@ -13,7 +13,7 @@ async fn generate_btc_address(_args: Args) -> Response {
 }
 
 async fn generate_btc_address_impl() -> Response {
-    if let Some(btc_address) = read_state(|state| state.data.btc_address.as_ref().map(|a| a.value.clone())) {
+    if let Some(btc_address) = read_state(|state| state.data.user.btc_address.as_ref().map(|a| a.value.clone())) {
         return Success(btc_address);
     }
 
@@ -24,7 +24,7 @@ async fn generate_btc_address_impl() -> Response {
     .await
     {
         Ok(btc_address) => {
-            mutate_state(|state| state.data.btc_address = Some(Timestamped::new(btc_address.clone(), state.env.now())));
+            mutate_state(|state| state.data.user.btc_address = Some(Timestamped::new(btc_address.clone(), state.env.now())));
             Success(btc_address)
         }
         Err(error) => Error(error.into()),

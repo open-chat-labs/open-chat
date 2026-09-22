@@ -10,9 +10,10 @@ fn token_swaps(args: Args) -> Response {
 }
 
 fn token_swaps_impl(args: Args, state: &RuntimeState) -> Response {
-    let total = state.data.token_swaps.len() as u32;
+    let total = state.data.user.token_swaps.len() as u32;
     let swaps = state
         .data
+        .user
         .token_swaps
         .page(args.start as usize, args.max_results as usize)
         .into_iter()

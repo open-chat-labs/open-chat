@@ -18,16 +18,16 @@ fn unpin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     match args.chat {
         ChatInList::Direct(chat_id) => {
-            state.data.direct_chats.unpin(&chat_id, now);
+            state.data.user.direct_chats.unpin(&chat_id, now);
         }
         ChatInList::Group(chat_id) => {
-            state.data.group_chats.unpin(&chat_id, now);
+            state.data.user.group_chats.unpin(&chat_id, now);
         }
         ChatInList::Favourite(chat) => {
-            state.data.favourite_chats.unpin(&chat, now);
+            state.data.user.favourite_chats.unpin(&chat, now);
         }
         ChatInList::Community(community_id, channel_id) => {
-            if let Some(community) = state.data.communities.get_mut(&community_id) {
+            if let Some(community) = state.data.user.communities.get_mut(&community_id) {
                 community.unpin(&channel_id, now);
             } else {
                 return Err(OCErrorCode::ChatNotFound.into());

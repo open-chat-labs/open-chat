@@ -13,15 +13,15 @@ fn join_video_call(args: Args) -> Response {
 }
 
 fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if state.data.suspended.value {
+    if state.data.user.suspended.value {
         return Err(OCErrorCode::InitiatorSuspended.into());
     }
 
-    if state.data.blocked_users.contains(&args.user_id) {
+    if state.data.user.blocked_users.contains(&args.user_id) {
         return Err(OCErrorCode::TargetUserBlocked.into());
     }
 
-    if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&args.user_id.into()) {
         let now = state.env.now();
         let my_user_id: UserId = state.env.canister_id().into();
 

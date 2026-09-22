@@ -30,6 +30,17 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         let streak_insurance_updated = user.streak.insurance_last_updated() > updates_since;
         let is_unique_person_updated = user.unique_person_proof.as_ref().is_some_and(|p| p.timestamp > updates_since);
         let referrals = user.referrals.updated_since(updates_since);
+        let btc_address_if_updated = user
+            .btc_address
+            .as_ref()
+            .filter(|a| a.timestamp > updates_since)
+            .map(|a| a.value.clone());
+        let one_sec_address_if_updated = user
+            .one_sec_address
+            .as_ref()
+            .filter(|a| a.timestamp > updates_since)
+            .map(|a| a.value.clone());
+        let premium_items_updated = user.premium_items.last_updated() > updates_since;
 
         let has_any_updates = username.is_some()
             || display_name.has_update()
@@ -42,6 +53,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             || streak_insurance_updated
             || is_unique_person_updated
             || !referrals.is_empty()
+            || btc_address_if_updated.is_some()
+            || one_sec_address_if_updated.is_some()
+            || premium_items_updated
             || user.chit_events.last_updated() > updates_since
             || user.achievements_last_seen > updates_since
             || user.favourite_chats.any_updated(updates_since)
@@ -165,9 +179,9 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
             message_activity_summary,
             bots_added_or_updated: Vec::new(),
             bots_removed: Vec::new(),
-            btc_address: None,
-            one_sec_address: None,
-            premium_items: None,
+            btc_address: btc_address_if_updated,
+            one_sec_address: one_sec_address_if_updated,
+            premium_items: premium_items_updated.then(|| user.premium_items.item_ids()),
             pinned_chats,
         })
     })

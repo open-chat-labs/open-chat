@@ -48,3 +48,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Garbage collect a deleted chat's stable memory entries within the scope of the user who deleted it, and remove the `direct_chat_cores` metric ([#9415](https://github.com/open-chat-labs/open-chat/pull/9415))
 - Rename the `caller_is_owner` guards to `caller_is_hosted_user`, since the canister hosts many users ([#9432](https://github.com/open-chat-labs/open-chat/pull/9432))
 - Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, which must be upgraded first, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
+- Move `User` into the `user_state` library, shared with the User canister ([#9467](https://github.com/open-chat-labs/open-chat/pull/9467))
+

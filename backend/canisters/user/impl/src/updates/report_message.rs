@@ -36,9 +36,9 @@ async fn report_message_impl(args: Args) -> Response {
 }
 
 fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_message::Args, CanisterId)> {
-    state.data.verify_not_suspended()?;
+    state.data.user.verify_not_suspended()?;
 
-    let chat = state.data.direct_chats.get_or_err(&args.them.into())?;
+    let chat = state.data.user.direct_chats.get_or_err(&args.them.into())?;
     let user_id = state.env.canister_id().into();
     let events_reader = chat.main_events_reader();
 
@@ -61,7 +61,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_mes
 }
 
 fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) {
-    if let Some(chat) = state.data.direct_chats.get_mut(&args.them.into()) {
+    if let Some(chat) = state.data.user.direct_chats.get_mut(&args.them.into()) {
         chat.delete_messages(DeleteUndeleteMessagesArgs {
             caller: reporter,
             is_admin: true,

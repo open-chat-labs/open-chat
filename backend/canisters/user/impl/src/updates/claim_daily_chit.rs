@@ -17,7 +17,7 @@ fn claim_daily_chit(args: Args) -> Response {
 fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
-    match state.data.streak.claim(now) {
+    match state.data.user.streak.claim(now) {
         Ok(Some(insurance_claim)) => state.mark_streak_insurance_claim(insurance_claim),
         Ok(None) => {}
         Err(next_claim) => return AlreadyClaimed(next_claim),
@@ -25,45 +25,45 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let mut utc_offset_updated = false;
     if let Some(utc_offset_mins) = args.utc_offset_mins {
-        utc_offset_updated = state.data.streak.set_utc_offset_mins(utc_offset_mins, now);
+        utc_offset_updated = state.data.user.streak.set_utc_offset_mins(utc_offset_mins, now);
         if utc_offset_updated {
             // Claim again in case the timezone change has made this possible
-            _ = state.data.streak.claim(now);
+            _ = state.data.user.streak.claim(now);
         }
     }
 
     let user_id: UserId = state.env.canister_id().into();
-    let streak = state.data.streak.days(now);
+    let streak = state.data.user.streak.days(now);
     let chit_earned = chit_for_streak(streak);
 
-    state.data.chit_events.push(ChitEvent {
+    state.data.user.chit_events.push(ChitEvent {
         amount: chit_earned as i32,
         timestamp: now,
         reason: ChitEventType::DailyClaim,
     });
 
     if streak >= 3 {
-        state.data.award_achievement(Achievement::Streak3, now);
+        state.data.user.award_achievement(Achievement::Streak3, now);
     }
 
     if streak >= 7 {
-        state.data.award_achievement(Achievement::Streak7, now);
+        state.data.user.award_achievement(Achievement::Streak7, now);
     }
 
     if streak >= 14 {
-        state.data.award_achievement(Achievement::Streak14, now);
+        state.data.user.award_achievement(Achievement::Streak14, now);
     }
 
     if streak >= 30 {
-        state.data.award_achievement(Achievement::Streak30, now);
+        state.data.user.award_achievement(Achievement::Streak30, now);
     }
 
     if streak >= 100 {
-        state.data.award_achievement(Achievement::Streak100, now);
+        state.data.user.award_achievement(Achievement::Streak100, now);
     }
 
     if streak >= 365 {
-        state.data.award_achievement(Achievement::Streak365, now);
+        state.data.user.award_achievement(Achievement::Streak365, now);
     }
 
     state.set_up_streak_insurance_timer_job();
@@ -81,10 +81,10 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     Success(SuccessResult {
         chit_earned,
-        chit_balance: state.data.chit_events.chit_balance(),
+        chit_balance: state.data.user.chit_events.chit_balance(),
         streak,
-        max_streak: state.data.streak.max_streak(),
-        next_claim: state.data.streak.next_claim(),
+        max_streak: state.data.user.streak.max_streak(),
+        next_claim: state.data.user.streak.next_claim(),
         utc_offset_updated,
     })
 }
