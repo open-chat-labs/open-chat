@@ -1,4 +1,3 @@
-use crate::activity_notifications::handle_activity_notification;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -31,6 +30,6 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult
         .members
         .register_proposal_vote(&user_id, args.message_index, now);
 
-    handle_activity_notification(state);
+    state.mark_activity_for_user(user_id);
     Ok(())
 }
