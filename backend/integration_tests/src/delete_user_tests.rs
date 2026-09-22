@@ -103,7 +103,7 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
 
     // Simulate a user deleted before cycles were refunded on deletion
     env.add_cycles(user.canister(), T);
-    let dispenser_balance_before = env.cycle_balance(canister_ids.cycles_dispenser);
+    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
 
     let response = client::user_index::refund_deleted_user_cycles(
         env,
@@ -117,7 +117,7 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
     );
 
     wait_for_cycles_to_be_refunded(env, &user);
-    let refunded = env.cycle_balance(canister_ids.cycles_dispenser) - dispenser_balance_before;
+    let refunded = cycles_refunded_metric(env, user.local_user_index) - refunded_before;
     assert!(refunded > T - MAX_RESIDUAL_CYCLES, "{refunded}");
 
     // The refunder is uninstalled again afterwards
@@ -127,8 +127,66 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
     wrapper.discard();
 }
 
+#[test]
+fn cycles_refund_leaves_a_canister_with_other_code_untouched() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+    let operator = register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+
+    delete_user(env, &user_auth, canister_ids.identity);
+    wait_for_cycles_to_be_refunded(env, &user);
+
+    // The deleted user's canister somehow ends up with cycles and some other code on it
+    env.add_cycles(user.canister(), T);
+    let other_wasm = wat::parse_str("(module)").unwrap();
+    env.install_canister(user.canister(), other_wasm, vec![], Some(user.local_user_index));
+    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
+    let module_hash = canister_status.module_hash.unwrap();
+    let balance_before = env.cycle_balance(user.canister());
+
+    client::user_index::refund_deleted_user_cycles(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user_index_canister::refund_deleted_user_cycles::Args {},
+    );
+    wait_for_refund_queue_to_empty(env, user.local_user_index);
+
+    // It is left exactly as it was
+    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
+    assert_eq!(canister_status.module_hash.unwrap(), module_hash);
+    assert!(balance_before - env.cycle_balance(user.canister()) < 1_000_000_000);
+
+    wrapper.discard();
+}
+
 // See backend/canisters/cycles_refunder/README.md for why ~80B cycles can't be recovered
 const MAX_RESIDUAL_CYCLES: u128 = 100_000_000_000;
+
+fn cycles_refunded_metric(env: &pocket_ic::PocketIc, local_user_index: types::CanisterId) -> u128 {
+    let metrics = crate::utils::metrics(env, local_user_index);
+    metrics["cycles_refunded_from_deleted_users"].as_u64().unwrap().into()
+}
+
+fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_index: types::CanisterId) {
+    for _ in 0..50 {
+        let metrics = crate::utils::metrics(env, local_user_index);
+        if metrics["cycles_refund_queue_length"] == 0 {
+            return;
+        }
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
+    panic!("Refund queue did not empty");
+}
 
 // Refunding takes a handful of rounds: canister_status, install_code, the refund call (which
 // deposits into the CyclesDispenser via the management canister), then uninstall_code. The user
@@ -136,7 +194,14 @@ const MAX_RESIDUAL_CYCLES: u128 = 100_000_000_000;
 // applies and the LocalUserIndex has to retry after a delay, hence time is advanced too.
 fn wait_for_cycles_to_be_refunded(env: &mut pocket_ic::PocketIc, user: &User) {
     for _ in 0..200 {
-        if env.cycle_balance(user.canister()) < MAX_RESIDUAL_CYCLES {
+        // The balance drops once `refund` completes, and the refunder is uninstalled after that
+        if env.cycle_balance(user.canister()) < MAX_RESIDUAL_CYCLES
+            && env
+                .canister_status(user.canister(), Some(user.local_user_index))
+                .unwrap()
+                .module_hash
+                .is_none()
+        {
             return;
         }
         env.advance_time(Duration::from_secs(60));

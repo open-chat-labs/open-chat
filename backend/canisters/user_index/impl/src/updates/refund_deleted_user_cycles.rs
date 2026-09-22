@@ -15,12 +15,13 @@ const BATCH_SIZE: usize = 1000;
 #[trace]
 fn refund_deleted_user_cycles(_args: Args) -> Response {
     mutate_state(|state| {
-        // Users on MultiUser canisters share them with other users, so have nothing to refund
+        // Removed bots are in `deleted_users` too but have no canister, and users on MultiUser
+        // canisters share them with other users, so neither have anything to refund
         let canister_ids: Vec<CanisterId> = state
             .data
             .deleted_users
             .iter()
-            .filter(|u| u.user_id.index() == 0)
+            .filter(|u| u.user_id.is_canister() && u.user_id.index() == 0)
             .map(|u| u.user_id.canister_id())
             .collect();
 

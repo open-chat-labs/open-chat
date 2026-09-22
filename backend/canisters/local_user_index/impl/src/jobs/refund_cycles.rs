@@ -1,12 +1,14 @@
 use crate::{CanisterToRefund, RuntimeState, mutate_state, read_state};
-use constants::MINUTE_IN_MS;
 use ic_cdk_management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{BuildVersion, C2CError, CanisterId, CanisterWasmBytes, Cycles, Milliseconds};
-use utils::canister::{CanisterToInstall, WasmToInstall};
+use utils::canister::{
+    CanisterToInstall, WasmToInstall, delay_if_should_retry_failed_c2c_call, is_invalid_controller_error,
+    is_out_of_cycles_error,
+};
 
 // Sends the cycles held by deleted users' uninstalled canisters to the CyclesDispenser, by
 // installing a tiny canister on each which does just that, then uninstalling it again.
@@ -16,7 +18,11 @@ const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../../../cycles_refunder/
 // A canister which recently ran a large `install_code` (eg. a user canister upgraded shortly
 // before the user was deleted) is rate limited from running another for several minutes
 const MAX_ATTEMPTS: usize = 10;
-const RETRY_DELAY: Milliseconds = 5 * MINUTE_IN_MS;
+
+// `install_code` needs ~300B cycles up front and ~80B can never be recovered (see the refunder's
+// README), so below this there is nothing worth refunding. This also makes it cheap to queue a
+// canister which has already been refunded.
+const MIN_CYCLES_TO_REFUND: Cycles = 400_000_000_000;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -37,6 +43,9 @@ fn run() {
     TIMER_ID.set(None);
 
     match mutate_state(get_next) {
+        // As with the other jobs, if the canister is upgraded mid-way through the canister is
+        // simply dropped. Re-queueing it (eg. via `refund_deleted_user_cycles`) picks up from
+        // wherever it got to.
         Ok(canister) => ic_cdk::futures::spawn_migratory(process_canister(canister)),
         Err(Some(delay)) => {
             read_state(|state| start_job_if_required(state, Some(delay)));
@@ -73,13 +82,18 @@ async fn process_canister(canister: CanisterToRefund) {
             Err(RefundError::CanisterHasCode) => {
                 error!(%canister_id, "Cycles not refunded, the canister has code installed");
             }
+            Err(RefundError::TooFewCycles(cycles)) => {
+                info!(%canister_id, cycles, "Cycles not refunded, too few to be worth it");
+            }
             Err(RefundError::C2C(error)) => {
                 let attempt = canister.attempt + 1;
-                if attempt < MAX_ATTEMPTS {
+                if let Some(delay) = retry_delay(&error)
+                    && attempt < MAX_ATTEMPTS
+                {
                     state.data.cycles_refund_queue.push_back(CanisterToRefund {
                         canister_id,
                         attempt,
-                        retry_after: state.env.now() + RETRY_DELAY,
+                        retry_after: state.env.now() + delay,
                     });
                 } else {
                     error!(%canister_id, ?error, "Cycles not refunded, giving up");
@@ -90,8 +104,21 @@ async fn process_canister(canister: CanisterToRefund) {
     });
 }
 
+// Only errors which can clear on their own are worth retrying, eg. the install_code rate limit.
+// In particular another LocalUserIndex's canister is always rejected as we don't control it.
+fn retry_delay(error: &C2CError) -> Option<Milliseconds> {
+    if is_invalid_controller_error(error.reject_code(), error.message())
+        || is_out_of_cycles_error(error.reject_code(), error.message())
+    {
+        None
+    } else {
+        delay_if_should_retry_failed_c2c_call(error)
+    }
+}
+
 enum RefundError {
     CanisterHasCode,
+    TooFewCycles(Cycles),
     C2C(C2CError),
 }
 
@@ -106,6 +133,10 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
     let wasm = CanisterWasmBytes(CYCLES_REFUNDER_WASM.to_vec());
 
     let status = utils::canister::canister_status(canister_id).await?;
+    let balance = u128::try_from(status.cycles.0).unwrap_or(u128::MAX);
+    if balance < MIN_CYCLES_TO_REFUND {
+        return Err(RefundError::TooFewCycles(balance));
+    }
     match status.module_hash {
         None => {
             // `Install` mode fails if the canister has code, so a live canister can never be
