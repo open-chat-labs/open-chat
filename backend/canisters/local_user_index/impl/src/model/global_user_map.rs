@@ -173,3 +173,38 @@ impl GlobalUserMap {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    #[test]
+    fn multi_user_canisters_learnt_from_indexed_users() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_canister = CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
+        let multi_user_canister = CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
+        let mut map = GlobalUserMap::default();
+
+        map.add(Principal::from_slice(&[1]), user_canister.into(), UserType::User);
+        assert!(map.multi_user_canisters().is_empty());
+
+        map.add(
+            Principal::from_slice(&[2]),
+            UserId::new_indexed(multi_user_canister, 1),
+            UserType::User,
+        );
+        map.add(
+            Principal::from_slice(&[3]),
+            UserId::new_indexed(multi_user_canister, 2),
+            UserType::User,
+        );
+        assert_eq!(
+            map.multi_user_canisters().iter().copied().collect::<Vec<_>>(),
+            vec![multi_user_canister]
+        );
+    }
+}

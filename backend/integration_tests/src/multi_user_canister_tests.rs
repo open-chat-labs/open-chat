@@ -24,6 +24,38 @@ use user_canister::{
 };
 
 #[test]
+fn local_user_index_identifies_user_and_multi_user_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let user = client::register_user(env, canister_ids);
+
+    let is_user_or_multi_user_canister = |canister_id| {
+        client::local_user_index::is_user_or_multi_user_canister(
+            env,
+            Principal::anonymous(),
+            local_user_index,
+            &local_user_index_canister::is_user_or_multi_user_canister::Args { canister_id },
+        )
+    };
+
+    use local_user_index_canister::is_user_or_multi_user_canister::Response;
+    assert_eq!(
+        is_user_or_multi_user_canister(multi_user_canister),
+        Response::MultiUserCanister
+    );
+    assert_eq!(is_user_or_multi_user_canister(user.canister()), Response::UserCanister);
+    assert_eq!(is_user_or_multi_user_canister(canister_ids.user_index), Response::Neither);
+}
+
+#[test]
 fn create_then_upgrade_multi_user_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
