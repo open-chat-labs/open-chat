@@ -13,9 +13,15 @@ use types::{CanisterId, TimestampMillis};
 const TRANSFER_METHOD_NAME: &str = "icrc1_transfer";
 
 // How far the certificate's time may be from now. The client reads the certificate as soon as the
-// ledger replies, so this only needs to allow for the time taken to pass it on. A block index needs
-// remembering for this long after the certificate's time to stop the transfer being used twice.
+// ledger replies, so this only needs to allow for the time taken to pass it on.
 pub const MAX_CERTIFICATE_TIME_OFFSET: TimestampMillis = 5 * MINUTE_IN_MS;
+
+// How long after the transfer's `created_at_time` it can be used. The certificate's time alone
+// doesn't bound this, since the subnet keeps the reply for a while after the call completes, during
+// which fresh certificates holding it can be read. The ledger rejects transfers created more than a
+// minute ahead of its own time, so a block index only needs remembering until `created` plus this
+// to stop the transfer being used twice.
+pub const MAX_TRANSFER_AGE: TimestampMillis = 5 * MINUTE_IN_MS;
 
 // Checks the certificate proves the ledger replied to the `sender`'s call to `icrc1_transfer`
 // with a block index, and that the transfer is the one described by `transaction`. The memo must
@@ -30,6 +36,10 @@ pub fn verify_certified_transfer(
     now: TimestampMillis,
 ) -> Result<CompletedCryptoTransaction, OCError> {
     let from = verify_transfer_arg(&transaction, sender, required_memo)?;
+
+    if (now * NANOS_PER_MILLISECOND).saturating_sub(transaction.created) > MAX_TRANSFER_AGE * NANOS_PER_MILLISECOND {
+        return Err(OCErrorCode::InvalidRequest.with_message("Transfer is too old"));
+    }
 
     let request_id = request_id(sender, transaction.ledger, TRANSFER_METHOD_NAME, &transaction.call);
 
@@ -91,6 +101,8 @@ fn verify_transfer_arg(
 
 // The request id of the call, as defined in the IC interface spec:
 // https://internetcomputer.org/docs/references/ic-interface-spec#request-id
+// A call made with any other optional field, such as `sender_info`, has a different request id, so
+// fails verification.
 fn request_id(sender: Principal, canister_id: CanisterId, method_name: &str, call: &CertifiedCall) -> [u8; 32] {
     let mut fields = vec![
         ("request_type".to_string(), Value::String("call".to_string())),
@@ -116,10 +128,17 @@ fn extract_block_index(certificate: &Certificate, request_id: &[u8; 32]) -> Resu
     let LookupResult::Found(status) = lookup("status") else {
         return Err(OCErrorCode::InvalidSignature.with_message("Certificate holds no status for the request"));
     };
-    if status != b"replied" {
-        return Err(
-            OCErrorCode::TransferFailed.with_message(format!("Transfer status is '{}'", String::from_utf8_lossy(status)))
-        );
+    match status {
+        b"replied" => {}
+        b"rejected" => return Err(OCErrorCode::TransferFailed.with_message("Transfer call was rejected")),
+        // The call is still in progress, or its reply has been pruned, so whether the transfer was
+        // made isn't known
+        _ => {
+            return Err(OCErrorCode::InvalidRequest.with_message(format!(
+                "Transfer outcome unknown, status is '{}'",
+                String::from_utf8_lossy(status)
+            )));
+        }
     }
 
     let LookupResult::Found(reply) = lookup("reply") else {
@@ -139,14 +158,16 @@ fn extract_block_index(certificate: &Certificate, request_id: &[u8; 32]) -> Resu
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ic_certification::{fork, labeled, leaf};
+    use ic_certification::{Delegation, HashTree, fork, labeled, leaf};
     use ic_verify_bls_signature::PrivateKey;
     use icrc_ledger_types::icrc1::transfer::Memo;
     use serde::Serialize;
     use serde_bytes::ByteBuf;
 
     const NOW: TimestampMillis = 1_800_000_000_000;
+    const NOW_NANOS: u64 = NOW * NANOS_PER_MILLISECOND;
     const DER_PREFIX: &[u8; 37] = b"\x30\x81\x82\x30\x1d\x06\x0d\x2b\x06\x01\x04\x01\x82\xdc\x7c\x05\x03\x01\x02\x01\x06\x0c\x2b\x06\x01\x04\x01\x82\xdc\x7c\x05\x03\x02\x01\x03\x61\x00";
+    const LEDGER: [u8; 10] = [0, 0, 0, 0, 2, 0, 0, 5, 1, 1];
 
     // The example given in the IC interface spec
     #[test]
@@ -166,7 +187,7 @@ mod tests {
 
     #[test]
     fn valid_transfer_succeeds() {
-        let test = TestTransfer::new();
+        let test = TestTransfer::build(TestOptions::default());
         let completed = test.verify().unwrap();
         assert_eq!(completed.block_index, 123);
         assert_eq!(completed.amount, test.transaction.amount);
@@ -178,61 +199,161 @@ mod tests {
     }
 
     #[test]
+    fn delegated_to_subnet_holding_ledger_succeeds() {
+        let test = TestTransfer::build(TestOptions {
+            delegated_ranges: Some(vec![(
+                principal(&[0, 0, 0, 0, 2, 0, 0, 0, 1, 1]),
+                principal(&[0, 0, 0, 0, 2, 0xff, 0xff, 0xff, 1, 1]),
+            )]),
+            ..Default::default()
+        });
+        assert_eq!(test.verify().unwrap().block_index, 123);
+    }
+
+    #[test]
+    fn delegated_to_subnet_not_holding_ledger_fails() {
+        let test = TestTransfer::build(TestOptions {
+            delegated_ranges: Some(vec![(
+                principal(&[0, 0, 0, 0, 3, 0, 0, 0, 1, 1]),
+                principal(&[0, 0, 0, 0, 3, 0xff, 0xff, 0xff, 1, 1]),
+            )]),
+            ..Default::default()
+        });
+        let error = test.verify().unwrap_err();
+        assert_eq!(error.code(), OCErrorCode::InvalidSignature as u16);
+        assert!(error.message().unwrap().contains("is not within the certificate's range"));
+    }
+
+    #[test]
     fn different_sender_fails() {
-        let mut test = TestTransfer::new();
+        let mut test = TestTransfer::build(TestOptions::default());
         test.sender = Principal::from_slice(&[9; 29]);
         assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidSignature as u16);
     }
 
     #[test]
     fn different_ledger_fails() {
-        let mut test = TestTransfer::new();
+        let mut test = TestTransfer::build(TestOptions::default());
         test.transaction.ledger = CanisterId::from_slice(&[3; 10]);
         assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidSignature as u16);
     }
 
     #[test]
     fn transaction_not_matching_arg_fails() {
-        let mut test = TestTransfer::new();
+        let mut test = TestTransfer::build(TestOptions::default());
         test.transaction.amount += 1;
         assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidRequest as u16);
     }
 
     #[test]
+    fn arg_without_fee_fails() {
+        let test = TestTransfer::build(TestOptions {
+            fee_in_arg: false,
+            ..Default::default()
+        });
+        assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidRequest as u16);
+    }
+
+    #[test]
     fn wrong_memo_fails() {
-        let test = TestTransfer::new();
+        let test = TestTransfer::build(TestOptions::default());
         let result = verify_certified_transfer(test.transaction.clone(), test.sender, b"other", &test.root_key, NOW);
         assert_eq!(result.unwrap_err().code(), OCErrorCode::InvalidRequest as u16);
     }
 
     #[test]
     fn changed_nonce_fails() {
-        let mut test = TestTransfer::new();
+        let mut test = TestTransfer::build(TestOptions::default());
         test.transaction.call.nonce = Some(ByteBuf::from(vec![2]));
         assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidSignature as u16);
     }
 
     #[test]
     fn signed_by_wrong_key_fails() {
-        let mut test = TestTransfer::new();
-        test.root_key = TestTransfer::root_key(&private_key(2));
+        let mut test = TestTransfer::build(TestOptions::default());
+        test.root_key = root_key(&private_key(2));
         assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidSignature as u16);
     }
 
     #[test]
     fn old_certificate_fails() {
-        let test = TestTransfer::new();
-        let now = NOW + MAX_CERTIFICATE_TIME_OFFSET + 1;
-        let result = verify_certified_transfer(test.transaction.clone(), test.sender, &test.memo, &test.root_key, now);
-        assert_eq!(result.unwrap_err().code(), OCErrorCode::InvalidSignature as u16);
+        let test = TestTransfer::build(TestOptions {
+            certificate_time: NOW_NANOS - (MAX_CERTIFICATE_TIME_OFFSET + 1) * NANOS_PER_MILLISECOND,
+            ..Default::default()
+        });
+        assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidSignature as u16);
     }
 
     #[test]
-    fn rejected_transfer_fails() {
-        let test = TestTransfer::with_reply(Err(TransferError::InsufficientFunds {
-            balance: Nat::from(0u32),
-        }));
+    fn future_certificate_fails() {
+        let test = TestTransfer::build(TestOptions {
+            certificate_time: NOW_NANOS + (MAX_CERTIFICATE_TIME_OFFSET + 1) * NANOS_PER_MILLISECOND,
+            ..Default::default()
+        });
+        assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidSignature as u16);
+    }
+
+    // A fresh certificate can be read while the subnet still holds the reply, so the transfer's age
+    // must be checked separately
+    #[test]
+    fn old_transfer_with_fresh_certificate_fails() {
+        let test = TestTransfer::build(TestOptions {
+            created: NOW_NANOS - (MAX_TRANSFER_AGE + 1) * NANOS_PER_MILLISECOND,
+            ..Default::default()
+        });
+        assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidRequest as u16);
+    }
+
+    #[test]
+    fn transfer_error_fails() {
+        let test = TestTransfer::build(TestOptions {
+            reply: Err(TransferError::InsufficientFunds {
+                balance: Nat::from(0u32),
+            }),
+            ..Default::default()
+        });
         assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::TransferFailed as u16);
+    }
+
+    #[test]
+    fn rejected_call_fails() {
+        let test = TestTransfer::build(TestOptions {
+            status: "rejected",
+            ..Default::default()
+        });
+        assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::TransferFailed as u16);
+    }
+
+    #[test]
+    fn pruned_reply_fails_without_claiming_the_transfer_failed() {
+        let test = TestTransfer::build(TestOptions {
+            status: "done",
+            ..Default::default()
+        });
+        assert_eq!(test.verify().unwrap_err().code(), OCErrorCode::InvalidRequest as u16);
+    }
+
+    struct TestOptions {
+        reply: Result<Nat, TransferError>,
+        status: &'static str,
+        certificate_time: u64,
+        created: u64,
+        fee_in_arg: bool,
+        // If set, the certificate is signed by a subnet whose delegation covers these canister ranges
+        delegated_ranges: Option<Vec<(Principal, Principal)>>,
+    }
+
+    impl Default for TestOptions {
+        fn default() -> Self {
+            TestOptions {
+                reply: Ok(Nat::from(123u32)),
+                status: "replied",
+                certificate_time: NOW_NANOS,
+                created: NOW_NANOS,
+                fee_in_arg: true,
+                delegated_ranges: None,
+            }
+        }
     }
 
     struct TestTransfer {
@@ -243,13 +364,9 @@ mod tests {
     }
 
     impl TestTransfer {
-        fn new() -> TestTransfer {
-            TestTransfer::with_reply(Ok(Nat::from(123u32)))
-        }
-
-        fn with_reply(reply: Result<Nat, TransferError>) -> TestTransfer {
+        fn build(options: TestOptions) -> TestTransfer {
             let sender = Principal::from_slice(&[1; 29]);
-            let ledger = CanisterId::from_slice(&[2; 10]);
+            let ledger = CanisterId::from_slice(&LEDGER);
             let memo = b"verifying canister".to_vec();
             let to = Account {
                 owner: Principal::from_slice(&[4; 29]),
@@ -258,14 +375,14 @@ mod tests {
             let arg = TransferArg {
                 from_subaccount: Some([7; 32]),
                 to: to.into(),
-                fee: Some(Nat::from(10u32)),
-                created_at_time: Some(NOW * NANOS_PER_MILLISECOND),
+                fee: options.fee_in_arg.then(|| Nat::from(10u32)),
+                created_at_time: Some(options.created),
                 memo: Some(Memo::from(memo.clone())),
                 amount: Nat::from(1000u32),
             };
             let call = CertifiedCall {
                 arg: candid::encode_one(&arg).unwrap(),
-                ingress_expiry: (NOW + MINUTE_IN_MS) * NANOS_PER_MILLISECOND,
+                ingress_expiry: NOW_NANOS + MINUTE_IN_MS * NANOS_PER_MILLISECOND,
                 nonce: Some(ByteBuf::from(vec![1])),
                 certificate: Vec::new(),
             };
@@ -277,25 +394,41 @@ mod tests {
                     labeled(
                         request_id.to_vec(),
                         fork(
-                            labeled("reply", leaf(candid::encode_one(&reply).unwrap())),
-                            labeled("status", leaf(b"replied".to_vec())),
+                            labeled("reply", leaf(candid::encode_one(&options.reply).unwrap())),
+                            labeled("status", leaf(options.status.as_bytes().to_vec())),
                         ),
                     ),
                 ),
-                labeled("time", leaf(leb128(NOW * NANOS_PER_MILLISECOND))),
+                labeled("time", leaf(leb128(options.certificate_time))),
             );
-            let mut message = b"\x0Dic-state-root".to_vec();
-            message.extend_from_slice(&tree.digest());
-            let key = private_key(1);
-            let certificate = Certificate {
-                tree,
-                signature: key.sign(&message).serialize().to_vec(),
-                delegation: None,
+
+            let root = private_key(1);
+            let certificate = match options.delegated_ranges {
+                None => sign(tree, &root, None),
+                Some(ranges) => {
+                    let subnet = private_key(3);
+                    let subnet_id = vec![5; 29];
+                    let ranges: Vec<_> = ranges
+                        .into_iter()
+                        .map(|(start, end)| (ByteBuf::from(start.as_slice()), ByteBuf::from(end.as_slice())))
+                        .collect();
+                    let delegation_tree = fork(
+                        labeled(
+                            "canister_ranges",
+                            labeled(subnet_id.clone(), labeled(LEDGER.to_vec(), leaf(to_cbor(&ranges)))),
+                        ),
+                        labeled(
+                            "subnet",
+                            labeled(subnet_id.clone(), labeled("public_key", leaf(root_key(&subnet)))),
+                        ),
+                    );
+                    let delegation = Delegation {
+                        subnet_id,
+                        certificate: to_cbor(&sign(delegation_tree, &root, None)),
+                    };
+                    sign(tree, &subnet, Some(delegation))
+                }
             };
-            let mut certificate_bytes = Vec::new();
-            let mut serializer = serde_cbor::Serializer::new(&mut certificate_bytes);
-            serializer.self_describe().unwrap();
-            certificate.serialize(&mut serializer).unwrap();
 
             TestTransfer {
                 transaction: PendingCryptoTransaction {
@@ -305,33 +438,55 @@ mod tests {
                     to,
                     fee: 10,
                     memo: Some(Memo::from(memo.clone())),
-                    created: NOW * NANOS_PER_MILLISECOND,
+                    created: options.created,
                     call: CertifiedCall {
-                        certificate: certificate_bytes,
+                        certificate: to_cbor(&certificate),
                         ..call
                     },
                 },
                 sender,
                 memo,
-                root_key: TestTransfer::root_key(&key),
+                root_key: root_key(&root),
             }
         }
 
         fn verify(&self) -> Result<CompletedCryptoTransaction, OCError> {
             verify_certified_transfer(self.transaction.clone(), self.sender, &self.memo, &self.root_key, NOW)
         }
+    }
 
-        fn root_key(key: &PrivateKey) -> Vec<u8> {
-            let mut der = DER_PREFIX.to_vec();
-            der.extend_from_slice(&key.public_key().serialize());
-            der
+    fn sign(tree: HashTree, key: &PrivateKey, delegation: Option<Delegation>) -> Certificate {
+        let mut message = b"\x0Dic-state-root".to_vec();
+        message.extend_from_slice(&tree.digest());
+        Certificate {
+            tree,
+            signature: key.sign(&message).serialize().to_vec(),
+            delegation,
         }
+    }
+
+    fn to_cbor<T: Serialize>(value: &T) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        let mut serializer = serde_cbor::Serializer::new(&mut bytes);
+        serializer.self_describe().unwrap();
+        value.serialize(&mut serializer).unwrap();
+        bytes
+    }
+
+    fn root_key(key: &PrivateKey) -> Vec<u8> {
+        let mut der = DER_PREFIX.to_vec();
+        der.extend_from_slice(&key.public_key().serialize());
+        der
     }
 
     fn private_key(seed: u8) -> PrivateKey {
         let mut bytes = [0; 32];
         bytes[31] = seed;
         PrivateKey::deserialize(&bytes).unwrap()
+    }
+
+    fn principal(bytes: &[u8]) -> Principal {
+        Principal::from_slice(bytes)
     }
 
     fn leb128(mut value: u64) -> Vec<u8> {
