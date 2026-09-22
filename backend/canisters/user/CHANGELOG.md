@@ -55,19 +55,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fail with `ThreadNotFound` rather than trapping when a thread root is not found while translating it for the other user's canister, and check it before pushing a message ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Mark the user's chat with themselves as such, so that messages they send to themselves are read on both sides ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
 - Check the thread root of a P2P swap being accepted before making the transfer, and look the swap up in that thread rather than in the main list ([#9409](https://github.com/open-chat-labs/open-chat/pull/9409))
-- Move the blocked users, contacts, favourite chats and profile document models into the `user_core` library, shared with the MultiUser canister ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
+- Move the blocked users, contacts, favourite chats and profile document models into the `user_state` library, shared with the MultiUser canister ([#9414](https://github.com/open-chat-labs/open-chat/pull/9414))
 - Collapse `DirectChat` back into a single struct holding its events and both read positions ([#9415](https://github.com/open-chat-labs/open-chat/pull/9415))
 - Send events to the LocalUserIndex over `c2c_user_canister_v2`, the endpoint the MultiUser canister also uses, rather than `c2c_user_canister` ([#9436](https://github.com/open-chat-labs/open-chat/pull/9436))
-- Move the CHIT events and streak models into the `user_core` library, shared with the MultiUser canister ([#9437](https://github.com/open-chat-labs/open-chat/pull/9437))
-- Move the game CHIT keys model and `c2c_game_chit` argument validation into the `user_core` library, shared with the MultiUser canister ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
-- Move the group and community models (`GroupChats`, `Communities` and `ThreadsRead`) into the `user_core` library, shared with the MultiUser canister ([#9447](https://github.com/open-chat-labs/open-chat/pull/9447))
-- Move `Membership` and `COMMUNITY_CREATION_LIMIT` into the `user_core` library, shared with the MultiUser canister ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
-- Hold the user's state, including their token and P2P swaps, BTC and 1sec addresses, bots and premium items, in the `User` struct shared with the MultiUser canister via the `user_core` library, nested within `Data` as `user`, migrating the previous layout on upgrade ([#9467](https://github.com/open-chat-labs/open-chat/pull/9467))
+- Move the CHIT events and streak models into the `user_state` library, shared with the MultiUser canister ([#9437](https://github.com/open-chat-labs/open-chat/pull/9437))
+- Move the game CHIT keys model and `c2c_game_chit` argument validation into the `user_state` library, shared with the MultiUser canister ([#9440](https://github.com/open-chat-labs/open-chat/pull/9440))
+- Move the group and community models (`GroupChats`, `Communities` and `ThreadsRead`) into the `user_state` library, shared with the MultiUser canister ([#9447](https://github.com/open-chat-labs/open-chat/pull/9447))
+- Move `Membership` and `COMMUNITY_CREATION_LIMIT` into the `user_state` library, shared with the MultiUser canister ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
+- Hold the user's state, including their token and P2P swaps, BTC and 1sec addresses, bots and premium items, in the `User` struct shared with the MultiUser canister via the `user_state` library, nested within `Data` as `user`, migrating the previous layout on upgrade ([#9467](https://github.com/open-chat-labs/open-chat/pull/9467))
 - Build `initial_state` and `updates` from the shared `User`, so the MultiUser canister serves the same ([#9469](https://github.com/open-chat-labs/open-chat/pull/9469))
-- Rename the `user_state` library to `user_core`, with the state under `model` and one module per shared endpoint under `queries` and `updates` ([#9470](https://github.com/open-chat-labs/open-chat/pull/9470))
 - Queue direct chat events per canister, paired with their recipient, and send those for users in a MultiUser canister via its `c2c_user_canister_v2` ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
 - Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, which must be upgraded first, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
-- Move the referrals model into the `user_core` library, shared with the MultiUser canister ([#9464](https://github.com/open-chat-labs/open-chat/pull/9464))
+- Move the referrals model into the `user_state` library, shared with the MultiUser canister ([#9464](https://github.com/open-chat-labs/open-chat/pull/9464))
 
 ### Fixed
 
@@ -77,9 +76,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make `user_id` optional in `c2c_user_canister` args, since old User canisters don't send it ([#9410](https://github.com/open-chat-labs/open-chat/pull/9410))
 - Cancel the pending hard delete of a message's content when it is undeleted, so a message deleted again gets the full 5 minutes to be undeleted ([#9430](https://github.com/open-chat-labs/open-chat/pull/9430))
 - Apply `thread_root_message_index` to the sender's own copy of a direct chat when editing or deleting a thread reply ([#9431](https://github.com/open-chat-labs/open-chat/pull/9431))
-- Move the message activity feed model into the shared `user_core` library, so the MultiUser canister can hold one per user ([#9433](https://github.com/open-chat-labs/open-chat/pull/9433))
-- Move the PIN number, hot group exclusions and saved crypto accounts models into the shared `user_core` library, so the MultiUser canister can hold them per user ([#9434](https://github.com/open-chat-labs/open-chat/pull/9434))
+- Move the message activity feed model into the shared `user_state` library, so the MultiUser canister can hold one per user ([#9433](https://github.com/open-chat-labs/open-chat/pull/9433))
+- Move the PIN number, hot group exclusions and saved crypto accounts models into the shared `user_state` library, so the MultiUser canister can hold them per user ([#9434](https://github.com/open-chat-labs/open-chat/pull/9434))
 - Reject paying for streak insurance which would take the days insured over 30, the most the UI allows, since the price and the count of days overflow otherwise ([#9441](https://github.com/open-chat-labs/open-chat/pull/9441))
+- Rename the `user_state` library to `user_core`, with the state under `model` and one module per shared endpoint under `queries` and `updates` ([#9470](https://github.com/open-chat-labs/open-chat/pull/9470))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-12
 
