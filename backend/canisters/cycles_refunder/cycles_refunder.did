@@ -1,0 +1,5 @@
+// Sends all cycles above what the canister needs to make the call to the CyclesDispenser
+// (gonut-hqaaa-aaaaf-aby7a-cai) and returns the number of cycles sent.
+service : {
+    refund : () -> (nat64);
+}
