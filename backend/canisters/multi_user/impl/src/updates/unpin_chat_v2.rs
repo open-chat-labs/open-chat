@@ -13,5 +13,5 @@ fn unpin_chat_v2(args: Args) -> Response {
 
 fn unpin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
-    state.with_caller_user_mut(|_, user| user_core::updates::unpin_chat_v2::unpin_chat_v2(user, args, now))
+    state.with_caller_user_mut(|_, user| user_core::updates::unpin_chat_v2(user, args, now))
 }

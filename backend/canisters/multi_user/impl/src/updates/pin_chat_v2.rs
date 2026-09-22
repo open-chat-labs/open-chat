@@ -13,9 +13,8 @@ fn pin_chat_v2(args: Args) -> Response {
 
 fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
-    let my_index = state.with_caller_user_mut(|my_index, user| {
-        user_core::updates::pin_chat_v2::pin_chat_v2(user, args, now).map(|()| my_index)
-    })?;
+    let my_index =
+        state.with_caller_user_mut(|my_index, user| user_core::updates::pin_chat_v2(user, args, now).map(|()| my_index))?;
     state.award_achievement_and_notify(my_index, Achievement::PinnedChat, now);
     Ok(())
 }

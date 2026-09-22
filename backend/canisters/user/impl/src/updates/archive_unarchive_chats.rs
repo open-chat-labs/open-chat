@@ -12,5 +12,5 @@ fn archive_unarchive_chats(args: Args) -> Response {
 
 fn archive_unarchive_chats_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    user_core::updates::archive_unarchive_chats::archive_unarchive_chats(&mut state.data.user, args, now)
+    user_core::updates::archive_unarchive_chats(&mut state.data.user, args, now)
 }

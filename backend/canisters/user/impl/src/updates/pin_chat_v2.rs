@@ -13,7 +13,7 @@ fn pin_chat_v2(args: Args) -> Response {
 
 fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
-    user_core::updates::pin_chat_v2::pin_chat_v2(&mut state.data.user, args, now)?;
+    user_core::updates::pin_chat_v2(&mut state.data.user, args, now)?;
     state.award_achievement_and_notify(Achievement::PinnedChat, now);
     Ok(())
 }
