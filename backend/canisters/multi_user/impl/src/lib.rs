@@ -1,4 +1,5 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
+use crate::model::used_transfers::UsedTransfers;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::users::Users;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
@@ -573,6 +574,7 @@ impl RuntimeState {
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
+            used_transfers: self.data.used_transfers.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -624,6 +626,10 @@ struct Data {
     pub known_multi_user_canisters: HashSet<CanisterId>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    // The certified transfers users have made from their own accounts which have been used, so that
+    // none can be used twice
+    #[serde(default)]
+    pub used_transfers: UsedTransfers,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -655,6 +661,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
+            used_transfers: UsedTransfers::default(),
             rng_seed,
             test_mode,
         }
@@ -686,6 +693,7 @@ pub struct Metrics {
     pub queued_local_user_index_events: u32,
     pub queued_user_canister_events: u32,
     pub known_multi_user_canisters: u32,
+    pub used_transfers: u32,
     pub canister_ids: CanisterIds,
 }
 

@@ -111,7 +111,7 @@ impl UserId {
         is_canister_id(&self.0)
     }
 
-    fn is_indexed(&self) -> bool {
+    pub fn is_indexed(&self) -> bool {
         let bytes = self.0.as_slice();
         bytes.len() == CANISTER_ID_LEN && bytes[CANISTER_ID_LEN - 1] & INDEXED_TAG != 0
     }

@@ -50,7 +50,7 @@ fn change_channel_role_inner(
 
     state.data.verify_not_frozen()?;
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
 
     // If caller is a bot then check bot permissions
     if let Caller::BotV2(bot_caller) = &caller

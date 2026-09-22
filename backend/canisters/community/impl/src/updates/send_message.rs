@@ -76,7 +76,7 @@ pub(crate) fn send_message_impl(
     finalised: bool,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
 
     let display_name = prepare(&caller, args.community_rules_accepted, state)?;
 
@@ -133,7 +133,7 @@ pub(crate) fn send_message_impl(
 }
 
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<SuccessResult> {
-    let caller = state.verified_caller(None)?;
+    let caller = state.verified_caller(None, args.user_id)?;
 
     let display_name = prepare(&caller, args.community_rules_accepted, state)?;
 

@@ -1,6 +1,7 @@
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::updates::delete_messages::enqueue_hard_delete_jobs;
 use crate::updates::send_message::{SenderDetails, receive_message};
+use crate::updates::tip_message::receive_tip;
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -135,9 +136,9 @@ fn process_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16,
         }
         UserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient, recipient_index, now, state),
         UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, *status, now),
-        // TODO: Handle these once the MultiUser canister supports tips, P2P swaps and video calls
-        UserCanisterEvent::TipMessage(_)
-        | UserCanisterEvent::P2PSwapStatusChange(_)
+        UserCanisterEvent::TipMessage(args) => receive_tip(recipient_index, sender, *args, now, state),
+        // TODO: Handle these once the MultiUser canister supports P2P swaps and video calls
+        UserCanisterEvent::P2PSwapStatusChange(_)
         | UserCanisterEvent::StartVideoCall(_)
         | UserCanisterEvent::JoinVideoCall(_) => {}
     }

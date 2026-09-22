@@ -49,7 +49,7 @@ fn change_role_inner(
         args.user_ids.push(args.user_id);
     }
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
 
     state.data.verify_not_frozen()?;
 

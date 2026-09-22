@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Accept a `user_id` in `c2c_leave_group` and `c2c_delete_group`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))
+- Let a MultiUser canister send messages with transfers and tip messages on behalf of its users via `c2c_send_message` and `c2c_tip_message`
 
 ### Changed
 

@@ -1,9 +1,10 @@
 use crate::{mutate_state, openchat_bot};
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal, ReplyContextInternal};
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
-use types::{Chat, ChatId, EventIndex, MessageId, MessageIndex};
+use tracing::error;
+use types::{Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -11,6 +12,30 @@ pub enum TimerJob {
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     MessageReminder(Box<MessageReminderJob>),
     ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
+    SendMessageToGroup(Box<SendMessageToGroupJob>),
+    SendMessageToChannel(Box<SendMessageToChannelJob>),
+}
+
+// Retries sending a message with a transfer to a group, after the call to send it failed. The
+// transfer has already been made, so the message is sent even though the user has been told it is
+// being retried.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SendMessageToGroupJob {
+    // The index of the user sending the message
+    pub user_index: u16,
+    pub chat_id: ChatId,
+    pub args: group_canister::c2c_send_message::Args,
+    pub attempt: u32,
+}
+
+// As `SendMessageToGroupJob`, for a channel
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SendMessageToChannelJob {
+    // The index of the user sending the message
+    pub user_index: u16,
+    pub community_id: CommunityId,
+    pub args: community_canister::c2c_send_message::Args,
+    pub attempt: u32,
 }
 
 // Removes the content of a deleted message from one user's copy of a direct chat, once the time in
@@ -59,6 +84,8 @@ impl TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.user_index,
             TimerJob::MessageReminder(job) => job.user_index,
             TimerJob::ClaimOrResetStreakInsurance(job) => job.user_index,
+            TimerJob::SendMessageToGroup(job) => job.user_index,
+            TimerJob::SendMessageToChannel(job) => job.user_index,
         }
     }
 }
@@ -97,7 +124,70 @@ impl Job for TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
             TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
+            TimerJob::SendMessageToGroup(job) => job.execute(),
+            TimerJob::SendMessageToChannel(job) => job.execute(),
         }
+    }
+}
+
+const SEND_MESSAGE_RETRY_INTERVAL: u64 = 10 * SECOND_IN_MS;
+const SEND_MESSAGE_MAX_ATTEMPTS: u32 = 20;
+
+impl SendMessageToGroupJob {
+    pub fn enqueue(self) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            state.data.timer_jobs.enqueue_job(
+                TimerJob::SendMessageToGroup(Box::new(self)),
+                now + SEND_MESSAGE_RETRY_INTERVAL,
+                now,
+            );
+        });
+    }
+}
+
+impl Job for SendMessageToGroupJob {
+    fn execute(self) {
+        ic_cdk::futures::spawn_migratory(async move {
+            match group_canister_c2c_client::c2c_send_message(self.chat_id.into(), &self.args).await {
+                Ok(group_canister::c2c_send_message::Response::Success(_)) => {}
+                Err(_) if self.attempt < SEND_MESSAGE_MAX_ATTEMPTS => SendMessageToGroupJob {
+                    attempt: self.attempt + 1,
+                    ..self
+                }
+                .enqueue(),
+                response => error!(?response, "Failed to send message to group"),
+            }
+        })
+    }
+}
+
+impl SendMessageToChannelJob {
+    pub fn enqueue(self) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            state.data.timer_jobs.enqueue_job(
+                TimerJob::SendMessageToChannel(Box::new(self)),
+                now + SEND_MESSAGE_RETRY_INTERVAL,
+                now,
+            );
+        });
+    }
+}
+
+impl Job for SendMessageToChannelJob {
+    fn execute(self) {
+        ic_cdk::futures::spawn_migratory(async move {
+            match community_canister_c2c_client::c2c_send_message(self.community_id.into(), &self.args).await {
+                Ok(community_canister::c2c_send_message::Response::Success(_)) => {}
+                Err(_) if self.attempt < SEND_MESSAGE_MAX_ATTEMPTS => SendMessageToChannelJob {
+                    attempt: self.attempt + 1,
+                    ..self
+                }
+                .enqueue(),
+                response => error!(?response, "Failed to send message to channel"),
+            }
+        })
     }
 }
 

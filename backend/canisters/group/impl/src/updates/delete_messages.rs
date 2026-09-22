@@ -82,7 +82,7 @@ fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
 fn commit(ext_caller: Option<Caller>, args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
     let agent = caller.agent();
 
     let now = state.env.now();

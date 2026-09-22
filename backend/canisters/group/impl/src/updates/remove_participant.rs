@@ -85,7 +85,7 @@ fn prepare(
         return Err(OCErrorCode::ChatNotPublic.into());
     }
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
 
     if caller.agent() == user_to_remove {
         Err(OCErrorCode::CannotRemoveSelf.into())

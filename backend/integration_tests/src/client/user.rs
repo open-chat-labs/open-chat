@@ -474,6 +474,7 @@ pub mod happy_path {
                 token_symbol,
                 from_account: None,
                 pin: None,
+                transfer: None,
             },
         );
 

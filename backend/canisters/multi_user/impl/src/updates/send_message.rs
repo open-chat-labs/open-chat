@@ -1,5 +1,7 @@
+use crate::crypto::{release_transfer, use_transfer, verify_recipient, wallet_account};
 use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
@@ -9,7 +11,8 @@ use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    CanisterId, DirectChatUserNotificationPayload, DirectMessageNotification, MessageId, MessageIndex, OCResult, OgPreview,
+    CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, DirectChatUserNotificationPayload,
+    DirectMessageNotification, MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview, PendingCryptoTransaction,
     ReplyContext, TimestampMillis, UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
@@ -25,6 +28,7 @@ async fn send_message_v2_impl(args: Args) -> Response {
     let PrepareOk {
         my_index,
         my_user_id,
+        my_principal,
         now,
         local_user_index_canister_id,
         maybe_recipient,
@@ -45,13 +49,17 @@ async fn send_message_v2_impl(args: Args) -> Response {
     };
 
     let content = match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
-        ValidateNewMessageContentResult::Success(content) => content,
-        // TODO: Crypto transfers need the user's pin number and the ledger calls, and P2P swaps the
-        // escrow canister, as in the User canister
-        ValidateNewMessageContentResult::SuccessCrypto(_) | ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
+        ValidateNewMessageContentResult::Success(content) => NewContent::Ready(content),
+        ValidateNewMessageContentResult::SuccessCrypto(content) => {
+            match prepare_transfer(content, args.recipient, recipient, my_principal).await {
+                Ok(ok) => ok,
+                Err(error) => return Error(error),
+            }
+        }
+        // TODO: P2P swaps need the escrow canister, as in the User canister
+        ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
             return Error(
-                OCErrorCode::InvalidRequest
-                    .with_message("Messages with transfers are not yet supported by the MultiUser canister"),
+                OCErrorCode::InvalidRequest.with_message("P2P swaps are not yet supported by the MultiUser canister"),
             );
         }
         ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
@@ -61,7 +69,25 @@ async fn send_message_v2_impl(args: Args) -> Response {
     };
 
     mutate_state(|state| {
-        send_message_impl(
+        // The transfer is verified and recorded along with the message being sent, so that if the
+        // message can't be sent the transfer is freed to be used again
+        let (content, transfer) = match content {
+            NewContent::Ready(content) => (content, None),
+            NewContent::Transfer(content, pending, principal) => match use_transfer(pending, principal, state) {
+                Ok(completed) => (
+                    MessageContentInternal::new_with_transfer(
+                        MessageContentInitial::Crypto(*content),
+                        CompletedCryptoTransaction::ICRC1(completed.clone()).into(),
+                        None,
+                        now,
+                    ),
+                    Some(completed),
+                ),
+                Err(error) => return Error(error),
+            },
+        };
+
+        let response = send_message_impl(
             my_index,
             my_user_id,
             args.recipient,
@@ -75,8 +101,42 @@ async fn send_message_v2_impl(args: Args) -> Response {
             recipient,
             args.og_previews,
             state,
-        )
+        );
+        if let (Error(_), Some(transfer)) = (&response, transfer) {
+            release_transfer(&transfer, state);
+        }
+        response
     })
+}
+
+enum NewContent {
+    Ready(MessageContentInternal),
+    // A crypto message, whose transfer is yet to be verified, along with the sender's principal,
+    // which it must be from
+    Transfer(Box<CryptoContent>, PendingCryptoTransaction, Principal),
+}
+
+// Checks the transfer in a crypto message, which the user has already made, is to the recipient's
+// wallet. The transfer itself is verified along with the message being sent.
+async fn prepare_transfer(
+    content: CryptoContent,
+    recipient: UserId,
+    recipient_kind: Recipient,
+    my_principal: Principal,
+) -> OCResult<NewContent> {
+    if matches!(recipient_kind, Recipient::Me) {
+        return Err(OCErrorCode::TransferCannotBeToSelf.into());
+    }
+    if content.recipient != recipient {
+        return Err(OCErrorCode::InvalidRequest.with_message("Transfer recipient is not the message recipient"));
+    }
+    let CryptoTransaction::Pending(pending) = content.transfer.clone() else {
+        return Err(OCErrorCode::InvalidRequest.with_message("Transaction must be of type 'Pending'"));
+    };
+
+    verify_recipient(&pending, wallet_account(recipient).await?)?;
+
+    Ok(NewContent::Transfer(Box::new(content), pending, my_principal))
 }
 
 #[update(msgpack = true)]
@@ -88,6 +148,8 @@ fn c2c_bot_send_message(_args: c2c_bot_send_message::Args) -> c2c_bot_send_messa
 struct PrepareOk {
     my_index: u16,
     my_user_id: UserId,
+    // Taken now since the caller isn't available once the endpoint has awaited a call
+    my_principal: Principal,
     now: TimestampMillis,
     local_user_index_canister_id: CanisterId,
     // None if the recipient is in another canister and the sender has no chat with them yet, in
@@ -133,6 +195,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
         .map(|maybe_recipient| PrepareOk {
             my_index,
             my_user_id,
+            my_principal: state.env.caller(),
             now: state.env.now(),
             local_user_index_canister_id: state.data.local_user_index_canister_id,
             maybe_recipient,

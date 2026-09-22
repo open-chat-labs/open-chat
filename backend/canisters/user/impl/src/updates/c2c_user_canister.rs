@@ -3,17 +3,13 @@ use crate::updates::c2c_send_messages::{
     HandleMessageArgs, get_sender_status, handle_message_impl, thread_root_message_index, verify_user,
 };
 use crate::updates::start_video_call::handle_start_video_call;
-use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state, read_state};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, Reader, TipMessageArgs};
+use chat_events::{MessageContentInternal, Reader};
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
-use ledger_utils::format_crypto_amount_with_symbol;
 use rand::RngExt;
-use types::{
-    Achievement, CallKind, Chat, DirectChatUserNotificationPayload, DirectMessageTipped, P2PSwapStatus, UserId, UserType,
-    VideoCallPresence,
-};
+use types::{Achievement, CallKind, Chat, P2PSwapStatus, UserId, UserType, VideoCallPresence};
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{
     MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent,
@@ -281,59 +277,19 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
 }
 
 fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
-    if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
-        let now = state.env.now();
-        let my_user_id = state.env.canister_id().into();
-        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
-            return;
-        };
+    let now = state.env.now();
+    let my_user_id = state.env.canister_id().into();
+    let Some(tipped) = state
+        .data
+        .user
+        .direct_chats
+        .get_mut(&caller_user_id.into())
+        .and_then(|chat| user_core::updates::c2c_user_canister::tip_message(chat, caller_user_id, my_user_id, args, now))
+    else {
+        return;
+    };
 
-        let tip_message_args = TipMessageArgs {
-            user_id: caller_user_id,
-            recipient: my_user_id,
-            thread_root_message_index,
-            message_id: args.message_id,
-            ledger: args.ledger,
-            token_symbol: args.token_symbol.clone(),
-            amount: args.amount,
-            now,
-        };
-
-        if chat.tip_message::<UserEventPusher>(tip_message_args, None).is_ok() {
-            if let Some(message_event) = chat
-                .events()
-                .main_events_reader()
-                .message_event_internal(args.message_id.into())
-            {
-                let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
-                let notification = DirectChatUserNotificationPayload::DirectMessageTipped(DirectMessageTipped {
-                    them: caller_user_id,
-                    thread_root_message_index,
-                    message_index: message_event.event.message_index,
-                    message_event_index: message_event.index,
-                    username: args.username,
-                    display_name: args.display_name,
-                    tip,
-                    user_avatar_id: args.user_avatar_id,
-                });
-                state.push_notification(Some(caller_user_id), my_user_id, notification);
-
-                state.data.user.push_message_activity(
-                    MessageActivityEvent {
-                        chat: Chat::Direct(caller_user_id.into()),
-                        thread_root_message_index,
-                        message_index: message_event.event.message_index,
-                        message_id: message_event.event.message_id,
-                        event_index: message_event.index,
-                        activity: MessageActivity::Tip,
-                        timestamp: now,
-                        user_id: Some(caller_user_id),
-                    },
-                    now,
-                );
-            }
-
-            state.award_achievement_and_notify(Achievement::HadMessageTipped, now);
-        }
-    }
+    state.push_notification(Some(caller_user_id), my_user_id, tipped.notification);
+    state.data.user.push_message_activity(tipped.activity, now);
+    state.award_achievement_and_notify(Achievement::HadMessageTipped, now);
 }

@@ -101,7 +101,7 @@ fn create_channel_impl(
         validate_external_url(external_url)?;
     }
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
 
     let messages_visible_to_non_members =
         args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate_config.is_none());

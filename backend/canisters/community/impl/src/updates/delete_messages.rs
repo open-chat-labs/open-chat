@@ -86,7 +86,7 @@ fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
 fn commit(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
         return Err(OCErrorCode::ChatNotFound.into());

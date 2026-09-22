@@ -542,7 +542,9 @@ impl RuntimeState {
         }
     }
 
-    pub fn verified_caller(&self, ext_caller: Option<Caller>) -> OCResult<Caller> {
+    // When `user_id` is given, the caller is acting as that user, whom it must hold (a MultiUser
+    // canister acting for one of its users, or a User canister for its own user)
+    pub fn verified_caller(&self, ext_caller: Option<Caller>, user_id: Option<UserId>) -> OCResult<Caller> {
         match ext_caller {
             Some(Caller::BotV2(bot)) => return Ok(Caller::BotV2(bot)),
             Some(Caller::Webhook(user_id)) => return Ok(Caller::Webhook(user_id)),
@@ -551,12 +553,19 @@ impl RuntimeState {
 
         let caller = self.env.caller();
 
-        if caller == self.data.user_index_canister_id {
-            return Ok(Caller::OCBot(OPENCHAT_BOT_USER_ID));
-        }
+        let user_id = match user_id {
+            Some(user_id) if user_id.canister_id() != caller => return Err(OCErrorCode::InitiatorNotAuthorized.into()),
+            Some(user_id) => user_id,
+            None => {
+                if caller == self.data.user_index_canister_id {
+                    return Ok(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+                }
 
-        let Some(user_id) = self.data.lookup_user_id(caller) else {
-            return Err(OCErrorCode::InitiatorNotFound.into());
+                let Some(user_id) = self.data.lookup_user_id(caller) else {
+                    return Err(OCErrorCode::InitiatorNotFound.into());
+                };
+                user_id
+            }
         };
 
         let member = self.data.chat.members.get_verified_member(user_id)?;

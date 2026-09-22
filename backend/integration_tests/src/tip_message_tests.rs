@@ -221,6 +221,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             decimals: 8,
             from_account: None,
             pin: None,
+            transfer: None,
         },
     );
 
@@ -296,6 +297,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             decimals: 8,
             from_account: None,
             pin: None,
+            transfer: None,
         },
     );
 
@@ -372,6 +374,7 @@ fn tip_direct_message_from_approved_account_succeeds() {
             decimals: 8,
             from_account: Some(external_wallet.into()),
             pin: None,
+            transfer: None,
         },
     );
     assert!(
@@ -440,6 +443,7 @@ fn tip_from_own_account_is_rejected() {
             decimals: 8,
             from_account: Some(icrc1::Account::for_user(user1.user_id)),
             pin: None,
+            transfer: None,
         },
     );
 

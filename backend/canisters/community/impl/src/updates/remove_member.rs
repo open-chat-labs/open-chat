@@ -100,7 +100,7 @@ fn prepare(user_id: UserId, block: bool, ext_caller: Option<Caller>, state: &Run
         return Err(OCErrorCode::CommunityNotPublic.into());
     }
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
     let agent = caller.agent();
 
     if agent == user_id {

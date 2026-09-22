@@ -74,7 +74,7 @@ pub(crate) fn send_message_impl(
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
 
     let now = state.env.now();
     let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
@@ -125,7 +125,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
         return Err(OCErrorCode::ChatFrozen.into());
     }
 
-    let caller = state.verified_caller(None)?;
+    let caller = state.verified_caller(None, args.user_id)?;
 
     // Bots can't call this c2c endpoint since it skips the validation
     if matches!(caller, Caller::Bot(_) | Caller::BotV2(_)) {

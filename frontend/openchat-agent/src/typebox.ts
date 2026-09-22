@@ -7540,21 +7540,6 @@ export const UserGroupChatSummaryUpdates = /* @__PURE__ */ Type.Object({
     date_read_pinned: Type.Optional(Type.BigInt()),
 });
 
-export type UserTipMessageArgs = Static<typeof UserTipMessageArgs>;
-export const UserTipMessageArgs = /* @__PURE__ */ Type.Object({
-    chat: Chat,
-    recipient: UserId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    ledger: TSPrincipal,
-    token_symbol: Type.String(),
-    amount: Type.BigInt(),
-    fee: Type.BigInt(),
-    decimals: Type.Number(),
-    from_account: Type.Optional(AccountICRC1),
-    pin: Type.Optional(PinNumberWrapper),
-});
-
 export type UserAddHotGroupExclusionsArgs = Static<typeof UserAddHotGroupExclusionsArgs>;
 export const UserAddHotGroupExclusionsArgs = /* @__PURE__ */ Type.Object({
     groups: Type.Array(ChatId),
@@ -8557,6 +8542,22 @@ export const UserCreateGroupResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type UserTipMessageArgs = Static<typeof UserTipMessageArgs>;
+export const UserTipMessageArgs = /* @__PURE__ */ Type.Object({
+    chat: Chat,
+    recipient: UserId,
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    ledger: TSPrincipal,
+    token_symbol: Type.String(),
+    amount: Type.BigInt(),
+    fee: Type.BigInt(),
+    decimals: Type.Number(),
+    from_account: Type.Optional(AccountICRC1),
+    pin: Type.Optional(PinNumberWrapper),
+    transfer: Type.Optional(PendingCryptoTransaction),
+});
 
 export type UserSendMessageWithTransferToGroupSuccessResult = Static<
     typeof UserSendMessageWithTransferToGroupSuccessResult

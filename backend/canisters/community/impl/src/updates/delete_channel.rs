@@ -36,7 +36,7 @@ fn c2c_bot_delete_channel_impl(args: c2c_bot_delete_channel::Args, state: &mut R
 fn delete_channel_impl(channel_id: ChannelId, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
     let channel = state.data.channels.get_or_err(&channel_id)?;
 
     // A community owner can delete a channel whether or not they are a member of the channel

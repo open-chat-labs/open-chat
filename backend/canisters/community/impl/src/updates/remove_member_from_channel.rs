@@ -18,7 +18,7 @@ pub(crate) fn remove_member_from_channel_impl(
 ) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let caller = state.verified_caller(ext_caller)?;
+    let caller = state.verified_caller(ext_caller, None)?;
 
     let channel = state.data.channels.get_mut_or_err(&channel_id)?;
     let now = state.env.now();
