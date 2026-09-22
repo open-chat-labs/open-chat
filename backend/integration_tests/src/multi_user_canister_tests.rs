@@ -2333,6 +2333,14 @@ fn game_chit_and_suspension_are_applied_per_user() {
         OCErrorCode::InitiatorSuspended,
     );
     assert!(game_chit(env, local_user_index, canister_id, b, "2:solve", 100).is_ok());
+    // And is told so before their input is checked, as in the User canister
+    let set_bio_response = client::multi_user::set_bio(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_bio::Args { text: "x".repeat(2001) },
+    );
+    assert!(matches!(set_bio_response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)));
 
     let since = now_millis(env);
     env.advance_time(Duration::from_millis(1));
