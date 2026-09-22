@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Install, update and uninstall bots per user (`c2c_install_bot`, `update_bot`, `c2c_uninstall_bot`, and the `BotUpdated` and `BotRemoved` events), and implement `join_video_call`, sharing the logic with the User canister via `user_core` ([#9479](https://github.com/open-chat-labs/open-chat/pull/9479))
 - Implement `c2c_charge_user_account` and `withdraw_crypto_v2`, sharing the ledger helpers and charging logic with the User canister, and answer `c2c_vote_on_proposal` with an error, since the canister's neurons can't be tied to one of its users ([#9480](https://github.com/open-chat-labs/open-chat/pull/9480))
 - Implement `generate_btc_address`, `generate_one_sec_address`, `update_btc_balance`, `approve_transfer`, `withdraw_btc` and `withdraw_via_one_sec`, each acting on the subaccount of the user, sharing the logic with the User canister via `user_core` ([#9481](https://github.com/open-chat-labs/open-chat/pull/9481))
+- Apply LocalUserIndex events via `user_core`, shared with the User canister, which hands back the side effects to perform ([#9483](https://github.com/open-chat-labs/open-chat/pull/9483))
 
 ### Changed
 

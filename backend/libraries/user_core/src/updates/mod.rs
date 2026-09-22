@@ -6,6 +6,7 @@ pub mod approve_transfer;
 mod archive_unarchive_chats;
 mod c2c_charge_user_account;
 mod c2c_install_bot;
+pub mod c2c_local_user_index;
 mod c2c_notify_achievement;
 mod c2c_pay_for_premium_item;
 mod c2c_set_user_suspended;

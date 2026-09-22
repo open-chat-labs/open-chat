@@ -185,6 +185,20 @@ impl User {
         }
     }
 
+    // Reinstates the daily claims the user missed, returning how many were and the streak this
+    // leaves them with
+    pub fn reinstate_missed_daily_claims(&mut self, days_to_reinstate: Vec<u16>, now: TimestampMillis) -> (usize, u16) {
+        let daily_claims = self.chit_events.daily_claims();
+        let new_events = self
+            .streak
+            .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
+        let count = new_events.len();
+        for event in new_events {
+            self.chit_events.push(event);
+        }
+        (count, self.streak.days(now))
+    }
+
     // Removes the bot and the user's chat with it, returning the chat's stable memory prefixes for
     // the caller to garbage collect
     pub fn uninstall_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> Vec<BaseKeyPrefix> {

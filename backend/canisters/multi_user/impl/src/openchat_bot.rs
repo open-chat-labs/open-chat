@@ -6,7 +6,7 @@ use types::{
     ChannelId, CommunityId, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, User, UserId,
     UserType,
 };
-use user_canister::{PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
+
 use user_core::openchat_bot;
 
 pub(crate) fn send_community_deleted_message(
@@ -66,35 +66,6 @@ pub(crate) fn send_removed_from_group_or_community_message(
     let text =
         openchat_bot::removed_from_group_or_community_text(is_group, removed_by, &group_or_community_name, public, blocked);
     send_text_message(user_index, text, Vec::new(), false, state);
-}
-
-pub(crate) fn send_user_suspended_message(user_index: u16, event: &UserSuspended, state: &mut RuntimeState) {
-    send_text_message(user_index, openchat_bot::user_suspended_text(event), Vec::new(), false, state);
-}
-
-pub(crate) fn send_phone_number_confirmed_bot_message(user_index: u16, event: &PhoneNumberConfirmed, state: &mut RuntimeState) {
-    send_text_message(
-        user_index,
-        openchat_bot::phone_number_confirmed_text(event),
-        Vec::new(),
-        false,
-        state,
-    );
-}
-
-pub(crate) fn send_storage_ugraded_bot_message(user_index: u16, event: &StorageUpgraded, state: &mut RuntimeState) {
-    send_text_message(
-        user_index,
-        openchat_bot::storage_upgraded_text(event),
-        Vec::new(),
-        false,
-        state,
-    );
-}
-
-pub(crate) fn send_referred_user_joined_message(user_index: u16, user_id: UserId, username: String, state: &mut RuntimeState) {
-    let text = openchat_bot::referred_user_joined_text(user_id);
-    send_text_message(user_index, text, vec![User { user_id, username }], false, state);
 }
 
 pub(crate) fn send_message(

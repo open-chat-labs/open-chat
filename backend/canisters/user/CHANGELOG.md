@@ -79,6 +79,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the NNS and SNS governance clients into the `governance_clients` library and the P2P swap deposit and `from_account` validation into `ledger_utils`, shared with the MultiUser canister, and charge user accounts via `user_core` ([#9480](https://github.com/open-chat-labs/open-chat/pull/9480))
 - Implement the BTC and OneSec address, balance, approval and withdrawal endpoints via `user_core`, which derives the account from the user id, shared with the MultiUser canister ([#9481](https://github.com/open-chat-labs/open-chat/pull/9481))
 - Implement `claim_daily_chit` via `user_core`, shared with the MultiUser canister ([#9482](https://github.com/open-chat-labs/open-chat/pull/9482))
+- Apply LocalUserIndex events via `user_core`, shared with the MultiUser canister, which hands back the side effects to perform ([#9483](https://github.com/open-chat-labs/open-chat/pull/9483))
 
 ### Fixed
 
