@@ -39,7 +39,7 @@ use types::{
     ChatMetrics, CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCallDismissedNotification,
     GroupCanisterGroupChatSummary, GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype,
     IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult,
-    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType,
+    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -142,17 +142,17 @@ impl RuntimeState {
         Ok(self.member_user(user_id))
     }
 
-    // The member's wallet, for paying them. Only a user sharing a MultiUser canister with others
-    // holds their funds under the principal held for them, everyone else under their user id.
-    pub fn member_wallet(&self, user_id: UserId) -> OCResult<UserIdAndPrincipal> {
+    // The member's wallet, for paying them. A user sharing a MultiUser canister with others holds
+    // their funds under the principal held for them, and everyone else under their user id.
+    pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
         if !user_id.is_indexed() {
-            return Ok(UserIdAndPrincipal::new(user_id, user_id.as_principal()));
+            return Ok(user_id.as_principal().into());
         }
         let user = self.member_user(user_id);
         if user.principal == Principal::anonymous() {
             Err(OCErrorCode::TargetUserNotFound.into())
         } else {
-            Ok(user)
+            Ok(user.into())
         }
     }
 

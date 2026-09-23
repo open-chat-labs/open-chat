@@ -21,8 +21,7 @@ use tracing::error;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, CanisterId, Chat, ChatId, CompletedCryptoTransaction, EventIndex,
     EventWrapper, GroupChatUserNotificationPayload, GroupMessageNotification, Message, MessageContent, MessageContentInitial,
-    MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User, UserId, UserIdAndPrincipal, UserType,
-    icrc2,
+    MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User, UserId, UserType, icrc1, icrc2,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -510,7 +509,7 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserId, 
             ValidateNewMessageContentResult::SuccessPrize(p) => {
                 validate_prize(&p, args.thread_root_message_index)?;
                 // The group holds the prize, paying out each winner's share from its own account
-                let recipient = UserIdAndPrincipal::new(this_canister_id.into(), this_canister_id);
+                let recipient = icrc1::Account::from(this_canister_id);
                 (MessageContentType::Prize, MEMO_PRIZE.as_slice(), p.transfer, recipient)
             }
             ValidateNewMessageContentResult::SuccessP2PSwap(p) => {
@@ -526,7 +525,7 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserId, 
                     args.thread_root_message_index,
                     args.message_id,
                 );
-                let swap = NewP2PSwap::new(&p, location, state.member_wallet(user_id)?, this_canister_id, now)?;
+                let swap = NewP2PSwap::new(&p, location, user_id, state.member_wallet(user_id)?, this_canister_id, now)?;
                 return Ok((
                     user_id,
                     PrepareTransferResult::P2PSwap(Box::new(P2PSwapToCreate {

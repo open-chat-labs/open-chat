@@ -17,8 +17,7 @@ use std::collections::BTreeMap;
 use tracing::error;
 use types::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, MessageIndex, OCResult, P2PSwapContentInitial, P2PSwapLocation,
-    PendingCryptoTransaction, PrizeContentInitial, TimestampMillis, TimestampNanos, UserId, UserIdAndPrincipal, certified,
-    icrc1, icrc2,
+    PendingCryptoTransaction, PrizeContentInitial, TimestampMillis, TimestampNanos, UserId, certified, icrc1, icrc2,
 };
 
 pub enum MemberTransfer {
@@ -27,11 +26,11 @@ pub enum MemberTransfer {
 }
 
 impl MemberTransfer {
-    // Checks the transfer is one the canister can accept, and is to `recipient`'s wallet. `memo` is
+    // Checks the transfer is one the canister can accept, and is to `recipient`. `memo` is
     // given to an ICRC2 transfer, and is the prefix of the memo a certified transfer must carry.
     pub fn new(
         transfer: CryptoTransaction,
-        recipient: UserIdAndPrincipal,
+        recipient: icrc1::Account,
         memo: &[u8],
         this_canister_id: CanisterId,
     ) -> OCResult<MemberTransfer> {
@@ -41,7 +40,7 @@ impl MemberTransfer {
         if pending.is_zero() {
             return Err(OCErrorCode::TransferCannotBeZero.into());
         }
-        if !pending.validate_recipient(recipient) {
+        if !pending.is_to(recipient.into()) {
             return Err(OCErrorCode::RecipientMismatch.into());
         }
 
@@ -166,16 +165,22 @@ impl NewP2PSwap {
     pub fn new(
         content: &P2PSwapContentInitial,
         location: P2PSwapLocation,
-        wallet: UserIdAndPrincipal,
+        user_id: UserId,
+        wallet: icrc1::Account,
         this_canister_id: CanisterId,
         now: TimestampMillis,
     ) -> OCResult<NewP2PSwap> {
-        let from = content.from_account.unwrap_or_else(|| wallet.into());
+        // The Escrow canister pays out and refunds to the offerer's default account, so that must be
+        // the member's wallet
+        if wallet.subaccount.is_some() {
+            return Err(OCErrorCode::InvalidRequest.with_message("The offerer's wallet must be a default account"));
+        }
+        let from = content.from_account.unwrap_or(wallet);
         ledger_utils::validate_from_account(Some(from), this_canister_id)?;
-        let offered_by = icrc1::Account::from(wallet).owner;
+        let offered_by = wallet.owner;
 
         Ok(NewP2PSwap {
-            user_id: wallet.user_id,
+            user_id,
             offered_by,
             from,
             args: escrow_canister::create_swap::Args {

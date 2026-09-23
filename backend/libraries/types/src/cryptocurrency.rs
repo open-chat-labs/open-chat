@@ -164,9 +164,12 @@ impl PendingCryptoTransaction {
     // Checks the transfer is to the recipient's wallet. `recipient` must hold their actual principal,
     // from the canister's own data or a lookup, never a caller's claim.
     pub fn validate_recipient(&self, recipient: UserIdAndPrincipal) -> bool {
-        // The whole account, not just the owner. Once a canister holds many users the owner alone
-        // is satisfied by a transfer destined for any of them.
-        let account = Account::from(recipient);
+        self.is_to(Account::from(recipient))
+    }
+
+    // Checks the transfer is to exactly `account`. The whole account, not just the owner, since once
+    // a canister holds many users the owner alone is satisfied by a transfer destined for any of them.
+    pub fn is_to(&self, account: Account) -> bool {
         let account_identifier = crate::account_identifier(account);
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
