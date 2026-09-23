@@ -3,6 +3,8 @@ use candid::{Deserialize, Principal};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
 use stable_memory_map::{Key, KeyPrefix, StableMemoryMap, UserIdKeyPrefix, with_map, with_map_mut};
+use std::collections::HashMap;
+use std::ops::Bound;
 use types::{MultiUserChat, UserId};
 
 #[derive(Serialize, Deserialize)]
@@ -59,6 +61,49 @@ impl MembersStableStorage {
                 .map(|(k, v)| (k.user_id(), ByteBuf::from(remove_principal(v))))
                 .collect()
         })
+    }
+
+    // Reads and writes the members in batches so that each modified node is written to stable
+    // memory at most once per batch. Returns the number of members updated.
+    pub fn populate_principals(&mut self, principals: &HashMap<UserId, Principal>) -> u32 {
+        const BATCH_SIZE: usize = 1000;
+
+        let mut updated = 0;
+        let mut start = Bound::Included(self.prefix.create_key(&Principal::from_slice(&[]).into()));
+        loop {
+            let batch: Vec<_> = with_map(|m| {
+                m.range((start.clone(), Bound::Unbounded))
+                    .take_while(|(k, _)| k.matches_prefix(&self.prefix))
+                    .take(BATCH_SIZE)
+                    .collect()
+            });
+
+            let Some((last_key, _)) = batch.last() else {
+                break;
+            };
+            start = Bound::Excluded(last_key.clone());
+            let batch_len = batch.len();
+
+            let to_update: Vec<_> = batch
+                .into_iter()
+                .filter_map(|(key, bytes)| {
+                    let principal = *principals.get(&key.user_id())?;
+                    let mut member = bytes_to_member(&bytes);
+                    (member.principal != Some(principal)).then(|| {
+                        member.principal = Some(principal);
+                        (key, member_to_bytes(member))
+                    })
+                })
+                .collect();
+
+            updated += to_update.len() as u32;
+            with_map_mut(|m| m.insert_many(to_update));
+
+            if batch_len < BATCH_SIZE {
+                break;
+            }
+        }
+        updated
     }
 
     #[cfg(test)]

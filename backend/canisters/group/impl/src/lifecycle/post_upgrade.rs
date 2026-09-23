@@ -7,6 +7,7 @@ use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
+use std::collections::HashMap;
 use tracing::info;
 use utils::env::canister::CanisterEnv;
 
@@ -32,12 +33,14 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| state.data.drain_legacy_user_event_queue());
 
     mutate_state(|state| {
-        let mut populated = 0;
-        for (principal, user_id) in state.data.principal_to_user_id_map.entries() {
-            if state.data.chat.members.set_principal(&user_id, principal) {
-                populated += 1;
-            }
-        }
+        let principals: HashMap<_, _> = state
+            .data
+            .principal_to_user_id_map
+            .entries()
+            .into_iter()
+            .map(|(principal, user_id)| (user_id, principal))
+            .collect();
+        let populated = state.data.chat.members.populate_principals(&principals);
         let members = state.data.chat.members.len();
         info!(populated, members, "Populated member principals");
     });

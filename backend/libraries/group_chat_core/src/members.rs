@@ -11,7 +11,7 @@ use serde_bytes::ByteBuf;
 use stable_memory_map::StableMemoryMap;
 use std::cell::OnceCell;
 use std::cmp::max;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::Deref;
 use types::{
     BotNotification, EventIndex, GroupMember, GroupRole, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped,
@@ -254,6 +254,11 @@ impl GroupMembers {
             self.members_map.insert(member.user_id, member);
         }
         Some(updated)
+    }
+
+    // Returns the number of members whose principal was set
+    pub fn populate_principals(&mut self, principals: &HashMap<UserId, Principal>) -> u32 {
+        self.members_map.populate_principals(principals)
     }
 
     pub fn set_principal(&mut self, user_id: &UserId, principal: Principal) -> bool {
@@ -1040,7 +1045,7 @@ mod tests {
     }
 
     #[test]
-    fn set_principal() {
+    fn populate_and_set_principal() {
         use ic_stable_structures::DefaultMemoryImpl;
         use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 
@@ -1057,6 +1062,11 @@ mod tests {
             0,
         );
 
+        assert_eq!(members.populate_principals(&[(user_id, principal)].into_iter().collect()), 1);
+        assert_eq!(members.get(&user_id).unwrap().principal(), Some(principal));
+        assert_eq!(members.populate_principals(&[(user_id, principal)].into_iter().collect()), 0);
+
+        let principal = Principal::from_slice(&[5]);
         assert!(members.set_principal(&user_id, principal));
         assert_eq!(members.get(&user_id).unwrap().principal(), Some(principal));
         assert!(!members.set_principal(&user_id, principal));

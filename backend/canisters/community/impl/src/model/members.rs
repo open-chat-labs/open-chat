@@ -9,7 +9,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{
     ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis, Timestamped,
     UserId, UserType, Version, is_default,
@@ -370,23 +370,14 @@ impl CommunityMembers {
 
     // Returns the number of members whose principal was set
     pub fn populate_member_principals(&mut self) -> u32 {
-        let mut count = 0;
-        for (principal, user_id) in self.principal_to_user_id_map.entries() {
-            if matches!(
-                self.update_member(&user_id, |m| {
-                    if m.principal != principal {
-                        m.principal = principal;
-                        true
-                    } else {
-                        false
-                    }
-                }),
-                Some(true)
-            ) {
-                count += 1;
-            }
-        }
-        count
+        let principals: HashMap<_, _> = self
+            .principal_to_user_id_map
+            .entries()
+            .into_iter()
+            .map(|(principal, user_id)| (user_id, principal))
+            .collect();
+
+        self.members_map.populate_principals(&principals)
     }
 
     pub fn mark_member_joined_channel(&mut self, user_id: UserId, channel_id: ChannelId) {
@@ -963,6 +954,33 @@ mod tests {
         members.update_user_principal(principal2, new_principal2);
         assert_eq!(members.get_by_user_id(&user_id2).unwrap().principal, new_principal2);
         assert_eq!(members.get(new_principal2).unwrap().user_id, user_id2);
+    }
+
+    #[test]
+    fn member_principals_populated_across_batches() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let principal = |i: u32| Principal::from_slice(&[&[0], i.to_be_bytes().as_slice()].concat());
+        let user_id = |i: u32| UserId::from(Principal::from_slice(&[&[1], i.to_be_bytes().as_slice()].concat()));
+
+        // 2000 members, so the final batch is full and is followed by an empty read
+        let mut members = CommunityMembers::new(principal(0), user_id(0), UserType::User, Vec::new(), 0);
+        for i in 1..2000 {
+            members.add(user_id(i), principal(i), UserType::User, None, 0);
+        }
+        for i in 0..2000 {
+            members.update_member(&user_id(i), |m| {
+                m.principal = Principal::anonymous();
+                true
+            });
+        }
+
+        assert_eq!(members.populate_member_principals(), 2000);
+        for i in 0..2000 {
+            assert_eq!(members.get_by_user_id(&user_id(i)).unwrap().principal, principal(i));
+        }
+        assert_eq!(members.populate_member_principals(), 0);
     }
 
     #[test]
