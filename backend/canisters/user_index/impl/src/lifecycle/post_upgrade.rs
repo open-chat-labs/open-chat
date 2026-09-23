@@ -1,7 +1,7 @@
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::updates::refund_deleted_user_cycles;
-use crate::{Data, read_state};
+use crate::{Data, mutate_state, read_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -40,6 +40,16 @@ fn post_upgrade(args: Args) {
             info!(?response, "Queued the cycles of previously deleted users to be refunded");
         });
     }
+
+    // One-off: move bot installations recorded under the wrong type of location back to the direct
+    // chat they were really installed into
+    // TODO remove after the release containing this has been deployed
+    mutate_state(|state| {
+        let now = state.env.now();
+        for (bot_id, from, to) in state.data.users.repair_misrecorded_direct_chat_bot_installations(now) {
+            info!(%bot_id, ?from, ?to, "Moved misrecorded bot installation");
+        }
+    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
