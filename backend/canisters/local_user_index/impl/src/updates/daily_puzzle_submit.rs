@@ -6,7 +6,7 @@ use canister_api_macros::update;
 use local_user_index_canister::daily_puzzle_submit::{Response::*, *};
 use tracing::{error, info};
 use types::{DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzleSolved, OCResult, UserId};
-use utils::canister::delay_if_should_retry_failed_c2c_call;
+use utils::canister::delay_if_should_retry_failed_c2c_call_to_new_method;
 
 // No `#[trace]`: it records args and result, and the args of a correct submit are the solution.
 // `canister_logger::init` enables the trace buffer wherever `test_mode` is on and `http_request`
@@ -47,7 +47,9 @@ async fn daily_puzzle_submit(args: Args) -> Response {
                 clear_reward(user_id, &args, &mut outcome.solved);
             }
             GameChitOutcome::Failed(error) => {
-                if delay_if_should_retry_failed_c2c_call(&error).is_some() {
+                // TODO revert to `delay_if_should_retry_failed_c2c_call` once every User canister
+                // has `c2c_game_chit`
+                if delay_if_should_retry_failed_c2c_call_to_new_method(&error).is_some() {
                     mutate_state(|state| state.data.game_chit_credit_retry_queue.push(credit));
                 } else {
                     error!(?error, key = %credit.key, "Daily puzzle reward credit failed");
