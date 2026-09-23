@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 - Move bot installations in a user's direct chat which were recorded under a `Group` or `Community` location back to the `User` location, since their events were being routed to a group or community that doesn't exist. The LocalUserIndexes must be upgraded first, with [#9520](https://github.com/open-chat-labs/open-chat/pull/9520), so that no more are recorded ([#9522](https://github.com/open-chat-labs/open-chat/pull/9522))
 
 ## [[2.0.2064](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2064-user_index)] - 2026-09-23
@@ -23,10 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Extract `deep_message_links` into its own library and drop the direct dependency on `chat_events` ([#9493](https://github.com/open-chat-labs/open-chat/pull/9493))
 - Return the account of a user's principal as their `icp_account` from `current_user` if they aren't alone in their canister, since that is their wallet ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 - Take the payment for an external achievement from the submitter's wallet, which for a user in a MultiUser canister is their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
-
-### Fixed
-
-- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 
 ## [[2.0.2058](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2058-user_index)] - 2026-09-18
 
