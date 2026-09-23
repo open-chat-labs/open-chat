@@ -11,7 +11,7 @@ use sns_governance_canister::types::Neuron;
 use sns_governance_canister::types::neuron::DissolveState;
 use types::{
     AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, ChitEarnedGate, CompositeGate, GateCheckFailedReason,
-    PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,
+    PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, UserIdAndPrincipal, VerifiedCredentialGate,
 };
 
 const SNS_FEE_SHARE_PERCENT: u128 = 2;
@@ -36,7 +36,7 @@ impl CheckIfPassesGateResult {
 
 #[derive(Clone)]
 pub struct CheckGateArgs {
-    pub user_id: UserId,
+    pub user: UserIdAndPrincipal,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub this_canister: CanisterId,
     pub is_unique_person: bool,
@@ -80,9 +80,9 @@ async fn check_non_composite_gate(gate: AccessGateNonComposite, args: CheckGateA
         AccessGateNonComposite::VerifiedCredential(g) => {
             check_verified_credential_gate(&g, args.verified_credential_args, args.now)
         }
-        AccessGateNonComposite::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
-        AccessGateNonComposite::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
-        AccessGateNonComposite::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
+        AccessGateNonComposite::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user.user_id).await,
+        AccessGateNonComposite::Payment(g) => try_transfer_from(&g, args.user, args.this_canister, args.now).await,
+        AccessGateNonComposite::TokenBalance(g) => check_token_balance_gate(&g, args.user.user_id).await,
         AccessGateNonComposite::Locked => CheckIfPassesGateResult::Failed(GateCheckFailedReason::Locked),
         AccessGateNonComposite::ReferredByMember => check_referred_by_member_gate(args.referred_by_member),
         AccessGateNonComposite::TotalChitEarned(g) => check_chit_earned_gate(&g, args.total_chit_earned),
@@ -348,14 +348,14 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
 
 async fn try_transfer_from(
     gate: &PaymentGate,
-    user_id: UserId,
+    user: UserIdAndPrincipal,
     this_canister_id: CanisterId,
     now: TimestampMillis,
 ) -> CheckIfPassesGateResult {
     let amount = gate.amount - 2 * gate.fee;
     let transfer_args = TransferFromArgs {
         spender_subaccount: None,
-        from: types::icrc1::Account::legacy_for_user(user_id).into(),
+        from: user.into(),
         to: this_canister_id.into(),
         // The amount the gate amount less the approval fee and the transfer_from fee
         amount: amount.into(),

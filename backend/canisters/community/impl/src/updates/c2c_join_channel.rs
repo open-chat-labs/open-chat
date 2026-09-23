@@ -219,7 +219,7 @@ fn is_permitted_to_join(
                 (
                     g.clone(),
                     CheckGateArgs {
-                        user_id: member.user_id,
+                        user: UserIdAndPrincipal::new(member.user_id, user_principal),
                         diamond_membership_expires_at,
                         this_canister: state.env.canister_id(),
                         is_unique_person: unique_person_proof.is_some(),
