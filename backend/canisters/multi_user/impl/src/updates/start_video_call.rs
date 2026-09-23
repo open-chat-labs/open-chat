@@ -8,7 +8,7 @@ use constants::HOUR_IN_MS;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
-use types::{CallKind, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, UserId};
+use types::{CallKind, MessageId, MessageIndex, Milliseconds, OCResult, UserId};
 use user_canister::start_video_call_v2::*;
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 use user_core::updates::start_video_call::{Started, notification, prepare};
@@ -35,7 +35,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .ok_or(OCErrorCode::TargetUserNotFound)??;
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
 
-    let StartVideoCallResult {
+    let Started {
         message_event,
         mute_notification,
     } = handle_start_video_call(
@@ -79,7 +79,7 @@ pub(crate) fn handle_start_video_call(
     call_kind: CallKind,
     max_duration: Milliseconds,
     state: &mut RuntimeState,
-) -> StartVideoCallResult {
+) -> Started {
     let now = state.env.now();
     let my_user_id = state.user_id(user_index);
     // Drawn up front, whether or not the chat turns out to need creating, since the user is
@@ -87,10 +87,7 @@ pub(crate) fn handle_start_video_call(
     let anonymized_chat_id: u128 = state.env.rng().random();
 
     // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
-    let Started {
-        message_event,
-        mute_notification,
-    } = state
+    let started = state
         .data
         .users
         .with_user_mut(user_index, |user| {
@@ -109,7 +106,7 @@ pub(crate) fn handle_start_video_call(
         })
         .expect("User not found");
 
-    if let Some(expiry) = message_event.expires_at {
+    if let Some(expiry) = started.message_event.expires_at {
         state.handle_event_expiry(user_index, expiry);
     }
 
@@ -123,13 +120,5 @@ pub(crate) fn handle_start_video_call(
         now,
     );
 
-    StartVideoCallResult {
-        message_event,
-        mute_notification,
-    }
-}
-
-pub(crate) struct StartVideoCallResult {
-    pub message_event: EventWrapper<Message>,
-    pub mute_notification: bool,
+    started
 }

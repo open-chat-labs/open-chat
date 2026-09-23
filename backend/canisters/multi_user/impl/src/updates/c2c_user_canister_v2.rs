@@ -260,15 +260,11 @@ pub(crate) fn receive_start_video_call(
     initiator_index: u16,
     state: &mut RuntimeState,
 ) {
-    let initiator = state.user_id(initiator_index);
-    let blocked = state
-        .data
-        .users
-        .with_user(initiator_index, |user| user.blocked_users.contains(&callee))
-        .unwrap_or(true);
-    if blocked {
+    // Already checked on the event path, but not when both are in this canister
+    if is_blocked(initiator_index, callee, state) {
         return;
     }
+    let initiator = state.user_id(initiator_index);
     handle_start_video_call(
         initiator_index,
         args.message_id,
