@@ -466,6 +466,10 @@ struct Data {
     // Set by proposal and fanned out to the LocalUserIndexes, including any added later
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
+    // Set once the cycles of users deleted before cycles were refunded on deletion have been
+    // queued for refunding, so that the one-off run in `post_upgrade` only happens once
+    #[serde(default)]
+    pub deleted_user_cycles_refund_queued: bool,
 }
 
 impl Data {
@@ -573,6 +577,7 @@ impl Data {
             multi_user_canisters_enabled: false,
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            deleted_user_cycles_refund_queued: false,
         };
 
         // Register the ProposalsBot
@@ -699,6 +704,7 @@ impl Default for Data {
             multi_user_canisters_enabled: false,
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            deleted_user_cycles_refund_queued: false,
         }
     }
 }
