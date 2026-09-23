@@ -354,20 +354,6 @@ impl CommunityMembers {
         self.user_groups.last_updated()
     }
 
-    pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
-        if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal).map(|v| v.into_value()) {
-            self.principal_to_user_id_map.insert(new_principal, user_id);
-            self.update_member(&user_id, |m| {
-                if m.principal != new_principal {
-                    m.principal = new_principal;
-                    true
-                } else {
-                    false
-                }
-            });
-        }
-    }
-
     // Returns the number of members whose principal was set
     pub fn populate_member_principals(&mut self) -> u32 {
         let principals: HashMap<_, _> = self
@@ -918,7 +904,7 @@ mod tests {
     }
 
     #[test]
-    fn member_principals_populated_and_updated() {
+    fn member_principals_populated() {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init(memory.get(MemoryId::new(1)));
 
@@ -949,11 +935,6 @@ mod tests {
 
         // Nothing is rewritten once the principals are populated
         assert_eq!(members.populate_member_principals(), 0);
-
-        let new_principal2 = Principal::from_slice(&[4]);
-        members.update_user_principal(principal2, new_principal2);
-        assert_eq!(members.get_by_user_id(&user_id2).unwrap().principal, new_principal2);
-        assert_eq!(members.get(new_principal2).unwrap().user_id, user_id2);
     }
 
     #[test]

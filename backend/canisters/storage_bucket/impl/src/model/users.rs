@@ -56,15 +56,6 @@ impl Users {
             .map(|_| previous)
     }
 
-    pub fn update_user_id(&mut self, old_user_id: Principal, new_user_id: Principal) -> bool {
-        if let Some(user) = self.remove(&old_user_id) {
-            self.users.insert(new_user_id, user);
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn len(&self) -> usize {
         self.users.len()
     }

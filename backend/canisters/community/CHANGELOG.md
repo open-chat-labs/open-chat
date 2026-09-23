@@ -35,6 +35,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Mark activity for the voter only rather than the whole chat when recording proposal votes, since the vote is private ([#9490](https://github.com/open-chat-labs/open-chat/pull/9490))
 - Apply the caller's min visible event index when updating messages, so that votes, reactions and tips cannot target messages in hidden history ([#9490](https://github.com/open-chat-labs/open-chat/pull/9490))
 
+### Removed
+
+- Remove the unused `c2c_update_user_principal` endpoint ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
+
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 
 ### Changed

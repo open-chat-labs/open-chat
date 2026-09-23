@@ -261,20 +261,6 @@ impl GroupMembers {
         self.members_map.populate_principals(principals)
     }
 
-    pub fn set_principal(&mut self, user_id: &UserId, principal: Principal) -> bool {
-        matches!(
-            self.update_member(user_id, |m| {
-                if m.principal != Some(principal) {
-                    m.principal = Some(principal);
-                    true
-                } else {
-                    false
-                }
-            }),
-            Some(true)
-        )
-    }
-
     pub fn is_blocked(&self, user_id: &UserId) -> bool {
         self.blocked.contains(user_id)
     }
@@ -1045,7 +1031,7 @@ mod tests {
     }
 
     #[test]
-    fn populate_and_set_principal() {
+    fn populate_principals() {
         use ic_stable_structures::DefaultMemoryImpl;
         use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 
@@ -1065,12 +1051,6 @@ mod tests {
         assert_eq!(members.populate_principals(&[(user_id, principal)].into_iter().collect()), 1);
         assert_eq!(members.get(&user_id).unwrap().principal(), Some(principal));
         assert_eq!(members.populate_principals(&[(user_id, principal)].into_iter().collect()), 0);
-
-        let principal = Principal::from_slice(&[5]);
-        assert!(members.set_principal(&user_id, principal));
-        assert_eq!(members.get(&user_id).unwrap().principal(), Some(principal));
-        assert!(!members.set_principal(&user_id, principal));
-        assert!(!members.set_principal(&Principal::from_slice(&[4]).into(), principal));
     }
 
     #[test]

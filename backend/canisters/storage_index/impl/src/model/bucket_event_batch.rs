@@ -11,7 +11,6 @@ pub enum EventToSync {
     UserAdded(Principal),
     UserRemoved(Principal),
     AccessorRemoved(AccessorId),
-    UserIdUpdated(Principal, Principal),
     FileToRemove(FileId),
 }
 
@@ -23,7 +22,6 @@ impl TimerJobItem for BucketEventBatch {
                 EventToSync::UserAdded(a) => args.users_added.push(*a),
                 EventToSync::UserRemoved(r) => args.users_removed.push(*r),
                 EventToSync::AccessorRemoved(r) => args.accessors_removed.push(*r),
-                EventToSync::UserIdUpdated(old, new) => args.user_ids_updated.push((*old, *new)),
                 EventToSync::FileToRemove(file_id) => args.files_to_remove.push(*file_id),
             }
         }
