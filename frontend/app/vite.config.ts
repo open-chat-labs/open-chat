@@ -33,17 +33,27 @@ const port = Number(process.env.OC_DEV_PORT ?? 5001);
 // directly from their TypeScript source via `ocPackageAliases` — see
 // ./oc-package-aliases.mjs, the single source shared with build-workers.mjs.
 
-// Directory (gitignored, under node_modules) where the dev web worker bundle is
-// emitted before being served at /worker.js.
+// Directory (gitignored, under node_modules) where the dev worker bundles are
+// emitted before being served at /worker.js, /transcode_worker.js and
+// /service_worker.js.
 const workerBuildDir = path.resolve(__dirname, "node_modules/.oc-worker");
 const workerEntries: Record<string, string> = {
     "worker.js": path.resolve(__dirname, "../openchat-worker/src/worker.ts"),
     "transcode_worker.js": path.resolve(__dirname, "../openchat-worker/src/transcodeWorker.ts"),
+    // Push notifications need the service worker. The production rollup build
+    // copies it from openchat-service-worker/lib; the dev server builds it here
+    // the same way as the web worker, so web push works under `npm run dev`.
+    "service_worker.js": path.resolve(
+        __dirname,
+        "../openchat-service-worker/src/service_worker.ts",
+    ),
 };
+// Registered from the site root, so the worker's scope covers the whole app
+const serviceWorkerPath = "/service_worker.js";
 
-// Builds the web worker from TypeScript source — reusing the sub-package
-// aliases so it pulls agent/shared from source too — and serves it at
-// /worker.js, rebuilding and triggering a full reload when worker/agent/shared
+// Builds the workers from TypeScript source — reusing the sub-package
+// aliases so they pull agent/shared from source too — and serves them at
+// /worker.js etc, rebuilding and triggering a full reload when worker/agent/shared
 // source changes. Replaces serving the Turbo-compiled
 // openchat-worker/lib/worker.js together with the chokidar poll that waited for
 // those lib files to appear.
@@ -99,6 +109,7 @@ function ocWorkerPlugin(): Plugin {
             // bundles) changes, then full-reload the page.
             const watchDirs = [
                 "../openchat-worker/src",
+                "../openchat-service-worker/src",
                 "../openchat-agent/src",
                 "../openchat-shared/src",
             ].map((d) => path.resolve(__dirname, d));
@@ -133,6 +144,7 @@ export default defineConfig({
             "this-is-not-the-value-youre-looking-for",
         ),
         "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(version),
+        "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(serviceWorkerPath),
     },
     server: {
         allowedHosts: ["host.docker.internal"],

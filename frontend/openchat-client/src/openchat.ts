@@ -11136,15 +11136,13 @@ export class OpenChat {
             return false;
         }
 
-        if (import.meta.env.OC_BUILD_ENV !== "development") {
-            // Register a service worker if it hasn't already been done
-            const registration = await this.#registerServiceWorker();
-            if (registration == null) {
-                return false;
-            }
-            // Ensure the service worker is updated to the latest version
-            registration.update();
+        // Register a service worker if it hasn't already been done
+        const registration = await this.#registerServiceWorker();
+        if (registration == null) {
+            return false;
         }
+        // Ensure the service worker is updated to the latest version
+        registration.update();
 
         navigator.serviceWorker.addEventListener("message", (event) => {
             if (event.data.type === "NOTIFICATION_RECEIVED") {
@@ -11313,8 +11311,11 @@ export class OpenChat {
         }
     }
 
+    // The VAPID public key may be standard base64 (prod) or base64url (the dev key, and what
+    // most key generators emit); atob only takes the former
     #toUint8Array(base64String: string): Uint8Array {
-        return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
+        const base64 = base64String.replace(/-/g, "+").replace(/_/g, "/");
+        return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
     }
 
     async #unsubscribeNotifications(): Promise<void> {
