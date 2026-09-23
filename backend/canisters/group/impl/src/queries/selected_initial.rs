@@ -13,7 +13,7 @@ fn selected_initial(_args: Args) -> Response {
 }
 
 fn selected_initial_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
-    let member = state.get_calling_member(false)?;
+    let member = state.get_calling_member(None, false)?;
     let min_visible_message_index = member.min_visible_message_index();
     let last_updated = state.data.details_last_updated();
 
