@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
 - Mark activity for the voter only rather than the whole chat when recording proposal votes, since the vote is private ([#9490](https://github.com/open-chat-labs/open-chat/pull/9490))
 - Apply the caller's min visible event index when updating messages, so that votes, reactions and tips cannot target messages in hidden history ([#9490](https://github.com/open-chat-labs/open-chat/pull/9490))
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 
 ## [[2.0.2036](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2036-group)] - 2026-08-20
 
