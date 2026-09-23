@@ -5,6 +5,7 @@ use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{
     GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, MAX_THREADS_IN_SUMMARY, OptionUpdate, TimestampMillis,
+    UserIdAndPrincipal,
 };
 
 #[query(msgpack = true)]
@@ -44,7 +45,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
         return SuccessNoUpdates;
     }
 
-    let updates = chat.summary_updates(updates_since, Some(member.user_id()));
+    let updates = chat.summary_updates(updates_since, Some(UserIdAndPrincipal::new(member.user_id(), caller)));
 
     let membership = GroupMembershipUpdates {
         role: updates.role_changed.then_some(member.role().value.into()),

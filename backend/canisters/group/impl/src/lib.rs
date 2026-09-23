@@ -39,7 +39,7 @@ use types::{
     CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
     GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope,
     MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules,
-    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
+    TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -219,7 +219,8 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    pub fn summary(&self, member: &GroupMemberInternal) -> GroupCanisterGroupChatSummary {
+    // `principal` is the member's, which determines the accounts in the messages they're shown
+    pub fn summary(&self, member: &GroupMemberInternal, principal: Principal) -> GroupCanisterGroupChatSummary {
         let chat = &self.data.chat;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
@@ -264,7 +265,7 @@ impl RuntimeState {
             messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(member.user_id())),
+            latest_message: main_events_reader.latest_message_event(Some(UserIdAndPrincipal::new(member.user_id(), principal))),
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: main_events_reader.latest_message_index(),
             participant_count: chat.members.len(),
@@ -862,7 +863,7 @@ impl Data {
                 min_visible_event_index: EventIndex::default(),
             }))
         } else if let Some(user_id) = self.lookup_user_id(caller) {
-            Some(EventsCaller::User(user_id))
+            Some(EventsCaller::User(UserIdAndPrincipal::new(user_id, caller)))
         } else {
             Some(EventsCaller::Unknown)
         }

@@ -3,7 +3,7 @@ use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use group_canister::thread_previews::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{OCResult, UserIdAndPrincipal};
 
 #[query(msgpack = true)]
 fn thread_previews(args: Args) -> Response {
@@ -20,7 +20,10 @@ fn thread_previews_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRes
 
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
-    let threads = state.data.chat.thread_previews(user_id, args.threads)?;
+    let threads = state
+        .data
+        .chat
+        .thread_previews(UserIdAndPrincipal::new(user_id, state.env.caller()), args.threads)?;
 
     Ok(SuccessResult { threads, timestamp: now })
 }

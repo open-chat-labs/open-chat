@@ -1,7 +1,7 @@
 use crate::User;
 use chat_events::{MessageContentInternal, Reader};
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, UserId};
+use types::{OCResult, UserId, UserIdAndPrincipal};
 use user_canister::deleted_message::{Args, SuccessResult};
 
 pub fn deleted_message(user: &User, args: Args, my_user_id: UserId) -> OCResult<SuccessResult> {
@@ -20,7 +20,9 @@ pub fn deleted_message(user: &User, args: Args, my_user_id: UserId) -> OCResult<
                 Err(OCErrorCode::MessageHardDeleted.into())
             } else {
                 Ok(SuccessResult {
-                    content: message.content.hydrate(Some(my_user_id)),
+                    content: message
+                        .content
+                        .hydrate(Some(UserIdAndPrincipal::new(my_user_id, user.principal))),
                 })
             }
         }

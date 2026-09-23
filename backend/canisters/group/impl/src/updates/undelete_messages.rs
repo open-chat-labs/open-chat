@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::undelete_messages::{Response::*, *};
 use std::collections::HashSet;
-use types::OCResult;
+use types::{OCResult, UserIdAndPrincipal};
 
 #[update(msgpack = true)]
 #[trace]
@@ -20,10 +20,12 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
 
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
-    let results = state
-        .data
-        .chat
-        .undelete_messages(user_id, args.thread_root_message_index, args.message_ids, now)?;
+    let results = state.data.chat.undelete_messages(
+        UserIdAndPrincipal::new(user_id, state.env.caller()),
+        args.thread_root_message_index,
+        args.message_ids,
+        now,
+    )?;
 
     if results.is_empty() {
         return Ok(SuccessResult { messages: vec![] });

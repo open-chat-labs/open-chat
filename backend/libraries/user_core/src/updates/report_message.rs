@@ -1,7 +1,7 @@
 use crate::User;
 use chat_events::{DeleteUndeleteMessagesArgs, Reader};
 use oc_error_codes::OCErrorCode;
-use types::{Chat, EventIndex, OCResult, TimestampMillis, UserId};
+use types::{Chat, EventIndex, OCResult, TimestampMillis, UserId, UserIdAndPrincipal};
 use user_canister::report_message::Args;
 use user_index_canister::c2c_report_message;
 
@@ -12,7 +12,10 @@ pub fn build_report(user: &User, args: &Args, my_user_id: UserId) -> OCResult<c2
     let chat = user.direct_chats.get_or_err(&args.them.into())?;
     let message = chat
         .main_events_reader()
-        .message(args.message_id.into(), Some(my_user_id))
+        .message(
+            args.message_id.into(),
+            Some(UserIdAndPrincipal::new(my_user_id, user.principal)),
+        )
         .ok_or(OCErrorCode::MessageNotFound)?;
 
     Ok(c2c_report_message::Args {

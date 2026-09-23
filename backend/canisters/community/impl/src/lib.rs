@@ -40,7 +40,7 @@ use types::{
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
     IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, PendingCryptoTransaction, Rules,
-    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
+    TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -262,10 +262,12 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
+    // `principal` is the member's, which determines the accounts in the messages they're shown
     pub fn summary(
         &self,
         member: Option<&CommunityMemberInternal>,
         is_invited: Option<bool>,
+        principal: Principal,
     ) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
@@ -288,7 +290,13 @@ impl RuntimeState {
                 .channels_for_member(m.user_id)
                 .iter()
                 .filter_map(|c| self.data.channels.get(c))
-                .filter_map(|c| c.summary(Some(m.user_id), data.is_public.value, &data.members))
+                .filter_map(|c| {
+                    c.summary(
+                        Some(UserIdAndPrincipal::new(m.user_id, principal)),
+                        data.is_public.value,
+                        &data.members,
+                    )
+                })
                 .collect();
 
             (channels, Some(membership))
@@ -982,7 +990,9 @@ impl Data {
                 }
             }
 
-            Ok(member.map_or(EventsCaller::Unknown, |m| EventsCaller::User(m.user_id)))
+            Ok(member.map_or(EventsCaller::Unknown, |m| {
+                EventsCaller::User(UserIdAndPrincipal::new(m.user_id, caller))
+            }))
         }
     }
 

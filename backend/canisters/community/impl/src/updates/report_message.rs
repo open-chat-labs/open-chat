@@ -6,7 +6,7 @@ use chat_events::Reader;
 use community_canister::report_message::*;
 use group_index_canister::c2c_report_message;
 use oc_error_codes::OCErrorCode;
-use types::{Caller, CanisterId, MultiUserChat, OCResult, UserId};
+use types::{Caller, CanisterId, MultiUserChat, OCResult, UserId, UserIdAndPrincipal};
 
 #[update(msgpack = true)]
 #[trace]
@@ -57,7 +57,10 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_mes
         .ok_or(OCErrorCode::MessageNotFound)?;
 
     let message = events_reader
-        .message(args.message_id.into(), Some(user_id))
+        .message(
+            args.message_id.into(),
+            Some(UserIdAndPrincipal::new(user_id, state.env.caller())),
+        )
         .ok_or(OCErrorCode::MessageNotFound)?;
 
     Ok((

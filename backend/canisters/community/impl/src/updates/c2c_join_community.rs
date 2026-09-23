@@ -56,7 +56,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
             }
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-                    Success(Box::new(state.summary(Some(&member), None)))
+                    Success(Box::new(state.summary(Some(&member), None, args.principal)))
                 } else {
                     Error(OCErrorCode::InitiatorNotInCommunity.into())
                 }
@@ -79,9 +79,11 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
 
     if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
         if !member.lapsed().value {
-            return Ok(IsPermittedToJoinSuccess::AlreadyInCommunity(Box::new(
-                state.summary(Some(&member), None),
-            )));
+            return Ok(IsPermittedToJoinSuccess::AlreadyInCommunity(Box::new(state.summary(
+                Some(&member),
+                None,
+                args.principal,
+            ))));
         }
     } else if state.data.members.is_blocked(&args.user_id) {
         return Err(OCErrorCode::InitiatorBlocked.into());
@@ -160,7 +162,7 @@ pub(crate) fn join_community_impl(
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
             if !member.lapsed().value {
-                let summary = state.summary(Some(&member), None);
+                let summary = state.summary(Some(&member), None, args.principal);
                 return Err(AlreadyInCommunity(Box::new(summary)));
             }
         }

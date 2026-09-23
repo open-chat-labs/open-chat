@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::undelete_messages::{Response::*, *};
 use std::collections::HashSet;
-use types::OCResult;
+use types::{OCResult, UserIdAndPrincipal};
 
 #[update(msgpack = true)]
 #[trace]
@@ -21,9 +21,12 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    let results = channel
-        .chat
-        .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)?;
+    let results = channel.chat.undelete_messages(
+        UserIdAndPrincipal::new(member.user_id, state.env.caller()),
+        args.thread_root_message_index,
+        args.message_ids,
+        now,
+    )?;
 
     if results.is_empty() {
         return Ok(SuccessResult { messages: vec![] });

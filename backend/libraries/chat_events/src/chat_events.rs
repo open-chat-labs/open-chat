@@ -5,6 +5,7 @@ use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::per_user_metrics::PerUserMetrics;
 use crate::search_index::SearchIndex;
 use crate::*;
+use candid::Principal;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_types::EventBuilder;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -30,8 +31,9 @@ use types::{
     Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview, OptionUpdate,
     P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
     PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
-    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
-    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation, is_default,
+    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId,
+    UserIdAndPrincipal, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
+    is_default,
 };
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -439,7 +441,10 @@ impl ChatEvents {
             args.now,
         );
 
-        let message = message_internal.clone().hydrate(Some(message_internal.sender));
+        // Nothing in a new message depends on the sender's principal, as it has no votes, winners or
+        // followers yet
+        let sender = UserIdAndPrincipal::new(message_internal.sender, Principal::anonymous());
+        let message = message_internal.clone().hydrate(Some(sender));
 
         let push_event_result = self.push_event(
             args.thread_root_message_index,

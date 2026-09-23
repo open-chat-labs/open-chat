@@ -16,7 +16,7 @@ use std::iter::Peekable;
 use std::ops::Deref;
 use types::{
     ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
-    Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
+    Mention, Message, MessageId, MessageIndex, TimestampMillis, UserIdAndPrincipal,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -445,7 +445,8 @@ pub trait Reader {
     fn event_index(&self, event_key: EventKey) -> Option<EventIndex>;
 
     fn iter(&self, start: Option<EventKey>, ascending: bool) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_>;
-    fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_>;
+    fn iter_latest_messages(&self, my_user: Option<UserIdAndPrincipal>)
+    -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_>;
 
     fn iter_events(
         &self,
@@ -459,7 +460,7 @@ pub trait Reader {
         self.get(event_key).and_then(|e| e.into_event())
     }
 
-    fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user_id: Option<UserId>) -> Vec<EventOrExpiredRange> {
+    fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user: Option<UserIdAndPrincipal>) -> Vec<EventOrExpiredRange> {
         let mut expired_event_ranges = HashSet::new();
         event_indexes
             .iter()
@@ -471,7 +472,7 @@ pub trait Reader {
                     true
                 }
             })
-            .map(|e| self.hydrate(e, my_user_id))
+            .map(|e| self.hydrate(e, my_user))
             .collect()
     }
 
@@ -481,9 +482,9 @@ pub trait Reader {
         ascending: bool,
         max_messages: usize,
         max_events: usize,
-        my_user_id: Option<UserId>,
+        my_user: Option<UserIdAndPrincipal>,
     ) -> Vec<EventOrExpiredRange> {
-        self.cap_then_hydrate_events(self.iter(start, ascending), max_messages, max_events, my_user_id)
+        self.cap_then_hydrate_events(self.iter(start, ascending), max_messages, max_events, my_user)
     }
 
     fn window(
@@ -491,29 +492,29 @@ pub trait Reader {
         start: EventKey,
         max_messages: usize,
         max_events: usize,
-        my_user_id: Option<UserId>,
+        my_user: Option<UserIdAndPrincipal>,
     ) -> Vec<EventOrExpiredRange> {
         let start_event_index = if let Some(e) = self.event_index(start) { e } else { return vec![] };
 
         // Handle EventIndex::default() as a special case so that in all other cases we can safely
         // decrement the event index
         if start_event_index == EventIndex::default() {
-            return self.scan(Some(start), true, max_messages, max_events, my_user_id);
+            return self.scan(Some(start), true, max_messages, max_events, my_user);
         }
 
         let forwards_iter = self.iter(Some(start_event_index.into()), true);
         let backwards_iter = self.iter(Some(start_event_index.decr().into()), false);
         let combined = forwards_iter.interleave(backwards_iter);
 
-        self.cap_then_hydrate_events(combined, max_messages, max_events, my_user_id)
+        self.cap_then_hydrate_events(combined, max_messages, max_events, my_user)
     }
 
     fn message_internal(&self, event_key: EventKey) -> Option<MessageInternal> {
         self.get_event(event_key).and_then(|e| e.event.into_message())
     }
 
-    fn message(&self, event_key: EventKey, my_user_id: Option<UserId>) -> Option<Message> {
-        self.message_internal(event_key).map(|m| m.hydrate(my_user_id))
+    fn message(&self, event_key: EventKey, my_user: Option<UserIdAndPrincipal>) -> Option<Message> {
+        self.message_internal(event_key).map(|m| m.hydrate(my_user))
     }
 
     fn message_event_internal(&self, event_key: EventKey) -> Option<EventWrapper<MessageInternal>> {
@@ -531,23 +532,27 @@ pub trait Reader {
         })
     }
 
-    fn message_event(&self, event_key: EventKey, my_user_id: Option<UserId>) -> Option<EventWrapper<Message>> {
-        self.get_event(event_key).and_then(|e| try_into_message_event(e, my_user_id))
+    fn message_event(&self, event_key: EventKey, my_user: Option<UserIdAndPrincipal>) -> Option<EventWrapper<Message>> {
+        self.get_event(event_key).and_then(|e| try_into_message_event(e, my_user))
     }
 
-    fn latest_message_event(&self, my_user_id: Option<UserId>) -> Option<EventWrapper<Message>> {
-        self.iter_latest_messages(my_user_id).next()
+    fn latest_message_event(&self, my_user: Option<UserIdAndPrincipal>) -> Option<EventWrapper<Message>> {
+        self.iter_latest_messages(my_user).next()
     }
 
     fn latest_message_event_if_updated(
         &self,
         since: TimestampMillis,
-        my_user_id: Option<UserId>,
+        my_user: Option<UserIdAndPrincipal>,
     ) -> Option<EventWrapper<Message>>;
 
-    fn hydrate(&self, event_or_expired_range: EventOrExpiredRangeInternal, my_user_id: Option<UserId>) -> EventOrExpiredRange {
+    fn hydrate(
+        &self,
+        event_or_expired_range: EventOrExpiredRangeInternal,
+        my_user: Option<UserIdAndPrincipal>,
+    ) -> EventOrExpiredRange {
         match event_or_expired_range {
-            EventOrExpiredRangeInternal::Event(event) => EventOrExpiredRange::Event(self.hydrate_event(event, my_user_id)),
+            EventOrExpiredRangeInternal::Event(event) => EventOrExpiredRange::Event(self.hydrate_event(event, my_user)),
             EventOrExpiredRangeInternal::ExpiredEventRange(from, to) => EventOrExpiredRange::ExpiredEventRange(from, to),
             EventOrExpiredRangeInternal::Unauthorized(event) => EventOrExpiredRange::Unauthorized(event),
         }
@@ -556,9 +561,9 @@ pub trait Reader {
     fn hydrate_event(
         &self,
         event: EventWrapperInternal<ChatEventInternal>,
-        my_user_id: Option<UserId>,
+        my_user: Option<UserIdAndPrincipal>,
     ) -> EventWrapper<ChatEvent> {
-        let event_data = event.event.chat_event(my_user_id);
+        let event_data = event.event.chat_event(my_user);
 
         EventWrapper {
             index: event.index,
@@ -583,7 +588,7 @@ pub trait Reader {
         iterator: impl Iterator<Item = EventOrExpiredRangeInternal>,
         max_messages: usize,
         max_events: usize,
-        my_user_id: Option<UserId>,
+        my_user: Option<UserIdAndPrincipal>,
     ) -> Vec<EventOrExpiredRange> {
         let mut message_count = 0;
         iterator
@@ -598,7 +603,7 @@ pub trait Reader {
                     false
                 }
             })
-            .map(|e| self.hydrate(e, my_user_id))
+            .map(|e| self.hydrate(e, my_user))
             .collect()
     }
 }
@@ -625,22 +630,25 @@ impl Reader for ChatEventsListReader<'_> {
         )
     }
 
-    fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_> {
+    fn iter_latest_messages(
+        &self,
+        my_user: Option<UserIdAndPrincipal>,
+    ) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_> {
         Box::new(
             self.events_list
                 .message_event_indexes
                 .iter_rev(self.events_list.events_map.stable_memory_prefix())
                 .map_while(|e| self.events_list.get_event(e.into(), self.min_visible_event_index, None))
-                .filter_map(move |e| try_into_message_event(e, my_user_id)),
+                .filter_map(move |e| try_into_message_event(e, my_user)),
         )
     }
 
     fn latest_message_event_if_updated(
         &self,
         since: TimestampMillis,
-        my_user_id: Option<UserId>,
+        my_user: Option<UserIdAndPrincipal>,
     ) -> Option<EventWrapper<Message>> {
-        self.latest_message_event(my_user_id).filter(|m| {
+        self.latest_message_event(my_user).filter(|m| {
             m.timestamp > since
                 || (self.last_updated_timestamps.latest_update().is_some_and(|ts| ts > since)
                     && self
@@ -653,7 +661,7 @@ impl Reader for ChatEventsListReader<'_> {
 
 fn try_into_message_event(
     event: EventWrapperInternal<ChatEventInternal>,
-    my_user_id: Option<UserId>,
+    my_user: Option<UserIdAndPrincipal>,
 ) -> Option<EventWrapper<Message>> {
     let message = event.event.into_message()?;
 
@@ -661,7 +669,7 @@ fn try_into_message_event(
         index: event.index,
         timestamp: event.timestamp,
         expires_at: event.expires_at,
-        event: message.hydrate(my_user_id),
+        event: message.hydrate(my_user),
     })
 }
 

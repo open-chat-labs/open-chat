@@ -13,7 +13,8 @@ use std::collections::HashSet;
 use types::{
     BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex,
     EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapContent, P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserType, VideoCallPresence,
+    P2PSwapContent, P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserType,
+    VideoCallPresence,
 };
 
 /// One user's copy of a direct chat. Each user of a chat holds their own copy, with its own events
@@ -204,14 +205,15 @@ impl DirectChat {
             .transpose()
     }
 
-    pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
+    pub fn to_summary(&self, my_user: UserIdAndPrincipal) -> DirectChatSummary {
+        let my_user_id = my_user.user_id;
         let events_reader = self.main_events_reader();
         let events_ttl = self.events.get_events_time_to_live();
 
         DirectChatSummary {
             them: self.them,
             last_updated: self.last_updated(),
-            latest_message: events_reader.latest_message_event(Some(my_user_id)),
+            latest_message: events_reader.latest_message_event(Some(my_user)),
             latest_event_index: events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: events_reader.latest_message_index(),
             date_created: self.date_created,
@@ -231,11 +233,12 @@ impl DirectChat {
         }
     }
 
-    pub fn to_summary_updates(&self, updates_since: TimestampMillis, my_user_id: UserId) -> DirectChatSummaryUpdates {
+    pub fn to_summary_updates(&self, updates_since: TimestampMillis, my_user: UserIdAndPrincipal) -> DirectChatSummaryUpdates {
+        let my_user_id = my_user.user_id;
         let events_reader = self.main_events_reader();
 
         let has_new_events = events_reader.latest_event_timestamp().is_some_and(|ts| ts > updates_since);
-        let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user_id));
+        let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user));
         let latest_event_index = if has_new_events { events_reader.latest_event_index() } else { None };
         let latest_message_index = if has_new_events { events_reader.latest_message_index() } else { None };
         let notifications_muted = self.notifications_muted.if_set_after(updates_since).copied();
@@ -668,7 +671,7 @@ mod tests {
         // The message they sent had index 7 in their copy of the chat
         assert_eq!(chat.max_read_up_to_of_theirs(1.into()), Some(7.into()));
 
-        let summary = chat.to_summary(me);
+        let summary = chat.to_summary(UserIdAndPrincipal::new(me, me.as_principal()));
         assert_eq!(summary.them, them);
         assert_eq!(summary.read_by_me_up_to, Some(1.into()));
         assert_eq!(summary.read_by_them_up_to, Some(1.into()));
@@ -791,8 +794,16 @@ mod tests {
 
         chat.notifications_muted = Timestamped::new(true, 80);
         assert_eq!(chat.last_updated(), 80);
-        assert_eq!(chat.to_summary_updates(60, user(1)).notifications_muted, Some(true));
-        assert_eq!(chat.to_summary_updates(60, user(1)).archived, None);
+        assert_eq!(
+            chat.to_summary_updates(60, UserIdAndPrincipal::new(user(1), user(1).as_principal()))
+                .notifications_muted,
+            Some(true)
+        );
+        assert_eq!(
+            chat.to_summary_updates(60, UserIdAndPrincipal::new(user(1), user(1).as_principal()))
+                .archived,
+            None
+        );
     }
 
     #[test]

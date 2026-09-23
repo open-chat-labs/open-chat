@@ -17,8 +17,8 @@ use group_community_common::{ExpiringMember, PaymentLockGuard};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{
-    AccessGateConfigInternal, ChannelId, MemberJoinedInternal, TimestampMillis, UniquePersonProof, UserId, UserType,
-    VerifiedCredentialGateArgs,
+    AccessGateConfigInternal, ChannelId, MemberJoinedInternal, TimestampMillis, UniquePersonProof, UserId, UserIdAndPrincipal,
+    UserType, VerifiedCredentialGateArgs,
 };
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -62,7 +62,7 @@ async fn c2c_join_channel_impl(mut args: Args) -> Response {
                 if matches!(response, Success(_) | AlreadyInChannel(_)) {
                     let summary = read_state(|state| {
                         let member = state.data.members.get_by_user_id(&args.user_id);
-                        state.summary(member.as_ref(), None)
+                        state.summary(member.as_ref(), None, args.principal)
                     });
                     SuccessJoinedCommunity(Box::new(summary))
                 } else {
@@ -198,7 +198,7 @@ fn is_permitted_to_join(
                     return Err(AlreadyInChannel(Box::new(
                         channel
                             .summary(
-                                Some(channel_member.user_id()),
+                                Some(UserIdAndPrincipal::new(channel_member.user_id(), user_principal)),
                                 state.data.is_public.value,
                                 &state.data.members,
                             )
@@ -278,7 +278,11 @@ fn commit(
     ) {
         AddResult::Success(result) => {
             let summary = channel
-                .summary(Some(user_id), state.data.is_public.value, &state.data.members)
+                .summary(
+                    Some(UserIdAndPrincipal::new(user_id, user_principal)),
+                    state.data.is_public.value,
+                    &state.data.members,
+                )
                 .unwrap();
 
             if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
@@ -314,7 +318,11 @@ fn commit(
             channel.chat.members.update_lapsed(user_id, false, now);
 
             let summary = channel
-                .summary(Some(user_id), state.data.is_public.value, &state.data.members)
+                .summary(
+                    Some(UserIdAndPrincipal::new(user_id, user_principal)),
+                    state.data.is_public.value,
+                    &state.data.members,
+                )
                 .unwrap();
             AlreadyInChannel(Box::new(summary))
         }
