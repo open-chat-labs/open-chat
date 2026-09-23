@@ -4,9 +4,8 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use icrc_ledger_types::icrc2::approve::{ApproveArgs, ApproveError};
 
-// What the ledger helpers take as an account. A user's is their account of the canister holding
-// them: their wallet if they are alone in their canister, and what a MultiUser canister spends from
-// on their behalf.
+// What the ledger helpers take as an account. A user's is the account of their id, which is their
+// wallet if they are alone in their canister.
 pub trait ToAccount {
     fn to_account(self) -> Account;
 }
@@ -31,7 +30,7 @@ impl ToAccount for types::icrc1::Account {
 
 impl ToAccount for types::UserId {
     fn to_account(self) -> Account {
-        self.holding_canister_account()
+        types::icrc1::Account::legacy_for_user(self).into()
     }
 }
 

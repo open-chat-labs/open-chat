@@ -16,7 +16,7 @@ pub async fn process_transaction(
         // The owner is implied by the caller, so only the subaccount goes in the args. Note this
         // picks which approval is spent - `icrc2_approve` grants to an exact (owner, subaccount)
         // pair, so a non-default subaccount here can only spend an approval that named it.
-        spender_subaccount: spender.holding_canister_account().subaccount,
+        spender_subaccount: types::icrc1::Account::legacy_for_user(spender).subaccount,
         from: transaction.from.into(),
         to: transaction.to.into(),
         fee: Some(transaction.fee.into()),

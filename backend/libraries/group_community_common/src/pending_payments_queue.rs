@@ -1,7 +1,7 @@
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{CanisterId, UserId};
+use types::{CanisterId, UserId, UserIdAndPrincipal};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PendingPaymentsQueue {
@@ -35,8 +35,21 @@ pub struct PendingPayment {
 pub enum PaymentRecipient {
     SnsTreasury,
     TreasuryCanister,
+    // Paid at `icrc1::Account::legacy_for_user`, so `MemberV2` should be used instead
     Member(UserId),
     Account(Account),
+    MemberV2(UserIdAndPrincipal),
+}
+
+impl PaymentRecipient {
+    // The member being paid, if the payment is to one
+    pub fn member(&self) -> Option<UserId> {
+        match self {
+            PaymentRecipient::Member(user_id) => Some(*user_id),
+            PaymentRecipient::MemberV2(user) => Some(user.user_id),
+            PaymentRecipient::SnsTreasury | PaymentRecipient::TreasuryCanister | PaymentRecipient::Account(_) => None,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy)]

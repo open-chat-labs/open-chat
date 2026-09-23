@@ -46,7 +46,7 @@ pub async fn pay(my_user_id: UserId, from_account: Option<icrc1::Account>, amoun
     };
     let amount = amount.into();
     let memo = Some(MEMO_STREAK_INSURANCE.to_vec().into());
-    let subaccount = icrc1::Account::holding_canister_account(my_user_id).subaccount;
+    let subaccount = icrc1::Account::legacy_for_user(my_user_id).subaccount;
 
     match from_account {
         // The allowance is what authorises this: the ledger only lets us pull from an account which

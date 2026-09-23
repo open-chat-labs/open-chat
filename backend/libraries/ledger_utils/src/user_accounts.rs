@@ -42,7 +42,7 @@ pub async fn deposit_to_accept_p2p_swap(
     let memo = Some(MEMO_P2P_SWAP_ACCEPT.to_vec().into());
     // Whichever account we spend from, the owner is this canister, so only the subaccount is ours
     // to choose. For ICRC-2 it picks which approval is spent rather than which account is debited.
-    let subaccount = my_user_id.holding_canister_account().subaccount;
+    let subaccount = icrc1::Account::legacy_for_user(my_user_id).subaccount;
 
     match from_account {
         // The allowance is what authorises this - the ledger only lets us pull from an account

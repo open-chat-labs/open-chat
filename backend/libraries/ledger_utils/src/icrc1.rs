@@ -12,7 +12,7 @@ pub async fn process_transaction(
     sender: Option<UserId>,
     retry_if_bad_fee: bool,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
-    let from = Account::holding_canister_account(crate::resolve_sender(sender));
+    let from = Account::legacy_for_user(crate::resolve_sender(sender));
 
     let args = TransferArg {
         // The owner is implied by the caller, so only the subaccount goes in the args.

@@ -18,7 +18,7 @@ pub async fn approve(args: Args, my_user_id: UserId, now_nanos: TimestampNanos) 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
         args.ledger_canister_id,
         &ApproveArgs {
-            from_subaccount: icrc1::Account::holding_canister_account(my_user_id).subaccount,
+            from_subaccount: icrc1::Account::legacy_for_user(my_user_id).subaccount,
             spender: args.spender.into(),
             amount: args.amount.into(),
             expected_allowance: None,

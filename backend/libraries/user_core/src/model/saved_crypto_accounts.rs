@@ -60,7 +60,6 @@ fn is_valid_account(text: &str) -> bool {
 mod tests {
     use super::*;
     use candid::Principal;
-    use types::UserId;
 
     #[test]
     fn principal_is_valid() {
@@ -69,8 +68,12 @@ mod tests {
 
     #[test]
     fn icrc1_account_with_subaccount_is_valid() {
-        let canister_id = Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 1, 1]);
-        let account = UserId::new_indexed(canister_id, 7).holding_canister_account();
+        let mut subaccount = [0; 32];
+        subaccount[31] = 7;
+        let account = Account {
+            owner: Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 1, 1]),
+            subaccount: Some(subaccount),
+        };
         assert!(account.subaccount.is_some());
         assert!(is_valid_account(&account.to_string()));
     }

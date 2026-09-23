@@ -68,23 +68,6 @@ impl UserId {
         }
     }
 
-    // This user's account of the canister which holds their data, from which that canister spends
-    // on their behalf. Index 0 maps to the default subaccount, so for a user alone in their canister
-    // this is the canister's own account. It isn't the user's wallet if they are in a MultiUser
-    // canister, since they hold their own funds in their principal's account - see
-    // `UserIdAndPrincipal`.
-    pub fn holding_canister_account(&self) -> Account {
-        let subaccount = self.index().to_be_bytes();
-        Account {
-            owner: self.canister_id(),
-            subaccount: (subaccount != [0; 2]).then(|| {
-                let mut bytes = [0; 32];
-                bytes[30..].copy_from_slice(&subaccount);
-                bytes
-            }),
-        }
-    }
-
     // The user's index within the canister which holds their data. Zero when that canister holds
     // this user alone.
     pub fn index(&self) -> u16 {
@@ -296,24 +279,6 @@ mod tests {
     #[should_panic(expected = "Not a canister id")]
     fn vanity_principal_of_canister_id_length_is_rejected() {
         UserId::new_indexed(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]), 1000);
-    }
-
-    #[test]
-    fn holding_canister_account_of_unindexed_user_is_the_canisters_own() {
-        let account = UserId::new(canister_id()).holding_canister_account();
-
-        assert_eq!(account.owner, canister_id());
-        assert_eq!(account.subaccount, None);
-    }
-
-    #[test]
-    fn holding_canister_account_of_indexed_user_is_a_subaccount_of_the_holding_canister() {
-        let account = UserId::new_indexed(canister_id(), 1000).holding_canister_account();
-
-        assert_eq!(account.owner, canister_id());
-        let mut expected = [0; 32];
-        expected[30..].copy_from_slice(&1000u16.to_be_bytes());
-        assert_eq!(account.subaccount, Some(expected));
     }
 
     #[test]

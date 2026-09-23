@@ -69,7 +69,7 @@ pub async fn process_transaction(
                 token_symbol: t.token_symbol,
                 amount: t.amount,
                 fee: t.fee,
-                from: types::icrc1::Account::holding_canister_account(resolve_sender(sender)).into(),
+                from: types::icrc1::Account::legacy_for_user(resolve_sender(sender)).into(),
                 to: t.to.into(),
                 memo: t.memo,
                 created: t.created,
