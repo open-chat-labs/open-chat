@@ -43,7 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `generate_btc_address`, `generate_one_sec_address`, `update_btc_balance`, `approve_transfer`, `withdraw_btc` and `withdraw_via_one_sec`, each acting on the subaccount of the user, sharing the logic with the User canister via `user_core` ([#9481](https://github.com/open-chat-labs/open-chat/pull/9481))
 - Apply LocalUserIndex events via `user_core`, shared with the User canister, which hands back the side effects to perform ([#9483](https://github.com/open-chat-labs/open-chat/pull/9483))
 - Send the user an `answered_elsewhere` dismissal when they join a call ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
-- Support crypto in direct chats in `send_message`, renamed from `send_message_v2`, via ICRC2 transfers from the user's wallet or certified transfers they have already made, and remove the `send_message_with_transfer_to_group` and `_to_channel` stubs, since those messages are now sent to Groups and Communities directly ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+- Support crypto in direct chats in `send_message`, renamed from `send_message_v2`, via ICRC2 transfers from the user's wallet or certified transfers they have already made, and remove the `send_message_with_transfer_to_group` and `_to_channel` stubs, since those messages are now sent to Groups and Communities directly ([#9516](https://github.com/open-chat-labs/open-chat/pull/9516))
 
 ### Changed
 
