@@ -158,7 +158,8 @@ impl NewP2PSwap {
             created: now * NANOS_PER_MILLISECOND,
         };
 
-        match ledger_utils::icrc2::process_transaction_for_user(transfer, self.user_id).await {
+        match ledger_utils::icrc2::process_transaction_for_user(transfer, ledger_utils::spender_subaccount(self.user_id)).await
+        {
             Ok(Ok(completed)) => Ok((swap_id, completed.into())),
             Ok(Err((_, error))) => Err((error, Some(swap_id))),
             Err(error) => Err((error.into(), Some(swap_id))),

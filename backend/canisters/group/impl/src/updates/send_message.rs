@@ -413,7 +413,9 @@ async fn send_message_with_transfer(args: Args) -> OCResult<SuccessResult> {
         PrepareTransferResult::Icrc2(transfer) => {
             let from = transfer.from;
             let completed: CompletedCryptoTransaction =
-                match ledger_utils::icrc2::process_transaction_for_user(transfer, user_id).await {
+                match ledger_utils::icrc2::process_transaction_for_user(transfer, ledger_utils::spender_subaccount(user_id))
+                    .await
+                {
                     Ok(Ok(completed)) => completed.into(),
                     Ok(Err((_, error))) => return Err(error),
                     Err(error) => return Err(error.into()),

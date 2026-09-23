@@ -27,7 +27,7 @@ async fn tip_message_impl(args: Args) -> OCResult {
                 transfer,
             } = *tip;
 
-            match ledger_utils::icrc2::process_transaction_for_user(transfer, user_id).await {
+            match ledger_utils::icrc2::process_transaction_for_user(transfer, ledger_utils::spender_subaccount(user_id)).await {
                 Ok(Ok(_)) => {}
                 Ok(Err((_, error))) => return Err(error),
                 Err(error) => return Err(error.into()),

@@ -23,7 +23,7 @@ use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCani
 // The User canister's `send_message_v2`. A message holding crypto is sent with a transfer the user
 // makes from their own wallet, since this canister doesn't hold its users' funds: either pulled by
 // this canister via ICRC2, against an approval made under the user's own spender subaccount (see
-// `ledger_utils::spender_subaccount`), or already made by the user and certified (see
+// `ledger_utils::multi_user_spender_subaccount`), or already made by the user and certified (see
 // `ledger_utils::UserTransfer`).
 async fn send_message(args: Args) -> Response {
     send_message_impl_async(args).await
@@ -66,7 +66,12 @@ async fn send_message_impl_async(mut args: Args) -> Response {
             .await
             {
                 Ok(UserTransfer::Icrc2(transfer)) => {
-                    match ledger_utils::icrc2::process_transaction_for_user(transfer, my_user_id).await {
+                    match ledger_utils::icrc2::process_transaction_for_user(
+                        transfer,
+                        ledger_utils::multi_user_spender_subaccount(my_user_id),
+                    )
+                    .await
+                    {
                         Ok(Ok(completed)) => {
                             MessageContent::Crypto(Box::new((content, CryptoTransfer::Completed(completed.into()))))
                         }

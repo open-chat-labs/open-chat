@@ -2481,7 +2481,7 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
             canister_ids.chat_ledger,
             icrc_ledger_types::icrc1::account::Account {
                 owner: canister_id,
-                subaccount: Some(ledger_utils::spender_subaccount(spender)),
+                subaccount: Some(ledger_utils::multi_user_spender_subaccount(spender)),
             },
             allowance,
         );
@@ -2638,7 +2638,7 @@ fn users_are_charged_from_their_own_wallets() {
             canister_ids.chat_ledger,
             icrc_ledger_types::icrc1::account::Account {
                 owner: canister_id,
-                subaccount: Some(ledger_utils::spender_subaccount(spender)),
+                subaccount: Some(ledger_utils::multi_user_spender_subaccount(spender)),
             },
             ONE_CHAT + FEE,
         );
@@ -4656,7 +4656,7 @@ fn users_send_crypto_from_their_own_wallets() {
         canister_ids.icp_ledger,
         icrc_ledger_types::icrc1::account::Account {
             owner: canister_id,
-            subaccount: Some(ledger_utils::spender_subaccount(a)),
+            subaccount: Some(ledger_utils::multi_user_spender_subaccount(a)),
         },
         2 * (amount + ICP_TRANSFER_FEE),
     );
@@ -4775,7 +4775,7 @@ fn users_send_crypto_from_their_own_wallets() {
         canister_ids.icp_ledger,
         icrc_ledger_types::icrc1::account::Account {
             owner: canister_id,
-            subaccount: Some(ledger_utils::spender_subaccount(b)),
+            subaccount: Some(ledger_utils::multi_user_spender_subaccount(b)),
         },
         amount + ICP_TRANSFER_FEE,
     );
