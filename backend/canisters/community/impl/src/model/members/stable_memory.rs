@@ -40,36 +40,33 @@ impl MembersStableStorage {
         let mut updated = 0;
         let mut start = Bound::Included(self.prefix.create_key(&Principal::from_slice(&[]).into()));
         loop {
+            let mut read = 0;
+            let mut last_user_id = None;
             let batch: Vec<_> = with_map(|m| {
                 m.range((start.clone(), Bound::Unbounded))
                     .take_while(|(k, _)| k.matches_prefix(&self.prefix))
                     .take(BATCH_SIZE)
+                    .filter_map(|(key, bytes)| {
+                        let user_id = key.user_id();
+                        read += 1;
+                        last_user_id = Some(user_id);
+
+                        let principal = *principals.get(&user_id)?;
+                        let mut member = bytes_to_member(&bytes);
+                        (member.principal != principal).then(|| {
+                            member.principal = principal;
+                            (key, member_to_bytes(member))
+                        })
+                    })
                     .collect()
             });
 
-            let Some((last_key, _)) = batch.last() else {
-                break;
-            };
-            start = Bound::Excluded(last_key.clone());
-            let batch_len = batch.len();
+            updated += batch.len() as u32;
+            with_map_mut(|m| m.insert_many(batch));
 
-            let to_update: Vec<_> = batch
-                .into_iter()
-                .filter_map(|(key, bytes)| {
-                    let principal = *principals.get(&key.user_id())?;
-                    let mut member = bytes_to_member(&bytes);
-                    (member.principal != principal).then(|| {
-                        member.principal = principal;
-                        (key, member_to_bytes(member))
-                    })
-                })
-                .collect();
-
-            updated += to_update.len() as u32;
-            with_map_mut(|m| m.insert_many(to_update));
-
-            if batch_len < BATCH_SIZE {
-                break;
+            match last_user_id {
+                Some(user_id) if read == BATCH_SIZE => start = Bound::Excluded(self.prefix.create_key(&user_id)),
+                _ => break,
             }
         }
         updated
