@@ -9,6 +9,7 @@ use canister_timer_jobs::Job;
 use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, SECOND_IN_MS};
 use ic_ledger_types::Tokens;
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use types::{
@@ -175,6 +176,33 @@ If you would like to extend your Diamond membership you will need to top up your
                             .data
                             .diamond_membership_payment_metrics
                             .recurring_payments_failed_due_to_insufficient_funds += 1;
+                    });
+                }
+                // A user in a MultiUser canister holds their own funds, so renewals are pulled from
+                // their wallet against an approval, which may have run out or been replaced
+                Response::Error(error) if error.matches_code(OCErrorCode::InsufficientAllowance) => {
+                    mutate_state(|state| {
+                        state.push_event_to_local_user_index(
+                            user_id,
+                            UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                                user_id,
+                                thread_root_message_id: None,
+                                content: MessageContentInitial::Text(TextContent {
+                                    text: format!(
+                                        "Failed to take payment for Diamond membership because OpenChat is no longer approved to take it from your wallet.
+Payment amount: {}
+
+If you would like to extend your Diamond membership you will need to approve the payment again or pay manually.",
+                                        Tokens::from_e8s(price_e8s),
+                                    ),
+                                }),
+                                mentioned: Vec::new(),
+                            })),
+                        );
+                        state
+                            .data
+                            .diamond_membership_payment_metrics
+                            .recurring_payments_failed_due_to_insufficient_allowance += 1;
                     });
                 }
                 Response::InternalError(_) => {

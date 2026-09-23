@@ -18,7 +18,7 @@ use testing::rng::{random_from_u128, random_string};
 use types::{
     CanisterId, ChannelId, ChatEvent, ChatId, CommunityId, CryptoContent, CryptoTransaction, EventIndex, Message,
     MessageContent, MessageContentInitial, MessageId, P2PSwapContentInitial, P2PSwapStatus, PendingCryptoTransaction,
-    PrizeContentInitial, UnitResult, UserId, icrc1, icrc2,
+    PrizeContentInitial, UnitResult, icrc1, icrc2,
 };
 
 const AMOUNT: u128 = 1_000_000;
@@ -44,7 +44,7 @@ fn send_crypto_directly_succeeds(in_channel: bool) {
         *controller,
         &user1,
         chat,
-        user1.user_id,
+        user1.principal,
         AMOUNT + ICP_TRANSFER_FEE,
     );
 
@@ -87,7 +87,7 @@ fn send_prize_directly_succeeds(in_channel: bool) {
         *controller,
         &user1,
         chat,
-        user1.user_id,
+        user1.principal,
         amount + ICP_TRANSFER_FEE,
     );
 
@@ -141,7 +141,7 @@ fn tip_message_directly_succeeds(in_channel: bool) {
         *controller,
         &user1,
         chat,
-        user1.user_id,
+        user1.principal,
         AMOUNT + ICP_TRANSFER_FEE,
     );
 
@@ -183,7 +183,7 @@ fn create_p2p_swap_directly_succeeds(in_channel: bool) {
         *controller,
         &user1,
         chat,
-        user1.user_id,
+        user1.principal,
         token0_amount + 2 * ICP_TRANSFER_FEE,
     );
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
@@ -242,7 +242,7 @@ fn creating_p2p_swap_directly_requires_diamond_membership() {
         *controller,
         &user2,
         chat,
-        user2.user_id,
+        user2.principal,
         AMOUNT + ICP_TRANSFER_FEE,
     );
 
@@ -288,7 +288,7 @@ fn approval_not_made_for_the_caller_cannot_be_spent(approved_for_another_user: b
             *controller,
             &user2,
             chat,
-            user2.user_id,
+            user2.principal,
             AMOUNT + ICP_TRANSFER_FEE,
         );
         (&user1, &user2)
@@ -374,7 +374,7 @@ fn transfer_to_someone_other_than_the_recipient_is_rejected() {
         *controller,
         &user1,
         chat,
-        user1.user_id,
+        user1.principal,
         AMOUNT + ICP_TRANSFER_FEE,
     );
 
@@ -420,7 +420,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     TestData { user1, user2, chat }
 }
 
-// Funds the user's principal, then approves the chat canister to spend `amount` of it for `spender`,
+// Funds the user's principal, then approves the chat canister to spend `amount` of it for the user
+// signing in with `spender`,
 // which costs the user a fee
 fn approve_chat(
     env: &mut PocketIc,
@@ -428,7 +429,7 @@ fn approve_chat(
     controller: Principal,
     user: &User,
     chat: DirectChat,
-    spender: UserId,
+    spender: Principal,
     amount: u128,
 ) {
     client::ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.principal, FUNDS);

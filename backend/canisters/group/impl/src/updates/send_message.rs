@@ -405,19 +405,22 @@ fn register_timer_jobs(
 // first. See `send_message_v2::Args` for which transfers are accepted.
 async fn send_message_with_transfer(args: Args) -> OCResult<SuccessResult> {
     let (user, prepared) = mutate_state(|state| prepare_transfer(&args, state))?;
-    let user_id = user.user_id;
 
     match prepared {
         // The transfer was certified, so the message has been sent already
         PrepareTransferResult::Sent(result) => Ok(result),
         PrepareTransferResult::Icrc2(transfer) => {
             let from = transfer.from;
-            let completed: CompletedCryptoTransaction =
-                match ledger_utils::icrc2::process_transaction_for_user(transfer, user_id).await {
-                    Ok(Ok(completed)) => completed.into(),
-                    Ok(Err((_, error))) => return Err(error),
-                    Err(error) => return Err(error.into()),
-                };
+            let completed: CompletedCryptoTransaction = match ledger_utils::icrc2::process_transaction_for_user(
+                transfer,
+                ledger_utils::spender_subaccount(user.principal),
+            )
+            .await
+            {
+                Ok(Ok(completed)) => completed.into(),
+                Ok(Err((_, error))) => return Err(error),
+                Err(error) => return Err(error.into()),
+            };
 
             let (result, now) = mutate_state(|state| {
                 (
@@ -532,7 +535,15 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserIdAn
                     args.thread_root_message_index,
                     args.message_id,
                 );
-                let swap = NewP2PSwap::new(&p, location, user_id, state.member_wallet(user_id)?, this_canister_id, now)?;
+                let swap = NewP2PSwap::new(
+                    &p,
+                    location,
+                    user_id,
+                    ledger_utils::spender_subaccount(user.principal),
+                    state.member_wallet(user_id)?,
+                    this_canister_id,
+                    now,
+                )?;
                 return Ok((
                     user,
                     PrepareTransferResult::P2PSwap(Box::new(P2PSwapToCreate {

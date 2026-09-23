@@ -65,8 +65,8 @@ async fn send_message_impl_async(mut args: Args) -> Response {
             )
             .await
             {
-                Ok(UserTransfer::Icrc2(transfer)) => {
-                    match ledger_utils::icrc2::process_transaction_for_user(transfer, my_user_id).await {
+                Ok((UserTransfer::Icrc2(transfer), spender_subaccount)) => {
+                    match ledger_utils::icrc2::process_transaction_for_user(transfer, spender_subaccount).await {
                         Ok(Ok(completed)) => {
                             MessageContent::Crypto(Box::new((content, CryptoTransfer::Completed(completed.into()))))
                         }
@@ -74,7 +74,7 @@ async fn send_message_impl_async(mut args: Args) -> Response {
                         Err(error) => return Error(error.into()),
                     }
                 }
-                Ok(UserTransfer::Certified(transfer)) => {
+                Ok((UserTransfer::Certified(transfer), _)) => {
                     MessageContent::Crypto(Box::new((content, CryptoTransfer::Certified(transfer))))
                 }
                 Err(error) => return Error(error),
@@ -178,7 +178,7 @@ async fn prepare_crypto_transfer(
     recipient: Recipient,
     local_user_index_canister_id: CanisterId,
     pin: &mut Option<PinNumberWrapper>,
-) -> OCResult<UserTransfer> {
+) -> OCResult<(UserTransfer, [u8; 32])> {
     // Crypto in a direct chat can only be sent to the other user in the chat
     if content.recipient != them {
         return Err(OCErrorCode::RecipientMismatch.into());
@@ -199,18 +199,23 @@ async fn prepare_crypto_transfer(
 
     mutate_state(|state| {
         let now = state.env.now();
-        state
+        // The sender approved any transfer this canister pulls for them under the spender subaccount
+        // derived from their principal, which is read here since the caller can't be after an await
+        let my_principal = state
             .data
             .users
-            .with_user_mut(my_index, |user| user.pin_number.verify(pin.as_mut(), now))
+            .with_user_mut(my_index, |user| {
+                user.pin_number.verify(pin.as_mut(), now).map(|_| user.principal)
+            })
             .ok_or(OCErrorCode::InitiatorNotFound)??;
 
-        UserTransfer::new(
+        let transfer = UserTransfer::new(
             content.transfer.clone(),
             recipient_wallet,
             &MEMO_MESSAGE,
             state.env.canister_id(),
-        )
+        )?;
+        Ok((transfer, ledger_utils::spender_subaccount(my_principal)))
     })
 }
 
