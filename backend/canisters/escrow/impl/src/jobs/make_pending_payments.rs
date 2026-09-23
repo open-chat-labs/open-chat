@@ -36,7 +36,7 @@ pub fn run() {
 
 async fn process_payment(pending_payment: PendingPayment) {
     let from_principal = match pending_payment.reason {
-        PendingPaymentReason::Swap(other_user_id) => other_user_id,
+        PendingPaymentReason::Swap(other_principal) => other_principal,
         PendingPaymentReason::Refund => pending_payment.principal,
     };
     let created_at_time = pending_payment.timestamp * NANOS_PER_MILLISECOND;
