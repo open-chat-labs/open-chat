@@ -18,8 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Detect an already pushed proposal via `MessageIdAlreadyExists` rather than the error message ([#9124](https://github.com/open-chat-labs/open-chat/pull/9124))
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+- Detect an already pushed proposal via `MessageIdAlreadyExists` rather than the error message ([#9124](https://github.com/open-chat-labs/open-chat/pull/9124))
 
 ## [[2.0.1957](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1957-proposals_bot)] - 2026-01-16
 
@@ -296,8 +296,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Support staking a neuron for any SNS to then use to submit proposals ([#4631](https://github.com/open-chat-labs/open-chat/pull/4631))
 - Add `permissions_v2` when creating group ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+- Support staking a neuron for any SNS to then use to submit proposals ([#4631](https://github.com/open-chat-labs/open-chat/pull/4631))
 
 ## [[2.0.891](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.891-proposals_bot)] - 2023-10-19
 

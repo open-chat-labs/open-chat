@@ -58,11 +58,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Evidence vault: quarantine blobs by hash so they are never publicly served and survive every deletion path, with capture metadata, retention clock, legal holds, LE-requested destruction, a hash-chained append-only access log, and a `vault_file_chunk` endpoint restricted to designated reviewers ([#9118](https://github.com/open-chat-labs/open-chat/pull/9118))
 - Hashes upheld as CSAM are reported to the storage index so every other bucket denylists them too ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - A quarantine op for a blob which is already vaulted registers the report's evidence claim rather than failing, so a second report holding the same blob keeps it alive ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - `vault_log` query - a page of the vault's tamper-evident access log, readable by designated vault reviewers (chain-of-custody evidence for auditors and law enforcement) ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-
-- Evidence vault: quarantine blobs by hash so they are never publicly served and survive every deletion path, with capture metadata, retention clock, legal holds, LE-requested destruction, a hash-chained append-only access log, and a `vault_file_chunk` endpoint restricted to designated reviewers ([#9118](https://github.com/open-chat-labs/open-chat/pull/9118))
 
 ### Fixed
 
@@ -181,9 +180,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Add cacheable resource header ([#5947](https://github.com/open-chat-labs/open-chat/pull/5947))
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
 - Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Add cacheable resource header ([#5947](https://github.com/open-chat-labs/open-chat/pull/5947))
 
 ## [[2.0.1030](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1030-storage_bucket)] - 2024-01-25
 

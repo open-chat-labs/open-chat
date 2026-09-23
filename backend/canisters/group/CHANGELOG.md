@@ -14,8 +14,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Store each member's principal on the member, populating existing members in post_upgrade ([#9507](https://github.com/open-chat-labs/open-chat/pull/9507))
-- Pass the target `user_id` in calls to User canisters ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
@@ -27,8 +25,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `insert_many` for bulk writes to the stable memory map, writing each modified node once rather than once per entry ([#9353](https://github.com/open-chat-labs/open-chat/pull/9353))
 - Move each chat's MessageIndex -> EventIndex map from the heap into stable memory, in chunks of LEB128 encoded deltas ([#9376](https://github.com/open-chat-labs/open-chat/pull/9376))
 - Move each chat's search index from the heap into the stable memory map for small entries, as an inverted index which also supports languages written without spaces, such as Chinese, Japanese and Thai ([#9377](https://github.com/open-chat-labs/open-chat/pull/9377))
+- Pass the target `user_id` in calls to User canisters ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Queue user events per canister, and send a MultiUser canister's in a single call via the v2 endpoint, while User canisters are still sent theirs via the original endpoint ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
 - Merge `get_calling_member_acting_as` into `get_calling_member`, which takes the optional user being acted for ([#9501](https://github.com/open-chat-labs/open-chat/pull/9501))
+- Store each member's principal on the member, populating existing members in post_upgrade ([#9507](https://github.com/open-chat-labs/open-chat/pull/9507))
 
 ### Removed
 
@@ -58,28 +58,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-- Escalate classifier moderation referrals to the user_index (via the group_index) for human review ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-- Add `c2c_flag_message` endpoint so user_index can flag reported messages ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
-- Notify user_index of CSAM detections for auto-sanction and escalation ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
-- Queue public messages for classification via the local_user_index and store the returned moderation flags ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
 - Expose `moderation_flags` in public group summary ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
 - Add per-message moderation flags, exposed as `moderation_flags` on messages ([#9090](https://github.com/open-chat-labs/open-chat/pull/9090))
+- Queue public messages for classification via the local_user_index and store the returned moderation flags ([#9091](https://github.com/open-chat-labs/open-chat/pull/9091))
+- Add `c2c_flag_message` endpoint so user_index can flag reported messages ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
+- Notify user_index of CSAM detections for auto-sanction and escalation ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
+- Reports which assert child sexual abuse content quarantine the media and delete the message immediately - the material is never viewed outside the quarantine framework - while the suspension waits for the human verdict ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- Escalate classifier moderation referrals to the user_index (via the group_index) for human review ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ### Changed
 
+- Suspend "verified user" (unique person) gating - the gate is ignored, filtered out of composite gates so an OR gate requires another branch ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
 - Add `c2c_moderation_undelete` and `c2c_moderation_hard_delete` so verdicts can restore or permanently remove auto-sanctioned messages ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Quarantined messages (CSAM-flagged, deleted by moderation) are viewable by no one and cannot be user-restored while the report is unresolved ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Include blob references when escalating CSAM detections, for evidence-vault quarantine ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-- Suspend "verified user" (unique person) gating - the gate is ignored, filtered out of composite gates so an OR gate requires another branch ([#9061](https://github.com/open-chat-labs/open-chat/pull/9061))
 
 ### Fixed
 
-- `c2c_flag_message` can delete the message in the same update, so moderation takedowns can never leave content deleted-but-unflagged; flags which are already set no longer prevent that deletion ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-- `c2c_moderation_hard_delete` deletes a message which was not already soft-deleted rather than reporting success while the content is still live ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-- Prevent members from demoting others more senior than themselves ([#9115](https://github.com/open-chat-labs/open-chat/pull/9115))
 - Lock against a user having two gate payments in progress concurrently ([#9080](https://github.com/open-chat-labs/open-chat/pull/9080))
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+- Prevent members from demoting others more senior than themselves ([#9115](https://github.com/open-chat-labs/open-chat/pull/9115))
+- `c2c_flag_message` can delete the message in the same update, so moderation takedowns can never leave content deleted-but-unflagged; flags which are already set no longer prevent that deletion ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
+- `c2c_moderation_hard_delete` deletes a message which was not already soft-deleted rather than reporting success while the content is still live ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ## [[2.0.1989](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1989-group)] - 2026-06-18
 
@@ -198,8 +198,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
 - Remove duplication by removing `MessageContent::message_type` function ([#8293](https://github.com/open-chat-labs/open-chat/pull/8293))
-- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
 - Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
+- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
 
 ### Fixed
 
@@ -312,9 +312,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add support for webhooks ([#7825](https://github.com/open-chat-labs/open-chat/pull/7825))
 - Allow bots to subscribe to chat events using ApiKeys ([#7836](https://github.com/open-chat-labs/open-chat/pull/7836))
 - Push chat event notifications to bots ([#7844](https://github.com/open-chat-labs/open-chat/pull/7844))
-- Add support for webhooks ([#7825](https://github.com/open-chat-labs/open-chat/pull/7825))
 
 ### Changed
 
@@ -485,12 +485,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Log error if end video call job fails ([#7066](https://github.com/open-chat-labs/open-chat/pull/7066))
 - 2-stage bot messages + bot context in messages ([#7060](https://github.com/open-chat-labs/open-chat/pull/7060))
+- Log error if end video call job fails ([#7066](https://github.com/open-chat-labs/open-chat/pull/7066))
+- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
 - Log error if tip fails due to recipient mismatch ([#7151](https://github.com/open-chat-labs/open-chat/pull/7151))
 - Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
 - When disappearing messages expire delete any linked files ([#7184](https://github.com/open-chat-labs/open-chat/pull/7184))
-- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
 - Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
 
 ### Removed
@@ -551,8 +551,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove a load of unused candid endpoints ([#6947](https://github.com/open-chat-labs/open-chat/pull/6947))
 - Remove references to bot_api_gateway ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+- Remove a load of unused candid endpoints ([#6947](https://github.com/open-chat-labs/open-chat/pull/6947))
 
 ### Fixed
 
@@ -679,8 +679,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fix removing link previews ([#6633](https://github.com/open-chat-labs/open-chat/pull/6633))
 - Determine whether c2c call should be retried based on response error ([#6640](https://github.com/open-chat-labs/open-chat/pull/6640))
-- Fix owners not receiving payments for composite payment gates ([#6652](https://github.com/open-chat-labs/open-chat/pull/6652))
 - Don't send notifications to bots ([#6648](https://github.com/open-chat-labs/open-chat/pull/6648))
+- Fix owners not receiving payments for composite payment gates ([#6652](https://github.com/open-chat-labs/open-chat/pull/6652))
 - Fix upgrade now that `Thread` message activity event has been deleted ([#6657](https://github.com/open-chat-labs/open-chat/pull/6657))
 
 ## [[2.0.1401](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1401-group)] - 2024-10-18
@@ -697,10 +697,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Push activity to users using `GroupedTimerJobQueue` ([#6552](https://github.com/open-chat-labs/open-chat/pull/6552))
 - Ensure members marked as lapsed in updates queries ([#6573](https://github.com/open-chat-labs/open-chat/pull/6573))
 - Reduce size of responses by only returning UserIds for basic members ([#6577](https://github.com/open-chat-labs/open-chat/pull/6577))
 - Remove `transaction` from serialized PrizeWinner messages ([#6578](https://github.com/open-chat-labs/open-chat/pull/6578))
-- Push activity to users using `GroupedTimerJobQueue` ([#6552](https://github.com/open-chat-labs/open-chat/pull/6552))
 - Return `u128` rather than `Nat` for ICRC2 ledger errors ([#6597](https://github.com/open-chat-labs/open-chat/pull/6597))
 - Lapsed members don't need to be re-invited ([#6602](https://github.com/open-chat-labs/open-chat/pull/6602))
 
@@ -814,8 +814,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `LifetimeDiamondMembership` access gate ([#5986](https://github.com/open-chat-labs/open-chat/pull/5986))
-- Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
 - Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
+- Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
 
 ## [[2.0.1195](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1195-group)] - 2024-06-06
 
@@ -997,8 +997,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
 - Add support for P2P trades ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+- Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
 
 ### Changed
 
@@ -1109,8 +1109,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Avoid iterating events to get summary updates ([#4638](https://github.com/open-chat-labs/open-chat/pull/4638))
 - Avoid iterating events to get chat member updates ([#4639](https://github.com/open-chat-labs/open-chat/pull/4639))
 - Avoid iterating events to get pinned message updates ([#4643](https://github.com/open-chat-labs/open-chat/pull/4643))
-- Avoid setting expiry for some event types ([#4647](https://github.com/open-chat-labs/open-chat/pull/4647))
 - Return expired event + message ranges when getting events ([#4646](https://github.com/open-chat-labs/open-chat/pull/4646))
+- Avoid setting expiry for some event types ([#4647](https://github.com/open-chat-labs/open-chat/pull/4647))
 
 ## [[2.0.888](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.888-group)] - 2023-10-18
 
@@ -1254,6 +1254,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
 - Add `ledger` to pending crypto transactions ([#3866](https://github.com/open-chat-labs/open-chat/pull/3866))
 - Extended `update_group_v2` to set group visibility ([#3880](https://github.com/open-chat-labs/open-chat/pull/3880))
+- Add `ledger` field to completed crypto transactions ([#3912](https://github.com/open-chat-labs/open-chat/pull/3912))
 - Deprecate the `block_users` and `change_permissions` permissions ([#3922](https://github.com/open-chat-labs/open-chat/pull/3922))
 - Add `channel_id` to `convert_into_community` response ([#3929](https://github.com/open-chat-labs/open-chat/pull/3929))
 - Check user is Diamond before converting group into community ([#3932](https://github.com/open-chat-labs/open-chat/pull/3932))
@@ -1263,7 +1264,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Set community avatar after converting group into community ([#3976](https://github.com/open-chat-labs/open-chat/pull/3976))
 - Use `canister_client` for making all c2c calls ([#3979](https://github.com/open-chat-labs/open-chat/pull/3979))
 - Avoid using `candid::Func` type directly ([#3983](https://github.com/open-chat-labs/open-chat/pull/3983))
-- Add `ledger` field to completed crypto transactions ([#3912](https://github.com/open-chat-labs/open-chat/pull/3912))
 
 ### Removed
 
@@ -1388,8 +1388,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Implement `edit_message_v2` ([#3504](https://github.com/open-chat-labs/open-chat/pull/3504))
 - Supports inviting of specific users ([#3499](https://github.com/open-chat-labs/open-chat/pull/3499))
+- Implement `edit_message_v2` ([#3504](https://github.com/open-chat-labs/open-chat/pull/3504))
 
 ### Changed
 
@@ -1437,8 +1437,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-chat-labs/open-chat/pull/3248)) & ([#3251](https://github.com/open-chat-labs/open-chat/pull/3251))
 - Removed all the code around reinstalling groups ([#3253](https://github.com/open-chat-labs/open-chat/pull/3253))
-- Removed `affected_events` from event responses ([#3322](https://github.com/open-chat-labs/open-chat/pull/3322))
 - Removed super_admin role from groups([#3319](https://github.com/open-chat-labs/open-chat/pull/3319))
+- Removed `affected_events` from event responses ([#3322](https://github.com/open-chat-labs/open-chat/pull/3322))
 
 ## [[2.0.619](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.619-group)] - 2023-02-28
 
