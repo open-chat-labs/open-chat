@@ -67,6 +67,8 @@ pub fn prize_refund(
 // A P2P swap a member is creating, which is funded from their own funds via ICRC2
 pub struct NewP2PSwap {
     user_id: UserId,
+    // The member's spender subaccount, under which they approved the deposit
+    spender_subaccount: [u8; 32],
     // The owner of the member's wallet, which the swap pays out and refunds to
     offered_by: Principal,
     from: icrc1::Account,
@@ -79,6 +81,7 @@ impl NewP2PSwap {
         content: &P2PSwapContentInitial,
         location: P2PSwapLocation,
         user_id: UserId,
+        spender_subaccount: [u8; 32],
         wallet: icrc1::Account,
         this_canister_id: CanisterId,
         now: TimestampMillis,
@@ -94,6 +97,7 @@ impl NewP2PSwap {
 
         Ok(NewP2PSwap {
             user_id,
+            spender_subaccount,
             offered_by,
             from,
             args: escrow_canister::create_swap::Args {
@@ -158,8 +162,7 @@ impl NewP2PSwap {
             created: now * NANOS_PER_MILLISECOND,
         };
 
-        match ledger_utils::icrc2::process_transaction_for_user(transfer, ledger_utils::spender_subaccount(self.user_id)).await
-        {
+        match ledger_utils::icrc2::process_transaction_for_user(transfer, self.spender_subaccount).await {
             Ok(Ok(completed)) => Ok((swap_id, completed.into())),
             Ok(Err((_, error))) => Err((error, Some(swap_id))),
             Err(error) => Err((error.into(), Some(swap_id))),

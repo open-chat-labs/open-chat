@@ -33,7 +33,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<(Payer, CanisterId)> {
 
     let payer = Payer::Approved {
         from: args.from_account.unwrap_or(wallet.into()),
-        spender_subaccount: Some(ledger_utils::multi_user_spender_subaccount(args.user_id)),
+        spender_subaccount: Some(ledger_utils::spender_subaccount(wallet)),
     };
     Ok((payer, state.data.user_index_canister_id))
 }

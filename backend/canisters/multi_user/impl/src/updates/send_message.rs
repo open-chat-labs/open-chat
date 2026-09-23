@@ -23,7 +23,7 @@ use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCani
 // The User canister's `send_message_v2`. A message holding crypto is sent with a transfer the user
 // makes from their own wallet, since this canister doesn't hold its users' funds: either pulled by
 // this canister via ICRC2, against an approval made under the user's own spender subaccount (see
-// `ledger_utils::multi_user_spender_subaccount`), or already made by the user and certified (see
+// `ledger_utils::spender_subaccount`), or already made by the user and certified (see
 // `ledger_utils::UserTransfer`).
 async fn send_message(args: Args) -> Response {
     send_message_impl_async(args).await
@@ -65,13 +65,8 @@ async fn send_message_impl_async(mut args: Args) -> Response {
             )
             .await
             {
-                Ok(UserTransfer::Icrc2(transfer)) => {
-                    match ledger_utils::icrc2::process_transaction_for_user(
-                        transfer,
-                        ledger_utils::multi_user_spender_subaccount(my_user_id),
-                    )
-                    .await
-                    {
+                Ok((UserTransfer::Icrc2(transfer), spender_subaccount)) => {
+                    match ledger_utils::icrc2::process_transaction_for_user(transfer, spender_subaccount).await {
                         Ok(Ok(completed)) => {
                             MessageContent::Crypto(Box::new((content, CryptoTransfer::Completed(completed.into()))))
                         }
@@ -79,7 +74,7 @@ async fn send_message_impl_async(mut args: Args) -> Response {
                         Err(error) => return Error(error.into()),
                     }
                 }
-                Ok(UserTransfer::Certified(transfer)) => {
+                Ok((UserTransfer::Certified(transfer), _)) => {
                     MessageContent::Crypto(Box::new((content, CryptoTransfer::Certified(transfer))))
                 }
                 Err(error) => return Error(error),
@@ -183,7 +178,7 @@ async fn prepare_crypto_transfer(
     recipient: Recipient,
     local_user_index_canister_id: CanisterId,
     pin: &mut Option<PinNumberWrapper>,
-) -> OCResult<UserTransfer> {
+) -> OCResult<(UserTransfer, [u8; 32])> {
     // Crypto in a direct chat can only be sent to the other user in the chat
     if content.recipient != them {
         return Err(OCErrorCode::RecipientMismatch.into());
@@ -204,18 +199,23 @@ async fn prepare_crypto_transfer(
 
     mutate_state(|state| {
         let now = state.env.now();
-        state
+        // The sender approved any transfer this canister pulls for them under the spender subaccount
+        // derived from their principal, which is read here since the caller can't be after an await
+        let my_principal = state
             .data
             .users
-            .with_user_mut(my_index, |user| user.pin_number.verify(pin.as_mut(), now))
+            .with_user_mut(my_index, |user| {
+                user.pin_number.verify(pin.as_mut(), now).map(|_| user.principal)
+            })
             .ok_or(OCErrorCode::InitiatorNotFound)??;
 
-        UserTransfer::new(
+        let transfer = UserTransfer::new(
             content.transfer.clone(),
             recipient_wallet,
             &MEMO_MESSAGE,
             state.env.canister_id(),
-        )
+        )?;
+        Ok((transfer, ledger_utils::spender_subaccount(my_principal)))
     })
 }
 

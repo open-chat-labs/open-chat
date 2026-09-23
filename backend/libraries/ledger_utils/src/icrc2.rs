@@ -16,10 +16,9 @@ pub async fn process_transaction(
     transfer_from(transaction, spender.user_id, spender_account.subaccount).await
 }
 
-// Pulls funds for a user in a canister which holds approvals made for many users, spending only an
-// approval made under that user's own `spender_subaccount` (see `spender_subaccount` for a Group or
-// Community, and `multi_user_spender_subaccount` for a MultiUser canister). An approval made for
-// anyone else, or to the canister's default account, can't be spent this way.
+// Pulls funds for a user in a canister which holds approvals made by many users, spending only an
+// approval made under that user's own `spender_subaccount` (see `crate::spender_subaccount`). An
+// approval made for anyone else, or to the canister's default account, can't be spent this way.
 pub async fn process_transaction_for_user(
     transaction: PendingCryptoTransaction,
     spender_subaccount: [u8; 32],

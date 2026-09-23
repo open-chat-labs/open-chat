@@ -23,11 +23,12 @@ async fn tip_message_impl(args: Args) -> OCResult {
         PrepareResult::Icrc2(tip) => {
             let TipToMake {
                 user_id,
+                spender_subaccount,
                 c2c_args,
                 transfer,
             } = *tip;
 
-            match ledger_utils::icrc2::process_transaction_for_user(transfer, ledger_utils::spender_subaccount(user_id)).await {
+            match ledger_utils::icrc2::process_transaction_for_user(transfer, spender_subaccount).await {
                 Ok(Ok(_)) => {}
                 Ok(Err((_, error))) => return Err(error),
                 Err(error) => return Err(error.into()),
@@ -51,6 +52,8 @@ enum PrepareResult {
 
 struct TipToMake {
     user_id: UserId,
+    // The caller's spender subaccount, under which they approved the transfer
+    spender_subaccount: [u8; 32],
     c2c_args: community_canister::c2c_tip_message::Args,
     transfer: icrc2::PendingCryptoTransaction,
 }
@@ -93,6 +96,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     )? {
         UserTransfer::Icrc2(transfer) => Ok(PrepareResult::Icrc2(Box::new(TipToMake {
             user_id,
+            spender_subaccount: ledger_utils::spender_subaccount(user.principal),
             c2c_args,
             transfer,
         }))),

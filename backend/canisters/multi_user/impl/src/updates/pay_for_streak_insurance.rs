@@ -66,7 +66,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
 
     let payer = Payer::Approved {
         from: args.from_account.unwrap_or(wallet.into()),
-        spender_subaccount: Some(ledger_utils::multi_user_spender_subaccount(state.user_id(my_index))),
+        spender_subaccount: Some(ledger_utils::spender_subaccount(wallet)),
     };
     Ok(PrepareOk {
         my_index,

@@ -2474,14 +2474,14 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
         |env: &PocketIc, principal: Principal| client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, principal);
     // The allowance has to cover the transfer fee too, since that is charged to the `from` account
     let allowance = ONE_CHAT + FEE;
-    let approve = |env: &mut PocketIc, from: Principal, spender: UserId| {
+    let approve = |env: &mut PocketIc, from: Principal, spender: Principal| {
         client::ledger::happy_path::approve(
             env,
             from,
             canister_ids.chat_ledger,
             icrc_ledger_types::icrc1::account::Account {
                 owner: canister_id,
-                subaccount: Some(ledger_utils::multi_user_spender_subaccount(spender)),
+                subaccount: Some(ledger_utils::spender_subaccount(spender)),
             },
             allowance,
         );
@@ -2525,7 +2525,7 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
         None,
         OCErrorCode::InsufficientAllowance,
     );
-    approve(env, a_principal, b);
+    approve(env, a_principal, b_principal);
     assert_pay_for_streak_insurance_error(
         env,
         a_principal,
@@ -2535,7 +2535,7 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
         None,
         OCErrorCode::InsufficientAllowance,
     );
-    approve(env, a_principal, a);
+    approve(env, a_principal, a_principal);
     let response = pay_for_streak_insurance(env, a_principal, canister_id, 1, ONE_CHAT, None);
     assert!(
         matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
@@ -2556,7 +2556,7 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
     claim_daily_chit(env, b_principal, canister_id);
     let external_wallet = random_principal();
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, external_wallet, wallet_balance);
-    approve(env, external_wallet, a);
+    approve(env, external_wallet, a_principal);
     assert_pay_for_streak_insurance_error(
         env,
         b_principal,
@@ -2566,7 +2566,7 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
         Some(external_wallet.into()),
         OCErrorCode::InsufficientAllowance,
     );
-    approve(env, external_wallet, b);
+    approve(env, external_wallet, b_principal);
     let response = pay_for_streak_insurance(env, b_principal, canister_id, 1, ONE_CHAT, Some(external_wallet.into()));
     assert!(
         matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
@@ -2625,20 +2625,20 @@ fn users_are_charged_from_their_own_wallets() {
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
     let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (_, b) = create_user(env, local_user_index, canister_id);
+    let (b_principal, _) = create_user(env, local_user_index, canister_id);
 
     let wallet_balance = 10 * ONE_CHAT;
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, a_principal, wallet_balance);
     let balance =
         |env: &PocketIc, principal: Principal| client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, principal);
-    let approve = |env: &mut PocketIc, spender: UserId| {
+    let approve = |env: &mut PocketIc, spender: Principal| {
         client::ledger::happy_path::approve(
             env,
             a_principal,
             canister_ids.chat_ledger,
             icrc_ledger_types::icrc1::account::Account {
                 owner: canister_id,
-                subaccount: Some(ledger_utils::multi_user_spender_subaccount(spender)),
+                subaccount: Some(ledger_utils::spender_subaccount(spender)),
             },
             ONE_CHAT + FEE,
         );
@@ -2677,11 +2677,11 @@ fn users_are_charged_from_their_own_wallets() {
     // under another user's is no use
     let response = charge(env, a, None);
     assert!(is_insufficient_allowance(&response), "{response:?}");
-    approve(env, b);
+    approve(env, b_principal);
     let response = charge(env, a, None);
     assert!(is_insufficient_allowance(&response), "{response:?}");
 
-    approve(env, a);
+    approve(env, a_principal);
     let response = charge(env, a, None);
     assert!(
         matches!(response, user_canister::c2c_charge_user_account::Response::Success(_)),
@@ -4656,7 +4656,7 @@ fn users_send_crypto_from_their_own_wallets() {
         canister_ids.icp_ledger,
         icrc_ledger_types::icrc1::account::Account {
             owner: canister_id,
-            subaccount: Some(ledger_utils::multi_user_spender_subaccount(a)),
+            subaccount: Some(ledger_utils::spender_subaccount(a_principal)),
         },
         2 * (amount + ICP_TRANSFER_FEE),
     );
@@ -4775,7 +4775,7 @@ fn users_send_crypto_from_their_own_wallets() {
         canister_ids.icp_ledger,
         icrc_ledger_types::icrc1::account::Account {
             owner: canister_id,
-            subaccount: Some(ledger_utils::multi_user_spender_subaccount(b)),
+            subaccount: Some(ledger_utils::spender_subaccount(b_principal)),
         },
         amount + ICP_TRANSFER_FEE,
     );

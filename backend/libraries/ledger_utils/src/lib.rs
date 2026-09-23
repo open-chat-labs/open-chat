@@ -4,7 +4,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 use sha2::{Digest, Sha256};
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
-    UserId, UserIdAndPrincipal,
+    UserIdAndPrincipal,
 };
 pub use user_accounts::{Payer, deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
 pub use user_transfers::UserTransfer;
@@ -102,27 +102,15 @@ pub(crate) fn sender_account(sender: UserIdAndPrincipal) -> types::icrc1::Accoun
     account
 }
 
-// The subaccount of a Group or Community which `user_id` must name as the spender's when approving
-// it to pull their funds. The canister only spends an approval under the subaccount of the user it is
-// acting for, so no one can spend an approval someone else made. Its members come from many
-// canisters, so this is derived from their whole user id.
-pub fn spender_subaccount(user_id: UserId) -> [u8; 32] {
-    convert_to_subaccount(&user_id.as_principal()).0
-}
-
-// The subaccount of a MultiUser canister which one of its users must name as the spender's when
-// approving the canister to pull their funds: their index within the canister, big-endian in the last
-// two bytes. Indexes start at 1, so this is never the default subaccount, and the canister only spends
-// an approval under the subaccount of the user it is acting for. All of a user's payments share it,
-// so a client should add to the user's allowance (passing `expected_allowance`) rather than replace
-// it, which would cancel a standing approval, such as the one Diamond renewals rely on.
-pub fn multi_user_spender_subaccount(user_id: UserId) -> [u8; 32] {
-    let index = user_id.index();
-    assert!(index != 0, "{user_id} is not held alongside other users");
-
-    let mut subaccount = [0; 32];
-    subaccount[30..].copy_from_slice(&index.to_be_bytes());
-    subaccount
+// The subaccount of a canister holding approvals made by many users (a Group, a Community or a
+// MultiUser canister) which a user must name as the spender's when approving it to pull their funds.
+// It is derived from the principal the user signs in with, which is globally unique, so a user names
+// the same subaccount whichever canister they approve, and the canister only spends an approval under
+// the subaccount of the user it is acting for. All of a user's payments through a canister share it,
+// so a client should add to the allowance (passing `expected_allowance`) rather than replace it, which
+// would cancel a standing approval, such as the one Diamond renewals rely on.
+pub fn spender_subaccount(principal: Principal) -> [u8; 32] {
+    convert_to_subaccount(&principal).0
 }
 
 pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {
@@ -167,14 +155,6 @@ pub fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64
 #[cfg(test)]
 mod tests {
     use test_case::test_case;
-
-    #[test]
-    fn multi_user_spender_subaccount_is_the_users_index() {
-        let canister_id = candid::Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 5, 1, 1]);
-        let subaccount = super::multi_user_spender_subaccount(types::UserId::new_indexed(canister_id, 258));
-        assert_eq!(subaccount[..30], [0; 30]);
-        assert_eq!(subaccount[30..], [1, 2]);
-    }
 
     #[test_case(1000000, 8, "0.01")]
     #[test_case(321000000, 8, "3.21")]
