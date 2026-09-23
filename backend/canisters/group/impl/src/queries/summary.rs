@@ -24,7 +24,7 @@ fn summary_impl(on_behalf_of: Option<Principal>, state: &RuntimeState) -> Respon
     };
 
     if let Some(member) = state.data.get_member(caller) {
-        let summary = state.summary(&member, caller);
+        let summary = state.summary(&member);
         Success(SuccessResult { summary })
     } else {
         Error(OCErrorCode::InitiatorNotInChat.into())

@@ -3,7 +3,7 @@ use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::thread_previews::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, UserIdAndPrincipal};
+use types::OCResult;
 
 #[query(msgpack = true)]
 fn thread_previews(args: Args) -> Response {
@@ -18,12 +18,10 @@ fn thread_previews_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRes
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }
 
-    let user_id = state.get_caller_user_id()?;
+    let user = state.get_caller_user()?;
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
     let now = state.env.now();
-    let threads = channel
-        .chat
-        .thread_previews(UserIdAndPrincipal::new(user_id, state.env.caller()), args.threads)?;
+    let threads = channel.chat.thread_previews(user, args.threads)?;
 
     Ok(SuccessResult { threads, timestamp: now })
 }

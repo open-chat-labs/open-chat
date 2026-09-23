@@ -15,7 +15,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::Deref;
 use types::{
     BotNotification, EventIndex, GroupMember, GroupRole, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped,
-    UserId, UserType, Version, is_default,
+    UserId, UserIdAndPrincipal, UserType, Version, is_default,
 };
 use utils::timestamped_set::TimestampedSet;
 
@@ -659,6 +659,12 @@ impl GroupMemberInternal {
 
     pub fn principal(&self) -> Option<Principal> {
         self.principal
+    }
+
+    // The member and their principal, which is anonymous for a channel member in a community, whose
+    // principal is on their community member instead
+    pub fn user(&self) -> UserIdAndPrincipal {
+        UserIdAndPrincipal::new(self.user_id, self.principal.unwrap_or_else(Principal::anonymous))
     }
 
     pub fn date_added(&self) -> TimestampMillis {

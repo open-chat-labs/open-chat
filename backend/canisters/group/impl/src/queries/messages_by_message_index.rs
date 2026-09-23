@@ -3,7 +3,7 @@ use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use group_canister::messages_by_message_index::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{EventsCaller, MessagesResponse, OCResult, UserIdAndPrincipal};
+use types::{EventsCaller, MessagesResponse, OCResult};
 
 #[query(msgpack = true)]
 fn messages_by_message_index(args: Args) -> Response {
@@ -18,10 +18,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> OCResult<
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }
 
-    let user_id = state.get_caller_user_id();
-    let events_caller = user_id.map_or(EventsCaller::Unknown, |u| {
-        EventsCaller::User(UserIdAndPrincipal::new(u, state.env.caller()))
-    });
+    let events_caller = state.get_caller_user().map_or(EventsCaller::Unknown, EventsCaller::User);
 
     state
         .data

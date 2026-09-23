@@ -1,6 +1,5 @@
 use super::expire_members;
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state};
-use candid::Principal;
 use gated_groups::{CheckGateArgs, CheckIfPassesGateResult, check_if_passes_gate};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
@@ -8,7 +7,7 @@ use local_user_index_canister_c2c_client::lookup_users;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{AccessGateConfigInternal, UserId, UserIdAndPrincipal};
+use types::{AccessGateConfigInternal, UserId};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -92,8 +91,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
         });
 
     let check_gate_args = CheckGateArgs {
-        // The member's principal isn't known here
-        user: UserIdAndPrincipal::new(details.user_id, Principal::anonymous()),
+        user: state.member_user(details.user_id),
         diamond_membership_expires_at,
         this_canister: state.env.canister_id(),
         is_unique_person,

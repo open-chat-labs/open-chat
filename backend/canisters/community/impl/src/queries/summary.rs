@@ -38,5 +38,5 @@ fn summary_impl(
     let member = state.data.members.get(caller);
     let is_invited = state.data.is_invited(caller);
 
-    Ok(state.summary(member.as_ref(), Some(is_invited), caller))
+    Ok(state.summary(member.as_ref(), Some(is_invited)))
 }

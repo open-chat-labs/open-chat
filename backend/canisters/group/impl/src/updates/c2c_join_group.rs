@@ -54,7 +54,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
 
     if let Some(member) = state.data.chat.members.get(&args.user_id) {
         if !member.lapsed().value {
-            let summary = state.summary(&member, args.principal);
+            let summary = state.summary(&member);
             return Ok(IsPermittedToJoinSuccess::AlreadyInGroup(Box::new(summary)));
         }
     } else if state.data.chat.members.is_blocked(&args.user_id) {
@@ -151,7 +151,7 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
 
             new_event = true;
 
-            let summary = state.summary(&result.member, args.principal);
+            let summary = state.summary(&result.member);
 
             // If there is a payment gate on this group then queue payments to owner(s) and treasury
             for payment in payments {
@@ -166,7 +166,7 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
             state.data.chat.members.update_lapsed(args.user_id, false, now);
 
             let member = state.data.chat.members.get(&args.user_id).unwrap();
-            let summary = state.summary(&member, args.principal);
+            let summary = state.summary(&member);
             Success(Box::new(summary))
         }
         AddResult::Blocked => Error(OCErrorCode::InitiatorBlocked.into()),

@@ -116,6 +116,22 @@ impl RuntimeState {
             .ok_or(OCErrorCode::InitiatorNotInChat)
     }
 
+    // The calling user and their principal, as recorded on their member record
+    pub fn get_caller_user(&self) -> Result<UserIdAndPrincipal, OCErrorCode> {
+        let user_id = self.get_caller_user_id()?;
+        Ok(self.member_user(user_id))
+    }
+
+    // The user and their principal, as recorded on their member record, or with the principal
+    // anonymous if they aren't a member
+    pub fn member_user(&self, user_id: UserId) -> UserIdAndPrincipal {
+        self.data
+            .chat
+            .members
+            .get(&user_id)
+            .map_or(UserIdAndPrincipal::new(user_id, Principal::anonymous()), |m| m.user())
+    }
+
     // The calling member, or when `user_id` is given, that member, whom the caller must hold (a
     // MultiUser canister acting for one of its users, or a User canister for its own user)
     pub fn get_calling_member(&self, user_id: Option<UserId>, verify: bool) -> Result<GroupMemberInternal, OCErrorCode> {
@@ -219,8 +235,7 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    // `principal` is the member's, which determines the accounts in the messages they're shown
-    pub fn summary(&self, member: &GroupMemberInternal, principal: Principal) -> GroupCanisterGroupChatSummary {
+    pub fn summary(&self, member: &GroupMemberInternal) -> GroupCanisterGroupChatSummary {
         let chat = &self.data.chat;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
@@ -265,7 +280,7 @@ impl RuntimeState {
             messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(UserIdAndPrincipal::new(member.user_id(), principal))),
+            latest_message: main_events_reader.latest_message_event(Some(member.user())),
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: main_events_reader.latest_message_index(),
             participant_count: chat.members.len(),
@@ -865,7 +880,13 @@ impl Data {
                 min_visible_event_index: EventIndex::default(),
             }))
         } else if let Some(user_id) = self.lookup_user_id(caller) {
-            Some(EventsCaller::User(UserIdAndPrincipal::new(user_id, caller)))
+            // Their principal is the caller, unless they are a member, when it's on their member record
+            let user = self
+                .chat
+                .members
+                .get(&user_id)
+                .map_or(UserIdAndPrincipal::new(user_id, caller), |m| m.user());
+            Some(EventsCaller::User(user))
         } else {
             Some(EventsCaller::Unknown)
         }

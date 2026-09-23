@@ -1,7 +1,7 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::deleted_message::{Response::*, *};
-use types::{MessageContent, OCResult, UserIdAndPrincipal};
+use types::{MessageContent, OCResult};
 
 #[query(msgpack = true)]
 fn deleted_message(args: Args) -> Response {
@@ -12,12 +12,10 @@ fn deleted_message(args: Args) -> Response {
 }
 
 fn deleted_message_impl(args: Args, state: &RuntimeState) -> OCResult<MessageContent> {
-    let user_id = state.get_caller_user_id()?;
+    let user = state.get_caller_user()?;
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
 
-    channel.chat.deleted_message(
-        UserIdAndPrincipal::new(user_id, state.env.caller()),
-        args.thread_root_message_index,
-        args.message_id,
-    )
+    channel
+        .chat
+        .deleted_message(user, args.thread_root_message_index, args.message_id)
 }

@@ -3,7 +3,7 @@ use crate::read_state;
 use canister_api_macros::query;
 use community_canister::channel_summary::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{CommunityCanisterChannelSummary, OCResult, UserIdAndPrincipal};
+use types::{CommunityCanisterChannelSummary, OCResult};
 
 #[query(msgpack = true)]
 fn channel_summary(args: Args) -> Response {
@@ -21,7 +21,7 @@ fn summary_impl(args: Args, state: &RuntimeState) -> OCResult<CommunityCanisterC
     let user_id = state.data.members.lookup_user_id(caller);
 
     match channel.summary(
-        user_id.map(|u| UserIdAndPrincipal::new(u, caller)),
+        user_id.map(|u| state.member_user(u)),
         state.data.is_public.value,
         &state.data.members,
     ) {

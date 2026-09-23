@@ -3,7 +3,7 @@ use crate::model::channels::ChannelUpdates;
 use crate::read_state;
 use canister_api_macros::query;
 use community_canister::channel_summary_updates::{Response::*, *};
-use types::{OCResult, UserIdAndPrincipal};
+use types::OCResult;
 
 #[query(msgpack = true)]
 fn channel_summary_updates(args: Args) -> Response {
@@ -24,7 +24,7 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Re
 
     Ok(
         match channel.summary_updates(
-            user_id.map(|u| UserIdAndPrincipal::new(u, caller)),
+            user_id.map(|u| state.member_user(u)),
             args.updates_since,
             state.data.is_public.value,
             &state.data.members,

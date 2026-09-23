@@ -1,14 +1,13 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::process_expire_member_actions;
 use crate::{RuntimeState, mutate_state};
-use candid::Principal;
 use gated_groups::{CheckGateArgs, check_if_passes_gate_synchronously};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
 use std::time::Duration;
 use std::{cell::Cell, mem};
 use tracing::trace;
-use types::{AccessGateExpiryBehaviour, Milliseconds, UserIdAndPrincipal};
+use types::{AccessGateExpiryBehaviour, Milliseconds};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -66,8 +65,7 @@ fn run() {
 
             if matches!(expiry_gate_type, AccessGateExpiryBehaviour::UserLookup) {
                 let mut check_gate_args = CheckGateArgs {
-                    // The member's principal isn't known here
-                    user: UserIdAndPrincipal::new(member.user_id, Principal::anonymous()),
+                    user: state.member_user(member.user_id),
                     diamond_membership_expires_at: None,
                     this_canister: state.env.canister_id(),
                     is_unique_person: false,

@@ -7,7 +7,6 @@ use ic_principal::Principal;
 use std::cmp::max;
 use types::{
     AccessGateConfig, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, OptionUpdate, TimestampMillis,
-    UserIdAndPrincipal,
 };
 
 #[query(msgpack = true)]
@@ -94,7 +93,7 @@ fn summary_updates_impl(
     let mut channels_added = Vec::new();
     let mut channels_updated = Vec::new();
 
-    let user = member.as_ref().map(|m| UserIdAndPrincipal::new(m.user_id, caller));
+    let user = member.as_ref().map(|m| m.user());
 
     for channel in channels_with_updates {
         if channel.date_imported.is_some_and(|ts| ts > updates_since) {
