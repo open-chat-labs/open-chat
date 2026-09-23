@@ -37,7 +37,6 @@ generate_msgpack_update_call!(remove_participant);
 generate_msgpack_update_call!(report_message);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(send_message_v2);
-generate_msgpack_update_call!(send_message_with_transfer);
 generate_update_call!(start_video_call_v2);
 generate_msgpack_update_call!(tip_message);
 generate_msgpack_update_call!(toggle_mute_notifications);

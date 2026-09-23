@@ -3,7 +3,7 @@ use ts_export::ts_export;
 use types::{MessageId, MessageIndex, PendingCryptoTransaction, UnitResult};
 
 // Tips a message with a transfer the caller makes from their own funds to the wallet of the
-// message's sender. As with `send_message_with_transfer`, the transfer must be ICRC2 or Certified,
+// message's sender. As with messages holding transfers, the transfer must be ICRC2 or Certified,
 // a certified tip carrying the memo `ledger_utils::certified::required_memo` builds from OC_TIP and
 // the group's canister id.
 #[ts_export(group, tip_message)]
@@ -15,6 +15,7 @@ pub struct Args {
     pub decimals: u8,
     pub username: String,
     pub display_name: Option<String>,
+    pub new_achievement: bool,
 }
 
 pub type Response = UnitResult;

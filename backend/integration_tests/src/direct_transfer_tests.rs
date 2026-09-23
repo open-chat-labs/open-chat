@@ -1,5 +1,5 @@
 // Messages holding transfers, and tips, sent to a Group or Community directly rather than via the
-// sender's User canister. The chat canister never pays from its own account on a member's behalf,
+// sender's User canister, which the chat canister makes the transfers for. The chat canister never pays from its own account on a member's behalf,
 // so these tests pull the sender's funds via ICRC-2, against an approval made under the sender's
 // own spender subaccount.
 
@@ -490,7 +490,7 @@ impl DirectChat {
     ) -> Result<EventIndex, OCError> {
         match self {
             DirectChat::Group(group_id) => {
-                use group_canister::send_message_with_transfer::*;
+                use group_canister::send_message_v2::*;
                 let args = Args {
                     thread_root_message_index: None,
                     message_id,
@@ -499,19 +499,23 @@ impl DirectChat {
                     sender_display_name: None,
                     replies_to: None,
                     mentioned: Vec::new(),
+                    forwarding: false,
                     block_level_markdown: false,
                     rules_accepted: None,
                     message_filter_failed: None,
                     new_achievement: false,
                     og_previews: Vec::new(),
                 };
-                match client::group::send_message_with_transfer(env, sender.principal, (*group_id).into(), &args) {
-                    Response::Success(result) => Ok(result.event_index),
+                match client::group::send_message_v2(env, sender.principal, (*group_id).into(), &args) {
+                    Response::Success(result) => {
+                        assert!(result.transfer.is_some());
+                        Ok(result.event_index)
+                    }
                     Response::Error(error) => Err(error),
                 }
             }
             DirectChat::Channel(community_id, channel_id) => {
-                use community_canister::send_message_with_transfer::*;
+                use community_canister::send_message::*;
                 let args = Args {
                     channel_id: *channel_id,
                     thread_root_message_index: None,
@@ -521,6 +525,7 @@ impl DirectChat {
                     sender_display_name: None,
                     replies_to: None,
                     mentioned: Vec::new(),
+                    forwarding: false,
                     block_level_markdown: false,
                     community_rules_accepted: None,
                     channel_rules_accepted: None,
@@ -528,8 +533,11 @@ impl DirectChat {
                     new_achievement: false,
                     og_previews: Vec::new(),
                 };
-                match client::community::send_message_with_transfer(env, sender.principal, (*community_id).into(), &args) {
-                    Response::Success(result) => Ok(result.event_index),
+                match client::community::send_message(env, sender.principal, (*community_id).into(), &args) {
+                    Response::Success(result) => {
+                        assert!(result.transfer.is_some());
+                        Ok(result.event_index)
+                    }
                     Response::Error(error) => Err(error),
                 }
             }
@@ -555,6 +563,7 @@ impl DirectChat {
                     decimals: 8,
                     username: sender.username(),
                     display_name: None,
+                    new_achievement: true,
                 },
             ),
             DirectChat::Channel(community_id, channel_id) => client::community::tip_message(
@@ -569,6 +578,7 @@ impl DirectChat {
                     decimals: 8,
                     username: sender.username(),
                     display_name: None,
+                    new_achievement: true,
                 },
             ),
         }

@@ -120,8 +120,6 @@ impl RuntimeState {
         Ok(self.member_user(user_id))
     }
 
-    // The user and their principal, as recorded on their member record, or with the principal
-    // anonymous if they aren't a member
     // The member's wallet, for paying them. Only a user sharing a MultiUser canister with others
     // holds their funds under the principal held for them, everyone else under their user id.
     pub fn member_wallet(&self, user_id: UserId) -> OCResult<UserIdAndPrincipal> {
@@ -136,6 +134,8 @@ impl RuntimeState {
         }
     }
 
+    // The user and their principal, as recorded on their member record, or with the principal
+    // anonymous if they aren't a member
     pub fn member_user(&self, user_id: UserId) -> UserIdAndPrincipal {
         self.data
             .members

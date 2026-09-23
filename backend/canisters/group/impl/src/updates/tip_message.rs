@@ -6,7 +6,7 @@ use constants::MEMO_TIP;
 use group_canister::tip_message::*;
 use group_community_common::MemberTransfer;
 use oc_error_codes::OCErrorCode;
-use types::{Caller, CryptoTransaction, OCResult, UserId, icrc2};
+use types::{Achievement, Caller, CryptoTransaction, OCResult, UserId, icrc2};
 
 #[update(msgpack = true)]
 #[trace]
@@ -15,27 +15,37 @@ async fn tip_message(args: Args) -> Response {
 }
 
 async fn tip_message_impl(args: Args) -> OCResult {
-    let TipToMake {
-        user_id,
-        c2c_args,
-        transfer,
-    } = match mutate_state(|state| prepare(args, state))? {
+    let new_achievement = args.new_achievement;
+
+    let user_id = match mutate_state(|state| prepare(args, state))? {
         // The transfer was certified, so the message has been tipped already
-        PrepareResult::Tipped => return Ok(()),
-        PrepareResult::Icrc2(tip) => *tip,
+        PrepareResult::Tipped(user_id) => user_id,
+        PrepareResult::Icrc2(tip) => {
+            let TipToMake {
+                user_id,
+                c2c_args,
+                transfer,
+            } = *tip;
+
+            match ledger_utils::icrc2::process_transaction_for_user(transfer, user_id).await {
+                Ok(Ok(_)) => {}
+                Ok(Err((_, error))) => return Err(error),
+                Err(error) => return Err(error.into()),
+            }
+
+            mutate_state(|state| tip_message_with_completed_transfer(user_id, c2c_args, state))?;
+            user_id
+        }
     };
 
-    match ledger_utils::icrc2::process_transaction_for_user(transfer, user_id).await {
-        Ok(Ok(_)) => {}
-        Ok(Err((_, error))) => return Err(error),
-        Err(error) => return Err(error.into()),
+    if new_achievement {
+        mutate_state(|state| state.notify_user_of_achievement(user_id, Achievement::TippedMessage, state.env.now()));
     }
-
-    mutate_state(|state| tip_message_with_completed_transfer(user_id, c2c_args, state))
+    Ok(())
 }
 
 enum PrepareResult {
-    Tipped,
+    Tipped(UserId),
     Icrc2(Box<TipToMake>),
 }
 
@@ -95,7 +105,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
             )?;
             tip_message_with_completed_transfer(user_id, c2c_args, state)?;
             state.data.certified_transfers.mark_used(&completed, now);
-            Ok(PrepareResult::Tipped)
+            Ok(PrepareResult::Tipped(user_id))
         }
     }
 }

@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Accept a `user_id` in `c2c_leave_community` and `c2c_delete_community`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))
 - Include the call facts (message id, call type, `audio_only`, start time, whether the channel is public, member count) in the notification when a call starts ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
-- Add `send_message_with_transfer` and `tip_message`, so members can send crypto, prizes and P2P swaps, and tip messages, in a channel directly, via ICRC2 transfers or certified transfers they have already made ([#9514](https://github.com/open-chat-labs/open-chat/pull/9514))
+- Let members send crypto, prizes and P2P swaps via `send_message`, and tip messages via a new `tip_message`, in a channel directly rather than via their User canister, using ICRC2 transfers or certified transfers they have already made ([#9514](https://github.com/open-chat-labs/open-chat/pull/9514))
 
 ### Changed
 

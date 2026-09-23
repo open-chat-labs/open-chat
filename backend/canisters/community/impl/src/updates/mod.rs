@@ -56,7 +56,6 @@ pub mod remove_member_from_channel;
 pub mod remove_reaction;
 pub mod report_message;
 pub mod send_message;
-pub mod send_message_with_transfer;
 pub mod set_member_display_name;
 pub mod set_video_call_presence;
 pub mod start_video_call;

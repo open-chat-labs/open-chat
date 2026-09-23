@@ -8,7 +8,7 @@
 //!   ledger's certified reply to that call.
 
 use candid::Principal;
-use constants::{MEMO_P2P_SWAP_CREATE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT};
+use constants::{MEMO_P2P_SWAP_CREATE, MEMO_PRIZE_REFUND, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT};
 use escrow_canister::deposit_subaccount;
 use ledger_utils::certified::{MAX_TRANSFER_AGE, required_memo, verify_certified_transfer};
 use oc_error_codes::{OCError, OCErrorCode};
@@ -120,6 +120,28 @@ pub fn validate_prize(prize: &PrizeContentInitial, thread_root_message_index: Op
         return Err(OCErrorCode::InvalidRequest.with_message("Transaction amount must equal total prizes + total fees"));
     }
     Ok(())
+}
+
+// The refund, less the fee for making it, of a prize whose funds were pulled from `from` but whose
+// message then couldn't be sent. The funds are held in the chat canister's own account, so without
+// this they would be left there.
+pub fn prize_refund(
+    transfer: &CompletedCryptoTransaction,
+    from: icrc1::Account,
+    now: TimestampMillis,
+) -> Option<PendingCryptoTransaction> {
+    let fee = transfer.fee();
+    let amount = transfer.units().checked_sub(fee).filter(|amount| *amount > 0)?;
+
+    Some(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+        ledger: transfer.ledger_canister_id(),
+        token_symbol: transfer.token_symbol().to_string(),
+        amount,
+        to: from,
+        fee,
+        memo: Some(MEMO_PRIZE_REFUND.to_vec().into()),
+        created: now * NANOS_PER_MILLISECOND,
+    }))
 }
 
 // A P2P swap a member is creating, which is funded from their own funds via ICRC2
