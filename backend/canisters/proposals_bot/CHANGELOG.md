@@ -15,12 +15,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
-- Record the principal of the user who submitted a proposal, and refund them at their wallet, which for a user in a MultiUser canister is their principal's account
+- Record the principal of the user who submitted a proposal, and refund them at their wallet, which for a user in a MultiUser canister is their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 
 ### Fixed
 
-- Detect an already pushed proposal via `MessageIdAlreadyExists` rather than the error message ([#9124](https://github.com/open-chat-labs/open-chat/pull/9124))
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+- Detect an already pushed proposal via `MessageIdAlreadyExists` rather than the error message ([#9124](https://github.com/open-chat-labs/open-chat/pull/9124))
 
 ## [[2.0.1957](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1957-proposals_bot)] - 2026-01-16
 
@@ -297,8 +297,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Support staking a neuron for any SNS to then use to submit proposals ([#4631](https://github.com/open-chat-labs/open-chat/pull/4631))
 - Add `permissions_v2` when creating group ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+- Support staking a neuron for any SNS to then use to submit proposals ([#4631](https://github.com/open-chat-labs/open-chat/pull/4631))
 
 ## [[2.0.891](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.891-proposals_bot)] - 2023-10-19
 
