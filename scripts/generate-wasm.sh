@@ -18,11 +18,13 @@ then
 fi
 
 # Install ic-wasm before RUSTFLAGS is set below: those flags are for the wasm target only, and
-# the `getrandom_backend="custom"` cfg in particular makes a native build fail to link.
-if ! cargo install --list | grep -Fxq "ic-wasm v0.9.11:"
+# the `getrandom_backend="custom"` cfg in particular makes a native build fail to link. This checks
+# the binary itself rather than `cargo install --list`, since the Dockerfile installs the release
+# binary directly; `--force` then replaces any other version there, however it was installed.
+if [ "$(${CARGO_HOME}/bin/ic-wasm --version 2>/dev/null)" != "ic-wasm 0.9.11" ]
 then
   echo Installing ic-wasm
-  cargo install --version 0.9.11 ic-wasm || exit 1
+  cargo install --force --version 0.9.11 ic-wasm || exit 1
 fi
 
 echo Building package $PACKAGE
