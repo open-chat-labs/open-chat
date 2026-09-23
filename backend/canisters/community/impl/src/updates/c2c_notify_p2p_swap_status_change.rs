@@ -75,11 +75,19 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
             }
             SwapStatus::Completed(c) => {
                 let now = state.env.now();
+                // Escrow identifies the acceptor by their wallet's owner, which is their user id if
+                // they are alone in their canister, otherwise their principal. If they have since
+                // left, only the former can be resolved.
+                let accepted_by = state
+                    .data
+                    .members
+                    .lookup_user_id(c.accepted_by)
+                    .unwrap_or(c.accepted_by.into());
                 result = channel
                     .chat
                     .events
                     .complete_p2p_swap(
-                        c.accepted_by.into(),
+                        accepted_by,
                         m.thread_root_message_index,
                         m.message_id,
                         c.token0_transfer_out.block_index,
