@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `set_call_push_enabled` and `call_push_enabled` for platform operators, fanning the value out to every LocalUserIndex and seeding new ones ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
+- One-off `post_upgrade` job which queues the cycles held by previously deleted users' canisters to be refunded, running only once however many times the canister is upgraded. The LocalUserIndexes must be upgraded first (#TBD)
 
 ### Changed
 
