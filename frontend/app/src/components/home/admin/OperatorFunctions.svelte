@@ -88,6 +88,8 @@
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     let openAiKeySet = $state(false);
+    // The native call push kill switch (#9456): the toggle shows what the user index holds
+    let callPushEnabled = $state(false);
     let mediaScanEnabled = $state(false);
     let mediaScanScanners = $state("");
     let currentMediaScan = $state("");
@@ -117,7 +119,42 @@
         );
     }
 
+    function refreshCallPush() {
+        client
+            .callPushEnabled()
+            .then((enabled) => (callPushEnabled = enabled))
+            .catch(() => undefined);
+    }
+
+    // Flips the switch on the user index, which fans it out to every local user index
+    function applyCallPush(): Promise<void> {
+        busy.add(20);
+        return client
+            .setCallPushEnabled(callPushEnabled)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast(
+                        i18nKey(`Native call push ${callPushEnabled ? "enabled" : "disabled"}`),
+                    );
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey(
+                            `Failed to update native call push: ${resp.message ?? `code ${resp.code}`}`,
+                        ),
+                    );
+                }
+            })
+            .catch((err) =>
+                toastStore.showFailureToast(i18nKey("Failed to update native call push"), err),
+            )
+            .finally(() => {
+                busy.delete(20);
+                refreshCallPush();
+            });
+    }
+
     onMount(() => {
+        refreshCallPush();
         // Pre-fill the moderation config so the forms show what is actually set rather than
         // being write-only
         client.moderationConfig().then((config) => {
@@ -643,7 +680,9 @@
 
 {#snippet proposedMediaScanView()}
     <Toggle small id="media-scan-enabled" bind:checked={mediaScanEnabled} />
-    <Input bind:value={mediaScanScanners} placeholder={i18nKey("Comma separated scanner principals")} />
+    <Input
+        bind:value={mediaScanScanners}
+        placeholder={i18nKey("Comma separated scanner principals")} />
 {/snippet}
 
 {#snippet proposedOpenAIKey()}
@@ -944,6 +983,19 @@
                 loading={busy.has(11)}
                 onClick={() => setVaultLegalHold(false)}>Clear hold</Button>
         </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Native call push</div>
+        <div class="name-value">
+            <div class="label">Enabled:</div>
+            <div class="value">
+                <Toggle small id="call-push-enabled" bind:checked={callPushEnabled} />
+            </div>
+        </div>
+        <Button tiny loading={busy.has(20)} disabled={busy.has(20)} onClick={applyCallPush}>
+            Apply
+        </Button>
     </section>
 
     <section class="operator-function">

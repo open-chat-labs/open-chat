@@ -28,6 +28,7 @@ generate_msgpack_update_call!(invite_users_to_channel);
 generate_msgpack_update_call!(invite_users_to_community);
 generate_msgpack_update_call!(invite_users_to_group);
 generate_msgpack_update_call!(join_channel);
+generate_msgpack_update_call!(set_call_push_enabled);
 generate_msgpack_update_call!(join_community);
 generate_msgpack_update_call!(join_group);
 generate_msgpack_update_call!(pay_for_premium_item);

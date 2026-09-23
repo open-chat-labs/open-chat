@@ -2631,6 +2631,20 @@ impl ChatEvents {
         }
     }
 
+    // The users in the named call. Empty if there is no such call.
+    pub fn video_call_participants_of(&self, message_id: MessageId) -> Vec<UserId> {
+        self.main_events_reader()
+            .message_internal(message_id.into())
+            .and_then(|m| {
+                if let MessageContentInternal::VideoCall(vc) = &m.content {
+                    Some(vc.participants.keys().copied().collect())
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_default()
+    }
+
     pub fn video_call_in_progress(&self, caller: Option<UserId>) -> Option<VideoCall> {
         let message_index = self.video_call_in_progress.as_ref()?.message_index;
         let event = self.main_events_reader().message_event_internal(message_index.into())?;

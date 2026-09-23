@@ -1489,6 +1489,12 @@ export const SuspensionDetails = /* @__PURE__ */ Type.Object({
     suspended_by: UserId,
 });
 
+export type CallDismissalKind = Static<typeof CallDismissalKind>;
+export const CallDismissalKind = /* @__PURE__ */ Type.Union([
+    Type.Literal("Ended"),
+    Type.Literal("AnsweredElsewhere"),
+]);
+
 export type TSBytes = Static<typeof TSBytes>;
 export const TSBytes = /* @__PURE__ */ Type.Union([Type.Uint8Array(), Type.Array(Type.Number())]);
 
@@ -1510,6 +1516,16 @@ export const OptionUpdateString = /* @__PURE__ */ Type.Union(
     ],
     { default: "NoChange" },
 );
+
+export type CallFacts = Static<typeof CallFacts>;
+export const CallFacts = /* @__PURE__ */ Type.Object({
+    id: MessageId,
+    ct: VideoCallType,
+    ao: Type.Optional(Type.Boolean()),
+    st: Type.BigInt(),
+    pb: Type.Boolean(),
+    mc: Type.Number(),
+});
 
 export type DecimalParam = Static<typeof DecimalParam>;
 export const DecimalParam = /* @__PURE__ */ Type.Object({
@@ -2318,6 +2334,11 @@ export const UserIndexAuthorityReportTokenArgs = /* @__PURE__ */ Type.Object({
     ooh_call_acknowledged: Type.Boolean(),
 });
 
+export type UserIndexSetCallPushEnabledArgs = Static<typeof UserIndexSetCallPushEnabledArgs>;
+export const UserIndexSetCallPushEnabledArgs = /* @__PURE__ */ Type.Object({
+    enabled: Type.Boolean(),
+});
+
 export type UserIndexPayForDiamondMembershipSuccessResult = Static<
     typeof UserIndexPayForDiamondMembershipSuccessResult
 >;
@@ -2492,6 +2513,11 @@ export const UserIndexClearAuthorityReportAttemptAuthorityReportFailure =
             }),
         }),
     ]);
+
+export type UserIndexCallPushEnabledResponse = Static<typeof UserIndexCallPushEnabledResponse>;
+export const UserIndexCallPushEnabledResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Boolean(),
+});
 
 export type UserIndexSubmitProofOfUniquePersonhoodResponse = Static<
     typeof UserIndexSubmitProofOfUniquePersonhoodResponse
@@ -5458,6 +5484,15 @@ export const GroupRulesChanged = /* @__PURE__ */ Type.Object({
     changed_by: UserId,
 });
 
+export type GroupCallDismissedNotification = Static<typeof GroupCallDismissedNotification>;
+export const GroupCallDismissedNotification = /* @__PURE__ */ Type.Object({
+    c: ChatId,
+    id: MessageId,
+    k: CallDismissalKind,
+    pb: Type.Boolean(),
+    mc: Type.Number(),
+});
+
 export type GroupCreated = Static<typeof GroupCreated>;
 export const GroupCreated = /* @__PURE__ */ Type.Object({
     name: Type.String(),
@@ -5729,6 +5764,7 @@ export const DirectMessageNotification = /* @__PURE__ */ Type.Object({
     fn: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
+    vc: Type.Optional(CallFacts),
 });
 
 export type CompletedCryptoTransactionNNS = Static<typeof CompletedCryptoTransactionNNS>;
@@ -6256,6 +6292,13 @@ export const ReplyContext = /* @__PURE__ */ Type.Object({
     event_index: EventIndex,
 });
 
+export type DirectCallDismissedNotification = Static<typeof DirectCallDismissedNotification>;
+export const DirectCallDismissedNotification = /* @__PURE__ */ Type.Object({
+    u: UserId,
+    id: MessageId,
+    k: CallDismissalKind,
+});
+
 export type EncryptedContent = Static<typeof EncryptedContent>;
 export const EncryptedContent = /* @__PURE__ */ Type.Object({
     content_type: EncryptedMessageContentType,
@@ -6313,6 +6356,7 @@ export const ChannelMessageNotification = /* @__PURE__ */ Type.Object({
     ca: Type.Optional(Type.BigInt()),
     cha: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
+    vc: Type.Optional(CallFacts),
 });
 
 export type GroupMembershipUpdates = Static<typeof GroupMembershipUpdates>;
@@ -6456,6 +6500,7 @@ export const GroupMessageNotification = /* @__PURE__ */ Type.Object({
     fn: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
+    vc: Type.Optional(CallFacts),
 });
 
 export type OptionUpdateDocument = Static<typeof OptionUpdateDocument>;
@@ -7956,6 +8001,12 @@ export const UserNotificationPayload = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         ct: ChannelMessageTipped,
+    }),
+    Type.Object({
+        dcd: DirectCallDismissedNotification,
+    }),
+    Type.Object({
+        gcd: GroupCallDismissedNotification,
     }),
 ]);
 

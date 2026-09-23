@@ -287,6 +287,7 @@ fn process_send_message_result(
             community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
             channel_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
+            call: None,
         });
         state.push_notification(Some(sender), result.users_to_notify, notification);
 

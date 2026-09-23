@@ -60,6 +60,7 @@ pub enum UserIndexEvent {
     SetModerationReferralConfig(SetModerationReferralConfig),
     SetMediaScanConfig(types::MediaScanConfig),
     SetMultiUserCanistersEnabled(bool),
+    SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
     RefundDeletedUserCycles(Vec<CanisterId>),
 }

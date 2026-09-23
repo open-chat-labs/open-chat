@@ -6,6 +6,7 @@ generate_msgpack_query_call!(notification_canisters);
 generate_msgpack_query_call!(subscription_exists);
 
 // Updates
+generate_msgpack_update_call!(add_fcm_token);
 generate_update_call!(notify_local_index_added);
 generate_msgpack_update_call!(mark_subscription_active);
 generate_msgpack_update_call!(push_subscription);

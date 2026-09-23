@@ -530,6 +530,8 @@ export type WorkerRequest =
     | DailyPuzzleGetConfig
     | DailyPuzzleSetEnabled
     | DailyPuzzleRegenerateToday
+    | CallPushEnabled
+    | SetCallPushEnabled
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -649,6 +651,14 @@ type DailyPuzzleGetConfig = {
 
 type DailyPuzzleSetEnabled = {
     kind: "dailyPuzzleSetEnabled";
+    enabled: boolean;
+};
+// The native call push kill switch (#9456), platform operators only
+type CallPushEnabled = {
+    kind: "callPushEnabled";
+};
+type SetCallPushEnabled = {
+    kind: "setCallPushEnabled";
     enabled: boolean;
 };
 type DailyPuzzleRegenerateToday = {
@@ -2994,6 +3004,10 @@ export type WorkerResult<T> = T extends Init
     : T extends DailyPuzzleSetEnabled
     ? Success | OCError
     : T extends DailyPuzzleRegenerateToday
+    ? Success | OCError
+    : T extends CallPushEnabled
+    ? boolean
+    : T extends SetCallPushEnabled
     ? Success | OCError
     : T extends SetPremiumItemCost
     ? void
