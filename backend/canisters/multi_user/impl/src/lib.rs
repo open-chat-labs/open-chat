@@ -8,6 +8,7 @@ use canister_timer_jobs::TimerJobs;
 use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChat;
 use event_store_types::EventBuilder;
+use ledger_utils::certified::CertifiedTransfers;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
@@ -625,6 +626,9 @@ struct Data {
     pub known_multi_user_canisters: HashSet<CanisterId>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    // The certified transfers users have sent messages with, so that none is used twice
+    #[serde(default)]
+    pub certified_transfers: CertifiedTransfers,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -656,6 +660,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
+            certified_transfers: CertifiedTransfers::default(),
             rng_seed,
             test_mode,
         }

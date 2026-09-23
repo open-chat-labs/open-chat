@@ -7,12 +7,14 @@ use types::{
     UserId, UserIdAndPrincipal,
 };
 pub use user_accounts::{deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
+pub use user_transfers::UserTransfer;
 
 pub mod certified;
 pub mod icrc1;
 pub mod icrc2;
 pub mod nns;
 mod user_accounts;
+mod user_transfers;
 
 pub fn create_pending_transaction(
     token_symbol: String,

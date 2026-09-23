@@ -6,9 +6,11 @@ use ic_certification::{Certificate, LookupResult};
 use ic_representation_independent_hash::{Value, representation_independent_hash};
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use oc_error_codes::{OCError, OCErrorCode};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use types::certified::{CertifiedCall, PendingCryptoTransaction};
 use types::icrc1::{Account, CompletedCryptoTransaction};
-use types::{CanisterId, TimestampMillis};
+use types::{CanisterId, OCResult, TimestampMillis, TimestampNanos};
 
 const TRANSFER_METHOD_NAME: &str = "icrc1_transfer";
 
@@ -174,6 +176,47 @@ fn extract_block_index(certificate: &Certificate, request_id: &[u8; 32]) -> Resu
     }
 }
 
+// The certified transfers which have been used, so that none is used twice. Each is held until it
+// is too old to pass verification anyway, which is only a few minutes.
+#[derive(Serialize, Deserialize, Default)]
+pub struct CertifiedTransfers {
+    // (Ledger, block index) -> when the transfer can be forgotten
+    used: BTreeMap<(CanisterId, u64), TimestampNanos>,
+}
+
+impl CertifiedTransfers {
+    // Verifies a certified transfer `caller` made for use in this canister, and that it hasn't been
+    // used already. It is only recorded as used by `mark_used`, which must be called in the same
+    // message execution once the transfer has been used.
+    pub fn verify(
+        &self,
+        transaction: PendingCryptoTransaction,
+        caller: Principal,
+        memo_prefix: &[u8],
+        this_canister_id: CanisterId,
+        ic_root_key: &[u8],
+        now: TimestampMillis,
+    ) -> OCResult<CompletedCryptoTransaction> {
+        let memo = required_memo(memo_prefix, this_canister_id);
+        let completed = verify_certified_transfer(transaction, caller, &memo, ic_root_key, now)?;
+
+        if self.used.contains_key(&(completed.ledger, completed.block_index)) {
+            Err(OCErrorCode::InvalidRequest.with_message("Transfer has already been used"))
+        } else {
+            Ok(completed)
+        }
+    }
+
+    pub fn mark_used(&mut self, transaction: &CompletedCryptoTransaction, now: TimestampMillis) {
+        let now_nanos = now * NANOS_PER_MILLISECOND;
+        self.used.retain(|_, expiry| *expiry >= now_nanos);
+        self.used.insert(
+            (transaction.ledger, transaction.block_index),
+            transaction.created + MAX_TRANSFER_AGE * NANOS_PER_MILLISECOND,
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -187,6 +230,39 @@ mod tests {
     const NOW_NANOS: u64 = NOW * NANOS_PER_MILLISECOND;
     const DER_PREFIX: &[u8; 37] = b"\x30\x81\x82\x30\x1d\x06\x0d\x2b\x06\x01\x04\x01\x82\xdc\x7c\x05\x03\x01\x02\x01\x06\x0c\x2b\x06\x01\x04\x01\x82\xdc\x7c\x05\x03\x02\x01\x03\x61\x00";
     const LEDGER: [u8; 10] = [0, 0, 0, 0, 2, 0, 0, 5, 1, 1];
+
+    fn completed(block_index: u64, created: TimestampMillis) -> CompletedCryptoTransaction {
+        let account = Account {
+            owner: Principal::from_slice(&[1; 29]),
+            subaccount: None,
+        };
+        CompletedCryptoTransaction {
+            ledger: CanisterId::from_slice(&LEDGER),
+            token_symbol: "TEST".to_string(),
+            amount: 1,
+            from: account.into(),
+            to: account.into(),
+            fee: 0,
+            memo: None,
+            created: created * NANOS_PER_MILLISECOND,
+            block_index,
+        }
+    }
+
+    #[test]
+    fn transfers_are_held_until_too_old_to_verify() {
+        let mut transfers = CertifiedTransfers::default();
+        transfers.mark_used(&completed(1, NOW), NOW);
+        transfers.mark_used(&completed(2, NOW + 1), NOW + 1);
+
+        // At exactly `MAX_TRANSFER_AGE` the first transfer can still pass verification, so is kept
+        transfers.mark_used(&completed(3, NOW + MAX_TRANSFER_AGE), NOW + MAX_TRANSFER_AGE);
+        assert!(transfers.used.contains_key(&(completed(1, NOW).ledger, 1)));
+
+        transfers.mark_used(&completed(4, NOW + MAX_TRANSFER_AGE + 1), NOW + MAX_TRANSFER_AGE + 1);
+        let held: Vec<_> = transfers.used.keys().map(|(_, block_index)| *block_index).collect();
+        assert_eq!(held, vec![2, 3, 4]);
+    }
 
     // The example given in the IC interface spec
     #[test]
