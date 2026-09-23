@@ -339,15 +339,18 @@ fn install_bot_rejects_location_of_wrong_type() {
         );
     }
 
+    // The user's own direct chat is accepted
+    let location = BotInstallationLocation::User(user.user_id.into());
     client::local_user_index::happy_path::install_bot(
         env,
         user.principal,
         local_user_index,
-        BotInstallationLocation::User(user.user_id.into()),
+        location,
         bot_id,
         BotPermissions::text_only(),
         None,
     );
+    client::local_user_index::happy_path::uninstall_bot(env, user.principal, local_user_index, location, bot_id);
 }
 
 #[test]
