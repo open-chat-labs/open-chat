@@ -1374,17 +1374,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `MemoryManager` so that we can use stable memory at run time ([#3040](https://github.com/open-chat-labs/open-chat/pull/3040))
 - Increase pinned chats limit ([#2998](https://github.com/open-chat-labs/open-chat/pull/2998))
 
-### Fixed
-
-- One time job to fix incorrect ICP transaction hashes ([#3035](https://github.com/open-chat-labs/open-chat/pull/3035))
-- Fix 'double borrowing' error when hard deleting files ([#3051](https://github.com/open-chat-labs/open-chat/pull/3051))
-
 ### Removed
 
 - Removed code only needed for the previous upgrade ([#3003](https://github.com/open-chat-labs/open-chat/pull/3003))
 - Removed `c2c_send_message` ([#3005](https://github.com/open-chat-labs/open-chat/pull/3005))
 - Removed `events_range` ([#3011](https://github.com/open-chat-labs/open-chat/pull/3011))
 - Remove one time fix to user date created ([#2994](https://github.com/open-chat-labs/open-chat/pull/2994))
+
+### Fixed
+
+- One time job to fix incorrect ICP transaction hashes ([#3035](https://github.com/open-chat-labs/open-chat/pull/3035))
+- Fix 'double borrowing' error when hard deleting files ([#3051](https://github.com/open-chat-labs/open-chat/pull/3051))
 
 ## [[2.0.555](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.555-user)] - 2023-01-20
 

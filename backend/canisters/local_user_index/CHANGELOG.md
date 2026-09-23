@@ -20,13 +20,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Queue user events per canister, and send a MultiUser canister's in a single call via the v2 endpoint, while User canisters are still sent theirs via the original endpoint ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
 - Stop filtering out `BotUpdated` events for User canisters, which all now handle them ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
 
-### Fixed
-
-- Don't uninstall a MultiUser canister when deleting one of its users, which would delete every user it holds ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
-
 ### Removed
 
 - Remove the unused `UserPrincipalUpdated` event ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
+
+### Fixed
+
+- Don't uninstall a MultiUser canister when deleting one of its users, which would delete every user it holds ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
 
 ## [[2.0.2059](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2059-local_user_index)] - 2026-09-18
 
@@ -195,13 +195,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.1897](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1897-local_user_index)] - 2025-09-11
 
-### Fix
+### Fixed
 
 - Fix User canister init args for new user creation ([#8606](https://github.com/open-chat-labs/open-chat/pull/8606))
 
 ## [[2.0.1896](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1896-local_user_index)] - 2025-09-11
 
-### Fix
+### Fixed
 
 - Don't trap for unsupported bot data encoding ([#8604](https://github.com/open-chat-labs/open-chat/pull/8604))
 
@@ -639,7 +639,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `StringChat` in `BotCommandClaims` ([#7133](https://github.com/open-chat-labs/open-chat/pull/7133))
 - Handle bot name/definition update ([#7135](https://github.com/open-chat-labs/open-chat/pull/7135))
 
-### Fixes
+### Fixed
 
 - Fix unit of claims expiry ([#7106](https://github.com/open-chat-labs/open-chat/pull/7106))
 - Sync full user details to new LocalUserIndexes ([#7153](https://github.com/open-chat-labs/open-chat/pull/7153))
@@ -676,7 +676,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
 - Include the total cycles topped up ([#7056](https://github.com/open-chat-labs/open-chat/pull/7056))
 
-### Fixes
+### Fixed
 
 - Fixes to `access_token` and `execute_bot_command` ([#7031](https://github.com/open-chat-labs/open-chat/pull/7031))
 

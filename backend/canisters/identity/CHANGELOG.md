@@ -12,25 +12,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.2055](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2055-identity)] - 2026-09-13
 
+### Removed
+
+- Remove the one-off WebAuthn key repair now that it has run in production ([#9323](https://github.com/open-chat-labs/open-chat/pull/9323))
+
 ### Fixed
 
 - Remove WebAuthn keys when a passkey is unlinked or its user deleted, and drop orphaned keys on upgrade ([#9324](https://github.com/open-chat-labs/open-chat/pull/9324))
 - Decrement the originating canister count when an auth principal is unlinked ([#9324](https://github.com/open-chat-labs/open-chat/pull/9324))
 
-### Removed
-
-- Remove the one-off WebAuthn key repair now that it has run in production ([#9323](https://github.com/open-chat-labs/open-chat/pull/9323))
-
 ## [[2.0.2053](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2053-identity)] - 2026-09-07
-
-### Fixed
-
-- Repair WebAuthn keys stored with trailing extension bytes and remap their auth principals ([#9279](https://github.com/open-chat-labs/open-chat/pull/9279))
 
 ### Changed
 
 - Validate WebAuthn keys at registration and reject any the IC would not accept ([#9280](https://github.com/open-chat-labs/open-chat/pull/9280))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
+
+### Fixed
+
+- Repair WebAuthn keys stored with trailing extension bytes and remap their auth principals ([#9279](https://github.com/open-chat-labs/open-chat/pull/9279))
 
 ## [[2.0.1979](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1979-identity)] - 2026-04-10
 

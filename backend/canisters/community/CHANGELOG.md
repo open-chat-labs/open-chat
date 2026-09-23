@@ -30,15 +30,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Queue user events per canister, and send a MultiUser canister's in a single call via the v2 endpoint, while User canisters are still sent theirs via the original endpoint ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
 - Merge `get_calling_member_acting_as` into `get_calling_member`, which takes the optional user being acted for ([#9501](https://github.com/open-chat-labs/open-chat/pull/9501))
 
+### Removed
+
+- Remove the unused `c2c_update_user_principal` endpoint ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
+
 ### Fixed
 
 - Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
 - Mark activity for the voter only rather than the whole chat when recording proposal votes, since the vote is private ([#9490](https://github.com/open-chat-labs/open-chat/pull/9490))
 - Apply the caller's min visible event index when updating messages, so that votes, reactions and tips cannot target messages in hidden history ([#9490](https://github.com/open-chat-labs/open-chat/pull/9490))
-
-### Removed
-
-- Remove the unused `c2c_update_user_principal` endpoint ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
 
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 

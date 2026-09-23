@@ -144,13 +144,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `set_internal_moderation_channel` endpoint for platform operators ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 - Pass in `expected_claim_type` when verifying JWT claims ([#9102](https://github.com/open-chat-labs/open-chat/pull/9102))
 
-### Fixed
-
-- Bump `date_updated` on suspension so clients receive the suspended flag ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
-
 ### Removed
 
 - Remove deprecated `OpenChatBotMessage` event type ([#9032](https://github.com/open-chat-labs/open-chat/pull/9032))
+
+### Fixed
+
+- Bump `date_updated` on suspension so clients receive the suspended flag ([#9092](https://github.com/open-chat-labs/open-chat/pull/9092))
 
 ## [[2.0.1986](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1986-user_index)] - 2026-05-29
 
