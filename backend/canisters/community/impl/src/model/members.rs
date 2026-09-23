@@ -51,6 +51,7 @@ impl CommunityMembers {
     ) -> CommunityMembers {
         let member = CommunityMemberInternal {
             user_id: creator_user_id,
+            principal: creator_principal,
             date_added: now,
             role: CommunityRole::Owner,
             suspended: Timestamped::default(),
@@ -108,6 +109,7 @@ impl CommunityMembers {
 
             let member = CommunityMemberInternal {
                 user_id,
+                principal,
                 date_added: now,
                 role: CommunityRole::Member,
                 suspended: Timestamped::default(),
@@ -355,7 +357,28 @@ impl CommunityMembers {
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
         if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal).map(|v| v.into_value()) {
             self.principal_to_user_id_map.insert(new_principal, user_id);
+            self.update_member(&user_id, |m| {
+                m.principal = new_principal;
+                true
+            });
         }
+    }
+
+    // Returns the number of members whose principal was set
+    pub fn populate_member_principals(&mut self) -> u32 {
+        let mut count = 0;
+        for (principal, user_id) in self.principal_to_user_id_map.entries() {
+            if matches!(
+                self.update_member(&user_id, |m| {
+                    m.principal = principal;
+                    true
+                }),
+                Some(true)
+            ) {
+                count += 1;
+            }
+        }
+        count
     }
 
     pub fn mark_member_joined_channel(&mut self, user_id: UserId, channel_id: ChannelId) {
@@ -695,6 +718,8 @@ impl Members for CommunityMembers {
 pub struct CommunityMemberInternal {
     #[serde(rename = "u")]
     pub user_id: UserId,
+    #[serde(rename = "p")]
+    pub principal: Principal,
     #[serde(rename = "d")]
     pub date_added: TimestampMillis,
     #[serde(rename = "r", default, skip_serializing_if = "is_default")]
@@ -902,12 +927,15 @@ mod tests {
         pub struct CommunityMemberInternal2 {
             #[serde(rename = "u")]
             pub user_id: UserId,
+            #[serde(rename = "p")]
+            pub principal: Principal,
             #[serde(rename = "d")]
             pub date_added: TimestampMillis,
         }
 
         let member1 = CommunityMemberInternal {
             user_id: CanisterId::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+            principal: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap(),
             date_added: 1732874138000,
             role: CommunityRole::Member,
             rules_accepted: None,
@@ -922,6 +950,7 @@ mod tests {
 
         let member2 = CommunityMemberInternal2 {
             user_id: member1.user_id,
+            principal: member1.principal,
             date_added: member1.date_added,
         };
 
@@ -929,6 +958,6 @@ mod tests {
         let bytes2 = msgpack::serialize_then_unwrap(&member2);
 
         assert_eq!(bytes1, bytes2);
-        assert_eq!(bytes1.len(), 26);
+        assert_eq!(bytes1.len(), 40);
     }
 }

@@ -1,6 +1,6 @@
 use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{LazyValue, PrincipalKeyPrefix, StableMemoryMap};
+use stable_memory_map::{Key, KeyPrefix, LazyValue, PrincipalKeyPrefix, StableMemoryMap, with_map};
 use types::UserId;
 
 #[derive(Serialize, Deserialize)]
@@ -40,6 +40,19 @@ impl PrincipalToUserIdMap {
 
     pub fn is_empty(&self) -> bool {
         self.count == 0
+    }
+
+    pub fn entries(&self) -> Vec<(Principal, UserId)> {
+        with_map(|m| {
+            m.range(self.prefix.create_key(&Principal::from_slice(&[]))..)
+                .take_while(|(k, _)| k.matches_prefix(&self.prefix))
+                .map(|(k, v)| {
+                    let principal = k.principal();
+                    let user_id = Self::bytes_to_value(&principal, v);
+                    (principal, user_id)
+                })
+                .collect()
+        })
     }
 }
 

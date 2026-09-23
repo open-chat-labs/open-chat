@@ -1,3 +1,4 @@
+use candid::Principal;
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageSuccess,
     DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, ExpiredThread, GroupGateUpdatedInternal, MessageContentInternal,
@@ -73,6 +74,7 @@ impl GroupChatCore {
     pub fn new(
         chat: MultiUserChat,
         created_by: UserId,
+        created_by_principal: Option<Principal>,
         is_public: bool,
         name: String,
         description: String,
@@ -89,7 +91,7 @@ impl GroupChatCore {
         external_url: Option<String>,
         now: TimestampMillis,
     ) -> GroupChatCore {
-        let members = GroupMembers::new(created_by, created_by_user_type, chat, now);
+        let members = GroupMembers::new(created_by, created_by_principal, created_by_user_type, chat, now);
         let events = ChatEvents::new_group_chat(
             chat,
             name.clone(),

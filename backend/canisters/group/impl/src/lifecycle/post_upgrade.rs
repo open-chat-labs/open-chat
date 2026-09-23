@@ -31,6 +31,17 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| state.data.drain_legacy_user_event_queue());
 
+    mutate_state(|state| {
+        let mut populated = 0;
+        for (principal, user_id) in state.data.principal_to_user_id_map.entries() {
+            if state.data.chat.members.set_principal(&user_id, principal) {
+                populated += 1;
+            }
+        }
+        let members = state.data.chat.members.len();
+        info!(populated, members, "Populated member principals");
+    });
+
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 

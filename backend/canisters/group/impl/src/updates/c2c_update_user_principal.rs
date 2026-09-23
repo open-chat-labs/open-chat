@@ -19,6 +19,7 @@ fn c2c_update_user_principal_impl(args: Args, state: &mut RuntimeState) -> Respo
         .map(|v| v.into_value())
     {
         state.data.principal_to_user_id_map.insert(args.new_principal, user_id);
+        state.data.chat.members.set_principal(&user_id, args.new_principal);
     }
     Response::Success
 }

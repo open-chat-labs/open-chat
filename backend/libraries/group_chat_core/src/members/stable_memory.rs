@@ -82,7 +82,9 @@ pub fn write_members_from_bytes(chat: MultiUserChat, members: Vec<(UserId, ByteB
         .map(|(user_id, byte_buf)| {
             let bytes = byte_buf.into_vec();
             // Check that the bytes are valid
-            let _ = bytes_to_member(&bytes);
+            let mut member = bytes_to_member(&bytes);
+            // Principals are only stored for group members, channel members have them set to None
+            let bytes = if member.principal.take().is_some() { member_to_bytes(member) } else { bytes };
             (prefix.create_key(&user_id), bytes)
         })
         .collect();

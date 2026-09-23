@@ -1,4 +1,5 @@
 use crate::CommunityMemberInternal;
+use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{StableMemoryMap, UserIdKeyPrefix};
 use std::collections::BTreeSet;
@@ -32,7 +33,6 @@ impl MembersStableStorage {
 
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
-        use ic_principal::Principal;
         use stable_memory_map::{Key, KeyPrefix, with_map};
 
         with_map(|m| {
@@ -54,6 +54,9 @@ impl Default for MembersStableStorage {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberStableStorage {
+    // TODO: Remove the default once every member's principal has been populated
+    #[serde(rename = "p", default = "Principal::anonymous")]
+    principal: Principal,
     #[serde(rename = "d", alias = "date_added")]
     date_added: TimestampMillis,
     #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
@@ -80,6 +83,7 @@ impl CommunityMemberStableStorage {
     fn hydrate(self, user_id: UserId) -> CommunityMemberInternal {
         CommunityMemberInternal {
             user_id,
+            principal: self.principal,
             date_added: self.date_added,
             role: self.role,
             rules_accepted: self.rules_accepted,
@@ -97,6 +101,7 @@ impl CommunityMemberStableStorage {
 impl From<CommunityMemberInternal> for CommunityMemberStableStorage {
     fn from(value: CommunityMemberInternal) -> Self {
         CommunityMemberStableStorage {
+            principal: value.principal,
             date_added: value.date_added,
             role: value.role,
             rules_accepted: value.rules_accepted,
