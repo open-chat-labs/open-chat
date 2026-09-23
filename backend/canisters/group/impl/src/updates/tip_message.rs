@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MEMO_TIP;
 use group_canister::tip_message::*;
-use group_community_common::MemberTransfer;
+use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, Caller, CryptoTransaction, OCResult, UserId, icrc2};
 
@@ -82,18 +82,18 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let this_canister_id = state.env.canister_id();
     let recipient_wallet = state.member_wallet(recipient)?;
 
-    match MemberTransfer::new(
+    match UserTransfer::new(
         CryptoTransaction::Pending(args.transfer),
         recipient_wallet,
         &MEMO_TIP,
         this_canister_id,
     )? {
-        MemberTransfer::Icrc2(transfer) => Ok(PrepareResult::Icrc2(Box::new(TipToMake {
+        UserTransfer::Icrc2(transfer) => Ok(PrepareResult::Icrc2(Box::new(TipToMake {
             user_id,
             c2c_args,
             transfer,
         }))),
-        MemberTransfer::Certified(transfer) => {
+        UserTransfer::Certified(transfer) => {
             let now = state.env.now();
             let completed = state.data.certified_transfers.verify(
                 transfer,

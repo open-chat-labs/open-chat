@@ -15,7 +15,8 @@ use group_canister::c2c_bot_send_message;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
-use group_community_common::{MemberTransfer, NewP2PSwap, prize_refund, validate_prize};
+use group_community_common::{NewP2PSwap, prize_refund, validate_prize};
+use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{
@@ -542,7 +543,7 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserId, 
             }
         };
 
-    let transfer = MemberTransfer::new(transfer, recipient, memo, this_canister_id)?;
+    let transfer = UserTransfer::new(transfer, recipient, memo, this_canister_id)?;
 
     state.data.chat.check_can_send_message(
         user_id,
@@ -553,8 +554,8 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserId, 
     )?;
 
     match transfer {
-        MemberTransfer::Icrc2(transfer) => Ok((user_id, PrepareTransferResult::Icrc2(transfer))),
-        MemberTransfer::Certified(transfer) => {
+        UserTransfer::Icrc2(transfer) => Ok((user_id, PrepareTransferResult::Icrc2(transfer))),
+        UserTransfer::Certified(transfer) => {
             let completed = state.data.certified_transfers.verify(
                 transfer,
                 state.env.caller(),

@@ -12,12 +12,13 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
-    Achievements, CertifiedTransfers, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient,
-    PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
+    PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use ledger_utils::certified::CertifiedTransfers;
 use model::legacy_user_event_batch::LegacyUserEventBatch;
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;

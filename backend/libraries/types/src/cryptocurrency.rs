@@ -143,6 +143,17 @@ impl PendingCryptoTransaction {
         self.units() == 0
     }
 
+    // Whether only the owner of the account the funds come from can submit the transaction. The
+    // ledger makes an NNS or ICRC1 transfer from the caller's own account, whereas an ICRC2 transfer
+    // is pulled by a spender the owner approved, and a certified transfer has already been made. So
+    // a canister which doesn't hold a user's funds can only submit the latter two for them.
+    pub fn must_be_submitted_by_account_owner(&self) -> bool {
+        match self {
+            PendingCryptoTransaction::NNS(_) | PendingCryptoTransaction::ICRC1(_) => true,
+            PendingCryptoTransaction::ICRC2(_) | PendingCryptoTransaction::Certified(_) => false,
+        }
+    }
+
     pub fn units(&self) -> u128 {
         match self {
             PendingCryptoTransaction::NNS(t) => t.amount.e8s().into(),
