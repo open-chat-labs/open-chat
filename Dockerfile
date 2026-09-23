@@ -1,4 +1,4 @@
-# To build run './scripts/docker-build-all-wasms.sh', which writes the wasms to ./wasms
+# To build run 'docker build . -t openchat'
 FROM ubuntu:24.04 AS builder
 SHELL ["bash", "-c"]
 
@@ -24,11 +24,10 @@ RUN curl --fail https://sh.rustup.rs -sSf \
     rustup target add wasm32-unknown-unknown
 
 # Install IC Wasm from its release binary rather than building it from source (which takes ~6 minutes).
-# The checksum pins the exact binary, so every build optimises the wasms with the same tool.
-ARG ic_wasm_version=0.9.11
-ARG ic_wasm_sha256=5aeea4ada46748a4b69e6d97d934074a64c45da4272882412103cce110aaf86b
-RUN curl --fail -sSL -o /tmp/ic-wasm.tar.xz https://github.com/dfinity/ic-wasm/releases/download/${ic_wasm_version}/ic-wasm-x86_64-unknown-linux-gnu.tar.xz && \
-    echo "${ic_wasm_sha256}  /tmp/ic-wasm.tar.xz" | sha256sum -c && \
+# The checksum pins the exact binary, so every build optimises the wasms with the same tool. The
+# version must match the one generate-all-canister-wasms.sh checks for, else that installs its own.
+RUN curl --fail -sSL -o /tmp/ic-wasm.tar.xz https://github.com/dfinity/ic-wasm/releases/download/0.9.11/ic-wasm-x86_64-unknown-linux-gnu.tar.xz && \
+    echo "5aeea4ada46748a4b69e6d97d934074a64c45da4272882412103cce110aaf86b  /tmp/ic-wasm.tar.xz" | sha256sum -c && \
     tar -xJf /tmp/ic-wasm.tar.xz -C $CARGO_HOME/bin --strip-components=1 ic-wasm-x86_64-unknown-linux-gnu/ic-wasm && \
     rm /tmp/ic-wasm.tar.xz
 
@@ -36,8 +35,3 @@ COPY . /build
 WORKDIR /build
 
 RUN if [[ -z "$canister_name" ]] ; then bash ./scripts/generate-all-canister-wasms.sh ; else bash ./scripts/generate-wasm.sh $canister_name ; fi
-
-# Only the wasms are exported (see docker-build-all-wasms.sh), which skips writing the multi-GB
-# build image out to docker
-FROM scratch AS wasms
-COPY --from=builder /build/wasms /

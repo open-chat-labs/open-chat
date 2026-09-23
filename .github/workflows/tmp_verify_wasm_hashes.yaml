@@ -1,0 +1,42 @@
+# TEMPORARY (to be removed before merging): checks that the new Dockerfile reproduces the wasm
+# hashes that master's "Push canister wasms" job published for 7acf9ddad
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/tmp_verify_wasm_hashes.yaml"
+
+name: TMP verify wasm hashes
+
+jobs:
+  verify:
+    name: Verify wasm hashes
+    runs-on:
+      - runs-on
+      - cpu=16
+      - image=ubuntu24-full-x64
+      - family=m7i
+      - run-id=${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Apply this PR's changes on top of 7acf9ddad
+        run: |
+          git diff origin/master HEAD -- Dockerfile scripts/ > /tmp/pr.patch
+          git checkout 7acf9ddad46957f8a289632071ebde26fd8d3525
+          git apply /tmp/pr.patch
+          git diff --stat
+      - name: Build canister wasms
+        run: ./scripts/docker-build-all-wasms.sh
+      - name: Compare with the published hashes
+        run: |
+          FAILED=0
+          for f in wasms/*.wasm.gz; do
+            name=$(basename $f)
+            curl -sfSL -o /tmp/$name https://openchat-canister-wasms.s3.amazonaws.com/7acf9ddad46957f8a289632071ebde26fd8d3525/$name
+            ours=$(sha256sum $f | cut -d' ' -f1)
+            theirs=$(sha256sum /tmp/$name | cut -d' ' -f1)
+            if [ "$ours" == "$theirs" ]; then echo "MATCH $name $ours"; else echo "MISMATCH $name ours=$ours published=$theirs"; FAILED=1; fi
+          done
+          exit $FAILED
