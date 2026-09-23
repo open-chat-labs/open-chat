@@ -19,12 +19,12 @@ use types::{
     CustomPermission, DiamondMembershipStatus, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller,
     EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
-    MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch,
-    MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OgPreview,
-    OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess,
-    RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId,
-    UserIdAndPrincipal, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence,
-    VoteOperation, WebhookDetails,
+    MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentType, MessageId, MessageIndex,
+    MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult,
+    OgPreview, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction,
+    ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UserIdAndPrincipal, UserType, UsersBlocked, UsersInvited, Version, Versioned,
+    VersionedRules, VideoCall, VideoCallPresence, VoteOperation, WebhookDetails,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -663,6 +663,50 @@ impl GroupChatCore {
         })
     }
 
+    // Checks `user_id` could send a message of `content_type` now, without sending it. Used before
+    // making a transfer for a message, so that the transfer isn't made for a message which then
+    // can't be sent. `rules_accepted` is the version of the rules the message would accept.
+    pub fn check_can_send_message(
+        &self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        content_type: MessageContentType,
+        rules_accepted: Option<Version>,
+    ) -> OCResult {
+        if self
+            .events
+            .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
+            .is_some()
+        {
+            return Err(OCErrorCode::MessageIdAlreadyExists.into());
+        }
+
+        let member = self.members.get_verified_member(user_id)?;
+
+        let accepting_rules = rules_accepted.is_some_and(|version| version >= self.rules.text.version);
+        if !accepting_rules && !member.check_rules(&self.rules.value) {
+            return Err(OCErrorCode::ChatRulesNotAccepted.into());
+        }
+
+        if !member
+            .role()
+            .can_send_message(content_type, thread_root_message_index.is_some(), &self.permissions)
+        {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
+        if let Some(root_message_index) = thread_root_message_index
+            && !self
+                .events
+                .is_accessible(member.min_visible_event_index(), None, root_message_index.into())
+        {
+            return Err(OCErrorCode::ThreadNotFound.into());
+        }
+
+        Ok(())
+    }
+
     fn update_bot_message(
         &mut self,
         caller: &Caller,
@@ -945,6 +989,28 @@ impl GroupChatCore {
             reaction,
             now,
         })
+    }
+
+    // Checks `user_id` could tip the message now, without tipping it, returning the message's sender,
+    // whom the tip is for. Used before making the transfer for a tip.
+    pub fn check_can_tip_message(
+        &self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> OCResult<UserId> {
+        let member = self.members.get_verified_member(user_id)?;
+
+        if !member.role().can_react_to_messages(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
+        let (message, _) = self
+            .events
+            .message_internal(member.min_visible_event_index(), thread_root_message_index, message_id.into())
+            .ok_or(OCErrorCode::MessageNotFound)?;
+
+        if message.sender == user_id { Err(OCErrorCode::CannotTipSelf.into()) } else { Ok(message.sender) }
     }
 
     pub fn tip_message<P: EventPusher>(&mut self, args: TipMessageArgs, event_pusher: P) -> OCResult<UpdateMessageSuccess> {

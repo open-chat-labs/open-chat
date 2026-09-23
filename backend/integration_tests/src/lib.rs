@@ -27,6 +27,7 @@ mod delete_history_tests;
 mod delete_message_tests;
 mod delete_user_tests;
 mod diamond_membership_tests;
+mod direct_transfer_tests;
 mod disappearing_message_tests;
 mod edit_message_tests;
 mod env;

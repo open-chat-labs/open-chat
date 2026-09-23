@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2064](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2064-user_index)] - 2026-09-23
+
 ### Added
 
 - Add `refund_deleted_user_cycles` for platform operators, which sends each deleted user's canister to the LocalUserIndex on its subnet (using the NNS registry's routing table) to have the cycles it still holds refunded ([#9476](https://github.com/open-chat-labs/open-chat/pull/9476))

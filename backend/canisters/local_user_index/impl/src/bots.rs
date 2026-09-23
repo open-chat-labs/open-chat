@@ -1,10 +1,28 @@
 use crate::RuntimeState;
+use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
     BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
-    BotCommunityOrGroupContext, BotInitiator, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, Chat, CommunityOrGroup, MessageId, User,
-    UserId,
+    BotCommunityOrGroupContext, BotInitiator, BotInstallationLocation, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, Chat,
+    CommunityOrGroup, MessageId, OCResult, User, UserId,
 };
+
+// The location canister is only called by its id, so without this a user could install a bot into
+// their own direct chat under a `Group` or `Community` location. The UserIndex would then record it
+// there and later route that installation's events into the group or community event queues, where
+// they could never be delivered.
+// A user can only install bots into their own direct chat, and a group or community is always
+// installed into via the LocalUserIndex it is hosted on.
+pub fn validate_installation_location(location: BotInstallationLocation, user_id: UserId, state: &RuntimeState) -> OCResult {
+    match location {
+        BotInstallationLocation::User(chat_id) if UserId::from(chat_id) == user_id => Ok(()),
+        BotInstallationLocation::User(_) => Err(OCErrorCode::InitiatorNotAuthorized.into()),
+        BotInstallationLocation::Group(chat_id) if state.data.local_groups.contains(&chat_id) => Ok(()),
+        BotInstallationLocation::Group(_) => Err(OCErrorCode::ChatNotFound.into()),
+        BotInstallationLocation::Community(community_id) if state.data.local_communities.contains(&community_id) => Ok(()),
+        BotInstallationLocation::Community(_) => Err(OCErrorCode::CommunityNotFound.into()),
+    }
+}
 
 pub struct BotAccessContext {
     pub bot_id: UserId,

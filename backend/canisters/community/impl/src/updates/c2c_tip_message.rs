@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use community_canister::c2c_tip_message::*;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{Achievement, ChannelMessageTipped, ChannelUserNotificationPayload, Chat, EventIndex, OCResult};
+use types::{Achievement, ChannelMessageTipped, ChannelUserNotificationPayload, Chat, EventIndex, OCResult, UserId};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
@@ -18,6 +18,11 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let user_id = state.get_calling_member(None, true)?.user_id;
+    tip_message_with_completed_transfer(user_id, args, state)
+}
+
+// Records a tip whose transfer has been made
+pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 

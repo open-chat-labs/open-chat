@@ -406,6 +406,12 @@ impl MessageContentInitial {
         )
     }
 
+    // Whether the message holds a transfer which is still to be made. An OpenChat bot's message may
+    // hold a transfer the bot has made already.
+    pub fn has_transfer_to_make(&self) -> bool {
+        self.pending_crypto_transfer().is_some() || matches!(self, MessageContentInitial::P2PSwap(_))
+    }
+
     pub fn pending_crypto_transfer(&self) -> Option<&PendingCryptoTransaction> {
         let transfer = match self {
             MessageContentInitial::Crypto(c) => &c.transfer,
@@ -901,8 +907,10 @@ pub struct P2PSwapContentInitial {
     pub token1_amount: u128,
     pub expires_in: Milliseconds,
     pub caption: Option<String>,
-    // The account token0 is deposited from, defaulting to this canister's own. Any other account
-    // must have approved this canister as spender, since the deposit is then pulled via ICRC-2.
+    // The account token0 is deposited from. Sent via the user's canister it defaults to that
+    // canister's own account, and sent to a Group or Community directly, to the caller's wallet. Any
+    // other account must have approved the canister taking the deposit as spender, since it is then
+    // pulled via ICRC-2.
     pub from_account: Option<icrc1::Account>,
 }
 
