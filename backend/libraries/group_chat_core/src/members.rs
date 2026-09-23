@@ -1040,7 +1040,31 @@ mod tests {
     }
 
     #[test]
-    fn principals_removed_when_importing_members_into_channel() {
+    fn set_principal() {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_id: UserId = Principal::from_slice(&[1]).into();
+        let principal = Principal::from_slice(&[2]);
+        let mut members = GroupMembers::new(
+            user_id,
+            None,
+            UserType::User,
+            MultiUserChat::Group(Principal::from_slice(&[3]).into()),
+            0,
+        );
+
+        assert!(members.set_principal(&user_id, principal));
+        assert_eq!(members.get(&user_id).unwrap().principal(), Some(principal));
+        assert!(!members.set_principal(&user_id, principal));
+        assert!(!members.set_principal(&Principal::from_slice(&[4]).into(), principal));
+    }
+
+    #[test]
+    fn principals_removed_when_exporting_members_into_channel() {
         use ic_stable_structures::DefaultMemoryImpl;
         use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 

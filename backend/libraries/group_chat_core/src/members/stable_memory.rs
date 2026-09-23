@@ -56,7 +56,7 @@ impl MembersStableStorage {
                     total_bytes += v.len();
                     total_bytes < max_bytes
                 })
-                .map(|(k, v)| (k.user_id(), ByteBuf::from(v)))
+                .map(|(k, v)| (k.user_id(), ByteBuf::from(remove_principal(v))))
                 .collect()
         })
     }
@@ -82,14 +82,19 @@ pub fn write_members_from_bytes(chat: MultiUserChat, members: Vec<(UserId, ByteB
         .map(|(user_id, byte_buf)| {
             let bytes = byte_buf.into_vec();
             // Check that the bytes are valid
-            let mut member = bytes_to_member(&bytes);
-            // Principals are only stored for group members, channel members have them set to None
-            let bytes = if member.principal.take().is_some() { member_to_bytes(member) } else { bytes };
+            let _ = bytes_to_member(&bytes);
             (prefix.create_key(&user_id), bytes)
         })
         .collect();
     with_map_mut(|m| m.insert_many(entries));
     latest
+}
+
+// Principals are only stored for members of Group canisters, so they are removed when exporting members
+// into a community, where channel members have them set to None
+fn remove_principal(bytes: Vec<u8>) -> Vec<u8> {
+    let mut member = bytes_to_member(&bytes);
+    if member.principal.take().is_some() { member_to_bytes(member) } else { bytes }
 }
 
 fn member_to_bytes(member: GroupMemberStableStorage) -> Vec<u8> {

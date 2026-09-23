@@ -358,8 +358,12 @@ impl CommunityMembers {
         if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal).map(|v| v.into_value()) {
             self.principal_to_user_id_map.insert(new_principal, user_id);
             self.update_member(&user_id, |m| {
-                m.principal = new_principal;
-                true
+                if m.principal != new_principal {
+                    m.principal = new_principal;
+                    true
+                } else {
+                    false
+                }
             });
         }
     }
@@ -370,8 +374,12 @@ impl CommunityMembers {
         for (principal, user_id) in self.principal_to_user_id_map.entries() {
             if matches!(
                 self.update_member(&user_id, |m| {
-                    m.principal = principal;
-                    true
+                    if m.principal != principal {
+                        m.principal = principal;
+                        true
+                    } else {
+                        false
+                    }
                 }),
                 Some(true)
             ) {
@@ -916,6 +924,45 @@ mod tests {
         members.remove(user_id2, Some(principal2), 0);
         assert!(members.channels_for_member(user_id2).is_empty());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
+    }
+
+    #[test]
+    fn member_principals_populated_and_updated() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+        let principal3 = Principal::from_slice(&[3]);
+        let user_id1: UserId = Principal::from_slice(&[11]).into();
+        let user_id2: UserId = Principal::from_slice(&[12]).into();
+        let user_id3: UserId = Principal::from_slice(&[13]).into();
+
+        let mut members = CommunityMembers::new(principal1, user_id1, UserType::User, Vec::new(), 0);
+        members.add(user_id2, principal2, UserType::User, None, 0);
+        // An invited user who isn't a member
+        members.add_user_id(principal3, user_id3);
+
+        // Simulate members which were stored before principals were added
+        for user_id in [user_id1, user_id2] {
+            members.update_member(&user_id, |m| {
+                m.principal = Principal::anonymous();
+                true
+            });
+        }
+
+        assert_eq!(members.populate_member_principals(), 2);
+        assert_eq!(members.get_by_user_id(&user_id1).unwrap().principal, principal1);
+        assert_eq!(members.get_by_user_id(&user_id2).unwrap().principal, principal2);
+        assert!(members.get_by_user_id(&user_id3).is_none());
+
+        // Nothing is rewritten once the principals are populated
+        assert_eq!(members.populate_member_principals(), 0);
+
+        let new_principal2 = Principal::from_slice(&[4]);
+        members.update_user_principal(principal2, new_principal2);
+        assert_eq!(members.get_by_user_id(&user_id2).unwrap().principal, new_principal2);
+        assert_eq!(members.get(new_principal2).unwrap().user_id, user_id2);
     }
 
     #[test]
