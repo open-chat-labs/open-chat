@@ -163,7 +163,10 @@ pub(crate) fn send_message_with_completed_transfer(
     let mut content = args.content;
     // Recorded so the prize can be refunded to the sender's wallet even if they have left
     if let MessageContentInternal::Prize(prize) = &mut content {
-        prize.principal = state.member_user(caller.agent()).principal;
+        prize.principal = match caller {
+            Caller::User(user) => user.principal,
+            _ => state.member_user(caller.agent()).principal,
+        };
     }
 
     let now = state.env.now();
