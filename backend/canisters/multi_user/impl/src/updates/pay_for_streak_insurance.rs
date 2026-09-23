@@ -3,7 +3,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{OCResult, UserCanisterStreakInsurancePayment, UserId};
+use types::{OCResult, UserCanisterStreakInsurancePayment};
 use user_canister::pay_for_streak_insurance::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -11,15 +11,13 @@ use user_canister::pay_for_streak_insurance::*;
 async fn pay_for_streak_insurance(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
-        my_user_id,
         days_currently_insured,
     } = match mutate_state(|state| prepare(&mut args, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),
     };
 
-    let transfer_result =
-        user_core::updates::pay_for_streak_insurance::pay(my_user_id, args.from_account, args.expected_price).await;
+    let transfer_result = user_core::updates::pay_for_streak_insurance::pay(args.from_account, args.expected_price).await;
 
     mutate_state(|state| {
         state
@@ -49,7 +47,6 @@ async fn pay_for_streak_insurance(mut args: Args) -> Response {
 
 struct PrepareOk {
     my_index: u16,
-    my_user_id: UserId,
     days_currently_insured: u8,
 }
 
@@ -62,7 +59,6 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     })?;
     Ok(PrepareOk {
         my_index,
-        my_user_id: state.user_id(my_index),
         days_currently_insured,
     })
 }

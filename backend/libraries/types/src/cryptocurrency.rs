@@ -570,8 +570,7 @@ pub mod icrc1 {
     impl Account {
         // The account of the user's id, for where their principal isn't known yet. It is the user's
         // wallet if they are alone in their canister, but no one's if they are in a MultiUser
-        // canister. As the account a canister acts from on behalf of its user, it is the canister's
-        // own account.
+        // canister, since nobody can sign for an indexed user id.
         // TODO: Use `From<UserIdAndPrincipal>` instead, once the user's principal is known
         pub fn legacy_for_user(user_id: UserId) -> Account {
             user_id.as_principal().into()

@@ -5,7 +5,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use ledger_utils::icrc1::make_transfer;
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, TimestampMillis, UserId, icrc1};
+use types::{OCResult, TimestampMillis, icrc1};
 use user_canister::pay_for_streak_insurance::Args;
 
 // Checks the request against the user's streak and takes the payment lock, which the caller
@@ -35,18 +35,17 @@ pub fn prepare(user: &mut User, args: &mut Args, now: TimestampMillis) -> OCResu
     }
 }
 
-// Pays the SNS governance canister, returning the transaction index. Whichever account we pay from,
-// the owner is this canister, so only the subaccount is ours to choose: the user's own, or for
-// ICRC-2 the one whose approval is spent rather than which account is debited. The caller has
+// Pays the SNS governance canister, returning the transaction index, from this canister's own
+// account, or for ICRC-2 from `from_account`, which must have approved this canister. The caller has
 // already checked `from_account` isn't one of this canister's own.
-pub async fn pay(my_user_id: UserId, from_account: Option<icrc1::Account>, amount: u128) -> OCResult<u64> {
+pub async fn pay(from_account: Option<icrc1::Account>, amount: u128) -> OCResult<u64> {
     let to = Account {
         owner: SNS_GOVERNANCE_CANISTER_ID,
         subaccount: None,
     };
     let amount = amount.into();
     let memo = Some(MEMO_STREAK_INSURANCE.to_vec().into());
-    let subaccount = icrc1::Account::legacy_for_user(my_user_id).subaccount;
+    let subaccount = None;
 
     match from_account {
         // The allowance is what authorises this: the ledger only lets us pull from an account which

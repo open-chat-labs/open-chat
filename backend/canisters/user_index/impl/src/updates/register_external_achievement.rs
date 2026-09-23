@@ -94,12 +94,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, ()> {
         return Err(());
     }
 
-    // Unknown only in test mode, where no payment is taken
+    // An unknown submitter is paid from the account of their user id, as before principals were
+    // known
     let submitted_by_principal = state
         .data
         .users
         .get_by_user_id(&args.submitted_by)
-        .map_or(Principal::anonymous(), |u| u.principal);
+        .map_or(args.submitted_by.as_principal(), |u| u.principal);
 
     Ok(PrepareResult {
         submitted_by_principal,

@@ -25,7 +25,7 @@ async fn withdraw_btc(mut args: Args) -> Response {
         Err(error) => return Error(error.into()),
     };
 
-    match user_core::updates::withdraw_btc::withdraw_btc(&args, my_user_id, now_nanos).await {
+    match user_core::updates::withdraw_btc::withdraw_btc(&args, now_nanos).await {
         Ok(block_index) => {
             mutate_state(|state| {
                 let user_id_string = my_user_id.to_string();

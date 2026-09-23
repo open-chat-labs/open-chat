@@ -312,6 +312,8 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
                     swap_id: self.swap_id,
+                    // TODO: Name the wallet's owner, which is the principal of a user in a MultiUser
+                    // canister, once they can accept P2P swaps
                     deposited_by: Some(self.user_id.as_principal()),
                 },
             )

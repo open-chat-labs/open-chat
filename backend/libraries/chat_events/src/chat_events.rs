@@ -5,7 +5,6 @@ use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::per_user_metrics::PerUserMetrics;
 use crate::search_index::SearchIndex;
 use crate::*;
-use candid::Principal;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_types::EventBuilder;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -441,9 +440,9 @@ impl ChatEvents {
             args.now,
         );
 
-        // Nothing in a new message depends on the sender's principal, as it has no votes, winners or
-        // followers yet
-        let sender = UserIdAndPrincipal::new(message_internal.sender, Principal::anonymous());
+        // The sender's principal isn't known here. The account of their user id is their wallet if
+        // they are alone in their canister, and nothing else in a new message depends on it.
+        let sender = UserIdAndPrincipal::new(message_internal.sender, message_internal.sender.as_principal());
         let message = message_internal.clone().hydrate(Some(sender));
 
         let push_event_result = self.push_event(

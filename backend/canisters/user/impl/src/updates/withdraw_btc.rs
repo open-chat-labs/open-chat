@@ -4,6 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use types::UserId;
 use user_canister::withdraw_btc::{Response::*, *};
 use user_core::updates::update_btc_balance::BtcDepositOrWithdrawalEventPayload;
 
@@ -20,13 +21,13 @@ async fn withdraw_btc_impl(mut args: Args) -> Response {
             .user
             .pin_number
             .verify(args.pin.as_mut(), state.env.now())
-            .map(|()| (state.env.canister_id().into(), state.env.now_nanos()))
+            .map(|()| (UserId::from(state.env.canister_id()), state.env.now_nanos()))
     }) {
         Ok(ok) => ok,
         Err(error) => return Error(error.into()),
     };
 
-    match user_core::updates::withdraw_btc::withdraw_btc(&args, my_user_id, now_nanos).await {
+    match user_core::updates::withdraw_btc::withdraw_btc(&args, now_nanos).await {
         Ok(block_index) => {
             mutate_state(|state| {
                 let user_id_string = my_user_id.to_string();

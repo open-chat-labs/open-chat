@@ -1,5 +1,5 @@
-//! Ledger operations on behalf of a user held by a User or MultiUser canister, where the accounts
-//! the canister spends from are its own subaccounts, one per user
+//! Ledger operations on behalf of a user held by a User or MultiUser canister, which the canister
+//! makes from its own account
 
 use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
 use escrow_canister::deposit_subaccount;
@@ -40,9 +40,10 @@ pub async fn deposit_to_accept_p2p_swap(
     let fee = Some(token1.fee.into());
     let created_at_time = Some(now * NANOS_PER_MILLISECOND);
     let memo = Some(MEMO_P2P_SWAP_ACCEPT.to_vec().into());
-    // Whichever account we spend from, the owner is this canister, so only the subaccount is ours
-    // to choose. For ICRC-2 it picks which approval is spent rather than which account is debited.
-    let subaccount = icrc1::Account::legacy_for_user(my_user_id).subaccount;
+    // Whichever account we spend from, the owner is this canister and the subaccount is its default
+    // one. For ICRC-2 the subaccount picks which approval is spent rather than which account is
+    // debited.
+    let subaccount = None;
 
     match from_account {
         // The allowance is what authorises this - the ledger only lets us pull from an account

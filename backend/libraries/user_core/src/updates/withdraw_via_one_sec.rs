@@ -35,7 +35,7 @@ pub async fn withdraw(
     my_user_id: UserId,
     now_nanos: TimestampNanos,
 ) -> OCResult {
-    approve_transfer::approve(approval, my_user_id, now_nanos).await?;
+    approve_transfer::approve(approval, now_nanos).await?;
 
     match one_sec_minter_canister_c2c_client::transfer_icp_to_evm(
         ONE_SEC_MINTER_CANISTER_ID,
