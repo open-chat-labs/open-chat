@@ -22,7 +22,7 @@ fn run_impl(state: &mut RuntimeState) {
 
     let users = data
         .local_users
-        .iter()
+        .iter_user_canisters()
         .map(|(u, l)| (u.canister_id(), ChildCanisterType::User, l.cycle_top_ups.as_slice()));
     let groups = data
         .local_groups

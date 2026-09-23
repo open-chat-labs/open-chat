@@ -1,13 +1,13 @@
 use crate::chit_tests::DAY_ZERO;
 use crate::env::ENV;
 use crate::utils::{metrics, now_millis, tick_many, try_metrics};
-use crate::{TestEnv, client, wasms};
+use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
 use constants::{ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use sha256::sha256;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
@@ -62,7 +62,18 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let user_counts_before = local_user_counts(env, local_user_index);
+
     let alice = client::register_user_in_multi_user_canister(env, canister_ids);
+    assert_eq!(alice.local_user_index, local_user_index);
+
+    // Alice is one of the LocalUserIndex's users, but isn't counted amongst its User canisters, so
+    // she is skipped by User canister upgrades and top ups
+    let (local_user_count, user_canister_count) = local_user_counts(env, local_user_index);
+    assert_eq!(local_user_count, user_counts_before.0 + 1);
+    assert_eq!(user_canister_count, user_counts_before.1);
+
     let bob = client::register_user_in_multi_user_canister(env, canister_ids);
     let charlie = client::register_user(env, canister_ids);
 
@@ -248,8 +259,8 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     // A's first message to B creates the chat for both of them, each with their own copy of it
     let message_id = random_from_u128();
@@ -385,8 +396,8 @@ fn a_user_who_deletes_a_direct_chat_gets_a_fresh_copy_when_messaged_again() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     send_text_message(env, a_principal, canister_id, b, "hello", random_from_u128());
     send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
@@ -457,8 +468,8 @@ fn initial_state_and_updates_track_a_users_direct_chats() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
     let a_chat = Chat::Direct(a.into());
 
     // A new user has no chats and nothing else yet
@@ -626,9 +637,9 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
-    let (_, c) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (_, c) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let initial = initial_state(env, a_principal, canister_id);
     assert_eq!(initial.avatar_id, None);
@@ -974,8 +985,15 @@ fn mark_read(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, the
     );
 }
 
-fn create_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: CanisterId) -> (Principal, UserId) {
-    create_user_referred_by(env, local_user_index, canister_id, None)
+// Registers a user via the LocalUserIndex, which puts them in its newest MultiUser canister, which
+// must be `canister_id`
+fn create_user(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    local_user_index: CanisterId,
+    canister_id: CanisterId,
+) -> (Principal, UserId) {
+    create_user_referred_by(env, canister_ids, local_user_index, canister_id, None)
 }
 
 fn send_message_args(recipient: UserId, text: &str, message_id: MessageId) -> user_canister::send_message_v2::Args {
@@ -1075,8 +1093,8 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let hello_id = random_from_u128();
     send_text_message(env, a_principal, canister_id, b, "hello", hello_id);
@@ -1287,8 +1305,8 @@ fn events_for_the_local_user_index_are_sent_from_a_multi_user_canister() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     // A notification of each message, blocking, unblocking and setting a profile background
     send_text_message(env, a_principal, canister_id, b, "hello", random_from_u128());
@@ -1390,6 +1408,14 @@ fn assert_stable_memory_maps_initialised(env: &PocketIc, canister_id: CanisterId
             "Stable memory map {memory_id} not initialised: {stable_memory_sizes:?}"
         );
     }
+}
+
+// The LocalUserIndex's count of all its users, and of those with a User canister of their own
+fn local_user_counts(env: &PocketIc, local_user_index: CanisterId) -> (u64, u64) {
+    let metrics = metrics(env, local_user_index);
+    let local_user_count = serde_json::from_value(metrics["local_user_count"].clone()).unwrap();
+    let user_versions: BTreeMap<String, u64> = serde_json::from_value(metrics["user_versions"].clone()).unwrap();
+    (local_user_count, user_versions.values().sum())
 }
 
 fn user_count(env: &PocketIc, canister_id: CanisterId) -> u32 {
@@ -1575,9 +1601,9 @@ fn search_messages_finds_matching_messages_in_a_direct_chat() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
-    let (_, c) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (_, c) = create_user(env, canister_ids, local_user_index, canister_id);
 
     send_text_message(env, a_principal, canister_id, b, "the quick brown fox", random_from_u128());
     send_text_message(env, a_principal, canister_id, b, "jumps over", random_from_u128());
@@ -1622,8 +1648,8 @@ fn disappearing_messages_expire_from_both_copies_of_a_direct_chat() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     send_text_message(env, a_principal, canister_id, b, "kept", random_from_u128());
 
@@ -1684,8 +1710,8 @@ fn reactions_to_a_users_messages_appear_in_their_message_activity_feed() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let a_message_id = random_from_u128();
     send_text_message(env, a_principal, canister_id, b, "from a", a_message_id);
@@ -1812,8 +1838,8 @@ fn saved_crypto_accounts_and_hot_group_exclusions_are_held_per_user() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, _) = create_user(env, local_user_index, canister_id);
-    let (b_principal, _) = create_user(env, local_user_index, canister_id);
+    let (a_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let user_canister::local_user_index::Response::Success(local_user_index_of_canister) =
         client::multi_user::local_user_index(env, a_principal, canister_id, &Empty {});
@@ -1890,8 +1916,8 @@ fn pin_number_is_set_verified_and_reported() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, _) = create_user(env, local_user_index, canister_id);
-    let (b_principal, _) = create_user(env, local_user_index, canister_id);
+    let (a_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
     assert!(initial_state(env, a_principal, canister_id).pin_number_settings.is_none());
 
     // No verification is needed to set the first PIN, which must be of a valid length
@@ -1993,8 +2019,8 @@ fn chit_streaks_and_achievements_are_held_per_user_in_a_multi_user_canister() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, _) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     // Streaks count days from the start of 2024
     crate::chit_tests::ensure_time_at_least_day0(env);
@@ -2130,8 +2156,8 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let now = now_millis(env);
     let notes = random_string();
@@ -2265,8 +2291,8 @@ fn game_chit_and_suspension_are_applied_per_user() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     // A credit is applied once per key, and each user has their own keys
     for user_id in [a, b] {
@@ -2468,8 +2494,8 @@ fn set_user_suspended(env: &mut PocketIc, sender: Principal, canister_id: Canist
 //     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
 //     let canister_id =
 //         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-//     let (a_principal, a) = create_user(env, local_user_index, canister_id);
-//     let (_, b) = create_user(env, local_user_index, canister_id);
+//     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+//     let (_, b) = create_user(env, canister_ids, local_user_index, canister_id);
 //
 //     // Each user's funds are held in their own subaccount of the canister
 //     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, a, 10 * ONE_CHAT);
@@ -2512,8 +2538,8 @@ fn set_user_suspended(env: &mut PocketIc, sender: Principal, canister_id: Canist
 //     let canister_id =
 //         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 //
-//     let (a_principal, a) = create_user(env, local_user_index, canister_id);
-//     let (b_principal, b) = create_user(env, local_user_index, canister_id);
+//     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+//     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 //
 //     crate::chit_tests::ensure_time_at_least_day0(env);
 //
@@ -2670,8 +2696,8 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let group: ChatId = random_principal().into();
     let community: CommunityId = random_principal().into();
     let channels: [ChannelId; 2] = [1u32.into(), 2u32.into()];
@@ -2952,7 +2978,7 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let deleted_by: UserId = random_principal().into();
     let [deleted_group, imported_group]: [ChatId; 2] = [random_principal().into(), random_principal().into()];
     let community: CommunityId = random_principal().into();
@@ -3083,7 +3109,7 @@ fn creating_a_community_requires_diamond_membership_in_a_multi_user_canister() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let create_community = |env: &mut PocketIc| {
         client::user::create_community(
@@ -3113,18 +3139,17 @@ fn creating_a_community_requires_diamond_membership_in_a_multi_user_canister() {
         "{response:?}"
     );
 
-    // Once Alice is a Diamond member her request passes validation and is sent to the GroupIndex,
-    // which doesn't know of her since users aren't yet registered into MultiUser canisters
+    // Once Alice is a Diamond member the community is created, and she is its first member
     diamond_membership_payment_received(env, local_user_index, canister_id, alice_id);
     assert!(has_achievement(
         &initial_state(env, alice, canister_id),
         Achievement::UpgradedToDiamond
     ));
     let response = create_community(env);
-    assert!(
-        matches!(&response, user_canister::create_community::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotFound)),
-        "{response:?}"
-    );
+    let user_canister::create_community::Response::Success(result) = response else {
+        panic!("{response:?}");
+    };
+    assert!(community_ids(&initial_state(env, alice, canister_id)).contains(&result.community_id));
 }
 
 #[test]
@@ -3140,10 +3165,11 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    // Alice referred Bob, both in this canister, and Carol, a User canister user, referred Alice
+    // Alice referred Bob, both in this canister, and Carol, a User canister user, referred Alice.
+    // Bob's registration tells Alice he used her referral code
     let carol = client::register_user(env, canister_ids);
-    let (alice, alice_id) = create_user_referred_by(env, local_user_index, canister_id, Some(carol.user_id));
-    let (bob, bob_id) = create_user_referred_by(env, local_user_index, canister_id, Some(alice_id));
+    let (alice, alice_id) = create_user_referred_by(env, canister_ids, local_user_index, canister_id, Some(carol.user_id));
+    let (bob, bob_id) = create_user_referred_by(env, canister_ids, local_user_index, canister_id, Some(alice_id));
     let referred_elsewhere: UserId = random_principal().into();
 
     let events = vec![
@@ -3185,8 +3211,8 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     let alice_state = initial_state(env, alice, canister_id);
     assert!(alice_state.is_unique_person);
     assert_eq!(
-        alice_state.referrals.iter().map(|r| r.user_id).collect::<Vec<_>>(),
-        vec![referred_elsewhere]
+        alice_state.referrals.iter().map(|r| r.user_id).collect::<BTreeSet<_>>(),
+        BTreeSet::from([bob_id, referred_elsewhere])
     );
     assert!(has_achievement(&alice_state, Achievement::ProvedUniquePersonhood));
     assert!(
@@ -3348,25 +3374,23 @@ fn local_user_index_events_update_the_state_each_user_holds() {
 
 fn create_user_referred_by(
     env: &mut PocketIc,
+    canister_ids: &CanisterIds,
     local_user_index: CanisterId,
     canister_id: CanisterId,
     referred_by: Option<UserId>,
 ) -> (Principal, UserId) {
-    let principal = random_principal();
-    let response = client::multi_user::c2c_create_user(
+    let user = client::register_user_in_multi_user_canister_on(
         env,
+        canister_ids,
         local_user_index,
-        canister_id,
-        &multi_user_canister::c2c_create_user::Args {
-            principal,
-            username: random_string(),
-            referred_by,
-        },
+        referred_by.map(|user_id| user_id.to_string()),
     );
-    match response {
-        multi_user_canister::c2c_create_user::Response::Success(user_id) => (principal, user_id),
-        response => panic!("{response:?}"),
-    }
+    assert_eq!(
+        user.canister(),
+        canister_id,
+        "User not registered in the expected MultiUser canister"
+    );
+    (user.principal, user.user_id)
 }
 
 fn public_profile(
@@ -3402,8 +3426,8 @@ fn bots_are_installed_per_user() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let bot_id: UserId = random_principal().into();
     let permissions = BotPermissions::from_chat_permission(ChatPermission::ReadSummary);
 
@@ -3517,8 +3541,8 @@ fn reporting_a_message_deletes_it_from_the_reporters_copy_only() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let message_id = random_from_u128();
     let response = client::multi_user::send_message(env, bob, canister_id, &send_message_args(alice_id, "rude", message_id));
@@ -3566,7 +3590,7 @@ fn premium_items_are_paid_for_from_the_users_chit() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
 
     // An external achievement gives Alice some CHIT to spend
     let event = local_user_index_event(
@@ -3749,8 +3773,8 @@ fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
 
     // Alice and Bob exchange messages, and each sets a reminder
     send_text_message(env, alice, canister_id, bob_id, "hello", random_from_u128());
@@ -3854,8 +3878,8 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let [group1, group2, group3]: [ChatId; 3] = [
         random_principal().into(),
         random_principal().into(),
@@ -4019,7 +4043,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
     let alice = client::register_user(env, canister_ids);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let mut next_id = 0;
     let mut send = |env: &mut PocketIc, caller: Principal, sender: UserId, event: UserCanisterEvent| {
         next_id += 1;
@@ -4274,7 +4298,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
     let alice = client::register_user(env, canister_ids);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
 
     // A recipient in another canister is looked up in the LocalUserIndex
     let unknown: UserId = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap().into();
@@ -4460,14 +4484,16 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
     } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    // Users are registered in the newest MultiUser canister, so each canister is filled before the
+    // next is created
     let first =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (_, alice_id) = create_user(env, canister_ids, local_user_index, first);
+    let (_, bob_id) = create_user(env, canister_ids, local_user_index, first);
     let second =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
     tick_many(env, 5);
-    let (_, alice_id) = create_user(env, local_user_index, first);
-    let (_, bob_id) = create_user(env, local_user_index, first);
-    let (carol, carol_id) = create_user(env, local_user_index, second);
+    let (carol, carol_id) = create_user(env, canister_ids, local_user_index, second);
 
     let message_from = |env: &PocketIc, id: u64, sender: UserId, text: &str| IdempotentEnvelope {
         created_at: now_millis(env),
@@ -4572,8 +4598,8 @@ fn users_send_crypto_from_their_own_wallets() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
 
-    let (a_principal, a) = create_user(env, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
     let carol = client::register_user(env, canister_ids);
 
     let amount = 1_000_000;

@@ -61,10 +61,6 @@ impl LocalUserMap {
         self.registration_in_progress.remove(principal);
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &LocalUser)> {
-        self.users.iter()
-    }
-
     // Excludes the users held in MultiUser canisters, which are upgraded and topped up per canister
     pub fn iter_user_canisters(&self) -> impl Iterator<Item = (&UserId, &LocalUser)> {
         self.users.iter().filter(|(user_id, _)| user_id.index() == 0)
@@ -78,6 +74,8 @@ impl LocalUserMap {
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct LocalUser {
     pub date_created: TimestampMillis,
+    // For a user held in a MultiUser canister this is the canister's version when they registered,
+    // and isn't kept up to date, since the version is tracked per MultiUser canister
     pub wasm_version: BuildVersion,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,

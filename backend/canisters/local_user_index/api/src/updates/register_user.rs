@@ -13,8 +13,8 @@ pub struct Args {
     pub referral_code: Option<String>,
     #[serde(with = "serde_bytes")]
     pub public_key: Vec<u8>,
-    // Registers the user in a MultiUser canister rather than in a canister of their own. Only
-    // honoured in test mode, so that both cases can be tested
+    // Registers the user in a MultiUser canister rather than in a canister of their own, so that
+    // both cases can be tested. Rejected outside of test mode
     #[serde(default)]
     pub use_multi_user_canister: Option<bool>,
 }

@@ -1,6 +1,6 @@
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
 use crate::updates::c2c_create_multi_user_canister::create_multi_user_canister;
-use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserEvent, UserIndexEvent, mutate_state, read_state};
+use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserEvent, UserIndexEvent, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -124,15 +124,7 @@ async fn create_user_in_multi_user_canister(
         }
     }
 
-    let canister_id = create_multi_user_canister().await?;
-    let wasm_version = read_state(|state| {
-        state
-            .data
-            .local_multi_user_canisters
-            .get(&canister_id)
-            .map(|c| c.wasm_version)
-            .unwrap_or_else(BuildVersion::min)
-    });
+    let (canister_id, wasm_version) = create_multi_user_canister().await?;
     let user_id = c2c_create_user(canister_id, principal, username, referred_by).await?;
     Ok((user_id, wasm_version))
 }

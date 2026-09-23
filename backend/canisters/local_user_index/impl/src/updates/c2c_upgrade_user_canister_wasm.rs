@@ -125,7 +125,7 @@ async fn get_users_active_since(since: TimestampMillis) -> Result<HashSet<UserId
             state
                 .data
                 .local_users
-                .iter()
+                .iter_user_canisters()
                 .filter(|(_, u)| u.date_created < since)
                 .map(|(u, _)| *u)
                 .collect::<Vec<_>>(),
@@ -158,7 +158,7 @@ async fn get_users_active_since(since: TimestampMillis) -> Result<HashSet<UserId
             state
                 .data
                 .local_users
-                .iter()
+                .iter_user_canisters()
                 .filter(|(_, u)| u.date_created >= since)
                 .map(|(u, _)| *u),
         );

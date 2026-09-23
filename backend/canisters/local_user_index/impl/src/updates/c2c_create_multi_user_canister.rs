@@ -15,12 +15,12 @@ use utils::canister;
 #[trace]
 async fn c2c_create_multi_user_canister(_args: Args) -> Response {
     match create_multi_user_canister().await {
-        Ok(canister_id) => Success(canister_id),
+        Ok((canister_id, _)) => Success(canister_id),
         Err(error) => Error(error),
     }
 }
 
-pub(crate) async fn create_multi_user_canister() -> Result<CanisterId, OCError> {
+pub(crate) async fn create_multi_user_canister() -> Result<(CanisterId, BuildVersion), OCError> {
     let prepare_ok = mutate_state(prepare)?;
 
     let wasm_version = prepare_ok.canister_wasm.version;
@@ -38,7 +38,7 @@ pub(crate) async fn create_multi_user_canister() -> Result<CanisterId, OCError> 
         Ok(canister_id) => {
             mutate_state(|state| commit(canister_id, wasm_version, state));
             info!(%canister_id, "MultiUser canister created");
-            Ok(canister_id)
+            Ok((canister_id, wasm_version))
         }
         Err((canister_id, error)) => {
             mutate_state(|state| rollback(canister_id, &error, state));
