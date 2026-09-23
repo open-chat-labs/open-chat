@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `set_call_push_enabled` and `call_push_enabled` for platform operators, fanning the value out to every LocalUserIndex and seeding new ones ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 - Add `refund_deleted_user_cycles` for platform operators, which sends each deleted user's canister to the LocalUserIndex on its subnet (using the NNS registry's routing table) to have the cycles it still holds refunded ([#9476](https://github.com/open-chat-labs/open-chat/pull/9476))
+- Add `set_call_push_enabled` and `call_push_enabled` for platform operators, fanning the value out to every LocalUserIndex and seeding new ones ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 - One-off `post_upgrade` job which queues the cycles held by previously deleted users' canisters to be refunded, running only once however many times the canister is upgraded. The LocalUserIndexes must be upgraded first ([#9511](https://github.com/open-chat-labs/open-chat/pull/9511))
 
 ### Changed
