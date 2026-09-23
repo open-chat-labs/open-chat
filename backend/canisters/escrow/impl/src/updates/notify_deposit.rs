@@ -201,15 +201,27 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
             subaccount: Some(deposit_subaccount(principal, swap.id)),
         };
 
+        // A recorded deposit is held for the swap's payout to the acceptor until that is made, whether
+        // or not the swap has since expired, unless it ended before being accepted, in which case it
+        // is refunded by the swap's cancellation or expiry
+        if swap.token0_received
+            && swap.token0_transfer_out.is_none()
+            && (swap.token1_received || (!expired && swap.cancelled_at.is_none()))
+        {
+            return PrepareResult::Error(Success(SuccessResult {
+                complete: swap.token1_received,
+            }));
+        }
+
         let response = if expired {
             SwapExpired
         } else if swap.cancelled_at.is_some() {
             SwapCancelled
         } else if swap.token0_received {
-            // Already recorded, so the deposit is held for the swap's payouts and mustn't be refunded
-            return PrepareResult::Error(Success(SuccessResult {
+            // Paid out already, so only an overpayment can be left to refund
+            Success(SuccessResult {
                 complete: swap.token1_received,
-            }));
+            })
         } else {
             return PrepareResult::Success(PrepareSuccess {
                 principal,
@@ -231,17 +243,28 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
             subaccount: Some(deposit_subaccount(principal, swap.id)),
         };
 
+        // As for the offerer, a recorded deposit is held for the swap's payout to the offerer until
+        // that is made. `accepted_by` is only set once the acceptor's deposit is recorded.
+        let accepted_by_depositor = swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by == principal);
+        if accepted_by_depositor
+            && swap.token1_transfer_out.is_none()
+            && (swap.token0_received || (!expired && swap.cancelled_at.is_none()))
+        {
+            return PrepareResult::Error(Success(SuccessResult {
+                complete: swap.token0_received,
+            }));
+        }
+
         let response = if expired {
             SwapExpired
         } else if swap.cancelled_at.is_some() {
             SwapCancelled
         } else if let Some((accepted_by, _)) = swap.accepted_by {
             if accepted_by == principal {
-                // Already recorded, so the deposit is held for the swap's payouts and mustn't be
-                // refunded
-                return PrepareResult::Error(Success(SuccessResult {
+                // Paid out already, so only an overpayment can be left to refund
+                Success(SuccessResult {
                     complete: swap.token0_received,
-                }));
+                })
             } else {
                 SwapAlreadyAccepted
             }
