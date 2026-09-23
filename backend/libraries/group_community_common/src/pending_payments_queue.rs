@@ -42,8 +42,8 @@ pub enum PaymentRecipient {
 }
 
 impl PaymentRecipient {
-    // The member being paid, if the payment is to one
-    pub fn member(&self) -> Option<UserId> {
+    // The user id of the member being paid, if the payment is to one
+    pub fn user_id(&self) -> Option<UserId> {
         match self {
             PaymentRecipient::Member(user_id) => Some(*user_id),
             PaymentRecipient::MemberV2(user) => Some(user.user_id),

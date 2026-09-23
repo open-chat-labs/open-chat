@@ -59,7 +59,7 @@ async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNa
     match make_transfer(pending_payment.ledger_canister, &args, true).await {
         Ok(Ok(_)) => {
             if matches!(pending_payment.reason, PendingPaymentReason::AccessGate)
-                && let Some(user_id) = pending_payment.recipient.member()
+                && let Some(user_id) = pending_payment.recipient.user_id()
             {
                 mutate_state(|state| {
                     state
