@@ -9,7 +9,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{
     ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis, Timestamped,
     UserId, UserType, Version, is_default,
@@ -51,6 +51,7 @@ impl CommunityMembers {
     ) -> CommunityMembers {
         let member = CommunityMemberInternal {
             user_id: creator_user_id,
+            principal: creator_principal,
             date_added: now,
             role: CommunityRole::Owner,
             suspended: Timestamped::default(),
@@ -108,6 +109,7 @@ impl CommunityMembers {
 
             let member = CommunityMemberInternal {
                 user_id,
+                principal,
                 date_added: now,
                 role: CommunityRole::Member,
                 suspended: Timestamped::default(),
@@ -350,6 +352,18 @@ impl CommunityMembers {
 
     pub fn user_groups_last_updated(&self) -> TimestampMillis {
         self.user_groups.last_updated()
+    }
+
+    // Returns the number of members whose principal was set
+    pub fn populate_member_principals(&mut self) -> u32 {
+        let principals: HashMap<_, _> = self
+            .principal_to_user_id_map
+            .entries()
+            .into_iter()
+            .map(|(principal, user_id)| (user_id, principal))
+            .collect();
+
+        self.members_map.populate_principals(&principals)
     }
 
     pub fn mark_member_joined_channel(&mut self, user_id: UserId, channel_id: ChannelId) {
@@ -689,6 +703,8 @@ impl Members for CommunityMembers {
 pub struct CommunityMemberInternal {
     #[serde(rename = "u")]
     pub user_id: UserId,
+    #[serde(rename = "p")]
+    pub principal: Principal,
     #[serde(rename = "d")]
     pub date_added: TimestampMillis,
     #[serde(rename = "r", default, skip_serializing_if = "is_default")]
@@ -888,6 +904,67 @@ mod tests {
     }
 
     #[test]
+    fn member_principals_populated() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+        let principal3 = Principal::from_slice(&[3]);
+        let user_id1: UserId = Principal::from_slice(&[11]).into();
+        let user_id2: UserId = Principal::from_slice(&[12]).into();
+        let user_id3: UserId = Principal::from_slice(&[13]).into();
+
+        let mut members = CommunityMembers::new(principal1, user_id1, UserType::User, Vec::new(), 0);
+        members.add(user_id2, principal2, UserType::User, None, 0);
+        // An invited user who isn't a member
+        members.add_user_id(principal3, user_id3);
+
+        // Simulate members which were stored before principals were added
+        for user_id in [user_id1, user_id2] {
+            members.update_member(&user_id, |m| {
+                m.principal = Principal::anonymous();
+                true
+            });
+        }
+
+        assert_eq!(members.populate_member_principals(), 2);
+        assert_eq!(members.get_by_user_id(&user_id1).unwrap().principal, principal1);
+        assert_eq!(members.get_by_user_id(&user_id2).unwrap().principal, principal2);
+        assert!(members.get_by_user_id(&user_id3).is_none());
+
+        // Nothing is rewritten once the principals are populated
+        assert_eq!(members.populate_member_principals(), 0);
+    }
+
+    #[test]
+    fn member_principals_populated_across_batches() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let principal = |i: u32| Principal::from_slice(&[&[0], i.to_be_bytes().as_slice()].concat());
+        let user_id = |i: u32| UserId::from(Principal::from_slice(&[&[1], i.to_be_bytes().as_slice()].concat()));
+
+        // 2000 members, so the final batch is full and is followed by an empty read
+        let mut members = CommunityMembers::new(principal(0), user_id(0), UserType::User, Vec::new(), 0);
+        for i in 1..2000 {
+            members.add(user_id(i), principal(i), UserType::User, None, 0);
+        }
+        for i in 0..2000 {
+            members.update_member(&user_id(i), |m| {
+                m.principal = Principal::anonymous();
+                true
+            });
+        }
+
+        assert_eq!(members.populate_member_principals(), 2000);
+        for i in 0..2000 {
+            assert_eq!(members.get_by_user_id(&user_id(i)).unwrap().principal, principal(i));
+        }
+        assert_eq!(members.populate_member_principals(), 0);
+    }
+
+    #[test]
     fn serialize_member_with_max_defaults() {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init(memory.get(MemoryId::new(1)));
@@ -896,12 +973,15 @@ mod tests {
         pub struct CommunityMemberInternal2 {
             #[serde(rename = "u")]
             pub user_id: UserId,
+            #[serde(rename = "p")]
+            pub principal: Principal,
             #[serde(rename = "d")]
             pub date_added: TimestampMillis,
         }
 
         let member1 = CommunityMemberInternal {
             user_id: CanisterId::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+            principal: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap(),
             date_added: 1732874138000,
             role: CommunityRole::Member,
             rules_accepted: None,
@@ -916,6 +996,7 @@ mod tests {
 
         let member2 = CommunityMemberInternal2 {
             user_id: member1.user_id,
+            principal: member1.principal,
             date_added: member1.date_added,
         };
 
@@ -923,6 +1004,6 @@ mod tests {
         let bytes2 = msgpack::serialize_then_unwrap(&member2);
 
         assert_eq!(bytes1, bytes2);
-        assert_eq!(bytes1.len(), 26);
+        assert_eq!(bytes1.len(), 40);
     }
 }

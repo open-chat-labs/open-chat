@@ -286,6 +286,7 @@ impl RuntimeState {
     pub fn add_member(&mut self, args: AddMemberArgs) -> AddMemberResult {
         let result = self.data.chat.members.add(
             args.user_id,
+            Some(args.principal),
             args.now,
             args.min_visible_event_index,
             args.min_visible_message_index,
@@ -680,6 +681,7 @@ impl Data {
         let chat = GroupChatCore::new(
             MultiUserChat::Group(chat_id),
             creator_user_id,
+            Some(creator_principal),
             is_public,
             name,
             description,

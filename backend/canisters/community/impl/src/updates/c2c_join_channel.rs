@@ -353,6 +353,7 @@ pub(crate) fn join_channel_unchecked(
 
     let mut result = channel.chat.members.add(
         user_id,
+        None,
         now,
         min_visible_event_index,
         min_visible_message_index,
