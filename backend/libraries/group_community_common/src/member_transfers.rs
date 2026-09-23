@@ -105,10 +105,18 @@ pub fn validate_prize(prize: &PrizeContentInitial, thread_root_message_index: Op
         return Err(OCErrorCode::InvalidRequest.with_message("Prize messages cannot be sent within threads"));
     }
 
-    let total_prizes = prize.prizes_v2.iter().sum::<u128>();
-    let total_transfer_fees = prize.prizes_v2.len() as u128 * prize.transfer.fee();
-    let oc_fee = (total_prizes * PRIZE_FEE_PERCENT as u128) / 100;
-    let total_amount_to_send = total_prizes + total_transfer_fees + oc_fee;
+    // Checked, since unchecked arithmetic wraps in release builds, which would let a small transfer
+    // fund prizes whose total overflows
+    let total_amount_to_send = prize
+        .prizes_v2
+        .iter()
+        .try_fold(0u128, |total, prize| total.checked_add(*prize))
+        .and_then(|total_prizes| {
+            let total_transfer_fees = (prize.prizes_v2.len() as u128).checked_mul(prize.transfer.fee())?;
+            let oc_fee = total_prizes.checked_mul(PRIZE_FEE_PERCENT as u128)? / 100;
+            total_prizes.checked_add(total_transfer_fees)?.checked_add(oc_fee)
+        })
+        .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("Prize amounts are too large"))?;
     let transaction_amount = prize.transfer.units();
 
     if transaction_amount != total_amount_to_send {
@@ -277,5 +285,47 @@ mod tests {
         transfers.mark_used(&completed(4, NOW + MAX_TRANSFER_AGE + 1), NOW + MAX_TRANSFER_AGE + 1);
         let held: Vec<_> = transfers.used.keys().map(|(_, block_index)| *block_index).collect();
         assert_eq!(held, vec![2, 3, 4]);
+    }
+
+    fn prize(prizes: Vec<u128>, amount: u128) -> PrizeContentInitial {
+        let account = icrc1::Account {
+            owner: Principal::from_slice(&[1; 29]),
+            subaccount: None,
+        };
+        PrizeContentInitial {
+            prizes_v2: prizes,
+            transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+                ledger: CanisterId::from_slice(&[0, 0, 0, 0, 2, 0, 0, 5, 1, 1]),
+                token_symbol: "TEST".to_string(),
+                amount,
+                from: account,
+                to: account,
+                fee: 10,
+                memo: None,
+                created: 0,
+            })),
+            end_date: 0,
+            caption: None,
+            diamond_only: false,
+            lifetime_diamond_only: false,
+            unique_person_only: false,
+            streak_only: 0,
+            requires_captcha: false,
+            min_chit_earned: 0,
+        }
+    }
+
+    #[test]
+    fn prize_funded_with_prizes_and_fees_is_valid() {
+        // 2 prizes of 1000, a fee of 10 to pay out each, and OpenChat's 5%
+        assert!(validate_prize(&prize(vec![1000, 1000], 2000 + 20 + 100), None).is_ok());
+        assert!(validate_prize(&prize(vec![1000, 1000], 2000 + 20), None).is_err());
+    }
+
+    #[test]
+    fn prizes_whose_total_overflows_are_rejected() {
+        // Without checked arithmetic the total wraps to 30, which a transfer of 30 would then match
+        assert!(validate_prize(&prize(vec![u128::MAX, 1], 30), None).is_err());
+        assert!(validate_prize(&prize(vec![u128::MAX / 2, u128::MAX / 2], 1), None).is_err());
     }
 }
