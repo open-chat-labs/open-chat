@@ -217,6 +217,9 @@
             updateBlockedUsernamePatterns,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
+            // Registers an FCM token for the current user, as the native app does. Lets a web
+            // session stand in for a phone when testing pushes that only go to FCM tokens.
+            addFcmToken: (token: string) => client.addFcmToken(token),
         };
 
 
