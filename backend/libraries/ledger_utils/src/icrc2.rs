@@ -2,7 +2,7 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use oc_error_codes::{OCError, OCErrorCode};
 use tracing::error;
 use types::{
-    C2CError, UserIdAndPrincipal,
+    C2CError, UserId, UserIdAndPrincipal,
     icrc2::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TransferFromError},
 };
 
@@ -12,13 +12,33 @@ pub async fn process_transaction(
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     let spender = crate::resolve_sender(spender);
     let spender_account = crate::sender_account(spender);
-    let spender = spender.user_id;
 
+    transfer_from(transaction, spender.user_id, spender_account.subaccount).await
+}
+
+// Pulls funds for `user_id` in a canister which holds approvals made for many users, such as a Group
+// or Community, spending only an approval made under that user's own spender subaccount (see
+// `spender_subaccount`). An approval made for anyone else, or to the canister's default account,
+// can't be spent this way.
+pub async fn process_transaction_for_user(
+    transaction: PendingCryptoTransaction,
+    user_id: UserId,
+) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
+    let this_canister_id = ic_cdk::api::canister_self();
+
+    transfer_from(transaction, this_canister_id.into(), Some(crate::spender_subaccount(user_id))).await
+}
+
+async fn transfer_from(
+    transaction: PendingCryptoTransaction,
+    spender: UserId,
+    spender_subaccount: Option<[u8; 32]>,
+) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     let args = TransferFromArgs {
         // The owner is implied by the caller, so only the subaccount goes in the args. Note this
         // picks which approval is spent - `icrc2_approve` grants to an exact (owner, subaccount)
         // pair, so a non-default subaccount here can only spend an approval that named it.
-        spender_subaccount: spender_account.subaccount,
+        spender_subaccount,
         from: transaction.from.into(),
         to: transaction.to.into(),
         fee: Some(transaction.fee.into()),

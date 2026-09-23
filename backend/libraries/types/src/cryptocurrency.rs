@@ -143,6 +143,17 @@ impl PendingCryptoTransaction {
         self.units() == 0
     }
 
+    // Whether only the owner of the account the funds come from can submit the transaction. The
+    // ledger makes an NNS or ICRC1 transfer from the caller's own account, whereas an ICRC2 transfer
+    // is pulled by a spender the owner approved, and a certified transfer has already been made. So
+    // a canister which doesn't hold a user's funds can only submit the latter two for them.
+    pub fn must_be_submitted_by_account_owner(&self) -> bool {
+        match self {
+            PendingCryptoTransaction::NNS(_) | PendingCryptoTransaction::ICRC1(_) => true,
+            PendingCryptoTransaction::ICRC2(_) | PendingCryptoTransaction::Certified(_) => false,
+        }
+    }
+
     pub fn units(&self) -> u128 {
         match self {
             PendingCryptoTransaction::NNS(t) => t.amount.e8s().into(),
@@ -164,9 +175,12 @@ impl PendingCryptoTransaction {
     // Checks the transfer is to the recipient's wallet. `recipient` must hold their actual principal,
     // from the canister's own data or a lookup, never a caller's claim.
     pub fn validate_recipient(&self, recipient: UserIdAndPrincipal) -> bool {
-        // The whole account, not just the owner. Once a canister holds many users the owner alone
-        // is satisfied by a transfer destined for any of them.
-        let account = Account::from(recipient);
+        self.is_to(Account::from(recipient))
+    }
+
+    // Checks the transfer is to exactly `account`. The whole account, not just the owner, since once
+    // a canister holds many users the owner alone is satisfied by a transfer destined for any of them.
+    pub fn is_to(&self, account: Account) -> bool {
         let account_identifier = crate::account_identifier(account);
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {

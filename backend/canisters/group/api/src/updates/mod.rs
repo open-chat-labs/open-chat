@@ -56,6 +56,7 @@ pub mod reset_invite_code;
 pub mod send_message_v2;
 pub mod set_video_call_presence;
 pub mod start_video_call_v2;
+pub mod tip_message;
 pub mod toggle_mute_notifications;
 pub mod unblock_user;
 pub mod undelete_messages;
