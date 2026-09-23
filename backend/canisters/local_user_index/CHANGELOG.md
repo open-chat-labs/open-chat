@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Reject `install_bot` and `uninstall_bot` calls whose location is the wrong type, eg. a user's own direct chat given as a `Group`, which led to the installation's events being queued for delivery to a group that doesn't exist ([#9520](https://github.com/open-chat-labs/open-chat/pull/9520))
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 
 ## [[2.0.2063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2063-local_user_index)] - 2026-09-23
 
@@ -35,7 +36,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Don't uninstall a MultiUser canister when deleting one of its users, which would delete every user it holds ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
-- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 
 ## [[2.0.2059](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2059-local_user_index)] - 2026-09-18
 
