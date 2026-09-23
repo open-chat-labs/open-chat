@@ -206,9 +206,10 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
         } else if swap.cancelled_at.is_some() {
             SwapCancelled
         } else if swap.token0_received {
-            Success(SuccessResult {
+            // Already recorded, so the deposit is held for the swap's payouts and mustn't be refunded
+            return PrepareResult::Error(Success(SuccessResult {
                 complete: swap.token1_received,
-            })
+            }));
         } else {
             return PrepareResult::Success(PrepareSuccess {
                 principal,
@@ -236,9 +237,11 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
             SwapCancelled
         } else if let Some((accepted_by, _)) = swap.accepted_by {
             if accepted_by == principal {
-                Success(SuccessResult {
+                // Already recorded, so the deposit is held for the swap's payouts and mustn't be
+                // refunded
+                return PrepareResult::Error(Success(SuccessResult {
                     complete: swap.token0_received,
-                })
+                }));
             } else {
                 SwapAlreadyAccepted
             }

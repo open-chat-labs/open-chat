@@ -261,6 +261,77 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 // has nothing left to refund it. The swap is ended by expiry, since the test can move the clock
 // while the check waits; a `cancel_swap` sent from the test was found to be handled only once the
 // check had finished, but a cancellation landing in between takes the same path.
+// Notifying a deposit again once it is recorded, as a retry may, or anyone naming the depositor may,
+// leaves it in place for the swap's payouts rather than refunding it
+#[test]
+fn a_recorded_deposit_is_not_refunded_when_notified_again() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    let icp_amount = 100_000_000_000;
+    let chat_amount = 1_000_000_000_000;
+    let swap_id = create_icp_for_chat_swap(env, canister_ids, &user1, &user2, icp_amount, chat_amount);
+
+    deposit(
+        env,
+        canister_ids,
+        *controller,
+        swap_id,
+        user1.user_id,
+        canister_ids.icp_ledger,
+        icp_amount + 10_000,
+    );
+    client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    // Anyone may notify naming the depositor
+    let response = client::escrow::notify_deposit(
+        env,
+        user2.user_id.canister_id(),
+        canister_ids.escrow,
+        &escrow_canister::notify_deposit::Args {
+            swap_id,
+            deposited_by: Some(user1.user_id.as_principal()),
+        },
+    );
+    assert!(
+        matches!(response, escrow_canister::notify_deposit::Response::Success(ref r) if !r.complete),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id),
+        0
+    );
+
+    // The acceptor's deposit completes the swap, and each is paid in full; the acceptor notifying
+    // again after it is recorded leaves the swap's funds in place too
+    deposit(
+        env,
+        canister_ids,
+        *controller,
+        swap_id,
+        user2.user_id,
+        canister_ids.chat_ledger,
+        chat_amount + 100_000,
+    );
+    client::escrow::happy_path::notify_deposit(env, user2.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    client::escrow::happy_path::notify_deposit(env, user2.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
+        chat_amount
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        icp_amount
+    );
+}
+
 #[test]
 fn deposit_is_refunded_if_swap_expires_while_it_is_checked() {
     let mut wrapper = ENV.deref().get();
