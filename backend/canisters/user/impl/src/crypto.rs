@@ -1,6 +1,9 @@
 use crate::read_state;
 use oc_error_codes::OCError;
-use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, OCResult, PendingCryptoTransaction, UserId, icrc1};
+use types::{
+    C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, OCResult, PendingCryptoTransaction, UserId,
+    UserIdAndPrincipal, icrc1,
+};
 
 pub use ledger_utils::{deposit_to_accept_p2p_swap, icrc2_transfer_from};
 
@@ -25,15 +28,15 @@ async fn process_transaction_internal(
     transaction: PendingCryptoTransaction,
     check_caller: bool,
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
-    let my_user_id = read_state(|state| {
+    let me = read_state(|state| {
         if check_caller && state.env.caller() != state.data.user.principal {
             panic!("Only the owner can transfer cryptocurrency");
         }
 
-        UserId::from(state.env.canister_id())
+        UserIdAndPrincipal::new(state.env.canister_id().into(), state.data.user.principal)
     });
 
-    ledger_utils::process_transaction(transaction, Some(my_user_id), false).await
+    ledger_utils::process_transaction(transaction, me, false).await
 }
 
 // The user's own account is the canister's default account, so any account the canister holds is

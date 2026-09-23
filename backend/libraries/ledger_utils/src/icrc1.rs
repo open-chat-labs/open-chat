@@ -3,16 +3,16 @@ use icrc_ledger_types::icrc1::transfer::TransferError;
 use tracing::error;
 use types::icrc1::Account;
 use types::{
-    C2CError, CanisterId, UserId,
+    C2CError, CanisterId, UserIdAndPrincipal,
     icrc1::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
 };
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: Option<UserId>,
+    sender: UserIdAndPrincipal,
     retry_if_bad_fee: bool,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
-    let from = Account::legacy_for_user(crate::resolve_sender(sender));
+    let from: Account = crate::sender_account(sender);
 
     let args = TransferArg {
         // The owner is implied by the caller, so only the subaccount goes in the args.

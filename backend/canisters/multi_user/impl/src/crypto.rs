@@ -1,13 +1,14 @@
 use oc_error_codes::OCError;
-use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserId};
+use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserIdAndPrincipal};
 
 pub use ledger_utils::validate_from_account;
 
-// Makes the transfer from the account of the user at `my_user_id`, one of this canister's
-// subaccounts. The caller has already checked the caller may act as that user.
+// Makes the transfer on behalf of `me`. The caller has already checked the caller may act as that
+// user. Their funds are in their principal's account rather than this canister's, so this fails
+// until the canister accepts transfers the user has made themselves.
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    my_user_id: UserId,
+    me: UserIdAndPrincipal,
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
-    ledger_utils::process_transaction(transaction, Some(my_user_id), false).await
+    ledger_utils::process_transaction(transaction, me, false).await
 }

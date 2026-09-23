@@ -31,7 +31,7 @@ async fn c2c_claim_prize_impl(args: Args) -> PrizeClaimResponse {
     let prize_amount = prepare_result.transaction.units();
 
     // Transfer the prize to the winner
-    let result = process_transaction(prepare_result.transaction, None, true).await;
+    let result = process_transaction(prepare_result.transaction, ledger_utils::this_canister(), true).await;
 
     match result {
         Ok(Ok(completed_transaction)) => {
