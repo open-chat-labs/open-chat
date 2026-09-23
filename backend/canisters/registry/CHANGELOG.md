@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
+
 ## [[2.0.2061](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2061-registry)] - 2026-09-23
 
 ### Added
@@ -21,7 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Detect an uninstalled ledger from the reject message, since the `IC0537` code it was matching on is never sent to canisters ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
-- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 
 ## [[2.0.1891](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1891-registry)] - 2025-09-11
 
