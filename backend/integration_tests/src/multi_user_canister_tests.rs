@@ -2551,18 +2551,28 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
     );
     assert!(initial_state(env, b_principal, canister_id).streak_insurance.is_none());
 
-    // B pays from an external wallet they approved, under their own spender subaccount
+    // B pays from an external wallet, which must have approved the payment under B's own spender
+    // subaccount, not another user's
     claim_daily_chit(env, b_principal, canister_id);
     let external_wallet = random_principal();
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, external_wallet, wallet_balance);
+    approve(env, external_wallet, a);
+    assert_pay_for_streak_insurance_error(
+        env,
+        b_principal,
+        canister_id,
+        1,
+        ONE_CHAT,
+        Some(external_wallet.into()),
+        OCErrorCode::InsufficientAllowance,
+    );
     approve(env, external_wallet, b);
     let response = pay_for_streak_insurance(env, b_principal, canister_id, 1, ONE_CHAT, Some(external_wallet.into()));
     assert!(
         matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
         "{response:?}"
     );
-    assert_eq!(balance(env, external_wallet), wallet_balance - ONE_CHAT - 2 * FEE);
-    assert_eq!(balance(env, b_principal), 0);
+    assert_eq!(balance(env, external_wallet), wallet_balance - ONE_CHAT - 3 * FEE);
 
     // Missing a day uses up each user's day of insurance, keeping their streaks, B setting up their
     // job having left A's in place. The OpenChat bot tells each of them.
@@ -2633,43 +2643,46 @@ fn users_are_charged_from_their_own_wallets() {
             ONE_CHAT + FEE,
         );
     };
-    let charge = |env: &mut PocketIc| {
+    let charge = |env: &mut PocketIc, user_id: UserId, from_account: Option<types::icrc1::Account>| {
         client::multi_user::c2c_charge_user_account(
             env,
             canister_ids.user_index,
             canister_id,
             &user_canister::c2c_charge_user_account::Args {
-                user_id: a,
+                user_id,
                 ledger_canister_id: canister_ids.chat_ledger,
                 amount: types::nns::Tokens::from_e8s(ONE_CHAT as u64),
-                from_account: None,
+                from_account,
             },
         )
     };
+    let is_insufficient_allowance = |response: &user_canister::c2c_charge_user_account::Response| {
+        matches!(
+            response,
+            user_canister::c2c_charge_user_account::Response::TransferFromError(
+                types::icrc2::TransferFromError::InsufficientAllowance { .. }
+            )
+        )
+    };
+    let is_error = |response: &user_canister::c2c_charge_user_account::Response, code: OCErrorCode| matches!(response, user_canister::c2c_charge_user_account::Response::Error(e) if e.matches_code(code));
     let user_index_balance = balance(env, canister_ids.user_index);
+
+    // Neither a user the canister doesn't hold, nor an account the canister holds, can be charged
+    let response = charge(env, UserId::new_indexed(canister_id, 999), None);
+    assert!(is_error(&response, OCErrorCode::TargetUserNotFound), "{response:?}");
+    let response = charge(env, a, Some(canister_id.into()));
+    assert!(is_error(&response, OCErrorCode::InvalidRequest), "{response:?}");
 
     // Without an approval under A's own spender subaccount nothing can be pulled, and one made
     // under another user's is no use
-    let response = charge(env);
-    assert!(
-        matches!(
-            response,
-            user_canister::c2c_charge_user_account::Response::TransferFromError(_)
-        ),
-        "{response:?}"
-    );
+    let response = charge(env, a, None);
+    assert!(is_insufficient_allowance(&response), "{response:?}");
     approve(env, b);
-    let response = charge(env);
-    assert!(
-        matches!(
-            response,
-            user_canister::c2c_charge_user_account::Response::TransferFromError(_)
-        ),
-        "{response:?}"
-    );
+    let response = charge(env, a, None);
+    assert!(is_insufficient_allowance(&response), "{response:?}");
 
     approve(env, a);
-    let response = charge(env);
+    let response = charge(env, a, None);
     assert!(
         matches!(response, user_canister::c2c_charge_user_account::Response::Success(_)),
         "{response:?}"

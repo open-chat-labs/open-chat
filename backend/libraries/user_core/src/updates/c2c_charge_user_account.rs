@@ -19,7 +19,10 @@ pub async fn c2c_charge_user_account(args: Args, payer: Payer, user_index_canist
         args.user_id
     );
 
-    if let Err(error) = ledger_utils::validate_from_account(args.from_account, this_canister_id) {
+    // The account actually paid from, whichever the caller chose, can't be one of this canister's
+    if let Payer::Approved { from, .. } = &payer
+        && let Err(error) = ledger_utils::validate_from_account(Some(*from), this_canister_id)
+    {
         return Error(error);
     }
 
