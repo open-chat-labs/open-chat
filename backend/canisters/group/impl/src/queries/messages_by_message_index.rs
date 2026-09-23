@@ -18,8 +18,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> OCResult<
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }
 
-    let user_id = state.get_caller_user_id();
-    let events_caller = user_id.map_or(EventsCaller::Unknown, EventsCaller::User);
+    let events_caller = state.get_caller_user().map_or(EventsCaller::Unknown, EventsCaller::User);
 
     state
         .data

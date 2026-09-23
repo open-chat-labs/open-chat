@@ -39,7 +39,7 @@ use types::{
     ChatMetrics, CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCallDismissedNotification,
     GroupCanisterGroupChatSummary, GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype,
     IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult,
-    Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserType,
+    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -134,6 +134,22 @@ impl RuntimeState {
             .principal_to_user_id_map
             .get(&caller)
             .ok_or(OCErrorCode::InitiatorNotInChat)
+    }
+
+    // The calling user and their principal, as recorded on their member record
+    pub fn get_caller_user(&self) -> Result<UserIdAndPrincipal, OCErrorCode> {
+        let user_id = self.get_caller_user_id()?;
+        Ok(self.member_user(user_id))
+    }
+
+    // The user and their principal, as recorded on their member record, or with the principal
+    // anonymous if they aren't a member
+    pub fn member_user(&self, user_id: UserId) -> UserIdAndPrincipal {
+        self.data
+            .chat
+            .members
+            .get(&user_id)
+            .map_or(UserIdAndPrincipal::new(user_id, Principal::anonymous()), |m| m.user())
     }
 
     // The calling member, or when `user_id` is given, that member, whom the caller must hold (a
@@ -249,7 +265,8 @@ impl RuntimeState {
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
-        for payment in calculate_gate_payments(payment, self.data.chat.members.owners()) {
+        let owners = self.data.chat.members.owners().iter().map(|u| self.member_user(*u)).collect();
+        for payment in calculate_gate_payments(payment, owners) {
             self.data.pending_payments_queue.push(payment);
         }
 
@@ -301,7 +318,7 @@ impl RuntimeState {
             messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(member.user_id())),
+            latest_message: main_events_reader.latest_message_event(Some(member.user())),
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: main_events_reader.latest_message_index(),
             participant_count: chat.members.len(),
@@ -901,7 +918,13 @@ impl Data {
                 min_visible_event_index: EventIndex::default(),
             }))
         } else if let Some(user_id) = self.lookup_user_id(caller) {
-            Some(EventsCaller::User(user_id))
+            // Their principal is the caller, unless they are a member, when it's on their member record
+            let user = self
+                .chat
+                .members
+                .get(&user_id)
+                .map_or(UserIdAndPrincipal::new(user_id, caller), |m| m.user());
+            Some(EventsCaller::User(user))
         } else {
             Some(EventsCaller::Unknown)
         }

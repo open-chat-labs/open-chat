@@ -30,8 +30,9 @@ use types::{
     Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview, OptionUpdate,
     P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
     PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
-    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
-    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation, is_default,
+    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId,
+    UserIdAndPrincipal, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
+    is_default,
 };
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -439,7 +440,10 @@ impl ChatEvents {
             args.now,
         );
 
-        let message = message_internal.clone().hydrate(Some(message_internal.sender));
+        // The sender's principal isn't known here. The account of their user id is their wallet if
+        // they are alone in their canister, and nothing else in a new message depends on it.
+        let sender = UserIdAndPrincipal::new(message_internal.sender, message_internal.sender.as_principal());
+        let message = message_internal.clone().hydrate(Some(sender));
 
         let push_event_result = self.push_event(
             args.thread_root_message_index,

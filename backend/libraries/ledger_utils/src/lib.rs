@@ -3,7 +3,8 @@ use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Subaccount};
 use oc_error_codes::{OCError, OCErrorCode};
 use sha2::{Digest, Sha256};
 use types::{
-    C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
+    C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
+    UserIdAndPrincipal,
 };
 pub use user_accounts::{deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
 
@@ -18,7 +19,7 @@ pub fn create_pending_transaction(
     ledger: CanisterId,
     amount: u128,
     fee: u128,
-    user_id: UserId,
+    to: types::icrc1::Account,
     memo: Option<&[u8]>,
     now_nanos: TimestampNanos,
 ) -> PendingCryptoTransaction {
@@ -27,7 +28,7 @@ pub fn create_pending_transaction(
         fee,
         token_symbol: token_symbol.clone(),
         amount,
-        to: types::icrc1::Account::for_user(user_id),
+        to,
         memo: memo.map(|bytes| bytes.to_vec().into()),
         created: now_nanos,
     })
@@ -35,7 +36,7 @@ pub fn create_pending_transaction(
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: Option<UserId>,
+    sender: Option<UserIdAndPrincipal>,
     retry_if_bad_fee: bool,
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     match transaction {
@@ -69,7 +70,7 @@ pub async fn process_transaction(
                 token_symbol: t.token_symbol,
                 amount: t.amount,
                 fee: t.fee,
-                from: types::icrc1::Account::for_user(resolve_sender(sender)).into(),
+                from: sender_account(resolve_sender(sender)).into(),
                 to: t.to.into(),
                 memo: t.memo,
                 created: t.created,
@@ -80,22 +81,23 @@ pub async fn process_transaction(
     }
 }
 
-// The user this canister is transferring on behalf of, defaulting to the canister itself where
-// there isn't one. The owner is always this canister because the ledger takes it from the caller, so
-// resolving it here rather than accepting it as an argument means the recorded `from` cannot
-// disagree with where the funds actually moved.
-pub(crate) fn resolve_sender(sender: Option<UserId>) -> UserId {
-    let canister_id = ic_cdk::api::canister_self();
+// The sender of a transfer, which is this canister when there is no user it is transferring for
+pub(crate) fn resolve_sender(sender: Option<UserIdAndPrincipal>) -> UserIdAndPrincipal {
+    sender.unwrap_or_else(UserIdAndPrincipal::this_canister)
+}
 
-    match sender {
-        // Transferring for a user held elsewhere would debit whichever of our own users shares their
-        // index, so refuse rather than move somebody else's funds.
-        Some(user_id) => {
-            assert_eq!(user_id.canister_id(), canister_id, "{user_id} is not held by this canister");
-            user_id
-        }
-        None => UserId::from(canister_id),
-    }
+// The account a transfer is made from, which is always this canister's own, since the ledger takes
+// the owner from the caller. So the sender must be this canister or its user, whose wallet it is -
+// a user in a MultiUser canister holds their own funds, which the canister can't transfer.
+pub(crate) fn sender_account(sender: UserIdAndPrincipal) -> types::icrc1::Account {
+    let account = types::icrc1::Account::from(sender);
+    let canister_id = ic_cdk::api::canister_self();
+    assert_eq!(
+        account.owner, canister_id,
+        "The wallet of {} is not this canister's account",
+        sender.user_id
+    );
+    account
 }
 
 pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {

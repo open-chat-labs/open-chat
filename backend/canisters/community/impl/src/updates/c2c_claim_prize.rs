@@ -91,7 +91,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         result.ledger_canister_id,
         result.amount,
         result.fee,
-        user_id,
+        member.user().into(),
         Some(&MEMO_PRIZE_CLAIM),
         transaction_time,
     );

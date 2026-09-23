@@ -103,7 +103,7 @@ fn swap_from_own_account_is_rejected() {
 
     let user = client::register_user(env, canister_ids);
 
-    let args = swap_args(canister_ids, ONE_ICP, Some(icrc1::Account::for_user(user.user_id)));
+    let args = swap_args(canister_ids, ONE_ICP, Some(icrc1::Account::legacy_for_user(user.user_id)));
     let response = client::user::swap_tokens(env, user.principal, user.canister(), &args);
     assert!(
         matches!(

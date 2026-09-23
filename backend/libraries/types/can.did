@@ -946,7 +946,6 @@ type NnsFailedCryptoTransaction = record {
 };
 
 type NnsUserOrAccount = variant {
-    User : UserId;
     Account : AccountIdentifier;
 };
 

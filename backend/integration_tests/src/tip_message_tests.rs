@@ -438,7 +438,7 @@ fn tip_from_own_account_is_rejected() {
             amount: 1_0000_0000,
             fee: ICP_TRANSFER_FEE,
             decimals: 8,
-            from_account: Some(icrc1::Account::for_user(user1.user_id)),
+            from_account: Some(icrc1::Account::legacy_for_user(user1.user_id)),
             pin: None,
         },
     );

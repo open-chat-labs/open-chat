@@ -4,6 +4,36 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use icrc_ledger_types::icrc2::approve::{ApproveArgs, ApproveError};
 
+// What the ledger helpers take as an account. A user's is the account of their id, which is their
+// wallet if they are alone in their canister.
+pub trait ToAccount {
+    fn to_account(self) -> Account;
+}
+
+impl ToAccount for Account {
+    fn to_account(self) -> Account {
+        self
+    }
+}
+
+impl ToAccount for candid::Principal {
+    fn to_account(self) -> Account {
+        self.into()
+    }
+}
+
+impl ToAccount for types::icrc1::Account {
+    fn to_account(self) -> Account {
+        self.into()
+    }
+}
+
+impl ToAccount for types::UserId {
+    fn to_account(self) -> Account {
+        types::icrc1::Account::legacy_for_user(self).into()
+    }
+}
+
 // Queries
 generate_query_call!(icrc1_balance_of);
 
@@ -45,7 +75,7 @@ pub mod happy_path {
         env: &mut PocketIc,
         sender: Principal,
         ledger_canister_id: CanisterId,
-        recipient: impl Into<Account>,
+        recipient: impl ToAccount,
         amount: u128,
     ) -> BlockIndex {
         icrc1_transfer(
@@ -54,7 +84,7 @@ pub mod happy_path {
             ledger_canister_id,
             &icrc1_transfer::Args {
                 from_subaccount: None,
-                to: recipient.into(),
+                to: recipient.to_account(),
                 fee: None,
                 created_at_time: None,
                 memo: None,
@@ -67,8 +97,8 @@ pub mod happy_path {
         .unwrap()
     }
 
-    pub fn balance_of(env: &PocketIc, ledger_canister_id: CanisterId, account: impl Into<Account>) -> u128 {
-        icrc1_balance_of(env, Principal::anonymous(), ledger_canister_id, &account.into())
+    pub fn balance_of(env: &PocketIc, ledger_canister_id: CanisterId, account: impl ToAccount) -> u128 {
+        icrc1_balance_of(env, Principal::anonymous(), ledger_canister_id, &account.to_account())
             .0
             .try_into()
             .unwrap()
@@ -78,7 +108,7 @@ pub mod happy_path {
         env: &mut PocketIc,
         sender: Principal,
         ledger_canister_id: CanisterId,
-        spender: impl Into<Account>,
+        spender: impl ToAccount,
         amount: u128,
     ) -> BlockIndex {
         icrc2_approve(
@@ -87,7 +117,7 @@ pub mod happy_path {
             ledger_canister_id,
             &icrc2_approve::Args {
                 from_subaccount: None,
-                spender: spender.into(),
+                spender: spender.to_account(),
                 amount: amount.into(),
                 expected_allowance: None,
                 expires_at: None,

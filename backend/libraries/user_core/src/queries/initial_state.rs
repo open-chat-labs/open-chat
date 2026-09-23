@@ -1,6 +1,6 @@
 use crate::User;
 use crate::queries::{pinned_direct_and_group_chats, sorted_pinned};
-use types::{CanisterId, InstalledBotDetails, TimestampMillis, UserId};
+use types::{CanisterId, InstalledBotDetails, TimestampMillis, UserId, UserIdAndPrincipal};
 use user_canister::initial_state::*;
 
 pub fn initial_state(
@@ -10,7 +10,11 @@ pub fn initial_state(
     now: TimestampMillis,
 ) -> SuccessResult {
     let direct_chats = DirectChatsInitial {
-        summaries: user.direct_chats.iter().map(|chat| chat.to_summary(my_user_id)).collect(),
+        summaries: user
+            .direct_chats
+            .iter()
+            .map(|chat| chat.to_summary(UserIdAndPrincipal::new(my_user_id, user.principal)))
+            .collect(),
     };
 
     let group_chats = GroupChatsInitial {

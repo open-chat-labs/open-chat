@@ -1,13 +1,9 @@
-use oc_error_codes::OCError;
-use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, UserId};
+use oc_error_codes::{OCError, OCErrorCode};
 
-pub use ledger_utils::validate_from_account;
-
-// Makes the transfer from the account of the user at `my_user_id`, one of this canister's
-// subaccounts. The caller has already checked the caller may act as that user.
-pub async fn process_transaction(
-    transaction: PendingCryptoTransaction,
-    my_user_id: UserId,
-) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
-    ledger_utils::process_transaction(transaction, Some(my_user_id), false).await
+// Users hold their own funds in their principal's account, which this canister can't spend from or
+// approve transfers from. So the endpoints which would spend a user's funds for them reject the
+// request until users can make those payments themselves.
+pub fn user_funds_not_spendable() -> OCError {
+    OCErrorCode::InvalidRequest
+        .with_message("Not supported by the MultiUser canister, since users hold their own funds in their own wallets")
 }

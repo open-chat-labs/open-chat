@@ -18,10 +18,10 @@ fn thread_previews_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRes
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }
 
-    let user_id = state.get_caller_user_id()?;
+    let user = state.get_caller_user()?;
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
     let now = state.env.now();
-    let threads = channel.chat.thread_previews(user_id, args.threads)?;
+    let threads = channel.chat.thread_previews(user, args.threads)?;
 
     Ok(SuccessResult { threads, timestamp: now })
 }

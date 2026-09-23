@@ -2,7 +2,7 @@ use crate::User;
 use crate::queries::{pinned_direct_and_group_chats, sorted_pinned};
 use installed_bots::BotUpdate;
 use std::collections::HashSet;
-use types::{InstalledBotDetails, OptionUpdate, TimestampMillis, UserId};
+use types::{InstalledBotDetails, OptionUpdate, TimestampMillis, UserId, UserIdAndPrincipal};
 use user_canister::updates::*;
 
 // None if nothing has changed since `updates_since`. `now` is only read once something has,
@@ -84,11 +84,12 @@ pub fn updates(
 
     let mut direct_chats_added = Vec::new();
     let mut direct_chats_updated = Vec::new();
+    let my_user = UserIdAndPrincipal::new(my_user_id, user.principal);
     for chat in user.direct_chats.updated_since(updates_since) {
         if chat.date_created() > updates_since {
-            direct_chats_added.push(chat.to_summary(my_user_id));
+            direct_chats_added.push(chat.to_summary(my_user));
         } else {
-            direct_chats_updated.push(chat.to_summary_updates(updates_since, my_user_id));
+            direct_chats_updated.push(chat.to_summary_updates(updates_since, my_user));
         }
     }
     let direct_chats = DirectChatsUpdates {

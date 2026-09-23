@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{DeleteUndeleteMessagesArgs, Reader};
 use oc_error_codes::OCErrorCode;
-use types::{EventIndex, OCResult};
+use types::{EventIndex, OCResult, UserIdAndPrincipal};
 use user_canister::undelete_messages::{Response::*, *};
 use user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, UserCanisterEvent};
 
@@ -31,6 +31,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         .with_user_mut(my_index, |user| -> OCResult<_> {
             user.verify_not_suspended()?;
 
+            let me = UserIdAndPrincipal::new(my_user_id, user.principal);
             let chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
 
             let undeleted: Vec<_> = chat
@@ -52,7 +53,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
 
             let messages: Vec<_> = undeleted
                 .iter()
-                .filter_map(|&message_id| events_reader.message(message_id.into(), Some(my_user_id)))
+                .filter_map(|&message_id| events_reader.message(message_id.into(), Some(me)))
                 .collect();
 
             let thread_root_message_id = if undeleted.is_empty() {

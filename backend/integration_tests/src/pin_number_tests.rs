@@ -173,7 +173,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
                     canister_ids.icp_ledger,
                     10000,
                     ICP_TRANSFER_FEE,
-                    user2.user_id,
+                    types::icrc1::Account::legacy_for_user(user2.user_id),
                     None,
                     now_nanos(env),
                 )),

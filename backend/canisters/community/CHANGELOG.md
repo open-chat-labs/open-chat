@@ -28,6 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pass the target `user_id` in calls to User canisters ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Queue user events per canister, and send a MultiUser canister's in a single call via the v2 endpoint, while User canisters are still sent theirs via the original endpoint ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
 - Merge `get_calling_member_acting_as` into `get_calling_member`, which takes the optional user being acted for ([#9501](https://github.com/open-chat-labs/open-chat/pull/9501))
+- Record the principal of a prize's sender when it is sent, so that any refund goes to their wallet even if they have since left ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+- Resolve a P2P swap's acceptor from either their user id or their principal, since escrow identifies each party by their wallet's owner ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 - Store each member's principal on the member, populating existing members in post_upgrade ([#9507](https://github.com/open-chat-labs/open-chat/pull/9507))
 
 ### Removed

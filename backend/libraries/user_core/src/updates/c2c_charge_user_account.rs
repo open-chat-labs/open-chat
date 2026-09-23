@@ -1,7 +1,6 @@
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
-use types::icrc1;
 use user_canister::c2c_charge_user_account::{Args, Response::*, *};
 
 // Charges the user's account, or the external account they approved, paying the UserIndex. The
@@ -24,9 +23,9 @@ pub async fn c2c_charge_user_account(args: Args, user_index_canister_id: types::
 
     let to = Account::from(user_index_canister_id);
     let amount = args.amount.e8s().into();
-    // Whichever account we charge, the owner is this canister, so only the subaccount is ours to
-    // choose. For ICRC-2 it picks which approval is spent rather than which account is debited.
-    let subaccount = icrc1::Account::for_user(args.user_id).subaccount;
+    // Whichever account we charge, the owner is this canister and the subaccount is its default one.
+    // For ICRC-2 the subaccount picks which approval is spent rather than which account is debited.
+    let subaccount = None;
 
     match args.from_account {
         // The allowance is what authorises this - the ledger only lets us pull from an account

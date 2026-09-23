@@ -19,13 +19,13 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> OCResult<
     }
 
     let caller = state.env.caller();
-    let user_id = state.data.members.get(caller).map(|m| m.user_id);
+    let user = state.data.members.get(caller).map(|m| m.user());
 
-    if user_id.is_none() && (!state.data.is_public.value || state.data.has_payment_gate()) {
+    if user.is_none() && (!state.data.is_public.value || state.data.has_payment_gate()) {
         return Err(OCErrorCode::InitiatorNotInCommunity.into());
     }
 
-    let events_caller = user_id.map_or(EventsCaller::Unknown, EventsCaller::User);
+    let events_caller = user.map_or(EventsCaller::Unknown, EventsCaller::User);
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
 
     channel

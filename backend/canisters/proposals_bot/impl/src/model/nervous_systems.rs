@@ -1,6 +1,7 @@
 use crate::{NervousSystemMetrics, generate_message_id};
+use candid::Principal;
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
@@ -8,7 +9,7 @@ use std::mem;
 use tracing::info;
 use types::{
     CanisterId, MessageId, MessageIndex, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId,
-    ProposalRewardStatus, ProposalUpdate, SnsNeuronId, TimestampMillis, UserId,
+    ProposalRewardStatus, ProposalUpdate, SnsNeuronId, TimestampMillis, UserId, UserIdAndPrincipal,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -302,11 +303,11 @@ impl NervousSystems {
     pub fn record_user_submitted_proposal(
         &mut self,
         governance_canister_id: CanisterId,
-        user_id: UserId,
+        user: UserIdAndPrincipal,
         proposal_id: ProposalId,
     ) {
         if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
-            ns.active_user_submitted_proposals.insert(proposal_id, user_id);
+            ns.active_user_submitted_proposals.insert(proposal_id, user);
         }
     }
 
@@ -335,7 +336,8 @@ pub struct NervousSystem {
     neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
     neuron_for_submitting_proposals_dissolve_delay: Milliseconds,
     sync_in_progress: bool,
-    active_user_submitted_proposals: BTreeMap<ProposalId, UserId>,
+    #[serde(deserialize_with = "deserialize_user_submitted_proposals")]
+    active_user_submitted_proposals: BTreeMap<ProposalId, UserIdAndPrincipal>,
     decided_user_submitted_proposals: Vec<UserSubmittedProposalResult>,
     transaction_fee: u64,
     min_neuron_stake: u64,
@@ -396,7 +398,7 @@ impl NervousSystem {
     pub fn process_proposal(&mut self, proposal: Proposal, finished: bool) {
         let proposal_id = proposal.id();
 
-        if let Some(user_id) = self.active_user_submitted_proposals.get(&proposal_id).copied()
+        if let Some(user) = self.active_user_submitted_proposals.get(&proposal_id).copied()
             && let Some(adopted) = match proposal.status() {
                 ProposalDecisionStatus::Unspecified | ProposalDecisionStatus::Open => None,
                 ProposalDecisionStatus::Adopted | ProposalDecisionStatus::Executed | ProposalDecisionStatus::Failed => {
@@ -408,7 +410,8 @@ impl NervousSystem {
             self.active_user_submitted_proposals.remove(&proposal_id);
             self.decided_user_submitted_proposals.push(UserSubmittedProposalResult {
                 proposal_id,
-                user_id,
+                user_id: user.user_id,
+                principal: user.principal,
                 adopted,
             });
         }
@@ -550,7 +553,36 @@ pub struct ProposalsToUpdate {
 pub struct UserSubmittedProposalResult {
     pub proposal_id: ProposalId,
     pub user_id: UserId,
+    // Anonymous for proposals submitted before the principal was recorded, which is fine as those
+    // users are all alone in their canisters, so are refunded at their user id
+    #[serde(default = "Principal::anonymous")]
+    pub principal: Principal,
     pub adopted: bool,
+}
+
+// Proposals submitted before the principal was recorded hold just the user id, and are given an
+// anonymous principal, which is fine as those users are all alone in their canisters
+fn deserialize_user_submitted_proposals<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<BTreeMap<ProposalId, UserIdAndPrincipal>, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum SubmittedBy {
+        User(UserIdAndPrincipal),
+        UserId(UserId),
+    }
+
+    let map: BTreeMap<ProposalId, SubmittedBy> = BTreeMap::deserialize(deserializer)?;
+    Ok(map
+        .into_iter()
+        .map(|(proposal_id, submitted_by)| {
+            let user = match submitted_by {
+                SubmittedBy::User(user) => user,
+                SubmittedBy::UserId(user_id) => UserIdAndPrincipal::new(user_id, Principal::anonymous()),
+            };
+            (proposal_id, user)
+        })
+        .collect())
 }
 
 pub enum ValidateSubmitProposalPaymentError {
@@ -563,4 +595,49 @@ pub struct NeuronInNeedOfDissolveDelayIncrease {
     pub governance_canister_id: CanisterId,
     pub neuron_id: SnsNeuronId,
     pub additional_dissolve_delay_seconds: u32,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Serialize, Deserialize)]
+    struct Wrapper {
+        #[serde(deserialize_with = "deserialize_user_submitted_proposals")]
+        proposals: BTreeMap<ProposalId, UserIdAndPrincipal>,
+    }
+
+    fn user_id() -> UserId {
+        Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 1, 1]).into()
+    }
+
+    // As stored before the principal was recorded
+    #[test]
+    fn proposals_submitted_by_user_id_deserialize_with_an_anonymous_principal() {
+        #[derive(Serialize)]
+        struct Previous {
+            proposals: BTreeMap<ProposalId, UserId>,
+        }
+
+        let bytes = msgpack::serialize_then_unwrap(Previous {
+            proposals: BTreeMap::from([(1, user_id())]),
+        });
+        let wrapper: Wrapper = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(
+            wrapper.proposals.get(&1),
+            Some(&UserIdAndPrincipal::new(user_id(), Principal::anonymous()))
+        );
+    }
+
+    #[test]
+    fn proposals_submitted_by_user_and_principal_round_trip() {
+        let user = UserIdAndPrincipal::new(user_id(), Principal::from_slice(&[9; 29]));
+        let bytes = msgpack::serialize_then_unwrap(Wrapper {
+            proposals: BTreeMap::from([(1, user)]),
+        });
+        let wrapper: Wrapper = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(wrapper.proposals.get(&1), Some(&user));
+    }
 }

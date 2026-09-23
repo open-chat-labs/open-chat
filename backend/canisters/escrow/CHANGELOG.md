@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pay swap funds and refunds to principals again rather than users' wallets, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since users in MultiUser canisters hold their own funds in their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+
 ## [[2.0.2056](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2056-escrow)] - 2026-09-18
 
 ### Changed

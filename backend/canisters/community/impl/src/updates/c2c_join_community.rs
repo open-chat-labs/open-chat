@@ -12,7 +12,7 @@ use gated_groups::{
 };
 use group_community_common::{ExpiringMember, PaymentLockGuard};
 use oc_error_codes::OCErrorCode;
-use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UsersUnblocked};
+use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UserIdAndPrincipal, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -97,7 +97,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
         IsPermittedToJoinSuccess::RequiresGate(
             gate_config.gate.clone(),
             Box::new(CheckGateArgs {
-                user_id: args.user_id,
+                user: UserIdAndPrincipal::new(args.user_id, args.principal),
                 diamond_membership_expires_at: args.diamond_membership_expires_at,
                 this_canister: state.env.canister_id(),
                 is_unique_person: args.unique_person_proof.is_some(),
