@@ -3,9 +3,10 @@ use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_STREAK_INSURANCE, SNS_GOVERNANCE_C
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
+use ledger_utils::Payer;
 use ledger_utils::icrc1::make_transfer;
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, TimestampMillis, icrc1};
+use types::{OCResult, TimestampMillis};
 use user_canister::pay_for_streak_insurance::Args;
 
 // Checks the request against the user's streak and takes the payment lock, which the caller
@@ -35,26 +36,27 @@ pub fn prepare(user: &mut User, args: &mut Args, now: TimestampMillis) -> OCResu
     }
 }
 
-// Pays the SNS governance canister, returning the transaction index, from this canister's own
-// account, or for ICRC-2 from `from_account`, which must have approved this canister. The caller has
-// already checked `from_account` isn't one of this canister's own.
-pub async fn pay(from_account: Option<icrc1::Account>, amount: u128) -> OCResult<u64> {
+// Pays the SNS governance canister from `payer`, returning the transaction index. The caller has
+// already checked the request's `from_account` isn't one of this canister's own.
+pub async fn pay(payer: Payer, amount: u128) -> OCResult<u64> {
     let to = Account {
         owner: SNS_GOVERNANCE_CANISTER_ID,
         subaccount: None,
     };
     let amount = amount.into();
     let memo = Some(MEMO_STREAK_INSURANCE.to_vec().into());
-    let subaccount = None;
 
-    match from_account {
+    match payer {
         // The allowance is what authorises this: the ledger only lets us pull from an account which
-        // has approved the spender we pass, the user's subaccount of this canister
-        Some(from) => {
+        // has approved this canister as spender, under the spender subaccount we pass
+        Payer::Approved {
+            from,
+            spender_subaccount,
+        } => {
             ledger_utils::icrc2_transfer_from(
                 CHAT_LEDGER_CANISTER_ID,
                 &TransferFromArgs {
-                    spender_subaccount: subaccount,
+                    spender_subaccount,
                     from: from.into(),
                     to,
                     fee: None,
@@ -65,10 +67,10 @@ pub async fn pay(from_account: Option<icrc1::Account>, amount: u128) -> OCResult
             )
             .await
         }
-        None => match make_transfer(
+        Payer::ThisCanister => match make_transfer(
             CHAT_LEDGER_CANISTER_ID,
             &TransferArg {
-                from_subaccount: subaccount,
+                from_subaccount: None,
                 to,
                 fee: None,
                 created_at_time: None,

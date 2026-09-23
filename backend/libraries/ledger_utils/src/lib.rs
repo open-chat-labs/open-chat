@@ -6,7 +6,7 @@ use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
     UserId, UserIdAndPrincipal,
 };
-pub use user_accounts::{deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
+pub use user_accounts::{Payer, deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
 pub use user_transfers::UserTransfer;
 
 pub mod certified;
