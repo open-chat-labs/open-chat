@@ -147,7 +147,7 @@ impl Bot {
         &mut self,
         now: TimestampMillis,
     ) -> Vec<(BotInstallationLocation, BotInstallationLocation)> {
-        let misrecorded: Vec<_> = self
+        let mut misrecorded: Vec<_> = self
             .installations
             .iter()
             .filter_map(|(location, details)| {
@@ -156,12 +156,15 @@ impl Bot {
                     BotInstallationLocation::Community(community_id) => (*community_id).into(),
                     BotInstallationLocation::User(_) => return None,
                 };
-                (UserId::from(location_id) == details.installed_by).then_some(*location)
+                (UserId::from(location_id) == details.installed_by).then_some((details.updated_at, *location))
             })
             .collect();
+        // Most recently updated first, so that if the bot was misrecorded under both a `Group` and
+        // a `Community` location for the same user, the latest of them is the one moved
+        misrecorded.sort_unstable_by(|a, b| b.cmp(a));
 
         let mut repaired = Vec::new();
-        for location in misrecorded {
+        for (_, location) in misrecorded {
             let details = self.installations.remove(&location).unwrap();
             let user_location = BotInstallationLocation::User(details.installed_by.into());
 
@@ -1248,6 +1251,44 @@ mod tests {
         // Running it again changes nothing
         assert!(bot.repair_misrecorded_direct_chat_installations(11).is_empty());
         assert_eq!(bot.installation_events.len(), events_before + 3);
+    }
+
+    #[test]
+    fn the_latest_of_several_misrecorded_installations_for_a_user_is_the_one_moved() {
+        let user_id: UserId = Principal::from_slice(&[3, 1]).into();
+        let local_user_index = Principal::from_slice(&[5, 1]);
+        let as_group = BotInstallationLocation::Group(user_id.into());
+        let as_community = BotInstallationLocation::Community(user_id.as_principal().into());
+
+        // Whichever order they were recorded in, the most recently updated wins
+        for (earlier, later) in [(as_group, as_community), (as_community, as_group)] {
+            let mut bot = test_bot();
+            bot.add_installation(
+                earlier,
+                local_user_index,
+                BotPermissions::default(),
+                BotPermissions::default(),
+                user_id,
+                1,
+            );
+            bot.add_installation(
+                later,
+                local_user_index,
+                BotPermissions::text_only(),
+                BotPermissions::default(),
+                user_id,
+                2,
+            );
+
+            let repaired = bot.repair_misrecorded_direct_chat_installations(10);
+
+            let user_location = BotInstallationLocation::User(user_id.into());
+            assert_eq!(repaired, vec![(later, user_location), (earlier, user_location)]);
+            assert_eq!(bot.installations.len(), 1);
+            let moved = &bot.installations[&user_location];
+            assert_eq!(moved.updated_at, 2);
+            assert_eq!(moved.granted_permissions, BotPermissions::text_only());
+        }
     }
 
     #[test]
