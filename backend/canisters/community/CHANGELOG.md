@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Accept a `user_id` in `c2c_leave_community` and `c2c_delete_community`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))
 - Include the call facts (message id, call type, `audio_only`, start time, whether the channel is public, member count) in the notification when a call starts ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
+- Let members send crypto, prizes and P2P swaps via `send_message`, and tip messages via a new `tip_message`, in a channel directly rather than via their User canister, using ICRC2 transfers or certified transfers they have already made ([#9514](https://github.com/open-chat-labs/open-chat/pull/9514))
 
 ### Changed
 
@@ -41,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
 - Mark activity for the voter only rather than the whole chat when recording proposal votes, since the vote is private ([#9490](https://github.com/open-chat-labs/open-chat/pull/9490))
 - Apply the caller's min visible event index when updating messages, so that votes, reactions and tips cannot target messages in hidden history ([#9490](https://github.com/open-chat-labs/open-chat/pull/9490))
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 
