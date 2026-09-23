@@ -135,12 +135,23 @@ pub(crate) fn send_message_impl(
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     let caller = state.verified_caller(None)?;
 
-    let display_name = prepare(&caller, args.community_rules_accepted, state)?;
-
     // Bots can't call this c2c endpoint since it skips the validation
     if matches!(caller, Caller::Bot(_) | Caller::BotV2(_)) {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
+
+    send_message_with_completed_transfer(&caller, args, false, state)
+}
+
+// Sends a message whose content has been validated already, and whose transfer, if it holds one,
+// has been made
+pub(crate) fn send_message_with_completed_transfer(
+    caller: &Caller,
+    args: C2CArgs,
+    new_achievement: bool,
+    state: &mut RuntimeState,
+) -> OCResult<SuccessResult> {
+    let display_name = prepare(caller, args.community_rules_accepted, state)?;
 
     let mut content = args.content;
     // Recorded so the prize can be refunded to the sender's wallet even if they have left
@@ -153,7 +164,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
         let users_mentioned = extract_users_mentioned(args.mentioned, content.text(), &state.data.members);
 
         let result = channel.chat.send_message(
-            &caller,
+            caller,
             args.thread_root_message_index,
             args.message_id,
             content,
@@ -175,7 +186,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
 
         Ok(process_send_message_result(
             result,
-            &caller,
+            caller,
             args.sender_name,
             display_name.or(args.sender_display_name),
             channel.id,
@@ -183,7 +194,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
             channel.chat.avatar.as_ref().map(|d| d.id),
             args.thread_root_message_index,
             users_mentioned,
-            false,
+            new_achievement,
             now,
             state,
         ))
@@ -192,7 +203,12 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
     }
 }
 
-fn prepare(caller: &Caller, community_rules_accepted: Option<Version>, state: &mut RuntimeState) -> OCResult<Option<String>> {
+// Checks the community isn't frozen and the sender has accepted its rules, returning their display name
+pub(crate) fn prepare(
+    caller: &Caller,
+    community_rules_accepted: Option<Version>,
+    state: &mut RuntimeState,
+) -> OCResult<Option<String>> {
     if state.data.is_frozen() {
         return Err(OCErrorCode::CommunityFrozen.into());
     }

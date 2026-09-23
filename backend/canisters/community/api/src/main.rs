@@ -65,8 +65,10 @@ fn main() {
     generate_ts_method!(community, report_message);
     generate_ts_method!(community, reset_invite_code);
     generate_ts_method!(community, send_message);
+    generate_ts_method!(community, send_message_with_transfer);
     generate_ts_method!(community, set_member_display_name);
     generate_ts_method!(community, set_video_call_presence);
+    generate_ts_method!(community, tip_message);
     generate_ts_method!(community, toggle_mute_notifications);
     generate_ts_method!(community, unblock_user);
     generate_ts_method!(community, undelete_messages);

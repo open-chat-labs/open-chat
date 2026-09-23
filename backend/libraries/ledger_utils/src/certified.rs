@@ -28,6 +28,16 @@ pub const MAX_TRANSFER_AGE: TimestampMillis = 5 * MINUTE_IN_MS;
 // claim a time far in the future, making it one whose block index must be remembered indefinitely.
 pub const MAX_TRANSFER_CREATED_AHEAD: TimestampMillis = 2 * MINUTE_IN_MS;
 
+// The memo a certified transfer must carry to be used in `canister_id`. `prefix` says what the
+// transfer is for, as the memo of any other OpenChat transfer does, and the canister id stops a
+// transfer made for use in one canister being used in another.
+pub fn required_memo(prefix: &[u8], canister_id: CanisterId) -> Vec<u8> {
+    let mut memo = prefix.to_vec();
+    memo.extend_from_slice(canister_id.as_slice());
+    assert!(memo.len() <= 32, "Memo is too long");
+    memo
+}
+
 // Checks the certificate proves the ledger replied to the `sender`'s call to `icrc1_transfer`
 // with a block index, and that the transfer is the one described by `transaction`. The memo must
 // be `required_memo`, so that a transfer made for one canister can't be used in another. It is
@@ -192,6 +202,14 @@ mod tests {
             hex::encode(request_id(Principal::anonymous(), canister_id, "hello", &call)),
             "1d1091364d6bb8a6c16b203ee75467d59ead468f523eb058880ae8ec80e2b101"
         );
+    }
+
+    #[test]
+    fn required_memo_is_prefix_then_canister_id() {
+        let canister_id = CanisterId::from_slice(&LEDGER);
+        let memo = required_memo(b"OC_TIP", canister_id);
+        assert_eq!(&memo[..6], b"OC_TIP");
+        assert_eq!(&memo[6..], canister_id.as_slice());
     }
 
     #[test]

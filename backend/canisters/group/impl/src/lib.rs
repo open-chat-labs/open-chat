@@ -12,8 +12,8 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
-    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
-    PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    Achievements, CertifiedTransfers, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient,
+    PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
@@ -144,6 +144,20 @@ impl RuntimeState {
 
     // The user and their principal, as recorded on their member record, or with the principal
     // anonymous if they aren't a member
+    // The member's wallet, for paying them. Only a user sharing a MultiUser canister with others
+    // holds their funds under the principal held for them, everyone else under their user id.
+    pub fn member_wallet(&self, user_id: UserId) -> OCResult<UserIdAndPrincipal> {
+        if !user_id.is_indexed() {
+            return Ok(UserIdAndPrincipal::new(user_id, user_id.as_principal()));
+        }
+        let user = self.member_user(user_id);
+        if user.principal == Principal::anonymous() {
+            Err(OCErrorCode::TargetUserNotFound.into())
+        } else {
+            Ok(user)
+        }
+    }
+
     pub fn member_user(&self, user_id: UserId) -> UserIdAndPrincipal {
         self.data
             .chat
@@ -677,6 +691,8 @@ struct Data {
     moderation_flags: Timestamped<u32>,
     pub bots: InstalledBots,
     idempotency_checker: IdempotencyChecker,
+    #[serde(default)]
+    certified_transfers: CertifiedTransfers,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -792,6 +808,7 @@ impl Data {
             moderation_flags: Timestamped::default(),
             bots: InstalledBots::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            certified_transfers: CertifiedTransfers::default(),
         }
     }
 

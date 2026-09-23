@@ -53,7 +53,9 @@ fn main() {
     generate_ts_method!(group, report_message);
     generate_ts_method!(group, reset_invite_code);
     generate_ts_method!(group, send_message_v2);
+    generate_ts_method!(group, send_message_with_transfer);
     generate_ts_method!(group, set_video_call_presence);
+    generate_ts_method!(group, tip_message);
     generate_ts_method!(group, toggle_mute_notifications);
     generate_ts_method!(group, unblock_user);
     generate_ts_method!(group, undelete_messages);

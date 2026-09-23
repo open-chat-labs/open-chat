@@ -132,6 +132,17 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
+    send_message_with_completed_transfer(&caller, args, false, state)
+}
+
+// Sends a message whose content has been validated already, and whose transfer, if it holds one,
+// has been made
+pub(crate) fn send_message_with_completed_transfer(
+    caller: &Caller,
+    args: C2CArgs,
+    new_achievement: bool,
+    state: &mut RuntimeState,
+) -> OCResult<SuccessResult> {
     let mut content = args.content;
     // Recorded so the prize can be refunded to the sender's wallet even if they have left
     if let MessageContentInternal::Prize(prize) = &mut content {
@@ -141,7 +152,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
     let now = state.env.now();
     let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
     let result = state.data.chat.send_message(
-        &caller,
+        caller,
         args.thread_root_message_index,
         args.message_id,
         content,
@@ -163,13 +174,13 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
 
     Ok(process_send_message_result(
         result,
-        &caller,
+        caller,
         args.sender_name,
         args.sender_display_name,
         args.thread_root_message_index,
         args.mentioned,
         now,
-        false,
+        new_achievement,
         state,
     ))
 }
