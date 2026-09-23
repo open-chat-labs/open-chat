@@ -1,5 +1,5 @@
 #![expect(deprecated)]
-use crate::nns::{Tokens, UserOrAccount};
+use crate::nns::UserOrAccount;
 use crate::{CanisterId, TimestampNanos, UserId, UserIdAndPrincipal};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
@@ -171,13 +171,6 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
                 UserOrAccount::Account(a) => a == account_identifier,
-                // Paid at the account of the user id, so only accepted where that is their wallet
-                UserOrAccount::User(u) => {
-                    u == recipient.user_id && Account::from(icrc1::Account::legacy_for_user(u)) == account
-                }
-                // The principal comes from the caller, so can't be trusted, and is only accepted
-                // where it gives the recipient's wallet
-                UserOrAccount::UserV2(u) => u.user_id == recipient.user_id && Account::from(u) == account,
             },
             PendingCryptoTransaction::ICRC1(t) => Account::from(t.to) == account,
             PendingCryptoTransaction::ICRC2(t) => Account::from(t.to) == account,
@@ -407,12 +400,10 @@ pub mod nns {
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // Only an account, which an ICP withdrawal to a legacy account identifier needs. Users are paid
+    // via ICRC1 or ICRC2 transfers instead.
     pub enum UserOrAccount {
-        // Paid at `Account::legacy_for_user`, which isn't the wallet of a user in a MultiUser
-        // canister, so `UserV2` should be used instead
-        User(UserId),
         Account(#[ts(as = "[u8; 32]")] AccountIdentifier),
-        UserV2(UserIdAndPrincipal),
     }
 
     #[ts_export]
@@ -963,23 +954,6 @@ pub mod certified {
     }
 }
 
-impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
-    fn from(value: icrc1::PendingCryptoTransaction) -> Self {
-        nns::PendingCryptoTransaction {
-            ledger: value.ledger,
-            token_symbol: value.token_symbol,
-            amount: Tokens::from_e8s(value.amount.try_into().unwrap()),
-            to: UserOrAccount::Account(AccountIdentifier::new(
-                &value.to.owner,
-                &Subaccount(value.to.subaccount.unwrap_or_default()),
-            )),
-            fee: Some(Tokens::from_e8s(value.fee.try_into().unwrap())),
-            memo: value.memo.map(|m| u64_from_bytes(m.0.as_slice())),
-            created: value.created,
-        }
-    }
-}
-
 fn u64_from_bytes(bytes: &[u8]) -> u64 {
     assert!(bytes.len() <= 8);
     let mut u64_bytes = [0u8; 8];
@@ -991,13 +965,13 @@ fn u64_from_bytes(bytes: &[u8]) -> u64 {
 mod tests {
     use super::*;
 
-    fn nns_transfer_to(to: UserOrAccount) -> PendingCryptoTransaction {
-        PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
+    fn icrc1_transfer_to(to: icrc1::Account) -> PendingCryptoTransaction {
+        PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
             ledger: CanisterId::from_slice(&[1; 10]),
-            token_symbol: "ICP".to_string(),
-            amount: Tokens::from_e8s(1),
+            token_symbol: "CHAT".to_string(),
+            amount: 1,
             to,
-            fee: None,
+            fee: 0,
             memo: None,
             created: 0,
         })
@@ -1011,62 +985,39 @@ mod tests {
         Principal::from_slice(&[9; 29])
     }
 
-    // The principal can't be trusted, but makes no difference to the wallet of a user alone in
-    // their canister
     #[test]
-    fn user_v2_for_user_alone_in_their_canister_is_accepted_whatever_the_principal() {
+    fn transfer_to_user_alone_in_their_canister_is_to_their_user_id() {
         let recipient = UserIdAndPrincipal::new(canister_user(), principal());
-        let transfer = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(
-            canister_user(),
-            Principal::anonymous(),
-        )));
 
-        assert!(transfer.validate_recipient(recipient));
+        assert!(icrc1_transfer_to(canister_user().as_principal().into()).validate_recipient(recipient));
+        assert!(!icrc1_transfer_to(principal().into()).validate_recipient(recipient));
     }
 
-    // Their wallet is their principal's, so only that principal is accepted
     #[test]
-    fn user_v2_for_indexed_user_is_only_accepted_with_their_principal() {
+    fn transfer_to_indexed_user_is_to_their_principal() {
         let user_id = UserId::new_indexed(canister_user().canister_id(), 7);
         let recipient = UserIdAndPrincipal::new(user_id, principal());
 
-        let own = nns_transfer_to(UserOrAccount::UserV2(recipient));
-        assert!(own.validate_recipient(recipient));
-
-        let other = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(
-            user_id,
-            Principal::anonymous(),
-        )));
-        assert!(!other.validate_recipient(recipient));
-    }
-
-    // Paid at the account of their user id, which isn't their wallet
-    #[test]
-    fn user_for_indexed_user_is_rejected() {
-        let user_id = UserId::new_indexed(canister_user().canister_id(), 7);
-        let transfer = nns_transfer_to(UserOrAccount::User(user_id));
-
-        assert!(!transfer.validate_recipient(UserIdAndPrincipal::new(user_id, principal())));
+        assert!(icrc1_transfer_to(principal().into()).validate_recipient(recipient));
+        assert!(!icrc1_transfer_to(icrc1::Account::legacy_for_user(user_id)).validate_recipient(recipient));
     }
 
     #[test]
-    fn user_v2_for_another_user_is_rejected() {
-        let other = UserId::new(Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 6, 1, 1]));
-        let transfer = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(other, principal())));
+    fn nns_transfer_to_recipients_account_identifier_is_accepted() {
+        let recipient = UserIdAndPrincipal::new(canister_user(), principal());
+        let transfer = |to| {
+            PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
+                ledger: CanisterId::from_slice(&[1; 10]),
+                token_symbol: "ICP".to_string(),
+                amount: nns::Tokens::from_e8s(1),
+                to: UserOrAccount::Account(to),
+                fee: None,
+                memo: None,
+                created: 0,
+            })
+        };
 
-        assert!(!transfer.validate_recipient(UserIdAndPrincipal::new(canister_user(), principal())));
-    }
-
-    // A bot's user id is its principal, so only that principal gives its wallet
-    #[test]
-    fn user_v2_for_bot_is_only_accepted_with_its_own_principal() {
-        let bot = UserId::new(Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]));
-        let recipient = UserIdAndPrincipal::new(bot, bot.as_principal());
-
-        let own = nns_transfer_to(UserOrAccount::UserV2(recipient));
-        assert!(own.validate_recipient(recipient));
-
-        let other = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(bot, principal())));
-        assert!(!other.validate_recipient(recipient));
+        assert!(transfer(AccountIdentifier::from(recipient)).validate_recipient(recipient));
+        assert!(!transfer(AccountIdentifier::new(&principal(), &Subaccount([0; 32]))).validate_recipient(recipient));
     }
 }

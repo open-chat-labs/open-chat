@@ -1,5 +1,4 @@
 use ic_ledger_types::{Memo, Subaccount, Timestamp, TransferArgs};
-use types::icrc1::Account;
 use types::nns::Tokens;
 use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, UserIdAndPrincipal};
 
@@ -12,11 +11,7 @@ pub async fn process_transaction(
     let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 
     let from = types::account_identifier(sender_account.into());
-    let to = match transaction.to {
-        types::nns::UserOrAccount::User(u) => types::account_identifier(Account::legacy_for_user(u).into()),
-        types::nns::UserOrAccount::Account(a) => a,
-        types::nns::UserOrAccount::UserV2(u) => u.into(),
-    };
+    let types::nns::UserOrAccount::Account(to) = transaction.to;
 
     let transfer_args = TransferArgs {
         memo: Memo(memo),

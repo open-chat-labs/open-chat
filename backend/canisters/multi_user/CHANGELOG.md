@@ -66,5 +66,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Handle `c2c_notify_group_deleted` via `user_core`, shared with the User canister ([#9484](https://github.com/open-chat-labs/open-chat/pull/9484))
 - Share `c2c_game_chit`, `set_bio`, `set_profile_background`, `manage_favourite_chats` and `pay_for_streak_insurance` with the User canister via `user_core` ([#9486](https://github.com/open-chat-labs/open-chat/pull/9486))
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the User canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
-- Transfer from the canister's own account rather than a subaccount per user, since users hold their own funds in their principal's account, and accept `UserOrAccount::UserV2` in NNS transfers
+- Transfer from the canister's own account rather than a subaccount per user, since users hold their own funds in their principal's account
 

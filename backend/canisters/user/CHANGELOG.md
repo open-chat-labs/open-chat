@@ -17,7 +17,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support paying for streak insurance and swapping tokens from external wallets using ICRC2 ([#9402](https://github.com/open-chat-labs/open-chat/pull/9402))
 - Add `c2c_group_canister_v2`, `c2c_community_canister_v2` and `c2c_local_user_index_v2`, which take each event paired with the user it is for, applying only those for this canister's user ([#9452](https://github.com/open-chat-labs/open-chat/pull/9452))
 - Add `c2c_user_canister_v2`, taking events which each name their sender and recipient, so that a MultiUser canister can send direct chat events on behalf of its users ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
-- Accept `UserOrAccount::UserV2` in NNS transfers, which names the recipient's principal along with their user id
 
 ### Changed
 
@@ -85,6 +84,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share `c2c_game_chit`, `set_bio`, `set_profile_background`, `manage_favourite_chats` and `pay_for_streak_insurance` with the MultiUser canister via `user_core` ([#9486](https://github.com/open-chat-labs/open-chat/pull/9486))
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the MultiUser canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
 - Stop naming the depositing user to the escrow canister for P2P swaps, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since the caller identifies them
+
+### Removed
+
+- Remove the unused `User` variant of `UserOrAccount`, leaving an NNS transfer only for an ICP withdrawal to an account identifier, as users are paid via ICRC1 or ICRC2
 
 ### Fixed
 

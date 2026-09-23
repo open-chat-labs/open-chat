@@ -1223,18 +1223,50 @@ export const OptionUpdateStreakInsurance = /* @__PURE__ */ Type.Union(
 export type DirectChatCreated = Static<typeof DirectChatCreated>;
 export const DirectChatCreated = /* @__PURE__ */ Type.Record(Type.String(), Type.Never());
 
+export type UserOrAccount = Static<typeof UserOrAccount>;
+export const UserOrAccount = /* @__PURE__ */ Type.Object({
+    Account: Type.Tuple([
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+    ]),
+});
+
 export type VerifiedCredentialGateArgs = Static<typeof VerifiedCredentialGateArgs>;
 export const VerifiedCredentialGateArgs = /* @__PURE__ */ Type.Object({
     user_ii_principal: TSPrincipal,
     credential_jwt: Type.String(),
     credential_jwts: Type.Array(Type.String()),
     ii_origin: Type.String(),
-});
-
-export type UserIdAndPrincipal = Static<typeof UserIdAndPrincipal>;
-export const UserIdAndPrincipal = /* @__PURE__ */ Type.Object({
-    user_id: UserId,
-    principal: TSPrincipal,
 });
 
 export type ServedHint = Static<typeof ServedHint>;
@@ -5880,6 +5912,17 @@ export const UsersInvited = /* @__PURE__ */ Type.Object({
     invited_by: UserId,
 });
 
+export type PendingCryptoTransactionNNS = Static<typeof PendingCryptoTransactionNNS>;
+export const PendingCryptoTransactionNNS = /* @__PURE__ */ Type.Object({
+    ledger: TSPrincipal,
+    token_symbol: Type.String(),
+    amount: Tokens,
+    to: UserOrAccount,
+    fee: Type.Optional(Tokens),
+    memo: Type.Optional(Type.BigInt()),
+    created: Type.BigInt(),
+});
+
 export type BannerChanged = Static<typeof BannerChanged>;
 export const BannerChanged = /* @__PURE__ */ Type.Object({
     new_banner: Type.Optional(Type.BigInt()),
@@ -6190,52 +6233,6 @@ export const OptionUpdateFrozenGroupInfo = /* @__PURE__ */ Type.Union(
     ],
     { default: "NoChange" },
 );
-
-export type UserOrAccount = Static<typeof UserOrAccount>;
-export const UserOrAccount = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        User: UserId,
-    }),
-    Type.Object({
-        Account: Type.Tuple([
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-        ]),
-    }),
-    Type.Object({
-        UserV2: UserIdAndPrincipal,
-    }),
-]);
 
 export type OptionalGroupPermissions = Static<typeof OptionalGroupPermissions>;
 export const OptionalGroupPermissions = /* @__PURE__ */ Type.Object({
@@ -7902,6 +7899,22 @@ export const P2PSwapContentInitial = /* @__PURE__ */ Type.Object({
     from_account: Type.Optional(AccountICRC1),
 });
 
+export type PendingCryptoTransaction = Static<typeof PendingCryptoTransaction>;
+export const PendingCryptoTransaction = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        NNS: PendingCryptoTransactionNNS,
+    }),
+    Type.Object({
+        ICRC1: PendingCryptoTransactionICRC1,
+    }),
+    Type.Object({
+        ICRC2: PendingCryptoTransactionICRC2,
+    }),
+    Type.Object({
+        Certified: PendingCryptoTransactionCertified,
+    }),
+]);
+
 export type BotActionScope = Static<typeof BotActionScope>;
 export const BotActionScope = /* @__PURE__ */ Type.Union([
     Type.Object({
@@ -8059,17 +8072,6 @@ export const Proposal = /* @__PURE__ */ Type.Union([
         SNS: SnsProposal,
     }),
 ]);
-
-export type PendingCryptoTransactionNNS = Static<typeof PendingCryptoTransactionNNS>;
-export const PendingCryptoTransactionNNS = /* @__PURE__ */ Type.Object({
-    ledger: TSPrincipal,
-    token_symbol: Type.String(),
-    amount: Tokens,
-    to: UserOrAccount,
-    fee: Type.Optional(Tokens),
-    memo: Type.Optional(Type.BigInt()),
-    created: Type.BigInt(),
-});
 
 export type ModerationReportContent = Static<typeof ModerationReportContent>;
 export const ModerationReportContent = /* @__PURE__ */ Type.Object({
@@ -8562,6 +8564,12 @@ export const UserSendMessageWithTransferToGroupSuccessResult = /* @__PURE__ */ T
     transfer: CompletedCryptoTransaction,
 });
 
+export type UserWithdrawCryptoArgs = Static<typeof UserWithdrawCryptoArgs>;
+export const UserWithdrawCryptoArgs = /* @__PURE__ */ Type.Object({
+    withdrawal: PendingCryptoTransaction,
+    pin: Type.Optional(PinNumberWrapper),
+});
+
 export type UserWithdrawCryptoResponse = Static<typeof UserWithdrawCryptoResponse>;
 export const UserWithdrawCryptoResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
@@ -8672,22 +8680,6 @@ export const CompositeGate = /* @__PURE__ */ Type.Object({
     inner: Type.Array(AccessGateNonComposite),
     and: Type.Boolean(),
 });
-
-export type PendingCryptoTransaction = Static<typeof PendingCryptoTransaction>;
-export const PendingCryptoTransaction = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        NNS: PendingCryptoTransactionNNS,
-    }),
-    Type.Object({
-        ICRC1: PendingCryptoTransactionICRC1,
-    }),
-    Type.Object({
-        ICRC2: PendingCryptoTransactionICRC2,
-    }),
-    Type.Object({
-        Certified: PendingCryptoTransactionCertified,
-    }),
-]);
 
 export type CryptoTransaction = Static<typeof CryptoTransaction>;
 export const CryptoTransaction = /* @__PURE__ */ Type.Union([
@@ -8962,12 +8954,6 @@ export const UserSendMessageWithTransferToGroupResponse = /* @__PURE__ */ Type.U
         Error: OCError,
     }),
 ]);
-
-export type UserWithdrawCryptoArgs = Static<typeof UserWithdrawCryptoArgs>;
-export const UserWithdrawCryptoArgs = /* @__PURE__ */ Type.Object({
-    withdrawal: PendingCryptoTransaction,
-    pin: Type.Optional(PinNumberWrapper),
-});
 
 export type UserSendMessageWithTransferToChannelResponse = Static<
     typeof UserSendMessageWithTransferToChannelResponse
