@@ -270,14 +270,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
-
-## [[2.0.1844](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1844-local_user_index)] - 2025-07-29
-
-### Changed
-
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
 - Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
+- Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
 
 ## [[2.0.1837](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1837-local_user_index)] - 2025-07-21
 
@@ -618,17 +613,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Withdraw from ICPSwap via LocalUserIndex so authentication happens first ([#7217](https://github.com/open-chat-labs/open-chat/pull/7217))
-- Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
-
-## [[2.0.1567](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1567-local_user_index)] - 2025-01-14
-
-### Changed
-
 - Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
 - Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
 - Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
 - Sync platform operators to LocalUserIndexes ([#7210](https://github.com/open-chat-labs/open-chat/pull/7210))
+- Withdraw from ICPSwap via LocalUserIndex so authentication happens first ([#7217](https://github.com/open-chat-labs/open-chat/pull/7217))
+- Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
 
 ## [[2.0.1547](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1547-local_user_index)] - 2025-01-06
 
