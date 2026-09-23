@@ -9,7 +9,15 @@ name: Push canister wasms
 jobs:
   push_canister_wasms:
     name: Push canister wasms
-    runs-on: ubuntu-latest
+    # The release build (LTO, one codegen unit) of every canister, then `ic-wasm optimize` on each,
+    # is CPU bound and takes ~20 minutes on a standard 4 core runner. The pre-release tests wait
+    # on this job, so it runs on the same spec of runner as the integration tests.
+    runs-on:
+      - runs-on
+      - cpu=16
+      - image=ubuntu24-full-x64
+      - family=m7i
+      - run-id=${{ github.run_id }}
     permissions:
       id-token: write
       contents: read
