@@ -1,4 +1,5 @@
-# To build run 'docker build . -t openchat'
+# To build run 'docker build . -t openchat --platform linux/amd64' (or use scripts/docker-build-all-wasms.sh).
+# The image is amd64 only: both the Rust toolchain and ic-wasm below are x86_64 builds.
 FROM ubuntu:24.04 AS builder
 SHELL ["bash", "-c"]
 
