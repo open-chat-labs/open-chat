@@ -1037,8 +1037,8 @@ impl GroupChatCore {
 
         let (is_admin, min_visible_event_index) = match caller {
             Caller::Webhook(_) | Caller::Bot(_) => return Err(OCErrorCode::InitiatorNotAuthorized.into()),
-            Caller::User(user_id) if !as_platform_moderator => {
-                let member = self.members.get_verified_member(user_id)?;
+            Caller::User(user) if !as_platform_moderator => {
+                let member = self.members.get_verified_member(user.user_id)?;
                 (
                     member.role().can_delete_messages(&self.permissions),
                     member.min_visible_event_index(),

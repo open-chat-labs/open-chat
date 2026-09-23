@@ -2523,166 +2523,289 @@ fn set_user_suspended(env: &mut PocketIc, sender: Principal, canister_id: Canist
 //     assert_eq!(balance(env, b), 10 * ONE_CHAT);
 // }
 //
-// #[test]
-// fn streak_insurance_is_paid_for_and_used_per_user() {
-//     const ONE_CHAT: u128 = 100_000_000;
-//
-//     let mut wrapper = ENV.deref().get();
-//     let TestEnv {
-//         env,
-//         canister_ids,
-//         controller,
-//     } = wrapper.env();
-//
-//     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-//     let canister_id =
-//         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-//
-//     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-//     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
-//
-//     crate::chit_tests::ensure_time_at_least_day0(env);
-//
-//     // Each user's funds are held in their own subaccount of the canister
-//     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, a, 10 * ONE_CHAT);
-//
-//     // Without a streak there is nothing to insure
-//     assert_pay_for_streak_insurance_error(env, b_principal, canister_id, 1, ONE_CHAT, None, OCErrorCode::NoActiveStreak);
-//
-//     claim_daily_chit(env, a_principal, canister_id);
-//
-//     assert_pay_for_streak_insurance_error(
-//         env,
-//         a_principal,
-//         canister_id,
-//         1,
-//         2 * ONE_CHAT,
-//         None,
-//         OCErrorCode::PriceMismatch,
-//     );
-//     // More days than can be insured at once are rejected before the price is checked
-//     assert_pay_for_streak_insurance_error(env, a_principal, canister_id, 31, ONE_CHAT, None, OCErrorCode::InvalidRequest);
-//     // Nor can a user pay from the account of another user of the canister
-//     assert_pay_for_streak_insurance_error(
-//         env,
-//         a_principal,
-//         canister_id,
-//         1,
-//         ONE_CHAT,
-//         Some(types::icrc1::Account::legacy_for_user(b)),
-//         OCErrorCode::InvalidRequest,
-//     );
-//
-//     let response = pay_for_streak_insurance(env, a_principal, canister_id, 1, ONE_CHAT, None);
-//     assert!(matches!(response, user_canister::pay_for_streak_insurance::Response::Success));
-//     assert_eq!(
-//         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, a),
-//         10 * ONE_CHAT - ONE_CHAT - constants::CHAT_TRANSFER_FEE
-//     );
-//     assert_eq!(
-//         initial_state(env, a_principal, canister_id)
-//             .streak_insurance
-//             .map(|s| s.days_insured),
-//         Some(1)
-//     );
-//     assert!(initial_state(env, b_principal, canister_id).streak_insurance.is_none());
-//
-//     // Paying from an approved account spends only an approval given to the paying user's own
-//     // subaccount of the canister, so an approval given to another user of the canister is no use
-//     claim_daily_chit(env, b_principal, canister_id);
-//     let wallet_balance = 10 * ONE_CHAT;
-//     let external_wallet = random_principal();
-//     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, external_wallet, wallet_balance);
-//     // The allowance has to cover the transfer fee too, since that is charged to the `from` account
-//     let allowance = ONE_CHAT + constants::CHAT_TRANSFER_FEE;
-//     client::ledger::happy_path::approve(env, external_wallet, canister_ids.chat_ledger, a, allowance);
-//     assert_pay_for_streak_insurance_error(
-//         env,
-//         b_principal,
-//         canister_id,
-//         1,
-//         ONE_CHAT,
-//         Some(external_wallet.into()),
-//         OCErrorCode::InsufficientAllowance,
-//     );
-//
-//     client::ledger::happy_path::approve(env, external_wallet, canister_ids.chat_ledger, b, allowance);
-//     let response = pay_for_streak_insurance(env, b_principal, canister_id, 1, ONE_CHAT, Some(external_wallet.into()));
-//     assert!(matches!(response, user_canister::pay_for_streak_insurance::Response::Success));
-//     // The wallet paid for both approvals and the insurance, while the user's own balance is untouched
-//     assert_eq!(
-//         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, external_wallet),
-//         wallet_balance - ONE_CHAT - 3 * constants::CHAT_TRANSFER_FEE
-//     );
-//     assert_eq!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, b), 0);
-//
-//     // Missing a day uses up each user's day of insurance, keeping their streaks, B setting up their
-//     // job having left A's in place. The OpenChat bot tells each of them.
-//     env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
-//     env.tick();
-//     for (principal, user_id) in [(a_principal, a), (b_principal, b)] {
-//         let state = initial_state(env, principal, canister_id);
-//         assert_eq!(state.streak, 2);
-//         assert_eq!(state.streak_insurance.map(|s| (s.days_insured, s.days_missed)), Some((1, 1)));
-//         assert!(
-//             chit_events(env, principal, canister_id)
-//                 .events
-//                 .iter()
-//                 .any(|e| matches!(e.reason, types::ChitEventType::StreakInsuranceClaim))
-//         );
-//         let messages = bot_messages(env, principal, canister_id, user_id);
-//         assert!(matches!(
-//             &messages.last().unwrap().content,
-//             MessageContent::Text(t) if t.text.contains("One day of streak insurance was just used up")
-//         ));
-//     }
-//
-//     // Missing another day, with the insurance used up, loses each streak and resets the insurance
-//     env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
-//     env.tick();
-//     for principal in [a_principal, b_principal] {
-//         let state = initial_state(env, principal, canister_id);
-//         assert_eq!(state.streak, 0);
-//         assert!(state.streak_insurance.is_none());
-//     }
-// }
-//
-// fn pay_for_streak_insurance(
-//     env: &mut PocketIc,
-//     sender: Principal,
-//     canister_id: CanisterId,
-//     additional_days: u8,
-//     expected_price: u128,
-//     from_account: Option<types::icrc1::Account>,
-// ) -> user_canister::pay_for_streak_insurance::Response {
-//     client::multi_user::pay_for_streak_insurance(
-//         env,
-//         sender,
-//         canister_id,
-//         &user_canister::pay_for_streak_insurance::Args {
-//             additional_days,
-//             expected_price,
-//             from_account,
-//             pin: None,
-//         },
-//     )
-// }
-//
-// fn assert_pay_for_streak_insurance_error(
-//     env: &mut PocketIc,
-//     sender: Principal,
-//     canister_id: CanisterId,
-//     additional_days: u8,
-//     expected_price: u128,
-//     from_account: Option<types::icrc1::Account>,
-//     code: OCErrorCode,
-// ) {
-//     let expected = code as u16;
-//     match pay_for_streak_insurance(env, sender, canister_id, additional_days, expected_price, from_account) {
-//         user_canister::pay_for_streak_insurance::Response::Error(error) => assert_eq!(error.code(), expected),
-//         response => panic!("{response:?}"),
-//     }
-// }
+#[test]
+fn streak_insurance_is_paid_for_and_used_per_user() {
+    const ONE_CHAT: u128 = 100_000_000;
+    const FEE: u128 = constants::CHAT_TRANSFER_FEE;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    crate::chit_tests::ensure_time_at_least_day0(env);
+
+    // Each user holds their own funds in their own wallet
+    let wallet_balance = 10 * ONE_CHAT;
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, a_principal, wallet_balance);
+    let balance =
+        |env: &PocketIc, principal: Principal| client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, principal);
+    // The allowance has to cover the transfer fee too, since that is charged to the `from` account
+    let allowance = ONE_CHAT + FEE;
+    let approve = |env: &mut PocketIc, from: Principal, spender: Principal| {
+        client::ledger::happy_path::approve(
+            env,
+            from,
+            canister_ids.chat_ledger,
+            icrc_ledger_types::icrc1::account::Account {
+                owner: canister_id,
+                subaccount: Some(ledger_utils::spender_subaccount(spender)),
+            },
+            allowance,
+        );
+    };
+
+    // Without a streak there is nothing to insure
+    assert_pay_for_streak_insurance_error(env, b_principal, canister_id, 1, ONE_CHAT, None, OCErrorCode::NoActiveStreak);
+
+    claim_daily_chit(env, a_principal, canister_id);
+
+    assert_pay_for_streak_insurance_error(
+        env,
+        a_principal,
+        canister_id,
+        1,
+        2 * ONE_CHAT,
+        None,
+        OCErrorCode::PriceMismatch,
+    );
+    // More days than can be insured at once are rejected before the price is checked
+    assert_pay_for_streak_insurance_error(env, a_principal, canister_id, 31, ONE_CHAT, None, OCErrorCode::InvalidRequest);
+    // Nor can a user pay from an account this canister holds
+    assert_pay_for_streak_insurance_error(
+        env,
+        a_principal,
+        canister_id,
+        1,
+        ONE_CHAT,
+        Some(canister_id.into()),
+        OCErrorCode::InvalidRequest,
+    );
+
+    // The payment is pulled from A's wallet via ICRC-2, which needs an approval made under A's own
+    // spender subaccount. One made under another user's is no use.
+    assert_pay_for_streak_insurance_error(
+        env,
+        a_principal,
+        canister_id,
+        1,
+        ONE_CHAT,
+        None,
+        OCErrorCode::InsufficientAllowance,
+    );
+    approve(env, a_principal, b_principal);
+    assert_pay_for_streak_insurance_error(
+        env,
+        a_principal,
+        canister_id,
+        1,
+        ONE_CHAT,
+        None,
+        OCErrorCode::InsufficientAllowance,
+    );
+    approve(env, a_principal, a_principal);
+    let response = pay_for_streak_insurance(env, a_principal, canister_id, 1, ONE_CHAT, None);
+    assert!(
+        matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
+        "{response:?}"
+    );
+    // A paid for both approvals and the insurance
+    assert_eq!(balance(env, a_principal), wallet_balance - ONE_CHAT - 3 * FEE);
+    assert_eq!(
+        initial_state(env, a_principal, canister_id)
+            .streak_insurance
+            .map(|s| s.days_insured),
+        Some(1)
+    );
+    assert!(initial_state(env, b_principal, canister_id).streak_insurance.is_none());
+
+    // B pays from an external wallet, which must have approved the payment under B's own spender
+    // subaccount, not another user's
+    claim_daily_chit(env, b_principal, canister_id);
+    let external_wallet = random_principal();
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, external_wallet, wallet_balance);
+    approve(env, external_wallet, a_principal);
+    assert_pay_for_streak_insurance_error(
+        env,
+        b_principal,
+        canister_id,
+        1,
+        ONE_CHAT,
+        Some(external_wallet.into()),
+        OCErrorCode::InsufficientAllowance,
+    );
+    approve(env, external_wallet, b_principal);
+    let response = pay_for_streak_insurance(env, b_principal, canister_id, 1, ONE_CHAT, Some(external_wallet.into()));
+    assert!(
+        matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
+        "{response:?}"
+    );
+    assert_eq!(balance(env, external_wallet), wallet_balance - ONE_CHAT - 3 * FEE);
+
+    // Missing a day uses up each user's day of insurance, keeping their streaks, B setting up their
+    // job having left A's in place. The OpenChat bot tells each of them.
+    env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
+    env.tick();
+    for (principal, user_id) in [(a_principal, a), (b_principal, b)] {
+        let state = initial_state(env, principal, canister_id);
+        assert_eq!(state.streak, 2);
+        assert_eq!(state.streak_insurance.map(|s| (s.days_insured, s.days_missed)), Some((1, 1)));
+        assert!(
+            chit_events(env, principal, canister_id)
+                .events
+                .iter()
+                .any(|e| matches!(e.reason, types::ChitEventType::StreakInsuranceClaim))
+        );
+        let messages = bot_messages(env, principal, canister_id, user_id);
+        assert!(matches!(
+            &messages.last().unwrap().content,
+            MessageContent::Text(t) if t.text.contains("One day of streak insurance was just used up")
+        ));
+    }
+
+    // Missing another day, with the insurance used up, loses each streak and resets the insurance
+    env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
+    env.tick();
+    for principal in [a_principal, b_principal] {
+        let state = initial_state(env, principal, canister_id);
+        assert_eq!(state.streak, 0);
+        assert!(state.streak_insurance.is_none());
+    }
+}
+
+// The UserIndex charges a user in a MultiUser canister, as it does for Diamond membership, by having
+// the canister pull the payment from the user's wallet via ICRC-2, against an approval made under the
+// user's own spender subaccount
+#[test]
+fn users_are_charged_from_their_own_wallets() {
+    const ONE_CHAT: u128 = 100_000_000;
+    const FEE: u128 = constants::CHAT_TRANSFER_FEE;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let wallet_balance = 10 * ONE_CHAT;
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, a_principal, wallet_balance);
+    let balance =
+        |env: &PocketIc, principal: Principal| client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, principal);
+    let approve = |env: &mut PocketIc, spender: Principal| {
+        client::ledger::happy_path::approve(
+            env,
+            a_principal,
+            canister_ids.chat_ledger,
+            icrc_ledger_types::icrc1::account::Account {
+                owner: canister_id,
+                subaccount: Some(ledger_utils::spender_subaccount(spender)),
+            },
+            ONE_CHAT + FEE,
+        );
+    };
+    let charge = |env: &mut PocketIc, user_id: UserId, from_account: Option<types::icrc1::Account>| {
+        client::multi_user::c2c_charge_user_account(
+            env,
+            canister_ids.user_index,
+            canister_id,
+            &user_canister::c2c_charge_user_account::Args {
+                user_id,
+                ledger_canister_id: canister_ids.chat_ledger,
+                amount: types::nns::Tokens::from_e8s(ONE_CHAT as u64),
+                from_account,
+            },
+        )
+    };
+    let is_insufficient_allowance = |response: &user_canister::c2c_charge_user_account::Response| {
+        matches!(
+            response,
+            user_canister::c2c_charge_user_account::Response::TransferFromError(
+                types::icrc2::TransferFromError::InsufficientAllowance { .. }
+            )
+        )
+    };
+    let is_error = |response: &user_canister::c2c_charge_user_account::Response, code: OCErrorCode| matches!(response, user_canister::c2c_charge_user_account::Response::Error(e) if e.matches_code(code));
+    let user_index_balance = balance(env, canister_ids.user_index);
+
+    // Neither a user the canister doesn't hold, nor an account the canister holds, can be charged
+    let response = charge(env, UserId::new_indexed(canister_id, 999), None);
+    assert!(is_error(&response, OCErrorCode::TargetUserNotFound), "{response:?}");
+    let response = charge(env, a, Some(canister_id.into()));
+    assert!(is_error(&response, OCErrorCode::InvalidRequest), "{response:?}");
+
+    // Without an approval under A's own spender subaccount nothing can be pulled, and one made
+    // under another user's is no use
+    let response = charge(env, a, None);
+    assert!(is_insufficient_allowance(&response), "{response:?}");
+    approve(env, b_principal);
+    let response = charge(env, a, None);
+    assert!(is_insufficient_allowance(&response), "{response:?}");
+
+    approve(env, a_principal);
+    let response = charge(env, a, None);
+    assert!(
+        matches!(response, user_canister::c2c_charge_user_account::Response::Success(_)),
+        "{response:?}"
+    );
+
+    // A paid for both approvals and the charge, which reached the UserIndex
+    assert_eq!(balance(env, a_principal), wallet_balance - ONE_CHAT - 3 * FEE);
+    assert_eq!(balance(env, canister_ids.user_index), user_index_balance + ONE_CHAT);
+}
+
+fn pay_for_streak_insurance(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    additional_days: u8,
+    expected_price: u128,
+    from_account: Option<types::icrc1::Account>,
+) -> user_canister::pay_for_streak_insurance::Response {
+    client::multi_user::pay_for_streak_insurance(
+        env,
+        sender,
+        canister_id,
+        &user_canister::pay_for_streak_insurance::Args {
+            additional_days,
+            expected_price,
+            from_account,
+            pin: None,
+        },
+    )
+}
+
+fn assert_pay_for_streak_insurance_error(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    additional_days: u8,
+    expected_price: u128,
+    from_account: Option<types::icrc1::Account>,
+    code: OCErrorCode,
+) {
+    let expected = code as u16;
+    match pay_for_streak_insurance(env, sender, canister_id, additional_days, expected_price, from_account) {
+        user_canister::pay_for_streak_insurance::Response::Error(error) => assert_eq!(error.code(), expected),
+        response => panic!("{response:?}"),
+    }
+}
 
 #[test]
 fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
@@ -4610,7 +4733,7 @@ fn users_send_crypto_from_their_own_wallets() {
         canister_ids.icp_ledger,
         icrc_ledger_types::icrc1::account::Account {
             owner: canister_id,
-            subaccount: Some(ledger_utils::spender_subaccount(a)),
+            subaccount: Some(ledger_utils::spender_subaccount(a_principal)),
         },
         2 * (amount + ICP_TRANSFER_FEE),
     );
@@ -4729,7 +4852,7 @@ fn users_send_crypto_from_their_own_wallets() {
         canister_ids.icp_ledger,
         icrc_ledger_types::icrc1::account::Account {
             owner: canister_id,
-            subaccount: Some(ledger_utils::spender_subaccount(b)),
+            subaccount: Some(ledger_utils::spender_subaccount(b_principal)),
         },
         amount + ICP_TRANSFER_FEE,
     );

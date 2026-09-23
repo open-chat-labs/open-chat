@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Apply LocalUserIndex events via `user_core`, shared with the User canister, which hands back the side effects to perform ([#9483](https://github.com/open-chat-labs/open-chat/pull/9483))
 - Send the user an `answered_elsewhere` dismissal when they join a call ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 - Support crypto in direct chats in `send_message`, renamed from `send_message_v2`, via ICRC2 transfers from the user's wallet or certified transfers they have already made, and remove the `send_message_with_transfer_to_group` and `_to_channel` stubs, since those messages are now sent to Groups and Communities directly ([#9516](https://github.com/open-chat-labs/open-chat/pull/9516))
+- Implement `c2c_charge_user_account` and `pay_for_streak_insurance`, pulling the payment via ICRC2 from the user's wallet or the external account they pay from, spending only an approval made under the user's own spender subaccount, which is derived from their principal and is shared by all their payments, including crypto sent in messages ([#9519](https://github.com/open-chat-labs/open-chat/pull/9519))
 
 ### Changed
 

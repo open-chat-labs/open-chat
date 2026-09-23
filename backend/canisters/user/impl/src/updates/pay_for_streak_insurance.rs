@@ -3,6 +3,7 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use ledger_utils::Payer;
 use types::{OCResult, UserCanisterStreakInsurancePayment, UserId};
 use user_canister::pay_for_streak_insurance::*;
 
@@ -18,7 +19,16 @@ async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
         Err(error) => return Response::Error(error),
     };
 
-    let transfer_result = user_core::updates::pay_for_streak_insurance::pay(args.from_account, args.expected_price).await;
+    // The user's funds are in this canister's own account, unless they are paying from an external
+    // account they approved
+    let payer = match args.from_account {
+        Some(from) => Payer::Approved {
+            from,
+            spender_subaccount: None,
+        },
+        None => Payer::ThisCanister,
+    };
+    let transfer_result = user_core::updates::pay_for_streak_insurance::pay(payer, args.expected_price).await;
 
     mutate_state(|state| {
         state.data.user.streak.release_payment_lock();

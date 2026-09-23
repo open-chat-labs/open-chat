@@ -3,7 +3,8 @@ use std::collections::HashSet;
 
 #[derive(Clone)]
 pub enum Caller {
-    User(UserId),
+    // The user along with the principal they sign in with
+    User(UserIdAndPrincipal),
     Bot(UserId),
     BotV2(BotCaller),
     OCBot(UserId),
@@ -19,7 +20,7 @@ pub struct BotCaller {
 impl Caller {
     pub fn agent(&self) -> UserId {
         match self {
-            Caller::User(user_id) => *user_id,
+            Caller::User(user) => user.user_id,
             Caller::Bot(user_id) => *user_id,
             Caller::BotV2(bot_caller) => bot_caller.bot,
             Caller::OCBot(user_id) => *user_id,
@@ -29,7 +30,7 @@ impl Caller {
 
     pub fn initiator(&self) -> Option<UserId> {
         match self {
-            Caller::User(user_id) => Some(*user_id),
+            Caller::User(user) => Some(user.user_id),
             Caller::Bot(user_id) => Some(*user_id),
             Caller::BotV2(bot_caller) => bot_caller.initiator.user(),
             Caller::OCBot(user_id) => Some(*user_id),

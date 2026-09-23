@@ -632,7 +632,7 @@ impl RuntimeState {
         let member = self.data.chat.members.get_verified_member(user_id)?;
 
         match member.user_type() {
-            UserType::User => Ok(Caller::User(member.user_id())),
+            UserType::User => Ok(Caller::User(member.user())),
             UserType::Bot => Ok(Caller::Bot(member.user_id())),
             UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id())),
             UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound.into()),

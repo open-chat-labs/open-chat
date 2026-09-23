@@ -10,6 +10,19 @@ use oc_error_codes::OCErrorCode;
 use types::icrc2::TransferFromError;
 use types::{CanisterId, OCResult, TimestampMillis, TokenInfo, UserId, icrc1};
 
+// Where a payment a canister makes for one of its users comes from
+pub enum Payer {
+    // The canister's own account, which is the wallet of a user alone in their canister
+    ThisCanister,
+    // An account which has approved the canister as spender, from which the payment is pulled via
+    // ICRC-2. `spender_subaccount` picks which approval is spent, so a canister holding many users
+    // spends only the approval made under the paying user's own (see `spender_subaccount`).
+    Approved {
+        from: icrc1::Account,
+        spender_subaccount: Option<[u8; 32]>,
+    },
+}
+
 // Rejects a `from_account` held by `this_canister_id`. Pulling from the canister's own accounts
 // would need an approval it had granted itself, so this is always a client bug; and in a canister
 // holding many users, another user's funds should only ever be reached through that user.

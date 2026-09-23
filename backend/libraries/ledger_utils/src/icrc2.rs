@@ -16,17 +16,16 @@ pub async fn process_transaction(
     transfer_from(transaction, spender.user_id, spender_account.subaccount).await
 }
 
-// Pulls funds for `user_id` in a canister which holds approvals made for many users, such as a Group
-// or Community, spending only an approval made under that user's own spender subaccount (see
-// `spender_subaccount`). An approval made for anyone else, or to the canister's default account,
-// can't be spent this way.
+// Pulls funds for a user in a canister which holds approvals made by many users, spending only an
+// approval made under that user's own `spender_subaccount` (see `crate::spender_subaccount`). An
+// approval made for anyone else, or to the canister's default account, can't be spent this way.
 pub async fn process_transaction_for_user(
     transaction: PendingCryptoTransaction,
-    user_id: UserId,
+    spender_subaccount: [u8; 32],
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     let this_canister_id = ic_cdk::api::canister_self();
 
-    transfer_from(transaction, this_canister_id.into(), Some(crate::spender_subaccount(user_id))).await
+    transfer_from(transaction, this_canister_id.into(), Some(spender_subaccount)).await
 }
 
 async fn transfer_from(
