@@ -11,7 +11,7 @@ use types::{Achievement, CanisterId, TimestampMillis, UserId, UserType};
 use user_canister::c2c_user_canister_v2::*;
 use user_canister::{
     DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, SendMessagesArgs,
-    SetEventsTtl, ToggleReactionArgs, UserCanisterEvent,
+    SetEventsTtl, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs, UserCanisterEvent,
 };
 use user_core::updates::c2c_user_canister::{self, can_act_for};
 
@@ -135,9 +135,9 @@ fn process_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16,
         }
         UserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient, recipient_index, now, state),
         UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, *status, now),
-        // TODO: Handle these once the MultiUser canister supports tips, P2P swaps and video calls
-        UserCanisterEvent::TipMessage(_)
-        | UserCanisterEvent::P2PSwapStatusChange(_)
+        UserCanisterEvent::TipMessage(args) => receive_tip(*args, sender, recipient, recipient_index, now, state),
+        // TODO: Handle these once the MultiUser canister supports P2P swaps and video calls
+        UserCanisterEvent::P2PSwapStatusChange(_)
         | UserCanisterEvent::StartVideoCall(_)
         | UserCanisterEvent::JoinVideoCall(_) => {}
     }
@@ -249,6 +249,38 @@ fn toggle_reaction(
         state.push_notification(Some(sender), recipient_index, notification, now);
     }
     state.award_achievement_and_notify(recipient_index, Achievement::HadMessageReactedTo, now);
+}
+
+// As in the User canister, a tip on the recipient's message notifies them, appears in their message
+// activity feed and earns them an achievement. Applied directly when the tipper is in this canister
+// too.
+pub(crate) fn receive_tip(
+    args: C2CTipMessageArgs,
+    sender: UserId,
+    recipient: UserId,
+    recipient_index: u16,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
+    let Some(received) = state
+        .with_their_direct_chat_mut(sender, recipient, |chat| {
+            c2c_user_canister::tip_message(chat, sender, recipient, args, now)
+        })
+        .flatten()
+    else {
+        return;
+    };
+
+    if let Some(notification) = received.notification {
+        state.push_notification(Some(sender), recipient_index, notification, now);
+    }
+    if let Some(activity) = received.activity {
+        state
+            .data
+            .users
+            .with_user_mut(recipient_index, |user| user.push_message_activity(activity, now));
+    }
+    state.award_achievement_and_notify(recipient_index, Achievement::HadMessageTipped, now);
 }
 
 fn set_events_ttl(
