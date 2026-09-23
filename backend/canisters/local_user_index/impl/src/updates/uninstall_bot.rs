@@ -1,3 +1,4 @@
+use crate::bots::validate_installation_location;
 use crate::{UserIndexEvent, guards::caller_is_openchat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
@@ -8,11 +9,14 @@ use types::{BotEvent, BotLifecycleEvent, BotNotification, BotUninstalledEvent, c
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn uninstall_bot(args: Args) -> Response {
-    let user_id = read_state(|state| {
+    let user_id = match read_state(|state| {
         let caller = state.env.caller();
         let user = state.data.global_users.get(&caller).unwrap();
-        user.user_id
-    });
+        validate_installation_location(args.location, user.user_id, state).map(|_| user.user_id)
+    }) {
+        Ok(user_id) => user_id,
+        Err(error) => return Response::Error(error),
+    };
 
     match c2c_uninstall_bot(
         args.location.canister_id(),

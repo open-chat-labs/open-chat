@@ -278,6 +278,78 @@ fn remove_bot_test() {
     assert_eq!(response.bots_removed[0], bot_id);
 }
 
+// The location canister is called by its id alone, so a user's direct chat accepts an install under
+// any variant. Were that recorded, the UserIndex would later route the installation's events into
+// the group or community event queues, where they could never be delivered.
+#[test]
+fn install_bot_rejects_location_of_wrong_type() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let other_user = client::register_user(env, canister_ids);
+    let (bot_id, _) = register_bot(env, &user, canister_ids.user_index, random_string(), random_string());
+    let local_user_index = canister_ids.local_user_index(env, user.user_id.canister_id());
+
+    tick_many(env, 3);
+
+    let wrong_locations = [
+        BotInstallationLocation::Group(user.user_id.into()),
+        BotInstallationLocation::Community(user.user_id.as_principal().into()),
+        BotInstallationLocation::User(other_user.user_id.into()),
+    ];
+
+    for location in wrong_locations {
+        let expected_code = || match location {
+            BotInstallationLocation::Group(_) => OCErrorCode::ChatNotFound,
+            BotInstallationLocation::Community(_) => OCErrorCode::CommunityNotFound,
+            BotInstallationLocation::User(_) => OCErrorCode::InitiatorNotAuthorized,
+        };
+
+        let response = client::local_user_index::install_bot(
+            env,
+            user.principal,
+            local_user_index,
+            &local_user_index_canister::install_bot::Args {
+                location,
+                bot_id,
+                granted_permissions: BotPermissions::text_only(),
+                granted_autonomous_permissions: None,
+            },
+        );
+        assert!(
+            matches!(&response, local_user_index_canister::install_bot::Response::Error(e) if e.matches_code(expected_code())),
+            "{location:?}: {response:?}"
+        );
+
+        let response = client::local_user_index::uninstall_bot(
+            env,
+            user.principal,
+            local_user_index,
+            &local_user_index_canister::uninstall_bot::Args { location, bot_id },
+        );
+        assert!(
+            matches!(&response, local_user_index_canister::uninstall_bot::Response::Error(e) if e.matches_code(expected_code())),
+            "{location:?}: {response:?}"
+        );
+    }
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        local_user_index,
+        BotInstallationLocation::User(user.user_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        None,
+    );
+}
+
 #[test]
 fn e2e_autonomous_bot_test() {
     let mut wrapper = ENV.deref().get();
