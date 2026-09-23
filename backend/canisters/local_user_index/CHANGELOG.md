@@ -17,17 +17,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Delete a user held in a MultiUser canister via its `c2c_delete_user` rather than skipping them. MultiUser canisters must be upgraded first ([#9451](https://github.com/open-chat-labs/open-chat/pull/9451))
+- Delete users held in a MultiUser canister via its `c2c_delete_user` ([#9451](https://github.com/open-chat-labs/open-chat/pull/9451))
 - Queue user events per canister, and send a MultiUser canister's in a single call via the v2 endpoint, while User canisters are still sent theirs via the original endpoint ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
 - Stop filtering out `BotUpdated` events for User canisters, which all now handle them ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
-
-### Fixed
-
-- Don't uninstall a MultiUser canister when deleting one of its users, which would delete every user it holds ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
 
 ### Removed
 
 - Remove the unused `UserPrincipalUpdated` event ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
+
+### Fixed
+
+- Don't uninstall a MultiUser canister when deleting one of its users, which would delete every user it holds ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
 
 ## [[2.0.2059](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2059-local_user_index)] - 2026-09-18
 
@@ -101,8 +101,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Forward `GroupModerationFlagsChanged` events from group_index to groups ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
 - Forward `CommunityModerationFlagsChanged` events from group_index to communities ([#9088](https://github.com/open-chat-labs/open-chat/pull/9088))
+- Forward `GroupModerationFlagsChanged` events from group_index to groups ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
 - Add `Translate` access token type for the translation proxy, issued to diamond members and platform moderators ([#9100](https://github.com/open-chat-labs/open-chat/pull/9100))
 
 ### Changed
@@ -196,13 +196,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.1897](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1897-local_user_index)] - 2025-09-11
 
-### Fix
+### Fixed
 
 - Fix User canister init args for new user creation ([#8606](https://github.com/open-chat-labs/open-chat/pull/8606))
 
 ## [[2.0.1896](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1896-local_user_index)] - 2025-09-11
 
-### Fix
+### Fixed
 
 - Don't trap for unsupported bot data encoding ([#8604](https://github.com/open-chat-labs/open-chat/pull/8604))
 
@@ -271,14 +271,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
-
-## [[2.0.1844](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1844-local_user_index)] - 2025-07-29
-
-### Changed
-
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
 - Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
+- Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
 
 ## [[2.0.1837](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1837-local_user_index)] - 2025-07-21
 
@@ -610,26 +605,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
 - Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
+- Verified flag added to group/community summary updates ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
 - Sync platform moderators/operators to LocalUserIndexes ([#7248](https://github.com/open-chat-labs/open-chat/pull/7248))
 - Support updating bot principal but not name ([#7253](https://github.com/open-chat-labs/open-chat/pull/7253))
 - Handle `RemoveBot` event ([#7254](https://github.com/open-chat-labs/open-chat/pull/7254))
-- Verified flag added to group/community summary updates ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
 
 ## [[2.0.1567](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1567-local_user_index)] - 2025-01-14
 
 ### Changed
 
-- Withdraw from ICPSwap via LocalUserIndex so authentication happens first ([#7217](https://github.com/open-chat-labs/open-chat/pull/7217))
-- Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
-
-## [[2.0.1567](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1567-local_user_index)] - 2025-01-14
-
-### Changed
-
+- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
 - Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
 - Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
-- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
 - Sync platform operators to LocalUserIndexes ([#7210](https://github.com/open-chat-labs/open-chat/pull/7210))
+- Withdraw from ICPSwap via LocalUserIndex so authentication happens first ([#7217](https://github.com/open-chat-labs/open-chat/pull/7217))
+- Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
 
 ## [[2.0.1547](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1547-local_user_index)] - 2025-01-06
 
@@ -640,7 +630,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `StringChat` in `BotCommandClaims` ([#7133](https://github.com/open-chat-labs/open-chat/pull/7133))
 - Handle bot name/definition update ([#7135](https://github.com/open-chat-labs/open-chat/pull/7135))
 
-### Fixes
+### Fixed
 
 - Fix unit of claims expiry ([#7106](https://github.com/open-chat-labs/open-chat/pull/7106))
 - Sync full user details to new LocalUserIndexes ([#7153](https://github.com/open-chat-labs/open-chat/pull/7153))
@@ -668,16 +658,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Set the derivation origin when checking verifiable credentials ([#6703](https://github.com/open-chat-labs/open-chat/pull/6703))
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 - Use `summary` instead of `c2c_summary` so that `c2c_summary` can be removed ([#6988](https://github.com/open-chat-labs/open-chat/pull/6988))
-- Set the derivation origin when checking verifiable credentials ([#6703](https://github.com/open-chat-labs/open-chat/pull/6703))
 - Ensure bot has permission to execute given action ([#7014](https://github.com/open-chat-labs/open-chat/pull/7014))
 - Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
 - Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
 - Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
 - Include the total cycles topped up ([#7056](https://github.com/open-chat-labs/open-chat/pull/7056))
 
-### Fixes
+### Fixed
 
 - Fixes to `access_token` and `execute_bot_command` ([#7031](https://github.com/open-chat-labs/open-chat/pull/7031))
 
@@ -1008,8 +998,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `LifetimeDiamondMembership` access gate ([#5986](https://github.com/open-chat-labs/open-chat/pull/5986))
-- Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
 - Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
+- Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
 
 ### Changed
 
@@ -1552,8 +1542,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Removed code only needed for the previous upgrade ([#3003](https://github.com/open-chat-labs/open-chat/pull/3003))
 - Remove one time fix to user date created ([#2994](https://github.com/open-chat-labs/open-chat/pull/2994))
+- Removed code only needed for the previous upgrade ([#3003](https://github.com/open-chat-labs/open-chat/pull/3003))
 
 ## [[2.0.563](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.563-local_user_index)] - 2023-01-23
 
