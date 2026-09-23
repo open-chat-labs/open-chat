@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Aggregate child canister cycle top ups every 5 minutes and expose the 100 most topped up canisters over the last 7, 30, 90 and 365 days via `http_request` at `/top_up_leaderboard` ([#9444](https://github.com/open-chat-labs/open-chat/pull/9444))
 - Track this LocalUserIndex's MultiUser canisters plus those elsewhere holding a registered user, and record when each local MultiUser canister was created and how many users it holds ([#9460](https://github.com/open-chat-labs/open-chat/pull/9460))
 - Add `is_user_or_multi_user_canister` so User and MultiUser canisters can authenticate callers ([#9461](https://github.com/open-chat-labs/open-chat/pull/9461))
+- Add call push: when a call starts in a direct chat or a private group of eight or fewer members, add the call fields to the FCM data so a phone can ring, and forward the `ended` and `answered_elsewhere` dismissals that stop it ringing. Behind the `call_push_enabled` switch, default off, set by the UserIndex or by a platform operator via `set_call_push_enabled` ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 
 ### Changed
 
