@@ -58,6 +58,57 @@ fn local_user_index_identifies_user_and_multi_user_canisters() {
 }
 
 #[test]
+fn register_user_with_flag_places_user_in_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let alice = client::register_user_in_multi_user_canister(env, canister_ids);
+    let bob = client::register_user_in_multi_user_canister(env, canister_ids);
+    let charlie = client::register_user(env, canister_ids);
+
+    // Alice and Bob are each held in a MultiUser canister on their LocalUserIndex (one is created
+    // if it has none), whereas without the flag Charlie gets a User canister of their own
+    for user in [&alice, &bob] {
+        assert_ne!(user.user_id.index(), 0);
+        let response = client::local_user_index::is_user_or_multi_user_canister(
+            env,
+            Principal::anonymous(),
+            user.local_user_index,
+            &local_user_index_canister::is_user_or_multi_user_canister::Args {
+                canister_id: user.canister(),
+            },
+        );
+        assert_eq!(
+            response,
+            local_user_index_canister::is_user_or_multi_user_canister::Response::MultiUserCanister
+        );
+    }
+    assert_eq!(charlie.user_id.index(), 0);
+
+    // The UserIndex has recorded their registrations
+    for user in [&alice, &bob] {
+        let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+        assert_eq!(current_user.user_id, user.user_id);
+        assert_eq!(current_user.username, user.username());
+    }
+
+    // And they can use their accounts. Bob may be in another canister, which the message reaches
+    // asynchronously
+    let sent = send_text_message(
+        env,
+        alice.principal,
+        alice.canister(),
+        bob.user_id,
+        "hello",
+        random_from_u128(),
+    );
+    assert_eq!(sent.chat_id, bob.user_id.into());
+    tick_many(env, 5);
+    let bob_events = events(env, bob.principal, bob.canister(), bob.user_id, alice.user_id);
+    assert_eq!(messages(&bob_events), vec![(alice.user_id, "hello".to_string())]);
+}
+
+#[test]
 fn create_then_upgrade_multi_user_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

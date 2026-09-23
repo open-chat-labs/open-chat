@@ -65,6 +65,11 @@ impl LocalUserMap {
         self.users.iter()
     }
 
+    // Excludes the users held in MultiUser canisters, which are upgraded and topped up per canister
+    pub fn iter_user_canisters(&self) -> impl Iterator<Item = (&UserId, &LocalUser)> {
+        self.users.iter().filter(|(user_id, _)| user_id.index() == 0)
+    }
+
     pub fn len(&self) -> usize {
         self.users.len()
     }

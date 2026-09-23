@@ -82,7 +82,7 @@ fn commit(
     for canister_id in state
         .data
         .local_users
-        .iter()
+        .iter_user_canisters()
         .filter(|(user_id, _)| active_users_filter.as_ref().is_none_or(|a| a.contains(user_id)))
         .filter(|(user_id, user)| {
             should_perform_upgrade(
@@ -112,7 +112,7 @@ fn commit(
 }
 
 fn min_canister_version(data: &Data) -> Option<BuildVersion> {
-    data.local_users.iter().map(|(_, u)| u.wasm_version).min()
+    data.local_users.iter_user_canisters().map(|(_, u)| u.wasm_version).min()
 }
 
 // Compiles the list of users who have been active since the specified timestamp.

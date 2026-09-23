@@ -560,7 +560,7 @@ impl RuntimeState {
             user_versions: self
                 .data
                 .local_users
-                .iter()
+                .iter_user_canisters()
                 .map(|u| u.1.wasm_version.to_string())
                 .count_per_value(),
             group_versions: self
