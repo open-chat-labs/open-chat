@@ -42,7 +42,7 @@ async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNa
         // Note in the case of CHAT this will cause the tokens to be burned
         PaymentRecipient::SnsTreasury => SNS_GOVERNANCE_CANISTER_ID.into(),
         PaymentRecipient::TreasuryCanister => OPENCHAT_TREASURY_CANISTER_ID.into(),
-        PaymentRecipient::Member(user_id) => user_id.into(),
+        PaymentRecipient::Member(user_id) => types::icrc1::Account::legacy_for_user(user_id).into(),
         PaymentRecipient::Account(account) => account,
     };
 

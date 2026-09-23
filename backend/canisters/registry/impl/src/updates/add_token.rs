@@ -98,7 +98,7 @@ async fn add_token_impl(
         let amount = if test_mode { 100_000_000 } else { TOKEN_LISTING_FEE_E8S };
         let transfer_args = TransferFromArgs {
             spender_subaccount: None,
-            from: user_id.into(),
+            from: types::icrc1::Account::legacy_for_user(user_id).into(),
             to: SNS_GOVERNANCE_CANISTER_ID.into(),
             amount: amount.into(),
             fee: None, // No transfer fee for BURNing

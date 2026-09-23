@@ -69,7 +69,7 @@ pub(crate) async fn process_token_swap(
         // exactly as if the funds had been there all along. Any refund therefore lands in the user's
         // OpenChat wallet too.
         let (my_user_id, now) = read_state(|state| (UserId::from(state.env.canister_id()), state.env.now()));
-        let my_account = Account::for_user(my_user_id);
+        let my_account = Account::holding_canister_account(my_user_id);
         // The allowance is what authorises this - the ledger only lets us pull from an account which
         // has approved this canister as spender - so there is nothing for us to check here.
         let result = icrc2_transfer_from(

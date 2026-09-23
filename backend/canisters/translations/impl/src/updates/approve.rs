@@ -27,7 +27,7 @@ async fn approve(args: Args) -> Response {
         ApproveResponse::Success(result) => {
             if !result.previously_approved {
                 state.data.pending_payments_queue.push(PendingPayment {
-                    recipient_account: result.proposed_by.into(),
+                    recipient_account: types::icrc1::Account::legacy_for_user(result.proposed_by).into(),
                     timestamp: now,
                     ledger: CHAT_LEDGER_CANISTER_ID,
                     fee: CHAT_TRANSFER_FEE,

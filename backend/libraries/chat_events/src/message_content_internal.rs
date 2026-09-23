@@ -1719,8 +1719,9 @@ impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
                     subaccount: None,
                 }
                 .into(),
+                // Where the prize was paid, by `create_pending_transaction`
                 to: my_user_id
-                    .map(types::icrc1::Account::for_user)
+                    .map(types::icrc1::Account::legacy_for_user)
                     .unwrap_or(types::icrc1::Account {
                         owner: Principal::anonymous(),
                         subaccount: None,

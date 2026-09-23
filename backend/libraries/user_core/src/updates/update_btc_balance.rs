@@ -20,7 +20,7 @@ pub async fn update_btc_balance(my_user_id: UserId, test_mode: bool) -> OCResult
         ckbtc_minter_canister_id,
         &ckbtc_minter_canister::update_balance::Args {
             owner: None,
-            subaccount: icrc1::Account::for_user(my_user_id).subaccount,
+            subaccount: icrc1::Account::holding_canister_account(my_user_id).subaccount,
         },
     )
     .await?

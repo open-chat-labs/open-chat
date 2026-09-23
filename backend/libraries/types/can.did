@@ -945,9 +945,15 @@ type NnsFailedCryptoTransaction = record {
     error_message : text;
 };
 
+type UserIdAndPrincipal = record {
+    user_id : UserId;
+    "principal" : principal;
+};
+
 type NnsUserOrAccount = variant {
     User : UserId;
     Account : AccountIdentifier;
+    UserV2 : UserIdAndPrincipal;
 };
 
 type NnsCryptoAccount = variant {

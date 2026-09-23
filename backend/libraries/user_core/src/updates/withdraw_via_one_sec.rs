@@ -44,7 +44,7 @@ pub async fn withdraw(
             evm_account: EvmAccount {
                 address: args.address.clone(),
             },
-            icp_account: IcpAccount::ICRC(icrc1::Account::for_user(my_user_id).into()),
+            icp_account: IcpAccount::ICRC(icrc1::Account::holding_canister_account(my_user_id).into()),
             evm_chain: args.evm_chain,
             icp_amount: args.amount.into(),
             evm_amount: None,

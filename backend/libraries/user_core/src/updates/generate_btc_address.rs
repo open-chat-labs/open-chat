@@ -8,7 +8,7 @@ pub async fn fetch_btc_address(my_user_id: UserId) -> Result<String, C2CError> {
         CKBTC_MINTER_CANISTER_ID,
         &ckbtc_minter_canister::get_btc_address::Args {
             owner: None,
-            subaccount: icrc1::Account::for_user(my_user_id).subaccount,
+            subaccount: icrc1::Account::holding_canister_account(my_user_id).subaccount,
         },
     )
     .await

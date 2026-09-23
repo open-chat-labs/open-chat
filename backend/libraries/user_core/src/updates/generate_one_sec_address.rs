@@ -7,7 +7,7 @@ use types::{OCResult, UserId, icrc1};
 pub async fn fetch_one_sec_address(my_user_id: UserId) -> OCResult<String> {
     match one_sec_minter_canister_c2c_client::get_forwarding_address(
         ONE_SEC_MINTER_CANISTER_ID,
-        &one_sec_minter_canister::IcpAccount::ICRC(icrc1::Account::for_user(my_user_id).into()),
+        &one_sec_minter_canister::IcpAccount::ICRC(icrc1::Account::holding_canister_account(my_user_id).into()),
     )
     .await?
     {

@@ -105,7 +105,7 @@ impl Job for ProcessUserRefundJob {
     fn execute(self) {
         let transfer_args = TransferArg {
             from_subaccount: None,
-            to: self.user_id.into(),
+            to: types::icrc1::Account::legacy_for_user(self.user_id).into(),
             fee: Some(self.fee.into()),
             created_at_time: None,
             memo: None,

@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn icrc1_account_with_subaccount_is_valid() {
         let canister_id = Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 1, 1]);
-        let account = Account::from(UserId::new_indexed(canister_id, 7));
+        let account = UserId::new_indexed(canister_id, 7).holding_canister_account();
         assert!(account.subaccount.is_some());
         assert!(is_valid_account(&account.to_string()));
     }

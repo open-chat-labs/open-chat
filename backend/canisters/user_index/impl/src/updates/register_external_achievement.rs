@@ -28,7 +28,7 @@ async fn register_external_achievement(args: Args) -> Response {
         let amount = (chit_budget as u128) * CHAT_FEE_PER_CHIT_AWARD;
         let transfer_args = TransferFromArgs {
             spender_subaccount: None,
-            from: args.submitted_by.into(),
+            from: types::icrc1::Account::legacy_for_user(args.submitted_by).into(),
             to: result.this_canister_id.into(),
             amount: amount.into(),
             fee: Some(CHAT_TRANSFER_FEE.into()),

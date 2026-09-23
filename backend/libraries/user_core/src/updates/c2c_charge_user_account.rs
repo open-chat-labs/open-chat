@@ -26,7 +26,7 @@ pub async fn c2c_charge_user_account(args: Args, user_index_canister_id: types::
     let amount = args.amount.e8s().into();
     // Whichever account we charge, the owner is this canister, so only the subaccount is ours to
     // choose. For ICRC-2 it picks which approval is spent rather than which account is debited.
-    let subaccount = icrc1::Account::for_user(args.user_id).subaccount;
+    let subaccount = icrc1::Account::holding_canister_account(args.user_id).subaccount;
 
     match args.from_account {
         // The allowance is what authorises this - the ledger only lets us pull from an account

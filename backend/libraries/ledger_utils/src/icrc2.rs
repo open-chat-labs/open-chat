@@ -3,7 +3,6 @@ use oc_error_codes::{OCError, OCErrorCode};
 use tracing::error;
 use types::{
     C2CError, UserId,
-    icrc1::Account,
     icrc2::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TransferFromError},
 };
 
@@ -17,7 +16,7 @@ pub async fn process_transaction(
         // The owner is implied by the caller, so only the subaccount goes in the args. Note this
         // picks which approval is spent - `icrc2_approve` grants to an exact (owner, subaccount)
         // pair, so a non-default subaccount here can only spend an approval that named it.
-        spender_subaccount: Account::for_user(spender).subaccount,
+        spender_subaccount: spender.holding_canister_account().subaccount,
         from: transaction.from.into(),
         to: transaction.to.into(),
         fee: Some(transaction.fee.into()),

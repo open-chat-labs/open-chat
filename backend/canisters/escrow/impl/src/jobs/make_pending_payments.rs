@@ -45,7 +45,7 @@ async fn process_payment(pending_payment: PendingPayment) {
         // Deposits are keyed by the depositor's raw principal, so the raw principal - not the
         // user's wallet account - is what reconstructs the deposit subaccount.
         from_subaccount: Some(deposit_subaccount(from_user.as_principal(), pending_payment.swap_id)),
-        to: pending_payment.user_id.into(),
+        to: Account::legacy_for_user(pending_payment.user_id).into(),
         fee: Some(pending_payment.token_info.fee.into()),
         created_at_time: Some(created_at_time),
         memo: None,
@@ -66,7 +66,7 @@ async fn process_payment(pending_payment: PendingPayment) {
                         subaccount: args.from_subaccount,
                     }
                     .into(),
-                    to: Account::for_user(pending_payment.user_id).into(),
+                    to: Account::legacy_for_user(pending_payment.user_id).into(),
                     fee: pending_payment.token_info.fee,
                     memo: None,
                     created: created_at_time,

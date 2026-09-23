@@ -62,7 +62,7 @@ async fn register_user(args: Args) -> Response {
             });
             Success(SuccessResult {
                 user_id,
-                icp_account: user_id.into(),
+                icp_account: types::UserIdAndPrincipal::new(user_id, caller).into(),
             })
         }
         Err((canister_id, error)) => {

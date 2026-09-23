@@ -2490,7 +2490,7 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
         canister_id,
         1,
         ONE_CHAT,
-        Some(types::icrc1::Account::for_user(b)),
+        Some(types::icrc1::Account::legacy_for_user(b)),
         OCErrorCode::InvalidRequest,
     );
 

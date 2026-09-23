@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Extract `deep_message_links` into its own library and drop the direct dependency on `chat_events` ([#9493](https://github.com/open-chat-labs/open-chat/pull/9493))
+- Return the account of a user's principal as their `icp_account` from `current_user` if they aren't alone in their canister, since that is their wallet
 
 ## [[2.0.2058](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2058-user_index)] - 2026-09-18
 

@@ -5,7 +5,6 @@ use std::collections::BTreeSet;
 // use ic_verifiable_credentials::VcFlowSigners;
 use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, ICP_LEDGER_CANISTER_ID, MEMO_JOINING_FEE, NANOS_PER_MILLISECOND};
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use oc_error_codes::{OCError, OCErrorCode};
 use sns_governance_canister::types::Neuron;
@@ -356,7 +355,7 @@ async fn try_transfer_from(
     let amount = gate.amount - 2 * gate.fee;
     let transfer_args = TransferFromArgs {
         spender_subaccount: None,
-        from: user_id.into(),
+        from: types::icrc1::Account::legacy_for_user(user_id).into(),
         to: this_canister_id.into(),
         // The amount the gate amount less the approval fee and the transfer_from fee
         amount: amount.into(),
@@ -376,7 +375,12 @@ async fn try_transfer_from(
 }
 
 async fn check_token_balance_gate(gate: &TokenBalanceGate, user_id: UserId) -> CheckIfPassesGateResult {
-    match icrc_ledger_canister_c2c_client::icrc1_balance_of(gate.ledger_canister_id, &Account::from(user_id)).await {
+    match icrc_ledger_canister_c2c_client::icrc1_balance_of(
+        gate.ledger_canister_id,
+        &types::icrc1::Account::legacy_for_user(user_id).into(),
+    )
+    .await
+    {
         Ok(balance) if balance >= gate.min_balance => CheckIfPassesGateResult::Success(Vec::new()),
         Ok(balance) => {
             CheckIfPassesGateResult::Failed(GateCheckFailedReason::InsufficientBalance(balance.0.try_into().unwrap()))

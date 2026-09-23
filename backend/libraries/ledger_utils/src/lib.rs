@@ -27,7 +27,7 @@ pub fn create_pending_transaction(
         fee,
         token_symbol: token_symbol.clone(),
         amount,
-        to: types::icrc1::Account::for_user(user_id),
+        to: types::icrc1::Account::legacy_for_user(user_id),
         memo: memo.map(|bytes| bytes.to_vec().into()),
         created: now_nanos,
     })
@@ -69,7 +69,7 @@ pub async fn process_transaction(
                 token_symbol: t.token_symbol,
                 amount: t.amount,
                 fee: t.fee,
-                from: types::icrc1::Account::for_user(resolve_sender(sender)).into(),
+                from: types::icrc1::Account::holding_canister_account(resolve_sender(sender)).into(),
                 to: t.to.into(),
                 memo: t.memo,
                 created: t.created,

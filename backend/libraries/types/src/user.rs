@@ -68,26 +68,20 @@ impl UserId {
         }
     }
 
-    // The user whose wallet this ledger account is - the inverse of `From<UserId> for Account`.
-    // None for an account which is not a user's wallet: one whose subaccount is not of the form
-    // `From<UserId>` produces, or an indexed subaccount of an owner which is not a canister. The
-    // default subaccount maps to the owner itself, whether it is a canister or not, so that the
-    // wallets of bots and other non-canister users resolve too.
-    //
-    // There is no equivalent for `AccountIdentifier`, which is a hash and cannot be inverted.
-    pub fn from_account(account: &Account) -> Option<UserId> {
-        let index = match account.subaccount {
-            None => 0,
-            Some(bytes) if bytes[..30] == [0; 30] => u16::from_be_bytes([bytes[30], bytes[31]]),
-            Some(_) => return None,
-        };
-
-        if index == 0 {
-            Some(UserId(account.owner))
-        } else if index <= MAX_USER_INDEX && is_canister_id(&account.owner) {
-            Some(UserId::new_indexed(account.owner, index))
-        } else {
-            None
+    // This user's account of the canister which holds their data, from which that canister spends
+    // on their behalf. Index 0 maps to the default subaccount, so for a user alone in their canister
+    // this is the canister's own account. It isn't the user's wallet if they are in a MultiUser
+    // canister, since they hold their own funds in their principal's account - see
+    // `UserIdAndPrincipal`.
+    pub fn holding_canister_account(&self) -> Account {
+        let subaccount = self.index().to_be_bytes();
+        Account {
+            owner: self.canister_id(),
+            subaccount: (subaccount != [0; 2]).then(|| {
+                let mut bytes = [0; 32];
+                bytes[30..].copy_from_slice(&subaccount);
+                bytes
+            }),
         }
     }
 
@@ -131,31 +125,43 @@ impl From<Principal> for UserId {
     }
 }
 
-impl From<UserId> for Account {
-    fn from(value: UserId) -> Self {
-        // Index 0 must map to the default subaccount, else every existing user's wallet address
-        // would change. Note the owner is the holding canister, never the UserId itself - nobody
-        // can sign for an indexed UserId, so tokens sent there would be unrecoverable.
-        let subaccount = value.index().to_be_bytes();
-        Account {
-            owner: value.canister_id(),
-            subaccount: (subaccount != [0; 2]).then(|| {
-                let mut bytes = [0; 32];
-                bytes[30..].copy_from_slice(&subaccount);
-                bytes
-            }),
-        }
+// A user along with the principal they sign in with, which together determine their wallet. Only
+// trust one built from data the canister holds or has looked up, never a caller's claim, since for
+// most users the principal is where their funds go.
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct UserIdAndPrincipal {
+    pub user_id: UserId,
+    pub principal: Principal,
+}
+
+impl UserIdAndPrincipal {
+    pub fn new(user_id: UserId, principal: Principal) -> UserIdAndPrincipal {
+        UserIdAndPrincipal { user_id, principal }
     }
 }
 
-impl From<UserId> for AccountIdentifier {
-    fn from(value: UserId) -> Self {
-        let account = Account::from(value);
-        AccountIdentifier::new(
-            &account.owner,
-            &account.subaccount.map_or(ic_ledger_types::DEFAULT_SUBACCOUNT, Subaccount),
-        )
+// The user's wallet. A user alone in their canister holds their funds in that canister's account,
+// whose id is their UserId. Anyone else, such as a user in a MultiUser canister or a bot, holds
+// their own funds in their principal's account.
+impl From<UserIdAndPrincipal> for Account {
+    fn from(value: UserIdAndPrincipal) -> Self {
+        let owner = if value.user_id.is_canister() { value.user_id.as_principal() } else { value.principal };
+        Account { owner, subaccount: None }
     }
+}
+
+impl From<UserIdAndPrincipal> for AccountIdentifier {
+    fn from(value: UserIdAndPrincipal) -> Self {
+        account_identifier(Account::from(value))
+    }
+}
+
+pub fn account_identifier(account: Account) -> AccountIdentifier {
+    AccountIdentifier::new(
+        &account.owner,
+        &account.subaccount.map_or(ic_ledger_types::DEFAULT_SUBACCOUNT, Subaccount),
+    )
 }
 
 impl Debug for UserId {
@@ -293,16 +299,16 @@ mod tests {
     }
 
     #[test]
-    fn account_for_unindexed_user_is_unchanged() {
-        let account = Account::from(UserId::new(canister_id()));
+    fn holding_canister_account_of_unindexed_user_is_the_canisters_own() {
+        let account = UserId::new(canister_id()).holding_canister_account();
 
         assert_eq!(account.owner, canister_id());
         assert_eq!(account.subaccount, None);
     }
 
     #[test]
-    fn account_for_indexed_user_is_a_subaccount_of_the_holding_canister() {
-        let account = Account::from(UserId::new_indexed(canister_id(), 1000));
+    fn holding_canister_account_of_indexed_user_is_a_subaccount_of_the_holding_canister() {
+        let account = UserId::new_indexed(canister_id(), 1000).holding_canister_account();
 
         assert_eq!(account.owner, canister_id());
         let mut expected = [0; 32];
@@ -311,53 +317,24 @@ mod tests {
     }
 
     #[test]
-    fn user_id_round_trips_through_its_account() {
+    fn wallet_of_user_alone_in_their_canister_is_the_canisters_account() {
+        let principal = Principal::from_slice(&[9; 29]);
+        let account = Account::from(UserIdAndPrincipal::new(UserId::new(canister_id()), principal));
+
+        assert_eq!(account.owner, canister_id());
+        assert_eq!(account.subaccount, None);
+    }
+
+    #[test]
+    fn wallet_of_other_users_is_their_principals_account() {
+        let principal = Principal::from_slice(&[9; 29]);
         let bot = UserId::from(Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]));
-        let mut user_ids = vec![UserId::new(canister_id()), bot];
-        user_ids.extend([1, 255, 256, 1000, MAX_USER_INDEX].map(|i| UserId::new_indexed(canister_id(), i)));
 
-        for user_id in user_ids {
-            assert_eq!(UserId::from_account(&Account::from(user_id)), Some(user_id), "{user_id}");
-        }
-    }
+        for user_id in [UserId::new_indexed(canister_id(), 1000), bot] {
+            let account = Account::from(UserIdAndPrincipal::new(user_id, principal));
 
-    // The ledger treats an all-zero subaccount as the default one, so both spellings are the same
-    // account and must resolve to the same user.
-    #[test]
-    fn explicit_default_subaccount_resolves_to_the_unindexed_user() {
-        let account = Account {
-            owner: canister_id(),
-            subaccount: Some([0; 32]),
-        };
-
-        assert_eq!(UserId::from_account(&account), Some(UserId::new(canister_id())));
-    }
-
-    #[test]
-    fn account_which_is_not_a_user_wallet_has_no_user_id() {
-        let mut arbitrary = [0; 32];
-        arbitrary[0] = 1;
-        let mut out_of_range = [0; 32];
-        out_of_range[30..].copy_from_slice(&(MAX_USER_INDEX + 1).to_be_bytes());
-        let mut indexed = [0; 32];
-        indexed[31] = 1;
-        let not_a_canister = Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]);
-
-        for account in [
-            Account {
-                owner: canister_id(),
-                subaccount: Some(arbitrary),
-            },
-            Account {
-                owner: canister_id(),
-                subaccount: Some(out_of_range),
-            },
-            Account {
-                owner: not_a_canister,
-                subaccount: Some(indexed),
-            },
-        ] {
-            assert_eq!(UserId::from_account(&account), None, "{account:?}");
+            assert_eq!(account.owner, principal, "{user_id}");
+            assert_eq!(account.subaccount, None, "{user_id}");
         }
     }
 }

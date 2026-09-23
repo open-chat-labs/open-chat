@@ -1,6 +1,6 @@
 #![expect(deprecated)]
 use crate::nns::{Tokens, UserOrAccount};
-use crate::{CanisterId, TimestampNanos, UserId};
+use crate::{CanisterId, TimestampNanos, UserId, UserIdAndPrincipal};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::account::Account;
@@ -161,14 +161,20 @@ impl PendingCryptoTransaction {
         }
     }
 
+    // Checks the transfer is to the recipient's wallet, which, as their principal isn't known here,
+    // is the account they were paid at before principals were needed to find it
     pub fn validate_recipient(&self, recipient: UserId) -> bool {
         // The whole account, not just the owner. Once a canister holds many users the owner alone
         // is satisfied by a transfer destined for any of them.
-        let account = Account::from(recipient);
+        let account = recipient.holding_canister_account();
+        let account_identifier = crate::account_identifier(account);
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
-                UserOrAccount::Account(a) => a == AccountIdentifier::from(recipient),
+                UserOrAccount::Account(a) => a == account_identifier,
                 UserOrAccount::User(u) => u == recipient,
+                // The principal comes from the caller, so can't be trusted to be the recipient's.
+                // Only accepted where it makes no difference to where the transfer goes.
+                UserOrAccount::UserV2(u) => u.user_id == recipient && AccountIdentifier::from(u) == account_identifier,
             },
             PendingCryptoTransaction::ICRC1(t) => Account::from(t.to) == account,
             PendingCryptoTransaction::ICRC2(t) => Account::from(t.to) == account,
@@ -399,8 +405,11 @@ pub mod nns {
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum UserOrAccount {
+        // Paid at `Account::legacy_for_user`, which isn't the wallet of a user in a MultiUser
+        // canister, so `UserV2` should be used instead
         User(UserId),
         Account(#[ts(as = "[u8; 32]")] AccountIdentifier),
+        UserV2(UserIdAndPrincipal),
     }
 
     #[ts_export]
@@ -539,9 +548,7 @@ pub mod icrc1 {
         pub subaccount: Option<[u8; 32]>,
     }
 
-    // The default account of a canister or other non-user principal. A principal which actually
-    // identifies a user must go through `for_user`/`From<UserId>` instead - building a user's
-    // account from their principal drops the subaccount their wallet lives in.
+    // The default account of a principal. A user's wallet comes from `From<UserIdAndPrincipal>`.
     impl From<Principal> for Account {
         fn from(value: Principal) -> Self {
             Account {
@@ -551,21 +558,34 @@ pub mod icrc1 {
         }
     }
 
-    impl From<UserId> for Account {
-        fn from(value: UserId) -> Self {
-            Account::for_user(value)
+    impl From<UserIdAndPrincipal> for Account {
+        fn from(value: UserIdAndPrincipal) -> Self {
+            icrc_ledger_types::icrc1::account::Account::from(value).into()
+        }
+    }
+
+    impl From<icrc_ledger_types::icrc1::account::Account> for Account {
+        fn from(value: icrc_ledger_types::icrc1::account::Account) -> Self {
+            Account {
+                owner: value.owner,
+                subaccount: value.subaccount,
+            }
         }
     }
 
     impl Account {
-        // A user's account. Note the owner is the canister holding the user's data, which is not
-        // the same as the UserId once a canister holds more than one user.
-        pub fn for_user(user_id: UserId) -> Account {
-            let account = icrc_ledger_types::icrc1::account::Account::from(user_id);
-            Account {
-                owner: account.owner,
-                subaccount: account.subaccount,
-            }
+        // The user's account of the canister which holds their data, from which that canister
+        // spends on their behalf. See `UserId::holding_canister_account`.
+        pub fn holding_canister_account(user_id: UserId) -> Account {
+            user_id.holding_canister_account().into()
+        }
+
+        // The account a user was paid at before their principal was needed to find their wallet,
+        // for where the principal isn't known yet. It is the user's wallet if they are alone in
+        // their canister, but not if they are in a MultiUser canister.
+        // TODO: Pay users at `From<UserIdAndPrincipal>` instead, once their principal is known
+        pub fn legacy_for_user(user_id: UserId) -> Account {
+            Account::holding_canister_account(user_id)
         }
     }
 

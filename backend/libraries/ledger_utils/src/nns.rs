@@ -1,4 +1,4 @@
-use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, TransferArgs};
+use ic_ledger_types::{Memo, Subaccount, Timestamp, TransferArgs};
 use types::icrc1::Account;
 use types::nns::Tokens;
 use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, UserId};
@@ -11,10 +11,11 @@ pub async fn process_transaction(
     let memo = transaction.memo.unwrap_or_default();
     let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 
-    let from = AccountIdentifier::from(sender);
+    let from = types::account_identifier(sender.holding_canister_account());
     let to = match transaction.to {
-        types::nns::UserOrAccount::User(u) => u.into(),
+        types::nns::UserOrAccount::User(u) => types::account_identifier(Account::legacy_for_user(u).into()),
         types::nns::UserOrAccount::Account(a) => a,
+        types::nns::UserOrAccount::UserV2(u) => u.into(),
     };
 
     let transfer_args = TransferArgs {
@@ -22,7 +23,7 @@ pub async fn process_transaction(
         amount: transaction.amount.into(),
         fee: fee.into(),
         // The owner is implied by the caller, so only the subaccount goes in the args.
-        from_subaccount: Account::for_user(sender).subaccount.map(Subaccount),
+        from_subaccount: sender.holding_canister_account().subaccount.map(Subaccount),
         to,
         created_at_time: Some(Timestamp {
             timestamp_nanos: transaction.created,
