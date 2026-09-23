@@ -63,6 +63,7 @@ pub enum PendingCryptoTransaction {
     NNS(nns::PendingCryptoTransaction),
     ICRC1(icrc1::PendingCryptoTransaction),
     ICRC2(icrc2::PendingCryptoTransaction),
+    Certified(certified::PendingCryptoTransaction),
 }
 
 #[ts_export]
@@ -125,6 +126,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.ledger,
             PendingCryptoTransaction::ICRC1(t) => t.ledger,
             PendingCryptoTransaction::ICRC2(t) => t.ledger,
+            PendingCryptoTransaction::Certified(t) => t.ledger,
         }
     }
 
@@ -133,6 +135,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.token_symbol.as_str(),
             PendingCryptoTransaction::ICRC1(t) => t.token_symbol.as_str(),
             PendingCryptoTransaction::ICRC2(t) => t.token_symbol.as_str(),
+            PendingCryptoTransaction::Certified(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -145,6 +148,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             PendingCryptoTransaction::ICRC1(t) => t.amount,
             PendingCryptoTransaction::ICRC2(t) => t.amount,
+            PendingCryptoTransaction::Certified(t) => t.amount,
         }
     }
 
@@ -153,6 +157,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(_) => ICP_FEE,
             PendingCryptoTransaction::ICRC1(t) => t.fee,
             PendingCryptoTransaction::ICRC2(t) => t.fee,
+            PendingCryptoTransaction::Certified(t) => t.fee,
         }
     }
 
@@ -167,6 +172,7 @@ impl PendingCryptoTransaction {
             },
             PendingCryptoTransaction::ICRC1(t) => Account::from(t.to) == account,
             PendingCryptoTransaction::ICRC2(t) => Account::from(t.to) == account,
+            PendingCryptoTransaction::Certified(t) => Account::from(t.to) == account,
         }
     }
 
@@ -181,6 +187,9 @@ impl PendingCryptoTransaction {
                 t.to.owner = owner;
                 t.to.subaccount = Some(subaccount.0)
             }
+            PendingCryptoTransaction::Certified(_) => {
+                panic!("A certified transfer has already been made so its recipient cannot be changed")
+            }
         }
     }
 
@@ -189,6 +198,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.created,
             PendingCryptoTransaction::ICRC1(t) => t.created,
             PendingCryptoTransaction::ICRC2(t) => t.created,
+            PendingCryptoTransaction::Certified(t) => t.created,
         }
     }
 
@@ -197,6 +207,8 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.created = created,
             PendingCryptoTransaction::ICRC1(t) => t.created = created,
             PendingCryptoTransaction::ICRC2(t) => t.created = created,
+            // The transfer has already been made, so when it was created is fixed
+            PendingCryptoTransaction::Certified(_) => {}
         }
     }
 
@@ -213,6 +225,8 @@ impl PendingCryptoTransaction {
                 assert!(memo.len() <= 32);
                 t.memo = Some(memo.to_vec().into());
             }
+            // The transfer has already been made with the memo the canister verifying it requires
+            PendingCryptoTransaction::Certified(_) => {}
         }
         self
     }
@@ -886,6 +900,48 @@ pub mod icrc2 {
         Duplicate { duplicate_of: u128 },
         TemporarilyUnavailable,
         GenericError { error_code: u128, message: String },
+    }
+}
+
+pub mod certified {
+    use super::*;
+    use icrc_ledger_types::icrc1::transfer::Memo;
+    use icrc1::Account;
+    use serde_bytes::ByteBuf;
+
+    // An ICRC1 transfer the user has already made from their own principal's account by calling
+    // `icrc1_transfer` on the ledger themselves. Rather than making the transfer, the canister
+    // verifies `call` proves the ledger accepted it, then treats it as a completed ICRC1 transfer.
+    // `amount`, `to`, `fee`, `memo` and `created` repeat what is in the call's arg, and the
+    // verification fails unless they match.
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts(rename = "PendingCryptoTransactionCertified")]
+    pub struct PendingCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token_symbol: String,
+        pub amount: u128,
+        pub to: Account,
+        pub fee: u128,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+        pub call: CertifiedCall,
+    }
+
+    // The content of the user's call to `icrc1_transfer`, from which its request id is computed,
+    // along with a certificate from the ledger's subnet holding the reply to that request id. The
+    // sender and canister id are not included, since they must be the caller and the ledger.
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct CertifiedCall {
+        #[serde(with = "serde_bytes")]
+        pub arg: Vec<u8>,
+        pub ingress_expiry: u64,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
+        pub nonce: Option<ByteBuf>,
+        #[serde(with = "serde_bytes")]
+        pub certificate: Vec<u8>,
     }
 }
 
