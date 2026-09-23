@@ -69,3 +69,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the User canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
 - Reject approvals, streak insurance payments, crypto, BTC and OneSec withdrawals, and account charges, which spent from each user's subaccount of the canister, since users hold their own funds in their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 
+### Fixed
+
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))

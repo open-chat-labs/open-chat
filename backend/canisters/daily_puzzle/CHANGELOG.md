@@ -23,3 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ship one puzzle per day whatever the schedule now says for that day, so a mid-day `set_schedule` cannot leave two live puzzles and charge two entry fees. A schedule change takes effect from tomorrow; `regenerate_today` is what changes today
 - Count `/metrics` results against the borrowed game id rather than cloning one per row
 - Push the day's puzzles to every local user index at once rather than one after another, so one stopped index no longer delays every index behind it
+
+### Fixed
+
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))

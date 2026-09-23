@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Return the account of a user's principal as their `icp_account` from `current_user` if they aren't alone in their canister, since that is their wallet ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 - Take the payment for an external achievement from the submitter's wallet, which for a user in a MultiUser canister is their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 
+### Fixed
+
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
+
 ## [[2.0.2058](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2058-user_index)] - 2026-09-18
 
 ### Added
