@@ -1,11 +1,12 @@
 use crate::guards::caller_is_governance_principal;
 use crate::{RuntimeState, mutate_state, read_state};
+use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use tracing::error;
-use types::{CanisterId, TimestampNanos};
+use types::{CanisterId, TimestampNanos, UserIdAndPrincipal};
 use user_index_canister::ExternalAchievementInitial;
 use user_index_canister::register_external_achievement::*;
 
@@ -28,7 +29,7 @@ async fn register_external_achievement(args: Args) -> Response {
         let amount = (chit_budget as u128) * CHAT_FEE_PER_CHIT_AWARD;
         let transfer_args = TransferFromArgs {
             spender_subaccount: None,
-            from: types::icrc1::Account::legacy_for_user(args.submitted_by).into(),
+            from: UserIdAndPrincipal::new(args.submitted_by, result.submitted_by_principal).into(),
             to: result.this_canister_id.into(),
             amount: amount.into(),
             fee: Some(CHAT_TRANSFER_FEE.into()),
@@ -74,6 +75,8 @@ async fn register_external_achievement(args: Args) -> Response {
 }
 
 struct PrepareResult {
+    // Which, along with their user id, determines the wallet the payment is taken from
+    submitted_by_principal: Principal,
     test_mode: bool,
     this_canister_id: CanisterId,
     now_nanos: TimestampNanos,
@@ -91,7 +94,15 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, ()> {
         return Err(());
     }
 
+    // Unknown only in test mode, where no payment is taken
+    let submitted_by_principal = state
+        .data
+        .users
+        .get_by_user_id(&args.submitted_by)
+        .map_or(Principal::anonymous(), |u| u.principal);
+
     Ok(PrepareResult {
+        submitted_by_principal,
         test_mode: state.data.test_mode,
         this_canister_id: state.env.canister_id(),
         now_nanos: state.env.now_nanos(),
