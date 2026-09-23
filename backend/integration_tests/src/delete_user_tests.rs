@@ -309,6 +309,7 @@ fn upgrade_user_index(env: &mut pocket_ic::PocketIc, canister_ids: &crate::Canis
         wasm_version: wasm.version,
     })
     .unwrap();
+    client::stop_canister(env, canister_ids.openchat_installer, canister_ids.user_index);
     env.upgrade_canister(
         canister_ids.user_index,
         wasm.module.into(),
@@ -316,6 +317,7 @@ fn upgrade_user_index(env: &mut pocket_ic::PocketIc, canister_ids: &crate::Canis
         Some(canister_ids.openchat_installer),
     )
     .unwrap();
+    client::start_canister(env, canister_ids.openchat_installer, canister_ids.user_index);
 }
 
 fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_index: types::CanisterId) {
