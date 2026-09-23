@@ -45,6 +45,7 @@ generate_msgpack_update_call!(remove_member_from_channel);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(send_message);
 generate_msgpack_update_call!(start_video_call_v2);
+generate_msgpack_update_call!(toggle_mute_notifications);
 generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
 generate_msgpack_update_call!(update_bot);

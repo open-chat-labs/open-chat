@@ -221,6 +221,7 @@ fn process_send_message_result(
             file_name: content.notification_file_name(),
             group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
             crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
+            call: None,
         });
         state.push_notification(Some(sender), result.users_to_notify, notification);
 

@@ -45,7 +45,7 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DailyPuzzleResult,
-    DiamondMembershipDetails, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds,
+    DiamondMembershipDetails, FcmData, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds,
     ModerationReferralConfig, Notification, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId,
     UserNotificationEnvelope, VerifiedCredentialGateArgs,
 };
@@ -61,6 +61,7 @@ use utils::idempotency_checker::IdempotencyChecker;
 use utils::iterator_extensions::IteratorExtensions;
 
 mod bots;
+mod call_push;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -398,14 +399,40 @@ impl RuntimeState {
                     })
                     .collect();
 
+                let payload = user_notification.notification;
+                let mut fcm_data: FcmData = payload.clone().into();
+
+                // Native call pushes (#9456). Off, every push is what it was before native calls
+                // and no dismissal leaves this canister. On, a call that the policy says should
+                // ring gets the call fields, and a dismissal passes only for a call that rang.
+                if let Some(rang) = call_push::dismissal_rang(&payload) {
+                    if !self.data.call_push_enabled || !rang {
+                        return;
+                    }
+                } else if self.data.call_push_enabled
+                    && let Some((facts, true)) = call_push::ringing_call(&payload)
+                {
+                    fcm_data = fcm_data.set_call(&facts);
+                }
+
+                // A dismissal is only ever a data push to a phone
+                let filtered_recipients: Vec<_> = if fcm_data.is_call_dismissal() {
+                    filtered_recipients
+                        .into_iter()
+                        .filter(|u| !self.data.fcm_token_store.get_for_user(u).is_empty())
+                        .collect()
+                } else {
+                    filtered_recipients
+                };
+
                 if !filtered_recipients.is_empty() {
                     self.data
                         .notifications
                         .add(NotificationEnvelope::User(Box::new(UserNotificationEnvelope {
                             recipients: filtered_recipients,
-                            notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
+                            notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&payload)),
                             timestamp: now,
-                            fcm_data: Some(user_notification.notification.into()),
+                            fcm_data: Some(fcm_data),
                         })));
                 }
             }
@@ -529,6 +556,7 @@ impl RuntimeState {
             multi_user_upgrades_in_progress: multi_user_upgrades_metrics.in_progress,
             multi_user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.version,
             multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
+            call_push_enabled: self.data.call_push_enabled,
             user_versions: self
                 .data
                 .local_users
@@ -699,6 +727,9 @@ struct Data {
     // Mirrors the flag on the UserIndex. Not acted on yet
     #[serde(default)]
     pub multi_user_canisters_enabled: bool,
+    // The native call push kill switch (#9456). Off until the Android shell can ring.
+    #[serde(default)]
+    pub call_push_enabled: bool,
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
     #[serde(default)]
@@ -786,6 +817,7 @@ impl Data {
         moderation_referral_config: Option<ModerationReferralConfig>,
         media_scan_config: MediaScanConfig,
         multi_user_canisters_enabled: bool,
+        call_push_enabled: bool,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -854,6 +886,7 @@ impl Data {
             media_scan_config,
             media_scan_job_log: MediaScanJobLog::default(),
             multi_user_canisters_enabled,
+            call_push_enabled,
             daily_puzzle_canister_id: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_results_queue: None,
@@ -907,6 +940,7 @@ pub struct Metrics {
     pub multi_user_upgrades_in_progress: u64,
     pub multi_user_wasm_version: BuildVersion,
     pub multi_user_canisters_enabled: bool,
+    pub call_push_enabled: bool,
     pub user_events_queue_length: usize,
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply

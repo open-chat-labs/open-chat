@@ -36,6 +36,7 @@ fn accept_if_valid(state: &RuntimeState) {
         // Service path (authority reporter) or operator reconciliation
         "record_authority_report_attempt" => state.is_caller_authority_reporter(),
         "clear_authority_report_attempt" => state.is_caller_authority_reporter() || state.is_caller_platform_operator(),
+        "set_call_push_enabled" => state.is_caller_platform_operator(),
         // The dual-authorized actions (destroy_vault_evidence, set_vault_reviewers,
         // set_openai_api_key, set_internal_moderation_channel) are no longer callable
         // directly - they are reachable only through this propose/confirm pair

@@ -5080,6 +5080,14 @@ export class OpenChatAgent extends EventTarget {
     dailyPuzzleSetEnabled(enabled: boolean): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().setEnabled(enabled);
     }
+
+    callPushEnabled(): Promise<boolean> {
+        return this._userIndexClient.callPushEnabled();
+    }
+
+    setCallPushEnabled(enabled: boolean): Promise<Success | OCError> {
+        return this._userIndexClient.setCallPushEnabled(enabled);
+    }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);
     }

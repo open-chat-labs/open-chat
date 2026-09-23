@@ -1,6 +1,7 @@
 use crate::{
     BotDataEncoding, BotEventPayload, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEvent, ChatId,
-    CommunityEvent, CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
+    CommunityEvent, CommunityId, EventIndex, FcmData, MessageId, MessageIndex, Reaction, TimestampMillis, UserId,
+    VideoCallType,
 };
 use candid::{CandidType, Principal};
 use serde::de::DeserializeOwned;
@@ -243,6 +244,67 @@ pub enum UserNotificationPayload {
     #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "ct")]
     ChannelMessageTipped(ChannelMessageTipped),
+    // A ring for the named call should stop. Never shown to the user.
+    #[subenum(DirectChatUserNotificationPayload)]
+    #[serde(rename = "dcd")]
+    DirectCallDismissed(DirectCallDismissedNotification),
+    #[subenum(GroupChatUserNotificationPayload)]
+    #[serde(rename = "gcd")]
+    GroupCallDismissed(GroupCallDismissedNotification),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CallFacts {
+    #[serde(rename = "id")]
+    pub message_id: MessageId,
+    #[serde(rename = "ct")]
+    pub call_type: VideoCallType,
+    #[serde(rename = "ao", default)]
+    #[ts(as = "Option<bool>", optional)]
+    pub audio_only: bool,
+    #[serde(rename = "st")]
+    pub started: TimestampMillis,
+    #[serde(rename = "pb")]
+    pub is_public: bool,
+    #[serde(rename = "mc")]
+    pub member_count: u32,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CallDismissalKind {
+    // The call ended before this user joined it
+    Ended,
+    // This user joined the call, perhaps on another device
+    AnsweredElsewhere,
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DirectCallDismissedNotification {
+    #[serde(rename = "u")]
+    pub them: UserId,
+    #[serde(rename = "id")]
+    pub message_id: MessageId,
+    #[serde(rename = "k")]
+    pub kind: CallDismissalKind,
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GroupCallDismissedNotification {
+    #[serde(rename = "c")]
+    pub chat_id: ChatId,
+    #[serde(rename = "id")]
+    pub message_id: MessageId,
+    #[serde(rename = "k")]
+    pub kind: CallDismissalKind,
+    // So the local user index can apply the same ring policy it applied to the start
+    #[serde(rename = "pb")]
+    pub is_public: bool,
+    #[serde(rename = "mc")]
+    pub member_count: u32,
 }
 
 #[ts_export]
@@ -295,6 +357,11 @@ pub struct DirectMessageNotification {
     pub sender_avatar_id: Option<u128>,
     #[serde(rename = "ct")]
     pub crypto_transfer: Option<CryptoTransferDetails>,
+    // Present when the message is a call start. What the local user index needs to decide
+    // whether the recipient's phone rings. Facts only: the fleet holds no ring policy.
+    #[serde(rename = "vc", default)]
+    #[ts(optional)]
+    pub call: Option<CallFacts>,
 }
 
 #[ts_export]
@@ -328,6 +395,11 @@ pub struct GroupMessageNotification {
     pub group_avatar_id: Option<u128>,
     #[serde(rename = "ct")]
     pub crypto_transfer: Option<CryptoTransferDetails>,
+    // Present when the message is a call start. What the local user index needs to decide
+    // whether the recipient's phone rings. Facts only: the fleet holds no ring policy.
+    #[serde(rename = "vc", default)]
+    #[ts(optional)]
+    pub call: Option<CallFacts>,
 }
 
 #[ts_export]
@@ -367,6 +439,11 @@ pub struct ChannelMessageNotification {
     pub channel_avatar_id: Option<u128>,
     #[serde(rename = "ct")]
     pub crypto_transfer: Option<CryptoTransferDetails>,
+    // Present when the message is a call start. What the local user index needs to decide
+    // whether the recipient's phone rings. Facts only: the fleet holds no ring policy.
+    #[serde(rename = "vc", default)]
+    #[ts(optional)]
+    pub call: Option<CallFacts>,
 }
 
 #[ts_export]
@@ -555,5 +632,102 @@ impl Debug for UserNotificationEnvelope {
             .field("notification_bytes", &self.notification_bytes.len())
             .field("timestamp", &self.timestamp)
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod call_facts_tests {
+    use super::*;
+    use candid::Principal;
+
+    // DirectMessageNotification exactly as the previous release held it. Frozen on purpose.
+    #[derive(Serialize, Deserialize)]
+    #[allow(dead_code)]
+    struct PreviousDirectMessageNotification {
+        #[serde(rename = "s")]
+        sender: UserId,
+        #[serde(rename = "tr")]
+        thread_root_message_index: Option<MessageIndex>,
+        #[serde(rename = "m")]
+        message_index: MessageIndex,
+        #[serde(rename = "e")]
+        event_index: EventIndex,
+        #[serde(rename = "sn")]
+        sender_name: String,
+        #[serde(rename = "sd")]
+        sender_display_name: Option<String>,
+        #[serde(rename = "ty")]
+        message_type: String,
+        #[serde(rename = "tx")]
+        message_text: Option<String>,
+        #[serde(rename = "i")]
+        image_url: Option<String>,
+        #[serde(rename = "fn", default)]
+        file_name: Option<String>,
+        #[serde(rename = "a")]
+        sender_avatar_id: Option<u128>,
+        #[serde(rename = "ct")]
+        crypto_transfer: Option<CryptoTransferDetails>,
+    }
+
+    // #9456 invariant 8: a message notification carrying the call facts block decodes with the
+    // previous release's type, so a canister on this release can talk to a local user index
+    // on the previous one. It holds because the inter-canister encoding is a named map.
+    #[test]
+    fn invariant_8_a_start_notification_with_call_facts_decodes_with_the_previous_type() {
+        let sender: UserId = Principal::from_slice(&[1]).into();
+        let new = DirectMessageNotification {
+            sender,
+            thread_root_message_index: None,
+            message_index: 3.into(),
+            event_index: EventIndex::from(4),
+            sender_name: "a".to_string(),
+            sender_display_name: None,
+            message_type: "VideoCall".to_string(),
+            message_text: None,
+            image_url: None,
+            file_name: None,
+            sender_avatar_id: None,
+            crypto_transfer: None,
+            call: Some(CallFacts {
+                message_id: 7u64.into(),
+                call_type: VideoCallType::Default,
+                audio_only: false,
+                started: 1000,
+                is_public: false,
+                member_count: 2,
+            }),
+        };
+        let bytes = msgpack::serialize_then_unwrap(&new);
+        let previous: PreviousDirectMessageNotification = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(previous.sender, sender);
+        assert_eq!(previous.message_type, "VideoCall");
+    }
+
+    // #9456 invariant 13: a message notification encoded by the previous release decodes with
+    // this release's type. The local user index is released before the fleet, so for a while
+    // every notification it receives is in the old shape, and one that failed to decode would
+    // fail its whole batch.
+    #[test]
+    fn invariant_13_a_start_notification_from_the_previous_release_decodes_with_the_new_type() {
+        let sender: UserId = Principal::from_slice(&[1]).into();
+        let previous = PreviousDirectMessageNotification {
+            sender,
+            thread_root_message_index: None,
+            message_index: 3.into(),
+            event_index: EventIndex::from(4),
+            sender_name: "a".to_string(),
+            sender_display_name: None,
+            message_type: "VideoCall".to_string(),
+            message_text: None,
+            image_url: None,
+            file_name: None,
+            sender_avatar_id: None,
+            crypto_transfer: None,
+        };
+        let bytes = msgpack::serialize_then_unwrap(&previous);
+        let new: DirectMessageNotification = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(new.sender, sender);
+        assert!(new.call.is_none());
     }
 }

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `set_call_push_enabled` and `call_push_enabled` for platform operators, fanning the value out to every LocalUserIndex and seeding new ones ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
+
 ### Changed
 
 - Extract `deep_message_links` into its own library and drop the direct dependency on `chat_events` ([#9493](https://github.com/open-chat-labs/open-chat/pull/9493))

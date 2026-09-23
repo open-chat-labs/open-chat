@@ -265,6 +265,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                     file_name: message_content.notification_file_name(),
                     sender_avatar_id: None,
                     crypto_transfer: message_content.notification_crypto_transfer_details(&[]),
+                    call: None,
                 });
                 state.push_notification(Some(bot_id), my_user_id, notification);
             }

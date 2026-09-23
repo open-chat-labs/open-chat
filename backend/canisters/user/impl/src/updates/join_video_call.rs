@@ -16,6 +16,11 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
     user_core::updates::join_video_call(&mut state.data.user, &args, my_user_id, now)?;
 
+    // this user has answered: any other device of theirs that is still ringing should stop
+    if let Some(dismissal) = user_core::updates::answered_dismissal(&state.data.user, &args) {
+        state.push_notification(None, my_user_id, dismissal);
+    }
+
     state.push_user_canister_event(
         args.user_id,
         UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {

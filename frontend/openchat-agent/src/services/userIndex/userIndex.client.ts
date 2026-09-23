@@ -80,6 +80,8 @@ import {
     UserIndexAuthorityReportTokenResponse,
     UserIndexClearAuthorityReportAttemptArgs,
     UserIndexModerationConfigResponse,
+    UserIndexCallPushEnabledResponse,
+    UserIndexSetCallPushEnabledArgs,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexProposeProtectedActionArgs,
@@ -404,6 +406,27 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             },
             unitResult,
             UserIndexResolveModerationReportArgs,
+            UnitResult,
+        );
+    }
+
+    // The native call push kill switch (#9456)
+    callPushEnabled(): Promise<boolean> {
+        return this.query(
+            "call_push_enabled",
+            {},
+            (resp) => resp.Success,
+            Empty,
+            UserIndexCallPushEnabledResponse,
+        );
+    }
+
+    setCallPushEnabled(enabled: boolean): Promise<Success | OCError> {
+        return this.update(
+            "set_call_push_enabled",
+            { enabled },
+            unitResult,
+            UserIndexSetCallPushEnabledArgs,
             UnitResult,
         );
     }

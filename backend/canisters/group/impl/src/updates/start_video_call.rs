@@ -9,7 +9,8 @@ use constants::HOUR_IN_MS;
 use group_canister::start_video_call_v2::*;
 use oc_error_codes::OCErrorCode;
 use types::{
-    CallKind, Caller, GroupChatUserNotificationPayload, GroupMessageNotification, OCResult, VideoCallPresence, VideoCallType,
+    CallFacts, CallKind, Caller, GroupChatUserNotificationPayload, GroupMessageNotification, OCResult, VideoCallPresence,
+    VideoCallType,
 };
 
 #[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
@@ -97,6 +98,14 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         file_name: None,
         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
         crypto_transfer: None,
+        call: Some(CallFacts {
+            message_id: args.message_id,
+            call_type: call_kind.call_type(),
+            audio_only: call_kind.audio_only(),
+            started: result.message_event.timestamp,
+            is_public: state.data.chat.is_public.value,
+            member_count: state.data.chat.members.len(),
+        }),
     });
     state.push_notification(Some(sender), result.users_to_notify, notification);
     handle_activity_notification(state);

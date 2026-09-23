@@ -24,9 +24,10 @@ fn accept_if_valid(state: &RuntimeState) {
         | "join_group"
         | "pay_for_premium_item"
         | "uninstall_bot" => state.is_caller_openchat_user(),
-        "reinstate_missed_daily_claims" | "set_daily_puzzle_canister_id" | "withdraw_from_icpswap" => {
-            state.is_caller_platform_operator()
-        }
+        "reinstate_missed_daily_claims"
+        | "set_call_push_enabled"
+        | "set_daily_puzzle_canister_id"
+        | "withdraw_from_icpswap" => state.is_caller_platform_operator(),
         "register_user" => true,
         // Canister callers bypass inspect_message; this only matters for tests that impersonate the daily_puzzle canister
         "c2c_daily_puzzle_push" => state.is_caller_daily_puzzle_canister(),

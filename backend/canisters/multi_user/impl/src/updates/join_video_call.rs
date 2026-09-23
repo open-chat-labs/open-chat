@@ -14,10 +14,16 @@ fn join_video_call(args: Args) -> Response {
 fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
     let canister_id = state.env.canister_id();
-    let my_index = state.with_caller_user_mut(|my_index, user| {
+    let (my_index, dismissal) = state.with_caller_user_mut(|my_index, user| {
         let my_user_id = UserId::new_indexed(canister_id, my_index);
-        user_core::updates::join_video_call(user, &args, my_user_id, now).map(|()| my_index)
+        user_core::updates::join_video_call(user, &args, my_user_id, now)
+            .map(|()| (my_index, user_core::updates::answered_dismissal(user, &args)))
     })?;
+
+    // this user has answered: any other device of theirs that is still ringing should stop
+    if let Some(dismissal) = dismissal {
+        state.push_notification(None, my_index, dismissal, now);
+    }
 
     // The other user's canister is told as the User canister tells it
     // TODO: A user in this canister is dropped by `push_user_canister_event`, so their copy of the

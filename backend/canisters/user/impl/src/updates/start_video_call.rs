@@ -8,8 +8,8 @@ use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    CallKind, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex,
-    Milliseconds, OCResult, UserId, UserType, VideoCallPresence, VideoCallType,
+    CallFacts, CallKind, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, MessageId,
+    MessageIndex, Milliseconds, OCResult, UserId, UserType, VideoCallPresence, VideoCallType,
 };
 use user_canister::start_video_call_v2::*;
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
@@ -58,6 +58,14 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             file_name: None,
             sender_avatar_id: args.initiator_avatar_id,
             crypto_transfer: None,
+            call: Some(CallFacts {
+                message_id: args.message_id,
+                call_type: call_kind.call_type(),
+                audio_only: call_kind.audio_only(),
+                started: message_event.timestamp,
+                is_public: false,
+                member_count: 2,
+            }),
         });
 
         state.push_notification(Some(sender), my_user_id, notification);
