@@ -663,7 +663,14 @@ function getAction(
             return agent.changeRole(payload.chatId, payload.userId, payload.newRole);
 
         case "registerProposalVote":
-            return agent.registerProposalVote(payload.chatId, payload.messageIndex, payload.adopt);
+            return agent.registerProposalVote(
+                payload.chatId,
+                payload.messageIndex,
+                payload.governanceCanisterId,
+                payload.proposalId,
+                payload.isNns,
+                payload.adopt,
+            );
 
         case "getRecommendedGroups":
             return agent.getRecommendedGroups(payload.exclusions);

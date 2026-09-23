@@ -691,6 +691,7 @@ export class OpenChat {
     #worker: WorkerAgent;
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
+    #ocIdentityPrincipal: string | undefined;
     #authClient: Promise<AuthClient>;
     #webAuthnKey: WebAuthnKey | undefined = undefined;
     #userLocation: string | undefined;
@@ -787,6 +788,15 @@ export class OpenChat {
             throw new Error("Trying to access the _authPrincipal before it has been set up");
         }
         return this.#authPrincipal;
+    }
+
+    // The principal of the OpenChat identity, which is the caller of every canister call the
+    // worker makes (and so the principal to hot-key neurons to). Distinct from the auth principal.
+    public get OcIdentityPrincipal(): string {
+        if (this.#ocIdentityPrincipal === undefined) {
+            throw new Error("Trying to access the OC identity principal before it has been set up");
+        }
+        return this.#ocIdentityPrincipal;
     }
 
     isNativeAndroid() {
@@ -916,6 +926,7 @@ export class OpenChat {
         this.#syncPuller.clear();
         const authPrincipal = identity.getPrincipal().toString();
         this.#authPrincipal = anon ? undefined : authPrincipal;
+        this.#ocIdentityPrincipal = undefined;
         this.updateIdentityState(anon ? { kind: "anon" } : { kind: "loading_user", registering });
 
         const setAuthIdentityResponse = await this.#worker.send({
@@ -950,6 +961,7 @@ export class OpenChat {
             }
 
             if (ocIdentity !== undefined) {
+                this.#ocIdentityPrincipal = ocIdentity.ocIdentityPrincipal;
                 this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
             }
 
@@ -6021,6 +6033,9 @@ export class OpenChat {
     registerProposalVote(
         chatId: MultiUserChatIdentifier,
         messageIndex: number,
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
         return this.#worker
@@ -6028,6 +6043,9 @@ export class OpenChat {
                 kind: "registerProposalVote",
                 chatId,
                 messageIndex,
+                governanceCanisterId,
+                proposalId,
+                isNns,
                 adopt,
             })
             .catch(CommonResponses.failure);

@@ -8,7 +8,7 @@
         currentUserIdStore,
         proposalTopicsStore,
     } from "@client";
-    import { ErrorCode, type ReadonlyMap } from "@shared";
+    import { ErrorCode, isMultiUserCanisterUser, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
@@ -61,6 +61,18 @@
     let showNeuronInfo = $state(false);
     let showPayload = $state(false);
 
+    function noEligibleNeuronsMessage(): string {
+        // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
+        // everyone else with those hot-keyed to their User canister, ie. their user id
+        return isMultiUserCanisterUser($currentUserIdStore)
+            ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
+                  values: { principal: client.OcIdentityPrincipal },
+              })
+            : $_("proposal.noEligibleNeuronsMessage", {
+                  values: { userId: $currentUserIdStore },
+              });
+    }
+
     function toggleSummary() {
         if (!showFullSummary) {
             summaryExpanded = !summaryExpanded;
@@ -77,7 +89,14 @@
 
         let success = false;
         client
-            .registerProposalVote(chatId, messageIndex, adopt)
+            .registerProposalVote(
+                chatId,
+                messageIndex,
+                content.governanceCanisterId,
+                proposal.id,
+                isNns,
+                adopt,
+            )
             .then((resp) => {
                 if (resp.kind === "success") {
                     success = true;
@@ -292,10 +311,7 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             {/snippet}
             {#snippet body()}
-                <Markdown
-                    text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: $currentUserIdStore },
-                    })} />
+                <Markdown text={noEligibleNeuronsMessage()} />
             {/snippet}
         </ModalContent>
     </Overlay>

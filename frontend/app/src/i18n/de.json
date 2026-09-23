@@ -1799,6 +1799,7 @@
         "neuronControllerAction": "Neuron-Controller-Aktionen",
         "noEligibleNeurons": "Keine geeigneten Neuronen gefunden",
         "noEligibleNeuronsMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.<br/><br/> Ihre OpenChat-Benutzer-ID lautet: {userId}.<br/><br/> Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> .",
+        "noEligibleNeuronsPrincipalMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihren OpenChat-Principal als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.<br/><br/> Ihr OpenChat-Principal lautet: {principal}.<br/><br/> Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> .",
         "notificationsAction": "Indexaktionen für Benachrichtigungen",
         "openchatInstallerAction": "OpenChat-Installationsaktionen",
         "passing": {

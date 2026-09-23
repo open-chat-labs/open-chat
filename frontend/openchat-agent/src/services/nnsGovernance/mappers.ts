@@ -1,4 +1,4 @@
-import type { ApiListProposalInfoResponse } from "./candid/idl";
+import type { ApiListNeuronsResponse, ApiListProposalInfoResponse } from "./candid/idl";
 import type { ManageNeuronResponse, ProposalVoteDetails } from "@shared";
 import { proposalVote } from "../common/chatMappers";
 import type { ApiManageNeuronResponse } from "./candid/idl";
@@ -46,4 +46,18 @@ export function getProposalVoteDetails(
             timestamp: tally.timestamp_seconds * BigInt(1000)
         }
     };
+}
+
+// The ids of the neurons which are not dissolved, and so may be able to vote
+export function neuronIds(candid: ApiListNeuronsResponse, nowMillis: bigint): string[] {
+    return candid.full_neurons
+        .filter((n) => {
+            const state = n.dissolve_state[0];
+            if (state === undefined) return false;
+            if ("WhenDissolvedTimestampSeconds" in state) {
+                return state.WhenDissolvedTimestampSeconds * BigInt(1000) >= nowMillis;
+            }
+            return state.DissolveDelaySeconds > BigInt(0);
+        })
+        .flatMap((n) => (n.id[0] !== undefined ? [n.id[0].id.toString()] : []));
 }
