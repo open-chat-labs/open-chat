@@ -12,8 +12,8 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
-    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
-    PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    Achievements, CertifiedTransfers, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient,
+    PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
@@ -39,7 +39,7 @@ use types::{
     ChatMetrics, CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCallDismissedNotification,
     GroupCanisterGroupChatSummary, GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype,
     IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult,
-    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType,
+    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -140,6 +140,20 @@ impl RuntimeState {
     pub fn get_caller_user(&self) -> Result<UserIdAndPrincipal, OCErrorCode> {
         let user_id = self.get_caller_user_id()?;
         Ok(self.member_user(user_id))
+    }
+
+    // The member's wallet, for paying them. A user sharing a MultiUser canister with others holds
+    // their funds under the principal held for them, and everyone else under their user id.
+    pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
+        if !user_id.is_indexed() {
+            return Ok(user_id.as_principal().into());
+        }
+        let user = self.member_user(user_id);
+        if user.principal == Principal::anonymous() {
+            Err(OCErrorCode::TargetUserNotFound.into())
+        } else {
+            Ok(user.into())
+        }
     }
 
     // The user and their principal, as recorded on their member record, or with the principal
@@ -677,6 +691,8 @@ struct Data {
     moderation_flags: Timestamped<u32>,
     pub bots: InstalledBots,
     idempotency_checker: IdempotencyChecker,
+    #[serde(default)]
+    certified_transfers: CertifiedTransfers,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -792,6 +808,7 @@ impl Data {
             moderation_flags: Timestamped::default(),
             bots: InstalledBots::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            certified_transfers: CertifiedTransfers::default(),
         }
     }
 

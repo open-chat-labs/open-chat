@@ -4,7 +4,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 use sha2::{Digest, Sha256};
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
-    UserIdAndPrincipal,
+    UserId, UserIdAndPrincipal,
 };
 pub use user_accounts::{deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
 
@@ -98,6 +98,14 @@ pub(crate) fn sender_account(sender: UserIdAndPrincipal) -> types::icrc1::Accoun
         sender.user_id
     );
     account
+}
+
+// The subaccount of a canister holding approvals made for many users, such as a Group or Community,
+// which `user_id` must name as the spender's when approving that canister to pull their funds. The
+// canister only spends an approval under the subaccount of the user it is acting for, so no one can
+// spend an approval someone else made.
+pub fn spender_subaccount(user_id: UserId) -> [u8; 32] {
+    convert_to_subaccount(&user_id.as_principal()).0
 }
 
 pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {

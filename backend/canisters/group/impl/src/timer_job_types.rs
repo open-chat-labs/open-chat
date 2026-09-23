@@ -3,6 +3,7 @@ use crate::{
     activity_notifications::handle_activity_notification, can_borrow_state, flush_pending_events, mutate_state, read_state,
     run_regular_jobs,
 };
+use candid::Principal;
 use canister_timer_jobs::Job;
 use chat_events::{EndPollResult, MessageContentInternal};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
@@ -22,6 +23,7 @@ pub enum TimerJob {
     RemoveOldEvents(RemoveOldEventsJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
+    NotifyEscrowCanisterOfSwapFunded(NotifyEscrowCanisterOfSwapFundedJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
 }
@@ -92,6 +94,25 @@ impl NotifyEscrowCanisterOfDepositJob {
     }
 }
 
+// Tells the Escrow canister the member creating a swap has funded it
+#[derive(Serialize, Deserialize, Clone)]
+pub struct NotifyEscrowCanisterOfSwapFundedJob {
+    pub swap_id: u32,
+    pub offered_by: Principal,
+    pub attempt: u32,
+}
+
+impl NotifyEscrowCanisterOfSwapFundedJob {
+    pub fn run(swap_id: u32, offered_by: Principal) {
+        let job = NotifyEscrowCanisterOfSwapFundedJob {
+            swap_id,
+            offered_by,
+            attempt: 0,
+        };
+        job.execute();
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CancelP2PSwapInEscrowCanisterJob {
     pub swap_id: u32,
@@ -131,6 +152,7 @@ impl Job for TimerJob {
             TimerJob::RemoveOldEvents(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
+            TimerJob::NotifyEscrowCanisterOfSwapFunded(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
         }
@@ -356,6 +378,44 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                     });
                 }
                 response => error!(?response, "Failed to notify escrow canister of deposit"),
+            };
+        })
+    }
+}
+
+impl Job for NotifyEscrowCanisterOfSwapFundedJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::futures::spawn_migratory(async move {
+            match escrow_canister_c2c_client::notify_deposit(
+                escrow_canister_id,
+                &escrow_canister::notify_deposit::Args {
+                    swap_id: self.swap_id,
+                    deposited_by: Some(self.offered_by),
+                },
+            )
+            .await
+            {
+                Ok(escrow_canister::notify_deposit::Response::InternalError(_)) | Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::NotifyEscrowCanisterOfSwapFunded(NotifyEscrowCanisterOfSwapFundedJob {
+                                swap_id: self.swap_id,
+                                offered_by: self.offered_by,
+                                attempt: self.attempt + 1,
+                            }),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                Ok(escrow_canister::notify_deposit::Response::Success(_))
+                // The swap was cancelled because funding it failed, or the message offering it
+                // couldn't be sent, in which case notifying the Escrow canister refunds any deposit
+                | Ok(escrow_canister::notify_deposit::Response::SwapCancelled) => {}
+                response => error!(?response, "Failed to notify escrow canister of swap funding"),
             };
         })
     }
