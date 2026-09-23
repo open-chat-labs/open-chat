@@ -234,6 +234,7 @@ impl Channel {
             chat: GroupChatCore::new(
                 MultiUserChat::Channel(community_id, id),
                 created_by,
+                None,
                 true,
                 name,
                 String::new(),

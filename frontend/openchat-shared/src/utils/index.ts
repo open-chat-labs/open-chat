@@ -26,4 +26,5 @@ export * from "./set";
 export * from "./string";
 export * from "./tauri";
 export * from "./time";
+export * from "./userId";
 export * from "./validation";

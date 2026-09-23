@@ -7,6 +7,7 @@ use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
+use std::collections::HashMap;
 use tracing::info;
 use utils::env::canister::CanisterEnv;
 
@@ -30,6 +31,19 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     mutate_state(|state| state.data.drain_legacy_user_event_queue());
+
+    mutate_state(|state| {
+        let principals: HashMap<_, _> = state
+            .data
+            .principal_to_user_id_map
+            .entries()
+            .into_iter()
+            .map(|(principal, user_id)| (user_id, principal))
+            .collect();
+        let populated = state.data.chat.members.populate_principals(&principals);
+        let members = state.data.chat.members.len();
+        info!(populated, members, "Populated member principals");
+    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");

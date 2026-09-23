@@ -1875,6 +1875,7 @@
         "neuronControllerAction": "Neuron Controller Actions",
         "noEligibleNeurons": "No eligible neurons found",
         "noEligibleNeuronsMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with. \n\nYour OpenChat user id is: {userId}. \n\nFor more information on voting and governance read [this blog post](https://oc.app/blog/governance).",
+        "noEligibleNeuronsPrincipalMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat principal as a hotkey to any neurons you wish to vote with. \n\nYour OpenChat principal is: {principal}. \n\nFor more information on voting and governance read [this blog post](https://oc.app/blog/governance).",
         "notificationsAction": "Notifications Index Actions",
         "openchatInstallerAction": "OpenChat Installer Actions",
         "passing": {

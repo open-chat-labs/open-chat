@@ -32,6 +32,12 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| state.data.drain_legacy_user_event_queue());
 
+    mutate_state(|state| {
+        let populated = state.data.members.populate_member_principals();
+        let members = state.data.members.len();
+        info!(populated, members, "Populated member principals");
+    });
+
     let completed_imports = read_state(|state| state.data.groups_being_imported.completed_imports());
 
     for group_id in completed_imports {

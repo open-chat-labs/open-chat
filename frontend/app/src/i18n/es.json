@@ -1799,6 +1799,7 @@
         "neuronControllerAction": "Acciones del controlador de neuronas",
         "noEligibleNeurons": "No se encontraron neuronas elegibles",
         "noEligibleNeuronsMessage": "No se encontraron neuronas elegibles o vinculadas. Para votar propuestas desde OpenChat, primero debe agregar su identificación de usuario de OpenChat como tecla de acceso rápido a cualquier neurona con la que desee votar.<br/><br/> Su ID de usuario de OpenChat es: {userId}.<br/><br/> Para obtener más información sobre votación y gobernanza, lea <a target=\"_blank\" href=\"https://oc.app/blog/governance\">esta publicación de blog</a> .",
+        "noEligibleNeuronsPrincipalMessage": "No se encontraron neuronas elegibles o vinculadas. Para votar propuestas desde OpenChat, primero debe agregar su principal de OpenChat como tecla de acceso rápido a cualquier neurona con la que desee votar.<br/><br/> Su principal de OpenChat es: {principal}.<br/><br/> Para obtener más información sobre votación y gobernanza, lea <a target=\"_blank\" href=\"https://oc.app/blog/governance\">esta publicación de blog</a> .",
         "notificationsAction": "Índice de notificaciones Acciones",
         "openchatInstallerAction": "Acciones del instalador de OpenChat",
         "passing": {

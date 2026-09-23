@@ -22,7 +22,7 @@
         currentUserIdStore,
         proposalTopicsStore,
     } from "@client";
-    import { ErrorCode, type ReadonlyMap } from "@shared";
+    import { ErrorCode, isMultiUserCanisterUser, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -123,6 +123,18 @@
 
     let showDetails = $state(false);
 
+    function noEligibleNeuronsMessage(): string {
+        // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
+        // everyone else with those hot-keyed to their User canister, ie. their user id
+        return isMultiUserCanisterUser($currentUserIdStore)
+            ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
+                  values: { principal: client.OcIdentityPrincipal },
+              })
+            : $_("proposal.noEligibleNeuronsMessage", {
+                  values: { userId: $currentUserIdStore },
+              });
+    }
+
     function onVote(adopt: boolean) {
         if (votingDisabled || (chatId.kind !== "group_chat" && chatId.kind !== "channel")) {
             return;
@@ -133,7 +145,14 @@
 
         let success = false;
         client
-            .registerProposalVote(chatId, messageIndex, adopt)
+            .registerProposalVote(
+                chatId,
+                messageIndex,
+                content.governanceCanisterId,
+                proposal.id,
+                isNns,
+                adopt,
+            )
             .then((resp) => {
                 if (resp.kind === "success") {
                     success = true;
@@ -494,11 +513,7 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             </Title>
             <Body colour="textSecondary">
-                <Markdown
-                    inline={true}
-                    text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: $currentUserIdStore },
-                    })} />
+                <Markdown inline={true} text={noEligibleNeuronsMessage()} />
             </Body>
         </Column>
     </Sheet>

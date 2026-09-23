@@ -1799,6 +1799,7 @@
         "neuronControllerAction": "Hành động điều khiển nơ-ron",
         "noEligibleNeurons": "Không tìm thấy tế bào thần kinh đủ điều kiện",
         "noEligibleNeuronsMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.<br/><br/> Id người dùng OpenChat của bạn là: {userId}.<br/><br/> Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
+        "noEligibleNeuronsPrincipalMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm principal OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.<br/><br/> Principal OpenChat của bạn là: {principal}.<br/><br/> Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
         "notificationsAction": "Thông báo Chỉ mục Hành động",
         "openchatInstallerAction": "Hành động cài đặt OpenChat",
         "passing": {

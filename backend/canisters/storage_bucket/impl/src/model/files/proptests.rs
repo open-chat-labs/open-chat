@@ -23,10 +23,6 @@ enum Operation {
         file_index: usize,
         file_id_seed: u128,
     },
-    UpdateAccessorId {
-        old: Principal,
-        new: Principal,
-    },
     RemoveAccessor {
         accessor: AccessorId,
     },
@@ -39,7 +35,6 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
         20 => any::<usize>()
             .prop_map(|file_index| Operation::Remove { file_index }),
         10 => (any::<usize>(), any::<usize>(), any::<u128>()).prop_map(|(user_index, file_index, file_id_seed)| Operation::Forward { owner: principal(user_index), file_index, file_id_seed } ),
-        5 => (any::<usize>(), any::<usize>()).prop_map(|(old_index, new_index)| Operation::UpdateAccessorId { old: principal(old_index), new: principal(new_index) } ),
         3 => any::<usize>().prop_map(|user_index| Operation::RemoveAccessor { accessor: principal(user_index) }),
     ]
 }
@@ -110,7 +105,6 @@ fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMilli
                 );
             }
         }
-        Operation::UpdateAccessorId { old, new } => files.update_accessor_id(old, new),
         Operation::RemoveAccessor { accessor } => {
             files.remove_accessor(&accessor);
         }

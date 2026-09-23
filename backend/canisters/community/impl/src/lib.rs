@@ -1019,6 +1019,7 @@ impl Data {
             for (user_id, user_type) in users_to_add {
                 match channel.chat.members.add(
                     user_id,
+                    None,
                     now,
                     min_visible_event_index,
                     min_visible_message_index,

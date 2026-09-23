@@ -1,7 +1,9 @@
 use crate::CommunityMemberInternal;
+use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{StableMemoryMap, UserIdKeyPrefix};
-use std::collections::BTreeSet;
+use stable_memory_map::{Key, KeyPrefix, StableMemoryMap, UserIdKeyPrefix, with_map, with_map_mut};
+use std::collections::{BTreeSet, HashMap};
+use std::ops::Bound;
 use types::{CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version, is_default};
 
 #[derive(Serialize, Deserialize)]
@@ -30,11 +32,48 @@ impl MembersStableStorage {
         map
     }
 
+    // Reads and writes the members in batches so that each modified node is written to stable
+    // memory at most once per batch. Returns the number of members updated.
+    pub fn populate_principals(&mut self, principals: &HashMap<UserId, Principal>) -> u32 {
+        const BATCH_SIZE: usize = 1000;
+
+        let mut updated = 0;
+        let mut start = Bound::Included(self.prefix.create_key(&Principal::from_slice(&[]).into()));
+        loop {
+            let mut read = 0;
+            let mut last_user_id = None;
+            let batch: Vec<_> = with_map(|m| {
+                m.range((start.clone(), Bound::Unbounded))
+                    .take_while(|(k, _)| k.matches_prefix(&self.prefix))
+                    .take(BATCH_SIZE)
+                    .filter_map(|(key, bytes)| {
+                        let user_id = key.user_id();
+                        read += 1;
+                        last_user_id = Some(user_id);
+
+                        let principal = *principals.get(&user_id)?;
+                        let mut member = bytes_to_member(&bytes);
+                        (member.principal != principal).then(|| {
+                            member.principal = principal;
+                            (key, member_to_bytes(member))
+                        })
+                    })
+                    .collect()
+            });
+
+            updated += batch.len() as u32;
+            with_map_mut(|m| m.insert_many(batch));
+
+            match last_user_id {
+                Some(user_id) if read == BATCH_SIZE => start = Bound::Excluded(self.prefix.create_key(&user_id)),
+                _ => break,
+            }
+        }
+        updated
+    }
+
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
-        use ic_principal::Principal;
-        use stable_memory_map::{Key, KeyPrefix, with_map};
-
         with_map(|m| {
             m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
                 .take_while(|(k, _)| k.matches_prefix(&self.prefix))
@@ -54,6 +93,9 @@ impl Default for MembersStableStorage {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberStableStorage {
+    // TODO: Remove the default once every member's principal has been populated
+    #[serde(rename = "p", default = "Principal::anonymous")]
+    principal: Principal,
     #[serde(rename = "d", alias = "date_added")]
     date_added: TimestampMillis,
     #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
@@ -80,6 +122,7 @@ impl CommunityMemberStableStorage {
     fn hydrate(self, user_id: UserId) -> CommunityMemberInternal {
         CommunityMemberInternal {
             user_id,
+            principal: self.principal,
             date_added: self.date_added,
             role: self.role,
             rules_accepted: self.rules_accepted,
@@ -97,6 +140,7 @@ impl CommunityMemberStableStorage {
 impl From<CommunityMemberInternal> for CommunityMemberStableStorage {
     fn from(value: CommunityMemberInternal) -> Self {
         CommunityMemberStableStorage {
+            principal: value.principal,
             date_added: value.date_added,
             role: value.role,
             rules_accepted: value.rules_accepted,
