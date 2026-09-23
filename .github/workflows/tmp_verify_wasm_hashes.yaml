@@ -10,12 +10,7 @@ name: TMP verify wasm hashes
 jobs:
   verify:
     name: Verify wasm hashes
-    runs-on:
-      - runs-on
-      - cpu=16
-      - image=ubuntu24-full-x64
-      - family=m7i
-      - run-id=${{ github.run_id }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
