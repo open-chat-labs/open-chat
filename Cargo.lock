@@ -1603,7 +1603,6 @@ dependencies = [
  "ic-agent",
  "ic-utils",
  "identity_canister",
- "market_maker_canister",
  "neuron_controller_canister",
  "notifications_index_canister",
  "notifications_index_canister_client",

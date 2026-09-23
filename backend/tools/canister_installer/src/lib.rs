@@ -249,16 +249,6 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let market_maker_canister_wasm = get_canister_wasm(CanisterName::MarketMaker, version);
-    let market_maker_init_args = market_maker_canister::init::Args {
-        user_index_canister_id: canister_ids.user_index,
-        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        icp_ledger_canister_id: canister_ids.nns_ledger,
-        chat_ledger_canister_id: CHAT_LEDGER_CANISTER_ID,
-        wasm_version: version,
-        test_mode,
-    };
-
     let neuron_controller_canister_wasm = get_canister_wasm(CanisterName::NeuronController, version);
     let neuron_controller_init_args = neuron_controller_canister::init::Args {
         governance_principals: vec![principal],
@@ -371,12 +361,6 @@ async fn install_service_canisters_impl(
             &canister_ids.registry,
             &registry_canister_wasm.module,
             Encode!(&registry_init_args).unwrap(),
-        ),
-        install_wasm(
-            management_canister,
-            &canister_ids.market_maker,
-            &market_maker_canister_wasm.module,
-            Encode!(&market_maker_init_args).unwrap(),
         ),
         install_wasm(
             management_canister,
