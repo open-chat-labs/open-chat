@@ -142,11 +142,15 @@
                     );
                 } else {
                     toastStore.showFailureToast(
-                        i18nKey(`Failed to update native call push: ${resp.message ?? `code ${resp.code}`}`),
+                        i18nKey(
+                            `Failed to update native call push: ${resp.message ?? `code ${resp.code}`}`,
+                        ),
                     );
                 }
             })
-            .catch((err) => toastStore.showFailureToast(i18nKey("Failed to update native call push"), err))
+            .catch((err) =>
+                toastStore.showFailureToast(i18nKey("Failed to update native call push"), err),
+            )
             .finally(() => {
                 busy.delete(20);
                 refreshCallPush();
@@ -680,7 +684,9 @@
 
 {#snippet proposedMediaScanView()}
     <Toggle small id="media-scan-enabled" bind:checked={mediaScanEnabled} />
-    <Input bind:value={mediaScanScanners} placeholder={i18nKey("Comma separated scanner principals")} />
+    <Input
+        bind:value={mediaScanScanners}
+        placeholder={i18nKey("Comma separated scanner principals")} />
 {/snippet}
 
 {#snippet proposedOpenAIKey()}
@@ -986,28 +992,14 @@
     <section class="operator-function">
         <div class="title">Native call push</div>
         <div class="name-value">
-            <div class="label">Current:</div>
-            <div class="value">
-                <Input
-                    disabled
-                    value={currentCallPush === undefined
-                        ? "unknown"
-                        : currentCallPush
-                          ? "Enabled"
-                          : "Disabled"} />
-            </div>
-        </div>
-        <div class="name-value">
             <div class="label">Enabled:</div>
             <div class="value">
                 <Toggle small id="call-push-enabled" bind:checked={callPushEnabled} />
             </div>
         </div>
-        <ButtonGroup align="end">
-            <Button tiny loading={busy.has(20)} disabled={busy.has(20)} onClick={applyCallPush}>
-                Apply
-            </Button>
-        </ButtonGroup>
+        <Button tiny loading={busy.has(20)} disabled={busy.has(20)} onClick={applyCallPush}>
+            Apply
+        </Button>
     </section>
 
     <section class="operator-function">
