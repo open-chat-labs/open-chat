@@ -1,11 +1,16 @@
+# `merge_group` runs these checks on the merge queue's temporary branches. Without it a PR added
+# to the queue would sit with its required checks pending and never merge.
 on:
   pull_request:
+    branches:
+      - master
+  merge_group:
     branches:
       - master
 
 # If two events are triggered within a short time in the same PR, cancel the run of the oldest event
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 name: Validate candid files
