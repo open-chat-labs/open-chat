@@ -268,7 +268,9 @@ impl Job for MakeTransferJob {
         ic_cdk::futures::spawn_migratory(make_transfer(pending, self.attempt));
 
         async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, attempt: u32) {
-            if let Err(error) = process_transaction(pending_transaction.clone(), ledger_utils::this_canister(), true).await {
+            if let Err(error) =
+                process_transaction(pending_transaction.clone(), types::UserIdAndPrincipal::this_canister(), true).await
+            {
                 error!(?error, "Transaction failed");
                 if attempt < 50 {
                     mutate_state(|state| {

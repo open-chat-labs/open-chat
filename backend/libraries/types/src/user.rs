@@ -122,6 +122,13 @@ impl UserIdAndPrincipal {
     pub fn new(user_id: UserId, principal: Principal) -> UserIdAndPrincipal {
         UserIdAndPrincipal { user_id, principal }
     }
+
+    // This canister, for example as the sender of a transfer it makes for itself rather than for a
+    // user
+    pub fn this_canister() -> UserIdAndPrincipal {
+        let canister_id = ic_cdk::api::canister_self();
+        UserIdAndPrincipal::new(canister_id.into(), canister_id)
+    }
 }
 
 // The user's wallet. A user alone in their canister holds their funds in that canister's account,

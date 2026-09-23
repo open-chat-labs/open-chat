@@ -81,12 +81,6 @@ pub async fn process_transaction(
     }
 }
 
-// This canister as the sender of a transfer it makes for itself rather than for a user
-pub fn this_canister() -> UserIdAndPrincipal {
-    let canister_id = ic_cdk::api::canister_self();
-    UserIdAndPrincipal::new(canister_id.into(), canister_id)
-}
-
 // The account a transfer is made from, which is always this canister's own, since the ledger takes
 // the owner from the caller. So the sender must be this canister or its user, whose wallet it is -
 // a user in a MultiUser canister holds their own funds, which the canister can't transfer.
