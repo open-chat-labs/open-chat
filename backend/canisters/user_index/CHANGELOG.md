@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Move bot installations in a user's direct chat which were recorded under a `Group` or `Community` location back to the `User` location, since their events were being routed to a group or community that doesn't exist ([#9522](https://github.com/open-chat-labs/open-chat/pull/9522))
+- Move bot installations in a user's direct chat which were recorded under a `Group` or `Community` location back to the `User` location, since their events were being routed to a group or community that doesn't exist. The LocalUserIndexes must be upgraded first, with [#9520](https://github.com/open-chat-labs/open-chat/pull/9520), so that no more are recorded ([#9522](https://github.com/open-chat-labs/open-chat/pull/9522))
 
 ## [[2.0.2058](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2058-user_index)] - 2026-09-18
 

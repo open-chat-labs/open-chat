@@ -135,6 +135,13 @@ impl Bot {
     // these, and is moved to the `User` location it was really installed into.
     // The move is recorded as installation events too, so that bots which sync their installations
     // incrementally pick it up.
+    // This only finds those made by a user alone in their canister, since a user in a MultiUser
+    // canister would have had to give the canister's id rather than their own, but MultiUser
+    // canisters were not yet live when the LocalUserIndex started validating locations.
+    // If the user later uninstalled the bot under the `User` location, that uninstall found nothing
+    // to remove here, so the bot is moved to an installation it no longer has. That can't be
+    // detected from here, but is harmless: the user's canister ignores updates for a bot it doesn't
+    // have, and removing one only clears any chat left with it.
     // TODO remove once the release containing this has been deployed
     pub fn repair_misrecorded_direct_chat_installations(
         &mut self,
