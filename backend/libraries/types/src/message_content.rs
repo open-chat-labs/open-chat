@@ -406,6 +406,12 @@ impl MessageContentInitial {
         )
     }
 
+    // Whether the message holds a transfer which is still to be made, rather than one which has been
+    // made already, as an OpenChat bot's may have been
+    pub fn has_transfer_to_make(&self) -> bool {
+        self.pending_crypto_transfer().is_some() || matches!(self, MessageContentInitial::P2PSwap(_))
+    }
+
     pub fn pending_crypto_transfer(&self) -> Option<&PendingCryptoTransaction> {
         let transfer = match self {
             MessageContentInitial::Crypto(c) => &c.transfer,

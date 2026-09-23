@@ -29,7 +29,7 @@ use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 #[update(msgpack = true)]
 #[trace]
 async fn send_message_v2(args: Args) -> Response {
-    let result = if args.content.contains_crypto_transfer() {
+    let result = if args.content.has_transfer_to_make() {
         execute_update_async(|| send_message_with_transfer(args)).await
     } else {
         execute_update(|state| send_message_impl(args, None, true, state))

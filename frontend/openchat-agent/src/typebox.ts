@@ -3608,24 +3608,6 @@ export const CommunityRegisterWebhookSuccessResult = /* @__PURE__ */ Type.Object
     avatar_id: Type.Optional(Type.BigInt()),
 });
 
-export type CommunitySendMessageSuccessResult = Static<typeof CommunitySendMessageSuccessResult>;
-export const CommunitySendMessageSuccessResult = /* @__PURE__ */ Type.Object({
-    event_index: EventIndex,
-    message_index: MessageIndex,
-    timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.BigInt()),
-});
-
-export type CommunitySendMessageResponse = Static<typeof CommunitySendMessageResponse>;
-export const CommunitySendMessageResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: CommunitySendMessageSuccessResult,
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type CommunityEventsByIndexArgs = Static<typeof CommunityEventsByIndexArgs>;
 export const CommunityEventsByIndexArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
@@ -4592,24 +4574,6 @@ export const GroupRegisterWebhookSuccessResult = /* @__PURE__ */ Type.Object({
     secret: Type.String(),
     avatar_id: Type.Optional(Type.BigInt()),
 });
-
-export type GroupSendMessageSuccessResult = Static<typeof GroupSendMessageSuccessResult>;
-export const GroupSendMessageSuccessResult = /* @__PURE__ */ Type.Object({
-    event_index: EventIndex,
-    message_index: MessageIndex,
-    timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.BigInt()),
-});
-
-export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
-export const GroupSendMessageResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: GroupSendMessageSuccessResult,
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
 
 export type GroupEventsByIndexArgs = Static<typeof GroupEventsByIndexArgs>;
 export const GroupEventsByIndexArgs = /* @__PURE__ */ Type.Object({
@@ -8515,6 +8479,7 @@ export const CommunityTipMessageArgs = /* @__PURE__ */ Type.Object({
     decimals: Type.Number(),
     username: Type.String(),
     display_name: Type.Optional(Type.String()),
+    new_achievement: Type.Boolean(),
 });
 
 export type CommunitySelectedChannelInitialResponse = Static<
@@ -8539,16 +8504,24 @@ export const CommunitySelectedInitialResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type CommunitySendMessageWithTransferSuccessResult = Static<
-    typeof CommunitySendMessageWithTransferSuccessResult
->;
-export const CommunitySendMessageWithTransferSuccessResult = /* @__PURE__ */ Type.Object({
+export type CommunitySendMessageSuccessResult = Static<typeof CommunitySendMessageSuccessResult>;
+export const CommunitySendMessageSuccessResult = /* @__PURE__ */ Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
-    transfer: CompletedCryptoTransaction,
+    transfer: Type.Optional(CompletedCryptoTransaction),
 });
+
+export type CommunitySendMessageResponse = Static<typeof CommunitySendMessageResponse>;
+export const CommunitySendMessageResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: CommunitySendMessageSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type ProposalsBotProposalToSubmitAction = Static<typeof ProposalsBotProposalToSubmitAction>;
 export const ProposalsBotProposalToSubmitAction = /* @__PURE__ */ Type.Union([
@@ -8624,18 +8597,27 @@ export const GroupTipMessageArgs = /* @__PURE__ */ Type.Object({
     decimals: Type.Number(),
     username: Type.String(),
     display_name: Type.Optional(Type.String()),
+    new_achievement: Type.Boolean(),
 });
 
-export type GroupSendMessageWithTransferSuccessResult = Static<
-    typeof GroupSendMessageWithTransferSuccessResult
->;
-export const GroupSendMessageWithTransferSuccessResult = /* @__PURE__ */ Type.Object({
+export type GroupSendMessageSuccessResult = Static<typeof GroupSendMessageSuccessResult>;
+export const GroupSendMessageSuccessResult = /* @__PURE__ */ Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
-    transfer: CompletedCryptoTransaction,
+    transfer: Type.Optional(CompletedCryptoTransaction),
 });
+
+export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
+export const GroupSendMessageResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: GroupSendMessageSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type UserCreateGroupResponse = Static<typeof UserCreateGroupResponse>;
 export const UserCreateGroupResponse = /* @__PURE__ */ Type.Union([
@@ -9024,36 +9006,12 @@ export const LocalUserIndexBotSendMessageArgs = /* @__PURE__ */ Type.Object({
     og_previews: Type.Optional(Type.Array(OgPreview)),
 });
 
-export type CommunitySendMessageWithTransferResponse = Static<
-    typeof CommunitySendMessageWithTransferResponse
->;
-export const CommunitySendMessageWithTransferResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: CommunitySendMessageWithTransferSuccessResult,
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type ProposalsBotSubmitProposalArgs = Static<typeof ProposalsBotSubmitProposalArgs>;
 export const ProposalsBotSubmitProposalArgs = /* @__PURE__ */ Type.Object({
     governance_canister_id: TSPrincipal,
     proposal: ProposalsBotProposalToSubmit,
     transaction: PendingCryptoTransactionICRC2,
 });
-
-export type GroupSendMessageWithTransferResponse = Static<
-    typeof GroupSendMessageWithTransferResponse
->;
-export const GroupSendMessageWithTransferResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: GroupSendMessageWithTransferSuccessResult,
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
 
 export type UserSendMessageWithTransferToGroupResponse = Static<
     typeof UserSendMessageWithTransferToGroupResponse
@@ -9377,26 +9335,6 @@ export const CommunityUpdateCommunityArgs = /* @__PURE__ */ Type.Object({
     primary_language: Type.Optional(Type.String()),
 });
 
-export type CommunitySendMessageWithTransferArgs = Static<
-    typeof CommunitySendMessageWithTransferArgs
->;
-export const CommunitySendMessageWithTransferArgs = /* @__PURE__ */ Type.Object({
-    channel_id: ChannelId,
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    content: MessageContentInitial,
-    sender_name: Type.String(),
-    sender_display_name: Type.Optional(Type.String()),
-    replies_to: Type.Optional(GroupReplyContext),
-    mentioned: Type.Array(User),
-    block_level_markdown: Type.Boolean(),
-    community_rules_accepted: Type.Optional(Version),
-    channel_rules_accepted: Type.Optional(Version),
-    message_filter_failed: Type.Optional(Type.BigInt()),
-    new_achievement: Type.Boolean(),
-    og_previews: Type.Array(OgPreview),
-});
-
 export type CommunitySendMessageArgs = Static<typeof CommunitySendMessageArgs>;
 export const CommunitySendMessageArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
@@ -9474,22 +9412,6 @@ export const GroupUpdateGroupArgs = /* @__PURE__ */ Type.Object({
     gate_config: OptionUpdateAccessGateConfig,
     public: Type.Optional(Type.Boolean()),
     messages_visible_to_non_members: Type.Optional(Type.Boolean()),
-});
-
-export type GroupSendMessageWithTransferArgs = Static<typeof GroupSendMessageWithTransferArgs>;
-export const GroupSendMessageWithTransferArgs = /* @__PURE__ */ Type.Object({
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-    content: MessageContentInitial,
-    sender_name: Type.String(),
-    sender_display_name: Type.Optional(Type.String()),
-    replies_to: Type.Optional(GroupReplyContext),
-    mentioned: Type.Array(User),
-    block_level_markdown: Type.Boolean(),
-    rules_accepted: Type.Optional(Version),
-    message_filter_failed: Type.Optional(Type.BigInt()),
-    new_achievement: Type.Boolean(),
-    og_previews: Type.Array(OgPreview),
 });
 
 export type GroupSendMessageArgs = Static<typeof GroupSendMessageArgs>;
