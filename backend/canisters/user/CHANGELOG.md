@@ -85,6 +85,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share `c2c_game_chit`, `set_bio`, `set_profile_background`, `manage_favourite_chats` and `pay_for_streak_insurance` with the MultiUser canister via `user_core` ([#9486](https://github.com/open-chat-labs/open-chat/pull/9486))
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the MultiUser canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
 - Stop naming the depositing user to the escrow canister for P2P swaps, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since the caller identifies them ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+- Share the video call handling with the MultiUser canister via `user_core` ([#9500](https://github.com/open-chat-labs/open-chat/pull/9500))
 
 ### Removed
 

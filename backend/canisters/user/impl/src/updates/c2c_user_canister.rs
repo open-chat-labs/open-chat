@@ -12,7 +12,6 @@ use ledger_utils::format_crypto_amount_with_symbol;
 use rand::RngExt;
 use types::{
     Achievement, CallKind, Chat, DirectChatUserNotificationPayload, DirectMessageTipped, P2PSwapStatus, UserId, UserType,
-    VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{
@@ -103,7 +102,7 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
         }
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
-                let _ = chat.set_video_call_presence(caller_user_id, c.message_id, VideoCallPresence::Default, now);
+                user_core::updates::c2c_user_canister::join_video_call(chat, caller_user_id, c.message_id, now);
             }
         }
         UserCanisterEvent::StartVideoCall(args) => {
