@@ -1,7 +1,8 @@
 use crate::model::swaps::Swap;
+use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{TimestampMillis, TokenInfo, UserId};
+use types::{TimestampMillis, TokenInfo};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PendingPaymentsQueue {
@@ -16,7 +17,7 @@ impl PendingPaymentsQueue {
     pub fn push_refunds(&mut self, swap: &Swap, now: TimestampMillis) {
         if swap.token0_received {
             self.push(PendingPayment {
-                user_id: swap.offered_by.into(),
+                principal: swap.offered_by,
                 timestamp: now,
                 token_info: swap.token0.clone(),
                 amount: swap.amount0,
@@ -28,7 +29,7 @@ impl PendingPaymentsQueue {
             && let Some((accepted_by, _)) = swap.accepted_by
         {
             self.push(PendingPayment {
-                user_id: accepted_by.into(),
+                principal: accepted_by,
                 timestamp: now,
                 token_info: swap.token1.clone(),
                 amount: swap.amount1,
@@ -49,11 +50,8 @@ impl PendingPaymentsQueue {
 
 #[derive(Serialize, Deserialize)]
 pub struct PendingPayment {
-    // A UserId rather than a Principal because the payout must go to the user's wallet - for an
-    // indexed user that is a subaccount of their holding canister, while their raw principal is an
-    // account nobody can sign for.
-    #[serde(alias = "principal")]
-    pub user_id: UserId,
+    #[serde(alias = "user_id")]
+    pub principal: Principal,
     pub timestamp: TimestampMillis,
     pub token_info: TokenInfo,
     pub amount: u128,
@@ -63,6 +61,53 @@ pub struct PendingPayment {
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum PendingPaymentReason {
-    Swap(UserId), // The other party in the swap
+    Swap(Principal), // The other party in the swap
     Refund,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use types::UserId;
+
+    // The escrow canister in production stores pending payments to a `UserId`, as below, which
+    // must still deserialize now they are to a `Principal`
+    #[test]
+    fn pending_payment_to_user_id_deserializes() {
+        #[derive(Serialize)]
+        struct PendingPaymentToUserId {
+            user_id: UserId,
+            timestamp: TimestampMillis,
+            token_info: TokenInfo,
+            amount: u128,
+            swap_id: u32,
+            reason: PendingPaymentReasonToUserId,
+        }
+
+        #[derive(Serialize)]
+        enum PendingPaymentReasonToUserId {
+            Swap(UserId),
+        }
+
+        let user = Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 1, 1]);
+        let other_user = Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 9, 1, 1]);
+        let bytes = msgpack::serialize_then_unwrap(PendingPaymentToUserId {
+            user_id: user.into(),
+            timestamp: 1,
+            token_info: TokenInfo {
+                symbol: "ICP".to_string(),
+                ledger: Principal::from_slice(&[2; 10]),
+                decimals: 8,
+                fee: 10_000,
+            },
+            amount: 100,
+            swap_id: 3,
+            reason: PendingPaymentReasonToUserId::Swap(other_user.into()),
+        });
+
+        let payment: PendingPayment = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(payment.principal, user);
+        assert_eq!(payment.amount, 100);
+        assert!(matches!(payment.reason, PendingPaymentReason::Swap(p) if p == other_user));
+    }
 }
