@@ -6,15 +6,13 @@ use crate::updates::start_video_call::handle_start_video_call;
 use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{
-    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, MessageContentInternal, Reader, TipMessageArgs,
-};
+use chat_events::{MessageContentInternal, Reader, TipMessageArgs};
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
 use rand::RngExt;
 use types::{
-    Achievement, CallKind, Chat, ChitEvent, ChitEventType, DirectChatUserNotificationPayload, DirectMessageTipped,
-    DirectReactionAddedNotification, EventIndex, MessageContentInitial, P2PSwapStatus, UserId, UserType, VideoCallPresence,
+    Achievement, CallKind, Chat, DirectChatUserNotificationPayload, DirectMessageTipped, P2PSwapStatus, UserId, UserType,
+    VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{
@@ -79,7 +77,9 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             send_messages(*args, caller_user_id, state);
         }
         UserCanisterEvent::EditMessage(args) => {
-            edit_message(*args, caller_user_id, state);
+            if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
+                user_core::updates::c2c_user_canister::edit_message(chat, caller_user_id, *args, now);
+            }
         }
         UserCanisterEvent::DeleteMessages(args) => {
             delete_messages(*args, caller_user_id, state);
@@ -118,57 +118,20 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             );
         }
         UserCanisterEvent::SetReferralStatus(status) => {
-            let chit_reward = state.data.user.referrals.set_status(caller_user_id, *status, now);
-            let mut rewarded = false;
-
-            if chit_reward > 0 {
-                state.data.user.chit_events.push(ChitEvent {
-                    amount: chit_reward as i32,
-                    timestamp: now,
-                    reason: ChitEventType::Referral(*status),
-                });
-
-                rewarded = true;
-            }
-
-            if let Some(achievement) = match state.data.user.referrals.total_verified() {
-                1 => Some(Achievement::Referred1stUser),
-                3 => Some(Achievement::Referred3rdUser),
-                10 => Some(Achievement::Referred10thUser),
-                20 => Some(Achievement::Referred20thUser),
-                50 => Some(Achievement::Referred50thUser),
-                _ => None,
-            } {
-                rewarded |= state.data.user.award_achievement(achievement, now);
-            }
-
-            if rewarded {
+            if state.data.user.set_referral_status(caller_user_id, *status, now) {
                 state.notify_user_index_of_chit(now);
             }
         }
         UserCanisterEvent::SetEventsTtl(args) => {
-            let is_new_chat = !state.data.user.direct_chats.exists(&caller_user_id.into());
-            let chat = state.data.user.direct_chats.get_or_create(
-                state.env.canister_id().into(),
+            let my_user_id = state.env.canister_id().into();
+            user_core::updates::c2c_user_canister::set_events_ttl(
+                &mut state.data.user,
+                my_user_id,
                 caller_user_id,
-                UserType::User,
+                *args,
                 || state.env.rng().random(),
                 now,
             );
-
-            let last_updated_timestamp = chat.events().get_events_time_to_live().timestamp;
-
-            // If this is a newly created chat, or the incoming timestamp is higher than the
-            // existing one, update the TTL.
-            // Else, if the timestamps are equal (meaning both users updated at the same time),
-            // pick the TTL from whichever user has the lowest userId when their bytes are compared.
-            // This ensures the TTL is always the same in each user's canister.
-            if is_new_chat
-                || last_updated_timestamp < args.timestamp
-                || (last_updated_timestamp == args.timestamp && caller_user_id.as_slice() < state.env.canister_id().as_slice())
-            {
-                chat.set_events_time_to_live(caller_user_id, args.events_ttl, now);
-            }
         }
     }
 }
@@ -216,153 +179,70 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
     }
 }
 
-fn edit_message(args: user_canister::EditMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
-    if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
-        let now = state.env.now();
-        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
-            return;
-        };
-
-        let _ = chat.edit_message::<UserEventPusher>(
-            EditMessageArgs {
-                sender: caller_user_id,
-                min_visible_event_index: EventIndex::default(),
-                thread_root_message_index,
-                message_id: args.message_id,
-                content: MessageContentInitial::from(args.content).into(),
-                block_level_markdown: args.block_level_markdown,
-                og_previews: args.og_previews,
-                finalise_bot_message: false,
-                now,
-            },
-            None,
-        );
-    }
-}
-
 fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let chat_id = caller_user_id.into();
-    if let Some(chat) = state.data.user.direct_chats.get_mut(&chat_id) {
-        let now = state.env.now();
-        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
-            return;
-        };
+    let now = state.env.now();
+    let Some((thread_root_message_index, deleted)) = state
+        .data
+        .user
+        .direct_chats
+        .get_mut(&chat_id)
+        .and_then(|chat| user_core::updates::c2c_user_canister::delete_messages(chat, caller_user_id, args, now))
+    else {
+        return;
+    };
 
-        let delete_message_results = chat.delete_messages(DeleteUndeleteMessagesArgs {
-            caller: caller_user_id,
-            is_admin: false,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index,
-            message_ids: args.message_ids,
+    let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
+    for message_id in deleted {
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            })),
+            remove_deleted_message_content_at,
             now,
-        });
-
-        let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-        for (message_id, result) in delete_message_results {
-            if result.is_ok() {
-                state.data.timer_jobs.enqueue_job(
-                    TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
-                        chat_id,
-                        thread_root_message_index,
-                        message_id,
-                    })),
-                    remove_deleted_message_content_at,
-                    now,
-                );
-            }
-        }
+        );
     }
 }
 
 fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let chat_id = caller_user_id.into();
-    if let Some(chat) = state.data.user.direct_chats.get_mut(&chat_id) {
-        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
-            return;
-        };
+    let now = state.env.now();
+    let Some((thread_root_message_index, undeleted)) = state
+        .data
+        .user
+        .direct_chats
+        .get_mut(&chat_id)
+        .and_then(|chat| user_core::updates::c2c_user_canister::undelete_messages(chat, caller_user_id, args, now))
+    else {
+        return;
+    };
 
-        let undeleted: Vec<_> = chat
-            .undelete_messages(DeleteUndeleteMessagesArgs {
-                caller: caller_user_id,
-                is_admin: false,
-                min_visible_event_index: EventIndex::default(),
-                thread_root_message_index,
-                message_ids: args.message_ids,
-                now: state.env.now(),
-            })
-            .into_iter()
-            .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
-            .collect();
-
-        HardDeleteMessageContentJob::cancel(&mut state.data.timer_jobs, chat_id, thread_root_message_index, &undeleted);
-    }
+    HardDeleteMessageContentJob::cancel(&mut state.data.timer_jobs, chat_id, thread_root_message_index, &undeleted);
 }
 
 fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut RuntimeState) {
-    if !args.reaction.is_valid() {
+    let now = state.env.now();
+    let Some(reaction) = state
+        .data
+        .user
+        .direct_chats
+        .get_mut(&caller_user_id.into())
+        .and_then(|chat| user_core::updates::c2c_user_canister::toggle_reaction(chat, caller_user_id, args, now))
+    else {
         return;
+    };
+
+    if let Some(notification) = reaction.notification
+        && !state.data.user.suspended.value
+    {
+        // The reacted-to message wasn't the sender's, so it is this user's
+        let my_user_id = state.env.canister_id().into();
+        state.push_notification(Some(caller_user_id), my_user_id, notification);
     }
-
-    if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
-        let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
-            return;
-        };
-
-        let now = state.env.now();
-
-        let add_remove_reaction_args = AddRemoveReactionArgs {
-            user_id: caller_user_id,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index,
-            message_id: args.message_id,
-            reaction: args.reaction.clone(),
-            now,
-        };
-
-        if args.added {
-            if let Ok(result) = chat.add_reaction::<UserEventPusher>(add_remove_reaction_args, None) {
-                let message = result.value;
-
-                // They may be reacting to their own message; in that case we should not generate any activity
-                // for the other user (push notification, activity-feed event, or achievement progress).
-                if message.sender != caller_user_id {
-                    if !state.data.user.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
-                        let notification =
-                            DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
-                                them: chat.them,
-                                thread_root_message_index,
-                                message_index: message.message_index,
-                                message_event_index: result.event_index,
-                                username: args.username,
-                                display_name: args.display_name,
-                                reaction: args.reaction,
-                                user_avatar_id: args.user_avatar_id,
-                            });
-
-                        state.push_notification(Some(caller_user_id), message.sender, notification);
-                    }
-
-                    state.data.user.push_message_activity(
-                        MessageActivityEvent {
-                            chat: Chat::Direct(caller_user_id.into()),
-                            thread_root_message_index,
-                            message_index: message.message_index,
-                            message_id: message.message_id,
-                            event_index: result.event_index,
-                            activity: MessageActivity::Reaction,
-                            timestamp: now,
-                            user_id: Some(caller_user_id),
-                        },
-                        now,
-                    );
-
-                    state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
-                }
-            }
-        } else {
-            let _ = chat.remove_reaction(add_remove_reaction_args);
-        }
-    }
+    state.data.user.push_message_activity(reaction.activity, now);
+    state.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
 }
 
 fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, state: &mut RuntimeState) {

@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use types::{CanisterId, UserId, UserType};
 use user_canister::c2c_user_canister_v2::*;
+use user_core::updates::c2c_user_canister::can_act_for;
 
 #[update(msgpack = true)]
 #[trace]
@@ -99,16 +100,5 @@ fn known_caller_kind(caller: CanisterId, state: &RuntimeState) -> Option<Caniste
         Some(CanisterKind::UserCanister)
     } else {
         None
-    }
-}
-
-// Whether a sender is one a canister of this kind can act for: a User canister acts only for its
-// own user, whose id is the canister's id, and a MultiUser canister only for the users it holds,
-// whose ids carry an index, never as its own canister id
-fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bool {
-    match kind {
-        CanisterKind::UserCanister => sender == UserId::from(caller),
-        CanisterKind::MultiUserCanister => sender.index() != 0 && sender.canister_id() == caller,
-        CanisterKind::Neither => false,
     }
 }

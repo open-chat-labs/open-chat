@@ -30,7 +30,7 @@ fn change_role_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<HashMa
         args.user_ids.push(args.user_id);
     }
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     let caller_id = member.user_id;
 
     state.data.verify_not_frozen()?;

@@ -5313,6 +5313,14 @@ export const DailyPuzzleResult = /* @__PURE__ */ Type.Object({
     solved_at: Type.BigInt(),
 });
 
+export type CertifiedCall = Static<typeof CertifiedCall>;
+export const CertifiedCall = /* @__PURE__ */ Type.Object({
+    arg: TSBytes,
+    ingress_expiry: Type.BigInt(),
+    nonce: Type.Optional(TSBytes),
+    certificate: TSBytes,
+});
+
 export type ChitEventType = Static<typeof ChitEventType>;
 export const ChitEventType = /* @__PURE__ */ Type.Union([
     Type.Literal("DailyClaim"),
@@ -6184,6 +6192,18 @@ export const GroupVisibilityChanged = /* @__PURE__ */ Type.Object({
 export type MarkVideoCallAsEndedArgs = Static<typeof MarkVideoCallAsEndedArgs>;
 export const MarkVideoCallAsEndedArgs = /* @__PURE__ */ Type.Object({
     chat: Chat,
+});
+
+export type PendingCryptoTransactionCertified = Static<typeof PendingCryptoTransactionCertified>;
+export const PendingCryptoTransactionCertified = /* @__PURE__ */ Type.Object({
+    ledger: TSPrincipal,
+    token_symbol: Type.String(),
+    amount: Type.BigInt(),
+    to: AccountICRC1,
+    fee: Type.BigInt(),
+    memo: Type.Optional(TSBytes),
+    created: Type.BigInt(),
+    call: CertifiedCall,
 });
 
 export type SelectedGroupUpdates = Static<typeof SelectedGroupUpdates>;
@@ -7939,6 +7959,9 @@ export const PendingCryptoTransaction = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         ICRC2: PendingCryptoTransactionICRC2,
+    }),
+    Type.Object({
+        Certified: PendingCryptoTransactionCertified,
     }),
 ]);
 

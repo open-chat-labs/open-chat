@@ -474,7 +474,7 @@ impl Data {
 
     // A chat only has a small number of entries, so they can be removed immediately. If they can't
     // all be removed within this message, the rest are left for the garbage collection job.
-    fn garbage_collect_now_or_later(&mut self, prefix: BaseKeyPrefix) {
+    pub fn garbage_collect_now_or_later(&mut self, prefix: BaseKeyPrefix) {
         if stable_memory_map::garbage_collect(prefix.clone()).is_err() {
             self.stable_memory_keys_to_garbage_collect.push(prefix);
             jobs::garbage_collect_stable_memory::start_job_if_required(self);

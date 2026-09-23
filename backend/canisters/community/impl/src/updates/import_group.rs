@@ -67,7 +67,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     if member.role().is_owner() {
         if !state.data.groups_being_imported.contains(&args.group_id) {
             Ok(PrepareResult {

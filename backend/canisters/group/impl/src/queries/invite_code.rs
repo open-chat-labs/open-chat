@@ -14,7 +14,7 @@ fn invite_code(_: Args) -> Response {
 }
 
 fn invite_code_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     if member.role().can_invite_users(&state.data.chat.permissions) {
         Ok(SuccessResult {
             code: if state.data.invite_code_enabled { state.data.invite_code } else { None },

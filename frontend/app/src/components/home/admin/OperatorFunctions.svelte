@@ -88,9 +88,8 @@
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     let openAiKeySet = $state(false);
-    // The native call push kill switch (#9456): what the user index holds, and what the toggle shows
+    // The native call push kill switch (#9456): the toggle shows what the user index holds
     let callPushEnabled = $state(false);
-    let currentCallPush: boolean | undefined = $state(undefined);
     let mediaScanEnabled = $state(false);
     let mediaScanScanners = $state("");
     let currentMediaScan = $state("");
@@ -123,11 +122,8 @@
     function refreshCallPush() {
         client
             .callPushEnabled()
-            .then((enabled) => {
-                currentCallPush = enabled;
-                callPushEnabled = enabled;
-            })
-            .catch(() => (currentCallPush = undefined));
+            .then((enabled) => (callPushEnabled = enabled))
+            .catch(() => undefined);
     }
 
     // Flips the switch on the user index, which fans it out to every local user index

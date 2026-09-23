@@ -253,31 +253,6 @@ impl Files {
         files_removed
     }
 
-    pub fn update_owner(&mut self, file_id: &FileId, new_owner: Principal) -> bool {
-        self.files
-            .update(file_id, |file| {
-                file.owner = new_owner;
-                true
-            })
-            .is_some()
-    }
-
-    pub fn update_accessor_id(&mut self, old_accessor_id: AccessorId, new_accessor_id: AccessorId) {
-        let files = self.accessors_map.remove(old_accessor_id);
-        for file_id in files.iter() {
-            let updated = self.files.update(file_id, |file| {
-                let updated = file.accessors.remove(&old_accessor_id);
-                if updated {
-                    file.accessors.insert(new_accessor_id);
-                }
-                updated
-            });
-            if updated == Some(true) {
-                self.accessors_map.link(new_accessor_id, *file_id);
-            }
-        }
-    }
-
     pub fn remove_expired_files(&mut self, now: TimestampMillis, max_count: usize) -> Vec<FileRemoved> {
         let mut files_removed = Vec::new();
         while let Some(file_id) = self

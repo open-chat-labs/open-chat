@@ -1,4 +1,3 @@
-use crate::activity_notifications::handle_activity_notification;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -14,7 +13,7 @@ fn register_proposal_vote_v2(args: Args) -> Response {
 fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     let min_visible_event_index = member.min_visible_event_index();
     let user_id = member.user_id();
     let now = state.env.now();
@@ -31,6 +30,6 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult
         .members
         .register_proposal_vote(&user_id, args.message_index, now);
 
-    handle_activity_notification(state);
+    state.mark_activity_for_user(user_id);
     Ok(())
 }

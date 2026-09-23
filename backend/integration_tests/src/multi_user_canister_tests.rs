@@ -2333,6 +2333,14 @@ fn game_chit_and_suspension_are_applied_per_user() {
         OCErrorCode::InitiatorSuspended,
     );
     assert!(game_chit(env, local_user_index, canister_id, b, "2:solve", 100).is_ok());
+    // And is told so before their input is checked, as in the User canister
+    let set_bio_response = client::multi_user::set_bio(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_bio::Args { text: "x".repeat(2001) },
+    );
+    assert!(matches!(set_bio_response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)));
 
     let since = now_millis(env);
     env.advance_time(Duration::from_millis(1));
@@ -4179,6 +4187,25 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         messages(&chat(env)),
         vec![(alice.user_id, "edited".to_string()), (alice.user_id, "once".to_string())]
     );
+
+    // Nor can she change the chat's TTL, and a blocked user Bob has no chat with can't create one
+    let dave = client::register_user(env, canister_ids);
+    block_user(env, bob, canister_id, dave.user_id);
+    env.advance_time(Duration::from_millis(1));
+    for blocked in [&alice, &dave] {
+        send(
+            env,
+            blocked.canister(),
+            blocked.user_id,
+            UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
+                events_ttl: Some(60_000),
+                timestamp: now_millis(env),
+            })),
+        );
+    }
+    let summary = single_direct_chat_summary(initial_state(env, bob, canister_id));
+    assert_eq!(summary.them, alice.user_id);
+    assert_eq!(summary.events_ttl, Some(3_600_000));
 }
 
 #[test]

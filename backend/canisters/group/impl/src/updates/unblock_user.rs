@@ -19,7 +19,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if !state.data.chat.is_public.value {
         Err(OCErrorCode::ChatNotPublic.into())
     } else {
-        let caller_member = state.get_calling_member(true)?;
+        let caller_member = state.get_calling_member(None, true)?;
         if caller_member.user_id() == args.user_id {
             Err(OCErrorCode::CannotBlockSelf.into())
         } else if caller_member.role().can_unblock_users(&state.data.chat.permissions) {

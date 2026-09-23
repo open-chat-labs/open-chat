@@ -1,5 +1,10 @@
+# `merge_group` runs these checks on the merge queue's temporary branches. Without it a PR added
+# to the queue would sit with its required checks pending and never merge.
 on:
   pull_request:
+    branches:
+      - master
+  merge_group:
     branches:
       - master
 
@@ -75,7 +80,9 @@ jobs:
       - uses: ./.github/workflows/setup-rust
         with:
           cache: read
+      # `--tests` skips the doc tests: there are none (the single doc example is `ignore`d), but
+      # without the flag cargo still runs rustdoc for every crate, about 15 seconds
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --workspace --exclude integration_tests --exclude open-chat --exclude tauri-plugin-oc
+          args: --workspace --exclude integration_tests --exclude open-chat --exclude tauri-plugin-oc --tests

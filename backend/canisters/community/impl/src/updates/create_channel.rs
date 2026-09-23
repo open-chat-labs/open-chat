@@ -175,6 +175,7 @@ fn create_channel_impl(
     let mut chat = GroupChatCore::new(
         MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
         caller.agent(),
+        None,
         args.is_public,
         args.name.clone(),
         args.description,

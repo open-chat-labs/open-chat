@@ -1799,6 +1799,7 @@
         "neuronControllerAction": "Дії контролера нейронів",
         "noEligibleNeurons": "Відповідних нейронів не знайдено",
         "noEligibleNeuronsMessage": "Не знайдено придатних або пов’язаних нейронів. Щоб голосувати за пропозиції в OpenChat, ви повинні спочатку додати свій ідентифікатор користувача OpenChat як гарячу клавішу до будь-яких нейронів, за допомогою яких ви хочете голосувати. <br/><br/>Ваш ідентифікатор користувача OpenChat: {userId}. <br/><br/>Щоб дізнатися більше про голосування та управління, прочитайте <a target=\"_blank\" href=\"https://oc.app/blog/governance\">цю публікацію в блозі</a>.",
+        "noEligibleNeuronsPrincipalMessage": "Не знайдено придатних або пов’язаних нейронів. Щоб голосувати за пропозиції в OpenChat, ви повинні спочатку додати свій principal OpenChat як гарячу клавішу до будь-яких нейронів, за допомогою яких ви хочете голосувати. <br/><br/>Ваш principal OpenChat: {principal}. <br/><br/>Щоб дізнатися більше про голосування та управління, прочитайте <a target=\"_blank\" href=\"https://oc.app/blog/governance\">цю публікацію в блозі</a>.",
         "notificationsAction": "Дії індексу сповіщень",
         "openchatInstallerAction": "Дії інсталятора OpenChat",
         "passing": {

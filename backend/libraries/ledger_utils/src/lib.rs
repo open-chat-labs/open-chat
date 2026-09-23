@@ -7,6 +7,7 @@ use types::{
 };
 pub use user_accounts::{deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
 
+pub mod certified;
 pub mod icrc1;
 pub mod icrc2;
 pub mod nns;
@@ -59,6 +60,23 @@ pub async fn process_transaction(
             Ok(Err((c, error))) => Ok(Err((c.into(), error))),
             Err(e) => Err(e),
         },
+        // The user has already made the transfer themselves, so there is nothing to process. It
+        // must instead be checked using `certified::verify_certified_transfer`.
+        PendingCryptoTransaction::Certified(t) => {
+            let error = OCErrorCode::InvalidRequest.with_message("Certified transfers are not supported here");
+            let failed = types::icrc1::FailedCryptoTransaction {
+                ledger: t.ledger,
+                token_symbol: t.token_symbol,
+                amount: t.amount,
+                fee: t.fee,
+                from: types::icrc1::Account::for_user(resolve_sender(sender)).into(),
+                to: t.to.into(),
+                memo: t.memo,
+                created: t.created,
+                error_message: error.message().unwrap_or_default().to_string(),
+            };
+            Ok(Err((failed.into(), error)))
+        }
     }
 }
 

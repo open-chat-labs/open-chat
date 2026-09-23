@@ -1,5 +1,6 @@
 import type {
     ApiListNervousSystemFunctionsResponse,
+    ApiListNeuronsResponse,
     ApiListProposalsResponse,
     ApiManageNeuronResponse,
     ApiNervousSystemFunction,
@@ -83,4 +84,18 @@ function snsFunctionType(candid: ApiSnsFunctionType): SnsFunctionType {
     } else {
         return { kind: "generic_nervous_system_function" };
     }
+}
+
+// The ids (subaccounts) of the neurons which are not dissolved, and so may be able to vote
+export function neuronIds(candid: ApiListNeuronsResponse, nowMillis: bigint): Uint8Array[] {
+    return candid.neurons
+        .filter((n) => {
+            const state = n.dissolve_state[0];
+            if (state === undefined) return false;
+            if ("WhenDissolvedTimestampSeconds" in state) {
+                return state.WhenDissolvedTimestampSeconds * BigInt(1000) >= nowMillis;
+            }
+            return state.DissolveDelaySeconds > BigInt(0);
+        })
+        .flatMap((n) => (n.id[0] !== undefined ? [new Uint8Array(n.id[0].id)] : []));
 }

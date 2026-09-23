@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 
+### Removed
+
+- Remove the unused `user_ids_updated` field from `c2c_sync_index`. Must be released before StorageIndex ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
+
 ## [[2.0.2048](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2048-storage_bucket)] - 2026-08-31
 
 ### Added

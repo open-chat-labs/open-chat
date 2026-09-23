@@ -1,5 +1,10 @@
+# `merge_group` runs these checks on the merge queue's temporary branches. Without it a PR added
+# to the queue would sit with its required checks pending and never merge.
 on:
   pull_request:
+    branches:
+      - master
+  merge_group:
     branches:
       - master
 

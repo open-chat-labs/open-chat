@@ -8,6 +8,8 @@ name: Post Canbench results
 
 jobs:
   download-results:
+    # Merge queue runs of the benchmarks have no PR to comment on
+    if: github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-benchmarks.outputs.matrix }}
