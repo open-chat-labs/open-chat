@@ -11,8 +11,9 @@ then
   WASM_SRC=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
 fi
 
-# Fetch the tags once up front rather than in each of the parallel downloads below
-if [[ $WASM_SRC == "prod" ]] || [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
+# Fetch the tags once up front rather than in each of the parallel downloads below, which
+# otherwise each fetch them (via get-canister-version.sh) when given a release version
+if [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
 then
   git fetch -tfq origin master || { echo "Failed to fetch tags"; exit 1; }
   export OC_TAGS_FETCHED=1
