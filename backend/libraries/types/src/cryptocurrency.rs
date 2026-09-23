@@ -1,6 +1,6 @@
 #![expect(deprecated)]
-use crate::nns::{Tokens, UserOrAccount};
-use crate::{CanisterId, TimestampNanos, UserId};
+use crate::nns::UserOrAccount;
+use crate::{CanisterId, TimestampNanos, UserId, UserIdAndPrincipal};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::account::Account;
@@ -63,6 +63,7 @@ pub enum PendingCryptoTransaction {
     NNS(nns::PendingCryptoTransaction),
     ICRC1(icrc1::PendingCryptoTransaction),
     ICRC2(icrc2::PendingCryptoTransaction),
+    Certified(certified::PendingCryptoTransaction),
 }
 
 #[ts_export]
@@ -125,6 +126,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.ledger,
             PendingCryptoTransaction::ICRC1(t) => t.ledger,
             PendingCryptoTransaction::ICRC2(t) => t.ledger,
+            PendingCryptoTransaction::Certified(t) => t.ledger,
         }
     }
 
@@ -133,6 +135,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.token_symbol.as_str(),
             PendingCryptoTransaction::ICRC1(t) => t.token_symbol.as_str(),
             PendingCryptoTransaction::ICRC2(t) => t.token_symbol.as_str(),
+            PendingCryptoTransaction::Certified(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -145,6 +148,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             PendingCryptoTransaction::ICRC1(t) => t.amount,
             PendingCryptoTransaction::ICRC2(t) => t.amount,
+            PendingCryptoTransaction::Certified(t) => t.amount,
         }
     }
 
@@ -153,20 +157,24 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(_) => ICP_FEE,
             PendingCryptoTransaction::ICRC1(t) => t.fee,
             PendingCryptoTransaction::ICRC2(t) => t.fee,
+            PendingCryptoTransaction::Certified(t) => t.fee,
         }
     }
 
-    pub fn validate_recipient(&self, recipient: UserId) -> bool {
+    // Checks the transfer is to the recipient's wallet. `recipient` must hold their actual principal,
+    // from the canister's own data or a lookup, never a caller's claim.
+    pub fn validate_recipient(&self, recipient: UserIdAndPrincipal) -> bool {
         // The whole account, not just the owner. Once a canister holds many users the owner alone
         // is satisfied by a transfer destined for any of them.
         let account = Account::from(recipient);
+        let account_identifier = crate::account_identifier(account);
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
-                UserOrAccount::Account(a) => a == AccountIdentifier::from(recipient),
-                UserOrAccount::User(u) => u == recipient,
+                UserOrAccount::Account(a) => a == account_identifier,
             },
             PendingCryptoTransaction::ICRC1(t) => Account::from(t.to) == account,
             PendingCryptoTransaction::ICRC2(t) => Account::from(t.to) == account,
+            PendingCryptoTransaction::Certified(t) => Account::from(t.to) == account,
         }
     }
 
@@ -181,6 +189,9 @@ impl PendingCryptoTransaction {
                 t.to.owner = owner;
                 t.to.subaccount = Some(subaccount.0)
             }
+            PendingCryptoTransaction::Certified(_) => {
+                panic!("A certified transfer has already been made so its recipient cannot be changed")
+            }
         }
     }
 
@@ -189,6 +200,7 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.created,
             PendingCryptoTransaction::ICRC1(t) => t.created,
             PendingCryptoTransaction::ICRC2(t) => t.created,
+            PendingCryptoTransaction::Certified(t) => t.created,
         }
     }
 
@@ -197,6 +209,8 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => t.created = created,
             PendingCryptoTransaction::ICRC1(t) => t.created = created,
             PendingCryptoTransaction::ICRC2(t) => t.created = created,
+            // The transfer has already been made, so when it was created is fixed
+            PendingCryptoTransaction::Certified(_) => {}
         }
     }
 
@@ -213,6 +227,8 @@ impl PendingCryptoTransaction {
                 assert!(memo.len() <= 32);
                 t.memo = Some(memo.to_vec().into());
             }
+            // The transfer has already been made with the memo the canister verifying it requires
+            PendingCryptoTransaction::Certified(_) => {}
         }
         self
     }
@@ -384,8 +400,9 @@ pub mod nns {
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    // Only an account, which an ICP withdrawal to a legacy account identifier needs. Users are paid
+    // via ICRC1 or ICRC2 transfers instead.
     pub enum UserOrAccount {
-        User(UserId),
         Account(#[ts(as = "[u8; 32]")] AccountIdentifier),
     }
 
@@ -525,9 +542,7 @@ pub mod icrc1 {
         pub subaccount: Option<[u8; 32]>,
     }
 
-    // The default account of a canister or other non-user principal. A principal which actually
-    // identifies a user must go through `for_user`/`From<UserId>` instead - building a user's
-    // account from their principal drops the subaccount their wallet lives in.
+    // The default account of a principal. A user's wallet comes from `From<UserIdAndPrincipal>`.
     impl From<Principal> for Account {
         fn from(value: Principal) -> Self {
             Account {
@@ -537,21 +552,28 @@ pub mod icrc1 {
         }
     }
 
-    impl From<UserId> for Account {
-        fn from(value: UserId) -> Self {
-            Account::for_user(value)
+    impl From<UserIdAndPrincipal> for Account {
+        fn from(value: UserIdAndPrincipal) -> Self {
+            icrc_ledger_types::icrc1::account::Account::from(value).into()
+        }
+    }
+
+    impl From<icrc_ledger_types::icrc1::account::Account> for Account {
+        fn from(value: icrc_ledger_types::icrc1::account::Account) -> Self {
+            Account {
+                owner: value.owner,
+                subaccount: value.subaccount,
+            }
         }
     }
 
     impl Account {
-        // A user's account. Note the owner is the canister holding the user's data, which is not
-        // the same as the UserId once a canister holds more than one user.
-        pub fn for_user(user_id: UserId) -> Account {
-            let account = icrc_ledger_types::icrc1::account::Account::from(user_id);
-            Account {
-                owner: account.owner,
-                subaccount: account.subaccount,
-            }
+        // The account of the user's id, for where their principal isn't known yet. It is the user's
+        // wallet if they are alone in their canister, but no one's if they are in a MultiUser
+        // canister, since nobody can sign for an indexed user id.
+        // TODO: Use `From<UserIdAndPrincipal>` instead, once the user's principal is known
+        pub fn legacy_for_user(user_id: UserId) -> Account {
+            user_id.as_principal().into()
         }
     }
 
@@ -889,20 +911,45 @@ pub mod icrc2 {
     }
 }
 
-impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
-    fn from(value: icrc1::PendingCryptoTransaction) -> Self {
-        nns::PendingCryptoTransaction {
-            ledger: value.ledger,
-            token_symbol: value.token_symbol,
-            amount: Tokens::from_e8s(value.amount.try_into().unwrap()),
-            to: UserOrAccount::Account(AccountIdentifier::new(
-                &value.to.owner,
-                &Subaccount(value.to.subaccount.unwrap_or_default()),
-            )),
-            fee: Some(Tokens::from_e8s(value.fee.try_into().unwrap())),
-            memo: value.memo.map(|m| u64_from_bytes(m.0.as_slice())),
-            created: value.created,
-        }
+pub mod certified {
+    use super::*;
+    use icrc_ledger_types::icrc1::transfer::Memo;
+    use icrc1::Account;
+    use serde_bytes::ByteBuf;
+
+    // An ICRC1 transfer the user has already made from their own principal's account by calling
+    // `icrc1_transfer` on the ledger themselves. Rather than making the transfer, the canister
+    // verifies `call` proves the ledger accepted it, then treats it as a completed ICRC1 transfer.
+    // `amount`, `to`, `fee`, `memo` and `created` repeat what is in the call's arg, and the
+    // verification fails unless they match.
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts(rename = "PendingCryptoTransactionCertified")]
+    pub struct PendingCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token_symbol: String,
+        pub amount: u128,
+        pub to: Account,
+        pub fee: u128,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+        pub call: CertifiedCall,
+    }
+
+    // The content of the user's call to `icrc1_transfer`, from which its request id is computed,
+    // along with a certificate from the ledger's subnet holding the reply to that request id. The
+    // sender and canister id are not included, since they must be the caller and the ledger.
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct CertifiedCall {
+        #[serde(with = "serde_bytes")]
+        pub arg: Vec<u8>,
+        pub ingress_expiry: u64,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
+        pub nonce: Option<ByteBuf>,
+        #[serde(with = "serde_bytes")]
+        pub certificate: Vec<u8>,
     }
 }
 
@@ -911,4 +958,65 @@ fn u64_from_bytes(bytes: &[u8]) -> u64 {
     let mut u64_bytes = [0u8; 8];
     u64_bytes[(8 - bytes.len())..].copy_from_slice(bytes);
     u64::from_be_bytes(u64_bytes)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn icrc1_transfer_to(to: icrc1::Account) -> PendingCryptoTransaction {
+        PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+            ledger: CanisterId::from_slice(&[1; 10]),
+            token_symbol: "CHAT".to_string(),
+            amount: 1,
+            to,
+            fee: 0,
+            memo: None,
+            created: 0,
+        })
+    }
+
+    fn canister_user() -> UserId {
+        UserId::new(Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 5, 1, 1]))
+    }
+
+    fn principal() -> Principal {
+        Principal::from_slice(&[9; 29])
+    }
+
+    #[test]
+    fn transfer_to_user_alone_in_their_canister_is_to_their_user_id() {
+        let recipient = UserIdAndPrincipal::new(canister_user(), principal());
+
+        assert!(icrc1_transfer_to(canister_user().as_principal().into()).validate_recipient(recipient));
+        assert!(!icrc1_transfer_to(principal().into()).validate_recipient(recipient));
+    }
+
+    #[test]
+    fn transfer_to_indexed_user_is_to_their_principal() {
+        let user_id = UserId::new_indexed(canister_user().canister_id(), 7);
+        let recipient = UserIdAndPrincipal::new(user_id, principal());
+
+        assert!(icrc1_transfer_to(principal().into()).validate_recipient(recipient));
+        assert!(!icrc1_transfer_to(icrc1::Account::legacy_for_user(user_id)).validate_recipient(recipient));
+    }
+
+    #[test]
+    fn nns_transfer_to_recipients_account_identifier_is_accepted() {
+        let recipient = UserIdAndPrincipal::new(canister_user(), principal());
+        let transfer = |to| {
+            PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
+                ledger: CanisterId::from_slice(&[1; 10]),
+                token_symbol: "ICP".to_string(),
+                amount: nns::Tokens::from_e8s(1),
+                to: UserOrAccount::Account(to),
+                fee: None,
+                memo: None,
+                created: 0,
+            })
+        };
+
+        assert!(transfer(AccountIdentifier::from(recipient)).validate_recipient(recipient));
+        assert!(!transfer(AccountIdentifier::new(&principal(), &Subaccount([0; 32]))).validate_recipient(recipient));
+    }
 }

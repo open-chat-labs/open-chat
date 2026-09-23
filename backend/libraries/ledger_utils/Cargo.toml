@@ -9,8 +9,12 @@ edition.workspace = true
 candid = { workspace = true }
 constants = { path = "../constants" }
 escrow_canister = { path = "../../canisters/escrow/api" }
+ic-cbor = { workspace = true }
 ic-cdk = { workspace = true }
+ic-certificate-verification = { workspace = true }
+ic-certification = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic-representation-independent-hash = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../external_canisters/icp_ledger/c2c_client" }
 icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
@@ -20,4 +24,9 @@ tracing = { workspace = true }
 types = { path = "../types" }
 
 [dev-dependencies]
+hex = { workspace = true }
+ic-verify-bls-signature = "0.6"
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+serde_cbor = { workspace = true }
 test-case = { workspace = true }

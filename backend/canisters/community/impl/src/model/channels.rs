@@ -12,7 +12,7 @@ use std::collections::{BTreeSet, HashMap};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MAX_THREADS_IN_SUMMARY, MultiUserChat,
-    Rules, TimestampMillis, UserId, UserType,
+    Rules, TimestampMillis, UserId, UserIdAndPrincipal, UserType,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -234,6 +234,7 @@ impl Channel {
             chat: GroupChatCore::new(
                 MultiUserChat::Channel(community_id, id),
                 created_by,
+                None,
                 true,
                 name,
                 String::new(),
@@ -256,10 +257,11 @@ impl Channel {
 
     pub fn summary(
         &self,
-        user_id: Option<UserId>,
+        user: Option<UserIdAndPrincipal>,
         is_public_community: bool,
         community_members: &CommunityMembers,
     ) -> Option<CommunityCanisterChannelSummary> {
+        let user_id = user.map(|u| u.user_id);
         let chat = &self.chat;
         let is_community_member = user_id.is_some_and(|user_id| community_members.contains(&user_id));
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
@@ -282,7 +284,7 @@ impl Channel {
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
 
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
-        let latest_message = if can_view_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
+        let latest_message = if can_view_latest_message { main_events_reader.latest_message_event(user) } else { None };
         let events_ttl = chat.events.get_events_time_to_live();
 
         let latest_message_sender_display_name = latest_message
@@ -358,11 +360,12 @@ impl Channel {
 
     pub fn summary_updates(
         &self,
-        user_id: Option<UserId>,
+        user: Option<UserIdAndPrincipal>,
         since: TimestampMillis,
         is_public_community: bool,
         community_members: &CommunityMembers,
     ) -> ChannelUpdates {
+        let user_id = user.map(|u| u.user_id);
         let chat = &self.chat;
         let is_community_member = user_id.is_some_and(|user_id| community_members.contains(&user_id));
         let member = user_id.and_then(|id| chat.members.get(&id));
@@ -371,13 +374,13 @@ impl Channel {
             && m.date_added() > since
         {
             return ChannelUpdates::Added(
-                self.summary(user_id, is_public_community, community_members)
+                self.summary(user, is_public_community, community_members)
                     .expect("Channel should be accessible"),
             );
         }
 
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
-        let updates = chat.summary_updates(since, user_id);
+        let updates = chat.summary_updates(since, user);
 
         let latest_message = can_view_latest_message.then_some(updates.latest_message).flatten();
 

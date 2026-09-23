@@ -6,6 +6,8 @@ export interface Ballot { 'vote' : number, 'voting_power' : bigint }
 export type Command = { 'RegisterVote' : RegisterVote };
 export type Command_1 = { 'Error' : GovernanceError } |
   { 'RegisterVote' : {} };
+export type DissolveState = { 'DissolveDelaySeconds' : bigint } |
+  { 'WhenDissolvedTimestampSeconds' : bigint };
 export type FunctionType = { 'NativeNervousSystemFunction' : {} } |
   { 'GenericNervousSystemFunction' : GenericNervousSystemFunction };
 export interface GenericNervousSystemFunction {
@@ -22,6 +24,12 @@ export interface ListNervousSystemFunctionsResponse {
   'reserved_ids' : BigUint64Array | bigint[],
   'functions' : Array<NervousSystemFunction>,
 }
+export interface ListNeurons {
+  'of_principal' : [] | [Principal],
+  'limit' : number,
+  'start_page_at' : [] | [NeuronId],
+}
+export interface ListNeuronsResponse { 'neurons' : Array<Neuron> }
 export interface ListProposals {
   'include_reward_status' : Int32Array | number[],
   'before_proposal' : [] | [ProposalId],
@@ -35,6 +43,11 @@ export interface ManageNeuron {
   'command' : [] | [Command],
 }
 export interface ManageNeuronResponse { 'command' : [] | [Command_1] }
+export interface Neuron {
+  'id' : [] | [NeuronId],
+  'dissolve_state' : [] | [DissolveState],
+}
+export interface NeuronId { 'id' : Uint8Array | number[] }
 export interface NervousSystemFunction {
   'id' : bigint,
   'name' : string,
@@ -62,6 +75,7 @@ export interface _SERVICE {
     [],
     ListNervousSystemFunctionsResponse
   >,
+  'list_neurons' : ActorMethod<[ListNeurons], ListNeuronsResponse>,
   'list_proposals' : ActorMethod<[ListProposals], ListProposalsResponse>,
   'manage_neuron' : ActorMethod<[ManageNeuron], ManageNeuronResponse>,
 }

@@ -279,6 +279,7 @@ impl RuntimeState {
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, i)| (*c, *i)).collect(),
             multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
+            call_push_enabled: self.data.call_push_enabled,
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
@@ -458,9 +459,17 @@ struct Data {
     // Set by proposal and fanned out to the LocalUserIndexes. Not acted on yet
     #[serde(default)]
     pub multi_user_canisters_enabled: bool,
+    // The native call push kill switch (#9456). Set by a platform operator and fanned out to the
+    // LocalUserIndexes, including any added later
+    #[serde(default)]
+    pub call_push_enabled: bool,
     // Set by proposal and fanned out to the LocalUserIndexes, including any added later
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
+    // Set once the cycles of users deleted before cycles were refunded on deletion have been
+    // queued for refunding, so that the one-off run in `post_upgrade` only happens once
+    #[serde(default)]
+    pub deleted_user_cycles_refund_queued: bool,
 }
 
 impl Data {
@@ -566,7 +575,9 @@ impl Data {
             blocked_attempt_notice_throttle: HashMap::new(),
             multi_user_canisters: HashMap::new(),
             multi_user_canisters_enabled: false,
+            call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            deleted_user_cycles_refund_queued: false,
         };
 
         // Register the ProposalsBot
@@ -691,7 +702,9 @@ impl Default for Data {
             blocked_attempt_notice_throttle: HashMap::new(),
             multi_user_canisters: HashMap::new(),
             multi_user_canisters_enabled: false,
+            call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            deleted_user_cycles_refund_queued: false,
         }
     }
 }
@@ -723,6 +736,7 @@ pub struct Metrics {
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub multi_user_canisters: Vec<(CanisterId, CanisterId)>,
     pub multi_user_canisters_enabled: bool,
+    pub call_push_enabled: bool,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,

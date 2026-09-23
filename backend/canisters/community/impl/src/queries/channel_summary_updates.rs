@@ -23,7 +23,12 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Re
     }
 
     Ok(
-        match channel.summary_updates(user_id, args.updates_since, state.data.is_public.value, &state.data.members) {
+        match channel.summary_updates(
+            user_id.map(|u| state.member_user(u)),
+            args.updates_since,
+            state.data.is_public.value,
+            &state.data.members,
+        ) {
             ChannelUpdates::Added(s) => SuccessAdded(s),
             ChannelUpdates::Updated(s) => SuccessUpdated(s),
         },

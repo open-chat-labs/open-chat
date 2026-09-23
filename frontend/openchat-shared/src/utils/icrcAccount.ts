@@ -1,4 +1,11 @@
 import { Principal } from "@icp-sdk/core/principal";
+import {
+    indexedUserId,
+    isCanisterId,
+    MAX_USER_INDEX,
+    userCanisterId,
+    userIndexWithinCanister,
+} from "./userId";
 
 const BASE32_ALPHABET = "abcdefghijklmnopqrstuvwxyz234567";
 const MAX_SUBACCOUNT_HEX_LENGTH = 64;
@@ -123,17 +130,8 @@ function hexStringToUint8Array(hex: string): Uint8Array {
     return bytes;
 }
 
-// The IC's canister ids are a big-endian u64 followed by two class tag bytes, so they are always
-// exactly this long and always end in exactly these bytes.
-const CANISTER_ID_LENGTH = 10;
-const CANISTER_ID_TAG = [0x01, 0x01];
-// Set in a UserId's final byte to mark it as carrying the user's index within their canister. No
-// class tag the IC defines has the top bit set, so a byte which does cannot be one.
-const INDEXED_TAG = 0x80;
 // Every ICRC-1 subaccount is exactly this long, the index occupying the final two bytes.
 const SUBACCOUNT_LENGTH = 32;
-// The largest index the seven spare bits of a UserId's final byte, plus the byte before it, hold.
-const MAX_USER_INDEX = (1 << 15) - 1;
 
 // The ledger account holding a user's funds, which is also the account their canister spends as
 // when pulling from an external wallet via ICRC-2. Mirrors `impl From<UserId> for Account` in
@@ -142,40 +140,18 @@ const MAX_USER_INDEX = (1 << 15) - 1;
 // canister goes in the subaccount. Index 0 maps to no subaccount so that users who predate indexing
 // keep the address they already have.
 export function userIdToIcrcAccount(userId: string): IcrcAccount {
-    const bytes = Principal.fromText(userId).toUint8Array();
-    const index = userIndex(bytes);
+    const owner = userCanisterId(userId);
+    const index = userIndexWithinCanister(userId);
 
     if (index === 0) {
-        return { owner: Principal.fromUint8Array(canisterIdBytes(bytes)) };
+        return { owner };
     }
 
     const subaccount = new Uint8Array(SUBACCOUNT_LENGTH);
     subaccount[SUBACCOUNT_LENGTH - 2] = (index >> 8) & 0xff;
     subaccount[SUBACCOUNT_LENGTH - 1] = index & 0xff;
 
-    return { owner: Principal.fromUint8Array(canisterIdBytes(bytes)), subaccount };
-}
-
-// Rebuilding the canister id means restoring the two tag bytes the index displaced.
-function canisterIdBytes(bytes: Uint8Array): Uint8Array {
-    if (!isIndexed(bytes)) return bytes;
-
-    const canisterId = new Uint8Array(CANISTER_ID_LENGTH);
-    canisterId.set(bytes.subarray(0, 8));
-    canisterId.set(CANISTER_ID_TAG, 8);
-    return canisterId;
-}
-
-function userIndex(bytes: Uint8Array): number {
-    if (!isIndexed(bytes)) return 0;
-
-    return bytes[8] | ((bytes[9] & ~INDEXED_TAG) << 8);
-}
-
-function isIndexed(bytes: Uint8Array): boolean {
-    return (
-        bytes.length === CANISTER_ID_LENGTH && (bytes[CANISTER_ID_LENGTH - 1] & INDEXED_TAG) !== 0
-    );
+    return { owner, subaccount };
 }
 
 // The user whose wallet this ledger account is - the inverse of `userIdToIcrcAccount`, mirroring
@@ -205,26 +181,4 @@ function subaccountIndex(subaccount: Uint8Array | undefined): number | undefined
     if (!subaccount.subarray(0, SUBACCOUNT_LENGTH - 2).every((b) => b === 0)) return undefined;
 
     return (subaccount[SUBACCOUNT_LENGTH - 2] << 8) | subaccount[SUBACCOUNT_LENGTH - 1];
-}
-
-// Mirrors `UserId::new_indexed`: the index takes the place of the canister id's two trailing tag
-// bytes, which is what `canisterIdBytes` reverses.
-function indexedUserId(canisterId: Principal, index: number): string {
-    const bytes = new Uint8Array(CANISTER_ID_LENGTH);
-    bytes.set(canisterId.toUint8Array().subarray(0, 8));
-    bytes[8] = index & 0xff;
-    bytes[9] = INDEXED_TAG | (index >> 8);
-    return Principal.fromUint8Array(bytes).toText();
-}
-
-// Both the length and the trailing tag bytes, because `indexedUserId` rebuilds an id from the
-// leading 8 alone. Anything else of canister id length would pass a length check and then come
-// back as some other canister entirely.
-function isCanisterId(principal: Principal): boolean {
-    const bytes = principal.toUint8Array();
-    return (
-        bytes.length === CANISTER_ID_LENGTH &&
-        bytes[8] === CANISTER_ID_TAG[0] &&
-        bytes[9] === CANISTER_ID_TAG[1]
-    );
 }

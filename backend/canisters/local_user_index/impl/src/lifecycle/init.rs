@@ -38,6 +38,7 @@ fn init(args: Args) {
         args.moderation_referral_config,
         args.media_scan_config,
         args.multi_user_canisters_enabled,
+        args.call_push_enabled,
         args.test_mode,
     );
 

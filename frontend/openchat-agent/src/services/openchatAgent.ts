@@ -134,6 +134,7 @@ import type {
     RehydratedMessagePreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
+    ManageNeuronResponse,
     RegisterUserResponse,
     RegistryValue,
     RemoveHotGroupExclusionResponse,
@@ -224,6 +225,7 @@ import {
     ChatMap,
     CommonResponses,
     DestinationInvalidError,
+    ErrorCode,
     Lazy,
     MAX_ACTIVITY_EVENTS,
     ONE_MINUTE_MILLIS,
@@ -234,6 +236,7 @@ import {
     chatIdentifiersEqual,
     emptyEventsResponse,
     isError,
+    isMultiUserCanisterUser,
     isSuccessfulEventsResponse,
     mergeEventStreamResponses,
     messageContextToString,
@@ -330,6 +333,8 @@ type ResolvedMessagePreviews = {
 function emptyResolvedMessagePreviews(): ResolvedMessagePreviews {
     return { messages: new AsyncMessageContextMap(), previews: new Map() };
 }
+
+const NNS_ERROR_TYPE_NEURON_ALREADY_VOTED = 19;
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -3359,18 +3364,126 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.unarchiveChat(chatId);
     }
 
-    registerProposalVote(
+    async registerProposalVote(
         chatId: MultiUserChatIdentifier,
         messageIndex: number,
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        if (offline()) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return CommonResponses.offline();
+
+        // A User canister votes with the neurons hot-keyed to it. A MultiUser canister can't, since
+        // its users share its principal, so for them vote with the neurons hot-keyed to their own
+        // principal from here, then record the vote against the message.
+        if (isMultiUserCanisterUser(this._userClient.userId)) {
+            const voteResponse = await this.voteWithNeurons(
+                governanceCanisterId,
+                proposalId,
+                isNns,
+                adopt,
+            );
+            if (voteResponse.kind !== "success") return voteResponse;
+
+            switch (chatId.kind) {
+                case "group_chat":
+                    return this._groupClient.registerProposalVoteV2(
+                        chatId.groupId,
+                        messageIndex,
+                        adopt,
+                    );
+                case "channel":
+                    return this._communityClient.registerProposalVoteV2(
+                        chatId,
+                        messageIndex,
+                        adopt,
+                    );
+            }
+        }
 
         switch (chatId.kind) {
             case "group_chat":
                 return this._groupClient.registerProposalVote(chatId.groupId, messageIndex, adopt);
             case "channel":
                 return this._communityClient.registerProposalVote(chatId, messageIndex, adopt);
+        }
+    }
+
+    // Lists the neurons the user's principal controls or is hot-keyed to, then votes with each of
+    // them in parallel. The vote counts as cast if any neuron's vote is accepted, or if any neuron
+    // had already voted (eg. via the NNS dapp), so that the vote still gets recorded in OpenChat.
+    // Other neurons will typically have failed because they are not eligible for this proposal.
+    private async voteWithNeurons(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean,
+        adopt: boolean,
+    ): Promise<RegisterProposalVoteResponse> {
+        let votes: PromiseSettledResult<ManageNeuronResponse>[];
+        if (isNns) {
+            const client = new NnsGovernanceClient(
+                this.identity,
+                this._agent,
+                governanceCanisterId,
+            );
+            const neuronIds = await client.listNeurons();
+            if (neuronIds.length === 0) return noEligibleNeurons();
+            votes = await Promise.allSettled(
+                neuronIds.map((id) => client.registerVote(id, proposalId, adopt)),
+            );
+        } else {
+            const client = new SnsGovernanceClient(
+                this.identity,
+                this._agent,
+                governanceCanisterId,
+            );
+            const neuronIds = await client.listNeurons();
+            if (neuronIds.length === 0) return noEligibleNeurons();
+            votes = await Promise.allSettled(
+                neuronIds.map((id) => client.registerVote(id, proposalId, adopt)),
+            );
+        }
+
+        const outcomes: ManageNeuronResponse[] = votes.map((v) =>
+            v.status === "fulfilled"
+                ? v.value
+                : { kind: "error", type: -1, message: String(v.reason) },
+        );
+
+        if (outcomes.some((o) => o.kind === "success" || isAlreadyVoted(o, isNns))) {
+            return CommonResponses.success();
+        }
+
+        this.config.logger.error("Failed to vote with any neuron", outcomes);
+        const first = outcomes.find((o) => o.kind === "error");
+        return {
+            kind: "error",
+            code:
+                first !== undefined && isNotAcceptingVotes(first)
+                    ? ErrorCode.ProposalNotAcceptingVotes
+                    : ErrorCode.Unknown,
+            message: first?.kind === "error" ? first.message : undefined,
+        };
+
+        function noEligibleNeurons(): RegisterProposalVoteResponse {
+            return { kind: "error", code: ErrorCode.NoEligibleNeurons, message: undefined };
+        }
+
+        // NNS governance has a dedicated error type for this, SNS governance reports it as a
+        // precondition failure, so fall back to the message both of them use
+        function isAlreadyVoted(outcome: ManageNeuronResponse, isNns: boolean): boolean {
+            if (outcome.kind !== "error") return false;
+            if (isNns && outcome.type === NNS_ERROR_TYPE_NEURON_ALREADY_VOTED) return true;
+            return /already voted/i.test(outcome.message);
+        }
+
+        // Best effort: both canisters report a closed proposal as a precondition failure whose
+        // message mentions the deadline
+        function isNotAcceptingVotes(outcome: ManageNeuronResponse): boolean {
+            return (
+                outcome.kind === "error" && /deadline|not accepting votes/i.test(outcome.message)
+            );
         }
     }
 
@@ -4966,6 +5079,14 @@ export class OpenChatAgent extends EventTarget {
 
     dailyPuzzleSetEnabled(enabled: boolean): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().setEnabled(enabled);
+    }
+
+    callPushEnabled(): Promise<boolean> {
+        return this._userIndexClient.callPushEnabled();
+    }
+
+    setCallPushEnabled(enabled: boolean): Promise<Success | OCError> {
+        return this._userIndexClient.setCallPushEnabled(enabled);
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);

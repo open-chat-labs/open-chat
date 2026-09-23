@@ -11,6 +11,7 @@ mod account_linking_tests;
 mod airdrop_bot_tests;
 mod batched_summary_and_event_tests;
 mod bot_tests;
+mod call_push_tests;
 mod change_group_role_tests;
 mod chit_tests;
 mod client;

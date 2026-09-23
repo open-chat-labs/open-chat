@@ -340,7 +340,8 @@ impl RuntimeState {
     }
 
     // Records a payment for streak insurance by the user at `user_index`, as the User canister's
-    // `mark_streak_insurance_payment`
+    // `mark_streak_insurance_payment`. Unused until users can pay for it from their own wallets.
+    #[expect(dead_code)]
     pub fn mark_streak_insurance_payment(&mut self, user_index: u16, payment: UserCanisterStreakInsurancePayment) {
         if self
             .data

@@ -197,11 +197,7 @@ fn is_permitted_to_join(
                 if !member.lapsed().value && !channel_member.lapsed().value {
                     return Err(AlreadyInChannel(Box::new(
                         channel
-                            .summary(
-                                Some(channel_member.user_id()),
-                                state.data.is_public.value,
-                                &state.data.members,
-                            )
+                            .summary(Some(member.user()), state.data.is_public.value, &state.data.members)
                             .unwrap(),
                     )));
                 }
@@ -219,7 +215,7 @@ fn is_permitted_to_join(
                 (
                     g.clone(),
                     CheckGateArgs {
-                        user_id: member.user_id,
+                        user: member.user(),
                         diamond_membership_expires_at,
                         this_canister: state.env.canister_id(),
                         is_unique_person: unique_person_proof.is_some(),
@@ -261,6 +257,7 @@ fn commit(
     };
 
     let user_id = member.user_id;
+    let user = member.user();
     let Some(channel) = state.data.channels.get_mut(&channel_id) else {
         return Error(OCErrorCode::ChatNotFound.into());
     };
@@ -278,7 +275,7 @@ fn commit(
     ) {
         AddResult::Success(result) => {
             let summary = channel
-                .summary(Some(user_id), state.data.is_public.value, &state.data.members)
+                .summary(Some(user), state.data.is_public.value, &state.data.members)
                 .unwrap();
 
             if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
@@ -314,7 +311,7 @@ fn commit(
             channel.chat.members.update_lapsed(user_id, false, now);
 
             let summary = channel
-                .summary(Some(user_id), state.data.is_public.value, &state.data.members)
+                .summary(Some(user), state.data.is_public.value, &state.data.members)
                 .unwrap();
             AlreadyInChannel(Box::new(summary))
         }
@@ -353,6 +350,7 @@ pub(crate) fn join_channel_unchecked(
 
     let mut result = channel.chat.members.add(
         user_id,
+        None,
         now,
         min_visible_event_index,
         min_visible_message_index,

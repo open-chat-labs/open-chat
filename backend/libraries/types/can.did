@@ -894,6 +894,7 @@ type PendingCryptoTransaction = variant {
     NNS : NnsPendingCryptoTransaction;
     ICRC1 : Icrc1PendingCryptoTransaction;
     ICRC2 : Icrc2PendingCryptoTransaction;
+    Certified : CertifiedPendingCryptoTransaction;
 };
 
 type CompletedCryptoTransaction = variant {
@@ -945,7 +946,6 @@ type NnsFailedCryptoTransaction = record {
 };
 
 type NnsUserOrAccount = variant {
-    User : UserId;
     Account : AccountIdentifier;
 };
 
@@ -996,6 +996,24 @@ type Icrc1FailedCryptoTransaction = record {
     memo : opt Memo;
     created : TimestampNanos;
     error_message : text;
+};
+
+type CertifiedPendingCryptoTransaction = record {
+    ledger : CanisterId;
+    token_symbol : text;
+    amount : nat;
+    to : Icrc1Account;
+    fee : nat;
+    memo : opt Memo;
+    created : TimestampNanos;
+    call : CertifiedCall;
+};
+
+type CertifiedCall = record {
+    arg : blob;
+    ingress_expiry : nat64;
+    nonce : opt blob;
+    certificate : blob;
 };
 
 type Icrc2PendingCryptoTransaction = record {

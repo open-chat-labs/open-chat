@@ -76,7 +76,7 @@ async fn process_swap(
             if let Some(response) = unavailable {
                 if balance > token_info.fee {
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: principal.into(),
+                        principal,
                         timestamp: now,
                         amount: balance - token_info.fee,
                         token_info,
@@ -91,7 +91,7 @@ async fn process_swap(
             if balance < balance_required {
                 if balance > token_info.fee {
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: principal.into(),
+                        principal,
                         timestamp: state.env.now(),
                         amount: balance - token_info.fee,
                         token_info,
@@ -115,20 +115,20 @@ async fn process_swap(
                 if complete {
                     let accepted_by = swap.accepted_by.unwrap().0;
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: swap.offered_by.into(),
+                        principal: swap.offered_by,
                         timestamp: now,
                         token_info: swap.token1.clone(),
                         amount: swap.amount1,
                         swap_id: swap.id,
-                        reason: PendingPaymentReason::Swap(accepted_by.into()),
+                        reason: PendingPaymentReason::Swap(accepted_by),
                     });
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: accepted_by.into(),
+                        principal: accepted_by,
                         timestamp: now,
                         token_info: swap.token0.clone(),
                         amount: swap.amount0,
                         swap_id: swap.id,
-                        reason: PendingPaymentReason::Swap(swap.offered_by.into()),
+                        reason: PendingPaymentReason::Swap(swap.offered_by),
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
@@ -148,7 +148,7 @@ async fn check_for_refund(swap_id: u32, principal: Principal, token_info: TokenI
             if balance > token_info.fee {
                 mutate_state(|state| {
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: principal.into(),
+                        principal,
                         timestamp: state.env.now(),
                         amount: balance - token_info.fee,
                         token_info,

@@ -1,5 +1,6 @@
 use crate::updates::submit_proposal::{LinkedNnsProposal, submit_proposal};
-use crate::{UserIdAndPayment, mutate_state};
+use crate::{UserAndPayment, mutate_state};
+use candid::Principal;
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
@@ -9,7 +10,7 @@ use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{Empty, ManageNeuron, get_proposal_response, manage_neuron_response};
 use tracing::error;
-use types::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis, UserId};
+use types::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis, UserId, UserIdAndPrincipal};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -26,13 +27,18 @@ pub struct SubmitProposalJob {
     pub governance_canister_id: CanisterId,
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
-    pub user_id_and_payment: Option<UserIdAndPayment>,
+    #[serde(alias = "user_id_and_payment")]
+    pub user_and_payment: Option<UserAndPayment>,
     pub linked_nns_proposal: Option<LinkedNnsProposal>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProcessUserRefundJob {
     pub user_id: UserId,
+    // Anonymous for refunds queued before the principal was recorded, which is fine as those users
+    // are all alone in their canisters, so are refunded at their user id
+    #[serde(default = "Principal::anonymous")]
+    pub principal: Principal,
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
     pub fee: u128,
@@ -90,7 +96,7 @@ impl Job for SubmitProposalJob {
     fn execute(self) {
         ic_cdk::futures::spawn_migratory(async move {
             submit_proposal(
-                self.user_id_and_payment,
+                self.user_and_payment,
                 self.governance_canister_id,
                 self.neuron_id,
                 self.proposal,
@@ -105,7 +111,7 @@ impl Job for ProcessUserRefundJob {
     fn execute(self) {
         let transfer_args = TransferArg {
             from_subaccount: None,
-            to: self.user_id.into(),
+            to: UserIdAndPrincipal::new(self.user_id, self.principal).into(),
             fee: Some(self.fee.into()),
             created_at_time: None,
             memo: None,

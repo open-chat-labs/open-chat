@@ -70,6 +70,7 @@ fn comprehensive(#[strategy(pvec(operation_strategy(), 100..5_000))] ops: Vec<Op
 
     let mut members = GroupMembers::new(
         user_id(0),
+        None,
         UserType::User,
         MultiUserChat::Group(Principal::anonymous().into()),
         0,
@@ -89,6 +90,7 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
         Operation::Add { user_id } => {
             members.add(
                 user_id,
+                None,
                 timestamp,
                 EventIndex::default(),
                 MessageIndex::default(),

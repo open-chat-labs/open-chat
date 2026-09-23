@@ -1224,47 +1224,42 @@ export type DirectChatCreated = Static<typeof DirectChatCreated>;
 export const DirectChatCreated = /* @__PURE__ */ Type.Record(Type.String(), Type.Never());
 
 export type UserOrAccount = Static<typeof UserOrAccount>;
-export const UserOrAccount = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        User: UserId,
-    }),
-    Type.Object({
-        Account: Type.Tuple([
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-            Type.Number(),
-        ]),
-    }),
-]);
+export const UserOrAccount = /* @__PURE__ */ Type.Object({
+    Account: Type.Tuple([
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+        Type.Number(),
+    ]),
+});
 
 export type VerifiedCredentialGateArgs = Static<typeof VerifiedCredentialGateArgs>;
 export const VerifiedCredentialGateArgs = /* @__PURE__ */ Type.Object({
@@ -1494,6 +1489,12 @@ export const SuspensionDetails = /* @__PURE__ */ Type.Object({
     suspended_by: UserId,
 });
 
+export type CallDismissalKind = Static<typeof CallDismissalKind>;
+export const CallDismissalKind = /* @__PURE__ */ Type.Union([
+    Type.Literal("Ended"),
+    Type.Literal("AnsweredElsewhere"),
+]);
+
 export type TSBytes = Static<typeof TSBytes>;
 export const TSBytes = /* @__PURE__ */ Type.Union([Type.Uint8Array(), Type.Array(Type.Number())]);
 
@@ -1515,6 +1516,16 @@ export const OptionUpdateString = /* @__PURE__ */ Type.Union(
     ],
     { default: "NoChange" },
 );
+
+export type CallFacts = Static<typeof CallFacts>;
+export const CallFacts = /* @__PURE__ */ Type.Object({
+    id: MessageId,
+    ct: VideoCallType,
+    ao: Type.Optional(Type.Boolean()),
+    st: Type.BigInt(),
+    pb: Type.Boolean(),
+    mc: Type.Number(),
+});
 
 export type DecimalParam = Static<typeof DecimalParam>;
 export const DecimalParam = /* @__PURE__ */ Type.Object({
@@ -2323,6 +2334,11 @@ export const UserIndexAuthorityReportTokenArgs = /* @__PURE__ */ Type.Object({
     ooh_call_acknowledged: Type.Boolean(),
 });
 
+export type UserIndexSetCallPushEnabledArgs = Static<typeof UserIndexSetCallPushEnabledArgs>;
+export const UserIndexSetCallPushEnabledArgs = /* @__PURE__ */ Type.Object({
+    enabled: Type.Boolean(),
+});
+
 export type UserIndexPayForDiamondMembershipSuccessResult = Static<
     typeof UserIndexPayForDiamondMembershipSuccessResult
 >;
@@ -2497,6 +2513,11 @@ export const UserIndexClearAuthorityReportAttemptAuthorityReportFailure =
             }),
         }),
     ]);
+
+export type UserIndexCallPushEnabledResponse = Static<typeof UserIndexCallPushEnabledResponse>;
+export const UserIndexCallPushEnabledResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Boolean(),
+});
 
 export type UserIndexSubmitProofOfUniquePersonhoodResponse = Static<
     typeof UserIndexSubmitProofOfUniquePersonhoodResponse
@@ -5287,6 +5308,14 @@ export const DailyPuzzleResult = /* @__PURE__ */ Type.Object({
     solved_at: Type.BigInt(),
 });
 
+export type CertifiedCall = Static<typeof CertifiedCall>;
+export const CertifiedCall = /* @__PURE__ */ Type.Object({
+    arg: TSBytes,
+    ingress_expiry: Type.BigInt(),
+    nonce: Type.Optional(TSBytes),
+    certificate: TSBytes,
+});
+
 export type ChitEventType = Static<typeof ChitEventType>;
 export const ChitEventType = /* @__PURE__ */ Type.Union([
     Type.Literal("DailyClaim"),
@@ -5453,6 +5482,15 @@ export const GroupRulesChanged = /* @__PURE__ */ Type.Object({
     enabled: Type.Boolean(),
     prev_enabled: Type.Boolean(),
     changed_by: UserId,
+});
+
+export type GroupCallDismissedNotification = Static<typeof GroupCallDismissedNotification>;
+export const GroupCallDismissedNotification = /* @__PURE__ */ Type.Object({
+    c: ChatId,
+    id: MessageId,
+    k: CallDismissalKind,
+    pb: Type.Boolean(),
+    mc: Type.Number(),
 });
 
 export type GroupCreated = Static<typeof GroupCreated>;
@@ -5726,6 +5764,7 @@ export const DirectMessageNotification = /* @__PURE__ */ Type.Object({
     fn: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
+    vc: Type.Optional(CallFacts),
 });
 
 export type CompletedCryptoTransactionNNS = Static<typeof CompletedCryptoTransactionNNS>;
@@ -6150,6 +6189,18 @@ export const MarkVideoCallAsEndedArgs = /* @__PURE__ */ Type.Object({
     chat: Chat,
 });
 
+export type PendingCryptoTransactionCertified = Static<typeof PendingCryptoTransactionCertified>;
+export const PendingCryptoTransactionCertified = /* @__PURE__ */ Type.Object({
+    ledger: TSPrincipal,
+    token_symbol: Type.String(),
+    amount: Type.BigInt(),
+    to: AccountICRC1,
+    fee: Type.BigInt(),
+    memo: Type.Optional(TSBytes),
+    created: Type.BigInt(),
+    call: CertifiedCall,
+});
+
 export type SelectedGroupUpdates = Static<typeof SelectedGroupUpdates>;
 export const SelectedGroupUpdates = /* @__PURE__ */ Type.Object({
     timestamp: Type.BigInt(),
@@ -6241,6 +6292,13 @@ export const ReplyContext = /* @__PURE__ */ Type.Object({
     event_index: EventIndex,
 });
 
+export type DirectCallDismissedNotification = Static<typeof DirectCallDismissedNotification>;
+export const DirectCallDismissedNotification = /* @__PURE__ */ Type.Object({
+    u: UserId,
+    id: MessageId,
+    k: CallDismissalKind,
+});
+
 export type EncryptedContent = Static<typeof EncryptedContent>;
 export const EncryptedContent = /* @__PURE__ */ Type.Object({
     content_type: EncryptedMessageContentType,
@@ -6298,6 +6356,7 @@ export const ChannelMessageNotification = /* @__PURE__ */ Type.Object({
     ca: Type.Optional(Type.BigInt()),
     cha: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
+    vc: Type.Optional(CallFacts),
 });
 
 export type GroupMembershipUpdates = Static<typeof GroupMembershipUpdates>;
@@ -6441,6 +6500,7 @@ export const GroupMessageNotification = /* @__PURE__ */ Type.Object({
     fn: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
+    vc: Type.Optional(CallFacts),
 });
 
 export type OptionUpdateDocument = Static<typeof OptionUpdateDocument>;
@@ -7895,6 +7955,9 @@ export const PendingCryptoTransaction = /* @__PURE__ */ Type.Union([
     Type.Object({
         ICRC2: PendingCryptoTransactionICRC2,
     }),
+    Type.Object({
+        Certified: PendingCryptoTransactionCertified,
+    }),
 ]);
 
 export type BotActionScope = Static<typeof BotActionScope>;
@@ -7938,6 +8001,12 @@ export const UserNotificationPayload = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         ct: ChannelMessageTipped,
+    }),
+    Type.Object({
+        dcd: DirectCallDismissedNotification,
+    }),
+    Type.Object({
+        gcd: GroupCallDismissedNotification,
     }),
 ]);
 

@@ -9,7 +9,7 @@ use community_canister::start_video_call_v2::*;
 use constants::HOUR_IN_MS;
 use oc_error_codes::OCErrorCode;
 use types::{
-    CallKind, Caller, ChannelMessageNotification, ChannelUserNotificationPayload, CommunityId, OCResult, UserId,
+    CallFacts, CallKind, Caller, ChannelMessageNotification, ChannelUserNotificationPayload, CommunityId, OCResult, UserId,
     VideoCallPresence, VideoCallType,
 };
 
@@ -105,6 +105,15 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         channel_name: channel.chat.name.value.clone(),
         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
         channel_avatar_id,
+        // a channel never rings; the facts are still sent so the policy stays in one place
+        call: Some(CallFacts {
+            message_id: args.message_id,
+            call_type: call_kind.call_type(),
+            audio_only: call_kind.audio_only(),
+            started: result.message_event.timestamp,
+            is_public: channel.chat.is_public.value,
+            member_count: channel.chat.members.len(),
+        }),
     });
 
     state.push_notification(Some(sender), users_to_notify, notification);

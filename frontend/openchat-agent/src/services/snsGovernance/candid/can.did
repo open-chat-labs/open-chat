@@ -12,6 +12,10 @@ type Command_1 = variant {
   Error : GovernanceError;
   RegisterVote : record {};
 };
+type DissolveState = variant {
+  DissolveDelaySeconds : nat64;
+  WhenDissolvedTimestampSeconds : nat64;
+};
 type FunctionType = variant {
   NativeNervousSystemFunction : record {};
   GenericNervousSystemFunction : GenericNervousSystemFunction;
@@ -27,6 +31,12 @@ type ListNervousSystemFunctionsResponse = record {
   reserved_ids : vec nat64;
   functions : vec NervousSystemFunction;
 };
+type ListNeurons = record {
+  of_principal : opt principal;
+  limit : nat32;
+  start_page_at : opt NeuronId;
+};
+type ListNeuronsResponse = record { neurons : vec Neuron };
 type ListProposals = record {
   include_reward_status : vec int32;
   before_proposal : opt ProposalId;
@@ -37,6 +47,11 @@ type ListProposals = record {
 type ListProposalsResponse = record { proposals : vec ProposalData };
 type ManageNeuron = record { subaccount : vec nat8; command : opt Command };
 type ManageNeuronResponse = record { command : opt Command_1 };
+type Neuron = record {
+  id : opt NeuronId;
+  dissolve_state : opt DissolveState;
+};
+type NeuronId = record { id : blob };
 type NervousSystemFunction = record {
   id : nat64;
   name : text;
@@ -60,6 +75,7 @@ service : {
   list_nervous_system_functions : () -> (
       ListNervousSystemFunctionsResponse,
   ) query;
+  list_neurons : (ListNeurons) -> (ListNeuronsResponse) query;
   list_proposals : (ListProposals) -> (ListProposalsResponse) query;
   manage_neuron : (ManageNeuron) -> (ManageNeuronResponse);
 }

@@ -132,13 +132,19 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<Su
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
+    let mut content = args.content;
+    // Recorded so the prize can be refunded to the sender's wallet even if they have left
+    if let MessageContentInternal::Prize(prize) = &mut content {
+        prize.principal = state.member_user(caller.agent()).principal;
+    }
+
     let now = state.env.now();
     let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
     let result = state.data.chat.send_message(
         &caller,
         args.thread_root_message_index,
         args.message_id,
-        args.content,
+        content,
         args.replies_to,
         &mentioned,
         args.forwarding,
@@ -221,6 +227,7 @@ fn process_send_message_result(
             file_name: content.notification_file_name(),
             group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
             crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
+            call: None,
         });
         state.push_notification(Some(sender), result.users_to_notify, notification);
 

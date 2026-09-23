@@ -11,11 +11,11 @@ use serde_bytes::ByteBuf;
 use stable_memory_map::StableMemoryMap;
 use std::cell::OnceCell;
 use std::cmp::max;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::Deref;
 use types::{
     BotNotification, EventIndex, GroupMember, GroupRole, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped,
-    UserId, UserType, Version, is_default,
+    UserId, UserIdAndPrincipal, UserType, Version, is_default,
 };
 use utils::timestamped_set::TimestampedSet;
 
@@ -44,9 +44,16 @@ pub struct GroupMembers {
 }
 
 impl GroupMembers {
-    pub fn new(creator_user_id: UserId, user_type: UserType, chat: MultiUserChat, now: TimestampMillis) -> GroupMembers {
+    pub fn new(
+        creator_user_id: UserId,
+        creator_principal: Option<Principal>,
+        user_type: UserType,
+        chat: MultiUserChat,
+        now: TimestampMillis,
+    ) -> GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
+            principal: creator_principal,
             date_added: now,
             role: Timestamped::new(GroupRoleInternal::Owner, now),
             min_visible_event_index: EventIndex::default(),
@@ -97,9 +104,11 @@ impl GroupMembers {
         stable_memory::write_members_from_bytes(chat, members)
     }
 
+    #[expect(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         user_id: UserId,
+        principal: Option<Principal>,
         now: TimestampMillis,
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
@@ -113,6 +122,7 @@ impl GroupMembers {
         } else if self.member_ids.insert(user_id) {
             let member = GroupMemberInternal {
                 user_id,
+                principal,
                 date_added: now,
                 role: Timestamped::new(GroupRoleInternal::Member, 0),
                 min_visible_event_index,
@@ -244,6 +254,11 @@ impl GroupMembers {
             self.members_map.insert(member.user_id, member);
         }
         Some(updated)
+    }
+
+    // Returns the number of members whose principal was set
+    pub fn populate_principals(&mut self, principals: &HashMap<UserId, Principal>) -> u32 {
+        self.members_map.populate_principals(principals)
     }
 
     pub fn is_blocked(&self, user_id: &UserId) -> bool {
@@ -619,6 +634,7 @@ pub struct AddMemberSuccess {
 #[derive(Clone)]
 pub struct GroupMemberInternal {
     user_id: UserId,
+    principal: Option<Principal>,
     date_added: TimestampMillis,
     role: Timestamped<GroupRoleInternal>,
     notifications_muted: Timestamped<bool>,
@@ -639,6 +655,16 @@ pub struct GroupMemberInternal {
 impl GroupMemberInternal {
     pub fn user_id(&self) -> UserId {
         self.user_id
+    }
+
+    pub fn principal(&self) -> Option<Principal> {
+        self.principal
+    }
+
+    // The member and their principal, which is anonymous for a channel member in a community, whose
+    // principal is on their community member instead
+    pub fn user(&self) -> UserIdAndPrincipal {
+        UserIdAndPrincipal::new(self.user_id, self.principal.unwrap_or_else(Principal::anonymous))
     }
 
     pub fn date_added(&self) -> TimestampMillis {
@@ -841,6 +867,8 @@ pub enum VerifyMemberError {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GroupMemberStableStorage {
+    #[serde(rename = "pi", default, skip_serializing_if = "Option::is_none")]
+    principal: Option<Principal>,
     #[serde(rename = "d")]
     date_added: TimestampMillis,
     #[serde(rename = "r", default, skip_serializing_if = "is_default")]
@@ -881,6 +909,7 @@ impl GroupMemberStableStorage {
     pub fn hydrate(self, user_id: UserId) -> GroupMemberInternal {
         GroupMemberInternal {
             user_id,
+            principal: self.principal,
             date_added: self.date_added,
             role: self.role,
             notifications_muted: self.notifications_muted,
@@ -903,6 +932,7 @@ impl GroupMemberStableStorage {
 impl From<GroupMemberInternal> for GroupMemberStableStorage {
     fn from(value: GroupMemberInternal) -> Self {
         GroupMemberStableStorage {
+            principal: value.principal,
             date_added: value.date_added,
             role: value.role,
             notifications_muted: value.notifications_muted,
@@ -943,6 +973,7 @@ mod tests {
         }
 
         let member1 = GroupMemberStableStorage {
+            principal: None,
             date_added: 1732874138000,
             role: Timestamped::default(),
             notifications_muted: default_notifications_muted(),
@@ -979,6 +1010,7 @@ mod tests {
         mentions.add(Some(1.into()), 1.into(), 1u64.into(), 1);
 
         let member = GroupMemberStableStorage {
+            principal: Some(Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap()),
             date_added: 1732874138000,
             role: Timestamped::new(GroupRoleInternal::Owner, 1),
             notifications_muted: Timestamped::new(true, 1),
@@ -999,8 +1031,55 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 167);
+        assert_eq!(member_bytes_len, 184);
 
         let _deserialized: GroupMemberStableStorage = msgpack::deserialize_then_unwrap(&member_bytes);
+    }
+
+    #[test]
+    fn populate_principals() {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_id: UserId = Principal::from_slice(&[1]).into();
+        let principal = Principal::from_slice(&[2]);
+        let mut members = GroupMembers::new(
+            user_id,
+            None,
+            UserType::User,
+            MultiUserChat::Group(Principal::from_slice(&[3]).into()),
+            0,
+        );
+
+        assert_eq!(members.populate_principals(&[(user_id, principal)].into_iter().collect()), 1);
+        assert_eq!(members.get(&user_id).unwrap().principal(), Some(principal));
+        assert_eq!(members.populate_principals(&[(user_id, principal)].into_iter().collect()), 0);
+    }
+
+    #[test]
+    fn principals_removed_when_exporting_members_into_channel() {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let principal = Principal::from_slice(&[1]);
+        let user_id: UserId = Principal::from_slice(&[2]).into();
+        let group = MultiUserChat::Group(Principal::from_slice(&[3]).into());
+        let channel = MultiUserChat::Channel(Principal::from_slice(&[4]).into(), 1u32.into());
+
+        let group_members = GroupMembers::new(user_id, Some(principal), UserType::User, group, 0);
+        assert_eq!(group_members.get(&user_id).unwrap().principal(), Some(principal));
+
+        let bytes = group_members.read_members_as_bytes_from_stable_memory(None);
+        GroupMembers::write_members_from_bytes_to_stable_memory(channel, bytes);
+
+        let mut channel_members = group_members;
+        channel_members.set_chat(channel);
+        assert_eq!(channel_members.get(&user_id).unwrap().principal(), None);
     }
 }

@@ -61,19 +61,12 @@ pub struct ProcessTokenSwapJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyEscrowCanisterOfDepositJob {
     pub swap_id: u32,
-    // `None` only for jobs queued before this field existed; escrow then falls back to the
-    // caller, which is correct for those jobs since they predate indexed UserIds.
-    pub user_id: Option<UserId>,
     pub attempt: u32,
 }
 
 impl NotifyEscrowCanisterOfDepositJob {
-    pub fn run(swap_id: u32, user_id: UserId) {
-        let job = NotifyEscrowCanisterOfDepositJob {
-            swap_id,
-            user_id: Some(user_id),
-            attempt: 0,
-        };
+    pub fn run(swap_id: u32) {
+        let job = NotifyEscrowCanisterOfDepositJob { swap_id, attempt: 0 };
         job.execute();
     }
 }
@@ -267,7 +260,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
                     swap_id: self.swap_id,
-                    deposited_by: self.user_id.map(|u| u.as_principal()),
+                    deposited_by: None,
                 },
             )
             .await
@@ -279,7 +272,6 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                         state.data.timer_jobs.enqueue_job(
                             TimerJob::NotifyEscrowCanisterOfDeposit(Box::new(NotifyEscrowCanisterOfDepositJob {
                                 swap_id: self.swap_id,
-                                user_id: self.user_id,
                                 attempt: self.attempt + 1,
                             })),
                             now + 10 * SECOND_IN_MS,

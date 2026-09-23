@@ -10,8 +10,8 @@ use types::{
     BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId,
     ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload,
     MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
-    TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotificationPayload, UserType, is_default,
+    TimestampMillis, UniquePersonProof, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -45,7 +45,6 @@ pub enum UserIndexEvent {
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     ReferralCodeAdded(ReferralCodeAdded),
-    UserPrincipalUpdated(UpdateUserPrincipalArgs),
     DeleteUser(DeleteUser),
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
@@ -61,6 +60,7 @@ pub enum UserIndexEvent {
     SetModerationReferralConfig(SetModerationReferralConfig),
     SetMediaScanConfig(types::MediaScanConfig),
     SetMultiUserCanistersEnabled(bool),
+    SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
     RefundDeletedUserCycles(Vec<CanisterId>),
 }

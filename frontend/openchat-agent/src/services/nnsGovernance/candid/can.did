@@ -9,7 +9,23 @@ type Command_1 = variant {
   Error : GovernanceError;
   RegisterVote : record {};
 };
+type DissolveState = variant {
+  DissolveDelaySeconds : nat64;
+  WhenDissolvedTimestampSeconds : nat64;
+};
 type GovernanceError = record { error_message : text; error_type : int32 };
+type ListNeurons = record {
+  neuron_ids : vec nat64;
+  include_neurons_readable_by_caller : bool;
+  include_empty_neurons_readable_by_caller : opt bool;
+  include_public_neurons_in_full_neurons : opt bool;
+  page_number : opt nat64;
+  page_size : opt nat64;
+};
+type ListNeuronsResponse = record {
+  full_neurons : vec Neuron;
+  total_pages_available : opt nat64;
+};
 type ListProposalInfo = record {
   include_reward_status : vec int32;
   before_proposal : opt NeuronId;
@@ -23,6 +39,10 @@ type ManageNeuron = record {
   command : opt Command;
 };
 type ManageNeuronResponse = record { command : opt Command_1 };
+type Neuron = record {
+  id : opt NeuronId;
+  dissolve_state : opt DissolveState;
+};
 type NeuronId = record { id : nat64 };
 type ProposalInfo = record {
   id : opt NeuronId;
@@ -37,6 +57,7 @@ type Tally = record {
   timestamp_seconds : nat64;
 };
 service : {
+  list_neurons : (ListNeurons) -> (ListNeuronsResponse) query;
   list_proposals : (ListProposalInfo) -> (ListProposalInfoResponse) query;
   manage_neuron : (ManageNeuron) -> (ManageNeuronResponse);
 }

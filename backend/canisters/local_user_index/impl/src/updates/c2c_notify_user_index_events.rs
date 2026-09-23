@@ -215,12 +215,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::ReferralCodeAdded(ev) => {
             state.data.referral_codes.add(ev.referral_type, ev.code, ev.expiry, **now);
         }
-        UserIndexEvent::UserPrincipalUpdated(update) => {
-            state
-                .data
-                .global_users
-                .update_user_principal(update.old_principal, update.new_principal);
-        }
         UserIndexEvent::BotRemoved(ev) => {
             state.data.bots.remove(&ev.user_id);
         }
@@ -357,6 +351,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::SetMultiUserCanistersEnabled(enabled) => {
             state.data.multi_user_canisters_enabled = enabled;
+        }
+        UserIndexEvent::SetCallPushEnabled(enabled) => {
+            state.data.call_push_enabled = enabled;
         }
         UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
             state.set_daily_puzzle_canister_id(canister_id);

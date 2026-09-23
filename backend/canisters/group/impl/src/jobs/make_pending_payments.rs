@@ -42,8 +42,9 @@ async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNa
         // Note in the case of CHAT this will cause the tokens to be burned
         PaymentRecipient::SnsTreasury => SNS_GOVERNANCE_CANISTER_ID.into(),
         PaymentRecipient::TreasuryCanister => OPENCHAT_TREASURY_CANISTER_ID.into(),
-        PaymentRecipient::Member(user_id) => user_id.into(),
+        PaymentRecipient::Member(user_id) => types::icrc1::Account::legacy_for_user(user_id).into(),
         PaymentRecipient::Account(account) => account,
+        PaymentRecipient::MemberV2(user) => user.into(),
     };
 
     let args = TransferArg {
@@ -58,7 +59,7 @@ async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNa
     match make_transfer(pending_payment.ledger_canister, &args, true).await {
         Ok(Ok(_)) => {
             if matches!(pending_payment.reason, PendingPaymentReason::AccessGate)
-                && let PaymentRecipient::Member(user_id) = pending_payment.recipient
+                && let Some(user_id) = pending_payment.recipient.user_id()
             {
                 mutate_state(|state| {
                     state

@@ -1,5 +1,10 @@
+# `merge_group` runs these checks on the merge queue's temporary branches. Without it a PR added
+# to the queue would sit with its required checks pending and never merge.
 on:
   pull_request:
+    branches:
+      - master
+  merge_group:
     branches:
       - master
 
@@ -56,6 +61,7 @@ jobs:
           name: canbench_result_${{github.job}}
           path: /tmp/canbench_result_${{ github.job }}
 
+      # Empty on a merge_group run; the results comment is only posted for pull_request runs
       - name: Save PR number
         run: |
           echo ${{ github.event.number }} > /tmp/pr_number

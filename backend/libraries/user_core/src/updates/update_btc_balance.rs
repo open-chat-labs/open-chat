@@ -3,7 +3,7 @@ use ckbtc_minter_canister::{CKBTC_MINTER_CANISTER_ID, TESTNET_CKBTC_MINTER_CANIS
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use tracing::error;
-use types::{OCResult, UserId, icrc1};
+use types::{OCResult, UserIdAndPrincipal, icrc1};
 
 // What the ckBTC minter credited the user's account with, and any deposits it couldn't. The
 // caller tells the user of each via the OpenChat bot, records the deposit and awards the
@@ -13,14 +13,16 @@ pub struct BtcBalanceUpdate {
     pub errors: Vec<String>,
 }
 
-pub async fn update_btc_balance(my_user_id: UserId, test_mode: bool) -> OCResult<BtcBalanceUpdate> {
+// Mints ckBTC to the user's wallet for any BTC deposited to its address
+pub async fn update_btc_balance(me: UserIdAndPrincipal, test_mode: bool) -> OCResult<BtcBalanceUpdate> {
+    let wallet = icrc1::Account::from(me);
     let ckbtc_minter_canister_id = if test_mode { TESTNET_CKBTC_MINTER_CANISTER_ID } else { CKBTC_MINTER_CANISTER_ID };
 
     match ckbtc_minter_canister_c2c_client::update_balance(
         ckbtc_minter_canister_id,
         &ckbtc_minter_canister::update_balance::Args {
-            owner: None,
-            subaccount: icrc1::Account::for_user(my_user_id).subaccount,
+            owner: Some(wallet.owner),
+            subaccount: wallet.subaccount,
         },
     )
     .await?

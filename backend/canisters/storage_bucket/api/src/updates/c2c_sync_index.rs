@@ -7,7 +7,6 @@ pub struct Args {
     pub users_added: Vec<Principal>,
     pub users_removed: Vec<Principal>,
     pub accessors_removed: Vec<AccessorId>,
-    pub user_ids_updated: Vec<(Principal, Principal)>,
     pub files_to_remove: Vec<FileId>,
 }
 

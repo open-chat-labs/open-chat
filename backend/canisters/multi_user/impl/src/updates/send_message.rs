@@ -388,6 +388,7 @@ pub(crate) fn receive_message(
                 file_name: content.notification_file_name(),
                 sender_avatar_id: sender_details.avatar_id,
                 crypto_transfer: content.notification_crypto_transfer_details(&[]),
+                call: None,
             }))
         };
 

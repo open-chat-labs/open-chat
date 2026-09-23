@@ -199,7 +199,7 @@ fn paying_for_diamond_membership_from_own_account_is_rejected() {
             ledger: ICP_LEDGER_CANISTER_ID,
             expected_price_e8s: fees.icp_price_e8s(duration),
             recurring: false,
-            from_account: Some(icrc1::Account::for_user(user.user_id)),
+            from_account: Some(icrc1::Account::legacy_for_user(user.user_id)),
         },
     );
 

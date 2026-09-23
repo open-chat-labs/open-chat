@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use chat_events::{DeleteUndeleteMessagesArgs, Reader};
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
-use types::{EventIndex, OCResult};
+use types::{EventIndex, OCResult, UserIdAndPrincipal};
 use user_canister::UserCanisterEvent;
 use user_canister::undelete_messages::{Response::*, *};
 
@@ -22,8 +22,9 @@ fn undelete_messages(args: Args) -> Response {
 fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     state.data.user.verify_not_suspended()?;
 
-    let chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
     let my_user_id = state.env.canister_id().into();
+    let me = UserIdAndPrincipal::new(my_user_id, state.data.user.principal);
+    let chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
     let now = state.env.now();
 
     let delete_message_results = chat.undelete_messages(DeleteUndeleteMessagesArgs {
@@ -46,7 +47,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
 
     let messages: Vec<_> = deleted
         .iter()
-        .filter_map(|&message_id| events_reader.message(message_id.into(), Some(my_user_id)))
+        .filter_map(|&message_id| events_reader.message(message_id.into(), Some(me)))
         .collect();
 
     HardDeleteMessageContentJob::cancel(

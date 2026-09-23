@@ -18,9 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Pass the target `user_id` in calls to User canisters ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
+- Pass the target `user_id` in calls to User canisters ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 
 ### Fixed
 
@@ -40,20 +40,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add `set_group_moderation_flags` endpoint and filter group search by moderation flags ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
+- Add `c2c_csam_detected` endpoint forwarding CSAM detections from groups/communities to user_index ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
 - Forward the CSAM assertion flag on reports so quarantine and deletion apply immediately (the suspension waits for the human verdict) ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - `c2c_moderation_referral` - forwards moderation referrals from group/community canisters to the user_index ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
-- Add `c2c_csam_detected` endpoint forwarding CSAM detections from groups/communities to user_index ([#9093](https://github.com/open-chat-labs/open-chat/pull/9093))
-- Add `set_group_moderation_flags` endpoint and filter group search by moderation flags ([#9089](https://github.com/open-chat-labs/open-chat/pull/9089))
 
 ### Changed
 
-- Forward blob references with CSAM detections so the evidence vault can quarantine media ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 - Sync community moderation flags to the community canisters ([#9088](https://github.com/open-chat-labs/open-chat/pull/9088))
+- Forward blob references with CSAM detections so the evidence vault can quarantine media ([#9119](https://github.com/open-chat-labs/open-chat/pull/9119))
 
 ### Fixed
 
-- Defer the moderation-flag back-fill to a timer: pushing to the local-index event queue makes an inter-canister call, which is forbidden during post-upgrade and failed the 2.0.2017 upgrade ([#9155](https://github.com/open-chat-labs/open-chat/pull/9155))
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
+- Defer the moderation-flag back-fill to a timer: pushing to the local-index event queue makes an inter-canister call, which is forbidden during post-upgrade and failed the 2.0.2017 upgrade ([#9155](https://github.com/open-chat-labs/open-chat/pull/9155))
 
 ## [[2.0.1932](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1932-group_index)] - 2025-12-04
 
@@ -749,7 +749,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added `events_ttl` field to `c2c_create_group` args for setting the 'time to live' for disappearing messages ([#3029](https://github.com/open-chat-labs/open-chat/pull/3029))
 - Added `set_service_principals` for setting which principals have admin control ([#3038](https://github.com/open-chat-labs/open-chat/pull/3038))
 
-# Changed
+### Changed
 
 - Use `MemoryManager` so that we can use stable memory at run time ([#3040](https://github.com/open-chat-labs/open-chat/pull/3040))
 

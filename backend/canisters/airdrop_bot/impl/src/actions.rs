@@ -132,7 +132,7 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), Option<Mi
         )
     });
 
-    let to = Account::for_user(action.recipient);
+    let to = Account::legacy_for_user(action.recipient);
     let memo = match action.airdrop_type {
         AirdropType::Main(_) => MEMO_CHIT_FOR_CHAT_AIRDROP,
         AirdropType::Lottery(_) => MEMO_CHIT_FOR_CHAT_LOTTERY,

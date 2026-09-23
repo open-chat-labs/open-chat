@@ -45,7 +45,7 @@ pub use c2c_notify_achievement::c2c_notify_achievement;
 pub use c2c_pay_for_premium_item::c2c_pay_for_premium_item;
 pub use c2c_set_user_suspended::c2c_set_user_suspended;
 pub use c2c_uninstall_bot::c2c_uninstall_bot;
-pub use join_video_call::join_video_call;
+pub use join_video_call::{answered_dismissal, join_video_call};
 pub use manage_favourite_chats::manage_favourite_chats;
 pub use mute_notifications::toggle_mute_notifications;
 pub use pin_chat_v2::pin_chat_v2;

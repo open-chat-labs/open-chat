@@ -1799,6 +1799,7 @@
         "neuronControllerAction": "ニューロン コントローラーのアクション",
         "noEligibleNeurons": "適格なニューロンが見つかりません",
         "noEligibleNeuronsMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat ユーザー ID をホットキーとして投票したいニューロンに追加する必要があります。<br/><br/>あなたの OpenChat ユーザー ID は: {userId} です。<br/><br/>投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
+        "noEligibleNeuronsPrincipalMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat プリンシパルをホットキーとして投票したいニューロンに追加する必要があります。<br/><br/>あなたの OpenChat プリンシパルは: {principal} です。<br/><br/>投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
         "notificationsAction": "通知インデックス アクション",
         "openchatInstallerAction": "OpenChatインストーラーアクション",
         "passing": {

@@ -78,7 +78,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                     }
                 }
             });
-            NotifyEscrowCanisterOfDepositJob::run(content.swap_id, my_user_id);
+            NotifyEscrowCanisterOfDepositJob::run(content.swap_id);
             Success(AcceptSwapSuccess { token1_txn_in: index })
         }
         Err(error) => {

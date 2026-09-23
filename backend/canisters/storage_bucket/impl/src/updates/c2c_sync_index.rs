@@ -52,16 +52,6 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    for (old_user_id, new_user_id) in args.user_ids_updated {
-        if state.data.users.update_user_id(old_user_id, new_user_id) {
-            let user = state.data.users.get(&new_user_id).unwrap();
-            for file_id in user.files_owned() {
-                state.data.files.update_owner(&file_id, new_user_id);
-            }
-            state.data.files.update_accessor_id(old_user_id, new_user_id);
-        }
-    }
-
     crate::jobs::remove_expired_files::start_job_if_required(state);
 
     Success(SuccessResult { files_removed })

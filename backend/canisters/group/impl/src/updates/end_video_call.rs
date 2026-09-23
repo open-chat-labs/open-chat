@@ -5,7 +5,7 @@ use crate::{GroupEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::end_video_call_v2::*;
-use types::OCResult;
+use types::{CallDismissalKind, OCResult, UserId};
 
 #[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
 #[trace]
@@ -21,6 +21,7 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
     );
 
     let now = state.env.now();
+    let participants = state.data.chat.events.video_call_participants_of(args.message_id);
     let result = state.data.chat.events.end_video_call(
         args.message_id.into(),
         now,
@@ -32,6 +33,21 @@ pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCRes
     )?;
 
     state.push_bot_notification(result.bot_notification);
+
+    // stop the ring on every device: the participants' other devices as answered, everyone
+    // else's as a call they missed
+    let not_in_the_call: Vec<UserId> = state
+        .data
+        .chat
+        .members
+        .notifications_unmuted()
+        .iter()
+        .filter(|u| !participants.contains(u) && !state.data.chat.members.bots().contains_key(u))
+        .copied()
+        .collect();
+    state.push_call_dismissal(args.message_id, CallDismissalKind::AnsweredElsewhere, participants);
+    state.push_call_dismissal(args.message_id, CallDismissalKind::Ended, not_in_the_call);
+
     handle_activity_notification(state);
     Ok(())
 }

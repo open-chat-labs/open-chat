@@ -465,7 +465,7 @@ fn p2p_swap_from_own_account_is_rejected() {
                 token1_amount: 10_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
-                from_account: Some(icrc1::Account::for_user(user1.user_id)),
+                from_account: Some(icrc1::Account::legacy_for_user(user1.user_id)),
             }),
             replies_to: None,
             forwarding: false,
@@ -537,7 +537,7 @@ fn accept_p2p_swap_from_own_account_is_rejected() {
             thread_root_message_index: None,
             message_id,
             pin: None,
-            from_account: Some(icrc1::Account::for_user(user2.user_id)),
+            from_account: Some(icrc1::Account::legacy_for_user(user2.user_id)),
         },
     );
 
