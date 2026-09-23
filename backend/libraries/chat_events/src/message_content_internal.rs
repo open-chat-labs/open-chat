@@ -1652,7 +1652,8 @@ impl PrizeContentInternal {
                 ledger,
                 refund - transaction_fee,
                 transaction_fee,
-                sender,
+                // TODO: Refund the sender at their wallet, once their principal is known here
+                types::icrc1::Account::legacy_for_user(sender),
                 Some(&MEMO_PRIZE_REFUND),
                 now_nanos,
             ));

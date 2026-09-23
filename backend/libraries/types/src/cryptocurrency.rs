@@ -161,20 +161,23 @@ impl PendingCryptoTransaction {
         }
     }
 
-    // Checks the transfer is to the recipient's wallet, which, as their principal isn't known here,
-    // is the account they were paid at before principals were needed to find it
-    pub fn validate_recipient(&self, recipient: UserId) -> bool {
+    // Checks the transfer is to the recipient's wallet. `recipient` must hold their actual principal,
+    // from the canister's own data or a lookup, never a caller's claim.
+    pub fn validate_recipient(&self, recipient: UserIdAndPrincipal) -> bool {
         // The whole account, not just the owner. Once a canister holds many users the owner alone
         // is satisfied by a transfer destined for any of them.
-        let account = icrc1::Account::legacy_for_user(recipient).into();
+        let account = Account::from(recipient);
         let account_identifier = crate::account_identifier(account);
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
                 UserOrAccount::Account(a) => a == account_identifier,
-                UserOrAccount::User(u) => u == recipient,
-                // The principal comes from the caller, so can't be trusted to be the recipient's.
-                // Only accepted where it makes no difference to where the transfer goes.
-                UserOrAccount::UserV2(u) => u.user_id == recipient && AccountIdentifier::from(u) == account_identifier,
+                // Paid at the account of the user id, so only accepted where that is their wallet
+                UserOrAccount::User(u) => {
+                    u == recipient.user_id && Account::from(icrc1::Account::legacy_for_user(u)) == account
+                }
+                // The principal comes from the caller, so can't be trusted, and is only accepted
+                // where it gives the recipient's wallet
+                UserOrAccount::UserV2(u) => u.user_id == recipient.user_id && Account::from(u) == account,
             },
             PendingCryptoTransaction::ICRC1(t) => Account::from(t.to) == account,
             PendingCryptoTransaction::ICRC2(t) => Account::from(t.to) == account,
@@ -1012,19 +1015,38 @@ mod tests {
     // their canister
     #[test]
     fn user_v2_for_user_alone_in_their_canister_is_accepted_whatever_the_principal() {
-        let recipient = canister_user();
-        let transfer = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(recipient, principal())));
+        let recipient = UserIdAndPrincipal::new(canister_user(), principal());
+        let transfer = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(
+            canister_user(),
+            Principal::anonymous(),
+        )));
 
         assert!(transfer.validate_recipient(recipient));
     }
 
-    // Their wallet is their principal's, which isn't known here, so can't be checked
+    // Their wallet is their principal's, so only that principal is accepted
     #[test]
-    fn user_v2_for_indexed_user_is_rejected() {
-        let recipient = UserId::new_indexed(canister_user().canister_id(), 7);
-        let transfer = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(recipient, principal())));
+    fn user_v2_for_indexed_user_is_only_accepted_with_their_principal() {
+        let user_id = UserId::new_indexed(canister_user().canister_id(), 7);
+        let recipient = UserIdAndPrincipal::new(user_id, principal());
 
-        assert!(!transfer.validate_recipient(recipient));
+        let own = nns_transfer_to(UserOrAccount::UserV2(recipient));
+        assert!(own.validate_recipient(recipient));
+
+        let other = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(
+            user_id,
+            Principal::anonymous(),
+        )));
+        assert!(!other.validate_recipient(recipient));
+    }
+
+    // Paid at the account of their user id, which isn't their wallet
+    #[test]
+    fn user_for_indexed_user_is_rejected() {
+        let user_id = UserId::new_indexed(canister_user().canister_id(), 7);
+        let transfer = nns_transfer_to(UserOrAccount::User(user_id));
+
+        assert!(!transfer.validate_recipient(UserIdAndPrincipal::new(user_id, principal())));
     }
 
     #[test]
@@ -1032,18 +1054,19 @@ mod tests {
         let other = UserId::new(Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 6, 1, 1]));
         let transfer = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(other, principal())));
 
-        assert!(!transfer.validate_recipient(canister_user()));
+        assert!(!transfer.validate_recipient(UserIdAndPrincipal::new(canister_user(), principal())));
     }
 
     // A bot's user id is its principal, so only that principal gives its wallet
     #[test]
     fn user_v2_for_bot_is_only_accepted_with_its_own_principal() {
         let bot = UserId::new(Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]));
+        let recipient = UserIdAndPrincipal::new(bot, bot.as_principal());
 
-        let own = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(bot, bot.as_principal())));
-        assert!(own.validate_recipient(bot));
+        let own = nns_transfer_to(UserOrAccount::UserV2(recipient));
+        assert!(own.validate_recipient(recipient));
 
         let other = nns_transfer_to(UserOrAccount::UserV2(UserIdAndPrincipal::new(bot, principal())));
-        assert!(!other.validate_recipient(bot));
+        assert!(!other.validate_recipient(recipient));
     }
 }

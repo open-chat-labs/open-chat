@@ -1,6 +1,6 @@
-use crate::crypto::{process_transaction, validate_from_account};
+use crate::crypto::{process_transaction_without_caller_check, user_wallet, validate_from_account};
 use crate::guards::caller_is_owner;
-use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state};
+use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
@@ -26,6 +26,12 @@ async fn tip_message_impl(mut args: Args) -> Response {
         Err(response) => return Error(response),
     };
 
+    let local_user_index_canister_id = read_state(|state| state.data.local_user_index_canister_id);
+    let recipient_wallet: icrc1::Account = match user_wallet(args.recipient, local_user_index_canister_id).await {
+        Ok(recipient) => recipient.into(),
+        Err(error) => return Error(error),
+    };
+
     let pending_transfer = match args.from_account {
         // The allowance is what authorises this - the ledger only lets us pull from an account which
         // has approved this canister as spender - so there is nothing for us to check here.
@@ -34,7 +40,7 @@ async fn tip_message_impl(mut args: Args) -> Response {
             token_symbol: args.token_symbol.clone(),
             amount: args.amount,
             from,
-            to: icrc1::Account::legacy_for_user(args.recipient),
+            to: recipient_wallet,
             fee: args.fee,
             memo: Some(MEMO_TIP.to_vec().into()),
             created: now_nanos,
@@ -43,14 +49,15 @@ async fn tip_message_impl(mut args: Args) -> Response {
             ledger: args.ledger,
             token_symbol: args.token_symbol.clone(),
             amount: args.amount,
-            to: icrc1::Account::legacy_for_user(args.recipient),
+            to: recipient_wallet,
             fee: args.fee,
             memo: Some(MEMO_TIP.to_vec().into()),
             created: now_nanos,
         }),
     };
-    // Make the crypto transfer
-    match process_transaction(pending_transfer).await {
+    // Make the crypto transfer. The caller was checked by the guard, and isn't available once the
+    // recipient's wallet has been looked up.
+    match process_transaction_without_caller_check(pending_transfer).await {
         Ok(Ok(_)) => {}
         Ok(Err((_, error))) => return Error(error),
         Err(error) => return Error(error.into()),

@@ -1,6 +1,5 @@
 use candid::Principal;
 use std::cmp::min;
-use std::collections::BTreeSet;
 // use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
 // use ic_verifiable_credentials::VcFlowSigners;
 use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, ICP_LEDGER_CANISTER_ID, MEMO_JOINING_FEE, NANOS_PER_MILLISECOND};
@@ -82,7 +81,7 @@ async fn check_non_composite_gate(gate: AccessGateNonComposite, args: CheckGateA
         }
         AccessGateNonComposite::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user.user_id).await,
         AccessGateNonComposite::Payment(g) => try_transfer_from(&g, args.user, args.this_canister, args.now).await,
-        AccessGateNonComposite::TokenBalance(g) => check_token_balance_gate(&g, args.user.user_id).await,
+        AccessGateNonComposite::TokenBalance(g) => check_token_balance_gate(&g, args.user).await,
         AccessGateNonComposite::Locked => CheckIfPassesGateResult::Failed(GateCheckFailedReason::Locked),
         AccessGateNonComposite::ReferredByMember => check_referred_by_member_gate(args.referred_by_member),
         AccessGateNonComposite::TotalChitEarned(g) => check_chit_earned_gate(&g, args.total_chit_earned),
@@ -374,13 +373,8 @@ async fn try_transfer_from(
     }
 }
 
-async fn check_token_balance_gate(gate: &TokenBalanceGate, user_id: UserId) -> CheckIfPassesGateResult {
-    match icrc_ledger_canister_c2c_client::icrc1_balance_of(
-        gate.ledger_canister_id,
-        &types::icrc1::Account::legacy_for_user(user_id).into(),
-    )
-    .await
-    {
+async fn check_token_balance_gate(gate: &TokenBalanceGate, user: UserIdAndPrincipal) -> CheckIfPassesGateResult {
+    match icrc_ledger_canister_c2c_client::icrc1_balance_of(gate.ledger_canister_id, &user.into()).await {
         Ok(balance) if balance >= gate.min_balance => CheckIfPassesGateResult::Success(Vec::new()),
         Ok(balance) => {
             CheckIfPassesGateResult::Failed(GateCheckFailedReason::InsufficientBalance(balance.0.try_into().unwrap()))
@@ -402,7 +396,7 @@ struct GatePaymentSplit {
     treasury_share: u128,
 }
 
-pub fn calculate_gate_payments(payment: GatePayment, owners: &BTreeSet<UserId>) -> Vec<PendingPayment> {
+pub fn calculate_gate_payments(payment: GatePayment, owners: Vec<UserIdAndPrincipal>) -> Vec<PendingPayment> {
     let is_chat = payment.ledger_canister_id == CHAT_LEDGER_CANISTER_ID;
     let GatePaymentSplit {
         owner_share,
@@ -411,11 +405,11 @@ pub fn calculate_gate_payments(payment: GatePayment, owners: &BTreeSet<UserId>) 
 
     let mut payments = Vec::new();
     if owner_share > 0 {
-        payments.extend(owners.iter().map(|u| PendingPayment {
+        payments.extend(owners.into_iter().map(|u| PendingPayment {
             amount: owner_share,
             fee: payment.fee,
             ledger_canister: payment.ledger_canister_id,
-            recipient: PaymentRecipient::Member(*u),
+            recipient: PaymentRecipient::MemberV2(u),
             reason: PendingPaymentReason::AccessGate,
         }));
     }

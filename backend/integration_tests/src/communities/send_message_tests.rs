@@ -89,7 +89,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
                     canister_ids.icp_ledger,
                     10000,
                     10000,
-                    user2.user_id,
+                    types::icrc1::Account::legacy_for_user(user2.user_id),
                     None,
                     now_nanos(env),
                 )),

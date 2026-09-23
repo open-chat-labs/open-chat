@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
 use ledger_utils::format_crypto_amount;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use types::Achievement;
+use types::{Achievement, UserIdAndPrincipal};
 use user_canister::update_btc_balance::*;
 use user_core::openchat_bot::{btc_deposit_failed_text, btc_deposit_received_text};
 use user_core::updates::update_btc_balance::{BtcDepositOrWithdrawalEventPayload, update_btc_balance as update};
@@ -16,9 +16,15 @@ async fn update_btc_balance(_args: Args) -> Response {
 }
 
 async fn update_btc_balance_impl() -> Response {
-    let (my_user_id, test_mode) = read_state(|state| (state.env.canister_id().into(), state.data.test_mode));
+    let (my_user_id, principal, test_mode) = read_state(|state| {
+        (
+            state.env.canister_id().into(),
+            state.data.user.principal,
+            state.data.test_mode,
+        )
+    });
 
-    let result = match update(my_user_id, test_mode).await {
+    let result = match update(UserIdAndPrincipal::new(my_user_id, principal), test_mode).await {
         Ok(result) => result,
         Err(error) => return Response::Error(error),
     };

@@ -228,7 +228,8 @@ impl RuntimeState {
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
-        for payment in calculate_gate_payments(payment, self.data.chat.members.owners()) {
+        let owners = self.data.chat.members.owners().iter().map(|u| self.member_user(*u)).collect();
+        for payment in calculate_gate_payments(payment, owners) {
             self.data.pending_payments_queue.push(payment);
         }
 

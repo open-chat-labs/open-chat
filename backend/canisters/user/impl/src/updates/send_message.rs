@@ -1,5 +1,5 @@
 use super::c2c_send_messages::{HandleMessageArgs, handle_message_impl};
-use crate::crypto::{process_transaction_without_caller_check, validate_from_account};
+use crate::crypto::{process_transaction_without_caller_check, user_wallet, validate_from_account};
 use crate::guards::{caller_is_local_user_index, caller_is_owner};
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
@@ -64,7 +64,11 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
                     _ => unreachable!(),
                 };
 
-                if !pending_transfer.validate_recipient(args.recipient) {
+                let recipient = match user_wallet(args.recipient, local_user_index_canister_id).await {
+                    Ok(recipient) => recipient,
+                    Err(error) => return Error(error),
+                };
+                if !pending_transfer.validate_recipient(recipient) {
                     return Error(OCErrorCode::InvalidRequest.with_message("Transaction is not to the user's account"));
                 }
 

@@ -4,7 +4,7 @@ use oc_error_codes::{OCError, OCErrorCode};
 use sha2::{Digest, Sha256};
 use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
-    UserId, UserIdAndPrincipal,
+    UserIdAndPrincipal,
 };
 pub use user_accounts::{deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
 
@@ -19,7 +19,7 @@ pub fn create_pending_transaction(
     ledger: CanisterId,
     amount: u128,
     fee: u128,
-    user_id: UserId,
+    to: types::icrc1::Account,
     memo: Option<&[u8]>,
     now_nanos: TimestampNanos,
 ) -> PendingCryptoTransaction {
@@ -28,7 +28,7 @@ pub fn create_pending_transaction(
         fee,
         token_symbol: token_symbol.clone(),
         amount,
-        to: types::icrc1::Account::legacy_for_user(user_id),
+        to,
         memo: memo.map(|bytes| bytes.to_vec().into()),
         created: now_nanos,
     })
