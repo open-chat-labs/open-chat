@@ -1588,6 +1588,12 @@ pub struct PrizeContentInternal {
     pub requires_captcha: bool,
     #[serde(rename = "mc", default, skip_serializing_if = "is_default")]
     pub min_chit_earned: u32,
+    // The sender's principal, which along with their user id determines the wallet any refund is
+    // paid to. Recorded when the prize is sent, as the sender may have left the chat by the time
+    // it ends. Anonymous for prizes sent before it was recorded, which is fine as their senders are
+    // all alone in their canisters, so are refunded at their user id.
+    #[serde(rename = "pr", default = "Principal::anonymous")]
+    pub principal: Principal,
 }
 
 impl PrizeContentInternal {
@@ -1609,6 +1615,8 @@ impl PrizeContentInternal {
             fee_percent: PRIZE_FEE_PERCENT,
             requires_captcha: content.requires_captcha,
             min_chit_earned: content.min_chit_earned,
+            // Set by the chat from the sender's member record when the prize is sent
+            principal: Principal::anonymous(),
         }
     }
 
@@ -1652,8 +1660,7 @@ impl PrizeContentInternal {
                 ledger,
                 refund - transaction_fee,
                 transaction_fee,
-                // TODO: Refund the sender at their wallet, once their principal is known here
-                types::icrc1::Account::legacy_for_user(sender),
+                UserIdAndPrincipal::new(sender, self.principal).into(),
                 Some(&MEMO_PRIZE_REFUND),
                 now_nanos,
             ));

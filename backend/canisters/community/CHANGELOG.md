@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move each chat's search index from the heap into the stable memory map for small entries, as an inverted index which also supports languages written without spaces, such as Chinese, Japanese and Thai ([#9377](https://github.com/open-chat-labs/open-chat/pull/9377))
 - Queue user events per canister, and send a MultiUser canister's in a single call via the v2 endpoint, while User canisters are still sent theirs via the original endpoint ([#9453](https://github.com/open-chat-labs/open-chat/pull/9453))
 - Merge `get_calling_member_acting_as` into `get_calling_member`, which takes the optional user being acted for ([#9501](https://github.com/open-chat-labs/open-chat/pull/9501))
+- Record the principal of a prize's sender when it is sent, so that any refund goes to their wallet even if they have since left
 
 ### Fixed
 
