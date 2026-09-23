@@ -26,7 +26,6 @@ mod c2c_send_messages;
 mod c2c_set_user_suspended;
 mod c2c_uninstall_bot;
 mod c2c_user_canister_v2;
-mod c2c_vote_on_proposal;
 mod c2c_withdraw_from_icpswap;
 mod cancel_message_reminder;
 mod cancel_p2p_swap;

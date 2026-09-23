@@ -13,7 +13,7 @@ fn register_proposal_vote_v2(args: Args) -> Response {
 fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     let user_id = member.user_id;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let channel_member = channel.chat.members.get_verified_member(user_id)?;

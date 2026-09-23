@@ -14,7 +14,7 @@ fn webhook(args: Args) -> Response {
 }
 
 fn webhook_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
-    let user_id = state.get_calling_member(true)?.user_id;
+    let user_id = state.get_calling_member(None, true)?.user_id;
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
     let member = channel.chat.members.get_verified_member(user_id)?;
 

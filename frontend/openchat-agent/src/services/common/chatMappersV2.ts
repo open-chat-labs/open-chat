@@ -1293,6 +1293,18 @@ export function pendingCryptoTransfer(
             fromAccount: formatIcrcAccount(value.ICRC2.from),
         };
     }
+    if ("Certified" in value) {
+        return {
+            kind: "pending",
+            ledger: principalBytesToString(value.Certified.ledger),
+            token: value.Certified.token_symbol,
+            recipient,
+            amountE8s: value.Certified.amount,
+            feeE8s: value.Certified.fee,
+            memo: mapOptional(value.Certified.memo, bytesToBigint),
+            createdAtNanos: value.Certified.created,
+        };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiPendingCryptoTransaction type received", value);
 }

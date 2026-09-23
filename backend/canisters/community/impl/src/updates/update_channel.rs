@@ -38,7 +38,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
         return Err(OCErrorCode::NameTaken.into());
     }
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
     let has_gate_config_updates = args.gate_config.has_update();

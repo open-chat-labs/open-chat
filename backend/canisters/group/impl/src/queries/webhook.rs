@@ -14,7 +14,7 @@ fn webhook(args: Args) -> Response {
 }
 
 fn webhook_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
 
     if !member.role().is_owner() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());

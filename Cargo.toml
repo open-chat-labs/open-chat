@@ -124,6 +124,7 @@ members = [
     "backend/libraries/chat_events",
     "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
+    "backend/libraries/deep_message_links",
     "backend/libraries/direct_chat",
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/email_magic_links",
@@ -239,6 +240,7 @@ ic-ledger-types = "0.16"
 ic-cdk-management-canister = "0.1"
 ic-management-canister-types = "0.8"
 ic_principal = "0.1"
+ic-representation-independent-hash = "3"
 ic-stable-structures = "0.7"
 ic-transport-types = "0.49"
 ic-utils = "0.49"
@@ -315,12 +317,31 @@ opt-level = "z"
 codegen-units = 1
 debug = false
 
+# The puzzle generators and solvers are search-heavy, and their tests generate hundreds of puzzles
+# each: unoptimised they take minutes, optimised seconds. This applies to `cargo test` too, since
+# the test profile inherits from dev.
+[profile.dev.package.puzzle_core]
+opt-level = 3
+[profile.dev.package.unruly]
+opt-level = 3
+[profile.dev.package.loopy]
+opt-level = 3
+[profile.dev.package.light_up]
+opt-level = 3
+[profile.dev.package.slant]
+opt-level = 3
+[profile.dev.package.tents]
+opt-level = 3
+[profile.dev.package.bridges]
+opt-level = 3
+
 [patch.crates-io]
 aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }
 ic-cbor = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-certificate-verification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-certification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-http-certification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
+ic-representation-independent-hash = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "b88706bd6dd4f7463e75886ec10c58fddb810c37" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "96e2b23ee8fb6131fefb504a0795af38fb2d01fb" }

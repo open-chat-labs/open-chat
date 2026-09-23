@@ -13,7 +13,7 @@ fn register_proposal_vote_v2(args: Args) -> Response {
 fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_calling_member(None, true)?;
     let min_visible_event_index = member.min_visible_event_index();
     let user_id = member.user_id();
     let now = state.env.now();

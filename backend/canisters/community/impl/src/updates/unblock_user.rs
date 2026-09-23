@@ -20,7 +20,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::CommunityNotPublic.into());
     }
 
-    let caller_member = state.get_calling_member(true)?;
+    let caller_member = state.get_calling_member(None, true)?;
 
     if caller_member.user_id == args.user_id {
         Err(OCErrorCode::CannotBlockSelf.into())
