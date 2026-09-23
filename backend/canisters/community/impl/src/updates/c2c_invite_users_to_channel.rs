@@ -13,8 +13,15 @@ use types::{BotCaller, BotPermissions, Caller, ChannelId, ChatPermission, OCResu
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_invite_users_to_channel(args: Args) -> Response {
-    execute_update(|state| c2c_invite_users_to_channel_impl(args.channel_id, args.users, Caller::User(args.caller), state))
-        .unwrap_or_else(Error)
+    execute_update(|state| {
+        c2c_invite_users_to_channel_impl(
+            args.channel_id,
+            args.users,
+            Caller::User(state.member_user(args.caller)),
+            state,
+        )
+    })
+    .unwrap_or_else(Error)
 }
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]

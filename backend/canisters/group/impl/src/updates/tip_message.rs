@@ -58,9 +58,10 @@ struct TipToMake {
 fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let Caller::User(user_id) = state.verified_caller(None)? else {
+    let Caller::User(user) = state.verified_caller(None)? else {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     };
+    let user_id = user.user_id;
 
     let recipient = state
         .data

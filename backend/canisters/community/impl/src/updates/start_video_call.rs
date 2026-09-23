@@ -22,6 +22,8 @@ fn start_video_call_v2(args: Args) -> Response {
 fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
+    // Looked up before the channel is borrowed
+    let sender_user = state.member_user(args.initiator);
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
 
     if matches!(
@@ -40,7 +42,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
 
     let result = channel.chat.send_message(
-        &Caller::User(sender),
+        &Caller::User(sender_user),
         None,
         args.message_id,
         MessageContentInternal::VideoCall(VideoCallContentInternal {

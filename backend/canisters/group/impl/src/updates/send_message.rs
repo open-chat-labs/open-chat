@@ -22,7 +22,8 @@ use tracing::error;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, CanisterId, Chat, ChatId, CompletedCryptoTransaction, EventIndex,
     EventWrapper, GroupChatUserNotificationPayload, GroupMessageNotification, Message, MessageContent, MessageContentInitial,
-    MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User, UserId, UserType, icrc1, icrc2,
+    MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User, UserIdAndPrincipal, UserType, icrc1,
+    icrc2,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -400,7 +401,8 @@ fn register_timer_jobs(
 // Sends a message holding a transfer the sender makes from their own funds, making the transfer
 // first. See `send_message_v2::Args` for which transfers are accepted.
 async fn send_message_with_transfer(args: Args) -> OCResult<SuccessResult> {
-    let (user_id, prepared) = mutate_state(|state| prepare_transfer(&args, state))?;
+    let (user, prepared) = mutate_state(|state| prepare_transfer(&args, state))?;
+    let user_id = user.user_id;
 
     match prepared {
         // The transfer was certified, so the message has been sent already
@@ -416,7 +418,7 @@ async fn send_message_with_transfer(args: Args) -> OCResult<SuccessResult> {
 
             let (result, now) = mutate_state(|state| {
                 (
-                    send_message_holding_transfer(user_id, &args, completed.clone(), None, state),
+                    send_message_holding_transfer(user, &args, completed.clone(), None, state),
                     state.env.now(),
                 )
             });
@@ -450,7 +452,7 @@ async fn send_message_with_transfer(args: Args) -> OCResult<SuccessResult> {
                 }
             };
 
-            let result = mutate_state(|state| send_message_holding_transfer(user_id, &args, completed, Some(swap_id), state));
+            let result = mutate_state(|state| send_message_holding_transfer(user, &args, completed, Some(swap_id), state));
             match &result {
                 Ok(_) => NotifyEscrowCanisterOfSwapFundedJob::run(swap_id, offered_by),
                 Err(error) => {
@@ -484,16 +486,17 @@ struct P2PSwapToCreate {
     now: TimestampMillis,
 }
 
-fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserId, PrepareTransferResult)> {
+fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserIdAndPrincipal, PrepareTransferResult)> {
     state.data.verify_not_frozen()?;
 
     if state.data.chat.external_url.is_some() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    let Caller::User(user_id) = state.verified_caller(None)? else {
+    let Caller::User(user) = state.verified_caller(None)? else {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     };
+    let user_id = user.user_id;
 
     let now = state.env.now();
     let this_canister_id = state.env.canister_id();
@@ -528,7 +531,7 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserId, 
                 );
                 let swap = NewP2PSwap::new(&p, location, user_id, state.member_wallet(user_id)?, this_canister_id, now)?;
                 return Ok((
-                    user_id,
+                    user,
                     PrepareTransferResult::P2PSwap(Box::new(P2PSwapToCreate {
                         swap,
                         escrow_canister_id: state.data.escrow_canister_id,
@@ -554,7 +557,7 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserId, 
     )?;
 
     match transfer {
-        UserTransfer::Icrc2(transfer) => Ok((user_id, PrepareTransferResult::Icrc2(transfer))),
+        UserTransfer::Icrc2(transfer) => Ok((user, PrepareTransferResult::Icrc2(transfer))),
         UserTransfer::Certified(transfer) => {
             let completed = state.data.certified_transfers.verify(
                 transfer,
@@ -564,15 +567,15 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserId, 
                 &state.env.ic_root_key(),
                 now,
             )?;
-            let result = send_message_holding_transfer(user_id, args, completed.clone().into(), None, state)?;
+            let result = send_message_holding_transfer(user, args, completed.clone().into(), None, state)?;
             state.data.certified_transfers.mark_used(&completed, now);
-            Ok((user_id, PrepareTransferResult::Sent(result)))
+            Ok((user, PrepareTransferResult::Sent(result)))
         }
     }
 }
 
 fn send_message_holding_transfer(
-    user_id: UserId,
+    user: UserIdAndPrincipal,
     args: &Args,
     transfer: CompletedCryptoTransaction,
     p2p_swap_id: Option<u32>,
@@ -596,7 +599,7 @@ fn send_message_holding_transfer(
         og_previews: args.og_previews.clone(),
     };
 
-    let result = send_message_with_completed_transfer(&Caller::User(user_id), c2c_args, args.new_achievement, state)?;
+    let result = send_message_with_completed_transfer(&Caller::User(user), c2c_args, args.new_achievement, state)?;
 
     Ok(SuccessResult {
         transfer: Some(transfer),
