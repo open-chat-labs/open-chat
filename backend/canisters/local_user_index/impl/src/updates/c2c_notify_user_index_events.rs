@@ -215,12 +215,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::ReferralCodeAdded(ev) => {
             state.data.referral_codes.add(ev.referral_type, ev.code, ev.expiry, **now);
         }
-        UserIndexEvent::UserPrincipalUpdated(update) => {
-            state
-                .data
-                .global_users
-                .update_user_principal(update.old_principal, update.new_principal);
-        }
         UserIndexEvent::BotRemoved(ev) => {
             state.data.bots.remove(&ev.user_id);
         }

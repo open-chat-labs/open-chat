@@ -352,12 +352,6 @@ impl CommunityMembers {
         self.user_groups.last_updated()
     }
 
-    pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
-        if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal).map(|v| v.into_value()) {
-            self.principal_to_user_id_map.insert(new_principal, user_id);
-        }
-    }
-
     pub fn mark_member_joined_channel(&mut self, user_id: UserId, channel_id: ChannelId) {
         if let Some(channel_ids) = self.members_and_channels.get_mut(&user_id) {
             channel_ids.push_if_not_contains(channel_id);
