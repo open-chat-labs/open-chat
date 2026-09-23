@@ -9,10 +9,10 @@ use types::{
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: UserIdAndPrincipal,
+    sender: Option<UserIdAndPrincipal>,
     retry_if_bad_fee: bool,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
-    let from: Account = crate::sender_account(sender);
+    let from: Account = crate::sender_account(crate::resolve_sender(sender));
 
     let args = TransferArg {
         // The owner is implied by the caller, so only the subaccount goes in the args.

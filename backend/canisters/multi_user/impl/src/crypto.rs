@@ -10,5 +10,5 @@ pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     me: UserIdAndPrincipal,
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
-    ledger_utils::process_transaction(transaction, me, false).await
+    ledger_utils::process_transaction(transaction, Some(me), false).await
 }

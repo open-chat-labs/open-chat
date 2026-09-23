@@ -36,7 +36,7 @@ pub fn create_pending_transaction(
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    sender: UserIdAndPrincipal,
+    sender: Option<UserIdAndPrincipal>,
     retry_if_bad_fee: bool,
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
     match transaction {
@@ -70,7 +70,7 @@ pub async fn process_transaction(
                 token_symbol: t.token_symbol,
                 amount: t.amount,
                 fee: t.fee,
-                from: sender_account(sender).into(),
+                from: sender_account(resolve_sender(sender)).into(),
                 to: t.to.into(),
                 memo: t.memo,
                 created: t.created,
@@ -79,6 +79,11 @@ pub async fn process_transaction(
             Ok(Err((failed.into(), error)))
         }
     }
+}
+
+// The sender of a transfer, which is this canister when there is no user it is transferring for
+pub(crate) fn resolve_sender(sender: Option<UserIdAndPrincipal>) -> UserIdAndPrincipal {
+    sender.unwrap_or_else(UserIdAndPrincipal::this_canister)
 }
 
 // The account a transfer is made from, which is always this canister's own, since the ledger takes

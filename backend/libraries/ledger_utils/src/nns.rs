@@ -5,9 +5,9 @@ use types::{C2CError, CompletedCryptoTransaction, FailedCryptoTransaction, UserI
 
 pub async fn process_transaction(
     transaction: types::nns::PendingCryptoTransaction,
-    sender: UserIdAndPrincipal,
+    sender: Option<UserIdAndPrincipal>,
 ) -> Result<Result<CompletedCryptoTransaction, FailedCryptoTransaction>, C2CError> {
-    let sender_account = crate::sender_account(sender);
+    let sender_account = crate::sender_account(crate::resolve_sender(sender));
     let memo = transaction.memo.unwrap_or_default();
     let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 

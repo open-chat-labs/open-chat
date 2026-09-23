@@ -36,7 +36,7 @@ async fn process_transaction_internal(
         UserIdAndPrincipal::new(state.env.canister_id().into(), state.data.user.principal)
     });
 
-    ledger_utils::process_transaction(transaction, me, false).await
+    ledger_utils::process_transaction(transaction, Some(me), false).await
 }
 
 // The user's own account is the canister's default account, so any account the canister holds is

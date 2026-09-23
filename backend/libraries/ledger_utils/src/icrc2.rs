@@ -8,8 +8,9 @@ use types::{
 
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
-    spender: UserIdAndPrincipal,
+    spender: Option<UserIdAndPrincipal>,
 ) -> Result<Result<CompletedCryptoTransaction, (FailedCryptoTransaction, OCError)>, C2CError> {
+    let spender = crate::resolve_sender(spender);
     let spender_account = crate::sender_account(spender);
     let spender = spender.user_id;
 
