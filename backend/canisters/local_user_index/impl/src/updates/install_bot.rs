@@ -1,3 +1,4 @@
+use crate::bots::validate_installation_location;
 use crate::{RuntimeState, UserIndexEvent, guards::caller_is_openchat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
@@ -78,6 +79,7 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> {
     let caller = state.env.caller();
     let user = state.data.global_users.get(&caller).unwrap();
+    validate_installation_location(args.location, user.user_id, state)?;
     let bot = state.data.bots.get(&args.bot_id).ok_or(OCErrorCode::BotNotFound)?;
 
     match bot.registration_status {

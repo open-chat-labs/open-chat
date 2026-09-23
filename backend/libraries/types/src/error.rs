@@ -27,9 +27,11 @@ pub enum C2CRetryPolicy {
 impl C2CRetryPolicy {
     // Determines whether a failed c2c call is worth retrying.
     //
-    // Note we deliberately do not look at the reject message - the IC does not expose the fine
-    // grained error codes (eg. IC0207) to canisters, only the coarse `RejectCode`, so any code
-    // found in the message is there at the replica's discretion and cannot be relied upon.
+    // Note we deliberately do not look for IC error codes in the reject message - the IC does not
+    // expose the fine grained error codes (eg. IC0207) to canisters, only the coarse `RejectCode`,
+    // so any code found in the message is there at the replica's discretion and cannot be relied
+    // upon. We do match on the replica's own reject text in a couple of cases, see
+    // `callee_is_stopped` and `callee_has_no_such_method`.
     pub fn from_cdk_error(error: &CdkError) -> Self {
         // Failures which will recur however many times we retry
         let permanent = match error {
@@ -43,7 +45,7 @@ impl C2CRetryPolicy {
             _ => false,
         };
 
-        if permanent {
+        if permanent || callee_has_no_such_method(error) {
             C2CRetryPolicy::DoNotRetry
         } else if callee_is_stopped(error) {
             C2CRetryPolicy::RetryAfterShortDelay
@@ -77,6 +79,25 @@ fn callee_is_stopped(error: &CdkError) -> bool {
     matches!(error, CdkError::CallRejected(rejected)
         if matches!(rejected.reject_code(), Ok(RejectCode::CanisterError))
             && matches!(rejected.reject_message(), m if m.contains("is stopped") || m.contains("is stopping")))
+}
+
+// A missing method surfaces as `CanisterError` too, so would otherwise be retried after a delay,
+// forever, since a callee does not gain a method until it is upgraded to one which has it. That
+// happens when an event is queued against a canister of the wrong type (eg. group events keyed by a
+// User canister's id). As with `callee_is_stopped`, this reads the replica's own reject text
+// ("Canister has no update method '...'"), not an IC error code.
+//
+// Note this means a call to a method which the callee has not yet been upgraded to support is no
+// longer retried until it has been. So a caller must not start calling a new method until every
+// live version of the callee has it, or else must keep retrying regardless, by checking
+// `C2CError::is_method_not_found` (see `utils::canister::delay_if_should_retry_failed_c2c_call_to_new_method`).
+fn callee_has_no_such_method(error: &CdkError) -> bool {
+    matches!(error, CdkError::CallRejected(rejected)
+        if matches!(rejected.reject_code(), Ok(RejectCode::CanisterError)) && is_no_such_method_message(rejected.reject_message()))
+}
+
+fn is_no_such_method_message(message: &str) -> bool {
+    message.contains("has no update method") || message.contains("has no query method")
 }
 
 // `CallErrorExt::is_immediately_retryable` treats every `SysTransient` failure as safe to retry
@@ -162,6 +183,11 @@ impl C2CError {
     pub fn message(&self) -> &str {
         &self.message
     }
+
+    // Whether the callee does not have the method called (see `callee_has_no_such_method`)
+    pub fn is_method_not_found(&self) -> bool {
+        self.reject_code == RejectCode::CanisterError && is_no_such_method_message(&self.message)
+    }
 }
 
 impl Debug for C2CError {
@@ -213,7 +239,7 @@ mod tests {
             C2CRetryPolicy::from_cdk_error(&rejected(RejectCode::SysTransient)),
             C2CRetryPolicy::RetryAfterDelay
         );
-        // A trapping callee and one missing the method are likewise indistinguishable
+        // A trapping callee, if the replica says nothing more specific
         assert_eq!(
             C2CRetryPolicy::from_cdk_error(&rejected(RejectCode::CanisterError)),
             C2CRetryPolicy::RetryAfterDelay
@@ -235,6 +261,32 @@ mod tests {
         ));
 
         assert_eq!(C2CRetryPolicy::from_cdk_error(&stopped), C2CRetryPolicy::RetryAfterShortDelay);
+    }
+
+    // Retrying cannot succeed until the callee is upgraded to a version with the method, if ever.
+    // The first message is verbatim what the replica sent a prod LocalUserIndex whose group events
+    // were keyed by a User canister's id. The second is the replica's equivalent for a query, as
+    // matched by `ic-utils`.
+    #[test]
+    fn a_callee_without_the_method_is_not_retried() {
+        let messages = [
+            "IC0536: Error from Canister pyafw-yiaaa-aaaar-awvyq-cai: Canister has no update method 'c2c_local_index_msgpack'..\nCheck that the method being called is exported by the target canister. See documentation: https://docs.internetcomputer.org/references/execution-errors#method-not-found",
+            "Error from Canister pyafw-yiaaa-aaaar-awvyq-cai: Canister has no query method 'some_query'.",
+        ];
+
+        for message in messages {
+            let method_not_found = CdkError::CallRejected(CallRejected::with_rejection(
+                RejectCode::CanisterError as u32,
+                message.to_string(),
+            ));
+
+            assert_eq!(
+                C2CRetryPolicy::from_cdk_error(&method_not_found),
+                C2CRetryPolicy::DoNotRetry,
+                "{message}"
+            );
+            assert!(C2CError::from_cdk_error(CanisterId::anonymous(), "method", method_not_found).is_method_not_found());
+        }
     }
 
     #[test]

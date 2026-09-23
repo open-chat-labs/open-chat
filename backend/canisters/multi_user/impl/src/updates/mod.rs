@@ -56,7 +56,6 @@ mod remove_reaction;
 mod report_message;
 mod save_crypto_account;
 mod send_message;
-mod send_message_with_transfer;
 mod set_avatar;
 mod set_bio;
 mod set_community_indexes;

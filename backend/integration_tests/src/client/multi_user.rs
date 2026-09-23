@@ -7,9 +7,9 @@ use user_canister::{
     edit_message_v2, events, events_by_index, events_window, hot_group_exclusions, initial_state, local_user_index,
     manage_favourite_chats, mark_achievements_seen, mark_message_activity_feed_read, mark_read, message_activity_feed,
     messages_by_message_index, mute_notifications, pay_for_streak_insurance, pin_chat_v2, public_profile, remove_reaction,
-    report_message, save_crypto_account, saved_crypto_accounts, search_messages, send_message_v2, set_avatar, set_bio,
-    set_contact, set_message_reminder_v2, set_pin_number, set_profile_background, unblock_user, undelete_messages,
-    unmute_notifications, unpin_chat_v2, update_chat_settings, updates,
+    report_message, save_crypto_account, saved_crypto_accounts, search_messages, set_avatar, set_bio, set_contact,
+    set_message_reminder_v2, set_pin_number, set_profile_background, unblock_user, undelete_messages, unmute_notifications,
+    unpin_chat_v2, update_chat_settings, updates,
 };
 use user_canister::{
     c2c_community_canister_v2, c2c_game_chit, c2c_group_canister_v2, c2c_groups_and_communities, c2c_local_user_index_v2,
@@ -74,7 +74,6 @@ generate_msgpack_update_call!(pin_chat_v2);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(report_message);
 generate_msgpack_update_call!(save_crypto_account);
-generate_msgpack_update_call!(send_message_v2);
 generate_msgpack_update_call!(set_avatar);
 generate_msgpack_update_call!(set_bio);
 generate_msgpack_update_call!(set_community_indexes);
@@ -87,3 +86,14 @@ generate_msgpack_update_call!(undelete_messages);
 generate_msgpack_update_call!(unmute_notifications);
 generate_msgpack_update_call!(unpin_chat_v2);
 generate_msgpack_update_call!(update_chat_settings);
+
+// Takes the User canister's `send_message_v2` args, since the MultiUser canister implements the same
+// API under the name `send_message`
+pub fn send_message(
+    env: &mut pocket_ic::PocketIc,
+    sender: candid::Principal,
+    canister_id: candid::Principal,
+    args: &user_canister::send_message_v2::Args,
+) -> user_canister::send_message_v2::Response {
+    crate::client::execute_msgpack_update(env, sender, canister_id, "send_message_msgpack", args)
+}

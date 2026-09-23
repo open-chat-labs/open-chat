@@ -3,7 +3,7 @@ use crate::env::ENV;
 use crate::utils::{metrics, now_millis, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
 use candid::Principal;
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use sha256::sha256;
@@ -13,11 +13,11 @@ use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex,
-    Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, DeletedCommunityInfo,
-    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
-    EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter,
-    UserId,
+    Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent,
+    CryptoTransaction, DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary,
+    DirectChatSummaryUpdates, Document, Empty, EventsResponse, IdempotentEnvelope, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate, PendingCryptoTransaction, PinNumberSettings,
+    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -308,15 +308,14 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
     assert_eq!(messages(&window), expected);
 
     // A message id can only be used once in a chat
-    let duplicate =
-        client::multi_user::send_message_v2(env, a_principal, canister_id, &send_message_args(b, "again", message_id));
+    let duplicate = client::multi_user::send_message(env, a_principal, canister_id, &send_message_args(b, "again", message_id));
     assert!(
         matches!(&duplicate, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::MessageIdAlreadyExists)),
         "{duplicate:?}"
     );
 
     // A message to a thread whose root does not exist is rejected rather than creating the thread
-    let missing_thread = client::multi_user::send_message_v2(
+    let missing_thread = client::multi_user::send_message(
         env,
         a_principal,
         canister_id,
@@ -332,7 +331,7 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
 
     // A recipient in another canister who isn't an OpenChat user is not found
     let elsewhere: UserId = random_principal().into();
-    let unknown = client::multi_user::send_message_v2(
+    let unknown = client::multi_user::send_message(
         env,
         a_principal,
         canister_id,
@@ -711,7 +710,7 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     assert_eq!(initial_state(env, a_principal, canister_id).blocked_users, vec![b]);
     assert!(updates(env, b_principal, canister_id, start).is_none());
     let response =
-        client::multi_user::send_message_v2(env, a_principal, canister_id, &send_message_args(b, "hi", random_from_u128()));
+        client::multi_user::send_message(env, a_principal, canister_id, &send_message_args(b, "hi", random_from_u128()));
     assert!(
         matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserBlocked)),
         "{response:?}"
@@ -1002,8 +1001,7 @@ fn send_text_message(
     text: &str,
     message_id: MessageId,
 ) -> user_canister::send_message_v2::SuccessResult {
-    let response =
-        client::multi_user::send_message_v2(env, sender, canister_id, &send_message_args(recipient, text, message_id));
+    let response = client::multi_user::send_message(env, sender, canister_id, &send_message_args(recipient, text, message_id));
     match response {
         user_canister::send_message_v2::Response::Success(result) => result,
         response => panic!("{response:?}"),
@@ -1096,7 +1094,7 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     let b_root = Some(1.into());
 
     let reply_id = random_from_u128();
-    client::multi_user::send_message_v2(
+    client::multi_user::send_message(
         env,
         a_principal,
         canister_id,
@@ -3523,7 +3521,7 @@ fn reporting_a_message_deletes_it_from_the_reporters_copy_only() {
     let (bob, bob_id) = create_user(env, local_user_index, canister_id);
 
     let message_id = random_from_u128();
-    let response = client::multi_user::send_message_v2(env, bob, canister_id, &send_message_args(alice_id, "rude", message_id));
+    let response = client::multi_user::send_message(env, bob, canister_id, &send_message_args(alice_id, "rude", message_id));
     assert!(
         matches!(response, user_canister::send_message_v2::Response::Success(_)),
         "{response:?}"
@@ -4280,7 +4278,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
 
     // A recipient in another canister is looked up in the LocalUserIndex
     let unknown: UserId = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap().into();
-    let response = client::multi_user::send_message_v2(
+    let response = client::multi_user::send_message(
         env,
         bob,
         canister_id,
@@ -4317,7 +4315,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
             "{response:?}"
         );
     }
-    let response = client::multi_user::send_message_v2(
+    let response = client::multi_user::send_message(
         env,
         bob,
         canister_id,
@@ -4554,4 +4552,179 @@ fn known_multi_user_canisters(env: &PocketIc, canister_id: CanisterId) -> u32 {
 
 fn multi_user_canister_count(env: &PocketIc, local_user_index: CanisterId) -> u64 {
     serde_json::from_value(metrics(env, local_user_index)["multi_user_canister_count"].clone()).unwrap()
+}
+
+// Users hold their own funds in their own wallets, so crypto is sent via ICRC2, pulled from the
+// sender's wallet against an approval made under their own spender subaccount, to either a user in
+// the same canister, whose wallet is under their principal, or one in a User canister, whose wallet
+// is under their user id. An ICRC1 transfer would be made from the canister's own account, so is
+// refused.
+#[test]
+fn users_send_crypto_from_their_own_wallets() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+
+    let (a_principal, a) = create_user(env, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, local_user_index, canister_id);
+    let carol = client::register_user(env, canister_ids);
+
+    let amount = 1_000_000;
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, a_principal, 1_000_000_000);
+    client::ledger::happy_path::approve(
+        env,
+        a_principal,
+        canister_ids.icp_ledger,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: canister_id,
+            subaccount: Some(ledger_utils::spender_subaccount(a)),
+        },
+        2 * (amount + ICP_TRANSFER_FEE),
+    );
+
+    let send_crypto = |env: &mut PocketIc, recipient: UserId, transfer: PendingCryptoTransaction| {
+        client::multi_user::send_message(
+            env,
+            a_principal,
+            canister_id,
+            &user_canister::send_message_v2::Args {
+                content: MessageContentInitial::Crypto(CryptoContent {
+                    recipient,
+                    transfer: CryptoTransaction::Pending(transfer),
+                    caption: None,
+                }),
+                ..send_message_args(recipient, "", random_from_u128())
+            },
+        )
+    };
+    let icrc2_transfer = |env: &PocketIc, to: icrc1::Account| {
+        PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+            ledger: ICP_LEDGER_CANISTER_ID,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount,
+            from: a_principal.into(),
+            to,
+            fee: ICP_TRANSFER_FEE,
+            memo: None,
+            created: now_millis(env) * 1_000_000,
+        })
+    };
+
+    // To B, in the same canister
+    let transfer = icrc2_transfer(env, b_principal.into());
+    let response = send_crypto(env, b, transfer);
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, b_principal),
+        amount
+    );
+    assert!(matches!(
+        events(env, b_principal, canister_id, b, a).events.last().unwrap().event,
+        ChatEvent::Message(ref m) if matches!(m.content, MessageContent::Crypto(_))
+    ));
+
+    // To Carol, in a User canister
+    let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(carol.user_id));
+    let response = send_crypto(env, carol.user_id, transfer);
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, carol.user_id),
+        amount
+    );
+
+    // An ICRC1 transfer, which only the account's owner can make
+    let transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+        ledger: ICP_LEDGER_CANISTER_ID,
+        token_symbol: ICP_SYMBOL.to_string(),
+        amount,
+        to: b_principal.into(),
+        fee: ICP_TRANSFER_FEE,
+        memo: None,
+        created: now_millis(env) * 1_000_000,
+    });
+    let response = send_crypto(env, b, transfer);
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+
+    let a_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, a_principal);
+
+    // To B, but addressed to B's user id, which isn't where B holds their funds
+    let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(b));
+    let response = send_crypto(env, b, transfer);
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::RecipientMismatch)),
+        "{response:?}"
+    );
+
+    // In a thread which doesn't exist, which is refused before any funds are moved
+    let transfer = icrc2_transfer(env, b_principal.into());
+    let response = client::multi_user::send_message(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::send_message_v2::Args {
+            thread_root_message_index: Some(99.into()),
+            content: MessageContentInitial::Crypto(CryptoContent {
+                recipient: b,
+                transfer: CryptoTransaction::Pending(transfer),
+                caption: None,
+            }),
+            ..send_message_args(b, "", random_from_u128())
+        },
+    );
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::ThreadNotFound)),
+        "{response:?}"
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, a_principal),
+        a_balance
+    );
+
+    // A can't spend an approval B made for themselves, even to pay B
+    client::ledger::happy_path::approve(
+        env,
+        b_principal,
+        canister_ids.icp_ledger,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: canister_id,
+            subaccount: Some(ledger_utils::spender_subaccount(b)),
+        },
+        amount + ICP_TRANSFER_FEE,
+    );
+    let b_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, b_principal);
+    let transfer = PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+        ledger: ICP_LEDGER_CANISTER_ID,
+        token_symbol: ICP_SYMBOL.to_string(),
+        amount,
+        from: b_principal.into(),
+        to: b_principal.into(),
+        fee: ICP_TRANSFER_FEE,
+        memo: None,
+        created: now_millis(env) * 1_000_000,
+    });
+    let response = send_crypto(env, b, transfer);
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientAllowance)),
+        "{response:?}"
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, b_principal),
+        b_balance
+    );
 }
