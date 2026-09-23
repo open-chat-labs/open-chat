@@ -97,13 +97,6 @@ impl GlobalUserMap {
         self.diamond_membership_expiry_dates.insert(user_id, expires_at);
     }
 
-    pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
-        if let Some(user_id) = self.principal_to_user_id.remove(&old_principal).map(|v| v.into_value()) {
-            self.principal_to_user_id.insert(new_principal, user_id);
-            self.user_id_to_principal.insert(user_id, new_principal);
-        }
-    }
-
     pub fn remove(&mut self, user_id: &UserId) -> bool {
         if let Some(principal) = self.user_id_to_principal.remove(user_id) {
             self.principal_to_user_id.remove_if(&principal, |u| u == user_id);
