@@ -10,6 +10,7 @@ fn main() {
     generate_candid_method!(user_index, diamond_membership_fees, query);
     generate_candid_method!(user_index, explore_bots, query);
     generate_candid_method!(user_index, external_achievements, query);
+    generate_candid_method!(user_index, migrated_user_ids, query);
     generate_candid_method!(user_index, platform_moderators, query);
     generate_candid_method!(user_index, platform_moderators_group, query);
     generate_candid_method!(user_index, platform_operators, query);
@@ -44,6 +45,7 @@ fn main() {
     generate_ts_method!(user_index, diamond_membership_fees);
     generate_ts_method!(user_index, explore_bots);
     generate_ts_method!(user_index, external_achievements);
+    generate_ts_method!(user_index, migrated_user_ids);
     generate_ts_method!(user_index, platform_moderators);
     generate_ts_method!(user_index, platform_moderators_group);
     generate_ts_method!(user_index, platform_operators);
