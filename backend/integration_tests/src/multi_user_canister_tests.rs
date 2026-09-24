@@ -17,8 +17,8 @@ use types::{
     ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction, DeletedCommunityInfo,
     DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
     EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis,
-    UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
+    NotificationEnvelope, OptionUpdate, PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, TextContent,
+    TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -3704,6 +3704,27 @@ fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
         Some(BotPermissions::text_only()),
     );
 
+    // Alice subscribes to push notifications, without which the LocalUserIndex drops those for her
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        alice,
+        canister_ids.notifications_index,
+        "123",
+        "456",
+        "https://xyz.com/",
+    );
+    tick_many(env, 3);
+    let start_index = client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+    // The number of notifications Alice has been sent since subscribing
+    let notification_count = |env: &mut PocketIc| {
+        tick_many(env, 3);
+        client::local_user_index::happy_path::notifications(env, *controller, local_user_index, start_index + 1)
+            .notifications
+            .iter()
+            .filter(|n| matches!(&n.value, NotificationEnvelope::User(n) if n.recipients.contains(&alice_id)))
+            .count()
+    };
+
     // The bot sends its message via the LocalUserIndex, which passes it to the MultiUser canister
     let send = |env: &mut PocketIc, user_id: UserId, message_id: MessageId, text: &str, finalised: bool| {
         client::local_user_index::bot_send_message(
@@ -3723,7 +3744,7 @@ fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
         )
     };
 
-    // A message which isn't yet finalised appears in Alice's chat with the bot
+    // A message which isn't yet finalised appears in Alice's chat with the bot, without notifying her
     let message_id = random_from_u128();
     let response = send(env, alice_id, message_id, "Hello", false);
     assert!(
@@ -3734,8 +3755,10 @@ fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
     assert_eq!(bot_message.sender, bot_id);
     assert!(matches!(&bot_message.content, MessageContent::Text(t) if t.text == "Hello"));
     assert!(bot_message.bot_context().is_some_and(|c| !c.finalised));
+    assert_eq!(notification_count(env), 0);
 
-    // Sending it again with the same id edits it, and once it is finalised it can't be edited
+    // Sending it again with the same id edits it, notifying her once it is finalised, after which it
+    // can't be edited
     let response = send(env, alice_id, message_id, "Hello Alice", true);
     assert!(
         matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
@@ -3746,11 +3769,36 @@ fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
         matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageIdAlreadyExists)),
         "{response:?}"
     );
-    let events = events(env, alice, canister_id, alice_id, bot_id);
-    assert_eq!(messages(&events), vec![(bot_id, "Hello Alice".to_string())]);
-    let bot_message = message(&events, message_id);
+    let bot_message = message(&events(env, alice, canister_id, alice_id, bot_id), message_id);
+    assert!(matches!(&bot_message.content, MessageContent::Text(t) if t.text == "Hello Alice"));
     assert!(bot_message.edited);
     assert!(bot_message.bot_context().is_some_and(|c| c.finalised));
+    assert_eq!(notification_count(env), 1);
+
+    // A new finalised message notifies her too, unless she has muted the chat
+    let response = send(env, alice_id, random_from_u128(), "How are you?", true);
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+    assert_eq!(notification_count(env), 2);
+    let muted = client::user::mute_notifications(
+        env,
+        alice,
+        canister_id,
+        &user_canister::mute_notifications::Args { chat_id: bot_id.into() },
+    );
+    assert!(matches!(muted, user_canister::mute_notifications::Response::Success));
+    let response = send(env, alice_id, random_from_u128(), "Still there?", true);
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+    assert_eq!(notification_count(env), 2);
+    assert_eq!(
+        messages(&events(env, alice, canister_id, alice_id, bot_id)),
+        ["Hello Alice", "How are you?", "Still there?"].map(|t| (bot_id, t.to_string()))
+    );
 
     // Bob hasn't installed the bot, so it can't message him
     let response = send(env, bob_id, random_from_u128(), "Hello", true);

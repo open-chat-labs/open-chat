@@ -270,7 +270,6 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
         state.push_notification(Some(bot_id), user_index, notification, now);
     }
 
-    // TODO: Delete the files the message references once it expires, as the User canister does
     if let Some((message_event, _)) = new_message
         && let Some(expiry) = message_event.expires_at
     {
