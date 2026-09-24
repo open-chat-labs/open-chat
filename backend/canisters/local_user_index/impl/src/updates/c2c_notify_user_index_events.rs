@@ -359,7 +359,29 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.set_daily_puzzle_canister_id(canister_id);
         }
         UserIndexEvent::UserIdMigrated(ev) => {
-            state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id);
+            if state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id) {
+                for canister_id in ev.canisters_to_notify {
+                    if state.data.local_groups.get(&canister_id.into()).is_some() {
+                        state.push_event_to_group(
+                            canister_id,
+                            GroupEvent::UserIdMigrated(group_canister::UserIdMigrated {
+                                old_user_id: ev.old_user_id,
+                                new_user_id: ev.new_user_id,
+                            }),
+                            **now,
+                        );
+                    } else if state.data.local_communities.get(&canister_id.into()).is_some() {
+                        state.push_event_to_community(
+                            canister_id,
+                            CommunityEvent::UserIdMigrated(community_canister::UserIdMigrated {
+                                old_user_id: ev.old_user_id,
+                                new_user_id: ev.new_user_id,
+                            }),
+                            **now,
+                        );
+                    }
+                }
+            }
         }
     }
 }
