@@ -399,7 +399,7 @@ impl DirectChat {
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
         self.events
-            .tip_message(args, &MigratedUserIds::default(), EventIndex::default(), event_pusher)
+            .tip_message(args, EventIndex::default(), &MigratedUserIds::default(), event_pusher)
     }
 
     pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
@@ -478,10 +478,10 @@ impl DirectChat {
     ) -> OCResult<UpdateMessageSuccess<u32>> {
         self.events.cancel_p2p_swap(
             user_id,
-            &MigratedUserIds::default(),
             thread_root_message_index,
             message_id,
             now,
+            &MigratedUserIds::default(),
         )
     }
 

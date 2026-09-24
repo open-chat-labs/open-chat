@@ -15,9 +15,14 @@ pub struct MigratedUserIds {
 
 impl MigratedUserIds {
     // Returns false if nothing was inserted: the migration is already recorded, or it conflicts
-    // with one which is, which should never happen since user ids are never reused
+    // with one which is, which should never happen since user ids are never reused. That includes
+    // another id already having been migrated to `new_user_id`, which would make the two ids'
+    // users one and the same.
     pub fn insert(&mut self, old_user_id: UserId, new_user_id: UserId) -> bool {
-        if self.map.contains_key(&old_user_id) || self.latest(new_user_id) == old_user_id {
+        if self.map.contains_key(&old_user_id)
+            || self.latest(new_user_id) == old_user_id
+            || self.map.values().any(|u| *u == new_user_id)
+        {
             return false;
         }
         self.map.insert(old_user_id, new_user_id);
@@ -112,6 +117,17 @@ mod tests {
         assert!(!ids.is_same_user(user_id(1), user_id(4)));
         assert_eq!(ids.latest(user_id(1)), user_id(3));
         assert_eq!(ids.latest(user_id(4)), user_id(4));
+    }
+
+    #[test]
+    fn two_ids_cannot_be_migrated_to_the_same_id() {
+        let mut ids = MigratedUserIds::default();
+
+        assert!(ids.insert(user_id(1), user_id(3)));
+        assert!(!ids.insert(user_id(2), user_id(3)));
+
+        assert!(!ids.is_same_user(user_id(1), user_id(2)));
+        assert_eq!(ids.get(&user_id(2)), None);
     }
 
     #[test]

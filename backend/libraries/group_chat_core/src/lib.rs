@@ -1004,9 +1004,9 @@ impl GroupChatCore {
     pub fn check_can_tip_message(
         &self,
         user_id: UserId,
-        migrated_user_ids: &MigratedUserIds,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UserId> {
         let member = self.members.get_verified_member(user_id)?;
 
@@ -1036,7 +1036,7 @@ impl GroupChatCore {
         let min_visible_event_index = member.min_visible_event_index();
 
         self.events
-            .tip_message(args, &MigratedUserIds::default(), min_visible_event_index, Some(event_pusher))
+            .tip_message(args, min_visible_event_index, &MigratedUserIds::default(), Some(event_pusher))
     }
 
     pub fn delete_messages(
@@ -1806,9 +1806,9 @@ impl GroupChatCore {
         self.events.follow_thread(
             thread_root_message_index,
             user_id,
-            &MigratedUserIds::default(),
             member.min_visible_event_index(),
             now,
+            &MigratedUserIds::default(),
         )?;
 
         self.members.update_member(&user_id, |m| {
@@ -1830,9 +1830,9 @@ impl GroupChatCore {
         self.events.unfollow_thread(
             thread_root_message_index,
             user_id,
-            &MigratedUserIds::default(),
             member.min_visible_event_index(),
             now,
+            &MigratedUserIds::default(),
         )?;
 
         self.members.update_member(&user_id, |m| {
@@ -1886,7 +1886,6 @@ impl GroupChatCore {
 
         self.events.reserve_prize(
             user_id,
-            &MigratedUserIds::default(),
             min_visible_event_index,
             message_id,
             now,
@@ -1896,6 +1895,7 @@ impl GroupChatCore {
             streak,
             streak_ends,
             user_reauthenticated,
+            &MigratedUserIds::default(),
         )
     }
 
@@ -1930,10 +1930,10 @@ impl GroupChatCore {
         if self.members.contains(&user_id) {
             self.events.cancel_p2p_swap(
                 user_id,
-                &MigratedUserIds::default(),
                 thread_root_message_index,
                 message_id,
                 now,
+                &MigratedUserIds::default(),
             )
         } else {
             Err(OCErrorCode::InitiatorNotInChat.into())

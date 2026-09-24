@@ -67,9 +67,9 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
 
     let recipient = state.data.chat.check_can_tip_message(
         user_id,
-        &MigratedUserIds::default(),
         args.thread_root_message_index,
         args.message_id,
+        &MigratedUserIds::default(),
     )?;
 
     let c2c_args = group_canister::c2c_tip_message::Args {
