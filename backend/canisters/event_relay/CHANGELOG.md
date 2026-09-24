@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Track the spawned tasks in progress using `utils::async_work`
+- Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 
 ## [[2.0.1939](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1939-event_relay)] - 2025-12-31
