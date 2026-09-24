@@ -46,5 +46,14 @@ class BlobLocationTest {
     fun `text which is not a principal is left as it is`() {
         assertEquals(BlobLocation("alice", "avatar"), BlobLocation.of("alice", "avatar"))
         assertEquals(BlobLocation("", "avatar"), BlobLocation.of("", "avatar"))
+        // Principal text which isn't canonical, as `Principal.fromText` requires
+        assertEquals(
+            BlobLocation("SVGK6-Q4AAA-AAAAA-QAAMO-RAY", "avatar"),
+            BlobLocation.of("SVGK6-Q4AAA-AAAAA-QAAMO-RAY", "avatar"),
+        )
+        assertEquals(
+            BlobLocation("svgk6q4aaaaaaaaqaamoray", "avatar"),
+            BlobLocation.of("svgk6q4aaaaaaaaqaamoray", "avatar"),
+        )
     }
 }

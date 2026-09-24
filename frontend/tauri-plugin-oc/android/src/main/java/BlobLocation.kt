@@ -31,9 +31,10 @@ data class BlobLocation(val canisterId: String, val path: String) {
         private const val CHECKSUM_LENGTH = 4
 
         // A principal's text is the base32 of a CRC32 checksum followed by its bytes, in groups of
-        // five characters. Null for anything which isn't a principal.
+        // five characters. Null for anything which isn't a principal in that canonical form, as
+        // `Principal.fromText` rejects it on the web.
         private fun decodePrincipal(text: String): ByteArray? {
-            val chars = text.replace("-", "").lowercase()
+            val chars = text.replace("-", "")
             var buffer = 0
             var bits = 0
             val output = ArrayList<Byte>()
@@ -50,8 +51,7 @@ data class BlobLocation(val canisterId: String, val path: String) {
             if (output.size < CHECKSUM_LENGTH) return null
 
             val bytes = output.subList(CHECKSUM_LENGTH, output.size).toByteArray()
-            if (!checksum(bytes).contentEquals(output.subList(0, CHECKSUM_LENGTH).toByteArray())) return null
-            return bytes
+            return bytes.takeIf { encodePrincipal(it) == text }
         }
 
         private fun encodePrincipal(bytes: ByteArray): String {

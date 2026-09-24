@@ -3,7 +3,7 @@
 // startup. They pin down the CURRENT output so that memoising it cannot change
 // what the main thread receives.
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "@shared";
-import { buildIdenticonUrl, buildUserAvatarUrl } from "./chat";
+import { buildBlobUrl, buildIdenticonUrl, buildUserAvatarUrl } from "./chat";
 
 // Captured from the unmemoised implementation.
 const XYZ_IDENTICON =
@@ -59,6 +59,13 @@ describe("buildUserAvatarUrl", () => {
         );
     });
 
+    test("a user in a MultiUser canister gets a url under their index within it", () => {
+        // `UserId::new_indexed(dfdal-2uaaa-aaaaa-qaama-cai, 1000)`
+        expect(buildUserAvatarUrl(PATTERN, "svgk6-q4aaa-aaaaa-qaamo-ray", 5n)).toBe(
+            "https://dfdal-2uaaa-aaaaa-qaama-cai.raw.icp0.io/1000/avatar/5",
+        );
+    });
+
     test("a user with no avatar id gets their identicon", () => {
         expect(buildUserAvatarUrl(PATTERN, "xyz", undefined)).toBe(XYZ_IDENTICON);
     });
@@ -66,6 +73,19 @@ describe("buildUserAvatarUrl", () => {
     test("the openchat bot gets its fixed avatar, not an identicon", () => {
         expect(buildUserAvatarUrl(PATTERN, OPENCHAT_BOT_USER_ID, undefined)).toBe(
             OPENCHAT_BOT_AVATAR_URL,
+        );
+    });
+});
+
+describe("buildBlobUrl", () => {
+    test("a channel's avatar is under the channel in its community", () => {
+        const channel = {
+            kind: "channel" as const,
+            communityId: "27eue-hyaaa-aaaaf-aaa4a-cai",
+            channelId: 42,
+        };
+        expect(buildBlobUrl(PATTERN, channel.communityId, 7n, "avatar", channel)).toBe(
+            "https://27eue-hyaaa-aaaaf-aaa4a-cai.raw.icp0.io/channel/42/avatar/7",
         );
     });
 });
