@@ -7,7 +7,6 @@ use constants::MEMO_TIP;
 use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, Caller, CryptoTransaction, OCResult, UserId, icrc2};
-use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -69,7 +68,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         user_id,
         args.thread_root_message_index,
         args.message_id,
-        &MigratedUserIds::default(),
+        &state.data.migrated_user_ids,
     )?;
 
     let c2c_args = community_canister::c2c_tip_message::Args {

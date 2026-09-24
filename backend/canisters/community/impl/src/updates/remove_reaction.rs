@@ -15,9 +15,14 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
 
-    let result = channel
-        .chat
-        .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)?;
+    let result = channel.chat.remove_reaction(
+        user_id,
+        args.thread_root_message_index,
+        args.message_id,
+        args.reaction,
+        now,
+        &state.data.migrated_user_ids,
+    )?;
 
     state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);

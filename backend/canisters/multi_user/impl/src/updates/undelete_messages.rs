@@ -35,14 +35,17 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
             let chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
 
             let undeleted: Vec<_> = chat
-                .undelete_messages(DeleteUndeleteMessagesArgs {
-                    caller: my_user_id,
-                    is_admin: false,
-                    min_visible_event_index: EventIndex::default(),
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_ids: args.message_ids,
-                    now,
-                })
+                .undelete_messages(
+                    DeleteUndeleteMessagesArgs {
+                        caller: my_user_id,
+                        is_admin: false,
+                        min_visible_event_index: EventIndex::default(),
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_ids: args.message_ids,
+                        now,
+                    },
+                    &state.data.migrated_user_ids,
+                )
                 .into_iter()
                 .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
                 .collect();
@@ -89,17 +92,20 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     if !undeleted.is_empty()
         && let Some(their_index) = state.index_of_local_user(args.user_id)
         && let Some((thread_root_message_index, undeleted_in_theirs)) = state
-            .with_their_direct_chat_mut(my_user_id, args.user_id, |chat| {
+            .with_their_direct_chat_mut(my_user_id, args.user_id, |chat, migrated_user_ids| {
                 let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;
                 let undeleted: Vec<_> = chat
-                    .undelete_messages(DeleteUndeleteMessagesArgs {
-                        caller: my_user_id,
-                        is_admin: false,
-                        min_visible_event_index: EventIndex::default(),
-                        thread_root_message_index,
-                        message_ids: undeleted,
-                        now,
-                    })
+                    .undelete_messages(
+                        DeleteUndeleteMessagesArgs {
+                            caller: my_user_id,
+                            is_admin: false,
+                            min_visible_event_index: EventIndex::default(),
+                            thread_root_message_index,
+                            message_ids: undeleted,
+                            now,
+                        },
+                        migrated_user_ids,
+                    )
                     .into_iter()
                     .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
                     .collect();

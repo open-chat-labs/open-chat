@@ -22,14 +22,17 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
 
-    let delete_message_results = chat.delete_messages(DeleteUndeleteMessagesArgs {
-        caller: my_user_id,
-        is_admin: true,
-        min_visible_event_index: EventIndex::default(),
-        thread_root_message_index: args.thread_root_message_index,
-        message_ids: args.message_ids,
-        now,
-    });
+    let delete_message_results = chat.delete_messages(
+        DeleteUndeleteMessagesArgs {
+            caller: my_user_id,
+            is_admin: true,
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index: args.thread_root_message_index,
+            message_ids: args.message_ids,
+            now,
+        },
+        &state.data.migrated_user_ids,
+    );
 
     let deleted: Vec<_> = delete_message_results
         .into_iter()
@@ -57,7 +60,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         if args.user_id != OPENCHAT_BOT_USER_ID {
             let my_messages: Vec<_> = deleted
                 .iter()
-                .filter(|(_, success)| success.sender == my_user_id)
+                .filter(|(_, success)| state.data.migrated_user_ids.is_same_user(success.sender, my_user_id))
                 .map(|(id, _)| id)
                 .copied()
                 .collect();

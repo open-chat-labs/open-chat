@@ -72,7 +72,13 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
         }
         UserCanisterEvent::EditMessage(args) => {
             if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
-                user_core::updates::c2c_user_canister::edit_message(chat, caller_user_id, *args, now);
+                user_core::updates::c2c_user_canister::edit_message(
+                    chat,
+                    caller_user_id,
+                    *args,
+                    now,
+                    &state.data.migrated_user_ids,
+                );
             }
         }
         UserCanisterEvent::DeleteMessages(args) => {
@@ -174,13 +180,9 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
 fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let chat_id = caller_user_id.into();
     let now = state.env.now();
-    let Some((thread_root_message_index, deleted)) = state
-        .data
-        .user
-        .direct_chats
-        .get_mut(&chat_id)
-        .and_then(|chat| user_core::updates::c2c_user_canister::delete_messages(chat, caller_user_id, args, now))
-    else {
+    let Some((thread_root_message_index, deleted)) = state.data.user.direct_chats.get_mut(&chat_id).and_then(|chat| {
+        user_core::updates::c2c_user_canister::delete_messages(chat, caller_user_id, args, now, &state.data.migrated_user_ids)
+    }) else {
         return;
     };
 
@@ -201,13 +203,9 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
 fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let chat_id = caller_user_id.into();
     let now = state.env.now();
-    let Some((thread_root_message_index, undeleted)) = state
-        .data
-        .user
-        .direct_chats
-        .get_mut(&chat_id)
-        .and_then(|chat| user_core::updates::c2c_user_canister::undelete_messages(chat, caller_user_id, args, now))
-    else {
+    let Some((thread_root_message_index, undeleted)) = state.data.user.direct_chats.get_mut(&chat_id).and_then(|chat| {
+        user_core::updates::c2c_user_canister::undelete_messages(chat, caller_user_id, args, now, &state.data.migrated_user_ids)
+    }) else {
         return;
     };
 
@@ -216,13 +214,9 @@ fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_use
 
 fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
-    let Some(reaction) = state
-        .data
-        .user
-        .direct_chats
-        .get_mut(&caller_user_id.into())
-        .and_then(|chat| user_core::updates::c2c_user_canister::toggle_reaction(chat, caller_user_id, args, now))
-    else {
+    let Some(reaction) = state.data.user.direct_chats.get_mut(&caller_user_id.into()).and_then(|chat| {
+        user_core::updates::c2c_user_canister::toggle_reaction(chat, caller_user_id, args, now, &state.data.migrated_user_ids)
+    }) else {
         return;
     };
 
@@ -245,13 +239,16 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
 fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
     let my_user_id = state.env.canister_id().into();
-    let Some(received) = state
-        .data
-        .user
-        .direct_chats
-        .get_mut(&caller_user_id.into())
-        .and_then(|chat| user_core::updates::c2c_user_canister::tip_message(chat, caller_user_id, my_user_id, args, now))
-    else {
+    let Some(received) = state.data.user.direct_chats.get_mut(&caller_user_id.into()).and_then(|chat| {
+        user_core::updates::c2c_user_canister::tip_message(
+            chat,
+            caller_user_id,
+            my_user_id,
+            args,
+            now,
+            &state.data.migrated_user_ids,
+        )
+    }) else {
         return;
     };
 

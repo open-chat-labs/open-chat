@@ -117,7 +117,13 @@ fn tip_direct_chat_message(
     let recipient = args.recipient;
     // TODO: Push the tip to the event store (`UserEventPusher` in the User canister)
     let c2c_args = match state.data.users.with_user_mut(my_index, |user| {
-        user_core::updates::tip_message::tip_direct_chat_message::<NullEventPusher>(user, args, decimals, None)
+        user_core::updates::tip_message::tip_direct_chat_message::<NullEventPusher>(
+            user,
+            args,
+            decimals,
+            &state.data.migrated_user_ids,
+            None,
+        )
     }) {
         Some(Ok(c2c_args)) => c2c_args,
         Some(Err(error)) => return Error(error),

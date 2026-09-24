@@ -15,7 +15,9 @@ fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    channel.chat.unfollow_thread(user_id, args.thread_root_message_index, now)?;
+    channel
+        .chat
+        .unfollow_thread(user_id, args.thread_root_message_index, now, &state.data.migrated_user_ids)?;
     state.mark_activity_for_user(user_id);
     Ok(())
 }

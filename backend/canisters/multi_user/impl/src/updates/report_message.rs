@@ -22,10 +22,9 @@ async fn report_message(args: Args) -> Response {
                 mutate_state(|state| {
                     let now = state.env.now();
                     // Does nothing if the user was deleted while the report was being made
-                    state
-                        .data
-                        .users
-                        .with_user_mut(my_index, |user| delete_reported_message(user, &args, c2c_args.reporter, now));
+                    state.data.users.with_user_mut(my_index, |user| {
+                        delete_reported_message(user, &args, c2c_args.reporter, now, &state.data.migrated_user_ids)
+                    });
                 });
             }
 

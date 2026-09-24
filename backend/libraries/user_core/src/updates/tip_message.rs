@@ -3,6 +3,7 @@ use chat_events::{EventPusher, TipMessageArgs};
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, Chat, EventIndex, OCResult, TimestampMillis, UserId};
 use user_canister::tip_message::Args;
+use utils::migrated_user_ids::MigratedUserIds;
 
 // Checks the user may give the tip: they aren't suspended, it isn't nothing or to themselves, any
 // account it is given from isn't one of this canister's, and their PIN, if they have one, is right
@@ -61,13 +62,14 @@ pub fn tip_direct_chat_message<P: EventPusher>(
     user: &mut User,
     args: TipMessageArgs,
     decimals: u8,
+    migrated_user_ids: &MigratedUserIds,
     event_pusher: Option<P>,
 ) -> OCResult<user_canister::TipMessageArgs> {
     let chat = user
         .direct_chats
         .get_mut(&args.recipient.into())
         .ok_or(OCErrorCode::ChatNotFound)?;
-    chat.tip_message(args.clone(), event_pusher)?;
+    chat.tip_message(args.clone(), migrated_user_ids, event_pusher)?;
     let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
     Ok(user_canister::TipMessageArgs {
         thread_root_message_id,
