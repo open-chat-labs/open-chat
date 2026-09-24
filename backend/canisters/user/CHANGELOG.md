@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `c2c_try_start_migration` for the UserIndex, which checks the canister has no work outstanding, then freezes it and returns the user serialized, to be migrated to the given MultiUser canister
+- Add `c2c_try_start_migration` for the UserIndex, which checks the canister has no work outstanding, then freezes it and returns the user serialized, to be migrated to the given MultiUser canister ([#9544](https://github.com/open-chat-labs/open-chat/pull/9544))
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Support leaving tips from external wallets using ICRC2 ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
