@@ -32,6 +32,7 @@ mod set_community_indexes;
 mod set_contact;
 mod set_profile_background;
 pub mod start_video_call;
+pub mod tip_message;
 mod unpin_chat_v2;
 mod update_bot;
 pub mod update_btc_balance;
