@@ -95,6 +95,7 @@ export class UsersState {
             users.forEach((u) => this.#set(map, u));
             return map;
         });
+        this.#updateSuspended(users);
     }
 
     // The id a user is held under, which is their latest id if they've been migrated
@@ -103,10 +104,14 @@ export class UsersState {
     }
 
     #set(map: Map<string, UserSummary>, user: UserSummary) {
-        map.set(user.userId, user);
-        for (const previous of this.#previousUserIds.get(user.userId) ?? []) {
-            map.set(previous, user);
+        for (const id of this.#idsOf(user.userId)) {
+            map.set(id, user);
         }
+    }
+
+    // The user's latest id, followed by any earlier ids they're also held under
+    #idsOf(userId: string): string[] {
+        return [userId, ...(this.#previousUserIds.get(userId) ?? [])];
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {
@@ -139,10 +144,12 @@ export class UsersState {
                 u.suspended = suspended;
                 this.#set(users, u);
                 suspendedUsersStore.update((s) => {
-                    if (suspended) {
-                        s.add(userId);
-                    } else {
-                        s.delete(userId);
+                    for (const id of this.#idsOf(userId)) {
+                        if (suspended) {
+                            s.add(id);
+                        } else {
+                            s.delete(id);
+                        }
                     }
                     return s;
                 });
@@ -206,12 +213,15 @@ export class UsersState {
         const toAdd = new Set<string>();
         const toRemove = new Set<string>();
         for (const user of users) {
-            if (user.suspended) {
-                if (!this.#suspendedUsers.has(user.userId)) {
-                    toAdd.add(user.userId);
+            // Chat events refer to a migrated user by their earlier ids too
+            for (const id of this.#idsOf(user.userId)) {
+                if (user.suspended) {
+                    if (!this.#suspendedUsers.has(id)) {
+                        toAdd.add(id);
+                    }
+                } else if (this.#suspendedUsers.has(id)) {
+                    toRemove.add(id);
                 }
-            } else if (this.#suspendedUsers.has(user.userId)) {
-                toRemove.add(user.userId);
             }
         }
         if (toAdd.size > 0 || toRemove.size > 0) {

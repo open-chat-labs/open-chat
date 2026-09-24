@@ -150,6 +150,23 @@ describe("migrated users", () => {
         expect(users.latestUserId("oldest")).toBe("new");
     });
 
+    test("a suspended user is suspended under their earlier ids too", () => {
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+        users.addMany([user("new", true)]);
+        expect(users.suspendedUsers.has("old")).toBe(true);
+        expect(users.suspendedUsers.has("new")).toBe(true);
+
+        users.userSuspended("new", false);
+        expect(users.suspendedUsers.has("old")).toBe(false);
+        expect(users.suspendedUsers.has("new")).toBe(false);
+    });
+
+    test("an earlier id learned after the suspension is suspended too", () => {
+        users.addMany([user("new", true)]);
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+        expect(users.suspendedUsers.has("old")).toBe(true);
+    });
+
     test("a mapping already known does not publish", () => {
         users.addMigratedUserIds(new Map([["old", "new"]]));
         users.addMany([user("new")]);

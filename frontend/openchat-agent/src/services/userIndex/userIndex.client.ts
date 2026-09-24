@@ -674,7 +674,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
 
         this.userDb.setCachedDeletedUserIds(mergedResponse.deletedUserIds);
 
-        this.userDb
+        const cachingUsers = this.userDb
             .setCachedUsers(mergedResponse.users)
             .catch((err) => console.error("Failed to save users to the cache", err));
 
@@ -692,7 +692,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         console.error("Failed to save the current user to the cache", err),
                     ),
                 currentUserMigratedFrom !== undefined
-                    ? Promise.all([cachingMigrations, this.forgetCachedChatState()])
+                    ? Promise.all([cachingUsers, cachingMigrations, this.forgetCachedChatState()])
                     : undefined,
             ]);
         }
