@@ -13,6 +13,10 @@ export class UsersState {
     #blockedUsers!: ReadonlySet<string>;
     #suspendedUsers!: ReadonlySet<string>;
     #specialUsers: ReadonlySet<string> = new Set();
+    // Users who've been migrated to a MultiUser canister are held under their latest id, and also
+    // under each of their earlier ids, since chat events etc. still refer to them by those
+    #latestUserIds: Map<string, string> = new Map();
+    #previousUserIds: Map<string, Set<string>> = new Map();
 
     constructor() {
         allUsersStore.subscribe((val) => (this.#allUsers = val));
@@ -43,7 +47,7 @@ export class UsersState {
 
     addUser(user: UserSummary) {
         allUsersStore.update((map) => {
-            map.set(user.userId, user);
+            this.#set(map, user);
             return map;
         });
         this.#updateSuspended([user]);
@@ -53,10 +57,56 @@ export class UsersState {
         if (users.length === 0) return;
 
         allUsersStore.update((map) => {
-            users.forEach((u) => map.set(u.userId, u));
+            users.forEach((u) => this.#set(map, u));
             return map;
         });
         this.#updateSuspended(users);
+    }
+
+    // Maps each earlier id of a user who's been migrated to a MultiUser canister to their latest id
+    addMigratedUserIds(migrated: ReadonlyMap<string, string>) {
+        const changed = new Set<string>();
+        for (const [previous, latest] of migrated) {
+            if (previous === latest || this.#latestUserIds.get(previous) === latest) continue;
+
+            // Any ids which were migrated to `previous` now resolve to `latest` too
+            const ids = [previous, ...(this.#previousUserIds.get(previous) ?? [])];
+            this.#previousUserIds.delete(previous);
+            const formerLatest = this.#latestUserIds.get(previous);
+            if (formerLatest !== undefined) {
+                this.#previousUserIds.get(formerLatest)?.delete(previous);
+            }
+
+            const previousIds = this.#previousUserIds.get(latest) ?? new Set();
+            for (const id of ids) {
+                this.#latestUserIds.set(id, latest);
+                previousIds.add(id);
+            }
+            this.#previousUserIds.set(latest, previousIds);
+            changed.add(latest);
+        }
+
+        const users = [...changed]
+            .map((userId) => this.#allUsers.get(userId))
+            .filter((u) => u !== undefined);
+        if (users.length === 0) return;
+
+        allUsersStore.update((map) => {
+            users.forEach((u) => this.#set(map, u));
+            return map;
+        });
+    }
+
+    // The id a user is held under, which is their latest id if they've been migrated
+    latestUserId(userId: string): string {
+        return this.#latestUserIds.get(userId) ?? userId;
+    }
+
+    #set(map: Map<string, UserSummary>, user: UserSummary) {
+        map.set(user.userId, user);
+        for (const previous of this.#previousUserIds.get(user.userId) ?? []) {
+            map.set(previous, user);
+        }
     }
 
     setUpdated(userIds: string[], timestamp: bigint) {
@@ -71,7 +121,7 @@ export class UsersState {
                 const user = map.get(userId);
                 if (user !== undefined) {
                     user.updated = timestamp;
-                    map.set(userId, user);
+                    this.#set(map, user);
                 }
             }
             return map;
@@ -79,6 +129,7 @@ export class UsersState {
     }
 
     userSuspended(userId: string, suspended: boolean) {
+        userId = this.latestUserId(userId);
         const existing = allUsersStore.value.get(userId);
         if (existing === undefined || existing.suspended === suspended) return;
 
@@ -86,7 +137,7 @@ export class UsersState {
             const u = users.get(userId);
             if (u) {
                 u.suspended = suspended;
-                users.set(userId, u);
+                this.#set(users, u);
                 suspendedUsersStore.update((s) => {
                     if (suspended) {
                         s.add(userId);
@@ -125,10 +176,7 @@ export class UsersState {
         }
     }
 
-    updateUser(
-        userId: string,
-        updater: (user: UserSummary) => UserSummary | undefined,
-    ): void {
+    updateUser(userId: string, updater: (user: UserSummary) => UserSummary | undefined): void {
         const user = this.get(userId);
         if (user !== undefined) {
             const updated = updater(user);

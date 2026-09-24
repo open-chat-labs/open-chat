@@ -1171,8 +1171,8 @@ export class ChatsDb {
         }
     }
 
-    setCachedCurrentUser(user: CreatedUser): void {
-        this.getDb().then((db) => db.put("currentUser", user, this.principalString));
+    async setCachedCurrentUser(user: CreatedUser): Promise<void> {
+        await (await this.getDb()).put("currentUser", user, this.principalString);
     }
 
     async patchCachedCurrentUser(patch: Partial<CreatedUser>): Promise<void> {

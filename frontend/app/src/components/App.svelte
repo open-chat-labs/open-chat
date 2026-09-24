@@ -172,6 +172,8 @@
             subscribe("askToSpeak", askToSpeak),
             subscribe("userLoggedIn", onUserLoggedIn),
             subscribe("sessionExpired", () => client.logout()),
+            // The current user has been migrated to a new user id, so start again under it
+            subscribe("currentUserIdChanged", () => window.location.reload()),
         ];
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);

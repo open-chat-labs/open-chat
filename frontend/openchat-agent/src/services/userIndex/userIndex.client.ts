@@ -186,7 +186,21 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         ) {
                             liveUser = { ...liveUser, acceptedTermsVersion: accepted };
                         }
-                        this.chatsDb.setCachedCurrentUser(liveUser);
+                        const cachingUser = this.chatsDb
+                            .setCachedCurrentUser(liveUser)
+                            .catch((err) =>
+                                console.error("Failed to save the current user to the cache", err),
+                            );
+                        if (cachedUser !== undefined && cachedUser.userId !== liveUser.userId) {
+                            // The user has been migrated to a MultiUser canister. The client
+                            // restarts the session under their new id, so it must be cached first.
+                            this.userDb
+                                .setMigratedUserIds(new Map([[cachedUser.userId, liveUser.userId]]))
+                                .catch((err) =>
+                                    console.error("Failed to save migrated user ids to the cache", err),
+                                );
+                            await cachingUser;
+                        }
                     }
                     resolve(liveUser, true);
                 }
@@ -590,7 +604,12 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         // not take the whole batch down in Principal.fromText: there is no such user, so the
         // caller sees exactly what it would for an unknown id
         users = dropInvalidUserIds(users);
-        const allUsers = users.userGroups.flatMap((g) => g.users);
+        const requested = users.userGroups.flatMap((g) => g.users);
+
+        // Users who've been migrated to a MultiUser canister are cached, and requested, under
+        // their latest id
+        const knownMigrations = await this.userDb.getLatestUserIds(requested);
+        const allUsers = [...new Set(requested.map((u) => knownMigrations.get(u) ?? u))];
 
         const fromCache = await this.userDb.getCachedUsers(allUsers);
         const suspendedUsersSyncedTo = await this.userDb.getSuspendedUsersSyncedUpTo();
@@ -603,22 +622,60 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
 
         const apiResponse = await this.getUsersFromBackend(args, suspendedUsersSyncedTo);
 
+        const newMigrations = migrationsFromResponse(apiResponse);
+        if (apiResponse.currentUser !== undefined) {
+            // The current user comes back under their latest id without their earlier ones, but
+            // the one we've got cached is the id they had when the session started
+            const cachedCurrentUserId = (await this.chatsDb.getCachedCurrentUser())?.userId;
+            if (
+                cachedCurrentUserId !== undefined &&
+                cachedCurrentUserId !== apiResponse.currentUser.userId
+            ) {
+                newMigrations.set(cachedCurrentUserId, apiResponse.currentUser.userId);
+            }
+        }
+
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(
             allUsers,
             requestedFromServer,
             apiResponse,
             fromCache,
+            newMigrations,
         );
 
-        this.userDb.setCachedDeletedUserIds(apiResponse.deletedUserIds);
+        const migratedUserIds = new Map(newMigrations);
+        for (const userId of requested) {
+            const known = knownMigrations.get(userId) ?? userId;
+            const latest = newMigrations.get(known) ?? known;
+            if (latest !== userId) {
+                migratedUserIds.set(userId, latest);
+            }
+            // The server only knows of the id we asked for, which may itself be an earlier id
+            if (apiResponse.deletedUserIds.has(known)) {
+                mergedResponse.deletedUserIds.add(userId);
+            }
+        }
+        if (migratedUserIds.size > 0) {
+            mergedResponse.migratedUserIds = migratedUserIds;
+        }
+
+        this.userDb.setCachedDeletedUserIds(mergedResponse.deletedUserIds);
 
         this.userDb
             .setCachedUsers(mergedResponse.users)
             .catch((err) => console.error("Failed to save users to the cache", err));
 
+        this.userDb
+            .setMigratedUserIds(newMigrations)
+            .catch((err) => console.error("Failed to save migrated user ids to the cache", err));
+
         if (mergedResponse.currentUser) {
-            this.chatsDb.mergeCachedCurrentUser(mergedResponse.currentUser);
+            // Awaited so that, if the current user's id has changed, the new id is cached before
+            // the client restarts the session under it
+            await this.chatsDb
+                .mergeCachedCurrentUser(mergedResponse.currentUser)
+                .catch((err) => console.error("Failed to save the current user to the cache", err));
         }
 
         if (mergedResponse.serverTimestamp !== undefined) {
@@ -633,13 +690,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     }
 
     async populateUserCache(userIds: string[]): Promise<void> {
-        const fromCache = await this.userDb.getCachedUsers(userIds);
+        const knownMigrations = await this.userDb.getLatestUserIds(userIds);
+        const latestUserIds = [...new Set(userIds.map((u) => knownMigrations.get(u) ?? u))];
 
-        if (fromCache.length === userIds.length) {
+        const fromCache = await this.userDb.getCachedUsers(latestUserIds);
+
+        if (fromCache.length === latestUserIds.length) {
             return;
         }
 
-        const args = this.buildGetUsersArgs(userIds, fromCache, true);
+        const args = this.buildGetUsersArgs(latestUserIds, fromCache, true);
         const apiResponse = await this.getUsersFromBackend(args, undefined);
 
         const users: UserSummary[] = [];
@@ -658,6 +718,9 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         this.userDb
             .setCachedUsers(users)
             .catch((err) => console.error("Failed to save users to the cache", err));
+        this.userDb
+            .setMigratedUserIds(migrationsFromResponse(apiResponse))
+            .catch((err) => console.error("Failed to save migrated user ids to the cache", err));
         this.userDb.setCachedDeletedUserIds(apiResponse.deletedUserIds);
     }
 
@@ -730,21 +793,33 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         return args;
     }
 
-    // Merges the cached values into the response
+    // Merges the cached values into the response. Users are returned under their latest ids, so a
+    // user in `migrations`, which maps earlier ids to latest ids, is returned under the id they were
+    // migrated to rather than the one they were requested by.
     private mergeGetUsersResponse(
         allUsersRequested: string[],
         requestedFromServer: Set<string>,
         apiResponse: UsersApiResponse,
         fromCache: UserSummary[],
+        migrations: ReadonlyMap<string, string>,
     ): UsersResponse {
         const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
         const apiResponseMap = new Map<string, UserSummaryUpdate>(
             apiResponse.users.map((u) => [u.userId, u]),
         );
+        const currentUserId = apiResponse.currentUser?.userId;
 
         const users: UserSummary[] = [];
+        const added = new Set<string>();
 
-        for (const userId of allUsersRequested) {
+        for (const requestedId of allUsersRequested) {
+            const userId = migrations.get(requestedId) ?? requestedId;
+            // The current user is added from `currentUser` below
+            if (added.has(userId) || userId === currentUserId) continue;
+            added.add(userId);
+
+            // Anything cached under an earlier id is replaced by what the server returns, which is
+            // the user in full under their latest id
             const cached = fromCacheMap.get(userId);
             const fromServer = apiResponseMap.get(userId);
 
@@ -759,18 +834,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                     users.push(merged);
                 }
             } else if (cached !== undefined) {
-                if (cached.userId !== apiResponse.currentUser?.userId) {
-                    if (requestedFromServer.has(userId)) {
-                        // If this user was requested from the server but wasn't included in the response, then that means
-                        // our cached copy is up to date.
-                        users.push({
-                            ...cached,
+                if (requestedFromServer.has(userId)) {
+                    // If this user was requested from the server but wasn't included in the response, then that means
+                    // our cached copy is up to date.
+                    users.push({
+                        ...cached,
 
-                            updated: apiResponse.serverTimestamp!,
-                        });
-                    } else {
-                        users.push(cached);
-                    }
+                        updated: apiResponse.serverTimestamp!,
+                    });
+                } else {
+                    users.push(cached);
                 }
             } else {
                 // if we get here it means that for this user, nothing came back from the server
@@ -800,7 +873,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             serverTimestamp: apiResponse.serverTimestamp,
             users,
             currentUser: apiResponse.currentUser,
-            deletedUserIds: apiResponse.deletedUserIds,
+            deletedUserIds: new Set(apiResponse.deletedUserIds),
         };
     }
 
@@ -1170,4 +1243,16 @@ function apiModerationVerdict(verdict: ModerationVerdict): "Upheld" | "UpheldAsC
         case "dismissed":
             return "Dismissed";
     }
+}
+
+// The earlier ids of the users returned who were requested by an id from before they were migrated
+// to a MultiUser canister, each mapped to the user's latest id
+function migrationsFromResponse(apiResponse: UsersApiResponse): Map<string, string> {
+    const migrations = new Map<string, string>();
+    for (const user of apiResponse.users) {
+        for (const previousUserId of user.previousUserIds ?? []) {
+            migrations.set(previousUserId, user.userId);
+        }
+    }
+    return migrations;
 }

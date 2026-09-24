@@ -250,6 +250,9 @@ export function userSummaryUpdate(value: TUserSummaryV2): UserSummaryUpdate {
             maxStreak: v.max_streak,
             totalChitEarned: v.total_chit_earned,
         })),
+        previousUserIds: mapOptional(value.previous_user_ids, (ids) =>
+            ids.map(principalBytesToString),
+        ),
     };
 }
 
