@@ -7,6 +7,7 @@ use group_canister::tip_message::*;
 use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, Caller, CryptoTransaction, OCResult, UserId, icrc2};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -64,10 +65,12 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     };
     let user_id = user.user_id;
 
-    let recipient = state
-        .data
-        .chat
-        .check_can_tip_message(user_id, args.thread_root_message_index, args.message_id)?;
+    let recipient = state.data.chat.check_can_tip_message(
+        user_id,
+        args.thread_root_message_index,
+        args.message_id,
+        &MigratedUserIds::default(),
+    )?;
 
     let c2c_args = group_canister::c2c_tip_message::Args {
         recipient,
