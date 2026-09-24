@@ -1017,6 +1017,87 @@ mod tests {
     }
 
     #[test]
+    fn read_all_entries_interleaves_the_two_maps() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        // Key types 2 and 57 are in the main map, 17 and 23 in the small entries map
+        let keys: Vec<Vec<u8>> = vec![vec![2, 1], vec![17, 1], vec![23, 1], vec![57, 1], vec![57, 2]];
+        with_map_mut(|m| {
+            for key in keys.iter().rev() {
+                m.map_mut(map_class(key)).insert(BaseKey::new(key.clone()), vec![0; 10]);
+            }
+        });
+
+        let mut read = Vec::new();
+        let mut after: Option<Vec<u8>> = None;
+        loop {
+            // Each page fits a single entry
+            let ReadAllEntriesResult { entries, finished } = read_all_entries(after.as_deref(), 1);
+            assert!(entries.len() <= 1);
+            after = entries.last().map(|(k, _)| k.clone());
+            read.extend(entries.into_iter().map(|(k, _)| k));
+            if finished {
+                break;
+            }
+        }
+        assert_eq!(read, keys);
+    }
+
+    #[test]
+    fn read_all_entries_of_an_empty_map() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        let ReadAllEntriesResult { entries, finished } = read_all_entries(None, ONE_KB);
+        assert!(entries.is_empty());
+        assert!(finished);
+    }
+
+    #[test]
+    fn read_all_entries_without_a_small_entries_map() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init(memory_manager.get(MAIN));
+
+        with_map_mut(|m| {
+            m.insert(default_key(), vec![1]);
+        });
+
+        let ReadAllEntriesResult { entries, finished } = read_all_entries(None, ONE_KB);
+        assert_eq!(entries.len(), 1);
+        assert!(finished);
+    }
+
+    #[test]
+    fn read_all_entries_stops_before_an_entry_which_would_exceed_max_bytes() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        // A small entry (key type 17, in the small entries map) followed by a large one (key type
+        // 57, in the main map)
+        let small = vec![17, 1];
+        let large = vec![57, 1];
+        with_map_mut(|m| {
+            m.map_mut(map_class(&small)).insert(BaseKey::new(small.clone()), vec![0; 10]);
+            m.map_mut(map_class(&large)).insert(BaseKey::new(large.clone()), vec![0; 100]);
+        });
+
+        let ReadAllEntriesResult { entries, finished } = read_all_entries(None, 50);
+        assert_eq!(
+            entries.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>(),
+            vec![small.clone()]
+        );
+        assert!(!finished);
+
+        // The large entry is read on its own, despite being larger than the limit
+        let ReadAllEntriesResult { entries, finished } = read_all_entries(Some(&small), 50);
+        assert_eq!(entries.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>(), vec![large]);
+        assert!(finished);
+    }
+
+    const ONE_KB: usize = 1024;
+
+    #[test]
     fn read_all_entries_reads_an_entry_larger_than_max_bytes() {
         let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
         init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));

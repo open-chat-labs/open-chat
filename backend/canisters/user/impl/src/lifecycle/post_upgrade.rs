@@ -42,6 +42,16 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
+    // Nothing may change the state of a canister whose user is being migrated, since the MultiUser
+    // canister pulls the user's stable memory entries as they are, so none of the migrations below
+    // run on it
+    if data.is_migrating() {
+        let env = Box::new(CanisterEnv::new(data.rng_seed));
+        init_state(env, data, args.wasm_version);
+        info!(version = %args.wasm_version, "Post-upgrade complete, skipping migrations since the user is being migrated");
+        return;
+    }
+
     // Give each existing direct chat a `key_id`, so that every stable memory entry written from
     // here on (including by the migrations below) is keyed by it rather than by the other user's
     // id. The events themselves are moved to the new keys at the end of `post_upgrade`.

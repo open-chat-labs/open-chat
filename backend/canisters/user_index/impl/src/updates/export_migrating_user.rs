@@ -37,10 +37,10 @@ async fn export(canister_id: CanisterId) -> Result<SuccessResult, C2CError> {
         )
         .await?;
 
-        user_bytes += page.len() as u64;
-        if page.len() < PAGE_SIZE as usize {
+        if page.is_empty() {
             break;
         }
+        user_bytes += page.len() as u64;
     }
 
     let mut stable_memory_entries = 0;

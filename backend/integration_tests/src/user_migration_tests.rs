@@ -5,8 +5,8 @@ use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use testing::rng::random_string;
-use types::{CanisterId, Chat};
+use testing::rng::{random_from_u128, random_string};
+use types::{CanisterId, Chat, Document};
 use user_index_canister::start_user_migration::{Response, SuccessResult};
 
 #[test]
@@ -119,6 +119,17 @@ fn migrating_user_is_exported() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+
+    // Along with the rest, these take up more than one page of stable memory entries, and the
+    // profile background alone is larger than a page's limit
+    client::user::happy_path::set_avatar(env, &user1, Some(document(800 * 1024)));
+    client::user::happy_path::set_profile_background(
+        env,
+        &user1,
+        &user_canister::set_profile_background::Args {
+            profile_background: Some(document(1024 * 1024)),
+        },
+    );
     tick_many(env, 3);
 
     // The UserIndex stands in for the MultiUser canister, which pulls the export
@@ -135,9 +146,9 @@ fn migrating_user_is_exported() {
     };
 
     assert_eq!(exported.user_bytes, started.user_bytes);
-    // The direct chat's events and their indexes, among others
-    assert!(exported.stable_memory_entries > 0);
-    assert!(exported.stable_memory_bytes > 0);
+    // The avatar and profile background, and the direct chat's events and their indexes, among others
+    assert!(exported.stable_memory_entries > 2);
+    assert!(exported.stable_memory_bytes > 1800 * 1024);
 }
 
 #[test]
@@ -150,19 +161,28 @@ fn only_the_multi_user_canister_being_migrated_to_can_export() {
         ..
     } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
-    start_user_migration(env, *controller, canister_ids.user_index, &user, multi_user_canister(1));
+    // One user is being migrated to another MultiUser canister, and the other isn't being migrated
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    start_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
 
-    let response = client::user_index::export_migrating_user(
-        env,
-        *controller,
-        canister_ids.user_index,
-        &user_index_canister::export_migrating_user::Args { user_id: user.user_id },
-    );
-    assert!(
-        matches!(response, user_index_canister::export_migrating_user::Response::Error(_)),
-        "{response:?}"
-    );
+    for user in [&user1, &user2] {
+        let response = client::user_index::export_migrating_user(
+            env,
+            *controller,
+            canister_ids.user_index,
+            &user_index_canister::export_migrating_user::Args { user_id: user.user_id },
+        );
+        assert!(
+            matches!(
+                response,
+                user_index_canister::export_migrating_user::Response::Error(ref e)
+                    if e.matches_code(OCErrorCode::C2CError)
+                        && e.message().is_some_and(|m| m.contains("not the MultiUser canister the user is being migrated to"))
+            ),
+            "{response:?}"
+        );
+    }
 }
 
 fn start_user_migration(
@@ -184,6 +204,14 @@ fn start_user_migration(
     match response {
         Response::Success(result) => result,
         response => panic!("'start_user_migration' error: {response:?}"),
+    }
+}
+
+fn document(len: usize) -> Document {
+    Document {
+        id: random_from_u128(),
+        mime_type: "image/png".to_string(),
+        data: (0..len).map(|i| i as u8).collect(),
     }
 }
 

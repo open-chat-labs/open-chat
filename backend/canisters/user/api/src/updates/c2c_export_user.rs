@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
-// A page of the user as serialized when their migration started, `page_size` bytes starting at `from`
+// A page of the user as serialized when their migration started, `page_size` bytes (at most 1MB)
+// starting at `from`. An empty page means there are no more.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub from: u64,
