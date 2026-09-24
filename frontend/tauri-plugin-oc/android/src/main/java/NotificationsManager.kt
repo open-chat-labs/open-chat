@@ -8,6 +8,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import app.tauri.plugin.JSObject
+import com.ocplugin.app.calls.CallRinger
 import com.ocplugin.app.data.*
 import com.ocplugin.app.decoders.NotificationDecoder
 import com.ocplugin.app.models.Conversation
@@ -15,7 +16,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
-// TODO Fix video call notification
 // TODO Notification management improvements
 //  - Reconstruct notifications on device restart!
 //  - Manage media (i.e. shared photos)
@@ -42,10 +42,22 @@ object NotificationsManager {
         try {
             Log.d(OC_TAG_NOT, ">>>> Received notification: $data")
 
+            NotificationDecoder.decodeCallDismissal(data)?.let {
+                CallRinger.onDismissal(context, it)
+                return
+            }
+
             val newNotification = NotificationDecoder.decode(data)
             if (newNotification == null) {
                 Log.e(OC_TAG_NOT, "!!!! Notification data failed decoding: $data")
                 return
+            }
+
+            // Call fields present means ring, on screen or not. The ring path owns the
+            // notification from here; a missed call comes back through
+            // notifyMessageStyleNotification.
+            NotificationDecoder.decodeCallFacts(data)?.let { facts ->
+                if (CallRinger.onStarted(context, newNotification, facts)) return
             }
 
             // Notification successfully decoded, save to local db!
