@@ -9,7 +9,7 @@ pub fn start_job() {
 }
 
 fn run() {
-    ic_cdk::futures::spawn_migratory(run_async());
+    utils::async_work::spawn_tracked(run_async());
 }
 
 async fn run_async() {

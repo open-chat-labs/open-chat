@@ -32,7 +32,7 @@ pub fn run() {
             .pop_front()
             .map(|p| (state.data.online_users_canister_id, p))
     }) {
-        ic_cdk::futures::spawn_migratory(remove_user(canister_id, principal));
+        utils::async_work::spawn_tracked(remove_user(canister_id, principal));
     }
 }
 

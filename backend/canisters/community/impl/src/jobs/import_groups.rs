@@ -46,7 +46,7 @@ fn run() {
 
     let batch = mutate_state(next_batch);
     if !batch.is_empty() {
-        ic_cdk::futures::spawn_migratory(import_groups(batch));
+        utils::async_work::spawn_tracked(import_groups(batch));
     }
 }
 

@@ -267,7 +267,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        ic_cdk::futures::spawn_migratory(async move {
+        utils::async_work::spawn_tracked(async move {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
@@ -312,7 +312,7 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        ic_cdk::futures::spawn_migratory(async move {
+        utils::async_work::spawn_tracked(async move {
             match escrow_canister_c2c_client::cancel_swap(
                 escrow_canister_id,
                 &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
