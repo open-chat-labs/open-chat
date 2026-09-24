@@ -32,7 +32,7 @@ object CallRinger {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val timeouts = HashMap<CallId, Runnable>()
     private val avatars = ConcurrentHashMap<CallId, Bitmap>()
-    private const val AVATAR_WAIT_MS = 1_500L
+    const val AVATAR_WAIT_MS = 1_500L
 
     // The ring activity listens so a dismissal while it is on screen closes it.
     val listeners = CopyOnWriteArraySet<(CallId, CallRegistry.End) -> Unit>()
@@ -65,24 +65,28 @@ object CallRinger {
         finish(context, dismissal.id, end, call)
     }
 
+    // The answer for the call in the notification's own extras is handed to the web
+    // layer whether or not the call is still ringing here: a tap on a stale notification
+    // (answered elsewhere, ended, or a fresh process after a reap) still means "open the
+    // call", and the web layer finds out from the canister whether it is still on.
     fun accept(context: Context, call: IncomingCall) {
         val known = registry.ringing(call.id)
-        if (!registry.accepted(call.id)) {
-            // Not ringing here any more (answered elsewhere, ended, or a fresh process
-            // after a reap). The tap still means "open the call".
+        val end = registry.accepted(call.id)
+        if (end == null) {
             IncomingCallNotifications.cancelRing(context, call.id)
         } else {
-            finish(context, call.id, CallRegistry.End.ANSWERED_HERE, known ?: call)
+            finish(context, call.id, end, known ?: call)
         }
         deliver(context, CallAction.Accept(call.id, call.kind))
     }
 
     fun decline(context: Context, id: CallId) {
         val call = registry.ringing(id)
-        if (registry.declined(id)) {
-            finish(context, id, CallRegistry.End.REJECTED, call)
-        } else {
+        val end = registry.declined(id)
+        if (end == null) {
             IncomingCallNotifications.cancelRing(context, id)
+        } else {
+            finish(context, id, end, call)
         }
     }
 
@@ -92,6 +96,11 @@ object CallRinger {
         finish(context, id, CallRegistry.End.ANSWERED_HERE, null)
     }
 
+    // The one way the ring notification gets posted. At most once per call.
+    fun showRing(context: Context, call: IncomingCall) {
+        if (registry.shouldPostRing(call.id)) IncomingCallNotifications.postRing(context, call, avatars[call.id])
+    }
+
     // The ringing call for a Telecom address, for a connection request whose extras
     // did not survive the trip through Telecom.
     fun ringingFor(context: Context, address: String?): IncomingCall? {
@@ -99,11 +108,7 @@ object CallRinger {
         return registry.ringingCalls().firstOrNull { it.id.chat == chat }
     }
 
-    fun telecomRefused(context: Context, call: IncomingCall) {
-        if (registry.ringing(call.id) != null) IncomingCallNotifications.postRing(context, call, avatars[call.id])
-    }
-
-    fun avatarFor(id: CallId): Bitmap? = avatars[id]
+    fun telecomRefused(context: Context, call: IncomingCall) = showRing(context, call)
 
     fun redial(context: Context, chat: CallChat) {
         deliver(context, CallAction.Start(chat, CallKind.VIDEO))
@@ -115,14 +120,12 @@ object CallRinger {
             timeouts[call.id] = timeout
             main.postDelayed(timeout, (deadline - System.currentTimeMillis()).coerceAtLeast(0))
         }
-        if (!CallTelecom.reportIncoming(context, call)) {
-            IncomingCallNotifications.postRing(context, call, avatars[call.id])
-        }
+        if (!CallTelecom.reportIncoming(context, call)) showRing(context, call)
     }
 
     private fun onTimeout(context: Context, id: CallId) {
         val call = registry.ringing(id)
-        if (registry.timedOut(id)) finish(context, id, CallRegistry.End.MISSED, call)
+        registry.timedOut(id)?.let { finish(context, id, it, call) }
     }
 
     private fun finish(context: Context, id: CallId, end: CallRegistry.End, call: IncomingCall?) {
@@ -131,7 +134,7 @@ object CallRinger {
         avatars.remove(id)
         CallTelecom.end(id, end)
         listeners.forEach { it(id, end) }
-        if (end == CallRegistry.End.MISSED && call != null) postMissed(context, call)
+        if (end.postsMissedCall && call != null) postMissed(context, call)
     }
 
     // The ordinary message notification for the chat, reading "Missed call", so the tap

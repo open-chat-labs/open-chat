@@ -180,7 +180,7 @@ class CallConnection(private val context: Context, val call: IncomingCall, addre
     // The one point at which Android 14 and later grants a full-screen intent to an app
     // that is not the dialler, and only for a notification posted synchronously here.
     override fun onShowIncomingCallUi() {
-        IncomingCallNotifications.postRing(context, call, CallRinger.avatarFor(call.id))
+        CallRinger.showRing(context, call)
     }
 
     // Answered from a system surface such as a headset. Same path as the ring activity's

@@ -52,6 +52,23 @@ class KeyguardBoundaryTest {
     }
 
     @Test
+    fun `invariant 19 the app counts as on screen only while the main activity is started`() {
+        val source = File(app, "java/com/oclabs/openchat/MyApplication.kt").readText()
+        assertTrue(source.contains("activity is MainActivity"))
+        assertFalse(source.contains("ProcessLifecycleOwner"))
+        // The ring activity is an activity in this process and must never count.
+        assertFalse(source.contains("IncomingCallActivity"))
+    }
+
+    @Test
+    fun `invariant 10 the production handle path evicts through the tested rule`() {
+        val source = File(plugin, "java/calls/CallHandleDirectory.kt").readText()
+        val token = source.substring(source.indexOf("fun token("), source.indexOf("fun chat("))
+        assertTrue(token.contains("evictOldest("))
+        assertFalse(token.contains("removeAt(0)"))
+    }
+
+    @Test
     fun `invariant 14 the parked answer is written only by the ringer and never read from an intent`() {
         val writers = (kotlinSources(plugin) + kotlinSources(app)).filter {
             Regex("""pendingCallAction\s*=(?!\s*null)""").containsMatchIn(it.readText())

@@ -160,8 +160,8 @@ describe("native call bridge", () => {
             await import("./call_bridge");
         await expect(expectCallActions(vi.fn())).resolves.toBeDefined();
         expect(consumePendingCallAction()).toBeNull();
-        expect(() => notifyCallJoined(1n)).not.toThrow();
-        await Promise.resolve();
+        // Rejection from the missing command is swallowed, never left unhandled.
+        await expect(notifyCallJoined(1n)).resolves.toBeUndefined();
         expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|call_ring_handled", {
             messageId: "1",
         });

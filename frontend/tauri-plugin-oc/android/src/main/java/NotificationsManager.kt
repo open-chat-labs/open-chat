@@ -9,6 +9,8 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.calls.CallRinger
+import com.ocplugin.app.calls.PushRoute
+import com.ocplugin.app.calls.PushRouting
 import com.ocplugin.app.data.*
 import com.ocplugin.app.decoders.NotificationDecoder
 import com.ocplugin.app.models.Conversation
@@ -42,22 +44,22 @@ object NotificationsManager {
         try {
             Log.d(OC_TAG_NOT, ">>>> Received notification: $data")
 
-            NotificationDecoder.decodeCallDismissal(data)?.let {
-                CallRinger.onDismissal(context, it)
-                return
-            }
-
-            val newNotification = NotificationDecoder.decode(data)
-            if (newNotification == null) {
-                Log.e(OC_TAG_NOT, "!!!! Notification data failed decoding: $data")
-                return
-            }
-
-            // Call fields present means ring, on screen or not. The ring path owns the
-            // notification from here; a missed call comes back through
-            // notifyMessageStyleNotification.
-            NotificationDecoder.decodeCallFacts(data)?.let { facts ->
-                if (CallRinger.onStarted(context, newNotification, facts)) return
+            val newNotification = when (val route = PushRouting.route(data, appIsInForeground)) {
+                is PushRoute.Dismissal -> {
+                    CallRinger.onDismissal(context, route.dismissal)
+                    return
+                }
+                is PushRoute.Ring -> {
+                    // The ring path owns the notification from here; a missed call comes
+                    // back through notifyMessageStyleNotification.
+                    if (CallRinger.onStarted(context, route.notification, route.facts)) return
+                    route.notification
+                }
+                is PushRoute.Message -> route.notification
+                PushRoute.Drop -> {
+                    Log.e(OC_TAG_NOT, "!!!! Notification data failed decoding: $data")
+                    return
+                }
             }
 
             // Notification successfully decoded, save to local db!

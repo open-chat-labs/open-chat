@@ -10,16 +10,17 @@ class CallRegistry(
     private val ringWindowMs: Long = RING_WINDOW_MS,
     private val rememberLimit: Int = 100,
 ) {
-    // How a ring ended. Mapped to a Telecom disconnect cause by the adapter.
-    enum class End {
+    // How a ring ended. Mapped to a Telecom disconnect cause by the adapter. Only a
+    // missed call posts the missed call notification.
+    enum class End(val postsMissedCall: Boolean) {
         // Ring window elapsed, or the caller hung up while it rang. A missed call.
-        MISSED,
+        MISSED(true),
         // Declined on this device.
-        REJECTED,
+        REJECTED(false),
         // Answered on another of the user's devices.
-        ANSWERED_ELSEWHERE,
-        // Answered on this device.
-        ANSWERED_HERE,
+        ANSWERED_ELSEWHERE(false),
+        // Answered on this device, from the ring screen, Telecom, or inside the app.
+        ANSWERED_HERE(false),
     }
 
     sealed class Started {
@@ -39,6 +40,10 @@ class CallRegistry(
 
     // Dismissals that arrived before their `started`. FCM does not order pushes.
     private val earlyDismissals = LinkedHashMap<CallId, DismissalKind>()
+
+    // Calls whose ring notification has been posted. It is posted at most once: an
+    // update stops the insistent ringtone.
+    private val notified = LinkedHashSet<CallId>()
 
     // The shell rings natively whether or not the app is on screen; the web layer never
     // rings in the Android shell.
@@ -73,14 +78,24 @@ class CallRegistry(
         return end(id, if (dismissal.kind == DismissalKind.ENDED) End.MISSED else End.ANSWERED_ELSEWHERE)
     }
 
+    // Each returns how the ring ended, or null when the call was not ringing here.
     @Synchronized
-    fun accepted(id: CallId): Boolean = end(id, End.ANSWERED_HERE) != null
+    fun accepted(id: CallId): End? = end(id, End.ANSWERED_HERE)
 
     @Synchronized
-    fun declined(id: CallId): Boolean = end(id, End.REJECTED) != null
+    fun declined(id: CallId): End? = end(id, End.REJECTED)
 
     @Synchronized
-    fun timedOut(id: CallId): Boolean = end(id, End.MISSED) != null
+    fun timedOut(id: CallId): End? = end(id, End.MISSED)
+
+    // True the first time only, and only while the call is ringing.
+    @Synchronized
+    fun shouldPostRing(id: CallId): Boolean {
+        if (id !in ringing || id in notified) return false
+        notified.add(id)
+        while (notified.size > rememberLimit) notified.remove(notified.first())
+        return true
+    }
 
     // Joined from inside the app while ringing here: answered on this device.
     @Synchronized

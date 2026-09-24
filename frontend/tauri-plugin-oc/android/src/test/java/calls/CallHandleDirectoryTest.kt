@@ -22,10 +22,11 @@ class CallHandleDirectoryTest {
     }
 
     @Test
-    fun `invariant 9 minting avoids handles already in use`() {
-        val taken = (0 until 50).map { CallHandleDirectory.mint(emptySet()) }.toSet()
-        val fresh = CallHandleDirectory.mint(taken)
-        assertTrue(fresh !in taken)
+    fun `invariant 9 minting retries a handle already in use`() {
+        // The digit source yields all ones, then all twos.
+        val digits = (List(12) { 1 } + List(12) { 2 }).iterator()
+        val fresh = CallHandleDirectory.mint(setOf("111111111111")) { digits.next() }
+        assertEquals("222222222222", fresh)
     }
 
     @Test

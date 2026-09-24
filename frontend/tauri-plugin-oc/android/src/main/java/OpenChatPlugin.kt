@@ -155,8 +155,7 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 
     @Command
     fun getPendingCallAction(invoke: Invoke) {
-        val payload = OCPluginCompanion.pendingCallAction
-        OCPluginCompanion.pendingCallAction = null
+        val payload = OCPluginCompanion.takePendingCallAction()
         if (payload != null) {
             invoke.resolve(JSObject().put("payload", payload))
         } else {
@@ -216,6 +215,14 @@ object OCPluginCompanion {
     // carries it, so nothing outside this process can put a call here.
     @Volatile
     var pendingCallAction: String? = null
+
+    // Cleared on read, so an answer is delivered once.
+    @Synchronized
+    fun takePendingCallAction(): String? {
+        val payload = pendingCallAction
+        pendingCallAction = null
+        return payload
+    }
 
     fun initFcmTokenCache() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->

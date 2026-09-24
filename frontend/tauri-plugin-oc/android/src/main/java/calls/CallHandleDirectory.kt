@@ -32,7 +32,7 @@ object CallHandleDirectory {
         map[token] = key
         order.remove(token)
         order.add(token)
-        while (order.size > DEFAULT_LIMIT) map.remove(order.removeAt(0))
+        evictOldest(map, order, DEFAULT_LIMIT)
         save(context, map, order)
         return token
     }
@@ -57,9 +57,10 @@ object CallHandleDirectory {
         return map[digits]
     }
 
-    fun mint(existing: Set<String>): String {
+    // Pure given its digit source. Retries until the token is not one already minted.
+    fun mint(existing: Set<String>, nextDigit: () -> Int = { random.nextInt(10) }): String {
         while (true) {
-            val token = buildString { repeat(TOKEN_DIGITS) { append(random.nextInt(10)) } }
+            val token = buildString { repeat(TOKEN_DIGITS) { append(nextDigit()) } }
             if (token !in existing) return token
         }
     }

@@ -129,10 +129,10 @@ export function runCallAction(action: NativeCallAction): void {
 
 // The web layer joined this call from inside the app (the call message's Join button)
 // while the shell may still be ringing for it: the shell ends its ring as answered
-// here. Fire and forget; a shell without the command ignores it.
-export function notifyCallJoined(messageId: bigint): void {
-    if (!isAndroidTauriApp()) return;
-    invoke("plugin:oc|call_ring_handled", { messageId: messageId.toString() }).catch(
+// here. Never rejects: a shell without the command is a no-op.
+export function notifyCallJoined(messageId: bigint): Promise<void> {
+    if (!isAndroidTauriApp()) return Promise.resolve();
+    return invoke<void>("plugin:oc|call_ring_handled", { messageId: messageId.toString() }).catch(
         () => undefined,
     );
 }

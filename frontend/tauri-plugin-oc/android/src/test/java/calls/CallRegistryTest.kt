@@ -26,7 +26,7 @@ class CallRegistryTest {
         assertTrue(r.started(call(), now) is Started.Ring)
         assertEquals(Started.Ignore, r.started(call(), now + 1))
         assertEquals(Started.Ignore, r.started(call(), now + 2))
-        assertTrue(r.accepted(call().id))
+        assertEquals(End.ANSWERED_HERE, r.accepted(call().id))
         assertEquals(Started.Ignore, r.started(call(), now + 3))
     }
 
@@ -86,7 +86,7 @@ class CallRegistryTest {
         assertEquals(CallId(alice, "9"), r.joinedInApp("9"))
         assertNull(r.ringing(CallId(alice, "9")))
         assertNull(r.joinedInApp("9"))
-        assertFalse(r.timedOut(CallId(alice, "9")))
+        assertNull(r.timedOut(CallId(alice, "9")))
     }
 
     @Test
@@ -113,9 +113,9 @@ class CallRegistryTest {
     fun `invariant 7 a timeout or an ended dismissal is a missed call`() {
         val r = CallRegistry()
         r.started(call(messageId = "1"), now)
-        assertTrue(r.timedOut(CallId(alice, "1")))
+        assertEquals(End.MISSED, r.timedOut(CallId(alice, "1")))
         // Only once: a second timeout has nothing to end.
-        assertFalse(r.timedOut(CallId(alice, "1")))
+        assertNull(r.timedOut(CallId(alice, "1")))
 
         r.started(call(messageId = "2"), now)
         assertEquals(End.MISSED, r.dismissed(dismissal(alice, "2", DismissalKind.ENDED)))
@@ -126,20 +126,20 @@ class CallRegistryTest {
     fun `invariant 8 accept decline answered_elsewhere and in-app join are not missed calls`() {
         val r = CallRegistry()
         r.started(call(messageId = "1"), now)
-        assertTrue(r.accepted(CallId(alice, "1")))
-        assertFalse(r.timedOut(CallId(alice, "1")))
+        assertEquals(End.ANSWERED_HERE, r.accepted(CallId(alice, "1")))
+        assertNull(r.timedOut(CallId(alice, "1")))
 
         r.started(call(messageId = "2"), now)
-        assertTrue(r.declined(CallId(alice, "2")))
-        assertFalse(r.timedOut(CallId(alice, "2")))
+        assertEquals(End.REJECTED, r.declined(CallId(alice, "2")))
+        assertNull(r.timedOut(CallId(alice, "2")))
 
         r.started(call(messageId = "3"), now)
         assertEquals(End.ANSWERED_ELSEWHERE, r.dismissed(dismissal(alice, "3", DismissalKind.ANSWERED_ELSEWHERE)))
-        assertFalse(r.timedOut(CallId(alice, "3")))
+        assertNull(r.timedOut(CallId(alice, "3")))
 
         r.started(call(messageId = "4"), now)
         assertEquals(CallId(alice, "4"), r.joinedInApp("4"))
-        assertFalse(r.timedOut(CallId(alice, "4")))
+        assertNull(r.timedOut(CallId(alice, "4")))
         assertNull(r.joinedInApp("4"))
     }
 
@@ -152,12 +152,50 @@ class CallRegistryTest {
     }
 
     @Test
-    fun `invariant 14 only a ringing call can be accepted`() {
+    fun `invariant 7 and 8 the registry names how each ring ended and only a missed call posts a notification`() {
         val r = CallRegistry()
-        assertFalse(r.accepted(CallId(alice, "never-rang")))
+        r.started(call(messageId = "a"), now)
+        assertEquals(End.ANSWERED_HERE, r.accepted(CallId(alice, "a")))
+        r.started(call(messageId = "d"), now)
+        assertEquals(End.REJECTED, r.declined(CallId(alice, "d")))
+        r.started(call(messageId = "t"), now)
+        assertEquals(End.MISSED, r.timedOut(CallId(alice, "t")))
+        r.started(call(messageId = "j"), now)
+        assertEquals(CallId(alice, "j"), r.joinedInApp("j"))
+        assertEquals(listOf(End.MISSED), End.entries.filter { it.postsMissedCall })
+    }
+
+    @Test
+    fun `invariant 17 the ring notification is posted at most once per call and only while ringing`() {
+        val r = CallRegistry()
+        assertFalse(r.shouldPostRing(call().id))
+        r.started(call(), now)
+        assertTrue(r.shouldPostRing(call().id))
+        assertFalse(r.shouldPostRing(call().id))
+        r.declined(call().id)
+        assertFalse(r.shouldPostRing(call().id))
+    }
+
+    @Test
+    fun `invariant 18 the avatar fetch can delay a ring by at most one and a half seconds`() {
+        assertTrue(CallRinger.AVATAR_WAIT_MS <= 1_500L)
+    }
+
+    @Test
+    fun `invariant 20 an in-app join for a message id that never rang changes nothing`() {
+        val r = CallRegistry()
+        r.started(call(messageId = "1"), now)
+        assertNull(r.joinedInApp("never"))
+        assertEquals(call(messageId = "1"), r.ringing(CallId(alice, "1")))
+    }
+
+    @Test
+    fun `invariant 14 the registry accepts only a call that is ringing`() {
+        val r = CallRegistry()
+        assertNull(r.accepted(CallId(alice, "never-rang")))
         r.started(call(), now)
         r.declined(call().id)
-        assertFalse(r.accepted(call().id))
+        assertNull(r.accepted(call().id))
     }
 
     @Test
