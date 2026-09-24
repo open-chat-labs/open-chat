@@ -4899,3 +4899,201 @@ fn users_send_crypto_from_their_own_wallets() {
         b_balance
     );
 }
+
+#[test]
+fn tips_are_paid_from_the_tippers_own_wallet() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let carol = client::register_user(env, canister_ids);
+
+    let tip = 1_0000_0000;
+    let ledger = canister_ids.icp_ledger;
+    // Alice holds her funds in her own wallet, and approves this canister to pull them under her own
+    // spender subaccount. Carol's are in her User canister's account.
+    client::ledger::happy_path::transfer(env, *controller, ledger, alice, 10 * tip);
+    client::ledger::happy_path::approve(
+        env,
+        alice,
+        ledger,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: canister_id,
+            subaccount: Some(ledger_utils::spender_subaccount(alice)),
+        },
+        5 * (tip + ICP_TRANSFER_FEE),
+    );
+    client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 10 * tip);
+    tick_many(env, 3);
+
+    let tip_args = |chat: Chat, recipient: UserId, message_id| user_canister::tip_message::Args {
+        chat,
+        recipient,
+        thread_root_message_index: None,
+        message_id,
+        ledger,
+        token_symbol: ICP_SYMBOL.to_string(),
+        amount: tip,
+        fee: ICP_TRANSFER_FEE,
+        decimals: 8,
+        from_account: None,
+        pin: None,
+    };
+    let alice_tips = |env: &mut PocketIc, recipient: UserId, message_id| {
+        client::user::tip_message(
+            env,
+            alice,
+            canister_id,
+            &tip_args(Chat::Direct(recipient.into()), recipient, message_id),
+        )
+    };
+    let tips_on = |message: Message| message.tips.iter().cloned().collect::<Vec<_>>();
+    let tipped_by = |user_id: UserId| vec![(ledger, vec![(user_id, tip)])];
+
+    // Alice tips Bob's message. Both are in this canister, so both copies of the chat are updated
+    // directly, and the tip goes from Alice's wallet to Bob's.
+    let message_id = random_from_u128();
+    send_text_message(env, bob, canister_id, alice_id, "tip me", message_id);
+    let response = alice_tips(env, bob_id, message_id);
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Success),
+        "{response:?}"
+    );
+    assert_eq!(
+        tips_on(message(&events(env, alice, canister_id, alice_id, bob_id), message_id)),
+        tipped_by(alice_id)
+    );
+    assert_eq!(
+        tips_on(message(&events(env, bob, canister_id, bob_id, alice_id), message_id)),
+        tipped_by(alice_id)
+    );
+    assert!(has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::TippedMessage
+    ));
+    assert!(has_achievement(
+        &initial_state(env, bob, canister_id),
+        Achievement::HadMessageTipped
+    ));
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob), tip);
+
+    // Alice tips Carol's message, into Carol's wallet, and Carol's canister is told
+    send_text_message(env, alice, canister_id, carol.user_id, "hello", random_from_u128());
+    tick_many(env, 3);
+    let message_id = random_from_u128();
+    client::user::happy_path::send_text_message(env, &carol, alice_id, "tip me too", Some(message_id));
+    tick_many(env, 3);
+    let response = alice_tips(env, carol.user_id, message_id);
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 10, 10);
+    assert_eq!(tips_on(message(&carols_events, message_id)), tipped_by(alice_id));
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, carol.user_id), 11 * tip);
+
+    // Carol tips Alice's message, into Alice's wallet, and her canister tells this one
+    let message_id = random_from_u128();
+    send_text_message(env, alice, canister_id, carol.user_id, "tip me back", message_id);
+    tick_many(env, 3);
+    let response = client::user::tip_message(
+        env,
+        carol.principal,
+        carol.canister(),
+        &tip_args(Chat::Direct(alice_id.into()), alice_id, message_id),
+    );
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    assert_eq!(
+        tips_on(message(&events(env, alice, canister_id, alice_id, carol.user_id), message_id)),
+        tipped_by(carol.user_id)
+    );
+    assert!(has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::HadMessageTipped
+    ));
+
+    // A tip can't be to oneself, must be on a message of the recipient's in a chat with them, can't
+    // spend another user's approval, and in a group is given via the group; none of these move any
+    // funds
+    let alices_balance = client::ledger::happy_path::balance_of(env, ledger, alice);
+    // Two tips given, each with its transfer fee, the fee for the approval, and Carol's tip received
+    assert_eq!(
+        alices_balance,
+        10 * tip - 2 * (tip + ICP_TRANSFER_FEE) - ICP_TRANSFER_FEE + tip
+    );
+    // A message of Alice's to Bob, for Bob to try tipping from Alice's wallet
+    let alices_message_to_bob = random_from_u128();
+    send_text_message(
+        env,
+        alice,
+        canister_id,
+        bob_id,
+        "don't tip me from my wallet",
+        alices_message_to_bob,
+    );
+    let refused = [
+        (alice_tips(env, alice_id, message_id), OCErrorCode::CannotTipSelf),
+        // A message which isn't there, or isn't the recipient's
+        (alice_tips(env, bob_id, random_from_u128()), OCErrorCode::MessageNotFound),
+        (
+            client::user::tip_message(
+                env,
+                alice,
+                canister_id,
+                &tip_args(Chat::Direct(bob_id.into()), carol.user_id, message_id),
+            ),
+            OCErrorCode::RecipientMismatch,
+        ),
+        // Bob can't spend the approval Alice made for herself
+        (
+            client::user::tip_message(
+                env,
+                bob,
+                canister_id,
+                &user_canister::tip_message::Args {
+                    from_account: Some(alice.into()),
+                    ..tip_args(Chat::Direct(alice_id.into()), alice_id, alices_message_to_bob)
+                },
+            ),
+            OCErrorCode::InsufficientAllowance,
+        ),
+        (
+            client::user::tip_message(
+                env,
+                bob,
+                canister_id,
+                &tip_args(Chat::Direct(carol.user_id.into()), carol.user_id, message_id),
+            ),
+            OCErrorCode::ChatNotFound,
+        ),
+        (
+            client::user::tip_message(
+                env,
+                alice,
+                canister_id,
+                &tip_args(Chat::Group(canister_ids.user_index.into()), bob_id, message_id),
+            ),
+            OCErrorCode::InvalidRequest,
+        ),
+    ];
+    for (response, code) in refused {
+        assert!(
+            matches!(&response, user_canister::tip_message::Response::Error(e) if e.matches_code(code)),
+            "{response:?}"
+        );
+    }
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, alice), alices_balance);
+}
