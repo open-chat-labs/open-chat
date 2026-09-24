@@ -28,9 +28,10 @@ impl MigratedUserIds {
         self.map.insert(old_user_id, new_user_id);
 
         // The user's ids which led to `old_user_id`, and it too, now lead to their latest id
-        let mut previous_ids = self.previous_ids.remove(&old_user_id).unwrap_or_default();
+        let earlier_ids = self.previous_ids.remove(&old_user_id).unwrap_or_default();
+        let previous_ids = self.previous_ids.entry(latest).or_default();
+        previous_ids.extend(earlier_ids);
         previous_ids.push(old_user_id);
-        self.previous_ids.entry(latest).or_default().extend(previous_ids);
         true
     }
 
