@@ -7,6 +7,7 @@ pub mod block_user;
 pub mod c2c_accept_p2p_swap;
 pub mod c2c_bot_add_reaction;
 pub mod c2c_bot_send_message;
+pub mod c2c_cancel_migration;
 pub mod c2c_charge_user_account;
 pub mod c2c_community_canister;
 pub mod c2c_community_canister_v2;

@@ -5,8 +5,9 @@ use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{CanisterId, Chat, Document};
+use types::{CanisterId, Chat, Document, OptionUpdate};
 use user_index_canister::start_user_migration::{Response, SuccessResult};
 
 #[test]
@@ -186,6 +187,74 @@ fn only_the_multi_user_canister_being_migrated_to_can_export() {
     }
 }
 
+#[test]
+fn cancelling_a_migration_unfreezes_the_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    // A disappearing message, whose timer job is cancelled when the migration starts
+    client::user::happy_path::update_chat_settings(
+        env,
+        &user1,
+        &user_canister::update_chat_settings::Args {
+            user_id: user2.user_id,
+            events_ttl: OptionUpdate::SetToSome(60_000),
+        },
+    );
+    let message = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    tick_many(env, 3);
+
+    start_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
+    // A cancellation of a migration to another MultiUser canister is rejected
+    let response = client::user_index::cancel_user_migration(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::cancel_user_migration::Args {
+            user_id: user1.user_id,
+            multi_user_canister_id: multi_user_canister(2),
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::cancel_user_migration::Response::Error(ref e) if e.matches_code(OCErrorCode::AlreadyInProgress)),
+        "{response:?}"
+    );
+
+    cancel_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
+
+    // The canister is no longer frozen, so its owner can change it again
+    let response = client::user::set_bio(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::set_bio::Args { text: random_string() },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+
+    // The timer job removing the expired message was scheduled again
+    env.advance_time(Duration::from_millis(60_000));
+    tick_many(env, 3);
+    assert!(
+        client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![message.event_index])
+            .events
+            .is_empty()
+    );
+
+    // Cancelling again succeeds, since there is nothing left to cancel
+    cancel_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
+
+    // And the migration can be started again, to another MultiUser canister
+    start_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(2));
+}
+
 fn start_user_migration(
     env: &mut PocketIc,
     sender: Principal,
@@ -206,6 +275,28 @@ fn start_user_migration(
         Response::Success(result) => result,
         response => panic!("'start_user_migration' error: {response:?}"),
     }
+}
+
+fn cancel_user_migration(
+    env: &mut PocketIc,
+    sender: Principal,
+    user_index: CanisterId,
+    user: &User,
+    multi_user_canister_id: CanisterId,
+) {
+    let response = client::user_index::cancel_user_migration(
+        env,
+        sender,
+        user_index,
+        &user_index_canister::cancel_user_migration::Args {
+            user_id: user.user_id,
+            multi_user_canister_id,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::cancel_user_migration::Response::Success),
+        "'cancel_user_migration' error: {response:?}"
+    );
 }
 
 fn document(len: usize) -> Document {
