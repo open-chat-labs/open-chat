@@ -313,7 +313,7 @@ describe("DailyPuzzleGame", () => {
         const client = fakeClient({
             dailyPuzzleHint: vi
                 .fn()
-                .mockResolvedValueOnce({ kind: "error", code: 250, message: "40" })
+                .mockResolvedValueOnce({ kind: "error", code: 250, message: "20" })
                 .mockResolvedValueOnce({
                     kind: "success",
                     hint,
@@ -328,7 +328,7 @@ describe("DailyPuzzleGame", () => {
             "light_up",
             1,
             expect.anything(),
-            40,
+            20,
         );
         expect(toastStore.showFailureToast).not.toHaveBeenCalled();
         expect(g.lastHint).toEqual(hint);
@@ -337,12 +337,25 @@ describe("DailyPuzzleGame", () => {
 
     test("a second price mismatch is an error, not a loop", async () => {
         const client = fakeClient({
-            dailyPuzzleHint: vi.fn(async () => ({ kind: "error", code: 250, message: "40" })),
+            dailyPuzzleHint: vi.fn(async () => ({ kind: "error", code: 250, message: "20" })),
         });
         const g = build(userState(), client);
         await g.hint();
         expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
         expect(toastStore.showFailureToast).toHaveBeenCalled();
+    });
+
+    // #9517 invariant 2. A tap that showed 125 on the button was retried at a quoted 200.
+    test("a price mismatch quoting more than the button showed is not retried", async () => {
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({ kind: "error", code: 250, message: "40" })),
+        });
+        const g = build(userState(), client);
+        expect(g.nextHintPrice).toBe(25);
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
+        expect(toastStore.showFailureToast).toHaveBeenCalled();
+        expect(g.busy).toBe(false);
     });
 
     // #9334 invariant 61. Slant #20709 step 9: the deduction looked at the four cells round the

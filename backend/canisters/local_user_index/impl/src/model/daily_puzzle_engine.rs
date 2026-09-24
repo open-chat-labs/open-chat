@@ -663,6 +663,18 @@ impl DailyPuzzleEngine {
             .ok_or(OCErrorCode::ItemNotFound)?;
         let step = step as u16;
 
+        // A step is climbed from where it was left, never entered above level 1 (#9517 invariant
+        // 1). The client cannot tell that a level 1 or 2 step is finished, because the
+        // conclusions that would show it are withheld, so it keeps asking for the next level of a
+        // step the player has already completed. The server has moved on to a new step by then,
+        // and serving that at the asked-for level reveals something nobody asked about. A step
+        // whose first level is still being paid for counts as started.
+        let started = record
+            .hints
+            .iter()
+            .any(|e| e.step == step && (e.served.is_some() || e.pending_level.is_some()));
+        let level = if started { level } else { 1 };
+
         let price_at = |level: u8| {
             puzzle
                 .game_config
@@ -1467,7 +1479,8 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (step, _) = serve(&mut engine, u, 2, &[], 75);
+        serve(&mut engine, u, 1, &[], 25);
+        let (step, _) = serve(&mut engine, u, 2, &[], 50);
         for _ in 0..engine.puzzle(GAME).unwrap().config.max_free_checks + 1 {
             match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
                 HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.level, 2),
@@ -1945,7 +1958,8 @@ mod tests {
 
         // Two steps, bought at different levels: the penalty does not care which
         serve(&mut engine, u, 1, &[], 25);
-        serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 75);
+        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
+        serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 50);
 
         let outcome = engine.submit(u, GAME, NUMBER, &solution, START + 10_000).unwrap();
         assert_eq!(outcome.solved.reward, 150);
@@ -2235,10 +2249,41 @@ mod tests {
         assert_eq!(r.hint.hint.conclusions, vec![(0, 1), (2, 0)]);
 
         // A target that names something other than the conclusion survives at level 2
-        let (_, r) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 75);
+        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
+        let (_, r) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 50);
         assert_eq!(r.hint.hint.technique, 2);
         assert_eq!(r.hint.hint.target, vec![1]);
         assert!(r.hint.hint.conclusions.is_empty());
+    }
+
+    /// #9517 invariant 1: a step is served above level 1 only once it has been served at a lower
+    /// level. The client keeps climbing a finished step's ladder because it cannot see that the
+    /// step is done, and by then the server has picked a new one.
+    #[test]
+    fn hint_new_step_is_served_at_level_1_whatever_level_is_asked() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        // Step 0 served at level 2, then finished by the player
+        serve(&mut engine, u, 1, &[], 25);
+        serve(&mut engine, u, 2, &[], 50);
+        let finished = [(0, 1), (2, 0)];
+
+        // The client asks for level 3 at the upgrade price. Step 1 is new, so it is level 1 and
+        // the quote says so.
+        let quoted = match engine.reserve_hint(u, GAME, NUMBER, 3, &finished, 125, START) {
+            Err(e) => e,
+            Ok(_) => panic!("expected a price mismatch"),
+        };
+        assert!(quoted.matches_code(OCErrorCode::PriceMismatch));
+        assert_eq!(quoted.message(), Some("25"));
+
+        let (step, r) = serve(&mut engine, u, 3, &finished, 25);
+        assert_eq!(step, 1);
+        assert_eq!(r.hint.level, 1);
+        assert!(r.hint.hint.conclusions.is_empty());
+        assert_eq!(r.hints_used, 2);
     }
 
     // One wrong key, never the set: `filled` is client-supplied and can cover the whole board, so
@@ -2270,7 +2315,7 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let step = match engine.reserve_hint(u, GAME, NUMBER, 2, &[], 75, START).unwrap() {
+        let step = match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
             HintPrepared::Serve { step, .. } => {
                 assert!(state(&engine, u, START).hints.is_empty());
                 step
@@ -2286,7 +2331,7 @@ mod tests {
         );
 
         // A failed debit puts the step back, budget included
-        engine.release_hint(u, GAME, NUMBER, step, 2);
+        engine.release_hint(u, GAME, NUMBER, step, 1);
         assert_eq!(state(&engine, u, START).hints.len(), 1);
         let (step, _) = serve(&mut engine, u, 1, &[(0, 1), (2, 0), (6, 1)], 25);
         assert_eq!(step, 2);
@@ -2300,14 +2345,15 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (step, result) = match engine.reserve_hint(u, GAME, NUMBER, 3, &[], 200, START).unwrap() {
+        serve(&mut engine, u, 1, &[], 25);
+        let (step, result) = match engine.reserve_hint(u, GAME, NUMBER, 3, &[], 175, START).unwrap() {
             HintPrepared::Serve { step, result, .. } => (step, result),
             _ => panic!("expected a serve"),
         };
         assert!(!result.hint.hint.conclusions.is_empty());
         assert_eq!(result.state.hints.len(), 1);
         assert_eq!(result.state.hints[0].level, 3);
-        assert!(state(&engine, u, START).hints.is_empty());
+        assert_eq!(state(&engine, u, START).hints[0].level, 1);
 
         engine.confirm_hint(u, GAME, NUMBER, step, 3, false);
         let hints = state(&engine, u, START).hints;
