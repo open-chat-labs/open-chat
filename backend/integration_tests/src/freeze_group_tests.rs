@@ -3,6 +3,7 @@ use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
@@ -252,6 +253,42 @@ fn freeze_and_suspend_users() {
     let user = client::user_index::happy_path::current_user(env, user2.principal, canister_ids.user_index);
 
     assert!(user.suspension_details.is_some());
+
+    client::group_index::unfreeze_group(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::unfreeze_group::Args { chat_id: group_id },
+    );
+
+    // The suspension reached the group despite it being frozen at the time, so once it is unfrozen
+    // the suspended member still can't send messages
+    let response = client::group::send_message_v2(
+        env,
+        user2.principal,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: MessageContentInitial::Text(TextContent {
+                text: "spam".to_string(),
+            }),
+            sender_name: user2.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(&response, group_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)),
+        "{response:?}"
+    );
 }
 
 #[test]
