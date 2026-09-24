@@ -26,7 +26,7 @@ use types::{
 };
 use user_canister::UserCanisterEvent;
 use user_core::{Community, GroupChat, User};
-use utils::async_work::AsyncWorkGuard;
+use utils::async_work::{AsyncWorkGuard, async_work_in_progress};
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -445,18 +445,12 @@ impl Data {
     // and its remaining timer jobs are cancelled, since the MultiUser canister schedules them again
     // from the user's state. A repeated call for the same MultiUser canister returns the same
     // migration again.
-    pub fn try_start_migration(
-        &mut self,
-        multi_user_canister_id: CanisterId,
-        async_work_in_progress: bool,
-        wasm_version: BuildVersion,
-        now: TimestampMillis,
-    ) -> OCResult<&Migration> {
+    pub fn try_start_migration(&mut self, multi_user_canister_id: CanisterId, now: TimestampMillis) -> OCResult<&Migration> {
         match &self.migration {
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
             None => {
-                if async_work_in_progress {
+                if async_work_in_progress() {
                     return Err(OCErrorCode::NotReadyForMigration.with_message("Async work is in progress"));
                 }
                 if let Some(reason) = self.reason_not_ready_for_migration() {
@@ -468,7 +462,7 @@ impl Data {
                     multi_user_canister_id,
                     started: now,
                     user: msgpack::serialize_then_unwrap(&self.user),
-                    wasm_version,
+                    wasm_version: WASM_VERSION.with_borrow(|v| **v),
                 });
             }
         }

@@ -1,9 +1,8 @@
 use crate::guards::caller_is_user_index;
-use crate::{WASM_VERSION, mutate_state};
+use crate::mutate_state;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::c2c_try_start_migration::{Response::*, *};
-use utils::async_work::async_work_in_progress;
 
 // Called by the UserIndex to start migrating the user to a MultiUser canister. Not run via
 // `execute_update`, since a repeated call must still be answered once the canister is frozen for the
@@ -11,15 +10,9 @@ use utils::async_work::async_work_in_progress;
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 fn c2c_try_start_migration(args: Args) -> Response {
-    let async_work_in_progress = async_work_in_progress();
-    let wasm_version = WASM_VERSION.with_borrow(|v| **v);
-
     mutate_state(|state| {
         let now = state.env.now();
-        match state
-            .data
-            .try_start_migration(args.multi_user_canister_id, async_work_in_progress, wasm_version, now)
-        {
+        match state.data.try_start_migration(args.multi_user_canister_id, now) {
             Ok(migration) => Success(SuccessResult {
                 user_bytes: migration.user.len() as u64,
                 wasm_version: migration.wasm_version,
@@ -31,11 +24,12 @@ fn c2c_try_start_migration(args: Args) -> Response {
 
 #[cfg(test)]
 mod tests {
-    use crate::Data;
+    use crate::{Data, WASM_VERSION};
     use candid::Principal;
     use oc_error_codes::OCErrorCode;
-    use types::{BuildVersion, CanisterId, FrozenUserInfo};
+    use types::{BuildVersion, CanisterId, FrozenUserInfo, Timestamped};
     use user_core::User;
+    use utils::async_work::AsyncWorkGuard;
 
     fn data() -> Data {
         Data::new(
@@ -61,13 +55,16 @@ mod tests {
         BuildVersion::new(2, 0, patch)
     }
 
+    fn set_wasm_version(patch: u32) {
+        WASM_VERSION.set(Timestamped::new(version(patch), 0));
+    }
+
     #[test]
     fn starts_migration_and_stores_the_user() {
         let mut data = data();
+        set_wasm_version(1);
 
-        let migration = data
-            .try_start_migration(multi_user_canister(1), false, version(1), 2)
-            .unwrap();
+        let migration = data.try_start_migration(multi_user_canister(1), 2).unwrap();
 
         let user: User = msgpack::deserialize_then_unwrap(&migration.user);
         assert_eq!(migration.multi_user_canister_id, multi_user_canister(1));
@@ -81,17 +78,13 @@ mod tests {
     #[test]
     fn repeated_call_returns_the_same_migration() {
         let mut data = data();
+        set_wasm_version(1);
 
-        let first = data
-            .try_start_migration(multi_user_canister(1), false, version(1), 2)
-            .unwrap()
-            .user
-            .clone();
+        let first = data.try_start_migration(multi_user_canister(1), 2).unwrap().user.clone();
 
         // Even if the canister has since been upgraded, the user as they were serialized is returned
-        let second = data
-            .try_start_migration(multi_user_canister(1), false, version(2), 3)
-            .unwrap();
+        set_wasm_version(2);
+        let second = data.try_start_migration(multi_user_canister(1), 3).unwrap();
 
         assert_eq!(second.user, first);
         assert_eq!(second.started, 2);
@@ -101,13 +94,9 @@ mod tests {
     #[test]
     fn migration_to_another_canister_is_rejected() {
         let mut data = data();
-        data.try_start_migration(multi_user_canister(1), false, version(1), 2)
-            .unwrap();
+        data.try_start_migration(multi_user_canister(1), 2).unwrap();
 
-        let error = data
-            .try_start_migration(multi_user_canister(2), false, version(1), 3)
-            .map(|_| ())
-            .unwrap_err();
+        let error = data.try_start_migration(multi_user_canister(2), 3).map(|_| ()).unwrap_err();
 
         assert!(error.matches_code(OCErrorCode::AlreadyInProgress));
         assert_eq!(data.migration.unwrap().multi_user_canister_id, multi_user_canister(1));
@@ -116,11 +105,9 @@ mod tests {
     #[test]
     fn canister_with_async_work_in_progress_is_not_ready() {
         let mut data = data();
+        let _guard = AsyncWorkGuard::new();
 
-        let error = data
-            .try_start_migration(multi_user_canister(1), true, version(1), 2)
-            .map(|_| ())
-            .unwrap_err();
+        let error = data.try_start_migration(multi_user_canister(1), 2).map(|_| ()).unwrap_err();
 
         assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
         assert!(data.migration.is_none());
@@ -135,10 +122,7 @@ mod tests {
             reason: None,
         });
 
-        let error = data
-            .try_start_migration(multi_user_canister(1), false, version(1), 2)
-            .map(|_| ())
-            .unwrap_err();
+        let error = data.try_start_migration(multi_user_canister(1), 2).map(|_| ()).unwrap_err();
 
         assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
         assert!(data.migration.is_none());
@@ -150,10 +134,7 @@ mod tests {
         data.stable_memory_keys_to_garbage_collect
             .push(stable_memory_map::ChatEventKeyPrefix::new_from_direct_chat_key_id(1, None).into());
 
-        let error = data
-            .try_start_migration(multi_user_canister(1), false, version(1), 2)
-            .map(|_| ())
-            .unwrap_err();
+        let error = data.try_start_migration(multi_user_canister(1), 2).map(|_| ()).unwrap_err();
 
         assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
         assert!(data.migration.is_none());
