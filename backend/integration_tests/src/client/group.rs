@@ -32,6 +32,7 @@ generate_update_call!(end_video_call_v2);
 generate_msgpack_update_call!(join_video_call);
 generate_msgpack_update_call!(pin_message_v2);
 generate_msgpack_update_call!(register_poll_vote);
+generate_msgpack_update_call!(register_proposal_vote);
 generate_msgpack_update_call!(register_webhook);
 generate_msgpack_update_call!(remove_participant);
 generate_msgpack_update_call!(report_message);
