@@ -2257,33 +2257,52 @@ mod tests {
     }
 
     /// #9517 invariant 1: a step is served above level 1 only once it has been served at a lower
-    /// level. The client keeps climbing a finished step's ladder because it cannot see that the
-    /// step is done, and by then the server has picked a new one.
+    /// level, or its level 1 is still being paid for. The client keeps climbing a finished step's
+    /// ladder because it cannot see that the step is done, and by then the server has picked a
+    /// new one. Both rungs are checked: level 3 after a level 2 step, level 2 after a level 1 one.
     #[test]
     fn hint_new_step_is_served_at_level_1_whatever_level_is_asked() {
+        for (asked, upgrade_price) in [(3u8, 125u32), (2, 50)] {
+            let mut engine = new_engine();
+            let u = user(1);
+            started(&mut engine, u, START);
+
+            // Step 0 served up to the level below the one asked for, then finished by the player
+            for level in 1..asked {
+                serve(&mut engine, u, level, &[], if level == 1 { 25 } else { 50 });
+            }
+            let finished = [(0, 1), (2, 0)];
+
+            // The client asks for the next level at the upgrade price. Step 1 is new, so it is
+            // level 1 and the quote says so.
+            let quoted = match engine.reserve_hint(u, GAME, NUMBER, asked, &finished, upgrade_price, START) {
+                Err(e) => e,
+                Ok(_) => panic!("expected a price mismatch asking for level {asked}"),
+            };
+            assert!(quoted.matches_code(OCErrorCode::PriceMismatch));
+            assert_eq!(quoted.message(), Some("25"), "asking for level {asked}");
+
+            let (step, r) = serve(&mut engine, u, asked, &finished, 25);
+            assert_eq!(step, 1);
+            assert_eq!(r.hint.level, 1, "asking for level {asked}");
+            assert_eq!(r.hint.hint.technique, 0);
+            assert!(r.hint.hint.conclusions.is_empty());
+            assert_eq!(r.hints_used, 2);
+        }
+
+        // A step whose level 1 is in flight counts as started: a second call for level 2 is not
+        // turned into a fresh level 1 purchase, it is refused as a reservation in flight
         let mut engine = new_engine();
         let u = user(1);
         started(&mut engine, u, START);
-
-        // Step 0 served at level 2, then finished by the player
-        serve(&mut engine, u, 1, &[], 25);
-        serve(&mut engine, u, 2, &[], 50);
-        let finished = [(0, 1), (2, 0)];
-
-        // The client asks for level 3 at the upgrade price. Step 1 is new, so it is level 1 and
-        // the quote says so.
-        let quoted = match engine.reserve_hint(u, GAME, NUMBER, 3, &finished, 125, START) {
-            Err(e) => e,
-            Ok(_) => panic!("expected a price mismatch"),
-        };
-        assert!(quoted.matches_code(OCErrorCode::PriceMismatch));
-        assert_eq!(quoted.message(), Some("25"));
-
-        let (step, r) = serve(&mut engine, u, 3, &finished, 25);
-        assert_eq!(step, 1);
-        assert_eq!(r.hint.level, 1);
-        assert!(r.hint.hint.conclusions.is_empty());
-        assert_eq!(r.hints_used, 2);
+        assert!(matches!(
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START),
+            Ok(HintPrepared::Serve { .. })
+        ));
+        assert_err(
+            engine.reserve_hint(u, GAME, NUMBER, 2, &[], 75, START),
+            OCErrorCode::Throttled,
+        );
     }
 
     // One wrong key, never the set: `filled` is client-supplied and can cover the whole board, so

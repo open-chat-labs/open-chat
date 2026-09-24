@@ -345,16 +345,40 @@ describe("DailyPuzzleGame", () => {
         expect(toastStore.showFailureToast).toHaveBeenCalled();
     });
 
-    // #9517 invariant 2. A tap that showed 125 on the button was retried at a quoted 200.
+    // #9517 invariant 2. A tap that showed 125 on the button was retried at a quoted 200. The
+    // upgrade is the case that matters: the button shows the difference, which is below the
+    // level's full price, and the quote was the full price.
     test("a price mismatch quoting more than the button showed is not retried", async () => {
+        const hint: ServedHint = {
+            hint: { technique: 1, focus: [0, 1, 2], target: [], conclusions: [] },
+            level: 2,
+            mistake: false,
+        };
         const client = fakeClient({
-            dailyPuzzleHint: vi.fn(async () => ({ kind: "error", code: 250, message: "40" })),
+            dailyPuzzleHint: vi
+                .fn()
+                .mockResolvedValueOnce({
+                    kind: "success",
+                    hint,
+                    hintsUsed: 1,
+                    state: userState({ hints: [hint] }),
+                })
+                .mockResolvedValue({ kind: "error", code: 250, message: "200" }),
         });
         const g = build(userState(), client);
-        expect(g.nextHintPrice).toBe(25);
         await g.hint();
-        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
+        expect(g.nextHintLevel).toBe(3);
+        expect(g.nextHintPrice).toBe(125);
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
+        expect(client.dailyPuzzleHint).toHaveBeenLastCalledWith(
+            "light_up",
+            3,
+            expect.anything(),
+            125,
+        );
         expect(toastStore.showFailureToast).toHaveBeenCalled();
+        expect(g.lastHint).toEqual(hint);
         expect(g.busy).toBe(false);
     });
 
