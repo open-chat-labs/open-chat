@@ -5237,6 +5237,7 @@ export const UserSummary = /* @__PURE__ */ Type.Object({
     max_streak: Type.Number(),
     is_unique_person: Type.Optional(Type.Boolean()),
     hide_online_status: Type.Optional(Type.Boolean()),
+    previous_user_id: Type.Optional(UserId),
 });
 
 export type DirectMessageTipped = Static<typeof DirectMessageTipped>;
@@ -8002,6 +8003,7 @@ export const UserSummaryV2 = /* @__PURE__ */ Type.Object({
     user_id: UserId,
     stable: Type.Optional(UserSummaryStable),
     volatile: Type.Optional(UserSummaryVolatile),
+    previous_user_id: Type.Optional(UserId),
 });
 
 export type P2PSwapStatus = Static<typeof P2PSwapStatus>;

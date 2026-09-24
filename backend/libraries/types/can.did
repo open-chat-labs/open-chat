@@ -867,6 +867,7 @@ type UserSummary = record {
     max_streak : nat16;
     is_unique_person : bool;
     hide_online_status : bool;
+    previous_user_id : opt UserId;
 };
 
 type BuildVersion = record {
@@ -1775,6 +1776,7 @@ type UserSummaryV2 = record {
     user_id : UserId;
     stable : opt UserSummaryStable;
     volatile : opt UserSummaryVolatile;
+    previous_user_id : opt UserId;
 };
 
 type UserSummaryStable = record {

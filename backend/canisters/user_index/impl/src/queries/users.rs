@@ -58,6 +58,27 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
             if !user_ids.insert(user_id) {
                 continue;
             }
+            let latest_user_id = state.data.migrated_user_ids.latest(user_id);
+            if latest_user_id != user_id {
+                // The user has since been migrated to a MultiUser canister. The client only knows
+                // them by this id, so return them in full, whether or not they've been updated,
+                // under their latest id along with this one, so the client can map one to the other
+                user_ids.insert(latest_user_id);
+                if let Some(user) = state
+                    .data
+                    .users
+                    .get_by_user_id(&latest_user_id)
+                    .filter(|u| u.principal != caller)
+                {
+                    users.push(UserSummaryV2 {
+                        previous_user_id: Some(user_id),
+                        ..user.to_summary_v2(now)
+                    });
+                } else if state.data.users.is_deleted(&latest_user_id) {
+                    deleted.push(user_id);
+                }
+                continue;
+            }
             if let Some(user) = state.data.users.get_by_user_id(&user_id).filter(|u| {
                 (u.date_updated > updated_since
                     || u.chit_updated > updated_since
@@ -68,6 +89,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                     user_id,
                     stable: (user.date_updated > updated_since).then(|| user.to_summary_stable(now)),
                     volatile: Some(user.to_summary_volatile(now)),
+                    previous_user_id: None,
                 });
                 // TODO maybe convert `deleted_users` to a HashMap?
             } else if state.data.users.is_deleted(&user_id) {
@@ -96,4 +118,99 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
         deleted,
         timestamp: now,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Data;
+    use crate::model::user::User;
+    use candid::Principal;
+    use types::{TimestampMillis, UserId};
+    use utils::env::test::TestEnv;
+
+    #[test]
+    fn migrated_user_returned_in_full_under_latest_id() {
+        let state = setup_runtime_state();
+
+        let result = users(&state, vec![user_id(1)], state.env.now());
+
+        assert_eq!(result.users.len(), 1);
+        let user = &result.users[0];
+        assert_eq!(user.user_id, user_id(2));
+        assert_eq!(user.previous_user_id, Some(user_id(1)));
+        assert!(user.stable.is_some());
+        assert!(user.volatile.is_some());
+    }
+
+    #[test]
+    fn user_looked_up_by_latest_id_has_no_previous_id() {
+        let state = setup_runtime_state();
+
+        let result = users(&state, vec![user_id(2)], 0);
+
+        assert_eq!(result.users.len(), 1);
+        assert_eq!(result.users[0].user_id, user_id(2));
+        assert_eq!(result.users[0].previous_user_id, None);
+    }
+
+    #[test]
+    fn migrated_user_not_also_returned_under_latest_id() {
+        let state = setup_runtime_state();
+
+        let result = users(&state, vec![user_id(1), user_id(2)], 0);
+
+        assert_eq!(result.users.len(), 1);
+        assert_eq!(result.users[0].previous_user_id, Some(user_id(1)));
+    }
+
+    #[test]
+    fn user_not_migrated_is_unaffected() {
+        let state = setup_runtime_state();
+
+        let result = users(&state, vec![user_id(3)], 0);
+
+        assert_eq!(result.users.len(), 1);
+        assert_eq!(result.users[0].user_id, user_id(3));
+        assert_eq!(result.users[0].previous_user_id, None);
+    }
+
+    fn users(state: &RuntimeState, user_ids: Vec<UserId>, updated_since: TimestampMillis) -> Result {
+        let Response::Success(result) = users_impl(
+            Args {
+                user_groups: vec![UserGroup {
+                    users: user_ids,
+                    updated_since,
+                }],
+                users_suspended_since: None,
+            },
+            state,
+        );
+        result
+    }
+
+    // User 1 has been migrated to user 2. User 3 hasn't been migrated.
+    fn setup_runtime_state() -> RuntimeState {
+        let mut env = TestEnv::default();
+        let mut data = Data::default();
+
+        for i in [2, 3] {
+            data.users.add_test_user(User {
+                principal: Principal::from_slice(&[i, 1]),
+                user_id: user_id(i),
+                username: format!("user{i}"),
+                date_created: env.now,
+                date_updated: env.now,
+                ..Default::default()
+            });
+        }
+        data.migrated_user_ids.insert(user_id(1), user_id(2));
+        env.now += 1000;
+
+        RuntimeState::new(Box::new(env), data)
+    }
+
+    fn user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
+    }
 }

@@ -179,6 +179,7 @@ impl User {
             max_streak: self.max_streak,
             is_unique_person: self.unique_person_proof.is_some(),
             hide_online_status: self.hide_online_status,
+            previous_user_id: None,
         }
     }
 
@@ -187,6 +188,7 @@ impl User {
             user_id: self.user_id,
             stable: Some(self.to_summary_stable(now)),
             volatile: Some(self.to_summary_volatile(now)),
+            previous_user_id: None,
         }
     }
 
