@@ -98,6 +98,13 @@ impl RuntimeState {
         RuntimeState { env, data, regular_jobs }
     }
 
+    // The regular jobs are skipped while the canister is frozen
+    pub fn run_regular_jobs(&mut self) {
+        if !self.data.is_frozen() {
+            self.regular_jobs.run(self.env.deref(), &mut self.data);
+        }
+    }
+
     pub fn is_caller_user_index(&self) -> bool {
         self.env.caller() == self.data.user_index_canister_id
     }
@@ -1165,7 +1172,7 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 
 fn execute_update_even_if_frozen<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
-        state.regular_jobs.run(state.env.deref(), &mut state.data);
+        state.run_regular_jobs();
         let result = f(state);
         state.data.flush_pending_events();
         result
@@ -1186,7 +1193,7 @@ async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Out
 }
 
 fn run_regular_jobs() {
-    mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+    mutate_state(|state| state.run_regular_jobs());
 }
 
 fn flush_pending_events() {

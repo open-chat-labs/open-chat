@@ -10,6 +10,7 @@ use rand::rngs::StdRng;
 use rand::{RngExt, SeedableRng};
 use stable_memory_map::{BaseKey, BaseKeyPrefix, ChatEventKeyPrefix};
 use types::{ChannelId, Chat, EventContext, MessageId, MultiUserChat, TimestampMillis};
+use utils::migrated_user_ids::MigratedUserIds;
 
 const WORDS: &[&str] = &[
     "apple",
@@ -229,7 +230,11 @@ fn chat_events_keep_search_index_up_to_date() {
     assert_eq!(search(&events, "", &[bob]), vec![thread_root]);
 
     // Editing a deleted message doesn't add it back to the index
-    let _ = events.edit_message::<NullEventPusher>(edit_args(bob, konnichiwa, "世界 again", 31), None);
+    let _ = events.edit_message::<NullEventPusher>(
+        edit_args(bob, konnichiwa, "世界 again", 31),
+        &MigratedUserIds::default(),
+        None,
+    );
     assert!(search(&events, "世界", &[]).is_empty());
 
     undelete(&mut events, bob, konnichiwa, 40);
@@ -242,6 +247,31 @@ fn chat_events_keep_search_index_up_to_date() {
     events.remove_event(event_index, 50).unwrap();
     assert!(search(&events, "世界", &[]).is_empty());
     assert!(search(&events, "", &[bob]).iter().all(|m| *m != konnichiwa));
+}
+
+#[test]
+fn message_edited_under_a_new_id_stays_indexed_under_its_sender() {
+    let mut events = setup_group_events();
+    let old_user_id = user_id(1);
+    let new_user_id = user_id(2);
+
+    let chat = events.stable_memory_prefix().clone();
+    let hello = push(&mut events, old_user_id, "hello world", 10);
+    // Where the index keeps a message by its sender
+    events
+        .search_index_mut()
+        .move_to_heap(&chat, hello, old_user_id, document(&["hello world".to_string()]));
+
+    // The sender has since been migrated to a MultiUser canister and given a new id
+    let mut migrated_user_ids = MigratedUserIds::default();
+    migrated_user_ids.insert(old_user_id, new_user_id);
+    events
+        .edit_message::<NullEventPusher>(edit_args(new_user_id, hello, "goodbye world", 20), &migrated_user_ids, None)
+        .unwrap();
+
+    assert!(search(&events, "hello", &[]).is_empty());
+    assert_eq!(search(&events, "goodbye", &[old_user_id]), vec![hello]);
+    assert!(search(&events, "goodbye", &[new_user_id]).is_empty());
 }
 
 #[test]
@@ -508,7 +538,7 @@ fn push_args(
 
 fn edit(events: &mut ChatEvents, sender: UserId, message_index: MessageIndex, text: &str, now: TimestampMillis) {
     events
-        .edit_message::<NullEventPusher>(edit_args(sender, message_index, text, now), None)
+        .edit_message::<NullEventPusher>(edit_args(sender, message_index, text, now), &MigratedUserIds::default(), None)
         .unwrap();
 }
 
@@ -527,12 +557,12 @@ fn edit_args(sender: UserId, message_index: MessageIndex, text: &str, now: Times
 }
 
 fn delete(events: &mut ChatEvents, caller: UserId, message_index: MessageIndex, now: TimestampMillis) {
-    let results = events.delete_messages(delete_args(caller, message_index, now));
+    let results = events.delete_messages(delete_args(caller, message_index, now), &MigratedUserIds::default());
     assert!(results.iter().all(|(_, r)| r.is_ok()));
 }
 
 fn undelete(events: &mut ChatEvents, caller: UserId, message_index: MessageIndex, now: TimestampMillis) {
-    let results = events.undelete_messages(delete_args(caller, message_index, now));
+    let results = events.undelete_messages(delete_args(caller, message_index, now), &MigratedUserIds::default());
     assert!(results.iter().all(|(_, r)| r.is_ok()));
 }
 

@@ -64,6 +64,13 @@ impl RuntimeState {
         RuntimeState { env, data, regular_jobs }
     }
 
+    // The regular jobs are skipped while the canister is frozen
+    pub fn run_regular_jobs(&mut self) {
+        if !self.data.is_frozen() {
+            self.regular_jobs.run(self.env.deref(), &mut self.data);
+        }
+    }
+
     pub fn is_caller_owner(&self) -> bool {
         self.env.caller() == self.data.user.principal
     }
@@ -436,10 +443,6 @@ impl Data {
         self.frozen.is_some() || self.migration.is_some()
     }
 
-    pub fn is_migrating(&self) -> bool {
-        self.migration.is_some()
-    }
-
     // Starts migrating the user to the given MultiUser canister, if the canister is ready, storing
     // the user serialized for the MultiUser canister to pull. From then on the canister is frozen,
     // and its remaining timer jobs are cancelled, since the MultiUser canister schedules them again
@@ -661,7 +664,7 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 
 fn execute_update_even_if_frozen<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
-        run_regular_jobs_unless_migrating(state);
+        state.run_regular_jobs();
         let result = f(state);
         state.data.flush_pending_events();
         result
@@ -682,14 +685,7 @@ async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Out
 }
 
 fn run_regular_jobs() {
-    mutate_state(run_regular_jobs_unless_migrating);
-}
-
-// Once a migration has started the user must not change, and regular jobs could change them
-fn run_regular_jobs_unless_migrating(state: &mut RuntimeState) {
-    if !state.data.is_migrating() {
-        state.regular_jobs.run(state.env.deref(), &mut state.data);
-    }
+    mutate_state(|state| state.run_regular_jobs());
 }
 
 fn flush_pending_events() {
