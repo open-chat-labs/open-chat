@@ -34,7 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store each member's principal on the member, populating existing members in post_upgrade ([#9507](https://github.com/open-chat-labs/open-chat/pull/9507))
 - Hold the calling user's principal in `Caller::User` alongside their user id ([#9525](https://github.com/open-chat-labs/open-chat/pull/9525))
 - Record the owner of the acceptor's wallet on a P2P swap when they reserve it, name them by it to the escrow canister, and resolve them by it when the swap completes ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
-- Reject every update call while the community is frozen in one place, `execute_update`, by trapping, rather than per endpoint with a `CommunityFrozen` error. Only the endpoints which must keep working while frozen run via `execute_update_even_if_frozen`: unfreezing, platform moderation, `c2c_local_index`, P2P swap status notifications, ending video calls and `wallet_receive`. Among others, `c2c_uninstall_bot`, `decline_invitation`, `import_group` and `c2c_import_proposals_group`, which previously worked while frozen, are now blocked ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
+- Reject every update call while the community is frozen in one place, `execute_update`, by trapping, rather than per endpoint with a `CommunityFrozen` error. Only freezing, unfreezing and `wallet_receive` run via `execute_update_even_if_frozen`. Every other update, including those which previously worked while frozen such as platform moderation, `c2c_local_index`, ending video calls and `import_group`, is now blocked ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
 
 ### Removed
 
