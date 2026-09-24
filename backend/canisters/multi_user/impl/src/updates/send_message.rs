@@ -1,3 +1,4 @@
+use crate::crypto::user_wallet;
 use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
 use canister_api_macros::update;
@@ -5,23 +6,30 @@ use canister_tracing_macros::trace;
 use chat_events::{
     MessageContentInternal, NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult,
 };
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
+use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    CanisterId, DirectChatUserNotificationPayload, DirectMessageNotification, MessageId, MessageIndex, OCResult, OgPreview,
-    ReplyContext, TimestampMillis, UserId, UserType,
+    CanisterId, CompletedCryptoTransaction, CryptoContent, DirectChatUserNotificationPayload, DirectMessageNotification,
+    MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview, PinNumberWrapper, ReplyContext, TimestampMillis,
+    UserId, UserType, certified, icrc1,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-async fn send_message_v2(args: Args) -> Response {
-    send_message_v2_impl(args).await
+// The User canister's `send_message_v2`. A message holding crypto is sent with a transfer the user
+// makes from their own wallet, since this canister doesn't hold its users' funds: either pulled by
+// this canister via ICRC2, against an approval made under the user's own spender subaccount (see
+// `ledger_utils::spender_subaccount`), or already made by the user and certified (see
+// `ledger_utils::UserTransfer`).
+async fn send_message(args: Args) -> Response {
+    send_message_impl_async(args).await
 }
 
-async fn send_message_v2_impl(args: Args) -> Response {
+async fn send_message_impl_async(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
         my_user_id,
@@ -45,13 +53,37 @@ async fn send_message_v2_impl(args: Args) -> Response {
     };
 
     let content = match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
-        ValidateNewMessageContentResult::Success(content) => content,
-        // TODO: Crypto transfers need the user's pin number and the ledger calls, and P2P swaps the
-        // escrow canister, as in the User canister
-        ValidateNewMessageContentResult::SuccessCrypto(_) | ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
+        ValidateNewMessageContentResult::Success(content) => MessageContent::Other(content),
+        ValidateNewMessageContentResult::SuccessCrypto(content) => {
+            match prepare_crypto_transfer(
+                &content,
+                my_index,
+                args.recipient,
+                recipient,
+                local_user_index_canister_id,
+                &mut args.pin,
+            )
+            .await
+            {
+                Ok((UserTransfer::Icrc2(transfer), spender_subaccount)) => {
+                    match ledger_utils::icrc2::process_transaction_for_user(transfer, spender_subaccount).await {
+                        Ok(Ok(completed)) => {
+                            MessageContent::Crypto(Box::new((content, CryptoTransfer::Completed(completed.into()))))
+                        }
+                        Ok(Err((_, error))) => return Error(error),
+                        Err(error) => return Error(error.into()),
+                    }
+                }
+                Ok((UserTransfer::Certified(transfer), _)) => {
+                    MessageContent::Crypto(Box::new((content, CryptoTransfer::Certified(transfer))))
+                }
+                Err(error) => return Error(error),
+            }
+        }
+        // TODO: P2P swaps need the escrow canister, as in the User canister
+        ValidateNewMessageContentResult::SuccessP2PSwap(_) => {
             return Error(
-                OCErrorCode::InvalidRequest
-                    .with_message("Messages with transfers are not yet supported by the MultiUser canister"),
+                OCErrorCode::InvalidRequest.with_message("P2P swaps are not yet supported by the MultiUser canister"),
             );
         }
         ValidateNewMessageContentResult::SuccessPrize(_) => unreachable!(),
@@ -61,7 +93,43 @@ async fn send_message_v2_impl(args: Args) -> Response {
     };
 
     mutate_state(|state| {
-        send_message_impl(
+        let now = state.env.now();
+        let (content, transfer, certified) = match content {
+            MessageContent::Other(content) => (content, None, None),
+            MessageContent::Crypto(crypto) => {
+                let (content, transfer) = *crypto;
+                let (completed, certified) = match transfer {
+                    CryptoTransfer::Completed(completed) => (completed, None),
+                    // The certified transfer is verified in the same execution as the message is
+                    // sent, so that it is only recorded as used once the message has been sent
+                    CryptoTransfer::Certified(transfer) => {
+                        let Some(sender) = state.data.users.with_user(my_index, |user| user.principal) else {
+                            return Error(OCErrorCode::InitiatorNotFound.into());
+                        };
+                        match state.data.certified_transfers.verify(
+                            transfer,
+                            sender,
+                            &MEMO_MESSAGE,
+                            state.env.canister_id(),
+                            &state.env.ic_root_key(),
+                            now,
+                        ) {
+                            Ok(completed) => (completed.clone().into(), Some(completed)),
+                            Err(error) => return Error(error),
+                        }
+                    }
+                };
+                let content = MessageContentInternal::new_with_transfer(
+                    MessageContentInitial::Crypto(content),
+                    completed.clone().into(),
+                    None,
+                    now,
+                );
+                (content, Some(completed), certified)
+            }
+        };
+
+        let response = send_message_impl(
             my_index,
             my_user_id,
             args.recipient,
@@ -74,8 +142,80 @@ async fn send_message_v2_impl(args: Args) -> Response {
             args.message_filter_failed,
             recipient,
             args.og_previews,
+            transfer,
             state,
-        )
+        );
+
+        if let Some(completed) = certified
+            && !matches!(response, Error(_))
+        {
+            state.data.certified_transfers.mark_used(&completed, now);
+        }
+        response
+    })
+}
+
+// A message's validated content, with the transfer it holds, if any
+#[expect(clippy::large_enum_variant)]
+enum MessageContent {
+    Other(MessageContentInternal),
+    Crypto(Box<(CryptoContent, CryptoTransfer)>),
+}
+
+enum CryptoTransfer {
+    Completed(CompletedCryptoTransaction),
+    // Made by the user already, but only verified when the message is sent
+    Certified(certified::PendingCryptoTransaction),
+}
+
+// Checks a crypto transfer is to the recipient's wallet, and is one this canister can submit for the
+// user. Users hold their own funds in their own wallets, so this canister can't make an NNS or ICRC1
+// transfer for them, only pull their funds via ICRC2, or accept a transfer they have already made.
+async fn prepare_crypto_transfer(
+    content: &CryptoContent,
+    my_index: u16,
+    them: UserId,
+    recipient: Recipient,
+    local_user_index_canister_id: CanisterId,
+    pin: &mut Option<PinNumberWrapper>,
+) -> OCResult<(UserTransfer, [u8; 32])> {
+    // Crypto in a direct chat can only be sent to the other user in the chat
+    if content.recipient != them {
+        return Err(OCErrorCode::RecipientMismatch.into());
+    }
+
+    // A user in this canister holds their funds under their own principal
+    let recipient_wallet: icrc1::Account = match recipient {
+        Recipient::Me => read_state(|state| state.data.users.with_user(my_index, |user| user.principal))
+            .ok_or(OCErrorCode::InitiatorNotFound)?
+            .into(),
+        Recipient::SameCanister(their_index) => {
+            read_state(|state| state.data.users.with_user(their_index, |user| user.principal))
+                .ok_or(OCErrorCode::TargetUserNotFound)?
+                .into()
+        }
+        Recipient::OtherCanister => user_wallet(content.recipient, local_user_index_canister_id).await?,
+    };
+
+    mutate_state(|state| {
+        let now = state.env.now();
+        // The sender approved any transfer this canister pulls for them under the spender subaccount
+        // derived from their principal, which is read here since the caller can't be after an await
+        let my_principal = state
+            .data
+            .users
+            .with_user_mut(my_index, |user| {
+                user.pin_number.verify(pin.as_mut(), now).map(|_| user.principal)
+            })
+            .ok_or(OCErrorCode::InitiatorNotFound)??;
+
+        let transfer = UserTransfer::new(
+            content.transfer.clone(),
+            recipient_wallet,
+            &MEMO_MESSAGE,
+            state.env.canister_id(),
+        )?;
+        Ok((transfer, ledger_utils::spender_subaccount(my_principal)))
     })
 }
 
@@ -119,6 +259,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
                 return Err(OCErrorCode::MessageIdAlreadyExists.into());
             }
 
+            // Checked before any transfer is made for the message, so that funds aren't moved for a
+            // message which can't then be sent
+            if args.thread_root_message_index.is_some() {
+                chat.ok_or(OCErrorCode::ThreadNotFound)?
+                    .thread_root_message_id(args.thread_root_message_index)?;
+            }
+
             Ok(if args.recipient == my_user_id {
                 Some(Recipient::Me)
             } else if let Some(index) = state.index_of_local_user(args.recipient) {
@@ -153,6 +300,7 @@ fn send_message_impl(
     message_filter_failed: Option<u64>,
     recipient_kind: Recipient,
     og_previews: Vec<OgPreview>,
+    transfer: Option<CompletedCryptoTransaction>,
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
@@ -259,13 +407,24 @@ fn send_message_impl(
         state.handle_event_expiry(my_index, expiry);
     }
 
-    Success(SuccessResult {
-        chat_id,
-        event_index: message_event.index,
-        message_index: message_event.event.message_index,
-        timestamp: now,
-        expires_at: message_event.expires_at,
-    })
+    if let Some(transfer) = transfer {
+        TransferSuccessV2(TransferSuccessV2Result {
+            chat_id,
+            event_index: message_event.index,
+            message_index: message_event.event.message_index,
+            timestamp: now,
+            expires_at: message_event.expires_at,
+            transfer,
+        })
+    } else {
+        Success(SuccessResult {
+            chat_id,
+            event_index: message_event.index,
+            message_index: message_event.event.message_index,
+            timestamp: now,
+            expires_at: message_event.expires_at,
+        })
+    }
 }
 
 // What the recipient's notification of a message shows of its sender

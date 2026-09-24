@@ -6,14 +6,15 @@ use types::{CanisterId, UserId, icrc1, icrc2};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    // The user being charged. The canister cannot derive this itself - from its own id it can only
-    // reach the user at index 0 - and it determines which subaccount pays (or for ICRC-2, whose
-    // approval is spent).
+    // The user being charged. The canister cannot derive this itself, since from its own id it can
+    // only reach the user at index 0.
     pub user_id: UserId,
     pub ledger_canister_id: CanisterId,
     pub amount: Tokens,
-    // The account to charge, defaulting to this canister's own. Any other account must have
-    // approved this canister as spender, since the payment is then pulled via ICRC-2.
+    // The account to charge, defaulting to the user's wallet. A User canister charges its own account
+    // directly, and pulls from any other via ICRC-2, which that account must have approved. A
+    // MultiUser canister's users hold their own funds, so it always pulls via ICRC-2, spending only
+    // an approval made under the user's own spender subaccount (see `ledger_utils::spender_subaccount`).
     pub from_account: Option<icrc1::Account>,
 }
 

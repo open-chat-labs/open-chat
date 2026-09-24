@@ -3,16 +3,19 @@
 //! canister then has to do: enqueue or cancel hard-delete jobs, and notify or reward the recipient.
 
 use crate::User;
-use chat_events::{AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, NullEventPusher};
+use chat_events::{
+    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, NullEventPusher, Reader, TipMessageArgs,
+};
 use direct_chat::DirectChat;
+use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use types::{
-    CanisterId, Chat, DirectChatUserNotificationPayload, DirectReactionAddedNotification, EventIndex, MessageContentInitial,
-    MessageId, MessageIndex, OCResult, TimestampMillis, UserId, UserType,
+    CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
+    MessageContentInitial, MessageId, MessageIndex, OCResult, TimestampMillis, UserId, UserType, VideoCallPresence,
 };
 use user_canister::{
     DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, MessageActivity,
-    MessageActivityEvent, SetEventsTtl, ToggleReactionArgs,
+    MessageActivityEvent, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs,
 };
 
 // Whether a sender is one a canister of this kind can act for: a User canister acts only for its
@@ -158,6 +161,81 @@ pub fn toggle_reaction(
         user_id: Some(sender),
     };
     Some(ReactionAdded { notification, activity })
+}
+
+// What a tip on one of the recipient's messages earns them from the caller: a notification and an
+// entry in their message activity feed if the message was found, and the `HadMessageTipped`
+// achievement either way
+pub struct TipReceived {
+    pub notification: Option<DirectChatUserNotificationPayload>,
+    pub activity: Option<MessageActivityEvent>,
+}
+
+// Records the sender's tip on the recipient's copy of the message. Returns None if it couldn't be
+// applied, in which case the recipient gets nothing.
+pub fn tip_message(
+    chat: &mut DirectChat,
+    sender: UserId,
+    my_user_id: UserId,
+    args: C2CTipMessageArgs,
+    now: TimestampMillis,
+) -> Option<TipReceived> {
+    let thread_root_message_index = chat.thread_root_message_index(args.thread_root_message_id).ok()?;
+    chat.tip_message::<NullEventPusher>(
+        TipMessageArgs {
+            user_id: sender,
+            recipient: my_user_id,
+            thread_root_message_index,
+            message_id: args.message_id,
+            ledger: args.ledger,
+            token_symbol: args.token_symbol.clone(),
+            amount: args.amount,
+            now,
+        },
+        None,
+    )
+    .ok()?;
+
+    let Some(message_event) = chat
+        .events()
+        .main_events_reader()
+        .message_event_internal(args.message_id.into())
+    else {
+        return Some(TipReceived {
+            notification: None,
+            activity: None,
+        });
+    };
+    let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
+    let notification = DirectChatUserNotificationPayload::DirectMessageTipped(DirectMessageTipped {
+        them: sender,
+        thread_root_message_index,
+        message_index: message_event.event.message_index,
+        message_event_index: message_event.index,
+        username: args.username,
+        display_name: args.display_name,
+        tip,
+        user_avatar_id: args.user_avatar_id,
+    });
+    let activity = MessageActivityEvent {
+        chat: Chat::Direct(sender.into()),
+        thread_root_message_index,
+        message_index: message_event.event.message_index,
+        message_id: message_event.event.message_id,
+        event_index: message_event.index,
+        activity: MessageActivity::Tip,
+        timestamp: now,
+        user_id: Some(sender),
+    };
+    Some(TipReceived {
+        notification: Some(notification),
+        activity: Some(activity),
+    })
+}
+
+// Records the sender joining the call in the recipient's copy of the chat
+pub fn join_video_call(chat: &mut DirectChat, sender: UserId, message_id: MessageId, now: TimestampMillis) {
+    let _ = chat.set_video_call_presence(sender, message_id, VideoCallPresence::Default, now);
 }
 
 // Applies the sender's change to the chat's message TTL, creating the chat if the recipient doesn't

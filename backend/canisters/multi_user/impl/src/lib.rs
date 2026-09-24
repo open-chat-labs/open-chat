@@ -5,12 +5,15 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEvents
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use chat_events::EventPusher;
 use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChat;
-use event_store_types::EventBuilder;
+use event_store_types::{Event, EventBuilder};
+use ledger_utils::certified::CertifiedTransfers;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
+use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
@@ -78,6 +81,10 @@ impl RuntimeState {
 
     pub fn is_caller_group_index(&self) -> bool {
         self.env.caller() == self.data.group_index_canister_id
+    }
+
+    pub fn is_caller_video_call_operator(&self) -> bool {
+        self.data.video_call_operators.contains(&self.env.caller())
     }
 
     // The index of the user the caller owns, if the caller is one of this canister's users
@@ -340,8 +347,7 @@ impl RuntimeState {
     }
 
     // Records a payment for streak insurance by the user at `user_index`, as the User canister's
-    // `mark_streak_insurance_payment`. Unused until users can pay for it from their own wallets.
-    #[expect(dead_code)]
+    // `mark_streak_insurance_payment`
     pub fn mark_streak_insurance_payment(&mut self, user_index: u16, payment: UserCanisterStreakInsurancePayment) {
         if self
             .data
@@ -625,6 +631,9 @@ struct Data {
     pub known_multi_user_canisters: HashSet<CanisterId>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    // The certified transfers users have sent messages with, so that none is used twice
+    #[serde(default)]
+    pub certified_transfers: CertifiedTransfers,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -656,6 +665,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
+            certified_transfers: CertifiedTransfers::default(),
             rng_seed,
             test_mode,
         }
@@ -668,6 +678,28 @@ fn new_user_canister_events_queue() -> GroupedTimerJobQueue<UserCanisterEventBat
 
 fn local_user_index_event_sync_queue_default() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
     BatchedTimerJobQueue::new(CanisterId::anonymous(), true)
+}
+
+// The User canister's `UserEventPusher`, but naming the user the events are from, since the
+// LocalUserIndex queue in this canister is shared by many users
+pub struct MultiUserEventPusher<'a> {
+    pub user_id: UserId,
+    pub now: TimestampMillis,
+    pub rng: &'a mut StdRng,
+    pub queue: &'a mut BatchedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+impl EventPusher for MultiUserEventPusher<'_> {
+    fn push(&mut self, event: Event) {
+        self.queue.push(IdempotentEnvelope {
+            created_at: self.now,
+            idempotency_id: self.rng.next_u64(),
+            value: UserEventWithUserId {
+                user_id: self.user_id,
+                event: LocalUserIndexEvent::EventStoreEvent(event),
+            },
+        })
+    }
 }
 
 #[derive(Serialize, Debug)]

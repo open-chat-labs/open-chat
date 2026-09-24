@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add the `use_multi_user_canister` flag to `register_user`, which in test mode registers the user in a MultiUser canister (creating one if there are none) rather than in a canister of their own ([#9524](https://github.com/open-chat-labs/open-chat/pull/9524))
+
+### Fixed
+
+- Reject `install_bot` and `uninstall_bot` calls whose location is the wrong type, eg. a user's own direct chat given as a `Group`, which led to the installation's events being queued for delivery to a group that doesn't exist ([#9520](https://github.com/open-chat-labs/open-chat/pull/9520))
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
+
+## [[2.0.2063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2063-local_user_index)] - 2026-09-23
+
+### Added
+
 - Add `c2c_user_canister_v2`, taking events from both User and MultiUser canisters, each naming the user it is from, which must be the calling User canister or one of the users hosted by the calling MultiUser canister ([#9435](https://github.com/open-chat-labs/open-chat/pull/9435))
 - Aggregate child canister cycle top ups every 5 minutes and expose the 100 most topped up canisters over the last 7, 30, 90 and 365 days via `http_request` at `/top_up_leaderboard` ([#9444](https://github.com/open-chat-labs/open-chat/pull/9444))
 - Track this LocalUserIndex's MultiUser canisters plus those elsewhere holding a registered user, and record when each local MultiUser canister was created and how many users it holds ([#9460](https://github.com/open-chat-labs/open-chat/pull/9460))

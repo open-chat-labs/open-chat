@@ -1,17 +1,19 @@
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::updates::delete_messages::enqueue_hard_delete_jobs;
 use crate::updates::send_message::{SenderDetails, receive_message};
+use crate::updates::start_video_call::handle_start_video_call;
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
+use constants::HOUR_IN_MS;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use rand::RngExt;
-use types::{Achievement, CanisterId, TimestampMillis, UserId, UserType};
+use types::{Achievement, CallKind, CanisterId, MessageId, TimestampMillis, UserId, UserType};
 use user_canister::c2c_user_canister_v2::*;
 use user_canister::{
     DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, SendMessagesArgs,
-    SetEventsTtl, ToggleReactionArgs, UserCanisterEvent,
+    SetEventsTtl, StartVideoCallArgs, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs, UserCanisterEvent,
 };
 use user_core::updates::c2c_user_canister::{self, can_act_for};
 
@@ -135,11 +137,11 @@ fn process_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16,
         }
         UserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient, recipient_index, now, state),
         UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, *status, now),
-        // TODO: Handle these once the MultiUser canister supports tips, P2P swaps and video calls
-        UserCanisterEvent::TipMessage(_)
-        | UserCanisterEvent::P2PSwapStatusChange(_)
-        | UserCanisterEvent::StartVideoCall(_)
-        | UserCanisterEvent::JoinVideoCall(_) => {}
+        UserCanisterEvent::StartVideoCall(args) => receive_start_video_call(*args, sender, recipient_index, state),
+        UserCanisterEvent::JoinVideoCall(args) => receive_join_video_call(args.message_id, sender, recipient, now, state),
+        UserCanisterEvent::TipMessage(args) => receive_tip(*args, sender, recipient, recipient_index, now, state),
+        // TODO: Handle this once the MultiUser canister supports P2P swaps
+        UserCanisterEvent::P2PSwapStatusChange(_) => {}
     }
 }
 
@@ -249,6 +251,77 @@ fn toggle_reaction(
         state.push_notification(Some(sender), recipient_index, notification, now);
     }
     state.award_achievement_and_notify(recipient_index, Achievement::HadMessageReactedTo, now);
+}
+
+// Records in the initiator's copy of the chat the call the callee's copy holds, as the User canister
+// does on the `StartVideoCall` event. Applied directly when both are in this canister.
+pub(crate) fn receive_start_video_call(
+    args: StartVideoCallArgs,
+    callee: UserId,
+    initiator_index: u16,
+    state: &mut RuntimeState,
+) {
+    // Already checked on the event path, but not when both are in this canister
+    if is_blocked(initiator_index, callee, state) {
+        return;
+    }
+    let initiator = state.user_id(initiator_index);
+    handle_start_video_call(
+        initiator_index,
+        args.message_id,
+        Some(args.message_index),
+        initiator,
+        callee,
+        if args.audio_only { CallKind::Audio } else { CallKind::Video },
+        args.max_duration.unwrap_or(HOUR_IN_MS),
+        state,
+    );
+}
+
+// Records the sender joining the call in the recipient's copy of the chat, as the User canister does
+// on the `JoinVideoCall` event. Applied directly when both are in this canister.
+pub(crate) fn receive_join_video_call(
+    message_id: MessageId,
+    sender: UserId,
+    recipient: UserId,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
+    state.with_their_direct_chat_mut(sender, recipient, |chat| {
+        c2c_user_canister::join_video_call(chat, sender, message_id, now)
+    });
+}
+
+// As in the User canister, a tip on the recipient's message notifies them, appears in their message
+// activity feed and earns them an achievement. Applied directly when the tipper is in this canister
+// too.
+pub(crate) fn receive_tip(
+    args: C2CTipMessageArgs,
+    sender: UserId,
+    recipient: UserId,
+    recipient_index: u16,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) {
+    let Some(received) = state
+        .with_their_direct_chat_mut(sender, recipient, |chat| {
+            c2c_user_canister::tip_message(chat, sender, recipient, args, now)
+        })
+        .flatten()
+    else {
+        return;
+    };
+
+    if let Some(notification) = received.notification {
+        state.push_notification(Some(sender), recipient_index, notification, now);
+    }
+    if let Some(activity) = received.activity {
+        state
+            .data
+            .users
+            .with_user_mut(recipient_index, |user| user.push_message_activity(activity, now));
+    }
+    state.award_achievement_and_notify(recipient_index, Achievement::HadMessageTipped, now);
 }
 
 fn set_events_ttl(

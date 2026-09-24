@@ -49,7 +49,7 @@ pub mod happy_path {
     };
 
     pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
-        register_user_with_referrer(env, principal, canister_id, public_key, None)
+        register_user_with_referrer(env, principal, canister_id, public_key, None, false)
     }
 
     pub fn register_user_with_referrer(
@@ -58,6 +58,7 @@ pub mod happy_path {
         canister_id: CanisterId,
         public_key: Vec<u8>,
         referral_code: Option<String>,
+        use_multi_user_canister: bool,
     ) -> User {
         let response = super::register_user(
             env,
@@ -68,6 +69,7 @@ pub mod happy_path {
                 referral_code,
                 public_key: public_key.clone(),
                 email: None,
+                use_multi_user_canister: Some(use_multi_user_canister),
             },
         );
 

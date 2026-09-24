@@ -6,13 +6,15 @@ use types::{
     C2CError, CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos,
     UserIdAndPrincipal,
 };
-pub use user_accounts::{deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
+pub use user_accounts::{Payer, deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
+pub use user_transfers::UserTransfer;
 
 pub mod certified;
 pub mod icrc1;
 pub mod icrc2;
 pub mod nns;
 mod user_accounts;
+mod user_transfers;
 
 pub fn create_pending_transaction(
     token_symbol: String,
@@ -98,6 +100,17 @@ pub(crate) fn sender_account(sender: UserIdAndPrincipal) -> types::icrc1::Accoun
         sender.user_id
     );
     account
+}
+
+// The subaccount of a canister holding approvals made by many users (a Group, a Community or a
+// MultiUser canister) which a user must name as the spender's when approving it to pull their funds.
+// It is derived from the principal the user signs in with, which is globally unique, so a user names
+// the same subaccount whichever canister they approve, and the canister only spends an approval under
+// the subaccount of the user it is acting for. All of a user's payments through a canister share it,
+// so a client should add to the allowance (passing `expected_allowance`) rather than replace it, which
+// would cancel a standing approval, such as the one Diamond renewals rely on.
+pub fn spender_subaccount(principal: Principal) -> [u8; 32] {
+    convert_to_subaccount(&principal).0
 }
 
 pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {

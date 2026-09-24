@@ -53,6 +53,17 @@ pub fn delay_if_should_retry_failed_c2c_call(error: &C2CError) -> Option<Millise
     }
 }
 
+// For a call to a method which not every live version of the callee has yet. A missing method is
+// otherwise not retried, but here it will appear once the callee is upgraded, so keep retrying until
+// it has been.
+pub fn delay_if_should_retry_failed_c2c_call_to_new_method(error: &C2CError) -> Option<Milliseconds> {
+    if error.is_method_not_found() {
+        Some(5 * MINUTE_IN_MS)
+    } else {
+        delay_if_should_retry_failed_c2c_call(error)
+    }
+}
+
 // A canister which has been uninstalled still exists, so the call is not rejected with
 // `DestinationInvalid` - it fails with `CanisterError`, which we otherwise cannot tell apart from
 // the callee trapping. The `IC0537` code identifies it, but the IC does not expose the fine grained
@@ -155,5 +166,25 @@ mod tests {
             delay_if_should_retry_failed_c2c_call(&error(C2CRetryPolicy::RetryAfterDelay)),
             Some(5 * MINUTE_IN_MS)
         );
+    }
+
+    #[test]
+    fn a_missing_new_method_is_retried_until_the_callee_has_it() {
+        let method_not_found = C2CError::new_with_retry_policy(
+            CanisterId::anonymous(),
+            "method",
+            RejectCode::CanisterError,
+            "Canister has no update method 'method_msgpack'".to_string(),
+            C2CRetryPolicy::DoNotRetry,
+        );
+        assert_eq!(delay_if_should_retry_failed_c2c_call(&method_not_found), None);
+        assert_eq!(
+            delay_if_should_retry_failed_c2c_call_to_new_method(&method_not_found),
+            Some(5 * MINUTE_IN_MS)
+        );
+
+        // Any other failure is treated as usual
+        let rejected = C2CError::new(CanisterId::anonymous(), "method", RejectCode::CanisterReject, String::new());
+        assert_eq!(delay_if_should_retry_failed_c2c_call_to_new_method(&rejected), None);
     }
 }

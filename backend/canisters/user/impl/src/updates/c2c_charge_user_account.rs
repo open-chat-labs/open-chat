@@ -2,6 +2,7 @@ use crate::guards::caller_is_user_index;
 use crate::{execute_update_async, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use ledger_utils::Payer;
 use oc_error_codes::OCErrorCode;
 use user_canister::c2c_charge_user_account::{Response::*, *};
 
@@ -21,5 +22,15 @@ async fn c2c_charge_user_account_impl(args: Args) -> Response {
         return Error(OCErrorCode::InvalidRequest.with_message(format!("{} is not held by this canister", args.user_id)));
     }
 
-    user_core::updates::c2c_charge_user_account(args, user_index_canister_id).await
+    // The user's funds are in this canister's own account, unless they are paying from an external
+    // account they approved
+    let payer = match args.from_account {
+        Some(from) => Payer::Approved {
+            from,
+            spender_subaccount: None,
+        },
+        None => Payer::ThisCanister,
+    };
+
+    user_core::updates::c2c_charge_user_account(args, payer, user_index_canister_id).await
 }

@@ -85,6 +85,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share `c2c_game_chit`, `set_bio`, `set_profile_background`, `manage_favourite_chats` and `pay_for_streak_insurance` with the MultiUser canister via `user_core` ([#9486](https://github.com/open-chat-labs/open-chat/pull/9486))
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the MultiUser canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
 - Stop naming the depositing user to the escrow canister for P2P swaps, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since the caller identifies them ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+- Share the video call handling with the MultiUser canister via `user_core` ([#9500](https://github.com/open-chat-labs/open-chat/pull/9500))
+- Share the `tip_message` checks and the handling of tips received with the MultiUser canister via `user_core` ([#9528](https://github.com/open-chat-labs/open-chat/pull/9528))
+- Resolve the offerer of a P2P swap in a direct chat by their principal via the LocalUserIndex when they aren't alone in their canister, and the acceptor by the principal recorded on the swap ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 
 ### Removed
 
@@ -101,6 +104,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the message activity feed model into the shared `user_state` library, so the MultiUser canister can hold one per user ([#9433](https://github.com/open-chat-labs/open-chat/pull/9433))
 - Move the PIN number, hot group exclusions and saved crypto accounts models into the shared `user_state` library, so the MultiUser canister can hold them per user ([#9434](https://github.com/open-chat-labs/open-chat/pull/9434))
 - Reject paying for streak insurance which would take the days insured over 30, the most the UI allows, since the price and the count of days overflow otherwise ([#9441](https://github.com/open-chat-labs/open-chat/pull/9441))
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
+- Ignore swap status notifications whose swap id doesn't match the swap on the message they name, since anyone can create a swap in the escrow canister naming any message and then cancel it ([#9530](https://github.com/open-chat-labs/open-chat/pull/9530))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-12
 

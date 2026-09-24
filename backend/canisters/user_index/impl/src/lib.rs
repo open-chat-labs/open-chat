@@ -814,6 +814,8 @@ pub struct DiamondMembershipPaymentMetrics {
     pub manual_payments_taken: u64,
     pub recurring_payments_taken: u64,
     pub recurring_payments_failed_due_to_insufficient_funds: u64,
+    #[serde(default)]
+    pub recurring_payments_failed_due_to_insufficient_allowance: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
