@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Refund a deposit whose swap was cancelled, expired or accepted by someone else while the deposit was being checked, rather than recording it ([#9503](https://github.com/open-chat-labs/open-chat/pull/9503))
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
+- Leave a recorded deposit in place when it is notified again, rather than refunding funds the swap holds for its payouts ([#9527](https://github.com/open-chat-labs/open-chat/pull/9527))
 
 ## [[2.0.2056](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2056-escrow)] - 2026-09-18
 

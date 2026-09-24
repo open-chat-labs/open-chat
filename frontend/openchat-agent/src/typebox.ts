@@ -2870,6 +2870,7 @@ export const LocalUserIndexRegisterUserArgs = /* @__PURE__ */ Type.Object({
     email: Type.Optional(Type.String()),
     referral_code: Type.Optional(Type.String()),
     public_key: TSBytes,
+    use_multi_user_canister: Type.Optional(Type.Boolean()),
 });
 
 export type LocalUserIndexRegisterUserSuccessResult = Static<

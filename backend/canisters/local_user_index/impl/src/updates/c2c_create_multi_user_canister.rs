@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::c2c_create_multi_user_canister::{Response::*, *};
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use rand::RngExt;
 use tracing::{error, info};
 use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, Cycles, OCResult};
@@ -14,10 +14,14 @@ use utils::canister;
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 async fn c2c_create_multi_user_canister(_args: Args) -> Response {
-    let prepare_ok = match mutate_state(prepare) {
-        Err(error) => return Error(error),
-        Ok(ok) => ok,
-    };
+    match create_multi_user_canister().await {
+        Ok((canister_id, _)) => Success(canister_id),
+        Err(error) => Error(error),
+    }
+}
+
+pub(crate) async fn create_multi_user_canister() -> Result<(CanisterId, BuildVersion), OCError> {
+    let prepare_ok = mutate_state(prepare)?;
 
     let wasm_version = prepare_ok.canister_wasm.version;
 
@@ -34,11 +38,11 @@ async fn c2c_create_multi_user_canister(_args: Args) -> Response {
         Ok(canister_id) => {
             mutate_state(|state| commit(canister_id, wasm_version, state));
             info!(%canister_id, "MultiUser canister created");
-            Success(canister_id)
+            Ok((canister_id, wasm_version))
         }
         Err((canister_id, error)) => {
             mutate_state(|state| rollback(canister_id, &error, state));
-            Error(error.into())
+            Err(error.into())
         }
     }
 }
