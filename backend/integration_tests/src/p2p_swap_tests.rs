@@ -1084,12 +1084,19 @@ fn p2p_swap_rejected_for_non_diamond_user() {
     );
 }
 
+enum SwapChat {
+    Direct,
+    Group,
+    Channel,
+}
+
 // Anyone can create a swap in the escrow canister naming any message as its location and the
 // canister holding that message as the one to notify. Cancelling such a swap must leave the status
 // of the swap actually on the message unchanged.
-#[test_case(true)]
-#[test_case(false)]
-fn cancelling_other_swap_naming_message_leaves_swap_unchanged(direct_chat: bool) {
+#[test_case(SwapChat::Direct)]
+#[test_case(SwapChat::Group)]
+#[test_case(SwapChat::Channel)]
+fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapChat) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -1117,61 +1124,105 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(direct_chat: bool)
         from_account: None,
     });
 
-    let (chat, canister_to_notify) = if direct_chat {
-        let response = client::user::send_message_v2(
-            env,
-            user1.principal,
-            user1.canister(),
-            &user_canister::send_message_v2::Args {
-                recipient: user2.user_id,
-                thread_root_message_index: None,
-                message_id,
-                content,
-                replies_to: None,
-                forwarding: false,
-                block_level_markdown: false,
-                message_filter_failed: None,
-                pin: None,
-                og_previews: Vec::new(),
-            },
-        );
-        assert!(
-            matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
-            "{response:?}"
-        );
-        (Chat::Direct(user2.user_id.into()), user1.canister())
-    } else {
-        let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-        client::group::happy_path::join_group(env, user2.principal, group_id);
+    let (chat, canister_to_notify) = match swap_chat {
+        SwapChat::Direct => {
+            let response = client::user::send_message_v2(
+                env,
+                user1.principal,
+                user1.canister(),
+                &user_canister::send_message_v2::Args {
+                    recipient: user2.user_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    content,
+                    replies_to: None,
+                    forwarding: false,
+                    block_level_markdown: false,
+                    message_filter_failed: None,
+                    pin: None,
+                    og_previews: Vec::new(),
+                },
+            );
+            assert!(
+                matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+                "{response:?}"
+            );
+            (Chat::Direct(user2.user_id.into()), user1.canister())
+        }
+        SwapChat::Group => {
+            let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
+            client::group::happy_path::join_group(env, user2.principal, group_id);
 
-        let response = client::user::send_message_with_transfer_to_group(
-            env,
-            user1.principal,
-            user1.canister(),
-            &user_canister::send_message_with_transfer_to_group::Args {
-                group_id,
-                thread_root_message_index: None,
-                message_id,
-                content,
-                sender_name: user1.username(),
-                sender_display_name: None,
-                replies_to: None,
-                mentioned: Vec::new(),
-                block_level_markdown: false,
-                rules_accepted: None,
-                message_filter_failed: None,
-                pin: None,
-                og_previews: Vec::new(),
-            },
-        );
-        assert!(
-            matches!(
-                response,
-                user_canister::send_message_with_transfer_to_group::Response::Success(_)
-            ),
-            "{response:?}"
-        );
-        (Chat::Group(group_id), group_id.into())
+            let response = client::user::send_message_with_transfer_to_group(
+                env,
+                user1.principal,
+                user1.canister(),
+                &user_canister::send_message_with_transfer_to_group::Args {
+                    group_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    content,
+                    sender_name: user1.username(),
+                    sender_display_name: None,
+                    replies_to: None,
+                    mentioned: Vec::new(),
+                    block_level_markdown: false,
+                    rules_accepted: None,
+                    message_filter_failed: None,
+                    pin: None,
+                    og_previews: Vec::new(),
+                },
+            );
+            assert!(
+                matches!(
+                    response,
+                    user_canister::send_message_with_transfer_to_group::Response::Success(_)
+                ),
+                "{response:?}"
+            );
+            (Chat::Group(group_id), group_id.into())
+        }
+        SwapChat::Channel => {
+            let community_id =
+                client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
+            let channel_id = client::community::happy_path::summary(env, user1.principal, community_id)
+                .channels
+                .first()
+                .unwrap()
+                .channel_id;
+            client::community::happy_path::join_community(env, user2.principal, community_id);
+
+            let response = client::user::send_message_with_transfer_to_channel(
+                env,
+                user1.principal,
+                user1.canister(),
+                &user_canister::send_message_with_transfer_to_channel::Args {
+                    community_id,
+                    channel_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    content,
+                    sender_name: user1.username(),
+                    sender_display_name: None,
+                    replies_to: None,
+                    mentioned: Vec::new(),
+                    block_level_markdown: false,
+                    community_rules_accepted: None,
+                    channel_rules_accepted: None,
+                    message_filter_failed: None,
+                    pin: None,
+                    og_previews: Vec::new(),
+                },
+            );
+            assert!(
+                matches!(
+                    response,
+                    user_canister::send_message_with_transfer_to_channel::Response::Success(_)
+                ),
+                "{response:?}"
+            );
+            (Chat::Channel(community_id, channel_id), community_id.into())
+        }
     };
 
     env.tick();
@@ -1213,17 +1264,29 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(direct_chat: bool)
         other_swap_amount + icp_token_info().fee,
     );
     client::escrow::happy_path::notify_deposit(env, attacker, canister_ids.escrow, other_swap.id, Some(user1.canister()));
+
+    let user1_icp_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.canister());
+
     client::escrow::happy_path::cancel_swap(env, attacker, canister_ids.escrow, other_swap.id);
 
     tick_many(env, 10);
 
+    // The refund is made before the notification is sent, so this confirms the attack ran
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.canister()),
+        user1_icp_balance + other_swap_amount
+    );
+
     let swap_event = |env: &mut PocketIc, user: &User| {
-        if direct_chat {
-            let other_user_id = if user.user_id == user1.user_id { user2.user_id } else { user1.user_id };
-            client::user::happy_path::events_by_index(env, user, other_user_id, vec![1.into()])
-        } else {
-            let Chat::Group(group_id) = chat else { unreachable!() };
-            client::group::happy_path::events_by_index(env, user, group_id, vec![2.into()])
+        match chat {
+            Chat::Direct(_) => {
+                let other_user_id = if user.user_id == user1.user_id { user2.user_id } else { user1.user_id };
+                client::user::happy_path::events_by_index(env, user, other_user_id, vec![1.into()])
+            }
+            Chat::Group(group_id) => client::group::happy_path::events_by_index(env, user, group_id, vec![2.into()]),
+            Chat::Channel(community_id, channel_id) => {
+                client::community::happy_path::events_by_index(env, user, community_id, channel_id, vec![2.into()])
+            }
         }
         .events
         .pop()
@@ -1236,41 +1299,62 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(direct_chat: bool)
     }
 
     // The swap can still be accepted and completed
-    if direct_chat {
-        let response = client::user::accept_p2p_swap(
-            env,
-            user2.principal,
-            user2.canister(),
-            &user_canister::accept_p2p_swap::Args {
-                user_id: user1.user_id,
-                thread_root_message_index: None,
-                message_id,
-                pin: None,
-                from_account: None,
-            },
-        );
-        assert!(
-            matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
-            "{response:?}"
-        );
-    } else {
-        let Chat::Group(group_id) = chat else { unreachable!() };
-        let response = client::group::accept_p2p_swap(
-            env,
-            user2.principal,
-            group_id.into(),
-            &group_canister::accept_p2p_swap::Args {
-                thread_root_message_index: None,
-                message_id,
-                pin: None,
-                new_achievement: false,
-                from_account: None,
-            },
-        );
-        assert!(
-            matches!(response, group_canister::accept_p2p_swap::Response::Success(_)),
-            "{response:?}"
-        );
+    match chat {
+        Chat::Direct(_) => {
+            let response = client::user::accept_p2p_swap(
+                env,
+                user2.principal,
+                user2.canister(),
+                &user_canister::accept_p2p_swap::Args {
+                    user_id: user1.user_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    pin: None,
+                    from_account: None,
+                },
+            );
+            assert!(
+                matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+                "{response:?}"
+            );
+        }
+        Chat::Group(group_id) => {
+            let response = client::group::accept_p2p_swap(
+                env,
+                user2.principal,
+                group_id.into(),
+                &group_canister::accept_p2p_swap::Args {
+                    thread_root_message_index: None,
+                    message_id,
+                    pin: None,
+                    new_achievement: false,
+                    from_account: None,
+                },
+            );
+            assert!(
+                matches!(response, group_canister::accept_p2p_swap::Response::Success(_)),
+                "{response:?}"
+            );
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let response = client::community::accept_p2p_swap(
+                env,
+                user2.principal,
+                community_id.into(),
+                &community_canister::accept_p2p_swap::Args {
+                    channel_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    pin: None,
+                    new_achievement: false,
+                    from_account: None,
+                },
+            );
+            assert!(
+                matches!(response, community_canister::accept_p2p_swap::Response::Success(_)),
+                "{response:?}"
+            );
+        }
     }
 
     tick_many(env, 10);
