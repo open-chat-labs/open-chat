@@ -16,6 +16,7 @@ pub mod c2c_send_openchat_bot_messages;
 pub mod c2c_set_avatar;
 pub mod c2c_suspend_users;
 mod cancel_protected_action;
+mod cancel_user_migration;
 mod clear_authority_report_attempt;
 mod confirm_protected_action;
 mod contest_moderation_sanction;

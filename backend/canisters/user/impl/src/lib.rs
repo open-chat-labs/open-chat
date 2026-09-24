@@ -484,6 +484,27 @@ impl Data {
         Ok(self.migration.as_ref().unwrap())
     }
 
+    // Cancels the user's migration, if there is one, unfreezing the canister and scheduling again
+    // the timer jobs which were cancelled when the migration started. Returns whether there was one.
+    pub fn cancel_migration(&mut self, now: TimestampMillis) -> bool {
+        if self.migration.take().is_none() {
+            return false;
+        }
+
+        if let Some(expiry) = self.user.next_event_expiry {
+            self.timer_jobs
+                .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+        if self.user.streak.days_insured() > 0 {
+            self.timer_jobs.enqueue_job(
+                TimerJob::ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
+                self.user.streak.ends(),
+                now,
+            );
+        }
+        true
+    }
+
     // The user is migrated along with their entries in the stable memory map, so the canister must
     // have no work outstanding which would change or read them, nor anything else which isn't
     // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
