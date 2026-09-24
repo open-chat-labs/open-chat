@@ -256,6 +256,102 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
     );
 }
 
+// Notifying a deposit again once it is recorded, as a retry may, or anyone naming the depositor may,
+// leaves it in place for the swap's payouts rather than refunding it, on either side of the swap
+#[test]
+fn a_recorded_deposit_is_not_refunded_when_notified_again() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    let icp_amount = 100_000_000_000;
+    let chat_amount = 1_000_000_000_000;
+    let notify_naming = |env: &mut PocketIc, sender: &User, swap_id: u32, depositor: &User| {
+        let response = client::escrow::notify_deposit(
+            env,
+            sender.user_id.canister_id(),
+            canister_ids.escrow,
+            &escrow_canister::notify_deposit::Args {
+                swap_id,
+                deposited_by: Some(depositor.user_id.as_principal()),
+            },
+        );
+        assert!(
+            matches!(response, escrow_canister::notify_deposit::Response::Success(_)),
+            "{response:?}"
+        );
+    };
+    let balance_of =
+        |env: &PocketIc, ledger: CanisterId, user: &User| client::ledger::happy_path::balance_of(env, ledger, user.user_id);
+
+    // The offerer's deposit, notified again by someone else, stays in the swap
+    let swap_id = create_icp_for_chat_swap(env, canister_ids, &user1, &user2, icp_amount, chat_amount);
+    deposit(
+        env,
+        canister_ids,
+        *controller,
+        swap_id,
+        user1.user_id,
+        canister_ids.icp_ledger,
+        icp_amount + 10_000,
+    );
+    notify_naming(env, &user1, swap_id, &user1);
+    notify_naming(env, &user2, swap_id, &user1);
+    tick_many(env, 10);
+    assert_eq!(balance_of(env, canister_ids.icp_ledger, &user1), 0);
+
+    // And so the acceptor is paid in full once they complete the swap
+    deposit(
+        env,
+        canister_ids,
+        *controller,
+        swap_id,
+        user2.user_id,
+        canister_ids.chat_ledger,
+        chat_amount + 100_000,
+    );
+    notify_naming(env, &user2, swap_id, &user2);
+    tick_many(env, 10);
+    assert_eq!(balance_of(env, canister_ids.chat_ledger, &user1), chat_amount);
+    assert_eq!(balance_of(env, canister_ids.icp_ledger, &user2), icp_amount);
+
+    // Likewise the acceptor's deposit, recorded before the offerer's, stays in the swap when notified
+    // again
+    let swap_id = create_icp_for_chat_swap(env, canister_ids, &user1, &user2, icp_amount, chat_amount);
+    deposit(
+        env,
+        canister_ids,
+        *controller,
+        swap_id,
+        user2.user_id,
+        canister_ids.chat_ledger,
+        chat_amount + 100_000,
+    );
+    notify_naming(env, &user2, swap_id, &user2);
+    notify_naming(env, &user1, swap_id, &user2);
+    tick_many(env, 10);
+    assert_eq!(balance_of(env, canister_ids.chat_ledger, &user2), 0);
+
+    deposit(
+        env,
+        canister_ids,
+        *controller,
+        swap_id,
+        user1.user_id,
+        canister_ids.icp_ledger,
+        icp_amount + 10_000,
+    );
+    notify_naming(env, &user1, swap_id, &user1);
+    tick_many(env, 10);
+    assert_eq!(balance_of(env, canister_ids.chat_ledger, &user1), 2 * chat_amount);
+    assert_eq!(balance_of(env, canister_ids.icp_ledger, &user2), 2 * icp_amount);
+}
+
 // A deposit is checked against the ledger before it is recorded, so the swap can end while the
 // check is in flight. The deposit must then be refunded rather than recorded against a swap which
 // has nothing left to refund it. The swap is ended by expiry, since the test can move the clock
