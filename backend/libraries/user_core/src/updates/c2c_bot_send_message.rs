@@ -12,6 +12,7 @@ use types::{
 };
 use user_canister::c2c_bot_send_message::Args;
 use user_canister::send_message_v2::{self, SuccessResult};
+use utils::migrated_user_ids::MigratedUserIds;
 
 // A message from a bot to the user, checked and validated
 pub struct BotMessage {
@@ -133,6 +134,7 @@ pub fn send<P: EventPusher>(
         let EditMessageSuccess {
             message_index, event, ..
         } = chat
+            // Bots are never migrated to a MultiUser canister, so have no earlier ids
             .edit_message::<P>(
                 EditMessageArgs {
                     sender: bot_id,
@@ -145,6 +147,7 @@ pub fn send<P: EventPusher>(
                     finalise_bot_message: message.finalised,
                     now,
                 },
+                &MigratedUserIds::default(),
                 None,
             )
             // Shouldn't happen

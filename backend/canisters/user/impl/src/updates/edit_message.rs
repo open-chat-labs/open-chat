@@ -38,6 +38,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
         chat.edit_message(
             edit_message_args,
+            &state.data.migrated_user_ids,
             Some(UserEventPusher {
                 now,
                 rng: state.env.rng(),

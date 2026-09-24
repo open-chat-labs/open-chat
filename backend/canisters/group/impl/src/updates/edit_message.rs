@@ -5,7 +5,6 @@ use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use group_canister::edit_message_v2::*;
 use types::{Achievement, EventIndex, OCResult};
-use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -33,7 +32,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let result = state.data.chat.events.edit_message(
         edit_message_args,
-        &MigratedUserIds::default(),
+        &state.data.migrated_user_ids,
         Some(GroupEventPusher {
             now,
             rng: state.env.rng(),

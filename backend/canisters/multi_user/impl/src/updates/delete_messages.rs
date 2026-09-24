@@ -34,17 +34,21 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
             let mut deleted = Vec::new();
             let mut my_messages = Vec::new();
-            for (message_id, result) in chat.delete_messages(DeleteUndeleteMessagesArgs {
-                caller: my_user_id,
-                is_admin: true,
-                min_visible_event_index: EventIndex::default(),
-                thread_root_message_index: args.thread_root_message_index,
-                message_ids: args.message_ids,
-                now,
-            }) {
+            for (message_id, result) in chat.delete_messages(
+                DeleteUndeleteMessagesArgs {
+                    caller: my_user_id,
+                    is_admin: true,
+                    min_visible_event_index: EventIndex::default(),
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_ids: args.message_ids,
+                    now,
+                },
+                &state.data.migrated_user_ids,
+            ) {
                 if let Ok(success) = result {
                     deleted.push(message_id);
-                    if success.sender == my_user_id {
+                    // Including their messages sent under an earlier id, from before they were migrated
+                    if state.data.migrated_user_ids.is_same_user(success.sender, my_user_id) {
                         my_messages.push(message_id);
                     }
                 }
@@ -78,17 +82,20 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if !my_messages.is_empty()
         && let Some(their_index) = state.index_of_local_user(args.user_id)
         && let Some((thread_root_message_index, deleted_in_theirs)) = state
-            .with_their_direct_chat_mut(my_user_id, args.user_id, |chat| {
+            .with_their_direct_chat_mut(my_user_id, args.user_id, |chat, migrated_user_ids| {
                 let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;
                 let deleted: Vec<_> = chat
-                    .delete_messages(DeleteUndeleteMessagesArgs {
-                        caller: my_user_id,
-                        is_admin: false,
-                        min_visible_event_index: EventIndex::default(),
-                        thread_root_message_index,
-                        message_ids: my_messages,
-                        now,
-                    })
+                    .delete_messages(
+                        DeleteUndeleteMessagesArgs {
+                            caller: my_user_id,
+                            is_admin: false,
+                            min_visible_event_index: EventIndex::default(),
+                            thread_root_message_index,
+                            message_ids: my_messages,
+                            now,
+                        },
+                        migrated_user_ids,
+                    )
                     .into_iter()
                     .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
                     .collect();

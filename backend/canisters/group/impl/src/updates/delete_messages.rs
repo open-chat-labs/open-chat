@@ -90,16 +90,22 @@ fn commit(ext_caller: Option<Caller>, args: Args, state: &mut RuntimeState) -> O
         args.message_ids,
         args.as_platform_moderator.unwrap_or_default(),
         now,
+        &state.data.migrated_user_ids,
     )?;
 
     let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-    for message_id in
-        results.iter().filter_map(
-            |(message_id, result)| {
-                if let Ok(success) = result { (success.sender == agent).then_some(message_id) } else { None }
-            },
-        )
-    {
+    for message_id in results.iter().filter_map(|(message_id, result)| {
+        // Including their messages sent under an earlier id, from before they were migrated
+        if let Ok(success) = result {
+            state
+                .data
+                .migrated_user_ids
+                .is_same_user(success.sender, agent)
+                .then_some(message_id)
+        } else {
+            None
+        }
+    }) {
         // After 5 minutes hard delete those messages where the deleter was the message sender
         state.data.timer_jobs.enqueue_job(
             TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {

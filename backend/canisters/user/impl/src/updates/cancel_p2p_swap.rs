@@ -21,5 +21,5 @@ fn cancel_p2p_swap(args: Args) -> Response {
 fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
     let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
-    user_core::updates::cancel_p2p_swap(&mut state.data.user, my_user_id, args, now)
+    user_core::updates::cancel_p2p_swap(&mut state.data.user, my_user_id, args, now, &state.data.migrated_user_ids)
 }

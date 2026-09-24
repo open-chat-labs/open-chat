@@ -191,19 +191,22 @@ impl RuntimeState {
         &mut self,
         my_user_id: UserId,
         their_user_id: UserId,
-        f: impl FnOnce(&mut DirectChat) -> R,
+        f: impl FnOnce(&mut DirectChat, &MigratedUserIds) -> R,
     ) -> Option<R> {
         if their_user_id == my_user_id {
             return None;
         }
         let their_index = self.index_of_local_user(their_user_id)?;
+        let migrated_user_ids = &self.data.migrated_user_ids;
         self.data
             .users
             .with_user_mut(their_index, |user| {
                 if user.blocked_users.contains(&my_user_id) {
                     None
                 } else {
-                    user.direct_chats.get_mut(&my_user_id.into()).map(f)
+                    user.direct_chats
+                        .get_mut(&my_user_id.into())
+                        .map(|chat| f(chat, migrated_user_ids))
                 }
             })
             .flatten()
