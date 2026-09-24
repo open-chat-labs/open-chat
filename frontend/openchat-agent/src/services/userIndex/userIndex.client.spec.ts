@@ -223,6 +223,47 @@ describe("UserIndexClient.getUsers with migrated users", () => {
         expect([...stores.get("users")!.keys()]).toEqual([ME_LATEST]);
     });
 
+    test("the current user under an id they've been migrated from is out of date and ignored", async () => {
+        setup({
+            users: { [ME_LATEST]: cachedUser(ME_LATEST) },
+            migratedUserIds: { [ME_OLD]: ME_LATEST },
+        });
+        cachedCurrentUser = { ...anonymousUser(), userId: ME_LATEST };
+        // From a replica which hasn't caught up with the migration
+        respond = () => ({ currentUser: currentUserSummary(ME_OLD) });
+
+        const resp = await client.getUsers(args(ME_LATEST), false);
+        await flush();
+
+        expect(resp.currentUser).toBeUndefined();
+        expect(resp.users.map((u) => u.userId)).toEqual([ME_LATEST]);
+        expect(cachedCurrentUser?.userId).toEqual(ME_LATEST);
+        expect(stores.get("migratedUserIds")).toEqual(new Map([[ME_OLD, ME_LATEST]]));
+        expect(chatStateForgotten).toBe(false);
+    });
+
+    test("getCurrentUser ignores a live user under an id they've been migrated from", async () => {
+        setup({ migratedUserIds: { [ME_OLD]: ME_LATEST } });
+        cachedCurrentUser = { ...anonymousUser(), userId: ME_LATEST };
+        liveCurrentUser = { ...anonymousUser(), userId: ME_OLD };
+
+        const results = await new Promise<string[]>((resolve) => {
+            const ids: string[] = [];
+            client.getCurrentUser().subscribe({
+                onResult: (user, final) => {
+                    if (user.kind === "created_user") ids.push(user.userId);
+                    if (final) resolve(ids);
+                },
+            });
+        });
+        await flush();
+
+        expect(results).toEqual([ME_LATEST, ME_LATEST]);
+        expect(cachedCurrentUser?.userId).toEqual(ME_LATEST);
+        expect(stores.get("migratedUserIds")).toEqual(new Map([[ME_OLD, ME_LATEST]]));
+        expect(chatStateForgotten).toBe(false);
+    });
+
     test("a current user whose old id was deleted is a new account, not a migration", async () => {
         setup();
         cachedCurrentUser = { ...anonymousUser(), userId: ME_OLD };

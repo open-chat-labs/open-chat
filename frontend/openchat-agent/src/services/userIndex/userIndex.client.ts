@@ -174,6 +174,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         Empty,
                         UserIndexCurrentUserResponse,
                     );
+                    if (
+                        liveUser.kind === "created_user" &&
+                        cachedUser !== undefined &&
+                        (await this.isEarlierUserId(liveUser.userId))
+                    ) {
+                        // From a replica which is behind, so it still has the user under an id
+                        // they've since been migrated from. The cached user is more up to date.
+                        resolve(cachedUser, true);
+                        return;
+                    }
                     if (liveUser.kind === "created_user") {
                         // A terms acceptance recorded while this query was in flight must not
                         // be clobbered by the (older) response - that would re-open the
@@ -619,7 +629,9 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
-        const apiResponse = await this.getUsersFromBackend(args, suspendedUsersSyncedTo);
+        const apiResponse = await this.withoutStaleCurrentUser(
+            await this.getUsersFromBackend(args, suspendedUsersSyncedTo),
+        );
 
         const newMigrations = migrationsFromResponse(apiResponse);
         let currentUserMigratedFrom: string | undefined = undefined;
@@ -762,6 +774,20 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 ),
             this.forgetCachedChatState(),
         ]);
+    }
+
+    // A replica which is behind can return the current user under an id they've since been migrated
+    // from. That's out of date, rather than a migration back to the earlier id, so it's dropped.
+    private async withoutStaleCurrentUser(response: UsersApiResponse): Promise<UsersApiResponse> {
+        return response.currentUser !== undefined &&
+            (await this.isEarlierUserId(response.currentUser.userId))
+            ? { ...response, currentUser: undefined }
+            : response;
+    }
+
+    // Whether `userId` is known to be an id from before a user was migrated to a MultiUser canister
+    private async isEarlierUserId(userId: string): Promise<boolean> {
+        return (await this.userDb.getLatestUserIds([userId])).size > 0;
     }
 
     private forgetCachedChatState(): Promise<void> {
