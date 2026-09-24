@@ -48,6 +48,7 @@ use user_canister::CommunityCanisterEvent;
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
+use utils::migrated_user_ids::MigratedUserIds;
 use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
@@ -649,6 +650,10 @@ struct Data {
     public_channel_list_updated: TimestampMillis,
     #[serde(default)]
     certified_transfers: CertifiedTransfers,
+    // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
+    // have changed
+    #[serde(default)]
+    migrated_user_ids: MigratedUserIds,
 }
 
 impl Data {
@@ -780,6 +785,7 @@ impl Data {
             moderation_flags: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
+            migrated_user_ids: MigratedUserIds::default(),
             public_channel_list_updated: now,
         }
     }

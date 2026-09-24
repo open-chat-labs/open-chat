@@ -46,6 +46,7 @@ use user_canister::GroupCanisterEvent;
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
+use utils::migrated_user_ids::MigratedUserIds;
 use utils::regular_jobs::RegularJobs;
 
 // A group larger than this never rings, so its call dismissals would be recipient lists the
@@ -695,6 +696,10 @@ struct Data {
     idempotency_checker: IdempotencyChecker,
     #[serde(default)]
     certified_transfers: CertifiedTransfers,
+    // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
+    // have changed
+    #[serde(default)]
+    migrated_user_ids: MigratedUserIds,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -811,6 +816,7 @@ impl Data {
             bots: InstalledBots::default(),
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
+            migrated_user_ids: MigratedUserIds::default(),
         }
     }
 

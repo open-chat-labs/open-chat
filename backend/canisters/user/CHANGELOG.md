@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Support leaving tips from external wallets using ICRC2 ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Return a distinct `InsufficientAllowance` error when an ICRC-2 transfer exceeds the approval ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
@@ -90,6 +91,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share the `tip_message` checks and the handling of tips received with the MultiUser canister via `user_core` ([#9528](https://github.com/open-chat-labs/open-chat/pull/9528))
 - Resolve the offerer of a P2P swap in a direct chat by their principal via the LocalUserIndex when they aren't alone in their canister, and the acceptor by the principal recorded on the swap ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 - Share P2P swap acceptance, cancellation and status changes with the MultiUser canister via `user_core` ([#9531](https://github.com/open-chat-labs/open-chat/pull/9531))
+- Share the checks and handling of `c2c_bot_send_message` with the MultiUser canister via `user_core` ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
 
 ### Removed
 

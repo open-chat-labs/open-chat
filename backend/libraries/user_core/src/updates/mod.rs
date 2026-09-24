@@ -6,6 +6,7 @@ mod add_hot_group_exclusions;
 pub mod approve_transfer;
 mod archive_unarchive_chats;
 pub mod c2c_accept_p2p_swap;
+pub mod c2c_bot_send_message;
 mod c2c_charge_user_account;
 mod c2c_game_chit;
 mod c2c_install_bot;

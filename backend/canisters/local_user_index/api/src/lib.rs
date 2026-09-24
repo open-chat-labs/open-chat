@@ -265,6 +265,10 @@ pub struct UserIdMigrated {
     pub old_user_id: UserId,
     #[serde(rename = "n")]
     pub new_user_id: UserId,
+    // The groups and communities the user is in, each of which the LocalUserIndex controlling it
+    // tells of the user's new id. Empty when sent to a LocalUserIndex added after the migration.
+    #[serde(rename = "c", default, skip_serializing_if = "Vec::is_empty")]
+    pub canisters_to_notify: Vec<CanisterId>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

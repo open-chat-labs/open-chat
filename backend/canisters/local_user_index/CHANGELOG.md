@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Pass `UserIdMigrated` on to each of the listed groups and communities which this LocalUserIndex controls. The groups and communities must be upgraded first ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Store the map of the old to the new id of each user migrated to a MultiUser canister, synced from the UserIndex ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
 - Add the `migrated_user_ids` query, which takes a list of user ids and returns the latest id of each user in it who has been migrated to a MultiUser canister ([#9538](https://github.com/open-chat-labs/open-chat/pull/9538))
 - Sign a decline token into each phone's ring push and add the `video_call_declined` endpoint for the video bridge, which dismisses the ring on the decliner's other phones ([#9542](https://github.com/open-chat-labs/open-chat/pull/9542))
@@ -17,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Reject `install_bot` and `uninstall_bot` calls whose location is the wrong type, eg. a user's own direct chat given as a `Group`, which led to the installation's events being queued for delivery to a group that doesn't exist ([#9520](https://github.com/open-chat-labs/open-chat/pull/9520))
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
+- Send `c2c_bot_send_message` for a direct chat to the canister holding the user, rather than to their user id, which for a user in a MultiUser canister is not a canister id ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
 
 ## [[2.0.2063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2063-local_user_index)] - 2026-09-23
 

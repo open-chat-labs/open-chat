@@ -28,6 +28,7 @@ use user_core::{Community, GroupChat, User};
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
+use utils::migrated_user_ids::MigratedUserIds;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
@@ -402,6 +403,10 @@ struct Data {
     // their users
     #[serde(default)]
     pub known_multi_user_canisters: HashSet<CanisterId>,
+    // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
+    // have changed
+    #[serde(default)]
+    pub migrated_user_ids: MigratedUserIds,
     // Set while the canister's state must not change, during which every update call is rejected.
     // Queries are still served.
     #[serde(default)]
@@ -464,6 +469,7 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             known_multi_user_canisters: HashSet::new(),
+            migrated_user_ids: MigratedUserIds::default(),
             frozen: None,
         }
     }

@@ -1,9 +1,9 @@
 use crate::crypto::user_wallet;
-use crate::guards::caller_is_hosted_user;
+use crate::guards::{caller_is_hosted_user, caller_is_local_user_index};
 use crate::timer_job_types::{
     CancelP2PSwapInEscrowCanisterJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, TimerJob,
 };
-use crate::{RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
+use crate::{MultiUserEventPusher, RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
@@ -20,6 +20,7 @@ use types::{
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
+use user_core::updates::c2c_bot_send_message::Sent;
 use user_core::updates::offer_p2p_swap;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -245,10 +246,63 @@ async fn prepare_crypto_transfer(
     })
 }
 
-#[update(msgpack = true)]
+// The User canister's `c2c_bot_send_message`, naming the user the bot is messaging since this
+// canister holds many users
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_bot_send_message(_args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
-    unimplemented!()
+fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
+    mutate_state(|state| c2c_bot_send_message_impl(args, state))
+}
+
+fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut RuntimeState) -> c2c_bot_send_message::Response {
+    let Some(user_index) = state.index_of_local_user(args.user_id) else {
+        return c2c_bot_send_message::Response::Error(OCErrorCode::TargetUserNotFound.into());
+    };
+    let my_user_id = state.user_id(user_index);
+    let bot_id = args.bot_id;
+    let now = state.env.now();
+    // Drawn up front, whether or not the chat turns out to need creating, since the user is
+    // borrowed for the whole of the call below
+    let anonymized_chat_id: u128 = state.env.rng().random();
+
+    let event_pusher = MultiUserEventPusher {
+        user_id: my_user_id,
+        now,
+        rng: state.env.rng(),
+        queue: &mut state.data.local_user_index_event_sync_queue,
+    };
+    let result = state.data.users.with_user_mut(user_index, |user| {
+        let message = user_core::updates::c2c_bot_send_message::prepare(user, args, now)?;
+        user_core::updates::c2c_bot_send_message::send(
+            user,
+            my_user_id,
+            message,
+            || anonymized_chat_id,
+            Some(event_pusher),
+            now,
+        )
+    });
+    let Sent {
+        result,
+        notification,
+        new_message,
+    } = match result {
+        Some(Ok(sent)) => sent,
+        Some(Err(error)) => return c2c_bot_send_message::Response::Error(error),
+        None => return c2c_bot_send_message::Response::Error(OCErrorCode::TargetUserNotFound.into()),
+    };
+
+    if let Some(notification) = notification {
+        state.push_notification(Some(bot_id), user_index, notification, now);
+    }
+
+    if let Some((message_event, _)) = new_message
+        && let Some(expiry) = message_event.expires_at
+    {
+        state.handle_event_expiry(user_index, expiry);
+    }
+
+    c2c_bot_send_message::Response::Success(result)
 }
 
 // Offers a swap in a direct chat, as the User canister does: creates the swap in the escrow canister

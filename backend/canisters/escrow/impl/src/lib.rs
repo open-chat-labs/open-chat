@@ -11,6 +11,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
+use utils::migrated_user_ids::MigratedUserIds;
 
 mod guards;
 mod jobs;
@@ -75,6 +76,11 @@ struct Data {
     pub disabled_tokens: BTreeSet<CanisterId>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+    // The latest ids of migrated users, as looked up from the UserIndex whenever a user's id is found
+    // to have changed. A swap's `canister_to_notify` is the id of the user it was offered to, if they
+    // were alone in their canister, so it is looked up by that.
+    #[serde(default)]
+    pub migrated_user_ids: MigratedUserIds,
 }
 
 impl Data {
@@ -89,6 +95,7 @@ impl Data {
             disabled_tokens: BTreeSet::new(),
             rng_seed: [0; 32],
             test_mode,
+            migrated_user_ids: MigratedUserIds::default(),
         }
     }
 }
