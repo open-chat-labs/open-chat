@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add the `use_multi_user_canister` flag to `register_user`, which in test mode registers the user in a MultiUser canister (creating one if there are none) rather than in a canister of their own ([#9524](https://github.com/open-chat-labs/open-chat/pull/9524))
+
 ### Fixed
 
 - Reject `install_bot` and `uninstall_bot` calls whose location is the wrong type, eg. a user's own direct chat given as a `Group`, which led to the installation's events being queued for delivery to a group that doesn't exist ([#9520](https://github.com/open-chat-labs/open-chat/pull/9520))
