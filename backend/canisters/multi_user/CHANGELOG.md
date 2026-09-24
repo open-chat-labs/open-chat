@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Add the MultiUser canister skeleton with its lifecycle endpoints ([#9310](https://github.com/open-chat-labs/open-chat/pull/9310))
 - Initialise the stable memory map, alongside a second map with 256 byte pages for small entries ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Add an unimplemented stub for every User canister endpoint, sharing the User canister's API types ([#9400](https://github.com/open-chat-labs/open-chat/pull/9400))
@@ -50,10 +49,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `tip_message` for direct chats, pulling the tip from the user's own wallet via ICRC2, and apply tips received from other users ([#9528](https://github.com/open-chat-labs/open-chat/pull/9528))
 - Implement P2P swaps in direct chats (`send_message`, `accept_p2p_swap`, `cancel_p2p_swap` and `c2c_notify_p2p_swap_status_change`) and `c2c_accept_p2p_swap` for swaps in groups and channels, with deposits pulled from each user's wallet via ICRC2 and the escrow canister knowing each user by their principal ([#9531](https://github.com/open-chat-labs/open-chat/pull/9531))
 - Implement `c2c_bot_send_message`, sending a bot's message to the user it names, callable only by the LocalUserIndex ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
+- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 
 ### Changed
 
-- Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Route stable memory map entries by key type to either the main map or the map for small entries ([#9348](https://github.com/open-chat-labs/open-chat/pull/9348))
 - Prefix every stable memory map key with the index of the user it belongs to, applied at the boundary of the map so the key types are unchanged ([#9406](https://github.com/open-chat-labs/open-chat/pull/9406))
@@ -76,4 +75,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share `c2c_game_chit`, `set_bio`, `set_profile_background`, `manage_favourite_chats` and `pay_for_streak_insurance` with the User canister via `user_core` ([#9486](https://github.com/open-chat-labs/open-chat/pull/9486))
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the User canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
 - Reject approvals, streak insurance payments, crypto, BTC and OneSec withdrawals, and account charges, which spent from each user's subaccount of the canister, since users hold their own funds in their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+- Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 

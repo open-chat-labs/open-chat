@@ -8,8 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `c2c_try_start_migration` for the UserIndex, which checks the canister has no work outstanding, then freezes it and stores the user serialized, for the given MultiUser canister to pull, returning its size ([#9544](https://github.com/open-chat-labs/open-chat/pull/9544))
-- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Support leaving tips from external wallets using ICRC2 ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Return a distinct `InsufficientAllowance` error when an ICRC-2 transfer exceeds the approval ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
@@ -21,10 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_user_canister_v2`, taking events which each name their sender and recipient, so that a MultiUser canister can send direct chat events on behalf of its users ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
 - Include the call facts (message id, call type, `audio_only`, start time) in the notification when a call starts, and send the owner an `answered_elsewhere` dismissal on join and an `answered_elsewhere` or `ended` dismissal when the call ends ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 - Add a `frozen` state, which rejects every update call except `wallet_receive` while set and leaves queries unaffected. Nothing sets it yet ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
+- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
+- Add `c2c_try_start_migration` for the UserIndex, which checks the canister has no work outstanding, then freezes it and stores the user serialized, for the given MultiUser canister to pull, returning its size ([#9544](https://github.com/open-chat-labs/open-chat/pull/9544))
 
 ### Changed
 
-- Track the async work in progress, spawned tasks and async updates alike, using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Support P2P swaps for users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
@@ -88,12 +87,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Handle `c2c_notify_group_deleted` via `user_core`, shared with the MultiUser canister ([#9484](https://github.com/open-chat-labs/open-chat/pull/9484))
 - Share `c2c_game_chit`, `set_bio`, `set_profile_background`, `manage_favourite_chats` and `pay_for_streak_insurance` with the MultiUser canister via `user_core` ([#9486](https://github.com/open-chat-labs/open-chat/pull/9486))
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the MultiUser canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
-- Stop naming the depositing user to the escrow canister for P2P swaps, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since the caller identifies them ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 - Share the video call handling with the MultiUser canister via `user_core` ([#9500](https://github.com/open-chat-labs/open-chat/pull/9500))
+- Stop naming the depositing user to the escrow canister for P2P swaps, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since the caller identifies them ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 - Share the `tip_message` checks and the handling of tips received with the MultiUser canister via `user_core` ([#9528](https://github.com/open-chat-labs/open-chat/pull/9528))
 - Resolve the offerer of a P2P swap in a direct chat by their principal via the LocalUserIndex when they aren't alone in their canister, and the acceptor by the principal recorded on the swap ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 - Share P2P swap acceptance, cancellation and status changes with the MultiUser canister via `user_core` ([#9531](https://github.com/open-chat-labs/open-chat/pull/9531))
 - Share the checks and handling of `c2c_bot_send_message` with the MultiUser canister via `user_core` ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
+- Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 
 ### Removed
 
