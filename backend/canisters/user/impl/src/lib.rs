@@ -15,7 +15,7 @@ use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
@@ -49,40 +49,6 @@ mod updates;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
-    // The async updates and spawned tasks which haven't yet completed, whose remaining steps could
-    // still change the canister's state. Not persisted, since a canister being upgraded is stopped
-    // first, so has none.
-    static ASYNC_WORK_IN_PROGRESS: Cell<u32> = const { Cell::new(0) };
-}
-
-// Counts some async work as in progress for as long as it is held. The future holding it is dropped
-// when the work completes, and also if it traps, when its call context is cleaned up.
-struct AsyncWorkGuard;
-
-impl AsyncWorkGuard {
-    fn new() -> AsyncWorkGuard {
-        ASYNC_WORK_IN_PROGRESS.set(ASYNC_WORK_IN_PROGRESS.get() + 1);
-        AsyncWorkGuard
-    }
-}
-
-impl Drop for AsyncWorkGuard {
-    fn drop(&mut self) {
-        ASYNC_WORK_IN_PROGRESS.set(ASYNC_WORK_IN_PROGRESS.get().saturating_sub(1));
-    }
-}
-
-fn async_work_in_progress() -> bool {
-    ASYNC_WORK_IN_PROGRESS.get() > 0
-}
-
-// Spawns a task, counting it as async work in progress until it completes
-fn spawn_tracked(future: impl Future<Output = ()> + 'static) {
-    let guard = AsyncWorkGuard::new();
-    ic_cdk::futures::spawn_migratory(async move {
-        let _guard = guard;
-        future.await;
-    });
 }
 
 canister_state!(RuntimeState);

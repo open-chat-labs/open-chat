@@ -1,8 +1,9 @@
 use crate::guards::caller_is_user_index;
-use crate::{WASM_VERSION, async_work_in_progress, mutate_state};
+use crate::{WASM_VERSION, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::c2c_try_start_migration::{Response::*, *};
+use utils::async_work::async_work_in_progress;
 
 // Called by the UserIndex to start migrating the user to a MultiUser canister. Not run via
 // `execute_update`, since a repeated call must still be answered once the canister is frozen for the
