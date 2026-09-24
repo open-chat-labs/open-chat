@@ -161,6 +161,7 @@ impl From<DataPrevious> for Data {
             idempotency_checker: d.idempotency_checker,
             known_multi_user_canisters: d.known_multi_user_canisters,
             migrated_user_ids: MigratedUserIds::default(),
+            frozen: None,
         }
     }
 }

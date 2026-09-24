@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- When told by the LocalUserIndex that a member has been migrated to a MultiUser canister, move their membership, role, invitation, block and other per-user state over to their new id, and map their principal to it. A prize claimed or a poll vote cast under their old id counts as theirs ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
+- Act on `UserIdMigrated`, moving the member's membership, role, invitation, block and other per-user state over to their new id and mapping their principal to it. A prize claimed or a poll vote cast under their old id counts as theirs ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
+- Accept `UserIdMigrated` from the LocalUserIndex, for members migrated to a MultiUser canister and given a new id. Not acted on yet ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Accept a `user_id` in `c2c_leave_group` and `c2c_delete_group`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))
@@ -36,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store each member's principal on the member, populating existing members in post_upgrade ([#9507](https://github.com/open-chat-labs/open-chat/pull/9507))
 - Hold the calling user's principal in `Caller::User` alongside their user id ([#9525](https://github.com/open-chat-labs/open-chat/pull/9525))
 - Record the owner of the acceptor's wallet on a P2P swap when they reserve it, name them by it to the escrow canister, and resolve them by it when the swap completes ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
+- Reject every update call while the group is frozen in one place, `execute_update`, by trapping, rather than per endpoint with a `ChatFrozen` error. Only freezing, unfreezing, platform moderation (including user suspensions), exporting the group into a community (which happens while it is frozen) and `wallet_receive` run via `execute_update_even_if_frozen`. Every other update, including some which previously worked while frozen such as `c2c_local_index` and ending video calls, is now blocked ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
 
 ### Removed
 

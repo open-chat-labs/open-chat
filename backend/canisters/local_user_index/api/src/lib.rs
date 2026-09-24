@@ -265,13 +265,13 @@ pub struct UserIdMigrated {
     pub old_user_id: UserId,
     #[serde(rename = "n")]
     pub new_user_id: UserId,
-    // The principal the user signs in with, which the migration leaves unchanged, and the groups
-    // they are in, each of which the LocalUserIndex controlling it tells of the user's new id. Left
-    // out when a LocalUserIndex added after the migration is sent it, since it has no groups.
+    // The principal the user signs in with, which the migration leaves unchanged, and the groups and
+    // communities they are in, each of which the LocalUserIndex controlling it tells of the user's new
+    // id. Left out when sent to a LocalUserIndex added after the migration.
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub principal: Option<Principal>,
-    #[serde(rename = "g", default, skip_serializing_if = "Vec::is_empty")]
-    pub groups: Vec<ChatId>,
+    #[serde(rename = "c", default, skip_serializing_if = "Vec::is_empty")]
+    pub canisters_to_notify: Vec<CanisterId>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

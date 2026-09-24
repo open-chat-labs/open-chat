@@ -313,7 +313,7 @@ describe("DailyPuzzleGame", () => {
         const client = fakeClient({
             dailyPuzzleHint: vi
                 .fn()
-                .mockResolvedValueOnce({ kind: "error", code: 250, message: "40" })
+                .mockResolvedValueOnce({ kind: "error", code: 250, message: "20" })
                 .mockResolvedValueOnce({
                     kind: "success",
                     hint,
@@ -328,7 +328,7 @@ describe("DailyPuzzleGame", () => {
             "light_up",
             1,
             expect.anything(),
-            40,
+            20,
         );
         expect(toastStore.showFailureToast).not.toHaveBeenCalled();
         expect(g.lastHint).toEqual(hint);
@@ -337,12 +337,49 @@ describe("DailyPuzzleGame", () => {
 
     test("a second price mismatch is an error, not a loop", async () => {
         const client = fakeClient({
-            dailyPuzzleHint: vi.fn(async () => ({ kind: "error", code: 250, message: "40" })),
+            dailyPuzzleHint: vi.fn(async () => ({ kind: "error", code: 250, message: "20" })),
         });
         const g = build(userState(), client);
         await g.hint();
         expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
         expect(toastStore.showFailureToast).toHaveBeenCalled();
+    });
+
+    // #9517 invariant 2. A tap that showed 125 on the button was retried at a quoted 200. The
+    // upgrade is the case that matters: the button shows the difference, which is below the
+    // level's full price, and the quote was the full price.
+    test("a price mismatch quoting more than the button showed is not retried", async () => {
+        const hint: ServedHint = {
+            hint: { technique: 1, focus: [0, 1, 2], target: [], conclusions: [] },
+            level: 2,
+            mistake: false,
+        };
+        const client = fakeClient({
+            dailyPuzzleHint: vi
+                .fn()
+                .mockResolvedValueOnce({
+                    kind: "success",
+                    hint,
+                    hintsUsed: 1,
+                    state: userState({ hints: [hint] }),
+                })
+                .mockResolvedValue({ kind: "error", code: 250, message: "200" }),
+        });
+        const g = build(userState(), client);
+        await g.hint();
+        expect(g.nextHintLevel).toBe(3);
+        expect(g.nextHintPrice).toBe(125);
+        await g.hint();
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
+        expect(client.dailyPuzzleHint).toHaveBeenLastCalledWith(
+            "light_up",
+            3,
+            expect.anything(),
+            125,
+        );
+        expect(toastStore.showFailureToast).toHaveBeenCalled();
+        expect(g.lastHint).toEqual(hint);
+        expect(g.busy).toBe(false);
     });
 
     // #9334 invariant 61. Slant #20709 step 9: the deduction looked at the four cells round the

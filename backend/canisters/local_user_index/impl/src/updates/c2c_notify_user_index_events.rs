@@ -3,7 +3,6 @@ use crate::{CanisterToRefund, CommunityEvent, GroupEvent, RuntimeState, UserEven
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
-use group_canister::UserIdMigrated as GroupUserIdMigrated;
 use local_user_index_canister::c2c_notify_user_index_events::*;
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use p256_key_pair::P256KeyPair;
@@ -361,14 +360,23 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::UserIdMigrated(ev) => {
             if state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id) {
-                for chat_id in ev.groups {
-                    if state.data.local_groups.get(&chat_id).is_some() {
+                for canister_id in ev.canisters_to_notify {
+                    if state.data.local_groups.get(&canister_id.into()).is_some() {
                         state.push_event_to_group(
-                            chat_id.into(),
-                            GroupEvent::UserIdMigrated(GroupUserIdMigrated {
+                            canister_id,
+                            GroupEvent::UserIdMigrated(group_canister::UserIdMigrated {
                                 old_user_id: ev.old_user_id,
                                 new_user_id: ev.new_user_id,
                                 principal: ev.principal,
+                            }),
+                            **now,
+                        );
+                    } else if state.data.local_communities.get(&canister_id.into()).is_some() {
+                        state.push_event_to_community(
+                            canister_id,
+                            CommunityEvent::UserIdMigrated(community_canister::UserIdMigrated {
+                                old_user_id: ev.old_user_id,
+                                new_user_id: ev.new_user_id,
                             }),
                             **now,
                         );

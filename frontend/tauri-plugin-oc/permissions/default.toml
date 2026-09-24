@@ -25,4 +25,6 @@ permissions = [
     "allow-get-pending-notification-tap",
     "allow-clear-all-notifications",
     "allow-delete-fcm-token",
+    "allow-get-pending-call-action",
+    "allow-call-ring-handled",
 ]

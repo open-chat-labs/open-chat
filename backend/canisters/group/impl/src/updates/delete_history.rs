@@ -18,8 +18,6 @@ fn delete_history(args: Args) -> Response {
 }
 
 fn delete_history_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let member = state.get_calling_member(None, true)?;
 
     if !member.role().can_delete_history() {

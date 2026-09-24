@@ -29,8 +29,6 @@ pub(crate) fn invite_users_to_community_impl(
     caller: Caller,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
-    state.data.verify_not_frozen()?;
-
     if let Caller::BotV2(bot_caller) = &caller
         && !state.data.is_bot_permitted(
             &bot_caller.bot,

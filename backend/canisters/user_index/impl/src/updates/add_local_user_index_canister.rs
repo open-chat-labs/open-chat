@@ -195,7 +195,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     old_user_id,
                     new_user_id,
                     principal: None,
-                    groups: Vec::new(),
+                    canisters_to_notify: Vec::new(),
                 }),
             );
         }

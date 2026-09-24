@@ -7,9 +7,8 @@ use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectChatUserNotificationPayload,
-    DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex, OCResult, OgPreview,
-    SenderContext, TimestampMillis, User, UserId, UserType,
+    CanisterId, Chat, ContentValidationError, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper,
+    Message, MessageContent, MessageId, MessageIndex, OCResult, OgPreview, TimestampMillis, User, UserId, UserType,
 };
 use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
@@ -88,8 +87,6 @@ async fn c2c_handle_bot_messages_impl(
                     og_previews: message.og_previews.unwrap_or_default(),
                     now,
                 },
-                None,
-                false,
                 state,
             );
         }
@@ -167,12 +164,7 @@ pub(crate) async fn verify_user(local_user_index_canister_id: CanisterId, user_i
     }
 }
 
-pub(crate) fn handle_message_impl(
-    args: HandleMessageArgs,
-    bot_caller: Option<BotCaller>,
-    finalised: bool,
-    state: &mut RuntimeState,
-) -> EventWrapper<Message> {
+pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeState) -> EventWrapper<Message> {
     let chat_id = args.sender.into();
     let replies_to = convert_reply_context(args.replies_to, args.sender, state);
     let files = args.content.blob_references();
@@ -207,7 +199,7 @@ pub(crate) fn handle_message_impl(
         block_level_markdown: args.block_level_markdown,
         og_previews: args.og_previews,
         now: args.now,
-        sender_context: bot_caller.map(|bot| SenderContext::Bot(BotMessageContext::from(&bot, finalised))),
+        sender_context: None,
     };
 
     let message_event = chat.push_message(

@@ -2233,6 +2233,16 @@ export const UserIndexSetVaultLegalHoldArgs = /* @__PURE__ */ Type.Object({
     reference: Type.String(),
 });
 
+export type UserIndexMigratedUserIdsArgs = Static<typeof UserIndexMigratedUserIdsArgs>;
+export const UserIndexMigratedUserIdsArgs = /* @__PURE__ */ Type.Object({
+    user_ids: Type.Array(UserId),
+});
+
+export type UserIndexMigratedUserIdsResponse = Static<typeof UserIndexMigratedUserIdsResponse>;
+export const UserIndexMigratedUserIdsResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Record(UserId, UserId),
+});
+
 export type UserIndexSetUserUpgradeConcurrencyArgs = Static<
     typeof UserIndexSetUserUpgradeConcurrencyArgs
 >;
@@ -2840,6 +2850,18 @@ export type LocalUserIndexBotDeleteChannelArgs = Static<typeof LocalUserIndexBot
 export const LocalUserIndexBotDeleteChannelArgs = /* @__PURE__ */ Type.Object({
     community_id: CommunityId,
     channel_id: ChannelId,
+});
+
+export type LocalUserIndexMigratedUserIdsArgs = Static<typeof LocalUserIndexMigratedUserIdsArgs>;
+export const LocalUserIndexMigratedUserIdsArgs = /* @__PURE__ */ Type.Object({
+    user_ids: Type.Array(UserId),
+});
+
+export type LocalUserIndexMigratedUserIdsResponse = Static<
+    typeof LocalUserIndexMigratedUserIdsResponse
+>;
+export const LocalUserIndexMigratedUserIdsResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Record(UserId, UserId),
 });
 
 export type LocalUserIndexBotChangeRoleResponse = Static<

@@ -20,8 +20,6 @@ fn start_video_call_v2(args: Args) -> Response {
 }
 
 fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     // Looked up before the channel is borrowed
     let sender = state.member_user(args.initiator);
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;

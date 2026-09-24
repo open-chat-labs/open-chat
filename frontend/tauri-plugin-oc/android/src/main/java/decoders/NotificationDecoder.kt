@@ -2,6 +2,12 @@ package com.ocplugin.app.decoders
 
 import android.util.Log
 import com.ocplugin.app.LOG_TAG
+import com.ocplugin.app.calls.CallChat
+import com.ocplugin.app.calls.CallDismissal
+import com.ocplugin.app.calls.CallFacts
+import com.ocplugin.app.calls.CallId
+import com.ocplugin.app.calls.CallKind
+import com.ocplugin.app.calls.DismissalKind
 import com.ocplugin.app.data.*
 import com.ocplugin.app.data.Notification
 import com.ocplugin.app.data.NotificationType
@@ -90,6 +96,29 @@ object NotificationDecoder {
                 return null
             }
         }
+    }
+
+    // The four call keys the local user index adds when a call should ring. All or nothing:
+    // a push with a partial set is treated as an ordinary message notification.
+    fun decodeCallFacts(data: Map<String, String>): CallFacts? {
+        val messageId = data["callMessageId"] ?: return null
+        val started = data["callStarted"]?.toLongOrNull() ?: return null
+        return CallFacts(messageId, CallKind.fromWire(data["callType"], data["callAudioOnly"]), started)
+    }
+
+    // A dismissal push has `type=call_dismissed` and no `senderId`, so the message decoder
+    // above rejects it; it is decoded here instead.
+    fun decodeCallDismissal(data: Map<String, String>): CallDismissal? {
+        if (data["type"]?.trim()?.lowercase() != "call_dismissed") return null
+        val chatType = data["chatType"] ?: return null
+        val chatId = data["chatId"] ?: return null
+        val messageId = data["callMessageId"] ?: return null
+        val kind = when (data["dismissalKind"]) {
+            "ended" -> DismissalKind.ENDED
+            "answered_elsewhere" -> DismissalKind.ANSWERED_ELSEWHERE
+            else -> return null
+        }
+        return CallDismissal(CallId(CallChat(chatType, chatId, data["communityId"]), messageId), kind)
     }
 
     fun decodeBodyType(data: Map<String, String>): BodyType {

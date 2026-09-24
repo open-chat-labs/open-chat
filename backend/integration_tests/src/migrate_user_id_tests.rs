@@ -34,7 +34,7 @@ fn group_member_moved_to_new_user_id() {
         &user_index_canister::record_user_id_migrated::Args {
             old_user_id: user.user_id,
             new_user_id,
-            groups: vec![group_id],
+            canisters_to_notify: vec![group_id.into()],
         },
     );
     assert!(matches!(response, UnitResult::Success), "{response:?}");
@@ -48,7 +48,7 @@ fn group_member_moved_to_new_user_id() {
         &user_index_canister::record_user_id_migrated::Args {
             old_user_id: user.user_id,
             new_user_id,
-            groups: vec![group_id],
+            canisters_to_notify: vec![group_id.into()],
         },
     );
     assert!(matches!(response, UnitResult::Error(e) if e.matches_code(OCErrorCode::NoChange)));
@@ -102,7 +102,7 @@ fn invited_user_moved_to_new_user_id() {
         &user_index_canister::record_user_id_migrated::Args {
             old_user_id: user.user_id,
             new_user_id,
-            groups: vec![group_id],
+            canisters_to_notify: vec![group_id.into()],
         },
     );
     assert!(matches!(response, UnitResult::Success), "{response:?}");

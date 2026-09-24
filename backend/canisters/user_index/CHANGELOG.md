@@ -8,8 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Include the migrated user's groups in `UserIdMigrated`, and add `record_user_id_migrated`, for governance principals in test mode only, until the UserIndex migrates users itself. The LocalUserIndexes must be upgraded first ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
+- Include the migrated user's principal in `UserIdMigrated`, and add `record_user_id_migrated`, for governance principals in test mode only, until the UserIndex migrates users itself. The LocalUserIndexes must be upgraded first ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
+- Include in `UserIdMigrated` the groups and communities the migrated user is in, for the LocalUserIndexes to notify. The LocalUserIndexes must be upgraded first ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Store a map of the old to the new id of each user migrated to a MultiUser canister, sending each entry to every LocalUserIndex, including any added later. Nothing records a migration yet. The LocalUserIndexes must be upgraded first ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
+- Add the `migrated_user_ids` query, which takes a list of user ids and returns the latest id of each user in it who has been migrated to a MultiUser canister ([#9538](https://github.com/open-chat-labs/open-chat/pull/9538))
 
 ### Fixed
 

@@ -183,10 +183,6 @@ fn is_permitted_to_join(
     composite_gate_index: Option<u8>,
     state: &RuntimeState,
 ) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
-    if state.data.is_frozen() {
-        return Err(Error(OCErrorCode::CommunityFrozen.into()));
-    }
-
     if let Some(member) = state.data.members.get(user_principal) {
         if member.suspended().value {
             return Err(Error(OCErrorCode::InitiatorSuspended.into()));

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 pub type FrozenCommunityInfo = FrozenGroupInfo;
+pub type FrozenUserInfo = FrozenGroupInfo;
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]

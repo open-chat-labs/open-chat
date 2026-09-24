@@ -95,8 +95,6 @@ fn create_channel_impl(
     ext_caller: Option<Caller>,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
-    state.data.verify_not_frozen()?;
-
     if let Some(external_url) = &args.external_url {
         validate_external_url(external_url)?;
     }

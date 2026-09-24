@@ -77,6 +77,15 @@ pub fn is_target_canister_uninstalled_or_deleted(reject_code: RejectCode, messag
     }
 }
 
+// Rejects an update call made while the canister is frozen. It traps rather than returning an
+// error, since a trap is a `CanisterError`, which the queues sending events to the canister retry,
+// whereas a reject from a guard is a `CanisterReject`, which they drop.
+pub fn trap_if_frozen(is_frozen: bool) {
+    if is_frozen {
+        ic_cdk::trap("Canister is frozen");
+    }
+}
+
 pub fn should_perform_upgrade(
     canister_id: CanisterId,
     current: BuildVersion,

@@ -51,8 +51,6 @@ fn change_role_inner(
 
     let caller = state.verified_caller(ext_caller)?;
 
-    state.data.verify_not_frozen()?;
-
     // If caller is a bot then check bot permissions
     if let Caller::BotV2(bot_caller) = &caller
         && !state.data.is_bot_permitted(

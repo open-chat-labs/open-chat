@@ -85,8 +85,6 @@ pub(crate) fn send_message_impl(
     finalised: bool,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
-    state.data.verify_not_frozen()?;
-
     if state.data.chat.external_url.is_some() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
@@ -138,10 +136,6 @@ pub(crate) fn send_message_impl(
 }
 
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> OCResult<SuccessResult> {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::ChatFrozen.into());
-    }
-
     let caller = state.verified_caller(None)?;
 
     // Bots can't call this c2c endpoint since it skips the validation
@@ -493,8 +487,6 @@ struct P2PSwapToCreate {
 }
 
 fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserIdAndPrincipal, PrepareTransferResult)> {
-    state.data.verify_not_frozen()?;
-
     if state.data.chat.external_url.is_some() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
