@@ -33,7 +33,7 @@ async fn start_user_migration(args: Args) -> Response {
     .await
     {
         Ok(user_canister::c2c_try_start_migration::Response::Success(result)) => Success(SuccessResult {
-            user: result.user,
+            user_bytes: result.user_bytes,
             wasm_version: result.wasm_version,
         }),
         Ok(user_canister::c2c_try_start_migration::Response::Error(error)) => Error(error),

@@ -22,7 +22,7 @@ fn start_user_migration_freezes_the_user_canister() {
     let user = client::register_user(env, canister_ids);
 
     let first = start_user_migration(env, *controller, canister_ids.user_index, &user, multi_user_canister(1));
-    assert!(!first.user.is_empty());
+    assert!(first.user_bytes > 0);
 
     // The canister is frozen, so its owner can't change it
     assert!(
@@ -35,9 +35,9 @@ fn start_user_migration_freezes_the_user_canister() {
         .is_err()
     );
 
-    // A repeated call returns the same user
+    // A repeated call returns the same size, since the user can't have changed
     let second = start_user_migration(env, *controller, canister_ids.user_index, &user, multi_user_canister(1));
-    assert_eq!(first.user, second.user);
+    assert_eq!(first.user_bytes, second.user_bytes);
     assert_eq!(first.wasm_version, second.wasm_version);
 
     // A migration to another MultiUser canister can't start

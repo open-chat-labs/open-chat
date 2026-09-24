@@ -1,6 +1,5 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use types::{BuildVersion, CanisterId};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -16,8 +15,8 @@ pub enum Response {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    // The user, serialized with msgpack
-    pub user: ByteBuf,
+    // The size of the user serialized with msgpack, which the MultiUser canister then pulls
+    pub user_bytes: u64,
     // The version of the User canister the user was serialized by, which the MultiUser canister
     // must match to deserialize them
     pub wasm_version: BuildVersion,

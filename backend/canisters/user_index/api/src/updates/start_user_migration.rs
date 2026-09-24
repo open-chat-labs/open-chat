@@ -1,6 +1,5 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use types::{BuildVersion, CanisterId, UserId};
 
 // Only available in test mode, until the UserIndex migrates users itself
@@ -18,6 +17,6 @@ pub enum Response {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub user: ByteBuf,
+    pub user_bytes: u64,
     pub wasm_version: BuildVersion,
 }

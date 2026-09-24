@@ -11,8 +11,8 @@ use user_canister::c2c_try_start_migration::{Response::*, *};
 #[trace]
 fn c2c_try_start_migration(args: Args) -> Response {
     match mutate_state(|state| state.data.try_start_migration(args.multi_user_canister_id)) {
-        Ok(user) => Success(SuccessResult {
-            user,
+        Ok(user_bytes) => Success(SuccessResult {
+            user_bytes,
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
         }),
         Err(error) => Error(error),
@@ -25,7 +25,6 @@ mod tests {
     use candid::Principal;
     use oc_error_codes::OCErrorCode;
     use types::{CanisterId, FrozenUserInfo};
-    use user_core::User;
 
     fn data() -> Data {
         Data::new(
@@ -48,20 +47,18 @@ mod tests {
     }
 
     #[test]
-    fn starts_migration_and_returns_the_user() {
+    fn starts_migration_and_returns_the_size_of_the_user() {
         let mut data = data();
 
-        let bytes = data.try_start_migration(multi_user_canister(1)).unwrap();
+        let user_bytes = data.try_start_migration(multi_user_canister(1)).unwrap();
 
-        let user: User = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(user.principal, data.user.principal);
-        assert_eq!(user.username.value, data.user.username.value);
+        assert_eq!(user_bytes, msgpack::serialize_then_unwrap(&data.user).len() as u64);
         assert_eq!(data.migrating_to, Some(multi_user_canister(1)));
         assert!(data.is_frozen());
     }
 
     #[test]
-    fn repeated_call_returns_the_user_again() {
+    fn repeated_call_returns_the_same_size() {
         let mut data = data();
 
         let first = data.try_start_migration(multi_user_canister(1)).unwrap();

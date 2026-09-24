@@ -5,7 +5,7 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
-use constants::{ICP_LEDGER_CANISTER_ID, ONE_MB, OPENCHAT_BOT_USER_ID};
+use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
@@ -14,7 +14,6 @@ use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -47,9 +46,6 @@ mod regular_jobs;
 mod timer_job_types;
 mod token_swaps;
 mod updates;
-
-// The most a migrated user may take up serialized, leaving room within the 2MB limit on a reply
-const MAX_MIGRATED_USER_BYTES: usize = 3 * ONE_MB as usize / 2;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -429,9 +425,9 @@ impl Data {
     }
 
     // Starts migrating the user to the given MultiUser canister, if the canister is ready, returning
-    // the user serialized. From then on the canister is frozen. A repeated call for the same MultiUser
-    // canister returns the user again, unchanged since the first call.
-    pub fn try_start_migration(&mut self, multi_user_canister_id: CanisterId) -> OCResult<ByteBuf> {
+    // the size of the user serialized. From then on the canister is frozen, so the user can't change.
+    // A repeated call for the same MultiUser canister returns the same size again.
+    pub fn try_start_migration(&mut self, multi_user_canister_id: CanisterId) -> OCResult<u64> {
         match self.migrating_to {
             Some(canister_id) if canister_id == multi_user_canister_id => {}
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
@@ -442,13 +438,9 @@ impl Data {
             }
         }
 
-        let user = msgpack::serialize_then_unwrap(&self.user);
-        if user.len() > MAX_MIGRATED_USER_BYTES {
-            return Err(OCErrorCode::NotReadyForMigration.with_message("User is too large"));
-        }
-
+        let user_bytes = msgpack::serialize_then_unwrap(&self.user).len() as u64;
         self.migrating_to = Some(multi_user_canister_id);
-        Ok(ByteBuf::from(user))
+        Ok(user_bytes)
     }
 
     // The user is migrated along with their entries in the stable memory map, so the canister must
