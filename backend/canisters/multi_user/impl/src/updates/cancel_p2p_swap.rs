@@ -23,8 +23,13 @@ fn cancel_p2p_swap(args: Args) -> Response {
 fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
     let this_canister_id = state.env.canister_id();
     let now = state.env.now();
-    state.with_caller_user_mut(|my_index, user| {
-        let my_user_id = UserId::new_indexed(this_canister_id, my_index);
-        user_core::updates::cancel_p2p_swap(user, my_user_id, args, now)
-    })
+    let my_index = state.caller_user_index_or_trap();
+    let my_user_id = UserId::new_indexed(this_canister_id, my_index);
+    state
+        .data
+        .users
+        .with_user_mut(my_index, |user| {
+            user_core::updates::cancel_p2p_swap(user, my_user_id, args, now, &state.data.migrated_user_ids)
+        })
+        .expect("User not found")
 }

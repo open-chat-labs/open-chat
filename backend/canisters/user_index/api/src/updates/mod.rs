@@ -21,6 +21,7 @@ pub mod confirm_protected_action;
 pub mod contest_moderation_sanction;
 pub mod create_multi_user_canister;
 pub mod destroy_vault_evidence;
+pub mod export_migrating_user;
 pub mod mark_local_user_index_full;
 pub mod mark_suspected_bot;
 pub mod pay_for_diamond_membership;

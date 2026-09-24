@@ -47,6 +47,10 @@ mod timer_job_types;
 mod token_swaps;
 mod updates;
 
+// The most exported in a single page when the user is being migrated to a MultiUser canister,
+// leaving room within the 2MB limit on a reply
+const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
+
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
@@ -77,6 +81,13 @@ impl RuntimeState {
 
     pub fn is_caller_user_index(&self) -> bool {
         self.env.caller() == self.data.user_index_canister_id
+    }
+
+    pub fn is_caller_multi_user_canister_migrating_to(&self) -> bool {
+        self.data
+            .migration
+            .as_ref()
+            .is_some_and(|m| m.multi_user_canister_id == self.env.caller())
     }
 
     pub fn is_caller_local_user_index(&self) -> bool {
@@ -441,6 +452,10 @@ pub struct Migration {
 impl Data {
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some() || self.migration.is_some()
+    }
+
+    pub fn is_migrating(&self) -> bool {
+        self.migration.is_some()
     }
 
     // Starts migrating the user to the given MultiUser canister, if the canister is ready, storing

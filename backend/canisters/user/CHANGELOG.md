@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add a `frozen` state, which rejects every update call except `wallet_receive` while set and leaves queries unaffected. Nothing sets it yet ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Add `c2c_try_start_migration` for the UserIndex, which checks the canister has no work outstanding, then freezes it and stores the user serialized, for the given MultiUser canister to pull, returning its size ([#9544](https://github.com/open-chat-labs/open-chat/pull/9544))
+- Add `c2c_export_user` and `c2c_export_user_stable_memory`, through which the MultiUser canister a user is being migrated to pulls, in pages, the user as serialized when the migration started and the raw entries of the stable memory map ([#9547](https://github.com/open-chat-labs/open-chat/pull/9547))
 
 ### Changed
 
@@ -93,6 +94,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Resolve the offerer of a P2P swap in a direct chat by their principal via the LocalUserIndex when they aren't alone in their canister, and the acceptor by the principal recorded on the swap ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 - Share P2P swap acceptance, cancellation and status changes with the MultiUser canister via `user_core` ([#9531](https://github.com/open-chat-labs/open-chat/pull/9531))
 - Share the checks and handling of `c2c_bot_send_message` with the MultiUser canister via `user_core` ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
+- Pass in the canister's cache of migrated user ids when interacting with the chat events ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Skip running the regular jobs while frozen ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
 

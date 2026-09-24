@@ -19,9 +19,13 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    let results = channel
-        .chat
-        .undelete_messages(member.user(), args.thread_root_message_index, args.message_ids, now)?;
+    let results = channel.chat.undelete_messages(
+        member.user(),
+        args.thread_root_message_index,
+        args.message_ids,
+        now,
+        &state.data.migrated_user_ids,
+    )?;
 
     if results.is_empty() {
         return Ok(SuccessResult { messages: vec![] });
