@@ -53,6 +53,19 @@ pub async fn lookup_user(
     Ok(if let c2c_lookup_user::Response::Success(user) = response { Some(user) } else { None })
 }
 
+// The user's latest id, if they have been migrated to a MultiUser canister since having `user_id`
+pub async fn lookup_migrated_user_id(
+    user_id: UserId,
+    local_user_index_canister_id: CanisterId,
+) -> Result<Option<UserId>, C2CError> {
+    let args = migrated_user_ids::Args { user_ids: vec![user_id] };
+
+    let migrated_user_ids::Response::Success(mut user_ids) =
+        crate::migrated_user_ids(local_user_index_canister_id, &args).await?;
+
+    Ok(user_ids.remove(&user_id))
+}
+
 pub async fn push_wasm_in_chunks(
     canister_id: CanisterId,
     canister_type: ChildCanisterType,
