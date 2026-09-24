@@ -453,9 +453,6 @@ impl Data {
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
             None => {
-                if async_work_in_progress() {
-                    return Err(OCErrorCode::NotReadyForMigration.with_message("Async work is in progress"));
-                }
                 if let Some(reason) = self.reason_not_ready_for_migration() {
                     return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
                 }
@@ -479,6 +476,8 @@ impl Data {
     fn reason_not_ready_for_migration(&self) -> Option<&'static str> {
         if self.frozen.is_some() {
             Some("Canister is frozen")
+        } else if async_work_in_progress() {
+            Some("Async work is in progress")
         } else if self.timer_jobs.iter().any(|(_, wrapper)| {
             // A job which has already run leaves an empty entry behind
             wrapper.deref().borrow().as_ref().is_some_and(|job| {
