@@ -159,6 +159,7 @@ impl From<DataPrevious> for Data {
             local_user_index_event_sync_queue: d.local_user_index_event_sync_queue,
             idempotency_checker: d.idempotency_checker,
             known_multi_user_canisters: d.known_multi_user_canisters,
+            frozen: None,
         }
     }
 }

@@ -20,8 +20,8 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotNotification, BuildVersion, CanisterId, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, TimestampMillis, Timestamped,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Notification, NotifyChit, TimestampMillis,
+    Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::UserCanisterEvent;
 use user_core::{Community, GroupChat, User};
@@ -401,9 +401,17 @@ struct Data {
     // their users
     #[serde(default)]
     pub known_multi_user_canisters: HashSet<CanisterId>,
+    // Set while the canister's state must not change, during which every update call is rejected.
+    // Queries are still served.
+    #[serde(default)]
+    pub frozen: Option<FrozenUserInfo>,
 }
 
 impl Data {
+    pub fn is_frozen(&self) -> bool {
+        self.frozen.is_some()
+    }
+
     // Moves the events queued before they were batched per canister into the queue which does so,
     // pairing each with the user it was queued for
     // TODO: Remove this, along with `user_canister_events_queue`, once it has run in every canister
@@ -455,6 +463,7 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             known_multi_user_canisters: HashSet::new(),
+            frozen: None,
         }
     }
 
@@ -549,6 +558,7 @@ pub struct Metrics {
 
 fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
+        trap_if_frozen(state);
         state.regular_jobs.run(state.env.deref(), &mut state.data);
         let result = f(state);
         state.data.flush_pending_events();
@@ -557,10 +567,21 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 }
 
 async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    read_state(trap_if_frozen);
     run_regular_jobs();
     let result = f().await;
     flush_pending_events();
     result
+}
+
+// Every update call passes through here, so this is what rejects them while the canister is frozen.
+// It traps rather than returning an error, since a trap is a `CanisterError`, which the queues
+// sending events to this canister retry, whereas a reject from a guard is a `CanisterReject`, which
+// they drop.
+fn trap_if_frozen(state: &RuntimeState) {
+    if state.data.is_frozen() {
+        ic_cdk::trap("Canister is frozen");
+    }
 }
 
 fn run_regular_jobs() {
