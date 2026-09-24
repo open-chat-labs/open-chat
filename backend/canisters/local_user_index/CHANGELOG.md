@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Store the map of the old to the new id of each user migrated to a MultiUser canister, synced from the UserIndex ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
 - Add the `use_multi_user_canister` flag to `register_user`, which in test mode registers the user in a MultiUser canister (creating one if there are none) rather than in a canister of their own ([#9524](https://github.com/open-chat-labs/open-chat/pull/9524))
 
 ### Fixed
