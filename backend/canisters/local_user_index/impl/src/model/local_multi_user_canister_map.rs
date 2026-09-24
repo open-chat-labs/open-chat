@@ -32,6 +32,21 @@ impl LocalMultiUserCanisterMap {
         );
     }
 
+    pub fn on_user_added(&mut self, canister_id: &CanisterId) {
+        if let Some(canister) = self.canisters.get_mut(canister_id) {
+            canister.user_count = canister.user_count.saturating_add(1);
+        }
+    }
+
+    // The newest canister which isn't being upgraded, so that each is filled before the next
+    pub fn canister_for_new_user(&self) -> Option<(CanisterId, BuildVersion)> {
+        self.canisters
+            .iter()
+            .filter(|(_, c)| !c.upgrade_in_progress)
+            .max_by_key(|(canister_id, c)| (c.created, **canister_id))
+            .map(|(canister_id, c)| (*canister_id, c.wasm_version))
+    }
+
     pub fn on_user_removed(&mut self, canister_id: &CanisterId) {
         if let Some(canister) = self.canisters.get_mut(canister_id) {
             canister.user_count = canister.user_count.saturating_sub(1);
