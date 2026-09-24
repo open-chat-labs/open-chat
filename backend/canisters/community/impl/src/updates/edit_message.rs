@@ -5,6 +5,7 @@ use chat_events::EditMessageArgs;
 use community_canister::edit_message::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, EventIndex, OCResult};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -35,6 +36,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             finalise_bot_message: false,
             now,
         },
+        &MigratedUserIds::default(),
         Some(CommunityEventPusher {
             now,
             rng: state.env.rng(),

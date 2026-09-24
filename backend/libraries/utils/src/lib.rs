@@ -1,3 +1,4 @@
+pub mod async_work;
 pub mod canister;
 pub mod canister_event_sync_queue;
 pub mod canister_timers;

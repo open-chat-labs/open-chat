@@ -24,6 +24,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Count `/metrics` results against the borrowed game id rather than cloning one per row
 - Push the day's puzzles to every local user index at once rather than one after another, so one stopped index no longer delays every index behind it
 
+### Changed
+
+- Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
+
 ### Fixed
 
 - Point a Tents "line exact" hint at only the cells it fills, not the whole line, since the line includes cells ruled out by steps the player is never shown ([#9535](https://github.com/open-chat-labs/open-chat/pull/9535))

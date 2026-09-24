@@ -58,7 +58,7 @@ fn run() {
     match mutate_state(get_next) {
         Ok(canister) => {
             IN_PROGRESS.set(true);
-            ic_cdk::futures::spawn_migratory(process_canister(canister));
+            utils::async_work::spawn_tracked(process_canister(canister));
         }
         Err(Some(delay)) => {
             read_state(|state| start_job_if_required(state, Some(delay)));

@@ -8,12 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Accept `UserIdMigrated` from the LocalUserIndex, for members migrated to a MultiUser canister and given a new id. Not acted on yet ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
-- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Accept a `user_id` in `c2c_leave_group` and `c2c_delete_group`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))
 - Include the call facts (message id, call type, `audio_only`, start time, whether the group is public, member count) in the notification when a call starts, send the joiner an `answered_elsewhere` dismissal on join, and when the call ends send `answered_elsewhere` to participants and `ended` to unmuted members who did not join, only while the group has 50 members or fewer ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 - Let members send crypto, prizes and P2P swaps via `send_message_v2`, and tip messages via a new `tip_message`, in a group directly rather than via their User canister, using ICRC2 transfers or certified transfers they have already made ([#9514](https://github.com/open-chat-labs/open-chat/pull/9514))
+- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
+- Accept `UserIdMigrated` from the LocalUserIndex, for members migrated to a MultiUser canister and given a new id. Not acted on yet ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 
 ### Changed
 
@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hold the calling user's principal in `Caller::User` alongside their user id ([#9525](https://github.com/open-chat-labs/open-chat/pull/9525))
 - Record the owner of the acceptor's wallet on a P2P swap when they reserve it, name them by it to the escrow canister, and resolve them by it when the swap completes ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 - Reject every update call while the group is frozen in one place, `execute_update`, by trapping, rather than per endpoint with a `ChatFrozen` error. Only freezing, unfreezing, platform moderation (including user suspensions), exporting the group into a community (which happens while it is frozen) and `wallet_receive` run via `execute_update_even_if_frozen`. Every other update, including some which previously worked while frozen such as `c2c_local_index` and ending video calls, is now blocked ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
+- Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Skip running the regular jobs while frozen ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
 
 ### Removed
