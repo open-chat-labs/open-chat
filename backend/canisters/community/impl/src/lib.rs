@@ -45,6 +45,7 @@ use types::{
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
+use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
@@ -787,10 +788,6 @@ impl Data {
         self.frozen.is_some()
     }
 
-    pub fn verify_not_frozen(&self) -> Result<(), OCErrorCode> {
-        if self.is_frozen() { Err(OCErrorCode::CommunityFrozen) } else { Ok(()) }
-    }
-
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
         self.is_public.value
             || self.members.get(caller).is_some()
@@ -1356,7 +1353,14 @@ impl EventPusher for CommunityEventPusher<'_> {
     }
 }
 
+// Runs an update call, trapping if the canister is frozen. Endpoints which must keep working while
+// frozen use `execute_update_even_if_frozen` instead.
 fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_even_if_frozen(f)
+}
+
+fn execute_update_even_if_frozen<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
         state.regular_jobs.run(state.env.deref(), &mut state.data);
         let result = f(state);
@@ -1366,6 +1370,11 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 }
 
 async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_async_even_if_frozen(f).await
+}
+
+async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
     run_regular_jobs();
     let result = f().await;
     flush_pending_events();

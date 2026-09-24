@@ -37,8 +37,6 @@ struct PrepareResult {
 }
 
 fn prepare(user_id: Option<UserId>, state: &RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_frozen()?;
-
     let member = state.get_calling_member(user_id, true)?;
     if !member.role().can_delete_community() {
         Err(OCErrorCode::InitiatorNotAuthorized.into())

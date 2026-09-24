@@ -18,8 +18,6 @@ fn c2c_leave_group(args: Args) -> Response {
 }
 
 fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let caller = state.env.caller();
     let user_id = args.user_id.unwrap_or(caller.into());
     if user_id.canister_id() != caller {

@@ -18,8 +18,6 @@ fn update_channel(args: Args) -> Response {
 }
 
 fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
-    state.data.verify_not_frozen()?;
-
     clean_args(&mut args);
 
     if let OptionUpdate::SetToSome(external_url) = &args.external_url {

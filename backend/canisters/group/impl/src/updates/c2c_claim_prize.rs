@@ -61,8 +61,6 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_frozen()?;
-
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
     let winner = state.member_user(args.user_id);

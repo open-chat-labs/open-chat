@@ -228,10 +228,6 @@ pub(crate) fn prepare(
     community_rules_accepted: Option<Version>,
     state: &mut RuntimeState,
 ) -> OCResult<Option<String>> {
-    if state.data.is_frozen() {
-        return Err(OCErrorCode::CommunityFrozen.into());
-    }
-
     let now = state.env.now();
     let sender = caller.agent();
 

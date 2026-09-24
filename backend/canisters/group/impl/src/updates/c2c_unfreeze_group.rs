@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_group_index_or_local_user_index;
-use crate::{RuntimeState, execute_update, jobs};
+use crate::{RuntimeState, execute_update_even_if_frozen, jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_unfreeze_group::{Response::*, *};
@@ -9,7 +9,7 @@ use types::{EventWrapper, GroupUnfrozen, Timestamped, UserId};
 #[update(guard = "caller_is_group_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_unfreeze_group(args: Args) -> Response {
-    execute_update(|state| c2c_unfreeze_group_impl(args.caller, state))
+    execute_update_even_if_frozen(|state| c2c_unfreeze_group_impl(args.caller, state))
 }
 
 pub(crate) fn c2c_unfreeze_group_impl(user_id: UserId, state: &mut RuntimeState) -> Response {

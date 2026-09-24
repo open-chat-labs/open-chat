@@ -13,8 +13,6 @@ fn c2c_install_bot(args: Args) -> Response {
 }
 
 fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let member = state.data.members.get_verified_member(args.caller.as_principal())?;
 
     if !member.role().is_owner() {

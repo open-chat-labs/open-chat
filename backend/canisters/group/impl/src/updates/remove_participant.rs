@@ -79,8 +79,6 @@ fn prepare(
     ext_caller: Option<Caller>,
     state: &RuntimeState,
 ) -> OCResult<Option<PrepareResult>> {
-    state.data.verify_not_frozen()?;
-
     if block && !state.data.chat.is_public.value {
         return Err(OCErrorCode::ChatNotPublic.into());
     }

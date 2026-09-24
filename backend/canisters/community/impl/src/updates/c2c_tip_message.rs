@@ -15,8 +15,6 @@ fn c2c_tip_message(args: Args) -> Response {
 }
 
 fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let user_id = state.get_calling_member(None, true)?.user_id;
     tip_message_with_completed_transfer(user_id, args, state)
 }
