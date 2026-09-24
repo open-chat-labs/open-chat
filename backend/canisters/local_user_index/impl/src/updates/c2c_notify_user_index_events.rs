@@ -358,6 +358,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
             state.set_daily_puzzle_canister_id(canister_id);
         }
+        UserIndexEvent::UserIdMigrated(ev) => {
+            state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id);
+        }
     }
 }
 
