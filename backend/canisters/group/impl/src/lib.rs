@@ -1156,7 +1156,8 @@ pub struct Metrics {
 }
 
 // Runs an update call, trapping if the canister is frozen. Endpoints which must keep working while
-// frozen use `execute_update_even_if_frozen` instead.
+// frozen use `execute_update_even_if_frozen` instead, which skips the regular jobs while frozen but
+// still flushes any events the call queues.
 fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     read_state(|state| trap_if_frozen(state.data.is_frozen()));
     execute_update_even_if_frozen(f)
@@ -1164,7 +1165,9 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 
 fn execute_update_even_if_frozen<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
-        state.regular_jobs.run(state.env.deref(), &mut state.data);
+        if !state.data.is_frozen() {
+            state.regular_jobs.run(state.env.deref(), &mut state.data);
+        }
         let result = f(state);
         state.data.flush_pending_events();
         result
@@ -1177,7 +1180,9 @@ async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f:
 }
 
 async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
-    run_regular_jobs();
+    if read_state(|state| !state.data.is_frozen()) {
+        run_regular_jobs();
+    }
     let result = f().await;
     flush_pending_events();
     result
