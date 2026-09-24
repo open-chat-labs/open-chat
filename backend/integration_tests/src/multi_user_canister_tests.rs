@@ -5753,3 +5753,68 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
         assert!(matches!(status, P2PSwapStatus::Expired(_)), "{status:?}");
     }
 }
+
+// `register_proposal_vote` votes via the member's User canister, which a MultiUser canister can't do
+// for its users, so they are pointed at `register_proposal_vote_v2`. Proposal messages can't be sent
+// in these tests, but users in MultiUser canisters are turned away before the message is looked up,
+// while anyone else gets as far as finding that it isn't a proposal.
+#[test]
+fn register_proposal_vote_rejects_users_in_multi_user_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let alice = client::register_user_in_multi_user_canister(env, canister_ids);
+
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    client::group::happy_path::join_group(env, alice.principal, group_id);
+    let group_message_index =
+        client::group::happy_path::send_text_message(env, &owner, group_id, None, random_string(), None).message_index;
+
+    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+    client::community::happy_path::join_community(env, alice.principal, community_id);
+    client::community::happy_path::join_channel(env, alice.principal, community_id, channel_id);
+    let channel_message_index =
+        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None)
+            .message_index;
+    env.tick();
+
+    for (user, in_multi_user_canister) in [(&alice, true), (&owner, false)] {
+        let expected = || {
+            if in_multi_user_canister { OCErrorCode::InvalidRequest } else { OCErrorCode::MessageNotFound }
+        };
+        let response = client::group::register_proposal_vote(
+            env,
+            user.principal,
+            group_id.into(),
+            &group_canister::register_proposal_vote::Args {
+                message_index: group_message_index,
+                adopt: true,
+            },
+        );
+        assert!(
+            matches!(&response, UnitResult::Error(e) if e.matches_code(expected())),
+            "{response:?}"
+        );
+
+        let response = client::community::register_proposal_vote(
+            env,
+            user.principal,
+            community_id.into(),
+            &community_canister::register_proposal_vote::Args {
+                channel_id,
+                message_index: channel_message_index,
+                adopt: true,
+            },
+        );
+        assert!(
+            matches!(&response, UnitResult::Error(e) if e.matches_code(expected())),
+            "{response:?}"
+        );
+    }
+}
