@@ -271,8 +271,11 @@
             // actions are parked by the shell and consumed by Router.svelte.
             expectCallActions(runCallAction),
 
-            // The shell reports a decline from the native ring to the bridge itself
-            setCallConfig(import.meta.env.OC_VIDEO_BRIDGE_URL!),
+            // The shell reports a decline from the native ring to the bridge itself. A build
+            // without the URL leaves whatever the shell already holds.
+            import.meta.env.OC_VIDEO_BRIDGE_URL
+                ? setCallConfig(import.meta.env.OC_VIDEO_BRIDGE_URL)
+                : Promise.resolve(),
         ]);
         listenersRegistered.then((results) => {
             results

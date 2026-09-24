@@ -231,7 +231,7 @@
                     hangup();
                     hostEnded = true;
                 } else if (ev && peerLeftEndsCall(chatId, ev.participant.local)) {
-                    hangup();
+                    leave(true);
                 }
             });
 
@@ -339,13 +339,18 @@
     }
 
     export function hangup() {
+        leave(false);
+    }
+
+    // `lastOneHere` when the caller already knows nobody else is in the call (the other
+    // party of a direct call left), so the end does not depend on presence having been
+    // reported yet. Not exported: `hangup` is bound to clicks and must take no argument.
+    function leave(lastOneHere: boolean) {
         if ($activeVideoCall?.call) {
-            if ($hasPresence) {
-                const present = $activeVideoCall.call.participantCounts().present;
-                if (present === 1) {
-                    // I must be the last person left in the call
-                    client.endVideoCall($activeVideoCall.chatId, $activeVideoCall.messageId);
-                }
+            const present = $hasPresence ? $activeVideoCall.call.participantCounts().present : 0;
+            if (lastOneHere || present === 1) {
+                // I must be the last person left in the call
+                client.endVideoCall($activeVideoCall.chatId, $activeVideoCall.messageId);
             }
 
             // this will trigger the left-meeting event which will in turn end the call
