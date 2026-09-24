@@ -422,7 +422,8 @@ fn garbage_collect_user_while(index: u16, keep_going: impl Fn() -> bool) -> Resu
 
 // Reads the raw entries of both maps in key order, starting after the key `after`, for a canister
 // which holds a single user to export everything it holds. Stops before an entry would take the
-// total size of the keys and values read past `max_bytes`, though always reads at least one entry.
+// total size read past `max_bytes`, though always reads at least one entry. Each entry counts as its
+// key and value plus `ENTRY_ENCODING_OVERHEAD`, so that `max_bytes` bounds the entries once encoded.
 pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntriesResult {
     assert!(
         !key_scope::is_scoped(),
@@ -448,7 +449,7 @@ pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntrie
         let mut total_bytes = 0;
         loop {
             // Each key is in exactly one of the maps, so the two never hold the same key
-            let size = |(key, value): &(BaseKey, Vec<u8>)| key.as_slice().len() + value.len();
+            let size = |(key, value): &(BaseKey, Vec<u8>)| key.as_slice().len() + value.len() + ENTRY_ENCODING_OVERHEAD;
             let (from_main, size) = match (main.peek(), small.peek()) {
                 (Some(main_entry), Some(small_entry)) => {
                     if main_entry.0 < small_entry.0 {
@@ -475,6 +476,10 @@ pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntrie
         }
     })
 }
+
+// The most an entry's encoding adds to its key and value, eg. with msgpack a 2 element array (1 byte)
+// holding 2 byte arrays (each with a header of up to 5 bytes)
+pub const ENTRY_ENCODING_OVERHEAD: usize = 11;
 
 pub struct ReadAllEntriesResult {
     // Each entry's raw key and value
@@ -1001,7 +1006,7 @@ mod tests {
         assert_eq!(entries.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>(), expected);
 
         // Page by page, each of which fits only 2 entries, continuing after the last key read
-        let entry_size = entries[0].0.len() + 10;
+        let entry_size = entries[0].0.len() + 10 + ENTRY_ENCODING_OVERHEAD;
         let mut read = Vec::new();
         let mut after: Option<Vec<u8>> = None;
         loop {

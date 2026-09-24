@@ -47,6 +47,10 @@ mod timer_job_types;
 mod token_swaps;
 mod updates;
 
+// The most exported in a single page when the user is being migrated to a MultiUser canister,
+// leaving room within the 2MB limit on a reply
+const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
+
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }

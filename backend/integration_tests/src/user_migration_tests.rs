@@ -118,10 +118,11 @@ fn migrating_user_is_exported() {
 
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
-    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
-
-    // Along with the rest, these take up more than one page of stable memory entries, and the
-    // profile background alone is larger than a page's limit
+    // Together with the avatar and profile background below, these take up more than one page of
+    // stable memory entries
+    for _ in 0..40 {
+        client::user::happy_path::send_text_message(env, &user1, user2.user_id, "x".repeat(5000), None);
+    }
     client::user::happy_path::set_avatar(env, &user1, Some(document(800 * 1024)));
     client::user::happy_path::set_profile_background(
         env,
@@ -148,7 +149,7 @@ fn migrating_user_is_exported() {
     assert_eq!(exported.user_bytes, started.user_bytes);
     // The avatar and profile background, and the direct chat's events and their indexes, among others
     assert!(exported.stable_memory_entries > 2);
-    assert!(exported.stable_memory_bytes > 1800 * 1024);
+    assert!(exported.stable_memory_bytes > 19 * 102 * 1024);
 }
 
 #[test]

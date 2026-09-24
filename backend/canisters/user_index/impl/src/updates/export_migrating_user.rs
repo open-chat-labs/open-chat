@@ -2,7 +2,6 @@ use crate::guards::caller_is_governance_principal;
 use crate::read_state;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::ONE_MB;
 use oc_error_codes::OCErrorCode;
 use types::{C2CError, CanisterId};
 use user_index_canister::export_migrating_user::{Response::*, *};
@@ -24,18 +23,11 @@ async fn export_migrating_user(args: Args) -> Response {
 }
 
 async fn export(canister_id: CanisterId) -> Result<SuccessResult, C2CError> {
-    const PAGE_SIZE: u32 = ONE_MB as u32;
-
     let mut user_bytes = 0;
     loop {
-        let user_canister::c2c_export_user::Response::Success(page) = user_canister_c2c_client::c2c_export_user(
-            canister_id,
-            &user_canister::c2c_export_user::Args {
-                from: user_bytes,
-                page_size: PAGE_SIZE,
-            },
-        )
-        .await?;
+        let user_canister::c2c_export_user::Response::Success(page) =
+            user_canister_c2c_client::c2c_export_user(canister_id, &user_canister::c2c_export_user::Args { from: user_bytes })
+                .await?;
 
         if page.is_empty() {
             break;

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_multi_user_canister_migrating_to;
-use crate::{RuntimeState, read_state};
+use crate::{PAGE_SIZE, RuntimeState, read_state};
 use canister_api_macros::update;
 use serde_bytes::ByteBuf;
 use std::cmp::min;
@@ -15,7 +15,7 @@ fn c2c_export_user(args: Args) -> Response {
 fn c2c_export_user_impl(args: Args, state: &RuntimeState) -> Response {
     let bytes = state.data.migration.as_ref().map(|m| m.user.as_slice()).unwrap_or_default();
     let from = min(usize::try_from(args.from).unwrap_or(usize::MAX), bytes.len());
-    let to = min(from.saturating_add(args.page_size as usize), bytes.len());
+    let to = min(from.saturating_add(PAGE_SIZE as usize), bytes.len());
 
     Success(ByteBuf::from(bytes[from..to].to_vec()))
 }
