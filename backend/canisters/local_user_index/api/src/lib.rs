@@ -63,6 +63,7 @@ pub enum UserIndexEvent {
     SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
     RefundDeletedUserCycles(Vec<CanisterId>),
+    UserIdMigrated(UserIdMigrated),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -255,6 +256,13 @@ pub struct ReferralCodeAdded {
     pub referral_type: ReferralType,
     pub code: String,
     pub expiry: Option<TimestampMillis>,
+}
+
+// A user has been migrated to a MultiUser canister, which gave them a new id
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserIdMigrated {
+    pub old_user_id: UserId,
+    pub new_user_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
