@@ -92,7 +92,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Resolve the offerer of a P2P swap in a direct chat by their principal via the LocalUserIndex when they aren't alone in their canister, and the acceptor by the principal recorded on the swap ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 - Share P2P swap acceptance, cancellation and status changes with the MultiUser canister via `user_core` ([#9531](https://github.com/open-chat-labs/open-chat/pull/9531))
 - Share the checks and handling of `c2c_bot_send_message` with the MultiUser canister via `user_core` ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
-- Skip the regular jobs in updates which run while frozen, still flushing any events they queue ([#XXXX](https://github.com/open-chat-labs/open-chat/pull/XXXX))
+- Skip the regular jobs in updates which run while frozen, still flushing any events they queue ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
 
 ### Removed
 
