@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `c2c_export_user` and `c2c_export_user_stable_memory`, through which the MultiUser canister a user is being migrated to pulls, in pages, the user as serialized when the migration started and the raw entries of the stable memory map
+- Add `c2c_export_user` and `c2c_export_user_stable_memory`, through which the MultiUser canister a user is being migrated to pulls, in pages, the user as serialized when the migration started and the raw entries of the stable memory map ([#9547](https://github.com/open-chat-labs/open-chat/pull/9547))
 - Add `c2c_try_start_migration` for the UserIndex, which checks the canister has no work outstanding, then freezes it and stores the user serialized, for the given MultiUser canister to pull, returning its size ([#9544](https://github.com/open-chat-labs/open-chat/pull/9544))
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Support leaving tips from external wallets using ICRC2 ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))
