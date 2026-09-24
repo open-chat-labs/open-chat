@@ -1,9 +1,9 @@
 use crate::chit_tests::DAY_ZERO;
-use crate::env::ENV;
+use crate::env::{ENV, VIDEO_CALL_OPERATOR};
 use crate::utils::{metrics, now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
-use constants::{ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
+use constants::{HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use sha256::sha256;
@@ -17,7 +17,7 @@ use types::{
     CryptoTransaction, DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary,
     DirectChatSummaryUpdates, Document, Empty, EventsResponse, IdempotentEnvelope, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate, PendingCryptoTransaction, PinNumberSettings,
-    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, icrc1, icrc2,
+    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -5096,4 +5096,194 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         );
     }
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, alice), alices_balance);
+}
+
+#[test]
+fn video_calls_are_recorded_in_both_copies_of_the_chat() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let carol = client::register_user(env, canister_ids);
+
+    // The video call operator starts a call in the callee's copy of the chat, naming the callee
+    let start = |env: &mut PocketIc, callee: UserId, initiator: UserId, initiator_username: String, message_id| {
+        let response = client::user::start_video_call_v2(
+            env,
+            VIDEO_CALL_OPERATOR,
+            canister_id,
+            &user_canister::start_video_call_v2::Args {
+                user_id: callee,
+                message_id,
+                initiator,
+                initiator_username,
+                initiator_display_name: None,
+                initiator_avatar_id: None,
+                max_duration: Some(HOUR_IN_MS),
+                call_type: VideoCallType::Default,
+                audio_only: None,
+            },
+        );
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    };
+    let join = |env: &mut PocketIc, joiner: Principal, other: UserId, message_id| {
+        let response = client::user::join_video_call(
+            env,
+            joiner,
+            canister_id,
+            &user_canister::join_video_call::Args {
+                user_id: other,
+                message_id,
+            },
+        );
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    };
+    let call_in_progress = |env: &PocketIc, viewer: Principal, them: UserId| {
+        initial_state(env, viewer, canister_id)
+            .direct_chats
+            .summaries
+            .into_iter()
+            .find(|c| c.them == them)
+            .and_then(|c| c.video_call_in_progress)
+            .is_some()
+    };
+    let participants = |env: &PocketIc, viewer: Principal, user_id: UserId, them: UserId, message_id| match message(
+        &events(env, viewer, canister_id, user_id, them),
+        message_id,
+    )
+    .content
+    {
+        MessageContent::VideoCall(call) => call.participants.len(),
+        content => panic!("{content:?}"),
+    };
+
+    // Carol, in a User canister, calls Alice: Alice's copy holds the call and Carol's canister is
+    // told; Alice joining is sent back to it; the operator then ends the call in each copy
+    let message_id = random_from_u128();
+    start(env, alice_id, carol.user_id, carol.username(), message_id);
+    tick_many(env, 3);
+    assert!(call_in_progress(env, alice, carol.user_id));
+    assert_eq!(participants(env, alice, alice_id, carol.user_id, message_id), 1);
+    let carols_chat = client::user::happy_path::initial_state(env, &carol)
+        .direct_chats
+        .summaries
+        .into_iter()
+        .find(|c| c.them == alice_id)
+        .unwrap();
+    assert!(carols_chat.video_call_in_progress.is_some());
+
+    join(env, alice, carol.user_id, message_id);
+    tick_many(env, 3);
+    assert_eq!(participants(env, alice, alice_id, carol.user_id, message_id), 2);
+    let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 10, 10);
+    assert!(matches!(
+        message(&carols_events, message_id).content,
+        MessageContent::VideoCall(call) if call.participants.len() == 2
+    ));
+    assert!(has_achievement(
+        &initial_state(env, alice, canister_id),
+        Achievement::JoinedCall
+    ));
+
+    let response = client::user::end_video_call_v2(
+        env,
+        VIDEO_CALL_OPERATOR,
+        canister_id,
+        &user_canister::end_video_call_v2::Args {
+            user_id: alice_id,
+            them: carol.user_id,
+            message_id,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    client::user::happy_path::end_video_call(env, alice_id, carol.user_id, message_id);
+    assert!(!call_in_progress(env, alice, carol.user_id));
+    let carols_chat = client::user::happy_path::initial_state(env, &carol)
+        .direct_chats
+        .summaries
+        .into_iter()
+        .find(|c| c.them == alice_id)
+        .unwrap();
+    assert!(carols_chat.video_call_in_progress.is_none());
+
+    // Bob, in the same canister, calls Alice: both copies are updated directly, and the call ends
+    // in both when its time is up
+    let message_id = random_from_u128();
+    start(env, alice_id, bob_id, "bob".to_string(), message_id);
+    assert!(call_in_progress(env, alice, bob_id));
+    assert!(call_in_progress(env, bob, alice_id));
+    assert_eq!(participants(env, bob, bob_id, alice_id, message_id), 1);
+    join(env, alice, bob_id, message_id);
+    assert_eq!(participants(env, alice, alice_id, bob_id, message_id), 2);
+    assert_eq!(participants(env, bob, bob_id, alice_id, message_id), 2);
+
+    // The operator ending the call in Bob's copy, the initiator's, leaves Alice's copy running until
+    // its own time is up
+    let response = client::user::end_video_call_v2(
+        env,
+        VIDEO_CALL_OPERATOR,
+        canister_id,
+        &user_canister::end_video_call_v2::Args {
+            user_id: bob_id,
+            them: alice_id,
+            message_id,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert!(!call_in_progress(env, bob, alice_id));
+    assert!(call_in_progress(env, alice, bob_id));
+    env.advance_time(Duration::from_millis(HOUR_IN_MS));
+    env.tick();
+    assert!(!call_in_progress(env, alice, bob_id));
+
+    // A call from Bob to Alice after Bob has blocked her still rings Alice, whose copy holds it, but
+    // Bob's copy doesn't take it
+    block_user(env, bob, canister_id, alice_id);
+    let message_id = random_from_u128();
+    start(env, alice_id, bob_id, "bob".to_string(), message_id);
+    assert!(call_in_progress(env, alice, bob_id));
+    assert!(!call_in_progress(env, bob, alice_id));
+    unblock_user(env, bob, canister_id, alice_id);
+    env.advance_time(Duration::from_millis(HOUR_IN_MS));
+    env.tick();
+
+    // Alice calls Carol: the operator starts the call in Carol's canister, which tells this one, and
+    // Carol joining is sent back to it
+    let message_id = random_from_u128();
+    let response = client::user::start_video_call_v2(
+        env,
+        VIDEO_CALL_OPERATOR,
+        carol.canister(),
+        &user_canister::start_video_call_v2::Args {
+            user_id: carol.user_id,
+            message_id,
+            initiator: alice_id,
+            initiator_username: "alice".to_string(),
+            initiator_display_name: None,
+            initiator_avatar_id: None,
+            max_duration: Some(HOUR_IN_MS),
+            call_type: VideoCallType::Default,
+            audio_only: None,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    tick_many(env, 3);
+    assert!(call_in_progress(env, alice, carol.user_id));
+    assert_eq!(participants(env, alice, alice_id, carol.user_id, message_id), 1);
+    client::user::happy_path::join_video_call(env, &carol, alice_id, message_id);
+    tick_many(env, 3);
+    assert_eq!(participants(env, alice, alice_id, carol.user_id, message_id), 2);
+
+    // Alice's copy, built from the event, ends when its time is up
+    env.advance_time(Duration::from_millis(HOUR_IN_MS));
+    env.tick();
+    assert!(!call_in_progress(env, alice, carol.user_id));
 }

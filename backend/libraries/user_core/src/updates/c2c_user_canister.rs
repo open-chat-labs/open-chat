@@ -11,7 +11,7 @@ use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use types::{
     CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
-    MessageContentInitial, MessageId, MessageIndex, OCResult, TimestampMillis, UserId, UserType,
+    MessageContentInitial, MessageId, MessageIndex, OCResult, TimestampMillis, UserId, UserType, VideoCallPresence,
 };
 use user_canister::{
     DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, MessageActivity,
@@ -231,6 +231,11 @@ pub fn tip_message(
         notification: Some(notification),
         activity: Some(activity),
     })
+}
+
+// Records the sender joining the call in the recipient's copy of the chat
+pub fn join_video_call(chat: &mut DirectChat, sender: UserId, message_id: MessageId, now: TimestampMillis) {
+    let _ = chat.set_video_call_presence(sender, message_id, VideoCallPresence::Default, now);
 }
 
 // Applies the sender's change to the chat's message TTL, creating the chat if the recipient doesn't
