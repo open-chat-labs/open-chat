@@ -74,7 +74,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
 
     let message = result.value;
     if let Some(sender) = channel.chat.members.get(&message.sender)
-        && message.sender != agent
+        && !state.data.migrated_user_ids.is_same_user(message.sender, agent)
         && !sender.user_type().is_bot()
     {
         let community_id: CommunityId = state.env.canister_id().into();
