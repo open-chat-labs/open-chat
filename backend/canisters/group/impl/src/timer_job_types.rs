@@ -1,7 +1,6 @@
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::{
     activity_notifications::handle_activity_notification, can_borrow_state, flush_pending_events, mutate_state, read_state,
-    run_regular_jobs,
 };
 use candid::Principal;
 use canister_timer_jobs::Job;
@@ -151,7 +150,7 @@ impl Job for TimerJob {
     fn execute(self) {
         let can_borrow_state = can_borrow_state();
         if can_borrow_state {
-            run_regular_jobs();
+            mutate_state(|state| state.run_regular_jobs());
         }
 
         match self {

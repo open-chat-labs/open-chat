@@ -1,4 +1,4 @@
-use crate::{can_borrow_state, run_regular_jobs};
+use crate::{can_borrow_state, mutate_state};
 use local_user_index_canister::CommunityEvent;
 use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope, Milliseconds};
@@ -9,7 +9,7 @@ timer_job_batch!(LocalUserIndexEventBatch, CanisterId, IdempotentEnvelope<Commun
 impl TimerJobItem for LocalUserIndexEventBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
         if can_borrow_state() {
-            run_regular_jobs();
+            mutate_state(|state| state.run_regular_jobs());
         }
 
         let response = local_user_index_canister_c2c_client::c2c_community_canister(

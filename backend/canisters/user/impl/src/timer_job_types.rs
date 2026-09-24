@@ -1,6 +1,6 @@
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::updates::swap_tokens::process_token_swap;
-use crate::{can_borrow_state, flush_pending_events, mutate_state, openchat_bot, read_state, run_regular_jobs};
+use crate::{can_borrow_state, flush_pending_events, mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
@@ -122,7 +122,7 @@ impl Job for TimerJob {
     fn execute(self) {
         let can_borrow_state = can_borrow_state();
         if can_borrow_state {
-            run_regular_jobs();
+            mutate_state(|state| state.run_regular_jobs());
         }
 
         match self {
