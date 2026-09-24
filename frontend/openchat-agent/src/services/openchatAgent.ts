@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
-import type { Principal } from "@icp-sdk/core/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type {
     ModerationConfig,
     VaultLogResponse,
@@ -236,6 +236,7 @@ import {
     applyOptionUpdate,
     chatIdentifiersEqual,
     emptyEventsResponse,
+    isCanisterId,
     isError,
     isMultiUserCanisterUser,
     isSuccessfulEventsResponse,
@@ -492,11 +493,12 @@ export class OpenChatAgent extends EventTarget {
         return this.identity.getPrincipal();
     }
 
-    // The ledger account holding the funds of `userId`. That is the principal's account for a user
-    // in a MultiUser canister, and only the current user's principal is known here, so for anyone
-    // else `userId` has to be a canister, such as a User canister or the translations canister.
+    // The ledger account holding the funds of `userId`. That is the principal's account for anyone
+    // but a user alone in their canister, and only the current user's principal is known here, so
+    // for anyone else `userId` has to be a canister, such as a User canister or the translations
+    // canister.
     private walletAccount(userId: string): IcrcAccount {
-        if (isMultiUserCanisterUser(userId) && userId !== this._userClient.userId) {
+        if (userId !== this._userClient.userId && !isCanisterId(Principal.fromText(userId))) {
             throw new Error(`Only the current user's wallet is known, not ${userId}'s`);
         }
         return userWalletAccount(userId, this.principal.toText());
@@ -3212,7 +3214,7 @@ export class OpenChatAgent extends EventTarget {
         }
         return this._ledgerIndexClient.getAccountTransactions(
             ledgerIndex,
-            this.walletAccount(userId),
+            { account: this.walletAccount(userId), userId },
             fromId,
         );
     }
