@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Return a user migrated to a MultiUser canister under their latest id from `users` and `user` when they are looked up by an earlier one, with the earlier ids they were looked up by as `previous_user_ids` so the client can map them to their latest id. `users` returns each such user once and in full, whether or not they have been updated since, and matches the caller by an earlier id when deciding whether to return `current_user`
+- Return a user migrated to a MultiUser canister under their latest id from `users` and `user` when they are looked up by an earlier one, with the earlier ids they were looked up by as `previous_user_ids` so the client can map them to their latest id. `users` returns each such user once and in full, whether or not they have been updated since, and returns `current_user` whether or not they have been updated if the caller is looked up by an earlier id
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 
 ### Fixed

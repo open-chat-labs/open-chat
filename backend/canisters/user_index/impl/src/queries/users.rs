@@ -22,12 +22,15 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
     let mut migrated: BTreeMap<UserId, Vec<UserId>> = BTreeMap::new();
 
     if let Some(u) = state.data.users.get_by_principal(&caller)
-        && let Some(updated_since) = args
-            .user_groups
-            .iter()
-            .find(|g| g.users.iter().any(|id| state.data.migrated_user_ids.latest(*id) == u.user_id))
-            .map(|g| g.updated_since)
-        && (u.date_updated > updated_since || u.chit_updated > updated_since)
+        && let Some((updated_since, known_by_earlier_id)) = args.user_groups.iter().find_map(|g| {
+            g.users
+                .iter()
+                .find(|id| state.data.migrated_user_ids.latest(**id) == u.user_id)
+                .map(|id| (g.updated_since, *id != u.user_id))
+        })
+        // A client which knows the caller by an earlier id gets them whether or not they've been
+        // updated, so that it learns their latest id
+        && (known_by_earlier_id || u.date_updated > updated_since || u.chit_updated > updated_since)
     {
         let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
 
@@ -203,10 +206,20 @@ mod tests {
     fn current_user_returned_when_looked_up_by_earlier_id() {
         let state = setup_runtime_state();
 
-        let result = users(&state, vec![user_id(9)], 0);
+        // Even though the caller hasn't been updated since
+        let result = users(&state, vec![user_id(9)], state.env.now());
 
         assert!(result.users.is_empty());
         assert_eq!(result.current_user.map(|u| u.user_id), Some(user_id(10)));
+    }
+
+    #[test]
+    fn current_user_looked_up_by_latest_id_not_returned_unless_updated() {
+        let state = setup_runtime_state();
+
+        let result = users(&state, vec![user_id(10)], state.env.now());
+
+        assert!(result.current_user.is_none());
     }
 
     #[test]
