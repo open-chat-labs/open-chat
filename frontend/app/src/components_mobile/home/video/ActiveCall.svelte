@@ -205,6 +205,15 @@
                 activeVideoCall.endCall();
             });
 
+            // A fatal error, such as "Meeting has ended" when the bridge deletes the room
+            // because the other side declined. The call object is finished; end the call here
+            // rather than leave Daily reporting an unhandled error.
+            call.on("error", (ev) => {
+                console.warn("Video call ended with an error", ev?.errorMsg);
+                ringOut?.cancel();
+                activeVideoCall.endCall();
+            });
+
             // this fires when a remote participant leaves the meeting
             call.on("participant-left", (ev) => {
                 // if the owner leaves, end the call
