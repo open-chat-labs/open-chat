@@ -199,14 +199,18 @@ impl GroupMembers {
             return None;
         }
 
-        if self.member_ids.contains(&new_user_id) {
-            return self.merge_into_new_user_id(old_user_id, new_user_id, now);
-        }
-
+        // A blocked user is not a member, so there is only the block to move
         if self.blocked.remove(&old_user_id) {
+            // If they have joined under their new id since being migrated, they are removed again
+            self.remove(new_user_id, now);
             self.blocked.insert(new_user_id);
             self.prune_then_insert_member_update(old_user_id, MemberUpdate::Unblocked, now);
             self.prune_then_insert_member_update(new_user_id, MemberUpdate::Blocked, now);
+            return None;
+        }
+
+        if self.member_ids.contains(&new_user_id) {
+            return self.merge_into_new_user_id(old_user_id, new_user_id, now);
         }
 
         let mut member = self.members_map.remove(&old_user_id)?.into_value();
@@ -1156,10 +1160,21 @@ mod tests {
             vec![(new_user_id, MemberUpdate::Added), (old_user_id, MemberUpdate::Removed)]
         );
 
-        // A blocked user stays blocked under their new id
+        // A blocked user stays blocked under their new id, and if they joined under it before the
+        // group was told, they are removed
+        members.add(
+            blocked_new,
+            None,
+            5,
+            EventIndex::default(),
+            MessageIndex::default(),
+            false,
+            UserType::User,
+        );
         assert!(members.change_user_id(blocked_old, blocked_new, 6).is_none());
         assert!(!members.is_blocked(&blocked_old));
         assert!(members.is_blocked(&blocked_new));
+        assert!(!members.contains(&blocked_new));
 
         // Neither an id which isn't known, nor one which a blocked user has, is changed
         assert!(members.change_user_id(old_user_id, owner, 7).is_none());

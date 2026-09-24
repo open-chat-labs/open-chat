@@ -1400,7 +1400,12 @@ impl GroupChatCore {
         new_user_id: UserId,
         now: TimestampMillis,
     ) -> Option<GroupMemberInternal> {
-        self.invited_users.change_user_id(old_user_id, new_user_id, now);
+        if self.members.contains(&new_user_id) {
+            // The user has already joined under their new id, so no longer needs the invitation
+            self.invited_users.remove(&old_user_id, now);
+        } else {
+            self.invited_users.change_user_id(old_user_id, new_user_id, now);
+        }
         self.members.change_user_id(old_user_id, new_user_id, now)
     }
 

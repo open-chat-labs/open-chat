@@ -937,12 +937,12 @@ impl Data {
         principal: Option<Principal>,
         now: TimestampMillis,
     ) {
-        self.migrated_user_ids.insert(old_user_id, new_user_id);
-
         // The group's state is being exported, and must stay as it is while that happens
         if self.community_being_imported_into.is_some() {
             return;
         }
+
+        self.migrated_user_ids.insert(old_user_id, new_user_id);
 
         let member = self.chat.change_user_id(old_user_id, new_user_id, now);
 

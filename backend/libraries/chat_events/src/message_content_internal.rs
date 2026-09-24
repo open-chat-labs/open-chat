@@ -787,11 +787,21 @@ impl PollContentInternal {
         if previous_user_ids.is_empty() {
             return;
         }
-        for votes in self.votes.values_mut() {
+
+        // Where only one vote per user is allowed, a vote the user has already cast under their
+        // current id stands, and otherwise their vote under the lowest option index is kept
+        let single_vote = !self.config.allow_multiple_votes_per_user;
+        let mut has_vote = single_vote && self.votes.values().any(|votes| votes.contains(&user_id));
+
+        let mut option_indexes: Vec<_> = self.votes.keys().copied().collect();
+        option_indexes.sort();
+        for option_index in option_indexes {
+            let votes = self.votes.get_mut(&option_index).unwrap();
             let len = votes.len();
             votes.retain(|u| !previous_user_ids.contains(u));
-            if votes.len() < len && !votes.contains(&user_id) {
+            if votes.len() < len && !has_vote && !votes.contains(&user_id) {
                 votes.push(user_id);
+                has_vote = single_vote;
             }
         }
     }
@@ -2385,6 +2395,21 @@ mod poll_tests {
             poll.register_vote(new_user_id, 0, VoteOperation::RegisterVote),
             RegisterVoteResult::SuccessNoChange
         ));
+    }
+
+    #[test]
+    fn vote_under_the_current_id_stands_where_only_one_is_allowed() {
+        let old_user_id = user_id(1);
+        let new_user_id = user_id(2);
+
+        let mut poll = poll(true);
+        poll.votes.insert(0, vec![old_user_id]);
+        poll.votes.insert(1, vec![new_user_id]);
+
+        poll.change_voter_ids(&[old_user_id], new_user_id);
+
+        assert_eq!(poll.votes.get(&0), Some(&Vec::new()));
+        assert_eq!(poll.votes.get(&1), Some(&vec![new_user_id]));
     }
 
     #[test]
