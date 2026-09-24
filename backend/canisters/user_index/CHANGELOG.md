@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Store a map of the old to the new id of each user migrated to a MultiUser canister, sending each entry to every LocalUserIndex, including any added later. Nothing records a migration yet. The LocalUserIndexes must be upgraded first
+- Store a map of the old to the new id of each user migrated to a MultiUser canister, sending each entry to every LocalUserIndex, including any added later. Nothing records a migration yet. The LocalUserIndexes must be upgraded first ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
 
 ### Fixed
 

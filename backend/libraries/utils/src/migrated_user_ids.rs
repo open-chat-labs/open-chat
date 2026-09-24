@@ -4,8 +4,9 @@ use types::UserId;
 
 // Maps the id a user had before being migrated to a MultiUser canister to the id they have now.
 //
-// A user migrated more than once is always mapped straight to their latest id, so every lookup
-// takes a single step, whichever of their earlier ids it starts from.
+// Each migration is stored as its own entry, and a user migrated more than once is found by
+// following their entries through to their latest id. So the map ends up the same whatever order
+// the migrations are inserted in, and however many times each one is.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 #[serde(transparent)]
 pub struct MigratedUserIds {
@@ -13,26 +14,22 @@ pub struct MigratedUserIds {
 }
 
 impl MigratedUserIds {
-    // Returns false if the migration was already recorded, so a repeated event is a no-op
+    // Returns false if nothing was inserted: the migration is already recorded, or it conflicts
+    // with one which is, which should never happen since user ids are never reused
     pub fn insert(&mut self, old_user_id: UserId, new_user_id: UserId) -> bool {
-        if old_user_id == new_user_id || self.map.get(&old_user_id) == Some(&new_user_id) {
+        if self.map.contains_key(&old_user_id) || self.latest(new_user_id) == old_user_id {
             return false;
-        }
-
-        // Point the user's earlier ids, which currently map to `old_user_id`, at their new id
-        for user_id in self.map.values_mut() {
-            if *user_id == old_user_id {
-                *user_id = new_user_id;
-            }
         }
         self.map.insert(old_user_id, new_user_id);
         true
     }
 
+    // The user's latest id, if they have been migrated since having `old_user_id`
     pub fn get(&self, old_user_id: &UserId) -> Option<UserId> {
-        self.map.get(old_user_id).copied()
+        self.map.contains_key(old_user_id).then(|| self.latest(*old_user_id))
     }
 
+    // Each migration, from which the whole map can be rebuilt by inserting them in any order
     pub fn iter(&self) -> impl Iterator<Item = (UserId, UserId)> + '_ {
         self.map.iter().map(|(old, new)| (*old, *new))
     }
@@ -43,6 +40,15 @@ impl MigratedUserIds {
 
     pub fn is_empty(&self) -> bool {
         self.map.is_empty()
+    }
+
+    // Follows the user's migrations from `user_id` through to their latest id. `insert` never
+    // adds a migration which would lead back to an earlier id, so this always ends.
+    fn latest(&self, mut user_id: UserId) -> UserId {
+        while let Some(next) = self.map.get(&user_id) {
+            user_id = *next;
+        }
+        user_id
     }
 }
 
@@ -91,7 +97,73 @@ mod tests {
 
         assert_eq!(ids.get(&user_id(1)), Some(user_id(3)));
         assert_eq!(ids.get(&user_id(2)), Some(user_id(3)));
+        assert_eq!(ids.get(&user_id(3)), None);
         assert_eq!(ids.len(), 2);
+    }
+
+    #[test]
+    fn order_of_inserts_does_not_matter() {
+        let mut ids = MigratedUserIds::default();
+
+        assert!(ids.insert(user_id(2), user_id(3)));
+        assert!(ids.insert(user_id(1), user_id(2)));
+
+        assert_eq!(ids.get(&user_id(1)), Some(user_id(3)));
+        assert_eq!(ids.get(&user_id(2)), Some(user_id(3)));
+    }
+
+    #[test]
+    fn repeating_an_earlier_migration_is_a_no_op() {
+        let mut ids = MigratedUserIds::default();
+
+        assert!(ids.insert(user_id(1), user_id(2)));
+        assert!(ids.insert(user_id(2), user_id(3)));
+        assert!(!ids.insert(user_id(1), user_id(2)));
+
+        assert_eq!(ids.get(&user_id(1)), Some(user_id(3)));
+    }
+
+    #[test]
+    fn conflicting_migration_is_ignored() {
+        let mut ids = MigratedUserIds::default();
+
+        assert!(ids.insert(user_id(1), user_id(2)));
+        assert!(!ids.insert(user_id(1), user_id(3)));
+
+        assert_eq!(ids.get(&user_id(1)), Some(user_id(2)));
+    }
+
+    #[test]
+    fn migration_leading_back_to_an_earlier_id_is_ignored() {
+        let mut ids = MigratedUserIds::default();
+
+        assert!(ids.insert(user_id(1), user_id(2)));
+        assert!(ids.insert(user_id(2), user_id(3)));
+        assert!(!ids.insert(user_id(3), user_id(1)));
+
+        assert_eq!(ids.get(&user_id(1)), Some(user_id(3)));
+        assert_eq!(ids.get(&user_id(3)), None);
+    }
+
+    #[test]
+    fn rebuilt_from_iter_in_any_order() {
+        let mut ids = MigratedUserIds::default();
+        ids.insert(user_id(1), user_id(2));
+        ids.insert(user_id(2), user_id(3));
+        ids.insert(user_id(4), user_id(5));
+
+        let mut entries: Vec<_> = ids.iter().collect();
+        entries.sort();
+        entries.reverse();
+
+        let mut rebuilt = MigratedUserIds::default();
+        for (old, new) in entries {
+            assert!(rebuilt.insert(old, new));
+        }
+
+        for i in 1..=5 {
+            assert_eq!(rebuilt.get(&user_id(i)), ids.get(&user_id(i)));
+        }
     }
 
     #[test]
