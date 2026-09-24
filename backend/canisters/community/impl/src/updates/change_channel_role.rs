@@ -48,8 +48,6 @@ fn change_channel_role_inner(
         args.user_ids.push(args.user_id);
     }
 
-    state.data.verify_not_frozen()?;
-
     let caller = state.verified_caller(ext_caller)?;
 
     // If caller is a bot then check bot permissions

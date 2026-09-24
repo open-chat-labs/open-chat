@@ -13,8 +13,6 @@ fn set_member_display_name(args: Args) -> Response {
 }
 
 fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let member = state.get_calling_member(None, true)?;
 
     if let Some(display_name) = args.display_name.as_ref()

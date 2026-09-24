@@ -12,8 +12,6 @@ fn delete_webhook(args: Args) -> Response {
 }
 
 fn delete_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let member = state.get_calling_member(None, true)?;
 
     if !member.role().is_owner() {
