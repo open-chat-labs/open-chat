@@ -278,6 +278,8 @@ pub enum CallDismissalKind {
     Ended,
     // This user joined the call, perhaps on another device
     AnsweredElsewhere,
+    /// This user declined the call, perhaps on another device
+    DeclinedElsewhere,
 }
 
 #[ts_export]

@@ -20,7 +20,12 @@
         expectPushNotifications,
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
-    import { expectCallActions, notifyCallJoined, runCallAction } from "@utils/native/call_bridge";
+    import {
+        expectCallActions,
+        notifyCallJoined,
+        runCallAction,
+        setCallConfig,
+    } from "@utils/native/call_bridge";
     import { expectShareTarget, handleShareTarget } from "@utils/native/share_target";
     import { portalState } from "component-lib";
     import {
@@ -265,6 +270,9 @@
             // A call answered from the native ring, or a call log redial. Cold-start
             // actions are parked by the shell and consumed by Router.svelte.
             expectCallActions(runCallAction),
+
+            // The shell reports a decline from the native ring to the bridge itself
+            setCallConfig(import.meta.env.OC_VIDEO_BRIDGE_URL!),
         ]);
         listenersRegistered.then((results) => {
             results

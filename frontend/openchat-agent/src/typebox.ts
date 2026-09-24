@@ -1493,6 +1493,7 @@ export type CallDismissalKind = Static<typeof CallDismissalKind>;
 export const CallDismissalKind = /* @__PURE__ */ Type.Union([
     Type.Literal("Ended"),
     Type.Literal("AnsweredElsewhere"),
+    Type.Literal("DeclinedElsewhere"),
 ]);
 
 export type TSBytes = Static<typeof TSBytes>;

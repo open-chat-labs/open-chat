@@ -103,7 +103,12 @@ object NotificationDecoder {
     fun decodeCallFacts(data: Map<String, String>): CallFacts? {
         val messageId = data["callMessageId"] ?: return null
         val started = data["callStarted"]?.toLongOrNull() ?: return null
-        return CallFacts(messageId, CallKind.fromWire(data["callType"], data["callAudioOnly"]), started)
+        return CallFacts(
+            messageId,
+            CallKind.fromWire(data["callType"], data["callAudioOnly"]),
+            started,
+            data["callDeclineToken"],
+        )
     }
 
     // A dismissal push has `type=call_dismissed` and no `senderId`, so the message decoder
@@ -116,6 +121,7 @@ object NotificationDecoder {
         val kind = when (data["dismissalKind"]) {
             "ended" -> DismissalKind.ENDED
             "answered_elsewhere" -> DismissalKind.ANSWERED_ELSEWHERE
+            "declined_elsewhere" -> DismissalKind.DECLINED_ELSEWHERE
             else -> return null
         }
         return CallDismissal(CallId(CallChat(chatType, chatId, data["communityId"]), messageId), kind)
