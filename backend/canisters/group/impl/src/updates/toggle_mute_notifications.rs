@@ -1,4 +1,4 @@
-use crate::{RuntimeState, execute_update_even_if_frozen};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::toggle_mute_notifications::*;
@@ -7,7 +7,7 @@ use types::OCResult;
 #[update(msgpack = true)]
 #[trace]
 fn toggle_mute_notifications(args: Args) -> Response {
-    execute_update_even_if_frozen(|state| toggle_mute_notifications_impl(args, state)).into()
+    execute_update(|state| toggle_mute_notifications_impl(args, state)).into()
 }
 
 fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> OCResult {

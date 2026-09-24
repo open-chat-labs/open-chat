@@ -6,7 +6,7 @@ use group_index_canister::freeze_group::SuspensionDetails;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
-use types::{ChatId, MessageContentInitial, TextContent, UnitResult};
+use types::{ChatId, MessageContentInitial, TextContent};
 
 #[test]
 fn freeze_then_unfreeze() {
@@ -110,18 +110,7 @@ fn frozen_group_rejects_updates_other_than_those_exempted() {
         .unwrap_err();
     assert!(error.reject_message.contains("Canister is frozen"), "{error:?}");
 
-    // Muting notifications is exempt, so still succeeds
-    let response = client::group::toggle_mute_notifications(
-        env,
-        user2.principal,
-        group_id.into(),
-        &group_canister::toggle_mute_notifications::Args {
-            mute: Some(true),
-            mute_at_everyone: None,
-        },
-    );
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-
+    // Unfreezing is exempt, so still succeeds
     client::group_index::unfreeze_group(
         env,
         user1.principal,
