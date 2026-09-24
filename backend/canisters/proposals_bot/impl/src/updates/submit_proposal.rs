@@ -2,7 +2,7 @@ use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
 use crate::timer_job_types::{
     CheckSnsProposalTallyThenVoteOnNnsProposalJob, ProcessUserRefundJob, SubmitProposalJob, TimerJob,
 };
-use crate::{RuntimeState, UserIdAndPayment, mutate_state, read_state};
+use crate::{RuntimeState, UserAndPayment, mutate_state, read_state};
 use candid::{Deserialize, Principal};
 use canister_api_macros::update;
 use canister_timer_jobs::Job;
@@ -19,7 +19,9 @@ use sns_governance_canister::types::{
     TransferSnsTreasuryFunds, UpgradeSnsControlledCanister, UpgradeSnsToNextVersion, manage_neuron_response,
 };
 use tracing::{error, info};
-use types::{CanisterId, MultiUserChat, NnsNeuronId, SnsNeuronId, TimestampMillis, UserDetails, UserId, icrc2};
+use types::{
+    CanisterId, MultiUserChat, NnsNeuronId, SnsNeuronId, TimestampMillis, UserDetails, UserId, UserIdAndPrincipal, icrc2,
+};
 use user_index_canister_c2c_client::lookup_user;
 
 const OC_ROOT_URL: &str = "https://oc.app/";
@@ -48,7 +50,12 @@ async fn submit_proposal_impl(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
+    let UserDetails {
+        user_id,
+        principal,
+        username,
+        ..
+    } = match lookup_user(caller, user_index_canister_id).await {
         Ok(Some(u)) => u,
         Ok(_) => panic!("User not found"),
         Err(error) => return InternalError(format!("Failed to lookup user: {error:?}")),
@@ -63,8 +70,9 @@ async fn submit_proposal_impl(args: Args) -> Response {
     let proposal = prepare_proposal(args.proposal, user_id, username, chat);
 
     submit_proposal(
-        Some(UserIdAndPayment {
+        Some(UserAndPayment {
             user_id,
+            principal,
             ledger_canister_id: args.transaction.ledger,
             amount: args.transaction.amount,
             fee: args.transaction.fee,
@@ -131,7 +139,7 @@ fn prepare_proposal(
 }
 
 pub(crate) async fn submit_proposal(
-    user_id_and_payment: Option<UserIdAndPayment>,
+    user_and_payment: Option<UserAndPayment>,
     governance_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
     proposal: ProposalToSubmit,
@@ -146,7 +154,10 @@ pub(crate) async fn submit_proposal(
             action: Some(convert_proposal_action(proposal.action.clone())),
         })),
     };
-    let user_id = user_id_and_payment.as_ref().map(|u| u.user_id);
+    let user = user_and_payment
+        .as_ref()
+        .map(|u| UserIdAndPrincipal::new(u.user_id, u.principal));
+    let user_id = user.map(|u| u.user_id);
     let user_id_string = user_id.map_or("none".to_string(), |id| id.to_string());
     match sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &make_proposal_args).await {
         Ok(response) => {
@@ -155,10 +166,10 @@ pub(crate) async fn submit_proposal(
                     manage_neuron_response::Command::MakeProposal(p) => {
                         let proposal_id = p.proposal_id.unwrap().id;
                         mutate_state(|state| {
-                            if let Some(user_id) = user_id {
+                            if let Some(user) = user {
                                 state.data.nervous_systems.record_user_submitted_proposal(
                                     governance_canister_id,
-                                    user_id,
+                                    user,
                                     proposal_id,
                                 )
                             }
@@ -184,9 +195,10 @@ pub(crate) async fn submit_proposal(
                         Success
                     }
                     manage_neuron_response::Command::Error(error) => {
-                        if let Some(user_and_payment) = user_id_and_payment {
+                        if let Some(user_and_payment) = user_and_payment {
                             ProcessUserRefundJob {
                                 user_id: user_and_payment.user_id,
+                                principal: user_and_payment.principal,
                                 ledger_canister_id: user_and_payment.ledger_canister_id,
                                 amount: user_and_payment.amount.saturating_sub(user_and_payment.fee),
                                 fee: user_and_payment.fee,
@@ -210,7 +222,7 @@ pub(crate) async fn submit_proposal(
                         governance_canister_id,
                         neuron_id,
                         proposal,
-                        user_id_and_payment,
+                        user_and_payment,
                         linked_nns_proposal,
                     })),
                     state,

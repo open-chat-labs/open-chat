@@ -18,6 +18,7 @@ use group_community_common::{
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use ledger_utils::certified::CertifiedTransfers;
 use model::legacy_user_event_batch::LegacyUserEventBatch;
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
@@ -39,7 +40,7 @@ use types::{
     ChatMetrics, CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCallDismissedNotification,
     GroupCanisterGroupChatSummary, GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype,
     IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult,
-    Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserType,
+    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -134,6 +135,36 @@ impl RuntimeState {
             .principal_to_user_id_map
             .get(&caller)
             .ok_or(OCErrorCode::InitiatorNotInChat)
+    }
+
+    // The calling user and their principal, as recorded on their member record
+    pub fn get_caller_user(&self) -> Result<UserIdAndPrincipal, OCErrorCode> {
+        let user_id = self.get_caller_user_id()?;
+        Ok(self.member_user(user_id))
+    }
+
+    // The member's wallet, for paying them. A user sharing a MultiUser canister with others holds
+    // their funds under the principal held for them, and everyone else under their user id.
+    pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
+        if !user_id.is_indexed() {
+            return Ok(user_id.as_principal().into());
+        }
+        let user = self.member_user(user_id);
+        if user.principal == Principal::anonymous() {
+            Err(OCErrorCode::TargetUserNotFound.into())
+        } else {
+            Ok(user.into())
+        }
+    }
+
+    // The user and their principal, as recorded on their member record, or with the principal
+    // anonymous if they aren't a member
+    pub fn member_user(&self, user_id: UserId) -> UserIdAndPrincipal {
+        self.data
+            .chat
+            .members
+            .get(&user_id)
+            .map_or(UserIdAndPrincipal::new(user_id, Principal::anonymous()), |m| m.user())
     }
 
     // The calling member, or when `user_id` is given, that member, whom the caller must hold (a
@@ -249,7 +280,8 @@ impl RuntimeState {
     }
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
-        for payment in calculate_gate_payments(payment, self.data.chat.members.owners()) {
+        let owners = self.data.chat.members.owners().iter().map(|u| self.member_user(*u)).collect();
+        for payment in calculate_gate_payments(payment, owners) {
             self.data.pending_payments_queue.push(payment);
         }
 
@@ -301,7 +333,7 @@ impl RuntimeState {
             messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(member.user_id())),
+            latest_message: main_events_reader.latest_message_event(Some(member.user())),
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: main_events_reader.latest_message_index(),
             participant_count: chat.members.len(),
@@ -600,7 +632,7 @@ impl RuntimeState {
         let member = self.data.chat.members.get_verified_member(user_id)?;
 
         match member.user_type() {
-            UserType::User => Ok(Caller::User(member.user_id())),
+            UserType::User => Ok(Caller::User(member.user())),
             UserType::Bot => Ok(Caller::Bot(member.user_id())),
             UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id())),
             UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound.into()),
@@ -660,6 +692,8 @@ struct Data {
     moderation_flags: Timestamped<u32>,
     pub bots: InstalledBots,
     idempotency_checker: IdempotencyChecker,
+    #[serde(default)]
+    certified_transfers: CertifiedTransfers,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -775,6 +809,7 @@ impl Data {
             moderation_flags: Timestamped::default(),
             bots: InstalledBots::default(),
             idempotency_checker: IdempotencyChecker::default(),
+            certified_transfers: CertifiedTransfers::default(),
         }
     }
 
@@ -901,7 +936,13 @@ impl Data {
                 min_visible_event_index: EventIndex::default(),
             }))
         } else if let Some(user_id) = self.lookup_user_id(caller) {
-            Some(EventsCaller::User(user_id))
+            // Their principal is the caller, unless they are a member, when it's on their member record
+            let user = self
+                .chat
+                .members
+                .get(&user_id)
+                .map_or(UserIdAndPrincipal::new(user_id, caller), |m| m.user());
+            Some(EventsCaller::User(user))
         } else {
             Some(EventsCaller::Unknown)
         }

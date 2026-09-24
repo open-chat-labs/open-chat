@@ -12,7 +12,7 @@ use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{
     ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis, Timestamped,
-    UserId, UserType, Version, is_default,
+    UserId, UserIdAndPrincipal, UserType, Version, is_default,
 };
 
 #[cfg(test)]
@@ -728,6 +728,11 @@ pub struct CommunityMemberInternal {
 }
 
 impl CommunityMemberInternal {
+    // The member and their principal
+    pub fn user(&self) -> UserIdAndPrincipal {
+        UserIdAndPrincipal::new(self.user_id, self.principal)
+    }
+
     pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) -> bool {
         let already_accepted = self.rules_accepted.as_ref().is_some_and(|accepted| version <= accepted.value);
 

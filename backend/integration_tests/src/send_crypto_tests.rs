@@ -46,7 +46,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
             from: random_principal.into(),
-            to: types::icrc1::Account::for_user(user2.user_id),
+            to: types::icrc1::Account::legacy_for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -59,7 +59,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
-            to: types::icrc1::Account::for_user(user2.user_id),
+            to: types::icrc1::Account::legacy_for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -154,7 +154,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
             from: random_principal.into(),
-            to: types::icrc1::Account::for_user(user2.user_id),
+            to: types::icrc1::Account::legacy_for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })
@@ -167,7 +167,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
             fee,
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
-            to: types::icrc1::Account::for_user(user2.user_id),
+            to: types::icrc1::Account::legacy_for_user(user2.user_id),
             memo: None,
             created: now_nanos,
         })

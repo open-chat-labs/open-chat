@@ -128,6 +128,41 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
 }
 
 #[test]
+fn cycles_of_users_deleted_previously_are_refunded_after_the_first_user_index_upgrade_only() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+
+    delete_user(env, &user_auth, canister_ids.identity);
+    wait_for_cycles_to_be_refunded(env, &user);
+
+    // Simulate a user deleted before cycles were refunded on deletion
+    env.add_cycles(user.canister(), T);
+    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
+
+    upgrade_user_index(env, canister_ids);
+
+    wait_for_cycles_to_be_refunded(env, &user);
+    let refunded = cycles_refunded_metric(env, user.local_user_index) - refunded_before;
+    assert!(refunded > T - MAX_RESIDUAL_CYCLES, "{refunded}");
+
+    // Subsequent upgrades don't refund the cycles again
+    env.add_cycles(user.canister(), T);
+    let balance_before = env.cycle_balance(user.canister());
+
+    upgrade_user_index(env, canister_ids);
+
+    for _ in 0..10 {
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
+    assert!(balance_before - env.cycle_balance(user.canister()) < 1_000_000_000);
+
+    wrapper.discard();
+}
+
+#[test]
 fn cycles_refund_tops_up_canisters_with_too_few_cycles_to_install_code() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -266,6 +301,23 @@ const MAX_RESIDUAL_CYCLES: u128 = 100_000_000_000;
 fn cycles_refunded_metric(env: &pocket_ic::PocketIc, local_user_index: types::CanisterId) -> u128 {
     let metrics = crate::utils::metrics(env, local_user_index);
     metrics["cycles_refunded_from_deleted_users"].as_u64().unwrap().into()
+}
+
+fn upgrade_user_index(env: &mut pocket_ic::PocketIc, canister_ids: &crate::CanisterIds) {
+    let wasm = crate::wasms::USER_INDEX.clone();
+    let args = candid::encode_one(user_index_canister::post_upgrade::Args {
+        wasm_version: wasm.version,
+    })
+    .unwrap();
+    client::stop_canister(env, canister_ids.openchat_installer, canister_ids.user_index);
+    env.upgrade_canister(
+        canister_ids.user_index,
+        wasm.module.into(),
+        args,
+        Some(canister_ids.openchat_installer),
+    )
+    .unwrap();
+    client::start_canister(env, canister_ids.openchat_installer, canister_ids.user_index);
 }
 
 fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_index: types::CanisterId) {

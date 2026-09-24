@@ -65,6 +65,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
 
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
+    let winner = state.member_user(args.user_id);
 
     let result = state.data.chat.reserve_prize(
         args.user_id,
@@ -87,7 +88,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         result.ledger_canister_id,
         result.amount,
         result.fee,
-        args.user_id,
+        winner.into(),
         Some(&MEMO_PRIZE_CLAIM),
         transaction_time,
     );

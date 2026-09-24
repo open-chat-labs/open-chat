@@ -5,6 +5,7 @@ use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::per_user_metrics::PerUserMetrics;
 use crate::search_index::SearchIndex;
 use crate::*;
+use candid::Principal;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_types::EventBuilder;
 use oc_error_codes::{OCError, OCErrorCode};
@@ -30,8 +31,9 @@ use types::{
     Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview, OptionUpdate,
     P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
     PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
-    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
-    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation, is_default,
+    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId,
+    UserIdAndPrincipal, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
+    is_default,
 };
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -439,7 +441,10 @@ impl ChatEvents {
             args.now,
         );
 
-        let message = message_internal.clone().hydrate(Some(message_internal.sender));
+        // The sender's principal isn't known here. The account of their user id is their wallet if
+        // they are alone in their canister, and nothing else in a new message depends on it.
+        let sender = UserIdAndPrincipal::new(message_internal.sender, message_internal.sender.as_principal());
+        let message = message_internal.clone().hydrate(Some(sender));
 
         let push_event_result = self.push_event(
             args.thread_root_message_index,
@@ -1693,9 +1698,27 @@ impl ChatEvents {
             .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = m.content { Some(p.into()) } else { None })
     }
 
+    // The user who reserved the swap, found by the owner of their wallet (see `reserve_p2p_swap`),
+    // by which the escrow canister names them
+    pub fn p2p_swap_reserved_by(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        principal: Principal,
+    ) -> Option<UserId> {
+        let (message, _) = self.message_internal(EventIndex::default(), thread_root_message_index, message_id.into())?;
+        let MessageContentInternal::P2PSwap(content) = &message.content else {
+            return None;
+        };
+        content.reserved_by(principal)
+    }
+
+    // Reserves the swap for the user, recording the owner of their wallet, which the escrow canister
+    // names them by
     pub fn reserve_p2p_swap(
         &mut self,
         user_id: UserId,
+        principal: Principal,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         min_visible_event_index: EventIndex,
@@ -1708,7 +1731,7 @@ impl ChatEvents {
             now,
             true,
             ChatEventType::MessageOther,
-            |message, event| Self::reserve_p2p_swap_inner(message, event.timestamp, user_id, now),
+            |message, event| Self::reserve_p2p_swap_inner(message, event.timestamp, user_id, principal, now),
         ) {
             Ok(result) => Ok(result.value),
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
@@ -1720,13 +1743,14 @@ impl ChatEvents {
         message: &mut MessageInternal,
         message_timestamp: TimestampMillis,
         user_id: UserId,
+        principal: Principal,
         now: TimestampMillis,
     ) -> Result<ReserveP2PSwapSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::P2PSwap(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
 
-        if content.reserve(user_id, now) {
+        if content.reserve(user_id, principal, now) {
             Ok(ReserveP2PSwapSuccess {
                 content: content.clone().into(),
                 created: message_timestamp,

@@ -38,7 +38,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
 
     let result = state.data.chat.send_message(
-        &Caller::User(sender),
+        &Caller::User(state.member_user(sender)),
         None,
         args.message_id,
         MessageContentInternal::VideoCall(VideoCallContentInternal {

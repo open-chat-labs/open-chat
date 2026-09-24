@@ -62,6 +62,11 @@ impl Translations {
         Some(new_index as u64)
     }
 
+    // Who proposed the translation
+    pub fn proposed_by(&self, id: u64) -> Option<UserId> {
+        self.translations.get(id as usize).map(|t| t.proposed.who)
+    }
+
     pub fn approve(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> ApproveResponse {
         let Some(translation) = self.translations.get(id as usize) else {
             return ApproveResponse::NotFound;

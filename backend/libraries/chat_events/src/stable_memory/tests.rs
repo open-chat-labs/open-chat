@@ -6,11 +6,11 @@ use crate::stable_memory::tests::test_values::{
     FILE_PREV2, GIPHY_CURRENT, GIPHY_PREV1, GIPHY_PREV2, GOVERNANCE_PROPOSAL_CURRENT, GOVERNANCE_PROPOSAL_PREV1,
     GOVERNANCE_PROPOSAL_PREV2, IMAGE_CURRENT, IMAGE_PREV1, IMAGE_PREV2, MESSAGE_REMINDER_CREATED_CURRENT,
     MESSAGE_REMINDER_CREATED_PREV1, MESSAGE_REMINDER_CREATED_PREV2, MESSAGE_REMINDER_CURRENT, MESSAGE_REMINDER_PREV1,
-    MESSAGE_REMINDER_PREV2, P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2, P2P_SWAP_PREV3, POLL_CURRENT, POLL_PREV1,
-    POLL_PREV2, PRIZE_CURRENT, PRIZE_PREV1, PRIZE_PREV2, PRIZE_PREV3, PRIZE_PREV4, PRIZE_PREV5, PRIZE_WINNER_CURRENT,
-    PRIZE_WINNER_PREV1, PRIZE_WINNER_PREV2, REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1, REPORTED_MESSAGE_PREV2,
-    TEXT_CURRENT, TEXT_PREV1, TEXT_PREV2, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CALL_PREV2, VIDEO_CURRENT, VIDEO_PREV1,
-    VIDEO_PREV2,
+    MESSAGE_REMINDER_PREV2, P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2, P2P_SWAP_PREV3, P2P_SWAP_PREV4, POLL_CURRENT,
+    POLL_PREV1, POLL_PREV2, PRIZE_CURRENT, PRIZE_PREV1, PRIZE_PREV2, PRIZE_PREV3, PRIZE_PREV4, PRIZE_PREV5, PRIZE_PREV6,
+    PRIZE_WINNER_CURRENT, PRIZE_WINNER_PREV1, PRIZE_WINNER_PREV2, REPORTED_MESSAGE_CURRENT, REPORTED_MESSAGE_PREV1,
+    REPORTED_MESSAGE_PREV2, TEXT_CURRENT, TEXT_PREV1, TEXT_PREV2, VIDEO_CALL_CURRENT, VIDEO_CALL_PREV1, VIDEO_CALL_PREV2,
+    VIDEO_CURRENT, VIDEO_PREV1, VIDEO_PREV2,
 };
 use crate::stable_memory::{ChatEventsStableStorage, bytes_to_event, event_to_bytes};
 use crate::{
@@ -336,13 +336,28 @@ fn prize_content() {
         fee_percent: 5,
         requires_captcha: true,
         min_chit_earned: 100,
+        principal: random_principal(&mut rng),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, PRIZE_CURRENT);
 
-    for test in [PRIZE_CURRENT, PRIZE_PREV1, PRIZE_PREV2, PRIZE_PREV3, PRIZE_PREV4, PRIZE_PREV5] {
+    for test in [
+        PRIZE_CURRENT,
+        PRIZE_PREV1,
+        PRIZE_PREV2,
+        PRIZE_PREV3,
+        PRIZE_PREV4,
+        PRIZE_PREV5,
+        PRIZE_PREV6,
+    ] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::Prize(_)));
     }
+
+    // Prizes stored before the sender's principal was recorded default to anonymous
+    let MessageContentInternal::Prize(prize) = test_deserialization(PRIZE_PREV1) else {
+        panic!()
+    };
+    assert_eq!(prize.principal, Principal::anonymous());
 }
 
 #[test]
@@ -458,13 +473,26 @@ fn p2p_swap_content() {
             token0_txn_out: rng.next_u64(),
             token1_txn_out: rng.next_u64(),
         }),
+        reserved_by_principal: Some(Principal::from_slice(&[3])),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, P2P_SWAP_CURRENT);
 
-    for test in [P2P_SWAP_CURRENT, P2P_SWAP_PREV1, P2P_SWAP_PREV2, P2P_SWAP_PREV3] {
+    for test in [
+        P2P_SWAP_CURRENT,
+        P2P_SWAP_PREV1,
+        P2P_SWAP_PREV2,
+        P2P_SWAP_PREV3,
+        P2P_SWAP_PREV4,
+    ] {
         assert!(matches!(test_deserialization(test), MessageContentInternal::P2PSwap(_)));
     }
+
+    // A swap stored before the acceptor's principal was recorded reads back without one
+    let MessageContentInternal::P2PSwap(swap) = test_deserialization(P2P_SWAP_PREV1) else {
+        panic!();
+    };
+    assert!(swap.reserved_by_principal.is_none());
 }
 
 #[test]

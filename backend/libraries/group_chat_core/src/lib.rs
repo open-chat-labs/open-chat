@@ -19,12 +19,12 @@ use types::{
     CustomPermission, DiamondMembershipStatus, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller,
     EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
-    MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch,
-    MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OgPreview,
-    OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess,
-    RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId,
-    UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
-    WebhookDetails,
+    MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentType, MessageId, MessageIndex,
+    MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult,
+    OgPreview, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction,
+    ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UserIdAndPrincipal, UserType, UsersBlocked, UsersInvited, Version, Versioned,
+    VersionedRules, VideoCall, VideoCallPresence, VoteOperation, WebhookDetails,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -186,7 +186,8 @@ impl GroupChatCore {
         )
     }
 
-    pub fn summary_updates(&self, since: TimestampMillis, user_id: Option<UserId>) -> SummaryUpdates {
+    pub fn summary_updates(&self, since: TimestampMillis, user: Option<UserIdAndPrincipal>) -> SummaryUpdates {
+        let user_id = user.map(|u| u.user_id);
         let member = user_id.and_then(|user_id| self.members.get(&user_id));
 
         let min_visible_event_index = if let Some(member) = &member {
@@ -200,7 +201,7 @@ impl GroupChatCore {
         };
 
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
-        let latest_message = events_reader.latest_message_event_if_updated(since, user_id);
+        let latest_message = events_reader.latest_message_event_if_updated(since, user);
         let mentions = member
             .as_ref()
             .map(|m| self.most_recent_mentions(m, Some(since)))
@@ -366,7 +367,7 @@ impl GroupChatCore {
             ascending,
             max_messages as usize,
             max_events as usize,
-            user_id,
+            caller.user(),
         ));
         let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
         let latest_event_index = reader.latest_event_index().unwrap();
@@ -391,7 +392,8 @@ impl GroupChatCore {
         let reader = self.events_reader(&caller, thread_root_message_index)?;
 
         let user_id = caller.user_id();
-        let (events, expired_event_ranges, unauthorized) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
+        let (events, expired_event_ranges, unauthorized) =
+            EventOrExpiredRange::split(reader.get_by_indexes(&events, caller.user()));
         let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
         let latest_event_index = reader.latest_event_index().unwrap();
         let chat_last_updated = self.last_updated(user_id);
@@ -417,8 +419,12 @@ impl GroupChatCore {
         let reader = self.events_reader(&caller, thread_root_message_index)?;
 
         let user_id = caller.user_id();
-        let (events, expired_event_ranges, unauthorized) =
-            EventOrExpiredRange::split(reader.window(mid_point.into(), max_messages as usize, max_events as usize, user_id));
+        let (events, expired_event_ranges, unauthorized) = EventOrExpiredRange::split(reader.window(
+            mid_point.into(),
+            max_messages as usize,
+            max_events as usize,
+            caller.user(),
+        ));
         let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
         let latest_event_index = reader.latest_event_index().unwrap();
         let chat_last_updated = self.last_updated(user_id);
@@ -444,7 +450,7 @@ impl GroupChatCore {
         let user_id = caller.user_id();
         let messages: Vec<_> = messages
             .into_iter()
-            .filter_map(|m| reader.message_event(m.into(), user_id))
+            .filter_map(|m| reader.message_event(m.into(), caller.user()))
             .collect();
         let latest_event_index = reader.latest_event_index().unwrap();
         let chat_last_updated = self.last_updated(user_id);
@@ -458,10 +464,11 @@ impl GroupChatCore {
 
     pub fn deleted_message(
         &self,
-        user_id: UserId,
+        user: UserIdAndPrincipal,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
     ) -> OCResult<MessageContent> {
+        let user_id = user.user_id;
         if let Some(member) = self.members.get(&user_id) {
             let min_visible_event_index = member.min_visible_event_index();
 
@@ -480,12 +487,12 @@ impl GroupChatCore {
                     } else if user_id == message.sender
                         || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
                     {
-                        Ok(message.content.hydrate(Some(user_id)))
+                        Ok(message.content.hydrate(Some(user)))
                     } else {
                         Err(OCErrorCode::InitiatorNotAuthorized.into())
                     }
                 } else {
-                    Ok(message.content.hydrate(Some(user_id)))
+                    Ok(message.content.hydrate(Some(user)))
                 };
             }
 
@@ -495,13 +502,13 @@ impl GroupChatCore {
         }
     }
 
-    pub fn thread_previews(&self, user_id: UserId, threads: Vec<MessageIndex>) -> OCResult<Vec<ThreadPreview>> {
-        let member = self.members.get(&user_id).ok_or(OCErrorCode::InitiatorNotInChat)?;
+    pub fn thread_previews(&self, user: UserIdAndPrincipal, threads: Vec<MessageIndex>) -> OCResult<Vec<ThreadPreview>> {
+        let member = self.members.get(&user.user_id).ok_or(OCErrorCode::InitiatorNotInChat)?;
 
         Ok(threads
             .into_iter()
             .filter_map(|root_message_index| {
-                self.build_thread_preview(user_id, member.min_visible_event_index(), root_message_index)
+                self.build_thread_preview(user, member.min_visible_event_index(), root_message_index)
             })
             .collect())
     }
@@ -656,6 +663,50 @@ impl GroupChatCore {
         })
     }
 
+    // Checks `user_id` could send a message of `content_type` now, without sending it. Used before
+    // making a transfer for a message, so that the transfer isn't made for a message which then
+    // can't be sent. `rules_accepted` is the version of the rules the message would accept.
+    pub fn check_can_send_message(
+        &self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        content_type: MessageContentType,
+        rules_accepted: Option<Version>,
+    ) -> OCResult {
+        if self
+            .events
+            .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
+            .is_some()
+        {
+            return Err(OCErrorCode::MessageIdAlreadyExists.into());
+        }
+
+        let member = self.members.get_verified_member(user_id)?;
+
+        let accepting_rules = rules_accepted.is_some_and(|version| version >= self.rules.text.version);
+        if !accepting_rules && !member.check_rules(&self.rules.value) {
+            return Err(OCErrorCode::ChatRulesNotAccepted.into());
+        }
+
+        if !member
+            .role()
+            .can_send_message(content_type, thread_root_message_index.is_some(), &self.permissions)
+        {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
+        if let Some(root_message_index) = thread_root_message_index
+            && !self
+                .events
+                .is_accessible(member.min_visible_event_index(), None, root_message_index.into())
+        {
+            return Err(OCErrorCode::ThreadNotFound.into());
+        }
+
+        Ok(())
+    }
+
     fn update_bot_message(
         &mut self,
         caller: &Caller,
@@ -695,7 +746,9 @@ impl GroupChatCore {
             .events_reader(min_visible_event_index, thread_root_message_index, None)
             .unwrap();
 
-        let message_event = reader.message_event(message_id.into(), Some(caller.agent())).unwrap();
+        // A bot's principal is its user id
+        let agent = UserIdAndPrincipal::new(caller.agent(), caller.agent().as_principal());
+        let message_event = reader.message_event(message_id.into(), Some(agent)).unwrap();
 
         let users_to_notify = if finalise {
             self.build_users_to_notify(
@@ -938,6 +991,28 @@ impl GroupChatCore {
         })
     }
 
+    // Checks `user_id` could tip the message now, without tipping it, returning the message's sender,
+    // whom the tip is for. Used before making the transfer for a tip.
+    pub fn check_can_tip_message(
+        &self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> OCResult<UserId> {
+        let member = self.members.get_verified_member(user_id)?;
+
+        if !member.role().can_react_to_messages(&self.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
+        let (message, _) = self
+            .events
+            .message_internal(member.min_visible_event_index(), thread_root_message_index, message_id.into())
+            .ok_or(OCErrorCode::MessageNotFound)?;
+
+        if message.sender == user_id { Err(OCErrorCode::CannotTipSelf.into()) } else { Ok(message.sender) }
+    }
+
     pub fn tip_message<P: EventPusher>(&mut self, args: TipMessageArgs, event_pusher: P) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(args.user_id)?;
 
@@ -962,8 +1037,8 @@ impl GroupChatCore {
 
         let (is_admin, min_visible_event_index) = match caller {
             Caller::Webhook(_) | Caller::Bot(_) => return Err(OCErrorCode::InitiatorNotAuthorized.into()),
-            Caller::User(user_id) if !as_platform_moderator => {
-                let member = self.members.get_verified_member(user_id)?;
+            Caller::User(user) if !as_platform_moderator => {
+                let member = self.members.get_verified_member(user.user_id)?;
                 (
                     member.role().can_delete_messages(&self.permissions),
                     member.min_visible_event_index(),
@@ -1024,11 +1099,12 @@ impl GroupChatCore {
 
     pub fn undelete_messages(
         &mut self,
-        user_id: UserId,
+        user: UserIdAndPrincipal,
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
         now: TimestampMillis,
     ) -> OCResult<Vec<UndeleteMessageSuccess>> {
+        let user_id = user.user_id;
         let member = self.members.get_verified_member(user_id)?;
 
         let min_visible_event_index = member.min_visible_event_index();
@@ -1054,7 +1130,7 @@ impl GroupChatCore {
                 events_reader
                     .message_internal(message_id.into())
                     .map(|m| UndeleteMessageSuccess {
-                        message: m.hydrate(Some(user_id)),
+                        message: m.hydrate(Some(user)),
                         bot_notification,
                     })
             })
@@ -1792,6 +1868,7 @@ impl GroupChatCore {
     pub fn reserve_p2p_swap(
         &mut self,
         user_id: UserId,
+        principal: Principal,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
@@ -1799,8 +1876,14 @@ impl GroupChatCore {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.events
-            .reserve_p2p_swap(user_id, thread_root_message_index, message_id, min_visible_event_index, now)
+        self.events.reserve_p2p_swap(
+            user_id,
+            principal,
+            thread_root_message_index,
+            message_id,
+            min_visible_event_index,
+            now,
+        )
     }
 
     pub fn cancel_p2p_swap(
@@ -1919,7 +2002,7 @@ impl GroupChatCore {
     ) -> OCResult<ChatEventsListReader<'_>> {
         let min_visible_event_index = match caller {
             EventsCaller::Unknown => self.min_visible_event_index(None),
-            EventsCaller::User(user_id) => self.min_visible_event_index(Some(*user_id)),
+            EventsCaller::User(user) => self.min_visible_event_index(Some(user.user_id)),
             EventsCaller::Bot(bot) => Ok(bot.min_visible_event_index),
             EventsCaller::System => Ok(EventIndex::default()),
         }?;
@@ -2018,7 +2101,7 @@ impl GroupChatCore {
 
     fn build_thread_preview(
         &self,
-        caller_user_id: UserId,
+        caller: UserIdAndPrincipal,
         min_visible_event_index: EventIndex,
         root_message_index: MessageIndex,
     ) -> Option<ThreadPreview> {
@@ -2026,7 +2109,7 @@ impl GroupChatCore {
 
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
 
-        let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
+        let root_message = events_reader.message_event(root_message_index.into(), Some(caller))?;
 
         let thread_events_reader = self
             .events
@@ -2035,7 +2118,7 @@ impl GroupChatCore {
         Some(ThreadPreview {
             root_message,
             latest_replies: thread_events_reader
-                .iter_latest_messages(Some(caller_user_id))
+                .iter_latest_messages(Some(caller))
                 .take(MAX_PREVIEWED_REPLY_COUNT)
                 .collect(),
             total_replies: thread_events_reader.next_message_index().into(),

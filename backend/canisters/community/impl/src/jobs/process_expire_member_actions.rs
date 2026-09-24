@@ -91,7 +91,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
         });
 
     let check_gate_args = CheckGateArgs {
-        user_id: details.user_id,
+        user: state.member_user(details.user_id),
         diamond_membership_expires_at,
         this_canister: state.env.canister_id(),
         is_unique_person,

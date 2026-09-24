@@ -20,7 +20,11 @@ fn summary_impl(args: Args, state: &RuntimeState) -> OCResult<CommunityCanisterC
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
     let user_id = state.data.members.lookup_user_id(caller);
 
-    match channel.summary(user_id, state.data.is_public.value, &state.data.members) {
+    match channel.summary(
+        user_id.map(|u| state.member_user(u)),
+        state.data.is_public.value,
+        &state.data.members,
+    ) {
         Some(summary) => Ok(summary),
         None => Err(OCErrorCode::InitiatorNotInChat.into()),
     }

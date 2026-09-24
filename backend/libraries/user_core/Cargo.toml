@@ -12,12 +12,15 @@ ckbtc_minter_canister_c2c_client = { path = "../../external_canisters/ckbtc_mint
 chat_events = { path = "../chat_events" }
 constants = { path = "../constants" }
 direct_chat = { path = "../direct_chat" }
+escrow_canister = { path = "../../canisters/escrow/api" }
+escrow_canister_c2c_client = { path = "../../canisters/escrow/c2c_client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 ic-cdk = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
 local_user_index_canister = { path = "../../canisters/local_user_index/api" }
+local_user_index_canister_c2c_client = { path = "../../canisters/local_user_index/c2c_client" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 ic-ledger-types = { workspace = true }
 installed_bots = { path = "../installed_bots" }

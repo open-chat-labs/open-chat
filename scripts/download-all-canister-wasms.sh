@@ -11,6 +11,14 @@ then
   WASM_SRC=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
 fi
 
+# Fetch the tags once up front rather than in each of the parallel downloads below, which
+# otherwise each fetch them (via get-canister-version.sh) when given a release version
+if [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
+then
+  git fetch -tfq origin master || { echo "Failed to fetch tags"; exit 1; }
+  export OC_TAGS_FETCHED=1
+fi
+
 echo "Downloading wasms"
 
 pids=()
@@ -25,7 +33,6 @@ pids=()
 ./download-canister-wasm.sh group_index $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh identity $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh local_user_index $WASM_SRC & pids+=($!)
-./download-canister-wasm.sh market_maker $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh multi_user $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh neuron_controller $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh notifications_index $WASM_SRC & pids+=($!)

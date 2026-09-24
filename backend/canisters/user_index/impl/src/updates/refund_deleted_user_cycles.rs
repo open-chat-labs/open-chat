@@ -16,6 +16,10 @@ const BATCH_SIZE: usize = 1000;
 #[update(guard = "caller_is_platform_operator", candid = true, msgpack = true)]
 #[trace]
 async fn refund_deleted_user_cycles(_args: Args) -> Response {
+    run().await
+}
+
+pub(crate) async fn run() -> Response {
     // Each LocalUserIndex only controls the canisters on its own subnet, so the IC registry's
     // routing table is used to send each canister to the right one
     let routing_table = match nns_registry::routing_table().await {
@@ -43,6 +47,7 @@ fn refund_deleted_user_cycles_impl(routing_table: Option<RoutingTable>, state: &
         .map(|u| u.user_id.canister_id())
         .collect();
     let canisters = canister_ids.len() as u32;
+    state.data.deleted_user_cycles_refund_queued = true;
 
     let local_user_indexes: Vec<CanisterId> = state.data.local_index_map.canisters().copied().collect();
     let (grouped, unrouted) = match routing_table {

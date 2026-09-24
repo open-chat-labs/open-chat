@@ -23,7 +23,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
 
     let results = channel
         .chat
-        .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)?;
+        .undelete_messages(member.user(), args.thread_root_message_index, args.message_ids, now)?;
 
     if results.is_empty() {
         return Ok(SuccessResult { messages: vec![] });

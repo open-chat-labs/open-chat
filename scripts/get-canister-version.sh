@@ -13,7 +13,11 @@ TAG=$2
 MAX_VERSION=${TAG/#v}
 MAX_VERSION=(${MAX_VERSION//-/ })
 
-git fetch -tfq origin master
+# Skipped when the caller has already fetched the tags, since concurrent fetches fail to lock the tag refs
+if [[ -z $OC_TAGS_FETCHED ]]
+then
+  git fetch -tfq origin master
+fi
 
 # Taken from https://stackoverflow.com/a/4025065
 vercomp () {

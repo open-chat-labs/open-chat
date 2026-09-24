@@ -6,10 +6,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT, SECOND_IN_MS};
-use escrow_canister::deposit_subaccount;
 use oc_error_codes::{OCError, OCErrorCode};
 use tracing::error;
-use types::icrc1::Account;
 use types::{
     Achievement, C2CError, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MAX_TEXT_LENGTH,
     MAX_TEXT_LENGTH_USIZE, MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapLocation, PendingCryptoTransaction,
@@ -17,7 +15,6 @@ use types::{
 };
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
-use user_core::P2PSwap;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -55,7 +52,7 @@ async fn send_message_with_transfer_to_channel_impl(
         Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
             match set_up_p2p_swap(escrow_canister_id, *create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
-                Err(error) => return Error(error.into()),
+                Err(error) => return Error(error),
             }
         }
         Err(error) => return Error(error),
@@ -164,7 +161,7 @@ async fn send_message_with_transfer_to_group_impl(
         Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
             match set_up_p2p_swap(escrow_canister_id, *create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
-                Err(error) => return Error(error.into()),
+                Err(error) => return Error(error),
             }
         }
         Err(error) => return Error(error),
@@ -310,22 +307,20 @@ fn prepare(
             if !state.data.user.membership(now).is_diamond_member() {
                 return Err(OCErrorCode::NotDiamondMember.into());
             }
-            let my_user_id = UserId::from(state.env.canister_id());
-            validate_from_account(p.from_account, my_user_id)?;
+            validate_from_account(p.from_account, state.env.canister_id().into())?;
 
             let chat_canister_id = chat.canister_id();
             let create_swap_args = escrow_canister::create_swap::Args {
                 location: P2PSwapLocation::from_message(chat, thread_root_message_index, message_id),
                 token0: p.token0.clone(),
                 token0_amount: p.token0_amount,
-                token0_principal: Some(my_user_id.as_principal()),
+                token0_principal: None,
                 token1: p.token1.clone(),
                 token1_amount: p.token1_amount,
                 token1_principal: None,
                 expires_at: now + p.expires_in,
                 additional_admins: vec![chat_canister_id],
                 canister_to_notify: Some(chat_canister_id),
-                user_to_notify: None,
                 is_public: false,
             };
             return Ok(P2PSwap(
@@ -353,8 +348,7 @@ async fn process_transaction(
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(Ok(completed)) => {
             if let Some(id) = p2p_swap_id {
-                let my_user_id = read_state(|state| UserId::from(state.env.canister_id()));
-                NotifyEscrowCanisterOfDepositJob::run(id, my_user_id);
+                NotifyEscrowCanisterOfDepositJob::run(id);
             }
             Ok(Ok((
                 MessageContentInternal::new_with_transfer(content, completed.clone().into(), p2p_swap_id, now),
@@ -370,36 +364,21 @@ pub(crate) async fn set_up_p2p_swap(
     escrow_canister_id: CanisterId,
     args: escrow_canister::create_swap::Args,
     from_account: Option<icrc1::Account>,
-) -> Result<(u32, PendingCryptoTransaction), SetUpP2PSwapError> {
-    use SetUpP2PSwapError::*;
-
-    let id = match escrow_canister_c2c_client::create_swap(escrow_canister_id, &args).await {
-        Ok(escrow_canister::create_swap::Response::Success(result)) => result.id,
-        Ok(escrow_canister::create_swap::Response::Error(error)) => return Err(Error(error)),
-        Ok(escrow_canister::create_swap::Response::InvalidSwap(message)) => return Err(InvalidSwap(message)),
-        Err(error) => return Err(InternalError(format!("{error:?}"))),
-    };
+) -> OCResult<(u32, PendingCryptoTransaction)> {
+    let id = user_core::updates::offer_p2p_swap::create_swap(escrow_canister_id, &args).await?;
 
     mutate_state(|state| {
         let my_user_id = UserId::from(state.env.canister_id());
         let now = state.env.now();
 
-        state.data.user.p2p_swaps.add(P2PSwap {
-            id,
-            location: args.location,
-            created_by: my_user_id,
-            created: now,
-            token0: args.token0.clone(),
-            token0_amount: args.token0_amount,
-            token1: args.token1.clone(),
-            token1_amount: args.token1_amount,
-            expires_at: args.expires_at,
-        });
+        state
+            .data
+            .user
+            .p2p_swaps
+            .add(user_core::updates::offer_p2p_swap::swap_offered(id, &args, my_user_id, now));
 
-        let to = Account {
-            owner: state.data.escrow_canister_id,
-            subaccount: Some(deposit_subaccount(my_user_id.as_principal(), id)),
-        };
+        // A user alone in their canister holds their funds in its account, which escrow knows them by
+        let to = user_core::updates::offer_p2p_swap::deposit_account(escrow_canister_id, my_user_id.as_principal(), id);
         let pending_transfer = match from_account {
             // The allowance is what authorises this - the ledger only lets us pull from an account
             // which has approved this canister as spender - so there is nothing for us to check here.
@@ -426,22 +405,6 @@ pub(crate) async fn set_up_p2p_swap(
 
         Ok((id, pending_transfer))
     })
-}
-
-pub(crate) enum SetUpP2PSwapError {
-    InvalidSwap(String),
-    InternalError(String),
-    Error(OCError),
-}
-
-impl From<SetUpP2PSwapError> for OCError {
-    fn from(value: SetUpP2PSwapError) -> Self {
-        match value {
-            SetUpP2PSwapError::InvalidSwap(message) => OCErrorCode::InvalidRequest.with_message(message),
-            SetUpP2PSwapError::InternalError(error) => OCErrorCode::Unknown.with_message(error),
-            SetUpP2PSwapError::Error(error) => error,
-        }
-    }
 }
 
 fn award_achievements(

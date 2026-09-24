@@ -193,6 +193,7 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                         if proposal.adopted {
                             let job = ProcessUserRefundJob {
                                 user_id: proposal.user_id,
+                                principal: proposal.principal,
                                 ledger_canister_id,
                                 amount,
                                 fee,
@@ -276,7 +277,7 @@ The [OpenChat named neuron](https://dashboard.internetcomputer.org/neuron/176821
                 payload,
             }),
         },
-        user_id_and_payment: None,
+        user_and_payment: None,
         linked_nns_proposal: Some(LinkedNnsProposal {
             nns_governance_canister_id,
             nns_neuron_id,

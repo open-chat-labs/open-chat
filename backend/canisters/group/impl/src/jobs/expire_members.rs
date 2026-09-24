@@ -65,7 +65,7 @@ fn run() {
 
             if matches!(expiry_gate_type, AccessGateExpiryBehaviour::UserLookup) {
                 let mut check_gate_args = CheckGateArgs {
-                    user_id: member.user_id,
+                    user: state.member_user(member.user_id),
                     diamond_membership_expires_at: None,
                     this_canister: state.env.canister_id(),
                     is_unique_person: false,

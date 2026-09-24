@@ -8,9 +8,14 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 constants = { path = "../constants" }
+escrow_canister = { path = "../../canisters/escrow/api" }
+escrow_canister_c2c_client = { path = "../../canisters/escrow/c2c_client" }
 ic-cdk = { workspace = true }
 ic-cdk-management-canister = { workspace = true }
 icrc-ledger-types = { workspace = true }
+ledger_utils = { path = "../ledger_utils" }
+local_user_index_canister_c2c_client = { path = "../../canisters/local_user_index/c2c_client" }
+oc_error_codes = { path = "../error_codes" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_repr = { workspace = true }

@@ -93,16 +93,16 @@ fn summary_updates_impl(
     let mut channels_added = Vec::new();
     let mut channels_updated = Vec::new();
 
-    let user_id = member.as_ref().map(|m| m.user_id);
+    let user = member.as_ref().map(|m| m.user());
 
     for channel in channels_with_updates {
         if channel.date_imported.is_some_and(|ts| ts > updates_since) {
-            if let Some(summary) = channel.summary(user_id, state.data.is_public.value, &state.data.members) {
+            if let Some(summary) = channel.summary(user, state.data.is_public.value, &state.data.members) {
                 last_updated = max(last_updated, summary.last_updated);
                 channels_added.push(summary);
             }
         } else {
-            match channel.summary_updates(user_id, updates_since, state.data.is_public.value, &state.data.members) {
+            match channel.summary_updates(user, updates_since, state.data.is_public.value, &state.data.members) {
                 ChannelUpdates::Added(s) => {
                     last_updated = max(last_updated, s.last_updated);
                     channels_added.push(s)

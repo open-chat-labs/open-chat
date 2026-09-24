@@ -16,7 +16,9 @@ const MAX_INVITES: usize = 100;
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_invite_users(args: Args) -> Response {
-    match execute_update(|state| invite_users_to_community_impl(args.users, Caller::User(args.caller), state)) {
+    match execute_update(|state| {
+        invite_users_to_community_impl(args.users, Caller::User(state.member_user(args.caller)), state)
+    }) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }

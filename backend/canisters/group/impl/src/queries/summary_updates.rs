@@ -44,7 +44,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
         return SuccessNoUpdates;
     }
 
-    let updates = chat.summary_updates(updates_since, Some(member.user_id()));
+    let updates = chat.summary_updates(updates_since, Some(member.user()));
 
     let membership = GroupMembershipUpdates {
         role: updates.role_changed.then_some(member.role().value.into()),

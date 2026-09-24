@@ -233,7 +233,7 @@ fn send_crypto_message_and_check_activity_feed(chat_type: ChatType) {
         fee: 10_000,
         token_symbol: ICP_SYMBOL.to_string(),
         amount,
-        to: types::icrc1::Account::for_user(us.user_id),
+        to: types::icrc1::Account::legacy_for_user(us.user_id),
         memo: None,
         created: now_nanos(env),
     });

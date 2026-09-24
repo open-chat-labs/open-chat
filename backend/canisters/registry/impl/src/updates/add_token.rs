@@ -9,7 +9,7 @@ use oc_error_codes::OCErrorCode;
 use registry_canister::add_token::*;
 use registry_canister::{NervousSystemDetails, Payment};
 use tracing::{error, info};
-use types::{CanisterId, OCResult, UserId};
+use types::{CanisterId, OCResult, UserId, UserIdAndPrincipal};
 
 const TOKEN_LISTING_FEE_E8S: u128 = 50_000_000_000; // 500 CHAT
 
@@ -80,11 +80,12 @@ async fn add_token_impl(
 
     let standards = icrc_ledger_canister_c2c_client::icrc1_supported_standards(ledger_canister_id).await?;
 
-    let (test_mode, now_nanos, exists) = read_state(|state| {
+    let (test_mode, now_nanos, exists, user_index_canister_id) = read_state(|state| {
         (
             state.data.test_mode,
             state.env.now_nanos(),
             state.data.tokens.exists(ledger_canister_id),
+            state.data.user_index_canister_id,
         )
     });
 
@@ -95,10 +96,22 @@ async fn add_token_impl(
     // Transfer the listing fee from the payer to the BURN address
     let mut payment: Option<Payment> = None;
     if let Some(user_id) = payer {
+        // A user in a MultiUser canister holds their own funds, in their principal's account, so
+        // their principal is looked up. Any other user's funds are in the account of their user id.
+        let from = if user_id.is_indexed() {
+            match user_index_canister_c2c_client::lookup_user(user_id.as_principal(), user_index_canister_id).await? {
+                // The lookup also resolves the principal a user signs in with, which isn't their user id
+                Some(user) if user.user_id == user_id => UserIdAndPrincipal::new(user_id, user.principal).into(),
+                _ => return Err(OCErrorCode::TargetUserNotFound.into()),
+            }
+        } else {
+            types::icrc1::Account::legacy_for_user(user_id).into()
+        };
+
         let amount = if test_mode { 100_000_000 } else { TOKEN_LISTING_FEE_E8S };
         let transfer_args = TransferFromArgs {
             spender_subaccount: None,
-            from: user_id.into(),
+            from,
             to: SNS_GOVERNANCE_CANISTER_ID.into(),
             amount: amount.into(),
             fee: None, // No transfer fee for BURNing

@@ -4,7 +4,8 @@ use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
 use ledger_utils::format_crypto_amount;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use types::Achievement;
+use oc_error_codes::{OCError, OCErrorCode};
+use types::{Achievement, UserIdAndPrincipal};
 use user_canister::update_btc_balance::*;
 use user_core::openchat_bot::{btc_deposit_failed_text, btc_deposit_received_text};
 use user_core::updates::update_btc_balance::{BtcDepositOrWithdrawalEventPayload, update_btc_balance as update};
@@ -15,16 +16,20 @@ use user_core::updates::update_btc_balance::{BtcDepositOrWithdrawalEventPayload,
 #[update(msgpack = true)]
 #[trace]
 async fn update_btc_balance(args: Args) -> Response {
-    let (user_index, test_mode) = match read_state(|state| {
-        state
-            .authorized_user_index(args.user_id)
-            .map(|index| (index, state.data.test_mode))
+    let (user_index, me, test_mode) = match read_state(|state| {
+        let index = state.authorized_user_index(args.user_id)?;
+        let principal = state
+            .data
+            .users
+            .with_user(index, |user| user.principal)
+            .ok_or(OCErrorCode::TargetUserNotFound)?;
+        Ok::<_, OCError>((index, UserIdAndPrincipal::new(args.user_id, principal), state.data.test_mode))
     }) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),
     };
 
-    let result = match update(args.user_id, test_mode).await {
+    let result = match update(me, test_mode).await {
         Ok(result) => result,
         Err(error) => return Response::Error(error),
     };

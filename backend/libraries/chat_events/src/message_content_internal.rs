@@ -21,7 +21,7 @@ use types::{
     PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
     ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
-    UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
+    UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -185,28 +185,28 @@ impl MessageContentInternal {
         }
     }
 
-    pub fn hydrate(self, my_user_id: Option<UserId>) -> MessageContent {
+    pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> MessageContent {
         match self {
-            MessageContentInternal::Text(t) => MessageContent::Text(t.hydrate(my_user_id)),
-            MessageContentInternal::Image(i) => MessageContent::Image(i.hydrate(my_user_id)),
-            MessageContentInternal::Video(v) => MessageContent::Video(v.hydrate(my_user_id)),
-            MessageContentInternal::Audio(a) => MessageContent::Audio(a.hydrate(my_user_id)),
-            MessageContentInternal::File(f) => MessageContent::File(f.hydrate(my_user_id)),
-            MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.hydrate(my_user_id)),
+            MessageContentInternal::Text(t) => MessageContent::Text(t.hydrate(my_user)),
+            MessageContentInternal::Image(i) => MessageContent::Image(i.hydrate(my_user)),
+            MessageContentInternal::Video(v) => MessageContent::Video(v.hydrate(my_user)),
+            MessageContentInternal::Audio(a) => MessageContent::Audio(a.hydrate(my_user)),
+            MessageContentInternal::File(f) => MessageContent::File(f.hydrate(my_user)),
+            MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user)),
+            MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.hydrate(my_user)),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.hydrate()),
-            MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.hydrate(my_user_id)),
-            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(p.hydrate(my_user_id)),
-            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.hydrate(my_user_id)),
-            MessageContentInternal::Prize(p) => MessageContent::Prize(p.hydrate(my_user_id)),
-            MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.hydrate(my_user_id)),
-            MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.hydrate(my_user_id)),
-            MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user_id)),
+            MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.hydrate(my_user)),
+            MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(p.hydrate(my_user)),
+            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.hydrate(my_user)),
+            MessageContentInternal::Prize(p) => MessageContent::Prize(p.hydrate(my_user)),
+            MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.hydrate(my_user)),
+            MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.hydrate(my_user)),
+            MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user)),
             MessageContentInternal::ModerationReport(r) => MessageContent::ModerationReport(*r.clone()),
-            MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.hydrate(my_user_id)),
+            MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.hydrate(my_user)),
             MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.hydrate()),
-            MessageContentInternal::Encrypted(e) => MessageContent::Encrypted(e.hydrate(my_user_id)),
-            MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user_id)),
+            MessageContentInternal::Encrypted(e) => MessageContent::Encrypted(e.hydrate(my_user)),
+            MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user)),
         }
     }
 
@@ -553,7 +553,7 @@ impl From<&MessageContentInternal> for Document {
 pub(crate) trait MessageContentInternalSubtype {
     type ContentType;
 
-    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType;
+    fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Self::ContentType;
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -571,7 +571,7 @@ impl From<TextContent> for TextContentInternal {
 impl MessageContentInternalSubtype for TextContentInternal {
     type ContentType = TextContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         TextContent { text: self.text }
     }
 }
@@ -608,7 +608,7 @@ impl From<ImageContent> for ImageContentInternal {
 impl MessageContentInternalSubtype for ImageContentInternal {
     type ContentType = ImageContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         ImageContent {
             width: self.width,
             height: self.height,
@@ -655,7 +655,7 @@ impl From<VideoContent> for VideoContentInternal {
 impl MessageContentInternalSubtype for VideoContentInternal {
     type ContentType = VideoContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         VideoContent {
             width: self.width,
             height: self.height,
@@ -697,7 +697,7 @@ impl From<AudioContent> for AudioContentInternal {
 impl MessageContentInternalSubtype for AudioContentInternal {
     type ContentType = AudioContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         AudioContent {
             caption: self.caption,
             mime_type: self.mime_type,
@@ -737,7 +737,7 @@ impl From<FileContent> for FileContentInternal {
 impl MessageContentInternalSubtype for FileContentInternal {
     type ContentType = FileContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         FileContent {
             name: self.name,
             caption: self.caption,
@@ -771,9 +771,9 @@ impl From<PollContent> for PollContentInternal {
 impl MessageContentInternalSubtype for PollContentInternal {
     type ContentType = PollContent;
 
-    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         PollContent {
-            votes: self.votes(my_user_id),
+            votes: self.votes(my_user.map(|u| u.user_id)),
             config: self.config.into(),
             ended: self.ended,
         }
@@ -927,7 +927,7 @@ pub struct CryptoContentInternal {
 impl MessageContentInternalSubtype for CryptoContentInternal {
     type ContentType = CryptoContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         CryptoContent {
             recipient: self.recipient,
             transfer: CryptoTransaction::Completed(self.transfer.into()),
@@ -1512,7 +1512,7 @@ impl From<&GiphyImageVariantInternal> for GiphyImageVariant {
 impl MessageContentInternalSubtype for GiphyContentInternal {
     type ContentType = GiphyContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         GiphyContent {
             caption: self.caption,
             title: self.title,
@@ -1545,11 +1545,11 @@ impl From<ProposalContent> for ProposalContentInternal {
 impl MessageContentInternalSubtype for ProposalContentInternal {
     type ContentType = ProposalContent;
 
-    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         ProposalContent {
             governance_canister_id: self.governance_canister_id,
             proposal: self.proposal,
-            my_vote: my_user_id.and_then(|u| self.votes.get(&u)).copied(),
+            my_vote: my_user.and_then(|u| self.votes.get(&u.user_id)).copied(),
         }
     }
 }
@@ -1588,6 +1588,12 @@ pub struct PrizeContentInternal {
     pub requires_captcha: bool,
     #[serde(rename = "mc", default, skip_serializing_if = "is_default")]
     pub min_chit_earned: u32,
+    // The sender's principal, which along with their user id determines the wallet any refund is
+    // paid to. Recorded when the prize is sent, as the sender may have left the chat by the time
+    // it ends. Anonymous for prizes sent before it was recorded, which is fine as their senders are
+    // all alone in their canisters, so are refunded at their user id.
+    #[serde(rename = "pr", default = "Principal::anonymous")]
+    pub principal: Principal,
 }
 
 impl PrizeContentInternal {
@@ -1609,6 +1615,8 @@ impl PrizeContentInternal {
             fee_percent: PRIZE_FEE_PERCENT,
             requires_captcha: content.requires_captcha,
             min_chit_earned: content.min_chit_earned,
+            // Set by the chat from the sender's member record when the prize is sent
+            principal: Principal::anonymous(),
         }
     }
 
@@ -1652,7 +1660,7 @@ impl PrizeContentInternal {
                 ledger,
                 refund - transaction_fee,
                 transaction_fee,
-                sender,
+                UserIdAndPrincipal::new(sender, self.principal).into(),
                 Some(&MEMO_PRIZE_REFUND),
                 now_nanos,
             ));
@@ -1665,12 +1673,12 @@ impl PrizeContentInternal {
 impl MessageContentInternalSubtype for PrizeContentInternal {
     type ContentType = PrizeContent;
 
-    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         PrizeContent {
             prizes_remaining: self.prizes_remaining.len() as u32,
             prizes_pending: self.reservations.len() as u32,
             winner_count: self.winners.len() as u32,
-            user_is_winner: my_user_id.map(|u| self.winners.contains(&u)).unwrap_or_default(),
+            user_is_winner: my_user.map(|u| self.winners.contains(&u.user_id)).unwrap_or_default(),
             winners: Vec::new(),
             token_symbol: self.transaction.token_symbol().to_string(),
             ledger: self.transaction.ledger_canister_id(),
@@ -1707,7 +1715,7 @@ pub struct PrizeWinnerContentInternal {
 impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
     type ContentType = PrizeWinnerContent;
 
-    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         PrizeWinnerContent {
             winner: self.winner,
             transaction: CompletedCryptoTransaction::ICRC1(types::icrc1::CompletedCryptoTransaction {
@@ -1719,8 +1727,9 @@ impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
                     subaccount: None,
                 }
                 .into(),
-                to: my_user_id
-                    .map(types::icrc1::Account::for_user)
+                // The winner's wallet
+                to: my_user
+                    .map(types::icrc1::Account::from)
                     .unwrap_or(types::icrc1::Account {
                         owner: Principal::anonymous(),
                         subaccount: None,
@@ -1762,7 +1771,7 @@ impl From<MessageReminderCreatedContent> for MessageReminderCreatedContentIntern
 impl MessageContentInternalSubtype for MessageReminderCreatedContentInternal {
     type ContentType = MessageReminderCreatedContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         MessageReminderCreatedContent {
             reminder_id: self.reminder_id,
             remind_at: self.remind_at,
@@ -1792,7 +1801,7 @@ impl From<MessageReminderContent> for MessageReminderContentInternal {
 impl MessageContentInternalSubtype for MessageReminderContentInternal {
     type ContentType = MessageReminderContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         MessageReminderContent {
             reminder_id: self.reminder_id,
             notes: self.notes,
@@ -1832,6 +1841,10 @@ pub struct P2PSwapContentInternal {
     pub token0_txn_in: u64,
     #[serde(rename = "s", alias = "status")]
     pub status: P2PSwapStatus,
+    // The owner of the wallet of the user who reserved the swap, by which the escrow canister names
+    // them once they accept it. None for swaps reserved before this was recorded.
+    #[serde(rename = "rp", default, skip_serializing_if = "Option::is_none")]
+    pub reserved_by_principal: Option<Principal>,
 }
 
 impl P2PSwapContentInternal {
@@ -1851,13 +1864,15 @@ impl P2PSwapContentInternal {
             caption: content.caption,
             token0_txn_in,
             status: P2PSwapStatus::Open,
+            reserved_by_principal: None,
         }
     }
 
-    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+    pub fn reserve(&mut self, user_id: UserId, principal: Principal, now: TimestampMillis) -> bool {
         if let P2PSwapStatus::Open = self.status {
             if now < self.expires_at {
                 self.status = P2PSwapStatus::Reserved(P2PSwapReserved { reserved_by: user_id });
+                self.reserved_by_principal = Some(principal);
                 return true;
             } else {
                 self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
@@ -1867,11 +1882,25 @@ impl P2PSwapContentInternal {
         false
     }
 
+    // The user the escrow canister names by the owner of their wallet, if they reserved the swap
+    pub fn reserved_by(&self, principal: Principal) -> Option<UserId> {
+        if self.reserved_by_principal != Some(principal) {
+            return None;
+        }
+        match &self.status {
+            P2PSwapStatus::Reserved(r) => Some(r.reserved_by),
+            P2PSwapStatus::Accepted(a) => Some(a.accepted_by),
+            P2PSwapStatus::Completed(c) => Some(c.accepted_by),
+            _ => None,
+        }
+    }
+
     pub fn unreserve(&mut self, user_id: UserId) -> bool {
         if let P2PSwapStatus::Reserved(r) = &self.status
             && r.reserved_by == user_id
         {
             self.status = P2PSwapStatus::Open;
+            self.reserved_by_principal = None;
             return true;
         }
         false
@@ -1928,7 +1957,7 @@ impl P2PSwapContentInternal {
 impl MessageContentInternalSubtype for P2PSwapContentInternal {
     type ContentType = P2PSwapContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         self.into()
     }
 }
@@ -1961,6 +1990,7 @@ impl From<P2PSwapContent> for P2PSwapContentInternal {
             caption: value.caption,
             token0_txn_in: value.token0_txn_in,
             status: value.status,
+            reserved_by_principal: None,
         }
     }
 }
@@ -2013,7 +2043,7 @@ pub struct CallParticipantInternal {
 impl MessageContentInternalSubtype for ReportedMessageInternal {
     type ContentType = ReportedMessage;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         ReportedMessage {
             count: self.reports.len() as u32,
             reports: self.reports.into_iter().take(10).collect(),
@@ -2050,7 +2080,7 @@ impl From<EncryptedContent> for EncryptedContentInternal {
 impl MessageContentInternalSubtype for EncryptedContentInternal {
     type ContentType = EncryptedContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         EncryptedContent {
             version: self.version,
             content_type: self.content_type,
@@ -2081,7 +2111,7 @@ impl From<CustomContent> for CustomContentInternal {
 impl MessageContentInternalSubtype for CustomContentInternal {
     type ContentType = CustomContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user: Option<UserIdAndPrincipal>) -> Self::ContentType {
         CustomContent {
             kind: self.kind,
             data: self.data,
@@ -2236,5 +2266,60 @@ mod video_call_tests {
             assert_eq!(decoded.hydrate().call_type, old);
             assert!(!decoded.hydrate().audio_only);
         }
+    }
+}
+
+#[cfg(test)]
+mod p2p_swap_tests {
+    use super::*;
+
+    fn token(symbol: &str) -> TokenInfo {
+        TokenInfo {
+            symbol: symbol.to_string(),
+            ledger: Principal::from_slice(&[1]),
+            decimals: 8,
+            fee: 10_000,
+        }
+    }
+
+    fn swap() -> P2PSwapContentInternal {
+        P2PSwapContentInternal::new(
+            1,
+            P2PSwapContentInitial {
+                token0: token("ICP"),
+                token0_amount: 100,
+                token1: token("CHAT"),
+                token1_amount: 1_000,
+                expires_in: 1_000,
+                caption: None,
+                from_account: None,
+            },
+            0,
+            0,
+        )
+    }
+
+    // The escrow canister names the acceptor by the owner of their wallet, which is resolved to
+    // them through what the swap recorded when they reserved it, for as long as it is theirs
+    #[test]
+    fn the_user_who_reserved_a_swap_is_found_by_the_owner_of_their_wallet() {
+        let user_id: UserId = Principal::from_slice(&[2]).into();
+        let wallet_owner = Principal::from_slice(&[3]);
+        let mut swap = swap();
+
+        assert!(swap.reserve(user_id, wallet_owner, 1));
+        assert_eq!(swap.reserved_by(wallet_owner), Some(user_id));
+        assert_eq!(swap.reserved_by(user_id.as_principal()), None);
+
+        assert!(swap.accept(user_id, 7));
+        assert_eq!(swap.reserved_by(wallet_owner), Some(user_id));
+        assert!(swap.complete(user_id, 8, 9).is_some());
+        assert_eq!(swap.reserved_by(wallet_owner), Some(user_id));
+
+        // Freed again, it is no longer theirs
+        let mut swap = self::swap();
+        assert!(swap.reserve(user_id, wallet_owner, 1));
+        assert!(swap.unreserve(user_id));
+        assert_eq!(swap.reserved_by(wallet_owner), None);
     }
 }

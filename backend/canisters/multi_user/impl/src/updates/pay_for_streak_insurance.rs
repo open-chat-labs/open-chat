@@ -1,25 +1,27 @@
-use crate::crypto::validate_from_account;
 use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{OCResult, UserCanisterStreakInsurancePayment, UserId};
+use ledger_utils::Payer;
+use types::{OCResult, UserCanisterStreakInsurancePayment};
 use user_canister::pay_for_streak_insurance::*;
 
+// Users hold their own funds in their own wallets, so they always pay via ICRC-2: from their wallet,
+// or the external account they are paying from, either of which must have approved this canister as
+// spender under the user's own spender subaccount
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn pay_for_streak_insurance(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
-        my_user_id,
         days_currently_insured,
+        payer,
     } = match mutate_state(|state| prepare(&mut args, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),
     };
 
-    let transfer_result =
-        user_core::updates::pay_for_streak_insurance::pay(my_user_id, args.from_account, args.expected_price).await;
+    let transfer_result = user_core::updates::pay_for_streak_insurance::pay(payer, args.expected_price).await;
 
     mutate_state(|state| {
         state
@@ -49,20 +51,26 @@ async fn pay_for_streak_insurance(mut args: Args) -> Response {
 
 struct PrepareOk {
     my_index: u16,
-    my_user_id: UserId,
     days_currently_insured: u8,
+    payer: Payer,
 }
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
-    validate_from_account(args.from_account, state.env.canister_id())?;
+    ledger_utils::validate_from_account(args.from_account, state.env.canister_id())?;
 
     let now = state.env.now();
-    let (my_index, days_currently_insured) = state.with_caller_user_mut(|my_index, user| {
-        user_core::updates::pay_for_streak_insurance::prepare(user, args, now).map(|days| (my_index, days))
+    let (my_index, (days_currently_insured, wallet)) = state.with_caller_user_mut(|my_index, user| {
+        let days_currently_insured = user_core::updates::pay_for_streak_insurance::prepare(user, args, now)?;
+        OCResult::Ok((my_index, (days_currently_insured, user.principal)))
     })?;
+
+    let payer = Payer::Approved {
+        from: args.from_account.unwrap_or(wallet.into()),
+        spender_subaccount: Some(ledger_utils::spender_subaccount(wallet)),
+    };
     Ok(PrepareOk {
         my_index,
-        my_user_id: state.user_id(my_index),
         days_currently_insured,
+        payer,
     })
 }

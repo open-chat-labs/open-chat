@@ -21,7 +21,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             date_created: u.date_created,
             display_name: u.display_name.clone(),
             avatar_id: u.avatar_id,
-            icp_account: u.user_id.into(),
+            icp_account: types::UserIdAndPrincipal::new(u.user_id, u.principal).into(),
             referrals: state.data.users.referrals(&u.user_id),
             // Role flags read false while suspended: a suspended account holds no authority,
             // and the client must not offer surfaces the canisters will refuse

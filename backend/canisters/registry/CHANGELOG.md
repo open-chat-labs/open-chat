@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
+
+## [[2.0.2061](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2061-registry)] - 2026-09-23
+
 ### Added
 
 - Add TACO as a swap provider ([#8979](https://github.com/open-chat-labs/open-chat/pull/8979))
@@ -14,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
+- Take the token listing fee from the principal's account of a payer in a MultiUser canister, looking it up in the UserIndex, since that is their wallet ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 
 ### Fixed
 

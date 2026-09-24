@@ -45,11 +45,53 @@ async fn process_swap(
         .map(|b| u128::try_from(b.0).unwrap())
     {
         Ok(balance) => mutate_state(|state| {
+            let now = state.env.now();
             let swap = state.data.swaps.get_mut(swap_id).unwrap();
+
+            // Another call for the same deposit may have recorded it while the balance was being
+            // checked, in which case it is left as it is: refunding it would take back funds the
+            // swap still holds for its payouts
+            let offered_by_depositor = principal == swap.offered_by;
+            if (offered_by_depositor && swap.token0_received)
+                || (swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by == principal) && swap.token1_received)
+            {
+                return Success(SuccessResult {
+                    complete: swap.token0_received && swap.token1_received,
+                });
+            }
+
+            // The swap may have expired, been cancelled or been accepted by someone else while the
+            // balance was being checked, in which case the deposit is refunded rather than
+            // recorded. Recording it would leave it with nothing to refund it, or take the swap over
+            // from its acceptor.
+            let unavailable = if now >= swap.expires_at {
+                Some(SwapExpired)
+            } else if swap.cancelled_at.is_some() {
+                Some(SwapCancelled)
+            } else if !offered_by_depositor && swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by != principal) {
+                Some(SwapAlreadyAccepted)
+            } else {
+                None
+            };
+            if let Some(response) = unavailable {
+                if balance > token_info.fee {
+                    state.data.pending_payments_queue.push(PendingPayment {
+                        principal,
+                        timestamp: now,
+                        amount: balance - token_info.fee,
+                        token_info,
+                        swap_id,
+                        reason: PendingPaymentReason::Refund,
+                    });
+                    crate::jobs::make_pending_payments::start_job_if_required(state);
+                }
+                return response;
+            }
+
             if balance < balance_required {
                 if balance > token_info.fee {
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: principal.into(),
+                        principal,
                         timestamp: state.env.now(),
                         amount: balance - token_info.fee,
                         token_info,
@@ -63,7 +105,6 @@ async fn process_swap(
                     balance_required,
                 })
             } else {
-                let now = state.env.now();
                 if principal == swap.offered_by {
                     swap.token0_received = true;
                 } else {
@@ -74,20 +115,20 @@ async fn process_swap(
                 if complete {
                     let accepted_by = swap.accepted_by.unwrap().0;
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: swap.offered_by.into(),
+                        principal: swap.offered_by,
                         timestamp: now,
                         token_info: swap.token1.clone(),
                         amount: swap.amount1,
                         swap_id: swap.id,
-                        reason: PendingPaymentReason::Swap(accepted_by.into()),
+                        reason: PendingPaymentReason::Swap(accepted_by),
                     });
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: accepted_by.into(),
+                        principal: accepted_by,
                         timestamp: now,
                         token_info: swap.token0.clone(),
                         amount: swap.amount0,
                         swap_id: swap.id,
-                        reason: PendingPaymentReason::Swap(swap.offered_by.into()),
+                        reason: PendingPaymentReason::Swap(swap.offered_by),
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
@@ -107,7 +148,7 @@ async fn check_for_refund(swap_id: u32, principal: Principal, token_info: TokenI
             if balance > token_info.fee {
                 mutate_state(|state| {
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: principal.into(),
+                        principal,
                         timestamp: state.env.now(),
                         amount: balance - token_info.fee,
                         token_info,
@@ -148,7 +189,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
     };
 
     let now = state.env.now();
-    let expired = now > swap.expires_at;
+    let expired = now >= swap.expires_at;
 
     let principal = args.deposited_by.unwrap_or_else(|| state.env.caller());
     let escrow_canister_id = state.env.canister_id();
@@ -160,11 +201,24 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
             subaccount: Some(deposit_subaccount(principal, swap.id)),
         };
 
+        // A recorded deposit is held for the swap's payout to the acceptor until that is made, whether
+        // or not the swap has since expired, unless it ended before being accepted, in which case it
+        // is refunded by the swap's cancellation or expiry
+        if swap.token0_received
+            && swap.token0_transfer_out.is_none()
+            && (swap.token1_received || (!expired && swap.cancelled_at.is_none()))
+        {
+            return PrepareResult::Error(Success(SuccessResult {
+                complete: swap.token1_received,
+            }));
+        }
+
         let response = if expired {
             SwapExpired
         } else if swap.cancelled_at.is_some() {
             SwapCancelled
         } else if swap.token0_received {
+            // Paid out already, so only an overpayment can be left to refund
             Success(SuccessResult {
                 complete: swap.token1_received,
             })
@@ -189,12 +243,25 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
             subaccount: Some(deposit_subaccount(principal, swap.id)),
         };
 
+        // As for the offerer, a recorded deposit is held for the swap's payout to the offerer until
+        // that is made. `accepted_by` is only set once the acceptor's deposit is recorded.
+        let accepted_by_depositor = swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by == principal);
+        if accepted_by_depositor
+            && swap.token1_transfer_out.is_none()
+            && (swap.token0_received || (!expired && swap.cancelled_at.is_none()))
+        {
+            return PrepareResult::Error(Success(SuccessResult {
+                complete: swap.token0_received,
+            }));
+        }
+
         let response = if expired {
             SwapExpired
         } else if swap.cancelled_at.is_some() {
             SwapCancelled
         } else if let Some((accepted_by, _)) = swap.accepted_by {
             if accepted_by == principal {
+                // Paid out already, so only an overpayment can be left to refund
                 Success(SuccessResult {
                     complete: swap.token0_received,
                 })

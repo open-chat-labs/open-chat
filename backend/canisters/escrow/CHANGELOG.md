@@ -6,12 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pay swap funds and refunds to principals again rather than users' wallets, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since users in MultiUser canisters hold their own funds in their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+
+### Removed
+
+- Remove `user_to_notify` and `SwapStatusChange::user_id`, identifying users by principal alone ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
+
+### Fixed
+
+- Refund a deposit whose swap was cancelled, expired or accepted by someone else while the deposit was being checked, rather than recording it ([#9503](https://github.com/open-chat-labs/open-chat/pull/9503))
+- Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
+- Leave a recorded deposit in place when it is notified again, rather than refunding funds the swap holds for its payouts ([#9527](https://github.com/open-chat-labs/open-chat/pull/9527))
+
 ## [[2.0.2056](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2056-escrow)] - 2026-09-18
 
 ### Changed
 
-- Pass `user_to_notify` through to `SwapStatusChange` so that a canister hosting multiple users knows which user a swap belongs to ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
+- Pass `user_to_notify` through to `SwapStatusChange` so that a canister hosting multiple users knows which user a swap belongs to ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))
 
 ### Fixed
 

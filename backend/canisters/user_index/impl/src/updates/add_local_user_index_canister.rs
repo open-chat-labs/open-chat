@@ -5,7 +5,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk_management_canister::{CanisterInfoArgs, CanisterInstallMode};
-use local_user_index_canister::{SetPremiumItemCost, UserDetailsFull, UserIndexEvent};
+use local_user_index_canister::{SetPremiumItemCost, UserDetailsFull, UserIdMigrated, UserIndexEvent};
 use rand::RngExt;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
@@ -186,6 +186,15 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             state.data.user_index_event_sync_queue.push(
                 canister_id,
                 UserIndexEvent::SetDailyPuzzleCanisterId(daily_puzzle_canister_id),
+            );
+        }
+        for (old_user_id, new_user_id) in state.data.migrated_user_ids.iter() {
+            state.data.user_index_event_sync_queue.push(
+                canister_id,
+                UserIndexEvent::UserIdMigrated(UserIdMigrated {
+                    old_user_id,
+                    new_user_id,
+                }),
             );
         }
         crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);

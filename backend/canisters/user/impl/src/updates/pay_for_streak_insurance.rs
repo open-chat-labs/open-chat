@@ -3,6 +3,7 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use ledger_utils::Payer;
 use types::{OCResult, UserCanisterStreakInsurancePayment, UserId};
 use user_canister::pay_for_streak_insurance::*;
 
@@ -13,16 +14,21 @@ async fn pay_for_streak_insurance(args: Args) -> Response {
 }
 
 async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
-    let PrepareOk {
-        my_user_id,
-        days_currently_insured,
-    } = match mutate_state(|state| prepare(&mut args, state)) {
+    let PrepareOk { days_currently_insured } = match mutate_state(|state| prepare(&mut args, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),
     };
 
-    let transfer_result =
-        user_core::updates::pay_for_streak_insurance::pay(my_user_id, args.from_account, args.expected_price).await;
+    // The user's funds are in this canister's own account, unless they are paying from an external
+    // account they approved
+    let payer = match args.from_account {
+        Some(from) => Payer::Approved {
+            from,
+            spender_subaccount: None,
+        },
+        None => Payer::ThisCanister,
+    };
+    let transfer_result = user_core::updates::pay_for_streak_insurance::pay(payer, args.expected_price).await;
 
     mutate_state(|state| {
         state.data.user.streak.release_payment_lock();
@@ -45,7 +51,6 @@ async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
 }
 
 struct PrepareOk {
-    my_user_id: UserId,
     days_currently_insured: u8,
 }
 
@@ -55,8 +60,5 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
 
     let now = state.env.now();
     let days_currently_insured = user_core::updates::pay_for_streak_insurance::prepare(&mut state.data.user, args, now)?;
-    Ok(PrepareOk {
-        my_user_id,
-        days_currently_insured,
-    })
+    Ok(PrepareOk { days_currently_insured })
 }

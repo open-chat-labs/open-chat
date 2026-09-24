@@ -2,13 +2,13 @@ use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
 use constants::{CKBTC_LEDGER_CANISTER_ID, MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use oc_error_codes::OCErrorCode;
-use types::{OCResult, TimestampNanos, UserId, icrc1};
+use types::{OCResult, TimestampNanos};
 use user_canister::withdraw_btc::Args;
 
 // Approves the ckBTC minter to take the amount from the user's account, then has it retrieve the
 // BTC to the address. The caller has verified the user's PIN. Returns the block index of the burn.
-pub async fn withdraw_btc(args: &Args, my_user_id: UserId, now_nanos: TimestampNanos) -> OCResult<u64> {
-    let from_subaccount = icrc1::Account::for_user(my_user_id).subaccount;
+pub async fn withdraw_btc(args: &Args, now_nanos: TimestampNanos) -> OCResult<u64> {
+    let from_subaccount = None;
 
     icrc_ledger_canister_c2c_client::icrc2_approve(
         CKBTC_LEDGER_CANISTER_ID,

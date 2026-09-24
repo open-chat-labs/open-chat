@@ -11,7 +11,7 @@ use types::{
     HistoryDeleted, MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
     MessageContent, MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, OgPreview,
     PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis,
-    Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, is_default,
+    Tips, UserId, UserIdAndPrincipal, UsersBlocked, UsersInvited, UsersUnblocked, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -147,10 +147,10 @@ impl ChatEventInternal {
         if let ChatEventInternal::Message(m) = self { Some(*m) } else { None }
     }
 
-    pub fn chat_event(self, my_user_id: Option<UserId>) -> ChatEvent {
+    pub fn chat_event(self, my_user: Option<UserIdAndPrincipal>) -> ChatEvent {
         match self {
             ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(d),
-            ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(m.hydrate(my_user_id))),
+            ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(m.hydrate(my_user))),
             ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g),
             ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g),
             ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g),
@@ -310,7 +310,7 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
-    pub fn hydrate(self, my_user_id: Option<UserId>) -> Message {
+    pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Message {
         Message {
             message_index: self.message_index,
             message_id: self.message_id,
@@ -318,7 +318,7 @@ impl MessageInternal {
             content: if let Some(deleted_by) = self.deleted_by {
                 MessageContent::Deleted(deleted_by.hydrate())
             } else {
-                self.content.hydrate(my_user_id)
+                self.content.hydrate(my_user)
             },
             sender_context: self.sender_context,
             replies_to: self.replies_to.as_ref().map(|r| r.hydrate()),
@@ -330,7 +330,7 @@ impl MessageInternal {
             tips: self.tips.clone(),
             edited: self.last_edited.is_some(),
             forwarded: self.forwarded,
-            thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
+            thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user)),
             block_level_markdown: self.block_level_markdown,
             og_previews: self.og_previews,
             moderation_flags: self.moderation_flags,
@@ -474,10 +474,10 @@ pub struct ThreadSummaryInternal {
 }
 
 impl ThreadSummaryInternal {
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> ThreadSummary {
+    pub fn hydrate(&self, my_user: Option<UserIdAndPrincipal>) -> ThreadSummary {
         ThreadSummary {
             participant_ids: self.participants.clone(),
-            followed_by_me: my_user_id.is_some_and(|u| self.followers.contains(&u)),
+            followed_by_me: my_user.is_some_and(|u| self.followers.contains(&u.user_id)),
             reply_count: self.reply_count,
             latest_event_index: self.latest_event_index,
             latest_event_timestamp: self.latest_event_timestamp,

@@ -182,8 +182,12 @@ fn generate_message_id(governance_canister_id: CanisterId, proposal_id: Proposal
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct UserIdAndPayment {
+pub struct UserAndPayment {
     pub user_id: UserId,
+    // Anonymous for payments made before the principal was recorded, which is fine as those users
+    // are all alone in their canisters, so are paid at their user id
+    #[serde(default = "Principal::anonymous")]
+    pub principal: Principal,
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
     pub fee: u128,

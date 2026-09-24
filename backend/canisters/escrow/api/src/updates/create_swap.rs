@@ -2,7 +2,7 @@ use candid::CandidType;
 use candid::Principal;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
+use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -16,9 +16,6 @@ pub struct Args {
     pub expires_at: TimestampMillis,
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
-    // The user within `canister_to_notify` the swap belongs to, when that canister hosts users
-    #[serde(default)]
-    pub user_to_notify: Option<UserId>,
     #[serde(default)]
     pub is_public: bool,
 }
