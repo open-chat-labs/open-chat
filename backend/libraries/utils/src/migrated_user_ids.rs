@@ -29,6 +29,15 @@ impl MigratedUserIds {
         self.map.contains_key(old_user_id).then(|| self.latest(*old_user_id))
     }
 
+    // The latest id of each of the given users who has been migrated, keyed by the id given for
+    // them. Users who have not been migrated are left out.
+    pub fn get_many(&self, user_ids: impl IntoIterator<Item = UserId>) -> HashMap<UserId, UserId> {
+        user_ids
+            .into_iter()
+            .filter_map(|user_id| self.get(&user_id).map(|latest| (user_id, latest)))
+            .collect()
+    }
+
     // Each migration, from which the whole map can be rebuilt by inserting them in any order
     pub fn iter(&self) -> impl Iterator<Item = (UserId, UserId)> + '_ {
         self.map.iter().map(|(old, new)| (*old, *new))
@@ -69,6 +78,18 @@ mod tests {
         assert_eq!(ids.get(&user_id(1)), Some(user_id(2)));
         assert_eq!(ids.get(&user_id(2)), None);
         assert_eq!(ids.len(), 1);
+    }
+
+    #[test]
+    fn get_many_returns_only_migrated_users() {
+        let mut ids = MigratedUserIds::default();
+        ids.insert(user_id(1), user_id(2));
+        ids.insert(user_id(2), user_id(3));
+        ids.insert(user_id(4), user_id(5));
+
+        let result = ids.get_many([user_id(1), user_id(3), user_id(4), user_id(6)]);
+
+        assert_eq!(result, HashMap::from([(user_id(1), user_id(3)), (user_id(4), user_id(5))]));
     }
 
     #[test]
