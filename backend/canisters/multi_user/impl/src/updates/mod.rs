@@ -39,7 +39,7 @@ mod delete_group;
 mod delete_messages;
 mod delete_saved_crypto_account;
 mod edit_message;
-mod end_video_call;
+pub(crate) mod end_video_call;
 mod generate_btc_address;
 mod generate_one_sec_address;
 mod join_video_call;

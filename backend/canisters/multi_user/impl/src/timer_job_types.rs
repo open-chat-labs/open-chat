@@ -1,9 +1,11 @@
+use crate::updates::end_video_call::end_video_call_impl;
 use crate::{mutate_state, openchat_bot};
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal, ReplyContextInternal};
 use constants::OPENCHAT_BOT_USER_ID;
 use serde::{Deserialize, Serialize};
-use types::{Chat, ChatId, EventIndex, MessageId, MessageIndex};
+use tracing::error;
+use types::{Chat, ChatId, EventIndex, MessageId, MessageIndex, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -11,6 +13,7 @@ pub enum TimerJob {
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     MessageReminder(Box<MessageReminderJob>),
     ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
+    MarkVideoCallEnded(MarkVideoCallEndedJob),
 }
 
 // Removes the content of a deleted message from one user's copy of a direct chat, once the time in
@@ -51,6 +54,15 @@ pub struct ClaimOrResetStreakInsuranceJob {
     pub user_index: u16,
 }
 
+// Marks a call ended in one user's copy of the chat once its maximum duration is up, as the User
+// canister's job of the same name does
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MarkVideoCallEndedJob {
+    pub user_index: u16,
+    pub them: UserId,
+    pub message_id: MessageId,
+}
+
 impl TimerJob {
     // The index of the user the job is for
     pub fn user_index(&self) -> u16 {
@@ -59,6 +71,7 @@ impl TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.user_index,
             TimerJob::MessageReminder(job) => job.user_index,
             TimerJob::ClaimOrResetStreakInsurance(job) => job.user_index,
+            TimerJob::MarkVideoCallEnded(job) => job.user_index,
         }
     }
 }
@@ -97,6 +110,7 @@ impl Job for TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
             TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
+            TimerJob::MarkVideoCallEnded(job) => job.execute(),
         }
     }
 }
@@ -166,5 +180,20 @@ impl Job for ClaimOrResetStreakInsuranceJob {
                 state.set_up_streak_insurance_timer_job(self.user_index);
             }
         });
+    }
+}
+
+impl Job for MarkVideoCallEndedJob {
+    fn execute(self) {
+        let result = mutate_state(|state| end_video_call_impl(self.user_index, self.them, self.message_id, state));
+        if let Err(error) = result {
+            error!(
+                ?error,
+                user_index = self.user_index,
+                them = ?self.them,
+                message_id = ?self.message_id,
+                "Failed to mark video call ended"
+            );
+        }
     }
 }

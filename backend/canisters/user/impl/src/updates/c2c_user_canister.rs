@@ -9,7 +9,7 @@ use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, Reader};
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use rand::RngExt;
-use types::{Achievement, CallKind, Chat, P2PSwapStatus, UserId, UserType, VideoCallPresence};
+use types::{Achievement, CallKind, Chat, P2PSwapStatus, UserId, UserType};
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{
     MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent,
@@ -99,7 +99,7 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
         }
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
-                let _ = chat.set_video_call_presence(caller_user_id, c.message_id, VideoCallPresence::Default, now);
+                user_core::updates::c2c_user_canister::join_video_call(chat, caller_user_id, c.message_id, now);
             }
         }
         UserCanisterEvent::StartVideoCall(args) => {
