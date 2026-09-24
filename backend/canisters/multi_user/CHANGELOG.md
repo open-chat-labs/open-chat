@@ -53,7 +53,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Pass in the canister's cache of migrated userIds when interacting with the chat events ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Route stable memory map entries by key type to either the main map or the map for small entries ([#9348](https://github.com/open-chat-labs/open-chat/pull/9348))
 - Prefix every stable memory map key with the index of the user it belongs to, applied at the boundary of the map so the key types are unchanged ([#9406](https://github.com/open-chat-labs/open-chat/pull/9406))
@@ -76,5 +75,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share `c2c_game_chit`, `set_bio`, `set_profile_background`, `manage_favourite_chats` and `pay_for_streak_insurance` with the User canister via `user_core` ([#9486](https://github.com/open-chat-labs/open-chat/pull/9486))
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the User canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
 - Reject approvals, streak insurance payments, crypto, BTC and OneSec withdrawals, and account charges, which spent from each user's subaccount of the canister, since users hold their own funds in their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+- Pass in the canister's cache of migrated user ids when interacting with the chat events ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 

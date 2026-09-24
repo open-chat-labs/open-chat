@@ -23,7 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Pass in the canister's cache of migrated userIds when interacting with the chat events ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Support P2P swaps for users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))
@@ -93,6 +92,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Resolve the offerer of a P2P swap in a direct chat by their principal via the LocalUserIndex when they aren't alone in their canister, and the acceptor by the principal recorded on the swap ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 - Share P2P swap acceptance, cancellation and status changes with the MultiUser canister via `user_core` ([#9531](https://github.com/open-chat-labs/open-chat/pull/9531))
 - Share the checks and handling of `c2c_bot_send_message` with the MultiUser canister via `user_core` ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
+- Pass in the canister's cache of migrated user ids when interacting with the chat events ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Skip running the regular jobs while frozen ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
 
