@@ -162,6 +162,7 @@ impl From<DataPrevious> for Data {
             known_multi_user_canisters: d.known_multi_user_canisters,
             migrated_user_ids: MigratedUserIds::default(),
             frozen: None,
+            migration: None,
         }
     }
 }

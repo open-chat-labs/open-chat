@@ -192,6 +192,7 @@ pub enum OCErrorCode {
     PrizeUserNotElligible = 348,
     NoEventsToDelete = 349,
     InsufficientAllowance = 350,
+    NotReadyForMigration = 351,
 
     // InternalError
     C2CError = 500,
