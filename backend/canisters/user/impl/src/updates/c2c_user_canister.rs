@@ -168,8 +168,6 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
                 og_previews: message.og_previews,
                 now,
             },
-            None,
-            false,
             state,
         );
     }

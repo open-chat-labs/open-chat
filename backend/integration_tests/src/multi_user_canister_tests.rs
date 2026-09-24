@@ -12,12 +12,13 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    Achievement, BotInitiator, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex,
-    Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent,
-    CryptoTransaction, DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary,
-    DirectChatSummaryUpdates, Document, Empty, EventsResponse, IdempotentEnvelope, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, Milliseconds, OptionUpdate, PendingCryptoTransaction, PinNumberSettings,
-    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
+    Achievement, AutonomousConfig, BotChatContext, BotDefinition, BotInitiator, BotInstallationLocation, BotMessageContent,
+    BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat, ChatEvent, ChatId,
+    ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction, DeletedCommunityInfo,
+    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
+    EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    OptionUpdate, PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis,
+    UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -3657,6 +3658,106 @@ fn bots_are_installed_per_user() {
     let bob_state = initial_state(env, bob, canister_id);
     assert!(bob_state.bots.is_empty());
     assert!(bob_state.direct_chats.summaries.is_empty());
+}
+
+#[test]
+fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (_, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    // Alice registers a bot which may send text messages autonomously, and installs it, which
+    // creates her chat with it
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        alice,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: "Says hello".to_string(),
+            commands: Vec::new(),
+            autonomous_config: Some(AutonomousConfig {
+                permissions: BotPermissions::text_only(),
+            }),
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+    client::local_user_index::happy_path::install_bot(
+        env,
+        alice,
+        local_user_index,
+        BotInstallationLocation::User(alice_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+
+    // The bot sends its message via the LocalUserIndex, which passes it to the MultiUser canister
+    let send = |env: &mut PocketIc, user_id: UserId, message_id: MessageId, text: &str, finalised: bool| {
+        client::local_user_index::bot_send_message(
+            env,
+            bot_principal,
+            local_user_index,
+            &local_user_index_canister::bot_send_message::Args {
+                chat_context: BotChatContext::Autonomous(Chat::Direct(user_id.into())),
+                thread: None,
+                message_id: Some(message_id),
+                replies_to: None,
+                content: BotMessageContent::Text(TextContent { text: text.to_string() }),
+                block_level_markdown: false,
+                finalised,
+                og_previews: None,
+            },
+        )
+    };
+
+    // A message which isn't yet finalised appears in Alice's chat with the bot
+    let message_id = random_from_u128();
+    let response = send(env, alice_id, message_id, "Hello", false);
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+    let bot_message = message(&events(env, alice, canister_id, alice_id, bot_id), message_id);
+    assert_eq!(bot_message.sender, bot_id);
+    assert!(matches!(&bot_message.content, MessageContent::Text(t) if t.text == "Hello"));
+    assert!(bot_message.bot_context().is_some_and(|c| !c.finalised));
+
+    // Sending it again with the same id edits it, and once it is finalised it can't be edited
+    let response = send(env, alice_id, message_id, "Hello Alice", true);
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+    let response = send(env, alice_id, message_id, "Goodbye", true);
+    assert!(
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageIdAlreadyExists)),
+        "{response:?}"
+    );
+    let events = events(env, alice, canister_id, alice_id, bot_id);
+    assert_eq!(messages(&events), vec![(bot_id, "Hello Alice".to_string())]);
+    let bot_message = message(&events, message_id);
+    assert!(bot_message.edited);
+    assert!(bot_message.bot_context().is_some_and(|c| c.finalised));
+
+    // Bob hasn't installed the bot, so it can't message him
+    let response = send(env, bob_id, random_from_u128(), "Hello", true);
+    assert!(
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{response:?}"
+    );
 }
 
 #[test]

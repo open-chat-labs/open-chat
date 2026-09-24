@@ -47,6 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support crypto in direct chats in `send_message`, renamed from `send_message_v2`, via ICRC2 transfers from the user's wallet or certified transfers they have already made, and remove the `send_message_with_transfer_to_group` and `_to_channel` stubs, since those messages are now sent to Groups and Communities directly ([#9516](https://github.com/open-chat-labs/open-chat/pull/9516))
 - Implement `c2c_charge_user_account` and `pay_for_streak_insurance`, taking the payment from the user's wallet via ICRC2 ([#9519](https://github.com/open-chat-labs/open-chat/pull/9519))
 - Implement `tip_message` for direct chats, pulling the tip from the user's own wallet via ICRC2, and apply tips received from other users ([#9528](https://github.com/open-chat-labs/open-chat/pull/9528))
+- Implement `c2c_bot_send_message`, sending a bot's message to the user it names, callable only by the LocalUserIndex ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ### Changed
 
