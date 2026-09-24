@@ -34,6 +34,7 @@ generate_msgpack_update_call!(authority_report_token);
 generate_msgpack_update_call!(record_authority_report_attempt);
 generate_msgpack_update_call!(clear_authority_report_attempt);
 generate_msgpack_update_call!(record_authority_report_filed);
+generate_msgpack_update_call!(record_user_id_migrated);
 generate_msgpack_update_call!(set_vault_legal_hold);
 generate_msgpack_update_call!(resolve_moderation_report);
 generate_msgpack_update_call!(propose_protected_action);

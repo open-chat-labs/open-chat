@@ -41,6 +41,23 @@ impl ExpiringMemberActions {
         });
     }
 
+    pub fn change_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        for action in self.queue.iter_mut() {
+            match action {
+                ExpiringMemberAction::UserLookup(user_ids) => {
+                    for user_id in user_ids.iter_mut().filter(|u| **u == old_user_id) {
+                        *user_id = new_user_id;
+                    }
+                }
+                ExpiringMemberAction::AsyncGateCheck(d) => {
+                    if d.user_id == old_user_id {
+                        d.user_id = new_user_id;
+                    }
+                }
+            }
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }

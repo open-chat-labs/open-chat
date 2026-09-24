@@ -1392,6 +1392,18 @@ impl GroupChatCore {
         self.invited_users.remove(user_id, now);
     }
 
+    // Moves a user's membership and any invitation over to their new id, once they have been migrated
+    // to a MultiUser canister. Returns the member as they now are, if the user was a member.
+    pub fn change_user_id(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        now: TimestampMillis,
+    ) -> Option<GroupMemberInternal> {
+        self.invited_users.change_user_id(old_user_id, new_user_id, now);
+        self.members.change_user_id(old_user_id, new_user_id, now)
+    }
+
     pub fn can_leave(&self, user_id: UserId) -> OCResult {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended().value {

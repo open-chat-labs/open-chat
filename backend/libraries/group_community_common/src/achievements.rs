@@ -19,4 +19,10 @@ impl Achievements {
     pub fn remove_user(&mut self, user_id: &UserId) {
         self.achievements.remove(user_id);
     }
+
+    pub fn change_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        if let Some(achievements) = self.achievements.remove(&old_user_id) {
+            self.achievements.entry(new_user_id).or_default().extend(achievements);
+        }
+    }
 }

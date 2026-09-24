@@ -928,6 +928,31 @@ impl Data {
         self.user_cache.delete(user_id);
     }
 
+    // Moves everything held against a user over to their new id, once they have been migrated to a
+    // MultiUser canister and so been given one. The events they took part in keep their old id.
+    pub fn change_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
+        self.migrated_user_ids.insert(old_user_id, new_user_id);
+
+        if let Some(member) = self.chat.change_user_id(old_user_id, new_user_id, now) {
+            // The user signs in with the same principal as before, which now maps to their new id
+            let principal = member.principal().or_else(|| {
+                self.principal_to_user_id_map
+                    .entries()
+                    .into_iter()
+                    .find(|(_, user_id)| *user_id == old_user_id)
+                    .map(|(principal, _)| principal)
+            });
+            if let Some(principal) = principal {
+                self.principal_to_user_id_map.insert(principal, new_user_id);
+            }
+        }
+
+        self.expiring_members.change_user_id(old_user_id, new_user_id);
+        self.expiring_member_actions.change_user_id(old_user_id, new_user_id);
+        self.achievements.change_user_id(old_user_id, new_user_id);
+        self.user_cache.change_user_id(old_user_id, new_user_id);
+    }
+
     pub fn get_caller_for_events(&self, caller: Principal, bot_initiator: Option<BotInitiator>) -> Option<EventsCaller> {
         if let Some(initiator) = bot_initiator {
             let bot_user_id = caller.into();

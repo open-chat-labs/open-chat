@@ -30,6 +30,14 @@ impl InvitedUsers {
         Some(invitation)
     }
 
+    pub fn change_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
+        if let Some(mut invitation) = self.users.remove(&old_user_id) {
+            invitation.invited = new_user_id;
+            self.users.entry(new_user_id).or_insert(invitation);
+            self.last_updated = now;
+        }
+    }
+
     pub fn get(&self, user_id: &UserId) -> Option<&UserInvitation> {
         self.users.get(user_id)
     }

@@ -185,6 +185,53 @@ impl GroupMembers {
         Some(member)
     }
 
+    // Moves a member, or a blocked user, over to a new id, for a user who has been migrated to a
+    // MultiUser canister and so been given one. Everything recorded against them moves with them, and
+    // clients see the old id leave and the new one join. Returns the member as they now are, if the
+    // user was a member.
+    pub fn change_user_id(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        now: TimestampMillis,
+    ) -> Option<GroupMemberInternal> {
+        if old_user_id == new_user_id || self.member_ids.contains(&new_user_id) || self.blocked.contains(&new_user_id) {
+            return None;
+        }
+
+        if self.blocked.remove(&old_user_id) {
+            self.blocked.insert(new_user_id);
+            self.prune_then_insert_member_update(old_user_id, MemberUpdate::Unblocked, now);
+            self.prune_then_insert_member_update(new_user_id, MemberUpdate::Blocked, now);
+        }
+
+        let mut member = self.members_map.remove(&old_user_id)?.into_value();
+        member.user_id = new_user_id;
+        self.members_map.insert(new_user_id, member.clone());
+
+        for user_ids in [
+            &mut self.member_ids,
+            &mut self.owners,
+            &mut self.admins,
+            &mut self.moderators,
+            &mut self.notifications_unmuted,
+            &mut self.at_everyone_muted,
+            &mut self.lapsed,
+            &mut self.suspended,
+        ] {
+            if user_ids.remove(&old_user_id) {
+                user_ids.insert(new_user_id);
+            }
+        }
+        if let Some(user_type) = self.bots.remove(&old_user_id) {
+            self.bots.insert(new_user_id, user_type);
+        }
+
+        self.prune_then_insert_member_update(old_user_id, MemberUpdate::Removed, now);
+        self.prune_then_insert_member_update(new_user_id, MemberUpdate::Added, now);
+        Some(member)
+    }
+
     pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         if self.blocked.insert(user_id) {
             self.prune_then_insert_member_update(user_id, MemberUpdate::Blocked, now);
@@ -1034,6 +1081,69 @@ mod tests {
         assert_eq!(member_bytes_len, 184);
 
         let _deserialized: GroupMemberStableStorage = msgpack::deserialize_then_unwrap(&member_bytes);
+    }
+
+    #[test]
+    fn change_user_id() {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let owner: UserId = Principal::from_slice(&[1]).into();
+        let old_user_id: UserId = Principal::from_slice(&[2]).into();
+        let new_user_id: UserId = Principal::from_slice(&[3]).into();
+        let blocked_old: UserId = Principal::from_slice(&[4]).into();
+        let blocked_new: UserId = Principal::from_slice(&[5]).into();
+        let principal = Principal::from_slice(&[6]);
+
+        let mut members = GroupMembers::new(
+            owner,
+            None,
+            UserType::User,
+            MultiUserChat::Group(Principal::from_slice(&[7]).into()),
+            0,
+        );
+        members.add(
+            old_user_id,
+            Some(principal),
+            1,
+            EventIndex::default(),
+            MessageIndex::default(),
+            false,
+            UserType::User,
+        );
+        members.change_role(old_user_id, None, GroupRoleInternal::Admin, 2).unwrap();
+        members.update_lapsed(old_user_id, true, 3);
+        members.block(blocked_old, 4);
+
+        let member = members.change_user_id(old_user_id, new_user_id, 5).unwrap();
+
+        assert_eq!(member.user_id(), new_user_id);
+        assert_eq!(member.principal(), Some(principal));
+        assert!(!members.contains(&old_user_id));
+        assert!(members.get(&old_user_id).is_none());
+        assert_eq!(members.get(&new_user_id).unwrap().role().value, GroupRoleInternal::Admin);
+        assert_eq!(members.role(&new_user_id), Some(GroupRole::Admin));
+        assert!(members.lapsed().contains(&new_user_id));
+        assert!(members.notifications_unmuted().contains(&new_user_id));
+        assert_eq!(
+            members.iter_latest_updates(4).collect::<Vec<_>>(),
+            vec![(new_user_id, MemberUpdate::Added), (old_user_id, MemberUpdate::Removed)]
+        );
+
+        // A blocked user stays blocked under their new id
+        assert!(members.change_user_id(blocked_old, blocked_new, 6).is_none());
+        assert!(!members.is_blocked(&blocked_old));
+        assert!(members.is_blocked(&blocked_new));
+
+        // Neither an id which isn't known, nor one which is already taken, is changed
+        assert!(members.change_user_id(old_user_id, owner, 7).is_none());
+        assert!(members.change_user_id(new_user_id, owner, 7).is_none());
+        assert!(members.contains(&new_user_id));
+
+        members.check_invariants();
     }
 
     #[test]

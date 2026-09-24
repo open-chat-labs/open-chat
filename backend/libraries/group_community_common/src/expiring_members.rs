@@ -38,6 +38,20 @@ impl ExpiringMembers {
             .retain(|m| !(m.user_id == user_id && (channel_id.is_none() || channel_id == m.channel_id)));
     }
 
+    pub fn change_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let mut new_heap = MinBinaryHeap::new();
+
+        for mut e in self.heap.drain() {
+            if e.user_id == old_user_id {
+                e.user_id = new_user_id;
+            }
+
+            new_heap.push(e);
+        }
+
+        self.heap = new_heap;
+    }
+
     pub fn change_gate_expiry(&mut self, channel_id: Option<ChannelId>, expiry_difference: i64) {
         if expiry_difference == 0 {
             return;

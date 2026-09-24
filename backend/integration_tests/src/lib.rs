@@ -41,6 +41,7 @@ mod identity_tests;
 mod join_group_tests;
 mod mentions_tests;
 mod message_activity_tests;
+mod migrate_user_id_tests;
 mod moderation_tests;
 mod multi_user_canister_tests;
 mod notification_tests;

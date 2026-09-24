@@ -43,6 +43,9 @@ enum Operation {
         user_index: usize,
         suspended: bool,
     },
+    ChangeUserId {
+        user_index: usize,
+    },
 }
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
@@ -60,6 +63,7 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
         1 => Just(Operation::UnlapseAll),
         2 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: true }),
         1 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: false }),
+        3 => any::<usize>().prop_map(|user_index| Operation::ChangeUserId { user_index }),
     ]
 }
 
@@ -150,6 +154,12 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
                 let user_id = get(&members.suspended, user_index);
                 members.set_suspended(user_id, false, timestamp);
             }
+        }
+        Operation::ChangeUserId { user_index } => {
+            let old_user_id = get(&members.member_ids, user_index);
+            // Ids from `user_id` are 8 bytes, so a 9 byte id can't already be in use
+            let new_user_id = Principal::from_slice(&[&timestamp.to_be_bytes()[..], &[0]].concat()).into();
+            members.change_user_id(old_user_id, new_user_id, timestamp);
         }
     };
 }

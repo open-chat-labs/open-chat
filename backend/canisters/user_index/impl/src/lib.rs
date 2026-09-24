@@ -169,15 +169,15 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
-    // Records that a user migrated to a MultiUser canister has been given a new id, and tells
-    // every LocalUserIndex
-    #[expect(dead_code, reason = "Called once the UserIndex orchestrates migrations")]
-    pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId) {
+    // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
+    // LocalUserIndex, each of which tells whichever of the user's groups it controls
+    pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, groups: Vec<ChatId>) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.push_event_to_all_local_user_indexes(
                 LocalUserIndexEvent::UserIdMigrated(UserIdMigrated {
                     old_user_id,
                     new_user_id,
+                    groups,
                 }),
                 None,
             );
