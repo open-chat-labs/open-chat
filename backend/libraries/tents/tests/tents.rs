@@ -452,3 +452,26 @@ fn the_solver_never_claims_an_unsound_grid() {
     let claimed = must_only_claim_sound_solutions::<Tents>(unsatisfiable_descriptions());
     assert!(claimed > 1_000, "only {claimed} of the corpus reached the solver");
 }
+
+/// #9517 invariant 3: a line-exact hint's focus is exactly the cells it
+/// fills. The whole line would include cells an unserved step ruled out,
+/// and the count would look wrong on the player's board.
+#[test]
+fn a_line_exact_hint_focuses_only_the_cells_it_fills() {
+    let mut seen = 0;
+    for seed in 0..SEEDS_PER_CONFIG {
+        let g = generate(seed, params(8, 8, Tier::Easy)).unwrap();
+        let (hints, _) = solve_with_trace(&g.description, Tier::Easy).unwrap();
+        for h in hints.iter().filter(|h| h.technique == tents::Technique::LineExact) {
+            let filled: Vec<u16> = h.conclusions.iter().map(|&(k, _)| k).collect();
+            let mut focus = h.focus.clone();
+            focus.sort_unstable();
+            let mut filled_sorted = filled.clone();
+            filled_sorted.sort_unstable();
+            assert_eq!(focus, filled_sorted, "seed {seed}");
+            assert!(h.conclusions.iter().all(|&(_, v)| v == 1), "seed {seed}");
+            seen += 1;
+        }
+    }
+    assert!(seen > 0, "no line-exact step in {SEEDS_PER_CONFIG} seeds");
+}

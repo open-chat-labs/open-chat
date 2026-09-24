@@ -334,11 +334,24 @@ fn line_count_exact(st: &mut State, line: usize, rec: &mut Option<&mut Vec<Hint>
     for &pos in &blanks {
         st.grid[pos] = sq;
     }
-    record(rec, || Hint {
-        technique,
-        target: blanks.iter().map(|&pos| pos as u16).collect(),
-        focus: (0..len).map(|j| (start + j * step) as u16).collect(),
-        conclusions: blanks.iter().map(|&pos| (pos as u16, (sq == Square::Tent) as u8)).collect(),
+    record(rec, || {
+        let target: Vec<u16> = blanks.iter().map(|&pos| pos as u16).collect();
+        // A full line is about the tents already in it, so the whole line
+        // is the handle. An exact line is about the cells left, and some
+        // of those were ruled out by steps the player is never shown (the
+        // server skips steps that only cross cells off), so the whole line
+        // would show them as open and make the count look wrong (#9517
+        // invariant 3).
+        let focus = match technique {
+            Technique::LineExact => target.clone(),
+            _ => (0..len).map(|j| (start + j * step) as u16).collect(),
+        };
+        Hint {
+            technique,
+            target,
+            focus,
+            conclusions: blanks.iter().map(|&pos| (pos as u16, (sq == Square::Tent) as u8)).collect(),
+        }
     });
     true
 }

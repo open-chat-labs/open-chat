@@ -7,7 +7,7 @@
     "technique.4": "This tree's tent must go in one of two cells, and both of them touch this cell, so this cell can't hold a tent.",
     "technique.5": "Only these cells in this row or column can still take a tent, and every way of fitting in the ones it needs agrees about the marked cells, so you can fill them in.",
     "technique.6": "Only these cells in this row or column can still take a tent, and every way of fitting in the ones it needs puts one next to the marked cells, so you can rule them out.",
-    "technique.7": "This row or column needs as many tents as it has cells left that could hold one, so every one of them is a tent.",
+    "technique.7": "Leave out the cells that cannot hold a tent: no free tree beside them, or touching a tent. This row or column needs as many tents as it has cells left, so every one of them is a tent.",
     "technique.8": "This row or column already has all its tents, so no other cell in it can hold one.",
     "demo.1": "Every tree needs its own tent in a cell beside it. The numbers count the tents in each row and column.",
     "demo.2": "A tent goes directly beside its tree, above, below, left or right. Corners do not count, so these cells stay empty.",
