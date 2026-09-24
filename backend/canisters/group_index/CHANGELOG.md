@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Accept a `user_id` in `c2c_create_group` and `c2c_create_community`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))
+- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 
 ### Changed
 

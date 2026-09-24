@@ -8,16 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Accept `UserIdMigrated` from the LocalUserIndex, for members migrated to a MultiUser canister and given a new id. Not acted on yet ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
-- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Accept a `user_id` in `c2c_leave_community` and `c2c_delete_community`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))
 - Include the call facts (message id, call type, `audio_only`, start time, whether the channel is public, member count) in the notification when a call starts ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 - Let members send crypto, prizes and P2P swaps via `send_message`, and tip messages via a new `tip_message`, in a channel directly rather than via their User canister, using ICRC2 transfers or certified transfers they have already made ([#9514](https://github.com/open-chat-labs/open-chat/pull/9514))
+- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
+- Accept `UserIdMigrated` from the LocalUserIndex, for members migrated to a MultiUser canister and given a new id. Not acted on yet ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 
 ### Changed
 
-- Track the async work in progress, spawned tasks and async updates alike, using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
@@ -38,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hold the calling user's principal in `Caller::User` alongside their user id ([#9525](https://github.com/open-chat-labs/open-chat/pull/9525))
 - Record the owner of the acceptor's wallet on a P2P swap when they reserve it, name them by it to the escrow canister, and resolve them by it when the swap completes ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 - Reject every update call while the community is frozen in one place, `execute_update`, by trapping, rather than per endpoint with a `CommunityFrozen` error. Only freezing, unfreezing, platform moderation (including user suspensions) and `wallet_receive` run via `execute_update_even_if_frozen`. Every other update, including some which previously worked while frozen such as `c2c_local_index`, ending video calls and `import_group`, is now blocked ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
+- Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 
 ### Removed
 
