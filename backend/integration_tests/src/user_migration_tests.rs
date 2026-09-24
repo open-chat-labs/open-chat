@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
@@ -104,6 +104,65 @@ fn user_with_a_message_reminder_is_not_ready_for_migration() {
         &user_canister::set_bio::Args { text: random_string() },
     );
     assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+}
+
+#[test]
+fn migrating_user_is_exported() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    tick_many(env, 3);
+
+    // The UserIndex stands in for the MultiUser canister, which pulls the export
+    let started = start_user_migration(env, *controller, canister_ids.user_index, &user1, canister_ids.user_index);
+
+    let response = client::user_index::export_migrating_user(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::export_migrating_user::Args { user_id: user1.user_id },
+    );
+    let user_index_canister::export_migrating_user::Response::Success(exported) = response else {
+        panic!("'export_migrating_user' error: {response:?}");
+    };
+
+    assert_eq!(exported.user_bytes, started.user_bytes);
+    // The direct chat's events and their indexes, among others
+    assert!(exported.stable_memory_entries > 0);
+    assert!(exported.stable_memory_bytes > 0);
+}
+
+#[test]
+fn only_the_multi_user_canister_being_migrated_to_can_export() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    start_user_migration(env, *controller, canister_ids.user_index, &user, multi_user_canister(1));
+
+    let response = client::user_index::export_migrating_user(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::export_migrating_user::Args { user_id: user.user_id },
+    );
+    assert!(
+        matches!(response, user_index_canister::export_migrating_user::Response::Error(_)),
+        "{response:?}"
+    );
 }
 
 fn start_user_migration(

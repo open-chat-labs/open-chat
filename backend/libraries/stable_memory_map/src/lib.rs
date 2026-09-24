@@ -420,6 +420,69 @@ fn garbage_collect_user_while(index: u16, keep_going: impl Fn() -> bool) -> Resu
     })
 }
 
+// Reads the raw entries of both maps in key order, starting after the key `after`, for a canister
+// which holds a single user to export everything it holds. Stops before an entry would take the
+// total size of the keys and values read past `max_bytes`, though always reads at least one entry.
+pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntriesResult {
+    assert!(
+        !key_scope::is_scoped(),
+        "Entries can only be read without a scope in a canister which holds a single user"
+    );
+
+    let start = match after {
+        Some(key) => Bound::Excluded(BaseKey::new(key.to_vec())),
+        None => Bound::Unbounded,
+    };
+    let range = (start, Bound::Unbounded);
+
+    with_map(|m| {
+        let mut main = m.map.range(range.clone()).map(|e| e.into_pair()).peekable();
+        let mut small = m
+            .small_entries_map
+            .iter()
+            .flat_map(|map| map.range(range.clone()))
+            .map(|e| e.into_pair())
+            .peekable();
+
+        let mut entries = Vec::new();
+        let mut total_bytes = 0;
+        loop {
+            // Each key is in exactly one of the maps, so the two never hold the same key
+            let size = |(key, value): &(BaseKey, Vec<u8>)| key.as_slice().len() + value.len();
+            let (from_main, size) = match (main.peek(), small.peek()) {
+                (Some(main_entry), Some(small_entry)) => {
+                    if main_entry.0 < small_entry.0 {
+                        (true, size(main_entry))
+                    } else {
+                        (false, size(small_entry))
+                    }
+                }
+                (Some(main_entry), None) => (true, size(main_entry)),
+                (None, Some(small_entry)) => (false, size(small_entry)),
+                (None, None) => return ReadAllEntriesResult { entries, finished: true },
+            };
+
+            if !entries.is_empty() && total_bytes + size > max_bytes {
+                return ReadAllEntriesResult {
+                    entries,
+                    finished: false,
+                };
+            }
+
+            let (key, value) = if from_main { main.next() } else { small.next() }.unwrap();
+            total_bytes += size;
+            entries.push((key.into_vec(), value));
+        }
+    })
+}
+
+pub struct ReadAllEntriesResult {
+    // Each entry's raw key and value
+    pub entries: Vec<(Vec<u8>, Vec<u8>)>,
+    // Whether there are no entries left after these
+    pub finished: bool,
+}
+
 fn map_bound<K: Key>(bound: Bound<&K>) -> Bound<BaseKey> {
     match bound {
         Bound::Included(k) => Bound::Included(k.clone().into()),
@@ -911,6 +974,60 @@ mod tests {
             KeyType::all().filter(|kt| kt.map_class() == MapClass::Default).count(),
             KeyType::BlockedUsers as usize + added_to_main_map.len()
         );
+    }
+
+    #[test]
+    fn read_all_entries_merges_both_maps_in_key_order() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        with_map_mut(|m| {
+            for i in 0..10 {
+                m.insert(small_key(i), vec![0; 10]);
+            }
+            m.insert(default_key(), vec![1; 10]);
+        });
+
+        let expected: Vec<Vec<u8>> = {
+            let mut keys: Vec<Vec<u8>> = (0..10).map(|i| BaseKey::from(small_key(i)).into_vec()).collect();
+            keys.push(BaseKey::from(default_key()).into_vec());
+            keys.sort();
+            keys
+        };
+
+        // Everything in one page
+        let ReadAllEntriesResult { entries, finished } = read_all_entries(None, usize::MAX);
+        assert!(finished);
+        assert_eq!(entries.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>(), expected);
+
+        // Page by page, each of which fits only 2 entries, continuing after the last key read
+        let entry_size = entries[0].0.len() + 10;
+        let mut read = Vec::new();
+        let mut after: Option<Vec<u8>> = None;
+        loop {
+            let ReadAllEntriesResult { entries: page, finished } = read_all_entries(after.as_deref(), 2 * entry_size + 5);
+            assert!(page.len() <= 2);
+            after = page.last().map(|(k, _)| k.clone());
+            read.extend(page.into_iter().map(|(k, _)| k));
+            if finished {
+                break;
+            }
+        }
+        assert_eq!(read, expected);
+    }
+
+    #[test]
+    fn read_all_entries_reads_an_entry_larger_than_max_bytes() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        with_map_mut(|m| {
+            m.insert(default_key(), vec![1; 100]);
+        });
+
+        let ReadAllEntriesResult { entries, finished } = read_all_entries(None, 10);
+        assert_eq!(entries.len(), 1);
+        assert!(finished);
     }
 
     fn small_key(i: u32) -> TestSmallEntriesKey {

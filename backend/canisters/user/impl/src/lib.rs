@@ -72,6 +72,13 @@ impl RuntimeState {
         self.env.caller() == self.data.user_index_canister_id
     }
 
+    pub fn is_caller_multi_user_canister_migrating_to(&self) -> bool {
+        self.data
+            .migration
+            .as_ref()
+            .is_some_and(|m| m.multi_user_canister_id == self.env.caller())
+    }
+
     pub fn is_caller_local_user_index(&self) -> bool {
         self.env.caller() == self.data.local_user_index_canister_id
     }
