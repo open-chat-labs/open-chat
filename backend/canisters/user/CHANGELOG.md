@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_group_canister_v2`, `c2c_community_canister_v2` and `c2c_local_user_index_v2`, which take each event paired with the user it is for, applying only those for this canister's user ([#9452](https://github.com/open-chat-labs/open-chat/pull/9452))
 - Add `c2c_user_canister_v2`, taking events which each name their sender and recipient, so that a MultiUser canister can send direct chat events on behalf of its users ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
 - Include the call facts (message id, call type, `audio_only`, start time) in the notification when a call starts, and send the owner an `answered_elsewhere` dismissal on join and an `answered_elsewhere` or `ended` dismissal when the call ends ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
+- Add a `frozen` state, which rejects every update call except `wallet_receive` while set and leaves queries unaffected. Nothing sets it yet ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
 
 ### Changed
 
@@ -88,6 +89,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share the video call handling with the MultiUser canister via `user_core` ([#9500](https://github.com/open-chat-labs/open-chat/pull/9500))
 - Share the `tip_message` checks and the handling of tips received with the MultiUser canister via `user_core` ([#9528](https://github.com/open-chat-labs/open-chat/pull/9528))
 - Resolve the offerer of a P2P swap in a direct chat by their principal via the LocalUserIndex when they aren't alone in their canister, and the acceptor by the principal recorded on the swap ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
+- Share P2P swap acceptance, cancellation and status changes with the MultiUser canister via `user_core` ([#9531](https://github.com/open-chat-labs/open-chat/pull/9531))
 
 ### Removed
 

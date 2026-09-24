@@ -59,6 +59,7 @@ use utils::event_stream::EventStream;
 use utils::fcm_token_store::FcmTokenStore;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::iterator_extensions::IteratorExtensions;
+use utils::migrated_user_ids::MigratedUserIds;
 
 mod bots;
 mod call_push;
@@ -556,6 +557,7 @@ impl RuntimeState {
             multi_user_upgrades_in_progress: multi_user_upgrades_metrics.in_progress,
             multi_user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.version,
             multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
+            migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
             user_versions: self
                 .data
@@ -740,6 +742,10 @@ struct Data {
     // Solve rewards whose credit call failed after the solve was recorded
     #[serde(default = "new_retry_queue")]
     pub game_chit_credit_retry_queue: GameChitCreditRetryQueue,
+    // The old id -> the new id of each user migrated to a MultiUser canister, synced from the
+    // UserIndex
+    #[serde(default)]
+    pub migrated_user_ids: MigratedUserIds,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -891,6 +897,7 @@ impl Data {
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_results_queue: None,
             game_chit_credit_retry_queue: new_retry_queue(),
+            migrated_user_ids: MigratedUserIds::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -940,6 +947,7 @@ pub struct Metrics {
     pub multi_user_upgrades_in_progress: u64,
     pub multi_user_wasm_version: BuildVersion,
     pub multi_user_canisters_enabled: bool,
+    pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
     pub user_events_queue_length: usize,
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one

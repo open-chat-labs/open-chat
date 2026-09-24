@@ -1,6 +1,7 @@
 
 <script lang="ts">
     import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
+    import { consumePendingCallAction, runCallAction } from "@utils/native/call_bridge";
     import {
         consumePendingDeepLink,
         consumePendingNotificationTap,
@@ -337,9 +338,14 @@
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
         ) {
-            const deepLink = consumePendingDeepLink();
-            const tapPath = deepLink === null ? consumePendingNotificationTap() : null;
-            if (deepLink) {
+            // An answered native ring beats any other cold-start intent.
+            const callAction = consumePendingCallAction();
+            const deepLink = callAction === null ? consumePendingDeepLink() : null;
+            const tapPath =
+                callAction === null && deepLink === null ? consumePendingNotificationTap() : null;
+            if (callAction) {
+                untrack(() => runCallAction(callAction));
+            } else if (deepLink) {
                 untrack(() => {
                     try {
                         const { pathname, search } = new URL(deepLink);

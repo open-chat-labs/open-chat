@@ -29,6 +29,7 @@
         sharing,
         type InterCallMessage,
     } from "../../../stores/video";
+    import { armRingOut, ringOutApplies, type RingOutHandle } from "../../../utils/callRingOut";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
     import { removeQueryStringParam } from "../../../utils/urls";
@@ -99,6 +100,9 @@
             }
         }
     }
+
+    // Ends a direct call this client started if nobody joins within the ring window.
+    let ringOut: RingOutHandle | undefined;
 
     export async function startOrJoinVideoCall(
         chatId: ChatIdentifier,
@@ -195,6 +199,7 @@
 
             // this only fires when *I* leave the meeting
             call.on("left-meeting", () => {
+                ringOut?.cancel();
                 // at this point I have already left the meeting and so participantCount will always report 0
                 // so we can't use it.
                 activeVideoCall.endCall();
@@ -207,6 +212,10 @@
                     hangup();
                     hostEnded = true;
                 }
+            });
+
+            call.on("participant-joined", (ev) => {
+                if (!ev?.participant.local) ringOut?.cancel();
             });
 
             call.on("joined-meeting", (ev) => {
@@ -239,6 +248,17 @@
             await call.join();
 
             activeVideoCall.setCall(chatId, BigInt(messageId), call);
+
+            if (ringOutApplies(chatId, joining)) {
+                ringOut?.cancel();
+                ringOut = armRingOut(
+                    () => (call?.participantCounts().present ?? 1) > 1,
+                    () => {
+                        toastStore.showSuccessToast(i18nKey("videoCall.noAnswer"));
+                        hangup();
+                    },
+                );
+            }
 
             if (joining) {
                 switch (chatId.kind) {

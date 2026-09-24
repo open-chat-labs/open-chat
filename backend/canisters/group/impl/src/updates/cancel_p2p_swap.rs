@@ -18,8 +18,6 @@ fn cancel_p2p_swap(args: Args) -> Response {
 }
 
 fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
-    state.data.verify_not_frozen()?;
-
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
     state

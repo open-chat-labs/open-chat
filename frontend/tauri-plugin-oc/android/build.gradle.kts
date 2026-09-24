@@ -22,7 +22,11 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "AVATAR_BASE_URL", "\"http://%s.raw.localhost:8080\"")
+            // From a device, localhost is the device. A dev build can point avatars at the
+            // Mac's nginx media proxy instead, e.g. OC_DEV_AVATAR_BASE_URL=http://192.168.1.5:8081/media-proxy/%s
+            val avatarBase = System.getenv("OC_DEV_AVATAR_BASE_URL")?.takeIf { it.isNotBlank() }
+                ?: "http://%s.raw.localhost:8080"
+            buildConfigField("String", "AVATAR_BASE_URL", "\"$avatarBase\"")
         }
         release {
             buildConfigField("String", "AVATAR_BASE_URL", "\"https://%s.raw.icp0.io\"")
@@ -43,6 +47,12 @@ android {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
+    }
+
+    // JVM unit tests for the pure call rules (src/test). android.util.Log calls in the
+    // code under test return defaults instead of throwing; no Robolectric.
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 }
 

@@ -156,6 +156,14 @@ type SearchResponse = variant {
     };
 };
 
+type MigratedUserIdsArgs = record {
+    user_ids : vec UserId;
+};
+
+type MigratedUserIdsResponse = variant {
+    Success : vec record { UserId; UserId };
+};
+
 type UsersChitArgs = record {
     users : vec UserId;
     year : nat16;
@@ -368,6 +376,7 @@ service : {
     diamond_membership_fees : (EmptyArgs) -> (DiamondMembershipFeesResponse) query;
     explore_bots : (ExploreBotsArgs) -> (ExploreBotsResponse) query;
     external_achievements : (ExternalAchievementsArgs) -> (ExternalAchievementsResponse) query;
+    migrated_user_ids : (MigratedUserIdsArgs) -> (MigratedUserIdsResponse) query;
     platform_moderators : (EmptyArgs) -> (PlatformModeratorsResponse) query;
     platform_moderators_group : (EmptyArgs) -> (PlatformModeratorsGroupResponse) query;
     platform_operators : (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;

@@ -94,8 +94,6 @@ struct PrepareResult {
 }
 
 fn prepare(user_id: UserId, block: bool, ext_caller: Option<Caller>, state: &RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_frozen()?;
-
     if block && !state.data.is_public.value {
         return Err(OCErrorCode::CommunityNotPublic.into());
     }

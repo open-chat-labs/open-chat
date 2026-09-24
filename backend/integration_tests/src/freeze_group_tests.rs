@@ -3,10 +3,11 @@ use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use testing::rng::random_string;
-use types::ChatId;
+use testing::rng::{random_from_u128, random_string};
+use types::{ChatId, MessageContentInitial, TextContent};
 
 #[test]
 fn freeze_then_unfreeze() {
@@ -55,6 +56,71 @@ fn freeze_then_unfreeze() {
     } else {
         panic!()
     }
+}
+
+#[test]
+fn frozen_group_rejects_updates_other_than_those_exempted() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1, user2, group_id, ..
+    } = init_test_data(env, canister_ids, *controller);
+
+    client::group_index::freeze_group(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::freeze_group::Args {
+            chat_id: group_id,
+            reason: None,
+            suspend_members: None,
+        },
+    );
+
+    // Sending a message is rejected
+    let send_message_args = group_canister::send_message_v2::Args {
+        thread_root_message_index: None,
+        message_id: random_from_u128(),
+        content: MessageContentInitial::Text(TextContent {
+            text: "hello".to_string(),
+        }),
+        sender_name: user2.username(),
+        sender_display_name: None,
+        replies_to: None,
+        mentioned: Vec::new(),
+        forwarding: false,
+        block_level_markdown: false,
+        rules_accepted: None,
+        message_filter_failed: None,
+        new_achievement: false,
+        og_previews: Vec::new(),
+    };
+    let error = env
+        .update_call(
+            group_id.into(),
+            user2.principal,
+            "send_message_v2_msgpack",
+            msgpack::serialize_then_unwrap(&send_message_args),
+        )
+        .unwrap_err();
+    assert!(error.reject_message.contains("Canister is frozen"), "{error:?}");
+
+    // Unfreezing is exempt, so still succeeds
+    client::group_index::unfreeze_group(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::unfreeze_group::Args { chat_id: group_id },
+    );
+
+    // Once unfrozen, sending a message succeeds
+    client::group::happy_path::send_text_message(env, &user2, group_id, None, "hello", None);
 }
 
 #[test]
@@ -187,6 +253,42 @@ fn freeze_and_suspend_users() {
     let user = client::user_index::happy_path::current_user(env, user2.principal, canister_ids.user_index);
 
     assert!(user.suspension_details.is_some());
+
+    client::group_index::unfreeze_group(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::unfreeze_group::Args { chat_id: group_id },
+    );
+
+    // The suspension reached the group despite it being frozen at the time, so once it is unfrozen
+    // the suspended member still can't send messages
+    let response = client::group::send_message_v2(
+        env,
+        user2.principal,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: MessageContentInitial::Text(TextContent {
+                text: "spam".to_string(),
+            }),
+            sender_name: user2.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(&response, group_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)),
+        "{response:?}"
+    );
 }
 
 #[test]

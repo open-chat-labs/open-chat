@@ -3,6 +3,7 @@ package com.ocplugin.app.commands
 import android.app.Activity
 import app.tauri.plugin.Invoke
 import com.ocplugin.app.NotificationsManager
+import com.ocplugin.app.calls.CallHandleDirectory
 
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +28,8 @@ class ClearAllNotifications(private val activity: Activity) {
             // Resolve once it has run.
             withContext(Dispatchers.IO) {
                 NotificationsManager.releaseAllNotificationsAfterSummaryDismissed(activity)
+                // Call log handles belong to the account too.
+                CallHandleDirectory.clear(activity)
             }
             invoke.resolve(null)
         }

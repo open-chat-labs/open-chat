@@ -16,7 +16,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use identity_canister::UserIdentity;
-use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
+use local_user_index_canister::{UserIdMigrated, UserIndexEvent as LocalUserIndexEvent};
 use model::authority_reports::{AuthorityReportMetrics, AuthorityReports};
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
@@ -42,6 +42,7 @@ use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
+use utils::migrated_user_ids::MigratedUserIds;
 use utils::time::MonthKey;
 
 mod guards;
@@ -168,6 +169,21 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
+    // Records that a user migrated to a MultiUser canister has been given a new id, and tells
+    // every LocalUserIndex
+    #[expect(dead_code, reason = "Called once the UserIndex orchestrates migrations")]
+    pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
+            self.push_event_to_all_local_user_indexes(
+                LocalUserIndexEvent::UserIdMigrated(UserIdMigrated {
+                    old_user_id,
+                    new_user_id,
+                }),
+                None,
+            );
+        }
+    }
+
     pub fn get_random_local_user_index_canister(&mut self) -> CanisterId {
         let canisters: Vec<CanisterId> = self.data.local_index_map.canisters().copied().collect();
         let index: usize = self.env.rng().next_u32() as usize % canisters.len();
@@ -279,6 +295,7 @@ impl RuntimeState {
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, i)| (*c, *i)).collect(),
             multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
+            migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
@@ -470,6 +487,10 @@ struct Data {
     // queued for refunding, so that the one-off run in `post_upgrade` only happens once
     #[serde(default)]
     pub deleted_user_cycles_refund_queued: bool,
+    // The old id -> the new id of each user migrated to a MultiUser canister. Fanned out to the
+    // LocalUserIndexes, including any added later
+    #[serde(default)]
+    pub migrated_user_ids: MigratedUserIds,
 }
 
 impl Data {
@@ -578,6 +599,7 @@ impl Data {
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
             deleted_user_cycles_refund_queued: false,
+            migrated_user_ids: MigratedUserIds::default(),
         };
 
         // Register the ProposalsBot
@@ -705,6 +727,7 @@ impl Default for Data {
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
             deleted_user_cycles_refund_queued: false,
+            migrated_user_ids: MigratedUserIds::default(),
         }
     }
 }
@@ -736,6 +759,7 @@ pub struct Metrics {
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub multi_user_canisters: Vec<(CanisterId, CanisterId)>,
     pub multi_user_canisters_enabled: bool,
+    pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,

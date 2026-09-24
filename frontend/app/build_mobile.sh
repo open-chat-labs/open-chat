@@ -19,7 +19,9 @@ export OC_ALCHEMY_API_KEY=6pSBD1eOqwyGDI1xFfV-p
 export OC_BITCOIN_MAINNET_ENABLED=false
 export OC_ACCOUNT_LINKING_CODES_ENABLED=false
 export OC_ACHIEVEMENT_URL_PATH=http://{canisterId}.localhost:8080
-export OC_BLOB_URL_PATTERN=http://{canisterId}.raw.localhost:8080/{blobType}
+# Blobs go through the nginx media proxy on 8081: from a device, localhost is the device,
+# and the proxy rewrites the Host header the PocketIC gateway insists on.
+export OC_BLOB_URL_PATTERN=http://$(ipconfig getifaddr en0):8081/media-proxy/{canisterId}/{blobType}
 export OC_BUILD_ENV=$NODE_ENV
 export OC_WEBAUTHN_ORIGIN=localhost
 # Overridable so the iOS dev flow can run alongside an Android/web dev server
