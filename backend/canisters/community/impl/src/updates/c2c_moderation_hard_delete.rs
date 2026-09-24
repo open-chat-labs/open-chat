@@ -32,6 +32,7 @@ fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeState) -> Unit
             vec![args.message_id],
             true,
             now,
+            &state.data.migrated_user_ids,
         );
 
         if let Some((content, _sender)) =

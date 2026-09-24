@@ -82,6 +82,7 @@ fn delete_message(args: &Args, reporter: UserIdAndPrincipal, state: &mut Runtime
             vec![args.message_id],
             false,
             state.env.now(),
+            &state.data.migrated_user_ids,
         )
         && results.iter().any(|(_, r)| r.is_ok())
     {

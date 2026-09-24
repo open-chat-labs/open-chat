@@ -47,7 +47,11 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             let chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
 
             // TODO: Push the edit to the event store (`UserEventPusher` in the User canister)
-            chat.edit_message::<NullEventPusher>(edit_message_args(my_user_id, args.thread_root_message_index), None)?;
+            chat.edit_message::<NullEventPusher>(
+                edit_message_args(my_user_id, args.thread_root_message_index),
+                &state.data.migrated_user_ids,
+                None,
+            )?;
             chat.thread_root_message_id(args.thread_root_message_index)
         })
         .ok_or(OCErrorCode::TargetUserNotFound)??;
@@ -65,9 +69,13 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             og_previews: args.og_previews.clone(),
         })),
     );
-    state.with_their_direct_chat_mut(my_user_id, args.user_id, |chat| {
+    state.with_their_direct_chat_mut(my_user_id, args.user_id, |chat, migrated_user_ids| {
         if let Ok(thread_root_message_index) = chat.thread_root_message_index(thread_root_message_id) {
-            let _ = chat.edit_message::<NullEventPusher>(edit_message_args(my_user_id, thread_root_message_index), None);
+            let _ = chat.edit_message::<NullEventPusher>(
+                edit_message_args(my_user_id, thread_root_message_index),
+                migrated_user_ids,
+                None,
+            );
         }
     });
 

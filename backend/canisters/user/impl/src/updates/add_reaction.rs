@@ -34,6 +34,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             reaction: args.reaction.clone(),
             now,
         },
+        &state.data.migrated_user_ids,
         Some(UserEventPusher {
             now,
             rng: state.env.rng(),

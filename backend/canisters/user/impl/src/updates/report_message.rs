@@ -25,7 +25,13 @@ async fn report_message_impl(args: Args) -> Response {
             if args.delete {
                 mutate_state(|state| {
                     let now = state.env.now();
-                    delete_reported_message(&mut state.data.user, &args, c2c_args.reporter, now)
+                    delete_reported_message(
+                        &mut state.data.user,
+                        &args,
+                        c2c_args.reporter,
+                        now,
+                        &state.data.migrated_user_ids,
+                    )
                 });
             }
 

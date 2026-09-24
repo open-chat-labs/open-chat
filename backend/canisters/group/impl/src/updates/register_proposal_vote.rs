@@ -5,7 +5,6 @@ use chat_events::{MessageContentInternal, Reader};
 use group_canister::register_proposal_vote::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, ProposalId, UserId};
-use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -60,7 +59,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = m.content { Some(p) } else { None })
     {
-        if proposal.vote(member.user_id(), &MigratedUserIds::default()).is_some() {
+        if proposal.vote(member.user_id(), &state.data.migrated_user_ids).is_some() {
             Err(OCErrorCode::NoChange.into())
         } else {
             Ok(PrepareResult {
@@ -87,7 +86,7 @@ fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
         args.message_index,
         args.adopt,
         now,
-        &MigratedUserIds::default(),
+        &state.data.migrated_user_ids,
     )?;
 
     state

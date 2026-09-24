@@ -36,6 +36,7 @@ pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, s
 
     let result = state.data.chat.tip_message(
         tip_message_args,
+        &state.data.migrated_user_ids,
         GroupEventPusher {
             now,
             rng: state.env.rng(),

@@ -162,6 +162,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
         &mut state.data.user,
         args,
         decimals,
+        &state.data.migrated_user_ids,
         Some(UserEventPusher {
             now,
             rng: state.env.rng(),

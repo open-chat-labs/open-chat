@@ -55,6 +55,10 @@ impl<T: TimerJobItemBatch> BatchedTimerJobQueue<T> {
     pub fn in_progress(&self) -> usize {
         self.0.in_progress()
     }
+
+    pub fn is_idle(&self) -> bool {
+        self.0.is_idle()
+    }
 }
 
 impl<T: TimerJobItemBatch + 'static> BatchedTimerJobQueue<T>

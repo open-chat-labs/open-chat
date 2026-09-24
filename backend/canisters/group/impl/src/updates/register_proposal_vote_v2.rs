@@ -3,7 +3,6 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::register_proposal_vote_v2::*;
 use types::OCResult;
-use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -23,7 +22,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult
         args.message_index,
         args.adopt,
         now,
-        &MigratedUserIds::default(),
+        &state.data.migrated_user_ids,
     )?;
 
     state

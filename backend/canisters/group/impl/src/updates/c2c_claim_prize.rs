@@ -75,6 +75,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         args.streak,
         args.streak_ends,
         args.user_reauthenticated,
+        &state.data.migrated_user_ids,
     )?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.
