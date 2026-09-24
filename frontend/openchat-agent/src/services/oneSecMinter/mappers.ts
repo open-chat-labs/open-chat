@@ -12,6 +12,7 @@ import {
     type Chain,
     ETHEREUM_NETWORK,
     type EvmChain,
+    type IcrcAccount,
     ICP_SYMBOL,
     type OneSecForwardingStatus,
     type OneSecTransferFees,
@@ -20,7 +21,7 @@ import {
     USDT_SYMBOL,
 } from "@shared";
 import { identity, optional } from "../../utils/mapping";
-import { userIdToApiIcrcAccount } from "../../utils/icrcAccount";
+import { apiIcrcAccount } from "../../utils/icrcAccount";
 
 export function forwardingResponse(
     candid: { Ok: ApiForwardingResponse } | { Err: string },
@@ -59,13 +60,13 @@ export function apiForwardEvmToIcpArgs(
     tokenSymbol: string,
     chain: EvmChain,
     address: string,
-    receiver: string,
+    receiver: IcrcAccount,
 ): ApiForwardEvmToIcpArg {
     return {
         token: apiToken(tokenSymbol),
         chain: apiEvmChain(chain),
         address,
-        receiver: { ICRC: userIdToApiIcrcAccount(receiver) },
+        receiver: { ICRC: apiIcrcAccount(receiver) },
     };
 }
 

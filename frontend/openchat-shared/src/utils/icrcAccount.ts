@@ -1,11 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
-import {
-    indexedUserId,
-    isCanisterId,
-    MAX_USER_INDEX,
-    userCanisterId,
-    userIndexWithinCanister,
-} from "./userId";
+import { isCanisterId, isMultiUserCanisterUser, userCanisterId } from "./userId";
 
 const BASE32_ALPHABET = "abcdefghijklmnopqrstuvwxyz234567";
 const MAX_SUBACCOUNT_HEX_LENGTH = 64;
@@ -130,55 +124,56 @@ function hexStringToUint8Array(hex: string): Uint8Array {
     return bytes;
 }
 
-// Every ICRC-1 subaccount is exactly this long, the index occupying the final two bytes.
+// Every ICRC-1 subaccount is exactly this long.
 const SUBACCOUNT_LENGTH = 32;
 
-// The ledger account holding a user's funds, which is also the account their canister spends as
-// when pulling from an external wallet via ICRC-2. Mirrors `impl From<UserId> for Account` in
-// backend/libraries/types/src/user.rs: the owner is the canister holding the user rather than the
-// UserId itself, since nobody can sign for an indexed UserId, and the user's index within that
-// canister goes in the subaccount. Index 0 maps to no subaccount so that users who predate indexing
-// keep the address they already have.
-export function userIdToIcrcAccount(userId: string): IcrcAccount {
-    const owner = userCanisterId(userId);
-    const index = userIndexWithinCanister(userId);
-
-    if (index === 0) {
-        return { owner };
-    }
-
-    const subaccount = new Uint8Array(SUBACCOUNT_LENGTH);
-    subaccount[SUBACCOUNT_LENGTH - 2] = (index >> 8) & 0xff;
-    subaccount[SUBACCOUNT_LENGTH - 1] = index & 0xff;
-
-    return { owner, subaccount };
+// The ledger account holding a user's funds. Mirrors `impl From<UserIdAndPrincipal> for Account` in
+// backend/libraries/types/src/user.rs: a user alone in their canister holds their funds in that
+// canister's account, whose id is their user id, while anyone else, such as a user in a MultiUser
+// canister, holds their own funds in the account of the principal they sign in with.
+export function userWalletAccount(userId: string, principal: string): IcrcAccount {
+    const userIdPrincipal = Principal.fromText(userId);
+    return {
+        owner: isCanisterId(userIdPrincipal) ? userIdPrincipal : Principal.fromText(principal),
+    };
 }
 
-// The user whose wallet this ledger account is - the inverse of `userIdToIcrcAccount`, mirroring
-// `UserId::from_account` in backend/libraries/types/src/user.rs. Undefined for an account which is
-// not a user's wallet: one whose subaccount is not of the form `userIdToIcrcAccount` produces, or
-// an indexed subaccount of an owner which is not a canister. The default subaccount maps to the
-// owner itself, whether or not that is a canister, so the wallets of bots and other non-canister
-// users resolve too.
+// The account a user's canister spends as when it pulls funds the user has approved via ICRC-2, so
+// the spender the user has to approve. A User canister spends as itself. A canister holding many
+// users spends each user's approval under a subaccount derived from their principal, mirroring
+// `ledger_utils::spender_subaccount`, so that it only ever spends a user's own approval.
+export function userCanisterSpenderAccount(userId: string, principal: string): IcrcAccount {
+    const owner = userCanisterId(userId);
+    if (!isMultiUserCanisterUser(userId)) {
+        return { owner };
+    }
+    return { owner, subaccount: spenderSubaccount(Principal.fromText(principal)) };
+}
+
+// Mirrors `ledger_utils::convert_to_subaccount`: the principal's length followed by its bytes.
+export function spenderSubaccount(principal: Principal): Uint8Array {
+    const bytes = principal.toUint8Array();
+    const subaccount = new Uint8Array(SUBACCOUNT_LENGTH);
+    subaccount[0] = bytes.length;
+    subaccount.set(bytes, 1);
+    return subaccount;
+}
+
+// The user whose wallet this ledger account might be, which is what lets the UI name the other side
+// of a transaction. Only an account with the default subaccount can be a wallet (see
+// `userWalletAccount`), and then it is the owner's: a User canister's id is its user's id, and the
+// principal of a user in a MultiUser canister is left for the caller to resolve, since it is not
+// their user id. Undefined for any other subaccount.
 //
 // There is no equivalent for the ICP ledger's AccountIdentifier, which is a hash and so cannot be
 // inverted.
 export function icrcAccountToUserId({ owner, subaccount }: IcrcAccount): string | undefined {
-    const index = subaccountIndex(subaccount);
+    if (
+        subaccount !== undefined &&
+        (subaccount.length !== SUBACCOUNT_LENGTH || !subaccount.every((b) => b === 0))
+    ) {
+        return undefined;
+    }
 
-    if (index === undefined) return undefined;
-    if (index === 0) return owner.toText();
-    if (index > MAX_USER_INDEX || !isCanisterId(owner)) return undefined;
-
-    return indexedUserId(owner, index);
-}
-
-// The index a subaccount carries, or undefined if it is not one `userIdToIcrcAccount` produces.
-// Both the default subaccount and an all-zero one mean index 0.
-function subaccountIndex(subaccount: Uint8Array | undefined): number | undefined {
-    if (subaccount === undefined) return 0;
-    if (subaccount.length !== SUBACCOUNT_LENGTH) return undefined;
-    if (!subaccount.subarray(0, SUBACCOUNT_LENGTH - 2).every((b) => b === 0)) return undefined;
-
-    return (subaccount[SUBACCOUNT_LENGTH - 2] << 8) | subaccount[SUBACCOUNT_LENGTH - 1];
+    return owner.toText();
 }

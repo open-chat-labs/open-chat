@@ -8,6 +8,7 @@ import {
     random32,
     Stream,
     toBigInt32,
+    userCanisterId,
     type AcceptP2PSwapResponse,
     type AddRemoveReactionResponse,
     type ApproveTransferResponse,
@@ -252,7 +253,8 @@ export class UserClient
         private readonly chatsDb: ChatsDb,
         private readonly userDb: UserDb,
     ) {
-        super(identity, agent, userId, "User");
+        // A MultiUser canister holds many users, so the canister is not always the user id
+        super(identity, agent, userCanisterId(userId).toText(), "User");
         this.userId = userId;
     }
 

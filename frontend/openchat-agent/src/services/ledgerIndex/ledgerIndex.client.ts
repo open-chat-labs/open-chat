@@ -1,9 +1,9 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type LedgerIndexService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
-import { userIdToApiIcrcAccount } from "../../utils/icrcAccount";
+import { apiIcrcAccount } from "../../utils/icrcAccount";
 import { accountTransactions } from "./mappers";
-import type { AccountTransactionResult } from "@shared";
+import type { AccountTransactionResult, IcrcAccount } from "@shared";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
@@ -12,13 +12,17 @@ export class LedgerIndexClient extends CandidCanisterAgent<LedgerIndexService> {
         super(identity, agent, undefined, idlFactory, "LedgerIndex");
     }
 
-    getAccountTransactions(ledgerIndex: string, userId: string, fromId?: bigint): Promise<AccountTransactionResult> {
+    getAccountTransactions(
+        ledgerIndex: string,
+        account: IcrcAccount,
+        fromId?: bigint,
+    ): Promise<AccountTransactionResult> {
         return this.handleQueryResponse(
             () =>
                 this.service.get_account_transactions.withOptions({ canisterId: ledgerIndex })({
                     max_results: 100n,
                     start: apiOptional(identity, fromId),
-                    account: userIdToApiIcrcAccount(userId),
+                    account: apiIcrcAccount(account),
                 }),
             accountTransactions,
         );

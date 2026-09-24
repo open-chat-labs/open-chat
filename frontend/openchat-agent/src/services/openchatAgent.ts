@@ -94,6 +94,7 @@ import type {
     GroupChatSummary,
     GroupInvite,
     GroupSearchResponse,
+    IcrcAccount,
     IndexRange,
     InviteCodeResponse,
     JoinCommunityResponse,
@@ -243,6 +244,7 @@ import {
     messageContextsEqual,
     offline,
     textToCode,
+    userWalletAccount,
     waitAll,
 } from "@shared";
 import type { AgentConfig } from "../config";
@@ -488,6 +490,16 @@ export class OpenChatAgent extends EventTarget {
 
     private get principal(): Principal {
         return this.identity.getPrincipal();
+    }
+
+    // The ledger account holding the funds of `userId`. That is the principal's account for a user
+    // in a MultiUser canister, and only the current user's principal is known here, so for anyone
+    // else `userId` has to be a canister, such as a User canister or the translations canister.
+    private walletAccount(userId: string): IcrcAccount {
+        if (isMultiUserCanisterUser(userId) && userId !== this._userClient.userId) {
+            throw new Error(`Only the current user's wallet is known, not ${userId}'s`);
+        }
+        return userWalletAccount(userId, this.principal.toText());
     }
 
     getAllCachedUsers(): Promise<UserSummary[]> {
@@ -3179,7 +3191,7 @@ export class OpenChatAgent extends EventTarget {
     refreshAccountBalance(ledger: string, userId: string): Promise<bigint> {
         if (offline()) return Promise.resolve(0n);
 
-        return this._ledgerClient.accountBalance(ledger, userId);
+        return this._ledgerClient.accountBalance(ledger, this.walletAccount(userId));
     }
 
     getAccountTransactions(
@@ -3196,9 +3208,13 @@ export class OpenChatAgent extends EventTarget {
                 this.identity,
                 this._agent,
                 ledgerIndex,
-            ).getAccountTransactions(userId, fromId);
+            ).getAccountTransactions(this.walletAccount(userId), fromId);
         }
-        return this._ledgerIndexClient.getAccountTransactions(ledgerIndex, userId, fromId);
+        return this._ledgerIndexClient.getAccountTransactions(
+            ledgerIndex,
+            this.walletAccount(userId),
+            fromId,
+        );
     }
 
     getMessagesByMessageIndex(
@@ -4455,7 +4471,9 @@ export class OpenChatAgent extends EventTarget {
         const allUtxos = await this._bitcoinClient.get().getUtxos(bitcoinAddress);
 
         if (allUtxos.length > 0) {
-            const knownUtxos = await this._ckbtcMinterClient.get().getKnownUtxos(userId);
+            const knownUtxos = await this._ckbtcMinterClient
+                .get()
+                .getKnownUtxos(this.walletAccount(userId));
             const knownUtxosSet = new Set(
                 knownUtxos.map((utxo) => bytesToHexString(utxo.outpoint.txid)),
             );
@@ -4507,7 +4525,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<OneSecForwardingStatus> {
         return this._oneSecMinterClient
             .get()
-            .forwardEvmToIcp(tokenSymbol, chain, address, receiver);
+            .forwardEvmToIcp(tokenSymbol, chain, address, this.walletAccount(receiver));
     }
 
     oneSecGetForwardingStatus(
@@ -4518,14 +4536,14 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<OneSecForwardingStatus> {
         return this._oneSecMinterClient
             .get()
-            .getForwardingStatus(tokenSymbol, chain, address, receiver);
+            .getForwardingStatus(tokenSymbol, chain, address, this.walletAccount(receiver));
     }
 
     async oneSecEnableForwarding(userId: string, evmAddress: string): Promise<void> {
         const client = this._oneSecForwarderClient.get();
         const forwarding = await client.isForwarding(evmAddress);
         if (!forwarding) {
-            await client.enableForwarding(userId);
+            await client.enableForwarding(this.walletAccount(userId));
         }
     }
 
