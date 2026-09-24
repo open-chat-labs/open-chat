@@ -24,7 +24,13 @@ fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
         .data
         .chat
         .events
-        .cancel_p2p_swap(user_id, args.thread_root_message_index, args.message_id, now)
+        .cancel_p2p_swap(
+            user_id,
+            args.thread_root_message_index,
+            args.message_id,
+            now,
+            &state.data.migrated_user_ids,
+        )
         .map(|result| {
             state.push_bot_notification(result.bot_notification);
             result.value

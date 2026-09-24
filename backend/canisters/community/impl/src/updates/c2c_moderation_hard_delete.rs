@@ -9,6 +9,7 @@ use community_canister::c2c_moderation_hard_delete::*;
 use constants::OPENCHAT_BOT_USER_ID;
 use tracing::error;
 use types::{Caller, UnitResult};
+use utils::migrated_user_ids::MigratedUserIds;
 
 // Permanently removes the chat-canister copy of a message after an Upheld verdict. For CSAM the
 // blob remains pinned in the evidence vault under the retention regime; the file-reference
@@ -32,6 +33,7 @@ fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeState) -> Unit
             vec![args.message_id],
             true,
             now,
+            &MigratedUserIds::default(),
         );
 
         if let Some((content, _sender)) =

@@ -12,3 +12,4 @@ ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
 stable_memory_map = { path = "../libraries/stable_memory_map" }
 types = { path = "../libraries/types" }
+utils = { path = "../libraries/utils" }

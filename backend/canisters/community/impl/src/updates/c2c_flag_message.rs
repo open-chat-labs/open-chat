@@ -7,6 +7,7 @@ use community_canister::c2c_flag_message::*;
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
 use types::{Caller, ModerationCategories, OCResult};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
@@ -46,6 +47,7 @@ fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             vec![args.message_id],
             true,
             now,
+            &MigratedUserIds::default(),
         )?;
         results
             .into_iter()

@@ -65,10 +65,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let now_nanos = state.env.now_nanos();
     let winner = state.member_user(args.user_id);
 
-    let previous_user_ids = state.data.migrated_user_ids.previous_ids(args.user_id);
     let result = state.data.chat.reserve_prize(
         args.user_id,
-        &previous_user_ids,
         args.message_id,
         now,
         args.is_unique_person,
@@ -77,6 +75,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         args.streak,
         args.streak_ends,
         args.user_reauthenticated,
+        &state.data.migrated_user_ids,
     )?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.

@@ -27,6 +27,7 @@ use types::{
     VersionedRules, VideoCall, VideoCallPresence, VoteOperation, WebhookDetails,
 };
 use utils::document::validate_avatar;
+use utils::migrated_user_ids::MigratedUserIds;
 use utils::text_validation::{
     StringLengthValidationError, validate_channel_name, validate_description, validate_group_name, validate_rules,
 };
@@ -739,7 +740,11 @@ impl GroupChatCore {
             now,
         };
 
-        let result = self.events.edit_message::<NullEventPusher>(edit_message_args, None).ok();
+        let result = self
+            .events
+            // Bots are never migrated to a MultiUser canister, so have no earlier ids
+            .edit_message::<NullEventPusher>(edit_message_args, &MigratedUserIds::default(), None)
+            .ok();
 
         let reader = self
             .events
@@ -934,6 +939,7 @@ impl GroupChatCore {
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
         event_pusher: P,
     ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
         if matches!(caller, Caller::Webhook(_) | Caller::Bot(_)) {
@@ -961,6 +967,7 @@ impl GroupChatCore {
                 reaction,
                 now,
             },
+            migrated_user_ids,
             Some(event_pusher),
         )
     }
@@ -972,6 +979,7 @@ impl GroupChatCore {
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(user_id)?;
 
@@ -981,14 +989,17 @@ impl GroupChatCore {
 
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.events.remove_reaction(AddRemoveReactionArgs {
-            user_id,
-            min_visible_event_index,
-            thread_root_message_index,
-            message_id,
-            reaction,
-            now,
-        })
+        self.events.remove_reaction(
+            AddRemoveReactionArgs {
+                user_id,
+                min_visible_event_index,
+                thread_root_message_index,
+                message_id,
+                reaction,
+                now,
+            },
+            migrated_user_ids,
+        )
     }
 
     // Checks `user_id` could tip the message now, without tipping it, returning the message's sender,
@@ -998,6 +1009,7 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UserId> {
         let member = self.members.get_verified_member(user_id)?;
 
@@ -1010,10 +1022,19 @@ impl GroupChatCore {
             .message_internal(member.min_visible_event_index(), thread_root_message_index, message_id.into())
             .ok_or(OCErrorCode::MessageNotFound)?;
 
-        if message.sender == user_id { Err(OCErrorCode::CannotTipSelf.into()) } else { Ok(message.sender) }
+        if migrated_user_ids.is_same_user(message.sender, user_id) {
+            Err(OCErrorCode::CannotTipSelf.into())
+        } else {
+            Ok(message.sender)
+        }
     }
 
-    pub fn tip_message<P: EventPusher>(&mut self, args: TipMessageArgs, event_pusher: P) -> OCResult<UpdateMessageSuccess> {
+    pub fn tip_message<P: EventPusher>(
+        &mut self,
+        args: TipMessageArgs,
+        migrated_user_ids: &MigratedUserIds,
+        event_pusher: P,
+    ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(args.user_id)?;
 
         if !member.role().can_react_to_messages(&self.permissions) {
@@ -1022,7 +1043,8 @@ impl GroupChatCore {
 
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.events.tip_message(args, min_visible_event_index, Some(event_pusher))
+        self.events
+            .tip_message(args, min_visible_event_index, migrated_user_ids, Some(event_pusher))
     }
 
     pub fn delete_messages(
@@ -1032,6 +1054,7 @@ impl GroupChatCore {
         message_ids: Vec<MessageId>,
         as_platform_moderator: bool,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<Vec<(MessageId, OCResult<DeleteMessageSuccess>)>> {
         let initiator = caller.initiator();
 
@@ -1056,14 +1079,17 @@ impl GroupChatCore {
             _ => (true, EventIndex::default()),
         };
 
-        let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
-            caller: caller.agent(),
-            is_admin,
-            min_visible_event_index,
-            thread_root_message_index,
-            message_ids,
-            now,
-        });
+        let results = self.events.delete_messages(
+            DeleteUndeleteMessagesArgs {
+                caller: caller.agent(),
+                is_admin,
+                min_visible_event_index,
+                thread_root_message_index,
+                message_ids,
+                now,
+            },
+            migrated_user_ids,
+        );
 
         if thread_root_message_index.is_none() {
             for message_id in results
@@ -1103,20 +1129,24 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         message_ids: Vec<MessageId>,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<Vec<UndeleteMessageSuccess>> {
         let user_id = user.user_id;
         let member = self.members.get_verified_member(user_id)?;
 
         let min_visible_event_index = member.min_visible_event_index();
 
-        let results = self.events.undelete_messages(DeleteUndeleteMessagesArgs {
-            caller: user_id,
-            is_admin: member.role().can_delete_messages(&self.permissions),
-            min_visible_event_index,
-            thread_root_message_index,
-            message_ids,
-            now,
-        });
+        let results = self.events.undelete_messages(
+            DeleteUndeleteMessagesArgs {
+                caller: user_id,
+                is_admin: member.role().can_delete_messages(&self.permissions),
+                min_visible_event_index,
+                thread_root_message_index,
+                message_ids,
+                now,
+            },
+            migrated_user_ids,
+        );
 
         let events_reader = self
             .events
@@ -1797,11 +1827,17 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: MessageIndex,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult {
         let member = self.members.get_verified_member(user_id)?;
 
-        self.events
-            .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)?;
+        self.events.follow_thread(
+            thread_root_message_index,
+            user_id,
+            member.min_visible_event_index(),
+            now,
+            migrated_user_ids,
+        )?;
 
         self.members.update_member(&user_id, |m| {
             m.followed_threads.insert(thread_root_message_index, now);
@@ -1816,11 +1852,17 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: MessageIndex,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult {
         let member = self.members.get_verified_member(user_id)?;
 
-        self.events
-            .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)?;
+        self.events.unfollow_thread(
+            thread_root_message_index,
+            user_id,
+            member.min_visible_event_index(),
+            now,
+            migrated_user_ids,
+        )?;
 
         self.members.update_member(&user_id, |m| {
             m.followed_threads.remove(thread_root_message_index);
@@ -1833,32 +1875,33 @@ impl GroupChatCore {
     pub fn register_poll_vote(
         &mut self,
         user_id: UserId,
-        previous_user_ids: Vec<UserId>,
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
         option_index: u32,
         operation: VoteOperation,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UpdateMessageSuccess<RegisterPollVoteSuccess>> {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.events.register_poll_vote(RegisterPollVoteArgs {
-            user_id,
-            min_visible_event_index,
-            thread_root_message_index,
-            message_index,
-            option_index,
-            operation,
-            now,
-            previous_user_ids,
-        })
+        self.events.register_poll_vote(
+            RegisterPollVoteArgs {
+                user_id,
+                min_visible_event_index,
+                thread_root_message_index,
+                message_index,
+                option_index,
+                operation,
+                now,
+            },
+            migrated_user_ids,
+        )
     }
 
     pub fn reserve_prize(
         &mut self,
         user_id: UserId,
-        previous_user_ids: &[UserId],
         message_id: MessageId,
         now: TimestampMillis,
         is_unique_person: bool,
@@ -1867,13 +1910,13 @@ impl GroupChatCore {
         streak: u16,
         streak_ends: TimestampMillis,
         user_reauthenticated: bool,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<ReservePrizeSuccess> {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
 
         self.events.reserve_prize(
             user_id,
-            previous_user_ids,
             min_visible_event_index,
             message_id,
             now,
@@ -1883,6 +1926,7 @@ impl GroupChatCore {
             streak,
             streak_ends,
             user_reauthenticated,
+            migrated_user_ids,
         )
     }
 
@@ -1913,10 +1957,11 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UpdateMessageSuccess<u32>> {
         if self.members.contains(&user_id) {
             self.events
-                .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
+                .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now, migrated_user_ids)
         } else {
             Err(OCErrorCode::InitiatorNotInChat.into())
         }

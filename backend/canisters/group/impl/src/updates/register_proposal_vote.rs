@@ -59,7 +59,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = m.content { Some(p) } else { None })
     {
-        if proposal.votes.contains_key(&member.user_id()) {
+        if proposal.vote(member.user_id(), &state.data.migrated_user_ids).is_some() {
             Err(OCErrorCode::NoChange.into())
         } else {
             Ok(PrepareResult {
@@ -80,11 +80,14 @@ fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
     let min_visible_event_index = member.min_visible_event_index();
     let now = state.env.now();
 
-    state
-        .data
-        .chat
-        .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)?;
+    state.data.chat.events.record_proposal_vote(
+        user_id,
+        min_visible_event_index,
+        args.message_index,
+        args.adopt,
+        now,
+        &state.data.migrated_user_ids,
+    )?;
 
     state
         .data

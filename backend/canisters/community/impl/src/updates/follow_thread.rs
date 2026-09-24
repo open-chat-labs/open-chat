@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::follow_thread::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, OCResult};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -17,7 +18,9 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let user_id = member.user_id;
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        channel.chat.follow_thread(user_id, args.thread_root_message_index, now)?;
+        channel
+            .chat
+            .follow_thread(user_id, args.thread_root_message_index, now, &MigratedUserIds::default())?;
         state.mark_activity_for_user(user_id);
 
         if args.new_achievement && !member.user_type.is_bot() {

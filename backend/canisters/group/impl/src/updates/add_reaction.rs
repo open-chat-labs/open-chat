@@ -61,6 +61,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
         args.message_id,
         args.reaction.clone(),
         now,
+        &state.data.migrated_user_ids,
         GroupEventPusher {
             now,
             rng: state.env.rng(),

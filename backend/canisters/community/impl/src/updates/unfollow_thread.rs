@@ -3,6 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::unfollow_thread::*;
 use types::OCResult;
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -15,7 +16,9 @@ fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    channel.chat.unfollow_thread(user_id, args.thread_root_message_index, now)?;
+    channel
+        .chat
+        .unfollow_thread(user_id, args.thread_root_message_index, now, &MigratedUserIds::default())?;
     state.mark_activity_for_user(user_id);
     Ok(())
 }

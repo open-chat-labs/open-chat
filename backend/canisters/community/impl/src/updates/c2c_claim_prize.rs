@@ -14,6 +14,7 @@ use types::{
     PrizeClaimResponse::{self, *},
     UserId,
 };
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -70,7 +71,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let user_id = member.user_id;
     let result = channel.chat.reserve_prize(
         user_id,
-        &[],
         args.message_id,
         now,
         args.is_unique_person,
@@ -79,6 +79,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         args.streak,
         args.streak_ends,
         args.user_reauthenticated,
+        &MigratedUserIds::default(),
     )?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.

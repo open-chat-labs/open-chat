@@ -10,6 +10,7 @@ use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, OCResult};
 use user_index_canister_c2c_client::lookup_user;
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -99,6 +100,7 @@ fn commit(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> O
         args.message_ids,
         args.as_platform_moderator.unwrap_or_default(),
         now,
+        &MigratedUserIds::default(),
     )?;
 
     let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);

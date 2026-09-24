@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use community_canister::register_poll_vote::{Response::*, *};
 use types::{Achievement, Chat, EventIndex, OCResult, PollVotes, TotalVotes};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -23,12 +24,12 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
 
     let result = channel.chat.register_poll_vote(
         user_id,
-        Vec::new(),
         args.thread_root_message_index,
         args.message_index,
         args.poll_option,
         args.operation,
         now,
+        &MigratedUserIds::default(),
     )?;
 
     if result.value.updated {

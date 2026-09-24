@@ -7,6 +7,7 @@ use community_canister::c2c_tip_message::*;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{Achievement, ChannelMessageTipped, ChannelUserNotificationPayload, Chat, EventIndex, OCResult, UserId};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -37,6 +38,7 @@ pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, s
 
     let result = channel.chat.tip_message(
         tip_message_args,
+        &MigratedUserIds::default(),
         CommunityEventPusher {
             now,
             rng: state.env.rng(),

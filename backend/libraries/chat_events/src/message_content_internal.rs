@@ -23,6 +23,7 @@ use types::{
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
     UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
 };
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInternal {
@@ -783,10 +784,12 @@ impl MessageContentInternalSubtype for PollContentInternal {
 impl PollContentInternal {
     // Moves any votes left under a user's earlier ids, from before they were migrated to a MultiUser
     // canister, over to their current id, so that they count as the user's own
-    pub fn change_voter_ids(&mut self, previous_user_ids: &[UserId], user_id: UserId) {
-        if previous_user_ids.is_empty() {
+    pub fn change_voter_ids(&mut self, user_id: UserId, migrated_user_ids: &MigratedUserIds) {
+        if migrated_user_ids.is_empty() {
             return;
         }
+        let latest = migrated_user_ids.latest(user_id);
+        let is_earlier_id = |u: &UserId| *u != user_id && migrated_user_ids.latest(*u) == latest;
 
         // Where only one vote per user is allowed, a vote the user has already cast under their
         // current id stands, and otherwise their vote under the lowest option index is kept
@@ -798,7 +801,7 @@ impl PollContentInternal {
         for option_index in option_indexes {
             let votes = self.votes.get_mut(&option_index).unwrap();
             let len = votes.len();
-            votes.retain(|u| !previous_user_ids.contains(u));
+            votes.retain(|u| !is_earlier_id(u));
             if votes.len() < len && !has_vote && !votes.contains(&user_id) {
                 votes.push(user_id);
                 has_vote = single_vote;
@@ -1555,6 +1558,23 @@ pub struct ProposalContentInternal {
     pub proposal: Proposal,
     #[serde(rename = "v", default, skip_serializing_if = "BTreeMap::is_empty")]
     pub votes: BTreeMap<UserId, bool>,
+}
+
+impl ProposalContentInternal {
+    // The user's vote, including one recorded under an earlier id, from before they were migrated
+    // to a MultiUser canister
+    pub fn vote(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> Option<bool> {
+        if let Some(vote) = self.votes.get(&user_id) {
+            return Some(*vote);
+        }
+        if migrated_user_ids.is_empty() {
+            return None;
+        }
+        let latest = migrated_user_ids.latest(user_id);
+        self.votes
+            .iter()
+            .find_map(|(u, vote)| (migrated_user_ids.latest(*u) == latest).then_some(*vote))
+    }
 }
 
 impl From<ProposalContent> for ProposalContentInternal {
@@ -2358,6 +2378,12 @@ mod poll_tests {
         Principal::from_slice(&[i]).into()
     }
 
+    fn migrated(old_user_id: UserId, new_user_id: UserId) -> MigratedUserIds {
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(old_user_id, new_user_id);
+        migrated_user_ids
+    }
+
     fn poll(allow_user_to_change_vote: bool) -> PollContentInternal {
         PollContentInternal {
             config: PollConfig {
@@ -2383,7 +2409,7 @@ mod poll_tests {
         let mut poll = poll(false);
         poll.register_vote(old_user_id, 0, VoteOperation::RegisterVote);
 
-        poll.change_voter_ids(&[old_user_id], new_user_id);
+        poll.change_voter_ids(new_user_id, &migrated(old_user_id, new_user_id));
 
         assert_eq!(poll.votes.get(&0), Some(&vec![new_user_id]));
         // The user already voted, so can't vote again for another option
@@ -2406,7 +2432,7 @@ mod poll_tests {
         poll.votes.insert(0, vec![old_user_id]);
         poll.votes.insert(1, vec![new_user_id]);
 
-        poll.change_voter_ids(&[old_user_id], new_user_id);
+        poll.change_voter_ids(new_user_id, &migrated(old_user_id, new_user_id));
 
         assert_eq!(poll.votes.get(&0), Some(&Vec::new()));
         assert_eq!(poll.votes.get(&1), Some(&vec![new_user_id]));
@@ -2420,7 +2446,7 @@ mod poll_tests {
         let mut poll = poll(true);
         poll.votes.insert(0, vec![old_user_id, new_user_id, user_id(3)]);
 
-        poll.change_voter_ids(&[old_user_id], new_user_id);
+        poll.change_voter_ids(new_user_id, &migrated(old_user_id, new_user_id));
 
         assert_eq!(poll.votes.get(&0), Some(&vec![new_user_id, user_id(3)]));
     }

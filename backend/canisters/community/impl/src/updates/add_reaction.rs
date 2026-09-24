@@ -10,6 +10,7 @@ use types::{
     ChatPermission, CommunityId, OCResult,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -64,6 +65,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
         args.message_id,
         args.reaction.clone(),
         now,
+        &MigratedUserIds::default(),
         CommunityEventPusher {
             now,
             rng: state.env.rng(),

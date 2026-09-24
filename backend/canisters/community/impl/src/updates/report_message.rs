@@ -7,6 +7,7 @@ use community_canister::report_message::*;
 use group_index_canister::c2c_report_message;
 use oc_error_codes::OCErrorCode;
 use types::{Caller, CanisterId, MultiUserChat, OCResult, UserIdAndPrincipal};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -82,6 +83,7 @@ fn delete_message(args: &Args, reporter: UserIdAndPrincipal, state: &mut Runtime
             vec![args.message_id],
             false,
             state.env.now(),
+            &MigratedUserIds::default(),
         )
         && results.iter().any(|(_, r)| r.is_ok())
     {

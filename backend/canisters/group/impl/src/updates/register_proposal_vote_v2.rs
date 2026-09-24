@@ -16,11 +16,14 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult
     let user_id = member.user_id();
     let now = state.env.now();
 
-    state
-        .data
-        .chat
-        .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)?;
+    state.data.chat.events.record_proposal_vote(
+        user_id,
+        min_visible_event_index,
+        args.message_index,
+        args.adopt,
+        now,
+        &state.data.migrated_user_ids,
+    )?;
 
     state
         .data
