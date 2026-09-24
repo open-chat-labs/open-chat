@@ -20,6 +20,7 @@ impl FireAndForgetHandler {
         let id = self.within_lock(|i| {
             let id = i.next_id;
             i.next_id += 1;
+            i.first_attempts_in_progress += 1;
             id
         });
 
@@ -36,7 +37,7 @@ impl FireAndForgetHandler {
 
     // Whether every call has completed
     pub fn is_empty(&self) -> bool {
-        self.within_lock(|i| i.canisters.is_empty())
+        self.within_lock(|i| i.canisters.is_empty() && i.first_attempts_in_progress == 0)
     }
 
     pub fn send_candid<A: CandidType>(&self, canister_id: CanisterId, method_name: impl Into<String>, args: A) {
@@ -53,6 +54,10 @@ impl FireAndForgetHandler {
 
     async fn process_single(self, mut call: C2cCall) {
         let result = make_c2c_call_raw(call.canister_id, &call.method_name, &call.payload, 0, None).await;
+
+        if call.attempt == 0 {
+            self.within_lock(|i| i.first_attempts_in_progress = i.first_attempts_in_progress.saturating_sub(1));
+        }
 
         if result.is_err() || call.attempt > 0 {
             self.within_lock(|i| {
@@ -119,6 +124,10 @@ impl FireAndForgetHandler {
 struct FireAndForgetHandlerInner {
     canisters: HashMap<CanisterId, PendingC2cCalls>,
     next_id: u64,
+    // Calls on their first attempt aren't recorded in `canisters` until they fail. Not persisted,
+    // since a canister being upgraded is stopped first, so has no calls in progress.
+    #[serde(skip)]
+    first_attempts_in_progress: u32,
     #[serde(skip)]
     timer: Option<PerRoundTimer>,
 }

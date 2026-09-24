@@ -15,7 +15,7 @@ use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
@@ -49,6 +49,40 @@ mod updates;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
+    // The async updates and spawned tasks which haven't yet completed, whose remaining steps could
+    // still change the canister's state. Not persisted, since a canister being upgraded is stopped
+    // first, so has none.
+    static ASYNC_WORK_IN_PROGRESS: Cell<u32> = const { Cell::new(0) };
+}
+
+// Counts some async work as in progress for as long as it is held. The future holding it is dropped
+// when the work completes, and also if it traps, when its call context is cleaned up.
+struct AsyncWorkGuard;
+
+impl AsyncWorkGuard {
+    fn new() -> AsyncWorkGuard {
+        ASYNC_WORK_IN_PROGRESS.set(ASYNC_WORK_IN_PROGRESS.get() + 1);
+        AsyncWorkGuard
+    }
+}
+
+impl Drop for AsyncWorkGuard {
+    fn drop(&mut self) {
+        ASYNC_WORK_IN_PROGRESS.set(ASYNC_WORK_IN_PROGRESS.get().saturating_sub(1));
+    }
+}
+
+fn async_work_in_progress() -> bool {
+    ASYNC_WORK_IN_PROGRESS.get() > 0
+}
+
+// Spawns a task, counting it as async work in progress until it completes
+fn spawn_tracked(future: impl Future<Output = ()> + 'static) {
+    let guard = AsyncWorkGuard::new();
+    ic_cdk::futures::spawn_migratory(async move {
+        let _guard = guard;
+        future.await;
+    });
 }
 
 canister_state!(RuntimeState);
@@ -413,34 +447,66 @@ struct Data {
     // Queries are still served.
     #[serde(default)]
     pub frozen: Option<FrozenUserInfo>,
-    // The MultiUser canister the user is being migrated to, from when the migration starts. The
-    // canister's state must not change from then on, so it is treated as frozen.
+    // Set when the user starts being migrated to a MultiUser canister. The canister's state must not
+    // change from then on, so it is treated as frozen.
     #[serde(default)]
-    pub migrating_to: Option<CanisterId>,
+    pub migration: Option<Migration>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Migration {
+    pub multi_user_canister_id: CanisterId,
+    pub started: TimestampMillis,
+    // The user as they were when the migration started, serialized with msgpack, for the MultiUser
+    // canister to pull
+    #[serde(with = "serde_bytes")]
+    pub user: Vec<u8>,
+    // The version of the wasm which serialized the user, which may since have been upgraded
+    pub wasm_version: BuildVersion,
 }
 
 impl Data {
     pub fn is_frozen(&self) -> bool {
-        self.frozen.is_some() || self.migrating_to.is_some()
+        self.frozen.is_some() || self.migration.is_some()
     }
 
-    // Starts migrating the user to the given MultiUser canister, if the canister is ready, returning
-    // the size of the user serialized. From then on the canister is frozen, so the user can't change.
-    // A repeated call for the same MultiUser canister returns the same size again.
-    pub fn try_start_migration(&mut self, multi_user_canister_id: CanisterId) -> OCResult<u64> {
-        match self.migrating_to {
-            Some(canister_id) if canister_id == multi_user_canister_id => {}
+    pub fn is_migrating(&self) -> bool {
+        self.migration.is_some()
+    }
+
+    // Starts migrating the user to the given MultiUser canister, if the canister is ready, storing
+    // the user serialized for the MultiUser canister to pull. From then on the canister is frozen,
+    // and its remaining timer jobs are cancelled, since the MultiUser canister schedules them again
+    // from the user's state. A repeated call for the same MultiUser canister returns the same
+    // migration again.
+    pub fn try_start_migration(
+        &mut self,
+        multi_user_canister_id: CanisterId,
+        async_work_in_progress: bool,
+        wasm_version: BuildVersion,
+        now: TimestampMillis,
+    ) -> OCResult<&Migration> {
+        match &self.migration {
+            Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
             None => {
+                if async_work_in_progress {
+                    return Err(OCErrorCode::NotReadyForMigration.with_message("Async work is in progress"));
+                }
                 if let Some(reason) = self.reason_not_ready_for_migration() {
                     return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
                 }
+
+                self.timer_jobs.cancel_jobs(|_| true);
+                self.migration = Some(Migration {
+                    multi_user_canister_id,
+                    started: now,
+                    user: msgpack::serialize_then_unwrap(&self.user),
+                    wasm_version,
+                });
             }
         }
-
-        let user_bytes = msgpack::serialize_then_unwrap(&self.user).len() as u64;
-        self.migrating_to = Some(multi_user_canister_id);
-        Ok(user_bytes)
+        Ok(self.migration.as_ref().unwrap())
     }
 
     // The user is migrated along with their entries in the stable memory map, so the canister must
@@ -451,10 +517,13 @@ impl Data {
         if self.frozen.is_some() {
             Some("Canister is frozen")
         } else if self.timer_jobs.iter().any(|(_, wrapper)| {
-            !matches!(
-                wrapper.deref().borrow().as_ref(),
-                Some(TimerJob::RemoveExpiredEvents(_) | TimerJob::ClaimOrResetStreakInsurance(_))
-            )
+            // A job which has already run leaves an empty entry behind
+            wrapper.deref().borrow().as_ref().is_some_and(|job| {
+                !matches!(
+                    job,
+                    TimerJob::RemoveExpiredEvents(_) | TimerJob::ClaimOrResetStreakInsurance(_)
+                )
+            })
         }) {
             Some("Timer jobs are pending")
         } else if !self.user_canister_events_queue.is_idle() || !self.user_canister_events_by_canister.is_idle() {
@@ -465,6 +534,13 @@ impl Data {
             Some("Calls to other canisters are pending")
         } else if !self.stable_memory_keys_to_garbage_collect.is_empty() {
             Some("Stable memory is still being garbage collected")
+        } else if self
+            .user
+            .direct_chats
+            .iter()
+            .any(|c| c.events().has_legacy_events() || c.events().heap_entries_to_migrate_count() > 0)
+        {
+            Some("Direct chat events are still being migrated")
         } else {
             None
         }
@@ -523,7 +599,7 @@ impl Data {
             known_multi_user_canisters: HashSet::new(),
             migrated_user_ids: MigratedUserIds::default(),
             frozen: None,
-            migrating_to: None,
+            migration: None,
         }
     }
 
@@ -625,7 +701,7 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 
 fn execute_update_even_if_frozen<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
-        state.regular_jobs.run(state.env.deref(), &mut state.data);
+        run_regular_jobs_unless_migrating(state);
         let result = f(state);
         state.data.flush_pending_events();
         result
@@ -646,7 +722,14 @@ async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Out
 }
 
 fn run_regular_jobs() {
-    mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+    mutate_state(run_regular_jobs_unless_migrating);
+}
+
+// Once a migration has started the user must not change, and regular jobs could change them
+fn run_regular_jobs_unless_migrating(state: &mut RuntimeState) {
+    if !state.data.is_migrating() {
+        state.regular_jobs.run(state.env.deref(), &mut state.data);
+    }
 }
 
 fn flush_pending_events() {

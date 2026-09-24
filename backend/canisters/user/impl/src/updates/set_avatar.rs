@@ -27,7 +27,7 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.user.avatar.set(ProfileDocumentType::Avatar, args.avatar, now);
     state.award_achievement_and_notify(Achievement::SetAvatar, now);
 
-    utils::async_work::spawn_tracked(update_index_canister(state.data.user_index_canister_id, id));
+    crate::spawn_tracked(update_index_canister(state.data.user_index_canister_id, id));
 
     Ok(())
 }
