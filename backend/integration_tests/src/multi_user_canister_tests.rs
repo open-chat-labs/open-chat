@@ -5834,7 +5834,7 @@ fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (_, b) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let avatar = document(100);
     let profile_background = document(200);
@@ -5886,6 +5886,20 @@ fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
         assert_eq!(get(env, format!("/{}/{path}", b.index() + 1)).status_code, 404);
         assert_eq!(get(env, format!("/{path}/{}", document.id)).status_code, 404);
     }
+
+    // Once B has an avatar too, each user's is served under their own index, and A's id under B's
+    // index redirects to B's
+    let b_avatar = document(150);
+    set_avatar(env, b_principal, canister_id, Some(b_avatar.clone()));
+    let response = get(env, format!("/{}/avatar/{}", b.index(), b_avatar.id));
+    assert_eq!(response.status_code, 200);
+    assert_eq!(response.body, b_avatar.data);
+    let response = get(env, format!("/{a_index}/avatar/{}", avatar.id));
+    assert_eq!(response.status_code, 200);
+    assert_eq!(response.body, avatar.data);
+    let response = get(env, format!("/{}/avatar/{}", b.index(), avatar.id));
+    assert_eq!(response.status_code, 301);
+    assert_eq!(location(&response), Some(format!("/{}/avatar/{}", b.index(), b_avatar.id)));
 
     // Once removed, a request for the old avatar is told it's gone
     set_avatar(env, a_principal, canister_id, None);
