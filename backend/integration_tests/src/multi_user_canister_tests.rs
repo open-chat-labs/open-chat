@@ -4944,13 +4944,48 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         Achievement::HadMessageTipped
     ));
 
-    // A tip can't be to oneself, needs a chat with the recipient, and in a group is given via the
-    // group; none of these move any funds
+    // A tip can't be to oneself, must be on a message of the recipient's in a chat with them, can't
+    // spend another user's approval, and in a group is given via the group; none of these move any
+    // funds
     let alices_balance = client::ledger::happy_path::balance_of(env, ledger, alice);
     // Two tips, each with its transfer fee, and the fee for the approval
     assert_eq!(alices_balance, 10 * tip - 2 * (tip + ICP_TRANSFER_FEE) - ICP_TRANSFER_FEE);
+    // A message of Alice's to Bob, for Bob to try tipping from Alice's wallet
+    let alices_message_to_bob = random_from_u128();
+    send_text_message(
+        env,
+        alice,
+        canister_id,
+        bob_id,
+        "don't tip me from my wallet",
+        alices_message_to_bob,
+    );
     let refused = [
         (alice_tips(env, alice_id, message_id), OCErrorCode::CannotTipSelf),
+        // A message which isn't there, or isn't the recipient's
+        (alice_tips(env, bob_id, random_from_u128()), OCErrorCode::MessageNotFound),
+        (
+            client::user::tip_message(
+                env,
+                alice,
+                canister_id,
+                &tip_args(Chat::Direct(bob_id.into()), carol.user_id, message_id),
+            ),
+            OCErrorCode::RecipientMismatch,
+        ),
+        // Bob can't spend the approval Alice made for herself
+        (
+            client::user::tip_message(
+                env,
+                bob,
+                canister_id,
+                &user_canister::tip_message::Args {
+                    from_account: Some(alice.into()),
+                    ..tip_args(Chat::Direct(alice_id.into()), alice_id, alices_message_to_bob)
+                },
+            ),
+            OCErrorCode::InsufficientAllowance,
+        ),
         (
             client::user::tip_message(
                 env,

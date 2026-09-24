@@ -1,7 +1,7 @@
 use crate::User;
 use chat_events::{EventPusher, TipMessageArgs};
 use oc_error_codes::OCErrorCode;
-use types::{CanisterId, Chat, OCResult, TimestampMillis, UserId};
+use types::{CanisterId, Chat, EventIndex, OCResult, TimestampMillis, UserId};
 use user_canister::tip_message::Args;
 
 // Checks the user may give the tip: they aren't suspended, it isn't nothing or to themselves, any
@@ -26,21 +26,33 @@ pub fn verify(
     Ok(())
 }
 
-// The tip of a message in the user's direct chat, if they have the chat
+// The tip of a message in the user's direct chat. Checked before any funds move, as a group does:
+// the tip must be to the other user in the chat, on a message they sent.
 pub fn direct_tip_args(user: &User, my_user_id: UserId, args: &Args, now: TimestampMillis) -> OCResult<TipMessageArgs> {
-    match args.chat {
-        Chat::Direct(chat_id) if user.direct_chats.exists(&chat_id) => Ok(TipMessageArgs {
-            user_id: my_user_id,
-            recipient: args.recipient,
-            thread_root_message_index: args.thread_root_message_index,
-            message_id: args.message_id,
-            ledger: args.ledger,
-            token_symbol: args.token_symbol.clone(),
-            amount: args.amount,
-            now,
-        }),
-        _ => Err(OCErrorCode::ChatNotFound.into()),
+    let Chat::Direct(chat_id) = args.chat else {
+        return Err(OCErrorCode::ChatNotFound.into());
+    };
+    let chat = user.direct_chats.get(&chat_id).ok_or(OCErrorCode::ChatNotFound)?;
+    if chat_id != args.recipient.into() {
+        return Err(OCErrorCode::RecipientMismatch.into());
     }
+    let (message, _) = chat
+        .events()
+        .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+        .ok_or(OCErrorCode::MessageNotFound)?;
+    if message.sender != args.recipient {
+        return Err(OCErrorCode::RecipientMismatch.into());
+    }
+    Ok(TipMessageArgs {
+        user_id: my_user_id,
+        recipient: args.recipient,
+        thread_root_message_index: args.thread_root_message_index,
+        message_id: args.message_id,
+        ledger: args.ledger,
+        token_symbol: args.token_symbol.clone(),
+        amount: args.amount,
+        now,
+    })
 }
 
 // Records the tip, once paid, in the tipper's copy of the direct chat, returning what the other

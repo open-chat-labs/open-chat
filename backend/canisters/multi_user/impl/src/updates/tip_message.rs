@@ -7,9 +7,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{NullEventPusher, TipMessageArgs};
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
-use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, CanisterId, Chat, CryptoTransaction, OCResult, PendingCryptoTransaction, UserId, icrc1, icrc2};
+use types::{Achievement, CanisterId, Chat, OCResult, UserId, icrc1, icrc2};
 use user_canister::UserCanisterEvent;
 use user_canister::tip_message::{Response::*, *};
 
@@ -27,7 +26,6 @@ async fn tip_message(mut args: Args) -> Response {
         tip_args,
         their_index,
         local_user_index_canister_id,
-        this_canister_id,
     } = match mutate_state(|state| prepare(&mut args, state)) {
         Ok(ok) => ok,
         Err(error) => return Error(error),
@@ -45,25 +43,17 @@ async fn tip_message(mut args: Args) -> Response {
         },
     };
 
-    let transfer = PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+    // The tip is pulled from the tipper's wallet, or the account they name, which `verify` checked
+    // isn't one of this canister's own, into the recipient's wallet
+    let transfer = icrc2::PendingCryptoTransaction {
         ledger: args.ledger,
         token_symbol: args.token_symbol.clone(),
         amount: args.amount,
         from: args.from_account.unwrap_or(my_principal.into()),
         to: recipient_wallet,
         fee: args.fee,
-        memo: None,
+        memo: Some(MEMO_TIP.to_vec().into()),
         created: tip_args.now * NANOS_PER_MILLISECOND,
-    });
-    let transfer = match UserTransfer::new(
-        CryptoTransaction::Pending(transfer),
-        recipient_wallet,
-        &MEMO_TIP,
-        this_canister_id,
-    ) {
-        Ok(UserTransfer::Icrc2(transfer)) => transfer,
-        Ok(UserTransfer::Certified(_)) => unreachable!(),
-        Err(error) => return Error(error),
     };
     match ledger_utils::icrc2::process_transaction_for_user(transfer, ledger_utils::spender_subaccount(my_principal)).await {
         Ok(Ok(_)) => {}
@@ -85,7 +75,6 @@ struct PrepareOk {
     tip_args: TipMessageArgs,
     their_index: Option<u16>,
     local_user_index_canister_id: CanisterId,
-    this_canister_id: CanisterId,
 }
 
 fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
@@ -94,20 +83,24 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     }
     let this_canister_id = state.env.canister_id();
     let now = state.env.now();
-    let (my_index, my_principal, tip_args) = state.with_caller_user_mut(|my_index, user| {
+    let (my_index, my_user_id, my_principal, tip_args) = state.with_caller_user_mut(|my_index, user| {
         let my_user_id = UserId::new_indexed(this_canister_id, my_index);
         user_core::updates::tip_message::verify(user, my_user_id, args, this_canister_id, now)?;
         let tip_args = user_core::updates::tip_message::direct_tip_args(user, my_user_id, args, now)?;
-        OCResult::Ok((my_index, user.principal, tip_args))
+        OCResult::Ok((my_index, my_user_id, user.principal, tip_args))
     })?;
+    let their_index = state.index_of_local_user(args.recipient);
+    if their_index.is_none() && state.user_index(args.recipient).is_some() {
+        // An index in this canister which no longer holds a user
+        return Err(OCErrorCode::TargetUserNotFound.into());
+    }
     Ok(PrepareOk {
         my_index,
-        my_user_id: state.user_id(my_index),
+        my_user_id,
         my_principal,
         tip_args,
-        their_index: state.index_of_local_user(args.recipient),
+        their_index,
         local_user_index_canister_id: state.data.local_user_index_canister_id,
-        this_canister_id,
     })
 }
 
