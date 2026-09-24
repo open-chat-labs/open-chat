@@ -213,7 +213,22 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
     tick_many(env, 3);
 
     start_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
-    cancel_user_migration(env, *controller, canister_ids.user_index, &user1);
+    // A cancellation of a migration to another MultiUser canister is rejected
+    let response = client::user_index::cancel_user_migration(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::cancel_user_migration::Args {
+            user_id: user1.user_id,
+            multi_user_canister_id: multi_user_canister(2),
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::cancel_user_migration::Response::Error(ref e) if e.matches_code(OCErrorCode::AlreadyInProgress)),
+        "{response:?}"
+    );
+
+    cancel_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
 
     // The canister is no longer frozen, so its owner can change it again
     let response = client::user::set_bio(
@@ -234,7 +249,7 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
     );
 
     // Cancelling again succeeds, since there is nothing left to cancel
-    cancel_user_migration(env, *controller, canister_ids.user_index, &user1);
+    cancel_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
 
     // And the migration can be started again, to another MultiUser canister
     start_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(2));
@@ -262,12 +277,21 @@ fn start_user_migration(
     }
 }
 
-fn cancel_user_migration(env: &mut PocketIc, sender: Principal, user_index: CanisterId, user: &User) {
+fn cancel_user_migration(
+    env: &mut PocketIc,
+    sender: Principal,
+    user_index: CanisterId,
+    user: &User,
+    multi_user_canister_id: CanisterId,
+) {
     let response = client::user_index::cancel_user_migration(
         env,
         sender,
         user_index,
-        &user_index_canister::cancel_user_migration::Args { user_id: user.user_id },
+        &user_index_canister::cancel_user_migration::Args {
+            user_id: user.user_id,
+            multi_user_canister_id,
+        },
     );
     assert!(
         matches!(response, user_index_canister::cancel_user_migration::Response::Success),

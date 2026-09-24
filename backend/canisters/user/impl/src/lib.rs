@@ -484,11 +484,17 @@ impl Data {
         Ok(self.migration.as_ref().unwrap())
     }
 
-    // Cancels the user's migration, if there is one, unfreezing the canister and scheduling again
-    // the timer jobs which were cancelled when the migration started. Returns whether there was one.
-    pub fn cancel_migration(&mut self, now: TimestampMillis) -> bool {
-        if self.migration.take().is_none() {
-            return false;
+    // Cancels the user's migration to the given MultiUser canister, if there is one, unfreezing the
+    // canister and scheduling again the timer jobs which were cancelled when the migration started.
+    // Returns whether there was one. A migration to another MultiUser canister is left in place.
+    //
+    // If the canister was upgraded during the migration, `post_upgrade` skipped that upgrade's data
+    // migrations, and they only run once the canister is upgraded again.
+    pub fn cancel_migration(&mut self, multi_user_canister_id: CanisterId, now: TimestampMillis) -> OCResult<bool> {
+        match &self.migration {
+            Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => self.migration = None,
+            Some(_) => return Err(OCErrorCode::AlreadyInProgress.with_message("Migrating to another canister")),
+            None => return Ok(false),
         }
 
         if let Some(expiry) = self.user.next_event_expiry {
@@ -502,7 +508,7 @@ impl Data {
                 now,
             );
         }
-        true
+        Ok(true)
     }
 
     // The user is migrated along with their entries in the stable memory map, so the canister must

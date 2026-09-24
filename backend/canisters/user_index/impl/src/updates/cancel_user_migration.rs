@@ -3,7 +3,6 @@ use crate::read_state;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::Empty;
 use user_index_canister::cancel_user_migration::{Response::*, *};
 
 // Cancels the migration of a user in a canister of their own to a MultiUser canister, as the
@@ -25,7 +24,14 @@ async fn cancel_user_migration(args: Args) -> Response {
         return Error(OCErrorCode::TargetUserNotFound.into());
     }
 
-    match user_canister_c2c_client::c2c_cancel_migration(args.user_id.canister_id(), &Empty {}).await {
+    match user_canister_c2c_client::c2c_cancel_migration(
+        args.user_id.canister_id(),
+        &user_canister::c2c_cancel_migration::Args {
+            multi_user_canister_id: args.multi_user_canister_id,
+        },
+    )
+    .await
+    {
         Ok(user_canister::c2c_cancel_migration::Response::Success) => Success,
         Ok(user_canister::c2c_cancel_migration::Response::Error(error)) => Error(error),
         Err(error) => Error(error.into()),
