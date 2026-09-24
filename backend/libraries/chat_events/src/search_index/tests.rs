@@ -250,7 +250,12 @@ fn message_edited_under_a_new_id_stays_indexed_under_its_sender() {
     let old_user_id = user_id(1);
     let new_user_id = user_id(2);
 
+    let chat = events.stable_memory_prefix().clone();
     let hello = push(&mut events, old_user_id, "hello world", 10);
+    // Where the index keeps a message by its sender
+    events
+        .search_index_mut()
+        .move_to_heap(&chat, hello, old_user_id, document(&["hello world".to_string()]));
 
     // The sender has since been migrated to a MultiUser canister and given a new id
     let mut args = edit_args(new_user_id, hello, "goodbye world", 20);
@@ -259,6 +264,7 @@ fn message_edited_under_a_new_id_stays_indexed_under_its_sender() {
 
     assert!(search(&events, "hello", &[]).is_empty());
     assert_eq!(search(&events, "goodbye", &[old_user_id]), vec![hello]);
+    assert!(search(&events, "goodbye", &[new_user_id]).is_empty());
 }
 
 #[test]

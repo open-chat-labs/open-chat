@@ -999,6 +999,7 @@ impl GroupChatCore {
     pub fn check_can_tip_message(
         &self,
         user_id: UserId,
+        previous_user_ids: &[UserId],
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
     ) -> OCResult<UserId> {
@@ -1013,7 +1014,11 @@ impl GroupChatCore {
             .message_internal(member.min_visible_event_index(), thread_root_message_index, message_id.into())
             .ok_or(OCErrorCode::MessageNotFound)?;
 
-        if message.sender == user_id { Err(OCErrorCode::CannotTipSelf.into()) } else { Ok(message.sender) }
+        if message.sender == user_id || previous_user_ids.contains(&message.sender) {
+            Err(OCErrorCode::CannotTipSelf.into())
+        } else {
+            Ok(message.sender)
+        }
     }
 
     pub fn tip_message<P: EventPusher>(&mut self, args: TipMessageArgs, event_pusher: P) -> OCResult<UpdateMessageSuccess> {

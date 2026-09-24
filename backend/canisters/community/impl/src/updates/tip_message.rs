@@ -66,6 +66,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
 
     let recipient = state.data.channels.get_or_err(&args.channel_id)?.chat.check_can_tip_message(
         user_id,
+        &[],
         args.thread_root_message_index,
         args.message_id,
     )?;

@@ -718,8 +718,11 @@ impl ChatEvents {
                 Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized))
             } else {
                 let sender = message.sender;
+                // A user deleting a message they sent under an earlier id is recorded as deleting it
+                // under that id, so the message is seen, as it is, to have been deleted by its sender
+                let deleted_by = if args.previous_user_ids.contains(&sender) { sender } else { args.caller };
                 message.deleted_by = Some(DeletedByInternal {
-                    deleted_by: args.caller,
+                    deleted_by,
                     timestamp: args.now,
                 });
                 Ok((sender, message.message_index, Document::from(&message.content)))
@@ -1057,10 +1060,8 @@ impl ChatEvents {
 
         // A vote recorded under one of the user's earlier ids, from before they were migrated to a
         // MultiUser canister, is theirs
-        for previous_user_id in previous_user_ids {
-            if let Some(vote) = proposal.votes.remove(previous_user_id) {
-                proposal.votes.entry(user_id).or_insert(vote);
-            }
+        if let Some(vote) = previous_user_ids.iter().find_map(|u| proposal.votes.get(u)) {
+            return Err(UpdateEventError::NoChange(*vote));
         }
 
         match proposal.votes.entry(user_id) {
@@ -3330,7 +3331,10 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use types::{MultiUserChat, NnsProposal, Proposal, ProposalDecisionStatus, ProposalRewardStatus, Tally};
+    use types::{
+        MultiUserChat, NnsProposal, P2PSwapContentInitial, Proposal, ProposalDecisionStatus, ProposalRewardStatus, Tally,
+        TokenInfo,
+    };
 
     #[test]
     fn record_proposal_vote_records_one_vote_per_user() {
@@ -3487,9 +3491,16 @@ mod tests {
 
         let results = events.delete_messages(delete_args(new_user_id(), vec![old_user_id()], 21));
         assert_eq!(results[0].1.as_ref().unwrap().sender, old_user_id());
-        assert!(text_message(&events, text_message_index).deleted_by.is_some());
 
-        let results = events.undelete_messages(delete_args(new_user_id(), vec![old_user_id()], 22));
+        // Deleted by its sender, as it was, so not counted as reported, and not restorable by an admin
+        let deleted_by = text_message(&events, text_message_index).deleted_by.unwrap().deleted_by;
+        assert_eq!(deleted_by, old_user_id());
+        assert_eq!(events.metrics().hydrate().reported_messages, 0);
+        let mut admin_args = delete_args(Principal::from_slice(&[10]).into(), Vec::new(), 22);
+        admin_args.is_admin = true;
+        assert!(events.undelete_messages(admin_args)[0].1.is_err());
+
+        let results = events.undelete_messages(delete_args(new_user_id(), vec![old_user_id()], 23));
         assert!(results[0].1.is_ok());
         assert!(text_message(&events, text_message_index).deleted_by.is_none());
     }
@@ -3517,22 +3528,18 @@ mod tests {
             .record_proposal_vote(old_user_id(), &[], EventIndex::default(), proposal_message_index, true, 100)
             .unwrap();
 
-        assert!(
-            events
-                .record_proposal_vote(
-                    new_user_id(),
-                    &[old_user_id()],
-                    EventIndex::default(),
-                    proposal_message_index,
-                    false,
-                    101
-                )
-                .is_err()
+        let result = events.record_proposal_vote(
+            new_user_id(),
+            &[old_user_id()],
+            EventIndex::default(),
+            proposal_message_index,
+            false,
+            101,
         );
-        assert!(
-            events
-                .record_proposal_vote(new_user_id(), &[], EventIndex::default(), proposal_message_index, false, 102)
-                .is_ok()
+        assert!(matches!(result, Err(e) if e.matches_code(OCErrorCode::NoChange)));
+        assert_eq!(
+            votes(&events, proposal_message_index),
+            BTreeMap::from([(old_user_id(), true)])
         );
     }
 
@@ -3594,6 +3601,101 @@ mod tests {
             .unfollow_thread(text_message_index, new_user_id(), &[old_user_id()], EventIndex::default(), 23)
             .unwrap();
         assert!(followers(&events).is_empty());
+    }
+
+    #[test]
+    fn prize_claimed_under_an_earlier_id_cannot_be_claimed_again() {
+        let (mut events, _, _) = setup_events();
+        let prize = PrizeContentInternal {
+            prizes_remaining: vec![100, 100],
+            reservations: BTreeSet::new(),
+            winners: [old_user_id()].into_iter().collect(),
+            transaction: CompletedCryptoTransactionInternal::ICRC1(
+                crate::message_content_internal::icrc1::CompletedCryptoTransactionInternal {
+                    ledger: Principal::from_slice(&[5]),
+                    token_symbol: "ICP".to_string(),
+                    amount: 300,
+                    from: crate::message_content_internal::icrc1::CryptoAccountInternal::Mint,
+                    to: crate::message_content_internal::icrc1::CryptoAccountInternal::Mint,
+                    fee: 0,
+                    memo: None,
+                    created: 0,
+                    block_index: 0,
+                },
+            ),
+            end_date: 1_000,
+            caption: None,
+            diamond_only: false,
+            lifetime_diamond_only: false,
+            unique_person_only: false,
+            streak_only: 0,
+            final_payments_started: false,
+            ledger_error: false,
+            prizes_paid: 0,
+            fee_percent: 0,
+            requires_captcha: false,
+            min_chit_earned: 0,
+            principal: Principal::anonymous(),
+        };
+        push_message(
+            &mut events,
+            Principal::from_slice(&[3]).into(),
+            10,
+            MessageContentInternal::Prize(prize),
+        );
+
+        let reserve = |events: &mut ChatEvents, previous_user_ids: &[UserId]| {
+            events.reserve_prize(
+                new_user_id(),
+                previous_user_ids,
+                EventIndex::default(),
+                MessageId::from(10u128),
+                20,
+                false,
+                DiamondMembershipStatus::Inactive,
+                0,
+                0,
+                0,
+                false,
+            )
+        };
+
+        assert!(matches!(reserve(&mut events, &[old_user_id()]), Err(e) if e.matches_code(OCErrorCode::PrizeAlreadyClaimed)));
+        assert!(reserve(&mut events, &[]).is_ok());
+    }
+
+    #[test]
+    fn p2p_swap_offered_under_an_earlier_id_can_be_cancelled() {
+        let (mut events, _, _) = setup_events();
+        let token = |symbol: &str| TokenInfo {
+            symbol: symbol.to_string(),
+            ledger: Principal::from_slice(&[5]),
+            decimals: 8,
+            fee: 10_000,
+        };
+        let swap = P2PSwapContentInternal::new(
+            1,
+            P2PSwapContentInitial {
+                token0: token("ICP"),
+                token0_amount: 100,
+                token1: token("CHAT"),
+                token1_amount: 1_000,
+                expires_in: 1_000,
+                caption: None,
+                from_account: None,
+            },
+            0,
+            0,
+        );
+        push_message(&mut events, old_user_id(), 10, MessageContentInternal::P2PSwap(swap));
+
+        assert!(
+            events
+                .cancel_p2p_swap(new_user_id(), &[], None, MessageId::from(10u128), 20)
+                .is_err()
+        );
+        let result = events.cancel_p2p_swap(new_user_id(), &[old_user_id()], None, MessageId::from(10u128), 21);
+        assert_eq!(result.unwrap().value, 1);
     }
 
     #[test]
