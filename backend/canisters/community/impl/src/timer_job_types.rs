@@ -5,7 +5,7 @@ use crate::updates::end_video_call::end_video_call_impl;
 use crate::{RuntimeState, can_borrow_state, flush_pending_events, mutate_state, read_state, run_regular_jobs};
 use candid::Principal;
 use canister_timer_jobs::Job;
-use chat_events::{EndPollResult, MessageContentInternal};
+use chat_events::{ChatEvents, EndPollResult, MessageContentInternal};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use event_store_types::TimestampMillis;
 use group_chat_core::AddResult;
@@ -94,32 +94,30 @@ pub struct MakeTransferJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyEscrowCanisterOfDepositJob {
-    pub user_id: UserId,
+    // The owner of the depositor's wallet, by which the escrow canister knows them. Jobs queued
+    // before this was recorded hold the depositor's user id, which is the same principal since
+    // those depositors were all alone in their canisters.
+    #[serde(alias = "user_id")]
+    pub principal: Principal,
     pub swap_id: u32,
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub transaction_index: u64,
-    // The owner of the depositor's wallet, by which the escrow canister knows them. None for jobs
-    // queued before this was recorded, whose depositors were all alone in their canisters.
-    #[serde(default)]
-    pub depositor: Option<Principal>,
     pub attempt: u32,
 }
 
 impl NotifyEscrowCanisterOfDepositJob {
     pub fn run(
-        user_id: UserId,
+        principal: Principal,
         swap_id: u32,
         channel_id: ChannelId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         transaction_index: u64,
-        depositor: Principal,
     ) {
         let job = NotifyEscrowCanisterOfDepositJob {
-            depositor: Some(depositor),
-            user_id,
+            principal,
             swap_id,
             channel_id,
             thread_root_message_index,
@@ -128,6 +126,14 @@ impl NotifyEscrowCanisterOfDepositJob {
             attempt: 0,
         };
         job.execute();
+    }
+
+    // The member who reserved the swap, which recorded their principal. For a swap reserved before
+    // that was recorded, the principal is the member's user id.
+    fn depositor_user_id(&self, events: &ChatEvents) -> UserId {
+        events
+            .p2p_swap_reserved_by(self.thread_root_message_index, self.message_id, self.principal)
+            .unwrap_or(self.principal.into())
     }
 }
 
@@ -402,7 +408,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
                     swap_id: self.swap_id,
-                    deposited_by: Some(self.depositor.unwrap_or(self.user_id.as_principal())),
+                    deposited_by: Some(self.principal),
                 },
             )
             .await
@@ -410,8 +416,9 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 Ok(escrow_canister::notify_deposit::Response::Success(_)) => {
                     mutate_state(|state| {
                         if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
+                            let user_id = self.depositor_user_id(&channel.chat.events);
                             let _ = channel.chat.events.accept_p2p_swap(
-                                self.user_id,
+                                user_id,
                                 self.thread_root_message_index,
                                 self.message_id,
                                 self.transaction_index,
@@ -422,8 +429,9 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 }
                 Ok(escrow_canister::notify_deposit::Response::SwapExpired) => mutate_state(|state| {
                     if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
+                        let user_id = self.depositor_user_id(&channel.chat.events);
                         channel.chat.events.unreserve_p2p_swap(
-                            self.user_id,
+                            user_id,
                             self.thread_root_message_index,
                             self.message_id,
                             state.env.now(),
@@ -436,8 +444,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                         state.data.timer_jobs.enqueue_job(
                             TimerJob::NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob {
                                 swap_id: self.swap_id,
-                                user_id: self.user_id,
-                                depositor: self.depositor,
+                                principal: self.principal,
                                 channel_id: self.channel_id,
                                 thread_root_message_index: self.thread_root_message_index,
                                 message_id: self.message_id,

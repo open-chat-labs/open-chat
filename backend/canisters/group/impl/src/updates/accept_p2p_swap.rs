@@ -32,12 +32,11 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
         match user_canister_c2c_client::c2c_accept_p2p_swap(user_id.canister_id(), &c2c_args).await {
             Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_index)) => {
                 NotifyEscrowCanisterOfDepositJob::run(
-                    user_id,
+                    depositor,
                     c2c_args.swap_id,
                     thread_root_message_index,
                     message_id,
                     transaction_index,
-                    depositor,
                 );
 
                 mutate_state(|state| {
