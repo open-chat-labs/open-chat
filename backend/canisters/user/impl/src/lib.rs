@@ -10,6 +10,7 @@ use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
@@ -20,12 +21,12 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotNotification, BuildVersion, CanisterId, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Notification, NotifyChit, TimestampMillis,
+    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis,
     Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::UserCanisterEvent;
 use user_core::{Community, GroupChat, User};
-use utils::async_work::AsyncWorkGuard;
+use utils::async_work::{AsyncWorkGuard, async_work_in_progress};
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -419,11 +420,92 @@ struct Data {
     // Queries are still served.
     #[serde(default)]
     pub frozen: Option<FrozenUserInfo>,
+    // Set when the user starts being migrated to a MultiUser canister. The canister's state must not
+    // change from then on, so it is treated as frozen.
+    #[serde(default)]
+    pub migration: Option<Migration>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Migration {
+    pub multi_user_canister_id: CanisterId,
+    pub started: TimestampMillis,
+    // The user as they were when the migration started, serialized with msgpack, for the MultiUser
+    // canister to pull
+    #[serde(with = "serde_bytes")]
+    pub user: Vec<u8>,
+    // The version of the wasm which serialized the user, which may since have been upgraded
+    pub wasm_version: BuildVersion,
 }
 
 impl Data {
     pub fn is_frozen(&self) -> bool {
-        self.frozen.is_some()
+        self.frozen.is_some() || self.migration.is_some()
+    }
+
+    // Starts migrating the user to the given MultiUser canister, if the canister is ready, storing
+    // the user serialized for the MultiUser canister to pull. From then on the canister is frozen,
+    // and its remaining timer jobs are cancelled, since the MultiUser canister schedules them again
+    // from the user's state. A repeated call for the same MultiUser canister returns the same
+    // migration again.
+    pub fn try_start_migration(&mut self, multi_user_canister_id: CanisterId, now: TimestampMillis) -> OCResult<&Migration> {
+        match &self.migration {
+            Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
+            Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
+            None => {
+                if let Some(reason) = self.reason_not_ready_for_migration() {
+                    return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
+                }
+
+                self.timer_jobs.cancel_jobs(|_| true);
+                self.migration = Some(Migration {
+                    multi_user_canister_id,
+                    started: now,
+                    user: msgpack::serialize_then_unwrap(&self.user),
+                    wasm_version: WASM_VERSION.with_borrow(|v| **v),
+                });
+            }
+        }
+        Ok(self.migration.as_ref().unwrap())
+    }
+
+    // The user is migrated along with their entries in the stable memory map, so the canister must
+    // have no work outstanding which would change or read them, nor anything else which isn't
+    // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
+    // state may remain.
+    fn reason_not_ready_for_migration(&self) -> Option<&'static str> {
+        if self.frozen.is_some() {
+            Some("Canister is frozen")
+        } else if async_work_in_progress() {
+            Some("Async work is in progress")
+        } else if self.timer_jobs.iter().any(|(_, wrapper)| {
+            // A job which has already run leaves an empty entry behind
+            wrapper.deref().borrow().as_ref().is_some_and(|job| {
+                !matches!(
+                    job,
+                    TimerJob::RemoveExpiredEvents(_) | TimerJob::ClaimOrResetStreakInsurance(_)
+                )
+            })
+        }) {
+            Some("Timer jobs are pending")
+        } else if !self.user_canister_events_queue.is_idle() || !self.user_canister_events_by_canister.is_idle() {
+            Some("Events for other users are pending")
+        } else if !self.local_user_index_event_sync_queue.is_idle() {
+            Some("Events for the LocalUserIndex are pending")
+        } else if !self.fire_and_forget_handler.is_empty() {
+            Some("Calls to other canisters are pending")
+        } else if !self.stable_memory_keys_to_garbage_collect.is_empty() {
+            Some("Stable memory is still being garbage collected")
+        } else if self
+            .user
+            .direct_chats
+            .iter()
+            .any(|c| c.events().has_legacy_events() || c.events().heap_entries_to_migrate_count() > 0)
+        {
+            Some("Direct chat events are still being migrated")
+        } else {
+            None
+        }
     }
 
     // Moves the events queued before they were batched per canister into the queue which does so,
@@ -479,6 +561,7 @@ impl Data {
             known_multi_user_canisters: HashSet::new(),
             migrated_user_ids: MigratedUserIds::default(),
             frozen: None,
+            migration: None,
         }
     }
 
