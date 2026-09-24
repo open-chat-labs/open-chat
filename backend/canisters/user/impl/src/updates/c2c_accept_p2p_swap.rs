@@ -1,11 +1,11 @@
-use crate::crypto::{deposit_to_accept_p2p_swap, validate_from_account};
 use crate::guards::caller_is_known_group_or_community_canister;
 use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{CanisterId, OCResult, TimestampMillis, UserId};
+use ledger_utils::{Payer, deposit_to_accept_p2p_swap};
+use types::{CanisterId, OCResult, TimestampMillis};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
-use user_core::P2PSwap;
+use user_core::updates::c2c_accept_p2p_swap::{deposited, prepare};
 
 #[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
 #[trace]
@@ -15,39 +15,36 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
 
 async fn c2c_accept_p2p_swap_impl(mut args: Args) -> Response {
     let PrepareResult {
-        my_user_id,
+        my_canister_id,
         escrow_canister_id,
         now,
-    } = match mutate_state(|state| prepare(&mut args, state)) {
+    } = match mutate_state(|state| prepare_impl(&mut args, state)) {
         Ok(ok) => ok,
-        Err(response) => return Error(response),
+        Err(error) => return Error(error),
     };
 
+    // The user's funds are in this canister's own account, which escrow knows them by, unless they
+    // are paying from an external account they approved
+    let payer = match args.from_account {
+        Some(from) => Payer::Approved {
+            from,
+            spender_subaccount: None,
+        },
+        None => Payer::ThisCanister,
+    };
     match deposit_to_accept_p2p_swap(
         escrow_canister_id,
-        my_user_id,
+        my_canister_id,
         args.swap_id,
         &args.token1,
         args.token1_amount,
         now,
-        args.from_account,
+        payer,
     )
     .await
     {
         Ok(block_index) => {
-            mutate_state(|state| {
-                state.data.user.p2p_swaps.add(P2PSwap {
-                    id: args.swap_id,
-                    location: args.location,
-                    created_by: args.created_by,
-                    created: args.created,
-                    token0: args.token0,
-                    token0_amount: args.token0_amount,
-                    token1: args.token1,
-                    token1_amount: args.token1_amount,
-                    expires_at: args.expires_at,
-                });
-            });
+            mutate_state(|state| deposited(&mut state.data.user, args));
             Success(block_index)
         }
         Err(error) => Error(error),
@@ -55,18 +52,18 @@ async fn c2c_accept_p2p_swap_impl(mut args: Args) -> Response {
 }
 
 struct PrepareResult {
-    my_user_id: UserId,
+    my_canister_id: CanisterId,
     escrow_canister_id: CanisterId,
     now: TimestampMillis,
 }
 
-fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
+fn prepare_impl(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let now = state.env.now();
-    state.data.user.pin_number.verify(args.pin.as_mut(), now)?;
-    validate_from_account(args.from_account, state.env.canister_id().into())?;
+    let my_canister_id = state.env.canister_id();
+    prepare(&mut state.data.user, my_canister_id, args, now)?;
 
     Ok(PrepareResult {
-        my_user_id: state.env.canister_id().into(),
+        my_canister_id,
         escrow_canister_id: state.data.escrow_canister_id,
         now,
     })
