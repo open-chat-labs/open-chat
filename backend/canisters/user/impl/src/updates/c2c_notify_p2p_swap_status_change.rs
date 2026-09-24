@@ -75,85 +75,93 @@ fn apply_status_change(args: Args, chat_id: ChatId, state: &mut RuntimeState) {
     let P2PSwapLocation::Message(m) = args.location else {
         return;
     };
-    if let Some(chat) = state.data.user.direct_chats.get_mut(&chat_id) {
-        let mut status_to_push_c2c = None;
 
-        match args.status {
-            SwapStatus::Expired(e) => {
-                if let Some(content) = chat.get_p2p_swap(m.thread_root_message_index, m.message_id) {
-                    let token0_txn_out = e
-                        .refunds
-                        .into_iter()
-                        .find(|t| t.ledger == content.token0.ledger)
-                        .map(|t| t.block_index);
+    let Some(chat) = state.data.user.direct_chats.get_mut(&chat_id) else {
+        return;
+    };
 
-                    let status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out });
+    // Anyone can create a swap in the escrow canister naming any message as its location, so ignore
+    // the notification unless it is for the swap on that message
+    let Some(content) = chat
+        .get_p2p_swap(m.thread_root_message_index, m.message_id)
+        .filter(|c| c.swap_id == args.swap_id)
+    else {
+        return;
+    };
 
-                    if chat
-                        .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
-                        .is_ok()
-                    {
-                        status_to_push_c2c = Some(status);
-                    }
-                }
+    let mut status_to_push_c2c = None;
+
+    match args.status {
+        SwapStatus::Expired(e) => {
+            let token0_txn_out = e
+                .refunds
+                .into_iter()
+                .find(|t| t.ledger == content.token0.ledger)
+                .map(|t| t.block_index);
+
+            let status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out });
+
+            if chat
+                .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
+                .is_ok()
+            {
+                status_to_push_c2c = Some(status);
             }
-            SwapStatus::Cancelled(c) => {
-                if let Some(content) = chat.get_p2p_swap(m.thread_root_message_index, m.message_id) {
-                    let token0_txn_out = c
-                        .refunds
-                        .into_iter()
-                        .find(|t| t.ledger == content.token0.ledger)
-                        .map(|t| t.block_index);
+        }
+        SwapStatus::Cancelled(c) => {
+            let token0_txn_out = c
+                .refunds
+                .into_iter()
+                .find(|t| t.ledger == content.token0.ledger)
+                .map(|t| t.block_index);
 
-                    let status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out });
+            let status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out });
 
-                    if chat
-                        .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
-                        .is_ok()
-                    {
-                        status_to_push_c2c = Some(status);
-                    }
-                }
+            if chat
+                .set_p2p_swap_status(m.thread_root_message_index, m.message_id, status.clone(), state.env.now())
+                .is_ok()
+            {
+                status_to_push_c2c = Some(status);
             }
-            SwapStatus::Completed(c) => {
-                let now = state.env.now();
-                // Escrow names the acceptor by the owner of their wallet, which the swap recorded
-                // when they reserved it. For a swap reserved before that was recorded, whose
-                // acceptor was alone in their canister, the owner is their user id.
-                let accepted_by = chat
-                    .events()
-                    .p2p_swap_reserved_by(m.thread_root_message_index, m.message_id, c.accepted_by)
-                    .unwrap_or(c.accepted_by.into());
-                if let Ok(result) = chat.complete_p2p_swap(
-                    accepted_by,
-                    m.thread_root_message_index,
-                    m.message_id,
-                    c.token0_transfer_out.block_index,
-                    c.token1_transfer_out.block_index,
+        }
+        SwapStatus::Completed(c) => {
+            let now = state.env.now();
+            // Escrow names the acceptor by the owner of their wallet, which the swap recorded
+            // when they reserved it. For a swap reserved before that was recorded, whose
+            // acceptor was alone in their canister, the owner is their user id.
+            let accepted_by = chat
+                .events()
+                .p2p_swap_reserved_by(m.thread_root_message_index, m.message_id, c.accepted_by)
+                .unwrap_or(c.accepted_by.into());
+            if let Ok(result) = chat.complete_p2p_swap(
+                accepted_by,
+                m.thread_root_message_index,
+                m.message_id,
+                c.token0_transfer_out.block_index,
+                c.token1_transfer_out.block_index,
+                now,
+                UserEventPusher {
                     now,
-                    UserEventPusher {
-                        now,
-                        rng: state.env.rng(),
-                        queue: &mut state.data.local_user_index_event_sync_queue,
-                    },
-                ) {
-                    status_to_push_c2c = Some(P2PSwapStatus::Completed(result.value));
-                }
+                    rng: state.env.rng(),
+                    queue: &mut state.data.local_user_index_event_sync_queue,
+                },
+            ) {
+                status_to_push_c2c = Some(P2PSwapStatus::Completed(result.value));
             }
-            _ => {}
         }
+        _ => {}
+    }
 
-        if let Some(status) = status_to_push_c2c
-            && let Ok(thread_root_message_id) = chat.thread_root_message_id(m.thread_root_message_index)
-        {
-            state.push_user_canister_event(
-                chat_id.into(),
-                UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
-                    thread_root_message_id,
-                    message_id: m.message_id,
-                    status,
-                })),
-            );
-        }
+    if let Some(status) = status_to_push_c2c
+        && let Ok(thread_root_message_id) = chat.thread_root_message_id(m.thread_root_message_index)
+    {
+        state.push_user_canister_event(
+            chat_id.into(),
+            UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
+                thread_root_message_id,
+                message_id: m.message_id,
+                status,
+            })),
+        );
     }
 }

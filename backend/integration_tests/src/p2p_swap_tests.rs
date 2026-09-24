@@ -1,13 +1,16 @@
 use crate::env::ENV;
-use crate::utils::{chat_token_info, icp_token_info, tick_many};
-use crate::{TestEnv, client};
+use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many};
+use crate::{TestEnv, User, client};
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
 use oc_error_codes::OCErrorCode;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
-use types::{ChatEvent, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus, icrc1};
+use types::{
+    Chat, ChatEvent, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapLocation, P2PSwapStatus, icrc1,
+};
 
 #[test]
 fn p2p_swap_in_direct_chat_succeeds() {
@@ -1079,6 +1082,205 @@ fn p2p_swap_rejected_for_non_diamond_user() {
         matches!(&channel_response, user_canister::send_message_with_transfer_to_channel::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
         "{channel_response:?}"
     );
+}
+
+// Anyone can create a swap in the escrow canister naming any message as its location and the
+// canister holding that message as the one to notify. Cancelling such a swap must leave the status
+// of the swap actually on the message unchanged.
+#[test_case(true)]
+#[test_case(false)]
+fn cancelling_other_swap_naming_message_leaves_swap_unchanged(direct_chat: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
+    let user2 = client::register_user(env, canister_ids);
+    let attacker = random_principal();
+
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, attacker, 100_000_000);
+
+    let message_id = random_from_u128();
+    let content = MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+        token0: icp_token_info(),
+        token0_amount: 1_000_000_000,
+        token1: chat_token_info(),
+        token1_amount: 10_000_000_000,
+        expires_in: DAY_IN_MS,
+        caption: None,
+        from_account: None,
+    });
+
+    let (chat, canister_to_notify) = if direct_chat {
+        let response = client::user::send_message_v2(
+            env,
+            user1.principal,
+            user1.canister(),
+            &user_canister::send_message_v2::Args {
+                recipient: user2.user_id,
+                thread_root_message_index: None,
+                message_id,
+                content,
+                replies_to: None,
+                forwarding: false,
+                block_level_markdown: false,
+                message_filter_failed: None,
+                pin: None,
+                og_previews: Vec::new(),
+            },
+        );
+        assert!(
+            matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+            "{response:?}"
+        );
+        (Chat::Direct(user2.user_id.into()), user1.canister())
+    } else {
+        let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
+        client::group::happy_path::join_group(env, user2.principal, group_id);
+
+        let response = client::user::send_message_with_transfer_to_group(
+            env,
+            user1.principal,
+            user1.canister(),
+            &user_canister::send_message_with_transfer_to_group::Args {
+                group_id,
+                thread_root_message_index: None,
+                message_id,
+                content,
+                sender_name: user1.username(),
+                sender_display_name: None,
+                replies_to: None,
+                mentioned: Vec::new(),
+                block_level_markdown: false,
+                rules_accepted: None,
+                message_filter_failed: None,
+                pin: None,
+                og_previews: Vec::new(),
+            },
+        );
+        assert!(
+            matches!(
+                response,
+                user_canister::send_message_with_transfer_to_group::Response::Success(_)
+            ),
+            "{response:?}"
+        );
+        (Chat::Group(group_id), group_id.into())
+    };
+
+    env.tick();
+
+    // The attacker creates a swap naming the existing swap's message, offered on behalf of its
+    // creator so that the notification is routed to their chat, then funds it so that cancelling it
+    // triggers a refund and with it a notification
+    let other_swap_amount = 10_000_000;
+    let other_swap = client::escrow::create_swap(
+        env,
+        attacker,
+        canister_ids.escrow,
+        &escrow_canister::create_swap::Args {
+            location: P2PSwapLocation::from_message(chat, None, message_id),
+            token0: icp_token_info(),
+            token0_amount: other_swap_amount,
+            token0_principal: Some(user1.canister()),
+            token1: chat_token_info(),
+            token1_amount: 10_000_000,
+            token1_principal: None,
+            expires_at: now_millis(env) + DAY_IN_MS,
+            additional_admins: Vec::new(),
+            canister_to_notify: Some(canister_to_notify),
+            is_public: false,
+        },
+    );
+    let escrow_canister::create_swap::Response::Success(other_swap) = other_swap else {
+        panic!("'create_swap' error: {other_swap:?}");
+    };
+
+    client::ledger::happy_path::transfer(
+        env,
+        attacker,
+        canister_ids.icp_ledger,
+        icrc1::Account {
+            owner: canister_ids.escrow,
+            subaccount: Some(escrow_canister::deposit_subaccount(user1.canister(), other_swap.id)),
+        },
+        other_swap_amount + icp_token_info().fee,
+    );
+    client::escrow::happy_path::notify_deposit(env, attacker, canister_ids.escrow, other_swap.id, Some(user1.canister()));
+    client::escrow::happy_path::cancel_swap(env, attacker, canister_ids.escrow, other_swap.id);
+
+    tick_many(env, 10);
+
+    let swap_event = |env: &mut PocketIc, user: &User| {
+        if direct_chat {
+            let other_user_id = if user.user_id == user1.user_id { user2.user_id } else { user1.user_id };
+            client::user::happy_path::events_by_index(env, user, other_user_id, vec![1.into()])
+        } else {
+            let Chat::Group(group_id) = chat else { unreachable!() };
+            client::group::happy_path::events_by_index(env, user, group_id, vec![2.into()])
+        }
+        .events
+        .pop()
+        .unwrap()
+        .event
+    };
+
+    for user in [&user1, &user2] {
+        verify_swap_status(swap_event(env, user), |status| matches!(status, P2PSwapStatus::Open));
+    }
+
+    // The swap can still be accepted and completed
+    if direct_chat {
+        let response = client::user::accept_p2p_swap(
+            env,
+            user2.principal,
+            user2.canister(),
+            &user_canister::accept_p2p_swap::Args {
+                user_id: user1.user_id,
+                thread_root_message_index: None,
+                message_id,
+                pin: None,
+                from_account: None,
+            },
+        );
+        assert!(
+            matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+            "{response:?}"
+        );
+    } else {
+        let Chat::Group(group_id) = chat else { unreachable!() };
+        let response = client::group::accept_p2p_swap(
+            env,
+            user2.principal,
+            group_id.into(),
+            &group_canister::accept_p2p_swap::Args {
+                thread_root_message_index: None,
+                message_id,
+                pin: None,
+                new_achievement: false,
+                from_account: None,
+            },
+        );
+        assert!(
+            matches!(response, group_canister::accept_p2p_swap::Response::Success(_)),
+            "{response:?}"
+        );
+    }
+
+    tick_many(env, 10);
+
+    for user in [&user1, &user2] {
+        verify_swap_status(
+            swap_event(env, user),
+            |status| matches!(status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id),
+        );
+    }
 }
 
 pub(crate) fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {
