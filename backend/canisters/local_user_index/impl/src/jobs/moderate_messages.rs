@@ -58,7 +58,7 @@ pub fn run() {
         // TIMER_ID is deliberately left set while the batch is in flight so that an enqueue
         // during the outcall cannot arm a second concurrent batch; it is cleared, and the timer
         // re-armed if required, when the batch completes
-        ic_cdk::futures::spawn_migratory(process_batch(api_key, moderation_referral_config, batch));
+        utils::async_work::spawn_tracked(process_batch(api_key, moderation_referral_config, batch));
     } else {
         TIMER_ID.set(None);
     }

@@ -45,6 +45,7 @@ use types::{
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
+use utils::async_work::AsyncWorkGuard;
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
@@ -1381,6 +1382,7 @@ async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f:
 }
 
 async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    let _guard = AsyncWorkGuard::new();
     run_regular_jobs();
     let result = f().await;
     flush_pending_events();

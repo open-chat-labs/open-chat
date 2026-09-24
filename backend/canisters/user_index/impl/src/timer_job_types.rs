@@ -108,7 +108,7 @@ impl Job for TimerJob {
 
 impl Job for ProcessReportClassification {
     fn execute(self) {
-        ic_cdk::futures::spawn(process_report(self.report_index));
+        utils::async_work::spawn_tracked(process_report(self.report_index));
     }
 }
 
@@ -129,7 +129,7 @@ impl Job for RecurringDiamondMembershipPayment {
                         .map(|duration| (duration, d.pay_in_chat(), fees))
                 })
         }) {
-            ic_cdk::futures::spawn_migratory(pay_for_diamond_membership(self.user_id, duration, fees, pay_in_chat));
+            utils::async_work::spawn_tracked(pay_for_diamond_membership(self.user_id, duration, fees, pay_in_chat));
         }
 
         async fn pay_for_diamond_membership(
@@ -223,7 +223,7 @@ If you would like to extend your Diamond membership you will need to approve the
 
 impl Job for SetUserSuspended {
     fn execute(self) {
-        ic_cdk::futures::spawn_migratory(suspend_user(self));
+        utils::async_work::spawn_tracked(suspend_user(self));
 
         // A suspension which silently fails to apply (eg. the user canister is stopped mid
         // upgrade) leaves a sanctioned user active, so retry rather than dropping it
@@ -260,7 +260,7 @@ impl Job for SetUserSuspended {
 
 impl Job for SetUserSuspendedInGroup {
     fn execute(self) {
-        ic_cdk::futures::spawn_migratory(set_user_suspended_in_group(
+        utils::async_work::spawn_tracked(set_user_suspended_in_group(
             self.user_id,
             self.group,
             self.suspended,
@@ -294,7 +294,7 @@ impl Job for SetUserSuspendedInGroup {
 
 impl Job for SetUserSuspendedInCommunity {
     fn execute(self) {
-        ic_cdk::futures::spawn_migratory(set_user_suspended_in_community(
+        utils::async_work::spawn_tracked(set_user_suspended_in_community(
             self.user_id,
             self.community,
             self.suspended,
@@ -354,7 +354,7 @@ impl Job for UnsuspendUser {
             return;
         }
 
-        ic_cdk::futures::spawn_migratory(unsuspend_user(self));
+        utils::async_work::spawn_tracked(unsuspend_user(self));
 
         async fn unsuspend_user(job: UnsuspendUser) {
             match unsuspend_user_impl(job.user_id).await {

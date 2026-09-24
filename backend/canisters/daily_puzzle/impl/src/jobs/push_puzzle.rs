@@ -50,7 +50,7 @@ pub(crate) fn schedule(refresh: bool, delay: Duration) {
 
 fn run(refresh: bool) {
     TIMER_ID.set(None);
-    ic_cdk::futures::spawn_migratory(push(refresh));
+    utils::async_work::spawn_tracked(push(refresh));
 }
 
 fn retry_delay(attempt: u32) -> Duration {

@@ -378,7 +378,7 @@ fn send_message_impl(
         let sender_display_name = state.data.user.display_name.value.clone();
 
         if recipient_type.user_type().is_bot() {
-            ic_cdk::futures::spawn_migratory(send_to_bot_canister(
+            utils::async_work::spawn_tracked(send_to_bot_canister(
                 recipient,
                 message_event.event.message_index,
                 legacy_bot_api::handle_direct_message::Args::new(send_message_args, sender_name),

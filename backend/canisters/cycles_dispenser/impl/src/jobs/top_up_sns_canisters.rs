@@ -14,7 +14,7 @@ pub fn start_job() {
 
 fn run() {
     if let Some(canister_id) = read_state(|state| state.data.sns_root_canister) {
-        ic_cdk::futures::spawn_migratory(run_async(canister_id));
+        utils::async_work::spawn_tracked(run_async(canister_id));
     }
 }
 

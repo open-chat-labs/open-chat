@@ -15,8 +15,8 @@ pub fn start_job() {
 
 fn run() {
     match mutate_state(get_next_action) {
-        Action::BurnIcp(burn) => ic_cdk::futures::spawn_migratory(burn_icp(burn)),
-        Action::NotifyTopUp(notify) => ic_cdk::futures::spawn_migratory(notify_cmc(notify)),
+        Action::BurnIcp(burn) => utils::async_work::spawn_tracked(burn_icp(burn)),
+        Action::NotifyTopUp(notify) => utils::async_work::spawn_tracked(notify_cmc(notify)),
         Action::None => {}
     }
 }
