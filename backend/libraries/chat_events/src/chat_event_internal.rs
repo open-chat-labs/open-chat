@@ -310,6 +310,21 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
+    // Moves any reactions left under a user's earlier ids, from before they were migrated to a
+    // MultiUser canister, over to their current id, so that they count as the user's own
+    pub fn change_reactor_ids(&mut self, previous_user_ids: &[UserId], user_id: UserId) {
+        if previous_user_ids.is_empty() {
+            return;
+        }
+        for (_, users) in self.reactions.iter_mut() {
+            let len = users.len();
+            users.retain(|u| !previous_user_ids.contains(u));
+            if users.len() < len {
+                users.insert(user_id);
+            }
+        }
+    }
+
     pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Message {
         Message {
             message_index: self.message_index,

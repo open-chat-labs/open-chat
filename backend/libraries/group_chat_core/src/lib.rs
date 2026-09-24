@@ -737,6 +737,7 @@ impl GroupChatCore {
             og_previews,
             finalise_bot_message: finalise,
             now,
+            previous_user_ids: Vec::new(),
         };
 
         let result = self.events.edit_message::<NullEventPusher>(edit_message_args, None).ok();
@@ -960,6 +961,7 @@ impl GroupChatCore {
                 message_id,
                 reaction,
                 now,
+                previous_user_ids: Vec::new(),
             },
             Some(event_pusher),
         )
@@ -988,6 +990,7 @@ impl GroupChatCore {
             message_id,
             reaction,
             now,
+            previous_user_ids: Vec::new(),
         })
     }
 
@@ -1063,6 +1066,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_ids,
             now,
+            previous_user_ids: Vec::new(),
         });
 
         if thread_root_message_index.is_none() {
@@ -1116,6 +1120,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_ids,
             now,
+            previous_user_ids: Vec::new(),
         });
 
         let events_reader = self
@@ -1784,7 +1789,7 @@ impl GroupChatCore {
         let member = self.members.get_verified_member(user_id)?;
 
         self.events
-            .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)?;
+            .follow_thread(thread_root_message_index, user_id, &[], member.min_visible_event_index(), now)?;
 
         self.members.update_member(&user_id, |m| {
             m.followed_threads.insert(thread_root_message_index, now);
@@ -1803,7 +1808,7 @@ impl GroupChatCore {
         let member = self.members.get_verified_member(user_id)?;
 
         self.events
-            .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)?;
+            .unfollow_thread(thread_root_message_index, user_id, &[], member.min_visible_event_index(), now)?;
 
         self.members.update_member(&user_id, |m| {
             m.followed_threads.remove(thread_root_message_index);
@@ -1833,6 +1838,7 @@ impl GroupChatCore {
             option_index,
             operation,
             now,
+            previous_user_ids: Vec::new(),
         })
     }
 
@@ -1853,6 +1859,7 @@ impl GroupChatCore {
 
         self.events.reserve_prize(
             user_id,
+            &[],
             min_visible_event_index,
             message_id,
             now,
@@ -1895,7 +1902,7 @@ impl GroupChatCore {
     ) -> OCResult<UpdateMessageSuccess<u32>> {
         if self.members.contains(&user_id) {
             self.events
-                .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
+                .cancel_p2p_swap(user_id, &[], thread_root_message_index, message_id, now)
         } else {
             Err(OCErrorCode::InitiatorNotInChat.into())
         }

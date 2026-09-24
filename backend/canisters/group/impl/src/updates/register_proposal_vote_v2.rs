@@ -20,7 +20,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult
         .data
         .chat
         .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)?;
+        .record_proposal_vote(user_id, &[], min_visible_event_index, args.message_index, args.adopt, now)?;
 
     state
         .data

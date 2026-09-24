@@ -245,6 +245,23 @@ fn chat_events_keep_search_index_up_to_date() {
 }
 
 #[test]
+fn message_edited_under_a_new_id_stays_indexed_under_its_sender() {
+    let mut events = setup_group_events();
+    let old_user_id = user_id(1);
+    let new_user_id = user_id(2);
+
+    let hello = push(&mut events, old_user_id, "hello world", 10);
+
+    // The sender has since been migrated to a MultiUser canister and given a new id
+    let mut args = edit_args(new_user_id, hello, "goodbye world", 20);
+    args.previous_user_ids = vec![old_user_id];
+    events.edit_message::<NullEventPusher>(args, None).unwrap();
+
+    assert!(search(&events, "hello", &[]).is_empty());
+    assert_eq!(search(&events, "goodbye", &[old_user_id]), vec![hello]);
+}
+
+#[test]
 fn legacy_heap_entries_are_searchable_then_migrated() {
     let mut events = setup_group_events();
     let chat = events.stable_memory_prefix().clone();
@@ -523,6 +540,7 @@ fn edit_args(sender: UserId, message_index: MessageIndex, text: &str, now: Times
         og_previews: Vec::new(),
         finalise_bot_message: false,
         now,
+        previous_user_ids: Vec::new(),
     }
 }
 
@@ -544,6 +562,7 @@ fn delete_args(caller: UserId, message_index: MessageIndex, now: TimestampMillis
         thread_root_message_index: None,
         message_ids: vec![message_id_of(message_index)],
         now,
+        previous_user_ids: Vec::new(),
     }
 }
 

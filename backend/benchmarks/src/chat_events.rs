@@ -96,6 +96,7 @@ fn add_reactions() -> BenchResult {
             message_id,
             reaction: Reaction::new((i % 10).to_string()),
             now: start + (i * 1000),
+            previous_user_ids: Vec::new(),
         })
         .collect();
 

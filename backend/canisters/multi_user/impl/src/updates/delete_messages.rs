@@ -41,6 +41,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 thread_root_message_index: args.thread_root_message_index,
                 message_ids: args.message_ids,
                 now,
+                previous_user_ids: Vec::new(),
             }) {
                 if let Ok(success) = result {
                     deleted.push(message_id);
@@ -88,6 +89,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                         thread_root_message_index,
                         message_ids: my_messages,
                         now,
+                        previous_user_ids: Vec::new(),
                     })
                     .into_iter()
                     .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))

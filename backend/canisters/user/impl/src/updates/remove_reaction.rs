@@ -27,6 +27,7 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         message_id: args.message_id,
         reaction: args.reaction.clone(),
         now,
+        previous_user_ids: Vec::new(),
     })?;
 
     let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;

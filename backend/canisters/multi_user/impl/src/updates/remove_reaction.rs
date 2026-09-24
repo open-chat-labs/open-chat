@@ -140,6 +140,7 @@ pub(crate) fn apply_reaction(
         message_id,
         reaction,
         now,
+        previous_user_ids: Vec::new(),
     };
     if added {
         // TODO: Push the reaction to the event store (`UserEventPusher` in the User canister)

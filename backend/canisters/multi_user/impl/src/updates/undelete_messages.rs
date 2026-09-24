@@ -42,6 +42,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
                     thread_root_message_index: args.thread_root_message_index,
                     message_ids: args.message_ids,
                     now,
+                    previous_user_ids: Vec::new(),
                 })
                 .into_iter()
                 .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
@@ -99,6 +100,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
                         thread_root_message_index,
                         message_ids: undeleted,
                         now,
+                        previous_user_ids: Vec::new(),
                     })
                     .into_iter()
                     .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))

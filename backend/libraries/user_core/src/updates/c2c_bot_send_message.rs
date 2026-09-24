@@ -144,6 +144,7 @@ pub fn send<P: EventPusher>(
                     og_previews: message.og_previews,
                     finalise_bot_message: message.finalised,
                     now,
+                    previous_user_ids: Vec::new(),
                 },
                 None,
             )

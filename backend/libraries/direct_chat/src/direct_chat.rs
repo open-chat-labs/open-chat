@@ -475,7 +475,7 @@ impl DirectChat {
         now: TimestampMillis,
     ) -> OCResult<UpdateMessageSuccess<u32>> {
         self.events
-            .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
+            .cancel_p2p_swap(user_id, &[], thread_root_message_index, message_id, now)
     }
 
     pub fn set_p2p_swap_status(

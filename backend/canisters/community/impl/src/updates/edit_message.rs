@@ -34,6 +34,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             og_previews: args.og_previews,
             finalise_bot_message: false,
             now,
+            previous_user_ids: Vec::new(),
         },
         Some(CommunityEventPusher {
             now,

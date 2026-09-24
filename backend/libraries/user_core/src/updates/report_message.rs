@@ -39,6 +39,7 @@ pub fn delete_reported_message(user: &mut User, args: &Args, my_user_id: UserId,
             thread_root_message_index: None,
             message_ids: vec![args.message_id],
             now,
+            previous_user_ids: Vec::new(),
         });
     }
 }

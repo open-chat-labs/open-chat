@@ -90,7 +90,7 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
     channel
         .chat
         .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)?;
+        .record_proposal_vote(user_id, &[], min_visible_event_index, args.message_index, args.adopt, now)?;
 
     channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
