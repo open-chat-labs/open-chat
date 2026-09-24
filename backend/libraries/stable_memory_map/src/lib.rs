@@ -420,16 +420,12 @@ fn garbage_collect_user_while(index: u16, keep_going: impl Fn() -> bool) -> Resu
     })
 }
 
-// Reads the raw entries of both maps in key order, starting after the key `after`, for a canister
-// which holds a single user to export everything it holds. Stops before an entry would take the
-// total size read past `max_bytes`, though always reads at least one entry. Each entry counts as its
-// key and value plus `ENTRY_ENCODING_OVERHEAD`, so that `max_bytes` bounds the entries once encoded.
+// Reads the raw entries of both maps in key order, starting after the key `after`, eg. for a canister
+// which holds a single user to export everything it holds. Keys are read as stored, so ignoring any
+// current key scope. Stops before an entry would take the total size read past `max_bytes`, though
+// always reads at least one entry. Each entry counts as its key and value plus
+// `ENTRY_ENCODING_OVERHEAD`, so that `max_bytes` bounds the entries once encoded.
 pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntriesResult {
-    assert!(
-        !key_scope::is_scoped(),
-        "Entries can only be read without a scope in a canister which holds a single user"
-    );
-
     let start = match after {
         Some(key) => Bound::Excluded(BaseKey::new(key.to_vec())),
         None => Bound::Unbounded,

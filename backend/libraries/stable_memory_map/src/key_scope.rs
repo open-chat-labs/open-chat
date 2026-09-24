@@ -58,10 +58,6 @@ thread_local! {
     static CURRENT: Cell<Option<KeyScope>> = const { Cell::new(None) };
 }
 
-pub(crate) fn is_scoped() -> bool {
-    SCOPED.get()
-}
-
 pub(crate) fn set_scoped(scoped: bool) {
     SCOPED.set(scoped);
     CURRENT.set(None);
