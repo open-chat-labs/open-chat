@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Record the owner of the acceptor's wallet on a P2P swap when they reserve it, name them by it to the escrow canister, and resolve them by it when the swap completes ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 - Reject every update call while the group is frozen in one place, `execute_update`, by trapping, rather than per endpoint with a `ChatFrozen` error. Only freezing, unfreezing, platform moderation (including user suspensions), exporting the group into a community (which happens while it is frozen) and `wallet_receive` run via `execute_update_even_if_frozen`. Every other update, including some which previously worked while frozen such as `c2c_local_index` and ending video calls, is now blocked ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
+- Skip running the regular jobs while frozen ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
 
 ### Removed
 
