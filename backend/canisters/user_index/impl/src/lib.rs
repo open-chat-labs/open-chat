@@ -170,7 +170,8 @@ impl RuntimeState {
     }
 
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
-    // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls
+    // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls.
+    // Only the first call for a migration is acted on, so it must list all of them.
     #[expect(dead_code, reason = "Called once the UserIndex orchestrates migrations")]
     pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, canisters_to_notify: Vec<CanisterId>) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
