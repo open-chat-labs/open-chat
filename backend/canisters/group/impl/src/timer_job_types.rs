@@ -5,7 +5,7 @@ use crate::{
 };
 use candid::Principal;
 use canister_timer_jobs::Job;
-use chat_events::{EndPollResult, MessageContentInternal};
+use chat_events::{ChatEvents, EndPollResult, MessageContentInternal};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
@@ -66,7 +66,11 @@ pub struct RemoveOldEventsJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyEscrowCanisterOfDepositJob {
-    pub user_id: UserId,
+    // The owner of the depositor's wallet, by which the escrow canister knows them. Jobs queued
+    // before this was recorded hold the depositor's user id, which is the same principal since
+    // those depositors were all alone in their canisters.
+    #[serde(alias = "user_id")]
+    pub principal: Principal,
     pub swap_id: u32,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
@@ -76,14 +80,14 @@ pub struct NotifyEscrowCanisterOfDepositJob {
 
 impl NotifyEscrowCanisterOfDepositJob {
     pub fn run(
-        user_id: UserId,
+        principal: Principal,
         swap_id: u32,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         transaction_index: u64,
     ) {
         let job = NotifyEscrowCanisterOfDepositJob {
-            user_id,
+            principal,
             swap_id,
             thread_root_message_index,
             message_id,
@@ -91,6 +95,14 @@ impl NotifyEscrowCanisterOfDepositJob {
             attempt: 0,
         };
         job.execute();
+    }
+
+    // The member who reserved the swap, which recorded their principal. For a swap reserved before
+    // that was recorded, the principal is the member's user id.
+    fn depositor_user_id(&self, events: &ChatEvents) -> UserId {
+        events
+            .p2p_swap_reserved_by(self.thread_root_message_index, self.message_id, self.principal)
+            .unwrap_or(self.principal.into())
     }
 }
 
@@ -334,17 +346,16 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
                     swap_id: self.swap_id,
-                    // TODO: Name the wallet's owner, which is the principal of a user in a MultiUser
-                    // canister, once they can accept P2P swaps
-                    deposited_by: Some(self.user_id.as_principal()),
+                    deposited_by: Some(self.principal),
                 },
             )
             .await
             {
                 Ok(escrow_canister::notify_deposit::Response::Success(_)) => {
                     mutate_state(|state| {
+                        let user_id = self.depositor_user_id(&state.data.chat.events);
                         let _ = state.data.chat.events.accept_p2p_swap(
-                            self.user_id,
+                            user_id,
                             self.thread_root_message_index,
                             self.message_id,
                             self.transaction_index,
@@ -353,8 +364,9 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                     });
                 }
                 Ok(escrow_canister::notify_deposit::Response::SwapExpired) => mutate_state(|state| {
+                    let user_id = self.depositor_user_id(&state.data.chat.events);
                     state.data.chat.events.unreserve_p2p_swap(
-                        self.user_id,
+                        user_id,
                         self.thread_root_message_index,
                         self.message_id,
                         state.env.now(),
@@ -366,7 +378,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                         state.data.timer_jobs.enqueue_job(
                             TimerJob::NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob {
                                 swap_id: self.swap_id,
-                                user_id: self.user_id,
+                                principal: self.principal,
                                 thread_root_message_index: self.thread_root_message_index,
                                 message_id: self.message_id,
                                 transaction_index: self.transaction_index,
@@ -475,5 +487,39 @@ impl Job for MarkVideoCallEndedJob {
         if let Err(error) = mutate_state(|state| end_video_call_impl(self.0.clone(), state)) {
             error!(?error, args = ?self.0, "Failed to mark video call ended");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // A deposit job queued before the depositor's principal was recorded named them by user id
+    #[test]
+    fn a_deposit_job_queued_with_a_user_id_reads_back_with_it_as_the_principal() {
+        #[derive(Serialize)]
+        struct OldNotifyEscrowCanisterOfDepositJob {
+            user_id: UserId,
+            swap_id: u32,
+            thread_root_message_index: Option<MessageIndex>,
+            message_id: MessageId,
+            transaction_index: u64,
+            attempt: u32,
+        }
+
+        let user_id: UserId = Principal::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap().into();
+        let bytes = msgpack::serialize_then_unwrap(OldNotifyEscrowCanisterOfDepositJob {
+            user_id,
+            swap_id: 1,
+            thread_root_message_index: None,
+            message_id: 2u64.into(),
+            transaction_index: 3,
+            attempt: 4,
+        });
+
+        let job: NotifyEscrowCanisterOfDepositJob = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(job.principal, user_id.as_principal());
+        assert_eq!(job.swap_id, 1);
+        assert_eq!(job.attempt, 4);
     }
 }

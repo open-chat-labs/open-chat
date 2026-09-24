@@ -1,4 +1,5 @@
 use crate::unread_message_index_map::UnreadMessageIndexMap;
+use candid::Principal;
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, ChatInternal, DeleteMessageSuccess,
     DeleteUndeleteMessagesArgs, EditMessageArgs, EditMessageSuccess, EventKey, EventPusher, MessageContentInternal,
@@ -406,12 +407,19 @@ impl DirectChat {
     pub fn reserve_p2p_swap(
         &mut self,
         user_id: UserId,
+        principal: Principal,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
     ) -> OCResult<ReserveP2PSwapSuccess> {
-        self.events
-            .reserve_p2p_swap(user_id, thread_root_message_index, message_id, EventIndex::default(), now)
+        self.events.reserve_p2p_swap(
+            user_id,
+            principal,
+            thread_root_message_index,
+            message_id,
+            EventIndex::default(),
+            now,
+        )
     }
 
     pub fn unreserve_p2p_swap(

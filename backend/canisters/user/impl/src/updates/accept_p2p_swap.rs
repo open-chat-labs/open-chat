@@ -112,7 +112,14 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareResult>
         // Translated before the transfer is made, so that a root the user cannot see fails the
         // call rather than leaving the other user uninformed of the acceptance
         let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
-        let reserve_success = chat.reserve_p2p_swap(my_user_id, args.thread_root_message_index, args.message_id, now)?;
+        // A user alone in their canister holds their funds in its account, which escrow knows them by
+        let reserve_success = chat.reserve_p2p_swap(
+            my_user_id,
+            state.env.canister_id(),
+            args.thread_root_message_index,
+            args.message_id,
+            now,
+        )?;
 
         Ok(PrepareResult {
             my_user_id,
