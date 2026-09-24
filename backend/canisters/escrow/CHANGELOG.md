@@ -6,13 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Removed
-
-- Remove `user_to_notify` and `SwapStatusChange::user_id`, identifying users by principal alone ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
-
 ### Changed
 
 - Pay swap funds and refunds to principals again rather than users' wallets, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since users in MultiUser canisters hold their own funds in their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+
+### Removed
+
+- Remove `user_to_notify` and `SwapStatusChange::user_id`, identifying users by principal alone ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 
 ### Fixed
 

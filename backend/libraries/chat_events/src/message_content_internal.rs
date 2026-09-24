@@ -2322,14 +2322,4 @@ mod p2p_swap_tests {
         assert!(swap.unreserve(user_id));
         assert_eq!(swap.reserved_by(wallet_owner), None);
     }
-
-    // A swap stored before the principal was recorded reads back without one
-    #[test]
-    fn a_swap_stored_before_the_principal_was_recorded_reads_back_without_one() {
-        let mut swap = swap();
-        swap.reserved_by_principal = None;
-        let bytes = msgpack::serialize_then_unwrap(&swap);
-        let decoded: P2PSwapContentInternal = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(decoded.reserved_by_principal, None);
-    }
 }

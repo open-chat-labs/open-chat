@@ -3,8 +3,12 @@ use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state, r
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
-use types::{CanisterId, Chat, ChatId, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus, UserId};
+use tracing::error;
+use types::{
+    CanisterId, Chat, ChatId, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus, UserId, UserIdAndPrincipal,
+};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 #[update(guard = "caller_is_escrow_canister", msgpack = true)]
 #[trace]
@@ -46,10 +50,24 @@ async fn offerer_user_id(principal: candid::Principal, local_user_index_canister
         user_id_or_principal: principal,
     };
     match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
-        Ok(local_user_index_canister::c2c_lookup_user::Response::Success(user)) => Some(user.user_id),
+        // The LocalUserIndex also finds a user alone in their canister by the principal they sign
+        // in with, but escrow never names them by it, so only a user whose wallet is owned by the
+        // principal is the offerer
+        Ok(local_user_index_canister::c2c_lookup_user::Response::Success(user))
+            if UserIdAndPrincipal::new(user.user_id, user.principal).wallet_owner() == principal =>
+        {
+            Some(user.user_id)
+        }
         Ok(_) => None,
-        // Failing the call has the escrow canister try again
-        Err(error) => ic_cdk::trap(format!("Failed to look up the offerer of a P2P swap: {error:?}")),
+        // Failing the call has the escrow canister try again, which is only worth it if the
+        // lookup could then succeed
+        Err(error) if delay_if_should_retry_failed_c2c_call(&error).is_some() => {
+            ic_cdk::trap(format!("Failed to look up the offerer of a P2P swap: {error:?}"))
+        }
+        Err(error) => {
+            error!(?error, %principal, "Failed to look up the offerer of a P2P swap");
+            None
+        }
     }
 }
 
