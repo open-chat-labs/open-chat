@@ -170,7 +170,8 @@ impl Job for HardDeleteMessageContentJob {
             // canister does. Each copy of the chat references the same files, so they must only be
             // deleted once, from the sender's copy.
             // A swap the user offered which is still open is cancelled, as in the User canister
-            if sender == my_user_id
+            // Including a swap they offered under an earlier id, from before they were migrated
+            if state.data.migrated_user_ids.is_same_user(sender, my_user_id)
                 && let MessageContentInternal::P2PSwap(s) = content
                 && matches!(s.status, P2PSwapStatus::Open)
             {

@@ -13,8 +13,10 @@ fn deleted_message(args: Args) -> Response {
 
 fn deleted_message_impl(args: Args, state: &RuntimeState) -> OCResult<MessageContent> {
     let user = state.get_caller_user()?;
-    state
-        .data
-        .chat
-        .deleted_message(user, args.thread_root_message_index, args.message_id)
+    state.data.chat.deleted_message(
+        user,
+        args.thread_root_message_index,
+        args.message_id,
+        &state.data.migrated_user_ids,
+    )
 }

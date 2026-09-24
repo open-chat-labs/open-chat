@@ -5,7 +5,14 @@ use user_canister::deleted_message::{Response::*, *};
 
 #[query(guard = "caller_is_owner", msgpack = true)]
 fn deleted_message(args: Args) -> Response {
-    match read_state(|state| user_core::queries::deleted_message(&state.data.user, args, state.env.canister_id().into())) {
+    match read_state(|state| {
+        user_core::queries::deleted_message(
+            &state.data.user,
+            args,
+            state.env.canister_id().into(),
+            &state.data.migrated_user_ids,
+        )
+    }) {
         Ok(result) => Success(result),
         Err(error) => Error(error),
     }

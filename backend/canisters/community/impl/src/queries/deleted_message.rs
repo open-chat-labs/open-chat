@@ -15,7 +15,10 @@ fn deleted_message_impl(args: Args, state: &RuntimeState) -> OCResult<MessageCon
     let user = state.get_caller_user()?;
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
 
-    channel
-        .chat
-        .deleted_message(user, args.thread_root_message_index, args.message_id)
+    channel.chat.deleted_message(
+        user,
+        args.thread_root_message_index,
+        args.message_id,
+        &state.data.migrated_user_ids,
+    )
 }

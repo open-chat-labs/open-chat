@@ -154,7 +154,7 @@ pub fn toggle_reaction(
     let message = result.value;
     // They may be reacting to their own message; in that case we should not generate any activity
     // for the other user (push notification, activity-feed event, or achievement progress).
-    if message.sender == sender {
+    if migrated_user_ids.is_same_user(message.sender, sender) {
         return None;
     }
 

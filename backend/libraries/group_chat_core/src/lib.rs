@@ -468,6 +468,7 @@ impl GroupChatCore {
         user: UserIdAndPrincipal,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<MessageContent> {
         let user_id = user.user_id;
         if let Some(member) = self.members.get(&user_id) {
@@ -485,8 +486,9 @@ impl GroupChatCore {
                         // Quarantined: suspected CSAM removed by moderation is viewable by no
                         // one here - designated reviewers access it via the evidence vault
                         Err(OCErrorCode::MessageHardDeleted.into())
-                    } else if user_id == message.sender
-                        || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
+                    } else if migrated_user_ids.is_same_user(user_id, message.sender)
+                        || (!migrated_user_ids.is_same_user(deleted_by.deleted_by, message.sender)
+                            && member.role().can_delete_messages(&self.permissions))
                     {
                         Ok(message.content.hydrate(Some(user)))
                     } else {

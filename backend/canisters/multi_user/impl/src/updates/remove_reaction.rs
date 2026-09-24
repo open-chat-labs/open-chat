@@ -99,7 +99,7 @@ pub(crate) fn toggle_reaction(
             let message = result.value;
 
             // A reaction to their own message generates no activity for them
-            (message.sender != my_user_id).then(|| MessageActivityEvent {
+            (!migrated_user_ids.is_same_user(message.sender, my_user_id)).then(|| MessageActivityEvent {
                 chat: Chat::Direct(my_user_id.into()),
                 thread_root_message_index,
                 message_index: message.message_index,
