@@ -68,6 +68,40 @@ class KeyguardBoundaryTest {
         assertFalse(token.contains("removeAt(0)"))
     }
 
+    // The registry decides; the adapters obey. Neither adapter loads under plain JUnit
+    // (Handler, Looper, Context), so obedience is pinned in the source, as for the
+    // handle directory above.
+    @Test
+    fun `invariant 5 the notification manager rings a call push without looking at the app state`() {
+        val source = File(plugin, "java/NotificationsManager.kt").readText()
+        val ring = source.substring(source.indexOf("is PushRoute.Ring ->"), source.indexOf("is PushRoute.Message ->"))
+        assertFalse(ring.contains("appIsInForeground"))
+        assertTrue(ring.contains("CallRinger.onStarted("))
+    }
+
+    @Test
+    fun `invariants 7 and 8 the ringer passes the registry's end through and posts a missed call only when the end says so`() {
+        val source = File(plugin, "java/calls/CallRinger.kt").readText()
+        // Only the in-app join names an End itself; every other end comes back from the
+        // registry and is passed on as returned.
+        assertFalse(source.contains("End.MISSED"))
+        assertFalse(source.contains("End.REJECTED"))
+        assertFalse(source.contains("End.ANSWERED_ELSEWHERE"))
+        val finish = source.substring(source.indexOf("private fun finish("), source.indexOf("private fun postMissed("))
+        assertTrue(finish.contains("end.postsMissedCall"))
+    }
+
+    @Test
+    fun `invariant 17 every ring notification is posted through the registry's once-only gate`() {
+        val ringer = File(plugin, "java/calls/CallRinger.kt").readText()
+        val showRing = ringer.substring(ringer.indexOf("fun showRing("), ringer.indexOf("fun redial("))
+        assertTrue(showRing.contains("registry.shouldPostRing("))
+        // postRing has exactly one caller: showRing.
+        val callers = kotlinSources(plugin).filter { it.readText().contains("IncomingCallNotifications.postRing(") }
+        assertEquals(listOf("CallRinger.kt"), callers.map { it.name })
+        assertEquals(1, ringer.split("IncomingCallNotifications.postRing(").size - 1)
+    }
+
     @Test
     fun `invariant 14 the parked answer is written only by the ringer and never read from an intent`() {
         val writers = (kotlinSources(plugin) + kotlinSources(app)).filter {
