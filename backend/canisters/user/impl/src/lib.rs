@@ -25,6 +25,7 @@ use types::{
 };
 use user_canister::UserCanisterEvent;
 use user_core::{Community, GroupChat, User};
+use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
@@ -556,9 +557,15 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
 }
 
+// Runs an update call, trapping if the canister is frozen. Endpoints which must keep working while
+// frozen use `execute_update_even_if_frozen` instead.
 fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_even_if_frozen(f)
+}
+
+fn execute_update_even_if_frozen<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
-        trap_if_frozen(state);
         state.regular_jobs.run(state.env.deref(), &mut state.data);
         let result = f(state);
         state.data.flush_pending_events();
@@ -567,21 +574,15 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 }
 
 async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
-    read_state(trap_if_frozen);
+    read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_async_even_if_frozen(f).await
+}
+
+async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
     run_regular_jobs();
     let result = f().await;
     flush_pending_events();
     result
-}
-
-// Every update call passes through here, so this is what rejects them while the canister is frozen.
-// It traps rather than returning an error, since a trap is a `CanisterError`, which the queues
-// sending events to this canister retry, whereas a reject from a guard is a `CanisterReject`, which
-// they drop.
-fn trap_if_frozen(state: &RuntimeState) {
-    if state.data.is_frozen() {
-        ic_cdk::trap("Canister is frozen");
-    }
 }
 
 fn run_regular_jobs() {

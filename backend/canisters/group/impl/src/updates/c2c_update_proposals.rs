@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{RuntimeState, execute_update};
+use crate::{RuntimeState, execute_update_even_if_frozen};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_update_proposals::*;
@@ -8,7 +8,7 @@ use types::OCResult;
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_update_proposals(args: Args) -> Response {
-    execute_update(|state| c2c_update_proposals_impl(args, state)).into()
+    execute_update_even_if_frozen(|state| c2c_update_proposals_impl(args, state)).into()
 }
 
 fn c2c_update_proposals_impl(args: Args, state: &mut RuntimeState) -> OCResult {

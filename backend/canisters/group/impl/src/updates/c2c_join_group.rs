@@ -50,8 +50,6 @@ enum IsPermittedToJoinSuccess {
 }
 
 fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermittedToJoinSuccess> {
-    state.data.verify_not_frozen()?;
-
     if let Some(member) = state.data.chat.members.get(&args.user_id) {
         if !member.lapsed().value {
             let summary = state.summary(&member);

@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, execute_update};
+use crate::{RuntimeState, execute_update_even_if_frozen};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
@@ -15,7 +15,7 @@ use types::{EventIndex, GroupNameChanged, ModerationCategories, TimestampMillis,
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_local_index(args: Args) -> Response {
-    execute_update(|state| c2c_local_index_impl(args, state))
+    execute_update_even_if_frozen(|state| c2c_local_index_impl(args, state))
 }
 
 fn c2c_local_index_impl(args: Args, state: &mut RuntimeState) -> Response {

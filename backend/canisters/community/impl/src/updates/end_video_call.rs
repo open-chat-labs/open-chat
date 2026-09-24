@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::TimerJob;
-use crate::{CommunityEventPusher, RuntimeState, execute_update};
+use crate::{CommunityEventPusher, RuntimeState, execute_update_even_if_frozen};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::end_video_call_v2::*;
@@ -11,7 +11,7 @@ use types::OCResult;
 #[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
 #[trace]
 fn end_video_call_v2(args: Args) -> Response {
-    execute_update(|state| end_video_call_impl(args, state)).into()
+    execute_update_even_if_frozen(|state| end_video_call_impl(args, state)).into()
 }
 
 pub(crate) fn end_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {

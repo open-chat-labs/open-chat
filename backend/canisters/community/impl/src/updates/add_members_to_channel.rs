@@ -36,8 +36,6 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_frozen()?;
-
     if state.data.is_public.value {
         return Err(OCErrorCode::CommunityPublic.into());
     }

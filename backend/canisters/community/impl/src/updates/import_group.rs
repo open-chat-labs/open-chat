@@ -1,5 +1,5 @@
 use crate::guards::caller_is_proposals_bot;
-use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
+use crate::{RuntimeState, execute_update_async_even_if_frozen, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::import_group::{Response::*, *};
@@ -11,7 +11,7 @@ use types::{CanisterId, ChannelId, ChatId, OCResult, UserId};
 async fn c2c_import_proposals_group(
     args: community_canister::c2c_import_proposals_group::Args,
 ) -> community_canister::c2c_import_proposals_group::Response {
-    execute_update_async(|| c2c_import_proposals_group_impl(args)).await
+    execute_update_async_even_if_frozen(|| c2c_import_proposals_group_impl(args)).await
 }
 
 async fn c2c_import_proposals_group_impl(
@@ -29,7 +29,7 @@ async fn c2c_import_proposals_group_impl(
 #[update(msgpack = true)]
 #[trace]
 async fn import_group(args: Args) -> Response {
-    execute_update_async(|| import_group_impl(args)).await
+    execute_update_async_even_if_frozen(|| import_group_impl(args)).await
 }
 
 async fn import_group_impl(args: Args) -> Response {

@@ -1,5 +1,5 @@
 use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
-use crate::{CommunityBeingImportedInto, RuntimeState, execute_update_async, mutate_state, read_state};
+use crate::{CommunityBeingImportedInto, RuntimeState, execute_update_async_even_if_frozen, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
@@ -13,7 +13,7 @@ use types::{CanisterId, OCResult, UserId};
 #[update(msgpack = true)]
 #[trace]
 async fn convert_into_community(args: Args) -> Response {
-    execute_update_async(|| convert_into_community_impl(args)).await
+    execute_update_async_even_if_frozen(|| convert_into_community_impl(args)).await
 }
 
 async fn convert_into_community_impl(args: Args) -> Response {

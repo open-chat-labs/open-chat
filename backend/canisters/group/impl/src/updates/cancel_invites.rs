@@ -12,8 +12,6 @@ fn cancel_invites(args: Args) -> Response {
 }
 
 fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let user_id = state.get_caller_user_id()?;
 
     state.data.chat.cancel_invites(user_id, args.user_ids, state.env.now())?;

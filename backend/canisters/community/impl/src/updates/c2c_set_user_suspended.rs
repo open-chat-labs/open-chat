@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{RuntimeState, execute_update};
+use crate::{RuntimeState, execute_update_even_if_frozen};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_set_user_suspended::*;
@@ -8,7 +8,7 @@ use oc_error_codes::OCErrorCode;
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 fn c2c_set_user_suspended(args: Args) -> Response {
-    execute_update(|state| c2c_set_user_suspended_impl(args, state))
+    execute_update_even_if_frozen(|state| c2c_set_user_suspended_impl(args, state))
 }
 
 fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response {

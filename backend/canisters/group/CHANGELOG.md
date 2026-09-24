@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store each member's principal on the member, populating existing members in post_upgrade ([#9507](https://github.com/open-chat-labs/open-chat/pull/9507))
 - Hold the calling user's principal in `Caller::User` alongside their user id ([#9525](https://github.com/open-chat-labs/open-chat/pull/9525))
 - Record the owner of the acceptor's wallet on a P2P swap when they reserve it, name them by it to the escrow canister, and resolve them by it when the swap completes ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
+- Reject every update call while the group is frozen in one place, `execute_update`, by trapping, rather than per endpoint with a `ChatFrozen` error. The endpoints which must keep working while frozen (unfreezing, platform moderation, exporting into a community, and those which didn't check before) run via `execute_update_even_if_frozen` ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
 
 ### Removed
 

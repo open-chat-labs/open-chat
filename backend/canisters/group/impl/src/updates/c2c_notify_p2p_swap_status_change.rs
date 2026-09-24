@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_escrow_canister;
-use crate::{GroupEventPusher, RuntimeState, execute_update};
+use crate::{GroupEventPusher, RuntimeState, execute_update_even_if_frozen};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
@@ -9,7 +9,7 @@ use types::{EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSw
 #[update(guard = "caller_is_escrow_canister", msgpack = true)]
 #[trace]
 fn c2c_notify_p2p_swap_status_change(args: Args) {
-    execute_update(|state| c2c_notify_p2p_swap_status_change_impl(args, state))
+    execute_update_even_if_frozen(|state| c2c_notify_p2p_swap_status_change_impl(args, state))
 }
 
 fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {

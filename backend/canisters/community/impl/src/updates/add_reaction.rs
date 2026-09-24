@@ -52,8 +52,6 @@ fn c2c_bot_add_reaction_impl(args: c2c_bot_add_reaction::Args, state: &mut Runti
 }
 
 fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let caller = state.verified_caller(ext_caller)?;
     let new_achievement = args.new_achievement;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
