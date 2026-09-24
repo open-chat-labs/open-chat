@@ -104,6 +104,12 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         self.within_lock(|i| i.in_progress.len())
     }
 
+    // Whether no items are queued or being processed. Unlike `is_empty`, this includes items queued
+    // for a key whose batch is already being processed.
+    pub fn is_idle(&self) -> bool {
+        self.within_lock(|i| i.items_map.is_empty() && i.in_progress.is_empty())
+    }
+
     fn within_lock<F: FnOnce(&mut GroupedTimerJobQueueInner<T::SharedState, T::Key, T::Item>) -> R, R>(&self, f: F) -> R {
         let mut inner = self.inner.try_lock().unwrap();
         f(inner.deref_mut())

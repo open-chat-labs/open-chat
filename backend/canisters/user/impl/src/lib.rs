@@ -5,14 +5,16 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
-use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
+use constants::{ICP_LEDGER_CANISTER_ID, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -20,7 +22,7 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotNotification, BuildVersion, CanisterId, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Notification, NotifyChit, TimestampMillis,
+    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis,
     Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::UserCanisterEvent;
@@ -45,6 +47,9 @@ mod regular_jobs;
 mod timer_job_types;
 mod token_swaps;
 mod updates;
+
+// The most a migrated user may take up serialized, leaving room within the 2MB limit on a reply
+const MAX_MIGRATED_USER_BYTES: usize = 3 * ONE_MB as usize / 2;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -412,11 +417,65 @@ struct Data {
     // Queries are still served.
     #[serde(default)]
     pub frozen: Option<FrozenUserInfo>,
+    // The MultiUser canister the user is being migrated to, from when the migration starts. The
+    // canister's state must not change from then on, so it is treated as frozen.
+    #[serde(default)]
+    pub migrating_to: Option<CanisterId>,
 }
 
 impl Data {
     pub fn is_frozen(&self) -> bool {
-        self.frozen.is_some()
+        self.frozen.is_some() || self.migrating_to.is_some()
+    }
+
+    // Starts migrating the user to the given MultiUser canister, if the canister is ready, returning
+    // the user serialized. From then on the canister is frozen. A repeated call for the same MultiUser
+    // canister returns the user again, unchanged since the first call.
+    pub fn try_start_migration(&mut self, multi_user_canister_id: CanisterId) -> OCResult<ByteBuf> {
+        match self.migrating_to {
+            Some(canister_id) if canister_id == multi_user_canister_id => {}
+            Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
+            None => {
+                if let Some(reason) = self.reason_not_ready_for_migration() {
+                    return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
+                }
+            }
+        }
+
+        let user = msgpack::serialize_then_unwrap(&self.user);
+        if user.len() > MAX_MIGRATED_USER_BYTES {
+            return Err(OCErrorCode::NotReadyForMigration.with_message("User is too large"));
+        }
+
+        self.migrating_to = Some(multi_user_canister_id);
+        Ok(ByteBuf::from(user))
+    }
+
+    // The user is migrated along with their entries in the stable memory map, so the canister must
+    // have no work outstanding which would change or read them, nor anything else which isn't
+    // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
+    // state may remain.
+    fn reason_not_ready_for_migration(&self) -> Option<&'static str> {
+        if self.frozen.is_some() {
+            Some("Canister is frozen")
+        } else if self.timer_jobs.iter().any(|(_, wrapper)| {
+            !matches!(
+                wrapper.deref().borrow().as_ref(),
+                Some(TimerJob::RemoveExpiredEvents(_) | TimerJob::ClaimOrResetStreakInsurance(_))
+            )
+        }) {
+            Some("Timer jobs are pending")
+        } else if !self.user_canister_events_queue.is_idle() || !self.user_canister_events_by_canister.is_idle() {
+            Some("Events for other users are pending")
+        } else if !self.local_user_index_event_sync_queue.is_idle() {
+            Some("Events for the LocalUserIndex are pending")
+        } else if !self.fire_and_forget_handler.is_empty() {
+            Some("Calls to other canisters are pending")
+        } else if !self.stable_memory_keys_to_garbage_collect.is_empty() {
+            Some("Stable memory is still being garbage collected")
+        } else {
+            None
+        }
     }
 
     // Moves the events queued before they were batched per canister into the queue which does so,
@@ -472,6 +531,7 @@ impl Data {
             known_multi_user_canisters: HashSet::new(),
             migrated_user_ids: MigratedUserIds::default(),
             frozen: None,
+            migrating_to: None,
         }
     }
 

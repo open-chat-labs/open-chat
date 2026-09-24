@@ -34,6 +34,11 @@ impl FireAndForgetHandler {
         ic_cdk::futures::spawn_migratory(self.clone().process_single(call));
     }
 
+    // Whether every call has completed
+    pub fn is_empty(&self) -> bool {
+        self.within_lock(|i| i.canisters.is_empty())
+    }
+
     pub fn send_candid<A: CandidType>(&self, canister_id: CanisterId, method_name: impl Into<String>, args: A) {
         self.send(canister_id, method_name, candid::encode_one(args).unwrap());
     }

@@ -26,6 +26,7 @@ pub mod c2c_remove_from_community;
 pub mod c2c_remove_from_group;
 pub mod c2c_revoke_super_admin;
 pub mod c2c_set_user_suspended;
+pub mod c2c_try_start_migration;
 pub mod c2c_uninstall_bot;
 pub mod c2c_user_canister;
 pub mod c2c_user_canister_v2;

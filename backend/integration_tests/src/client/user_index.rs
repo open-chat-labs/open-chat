@@ -46,6 +46,7 @@ generate_msgpack_update_call!(set_call_push_enabled);
 generate_msgpack_update_call!(set_display_name);
 generate_msgpack_update_call!(set_premium_item_cost);
 generate_msgpack_update_call!(set_username);
+generate_msgpack_update_call!(start_user_migration);
 generate_msgpack_update_call!(suspend_user);
 generate_msgpack_update_call!(update_diamond_membership_subscription);
 generate_msgpack_update_call!(unsuspend_user);
