@@ -71,6 +71,10 @@ pub struct NotifyEscrowCanisterOfDepositJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub transaction_index: u64,
+    // The owner of the depositor's wallet, by which the escrow canister knows them. None for jobs
+    // queued before this was recorded, whose depositors were all alone in their canisters.
+    #[serde(default)]
+    pub depositor: Option<Principal>,
     pub attempt: u32,
 }
 
@@ -81,8 +85,10 @@ impl NotifyEscrowCanisterOfDepositJob {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         transaction_index: u64,
+        depositor: Principal,
     ) {
         let job = NotifyEscrowCanisterOfDepositJob {
+            depositor: Some(depositor),
             user_id,
             swap_id,
             thread_root_message_index,
@@ -334,9 +340,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
                     swap_id: self.swap_id,
-                    // TODO: Name the wallet's owner, which is the principal of a user in a MultiUser
-                    // canister, once they can accept P2P swaps
-                    deposited_by: Some(self.user_id.as_principal()),
+                    deposited_by: Some(self.depositor.unwrap_or(self.user_id.as_principal())),
                 },
             )
             .await
@@ -367,6 +371,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                             TimerJob::NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob {
                                 swap_id: self.swap_id,
                                 user_id: self.user_id,
+                                depositor: self.depositor,
                                 thread_root_message_index: self.thread_root_message_index,
                                 message_id: self.message_id,
                                 transaction_index: self.transaction_index,

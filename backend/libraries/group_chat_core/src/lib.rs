@@ -1868,6 +1868,7 @@ impl GroupChatCore {
     pub fn reserve_p2p_swap(
         &mut self,
         user_id: UserId,
+        principal: Principal,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
@@ -1875,8 +1876,14 @@ impl GroupChatCore {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.events
-            .reserve_p2p_swap(user_id, thread_root_message_index, message_id, min_visible_event_index, now)
+        self.events.reserve_p2p_swap(
+            user_id,
+            principal,
+            thread_root_message_index,
+            message_id,
+            min_visible_event_index,
+            now,
+        )
     }
 
     pub fn cancel_p2p_swap(

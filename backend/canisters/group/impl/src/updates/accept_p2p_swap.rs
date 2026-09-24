@@ -1,6 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{RuntimeState, execute_update_async, mutate_state};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::accept_p2p_swap::{Response::*, *};
@@ -18,7 +19,11 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
     let message_id = args.message_id;
     let new_achievement = args.new_achievement;
 
-    let ReserveP2PSwapResult { user_id, c2c_args } = match mutate_state(|state| reserve_p2p_swap(args, state)) {
+    let ReserveP2PSwapResult {
+        user_id,
+        depositor,
+        c2c_args,
+    } = match mutate_state(|state| reserve_p2p_swap(args, state)) {
         Ok(result) => result,
         Err(response) => return Error(response),
     };
@@ -32,6 +37,7 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
                     thread_root_message_index,
                     message_id,
                     transaction_index,
+                    depositor,
                 );
 
                 mutate_state(|state| {
@@ -87,6 +93,8 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
 
 struct ReserveP2PSwapResult {
     user_id: UserId,
+    // The owner of the member's wallet, which the escrow canister knows them by
+    depositor: Principal,
     c2c_args: user_canister::c2c_accept_p2p_swap::Args,
 }
 
@@ -94,17 +102,19 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2P
     state.data.verify_not_frozen()?;
 
     let user_id = state.get_caller_user_id()?;
+    let depositor = state.member_wallet(user_id)?.owner;
     let now = state.env.now();
 
     let result = state
         .data
         .chat
-        .reserve_p2p_swap(user_id, args.thread_root_message_index, args.message_id, now)?;
+        .reserve_p2p_swap(user_id, depositor, args.thread_root_message_index, args.message_id, now)?;
 
     handle_activity_notification(state);
 
     Ok(ReserveP2PSwapResult {
         user_id,
+        depositor,
         c2c_args: user_canister::c2c_accept_p2p_swap::Args {
             user_id,
             swap_id: result.content.swap_id,

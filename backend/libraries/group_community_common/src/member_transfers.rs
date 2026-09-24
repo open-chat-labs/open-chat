@@ -111,7 +111,6 @@ impl NewP2PSwap {
                 expires_at: now + content.expires_in,
                 additional_admins: Vec::new(),
                 canister_to_notify: Some(this_canister_id),
-                user_to_notify: None,
                 is_public: false,
             },
         })

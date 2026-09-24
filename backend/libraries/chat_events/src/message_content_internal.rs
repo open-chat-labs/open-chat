@@ -1841,6 +1841,10 @@ pub struct P2PSwapContentInternal {
     pub token0_txn_in: u64,
     #[serde(rename = "s", alias = "status")]
     pub status: P2PSwapStatus,
+    // The owner of the wallet of the user who reserved the swap, by which the escrow canister names
+    // them once they accept it. None for swaps reserved before this was recorded.
+    #[serde(rename = "rp", default, skip_serializing_if = "Option::is_none")]
+    pub reserved_by_principal: Option<Principal>,
 }
 
 impl P2PSwapContentInternal {
@@ -1860,13 +1864,15 @@ impl P2PSwapContentInternal {
             caption: content.caption,
             token0_txn_in,
             status: P2PSwapStatus::Open,
+            reserved_by_principal: None,
         }
     }
 
-    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+    pub fn reserve(&mut self, user_id: UserId, principal: Principal, now: TimestampMillis) -> bool {
         if let P2PSwapStatus::Open = self.status {
             if now < self.expires_at {
                 self.status = P2PSwapStatus::Reserved(P2PSwapReserved { reserved_by: user_id });
+                self.reserved_by_principal = Some(principal);
                 return true;
             } else {
                 self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
@@ -1876,11 +1882,25 @@ impl P2PSwapContentInternal {
         false
     }
 
+    // The user the escrow canister names by the owner of their wallet, if they reserved the swap
+    pub fn reserved_by(&self, principal: Principal) -> Option<UserId> {
+        if self.reserved_by_principal != Some(principal) {
+            return None;
+        }
+        match &self.status {
+            P2PSwapStatus::Reserved(r) => Some(r.reserved_by),
+            P2PSwapStatus::Accepted(a) => Some(a.accepted_by),
+            P2PSwapStatus::Completed(c) => Some(c.accepted_by),
+            _ => None,
+        }
+    }
+
     pub fn unreserve(&mut self, user_id: UserId) -> bool {
         if let P2PSwapStatus::Reserved(r) = &self.status
             && r.reserved_by == user_id
         {
             self.status = P2PSwapStatus::Open;
+            self.reserved_by_principal = None;
             return true;
         }
         false
@@ -1970,6 +1990,7 @@ impl From<P2PSwapContent> for P2PSwapContentInternal {
             caption: value.caption,
             token0_txn_in: value.token0_txn_in,
             status: value.status,
+            reserved_by_principal: None,
         }
     }
 }
@@ -2245,5 +2266,70 @@ mod video_call_tests {
             assert_eq!(decoded.hydrate().call_type, old);
             assert!(!decoded.hydrate().audio_only);
         }
+    }
+}
+
+#[cfg(test)]
+mod p2p_swap_tests {
+    use super::*;
+
+    fn token(symbol: &str) -> TokenInfo {
+        TokenInfo {
+            symbol: symbol.to_string(),
+            ledger: Principal::from_slice(&[1]),
+            decimals: 8,
+            fee: 10_000,
+        }
+    }
+
+    fn swap() -> P2PSwapContentInternal {
+        P2PSwapContentInternal::new(
+            1,
+            P2PSwapContentInitial {
+                token0: token("ICP"),
+                token0_amount: 100,
+                token1: token("CHAT"),
+                token1_amount: 1_000,
+                expires_in: 1_000,
+                caption: None,
+                from_account: None,
+            },
+            0,
+            0,
+        )
+    }
+
+    // The escrow canister names the acceptor by the owner of their wallet, which is resolved to
+    // them through what the swap recorded when they reserved it, for as long as it is theirs
+    #[test]
+    fn the_user_who_reserved_a_swap_is_found_by_the_owner_of_their_wallet() {
+        let user_id: UserId = Principal::from_slice(&[2]).into();
+        let wallet_owner = Principal::from_slice(&[3]);
+        let mut swap = swap();
+
+        assert!(swap.reserve(user_id, wallet_owner, 1));
+        assert_eq!(swap.reserved_by(wallet_owner), Some(user_id));
+        assert_eq!(swap.reserved_by(user_id.as_principal()), None);
+
+        assert!(swap.accept(user_id, 7));
+        assert_eq!(swap.reserved_by(wallet_owner), Some(user_id));
+        assert!(swap.complete(user_id, 8, 9).is_some());
+        assert_eq!(swap.reserved_by(wallet_owner), Some(user_id));
+
+        // Freed again, it is no longer theirs
+        let mut swap = self::swap();
+        assert!(swap.reserve(user_id, wallet_owner, 1));
+        assert!(swap.unreserve(user_id));
+        assert_eq!(swap.reserved_by(wallet_owner), None);
+    }
+
+    // A swap stored before the principal was recorded reads back without one
+    #[test]
+    fn a_swap_stored_before_the_principal_was_recorded_reads_back_without_one() {
+        let mut swap = swap();
+        swap.reserved_by_principal = None;
+        let bytes = msgpack::serialize_then_unwrap(&swap);
+        let decoded: P2PSwapContentInternal = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(decoded.reserved_by_principal, None);
     }
 }

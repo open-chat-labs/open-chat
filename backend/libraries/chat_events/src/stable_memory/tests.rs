@@ -473,6 +473,7 @@ fn p2p_swap_content() {
             token0_txn_out: rng.next_u64(),
             token1_txn_out: rng.next_u64(),
         }),
+        reserved_by_principal: Some(Principal::from_slice(&[3])),
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, P2P_SWAP_CURRENT);

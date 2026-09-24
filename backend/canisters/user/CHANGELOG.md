@@ -86,6 +86,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Apply edits, deletes, reactions and TTL changes from other users via `user_core`, shared with the MultiUser canister ([#9487](https://github.com/open-chat-labs/open-chat/pull/9487))
 - Stop naming the depositing user to the escrow canister for P2P swaps, reverting [#9273](https://github.com/open-chat-labs/open-chat/pull/9273), since the caller identifies them ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 - Share the `tip_message` checks and the handling of tips received with the MultiUser canister via `user_core` ([#9528](https://github.com/open-chat-labs/open-chat/pull/9528))
+- Resolve the offerer of a P2P swap in a direct chat by their principal via the LocalUserIndex when they aren't alone in their canister, and the acceptor by the principal recorded on the swap ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
 
 ### Removed
 

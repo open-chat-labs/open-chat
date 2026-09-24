@@ -129,6 +129,12 @@ impl UserIdAndPrincipal {
         let canister_id = ic_cdk::api::canister_self();
         UserIdAndPrincipal::new(canister_id.into(), canister_id)
     }
+
+    // The owner of the user's wallet (see below), by which the escrow canister, for example, knows
+    // them
+    pub fn wallet_owner(&self) -> Principal {
+        if self.user_id.is_canister() { self.user_id.as_principal() } else { self.principal }
+    }
 }
 
 // The user's wallet. A user alone in their canister holds their funds in that canister's account,
@@ -136,8 +142,10 @@ impl UserIdAndPrincipal {
 // their own funds in their principal's account.
 impl From<UserIdAndPrincipal> for Account {
     fn from(value: UserIdAndPrincipal) -> Self {
-        let owner = if value.user_id.is_canister() { value.user_id.as_principal() } else { value.principal };
-        Account { owner, subaccount: None }
+        Account {
+            owner: value.wallet_owner(),
+            subaccount: None,
+        }
     }
 }
 
