@@ -1,9 +1,8 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::updates::c2c_user_canister_v2::receive_start_video_call;
-use crate::{RuntimeState, mutate_state};
+use crate::{MultiUserEventPusher, RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
-use chat_events::NullEventPusher;
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
@@ -86,12 +85,17 @@ pub(crate) fn handle_start_video_call(
     // borrowed for the whole of the call below
     let anonymized_chat_id: u128 = state.env.rng().random();
 
-    // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
+    let event_pusher = MultiUserEventPusher {
+        user_id: my_user_id,
+        now,
+        rng: state.env.rng(),
+        queue: &mut state.data.local_user_index_event_sync_queue,
+    };
     let started = state
         .data
         .users
         .with_user_mut(user_index, |user| {
-            user_core::updates::start_video_call::handle_start_video_call::<NullEventPusher>(
+            user_core::updates::start_video_call::handle_start_video_call(
                 user,
                 my_user_id,
                 message_id,
@@ -100,7 +104,7 @@ pub(crate) fn handle_start_video_call(
                 other,
                 call_kind,
                 || anonymized_chat_id,
-                None,
+                Some(event_pusher),
                 now,
             )
         })

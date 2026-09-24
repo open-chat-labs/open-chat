@@ -1,8 +1,7 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::TimerJob;
-use crate::{RuntimeState, mutate_state};
+use crate::{MultiUserEventPusher, RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
-use chat_events::NullEventPusher;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use types::{MessageId, OCResult, UserId};
@@ -33,12 +32,20 @@ pub(crate) fn end_video_call_impl(user_index: u16, them: UserId, message_id: Mes
 
     let now = state.env.now();
     let my_user_id = state.user_id(user_index);
-    // TODO: Push the call's end to the event store (`UserEventPusher` in the User canister)
+    let rng = state.env.rng();
+    let queue = &mut state.data.local_user_index_event_sync_queue;
     let dismissal = state
         .data
         .users
         .with_user_mut(user_index, |user| {
-            user_core::updates::end_video_call(user, my_user_id, them, message_id, now, || NullEventPusher)
+            // As in the User canister, only the copy of the chat belonging to the user who started
+            // the call pushes its end to the event store, so it is counted once
+            user_core::updates::end_video_call(user, my_user_id, them, message_id, now, || MultiUserEventPusher {
+                user_id: my_user_id,
+                now,
+                rng,
+                queue,
+            })
         })
         .expect("User not found")?;
 
