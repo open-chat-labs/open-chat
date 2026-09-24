@@ -29,7 +29,12 @@
         sharing,
         type InterCallMessage,
     } from "../../../stores/video";
-    import { armRingOut, ringOutApplies, type RingOutHandle } from "../../../utils/callRingOut";
+    import {
+        armRingOut,
+        peerLeftEndsCall,
+        ringOutApplies,
+        type RingOutHandle,
+    } from "../../../utils/callRingOut";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
     import { removeQueryStringParam } from "../../../utils/urls";
@@ -225,6 +230,8 @@
                 if (ev?.participant.owner && !ev.participant.local && callType === "broadcast") {
                     hangup();
                     hostEnded = true;
+                } else if (ev && peerLeftEndsCall(chatId, ev.participant.local)) {
+                    hangup();
                 }
             });
 
