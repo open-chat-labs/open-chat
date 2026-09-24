@@ -5818,3 +5818,76 @@ fn register_proposal_vote_rejects_users_in_multi_user_canisters() {
         );
     }
 }
+
+// Each user's avatar and profile background are served under their index within the canister, as a
+// User canister serves its user's at the root
+#[test]
+fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (_, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let avatar = document(100);
+    let profile_background = document(200);
+    set_avatar(env, a_principal, canister_id, Some(avatar.clone()));
+    let response = client::user::set_profile_background(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_profile_background::Args {
+            profile_background: Some(profile_background.clone()),
+        },
+    );
+    assert!(matches!(response, user_canister::set_profile_background::Response::Success));
+
+    let get = |env: &PocketIc, url: String| {
+        client::http_request(
+            env,
+            Principal::anonymous(),
+            canister_id,
+            &types::HttpRequest {
+                method: "GET".to_string(),
+                url,
+                headers: Vec::new(),
+                body: Vec::new(),
+            },
+        )
+    };
+    let location = |response: &types::HttpResponse| response.headers.iter().find(|h| h.0 == "Location").map(|h| h.1.clone());
+
+    let a_index = a.index();
+    for (path, document) in [("avatar", &avatar), ("profile_background", &profile_background)] {
+        // The document itself, under its id
+        let response = get(env, format!("/{a_index}/{path}/{}", document.id));
+        assert_eq!(response.status_code, 200);
+        assert_eq!(response.body, document.data);
+
+        // Without an id, or with an old one, the request is redirected to the latest, keeping the
+        // user's index
+        let expected_location = Some(format!("/{a_index}/{path}/{}", document.id));
+        let response = get(env, format!("/{a_index}/{path}"));
+        assert_eq!(response.status_code, 302);
+        assert_eq!(location(&response), expected_location);
+        let response = get(env, format!("/{a_index}/{path}/{}", document.id + 1));
+        assert_eq!(response.status_code, 301);
+        assert_eq!(location(&response), expected_location);
+
+        // B has none, a user who isn't in the canister has none, and there is nothing at the root
+        assert_eq!(get(env, format!("/{}/{path}", b.index())).status_code, 404);
+        assert_eq!(get(env, format!("/{}/{path}", b.index() + 1)).status_code, 404);
+        assert_eq!(get(env, format!("/{path}/{}", document.id)).status_code, 404);
+    }
+
+    // Once removed, a request for the old avatar is told it's gone
+    set_avatar(env, a_principal, canister_id, None);
+    assert_eq!(get(env, format!("/{a_index}/avatar/{}", avatar.id)).status_code, 410);
+}
