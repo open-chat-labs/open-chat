@@ -57,6 +57,7 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
+    blobLocation,
     chatIdentifiersEqual,
     defaultChatPermissions,
     defaultOptionalChatPermissions,
@@ -1522,9 +1523,11 @@ export function buildBlobUrl(
     blobId: bigint,
     blobType: "blobs" | "avatar" | "profile_background",
 ): string {
+    const location = blobLocation(canisterId, blobType);
+
     return `${pattern
-        .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobType)}/${blobId}`;
+        .replace("{canisterId}", location.canisterId)
+        .replace("{blobType}", location.path)}/${blobId}`;
 }
 
 export function buildIdenticonUrl(id: string): string {

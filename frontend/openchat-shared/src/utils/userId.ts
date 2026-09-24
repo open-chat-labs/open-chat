@@ -50,6 +50,23 @@ export function userIndexWithinCanister(userId: string): number {
     return bytes[8] | ((bytes[9] & ~INDEXED_TAG) << 8);
 }
 
+// Where the blobs of `ownerId`, such as its avatar, are served: the canister to fetch them from and
+// the path under which that canister serves blobs of `blobType`. A group, community or user alone in
+// their canister serves its own at its root. A MultiUser canister serves those of each of its users
+// under the user's index within it (see `Route::User` in backend/libraries/http_request).
+export function blobLocation(
+    ownerId: string,
+    blobType: string,
+): { canisterId: string; path: string } {
+    if (!isMultiUserCanisterUser(ownerId)) {
+        return { canisterId: ownerId, path: blobType };
+    }
+    return {
+        canisterId: userCanisterId(ownerId).toText(),
+        path: `${userIndexWithinCanister(ownerId)}/${blobType}`,
+    };
+}
+
 // Mirrors `UserId::new_indexed`: the index takes the place of the canister id's two trailing tag
 // bytes, which is what `userCanisterId` reverses.
 export function indexedUserId(canisterId: Principal, index: number): string {

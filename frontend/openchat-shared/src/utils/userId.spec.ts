@@ -2,6 +2,7 @@ import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
 import { ANON_USER_ID } from "../domain/user/user";
 import {
+    blobLocation,
     indexedUserId,
     isMultiUserCanisterUser,
     MAX_USER_INDEX,
@@ -69,5 +70,23 @@ describe("isMultiUserCanisterUser", () => {
     test("anything which is not a principal, such as the anonymous user id, is not", () => {
         expect(isMultiUserCanisterUser(ANON_USER_ID)).toBe(false);
         expect(isMultiUserCanisterUser("")).toBe(false);
+    });
+});
+
+describe("blobLocation", () => {
+    test("a user in a MultiUser canister is served by it under their index", () => {
+        expect(blobLocation("svgk6-q4aaa-aaaaa-qaamo-ray", "avatar")).toEqual({
+            canisterId,
+            path: "1000/avatar",
+        });
+        expect(blobLocation("qp43m-xeaaa-aaaaa-qaama-daa", "profile_background")).toEqual({
+            canisterId,
+            path: "1/profile_background",
+        });
+    });
+
+    test("anything else is served by its own canister at its root", () => {
+        expect(blobLocation(canisterId, "avatar")).toEqual({ canisterId, path: "avatar" });
+        expect(blobLocation(botId, "avatar")).toEqual({ canisterId: botId, path: "avatar" });
     });
 });

@@ -25,6 +25,7 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
+    blobLocation,
     ChatMap,
     mapOptionUpdate,
     OPENCHAT_BOT_AVATAR_URL,
@@ -468,12 +469,14 @@ export function buildBlobUrl(
     blobType: "blobs" | "avatar" | "banner",
     channelId?: ChannelIdentifier,
 ): string {
-    const blobTypeFragment =
-        channelId === undefined ? blobType : `channel/${channelId.channelId}/${blobType}`;
+    const location =
+        channelId === undefined
+            ? blobLocation(canisterId, blobType)
+            : { canisterId, path: `channel/${channelId.channelId}/${blobType}` };
 
     return `${pattern
-        .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobTypeFragment)}/${blobId}`;
+        .replace("{canisterId}", location.canisterId)
+        .replace("{blobType}", location.path)}/${blobId}`;
 }
 
 export function buildTokenLogoUrl(
