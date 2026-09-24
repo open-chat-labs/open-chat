@@ -1394,6 +1394,10 @@ async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Out
     result
 }
 
+fn run_regular_jobs() {
+    mutate_state(|state| state.run_regular_jobs());
+}
+
 fn flush_pending_events() {
     mutate_state(|state| state.data.flush_pending_events());
 }
