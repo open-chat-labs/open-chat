@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Pass the canister's cache of migrated users' latest ids to chat events, which recognise a migrated user's earlier ids through it when they edit, delete or undelete their messages, react, vote, claim prizes, tip, cancel P2P swaps or follow threads. Nothing fills the cache yet ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Encode the index of a user within their canister into `UserId`, so that a canister can hold many users ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Take the user a transfer is being made for rather than the sending canister, so that transfers can be sent from a subaccount ([#9260](https://github.com/open-chat-labs/open-chat/pull/9260))
 - Support P2P swaps for users whose wallets use subaccounts (to support multiple users per canister) ([#9273](https://github.com/open-chat-labs/open-chat/pull/9273))

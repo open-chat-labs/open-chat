@@ -18,10 +18,13 @@ fn undelete_messages(args: Args) -> Response {
 fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     let user = state.get_caller_user()?;
     let now = state.env.now();
-    let results = state
-        .data
-        .chat
-        .undelete_messages(user, args.thread_root_message_index, args.message_ids, now)?;
+    let results = state.data.chat.undelete_messages(
+        user,
+        args.thread_root_message_index,
+        args.message_ids,
+        now,
+        &state.data.migrated_user_ids,
+    )?;
 
     if results.is_empty() {
         return Ok(SuccessResult { messages: vec![] });

@@ -27,14 +27,17 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     let chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
     let now = state.env.now();
 
-    let delete_message_results = chat.undelete_messages(DeleteUndeleteMessagesArgs {
-        caller: my_user_id,
-        is_admin: false,
-        min_visible_event_index: EventIndex::default(),
-        thread_root_message_index: args.thread_root_message_index,
-        message_ids: args.message_ids,
-        now,
-    });
+    let delete_message_results = chat.undelete_messages(
+        DeleteUndeleteMessagesArgs {
+            caller: my_user_id,
+            is_admin: false,
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index: args.thread_root_message_index,
+            message_ids: args.message_ids,
+            now,
+        },
+        &state.data.migrated_user_ids,
+    );
 
     let deleted: Vec<_> = delete_message_results
         .into_iter()

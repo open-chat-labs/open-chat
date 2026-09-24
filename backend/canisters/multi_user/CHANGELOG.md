@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Pass the canister's cache of migrated users' latest ids to chat events, which recognise a migrated user's earlier ids through it when they edit, delete or undelete their messages, react, vote, claim prizes, tip, cancel P2P swaps or follow threads. Nothing fills the cache yet ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Route stable memory map entries by key type to either the main map or the map for small entries ([#9348](https://github.com/open-chat-labs/open-chat/pull/9348))
 - Prefix every stable memory map key with the index of the user it belongs to, applied at the boundary of the map so the key types are unchanged ([#9406](https://github.com/open-chat-labs/open-chat/pull/9406))

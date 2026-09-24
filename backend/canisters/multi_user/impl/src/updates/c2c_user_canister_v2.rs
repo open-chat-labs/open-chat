@@ -134,7 +134,9 @@ fn process_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16,
         UserCanisterEvent::UndeleteMessages(args) => undelete_messages(*args, sender, recipient, recipient_index, now, state),
         UserCanisterEvent::ToggleReaction(args) => toggle_reaction(*args, sender, recipient, recipient_index, now, state),
         UserCanisterEvent::MarkMessagesRead(args) => {
-            state.with_their_direct_chat_mut(sender, recipient, |chat| chat.mark_read_by_them_up_to(args.read_up_to, now));
+            state.with_their_direct_chat_mut(sender, recipient, |chat, _| {
+                chat.mark_read_by_them_up_to(args.read_up_to, now)
+            });
         }
         UserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient, recipient_index, now, state),
         UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, *status, now),
@@ -169,8 +171,8 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, recipient_index: u16, n
 }
 
 fn edit_message(args: C2CEditMessageArgs, sender: UserId, recipient: UserId, now: TimestampMillis, state: &mut RuntimeState) {
-    state.with_their_direct_chat_mut(sender, recipient, |chat| {
-        c2c_user_canister::edit_message(chat, sender, args, now)
+    state.with_their_direct_chat_mut(sender, recipient, |chat, migrated_user_ids| {
+        c2c_user_canister::edit_message(chat, sender, args, now, migrated_user_ids)
     });
 }
 
@@ -183,8 +185,8 @@ fn delete_messages(
     state: &mut RuntimeState,
 ) {
     let Some((thread_root_message_index, deleted)) = state
-        .with_their_direct_chat_mut(sender, recipient, |chat| {
-            c2c_user_canister::delete_messages(chat, sender, args, now)
+        .with_their_direct_chat_mut(sender, recipient, |chat, migrated_user_ids| {
+            c2c_user_canister::delete_messages(chat, sender, args, now, migrated_user_ids)
         })
         .flatten()
     else {
@@ -203,8 +205,8 @@ fn undelete_messages(
     state: &mut RuntimeState,
 ) {
     let Some((thread_root_message_index, undeleted)) = state
-        .with_their_direct_chat_mut(sender, recipient, |chat| {
-            c2c_user_canister::undelete_messages(chat, sender, args, now)
+        .with_their_direct_chat_mut(sender, recipient, |chat, migrated_user_ids| {
+            c2c_user_canister::undelete_messages(chat, sender, args, now, migrated_user_ids)
         })
         .flatten()
     else {
@@ -231,8 +233,8 @@ fn toggle_reaction(
     state: &mut RuntimeState,
 ) {
     let Some(reaction) = state
-        .with_their_direct_chat_mut(sender, recipient, |chat| {
-            c2c_user_canister::toggle_reaction(chat, sender, args, now)
+        .with_their_direct_chat_mut(sender, recipient, |chat, migrated_user_ids| {
+            c2c_user_canister::toggle_reaction(chat, sender, args, now, migrated_user_ids)
         })
         .flatten()
     else {
@@ -289,7 +291,7 @@ pub(crate) fn receive_join_video_call(
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) {
-    state.with_their_direct_chat_mut(sender, recipient, |chat| {
+    state.with_their_direct_chat_mut(sender, recipient, |chat, _| {
         c2c_user_canister::join_video_call(chat, sender, message_id, now)
     });
 }
@@ -306,8 +308,8 @@ pub(crate) fn receive_tip(
     state: &mut RuntimeState,
 ) {
     let Some(received) = state
-        .with_their_direct_chat_mut(sender, recipient, |chat| {
-            c2c_user_canister::tip_message(chat, sender, recipient, args, now)
+        .with_their_direct_chat_mut(sender, recipient, |chat, migrated_user_ids| {
+            c2c_user_canister::tip_message(chat, sender, recipient, args, now, migrated_user_ids)
         })
         .flatten()
     else {

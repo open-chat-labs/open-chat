@@ -8,6 +8,7 @@ use oc_error_codes::OCErrorCode;
 use types::{Chat, EventIndex, MessageId, MessageIndex, OCResult, Reaction, TimestampMillis, UserId};
 use user_canister::remove_reaction::*;
 use user_canister::{MessageActivity, MessageActivityEvent, ToggleReactionArgs, UserCanisterEvent};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -43,7 +44,7 @@ pub(crate) fn toggle_reaction(
     let my_user_id = state.user_id(my_index);
     let now = state.env.now();
 
-    let apply = |chat: &mut DirectChat, thread_root_message_index| {
+    let apply = |chat: &mut DirectChat, thread_root_message_index, migrated_user_ids: &MigratedUserIds| {
         apply_reaction(
             chat,
             my_user_id,
@@ -52,6 +53,7 @@ pub(crate) fn toggle_reaction(
             reaction.clone(),
             added,
             now,
+            migrated_user_ids,
         )
     };
 
@@ -62,7 +64,7 @@ pub(crate) fn toggle_reaction(
             user.verify_not_suspended()?;
 
             let chat = user.direct_chats.get_mut_or_err(&them.into())?;
-            apply(chat, thread_root_message_index)?;
+            apply(chat, thread_root_message_index, &state.data.migrated_user_ids)?;
             chat.thread_root_message_id(thread_root_message_index)
         })
         .ok_or(OCErrorCode::TargetUserNotFound)??;
@@ -91,9 +93,9 @@ pub(crate) fn toggle_reaction(
         );
     }
     let activity = state
-        .with_their_direct_chat_mut(my_user_id, them, |chat| {
+        .with_their_direct_chat_mut(my_user_id, them, |chat, migrated_user_ids| {
             let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;
-            let result = apply(chat, thread_root_message_index).ok()??;
+            let result = apply(chat, thread_root_message_index, migrated_user_ids).ok()??;
             let message = result.value;
 
             // A reaction to their own message generates no activity for them
@@ -124,6 +126,7 @@ pub(crate) fn toggle_reaction(
     Ok(())
 }
 
+#[expect(clippy::too_many_arguments)]
 pub(crate) fn apply_reaction(
     chat: &mut DirectChat,
     user_id: UserId,
@@ -132,6 +135,7 @@ pub(crate) fn apply_reaction(
     reaction: Reaction,
     added: bool,
     now: TimestampMillis,
+    migrated_user_ids: &MigratedUserIds,
 ) -> OCResult<Option<UpdateMessageSuccess<MessageInternal>>> {
     let args = AddRemoveReactionArgs {
         user_id,
@@ -143,8 +147,8 @@ pub(crate) fn apply_reaction(
     };
     if added {
         // TODO: Push the reaction to the event store (`UserEventPusher` in the User canister)
-        chat.add_reaction::<NullEventPusher>(args, None).map(Some)
+        chat.add_reaction::<NullEventPusher>(args, migrated_user_ids, None).map(Some)
     } else {
-        chat.remove_reaction(args).map(|_| None)
+        chat.remove_reaction(args, migrated_user_ids).map(|_| None)
     }
 }

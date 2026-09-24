@@ -4,6 +4,7 @@ use oc_error_codes::OCErrorCode;
 use types::{Chat, EventIndex, OCResult, TimestampMillis, UserId, UserIdAndPrincipal};
 use user_canister::report_message::Args;
 use user_index_canister::c2c_report_message;
+use utils::migrated_user_ids::MigratedUserIds;
 
 // Builds the report to send the UserIndex, provided the user may report and the message exists
 pub fn build_report(user: &User, args: &Args, my_user_id: UserId) -> OCResult<c2c_report_message::Args> {
@@ -30,15 +31,24 @@ pub fn build_report(user: &User, args: &Args, my_user_id: UserId) -> OCResult<c2
 }
 
 // Deletes the reported message from the user's copy of the chat, once the report has been made
-pub fn delete_reported_message(user: &mut User, args: &Args, my_user_id: UserId, now: TimestampMillis) {
+pub fn delete_reported_message(
+    user: &mut User,
+    args: &Args,
+    my_user_id: UserId,
+    now: TimestampMillis,
+    migrated_user_ids: &MigratedUserIds,
+) {
     if let Some(chat) = user.direct_chats.get_mut(&args.them.into()) {
-        chat.delete_messages(DeleteUndeleteMessagesArgs {
-            caller: my_user_id,
-            is_admin: true,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_ids: vec![args.message_id],
-            now,
-        });
+        chat.delete_messages(
+            DeleteUndeleteMessagesArgs {
+                caller: my_user_id,
+                is_admin: true,
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index: None,
+                message_ids: vec![args.message_id],
+                now,
+            },
+            migrated_user_ids,
+        );
     }
 }

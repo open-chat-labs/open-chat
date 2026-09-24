@@ -15,7 +15,10 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let user_id = member.user_id();
     let now = state.env.now();
 
-    state.data.chat.follow_thread(user_id, args.thread_root_message_index, now)?;
+    state
+        .data
+        .chat
+        .follow_thread(user_id, args.thread_root_message_index, now, &state.data.migrated_user_ids)?;
 
     if !member.user_type().is_bot() {
         if args.new_achievement {

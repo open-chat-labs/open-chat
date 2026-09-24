@@ -355,20 +355,26 @@ impl DirectChat {
     pub fn edit_message<P: EventPusher>(
         &mut self,
         args: EditMessageArgs,
+        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<EditMessageSuccess> {
-        self.events.edit_message(args, &MigratedUserIds::default(), event_pusher)
+        self.events.edit_message(args, migrated_user_ids, event_pusher)
     }
 
-    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
-        self.events.delete_messages(args, &MigratedUserIds::default())
+    pub fn delete_messages(
+        &mut self,
+        args: DeleteUndeleteMessagesArgs,
+        migrated_user_ids: &MigratedUserIds,
+    ) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
+        self.events.delete_messages(args, migrated_user_ids)
     }
 
     pub fn undelete_messages(
         &mut self,
         args: DeleteUndeleteMessagesArgs,
+        migrated_user_ids: &MigratedUserIds,
     ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
-        self.events.undelete_messages(args, &MigratedUserIds::default())
+        self.events.undelete_messages(args, migrated_user_ids)
     }
 
     pub fn remove_deleted_message_content(
@@ -384,22 +390,28 @@ impl DirectChat {
     pub fn add_reaction<P: EventPusher>(
         &mut self,
         args: AddRemoveReactionArgs,
+        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
-        self.events.add_reaction(args, &MigratedUserIds::default(), event_pusher)
+        self.events.add_reaction(args, migrated_user_ids, event_pusher)
     }
 
-    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> OCResult<UpdateMessageSuccess> {
-        self.events.remove_reaction(args, &MigratedUserIds::default())
+    pub fn remove_reaction(
+        &mut self,
+        args: AddRemoveReactionArgs,
+        migrated_user_ids: &MigratedUserIds,
+    ) -> OCResult<UpdateMessageSuccess> {
+        self.events.remove_reaction(args, migrated_user_ids)
     }
 
     pub fn tip_message<P: EventPusher>(
         &mut self,
         args: TipMessageArgs,
+        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
         self.events
-            .tip_message(args, EventIndex::default(), &MigratedUserIds::default(), event_pusher)
+            .tip_message(args, EventIndex::default(), migrated_user_ids, event_pusher)
     }
 
     pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
@@ -475,14 +487,10 @@ impl DirectChat {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
+        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UpdateMessageSuccess<u32>> {
-        self.events.cancel_p2p_swap(
-            user_id,
-            thread_root_message_index,
-            message_id,
-            now,
-            &MigratedUserIds::default(),
-        )
+        self.events
+            .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now, migrated_user_ids)
     }
 
     pub fn set_p2p_swap_status(
