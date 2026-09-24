@@ -11,11 +11,12 @@ use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use types::{
     CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
-    MessageContentInitial, MessageId, MessageIndex, OCResult, TimestampMillis, UserId, UserType, VideoCallPresence,
+    MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapStatus, TimestampMillis, UserId, UserType,
+    VideoCallPresence,
 };
 use user_canister::{
     DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, MessageActivity,
-    MessageActivityEvent, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs,
+    MessageActivityEvent, P2PSwapStatusChange, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs,
 };
 
 // Whether a sender is one a canister of this kind can act for: a User canister acts only for its
@@ -231,6 +232,36 @@ pub fn tip_message(
         notification: Some(notification),
         activity: Some(activity),
     })
+}
+
+// Applies the sender's change to the status of a P2P swap between them, adding the swap's
+// completion to the recipient's message activity feed
+pub fn p2p_swap_change_status(user: &mut User, sender: UserId, args: P2PSwapStatusChange, now: TimestampMillis) {
+    let Some(chat) = user.direct_chats.get_mut(&sender.into()) else {
+        return;
+    };
+    let completed = matches!(args.status, P2PSwapStatus::Completed(_));
+
+    if chat.set_p2p_swap_status(None, args.message_id, args.status, now).is_ok()
+        && completed
+        && let Some(message_event) = chat
+            .events()
+            .main_events_reader()
+            .message_event_internal(args.message_id.into())
+        && let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id)
+    {
+        let activity = MessageActivityEvent {
+            chat: Chat::Direct(sender.into()),
+            thread_root_message_index,
+            message_index: message_event.event.message_index,
+            message_id: message_event.event.message_id,
+            event_index: message_event.index,
+            activity: MessageActivity::P2PSwapAccepted,
+            timestamp: now,
+            user_id: Some(sender),
+        };
+        user.push_message_activity(activity, now);
+    }
 }
 
 // Records the sender joining the call in the recipient's copy of the chat
