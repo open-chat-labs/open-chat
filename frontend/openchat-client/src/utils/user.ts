@@ -170,3 +170,19 @@ export function missingUserIds(
     }
     return missing;
 }
+
+// Whether to restart the session because the current user has been migrated to a new user id.
+// It's done at most once for each change of id, since the restart relies on the new id having been
+// cached, and if that failed, restarting again would only get the old id again, then restart again,
+// and so on. It's kept in localStorage because the native app's restart doesn't keep sessionStorage.
+export function shouldRestartForNewUserId(previousUserId: string, latestUserId: string): boolean {
+    const key = `openchat_restarted_for_new_user_id_${previousUserId}_${latestUserId}`;
+    try {
+        if (localStorage.getItem(key) !== null) return false;
+        localStorage.setItem(key, Date.now().toString());
+        return true;
+    } catch {
+        // Without storage there's nothing to stop a loop, so don't restart
+        return false;
+    }
+}

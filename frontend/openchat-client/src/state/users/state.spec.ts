@@ -1,6 +1,6 @@
 import type { UserSummary } from "@shared";
 import { allUsersStore, suspendedUsersStore } from "./stores";
-import { userStore } from "./state";
+import { UsersState, userStore } from "./state";
 
 function user(userId: string, suspended = false): UserSummary {
     return {
@@ -100,5 +100,83 @@ describe("user store no-op publishes", () => {
             userStore.addMany([]);
             expect(publishes).toBe(0);
         });
+    });
+});
+
+describe("migrated users", () => {
+    let users: UsersState;
+
+    beforeEach(() => {
+        allUsersStore.set(new Map());
+        suspendedUsersStore.set(new Set());
+        users = new UsersState();
+    });
+
+    test("a migrated user can be looked up by their earlier id", () => {
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+        users.addMany([user("new")]);
+
+        expect(users.get("old")?.userId).toBe("new");
+        expect(users.get("new")?.userId).toBe("new");
+        expect(users.latestUserId("old")).toBe("new");
+    });
+
+    test("an entry under the earlier id is replaced once the mapping is known", () => {
+        users.addMany([user("old"), user("new")]);
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+
+        expect(users.get("old")?.userId).toBe("new");
+    });
+
+    test("updates to the user reach the entry under their earlier id", () => {
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+        users.addMany([user("new")]);
+
+        users.addUser({ ...user("new"), username: "renamed" });
+        users.userSuspended("old", true);
+
+        expect(users.get("old")?.username).toBe("renamed");
+        expect(users.get("old")?.suspended).toBe(true);
+        expect(users.get("new")?.suspended).toBe(true);
+    });
+
+    test("a user migrated again is found by each of their earlier ids", () => {
+        users.addMigratedUserIds(new Map([["oldest", "old"]]));
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+        users.addMany([user("new")]);
+
+        expect(users.get("oldest")?.userId).toBe("new");
+        expect(users.get("old")?.userId).toBe("new");
+        expect(users.latestUserId("oldest")).toBe("new");
+    });
+
+    test("a suspended user is suspended under their earlier ids too", () => {
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+        users.addMany([user("new", true)]);
+        expect(users.suspendedUsers.has("old")).toBe(true);
+        expect(users.suspendedUsers.has("new")).toBe(true);
+
+        users.userSuspended("new", false);
+        expect(users.suspendedUsers.has("old")).toBe(false);
+        expect(users.suspendedUsers.has("new")).toBe(false);
+    });
+
+    test("an earlier id learned after the suspension is suspended too", () => {
+        users.addMany([user("new", true)]);
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+        expect(users.suspendedUsers.has("old")).toBe(true);
+    });
+
+    test("a mapping already known does not publish", () => {
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+        users.addMany([user("new")]);
+        let publishes = 0;
+        const unsub = allUsersStore.subscribe(() => publishes++);
+        publishes = 0;
+
+        users.addMigratedUserIds(new Map([["old", "new"]]));
+
+        unsub();
+        expect(publishes).toBe(0);
     });
 });
