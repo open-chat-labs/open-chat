@@ -268,8 +268,9 @@ async fn send_message_to_user(
 ) -> Response {
     use Response::*;
 
+    // A user in a MultiUser canister is one of many there, so their id is not their canister's id
     match user_canister_c2c_client::c2c_bot_send_message(
-        chat_id.into(),
+        UserId::from(chat_id).canister_id(),
         &user_canister::c2c_bot_send_message::Args {
             user_id: chat_id.into(),
             bot_id,
