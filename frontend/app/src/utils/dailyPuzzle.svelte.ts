@@ -490,7 +490,9 @@ export class DailyPuzzleGame {
 
     // The server quotes the right price back on a mismatch (the step it picked, and what this
     // user has already bought, are its to know), so one retry with that quote is the honest
-    // move; a second mismatch is an error.
+    // move; a second mismatch is an error. A quote above the price on the button is never paid:
+    // the player agreed to what the button said, not to whatever the server asks (#9517
+    // invariant 2).
     #requestHint(level: number, price: number, retried: boolean): Promise<void> {
         return this.client
             .dailyPuzzleHint(this.puzzle.gameId, level, this.#filled(), price)
@@ -500,7 +502,8 @@ export class DailyPuzzleGame {
                     if (
                         resp.code === ErrorCode.PriceMismatch &&
                         !retried &&
-                        Number.isFinite(quoted)
+                        Number.isFinite(quoted) &&
+                        quoted <= price
                     ) {
                         return this.#requestHint(level, quoted, true);
                     }

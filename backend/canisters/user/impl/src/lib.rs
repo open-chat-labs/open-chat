@@ -20,13 +20,15 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotNotification, BuildVersion, CanisterId, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, TimestampMillis, Timestamped,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Notification, NotifyChit, TimestampMillis,
+    Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::UserCanisterEvent;
 use user_core::{Community, GroupChat, User};
+use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
+use utils::migrated_user_ids::MigratedUserIds;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
@@ -401,9 +403,21 @@ struct Data {
     // their users
     #[serde(default)]
     pub known_multi_user_canisters: HashSet<CanisterId>,
+    // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
+    // have changed
+    #[serde(default)]
+    pub migrated_user_ids: MigratedUserIds,
+    // Set while the canister's state must not change, during which every update call is rejected.
+    // Queries are still served.
+    #[serde(default)]
+    pub frozen: Option<FrozenUserInfo>,
 }
 
 impl Data {
+    pub fn is_frozen(&self) -> bool {
+        self.frozen.is_some()
+    }
+
     // Moves the events queued before they were batched per canister into the queue which does so,
     // pairing each with the user it was queued for
     // TODO: Remove this, along with `user_canister_events_queue`, once it has run in every canister
@@ -455,6 +469,8 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             known_multi_user_canisters: HashSet::new(),
+            migrated_user_ids: MigratedUserIds::default(),
+            frozen: None,
         }
     }
 
@@ -547,7 +563,14 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
 }
 
+// Runs an update call, trapping if the canister is frozen. Endpoints which must keep working while
+// frozen use `execute_update_even_if_frozen` instead.
 fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_even_if_frozen(f)
+}
+
+fn execute_update_even_if_frozen<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
         state.regular_jobs.run(state.env.deref(), &mut state.data);
         let result = f(state);
@@ -557,6 +580,11 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 }
 
 async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_async_even_if_frozen(f).await
+}
+
+async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
     run_regular_jobs();
     let result = f().await;
     flush_pending_events();

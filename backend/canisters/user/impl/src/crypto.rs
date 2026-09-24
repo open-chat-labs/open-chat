@@ -5,7 +5,7 @@ use types::{
     UserIdAndPrincipal, icrc1,
 };
 
-pub use ledger_utils::{deposit_to_accept_p2p_swap, icrc2_transfer_from};
+pub use ledger_utils::icrc2_transfer_from;
 
 // The user's wallet. A user alone in their canister, or a bot, holds their funds in the account of
 // their user id, which a bot's principal is too. A user in a MultiUser canister holds their own funds

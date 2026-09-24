@@ -43,8 +43,10 @@ use types::{
     Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
 };
 use user_canister::GroupCanisterEvent;
+use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
+use utils::migrated_user_ids::MigratedUserIds;
 use utils::regular_jobs::RegularJobs;
 
 // A group larger than this never rings, so its call dismissals would be recipient lists the
@@ -694,6 +696,10 @@ struct Data {
     idempotency_checker: IdempotencyChecker,
     #[serde(default)]
     certified_transfers: CertifiedTransfers,
+    // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
+    // have changed
+    #[serde(default)]
+    migrated_user_ids: MigratedUserIds,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -810,6 +816,7 @@ impl Data {
             bots: InstalledBots::default(),
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
+            migrated_user_ids: MigratedUserIds::default(),
         }
     }
 
@@ -833,10 +840,6 @@ impl Data {
 
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
-    }
-
-    pub fn verify_not_frozen(&self) -> Result<(), OCErrorCode> {
-        if self.is_frozen() { Err(OCErrorCode::ChatFrozen) } else { Ok(()) }
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
@@ -1152,7 +1155,14 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
 }
 
+// Runs an update call, trapping if the canister is frozen. Endpoints which must keep working while
+// frozen use `execute_update_even_if_frozen` instead.
 fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_even_if_frozen(f)
+}
+
+fn execute_update_even_if_frozen<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     mutate_state(|state| {
         state.regular_jobs.run(state.env.deref(), &mut state.data);
         let result = f(state);
@@ -1162,6 +1172,11 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 }
 
 async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_async_even_if_frozen(f).await
+}
+
+async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
     run_regular_jobs();
     let result = f().await;
     flush_pending_events();

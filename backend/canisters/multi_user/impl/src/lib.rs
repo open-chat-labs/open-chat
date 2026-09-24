@@ -29,6 +29,7 @@ use user_core::User;
 use user_core::{Community, GroupChat};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
+use utils::migrated_user_ids::MigratedUserIds;
 
 mod crypto;
 mod guards;
@@ -85,6 +86,10 @@ impl RuntimeState {
 
     pub fn is_caller_video_call_operator(&self) -> bool {
         self.data.video_call_operators.contains(&self.env.caller())
+    }
+
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id
     }
 
     // The index of the user the caller owns, if the caller is one of this canister's users
@@ -634,6 +639,10 @@ struct Data {
     // The certified transfers users have sent messages with, so that none is used twice
     #[serde(default)]
     pub certified_transfers: CertifiedTransfers,
+    // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
+    // have changed
+    #[serde(default)]
+    pub migrated_user_ids: MigratedUserIds,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -666,6 +675,7 @@ impl Data {
             known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
             certified_transfers: CertifiedTransfers::default(),
+            migrated_user_ids: MigratedUserIds::default(),
             rng_seed,
             test_mode,
         }

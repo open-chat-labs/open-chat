@@ -11,8 +11,6 @@ fn set_video_call_presence(args: Args) -> Response {
 }
 
 pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
 

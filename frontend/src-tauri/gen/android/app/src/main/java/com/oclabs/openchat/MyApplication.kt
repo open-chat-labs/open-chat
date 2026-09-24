@@ -1,10 +1,9 @@
 package com.oclabs.openchat
 
+import android.app.Activity
 import android.app.Application
+import android.os.Bundle
 import android.util.Log
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 import com.ocplugin.app.data.AppDb
 import com.google.firebase.FirebaseApp
 import com.ocplugin.app.LOG_TAG
@@ -29,14 +28,24 @@ class MyApplication: Application() {
         // Initialise app db.
         AppDb.init(this)
 
-        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) {
-                isAppInForeground = true
+        // "On screen" means the main activity, which hosts the app. The native incoming
+        // call screen is an activity in this process too, and it must not count: while it
+        // rings, the app may be dead behind it and a push forwarded to the web layer would
+        // be lost.
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityStarted(activity: Activity) {
+                if (activity is MainActivity) isAppInForeground = true
             }
-            
-            override fun onStop(owner: LifecycleOwner) {
-                isAppInForeground = false
+
+            override fun onActivityStopped(activity: Activity) {
+                if (activity is MainActivity) isAppInForeground = false
             }
+
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityResumed(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
         })
     }
 }

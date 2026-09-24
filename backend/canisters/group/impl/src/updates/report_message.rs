@@ -39,8 +39,6 @@ async fn report_message_impl(args: Args) -> Response {
 
 // Returns the reporter too, to act as if the message is deleted once the report has been made
 fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_message::Args, UserIdAndPrincipal, CanisterId)> {
-    state.data.verify_not_frozen()?;
-
     let member = state.get_calling_member(None, true)?;
     let chat = &state.data.chat;
 

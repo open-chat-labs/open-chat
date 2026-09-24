@@ -1,9 +1,11 @@
 //! The update endpoints shared by the User and MultiUser canisters, one function per endpoint.
 //! Endpoints which share only part of their logic, or several functions, stay as modules.
 
+pub mod accept_p2p_swap;
 mod add_hot_group_exclusions;
 pub mod approve_transfer;
 mod archive_unarchive_chats;
+pub mod c2c_accept_p2p_swap;
 pub mod c2c_bot_send_message;
 mod c2c_charge_user_account;
 mod c2c_game_chit;
@@ -11,10 +13,12 @@ mod c2c_install_bot;
 pub mod c2c_local_user_index;
 mod c2c_notify_achievement;
 pub mod c2c_notify_group_deleted;
+pub mod c2c_notify_p2p_swap_status_change;
 mod c2c_pay_for_premium_item;
 mod c2c_set_user_suspended;
 mod c2c_uninstall_bot;
 pub mod c2c_user_canister;
+mod cancel_p2p_swap;
 pub mod claim_daily_chit;
 pub mod create_community;
 pub mod create_group;
@@ -24,6 +28,7 @@ pub mod generate_one_sec_address;
 mod join_video_call;
 mod manage_favourite_chats;
 mod mute_notifications;
+pub mod offer_p2p_swap;
 pub mod pay_for_streak_insurance;
 mod pin_chat_v2;
 pub mod report_message;
@@ -49,6 +54,7 @@ pub use c2c_notify_achievement::c2c_notify_achievement;
 pub use c2c_pay_for_premium_item::c2c_pay_for_premium_item;
 pub use c2c_set_user_suspended::c2c_set_user_suspended;
 pub use c2c_uninstall_bot::c2c_uninstall_bot;
+pub use cancel_p2p_swap::cancel_p2p_swap;
 pub use end_video_call::end_video_call;
 pub use join_video_call::{answered_dismissal, join_video_call};
 pub use manage_favourite_chats::manage_favourite_chats;

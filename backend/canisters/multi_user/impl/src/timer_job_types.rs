@@ -1,11 +1,12 @@
 use crate::updates::end_video_call::end_video_call_impl;
-use crate::{mutate_state, openchat_bot};
+use crate::{mutate_state, openchat_bot, read_state};
+use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal, ReplyContextInternal};
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{Chat, ChatId, EventIndex, MessageId, MessageIndex, UserId};
+use types::{Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -14,6 +15,9 @@ pub enum TimerJob {
     MessageReminder(Box<MessageReminderJob>),
     ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
+    NotifyEscrowCanisterOfDeposit(Box<NotifyEscrowCanisterOfDepositJob>),
+    CancelP2PSwapInEscrowCanister(Box<CancelP2PSwapInEscrowCanisterJob>),
+    MarkP2PSwapExpired(Box<MarkP2PSwapExpiredJob>),
 }
 
 // Removes the content of a deleted message from one user's copy of a direct chat, once the time in
@@ -63,15 +67,45 @@ pub struct MarkVideoCallEndedJob {
     pub message_id: MessageId,
 }
 
+// Tells the escrow canister of a user's deposit into a swap, `depositor` being the owner of their
+// wallet, by which the escrow canister knows them. Kept if the user is deleted, since the deposit
+// has been made.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct NotifyEscrowCanisterOfDepositJob {
+    pub swap_id: u32,
+    pub depositor: Principal,
+    pub attempt: u32,
+}
+
+// Cancels a swap a user offered in the escrow canister, which refunds their deposit. Kept if the
+// user is deleted, so that their deposit is still refunded.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CancelP2PSwapInEscrowCanisterJob {
+    pub swap_id: u32,
+    pub attempt: u32,
+}
+
+// Marks a swap expired in one user's copy of the chat it was offered in, once its time is up
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MarkP2PSwapExpiredJob {
+    pub user_index: u16,
+    pub chat_id: ChatId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+}
+
 impl TimerJob {
-    // The index of the user the job is for
-    pub fn user_index(&self) -> u16 {
+    // The index of the user the job is for, if it is for one user's state rather than the escrow
+    // canister's
+    pub fn user_index(&self) -> Option<u16> {
         match self {
-            TimerJob::HardDeleteMessageContent(job) => job.user_index,
-            TimerJob::RemoveExpiredEvents(job) => job.user_index,
-            TimerJob::MessageReminder(job) => job.user_index,
-            TimerJob::ClaimOrResetStreakInsurance(job) => job.user_index,
-            TimerJob::MarkVideoCallEnded(job) => job.user_index,
+            TimerJob::HardDeleteMessageContent(job) => Some(job.user_index),
+            TimerJob::RemoveExpiredEvents(job) => Some(job.user_index),
+            TimerJob::MessageReminder(job) => Some(job.user_index),
+            TimerJob::ClaimOrResetStreakInsurance(job) => Some(job.user_index),
+            TimerJob::MarkVideoCallEnded(job) => Some(job.user_index),
+            TimerJob::MarkP2PSwapExpired(job) => Some(job.user_index),
+            TimerJob::NotifyEscrowCanisterOfDeposit(_) | TimerJob::CancelP2PSwapInEscrowCanister(_) => None,
         }
     }
 }
@@ -111,24 +145,44 @@ impl Job for TimerJob {
             TimerJob::MessageReminder(job) => job.execute(),
             TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+            TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
+            TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
+            TimerJob::MarkP2PSwapExpired(job) => job.execute(),
         }
     }
 }
 
 impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
-        mutate_state(|state| {
+        let p2p_swap_to_cancel = mutate_state(|state| {
             let now = state.env.now();
-            state.data.users.with_user_mut(self.user_index, |user| {
-                user.direct_chats
-                    .get_mut(&self.chat_id)
-                    .and_then(|chat| chat.remove_deleted_message_content(self.thread_root_message_index, self.message_id, now))
-            });
-            // TODO: If the message is the user's own, delete the files it references and cancel
-            // any P2P swap it holds which is still open, as the User canister does. Each copy of
-            // the chat references the same files, so they must only be deleted once, from the
-            // sender's copy.
+            let my_user_id = state.user_id(self.user_index);
+            let (content, sender) = state
+                .data
+                .users
+                .with_user_mut(self.user_index, |user| {
+                    user.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
+                        chat.remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
+                    })
+                })
+                .flatten()?;
+            // TODO: If the message is the user's own, delete the files it references, as the User
+            // canister does. Each copy of the chat references the same files, so they must only be
+            // deleted once, from the sender's copy.
+            // A swap the user offered which is still open is cancelled, as in the User canister
+            if sender == my_user_id
+                && let MessageContentInternal::P2PSwap(s) = content
+                && matches!(s.status, P2PSwapStatus::Open)
+            {
+                Some(s.swap_id)
+            } else {
+                None
+            }
         });
+
+        if let Some(swap_id) = p2p_swap_to_cancel {
+            CancelP2PSwapInEscrowCanisterJob::run(swap_id);
+        }
     }
 }
 
@@ -195,5 +249,108 @@ impl Job for MarkVideoCallEndedJob {
                 "Failed to mark video call ended"
             );
         }
+    }
+}
+
+impl NotifyEscrowCanisterOfDepositJob {
+    pub fn run(swap_id: u32, depositor: Principal) {
+        let job = NotifyEscrowCanisterOfDepositJob {
+            swap_id,
+            depositor,
+            attempt: 0,
+        };
+        job.execute();
+    }
+}
+
+impl Job for NotifyEscrowCanisterOfDepositJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::futures::spawn_migratory(async move {
+            match escrow_canister_c2c_client::notify_deposit(
+                escrow_canister_id,
+                &escrow_canister::notify_deposit::Args {
+                    swap_id: self.swap_id,
+                    deposited_by: Some(self.depositor),
+                },
+            )
+            .await
+            {
+                Ok(escrow_canister::notify_deposit::Response::Success(_)) => {}
+                Ok(escrow_canister::notify_deposit::Response::InternalError(_)) | Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::NotifyEscrowCanisterOfDeposit(Box::new(NotifyEscrowCanisterOfDepositJob {
+                                attempt: self.attempt + 1,
+                                ..self
+                            })),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(
+                    ?response,
+                    swap_id = self.swap_id,
+                    "Failed to notify escrow canister of deposit"
+                ),
+            };
+        })
+    }
+}
+
+impl CancelP2PSwapInEscrowCanisterJob {
+    pub fn run(swap_id: u32) {
+        let job = CancelP2PSwapInEscrowCanisterJob { swap_id, attempt: 0 };
+        job.execute();
+    }
+}
+
+impl Job for CancelP2PSwapInEscrowCanisterJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::futures::spawn_migratory(async move {
+            match escrow_canister_c2c_client::cancel_swap(
+                escrow_canister_id,
+                &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
+            )
+            .await
+            {
+                Ok(escrow_canister::cancel_swap::Response::Success)
+                | Ok(escrow_canister::cancel_swap::Response::SwapAlreadyAccepted)
+                | Ok(escrow_canister::cancel_swap::Response::SwapExpired) => {}
+                Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::CancelP2PSwapInEscrowCanister(Box::new(CancelP2PSwapInEscrowCanisterJob {
+                                swap_id: self.swap_id,
+                                attempt: self.attempt + 1,
+                            })),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, swap_id = self.swap_id, "Failed to cancel p2p swap"),
+            };
+        })
+    }
+}
+
+impl Job for MarkP2PSwapExpiredJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            // Does nothing if the user no longer exists
+            state.data.users.with_user_mut(self.user_index, |user| {
+                if let Some(chat) = user.direct_chats.get_mut(&self.chat_id) {
+                    let _ = chat.mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, now);
+                }
+            });
+        });
     }
 }

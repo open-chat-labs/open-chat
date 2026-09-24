@@ -75,8 +75,6 @@ enum IsPermittedToJoinSuccess {
 fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermittedToJoinSuccess> {
     let caller = state.env.caller();
 
-    state.data.verify_not_frozen()?;
-
     if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
         if !member.lapsed().value {
             return Ok(IsPermittedToJoinSuccess::AlreadyInCommunity(Box::new(

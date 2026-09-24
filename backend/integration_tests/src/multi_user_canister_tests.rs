@@ -17,8 +17,8 @@ use types::{
     ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction, DeletedCommunityInfo,
     DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
     EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    NotificationEnvelope, OptionUpdate, PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, TextContent,
-    TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
+    NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings,
+    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -5435,4 +5435,321 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
     env.advance_time(Duration::from_millis(HOUR_IN_MS));
     env.tick();
     assert!(!call_in_progress(env, alice, carol.user_id));
+}
+
+#[test]
+fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let carol = client::register_diamond_user(env, canister_ids, *controller);
+    // Dave is in another MultiUser canister
+    let other_canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (dave, dave_id) = create_user(env, canister_ids, local_user_index, other_canister_id);
+    // Only Diamond members can offer swaps
+    diamond_membership_payment_received(env, local_user_index, canister_id, alice_id);
+
+    let icp = canister_ids.icp_ledger;
+    let chat = canister_ids.chat_ledger;
+    let token0_amount = 1_000_000_000;
+    let token1_amount = 10_000_000_000;
+
+    // Alice and Bob hold their funds in their own wallets, and approve this canister to pull them
+    // under their own spender subaccounts: Alice offers ICP and Bob pays CHAT. Carol's funds are in
+    // her User canister's account.
+    let spender = |canister_id, principal| icrc_ledger_types::icrc1::account::Account {
+        owner: canister_id,
+        subaccount: Some(ledger_utils::spender_subaccount(principal)),
+    };
+    client::ledger::happy_path::transfer(env, *controller, icp, alice, 20 * token0_amount);
+    client::ledger::happy_path::approve(env, alice, icp, spender(canister_id, alice), 10 * token0_amount);
+    client::ledger::happy_path::transfer(env, *controller, chat, bob, 10 * token1_amount);
+    client::ledger::happy_path::approve(env, bob, chat, spender(canister_id, bob), 5 * token1_amount);
+    client::ledger::happy_path::transfer(env, *controller, chat, dave, 10 * token1_amount);
+    client::ledger::happy_path::approve(env, dave, chat, spender(other_canister_id, dave), 5 * token1_amount);
+    client::ledger::happy_path::transfer(env, *controller, icp, carol.user_id, 10 * token0_amount);
+    client::ledger::happy_path::transfer(env, *controller, chat, carol.user_id, 10 * token1_amount);
+    tick_many(env, 3);
+
+    let offer = |recipient: UserId, message_id| user_canister::send_message_v2::Args {
+        recipient,
+        thread_root_message_index: None,
+        message_id,
+        content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+            token0: crate::utils::icp_token_info(),
+            token0_amount,
+            token1: crate::utils::chat_token_info(),
+            token1_amount,
+            expires_in: constants::DAY_IN_MS,
+            caption: None,
+            from_account: None,
+        }),
+        replies_to: None,
+        forwarding: false,
+        block_level_markdown: false,
+        message_filter_failed: None,
+        pin: None,
+        og_previews: Vec::new(),
+    };
+    let accept = |them: UserId, message_id| user_canister::accept_p2p_swap::Args {
+        user_id: them,
+        thread_root_message_index: None,
+        message_id,
+        pin: None,
+        from_account: None,
+    };
+    let swap_status = |message: Message| match message.content {
+        MessageContent::P2PSwap(p) => p.status,
+        content => panic!("{content:?}"),
+    };
+    let completed_by =
+        |status: &P2PSwapStatus, user_id: UserId| matches!(status, P2PSwapStatus::Completed(c) if c.accepted_by == user_id);
+
+    // Alice offers Bob a swap, both being in this canister. Alice's ICP is pulled from her wallet, as
+    // is Bob's CHAT when he accepts, and each is paid into the other's wallet.
+    let message_id = random_from_u128();
+    let response = client::multi_user::send_message(env, alice, canister_id, &offer(bob_id, message_id));
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    let alices_chat = client::ledger::happy_path::balance_of(env, chat, alice);
+    let response = client::user::accept_p2p_swap(env, bob, canister_id, &accept(alice_id, message_id));
+    assert!(
+        matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, chat, alice),
+        alices_chat + token1_amount
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, icp, bob), token0_amount);
+    for (principal, me, them) in [(alice, alice_id, bob_id), (bob, bob_id, alice_id)] {
+        let status = swap_status(message(&events(env, principal, canister_id, me, them), message_id));
+        assert!(completed_by(&status, bob_id), "{status:?}");
+    }
+    assert!(has_achievement(
+        &initial_state(env, bob, canister_id),
+        Achievement::AcceptedP2PSwapOffer
+    ));
+
+    // Alice offers Carol, in her own User canister, a swap. Carol's canister is notified by the
+    // escrow canister, which names Alice by her principal, and tells this canister of the swap's
+    // completion.
+    let message_id = random_from_u128();
+    let response = client::multi_user::send_message(env, alice, canister_id, &offer(carol.user_id, message_id));
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    let alices_chat = client::ledger::happy_path::balance_of(env, chat, alice);
+    let carols_icp = client::ledger::happy_path::balance_of(env, icp, carol.user_id);
+    let response = client::user::accept_p2p_swap(env, carol.principal, carol.canister(), &accept(alice_id, message_id));
+    assert!(
+        matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, chat, alice),
+        alices_chat + token1_amount
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, icp, carol.user_id),
+        carols_icp + token0_amount
+    );
+    let status = swap_status(message(&events(env, alice, canister_id, alice_id, carol.user_id), message_id));
+    assert!(completed_by(&status, carol.user_id), "{status:?}");
+    let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 20, 20);
+    let status = swap_status(message(&carols_events, message_id));
+    assert!(completed_by(&status, carol.user_id), "{status:?}");
+
+    // Carol offers Bob a swap. The escrow canister notifies this canister, whose copy of the chat
+    // is Bob's, and Carol's canister is told of the swap's completion.
+    let message_id = random_from_u128();
+    let response = client::user::send_message_v2(env, carol.principal, carol.canister(), &offer(bob_id, message_id));
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    let carols_chat = client::ledger::happy_path::balance_of(env, chat, carol.user_id);
+    let bobs_icp = client::ledger::happy_path::balance_of(env, icp, bob);
+    let response = client::user::accept_p2p_swap(env, bob, canister_id, &accept(carol.user_id, message_id));
+    assert!(
+        matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, chat, carol.user_id),
+        carols_chat + token1_amount
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, icp, bob),
+        bobs_icp + token0_amount
+    );
+    let status = swap_status(message(&events(env, bob, canister_id, bob_id, carol.user_id), message_id));
+    assert!(completed_by(&status, bob_id), "{status:?}");
+    let carols_events = client::user::happy_path::events(env, &carol, bob_id, 0.into(), true, 20, 20);
+    let status = swap_status(message(&carols_events, message_id));
+    assert!(completed_by(&status, bob_id), "{status:?}");
+
+    // Alice offers Dave, in another MultiUser canister, a swap. The escrow canister notifies Dave's
+    // canister, which looks Alice up by her principal via the LocalUserIndex and sends her canister
+    // the swap's completion.
+    let message_id = random_from_u128();
+    let response = client::multi_user::send_message(env, alice, canister_id, &offer(dave_id, message_id));
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    let alices_chat = client::ledger::happy_path::balance_of(env, chat, alice);
+    let response = client::user::accept_p2p_swap(env, dave, other_canister_id, &accept(alice_id, message_id));
+    assert!(
+        matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, chat, alice),
+        alices_chat + token1_amount
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, icp, dave), token0_amount);
+    for (principal, canister_id, me, them) in [
+        (alice, canister_id, alice_id, dave_id),
+        (dave, other_canister_id, dave_id, alice_id),
+    ] {
+        let status = swap_status(message(&events(env, principal, canister_id, me, them), message_id));
+        assert!(completed_by(&status, dave_id), "{status:?}");
+    }
+
+    // Alice offers Bob a swap then cancels it. This canister created the swap, so may cancel it in
+    // the escrow canister, which refunds Alice's deposit to her wallet and tells Bob's copy.
+    let message_id = random_from_u128();
+    let response = client::multi_user::send_message(env, alice, canister_id, &offer(bob_id, message_id));
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    let alices_icp = client::ledger::happy_path::balance_of(env, icp, alice);
+    let response = client::user::cancel_p2p_swap(
+        env,
+        alice,
+        canister_id,
+        &user_canister::cancel_p2p_swap::Args {
+            user_id: bob_id,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::cancel_p2p_swap::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, icp, alice),
+        alices_icp + token0_amount
+    );
+    for (principal, me, them) in [(alice, alice_id, bob_id), (bob, bob_id, alice_id)] {
+        let status = swap_status(message(&events(env, principal, canister_id, me, them), message_id));
+        assert!(matches!(status, P2PSwapStatus::Cancelled(_)), "{status:?}");
+    }
+
+    // Carol offers a swap in her group, which Bob accepts. The group has this canister deposit Bob's
+    // CHAT from his wallet, and he is paid into it.
+    let group_id = client::user::happy_path::create_group(env, &carol, &random_string(), true, true);
+    client::group::happy_path::join_group(env, bob, group_id);
+    tick_many(env, 3);
+    let message_id = random_from_u128();
+    let response = client::user::send_message_with_transfer_to_group(
+        env,
+        carol.principal,
+        carol.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id,
+            content: offer(bob_id, message_id).content,
+            sender_name: carol.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(
+            response,
+            user_canister::send_message_with_transfer_to_group::Response::Success(_)
+        ),
+        "{response:?}"
+    );
+    let carols_chat = client::ledger::happy_path::balance_of(env, chat, carol.user_id);
+    let bobs_icp = client::ledger::happy_path::balance_of(env, icp, bob);
+    let response = client::group::accept_p2p_swap(
+        env,
+        bob,
+        group_id.into(),
+        &group_canister::accept_p2p_swap::Args {
+            thread_root_message_index: None,
+            message_id,
+            pin: None,
+            new_achievement: false,
+            from_account: None,
+        },
+    );
+    assert!(
+        matches!(response, group_canister::accept_p2p_swap::Response::Success(_)),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, chat, carol.user_id),
+        carols_chat + token1_amount
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, icp, bob),
+        bobs_icp + token0_amount
+    );
+
+    // Alice offers Bob a swap which expires. Both copies of the chat are marked expired and the
+    // escrow canister refunds Alice's deposit to her wallet.
+    let message_id = random_from_u128();
+    let response = client::multi_user::send_message(env, alice, canister_id, &offer(bob_id, message_id));
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    tick_many(env, 3);
+    let alices_icp = client::ledger::happy_path::balance_of(env, icp, alice);
+    env.advance_time(Duration::from_millis(constants::DAY_IN_MS + 1));
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, icp, alice),
+        alices_icp + token0_amount
+    );
+    for (principal, me, them) in [(alice, alice_id, bob_id), (bob, bob_id, alice_id)] {
+        let status = swap_status(message(&events(env, principal, canister_id, me, them), message_id));
+        assert!(matches!(status, P2PSwapStatus::Expired(_)), "{status:?}");
+    }
 }

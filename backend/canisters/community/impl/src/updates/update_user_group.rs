@@ -14,8 +14,6 @@ fn update_user_group(args: Args) -> Response {
 }
 
 fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let member = state.get_calling_member(None, true)?;
 
     if !member.role().can_manage_user_groups(&state.data.permissions) {

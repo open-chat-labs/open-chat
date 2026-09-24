@@ -16,4 +16,5 @@ pub mod group_and_community_summary_updates_v2;
 pub mod is_user_or_multi_user_canister;
 pub mod latest_notification_index;
 pub mod media_scan_jobs;
+pub mod migrated_user_ids;
 pub mod notifications;

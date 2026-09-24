@@ -12,8 +12,6 @@ fn cancel_invites(args: Args) -> Response {
 }
 
 fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let member = state.get_calling_member(None, true)?;
     let now = state.env.now();
 

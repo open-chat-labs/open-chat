@@ -47,8 +47,6 @@ fn c2c_invite_users_to_channel_impl(
     ext_caller: Caller,
     state: &mut RuntimeState,
 ) -> OCResult<Response> {
-    state.data.verify_not_frozen()?;
-
     if let Caller::BotV2(bot_caller) = &ext_caller
         && !state.data.is_bot_permitted(
             &bot_caller.bot,

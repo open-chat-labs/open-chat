@@ -10,6 +10,7 @@ import type {
     DailyParticipantUpdateOptions,
     DailyThemeConfig,
 } from "@daily-co/daily-js";
+import { isAndroidTauriApp } from "@shared";
 import { type ChatIdentifier, type VideoCallType } from "@client";
 import { get, type Subscriber, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
@@ -76,6 +77,13 @@ export const camera = writable<boolean>(false);
 export const sharing = writable<boolean>(false);
 export const selectedRingtone = createLocalStorageStore("openchat_ringtone", "boring");
 
+function rememberCall(messageId: bigint) {
+    previousCalls.add(messageId);
+    if (previousCalls.size > MAX_PREVIOUS_CALLS) {
+        previousCalls.delete(previousCalls.values().next().value as bigint);
+    }
+}
+
 export const incomingVideoCall = {
     subscribe: (subscriber: Subscriber<IncomingVideoCall | undefined>, invalidate?: () => void) =>
         incomingStore.subscribe(subscriber, invalidate),
@@ -83,13 +91,13 @@ export const incomingVideoCall = {
         if (call === undefined) {
             incomingStore.set(undefined);
         } else {
+            // The Android shell rings natively for every call; the in-app sheet and its
+            // ringtone never show there (native calls M2, #9510).
+            if (isAndroidTauriApp()) return;
             // only register an incoming call if we have not already done so. This prevents us ringing twice via a different mechanism for the same call.
             if (!previousCalls.has(call.messageId)) {
                 incomingStore.set(call);
-                previousCalls.add(call.messageId);
-                if (previousCalls.size > MAX_PREVIOUS_CALLS) {
-                    previousCalls.delete(previousCalls.values().next().value as bigint);
-                }
+                rememberCall(call.messageId);
             }
         }
     },

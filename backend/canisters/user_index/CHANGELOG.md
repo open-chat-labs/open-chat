@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Store a map of the old to the new id of each user migrated to a MultiUser canister, sending each entry to every LocalUserIndex, including any added later. Nothing records a migration yet. The LocalUserIndexes must be upgraded first ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
+- Add the `migrated_user_ids` query, which takes a list of user ids and returns the latest id of each user in it who has been migrated to a MultiUser canister ([#9538](https://github.com/open-chat-labs/open-chat/pull/9538))
+
 ### Fixed
 
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))

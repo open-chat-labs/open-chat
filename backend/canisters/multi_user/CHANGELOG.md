@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Add the MultiUser canister skeleton with its lifecycle endpoints ([#9310](https://github.com/open-chat-labs/open-chat/pull/9310))
 - Initialise the stable memory map, alongside a second map with 256 byte pages for small entries ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Add an unimplemented stub for every User canister endpoint, sharing the User canister's API types ([#9400](https://github.com/open-chat-labs/open-chat/pull/9400))
@@ -47,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support crypto in direct chats in `send_message`, renamed from `send_message_v2`, via ICRC2 transfers from the user's wallet or certified transfers they have already made, and remove the `send_message_with_transfer_to_group` and `_to_channel` stubs, since those messages are now sent to Groups and Communities directly ([#9516](https://github.com/open-chat-labs/open-chat/pull/9516))
 - Implement `c2c_charge_user_account` and `pay_for_streak_insurance`, taking the payment from the user's wallet via ICRC2 ([#9519](https://github.com/open-chat-labs/open-chat/pull/9519))
 - Implement `tip_message` for direct chats, pulling the tip from the user's own wallet via ICRC2, and apply tips received from other users ([#9528](https://github.com/open-chat-labs/open-chat/pull/9528))
+- Implement P2P swaps in direct chats (`send_message`, `accept_p2p_swap`, `cancel_p2p_swap` and `c2c_notify_p2p_swap_status_change`) and `c2c_accept_p2p_swap` for swaps in groups and channels, with deposits pulled from each user's wallet via ICRC2 and the escrow canister knowing each user by their principal ([#9531](https://github.com/open-chat-labs/open-chat/pull/9531))
 - Implement `c2c_bot_send_message`, sending a bot's message to the user it names, callable only by the LocalUserIndex ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
 
 ### Changed

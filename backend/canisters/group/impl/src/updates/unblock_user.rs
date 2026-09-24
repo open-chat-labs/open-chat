@@ -14,8 +14,6 @@ fn unblock_user(args: Args) -> Response {
 }
 
 fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     if !state.data.chat.is_public.value {
         Err(OCErrorCode::ChatNotPublic.into())
     } else {

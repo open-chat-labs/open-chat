@@ -49,8 +49,6 @@ fn c2c_invite_users_impl(
     ext_caller: Caller,
     state: &mut RuntimeState,
 ) -> OCResult<SuccessResult> {
-    state.data.verify_not_frozen()?;
-
     let now = state.env.now();
     let result = state.data.invite_users(ext_caller, users, now)?;
 

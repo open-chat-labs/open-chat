@@ -60,7 +60,7 @@
 //! | 4 | TreeCorner | This tree's tent must be in one of two cells that both touch this cell, so this cell can't hold a tent. (Tricky) |
 //! | 5 | LineCount | Only these cells in the row or column can still take a tent, and every way of fitting in the ones it needs agrees about the marked cells. |
 //! | 6 | LineNeighbour | Only these cells in the row or column can still take a tent, and every way of fitting in the ones it needs puts one next to the marked cells. (Tricky) |
-//! | 7 | LineExact | This row or column needs as many tents as it has cells left that could hold one, so every one of them is a tent. |
+//! | 7 | LineExact | Leave out the cells that cannot hold a tent: no free tree beside them, or touching a tent. This row or column needs as many tents as it has cells left, so every one of them is a tent. |
 //! | 8 | LineFull | This row or column already has all its tents, so no other cell in it can hold one. |
 
 mod generate;
