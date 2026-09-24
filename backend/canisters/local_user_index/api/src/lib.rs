@@ -261,7 +261,9 @@ pub struct ReferralCodeAdded {
 // A user has been migrated to a MultiUser canister, which gave them a new id
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserIdMigrated {
+    #[serde(rename = "o")]
     pub old_user_id: UserId,
+    #[serde(rename = "n")]
     pub new_user_id: UserId,
 }
 
