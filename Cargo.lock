@@ -1182,6 +1182,7 @@ dependencies = [
  "ic-stable-structures",
  "stable_memory_map",
  "types",
+ "utils",
 ]
 
 [[package]]
@@ -1885,6 +1886,7 @@ dependencies = [
  "testing",
  "tracing",
  "types",
+ "utils",
 ]
 
 [[package]]
@@ -3167,6 +3169,7 @@ dependencies = [
  "serde",
  "stable_memory_map",
  "types",
+ "utils",
 ]
 
 [[package]]

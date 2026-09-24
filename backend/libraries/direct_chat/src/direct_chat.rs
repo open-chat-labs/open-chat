@@ -17,6 +17,7 @@ use types::{
     P2PSwapContent, P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserType,
     VideoCallPresence,
 };
+use utils::migrated_user_ids::MigratedUserIds;
 
 /// One user's copy of a direct chat. Each user of a chat holds their own copy, with its own events
 /// (so its own event and message indexes) and its own record of how far each of them has read,
@@ -356,18 +357,18 @@ impl DirectChat {
         args: EditMessageArgs,
         event_pusher: Option<P>,
     ) -> OCResult<EditMessageSuccess> {
-        self.events.edit_message(args, event_pusher)
+        self.events.edit_message(args, &MigratedUserIds::default(), event_pusher)
     }
 
     pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
-        self.events.delete_messages(args)
+        self.events.delete_messages(args, &MigratedUserIds::default())
     }
 
     pub fn undelete_messages(
         &mut self,
         args: DeleteUndeleteMessagesArgs,
     ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
-        self.events.undelete_messages(args)
+        self.events.undelete_messages(args, &MigratedUserIds::default())
     }
 
     pub fn remove_deleted_message_content(
@@ -385,11 +386,11 @@ impl DirectChat {
         args: AddRemoveReactionArgs,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
-        self.events.add_reaction(args, event_pusher)
+        self.events.add_reaction(args, &MigratedUserIds::default(), event_pusher)
     }
 
     pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> OCResult<UpdateMessageSuccess> {
-        self.events.remove_reaction(args)
+        self.events.remove_reaction(args, &MigratedUserIds::default())
     }
 
     pub fn tip_message<P: EventPusher>(
@@ -397,7 +398,8 @@ impl DirectChat {
         args: TipMessageArgs,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
-        self.events.tip_message(args, EventIndex::default(), event_pusher)
+        self.events
+            .tip_message(args, EventIndex::default(), &MigratedUserIds::default(), event_pusher)
     }
 
     pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
@@ -474,8 +476,13 @@ impl DirectChat {
         message_id: MessageId,
         now: TimestampMillis,
     ) -> OCResult<UpdateMessageSuccess<u32>> {
-        self.events
-            .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
+        self.events.cancel_p2p_swap(
+            user_id,
+            thread_root_message_index,
+            message_id,
+            now,
+            &MigratedUserIds::default(),
+        )
     }
 
     pub fn set_p2p_swap_status(

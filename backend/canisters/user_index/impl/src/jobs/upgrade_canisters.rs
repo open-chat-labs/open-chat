@@ -26,7 +26,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 
 fn run() {
     match mutate_state(try_get_next) {
-        GetNextResult::Success(canister_to_upgrade) => ic_cdk::futures::spawn_migratory(perform_upgrade(canister_to_upgrade)),
+        GetNextResult::Success(canister_to_upgrade) => utils::async_work::spawn_tracked(perform_upgrade(canister_to_upgrade)),
         GetNextResult::Continue => {}
         GetNextResult::QueueEmpty => {
             TIMER.set(None);

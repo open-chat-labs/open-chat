@@ -52,7 +52,7 @@ pub(crate) fn reseed_rng() {
     if !claim_reseed() {
         return;
     }
-    ic_cdk::futures::spawn_migratory(reseed_rng_inner());
+    utils::async_work::spawn_tracked(reseed_rng_inner());
 
     async fn reseed_rng_inner() {
         let result = try_get_random_seed().await;

@@ -61,7 +61,7 @@ fn c2c_report_message(args: Args) -> Response {
             } else {
                 // The classification inputs were persisted in `add_report`, so if this call is
                 // lost to an upgrade the classification is resumed in post_upgrade
-                ic_cdk::futures::spawn(process_report(report_index));
+                utils::async_work::spawn_tracked(process_report(report_index));
             }
             Success
         }

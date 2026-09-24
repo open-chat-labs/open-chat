@@ -53,7 +53,7 @@ enum GetNextResult {
 
 fn run() {
     match mutate_state(next) {
-        GetNextResult::Success(canister_id) => ic_cdk::futures::spawn_migratory(run_async(canister_id)),
+        GetNextResult::Success(canister_id) => utils::async_work::spawn_tracked(run_async(canister_id)),
         GetNextResult::Continue => {}
         GetNextResult::Break => {
             TIMER.set(None);

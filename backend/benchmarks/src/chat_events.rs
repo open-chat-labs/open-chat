@@ -7,6 +7,7 @@ use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use std::collections::HashSet;
 use types::{ChannelId, Chat, EventIndex, MessageId, MessageIndex, MultiUserChat, Reaction, TimestampMillis};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[bench(raw)]
 fn push_simple_text_messages() -> BenchResult {
@@ -101,7 +102,7 @@ fn add_reactions() -> BenchResult {
 
     bench_fn(|| {
         for args in args_vec {
-            let _ = chat_events.add_reaction::<NullEventPusher>(args, None);
+            let _ = chat_events.add_reaction::<NullEventPusher>(args, &MigratedUserIds::default(), None);
         }
     })
 }

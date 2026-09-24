@@ -36,9 +36,9 @@ pub fn start_job(state: &RuntimeState) {
 pub fn run() {
     for (governance_canister_id, is_nns) in mutate_state(start_next_sync) {
         if is_nns {
-            ic_cdk::futures::spawn_migratory(get_and_process_nns_proposals(governance_canister_id));
+            utils::async_work::spawn_tracked(get_and_process_nns_proposals(governance_canister_id));
         } else {
-            ic_cdk::futures::spawn_migratory(get_and_process_sns_proposals(governance_canister_id));
+            utils::async_work::spawn_tracked(get_and_process_sns_proposals(governance_canister_id));
         }
     }
 }
