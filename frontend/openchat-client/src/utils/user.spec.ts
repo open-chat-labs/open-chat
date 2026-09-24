@@ -2,7 +2,12 @@ import type { UserLookup, UserSummary } from "@shared";
 import { _, addMessages, init } from "svelte-i18n";
 import { get } from "svelte/store";
 import { vi } from "vitest";
-import { buildUsernameList, compareUsername, missingUserIds } from "./user";
+import {
+    buildUsernameList,
+    compareUsername,
+    missingUserIds,
+    shouldRestartForNewUserId,
+} from "./user";
 
 addMessages("en", {
     you: "you",
@@ -158,5 +163,26 @@ describe("missing userIds", () => {
     test("should work", () => {
         const missing = missingUserIds(lookup, new Set(), new Set(["a", "b", "c", "d", "e"]));
         ["c", "d", "e"].forEach((u) => expect(missing.includes(u)).toBe(true));
+    });
+});
+
+describe("shouldRestartForNewUserId", () => {
+    beforeEach(() => localStorage.clear());
+
+    test("restarts once for each change of id", () => {
+        expect(shouldRestartForNewUserId("old", "new")).toBe(true);
+        expect(shouldRestartForNewUserId("old", "new")).toBe(false);
+        expect(shouldRestartForNewUserId("new", "newer")).toBe(true);
+    });
+
+    test("doesn't restart without storage to stop a loop", () => {
+        const spy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+            throw new Error("storage unavailable");
+        });
+        try {
+            expect(shouldRestartForNewUserId("old", "new")).toBe(false);
+        } finally {
+            spy.mockRestore();
+        }
     });
 });

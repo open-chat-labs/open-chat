@@ -649,6 +649,7 @@ import {
     compareUsername,
     formatLastOnlineDate,
     missingUserIds,
+    shouldRestartForNewUserId,
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
@@ -6407,19 +6408,12 @@ export class OpenChat {
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
-        return this.#worker
-            .send({
-                kind: "getUser",
-                userId,
-                allowStale,
-            })
-            .then((resp) => {
-                if (resp !== undefined) {
-                    userStore.addUser(resp);
-                }
-                return resp;
-            })
-            .catch(() => undefined);
+        // Via getUsers, which adds the user to the store, including under the id they were asked
+        // for if that's one from before they were migrated to a MultiUser canister
+        return this.getUsers(
+            { userGroups: [{ users: [userId], updatedSince: BigInt(0) }] },
+            allowStale,
+        ).then((resp) => resp.users.find((u) => u.userId === userStore.latestUserId(userId)));
     }
 
     getUserStatus(userId: string, now: number): Promise<UserStatus> {
@@ -7725,11 +7719,22 @@ export class OpenChat {
 
         if (!this.#currentUserIdChangedPublished) {
             this.#currentUserIdChangedPublished = true;
-            this.#logger.log("Current user id changed, restarting the session", {
-                from: currentUserId,
-                to: userId,
-            });
-            publish("currentUserIdChanged");
+            if (shouldRestartForNewUserId(currentUserId, userId)) {
+                this.#logger.log("Current user id changed, restarting the session", {
+                    from: currentUserId,
+                    to: userId,
+                });
+                publish("currentUserIdChanged");
+            } else {
+                // We've already restarted for this change, yet the session started under the old
+                // id again, so caching the new one must have failed. The session carries on under
+                // the old id rather than restarting over and over.
+                this.#logger.error(
+                    "Current user id changed again after restarting for it",
+                    new Error("Current user id changed"),
+                    { from: currentUserId, to: userId },
+                );
+            }
         }
         return true;
     }
