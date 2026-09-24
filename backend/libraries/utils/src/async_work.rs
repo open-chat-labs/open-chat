@@ -6,8 +6,12 @@ thread_local! {
     static ASYNC_WORK_IN_PROGRESS: Cell<u32> = const { Cell::new(0) };
 }
 
-// Counts some async work as in progress for as long as it is held. The future holding it is dropped
-// when the work completes, and also if it traps, when its call context is cleaned up.
+// Counts some async work as in progress for as long as it is held, by the future doing the work. That
+// future is dropped when the work completes. If the work traps after an await, it relies on ic-cdk
+// dropping the future during the cleanup of the call whose callback trapped: ic-cdk cancels both the
+// task which made that call (which is how a migratory task is dropped) and the tasks attached to
+// the current method (which is how an update's own future is dropped). If the work traps before
+// its first await, the increment is rolled back along with everything else.
 pub struct AsyncWorkGuard(());
 
 impl AsyncWorkGuard {
