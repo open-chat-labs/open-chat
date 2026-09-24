@@ -10,12 +10,14 @@ fn user(args: Args) -> Response {
 
 fn user_impl(args: Args, state: &RuntimeState) -> Response {
     let mut user = None;
-    let mut previous_user_id = None;
+    let mut previous_user_ids = Vec::new();
     if let Some(user_id) = args.user_id {
         // A user migrated to a MultiUser canister is returned under their latest id
         let latest_user_id = state.data.migrated_user_ids.latest(user_id);
         user = state.data.users.get_by_user_id(&latest_user_id);
-        previous_user_id = (latest_user_id != user_id).then_some(user_id);
+        if latest_user_id != user_id {
+            previous_user_ids.push(user_id);
+        }
     } else if let Some(username) = args.username {
         user = state.data.users.get_by_username(&username);
     }
@@ -23,7 +25,7 @@ fn user_impl(args: Args, state: &RuntimeState) -> Response {
     if let Some(user) = user {
         let now = state.env.now();
         Success(UserSummary {
-            previous_user_id,
+            previous_user_ids,
             ..user.to_summary(now)
         })
     } else {
@@ -47,7 +49,7 @@ mod tests {
         let user = user(&state, Some(user_id(1)), None);
 
         assert_eq!(user.user_id, user_id(2));
-        assert_eq!(user.previous_user_id, Some(user_id(1)));
+        assert_eq!(user.previous_user_ids, vec![user_id(1)]);
     }
 
     #[test]
@@ -59,7 +61,7 @@ mod tests {
             user(&state, None, Some("user2".to_string())),
         ] {
             assert_eq!(user.user_id, user_id(2));
-            assert_eq!(user.previous_user_id, None);
+            assert!(user.previous_user_ids.is_empty());
         }
     }
 
