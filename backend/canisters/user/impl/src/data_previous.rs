@@ -20,6 +20,7 @@ use user_core::{
     TokenSwaps, User,
 };
 use utils::idempotency_checker::IdempotencyChecker;
+use utils::migrated_user_ids::MigratedUserIds;
 
 // `Data` as it was serialized before the user's fields were split out into the shared `User`, which
 // `post_upgrade` falls back to when the stable memory holds that layout
@@ -159,6 +160,7 @@ impl From<DataPrevious> for Data {
             local_user_index_event_sync_queue: d.local_user_index_event_sync_queue,
             idempotency_checker: d.idempotency_checker,
             known_multi_user_canisters: d.known_multi_user_canisters,
+            migrated_user_ids: MigratedUserIds::default(),
             frozen: None,
         }
     }
