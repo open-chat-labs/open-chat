@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Pass `UserIdMigrated` on to each of the listed groups and communities which this LocalUserIndex controls. The groups and communities must be upgraded first
+- Pass `UserIdMigrated` on to each of the listed groups and communities which this LocalUserIndex controls. The groups and communities must be upgraded first ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Store the map of the old to the new id of each user migrated to a MultiUser canister, synced from the UserIndex ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
 - Add the `migrated_user_ids` query, which takes a list of user ids and returns the latest id of each user in it who has been migrated to a MultiUser canister ([#9538](https://github.com/open-chat-labs/open-chat/pull/9538))
 - Add the `use_multi_user_canister` flag to `register_user`, which in test mode registers the user in a MultiUser canister (creating one if there are none) rather than in a canister of their own ([#9524](https://github.com/open-chat-labs/open-chat/pull/9524))
