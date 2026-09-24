@@ -16,6 +16,14 @@ pub fn caller_is_user_index() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_multi_user_canister_migrating_to() -> Result<(), String> {
+    if read_state(|state| state.is_caller_multi_user_canister_migrating_to()) {
+        Ok(())
+    } else {
+        Err("Caller is not the MultiUser canister the user is being migrated to".to_owned())
+    }
+}
+
 pub fn caller_is_local_user_index() -> Result<(), String> {
     if read_state(|state| state.is_caller_local_user_index()) {
         Ok(())

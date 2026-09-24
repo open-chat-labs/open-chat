@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Include the call facts (message id, call type, `audio_only`, start time) in the notification when a call starts, and send the owner an `answered_elsewhere` dismissal on join and an `answered_elsewhere` or `ended` dismissal when the call ends ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 - Add a `frozen` state, which rejects every update call except `wallet_receive` while set and leaves queries unaffected. Nothing sets it yet ([#9533](https://github.com/open-chat-labs/open-chat/pull/9533))
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
+- Add `c2c_try_start_migration` for the UserIndex, which checks the canister has no work outstanding, then freezes it and stores the user serialized, for the given MultiUser canister to pull, returning its size ([#9544](https://github.com/open-chat-labs/open-chat/pull/9544))
+- Add `c2c_export_user` and `c2c_export_user_stable_memory`, through which the MultiUser canister a user is being migrated to pulls, in pages, the user as serialized when the migration started and the raw entries of the stable memory map ([#9547](https://github.com/open-chat-labs/open-chat/pull/9547))
 
 ### Changed
 
