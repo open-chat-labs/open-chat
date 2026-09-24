@@ -15,8 +15,6 @@ fn unpin_message(args: Args) -> Response {
 }
 
 fn unpin_message_impl(args: Args, state: &mut RuntimeState) -> OCResult<PushEventResult> {
-    state.data.verify_not_frozen()?;
-
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
     let result = state.data.chat.unpin_message(user_id, args.message_index, now)?;

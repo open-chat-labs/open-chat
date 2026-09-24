@@ -7,12 +7,16 @@ import android.content.pm.PackageManager
 import android.util.Log
 import android.webkit.WebView
 import app.tauri.annotation.Command
+import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSArray
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import com.google.firebase.messaging.FirebaseMessaging
+import com.ocplugin.app.calls.CallRinger
+import com.ocplugin.app.calls.CallTelecom
+import com.ocplugin.app.calls.IncomingCallNotifications
 import com.ocplugin.app.commands.*
 
 @Suppress("UNUSED")
@@ -28,6 +32,8 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         // Init notifications channel (if it's not been initialised before)
         NotificationsChannel.createMainChannel(activity)
         NotificationsChannel.createSummaryChannel(activity)
+        IncomingCallNotifications.createChannel(activity)
+        CallTelecom.ensureRegistered(activity)
 
         // Init the trigger fn!
         OCPluginCompanion.setTriggerRef(this)
@@ -146,6 +152,28 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
             invoke.resolve(JSObject())
         }
     }
+
+    @Command
+    fun getPendingCallAction(invoke: Invoke) {
+        val payload = OCPluginCompanion.takePendingCallAction()
+        if (payload != null) {
+            invoke.resolve(JSObject().put("payload", payload))
+        } else {
+            invoke.resolve(JSObject())
+        }
+    }
+
+    @Command
+    fun callRingHandled(invoke: Invoke) {
+        val args = invoke.parseArgs(CallRingHandledArgs::class.java)
+        args.messageId?.let { CallRinger.ringHandled(activity, it) }
+        invoke.resolve()
+    }
+}
+
+@InvokeArg
+class CallRingHandledArgs {
+    var messageId: String? = null
 }
 
 object OCPluginCompanion {
@@ -180,6 +208,21 @@ object OCPluginCompanion {
     // thread, read on the command-invoke thread.
     @Volatile
     var pendingNotificationTap: String? = null
+
+    // A call answered from the native ring, or a call log redial, received before the
+    // WebView was ready. Same rule as the tap above. Written only by CallRinger, which
+    // only writes for a call it was ringing or a handle it minted; a launch intent never
+    // carries it, so nothing outside this process can put a call here.
+    @Volatile
+    var pendingCallAction: String? = null
+
+    // Cleared on read, so an answer is delivered once.
+    @Synchronized
+    fun takePendingCallAction(): String? {
+        val payload = pendingCallAction
+        pendingCallAction = null
+        return payload
+    }
 
     fun initFcmTokenCache() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->

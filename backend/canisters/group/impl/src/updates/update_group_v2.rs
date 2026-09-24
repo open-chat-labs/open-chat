@@ -96,8 +96,6 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
-    state.data.verify_not_frozen()?;
-
     if let OptionUpdate::SetToSome(gate_config) = &args.gate_config
         && !gate_config.validate(state.data.test_mode)
     {

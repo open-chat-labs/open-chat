@@ -104,8 +104,6 @@ struct ReserveP2PSwapResult {
 }
 
 fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2PSwapResult> {
-    state.data.verify_not_frozen()?;
-
     let member = state.get_calling_member(None, true)?;
     let user_id = member.user_id;
     let depositor = state.member_wallet(user_id)?.owner;

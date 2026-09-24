@@ -23,6 +23,8 @@ const COMMANDS: &[&str] = &[
     "get_pending_notification_tap",
     "clear_all_notifications",
     "delete_fcm_token",
+    "get_pending_call_action",
+    "call_ring_handled",
 ];
 
 fn main() {

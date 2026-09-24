@@ -20,6 +20,7 @@
         expectPushNotifications,
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
+    import { expectCallActions, notifyCallJoined, runCallAction } from "@utils/native/call_bridge";
     import { expectShareTarget, handleShareTarget } from "@utils/native/share_target";
     import { portalState } from "component-lib";
     import {
@@ -260,6 +261,10 @@
 
             // Expect FCM token refreshes
             expectNewFcmToken(addFcmToken),
+
+            // A call answered from the native ring, or a call log redial. Cold-start
+            // actions are parked by the shell and consumed by Router.svelte.
+            expectCallActions(runCallAction),
         ]);
         listenersRegistered.then((results) => {
             results
@@ -360,6 +365,13 @@
         callType: VideoCallType;
         join: boolean;
     }) {
+        if (payload.join) {
+            // Joining from inside the app: the shell's native ring for this call, if any,
+            // ends as answered here.
+            const messageId = client.lookupChatSummary(payload.chatId)?.videoCallInProgress
+                ?.messageId;
+            if (messageId !== undefined) notifyCallJoined(messageId);
+        }
         videoCallElement?.startOrJoinVideoCall(payload.chatId, payload.callType, payload.join);
     }
 

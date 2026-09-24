@@ -12,8 +12,6 @@ fn toggle_mute_notifications(args: Args) -> Response {
 }
 
 fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.data.verify_not_frozen()?;
-
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
 

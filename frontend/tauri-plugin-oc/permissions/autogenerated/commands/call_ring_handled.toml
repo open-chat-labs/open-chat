@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-call-ring-handled"
+description = "Enables the call_ring_handled command without any pre-configured scope."
+commands.allow = ["call_ring_handled"]
+
+[[permission]]
+identifier = "deny-call-ring-handled"
+description = "Denies the call_ring_handled command without any pre-configured scope."
+commands.deny = ["call_ring_handled"]
