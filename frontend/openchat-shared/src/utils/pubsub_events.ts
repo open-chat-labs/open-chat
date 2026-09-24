@@ -120,6 +120,8 @@ export type PubSubEvents = {
     userLoggedIn: string;
     reactionSelected: { messageId: bigint; kind: "add" | "remove" };
     userSuspensionChanged: undefined;
+    // The current user has been migrated to a MultiUser canister, so has a new user id
+    currentUserIdChanged: undefined;
     sessionExpired: undefined;
     selectedChatInvalid: undefined;
     chitEarned: ChitEvent[];
