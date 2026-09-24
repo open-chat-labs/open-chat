@@ -4912,8 +4912,8 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
-    let (alice, alice_id) = create_user(env, local_user_index, canister_id);
-    let (bob, bob_id) = create_user(env, local_user_index, canister_id);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let carol = client::register_user(env, canister_ids);
 
     let tip = 1_0000_0000;
@@ -5001,39 +5001,21 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     assert_eq!(tips_on(message(&carols_events, message_id)), tipped_by(alice_id));
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, carol.user_id), 11 * tip);
 
-    // Carol tips Alice's message, and her canister tells this one. (Sent here as Carol's canister
-    // would, since Carol's canister can't yet look up the wallet of a user created directly in this
-    // canister, as this test's users are.)
+    // Carol tips Alice's message, into Alice's wallet, and her canister tells this one
     let message_id = random_from_u128();
     send_text_message(env, alice, canister_id, carol.user_id, "tip me back", message_id);
     tick_many(env, 3);
-    let response = client::multi_user::c2c_user_canister_v2(
+    let response = client::user::tip_message(
         env,
+        carol.principal,
         carol.canister(),
-        canister_id,
-        &user_canister::c2c_user_canister_v2::Args {
-            events: vec![IdempotentEnvelope {
-                created_at: now_millis(env),
-                idempotency_id: 1,
-                value: user_canister::c2c_user_canister_v2::Event {
-                    sender: carol.user_id,
-                    recipient: alice_id,
-                    event: UserCanisterEvent::TipMessage(Box::new(user_canister::TipMessageArgs {
-                        thread_root_message_id: None,
-                        message_id,
-                        ledger,
-                        token_symbol: ICP_SYMBOL.to_string(),
-                        amount: tip,
-                        decimals: 8,
-                        username: carol.username(),
-                        display_name: None,
-                        user_avatar_id: None,
-                    })),
-                },
-            }],
-        },
+        &tip_args(Chat::Direct(alice_id.into()), alice_id, message_id),
     );
-    assert!(matches!(response, types::SuccessOnly::Success));
+    assert!(
+        matches!(response, user_canister::tip_message::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 3);
     assert_eq!(
         tips_on(message(&events(env, alice, canister_id, alice_id, carol.user_id), message_id)),
         tipped_by(carol.user_id)
@@ -5047,8 +5029,11 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     // spend another user's approval, and in a group is given via the group; none of these move any
     // funds
     let alices_balance = client::ledger::happy_path::balance_of(env, ledger, alice);
-    // Two tips, each with its transfer fee, and the fee for the approval
-    assert_eq!(alices_balance, 10 * tip - 2 * (tip + ICP_TRANSFER_FEE) - ICP_TRANSFER_FEE);
+    // Two tips given, each with its transfer fee, the fee for the approval, and Carol's tip received
+    assert_eq!(
+        alices_balance,
+        10 * tip - 2 * (tip + ICP_TRANSFER_FEE) - ICP_TRANSFER_FEE + tip
+    );
     // A message of Alice's to Bob, for Bob to try tipping from Alice's wallet
     let alices_message_to_bob = random_from_u128();
     send_text_message(
