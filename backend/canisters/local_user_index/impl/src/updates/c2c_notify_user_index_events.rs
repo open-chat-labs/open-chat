@@ -368,6 +368,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                             GroupEvent::UserIdMigrated(GroupUserIdMigrated {
                                 old_user_id: ev.old_user_id,
                                 new_user_id: ev.new_user_id,
+                                principal: ev.principal,
                             }),
                             **now,
                         );

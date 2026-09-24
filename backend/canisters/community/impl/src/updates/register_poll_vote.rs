@@ -25,6 +25,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
 
     let result = channel.chat.register_poll_vote(
         user_id,
+        Vec::new(),
         args.thread_root_message_index,
         args.message_index,
         args.poll_option,

@@ -46,6 +46,9 @@ enum Operation {
     ChangeUserId {
         user_index: usize,
     },
+    ChangeBlockedUserId {
+        user_index: usize,
+    },
 }
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
@@ -64,6 +67,7 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
         2 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: true }),
         1 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: false }),
         3 => any::<usize>().prop_map(|user_index| Operation::ChangeUserId { user_index }),
+        1 => any::<usize>().prop_map(|user_index| Operation::ChangeBlockedUserId { user_index }),
     ]
 }
 
@@ -160,6 +164,13 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
             // Ids from `user_id` are 8 bytes, so a 9 byte id can't already be in use
             let new_user_id = Principal::from_slice(&[&timestamp.to_be_bytes()[..], &[0]].concat()).into();
             members.change_user_id(old_user_id, new_user_id, timestamp);
+        }
+        Operation::ChangeBlockedUserId { user_index } => {
+            if !members.blocked.is_empty() {
+                let old_user_id = get(&members.blocked, user_index);
+                let new_user_id = Principal::from_slice(&[&timestamp.to_be_bytes()[..], &[0]].concat()).into();
+                members.change_user_id(old_user_id, new_user_id, timestamp);
+            }
         }
     };
 }

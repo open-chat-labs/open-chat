@@ -21,8 +21,10 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
 
+    let previous_user_ids = state.data.migrated_user_ids.previous_ids(user_id);
     let result = state.data.chat.register_poll_vote(
         user_id,
+        previous_user_ids,
         args.thread_root_message_index,
         args.message_index,
         args.poll_option,

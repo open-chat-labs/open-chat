@@ -934,6 +934,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
+        p.change_voter_ids(&args.previous_user_ids, args.user_id);
         let result = p.register_vote(args.user_id, args.option_index, args.operation);
 
         match result {
@@ -1416,6 +1417,7 @@ impl ChatEvents {
     pub fn reserve_prize(
         &mut self,
         user_id: UserId,
+        previous_user_ids: &[UserId],
         min_visible_event_index: EventIndex,
         message_id: MessageId,
         now: TimestampMillis,
@@ -1437,6 +1439,7 @@ impl ChatEvents {
                 Self::reserve_prize_inner(
                     message,
                     user_id,
+                    previous_user_ids,
                     now,
                     is_unique_person,
                     diamond_status,
@@ -1457,6 +1460,7 @@ impl ChatEvents {
     fn reserve_prize_inner(
         message: &mut MessageInternal,
         user_id: UserId,
+        previous_user_ids: &[UserId],
         now: TimestampMillis,
         _is_unique_person: bool,
         diamond_status: DiamondMembershipStatus,
@@ -1499,7 +1503,12 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeFullyClaimed));
         }
 
-        if content.winners.contains(&user_id) || content.reservations.contains(&user_id) {
+        // A user who has since been migrated to a MultiUser canister may have claimed under an earlier id
+        if [user_id]
+            .iter()
+            .chain(previous_user_ids)
+            .any(|u| content.winners.contains(u) || content.reservations.contains(u))
+        {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeAlreadyClaimed));
         }
 
@@ -3078,6 +3087,8 @@ pub struct RegisterPollVoteArgs {
     pub option_index: u32,
     pub operation: VoteOperation,
     pub now: TimestampMillis,
+    // The user's ids from before they were migrated to a MultiUser canister, whose votes are theirs
+    pub previous_user_ids: Vec<UserId>,
 }
 
 pub struct RegisterPollVoteSuccess {

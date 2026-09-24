@@ -1828,6 +1828,7 @@ impl GroupChatCore {
     pub fn register_poll_vote(
         &mut self,
         user_id: UserId,
+        previous_user_ids: Vec<UserId>,
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
         option_index: u32,
@@ -1845,12 +1846,14 @@ impl GroupChatCore {
             option_index,
             operation,
             now,
+            previous_user_ids,
         })
     }
 
     pub fn reserve_prize(
         &mut self,
         user_id: UserId,
+        previous_user_ids: &[UserId],
         message_id: MessageId,
         now: TimestampMillis,
         is_unique_person: bool,
@@ -1865,6 +1868,7 @@ impl GroupChatCore {
 
         self.events.reserve_prize(
             user_id,
+            previous_user_ids,
             min_visible_event_index,
             message_id,
             now,

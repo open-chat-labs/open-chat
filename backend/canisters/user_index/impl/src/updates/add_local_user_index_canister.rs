@@ -194,6 +194,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 UserIndexEvent::UserIdMigrated(UserIdMigrated {
                     old_user_id,
                     new_user_id,
+                    principal: None,
                     groups: Vec::new(),
                 }),
             );

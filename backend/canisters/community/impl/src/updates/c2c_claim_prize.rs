@@ -72,6 +72,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let user_id = member.user_id;
     let result = channel.chat.reserve_prize(
         user_id,
+        &[],
         args.message_id,
         now,
         args.is_unique_person,

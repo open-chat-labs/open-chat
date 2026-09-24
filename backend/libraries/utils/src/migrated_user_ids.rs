@@ -29,6 +29,15 @@ impl MigratedUserIds {
         self.map.contains_key(old_user_id).then(|| self.latest(*old_user_id))
     }
 
+    // The earlier ids of the user whose latest id is `user_id`, so empty unless they have been migrated
+    pub fn previous_ids(&self, user_id: UserId) -> Vec<UserId> {
+        self.map
+            .keys()
+            .filter(|old_user_id| self.latest(**old_user_id) == user_id)
+            .copied()
+            .collect()
+    }
+
     // Each migration, from which the whole map can be rebuilt by inserting them in any order
     pub fn iter(&self) -> impl Iterator<Item = (UserId, UserId)> + '_ {
         self.map.iter().map(|(old, new)| (*old, *new))
@@ -69,6 +78,20 @@ mod tests {
         assert_eq!(ids.get(&user_id(1)), Some(user_id(2)));
         assert_eq!(ids.get(&user_id(2)), None);
         assert_eq!(ids.len(), 1);
+    }
+
+    #[test]
+    fn previous_ids_of_the_latest_id() {
+        let mut ids = MigratedUserIds::default();
+        ids.insert(user_id(1), user_id(2));
+        ids.insert(user_id(2), user_id(3));
+        ids.insert(user_id(4), user_id(5));
+
+        let mut previous = ids.previous_ids(user_id(3));
+        previous.sort();
+        assert_eq!(previous, vec![user_id(1), user_id(2)]);
+        assert!(ids.previous_ids(user_id(2)).is_empty());
+        assert!(ids.previous_ids(user_id(6)).is_empty());
     }
 
     #[test]

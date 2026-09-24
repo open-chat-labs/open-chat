@@ -2,6 +2,7 @@ use crate::client;
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{TestEnv, User};
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use testing::rng::random_string;
 use types::{ChatEvent, GroupRole, UnitResult, UserId};
@@ -39,6 +40,19 @@ fn group_member_moved_to_new_user_id() {
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     tick_many(env, 5);
 
+    // Recording the same migration again does nothing
+    let response = client::user_index::record_user_id_migrated(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::record_user_id_migrated::Args {
+            old_user_id: user.user_id,
+            new_user_id,
+            groups: vec![group_id],
+        },
+    );
+    assert!(matches!(response, UnitResult::Error(e) if e.matches_code(OCErrorCode::NoChange)));
+
     let group = client::group::happy_path::selected_initial(env, owner.principal, group_id);
     assert!(!group.participants.iter().any(|m| m.user_id == user.user_id));
     let member = group.participants.iter().find(|m| m.user_id == new_user_id).unwrap();
@@ -56,4 +70,57 @@ fn group_member_moved_to_new_user_id() {
         panic!("{events:?}");
     };
     assert_eq!(m.sender, new_user_id);
+}
+
+#[test]
+fn invited_user_moved_to_new_user_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), false, true);
+    client::local_user_index::happy_path::invite_users_to_group(
+        env,
+        &owner,
+        canister_ids.local_user_index(env, group_id),
+        group_id,
+        vec![user.user_id],
+    );
+    tick_many(env, 3);
+
+    let new_user_id = UserId::new_indexed(user.local_user_index, 1);
+    let response = client::user_index::record_user_id_migrated(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::record_user_id_migrated::Args {
+            old_user_id: user.user_id,
+            new_user_id,
+            groups: vec![group_id],
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    tick_many(env, 5);
+
+    let group = client::group::happy_path::selected_initial(env, owner.principal, group_id);
+    assert!(group.invited_users.contains(&new_user_id));
+    assert!(!group.invited_users.contains(&user.user_id));
+
+    // The user's principal, which is unchanged, finds their invitation under their new id
+    let response = client::group::public_summary(
+        env,
+        user.principal,
+        group_id.into(),
+        &group_canister::public_summary::Args { invite_code: None },
+    );
+    assert!(
+        matches!(response, group_canister::public_summary::Response::Success(ref r) if r.is_invited),
+        "{response:?}"
+    );
 }

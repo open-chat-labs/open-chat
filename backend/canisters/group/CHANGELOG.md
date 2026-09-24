@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- When told by the LocalUserIndex that a member has been migrated to a MultiUser canister, move their membership, role, invitation, block and other per-user state over to their new id, and map their principal to it ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
+- When told by the LocalUserIndex that a member has been migrated to a MultiUser canister, move their membership, role, invitation, block and other per-user state over to their new id, and map their principal to it. A prize claimed or a poll vote cast under their old id counts as theirs ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Accept a `user_id` in `c2c_leave_group` and `c2c_delete_group`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))

@@ -171,17 +171,24 @@ impl RuntimeState {
 
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
     // LocalUserIndex, each of which tells whichever of the user's groups it controls
-    pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, groups: Vec<ChatId>) {
-        if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
-            self.push_event_to_all_local_user_indexes(
-                LocalUserIndexEvent::UserIdMigrated(UserIdMigrated {
-                    old_user_id,
-                    new_user_id,
-                    groups,
-                }),
-                None,
-            );
+    // Returns false if nothing was recorded, since the migration already had been or conflicts with
+    // one which has
+    pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, groups: Vec<ChatId>) -> bool {
+        if !self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
+            return false;
         }
+
+        let principal = self.data.users.get_by_user_id(&old_user_id).map(|u| u.principal);
+        self.push_event_to_all_local_user_indexes(
+            LocalUserIndexEvent::UserIdMigrated(UserIdMigrated {
+                old_user_id,
+                new_user_id,
+                principal,
+                groups,
+            }),
+            None,
+        );
+        true
     }
 
     pub fn get_random_local_user_index_canister(&mut self) -> CanisterId {

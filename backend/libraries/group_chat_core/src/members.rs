@@ -195,8 +195,12 @@ impl GroupMembers {
         new_user_id: UserId,
         now: TimestampMillis,
     ) -> Option<GroupMemberInternal> {
-        if old_user_id == new_user_id || self.member_ids.contains(&new_user_id) || self.blocked.contains(&new_user_id) {
+        if old_user_id == new_user_id || self.blocked.contains(&new_user_id) {
             return None;
+        }
+
+        if self.member_ids.contains(&new_user_id) {
+            return self.merge_into_new_user_id(old_user_id, new_user_id, now);
         }
 
         if self.blocked.remove(&old_user_id) {
@@ -230,6 +234,25 @@ impl GroupMembers {
         self.prune_then_insert_member_update(old_user_id, MemberUpdate::Removed, now);
         self.prune_then_insert_member_update(new_user_id, MemberUpdate::Added, now);
         Some(member)
+    }
+
+    // The user joined under their new id before being told of it, so they keep the more senior of
+    // their two roles, and their membership under their old id is removed
+    fn merge_into_new_user_id(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        now: TimestampMillis,
+    ) -> Option<GroupMemberInternal> {
+        let old_role = self.members_map.get(&old_user_id)?.role.value;
+        let new_role = self.members_map.get(&new_user_id)?.role.value;
+
+        // Promoted before the old membership is removed, so that the group is never left without an owner
+        if !new_role.is_same_or_senior(old_role) {
+            let _ = self.change_role(new_user_id, None, old_role, now);
+        }
+        self.remove(old_user_id, now);
+        self.members_map.get(&new_user_id)
     }
 
     pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
@@ -1138,11 +1161,49 @@ mod tests {
         assert!(!members.is_blocked(&blocked_old));
         assert!(members.is_blocked(&blocked_new));
 
-        // Neither an id which isn't known, nor one which is already taken, is changed
+        // Neither an id which isn't known, nor one which a blocked user has, is changed
         assert!(members.change_user_id(old_user_id, owner, 7).is_none());
-        assert!(members.change_user_id(new_user_id, owner, 7).is_none());
+        assert!(members.change_user_id(new_user_id, blocked_new, 7).is_none());
         assert!(members.contains(&new_user_id));
 
+        members.check_invariants();
+    }
+
+    #[test]
+    fn change_user_id_when_new_id_is_already_a_member() {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let old_user_id: UserId = Principal::from_slice(&[1]).into();
+        let new_user_id: UserId = Principal::from_slice(&[2]).into();
+
+        // The sole owner, who joins again under their new id before the group is told of it
+        let mut members = GroupMembers::new(
+            old_user_id,
+            None,
+            UserType::User,
+            MultiUserChat::Group(Principal::from_slice(&[3]).into()),
+            0,
+        );
+        members.add(
+            new_user_id,
+            None,
+            1,
+            EventIndex::default(),
+            MessageIndex::default(),
+            false,
+            UserType::User,
+        );
+
+        let member = members.change_user_id(old_user_id, new_user_id, 2).unwrap();
+
+        assert_eq!(member.user_id(), new_user_id);
+        assert_eq!(members.role(&new_user_id), Some(GroupRole::Owner));
+        assert!(!members.contains(&old_user_id));
+        assert_eq!(members.len(), 1);
         members.check_invariants();
     }
 

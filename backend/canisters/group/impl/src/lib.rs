@@ -930,21 +930,28 @@ impl Data {
 
     // Moves everything held against a user over to their new id, once they have been migrated to a
     // MultiUser canister and so been given one. The events they took part in keep their old id.
-    pub fn change_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
+    pub fn change_user_id(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        principal: Option<Principal>,
+        now: TimestampMillis,
+    ) {
         self.migrated_user_ids.insert(old_user_id, new_user_id);
 
-        if let Some(member) = self.chat.change_user_id(old_user_id, new_user_id, now) {
-            // The user signs in with the same principal as before, which now maps to their new id
-            let principal = member.principal().or_else(|| {
-                self.principal_to_user_id_map
-                    .entries()
-                    .into_iter()
-                    .find(|(_, user_id)| *user_id == old_user_id)
-                    .map(|(principal, _)| principal)
-            });
-            if let Some(principal) = principal {
-                self.principal_to_user_id_map.insert(principal, new_user_id);
-            }
+        // The group's state is being exported, and must stay as it is while that happens
+        if self.community_being_imported_into.is_some() {
+            return;
+        }
+
+        let member = self.chat.change_user_id(old_user_id, new_user_id, now);
+
+        // The user signs in with the same principal as before, which now maps to their new id. It is
+        // held for invited users as well as members.
+        if let Some(principal) = principal.or_else(|| member.and_then(|m| m.principal()))
+            && self.principal_to_user_id_map.get(&principal) == Some(old_user_id)
+        {
+            self.principal_to_user_id_map.insert(principal, new_user_id);
         }
 
         self.expiring_members.change_user_id(old_user_id, new_user_id);

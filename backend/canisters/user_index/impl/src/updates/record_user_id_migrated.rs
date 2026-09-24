@@ -19,6 +19,9 @@ fn record_user_id_migrated_impl(args: Args, state: &mut RuntimeState) -> OCResul
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    state.record_user_id_migrated(args.old_user_id, args.new_user_id, args.groups);
-    Ok(())
+    if state.record_user_id_migrated(args.old_user_id, args.new_user_id, args.groups) {
+        Ok(())
+    } else {
+        Err(OCErrorCode::NoChange.into())
+    }
 }

@@ -5,6 +5,7 @@ mod lifecycle;
 mod queries;
 mod updates;
 
+use candid::Principal;
 pub use lifecycle::*;
 use oc_error_codes::OCError;
 pub use queries::*;
@@ -38,6 +39,9 @@ pub struct UserIdMigrated {
     pub old_user_id: UserId,
     #[serde(rename = "n")]
     pub new_user_id: UserId,
+    // The principal the user signs in with, which the migration leaves unchanged
+    #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
+    pub principal: Option<Principal>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
