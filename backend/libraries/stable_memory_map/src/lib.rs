@@ -421,16 +421,17 @@ fn garbage_collect_user_while(index: u16, keep_going: impl Fn() -> bool) -> Resu
 }
 
 // Reads the raw entries of both maps in key order, starting after the key `after`, eg. for a canister
-// which holds a single user to export everything it holds. Keys are read as stored, so ignoring any
-// current key scope. Stops before an entry would take the total size read past `max_bytes`, though
-// always reads at least one entry. Each entry counts as its key and value plus
-// `ENTRY_ENCODING_OVERHEAD`, so that `max_bytes` bounds the entries once encoded.
+// which holds a single user to export everything it holds. As with any other access to the map, in a
+// canister which holds many users only the entries in the current key scope are read, and their keys
+// are returned without the scope, as `after` is given. Stops before an entry would take the total
+// size read past `max_bytes`, though always reads at least one entry. Each entry counts as its key
+// and value plus `ENTRY_ENCODING_OVERHEAD`, so that `max_bytes` bounds the entries once encoded.
 pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntriesResult {
     let start = match after {
         Some(key) => Bound::Excluded(BaseKey::new(key.to_vec())),
         None => Bound::Unbounded,
     };
-    let range = (start, Bound::Unbounded);
+    let range = key_scope::scope_range(start, Bound::Unbounded);
 
     with_map(|m| {
         let mut main = m.map.range(range.clone()).map(|e| e.into_pair()).peekable();
@@ -468,7 +469,7 @@ pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntrie
 
             let (key, value) = if from_main { main.next() } else { small.next() }.unwrap();
             total_bytes += size;
-            entries.push((key.into_vec(), value));
+            entries.push((key_scope::unscope_key(key).into_vec(), value));
         }
     })
 }
@@ -1043,6 +1044,42 @@ mod tests {
             }
         }
         assert_eq!(read, keys);
+    }
+
+    #[test]
+    fn read_all_entries_reads_only_the_current_scope() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        for (scope, value) in [(KeyScope::User(1), 1), (KeyScope::User(2), 2), (KeyScope::Canister, 3)] {
+            with_key_scope(scope, || {
+                with_map_mut(|m| {
+                    for i in 0..3 {
+                        m.insert(small_key(i), vec![value]);
+                    }
+                    m.insert(default_key(), vec![value]);
+                })
+            });
+        }
+
+        let unscoped_keys: Vec<Vec<u8>> = {
+            let mut keys: Vec<Vec<u8>> = (0..3).map(|i| BaseKey::from(small_key(i)).into_vec()).collect();
+            keys.push(BaseKey::from(default_key()).into_vec());
+            keys.sort();
+            keys
+        };
+
+        with_key_scope(KeyScope::User(2), || {
+            let ReadAllEntriesResult { entries, finished } = read_all_entries(None, usize::MAX);
+            assert!(finished);
+            assert_eq!(entries.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>(), unscoped_keys);
+            assert!(entries.iter().all(|(_, v)| *v == vec![2]));
+
+            // Continuing after a key returned, which is unscoped
+            let ReadAllEntriesResult { entries, finished } = read_all_entries(Some(&unscoped_keys[1]), usize::MAX);
+            assert!(finished);
+            assert_eq!(entries.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>(), unscoped_keys[2..]);
+        });
     }
 
     #[test]
