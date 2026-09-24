@@ -33,7 +33,6 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             message_id: args.message_id,
             reaction: args.reaction.clone(),
             now,
-            previous_user_ids: Vec::new(),
         },
         Some(UserEventPusher {
             now,

@@ -33,7 +33,6 @@ pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, s
         token_symbol: args.token_symbol.clone(),
         amount: args.amount,
         now,
-        previous_user_ids: Vec::new(),
     };
 
     let result = channel.chat.tip_message(

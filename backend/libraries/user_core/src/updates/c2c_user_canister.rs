@@ -45,7 +45,6 @@ pub fn edit_message(chat: &mut DirectChat, sender: UserId, args: C2CEditMessageA
             og_previews: args.og_previews,
             finalise_bot_message: false,
             now,
-            previous_user_ids: Vec::new(),
         },
         None,
     );
@@ -67,7 +66,6 @@ pub fn delete_messages(
         thread_root_message_index,
         message_ids: args.message_ids,
         now,
-        previous_user_ids: Vec::new(),
     }));
     Some((thread_root_message_index, deleted))
 }
@@ -88,7 +86,6 @@ pub fn undelete_messages(
         thread_root_message_index,
         message_ids: args.message_ids,
         now,
-        previous_user_ids: Vec::new(),
     }));
     Some((thread_root_message_index, undeleted))
 }
@@ -128,7 +125,6 @@ pub fn toggle_reaction(
         message_id: args.message_id,
         reaction: args.reaction.clone(),
         now,
-        previous_user_ids: Vec::new(),
     };
     if !args.added {
         let _ = chat.remove_reaction(add_remove_reaction_args);
@@ -196,7 +192,6 @@ pub fn tip_message(
             token_symbol: args.token_symbol.clone(),
             amount: args.amount,
             now,
-            previous_user_ids: Vec::new(),
         },
         None,
     )

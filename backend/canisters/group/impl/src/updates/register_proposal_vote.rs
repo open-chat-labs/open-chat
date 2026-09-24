@@ -5,6 +5,7 @@ use chat_events::{MessageContentInternal, Reader};
 use group_canister::register_proposal_vote::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, ProposalId, UserId};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -80,11 +81,14 @@ fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
     let min_visible_event_index = member.min_visible_event_index();
     let now = state.env.now();
 
-    state
-        .data
-        .chat
-        .events
-        .record_proposal_vote(user_id, &[], min_visible_event_index, args.message_index, args.adopt, now)?;
+    state.data.chat.events.record_proposal_vote(
+        user_id,
+        &MigratedUserIds::default(),
+        min_visible_event_index,
+        args.message_index,
+        args.adopt,
+        now,
+    )?;
 
     state
         .data

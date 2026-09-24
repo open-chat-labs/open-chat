@@ -4,6 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::cancel_p2p_swap::*;
 use types::OCResult;
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -24,7 +25,13 @@ fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
         .data
         .chat
         .events
-        .cancel_p2p_swap(user_id, &[], args.thread_root_message_index, args.message_id, now)
+        .cancel_p2p_swap(
+            user_id,
+            &MigratedUserIds::default(),
+            args.thread_root_message_index,
+            args.message_id,
+            now,
+        )
         .map(|result| {
             state.push_bot_notification(result.bot_notification);
             result.value

@@ -30,7 +30,6 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         og_previews: args.og_previews.clone(),
         finalise_bot_message: false,
         now,
-        previous_user_ids: Vec::new(),
     };
 
     // Edit the message in the sender's copy of the chat. Unlike the User canister, which passes no

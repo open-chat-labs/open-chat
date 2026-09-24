@@ -7,6 +7,7 @@ use constants::MEMO_TIP;
 use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, Caller, CryptoTransaction, OCResult, UserId, icrc2};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[update(msgpack = true)]
 #[trace]
@@ -66,7 +67,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
 
     let recipient = state.data.channels.get_or_err(&args.channel_id)?.chat.check_can_tip_message(
         user_id,
-        &[],
+        &MigratedUserIds::default(),
         args.thread_root_message_index,
         args.message_id,
     )?;
