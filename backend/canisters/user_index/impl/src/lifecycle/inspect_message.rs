@@ -67,6 +67,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "start_user_migration"
+        | "export_migrating_user"
         | "register_external_achievement"
         | "publish_bot"
         | "suspected_bots" => state.is_caller_governance_principal(),
