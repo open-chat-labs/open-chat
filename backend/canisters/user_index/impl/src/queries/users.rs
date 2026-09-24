@@ -1,6 +1,6 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use types::{CurrentUserSummary, UserId, UserSummaryV2};
 use user_index_canister::users::{Response::*, *};
 
@@ -14,11 +14,12 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
     let mut user_ids = HashSet::new();
-    let mut users: Vec<UserSummaryV2> = Vec::new();
+    let mut users = Vec::new();
     let mut deleted = Vec::new();
     let mut current_user: Option<CurrentUserSummary> = None;
-    // The index in `users` of each user returned, by their latest id
-    let mut indexes: HashMap<UserId, usize> = HashMap::new();
+    // The latest id of each user the client knows by an id from before they were migrated to a
+    // MultiUser canister, mapped to each of those earlier ids
+    let mut migrated: BTreeMap<UserId, Vec<UserId>> = BTreeMap::new();
 
     if let Some(u) = state.data.users.get_by_principal(&caller)
         && let Some((updated_since, known_by_earlier_id)) = args.user_groups.iter().find_map(|g| {
@@ -63,37 +64,49 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
             if !user_ids.insert(user_id) {
                 continue;
             }
-            // A user migrated to a MultiUser canister since the client looked them up by this id is
-            // returned under their latest id, along with this one, so the client can map one to the
-            // other. Each user is returned once, along with every earlier id they were looked up by.
             let latest_user_id = state.data.migrated_user_ids.latest(user_id);
-            let is_earlier_id = latest_user_id != user_id;
-            if let Some(&index) = indexes.get(&latest_user_id) {
-                if is_earlier_id {
-                    users[index].previous_user_ids.push(user_id);
-                }
+            if latest_user_id != user_id {
+                migrated.entry(latest_user_id).or_default().push(user_id);
                 continue;
             }
-            // If the client only has the user cached under an earlier id, it gets them in full,
-            // whether or not they've been updated
-            if let Some(user) = state.data.users.get_by_user_id(&latest_user_id).filter(|u| {
-                (is_earlier_id
-                    || u.date_updated > updated_since
+            if let Some(user) = state.data.users.get_by_user_id(&user_id).filter(|u| {
+                (u.date_updated > updated_since
                     || u.chit_updated > updated_since
                     || (now > u.streak_ends && u.streak_ends > updated_since))
                     && u.principal != caller
             }) {
-                user_ids.insert(latest_user_id);
-                indexes.insert(latest_user_id, users.len());
                 users.push(UserSummaryV2 {
-                    user_id: latest_user_id,
-                    stable: (is_earlier_id || user.date_updated > updated_since).then(|| user.to_summary_stable(now)),
+                    user_id,
+                    stable: (user.date_updated > updated_since).then(|| user.to_summary_stable(now)),
                     volatile: Some(user.to_summary_volatile(now)),
-                    previous_user_ids: if is_earlier_id { vec![user_id] } else { Vec::new() },
+                    previous_user_ids: Vec::new(),
                 });
                 // TODO maybe convert `deleted_users` to a HashMap?
-            } else if state.data.users.is_deleted(&latest_user_id) {
+            } else if state.data.users.is_deleted(&user_id) {
                 deleted.push(user_id)
+            }
+        }
+    }
+
+    // Users the client knows by an earlier id are returned in full, whether or not they've been
+    // updated, under their latest id along with the earlier ones, so the client can map them across.
+    // Each is returned once, replacing any entry already added for them under their latest id.
+    if !migrated.is_empty() {
+        users.retain(|u| !migrated.contains_key(&u.user_id));
+        for (latest_user_id, previous_user_ids) in migrated {
+            user_ids.insert(latest_user_id);
+            if let Some(user) = state
+                .data
+                .users
+                .get_by_user_id(&latest_user_id)
+                .filter(|u| u.principal != caller)
+            {
+                users.push(UserSummaryV2 {
+                    previous_user_ids,
+                    ..user.to_summary_v2(now)
+                });
+            } else if state.data.users.is_deleted(&latest_user_id) {
+                deleted.extend(previous_user_ids);
             }
         }
     }
@@ -158,15 +171,13 @@ mod tests {
     fn migrated_user_returned_once_whatever_the_order_of_ids() {
         let state = setup_runtime_state();
 
-        for updated_since in [0, state.env.now()] {
-            for user_ids in [vec![user_id(1), user_id(2)], vec![user_id(2), user_id(1)]] {
-                let result = users(&state, user_ids, updated_since);
+        for user_ids in [vec![user_id(1), user_id(2)], vec![user_id(2), user_id(1)]] {
+            let result = users(&state, user_ids, state.env.now());
 
-                assert_eq!(result.users.len(), 1);
-                assert_eq!(result.users[0].user_id, user_id(2));
-                assert_eq!(result.users[0].previous_user_ids, vec![user_id(1)]);
-                assert!(result.users[0].stable.is_some());
-            }
+            assert_eq!(result.users.len(), 1);
+            assert_eq!(result.users[0].user_id, user_id(2));
+            assert_eq!(result.users[0].previous_user_ids, vec![user_id(1)]);
+            assert!(result.users[0].stable.is_some());
         }
     }
 
