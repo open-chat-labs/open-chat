@@ -76,17 +76,27 @@ impl TimerJobItem for UserCanisterEventBatch {
                     && let Some(new_user_id) = latest_id_if_migrated(canister_id.into()).await
                 {
                     mutate_state(|state| {
-                        state.data.user_canister_events_by_canister.push_many(
-                            new_user_id.canister_id(),
-                            self.items
-                                .iter()
-                                .map(|event| IdempotentEnvelope {
-                                    created_at: event.created_at,
-                                    idempotency_id: event.idempotency_id,
-                                    value: (new_user_id, event.value.1.clone()),
-                                })
-                                .collect(),
-                        )
+                        state.data.migrated_user_ids.insert(canister_id.into(), new_user_id);
+
+                        // Any events queued for the old id since this batch was taken are moved
+                        // too, after it, so that they stay in order. All are stamped with the
+                        // current time, since the MultiUser canister ignores any event from this
+                        // canister older than the latest it has had from it, and these may have
+                        // been created before events already sent to it.
+                        let now = state.env.now();
+                        let queue = &mut state.data.user_canister_events_by_canister;
+                        let events = self
+                            .items
+                            .iter()
+                            .cloned()
+                            .chain(queue.take(&canister_id))
+                            .map(|event| IdempotentEnvelope {
+                                created_at: now,
+                                idempotency_id: event.idempotency_id,
+                                value: (new_user_id, event.value.1),
+                            })
+                            .collect();
+                        queue.push_many(new_user_id.canister_id(), events);
                     });
                     return Ok(());
                 }
@@ -97,9 +107,9 @@ impl TimerJobItem for UserCanisterEventBatch {
     }
 }
 
-// The user's latest id, if they have been migrated to a MultiUser canister since having `user_id`.
-// Looked up from the LocalUserIndex unless already cached, and cached if found. A migration the
-// LocalUserIndex hasn't yet heard of isn't found, so the events are retried as usual until it has.
+// The user's latest id, if they have been migrated to a MultiUser canister since having `user_id`,
+// taken from the cache if it is there and otherwise looked up from the LocalUserIndex. A migration
+// the LocalUserIndex hasn't yet heard of isn't found, so the events are retried as usual until it has.
 async fn latest_id_if_migrated(user_id: UserId) -> Option<UserId> {
     let (cached, local_user_index_canister_id) = read_state(|state| {
         (
@@ -111,11 +121,8 @@ async fn latest_id_if_migrated(user_id: UserId) -> Option<UserId> {
         return cached;
     }
 
-    let new_user_id = local_user_index_canister_c2c_client::lookup_migrated_user_id(user_id, local_user_index_canister_id)
+    local_user_index_canister_c2c_client::lookup_migrated_user_id(user_id, local_user_index_canister_id)
         .await
         .ok()
-        .flatten()?;
-
-    mutate_state(|state| state.data.migrated_user_ids.insert(user_id, new_user_id));
-    Some(new_user_id)
+        .flatten()
 }
