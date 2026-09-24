@@ -592,7 +592,7 @@ async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f:
 }
 
 async fn execute_update_async_even_if_frozen<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
-    mutate_state(|state| state.run_regular_jobs());
+    run_regular_jobs();
     let result = f().await;
     flush_pending_events();
     result
