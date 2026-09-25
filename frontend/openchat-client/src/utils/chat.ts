@@ -57,7 +57,7 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
-    blobLocation,
+    buildBlobUrl,
     chatIdentifiersEqual,
     defaultChatPermissions,
     defaultOptionalChatPermissions,
@@ -1515,22 +1515,6 @@ export function buildUserBackgroundUrl(
     return backgroundId !== undefined
         ? buildBlobUrl(pattern, userId, backgroundId, "profile_background")
         : undefined;
-}
-
-// The url of a blob belonging to `ownerId`: the canister which serves it, such as a group, community
-// or storage bucket, or a user, whose blobs are served by the canister holding them (see
-// `blobLocation`)
-export function buildBlobUrl(
-    pattern: string,
-    ownerId: string,
-    blobId: bigint,
-    blobType: "blobs" | "avatar" | "profile_background",
-): string {
-    const location = blobLocation(ownerId, blobType);
-
-    return `${pattern
-        .replace("{canisterId}", location.canisterId)
-        .replace("{blobType}", location.path)}/${blobId}`;
 }
 
 export function buildIdenticonUrl(id: string): string {
