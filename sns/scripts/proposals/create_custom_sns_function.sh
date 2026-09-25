@@ -22,6 +22,4 @@ echo "TOPIC $TOPIC"
 
 PROPOSAL="record { title=\"$TITLE\"; url=\"$URL\"; summary=\"$SUMMARY\"; action=opt variant {AddGenericNervousSystemFunction = record {id=($FUNCTION_ID:nat64); name=\"$FUNCTION_NAME\"; description=opt\"$FUNCTION_DESC\"; function_type=opt variant {GenericNervousSystemFunction=record{validator_canister_id=opt principal\"$VALIDATOR_CANISTER_ID\"; target_canister_id=opt principal\"$TARGET_CANISTER_ID\"; validator_method_name=opt\"$VALIDATOR_NAME\"; target_method_name=opt\"$TARGET_NAME\"; topic=opt variant { $TOPIC }}}}}}"
 
-echo $PROPOSAL
-
 ../utils/submit_proposal_with_dfx.sh "$PROPOSAL"
