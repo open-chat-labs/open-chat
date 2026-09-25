@@ -158,6 +158,13 @@ impl GroupMembers {
     }
 
     pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> Option<GroupMemberInternal> {
+        let member = self.take_member(user_id)?;
+        self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
+        Some(member)
+    }
+
+    // Removes the member without recording an update
+    fn take_member(&mut self, user_id: UserId) -> Option<GroupMemberInternal> {
         let member = self.members_map.remove(&user_id)?.into_value();
         match member.role.value {
             GroupRoleInternal::Owner => self.owners.remove(&user_id),
@@ -181,12 +188,10 @@ impl GroupMembers {
             self.suspended.remove(&user_id);
         }
         self.member_ids.remove(&user_id);
-        self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
         Some(member)
     }
 
     // Moves the membership and block of a user migrated to a MultiUser canister onto their new id.
-    // If they are already a member under their new id, their membership under the old id is dropped.
     // Returns whether anything changed.
     pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> bool {
         if old_user_id == new_user_id {
@@ -194,10 +199,22 @@ impl GroupMembers {
         }
 
         let mut updated = false;
-        if let Some(mut member) = self.remove(old_user_id, now) {
-            if !self.member_ids.contains(&new_user_id) {
+        if self.member_ids.contains(&old_user_id) {
+            if self.blocked.contains(&new_user_id) {
+                // The user has been blocked under their new id, so their membership under the old id
+                // is dropped
+                self.remove(old_user_id, now);
+            } else {
+                // If the user has also joined under their new id since being migrated, that membership
+                // is replaced by their membership under the old id, which holds their role, the threads
+                // they follow, etc. No update is recorded for its removal, since the user remains a
+                // member and clients are told of them being added under their new id.
+                self.take_member(new_user_id);
+                let mut member = self.take_member(old_user_id).unwrap();
                 member.user_id = new_user_id;
-                self.insert_member(member, now);
+                self.insert_member(member);
+                self.prune_then_insert_member_update(old_user_id, MemberUpdate::Removed, now);
+                self.prune_then_insert_member_update(new_user_id, MemberUpdate::Added, now);
             }
             updated = true;
         }
@@ -211,7 +228,7 @@ impl GroupMembers {
     }
 
     // Inserts an existing member's record, as it was before they were migrated to a new id
-    fn insert_member(&mut self, member: GroupMemberInternal, now: TimestampMillis) {
+    fn insert_member(&mut self, member: GroupMemberInternal) {
         let user_id = member.user_id;
         self.member_ids.insert(user_id);
         match member.role.value {
@@ -236,7 +253,6 @@ impl GroupMembers {
             self.suspended.insert(user_id);
         }
         self.members_map.insert(user_id, member);
-        self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
     }
 
     pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
@@ -1115,33 +1131,13 @@ mod tests {
 
     #[test]
     fn migrate_user_id_moves_membership_and_block() {
-        use ic_stable_structures::DefaultMemoryImpl;
-        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init(memory.get(MemoryId::new(1)));
-
-        let [creator, old, new, blocked_old, blocked_new, both_old, both_new]: [UserId; 7] =
-            [1, 2, 3, 4, 5, 6, 7].map(|i| Principal::from_slice(&[i]).into());
+        let mut members = members_for_migration_tests();
+        let [old, new, blocked_old, blocked_new]: [UserId; 4] = [2, 3, 4, 5].map(test_user_id);
         let principal = Principal::from_slice(&[100]);
-        let mut members = GroupMembers::new(
-            creator,
-            None,
-            UserType::User,
-            MultiUserChat::Group(Principal::from_slice(&[101]).into()),
-            0,
-        );
 
         members.add(old, Some(principal), 1, 5.into(), 3.into(), true, UserType::User);
-        members.update_member(&old, |m| {
-            m.role = Timestamped::new(GroupRoleInternal::Admin, 2);
-            true
-        });
-        members.admins.insert(old);
+        set_role(&mut members, old, GroupRoleInternal::Admin);
         members.block(blocked_old, 3);
-        for user_id in [both_old, both_new] {
-            members.add(user_id, None, 4, 0.into(), 0.into(), false, UserType::User);
-        }
 
         assert!(members.migrate_user_id(old, new, 10));
         assert!(!members.contains(&old));
@@ -1160,28 +1156,104 @@ mod tests {
         assert!(!members.is_blocked(&blocked_old));
         assert!(members.is_blocked(&blocked_new));
 
-        // A user who is already a member under their new id loses their membership under the old id
-        assert!(members.migrate_user_id(both_old, both_new, 10));
-        assert!(!members.contains(&both_old));
-        assert!(members.contains(&both_new));
-
         // Clients are told of each change
-        let updates: Vec<_> = members.iter_latest_updates(9).collect();
-        for update in [
-            (old, MemberUpdate::Removed),
-            (new, MemberUpdate::Added),
-            (blocked_old, MemberUpdate::Unblocked),
-            (blocked_new, MemberUpdate::Blocked),
-            (both_old, MemberUpdate::Removed),
-        ] {
-            assert!(updates.contains(&update));
-        }
+        assert_eq!(
+            latest_updates(&members, 9),
+            [
+                (old, MemberUpdate::Removed),
+                (new, MemberUpdate::Added),
+                (blocked_old, MemberUpdate::Unblocked),
+                (blocked_new, MemberUpdate::Blocked),
+            ]
+            .into_iter()
+            .collect()
+        );
 
         // Nothing is left under the old ids
-        for (old, new) in [(old, new), (blocked_old, blocked_new), (both_old, both_new)] {
+        for (old, new) in [(old, new), (blocked_old, blocked_new)] {
             assert!(!members.migrate_user_id(old, new, 11));
         }
         members.check_invariants();
+    }
+
+    #[test]
+    fn migrate_user_id_keeps_old_membership_if_also_member_under_new_id() {
+        let mut members = members_for_migration_tests();
+        let [old, new]: [UserId; 2] = [2, 3].map(test_user_id);
+        members.add(old, None, 1, 0.into(), 0.into(), false, UserType::User);
+        set_role(&mut members, old, GroupRoleInternal::Owner);
+        members.add(new, None, 5, 0.into(), 0.into(), false, UserType::User);
+
+        assert!(members.migrate_user_id(old, new, 10));
+        assert!(!members.contains(&old));
+        let member = members.get(&new).unwrap();
+        assert_eq!(member.date_added, 1);
+        assert_eq!(member.role.value, GroupRoleInternal::Owner);
+        assert!(members.owners.contains(&new));
+
+        // Clients are told the user was added under their new id, not removed
+        assert_eq!(
+            latest_updates(&members, 9),
+            [(old, MemberUpdate::Removed), (new, MemberUpdate::Added)]
+                .into_iter()
+                .collect()
+        );
+        members.check_invariants();
+    }
+
+    #[test]
+    fn migrate_user_id_drops_old_membership_if_blocked_under_new_id() {
+        let mut members = members_for_migration_tests();
+        let [old, new]: [UserId; 2] = [2, 3].map(test_user_id);
+        members.add(old, None, 1, 0.into(), 0.into(), false, UserType::User);
+        members.block(new, 5);
+
+        assert!(members.migrate_user_id(old, new, 10));
+        assert!(!members.contains(&old));
+        assert!(!members.contains(&new));
+        assert!(members.is_blocked(&new));
+        members.check_invariants();
+    }
+
+    fn members_for_migration_tests() -> GroupMembers {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        GroupMembers::new(
+            test_user_id(1),
+            None,
+            UserType::User,
+            MultiUserChat::Group(Principal::from_slice(&[101]).into()),
+            0,
+        )
+    }
+
+    fn set_role(members: &mut GroupMembers, user_id: UserId, role: GroupRoleInternal) {
+        members.update_member(&user_id, |m| {
+            m.role = Timestamped::new(role, 2);
+            true
+        });
+        match role {
+            GroupRoleInternal::Owner => members.owners.insert(user_id),
+            GroupRoleInternal::Admin => members.admins.insert(user_id),
+            _ => unimplemented!(),
+        };
+    }
+
+    // Each user's latest update, as clients are told of them
+    fn latest_updates(members: &GroupMembers, since: TimestampMillis) -> HashMap<UserId, MemberUpdate> {
+        let mut updates = HashMap::new();
+        for (user_id, update) in members.iter_latest_updates(since) {
+            updates.entry(user_id).or_insert(update);
+        }
+        updates
+    }
+
+    fn test_user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
     }
 
     #[test]

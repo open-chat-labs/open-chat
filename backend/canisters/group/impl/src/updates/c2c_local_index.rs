@@ -213,7 +213,7 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
             state.data.handle_bot_definition_updated(ev, **now);
         }
         LocalIndexEvent::UserIdMigrated(ev) => {
-            state.data.migrate_user_ids(&[ev.old_user_id], ev.new_user_id, **now);
+            state.data.migrate_user_ids(&[ev.old_user_id], ev.new_user_id, None, **now);
         }
     }
 

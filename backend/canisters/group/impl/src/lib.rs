@@ -946,14 +946,21 @@ impl Data {
     // Moves everything held under the previous ids of a user migrated to a MultiUser canister (their
     // membership, block, invitation, metrics, etc) onto their latest id, stepping through each
     // migration in turn, so that from then on they only need to be looked up by their latest id.
-    // `previous_user_ids` must be ordered oldest first. If anything was held under a previous id, the
-    // migrations are also cached, since events may refer to the user by their previous ids. Returns
-    // whether anything was moved.
-    pub fn migrate_user_ids(&mut self, previous_user_ids: &[UserId], user_id: UserId, now: TimestampMillis) -> bool {
+    // `previous_user_ids` must be ordered oldest first. `principal` is the user's principal, if known,
+    // which is needed to update the lookup of an invited user who isn't a member. If anything was held
+    // under a previous id, the migrations are also cached, since events may refer to the user by their
+    // previous ids. Returns whether anything was moved.
+    pub fn migrate_user_ids(
+        &mut self,
+        previous_user_ids: &[UserId],
+        user_id: UserId,
+        principal: Option<Principal>,
+        now: TimestampMillis,
+    ) -> bool {
         let next_ids = previous_user_ids.iter().skip(1).chain([&user_id]);
         let mut migrated = false;
         for (&old_user_id, &new_user_id) in previous_user_ids.iter().zip(next_ids) {
-            migrated |= self.migrate_user_id(old_user_id, new_user_id, now);
+            migrated |= self.migrate_user_id(old_user_id, new_user_id, principal, now);
         }
         if migrated {
             self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
@@ -961,24 +968,45 @@ impl Data {
         migrated
     }
 
-    fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> bool {
+    fn migrate_user_id(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        principal: Option<Principal>,
+        now: TimestampMillis,
+    ) -> bool {
         if old_user_id == new_user_id {
             return false;
         }
 
-        let principal = self.chat.members.get(&old_user_id).and_then(|m| m.principal());
+        let old_member_principal = self.chat.members.get(&old_user_id).map(|m| m.principal());
         let mut migrated = self.chat.migrate_user_id(old_user_id, new_user_id, now);
+        let is_member = self.chat.members.contains(&new_user_id);
 
-        if let Some(principal) = principal
-            && self.principal_to_user_id_map.get(&principal) == Some(old_user_id)
+        if let Some(member_principal) = old_member_principal
+            && !is_member
         {
-            self.principal_to_user_id_map.insert(principal, new_user_id);
+            // The user has been blocked under their new id, so their membership under the old id was
+            // dropped
+            self.remove_user(
+                old_user_id,
+                member_principal.filter(|p| self.principal_to_user_id_map.get(p) == Some(old_user_id)),
+            );
+        }
+        for principal in [old_member_principal.flatten(), principal].into_iter().flatten() {
+            if self.principal_to_user_id_map.get(&principal) == Some(old_user_id) {
+                self.principal_to_user_id_map.insert(principal, new_user_id);
+                migrated = true;
+            }
         }
         if self.former_members.remove(&old_user_id) {
-            if !self.chat.members.contains(&new_user_id) {
+            if !is_member {
                 self.former_members.insert(new_user_id);
             }
             migrated = true;
+        }
+        if is_member {
+            self.former_members.remove(&new_user_id);
         }
         self.expiring_members.migrate_user_id(old_user_id, new_user_id);
         self.expiring_member_actions.migrate_user_id(old_user_id, new_user_id);
