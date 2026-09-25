@@ -112,13 +112,13 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
         Operation::Remove { user_index } => {
             let user_id = get_from_map(&members.members_and_channels, user_index);
             if members.owners.len() != 1 || members.owners.first() != Some(&user_id) {
-                members.remove(user_id, None, timestamp);
+                members.remove(user_id, None, true, timestamp);
             }
         }
         Operation::Block { user_index } => {
             let user_id = get_from_map(&members.members_and_channels, user_index);
             if members.owners.len() != 1 || members.owners.first() != Some(&user_id) {
-                members.remove(user_id, None, timestamp);
+                members.remove(user_id, None, true, timestamp);
                 members.block(user_id, timestamp);
             }
         }

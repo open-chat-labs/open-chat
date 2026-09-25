@@ -5908,3 +5908,38 @@ fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
     set_avatar(env, a_principal, canister_id, None);
     assert_eq!(get(env, format!("/user/{a_index}/avatar/{}", avatar.id)).status_code, 410);
 }
+
+// The UserIndex holds each user's avatar id, which it hands out in user summaries, so it is told when
+// a user in a MultiUser canister sets or removes their avatar, as it is by a User canister
+#[test]
+fn the_user_index_is_told_of_avatars_set_in_multi_user_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (_, b) = create_user(env, canister_ids, local_user_index, canister_id);
+    let carol = client::register_user(env, canister_ids);
+
+    let a_avatar = document(100);
+    set_avatar(env, a_principal, canister_id, Some(a_avatar.clone()));
+    let carols_avatar = document(100);
+    set_avatar(env, carol.principal, carol.canister(), Some(carols_avatar.clone()));
+    tick_many(env, 3);
+
+    let avatar_id =
+        |env: &PocketIc, user_id| client::user_index::happy_path::user(env, canister_ids.user_index, user_id).avatar_id;
+    assert_eq!(avatar_id(env, a), Some(a_avatar.id));
+    assert_eq!(avatar_id(env, b), None);
+    assert_eq!(avatar_id(env, carol.user_id), Some(carols_avatar.id));
+
+    set_avatar(env, a_principal, canister_id, None);
+    tick_many(env, 3);
+    assert_eq!(avatar_id(env, a), None);
+}

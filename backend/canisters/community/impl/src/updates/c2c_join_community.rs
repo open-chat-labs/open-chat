@@ -155,7 +155,6 @@ pub(crate) fn join_community_impl(
 
     match result {
         AddResult::Success(_) => {
-            state.data.former_members.remove(&args.user_id);
             state
                 .data
                 .cache_migrations_if_former_member(args.user_id, &args.previous_user_ids);

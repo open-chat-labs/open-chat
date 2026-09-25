@@ -375,8 +375,6 @@ impl RuntimeState {
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
             self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
-        }
-        if matches!(result, AddMemberResult::Success(_)) {
             self.data.former_members.remove(&args.user_id);
         }
 
@@ -543,6 +541,8 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: GroupCanisterEvent, now: TimestampMillis) {
+        // Sent to the user's latest id if they are known to have been migrated since having `user_id`
+        let user_id = self.data.migrated_user_ids.latest(user_id);
         self.data.user_events_queue.push(
             user_id.canister_id(),
             IdempotentEnvelope {

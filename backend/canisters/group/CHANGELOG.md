@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Let members send crypto, prizes and P2P swaps via `send_message_v2`, and tip messages via a new `tip_message`, in a group directly rather than via their User canister, using ICRC2 transfers or certified transfers they have already made ([#9514](https://github.com/open-chat-labs/open-chat/pull/9514))
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Accept `UserIdMigrated` from the LocalUserIndex, for members migrated to a MultiUser canister and given a new id. Not acted on yet ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
+- Retry sending events for migrated users to their new canister ([#9551](https://github.com/open-chat-labs/open-chat/pull/9551))
 - Record the users who have left or been removed from the group ([#9564](https://github.com/open-chat-labs/open-chat/pull/9564))
 - Accept the `previous_user_ids` of a user joining via `c2c_join_group`, and if the user was a member under any of them, cache their migrations to the user's current id ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
 
@@ -43,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Skip running the regular jobs while frozen ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
 - Return an error from `register_proposal_vote` for users in MultiUser canisters who should use `register_proposal_vote_v2` instead ([#9554](https://github.com/open-chat-labs/open-chat/pull/9554))
+- Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 
 ### Removed
 
