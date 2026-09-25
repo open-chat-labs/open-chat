@@ -222,6 +222,23 @@ fn create_p2p_swap_directly_succeeds(in_channel: bool) {
         ChatEvent::Message(Box::new(chat.message(env, &user1, event_index))),
         |status| matches!(status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id),
     );
+
+    // The swap is recorded against the offerer in their canister, just as one created via their
+    // canister is, so they aren't migrated away from the account it pays out to
+    let response = client::user_index::start_user_migration(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::start_user_migration::Args {
+            user_id: user1.user_id,
+            multi_user_canister_id: Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]),
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::start_user_migration::Response::Error(ref e)
+            if e.matches_code(OCErrorCode::NotReadyForMigration) && e.message() == Some("User has P2P swaps")),
+        "{response:?}"
+    );
 }
 
 #[test]

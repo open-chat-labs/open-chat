@@ -1,5 +1,6 @@
 import type { UserSummary } from "@shared";
 import { describe, expect, test } from "vitest";
+import { fakeIdb } from "./fakeIdb";
 import { UserDb } from "./userCache";
 
 function user(userId: string): UserSummary {
@@ -69,5 +70,52 @@ describe("getCachedUsers", () => {
         await userDb.getCachedUsers(["a", "b", "missing"]);
         expect(state.transactions).toBe(1);
         expect(state.gets).toEqual(["a", "b", "missing"]);
+    });
+});
+
+function storesDb(initial: Record<string, Record<string, unknown>>) {
+    const { db, stores } = fakeIdb(initial);
+    const userDb = new UserDb();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (userDb as any).connectionManager = { getDb: () => Promise.resolve(db) };
+    return { userDb, stores };
+}
+
+describe("migrated user ids", () => {
+    test("getLatestUserIds maps each migrated id to its latest id", async () => {
+        const { userDb } = storesDb({ migratedUserIds: { a: "b", c: "d" } });
+        const latest = await userDb.getLatestUserIds(["a", "c", "e"]);
+        expect(latest).toEqual(
+            new Map([
+                ["a", "b"],
+                ["c", "d"],
+            ]),
+        );
+    });
+
+    test("getLatestUserIds follows a user through each of their migrations", async () => {
+        const { userDb } = storesDb({ migratedUserIds: { a: "b", b: "c" } });
+        const latest = await userDb.getLatestUserIds(["a", "b"]);
+        expect(latest).toEqual(
+            new Map([
+                ["a", "c"],
+                ["b", "c"],
+            ]),
+        );
+    });
+
+    test("getLatestUserIds stops at a cycle rather than looping", async () => {
+        const { userDb } = storesDb({ migratedUserIds: { a: "b", b: "a" } });
+        const latest = await userDb.getLatestUserIds(["a"]);
+        expect(latest).toEqual(new Map([["a", "b"]]));
+    });
+
+    test("setMigratedUserIds records the mapping and drops users cached under earlier ids", async () => {
+        const { userDb, stores } = storesDb({
+            users: { a: user("a"), b: user("b"), x: user("x") },
+        });
+        await userDb.setMigratedUserIds(new Map([["a", "b"]]));
+        expect(stores.get("migratedUserIds")).toEqual(new Map([["a", "b"]]));
+        expect([...stores.get("users")!.keys()]).toEqual(["b", "x"]);
     });
 });

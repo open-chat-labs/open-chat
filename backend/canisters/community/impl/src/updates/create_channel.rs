@@ -70,6 +70,7 @@ fn c2c_create_proposals_channel_impl(args: Args, state: &mut RuntimeState) -> Re
             unique_person_proof: None,
             total_chit_earned: 0,
             composite_gate_index: None,
+            previous_user_ids: Vec::new(),
         },
         Vec::new(),
         state,

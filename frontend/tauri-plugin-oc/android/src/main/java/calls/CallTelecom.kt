@@ -119,6 +119,7 @@ object CallTelecom {
         CallRegistry.End.MISSED -> DisconnectCause.MISSED
         CallRegistry.End.REJECTED -> DisconnectCause.REJECTED
         CallRegistry.End.ANSWERED_ELSEWHERE -> DisconnectCause.ANSWERED_ELSEWHERE
+        CallRegistry.End.DECLINED_ELSEWHERE -> DisconnectCause.REJECTED
         CallRegistry.End.ANSWERED_HERE -> DisconnectCause.LOCAL
     }
 }

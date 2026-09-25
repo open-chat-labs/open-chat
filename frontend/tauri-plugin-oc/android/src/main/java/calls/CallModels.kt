@@ -1,6 +1,7 @@
 package com.ocplugin.app.calls
 
 import android.os.Bundle
+import com.ocplugin.app.BlobLocation
 import com.ocplugin.app.BuildConfig
 import com.ocplugin.app.data.Notification
 import com.ocplugin.app.data.NotificationType
@@ -44,10 +45,12 @@ enum class CallKind(val wire: String) {
     }
 }
 
-// The call fields a ring push carries. Their presence is what makes a push a ring.
-data class CallFacts(val messageId: String, val kind: CallKind, val started: Long)
+// The call fields a ring push carries. Their presence is what makes a push a ring. The
+// decline token is signed for this user and this call; it goes to the bridge on decline
+// and nowhere else (#9534).
+data class CallFacts(val messageId: String, val kind: CallKind, val started: Long, val declineToken: String? = null)
 
-enum class DismissalKind { ENDED, ANSWERED_ELSEWHERE }
+enum class DismissalKind { ENDED, ANSWERED_ELSEWHERE, DECLINED_ELSEWHERE }
 
 data class CallDismissal(val id: CallId, val kind: DismissalKind)
 
@@ -64,6 +67,7 @@ data class IncomingCall(
     val callerName: String?,
     // Caller's avatar for a direct call, the group's or community's otherwise.
     val avatarUrl: String?,
+    val declineToken: String? = null,
     // The decoded push, kept while the process lives so a missed call can post the
     // ordinary message notification for the chat.
     val notification: Notification? = null,
@@ -78,6 +82,7 @@ data class IncomingCall(
         putString(EXTRA_TITLE, title)
         putString(EXTRA_CALLER_NAME, callerName)
         putString(EXTRA_AVATAR_URL, avatarUrl)
+        putString(EXTRA_DECLINE_TOKEN, declineToken)
     }
 
     companion object {
@@ -90,6 +95,7 @@ data class IncomingCall(
         private const val EXTRA_TITLE = "oc_call_title"
         private const val EXTRA_CALLER_NAME = "oc_call_caller_name"
         private const val EXTRA_AVATAR_URL = "oc_call_avatar_url"
+        private const val EXTRA_DECLINE_TOKEN = "oc_call_decline_token"
 
         fun of(n: Notification, facts: CallFacts): IncomingCall? {
             val chat = CallChat.of(n) ?: return null
@@ -107,12 +113,16 @@ data class IncomingCall(
                 callerName = if (direct) null else n.senderName,
                 avatarUrl = if (direct) avatarUrl(n.senderId.value, n.senderAvatarId)
                     else avatarUrl(chat.communityId ?: chat.chatId, n.groupAvatarId ?: n.communityAvatarId),
+                declineToken = facts.declineToken,
                 notification = n,
             )
         }
 
         private fun avatarUrl(entityId: String, avatarId: String?): String? =
-            avatarId?.let { "${String.format(BuildConfig.AVATAR_BASE_URL, entityId)}/avatar/$it" }
+            avatarId?.let {
+                val location = BlobLocation.of(entityId, "avatar")
+                "${String.format(BuildConfig.AVATAR_BASE_URL, location.canisterId)}/${location.path}/$it"
+            }
 
         fun fromBundle(b: Bundle?): IncomingCall? {
             b ?: return null
@@ -126,6 +136,7 @@ data class IncomingCall(
                 title = b.getString(EXTRA_TITLE) ?: "",
                 callerName = b.getString(EXTRA_CALLER_NAME),
                 avatarUrl = b.getString(EXTRA_AVATAR_URL),
+                declineToken = b.getString(EXTRA_DECLINE_TOKEN),
             )
         }
     }

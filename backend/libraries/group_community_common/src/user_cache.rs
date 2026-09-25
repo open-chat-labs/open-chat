@@ -39,6 +39,13 @@ impl UserCache {
         self.map.remove(&user_id);
     }
 
+    // Keeps whatever is already cached for the new id, since that is the more recent
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        if let Some(user) = self.map.remove(&old_user_id) {
+            self.map.entry(new_user_id).or_insert(user);
+        }
+    }
+
     pub fn get(&self, user_id: &UserId) -> Option<&CachedUser> {
         self.map.get(user_id)
     }

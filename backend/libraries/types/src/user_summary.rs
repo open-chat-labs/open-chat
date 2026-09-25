@@ -34,6 +34,11 @@ pub struct UserSummary {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<bool>", optional)]
     pub hide_online_status: bool,
+    // The ids the user was looked up by from before they were migrated to a MultiUser canister, so
+    // that clients can map each of them to `user_id`, the user's latest id
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
+    pub previous_user_ids: Vec<UserId>,
 }
 
 #[ts_export]
@@ -42,6 +47,11 @@ pub struct UserSummaryV2 {
     pub user_id: UserId,
     pub stable: Option<UserSummaryStable>,
     pub volatile: Option<UserSummaryVolatile>,
+    // The ids the user was looked up by from before they were migrated to a MultiUser canister, so
+    // that clients can map each of them to `user_id`, the user's latest id
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
+    pub previous_user_ids: Vec<UserId>,
 }
 
 #[ts_export]

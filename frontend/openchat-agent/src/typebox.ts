@@ -1493,6 +1493,7 @@ export type CallDismissalKind = Static<typeof CallDismissalKind>;
 export const CallDismissalKind = /* @__PURE__ */ Type.Union([
     Type.Literal("Ended"),
     Type.Literal("AnsweredElsewhere"),
+    Type.Literal("DeclinedElsewhere"),
 ]);
 
 export type TSBytes = Static<typeof TSBytes>;
@@ -2155,6 +2156,26 @@ export const UserIndexUpdateDiamondMembershipSubscriptionResponse = /* @__PURE__
     }),
 ]);
 
+export type UserIndexCreateMultiUserCanisterArgs = Static<
+    typeof UserIndexCreateMultiUserCanisterArgs
+>;
+export const UserIndexCreateMultiUserCanisterArgs = /* @__PURE__ */ Type.Object({
+    local_user_index_canister_id: TSPrincipal,
+});
+
+export type UserIndexCreateMultiUserCanisterResponse = Static<
+    typeof UserIndexCreateMultiUserCanisterResponse
+>;
+export const UserIndexCreateMultiUserCanisterResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: TSPrincipal,
+    }),
+    Type.Literal("LocalUserIndexNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type UserIndexSuspendUserResponse = Static<typeof UserIndexSuspendUserResponse>;
 export const UserIndexSuspendUserResponse = /* @__PURE__ */ Type.Union([
     Type.Literal("Success"),
@@ -2427,6 +2448,13 @@ export const UserIndexRemoveBotResponse = /* @__PURE__ */ Type.Union([
 export type UserIndexSetHideOnlineStatusArgs = Static<typeof UserIndexSetHideOnlineStatusArgs>;
 export const UserIndexSetHideOnlineStatusArgs = /* @__PURE__ */ Type.Object({
     hide_online_status: Type.Boolean(),
+});
+
+export type UserIndexSetMultiUserCanistersEnabledArgs = Static<
+    typeof UserIndexSetMultiUserCanistersEnabledArgs
+>;
+export const UserIndexSetMultiUserCanistersEnabledArgs = /* @__PURE__ */ Type.Object({
+    enabled: Type.Boolean(),
 });
 
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
@@ -5237,6 +5265,7 @@ export const UserSummary = /* @__PURE__ */ Type.Object({
     max_streak: Type.Number(),
     is_unique_person: Type.Optional(Type.Boolean()),
     hide_online_status: Type.Optional(Type.Boolean()),
+    previous_user_ids: Type.Optional(Type.Array(UserId)),
 });
 
 export type DirectMessageTipped = Static<typeof DirectMessageTipped>;
@@ -8002,6 +8031,7 @@ export const UserSummaryV2 = /* @__PURE__ */ Type.Object({
     user_id: UserId,
     stable: Type.Optional(UserSummaryStable),
     volatile: Type.Optional(UserSummaryVolatile),
+    previous_user_ids: Type.Optional(Type.Array(UserId)),
 });
 
 export type P2PSwapStatus = Static<typeof P2PSwapStatus>;

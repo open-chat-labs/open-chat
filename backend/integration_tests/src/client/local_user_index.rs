@@ -36,6 +36,7 @@ generate_msgpack_update_call!(register_user);
 generate_msgpack_update_call!(set_daily_puzzle_canister_id);
 generate_update_call!(submit_media_scan_verdicts);
 generate_msgpack_update_call!(uninstall_bot);
+generate_msgpack_update_call!(video_call_declined);
 
 pub mod happy_path {
     use crate::User;

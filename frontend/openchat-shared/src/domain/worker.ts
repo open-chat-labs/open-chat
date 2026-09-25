@@ -237,6 +237,7 @@ import type {
     SetMessageReminderResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
+    CreateMultiUserCanisterResponse,
     SubmitProofOfUniquePersonhoodResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
@@ -371,6 +372,8 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
+    | CreateMultiUserCanister
+    | SetMultiUserCanistersEnabled
     | MarkLocalGroupIndexFull
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
@@ -1766,6 +1769,16 @@ type SetUserUpgradeConcurrency = {
     kind: "setUserUpgradeConcurrency";
 };
 
+type CreateMultiUserCanister = {
+    localUserIndexCanisterId: string;
+    kind: "createMultiUserCanister";
+};
+
+type SetMultiUserCanistersEnabled = {
+    enabled: boolean;
+    kind: "setMultiUserCanistersEnabled";
+};
+
 type MarkLocalGroupIndexFull = {
     canisterId: string;
     full: boolean;
@@ -2711,6 +2724,10 @@ export type WorkerResult<T> = T extends Init
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
+    : T extends CreateMultiUserCanister
+    ? CreateMultiUserCanisterResponse
+    : T extends SetMultiUserCanistersEnabled
+    ? boolean
     : T extends MarkLocalGroupIndexFull
     ? boolean
     : T extends SetDiamondMembershipFees

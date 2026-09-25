@@ -28,6 +28,10 @@ pub(crate) fn handle_events(events: Vec<IdempotentEnvelope<CommunityCanisterEven
                 CommunityCanisterEvent::Achievement(achievement) => {
                     awarded_achievement |= state.data.user.award_achievement(achievement, now);
                 }
+                CommunityCanisterEvent::P2PSwapCreated(swap) => {
+                    let my_user_id = state.env.canister_id().into();
+                    state.data.user.p2p_swaps.add_created_in_chat(*swap, my_user_id);
+                }
             }
         }
     }

@@ -8,8 +8,11 @@ use types::{ChatId, MessageIndex, TimestampMillis, UserId};
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn join_group(args: Args) -> Response {
-    let user_details =
-        mutate_state(|state| state.get_calling_user_and_process_credentials(args.verified_credential_args.as_ref()));
+    let (user_details, previous_user_ids) = mutate_state(|state| {
+        let user_details = state.get_calling_user_and_process_credentials(args.verified_credential_args.as_ref());
+        let previous_user_ids = state.data.migrated_user_ids.previous_ids(user_details.user_id);
+        (user_details, previous_user_ids)
+    });
 
     let c2c_args = group_canister::c2c_join_group::Args {
         user_id: user_details.user_id,
@@ -22,6 +25,7 @@ async fn join_group(args: Args) -> Response {
         unique_person_proof: user_details.unique_person_proof.clone(),
         total_chit_earned: user_details.chit.total_earned,
         composite_gate_index: args.composite_gate_index,
+        previous_user_ids,
     };
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {

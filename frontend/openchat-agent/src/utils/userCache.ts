@@ -1,8 +1,8 @@
-import { deleteDB, type DBSchema } from "idb";
+import { deleteDB, type DBSchema, type IDBPDatabase } from "idb";
 import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 
-const CACHE_VERSION = 13;
+const CACHE_VERSION = 14;
 const DB_NAME = "openchat_users";
 
 export interface UserSchema extends DBSchema {
@@ -20,6 +20,19 @@ export interface UserSchema extends DBSchema {
         key: string;
         value: string;
     };
+
+    // The id a user had before being migrated to a MultiUser canister, mapped to the id they
+    // were migrated to
+    migratedUserIds: {
+        key: string;
+        value: string;
+    };
+}
+
+async function createMigratedUserIdsStore(db: IDBPDatabase<UserSchema>) {
+    if (!db.objectStoreNames.contains("migratedUserIds")) {
+        db.createObjectStore("migratedUserIds");
+    }
 }
 
 export class UserDb {
@@ -28,9 +41,14 @@ export class UserDb {
     constructor() {
         this.connectionManager = IndexedDbConnectionManager.create<UserSchema>(
             DB_NAME,
-            [{ name: "users" }, { name: "suspendedUsersSyncedUpTo" }, { name: "deletedUserIds" }],
+            [
+                { name: "users" },
+                { name: "suspendedUsersSyncedUpTo" },
+                { name: "deletedUserIds" },
+                { name: "migratedUserIds" },
+            ],
             CACHE_VERSION,
-        );
+        ).withMigration(13, createMigratedUserIdsStore);
     }
 
     async getCachedUsers(userIds: string[]): Promise<UserSummary[]> {
@@ -45,6 +63,51 @@ export class UserDb {
             if (next !== undefined) users.push(next);
             return users;
         }, [] as UserSummary[]);
+    }
+
+    // Returns the latest id of each of `userIds` which is known to belong to a user who has since
+    // been migrated to a MultiUser canister, following them through any later migrations
+    async getLatestUserIds(userIds: string[]): Promise<Map<string, string>> {
+        const latest = new Map<string, string>();
+        if (userIds.length === 0) return latest;
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction("migratedUserIds", "readonly");
+        const store = tx.objectStore("migratedUserIds");
+        await Promise.all(
+            [...new Set(userIds)].map(async (userId) => {
+                const seen = new Set([userId]);
+                let next = await store.get(userId);
+                let current = userId;
+                while (next !== undefined && !seen.has(next)) {
+                    seen.add(next);
+                    current = next;
+                    next = await store.get(current);
+                }
+                if (current !== userId) {
+                    latest.set(userId, current);
+                }
+            }),
+        );
+        await tx.done;
+        return latest;
+    }
+
+    // Records each earlier id's latest id, and removes any users cached under an earlier id, since
+    // they're now cached under their latest id
+    async setMigratedUserIds(migrated: ReadonlyMap<string, string>): Promise<void> {
+        if (migrated.size === 0) return;
+        const db = await this.connectionManager.getDb();
+        const tx = db.transaction(["migratedUserIds", "users"], "readwrite", {
+            durability: "relaxed",
+        });
+        const migratedStore = tx.objectStore("migratedUserIds");
+        const userStore = tx.objectStore("users");
+        const writes = [...migrated].flatMap(([previous, latest]) => [
+            migratedStore.put(latest, previous),
+            userStore.delete(previous),
+        ]);
+        await Promise.all(writes);
+        await tx.done;
     }
 
     async getAllUsers(): Promise<UserSummary[]> {

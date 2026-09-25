@@ -236,6 +236,9 @@ impl RuntimeState {
             return;
         }
         let sender = self.user_id(sender_index);
+        // Sent to the recipient's latest id if they are known to have been migrated since having
+        // `recipient`
+        let recipient = self.data.migrated_user_ids.latest(recipient);
         self.data.user_canister_events_queue.push(
             recipient.canister_id(),
             IdempotentEnvelope {

@@ -66,6 +66,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         },
         true,
         Vec::new(),
+        &state.data.migrated_user_ids,
         now,
     )?;
 

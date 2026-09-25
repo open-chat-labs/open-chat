@@ -207,6 +207,9 @@ export type UsersResponse = {
     users: UserSummary[];
     deletedUserIds: Set<string>;
     currentUser?: CurrentUserSummary;
+    // Each requested id which belongs to a user who has since been migrated to a MultiUser
+    // canister, mapped to that user's latest id, which is the id they're returned under
+    migratedUserIds?: Map<string, string>;
 };
 
 export type UserSummaryStable = DataContent & {
@@ -230,6 +233,9 @@ export type UserSummaryUpdate = {
     stable?: UserSummaryStable;
     userId: string;
     volatile?: UserSummaryVolatile;
+    // The ids the user was requested by from before they were migrated to a MultiUser canister.
+    // `userId` is their latest id.
+    previousUserIds?: string[];
 };
 
 export type UsersApiResponse = {
@@ -456,6 +462,11 @@ export type PayForDiamondMembershipResponse =
     | Offline;
 
 export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
+
+export type CreateMultiUserCanisterResponse =
+    | { kind: "success"; canisterId: string }
+    | { kind: "local_user_index_not_found" }
+    | InternalError;
 
 export type SetMessageReminderResponse = Success | OCError | Offline;
 

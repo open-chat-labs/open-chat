@@ -2,6 +2,7 @@
     import "@styles/global.scss";
 
     import "@i18n/i18n";
+    import { invoke } from "@tauri-apps/api/core";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
     import {
@@ -20,7 +21,12 @@
         expectPushNotifications,
         expectWindowInsetChange,
     } from "@utils/native/notification_channels";
-    import { expectCallActions, notifyCallJoined, runCallAction } from "@utils/native/call_bridge";
+    import {
+        expectCallActions,
+        notifyCallJoined,
+        runCallAction,
+        setCallConfig,
+    } from "@utils/native/call_bridge";
     import { expectShareTarget, handleShareTarget } from "@utils/native/share_target";
     import { portalState } from "component-lib";
     import {
@@ -145,6 +151,14 @@
             subscribe("askToSpeak", askToSpeak),
             subscribe("userLoggedIn", onUserLoggedIn),
             subscribe("sessionExpired", () => client.logout()),
+            // The current user has been migrated to a new user id, so start again under it
+            subscribe("currentUserIdChanged", () => {
+                if (client.isNativeApp()) {
+                    invoke("plugin:oc|restart_app");
+                } else {
+                    window.location.reload();
+                }
+            }),
         ];
         // Registered rather than called at each logout site: an expired session logs out from
         // the worker agent now, not just from the handler below, and the previous user's
@@ -265,6 +279,12 @@
             // A call answered from the native ring, or a call log redial. Cold-start
             // actions are parked by the shell and consumed by Router.svelte.
             expectCallActions(runCallAction),
+
+            // The shell reports a decline from the native ring to the bridge itself. A build
+            // without the URL leaves whatever the shell already holds.
+            import.meta.env.OC_VIDEO_BRIDGE_URL
+                ? setCallConfig(import.meta.env.OC_VIDEO_BRIDGE_URL)
+                : Promise.resolve(),
         ]);
         listenersRegistered.then((results) => {
             results

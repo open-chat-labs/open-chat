@@ -22,7 +22,7 @@ pub trait Members {
     fn can_member_lapse(&self, user_id: &UserId) -> bool;
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u8)]
 pub enum MemberUpdate {
     Added = 1,

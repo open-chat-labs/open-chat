@@ -1,6 +1,6 @@
 use candid::Principal;
 use canister_client::generate_c2c_call;
-use types::{C2CError, CanisterId, UserDetails};
+use types::{C2CError, CanisterId, UserDetails, UserId};
 use user_index_canister::*;
 
 // Queries
@@ -29,4 +29,13 @@ pub async fn lookup_user(
     let response = crate::c2c_lookup_user(user_index_canister_id, &args).await?;
 
     Ok(if let c2c_lookup_user::Response::Success(user) = response { Some(user) } else { None })
+}
+
+// The user's latest id, if they have been migrated to a MultiUser canister since having `user_id`
+pub async fn lookup_migrated_user_id(user_id: UserId, user_index_canister_id: CanisterId) -> Result<Option<UserId>, C2CError> {
+    let args = migrated_user_ids::Args { user_ids: vec![user_id] };
+
+    let migrated_user_ids::Response::Success(mut user_ids) = crate::migrated_user_ids(user_index_canister_id, &args).await?;
+
+    Ok(user_ids.remove(&user_id))
 }

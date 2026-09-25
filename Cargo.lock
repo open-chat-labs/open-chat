@@ -4675,6 +4675,7 @@ dependencies = [
  "serde_repr",
  "tracing",
  "types",
+ "user_canister",
  "utils",
 ]
 
@@ -13084,6 +13085,7 @@ dependencies = [
  "constants",
  "human_readable",
  "ic-ledger-types",
+ "msgpack",
  "oc_error_codes",
  "serde",
  "serde_bytes",

@@ -167,6 +167,19 @@ describe("native call bridge", () => {
         });
     });
 
+    test("invariant 16 (#9534) the call config is sent only from the Android shell and a shell without it is a no-op", async () => {
+        tauri.invoke.mockRejectedValue(new Error("plugin:oc|set_call_config not found"));
+        const { setCallConfig } = await import("./call_bridge");
+        await expect(setCallConfig("https://bridge")).resolves.toBeUndefined();
+        expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|set_call_config", {
+            videoBridgeUrl: "https://bridge",
+        });
+        tauri.invoke.mockClear();
+        shared.isAndroidTauriApp.mockReturnValueOnce(false);
+        await setCallConfig("https://bridge");
+        expect(tauri.invoke).not.toHaveBeenCalled();
+    });
+
     test("invariant 16 the joined notice is only sent from the Android shell", async () => {
         shared.isAndroidTauriApp.mockReturnValueOnce(false);
         const { notifyCallJoined } = await import("./call_bridge");
