@@ -173,7 +173,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             );
         }
         LocalUserIndexEvent::MultiUserCanisterCreated(canister_id) => {
-            // Recorded here rather than in the `create_multi_user_canister` proposal handler so
+            // Recorded here rather than in the `create_multi_user_canister` handler so
             // that the mapping survives a dropped reply - the local index keeps retrying this
             // event until it is acked, and re-inserting is a no-op
             if state.data.multi_user_canisters.insert(canister_id, caller).is_none() {

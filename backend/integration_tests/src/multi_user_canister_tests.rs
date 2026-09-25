@@ -121,6 +121,45 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
 }
 
 #[test]
+fn only_platform_operators_can_create_multi_user_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let user = client::register_user(env, canister_ids);
+    let args = msgpack::serialize_then_unwrap(user_index_canister::create_multi_user_canister::Args {
+        local_user_index_canister_id: local_user_index,
+    });
+
+    let multi_user_canister_count_before = multi_user_canister_count(env, local_user_index);
+
+    // Neither an ordinary user nor the governance principal can create one
+    for sender in [user.principal, *controller] {
+        let response = env.update_call(
+            canister_ids.user_index,
+            sender,
+            "create_multi_user_canister_msgpack",
+            args.clone(),
+        );
+        assert!(response.is_err(), "{sender} was allowed to create a MultiUser canister");
+    }
+    assert_eq!(
+        multi_user_canister_count(env, local_user_index),
+        multi_user_canister_count_before
+    );
+
+    client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    assert_eq!(
+        multi_user_canister_count(env, local_user_index),
+        multi_user_canister_count_before + 1
+    );
+}
+
+#[test]
 fn create_then_upgrade_multi_user_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
