@@ -1,11 +1,11 @@
-use crate::guards::caller_is_governance_principal;
+use crate::guards::caller_is_platform_operator;
 use crate::read_state;
-use canister_api_macros::proposal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use tracing::{error, info};
 use user_index_canister::create_multi_user_canister::{Response::*, *};
 
-#[proposal(guard = "caller_is_governance_principal")]
+#[update(guard = "caller_is_platform_operator", msgpack = true)]
 #[trace]
 async fn create_multi_user_canister(args: Args) -> Response {
     let local_user_index_canister_id = args.local_user_index_canister_id;

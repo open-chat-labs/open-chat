@@ -14,7 +14,6 @@ generate_candid_query_call!(user);
 
 // Updates
 generate_candid_update_call!(add_local_user_index_canister);
-generate_candid_update_call!(create_multi_user_canister);
 generate_candid_update_call!(add_platform_moderator);
 generate_candid_update_call!(add_platform_operator);
 generate_candid_update_call!(remove_sms_messages);
