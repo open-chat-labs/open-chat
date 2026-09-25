@@ -5867,23 +5867,23 @@ fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
     let a_index = a.index();
     for (path, document) in [("avatar", &avatar), ("profile_background", &profile_background)] {
         // The document itself, under its id
-        let response = get(env, format!("/{a_index}/{path}/{}", document.id));
+        let response = get(env, format!("/user/{a_index}/{path}/{}", document.id));
         assert_eq!(response.status_code, 200);
         assert_eq!(response.body, document.data);
 
         // Without an id, or with an old one, the request is redirected to the latest, keeping the
         // user's index
-        let expected_location = Some(format!("/{a_index}/{path}/{}", document.id));
-        let response = get(env, format!("/{a_index}/{path}"));
+        let expected_location = Some(format!("/user/{a_index}/{path}/{}", document.id));
+        let response = get(env, format!("/user/{a_index}/{path}"));
         assert_eq!(response.status_code, 302);
         assert_eq!(location(&response), expected_location);
-        let response = get(env, format!("/{a_index}/{path}/{}", document.id + 1));
+        let response = get(env, format!("/user/{a_index}/{path}/{}", document.id + 1));
         assert_eq!(response.status_code, 301);
         assert_eq!(location(&response), expected_location);
 
         // B has none, a user who isn't in the canister has none, and there is nothing at the root
-        assert_eq!(get(env, format!("/{}/{path}", b.index())).status_code, 404);
-        assert_eq!(get(env, format!("/{}/{path}", b.index() + 1)).status_code, 404);
+        assert_eq!(get(env, format!("/user/{}/{path}", b.index())).status_code, 404);
+        assert_eq!(get(env, format!("/user/{}/{path}", b.index() + 1)).status_code, 404);
         assert_eq!(get(env, format!("/{path}/{}", document.id)).status_code, 404);
     }
 
@@ -5891,17 +5891,20 @@ fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
     // index redirects to B's
     let b_avatar = document(150);
     set_avatar(env, b_principal, canister_id, Some(b_avatar.clone()));
-    let response = get(env, format!("/{}/avatar/{}", b.index(), b_avatar.id));
+    let response = get(env, format!("/user/{}/avatar/{}", b.index(), b_avatar.id));
     assert_eq!(response.status_code, 200);
     assert_eq!(response.body, b_avatar.data);
-    let response = get(env, format!("/{a_index}/avatar/{}", avatar.id));
+    let response = get(env, format!("/user/{a_index}/avatar/{}", avatar.id));
     assert_eq!(response.status_code, 200);
     assert_eq!(response.body, avatar.data);
-    let response = get(env, format!("/{}/avatar/{}", b.index(), avatar.id));
+    let response = get(env, format!("/user/{}/avatar/{}", b.index(), avatar.id));
     assert_eq!(response.status_code, 301);
-    assert_eq!(location(&response), Some(format!("/{}/avatar/{}", b.index(), b_avatar.id)));
+    assert_eq!(
+        location(&response),
+        Some(format!("/user/{}/avatar/{}", b.index(), b_avatar.id))
+    );
 
     // Once removed, a request for the old avatar is told it's gone
     set_avatar(env, a_principal, canister_id, None);
-    assert_eq!(get(env, format!("/{a_index}/avatar/{}", avatar.id)).status_code, 410);
+    assert_eq!(get(env, format!("/user/{a_index}/avatar/{}", avatar.id)).status_code, 410);
 }

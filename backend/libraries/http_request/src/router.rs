@@ -16,8 +16,8 @@ pub enum Route {
     Metrics,
     Other(String, HashMap<String, String>),
     Webhook(WebhookRoute),
-    // A route for one of the users held by a MultiUser canister, which is prefixed by the user's
-    // index within it
+    // A route for one of the users held by a MultiUser canister, under `/user/{index}`, where
+    // `index` is the user's index within it
     User(u16, UserRoute),
 }
 
@@ -87,6 +87,13 @@ pub fn extract_route(path: &str) -> Route {
             let blob_id = parts.pop_front().and_then(|p| u128::from_str(p).ok());
             return Route::ProfileBackground(blob_id);
         }
+        "user" => {
+            if let Some(user_index) = parts.pop_front().and_then(|p| u16::from_str(p).ok())
+                && let Some(route) = parse_user_route(&mut parts)
+            {
+                return Route::User(user_index, route);
+            }
+        }
         "trace" => {
             let since = parts.pop_front().and_then(|p| u64::from_str(p).ok());
             return Route::Traces(since);
@@ -96,13 +103,7 @@ pub fn extract_route(path: &str) -> Route {
                 return route;
             }
         }
-        first => {
-            if let Ok(user_index) = u16::from_str(first)
-                && let Some(route) = parse_user_route(&mut parts)
-            {
-                return Route::User(user_index, route);
-            }
-        }
+        _ => (),
     }
 
     Route::Other(path.to_string(), parse_query(qs))
@@ -212,11 +213,11 @@ mod tests {
     fn user_avatar() {
         const BLOB_ID: u128 = 367253521351235123;
         assert!(matches!(
-            extract_route(&format!("/5/avatar/{BLOB_ID}")),
+            extract_route(&format!("/user/5/avatar/{BLOB_ID}")),
             Route::User(5, UserRoute::Avatar(Some(BLOB_ID)))
         ));
         assert!(matches!(
-            extract_route("/32767/avatar"),
+            extract_route("/user/32767/avatar"),
             Route::User(32767, UserRoute::Avatar(None))
         ));
     }
@@ -225,20 +226,22 @@ mod tests {
     fn user_profile_background() {
         const BLOB_ID: u128 = 367253521351235123;
         assert!(matches!(
-            extract_route(&format!("/5/profile_background/{BLOB_ID}")),
+            extract_route(&format!("/user/5/profile_background/{BLOB_ID}")),
             Route::User(5, UserRoute::ProfileBackground(Some(BLOB_ID)))
         ));
         assert!(matches!(
-            extract_route("/5/profile_background"),
+            extract_route("/user/5/profile_background"),
             Route::User(5, UserRoute::ProfileBackground(None))
         ));
     }
 
     #[test]
     fn user_route_needs_a_known_sub_route() {
-        assert!(matches!(extract_route("/5"), Route::Other(_, _)));
-        assert!(matches!(extract_route("/5/banner/1"), Route::Other(_, _)));
-        assert!(matches!(extract_route("/65536/avatar"), Route::Other(_, _)));
+        assert!(matches!(extract_route("/user/5"), Route::Other(_, _)));
+        assert!(matches!(extract_route("/user/5/banner/1"), Route::Other(_, _)));
+        assert!(matches!(extract_route("/user/65536/avatar"), Route::Other(_, _)));
+        assert!(matches!(extract_route("/user/avatar"), Route::Other(_, _)));
+        assert!(matches!(extract_route("/5/avatar"), Route::Other(_, _)));
     }
 
     #[test]

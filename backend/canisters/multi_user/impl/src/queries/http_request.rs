@@ -7,7 +7,7 @@ use types::{HttpRequest, HttpResponse, TimestampMillis};
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     // Serves the document of the user at `user_index`, as the User canister serves its own user's
-    // but under the user's index, so that a redirect to the document's latest id keeps the index
+    // but under `/user/{user_index}`, so that a redirect to the document's latest id keeps it
     fn get_user_document_impl(user_index: u16, route: UserRoute, state: &RuntimeState) -> HttpResponse {
         state
             .data
@@ -16,12 +16,12 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 UserRoute::Avatar(id) => get_document(
                     id,
                     user.avatar.get(ProfileDocumentType::Avatar).as_ref(),
-                    &format!("{user_index}/avatar"),
+                    &format!("user/{user_index}/avatar"),
                 ),
                 UserRoute::ProfileBackground(id) => get_document(
                     id,
                     user.profile_background.get(ProfileDocumentType::ProfileBackground).as_ref(),
-                    &format!("{user_index}/profile_background"),
+                    &format!("user/{user_index}/profile_background"),
                 ),
             })
             .unwrap_or_else(HttpResponse::not_found)
