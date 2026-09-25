@@ -11,10 +11,10 @@ use oc_error_codes::OCErrorCode;
 use rand::{Rng, RngExt};
 use tracing::error;
 use types::{
-    BuildVersion, C2CError, CanisterId, CanisterWasm, ChannelId, CommunityCreatedEventPayload, CommunityId, Cycles, OCResult,
-    UserId, UserType,
+    BuildVersion, C2CError, CanisterId, ChannelId, CommunityCreatedEventPayload, CommunityId, Cycles, OCResult, UserId,
+    UserType,
 };
-use utils::canister;
+use utils::canister::{self, VersionedWasmToInstall};
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
@@ -78,7 +78,7 @@ struct PrepareOk {
     canister_id: Option<CanisterId>,
     channels: Vec<(ChannelId, String)>,
     local_user_index_canister_id: CanisterId,
-    canister_wasm: CanisterWasm,
+    canister_wasm: VersionedWasmToInstall,
     cycles_to_use: Cycles,
     init_canister_args: InitCommunityCanisterArgs,
 }
@@ -100,7 +100,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         .iter()
         .map(|name| (ChannelId::from(state.env.rng().next_u32()), name.clone()))
         .collect();
-    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.clone();
+    let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::Community);
     let local_user_index_canister_id = state.env.canister_id();
     let init_canister_args = community_canister::init::Args {
         is_public: args.is_public,

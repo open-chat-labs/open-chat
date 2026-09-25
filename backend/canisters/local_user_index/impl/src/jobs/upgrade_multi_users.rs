@@ -1,4 +1,4 @@
-use crate::jobs::clear_chunk_store_if_no_pending_upgrades;
+use crate::jobs::refresh_chunk_store;
 use crate::{MULTI_USER_UPGRADE_CONCURRENCY, RuntimeState, mutate_state};
 use constants::min_cycles_balance;
 use ic_cdk_management_canister::CanisterInstallMode;
@@ -7,7 +7,7 @@ use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
 use tracing::trace;
 use types::{BuildVersion, CanisterId, Cycles, CyclesTopUp};
-use utils::canister::{CanisterToInstall, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall, install};
+use utils::canister::{CanisterToInstall, FailedUpgrade, install};
 
 thread_local! {
     static TIMER: RefCell<Option<PerRoundTimer>> = RefCell::default();
@@ -35,7 +35,7 @@ fn run() {
         TIMER.set(None);
         trace!("'upgrade_multi_users' job stopped");
 
-        clear_chunk_store_if_no_pending_upgrades();
+        refresh_chunk_store::refresh_if_no_pending_upgrades();
     }
 }
 
@@ -84,15 +84,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
         canister_id,
         current_wasm_version,
         new_wasm_version,
-        new_wasm: if canister_wasm.chunks.is_empty() {
-            WasmToInstall::Default(canister_wasm.wasm.module.clone())
-        } else {
-            WasmToInstall::Chunked(ChunkedWasmToInstall {
-                chunks: canister_wasm.chunks.clone(),
-                wasm_hash: canister_wasm.wasm_hash,
-                store_canister_id: state.env.canister_id(),
-            })
-        },
+        new_wasm: state.child_canister_wasm_to_install(ChildCanisterType::MultiUser).wasm,
         deposit_cycles_if_needed,
         args: msgpack::serialize_then_unwrap(&multi_user_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,

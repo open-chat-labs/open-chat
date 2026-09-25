@@ -22,6 +22,12 @@ pub enum WasmToInstall {
     Chunked(ChunkedWasmToInstall),
 }
 
+// A wasm to install along with its version
+pub struct VersionedWasmToInstall {
+    pub version: BuildVersion,
+    pub wasm: WasmToInstall,
+}
+
 pub struct ChunkedWasmToInstall {
     pub chunks: Vec<Hash>,
     pub wasm_hash: Hash,

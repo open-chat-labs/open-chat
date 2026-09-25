@@ -1,14 +1,14 @@
-use crate::canister::{convert_cdk_error, install_basic_raw};
+use crate::canister::{CanisterToInstall, VersionedWasmToInstall, convert_cdk_error, install, install_basic_raw};
 use candid::Principal;
-use ic_cdk_management_canister::{self as management_canister, CanisterSettings, CreateCanisterArgs};
+use ic_cdk_management_canister::{self as management_canister, CanisterInstallMode, CanisterSettings, CreateCanisterArgs};
 use serde::Serialize;
 use tracing::error;
-use types::{C2CError, CanisterId, CanisterWasm, Cycles};
+use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, Cycles};
 
 pub async fn create_and_install(
     existing_canister_id: Option<CanisterId>,
     additional_controller: Option<Principal>,
-    wasm: CanisterWasm,
+    wasm: VersionedWasmToInstall,
     init_args: Vec<u8>,
     cycles_to_use: Cycles,
     on_canister_created: fn(Cycles) -> (),
@@ -26,7 +26,18 @@ pub async fn create_and_install(
         },
     };
 
-    match install_basic_raw(canister_id, wasm, init_args).await {
+    match install(CanisterToInstall {
+        canister_id,
+        current_wasm_version: BuildVersion::default(),
+        new_wasm_version: wasm.version,
+        new_wasm: wasm.wasm,
+        deposit_cycles_if_needed: true,
+        args: init_args,
+        mode: CanisterInstallMode::Reinstall,
+        stop_start_canister: false,
+    })
+    .await
+    {
         Ok(_) => Ok(canister_id),
         Err(error) => Err((Some(canister_id), error)),
     }
