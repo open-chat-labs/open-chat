@@ -13084,6 +13084,7 @@ dependencies = [
  "constants",
  "human_readable",
  "ic-ledger-types",
+ "msgpack",
  "oc_error_codes",
  "serde",
  "serde_bytes",
