@@ -157,6 +157,7 @@ import type {
     SetMessageReminderResponse,
     SetPinNumberResponse,
     SetUserUpgradeConcurrencyResponse,
+    CreateMultiUserCanisterResponse,
     SetUsernameResponse,
     SetVideoCallPresenceResponse,
     SiwePrepareLoginResponse,
@@ -3804,6 +3805,12 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("offline");
 
         return this._userIndexClient.setUserUpgradeConcurrency(value);
+    }
+
+    createMultiUserCanister(
+        localUserIndexCanisterId: string,
+    ): Promise<CreateMultiUserCanisterResponse> {
+        return this._userIndexClient.createMultiUserCanister(localUserIndexCanisterId);
     }
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
