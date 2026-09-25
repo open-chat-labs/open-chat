@@ -61,6 +61,7 @@ generate_msgpack_update_call!(publish_bot);
 generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
+    use crate::CanisterIds;
     use crate::utils::tick_many;
     use candid::Principal;
     use constants::{CHAT_LEDGER_CANISTER_ID, CHUNK_STORE_CHUNK_SIZE, ICP_LEDGER_CANISTER_ID};
@@ -269,16 +270,21 @@ pub mod happy_path {
         ));
     }
 
+    // Registers a new user and makes them a platform operator, since only platform operators
+    // can call `create_multi_user_canister`
     pub fn create_multi_user_canister(
         env: &mut PocketIc,
-        sender: Principal,
-        user_index_canister_id: CanisterId,
+        controller: Principal,
+        canister_ids: &CanisterIds,
         local_user_index_canister_id: CanisterId,
     ) -> CanisterId {
+        let operator = crate::client::register_user(env, canister_ids);
+        add_platform_operator(env, controller, canister_ids.user_index, operator.user_id);
+
         let response = super::create_multi_user_canister(
             env,
-            sender,
-            user_index_canister_id,
+            operator.principal,
+            canister_ids.user_index,
             &user_index_canister::create_multi_user_canister::Args {
                 local_user_index_canister_id,
             },

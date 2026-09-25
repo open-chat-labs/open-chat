@@ -228,6 +228,16 @@ type RemoveBotArgs = record {
     bot_id : UserId;
 };
 
+type CreateMultiUserCanisterArgs = record {
+    local_user_index_canister_id : CanisterId;
+};
+
+type CreateMultiUserCanisterResponse = variant {
+    Success : CanisterId;
+    LocalUserIndexNotFound;
+    InternalError : text;
+};
+
 type RefundDeletedUserCyclesResponse = variant {
     Success : record {
         canisters : nat32;
@@ -393,6 +403,7 @@ service : {
     register_external_achievement : (RegisterExternalAchievementArgs) -> (RegisterExternalAchievementResponse);
 
     // Only callable by platform operators
+    create_multi_user_canister : (CreateMultiUserCanisterArgs) -> (CreateMultiUserCanisterResponse);
     refund_deleted_user_cycles : (EmptyArgs) -> (RefundDeletedUserCyclesResponse);
 
     // Only callable by whitelisted canisters
