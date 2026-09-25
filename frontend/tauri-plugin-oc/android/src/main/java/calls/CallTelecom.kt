@@ -370,14 +370,15 @@ class CallConnection(private val context: Context, override val call: IncomingCa
                 CallRoutePolicy.Route.OTHER -> return
             }
             try {
+                Log.i(LOG_TAG, "Asking Telecom for route $route")
                 setAudioRoute(code)
             } catch (e: Exception) {
                 Log.w(LOG_TAG, "setAudioRoute refused", e)
             }
         }
         override fun isActive(): Boolean = state == STATE_ACTIVE
-        override fun reflect(speaker: Boolean) {
-            CallSession.routeReflected(context, call.id, speaker)
+        override fun reflect(route: CallRoutePolicy.Route) {
+            CallSession.routeReflected(context, call.id, route)
         }
     })
 

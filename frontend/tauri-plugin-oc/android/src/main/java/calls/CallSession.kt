@@ -34,33 +34,37 @@ object CallSession {
         if (!CallTelecom.activate(call.id)) {
             CallTelecom.placeOutgoing(context, call, video)
         }
-        // Voice to the earpiece, video to the speaker, unless a headset is on.
-        speaker = video
-        CallTelecom.setSpeaker(call.id, speaker, isDefault = true)
-        CallProximity.update(context, active = true, video = video, speaker = speaker)
+        // Voice to the earpiece, video to the speaker, unless a headset is on. The lock
+        // follows the route the platform reports, not the request.
+        route = CallRoutePolicy.Route.OTHER
+        CallTelecom.setSpeaker(call.id, video, isDefault = true)
+        CallProximity.update(context, active = true, video = video, route = route)
         CallPip.update(active = true, video = video)
         CallForegroundService.start(context, call, now, sharing = false)
     }
 
     // The route the call is on, as the platform last reported it for an active call.
     @Volatile
-    private var speaker = false
+    private var route = CallRoutePolicy.Route.OTHER
 
     // A tap on the in-app speaker control.
     fun setSpeaker(context: Context, speaker: Boolean) {
-        val current = state.active ?: return
+        val current = state.active
+        Log.i(LOG_TAG, "Speaker ${if (speaker) "on" else "off"} requested; active=${current?.id?.messageId}")
+        current ?: return
         CallTelecom.setSpeaker(current.id, speaker, isDefault = false)
     }
 
     // The platform put the call on this route.
-    fun routeReflected(context: Context, id: CallId, speaker: Boolean) {
+    fun routeReflected(context: Context, id: CallId, route: CallRoutePolicy.Route) {
         val current = state.active ?: return
         if (current.id != id) return
-        this.speaker = speaker
-        CallProximity.update(context, active = true, video = current.video, speaker = speaker)
+        Log.i(LOG_TAG, "Route is now $route")
+        this.route = route
+        CallProximity.update(context, active = true, video = current.video, route = route)
         OCPluginCompanion.triggerRef(
             "call-control",
-            JSObject().put("kind", "route").put("messageId", id.messageId).put("speaker", speaker),
+            JSObject().put("kind", "route").put("messageId", id.messageId).put("speaker", route == CallRoutePolicy.Route.SPEAKER),
         )
     }
 
@@ -78,7 +82,7 @@ object CallSession {
         when (val ended = state.ended(id, System.currentTimeMillis())) {
             is CallSessionState.Ended.StopAfterGrace -> {
                 CallTelecom.end(id, CallRegistry.End.HUNG_UP)
-                CallProximity.update(context, active = false, video = false, speaker = false)
+                CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
                 CallPip.update(active = false, video = false)
                 CallRingback.stop()
                 armStopTimer(context)
@@ -102,7 +106,7 @@ object CallSession {
     fun endAll(context: Context) {
         state.endAll(System.currentTimeMillis())
         cancelStopTimer()
-        CallProximity.update(context, active = false, video = false, speaker = false)
+        CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
         CallPip.update(active = false, video = false)
         CallRingback.stop()
         CallTelecom.endAll(CallRegistry.End.HUNG_UP)

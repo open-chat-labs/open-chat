@@ -12,8 +12,8 @@ object CallProximity {
     private var lock: PowerManager.WakeLock? = null
 
     @Synchronized
-    fun update(context: Context, active: Boolean, video: Boolean, speaker: Boolean) {
-        val wanted = ProximityRule.holdWakeLock(active, video, speaker)
+    fun update(context: Context, active: Boolean, video: Boolean, route: CallRoutePolicy.Route) {
+        val wanted = ProximityRule.holdWakeLock(active, video, route)
         val current = lock
         if (wanted && current == null) {
             try {

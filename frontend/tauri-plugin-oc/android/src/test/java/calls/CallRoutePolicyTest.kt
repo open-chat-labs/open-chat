@@ -13,11 +13,11 @@ class CallRoutePolicyTest {
         var state: RouteState? = null
         var active = false
         val requests = mutableListOf<Route>()
-        val reflected = mutableListOf<Boolean>()
+        val reflected = mutableListOf<Route>()
         override fun routeState() = state
         override fun requestRoute(route: Route) { requests.add(route) }
         override fun isActive() = active
-        override fun reflect(speaker: Boolean) { reflected.add(speaker) }
+        override fun reflect(route: Route) { reflected.add(route) }
     }
 
     @Test
@@ -84,7 +84,7 @@ class CallRoutePolicyTest {
         }
         assertEquals(1 + CallRoutePolicy.MAX_ROUTE_REASSERTS, port.requests.size)
         // once the budget is spent the platform's route is reflected, not fought
-        assertEquals(listOf(false, false, false), port.reflected)
+        assertEquals(listOf(Route.EARPIECE, Route.EARPIECE, Route.EARPIECE), port.reflected)
         val inactive = FakePort()
         CallRoutePolicy(inactive).onRouteStateChanged(RouteState(Route.SPEAKER, btDevices = false))
         assertTrue(inactive.reflected.isEmpty())
@@ -100,10 +100,13 @@ class CallRoutePolicyTest {
     }
 
     @Test
-    fun `invariant 6 the proximity lock is held only for an active voice call off the speaker`() {
-        assertTrue(ProximityRule.holdWakeLock(active = true, video = false, speaker = false))
-        assertFalse(ProximityRule.holdWakeLock(active = true, video = false, speaker = true))
-        assertFalse(ProximityRule.holdWakeLock(active = true, video = true, speaker = false))
-        assertFalse(ProximityRule.holdWakeLock(active = false, video = false, speaker = false))
+    fun `invariant 6 the proximity lock is held only for an active voice call on the earpiece`() {
+        assertTrue(ProximityRule.holdWakeLock(active = true, video = false, route = Route.EARPIECE))
+        assertFalse(ProximityRule.holdWakeLock(active = true, video = false, route = Route.SPEAKER))
+        // a headset is not the ear: the screen stays on (found on the device)
+        assertFalse(ProximityRule.holdWakeLock(active = true, video = false, route = Route.BLUETOOTH))
+        assertFalse(ProximityRule.holdWakeLock(active = true, video = false, route = Route.OTHER))
+        assertFalse(ProximityRule.holdWakeLock(active = true, video = true, route = Route.EARPIECE))
+        assertFalse(ProximityRule.holdWakeLock(active = false, video = false, route = Route.EARPIECE))
     }
 }

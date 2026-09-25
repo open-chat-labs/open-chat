@@ -79,7 +79,7 @@ class TransactionalCall(
         }
         override fun requestRoute(route: CallRoutePolicy.Route) = requestEndpoint(route)
         override fun isActive(): Boolean = active
-        override fun reflect(speaker: Boolean) = CallSession.routeReflected(context, call.id, speaker)
+        override fun reflect(route: CallRoutePolicy.Route) = CallSession.routeReflected(context, call.id, route)
     })
 
     // Report the call. Throws what addCall throws; the caller falls back to the connection service.
@@ -208,7 +208,11 @@ class TransactionalCall(
         // or when the platform next reports the other basic route.
         val target = endpoint?.takeIf { it.endpointType == wanted }
             ?: endpoints.firstOrNull { it.endpointType == wanted }
-            ?: return
+        if (target == null) {
+            Log.w(LOG_TAG, "No $route endpoint among ${endpoints.map { it.endpointType }}")
+            return
+        }
+        Log.i(LOG_TAG, "Asking Telecom for endpoint ${target.endpointName} ($route)")
         try {
             control.requestCallEndpointChange(
                 target,

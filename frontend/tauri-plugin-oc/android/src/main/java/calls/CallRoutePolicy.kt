@@ -16,8 +16,9 @@ class CallRoutePolicy(private val port: Port) {
         fun routeState(): RouteState?
         fun requestRoute(route: Route)
         fun isActive(): Boolean
-        // Tell the in-app speaker control which route the call is on.
-        fun reflect(speaker: Boolean)
+        // Tell the session which route the call is on: the in-app speaker control and the
+        // proximity lock follow it.
+        fun reflect(route: Route)
     }
 
     // The route the app last asked for (true = speaker). The platform ignores a route until
@@ -106,7 +107,7 @@ class CallRoutePolicy(private val port: Port) {
         }
         // Pre-active states are baseline noise; reflect only what an active call routes.
         if (!port.isActive()) return
-        port.reflect(speakerNow)
+        port.reflect(state.route)
     }
 
     companion object {
@@ -114,8 +115,9 @@ class CallRoutePolicy(private val port: Port) {
     }
 }
 
-// The proximity sensor darkens the screen only for a voice call held to the ear (#9559
-// invariant 6). Pure.
+// The proximity sensor darkens the screen only for a voice call held to the ear, which is
+// the earpiece route and no other (#9559 invariant 6). Pure.
 object ProximityRule {
-    fun holdWakeLock(active: Boolean, video: Boolean, speaker: Boolean): Boolean = active && !video && !speaker
+    fun holdWakeLock(active: Boolean, video: Boolean, route: CallRoutePolicy.Route): Boolean =
+        active && !video && route == CallRoutePolicy.Route.EARPIECE
 }
