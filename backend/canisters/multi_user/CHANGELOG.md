@@ -86,4 +86,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix bug where disappearing message TTL could skip being set in new direct chats ([#9584](https://github.com/open-chat-labs/open-chat/pull/9584))
-- Fix bug where a disappearing message TTL changed twice before the other user received the changes could leave their copy of the direct chat with the earlier TTL ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Fix bug where a disappearing message TTL changed twice before the other user received the changes could leave their copy of the direct chat with the earlier TTL ([#9585](https://github.com/open-chat-labs/open-chat/pull/9585))
