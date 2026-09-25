@@ -233,6 +233,7 @@ import {
     SyncHeadMoved,
     UnsupportedValueError,
     applyOptionUpdate,
+    buildBlobUrl,
     chatIdentifiersEqual,
     emptyEventsResponse,
     isError,
@@ -244,7 +245,6 @@ import {
     offline,
     textToCode,
     waitAll,
-    buildBlobUrl,
 } from "@shared";
 import type { AgentConfig } from "../config";
 import { CachePrimer } from "../utils/cachePrimer";
