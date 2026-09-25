@@ -61,6 +61,7 @@ fn main() {
     generate_ts_method!(user_index, users_chit);
     generate_ts_method!(user_index, update_diamond_membership_subscription);
 
+    generate_ts_method!(user_index, create_multi_user_canister);
     generate_ts_method!(user_index, pay_for_diamond_membership);
     generate_ts_method!(user_index, register_bot);
     generate_ts_method!(user_index, remove_bot);
@@ -71,6 +72,7 @@ fn main() {
     generate_ts_method!(user_index, set_premium_item_cost);
     generate_ts_method!(user_index, set_user_upgrade_concurrency);
     generate_ts_method!(user_index, set_moderation_flags);
+    generate_ts_method!(user_index, set_multi_user_canisters_enabled);
     generate_ts_method!(user_index, set_username);
     generate_ts_method!(user_index, submit_proof_of_unique_personhood);
     generate_ts_method!(user_index, suspend_user);

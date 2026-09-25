@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use stable_memory_map::ProfileDocumentType;
-use types::{Achievement, OCResult};
+use types::{Achievement, CanisterId, OCResult, UserId};
 use user_canister::set_avatar::*;
 use utils::document::validate_avatar;
 
@@ -19,6 +19,7 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         return Err(OCErrorCode::AvatarTooBig.with_json(&error));
     }
 
+    let id = args.avatar.as_ref().map(|a| a.id);
     let now = state.env.now();
     let my_index = state.with_caller_user_mut(|my_index, user| -> OCResult<u16> {
         user.verify_not_suspended()?;
@@ -28,8 +29,19 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     state.award_achievement_and_notify(my_index, Achievement::SetAvatar, now);
 
-    // TODO: Tell the UserIndex the new avatar id (`c2c_set_avatar`) once it can take the id of the
-    // user it is for
+    utils::async_work::spawn_tracked(update_index_canister(
+        state.data.user_index_canister_id,
+        state.user_id(my_index),
+        id,
+    ));
 
     Ok(())
+}
+
+async fn update_index_canister(user_index_canister_id: CanisterId, user_id: UserId, avatar_id: Option<u128>) {
+    let args = user_index_canister::c2c_set_avatar::Args {
+        avatar_id,
+        user_id: Some(user_id),
+    };
+    let _ = user_index_canister_c2c_client::c2c_set_avatar(user_index_canister_id, &args).await;
 }

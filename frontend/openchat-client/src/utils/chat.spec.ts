@@ -15,6 +15,8 @@ import {
 import { localUpdates } from "../state";
 import {
     addVoteToPoll,
+    buildUserAvatarUrl,
+    buildUserBackgroundUrl,
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
@@ -394,5 +396,30 @@ describe("sortByTimestampThenEventIndex", () => {
             ev(2, 20n),
             ev(3, 30n),
         ]);
+    });
+});
+
+describe("user avatar and background urls", () => {
+    const pattern = "https://{canisterId}.raw.icp0.io/{blobType}";
+    const canisterId = "dfdal-2uaaa-aaaaa-qaama-cai";
+    // `UserId::new_indexed(canisterId, 1000)`
+    const indexedUserId = "svgk6-q4aaa-aaaaa-qaamo-ray";
+
+    test("a user alone in their canister is served at its root", () => {
+        expect(buildUserAvatarUrl(pattern, canisterId, 5n)).toBe(
+            `https://${canisterId}.raw.icp0.io/avatar/5`,
+        );
+        expect(buildUserBackgroundUrl(pattern, canisterId, 6n)).toBe(
+            `https://${canisterId}.raw.icp0.io/profile_background/6`,
+        );
+    });
+
+    test("a user in a MultiUser canister is served by it under their index", () => {
+        expect(buildUserAvatarUrl(pattern, indexedUserId, 5n)).toBe(
+            `https://${canisterId}.raw.icp0.io/user/1000/avatar/5`,
+        );
+        expect(buildUserBackgroundUrl(pattern, indexedUserId, 6n)).toBe(
+            `https://${canisterId}.raw.icp0.io/user/1000/profile_background/6`,
+        );
     });
 });

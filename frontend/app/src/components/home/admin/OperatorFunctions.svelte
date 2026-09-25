@@ -36,6 +36,7 @@
     let groupUpgradeConcurrency = $state("10");
     let communityUpgradeConcurrency = $state("10");
     let userUpgradeConcurrency = $state("10");
+    let multiUserCanisterLocalUserIndex = $state("");
     let busy = $state(new SvelteSet<number>());
     let governanceCanisterId = $state("");
     let stake = $state("0");
@@ -84,6 +85,10 @@
         isNaN(parseInt(communityUpgradeConcurrency, 0)),
     );
     let userUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(userUpgradeConcurrency, 0)));
+    let multiUserCanisterLocalUserIndexInvalid = $derived(
+        multiUserCanisterLocalUserIndex.trim() === "" ||
+            !isValidPrincipal(multiUserCanisterLocalUserIndex.trim()),
+    );
     let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
@@ -309,6 +314,56 @@
             })
             .finally(() => {
                 removeBusy(2);
+            });
+    }
+
+    function createMultiUserCanister(): void {
+        error = undefined;
+        const localUserIndex = multiUserCanisterLocalUserIndex.trim();
+        addBusy(15);
+        client
+            .createMultiUserCanister(localUserIndex)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast(
+                        i18nKey(`MultiUser canister created: ${resp.canisterId}`),
+                    );
+                } else {
+                    error = i18nKey(
+                        resp.kind === "local_user_index_not_found"
+                            ? `LocalUserIndex not found: ${localUserIndex}`
+                            : `Failed to create MultiUser canister: ${resp.error ?? "unknown error"}`,
+                    );
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => {
+                removeBusy(15);
+            });
+    }
+
+    // Recorded on the UserIndex and fanned out to every LocalUserIndex. There is no query for the
+    // current value (it is only surfaced in metrics), hence separate Enable / Disable buttons
+    // rather than a toggle
+    function setMultiUserCanistersEnabled(enabled: boolean): void {
+        error = undefined;
+        addBusy(16);
+        client
+            .setMultiUserCanistersEnabled(enabled)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(
+                        i18nKey(`MultiUser canisters ${enabled ? "enabled" : "disabled"}`),
+                    );
+                } else {
+                    error = i18nKey(
+                        `Failed to ${enabled ? "enable" : "disable"} MultiUser canisters`,
+                    );
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => {
+                removeBusy(16);
             });
     }
 
@@ -758,6 +813,38 @@
                 disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
                 onClick={setUserUpgradeConcurrency}>Apply</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Create MultiUser canister</div>
+        <ButtonGroup align="fill">
+            <Input
+                invalid={multiUserCanisterLocalUserIndexInvalid}
+                placeholder={i18nKey("LocalUserIndex canister id")}
+                bind:value={multiUserCanisterLocalUserIndex} />
+            <Button
+                tiny
+                disabled={busy.has(15) || multiUserCanisterLocalUserIndexInvalid}
+                loading={busy.has(15)}
+                onClick={createMultiUserCanister}>Create</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">MultiUser canisters</div>
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                disabled={busy.has(16)}
+                loading={busy.has(16)}
+                onClick={() => setMultiUserCanistersEnabled(true)}>Enable</Button>
+            <Button
+                tiny
+                secondary
+                disabled={busy.has(16)}
+                loading={busy.has(16)}
+                onClick={() => setMultiUserCanistersEnabled(false)}>Disable</Button>
         </ButtonGroup>
     </section>
 

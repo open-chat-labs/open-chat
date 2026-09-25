@@ -11,13 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add the `use_multi_user_canister` flag to `register_user`, which in test mode registers the user in a MultiUser canister (creating one if there are none) rather than in a canister of their own ([#9524](https://github.com/open-chat-labs/open-chat/pull/9524))
 - Store the map of the old to the new id of each user migrated to a MultiUser canister, synced from the UserIndex ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
 - Add the `migrated_user_ids` query, which takes a list of user ids and returns the latest id of each user in it who has been migrated to a MultiUser canister ([#9538](https://github.com/open-chat-labs/open-chat/pull/9538))
-- Pass `UserIdMigrated` on to each of the listed groups and communities which this LocalUserIndex controls. The groups and communities must be upgraded first ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Sign a decline token into each phone's ring push and add the `video_call_declined` endpoint for the video bridge, which dismisses the ring on the decliner's other phones ([#9542](https://github.com/open-chat-labs/open-chat/pull/9542))
+- Pass `UserIdMigrated` on to each of the listed groups and communities which this LocalUserIndex controls. The groups and communities must be upgraded first ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
+- Pass a joining user's previous ids to the group or community they are joining ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
 - Add the `VideoCallParticipant` access token, which proves only that the caller belongs to the chat, for declining or leaving its call through the video bridge ([#9578](https://github.com/open-chat-labs/open-chat/pull/9578))
 
 ### Changed
 
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
+- Once enabled, register new users in whichever MultiUser canister has the fewest users ([#9579](https://github.com/open-chat-labs/open-chat/pull/9579))
 
 ### Fixed
 

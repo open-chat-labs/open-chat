@@ -1,3 +1,4 @@
+use crate::jobs::latest_id_if_migrated;
 use crate::{RuntimeState, mutate_state, read_state};
 use constants::MINUTE_IN_MS;
 use ic_cdk_timers::TimerId;
@@ -55,25 +56,36 @@ async fn push_notifications(notifications: Vec<(UserId, DeletedCommunityInfo)>) 
 }
 
 async fn push_notification(user_id: UserId, deleted_community: DeletedCommunityInfo) {
+    // Sent to the user's latest id if they are known to have been migrated since having `user_id`
+    let user_id = read_state(|state| state.data.migrated_user_ids.latest(user_id));
     let args = user_canister::c2c_notify_community_deleted::Args {
         user_id,
         deleted_community,
     };
 
-    if user_canister_c2c_client::c2c_notify_community_deleted(user_id.canister_id(), &args)
-        .await
-        .is_err()
-    {
+    if let Err(error) = user_canister_c2c_client::c2c_notify_community_deleted(user_id.canister_id(), &args).await {
+        // If the user has been migrated to a MultiUser canister, the notification is sent on to them
+        // there instead
+        let new_user_id = latest_id_if_migrated(user_id, &error).await;
+
         mutate_state(|state| {
-            let now = state.env.now();
             let deleted_community = args.deleted_community;
 
-            let retry = now.saturating_sub(deleted_community.timestamp) < 10 * MINUTE_IN_MS;
+            if let Some(new_user_id) = new_user_id {
+                state.data.migrated_user_ids.insert(user_id, new_user_id);
+                state
+                    .data
+                    .deleted_communities
+                    .mark_notification_failed(deleted_community.id, new_user_id, true);
+            } else {
+                let now = state.env.now();
+                let retry = now.saturating_sub(deleted_community.timestamp) < 10 * MINUTE_IN_MS;
 
-            state
-                .data
-                .deleted_communities
-                .mark_notification_failed(deleted_community.id, user_id, retry);
+                state
+                    .data
+                    .deleted_communities
+                    .mark_notification_failed(deleted_community.id, user_id, retry);
+            }
 
             start_job_if_required(state);
         });

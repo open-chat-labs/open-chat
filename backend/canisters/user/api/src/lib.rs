@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use types::{
     Achievement, BotDefinitionUpdate, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId,
     DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OgPreview, P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof,
-    User, UserId,
+    OgPreview, P2PSwapLocation, P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis,
+    TokenInfo, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -425,10 +425,26 @@ pub struct MessageActivitySummary {
 pub enum CommunityCanisterEvent {
     MessageActivity(MessageActivityEvent),
     Achievement(Achievement),
+    P2PSwapCreated(Box<P2PSwapCreated>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum GroupCanisterEvent {
     MessageActivity(MessageActivityEvent),
     Achievement(Achievement),
+    P2PSwapCreated(Box<P2PSwapCreated>),
+}
+
+// A P2P swap the user created directly in a group or community rather than via their own canister,
+// which the group or community tells them of so that it is recorded against them just the same
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct P2PSwapCreated {
+    pub swap_id: u32,
+    pub location: P2PSwapLocation,
+    pub token0: TokenInfo,
+    pub token0_amount: u128,
+    pub token1: TokenInfo,
+    pub token1_amount: u128,
+    pub expires_at: TimestampMillis,
+    pub created: TimestampMillis,
 }

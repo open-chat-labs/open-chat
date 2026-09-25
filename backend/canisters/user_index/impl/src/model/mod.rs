@@ -6,6 +6,7 @@ pub mod external_achievements;
 pub mod group_index_event_batch;
 pub mod local_user_index_map;
 pub mod moderation;
+pub mod multi_user_canister_map;
 pub mod pending_payments_queue;
 pub mod premium_items;
 pub mod protected_actions;
@@ -15,6 +16,7 @@ pub mod storage_index_users_to_remove_batch;
 pub mod streak_insurance_logs;
 pub mod user;
 pub mod user_map;
+pub mod users_last_online;
 
 pub const MAX_AVATAR_SIZE: usize = 250_000;
 pub const MAX_DESCRIPTION_LEN: usize = 10_000;

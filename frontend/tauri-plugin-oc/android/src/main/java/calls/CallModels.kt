@@ -1,6 +1,7 @@
 package com.ocplugin.app.calls
 
 import android.os.Bundle
+import com.ocplugin.app.BlobLocation
 import com.ocplugin.app.BuildConfig
 import com.ocplugin.app.data.Notification
 import com.ocplugin.app.data.NotificationType
@@ -118,7 +119,10 @@ data class IncomingCall(
         }
 
         private fun avatarUrl(entityId: String, avatarId: String?): String? =
-            avatarId?.let { "${String.format(BuildConfig.AVATAR_BASE_URL, entityId)}/avatar/$it" }
+            avatarId?.let {
+                val location = BlobLocation.of(entityId, "avatar")
+                "${String.format(BuildConfig.AVATAR_BASE_URL, location.canisterId)}/${location.path}/$it"
+            }
 
         fun fromBundle(b: Bundle?): IncomingCall? {
             b ?: return null
