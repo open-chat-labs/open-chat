@@ -468,6 +468,10 @@ impl CommunityMembers {
         self.members_and_channels.contains_key(user_id)
     }
 
+    pub fn is_former_member(&self, user_id: &UserId) -> bool {
+        self.former_members.contains(user_id)
+    }
+
     pub fn len(&self) -> usize {
         self.members_and_channels.len()
     }
