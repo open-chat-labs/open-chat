@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Accept `UserIdMigrated` from the LocalUserIndex, for members migrated to a MultiUser canister and given a new id. Not acted on yet ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Record the users who have left or been removed from the group, which nothing reads yet ([#9564](https://github.com/open-chat-labs/open-chat/pull/9564))
-- Accept the `previous_user_ids` of a user joining via `c2c_join_group`, and if the user was a member under any of them, cache their migrations to the user's current id ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Accept the `previous_user_ids` of a user joining via `c2c_join_group`, and if the user was a member under any of them, cache their migrations to the user's current id ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
 
 ### Changed
 
