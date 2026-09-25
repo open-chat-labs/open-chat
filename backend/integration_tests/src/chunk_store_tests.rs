@@ -2,9 +2,11 @@ use crate::env::ENV;
 use crate::utils::{metrics, tick_many};
 use crate::{TestEnv, client, wasms};
 use constants::ONE_MB;
+use pocket_ic::PocketIc;
 use sha256::sha256;
 use std::collections::HashSet;
 use std::ops::Deref;
+use testing::rng::random_string;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 
 #[test]
@@ -45,19 +47,9 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
     }
     tick_many(env, 10);
 
-    let stored: HashSet<Hash> = env
-        .stored_chunks(local_user_index, Some(canister_ids.user_index))
-        .unwrap()
-        .into_iter()
-        .map(|h| h.try_into().unwrap())
-        .collect();
-
+    let stored = stored_chunks(env, local_user_index, canister_ids.user_index);
     assert!(!stored.contains(&stale_chunk));
-    for wasm in [&wasms::USER.module, &wasms::GROUP.module, &wasms::COMMUNITY.module] {
-        for chunk in chunk_hashes(wasm) {
-            assert!(stored.contains(&chunk), "Chunk missing from the chunk store");
-        }
-    }
+    assert_current_wasms_stored(&stored);
 
     // New users' canisters are installed with the latest wasm
     let user = client::register_user(env, canister_ids);
@@ -67,10 +59,67 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
     wrapper.discard();
 }
 
+#[test]
+fn chunks_are_uploaded_again_when_the_local_user_index_is_upgraded() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+
+    // Earlier versions of the LocalUserIndex cleared the chunk store but kept the chunk hashes
+    env.clear_chunk_store(local_user_index, Some(canister_ids.user_index))
+        .unwrap();
+
+    client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
+        env,
+        *controller,
+        canister_ids.user_index,
+        CanisterWasm {
+            version: BuildVersion::new(9, 9, 9),
+            module: wasms::LOCAL_USER_INDEX.module.clone(),
+        },
+    );
+    tick_many(env, 20);
+
+    assert_current_wasms_stored(&stored_chunks(env, local_user_index, canister_ids.user_index));
+
+    // New canisters can still be created
+    let user = client::register_user(env, canister_ids);
+    client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+
+    // Upgrading the LocalUserIndex would break later tests which draw this env
+    wrapper.discard();
+}
+
+fn stored_chunks(env: &PocketIc, local_user_index: CanisterId, user_index: CanisterId) -> HashSet<Hash> {
+    env.stored_chunks(local_user_index, Some(user_index))
+        .unwrap()
+        .into_iter()
+        .map(|h| h.try_into().unwrap())
+        .collect()
+}
+
+fn assert_current_wasms_stored(stored: &HashSet<Hash>) {
+    for wasm in [
+        &wasms::USER.module,
+        &wasms::GROUP.module,
+        &wasms::COMMUNITY.module,
+        &wasms::MULTI_USER.module,
+    ] {
+        for chunk in chunk_hashes(wasm) {
+            assert!(stored.contains(&chunk), "Chunk missing from the chunk store");
+        }
+    }
+}
+
 fn chunk_hashes(wasm: &[u8]) -> Vec<Hash> {
     wasm.chunks(ONE_MB as usize).map(sha256).collect()
 }
 
-fn wasm_version(env: &pocket_ic::PocketIc, canister_id: CanisterId) -> BuildVersion {
+fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
     serde_json::from_value(metrics(env, canister_id)["wasm_version"].clone()).unwrap()
 }

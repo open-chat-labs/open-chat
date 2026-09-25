@@ -1,4 +1,5 @@
 use crate::guards::caller_is_user_index;
+use crate::jobs::refresh_chunk_store;
 use crate::{Data, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -32,7 +33,11 @@ async fn c2c_upgrade_user_canister_wasm(args: Args) -> Response {
         None
     };
 
+    let clear_count = refresh_chunk_store::clear_count();
     let chunks = upload_wasm_in_chunks(&wasm.module, this_canister_id).await.unwrap();
+    // If the chunk store was cleared while uploading, the chunks may have been removed, so the
+    // wasm is installed in full until its chunks are uploaded again when the store is refreshed
+    let chunks = if refresh_chunk_store::clear_count() == clear_count { chunks } else { Vec::new() };
 
     mutate_state(|state| commit(args, wasm, chunks, active_users_filter, state))
 }
