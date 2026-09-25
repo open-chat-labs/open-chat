@@ -1070,6 +1070,36 @@ mod tests {
     }
 
     #[test]
+    fn blocked_ids_include_previous_ids_oldest_first() {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let [creator, old_id, middle_id, new_id]: [UserId; 4] = [1, 2, 3, 4].map(|i| Principal::from_slice(&[i]).into());
+        let mut members = GroupMembers::new(
+            creator,
+            None,
+            UserType::User,
+            MultiUserChat::Group(Principal::from_slice(&[5]).into()),
+            0,
+        );
+        assert!(members.blocked_ids(new_id, &[old_id, middle_id]).is_empty());
+
+        members.block(middle_id, 0);
+        assert_eq!(members.blocked_ids(new_id, &[old_id, middle_id]), vec![middle_id]);
+
+        members.block(new_id, 0);
+        members.block(old_id, 0);
+        assert_eq!(
+            members.blocked_ids(new_id, &[old_id, middle_id]),
+            vec![old_id, middle_id, new_id]
+        );
+        assert_eq!(members.blocked_ids(new_id, &[]), vec![new_id]);
+    }
+
+    #[test]
     fn principals_removed_when_exporting_members_into_channel() {
         use ic_stable_structures::DefaultMemoryImpl;
         use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
