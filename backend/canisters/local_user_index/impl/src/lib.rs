@@ -707,6 +707,7 @@ impl RuntimeState {
             user_events_queue_length: self.data.user_events_queue.len(),
             user_events_queue_in_progress: self.data.user_events_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
+            chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
@@ -1068,6 +1069,7 @@ pub struct Metrics {
     // whose last batch is still awaiting its reply
     pub user_events_queue_in_progress: usize,
     pub users_to_delete_queue_length: usize,
+    pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,

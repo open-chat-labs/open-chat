@@ -39,7 +39,10 @@ async fn c2c_upgrade_user_canister_wasm(args: Args) -> Response {
     // wasm is installed in full until its chunks are uploaded again when the store is refreshed
     let chunks = if refresh_chunk_store::clear_count() == clear_count { chunks } else { Vec::new() };
 
-    mutate_state(|state| commit(args, wasm, chunks, active_users_filter, state))
+    let response = mutate_state(|state| commit(args, wasm, chunks, active_users_filter, state));
+    // If there are no canisters to upgrade, the old wasm's chunks can be removed straight away
+    refresh_chunk_store::remove_stale_chunks_if_no_pending_upgrades();
+    response
 }
 
 struct PrepareResult {

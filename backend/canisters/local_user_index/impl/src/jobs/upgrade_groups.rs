@@ -36,7 +36,7 @@ fn run() {
         TIMER.set(None);
         trace!("'upgrade_groups' job stopped");
 
-        refresh_chunk_store::refresh_if_no_pending_upgrades();
+        refresh_chunk_store::remove_stale_chunks_if_no_pending_upgrades();
     }
 }
 

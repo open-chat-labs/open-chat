@@ -60,7 +60,7 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
 }
 
 #[test]
-fn chunks_are_uploaded_again_when_the_local_user_index_is_upgraded() {
+fn missing_chunks_are_uploaded_when_the_local_user_index_is_upgraded() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -73,6 +73,11 @@ fn chunks_are_uploaded_again_when_the_local_user_index_is_upgraded() {
     // Earlier versions of the LocalUserIndex cleared the chunk store but kept the chunk hashes
     env.clear_chunk_store(local_user_index, Some(canister_ids.user_index))
         .unwrap();
+    let stale_chunk: Hash = env
+        .upload_chunk(local_user_index, Some(canister_ids.user_index), vec![1, 2, 3])
+        .unwrap()
+        .try_into()
+        .unwrap();
 
     client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
         env,
@@ -83,13 +88,16 @@ fn chunks_are_uploaded_again_when_the_local_user_index_is_upgraded() {
             module: wasms::LOCAL_USER_INDEX.module.clone(),
         },
     );
-    tick_many(env, 20);
+    tick_many(env, 50);
 
-    assert_current_wasms_stored(&stored_chunks(env, local_user_index, canister_ids.user_index));
+    let stored = stored_chunks(env, local_user_index, canister_ids.user_index);
+    assert_current_wasms_stored(&stored);
+    // The store isn't cleared on start up, only once a series of upgrades completes
+    assert!(stored.contains(&stale_chunk));
 
     // New canisters can still be created
     let user = client::register_user(env, canister_ids);
-    client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+    client::user::happy_path::create_group(env, &user, &random_string(), false, true);
 
     // Upgrading the LocalUserIndex would break later tests which draw this env
     wrapper.discard();
