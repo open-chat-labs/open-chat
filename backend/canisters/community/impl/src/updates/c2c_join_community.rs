@@ -154,7 +154,11 @@ pub(crate) fn join_community_impl(
         .add(args.user_id, args.principal, args.user_type, referred_by, now);
 
     match result {
-        AddResult::Success(_) => {}
+        AddResult::Success(_) => {
+            state
+                .data
+                .cache_migrations_if_former_member(args.user_id, &args.previous_user_ids);
+        }
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
             if !member.lapsed().value {

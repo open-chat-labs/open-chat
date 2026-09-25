@@ -50,6 +50,7 @@ async fn c2c_join_channel_impl(mut args: Args) -> Response {
             unique_person_proof: args.unique_person_proof.clone(),
             total_chit_earned: args.total_chit_earned,
             composite_gate_index: None,
+            previous_user_ids: args.previous_user_ids.clone(),
         })
         .await
         {

@@ -68,6 +68,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use sha256::sha256;
     use std::collections::HashMap;
+    use std::time::Duration;
     use testing::rng::random_principal;
     use types::{
         BotDefinition, BotInstallationLocation, CanisterId, CanisterWasm, Chit, DiamondMembershipFees,
@@ -280,6 +281,12 @@ pub mod happy_path {
     ) -> CanisterId {
         let operator = crate::client::register_user(env, canister_ids);
         add_platform_operator(env, controller, canister_ids.user_index, operator.user_id);
+
+        // New users go to the LocalUserIndex's most recently created MultiUser canister, with ties
+        // on the (millisecond) creation time broken by canister id. PocketIC time barely moves
+        // unless advanced, so step past any canister created earlier in this env to ensure the new
+        // one is the canister which new users are placed in
+        env.advance_time(Duration::from_millis(1));
 
         let response = super::create_multi_user_canister(
             env,

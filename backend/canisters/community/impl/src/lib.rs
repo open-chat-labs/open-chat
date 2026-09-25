@@ -891,13 +891,22 @@ impl Data {
         principal: Option<Principal>,
         now: TimestampMillis,
     ) -> Option<CommunityMemberInternal> {
-        let removed = self.members.remove(user_id, principal, now);
+        let removed = self.members.remove(user_id, principal, false, now);
         self.channels.leave_all_channels(user_id, now);
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
         removed
+    }
+
+    // If the user was a member under any of their previous ids then the events may refer to them
+    // by those ids, so the migrations through to their current id are cached. Otherwise no events
+    // refer to them by their previous ids, so there is nothing to cache.
+    pub fn cache_migrations_if_former_member(&mut self, user_id: UserId, previous_user_ids: &[UserId]) {
+        if previous_user_ids.iter().any(|u| self.members.is_former_member(u)) {
+            self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
+        }
     }
 
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {

@@ -31,7 +31,7 @@ use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -375,6 +375,7 @@ impl RuntimeState {
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
             self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
+            self.data.former_members.remove(&args.user_id);
         }
 
         result
@@ -710,6 +711,11 @@ struct Data {
     // have changed
     #[serde(default)]
     migrated_user_ids: MigratedUserIds,
+    // Users who were members of the group but no longer are. A user who rejoins is removed again. Recorded so
+    // that a user who rejoins under a new id, having been migrated to a MultiUser canister, can be recognised as
+    // having events under their earlier ids.
+    #[serde(default)]
+    former_members: BTreeSet<UserId>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -827,6 +833,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
+            former_members: BTreeSet::new(),
         }
     }
 
@@ -933,6 +940,16 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
+        self.former_members.insert(user_id);
+    }
+
+    // If the user was a member under any of their previous ids then the events may refer to them
+    // by those ids, so the migrations through to their current id are cached. Otherwise no events
+    // refer to them by their previous ids, so there is nothing to cache.
+    pub fn cache_migrations_if_former_member(&mut self, user_id: UserId, previous_user_ids: &[UserId]) {
+        if previous_user_ids.iter().any(|u| self.former_members.contains(u)) {
+            self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
+        }
     }
 
     pub fn get_caller_for_events(&self, caller: Principal, bot_initiator: Option<BotInitiator>) -> Option<EventsCaller> {

@@ -80,4 +80,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reject approvals, streak insurance payments, crypto, BTC and OneSec withdrawals, and account charges, which spent from each user's subaccount of the canister, since users hold their own funds in their principal's account ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
 - Pass in the canister's cache of migrated user ids when interacting with the chat events ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
+- Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 
