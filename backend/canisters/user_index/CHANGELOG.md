@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `cancel_user_migration`, for governance principals in test mode only, which cancels a user's migration via their User canister's `c2c_cancel_migration`. The User canisters must be upgraded first ([#9553](https://github.com/open-chat-labs/open-chat/pull/9553))
 - Add a one-off job which fetches the last online date of every user from the OnlineUsers canister in batches of 500, storing them in a temporary map separate from the `UserMap`, so that the users who haven't been online for the longest can be migrated first ([#9557](https://github.com/open-chat-labs/open-chat/pull/9557))
 - Accept a `user_id` in `c2c_set_avatar`, so a MultiUser canister can set the avatar id of one of its users ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
+- One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal. The LocalUserIndexes must be upgraded first ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
 
 ### Changed
 
