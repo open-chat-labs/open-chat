@@ -4,13 +4,16 @@ use types::{TimestampMillis, UserId};
 
 // Temporary: a snapshot of each user's last online date, fetched once from the OnlineUsers canister
 // so that we can migrate the users who haven't signed in for the longest first.
+// The user ids are snapshotted when the job starts, so users who register after that won't be in
+// the map, and the map isn't updated when users are deleted, so always look users up in the
+// `UserMap` first.
 // TODO remove once the users have been migrated
 #[derive(Serialize, Deserialize, Default)]
 pub struct UsersLastOnline {
     started: bool,
     pending: VecDeque<UserId>,
-    last_online: HashMap<UserId, TimestampMillis>,
-    // Users the OnlineUsers canister has no last online date for
+    // `None` means the OnlineUsers canister has no last online date for the user
+    last_online: HashMap<UserId, Option<TimestampMillis>>,
     not_found: usize,
 }
 
@@ -37,20 +40,24 @@ impl UsersLastOnline {
         }
     }
 
-    pub fn record_batch(&mut self, requested: usize, results: impl Iterator<Item = (UserId, TimestampMillis)>) {
+    pub fn record_batch(&mut self, requested: Vec<UserId>, results: impl Iterator<Item = (UserId, TimestampMillis)>) {
+        let requested_count = requested.len();
+        for user_id in requested {
+            self.last_online.insert(user_id, None);
+        }
         let mut found = 0;
         for (user_id, last_online) in results {
-            self.last_online.insert(user_id, last_online);
+            self.last_online.insert(user_id, Some(last_online));
             found += 1;
         }
-        self.not_found += requested.saturating_sub(found);
+        self.not_found += requested_count.saturating_sub(found);
     }
 
     pub fn metrics(&self) -> UsersLastOnlineMetrics {
         UsersLastOnlineMetrics {
             started: self.started,
             pending: self.pending.len(),
-            found: self.last_online.len(),
+            found: self.last_online.len() - self.not_found,
             not_found: self.not_found,
         }
     }
@@ -90,18 +97,20 @@ mod tests {
         let batch = users_last_online.take_next_batch(3);
         assert_eq!(batch, (1..=3).map(user_id).collect::<Vec<_>>());
 
-        users_last_online.record_batch(batch.len(), [(user_id(1), 100), (user_id(3), 300)].into_iter());
+        users_last_online.record_batch(batch, [(user_id(1), 100), (user_id(3), 300)].into_iter());
         assert!(!users_last_online.is_complete());
 
         let batch = users_last_online.take_next_batch(3);
         assert_eq!(batch, (4..=5).map(user_id).collect::<Vec<_>>());
-        users_last_online.record_batch(batch.len(), [(user_id(5), 500)].into_iter());
+        users_last_online.record_batch(batch, [(user_id(5), 500)].into_iter());
         assert!(users_last_online.is_complete());
 
         let metrics = users_last_online.metrics();
         assert_eq!(metrics.pending, 0);
         assert_eq!(metrics.found, 3);
         assert_eq!(metrics.not_found, 2);
-        assert_eq!(users_last_online.last_online.get(&user_id(3)), Some(&300));
+        assert_eq!(users_last_online.last_online.get(&user_id(2)), Some(&None));
+        assert_eq!(users_last_online.last_online.get(&user_id(3)), Some(&Some(300)));
+        assert_eq!(users_last_online.last_online.get(&user_id(6)), None);
     }
 }

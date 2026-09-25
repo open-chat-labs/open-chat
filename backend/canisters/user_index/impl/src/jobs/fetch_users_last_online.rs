@@ -65,7 +65,7 @@ async fn fetch_batch(canister_id: CanisterId, user_ids: Vec<UserId>) {
         Ok(online_users_canister::last_online::Response::Success(results)) => mutate_state(|state| {
             let now = state.env.now();
             state.data.users_last_online.record_batch(
-                user_ids.len(),
+                user_ids,
                 results
                     .into_iter()
                     .map(|r| (r.user_id, now.saturating_sub(r.duration_since_last_online))),
