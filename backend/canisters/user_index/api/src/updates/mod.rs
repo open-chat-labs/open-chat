@@ -58,7 +58,6 @@ pub mod set_user_upgrade_concurrency;
 pub mod set_username;
 pub mod set_vault_legal_hold;
 pub mod set_vault_reviewers;
-pub mod start_user_migration;
 pub mod submit_proof_of_unique_personhood;
 pub mod suspend_user;
 pub mod unsuspend_user;

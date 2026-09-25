@@ -12,104 +12,7 @@ use testing::rng::{random_from_u128, random_string};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Chat, Document, MessageContentInitial, OptionUpdate, P2PSwapContentInitial, UserId,
 };
-use user_index_canister::start_user_migration::{Response, SuccessResult};
-
-#[test]
-fn start_user_migration_freezes_the_user_canister() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let user = client::register_user(env, canister_ids);
-
-    let first = start_user_migration(env, *controller, canister_ids.user_index, &user, multi_user_canister(1));
-    assert!(first.user_bytes > 0);
-
-    // The canister is frozen, so its owner can't change it
-    assert!(
-        env.update_call(
-            user.canister(),
-            user.principal,
-            "set_bio_msgpack",
-            msgpack::serialize_then_unwrap(&user_canister::set_bio::Args { text: random_string() }),
-        )
-        .is_err()
-    );
-
-    // A repeated call returns the same size, since the user can't have changed
-    let second = start_user_migration(env, *controller, canister_ids.user_index, &user, multi_user_canister(1));
-    assert_eq!(first.user_bytes, second.user_bytes);
-    assert_eq!(first.wasm_version, second.wasm_version);
-
-    // A migration to another MultiUser canister can't start
-    let response = client::user_index::start_user_migration(
-        env,
-        *controller,
-        canister_ids.user_index,
-        &user_index_canister::start_user_migration::Args {
-            user_id: user.user_id,
-            multi_user_canister_id: multi_user_canister(2),
-        },
-    );
-    assert!(
-        matches!(response, Response::Error(ref e) if e.matches_code(OCErrorCode::AlreadyInProgress)),
-        "{response:?}"
-    );
-}
-
-#[test]
-fn user_with_a_message_reminder_is_not_ready_for_migration() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
-
-    client::user::set_message_reminder_v2(
-        env,
-        user1.principal,
-        user1.canister(),
-        &user_canister::set_message_reminder_v2::Args {
-            chat: Chat::Direct(user2.user_id.into()),
-            thread_root_message_index: None,
-            event_index: 10.into(),
-            notes: None,
-            remind_at: now_millis(env) + 60_000,
-        },
-    );
-
-    let response = client::user_index::start_user_migration(
-        env,
-        *controller,
-        canister_ids.user_index,
-        &user_index_canister::start_user_migration::Args {
-            user_id: user1.user_id,
-            multi_user_canister_id: multi_user_canister(1),
-        },
-    );
-    assert!(
-        matches!(response, Response::Error(ref e) if e.matches_code(OCErrorCode::NotReadyForMigration)),
-        "{response:?}"
-    );
-
-    // The canister isn't frozen, so its owner can still change it
-    let response = client::user::set_bio(
-        env,
-        user1.principal,
-        user1.canister(),
-        &user_canister::set_bio::Args { text: random_string() },
-    );
-    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
-}
+use user_index_canister::user_migration::UserMigrationStatus;
 
 #[test]
 fn users_with_a_p2p_swap_are_not_ready_for_migration() {
@@ -188,13 +91,18 @@ fn users_with_a_p2p_swap_are_not_ready_for_migration() {
 
     // Neither the user who created the swap nor the one who accepted it can be migrated, even once it
     // has been settled
+    let operator = platform_operator(env, canister_ids, *controller);
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id, user2.user_id],
+        Some(multi_user_canister(1)),
+    );
+    wait_for_migration_attempts_to_run_out(env);
+
     for user in [&user1, &user2] {
-        let response = try_start_user_migration(env, *controller, canister_ids.user_index, user, multi_user_canister(1));
-        assert!(
-            matches!(response, Response::Error(ref e) if e.matches_code(OCErrorCode::NotReadyForMigration)
-                && e.message() == Some("User has P2P swaps")),
-            "{response:?}"
-        );
+        assert_failed_with_p2p_swaps(env, operator.principal, canister_ids.user_index, user.user_id);
     }
 }
 
@@ -226,7 +134,16 @@ fn migrating_user_is_exported() {
     tick_many(env, 3);
 
     // The UserIndex stands in for the MultiUser canister, which pulls the export
-    let started = start_user_migration(env, *controller, canister_ids.user_index, &user1, canister_ids.user_index);
+    let operator = platform_operator(env, canister_ids, *controller);
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(canister_ids.user_index),
+    );
+    tick_many(env, 10);
+    let started = started_migration(env, operator.principal, canister_ids.user_index, user1.user_id);
 
     let response = client::user_index::export_migrating_user(
         env,
@@ -257,7 +174,7 @@ fn only_the_multi_user_canister_being_migrated_to_can_export() {
     // One user is being migrated to another MultiUser canister, and the other isn't being migrated
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
-    start_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
+    start_migration(env, canister_ids, *controller, &user1, multi_user_canister(1));
 
     for user in [&user1, &user2] {
         let response = client::user_index::export_migrating_user(
@@ -303,7 +220,7 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
     let message = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     tick_many(env, 3);
 
-    start_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
+    start_migration(env, canister_ids, *controller, &user1, multi_user_canister(1));
     // A cancellation of a migration to another MultiUser canister is rejected
     let response = client::user_index::cancel_user_migration(
         env,
@@ -343,7 +260,7 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
     cancel_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
 
     // And the migration can be started again, to another MultiUser canister
-    start_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(2));
+    start_migration(env, canister_ids, *controller, &user1, multi_user_canister(2));
 }
 
 #[test]
@@ -362,7 +279,7 @@ fn migrate_users_starts_migrating_each_user_to_a_multi_user_canister() {
     let user = client::register_user(env, canister_ids);
     let before = user_migration_metrics(env, canister_ids.user_index);
 
-    let queued = migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id]);
+    let queued = migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id], None);
     assert_eq!(queued, vec![user.user_id]);
     tick_many(env, 10);
 
@@ -382,7 +299,59 @@ fn migrate_users_starts_migrating_each_user_to_a_multi_user_canister() {
     );
 
     // A user already being migrated isn't queued again
-    assert!(migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id]).is_empty());
+    assert!(migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id], None).is_empty());
+}
+
+#[test]
+fn suspended_user_is_migrated() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let moderator = client::register_diamond_user(env, canister_ids, *controller);
+    client::user_index::add_platform_moderator(
+        env,
+        *controller,
+        canister_ids.user_index,
+        &user_index_canister::add_platform_moderator::Args {
+            user_id: moderator.user_id,
+        },
+    );
+    let user = client::register_user(env, canister_ids);
+
+    let response = client::user_index::suspend_user(
+        env,
+        moderator.principal,
+        canister_ids.user_index,
+        &user_index_canister::suspend_user::Args {
+            user_id: user.user_id,
+            duration: None,
+            reason: random_string(),
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::suspend_user::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 5);
+
+    // The suspension is part of the user's state, so is carried over with them
+    let queued = migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister(1)),
+    );
+    assert_eq!(queued, vec![user.user_id]);
+    tick_many(env, 10);
+
+    started_migration(env, operator.principal, canister_ids.user_index, user.user_id);
 }
 
 #[test]
@@ -405,7 +374,7 @@ fn migration_is_retried_until_the_user_canister_is_ready() {
     set_message_reminder(env, &user1, &user2, 60_000);
     let before = user_migration_metrics(env, canister_ids.user_index);
 
-    migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id]);
+    migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id], None);
     tick_many(env, 10);
 
     let metrics = user_migration_metrics(env, canister_ids.user_index);
@@ -441,13 +410,9 @@ fn user_whose_canister_is_never_ready_fails_to_start_migrating() {
     set_message_reminder(env, &user1, &user2, DAY_IN_MS);
     let before = user_migration_metrics(env, canister_ids.user_index);
 
-    migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id]);
+    migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id], None);
 
-    // The LocalUserIndex gives up once its attempts run out
-    for _ in 0..25 {
-        env.advance_time(Duration::from_secs(31));
-        tick_many(env, 3);
-    }
+    wait_for_migration_attempts_to_run_out(env);
 
     let after = user_migration_metrics(env, canister_ids.user_index);
     assert_eq!(after.started, before.started);
@@ -471,7 +436,7 @@ fn user_whose_canister_is_never_ready_fails_to_start_migrating() {
 
     // A user who failed to be migrated can be queued again by naming them
     assert_eq!(
-        migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id]),
+        migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id], None),
         vec![user1.user_id]
     );
 }
@@ -514,49 +479,15 @@ fn user_canister_is_upgraded_to_the_latest_wasm_before_migrating() {
     tick_many(env, 10);
     assert_ne!(wasm_version(env, user.canister()), version);
 
-    migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id]);
+    migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id], None);
     tick_many(env, 10);
 
     assert_eq!(wasm_version(env, user.canister()), version);
-    let response = try_start_user_migration(env, *controller, canister_ids.user_index, &user, multi_user_canister(1));
-    assert!(
-        matches!(response, Response::Error(ref e) if e.matches_code(OCErrorCode::AlreadyInProgress)),
-        "{response:?}"
-    );
+    let started = started_migration(env, operator.principal, canister_ids.user_index, user.user_id);
+    assert_eq!(started.wasm_version, version);
 
     // Releasing a new User wasm would break later tests which draw this env
     wrapper.discard();
-}
-
-fn start_user_migration(
-    env: &mut PocketIc,
-    sender: Principal,
-    user_index: CanisterId,
-    user: &User,
-    multi_user_canister_id: CanisterId,
-) -> SuccessResult {
-    match try_start_user_migration(env, sender, user_index, user, multi_user_canister_id) {
-        Response::Success(result) => result,
-        response => panic!("'start_user_migration' error: {response:?}"),
-    }
-}
-
-fn try_start_user_migration(
-    env: &mut PocketIc,
-    controller: Principal,
-    user_index_canister_id: CanisterId,
-    user: &User,
-    multi_user_canister_id: CanisterId,
-) -> Response {
-    client::user_index::start_user_migration(
-        env,
-        controller,
-        user_index_canister_id,
-        &user_index_canister::start_user_migration::Args {
-            user_id: user.user_id,
-            multi_user_canister_id,
-        },
-    )
 }
 
 fn cancel_user_migration(
@@ -589,7 +520,7 @@ fn document(len: usize) -> Document {
     }
 }
 
-// The id isn't checked, since the MultiUser canister does nothing with the migration yet
+// The id isn't checked, since the MultiUser canister doesn't import users yet
 fn multi_user_canister(i: u8) -> CanisterId {
     Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
 }
@@ -609,9 +540,78 @@ fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
     serde_json::from_value(metrics(env, canister_id)["wasm_version"].clone()).unwrap()
 }
 
+// Starts migrating the user to the given canister, which the UserIndex doesn't check is a MultiUser
+// canister in test mode
+fn start_migration(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, user: &User, target: CanisterId) {
+    let operator = platform_operator(env, canister_ids, controller);
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(target),
+    );
+    tick_many(env, 10);
+    let started = started_migration(env, operator.principal, canister_ids.user_index, user.user_id);
+    assert!(started.user_bytes > 0);
+}
+
+pub(crate) struct StartedMigration {
+    pub user_bytes: u64,
+    pub wasm_version: BuildVersion,
+}
+
+pub(crate) fn user_migration_status(
+    env: &PocketIc,
+    sender: Principal,
+    user_index: CanisterId,
+    user_id: UserId,
+) -> Option<UserMigrationStatus> {
+    match client::user_index::user_migration(
+        env,
+        sender,
+        user_index,
+        &user_index_canister::user_migration::Args { user_id },
+    ) {
+        user_index_canister::user_migration::Response::Success(status) => Some(status),
+        user_index_canister::user_migration::Response::NotFound => None,
+    }
+}
+
+fn started_migration(env: &PocketIc, sender: Principal, user_index: CanisterId, user_id: UserId) -> StartedMigration {
+    match user_migration_status(env, sender, user_index, user_id) {
+        Some(UserMigrationStatus::Started {
+            user_bytes,
+            wasm_version,
+            ..
+        }) => StartedMigration {
+            user_bytes,
+            wasm_version,
+        },
+        status => panic!("Migration not started: {status:?}"),
+    }
+}
+
+pub(crate) fn assert_failed_with_p2p_swaps(env: &PocketIc, sender: Principal, user_index: CanisterId, user_id: UserId) {
+    let status = user_migration_status(env, sender, user_index, user_id);
+    assert!(
+        matches!(status, Some(UserMigrationStatus::Failed { ref error, .. })
+            if error.matches_code(OCErrorCode::NotReadyForMigration) && error.message() == Some("User has P2P swaps")),
+        "{status:?}"
+    );
+}
+
+// A canister which isn't ready is retried by the LocalUserIndex until its attempts run out
+pub(crate) fn wait_for_migration_attempts_to_run_out(env: &mut PocketIc) {
+    for _ in 0..25 {
+        env.advance_time(Duration::from_secs(31));
+        tick_many(env, 3);
+    }
+}
+
 // Registers a platform operator, and raises the migration concurrency so that migrations left
 // running by earlier tests in the env don't hold up those started here
-fn platform_operator(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
+pub(crate) fn platform_operator(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let operator = client::register_user(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, controller, canister_ids.user_index, operator.user_id);
 
@@ -625,13 +625,20 @@ fn platform_operator(env: &mut PocketIc, canister_ids: &CanisterIds, controller:
     operator
 }
 
-fn migrate_users(env: &mut PocketIc, sender: Principal, user_index: CanisterId, user_ids: Vec<UserId>) -> Vec<UserId> {
+pub(crate) fn migrate_users(
+    env: &mut PocketIc,
+    sender: Principal,
+    user_index: CanisterId,
+    user_ids: Vec<UserId>,
+    multi_user_canister_id: Option<CanisterId>,
+) -> Vec<UserId> {
     let response = client::user_index::migrate_users(
         env,
         sender,
         user_index,
         &user_index_canister::migrate_users::Args {
             users: user_index_canister::migrate_users::UsersToMigrate::Specific(user_ids),
+            multi_user_canister_id,
         },
     );
     match response {

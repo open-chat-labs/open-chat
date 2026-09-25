@@ -8,16 +8,19 @@ use types::{UserId, UserType};
 // migrating them. Nothing here is async, so rather than running on a timer, this is run whenever
 // users are queued or a migration may have finished.
 pub(crate) fn run(state: &mut RuntimeState) {
-    while let Some(user_id) = state.data.user_migrations.try_take_next() {
+    while let Some(user) = state.data.user_migrations.try_take_next() {
+        let user_id = user.user_id;
         if !can_migrate(&user_id, state) {
             // The user can no longer be migrated, eg. because they've since been deleted
             info!(%user_id, "User dropped from migration queue");
             continue;
         }
-        let in_progress = state.data.user_migrations.in_progress_per_canister();
-        let Some(multi_user_canister_id) = state.data.multi_user_canisters.canister_for_migrating_user(&in_progress) else {
+        let Some(multi_user_canister_id) = user.multi_user_canister_id.or_else(|| {
+            let in_progress = state.data.user_migrations.in_progress_per_canister();
+            state.data.multi_user_canisters.canister_for_migrating_user(&in_progress)
+        }) else {
             // This is run again once a MultiUser canister is created
-            state.data.user_migrations.return_to_front(user_id);
+            state.data.user_migrations.return_to_front(user);
             break;
         };
 
@@ -37,14 +40,14 @@ pub(crate) fn run(state: &mut RuntimeState) {
     }
 }
 
-// Users can be migrated if they are held in a canister of their own and aren't suspended, since a
-// suspended user's canister is frozen
+// Users can be migrated if they are held in a canister of their own. Suspended users are migrated
+// too, since their suspension is part of the user's state which is carried over.
 pub(crate) fn can_migrate(user_id: &UserId, state: &RuntimeState) -> bool {
     user_id.is_canister()
         && state
             .data
             .users
             .get_by_user_id(user_id)
-            .is_some_and(|user| user.user_type == UserType::User && user.suspension_details.is_none())
+            .is_some_and(|user| user.user_type == UserType::User)
         && state.data.local_index_map.get_index_canister(user_id).is_some()
 }

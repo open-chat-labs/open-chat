@@ -1,12 +1,16 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::UserId;
+use types::{CanisterId, UserId};
 
 // Queues users in canisters of their own to be migrated to MultiUser canisters. Only available in
 // test mode, until the MultiUser canister imports users
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub users: UsersToMigrate,
+    // The canister to migrate the users to, rather than the MultiUser canister with the fewest
+    // users. Only for tests, eg. to migrate users to the UserIndex so that it can pull their exports
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub multi_user_canister_id: Option<CanisterId>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

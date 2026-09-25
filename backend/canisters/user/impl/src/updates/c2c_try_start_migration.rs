@@ -1,14 +1,13 @@
-use crate::guards::caller_is_user_index_or_local_user_index;
+use crate::guards::caller_is_local_user_index;
 use crate::mutate_state;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::c2c_try_start_migration::{Response::*, *};
 
-// Called by the LocalUserIndex, or by the UserIndex in test mode, to start migrating the user to a
-// MultiUser canister. Not run via `execute_update`, since a repeated call must still be answered
-// once the canister is frozen for the migration, and nothing else may run which could change the
-// canister's state.
-#[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
+// Called by the LocalUserIndex to start migrating the user to a MultiUser canister. Not run via
+// `execute_update`, since a repeated call must still be answered once the canister is frozen for
+// the migration, and nothing else may run which could change the canister's state.
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_try_start_migration(args: Args) -> Response {
     mutate_state(|state| {

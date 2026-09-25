@@ -183,11 +183,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         LocalUserIndexEvent::UserMigrationStarted(ev) => {
-            if state
-                .data
-                .user_migrations
-                .mark_started(ev.user_id, ev.multi_user_canister_id, **now)
-            {
+            if state.data.user_migrations.mark_started(
+                ev.user_id,
+                ev.multi_user_canister_id,
+                ev.user_bytes,
+                ev.wasm_version,
+                **now,
+            ) {
                 info!(user_id = %ev.user_id, multi_user_canister_id = %ev.multi_user_canister_id, "User migration started");
             }
         }
