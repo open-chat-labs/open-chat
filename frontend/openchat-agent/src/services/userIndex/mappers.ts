@@ -35,7 +35,7 @@ import type {
     UserSummary,
     UserSummaryUpdate,
 } from "@shared";
-import { CommonResponses, UnsupportedValueError, isPrincipalValid } from "@shared";
+import { buildBlobUrl, CommonResponses, UnsupportedValueError, isPrincipalValid } from "@shared";
 import type {
     BotDefinition as ApiBotDefinition,
     BotInstallationLocation as ApiBotInstallationLocation,
@@ -137,12 +137,8 @@ export function botSchema(
         kind: "external_bot",
         id: botId,
         name: bot.name,
-        avatarUrl: mapOptional(
-            bot.avatar_id,
-            (id) =>
-                `${blobUrlPattern
-                    .replace("{canisterId}", canisterId)
-                    .replace("{blobType}", "avatar")}/${botId}/${id}`,
+        avatarUrl: mapOptional(bot.avatar_id, (id) =>
+            buildBlobUrl(blobUrlPattern, canisterId, id, "avatar", { botId }),
         ),
         ownerId: principalBytesToString(bot.owner),
         endpoint: bot.endpoint,
@@ -789,12 +785,8 @@ export function externalBotMatch(
     return {
         kind: "bot_match",
         name: match.name,
-        avatarUrl: mapOptional(
-            match.avatar_id,
-            (id) =>
-                `${blobUrlPattern
-                    .replace("{canisterId}", canisterId)
-                    .replace("{blobType}", "avatar")}/${botId}/${id}`,
+        avatarUrl: mapOptional(match.avatar_id, (id) =>
+            buildBlobUrl(blobUrlPattern, canisterId, id, "avatar", { botId }),
         ),
         id: botId,
         ownerId: principalBytesToString(match.owner),

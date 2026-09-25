@@ -116,6 +116,7 @@ import type {
     WireVideoCallType,
 } from "@shared";
 import {
+    buildBlobUrl,
     ErrorCode,
     isError,
     parseBigInt,
@@ -2967,15 +2968,11 @@ export function webhookDetails(
     return {
         id: webhookId,
         name: value.name,
-        avatarUrl: mapOptional(
-            value.avatar_id,
-            (avatarId) =>
-                `${blobUrlPattern
-                    .replace("{canisterId}", canisterId)
-                    .replace(
-                        "{blobType}",
-                        channelId === undefined ? "avatar" : `channel/${channelId}/avatar`,
-                    )}/${webhookId}/${avatarId}`,
+        avatarUrl: mapOptional(value.avatar_id, (avatarId) =>
+            buildBlobUrl(blobUrlPattern, canisterId, avatarId, "avatar", {
+                channelId,
+                botId: webhookId,
+            }),
         ),
     };
 }

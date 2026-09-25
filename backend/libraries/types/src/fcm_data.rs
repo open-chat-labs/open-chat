@@ -63,7 +63,7 @@ pub struct FcmData {
     pub call_dismissal: Option<FcmCallDismissal>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FcmCallData {
     #[serde(rename = "id")]
     pub message_id: MessageId,
@@ -73,6 +73,10 @@ pub struct FcmCallData {
     pub audio_only: bool,
     #[serde(rename = "st")]
     pub started: TimestampMillis,
+    // Signed by the local user index for this one recipient, so their phone can decline the
+    // call with the app not running. Only ever set on a push to that recipient (#9534).
+    #[serde(rename = "dt", default, skip_serializing_if = "Option::is_none")]
+    pub decline_token: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
@@ -129,9 +133,18 @@ impl FcmData {
                 call_type: facts.call_type,
                 audio_only: facts.audio_only,
                 started: facts.started,
+                decline_token: None,
             }),
             ..self
         }
+    }
+
+    // Attaches the decline token for the one recipient this push goes to
+    pub fn with_decline_token(mut self, token: String) -> Self {
+        if let Some(call) = self.call.as_mut() {
+            call.decline_token = Some(token);
+        }
+        self
     }
 
     pub fn for_direct_chat(direct_chat_id: UserId) -> Self {
@@ -290,6 +303,7 @@ impl FcmData {
                     match dismissal.kind {
                         CallDismissalKind::Ended => "ended",
                         CallDismissalKind::AnsweredElsewhere => "answered_elsewhere",
+                        CallDismissalKind::DeclinedElsewhere => "declined_elsewhere",
                     }
                     .into(),
                 ),
@@ -344,6 +358,7 @@ impl FcmData {
             );
             add_to_map("callAudioOnly", Some(call.audio_only.to_string()));
             add_to_map("callStarted", Some(call.started.to_string()));
+            add_to_map("callDeclineToken", call.decline_token);
         }
         add_to_map(
             "bodyType",
@@ -542,5 +557,42 @@ mod tests {
             assert_eq!(data["callMessageId"], "7");
             assert_eq!(data["dismissalKind"], "answered_elsewhere");
         }
+    }
+
+    // #9534 invariant 9: a ring push with a decline token is otherwise the M1 ring push, and a
+    // non-ring push carries no token.
+    #[test]
+    fn invariant_9_the_decline_token_is_the_only_difference_and_only_on_a_ring_push() {
+        let ring: FcmData = direct_message(Some(facts())).into();
+        let plain = ring.clone().set_call(&facts()).as_data();
+        let with_token = ring.set_call(&facts()).with_decline_token("jwt".to_string()).as_data();
+        assert_eq!(with_token["callDeclineToken"], "jwt");
+        let mut without = with_token.clone();
+        without.remove("callDeclineToken");
+        assert_eq!(without, plain);
+        assert!(!plain.contains_key("callDeclineToken"));
+
+        // a push that does not ring cannot carry a token, whatever is asked of it
+        let no_ring: FcmData = direct_message(None).into();
+        assert!(
+            !no_ring
+                .with_decline_token("jwt".to_string())
+                .as_data()
+                .contains_key("callDeclineToken")
+        );
+    }
+
+    // #9534 invariant 10: the shell tells a declined-elsewhere dismissal from the others by name.
+    #[test]
+    fn invariant_10_a_declined_elsewhere_dismissal_names_its_kind() {
+        let data = FcmData::call_dismissal(
+            Chat::Direct(user(1).into()),
+            7u64.into(),
+            CallDismissalKind::DeclinedElsewhere,
+        )
+        .as_data();
+        assert_eq!(data["type"], "call_dismissed");
+        assert_eq!(data["dismissalKind"], "declined_elsewhere");
+        assert!(!data.contains_key("senderId"), "{data:?}");
     }
 }

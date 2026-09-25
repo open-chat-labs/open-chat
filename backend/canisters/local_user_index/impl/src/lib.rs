@@ -25,7 +25,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::LocalIndexEvent as GroupEvent;
-use jwt::{sign_bytes, verify_and_decode};
+use jwt::{Claims, sign_and_encode_token, sign_bytes, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
@@ -43,11 +43,12 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use tracing::{error, info};
 use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
-    CLAIM_TYPE_DIAMOND_MEMBERSHIP, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DailyPuzzleResult,
-    DiamondMembershipDetails, FcmData, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, Milliseconds,
+    CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId, ChannelLatestMessageIndex,
+    Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles,
+    DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
+    GroupCallDismissedNotification, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, MessageId, Milliseconds,
     ModerationReferralConfig, Notification, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId,
-    UserNotificationEnvelope, VerifiedCredentialGateArgs,
+    UserNotificationEnvelope, UserNotificationPayload, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
@@ -221,6 +222,11 @@ impl RuntimeState {
     pub fn is_caller_daily_puzzle_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.daily_puzzle_canister_id == Some(caller)
+    }
+
+    pub fn is_caller_video_call_operator(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.video_call_operators.contains(&caller)
     }
 
     pub fn set_daily_puzzle_canister_id(&mut self, canister_id: CanisterId) {
@@ -426,19 +432,105 @@ impl RuntimeState {
                     filtered_recipients
                 };
 
-                if !filtered_recipients.is_empty() {
-                    self.data
-                        .notifications
-                        .add(NotificationEnvelope::User(Box::new(UserNotificationEnvelope {
-                            recipients: filtered_recipients,
-                            notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&payload)),
-                            timestamp: now,
-                            fcm_data: Some(fcm_data),
-                        })));
+                let notification_bytes = ByteBuf::from(msgpack::serialize_then_unwrap(&payload));
+
+                // A ring push carries a decline token signed for its one recipient (#9534), so
+                // each phone gets its own envelope. Recipients without a phone share one
+                // envelope with no token; the token never travels in a web push.
+                if let Some(call) = fcm_data.call.as_ref() {
+                    let (phones, others): (Vec<_>, Vec<_>) = filtered_recipients
+                        .into_iter()
+                        .partition(|u| !self.data.fcm_token_store.get_for_user(u).is_empty());
+                    let expiry = call.started + call_push::RING_WINDOW_MS;
+                    let message_id = call.message_id;
+                    for user_id in phones {
+                        let data =
+                            match self.sign_decline_token(user_id, fcm_data.chat_id, message_id, expiry, this_canister_id) {
+                                Some(token) => fcm_data.clone().with_decline_token(token),
+                                None => fcm_data.clone(),
+                            };
+                        self.add_user_notification(vec![user_id], notification_bytes.clone(), data, now);
+                    }
+                    if !others.is_empty() {
+                        self.add_user_notification(others, notification_bytes, fcm_data, now);
+                    }
+                } else if !filtered_recipients.is_empty() {
+                    self.add_user_notification(filtered_recipients, notification_bytes, fcm_data, now);
                 }
             }
             Notification::Bot(bot_notification) => self.push_bot_notification(bot_notification, this_canister_id, now),
         }
+    }
+
+    fn add_user_notification(
+        &mut self,
+        recipients: Vec<UserId>,
+        notification_bytes: ByteBuf,
+        fcm_data: FcmData,
+        now: TimestampMillis,
+    ) {
+        self.data
+            .notifications
+            .add(NotificationEnvelope::User(Box::new(UserNotificationEnvelope {
+                recipients,
+                notification_bytes,
+                timestamp: now,
+                fcm_data: Some(fcm_data),
+            })));
+    }
+
+    // A JWT the video bridge verifies with the OpenChat public key: this user may decline
+    // this call until the ring window ends (#9534). None when the key is not set.
+    fn sign_decline_token(
+        &mut self,
+        user_id: UserId,
+        chat_id: Chat,
+        message_id: MessageId,
+        expiry: TimestampMillis,
+        this_canister_id: CanisterId,
+    ) -> Option<String> {
+        if !self.data.oc_key_pair.is_initialised() {
+            return None;
+        }
+        let claims = Claims::new(
+            expiry,
+            CLAIM_TYPE_DECLINE_VIDEO_CALL.to_string(),
+            DeclineVideoCallClaims {
+                user_id,
+                chat_id,
+                message_id: message_id.to_string(),
+                local_user_index: this_canister_id,
+            },
+        );
+        sign_and_encode_token(self.data.oc_key_pair.secret_key_der(), claims, self.env.rng()).ok()
+    }
+
+    // The video bridge says this user declined the call: stop the ring on their other
+    // devices. Nothing is stored and nobody else hears of it (#9534). Same rules as every
+    // dismissal: only with the switch on, only to phones.
+    pub fn push_call_declined(&mut self, user_id: UserId, chat_id: Chat, message_id: MessageId, now: TimestampMillis) {
+        if !self.data.call_push_enabled || self.data.fcm_token_store.get_for_user(&user_id).is_empty() {
+            return;
+        }
+        let payload = match chat_id {
+            Chat::Direct(them) => UserNotificationPayload::DirectCallDismissed(DirectCallDismissedNotification {
+                them: them.into(),
+                message_id,
+                kind: CallDismissalKind::DeclinedElsewhere,
+            }),
+            Chat::Group(chat_id) => UserNotificationPayload::GroupCallDismissed(GroupCallDismissedNotification {
+                chat_id,
+                message_id,
+                kind: CallDismissalKind::DeclinedElsewhere,
+                is_public: false,
+                member_count: 1,
+            }),
+            // A channel never rings, so there is nothing to stop
+            Chat::Channel(..) => return,
+        };
+        let fcm_data = FcmData::call_dismissal(chat_id, message_id, CallDismissalKind::DeclinedElsewhere);
+        let notification_bytes = ByteBuf::from(msgpack::serialize_then_unwrap(&payload));
+        self.add_user_notification(vec![user_id], notification_bytes, fcm_data, now);
     }
 
     pub fn push_bot_notification(

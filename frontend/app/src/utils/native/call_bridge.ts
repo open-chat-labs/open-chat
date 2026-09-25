@@ -127,6 +127,14 @@ export function runCallAction(action: NativeCallAction): void {
     });
 }
 
+// What the shell needs to act on a call with the app not running: the bridge to tell
+// when the user declines from the ring. Sent on every start so a changed URL is picked
+// up. Never rejects: a shell without the command is a no-op.
+export function setCallConfig(videoBridgeUrl: string): Promise<void> {
+    if (!isAndroidTauriApp()) return Promise.resolve();
+    return invoke<void>("plugin:oc|set_call_config", { videoBridgeUrl }).catch(() => undefined);
+}
+
 // The web layer joined this call from inside the app (the call message's Join button)
 // while the shell may still be ringing for it: the shell ends its ring as answered
 // here. Never rejects: a shell without the command is a no-op.

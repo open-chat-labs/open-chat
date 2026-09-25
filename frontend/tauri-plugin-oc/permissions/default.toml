@@ -27,4 +27,5 @@ permissions = [
     "allow-delete-fcm-token",
     "allow-get-pending-call-action",
     "allow-call-ring-handled",
+    "allow-set-call-config",
 ]

@@ -17,6 +17,7 @@ import com.ocplugin.app.data.BodyType
 import com.ocplugin.app.data.Notification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -80,7 +81,9 @@ object CallRinger {
         deliver(context, CallAction.Accept(call.id, call.kind))
     }
 
-    fun decline(context: Context, id: CallId) {
+    // The ring ends here first, whatever the bridge then says. Returns the report to the
+    // bridge so a receiver can hold the process for it; null when there is nothing to report.
+    fun decline(context: Context, id: CallId): Job? {
         val call = registry.ringing(id)
         val end = registry.declined(id)
         if (end == null) {
@@ -88,6 +91,9 @@ object CallRinger {
         } else {
             finish(context, id, end, call)
         }
+        val token = call?.declineToken ?: return null
+        val bridge = CallConfig.videoBridgeUrl(context) ?: return null
+        return scope.launch { CallDeclineReporter.report(bridge, token) }
     }
 
     // The web layer joined this call from inside the app while it rang here.
