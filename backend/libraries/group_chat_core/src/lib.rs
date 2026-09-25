@@ -768,8 +768,8 @@ impl GroupChatCore {
                 replies_to,
                 &message_event,
                 mentioned,
-                suppressed,
                 everyone_mentioned,
+                suppressed,
                 migrated_user_ids,
                 now,
             )
@@ -2371,4 +2371,144 @@ pub struct LeaveGroupSuccess {
 pub struct ChangeRoleResults {
     pub users: HashMap<UserId, Result<GroupRoleInternal, OCError>>,
     pub bot_notification: Option<BotNotification>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chat_events::TextContentInternal;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use types::{BotCaller, BotInitiator};
+
+    #[test]
+    fn finalising_bot_message_which_mentions_everyone_notifies_everyone() {
+        let (mut chat, owner, muted_member) = setup();
+
+        let result = send_bot_message(&mut chat, "@everyone hello", false);
+
+        assert_eq!(sorted(result.users_to_notify), sorted(vec![owner, muted_member]));
+    }
+
+    #[test]
+    fn finalising_suppressed_bot_message_notifies_no_one() {
+        let (mut chat, _, _) = setup();
+
+        let result = send_bot_message(&mut chat, "hello", true);
+
+        assert!(result.users_to_notify.is_empty());
+    }
+
+    #[test]
+    fn finalising_bot_message_notifies_unmuted_members() {
+        let (mut chat, owner, _) = setup();
+
+        let result = send_bot_message(&mut chat, "hello", false);
+
+        assert_eq!(result.users_to_notify, vec![owner]);
+    }
+
+    // Sends an unfinalised bot message, then finalises it with the given text
+    fn send_bot_message(chat: &mut GroupChatCore, text: &str, suppressed: bool) -> SendMessageSuccess {
+        let caller = Caller::BotV2(BotCaller {
+            bot: bot_id(),
+            initiator: BotInitiator::Autonomous,
+        });
+        let message_id: MessageId = 1u64.into();
+
+        let unfinalised = send(chat, &caller, message_id, "...", false, false, 10);
+        assert!(unfinalised.unfinalised_bot_message);
+        assert!(unfinalised.users_to_notify.is_empty());
+
+        let finalised = send(chat, &caller, message_id, text, suppressed, true, 20);
+        assert!(!finalised.unfinalised_bot_message);
+        finalised
+    }
+
+    fn send(
+        chat: &mut GroupChatCore,
+        caller: &Caller,
+        message_id: MessageId,
+        text: &str,
+        suppressed: bool,
+        finalised: bool,
+        now: TimestampMillis,
+    ) -> SendMessageSuccess {
+        chat.send_message(
+            caller,
+            None,
+            message_id,
+            text_content(text),
+            None,
+            &[],
+            false,
+            None,
+            suppressed,
+            false,
+            NullEventPusher,
+            finalised,
+            Vec::new(),
+            &MigratedUserIds::default(),
+            now,
+        )
+        .unwrap()
+    }
+
+    fn setup() -> (GroupChatCore, UserId, UserId) {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+
+        let owner = user_id(1);
+        let muted_member = user_id(2);
+
+        let mut chat = GroupChatCore::new(
+            MultiUserChat::Group(Principal::from_slice(&[100]).into()),
+            owner,
+            None,
+            false,
+            "name".to_string(),
+            "description".to_string(),
+            Rules::default(),
+            None,
+            None,
+            true,
+            false,
+            GroupPermissions::default(),
+            None,
+            None,
+            UserType::User,
+            0,
+            None,
+            1,
+        );
+
+        chat.members.add(
+            muted_member,
+            None,
+            1,
+            EventIndex::default(),
+            MessageIndex::default(),
+            true,
+            UserType::User,
+        );
+
+        (chat, owner, muted_member)
+    }
+
+    fn text_content(text: &str) -> MessageContentInternal {
+        MessageContentInternal::Text(TextContentInternal { text: text.to_string() })
+    }
+
+    fn sorted(mut users: Vec<UserId>) -> Vec<UserId> {
+        users.sort();
+        users
+    }
+
+    fn bot_id() -> UserId {
+        user_id(3)
+    }
+
+    fn user_id(index: u8) -> UserId {
+        Principal::from_slice(&[index]).into()
+    }
 }
