@@ -4,6 +4,7 @@ use crate::model::events::{CommunityEventInternal, CommunityMemberJoinedInternal
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_synchronously;
 use crate::{RuntimeState, execute_update_async, jobs, mutate_state, read_state};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
@@ -12,12 +13,29 @@ use gated_groups::{
 };
 use group_community_common::{ExpiringMember, PaymentLockGuard};
 use oc_error_codes::OCErrorCode;
-use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UserIdAndPrincipal, UsersUnblocked};
+use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UserId, UserIdAndPrincipal, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_community(args: Args) -> Response {
-    execute_update_async(|| join_community(args)).await
+    execute_update_async(|| async {
+        migrate_previous_user_ids(args.user_id, args.principal, &args.previous_user_ids);
+        join_community(args).await
+    })
+    .await
+}
+
+// Moves anything held under a joining user's previous ids, such as a membership or block, onto their
+// current id, so that the checks made when they join only need to look at their current id
+pub(crate) fn migrate_previous_user_ids(user_id: UserId, principal: Principal, previous_user_ids: &[UserId]) {
+    if !previous_user_ids.is_empty() {
+        mutate_state(|state| {
+            let now = state.env.now();
+            if state.data.migrate_user_ids(previous_user_ids, user_id, Some(principal), now) {
+                handle_activity_notification(state);
+            }
+        });
+    }
 }
 
 pub(crate) async fn join_community(args: Args) -> Response {
@@ -154,11 +172,7 @@ pub(crate) fn join_community_impl(
         .add(args.user_id, args.principal, args.user_type, referred_by, now);
 
     match result {
-        AddResult::Success(_) => {
-            state
-                .data
-                .cache_migrations_if_former_member(args.user_id, &args.previous_user_ids);
-        }
+        AddResult::Success(_) => {}
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
             if !member.lapsed().value {
