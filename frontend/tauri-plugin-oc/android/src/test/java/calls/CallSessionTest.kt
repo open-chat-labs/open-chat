@@ -109,11 +109,11 @@ class CallSessionTest {
         assertEquals(android.telecom.DisconnectCause.LOCAL, CallTelecom.disconnectCode(CallRegistry.End.HUNG_UP))
         assertFalse(CallRegistry.End.HUNG_UP.postsMissedCall)
         val telecom = File("src/main/java/calls/CallTelecom.kt").readText()
-        val end = telecom.substring(telecom.indexOf("fun end(id: CallId, end: CallRegistry.End)"), telecom.indexOf("fun activate("))
+        val end = telecom.substring(telecom.indexOf("fun end(id: CallId, end: CallRegistry.End)"), telecom.indexOf("// The web layer claimed the call"))
         assertTrue("if (end == CallRegistry.End.ANSWERED_HERE)" in end)
-        assertTrue("connection.answered()" in end)
+        assertTrue("call.answered()" in end)
         // and an abort after the answer is a hang-up, not a miss
-        val abort = telecom.substring(telecom.indexOf("override fun onAbort()"), telecom.indexOf("fun answered()"))
+        val abort = telecom.substring(telecom.indexOf("override fun onAbort()"), telecom.indexOf("override fun answered()"))
         assertTrue("if (answered) CallRegistry.End.HUNG_UP else CallRegistry.End.MISSED" in abort)
     }
 
@@ -121,9 +121,9 @@ class CallSessionTest {
     fun `the answered connection the web layer never claims ends itself`() {
         val telecom = File("src/main/java/calls/CallTelecom.kt").readText()
         assertNotNull(telecom.indexOf("claimBackstop"))
-        val answered = telecom.substring(telecom.indexOf("fun answered()"), telecom.indexOf("fun activate()"))
+        val answered = telecom.substring(telecom.indexOf("override fun answered()"), telecom.indexOf("override fun activate()"))
         assertTrue("postDelayed(claimBackstop" in answered)
-        val activate = telecom.substring(telecom.indexOf("fun activate()"), telecom.indexOf("fun finish("))
+        val activate = telecom.substring(telecom.indexOf("override fun activate()"), telecom.indexOf("override fun finish("))
         assertTrue("removeCallbacks(claimBackstop)" in activate)
     }
 
@@ -147,5 +147,55 @@ class CallSessionTest {
         // a call ending in the tile leaves it
         val update = pip.substring(pip.indexOf("fun update("), pip.indexOf("fun onUserLeaveHint"))
         assertTrue("if (!wanted && inPip) leaveTile()" in update)
+    }
+
+    @Test
+    fun `invariant 10 the transactional account is used only from Android 16 QPR2 by release and both accounts opt in to the call log`() {
+        assertEquals(36, CallTelecom.TRANSACTIONAL_FROM_API)
+        assertEquals(3_600_001, CallTelecom.TRANSACTIONAL_FROM_RELEASE)
+        val telecom = File("src/main/java/calls/CallTelecom.kt").readText()
+        val gate = telecom.substring(telecom.indexOf("private fun transactionalSupported()"), telecom.indexOf("fun ensureRegistered"))
+        assertTrue("Build.VERSION.SDK_INT >= TRANSACTIONAL_FROM_API" in gate)
+        assertTrue("Build.VERSION.SDK_INT_FULL >= TRANSACTIONAL_FROM_RELEASE" in gate)
+        // no probing: usesTransactional is the gate plus a successful registration
+        assertTrue("fun usesTransactional(): Boolean = transactionalSupported() && transactionalReady" in telecom)
+        // both accounts carry the call log extra
+        val connectionAccount = telecom.substring(telecom.indexOf("fun ensureRegistered"), telecom.indexOf("private fun logExtras"))
+        assertTrue("setExtras(logExtras())" in connectionAccount)
+        val transactionalAccount = telecom.substring(telecom.indexOf("private fun registerTransactionalAccount"), telecom.indexOf("private fun unregisterStrayAccounts"))
+        assertTrue(".setExtras(logExtras())" in transactionalAccount)
+        assertTrue("CAPABILITY_SUPPORTS_TRANSACTIONAL_OPERATIONS" in transactionalAccount)
+        // both incoming and outgoing calls take the transactional path when it applies, and
+        // fall back to the connection service when addCall refuses
+        for (fn in listOf("fun reportIncoming(", "fun placeOutgoing(")) {
+            val body = telecom.substring(telecom.indexOf(fn))
+            val pathChoice = body.indexOf("if (usesTransactional()")
+            val fallback = body.indexOf("falling back to the connection service")
+            assertTrue(fn, pathChoice in 1 until fallback)
+        }
+    }
+
+    @Test
+    fun `invariant 1 the transactional disconnect never logs an answered call as missed`() {
+        for (end in CallRegistry.End.entries) {
+            val code = CallTelecom.transactionalDisconnectCode(end, answered = true)
+            assertTrue(end.name, code != android.telecom.DisconnectCause.MISSED)
+            assertTrue(end.name, code in setOf(android.telecom.DisconnectCause.LOCAL, android.telecom.DisconnectCause.REJECTED))
+        }
+        assertEquals(android.telecom.DisconnectCause.MISSED, CallTelecom.transactionalDisconnectCode(CallRegistry.End.MISSED, answered = false))
+        assertEquals(android.telecom.DisconnectCause.REJECTED, CallTelecom.transactionalDisconnectCode(CallRegistry.End.ANSWERED_ELSEWHERE, answered = false))
+        assertEquals(android.telecom.DisconnectCause.REJECTED, CallTelecom.transactionalDisconnectCode(CallRegistry.End.REJECTED, answered = false))
+    }
+
+    @Test
+    fun `invariant 11 a call-log redial that resolves to no chat starts no call`() {
+        val telecom = File("src/main/java/calls/CallTelecom.kt").readText()
+        val outgoing = telecom.substring(telecom.indexOf("override fun onCreateOutgoingConnection"))
+        val body = outgoing.substring(0, outgoing.indexOf("class CallConnection("))
+        assertTrue("?: return Connection.createFailedConnection(DisconnectCause(DisconnectCause.ERROR, \"unknown call\"))" in body)
+        assertTrue(body.indexOf("CallRinger.redial(") > body.indexOf("\"unknown call\""))
+        val callBack = File("src/main/java/calls/CallBackActivity.kt").readText()
+        assertTrue("CallHandleDirectory.chat(" in callBack)
+        assertTrue(callBack.indexOf("?: return") < callBack.indexOf("CallRinger.redial(") || callBack.indexOf("?.let") > 0)
     }
 }

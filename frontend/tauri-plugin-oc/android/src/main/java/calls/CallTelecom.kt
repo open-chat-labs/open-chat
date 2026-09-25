@@ -2,7 +2,6 @@ package com.ocplugin.app.calls
 
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,33 +15,78 @@ import android.telecom.DisconnectCause
 import android.telecom.PhoneAccount
 import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
+import android.telecom.VideoProfile
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.ocplugin.app.LOG_TAG
 import java.util.concurrent.ConcurrentHashMap
 
-// Self-managed Telecom integration: the phone account, incoming call reports, and the
-// mapping from how a ring ended to the disconnect cause the call log records.
+// A call as Telecom tracks it, over either of the two paths: a self-managed connection
+// service Connection, or a transactional CallControl (#9559 decision 1).
+interface TelecomCall {
+    val call: IncomingCall
+    // Answered on this device, as far as the call log is concerned.
+    val answered: Boolean
+    // The ring was answered on this device; the call carries on.
+    fun answered()
+    // The web layer is in the call.
+    fun activate()
+    fun setSpeaker(speaker: Boolean, isDefault: Boolean)
+    fun finish(end: CallRegistry.End)
+}
+
+// Self-managed Telecom integration: the phone accounts, incoming and outgoing call reports,
+// and the mapping from how a call ended to the disconnect cause the call log records.
 //
 // A connection lives for the call (#9559): an answered ring goes active and stays until
 // the web layer reports the call ended, and an outgoing call gets a connection of its own
 // when the web layer reports it active. An answered connection that the web layer never
 // claims is ended by a backstop, so nothing can leak.
+//
+// Two accounts. The connection service account is registered everywhere and carries
+// every call below Android 16 QPR2. From 16 QPR2 Telecom logs VoIP calls only when they
+// are transactional, so a second account with that capability is registered there and
+// calls go through TelecomManager.addCall; chosen by release, not by probing. One account
+// cannot be both: Telecom refuses a transactional account whose handle names a connection
+// service, so the second handle names a literal component that need not exist.
 object CallTelecom {
     private const val ACCOUNT_ID = "oc_self_managed"
+    private const val TRANSACTIONAL_ACCOUNT_ID = "oc_transactional"
+    private const val TRANSACTIONAL_ACCOUNT_COMPONENT = "com.ocplugin.app.calls.TransactionalCalls"
     private const val ACCOUNT_LABEL = "OpenChat"
+
+    // Build.VERSION_CODES_FULL for Android 16 QPR2, which the SDK this compiles against does
+    // not name: major * 100000 + minor.
+    const val TRANSACTIONAL_FROM_API = 36
+    const val TRANSACTIONAL_FROM_RELEASE = 3_600_001
 
     @Volatile
     private var registered = false
 
-    private val live = ConcurrentHashMap<CallId, CallConnection>()
+    @Volatile
+    private var transactionalReady = false
 
-    // Ends that arrived before Telecom created the connection. Applied on arrival.
+    private val live = ConcurrentHashMap<CallId, TelecomCall>()
+
+    // Ends and answers that arrived before Telecom created the call. Applied on arrival.
     private val pendingEnd = ConcurrentHashMap<CallId, CallRegistry.End>()
 
     private fun handle(context: Context) = PhoneAccountHandle(
         ComponentName(context, CallConnectionService::class.java),
         ACCOUNT_ID,
     )
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun transactionalHandle(context: Context) = PhoneAccountHandle(
+        ComponentName(context.packageName, TRANSACTIONAL_ACCOUNT_COMPONENT),
+        TRANSACTIONAL_ACCOUNT_ID,
+    )
+
+    // Transactional calls apply from Android 16 QPR2, and only once that account registered.
+    fun usesTransactional(): Boolean = transactionalSupported() && transactionalReady
+
+    private fun transactionalSupported(): Boolean =
+        Build.VERSION.SDK_INT >= TRANSACTIONAL_FROM_API && Build.VERSION.SDK_INT_FULL >= TRANSACTIONAL_FROM_RELEASE
 
     fun ensureRegistered(context: Context) {
         if (registered || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -57,28 +101,69 @@ object CallTelecom {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         // Telecom writes the call log rows itself, so no call log
                         // permission is needed and the user is never prompted.
-                        setExtras(Bundle().apply {
-                            putBoolean(PhoneAccount.EXTRA_LOG_SELF_MANAGED_CALLS, true)
-                        })
+                        setExtras(logExtras())
                     }
                 }
                 .build()
             tm.registerPhoneAccount(account)
             registered = true
+            if (transactionalSupported()) registerTransactionalAccount(context, tm)
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Telecom phone account registration failed", e)
         }
     }
 
-    // Asks Telecom to ring. True when it took the call, in which case the ring
-    // notification is posted from the connection's onShowIncomingCallUi. False when
-    // Telecom is unavailable or refused, and the caller posts the notification itself.
+    private fun logExtras() = Bundle().apply { putBoolean(PhoneAccount.EXTRA_LOG_SELF_MANAGED_CALLS, true) }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun registerTransactionalAccount(context: Context, tm: TelecomManager) {
+        try {
+            unregisterStrayAccounts(context, tm)
+            val account = PhoneAccount.builder(transactionalHandle(context), ACCOUNT_LABEL)
+                .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED or PhoneAccount.CAPABILITY_SUPPORTS_TRANSACTIONAL_OPERATIONS)
+                .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+                .setExtras(logExtras())
+                .build()
+            tm.registerPhoneAccount(account)
+            transactionalReady = true
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Transactional phone account registration failed", e)
+        }
+    }
+
+    // An account with our transactional id under another component name, left by a build
+    // that named the handle differently. Telecom allows ten accounts per package.
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun unregisterStrayAccounts(context: Context, tm: TelecomManager) {
+        try {
+            val current = transactionalHandle(context)
+            tm.ownSelfManagedPhoneAccounts
+                .filter { it.id == TRANSACTIONAL_ACCOUNT_ID && it != current }
+                .forEach { tm.unregisterPhoneAccount(it) }
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "Stray phone account sweep failed", e)
+        }
+    }
+
+    // Asks Telecom to ring. True when it took the call, in which case the ring notification
+    // is posted by the call's own path (onShowIncomingCallUi, or the transactional add
+    // callback). False when Telecom is unavailable or refused, and the caller posts the
+    // notification itself.
     fun reportIncoming(context: Context, call: IncomingCall): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
         ensureRegistered(context)
         if (!registered) return false
+        val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+        if (usesTransactional() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
+                TransactionalCall(context, call, incoming = true, video = call.kind != CallKind.AUDIO)
+                    .add(tm, transactionalHandle(context), address(context, call.id.chat))
+                return true
+            } catch (e: Exception) {
+                Log.w(LOG_TAG, "Transactional add refused; falling back to the connection service", e)
+            }
+        }
         return try {
-            val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
             val extras = Bundle().apply {
                 putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, call.toBundle())
                 putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, address(context, call.id.chat))
@@ -97,29 +182,29 @@ object CallTelecom {
 
     fun end(id: CallId, end: CallRegistry.End) {
         if (end == CallRegistry.End.ANSWERED_HERE) {
-            // The ring ended by an answer here: the connection carries on into the call.
-            val connection = live[id]
-            if (connection == null) pendingEnd[id] = end else connection.answered()
+            // The ring ended by an answer here: the call carries on.
+            val call = live[id]
+            if (call == null) pendingEnd[id] = end else call.answered()
             return
         }
-        val connection = live.remove(id)
-        if (connection == null) {
+        val call = live.remove(id)
+        if (call == null) {
             pendingEnd[id] = end
             return
         }
-        connection.finish(end)
+        call.finish(end)
     }
 
-    // The web layer claimed the call: the connection goes active. False when Telecom holds
-    // no connection for it, which is the case for an outgoing call.
+    // The web layer claimed the call: it goes active. False when Telecom holds no call for
+    // it, which is the case for an outgoing call.
     fun activate(id: CallId): Boolean {
-        val connection = live[id] ?: return false
-        connection.activate()
+        val call = live[id] ?: return false
+        call.activate()
         return true
     }
 
-    // An outgoing call the web layer started. Telecom asks the connection service for the
-    // connection, which is marked as ours through the extras; a request without that mark is
+    // An outgoing call the web layer started. On the connection service path Telecom asks
+    // for the connection, marked as ours through the extras; a request without that mark is
     // a dialler redial and is handled as one.
     fun placeOutgoing(context: Context, call: IncomingCall, video: Boolean) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -127,6 +212,15 @@ object CallTelecom {
         if (!registered) return
         try {
             val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+            if (usesTransactional() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                try {
+                    TransactionalCall(context, call, incoming = false, video = video)
+                        .add(tm, transactionalHandle(context), address(context, call.id.chat))
+                    return
+                } catch (e: Exception) {
+                    Log.w(LOG_TAG, "Transactional add refused; falling back to the connection service", e)
+                }
+            }
             if (!tm.isOutgoingCallPermitted(handle(context))) {
                 Log.w(LOG_TAG, "Telecom does not permit an outgoing call now")
                 return
@@ -136,7 +230,7 @@ object CallTelecom {
                 putBundle(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, call.toBundle().apply { putBoolean(EXTRA_OC_OUTGOING, true) })
                 putInt(
                     TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE,
-                    if (video) android.telecom.VideoProfile.STATE_BIDIRECTIONAL else android.telecom.VideoProfile.STATE_AUDIO_ONLY,
+                    if (video) VideoProfile.STATE_BIDIRECTIONAL else VideoProfile.STATE_AUDIO_ONLY,
                 )
             }
             tm.placeCall(address(context, call.id.chat), extras)
@@ -159,25 +253,36 @@ object CallTelecom {
 
     const val EXTRA_OC_OUTGOING = "oc_outgoing_call"
 
-    internal fun register(connection: CallConnection) {
-        val id = connection.call.id
+    internal fun register(call: TelecomCall) {
+        val id = call.call.id
         val early = pendingEnd.remove(id)
+        live[id] = call
         if (early != null) {
-            connection.finish(early)
-            return
+            if (early == CallRegistry.End.ANSWERED_HERE) call.answered() else end(id, early)
         }
-        live[id] = connection
     }
 
     internal fun unregister(id: CallId) {
         live.remove(id)
     }
 
-    // What the call log records for each end.
+    // What the call log records for each end on the connection service path.
     fun disconnectCode(end: CallRegistry.End): Int = when (end) {
         CallRegistry.End.MISSED -> DisconnectCause.MISSED
         CallRegistry.End.REJECTED -> DisconnectCause.REJECTED
         CallRegistry.End.ANSWERED_ELSEWHERE -> DisconnectCause.ANSWERED_ELSEWHERE
+        CallRegistry.End.DECLINED_ELSEWHERE -> DisconnectCause.REJECTED
+        CallRegistry.End.ANSWERED_HERE -> DisconnectCause.LOCAL
+        CallRegistry.End.HUNG_UP -> DisconnectCause.LOCAL
+    }
+
+    // CallControl.disconnect accepts only LOCAL, REMOTE, REJECTED and MISSED, and a call that
+    // went active is never a miss (#9559 invariant 1). Answered elsewhere has no code of its
+    // own; REJECTED keeps it out of the missed calls.
+    fun transactionalDisconnectCode(end: CallRegistry.End, answered: Boolean): Int = when (end) {
+        CallRegistry.End.MISSED -> if (answered) DisconnectCause.LOCAL else DisconnectCause.MISSED
+        CallRegistry.End.REJECTED -> DisconnectCause.REJECTED
+        CallRegistry.End.ANSWERED_ELSEWHERE -> if (answered) DisconnectCause.LOCAL else DisconnectCause.REJECTED
         CallRegistry.End.DECLINED_ELSEWHERE -> DisconnectCause.REJECTED
         CallRegistry.End.ANSWERED_HERE -> DisconnectCause.LOCAL
         CallRegistry.End.HUNG_UP -> DisconnectCause.LOCAL
@@ -237,13 +342,14 @@ class CallConnectionService : ConnectionService() {
     }
 }
 
-class CallConnection(private val context: Context, val call: IncomingCall, address: Uri?) : Connection() {
+class CallConnection(private val context: Context, override val call: IncomingCall, address: Uri?) : Connection(), TelecomCall {
     @Volatile
     private var finished = false
 
     // The ring was answered here; the connection now belongs to the call.
     @Volatile
-    private var answered = false
+    override var answered = false
+        private set
 
     private val main = Handler(Looper.getMainLooper())
 
@@ -321,7 +427,7 @@ class CallConnection(private val context: Context, val call: IncomingCall, addre
         finish(if (answered) CallRegistry.End.HUNG_UP else CallRegistry.End.MISSED)
     }
 
-    fun answered() {
+    override fun answered() {
         if (finished || answered) return
         answered = true
         setActive()
@@ -329,7 +435,7 @@ class CallConnection(private val context: Context, val call: IncomingCall, addre
     }
 
     // The web layer is in the call.
-    fun activate() {
+    override fun activate() {
         if (finished) return
         answered = true
         main.removeCallbacks(claimBackstop)
@@ -337,7 +443,7 @@ class CallConnection(private val context: Context, val call: IncomingCall, addre
         routes.reapply()
     }
 
-    fun setSpeaker(speaker: Boolean, isDefault: Boolean) {
+    override fun setSpeaker(speaker: Boolean, isDefault: Boolean) {
         if (!isDefault) routes.resetStompBudget()
         routes.apply(speaker, isDefault)
     }
@@ -363,7 +469,7 @@ class CallConnection(private val context: Context, val call: IncomingCall, addre
         return CallRoutePolicy.RouteState(route, btDevices = state.supportedRouteMask and CallAudioState.ROUTE_BLUETOOTH != 0)
     }
 
-    fun finish(end: CallRegistry.End) {
+    override fun finish(end: CallRegistry.End) {
         if (finished) return
         finished = true
         main.removeCallbacks(claimBackstop)
