@@ -78,9 +78,9 @@ pub fn is_target_canister_uninstalled_or_deleted(reject_code: RejectCode, messag
 }
 
 // Whether a call to a User canister failed in a way it does once its user has been migrated to a
-// MultiUser canister: the canister is uninstalled, and is briefly installed with the cycles refunder
-// beforehand, which has none of the User canister's methods. A caller finding this checks whether the
-// user has been migrated, so that it can send the call on to them.
+// MultiUser canister: the canister is uninstalled, then briefly installed with the cycles refunder,
+// which has none of the User canister's methods, and then uninstalled again. A caller finding this
+// checks whether the user has been migrated, so that it can send the call on to them.
 pub fn is_user_canister_possibly_migrated(error: &C2CError) -> bool {
     is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) || error.is_method_not_found()
 }

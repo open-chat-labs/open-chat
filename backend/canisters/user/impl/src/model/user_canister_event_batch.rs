@@ -74,8 +74,8 @@ impl TimerJobItem for UserCanisterEventBatch {
             Ok(()) => Ok(()),
             Err(error) => {
                 // If the user has been migrated to a MultiUser canister, their events are sent on
-                // to them there instead
-                if is_user_canister_possibly_migrated(&error) {
+                // to them there instead. Only a canister which holds a user alone is ever migrated.
+                if is_user_canister_possibly_migrated(&error) && self.items.iter().all(|event| event.value.0.index() == 0) {
                     match latest_id_if_migrated(canister_id.into()).await {
                         Ok(Some(new_user_id)) => {
                             mutate_state(|state| {
@@ -103,7 +103,10 @@ impl TimerJobItem for UserCanisterEventBatch {
                             });
                             return Ok(());
                         }
-                        Ok(None) => {}
+                        // The LocalUserIndex may not have heard of the migration yet, so the events are
+                        // retried, including while the cycles refunder is installed, which is only
+                        // briefly, and is otherwise the only time a User canister is missing the method
+                        Ok(None) => return Err(delay_if_should_retry_failed_c2c_call_to_new_method(&error)),
                         // They may have been migrated, so the events are retried as the lookup would
                         // be, falling back to retrying them as the call to the old canister would be
                         Err(lookup_error) => {
