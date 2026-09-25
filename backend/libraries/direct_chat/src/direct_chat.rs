@@ -9,7 +9,7 @@ use chat_events::{
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::collections::HashSet;
 use types::{
     BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex,
@@ -545,20 +545,41 @@ impl DirectChat {
         self.events_ttl_changed_at
     }
 
-    // Sets the TTL, which `user_id` changed at `changed_at`. For a change made by the other user
-    // this is when they made it, which is before `now`, the time this copy is updated.
+    // When the TTL was last changed, by either user. For chats from before this was recorded, until
+    // their TTL is next changed, it is when this copy's TTL was last updated, the best there is.
+    pub fn events_ttl_last_changed(&self) -> TimestampMillis {
+        self.events_ttl_changed_at
+            .unwrap_or_else(|| self.events.get_events_time_to_live().timestamp)
+    }
+
+    // Sets the TTL as changed by the user `user_id`, returning the time the change is given, to be
+    // sent to the other user, or `None` if the TTL already had the value, so nothing changed. The
+    // time is after every change this copy has seen, so that the change is ordered after them in
+    // both copies, even if it is made in the same millisecond as one of them or this canister's
+    // clock is behind the other user's.
     pub fn set_events_time_to_live(
         &mut self,
         user_id: UserId,
         events_ttl: Option<Milliseconds>,
+        now: TimestampMillis,
+    ) -> Option<TimestampMillis> {
+        let changed_at = max(now, self.events_ttl_last_changed() + 1);
+        self.events.set_events_time_to_live(user_id, events_ttl, now)?;
+        self.events_ttl_changed_at = Some(changed_at);
+        Some(changed_at)
+    }
+
+    // Applies the other user's change to the TTL, which they made at `changed_at`. Unlike a change
+    // made by the user, the time is recorded even if the TTL already has the value, since it is
+    // recorded in the other user's copy.
+    pub fn apply_their_events_time_to_live(
+        &mut self,
+        events_ttl: Option<Milliseconds>,
         changed_at: TimestampMillis,
         now: TimestampMillis,
-    ) -> Option<PushEventResultInternal> {
-        let result = self.events.set_events_time_to_live(user_id, events_ttl, now);
-        if result.is_some() {
-            self.events_ttl_changed_at = Some(changed_at);
-        }
-        result
+    ) {
+        self.events.set_events_time_to_live(self.them, events_ttl, now);
+        self.events_ttl_changed_at = Some(changed_at);
     }
 
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
@@ -828,22 +849,35 @@ mod tests {
     }
 
     #[test]
-    fn events_ttl_changed_at_is_recorded_only_when_the_ttl_changes_and_survives_serialization() {
+    fn events_ttl_changes_are_timed_after_every_change_seen() {
         init_stable_memory_map();
         let mut chat = DirectChat::new(user(1), user(2), UserType::User, 1, None, 123, 1);
         assert_eq!(chat.events_ttl_changed_at(), None);
 
-        // Setting the TTL it already has is not a change
-        assert!(chat.set_events_time_to_live(user(2), None, 5, 10).is_none());
+        // Setting the TTL it already has changes nothing
+        assert_eq!(chat.set_events_time_to_live(user(1), None, 10), None);
         assert_eq!(chat.events_ttl_changed_at(), None);
 
-        // A change the other user made at 5 is applied at 10, the time this copy is updated
-        assert!(chat.set_events_time_to_live(user(2), Some(1000), 5, 10).is_some());
-        assert_eq!(chat.events_ttl_changed_at(), Some(5));
-        assert_eq!(chat.events().get_events_time_to_live().timestamp, 10);
+        assert_eq!(chat.set_events_time_to_live(user(1), Some(1000), 10), Some(10));
 
-        let deserialized: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
-        assert_eq!(deserialized.events_ttl_changed_at(), Some(5));
+        // The other user's change, made at 20 by their clock, applied at 15 by this canister's
+        chat.apply_their_events_time_to_live(Some(2000), 20, 15);
+        assert_eq!(chat.events_ttl_last_changed(), 20);
+        assert_eq!(chat.events().get_events_time_to_live().timestamp, 15);
+
+        // A change made at 16 by this canister's clock is still timed after it
+        assert_eq!(chat.set_events_time_to_live(user(1), Some(3000), 16), Some(21));
+
+        // The other user's change is recorded even if the TTL already has the value
+        chat.apply_their_events_time_to_live(Some(3000), 30, 40);
+        assert_eq!(chat.events_ttl_last_changed(), 30);
+
+        let mut deserialized: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
+        assert_eq!(deserialized.events_ttl_changed_at(), Some(30));
+
+        // Chats from before the time was recorded fall back to when their TTL was last updated
+        deserialized.events_ttl_changed_at = None;
+        assert_eq!(deserialized.events_ttl_last_changed(), 16);
     }
 
     #[test]
