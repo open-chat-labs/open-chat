@@ -907,6 +907,15 @@ impl Data {
         removed
     }
 
+    // If the user was a member under any of their previous ids then the events may refer to them
+    // by those ids, so the migrations through to their current id are cached. Otherwise no events
+    // refer to them by their previous ids, so there is nothing to cache.
+    pub fn cache_migrations_if_former_member(&mut self, user_id: UserId, previous_user_ids: &[UserId]) {
+        if previous_user_ids.iter().any(|u| self.former_members.contains(u)) {
+            self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
+        }
+    }
+
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
         self.members.mark_member_left_channel(user_id, channel_id, false, now);
         self.expiring_members.remove_member(user_id, Some(channel_id));

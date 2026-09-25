@@ -943,6 +943,15 @@ impl Data {
         self.former_members.insert(user_id);
     }
 
+    // If the user was a member under any of their previous ids then the events may refer to them
+    // by those ids, so the migrations through to their current id are cached. Otherwise no events
+    // refer to them by their previous ids, so there is nothing to cache.
+    pub fn cache_migrations_if_former_member(&mut self, user_id: UserId, previous_user_ids: &[UserId]) {
+        if previous_user_ids.iter().any(|u| self.former_members.contains(u)) {
+            self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
+        }
+    }
+
     pub fn get_caller_for_events(&self, caller: Principal, bot_initiator: Option<BotInitiator>) -> Option<EventsCaller> {
         if let Some(initiator) = bot_initiator {
             let bot_user_id = caller.into();

@@ -21,6 +21,9 @@ pub struct Args {
     #[serde(default)]
     pub total_chit_earned: i32,
     pub composite_gate_index: Option<u8>,
+    // The ids the user had before being migrated to a MultiUser canister, ordered oldest first
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub previous_user_ids: Vec<UserId>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
