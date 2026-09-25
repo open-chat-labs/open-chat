@@ -30,4 +30,5 @@ permissions = [
     "allow-set-call-config",
     "allow-call-active",
     "allow-call-ended",
+    "allow-set-call-speaker",
 ]

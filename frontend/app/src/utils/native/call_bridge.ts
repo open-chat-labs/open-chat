@@ -181,6 +181,12 @@ function chatArgs(chatId: ChatIdentifier): {
     }
 }
 
+// The in-app speaker control. Telecom owns the route in the shell; this is a request.
+export function setCallSpeaker(speaker: boolean): Promise<void> {
+    if (!isAndroidTauriApp()) return Promise.resolve();
+    return invoke<void>("plugin:oc|set_call_speaker", { speaker }).catch(() => undefined);
+}
+
 // What a native surface (the ongoing notification, a headset, Telecom) did to the call.
 export type NativeCallControl =
     | { kind: "hangup"; messageId: bigint }

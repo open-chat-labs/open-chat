@@ -206,6 +206,14 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve()
     }
 
+    // The in-app speaker control.
+    @Command
+    fun setCallSpeaker(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallSpeakerArgs::class.java)
+        CallSession.setSpeaker(activity, args.speaker)
+        invoke.resolve()
+    }
+
     // The web layer left the call.
     @Command
     fun callEnded(invoke: Invoke) {
@@ -240,6 +248,11 @@ class CallActiveArgs {
     var messageId: String? = null
     var video: Boolean = false
     var title: String? = null
+}
+
+@InvokeArg
+class SetCallSpeakerArgs {
+    var speaker: Boolean = false
 }
 
 @InvokeArg

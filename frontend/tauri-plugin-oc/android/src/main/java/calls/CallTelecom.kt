@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.telecom.CallAudioState
 import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.ConnectionService
@@ -144,6 +145,11 @@ object CallTelecom {
         }
     }
 
+    // The app's route request: the connect-time default, or a user's tap.
+    fun setSpeaker(id: CallId, speaker: Boolean, isDefault: Boolean) {
+        live[id]?.setSpeaker(speaker, isDefault)
+    }
+
     fun endAll(end: CallRegistry.End) {
         val all = live.values.toList()
         live.clear()
@@ -241,6 +247,34 @@ class CallConnection(private val context: Context, val call: IncomingCall, addre
 
     private val main = Handler(Looper.getMainLooper())
 
+    // Telecom owns the audio route; the policy decides what to ask it for.
+    @Volatile
+    private var lastAudioState: CallAudioState? = null
+
+    @Volatile
+    private var lastMuted: Boolean? = null
+
+    private val routes = CallRoutePolicy(object : CallRoutePolicy.Port {
+        override fun routeState(): CallRoutePolicy.RouteState? = lastAudioState?.let { routeStateOf(it) }
+        override fun requestRoute(route: CallRoutePolicy.Route) {
+            val code = when (route) {
+                CallRoutePolicy.Route.SPEAKER -> CallAudioState.ROUTE_SPEAKER
+                CallRoutePolicy.Route.EARPIECE -> CallAudioState.ROUTE_EARPIECE
+                CallRoutePolicy.Route.BLUETOOTH -> CallAudioState.ROUTE_BLUETOOTH
+                CallRoutePolicy.Route.OTHER -> return
+            }
+            try {
+                setAudioRoute(code)
+            } catch (e: Exception) {
+                Log.w(LOG_TAG, "setAudioRoute refused", e)
+            }
+        }
+        override fun isActive(): Boolean = state == STATE_ACTIVE
+        override fun reflect(speaker: Boolean) {
+            CallSession.routeReflected(context, call.id, speaker)
+        }
+    })
+
     // An answered connection the web layer never claims ends itself.
     private val claimBackstop = Runnable {
         if (!finished && answered && CallSession.state.active?.id != call.id) {
@@ -300,6 +334,33 @@ class CallConnection(private val context: Context, val call: IncomingCall, addre
         answered = true
         main.removeCallbacks(claimBackstop)
         if (state != STATE_ACTIVE) setActive()
+        routes.reapply()
+    }
+
+    fun setSpeaker(speaker: Boolean, isDefault: Boolean) {
+        if (!isDefault) routes.resetStompBudget()
+        routes.apply(speaker, isDefault)
+    }
+
+    // The platform's view of the route and the system mute (a headset or car button).
+    override fun onCallAudioStateChanged(state: CallAudioState?) {
+        state ?: return
+        lastAudioState = state
+        routes.onRouteStateChanged(routeStateOf(state))
+        if (answered && lastMuted != state.isMuted) {
+            lastMuted = state.isMuted
+            CallSession.muteReported(call.id, state.isMuted)
+        }
+    }
+
+    private fun routeStateOf(state: CallAudioState): CallRoutePolicy.RouteState {
+        val route = when (state.route) {
+            CallAudioState.ROUTE_SPEAKER -> CallRoutePolicy.Route.SPEAKER
+            CallAudioState.ROUTE_EARPIECE -> CallRoutePolicy.Route.EARPIECE
+            CallAudioState.ROUTE_BLUETOOTH -> CallRoutePolicy.Route.BLUETOOTH
+            else -> CallRoutePolicy.Route.OTHER
+        }
+        return CallRoutePolicy.RouteState(route, btDevices = state.supportedRouteMask and CallAudioState.ROUTE_BLUETOOTH != 0)
     }
 
     fun finish(end: CallRegistry.End) {

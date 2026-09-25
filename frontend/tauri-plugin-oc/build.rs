@@ -28,6 +28,7 @@ const COMMANDS: &[&str] = &[
     "set_call_config",
     "call_active",
     "call_ended",
+    "set_call_speaker",
 ];
 
 fn main() {

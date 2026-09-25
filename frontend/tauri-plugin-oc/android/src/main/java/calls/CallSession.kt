@@ -34,7 +34,42 @@ object CallSession {
         if (!CallTelecom.activate(call.id)) {
             CallTelecom.placeOutgoing(context, call, video)
         }
+        // Voice to the earpiece, video to the speaker, unless a headset is on.
+        speaker = video
+        CallTelecom.setSpeaker(call.id, speaker, isDefault = true)
+        CallProximity.update(context, active = true, video = video, speaker = speaker)
         CallForegroundService.start(context, call, now, sharing = false)
+    }
+
+    // The route the call is on, as the platform last reported it for an active call.
+    @Volatile
+    private var speaker = false
+
+    // A tap on the in-app speaker control.
+    fun setSpeaker(context: Context, speaker: Boolean) {
+        val current = state.active ?: return
+        CallTelecom.setSpeaker(current.id, speaker, isDefault = false)
+    }
+
+    // The platform put the call on this route.
+    fun routeReflected(context: Context, id: CallId, speaker: Boolean) {
+        val current = state.active ?: return
+        if (current.id != id) return
+        this.speaker = speaker
+        CallProximity.update(context, active = true, video = current.video, speaker = speaker)
+        OCPluginCompanion.triggerRef(
+            "call-control",
+            JSObject().put("kind", "route").put("messageId", id.messageId).put("speaker", speaker),
+        )
+    }
+
+    // The system muted or unmuted the call (a headset button): the web layer applies it to
+    // the Daily call. One way: Telecom has no call for an app to set its mute.
+    fun muteReported(id: CallId, muted: Boolean) {
+        OCPluginCompanion.triggerRef(
+            "call-control",
+            JSObject().put("kind", "mute").put("messageId", id.messageId).put("muted", muted),
+        )
     }
 
     // The web layer left the call, for whatever reason.
@@ -42,6 +77,7 @@ object CallSession {
         when (val ended = state.ended(id, System.currentTimeMillis())) {
             is CallSessionState.Ended.StopAfterGrace -> {
                 CallTelecom.end(id, CallRegistry.End.HUNG_UP)
+                CallProximity.update(context, active = false, video = false, speaker = false)
                 armStopTimer(context)
             }
             CallSessionState.Ended.Ignore -> Unit
@@ -63,6 +99,7 @@ object CallSession {
     fun endAll(context: Context) {
         state.endAll(System.currentTimeMillis())
         cancelStopTimer()
+        CallProximity.update(context, active = false, video = false, speaker = false)
         CallTelecom.endAll(CallRegistry.End.HUNG_UP)
         CallForegroundService.stop(context)
         ownerTaskId = -1
