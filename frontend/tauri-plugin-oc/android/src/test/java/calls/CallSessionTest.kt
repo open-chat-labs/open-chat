@@ -232,10 +232,13 @@ class CallSessionTest {
         // and stops at once when none is (a group call never has one)
         val session = File("src/main/java/calls/CallSession.kt").readText()
         val endAll = session.substring(session.indexOf("fun endAll("), session.indexOf("fun ownerTaskAlive"))
-        val report = endAll.indexOf("CallDeclineReporter.reportEnd(bridge, token)")
+        val report = endAll.indexOf("CallDeclineReporter.reportEnd(bridge, token, END_REPORT_WAIT_MS)")
         assertTrue(report > 0)
+        // waited for, bounded, and before Telecom and the service are released
+        assertTrue(endAll.substring(0, report).contains("runBlocking {"))
+        assertTrue(endAll.indexOf("CallTelecom.endAll(", report) > report)
         assertTrue(endAll.indexOf("CallForegroundService.stop(context)", report) > report)
-        assertTrue("} else {" in endAll)
+        assertTrue(CallSession.END_REPORT_WAIT_MS in 1_000L..5_000L)
         val reporter = File("src/main/java/calls/CallDeclineReporter.kt").readText()
         assertTrue("/room/end_meeting" in reporter.substring(reporter.indexOf("fun reportEnd(")))
     }

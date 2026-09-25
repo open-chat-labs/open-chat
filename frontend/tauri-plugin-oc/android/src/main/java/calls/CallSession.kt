@@ -7,10 +7,7 @@ import android.util.Log
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.OCPluginCompanion
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 // The active call (#9559): drives Telecom, the foreground service and the web layer from
 // CallSessionState's answers. The web layer says when a call is active and when it ended;
@@ -21,7 +18,6 @@ object CallSession {
     val state = CallSessionState()
 
     private val main = Handler(Looper.getMainLooper())
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var stopTimer: Runnable? = null
 
     // The task hosting the call's main activity. A second main activity can live in another
@@ -114,30 +110,29 @@ object CallSession {
     }
 
     // The web layer is gone: end whatever is live, now. A direct call is ended for the
-    // other side too, through the bridge, before the service that keeps this process
-    // alive is stopped; a group call is only left.
+    // other side too, through the bridge, and that report is waited for (briefly) before
+    // anything else is released: the process is on its way out (on the device the
+    // WebView's own crash followed within a second), so an asynchronous report never
+    // landed. A group call is only left.
     fun endAll(context: Context) {
         val ended = state.endAll(System.currentTimeMillis())
         Log.i(LOG_TAG, "Native teardown; active=${ended?.id?.messageId} endToken=${ended?.endToken != null}")
         cancelStopTimer()
+        val token = ended?.endToken
+        val bridge = CallConfig.videoBridgeUrl(context)
+        if (token != null && bridge != null) {
+            val reported = runBlocking { CallDeclineReporter.reportEnd(bridge, token, END_REPORT_WAIT_MS) }
+            Log.i(LOG_TAG, "End reported to the bridge: $reported")
+        }
         CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
         CallRingback.stop()
         CallTelecom.endAll(CallRegistry.End.HUNG_UP)
         ownerTaskId = -1
-        val token = ended?.endToken
-        val bridge = CallConfig.videoBridgeUrl(context)
-        if (token != null && bridge != null) {
-            scope.launch {
-                try {
-                    CallDeclineReporter.reportEnd(bridge, token)
-                } finally {
-                    CallForegroundService.stop(context)
-                }
-            }
-        } else {
-            CallForegroundService.stop(context)
-        }
+        CallForegroundService.stop(context)
     }
+
+    // How long a native teardown waits for the bridge before letting the process go.
+    const val END_REPORT_WAIT_MS = 2_000L
 
     fun ownerTaskAlive(context: Context): Boolean = CallForegroundService.taskAlive(context, ownerTaskId)
 
