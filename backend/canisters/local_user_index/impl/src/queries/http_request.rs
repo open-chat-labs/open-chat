@@ -45,9 +45,14 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
     fn get_user_canister_versions(state: &RuntimeState) -> HttpResponse {
         let mut map = BTreeMap::new();
-        for (user_id, user) in state.data.local_users.iter_user_canisters() {
-            let version = map.entry(user.wasm_version).or_insert(UserCanisterVersion {
-                version: user.wasm_version,
+        for (user_id, wasm_version) in state
+            .data
+            .local_users
+            .iter_user_canisters()
+            .filter_map(|(user_id, user)| user.wasm_version.map(|v| (user_id, v)))
+        {
+            let version = map.entry(wasm_version).or_insert(UserCanisterVersion {
+                version: wasm_version,
                 count: 0,
                 users: Vec::new(),
             });

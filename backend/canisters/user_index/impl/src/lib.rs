@@ -482,10 +482,12 @@ struct Data {
     #[serde(default)]
     pub blocked_attempt_notice_throttle: HashMap<(u64, Principal), (TimestampMillis, u32)>,
     // Each MultiUser canister, along with when it was created, the LocalUserIndex which controls it
-    // and how many users it holds
-    #[serde(default)]
+    // and how many users it holds. Stored under a new name since the previous shape, a map of
+    // canister id -> LocalUserIndex, is still held under the old one
+    #[serde(rename = "multi_user_canisters_v2", default)]
     pub multi_user_canisters: MultiUserCanisterMap,
-    // Set by proposal and fanned out to the LocalUserIndexes. Not acted on yet
+    // Set by a platform operator and fanned out to the LocalUserIndexes. While set, new users are
+    // routed to the LocalUserIndex controlling the MultiUser canister with the fewest users
     #[serde(default)]
     pub multi_user_canisters_enabled: bool,
     // The native call push kill switch (#9456). Set by a platform operator and fanned out to the
