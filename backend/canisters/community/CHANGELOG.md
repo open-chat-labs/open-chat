@@ -46,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Skip running the regular jobs while frozen ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
 - Return an error from `register_proposal_vote` for users in MultiUser canisters who should use `register_proposal_vote_v2` instead ([#9554](https://github.com/open-chat-labs/open-chat/pull/9554))
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
-- Reject users joining who are blocked under any of their `previous_user_ids` ([#9567](https://github.com/open-chat-labs/open-chat/pull/9567))
+- Move anything held under a joining user's `previous_user_ids` onto their current id before checking whether they can join, so that a user blocked under an earlier id stays blocked ([#9567](https://github.com/open-chat-labs/open-chat/pull/9567))
 
 ### Removed
 
