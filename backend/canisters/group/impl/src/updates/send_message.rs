@@ -438,11 +438,28 @@ async fn send_message_with_transfer(args: Args) -> OCResult<SuccessResult> {
         }
         PrepareTransferResult::P2PSwap(swap) => {
             let offered_by = swap.swap.offered_by();
-            let (swap_id, completed) = match swap
+            let result = swap
                 .swap
                 .create(swap.escrow_canister_id, swap.local_user_index_canister_id, swap.now)
-                .await
-            {
+                .await;
+
+            // Once the swap exists it may pay out or refund to the member's wallet, so it is recorded
+            // against them in their canister, just as a swap created via their canister is
+            if let Some(swap_id) = match &result {
+                Ok((swap_id, _)) => Some(*swap_id),
+                Err((_, swap_id)) => *swap_id,
+            } {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.push_event_to_user(
+                        user.user_id,
+                        GroupCanisterEvent::P2PSwapCreated(Box::new(swap.swap.created(swap_id, swap.now))),
+                        now,
+                    )
+                });
+            }
+
+            let (swap_id, completed) = match result {
                 Ok(ok) => ok,
                 Err((error, swap_id)) => {
                     if let Some(swap_id) = swap_id {
