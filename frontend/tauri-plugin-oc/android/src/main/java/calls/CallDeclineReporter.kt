@@ -31,9 +31,9 @@ object CallDeclineReporter {
         send("$videoBridgeUrl/room/end_meeting", endToken, timeoutMs)
 
     // A group call the phone was in ended natively: the bridge takes the phone out of the
-    // room with the join token the web layer handed over; the call carries on.
-    suspend fun reportLeave(videoBridgeUrl: String, joinToken: String, sessionId: String?, timeoutMs: Long = TIMEOUT_MS): Boolean =
-        send("$videoBridgeUrl/room/leave", joinToken, timeoutMs, leaveBody(sessionId))
+    // room with the participant token the web layer handed over; the call carries on.
+    suspend fun reportLeave(videoBridgeUrl: String, participantToken: String, sessionId: String?, timeoutMs: Long = TIMEOUT_MS): Boolean =
+        send("$videoBridgeUrl/room/leave", participantToken, timeoutMs, leaveBody(sessionId))
 
     // The leave names this device's Daily session; without one the bridge ejects only
     // when the user has a single session in the room.
