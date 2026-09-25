@@ -485,7 +485,8 @@ struct Data {
     // and how many users it holds
     #[serde(default)]
     pub multi_user_canisters: MultiUserCanisterMap,
-    // Set by proposal and fanned out to the LocalUserIndexes. Not acted on yet
+    // Set by a platform operator and fanned out to the LocalUserIndexes. While set, new users are
+    // routed to the LocalUserIndex controlling the MultiUser canister with the fewest users
     #[serde(default)]
     pub multi_user_canisters_enabled: bool,
     // The native call push kill switch (#9456). Set by a platform operator and fanned out to the

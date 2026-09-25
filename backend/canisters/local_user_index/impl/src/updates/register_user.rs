@@ -118,8 +118,10 @@ async fn create_user_in_multi_user_canister(
 ) -> Result<(UserId, BuildVersion), OCError> {
     if let Some((canister_id, wasm_version)) = existing {
         match c2c_create_user(canister_id, principal, username.clone(), referred_by).await {
-            // The canister is full, so fall through to creating a new one
-            Err(error) if error.matches_code(OCErrorCode::UserLimitReached) => {}
+            // The canister is full, so stop offering it and fall through to creating a new one
+            Err(error) if error.matches_code(OCErrorCode::UserLimitReached) => {
+                mutate_state(|state| state.data.local_multi_user_canisters.mark_full(&canister_id));
+            }
             result => return result.map(|user_id| (user_id, wasm_version)),
         }
     }
@@ -164,7 +166,8 @@ enum Target {
         cycles_to_use: Cycles,
         init_canister_args: Box<InitUserCanisterArgs>,
     },
-    // The canister to add the user to. If there is none, or it is full, a new one is created
+    // The canister to add the user to, being the one with the fewest users. If there is none, or it
+    // is full, a new one is created
     MultiUserCanister(Option<(CanisterId, BuildVersion)>),
 }
 
@@ -175,12 +178,25 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         return Err(AlreadyRegistered);
     }
 
-    let use_multi_user_canister = args.use_multi_user_canister.unwrap_or_default();
-    if use_multi_user_canister && !state.data.test_mode {
+    let multi_user_canister_requested =
+        args.use_multi_user_canister.unwrap_or_default() || args.multi_user_canister_id.is_some();
+    if multi_user_canister_requested && !state.data.test_mode {
         return Err(Error(
             OCErrorCode::InvalidRequest.with_message("MultiUser canisters can only be requested in test mode"),
         ));
     }
+    let requested_multi_user_canister = match args.multi_user_canister_id {
+        Some(canister_id) => match state.data.local_multi_user_canisters.get(&canister_id) {
+            Some(canister) => Some((canister_id, canister.wasm_version)),
+            None => {
+                return Err(Error(
+                    OCErrorCode::InvalidRequest.with_message("MultiUser canister not found on this LocalUserIndex"),
+                ));
+            }
+        },
+        None => None,
+    };
+    let use_multi_user_canister = multi_user_canister_requested || state.data.multi_user_canisters_enabled;
 
     let now = state.env.now();
     if !state.data.local_users.mark_registration_in_progress(caller, now) {
@@ -235,7 +251,9 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
             caller,
             referred_by,
             is_from_identity_canister,
-            target: Target::MultiUserCanister(state.data.local_multi_user_canisters.canister_for_new_user()),
+            target: Target::MultiUserCanister(
+                requested_multi_user_canister.or_else(|| state.data.local_multi_user_canisters.canister_for_new_user()),
+            ),
         });
     }
 

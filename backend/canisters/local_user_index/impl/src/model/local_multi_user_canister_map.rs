@@ -16,6 +16,10 @@ pub struct LocalMultiUserCanister {
     pub created: TimestampMillis,
     #[serde(default)]
     pub user_count: u32,
+    // Set once the canister rejects a new user because it has given out every index. Indexes
+    // aren't reused, so it can take no more users, however many have since been deleted
+    #[serde(default)]
+    pub full: bool,
 }
 
 impl LocalMultiUserCanisterMap {
@@ -28,6 +32,7 @@ impl LocalMultiUserCanisterMap {
                 cycle_top_ups: Vec::new(),
                 created: now,
                 user_count: 0,
+                full: false,
             },
         );
     }
@@ -38,13 +43,20 @@ impl LocalMultiUserCanisterMap {
         }
     }
 
-    // The newest canister which isn't being upgraded, so that each is filled before the next
+    // Of the canisters which are neither full nor being upgraded, the one with the fewest users, so
+    // that users are spread evenly across them
     pub fn canister_for_new_user(&self) -> Option<(CanisterId, BuildVersion)> {
         self.canisters
             .iter()
-            .filter(|(_, c)| !c.upgrade_in_progress)
-            .max_by_key(|(canister_id, c)| (c.created, **canister_id))
+            .filter(|(_, c)| !c.full && !c.upgrade_in_progress)
+            .min_by_key(|(canister_id, c)| (c.user_count, **canister_id))
             .map(|(canister_id, c)| (*canister_id, c.wasm_version))
+    }
+
+    pub fn mark_full(&mut self, canister_id: &CanisterId) {
+        if let Some(canister) = self.canisters.get_mut(canister_id) {
+            canister.full = true;
+        }
     }
 
     pub fn on_user_removed(&mut self, canister_id: &CanisterId) {
@@ -89,5 +101,46 @@ impl LocalMultiUserCanister {
         if let Some(version) = new_version {
             self.wasm_version = version;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    fn canister_id(i: u64) -> CanisterId {
+        Principal::from_slice(&[&i.to_be_bytes()[..], &[1, 1]].concat())
+    }
+
+    #[test]
+    fn canister_for_new_user_picks_the_canister_with_the_fewest_users() {
+        let mut map = LocalMultiUserCanisterMap::default();
+        assert_eq!(map.canister_for_new_user(), None);
+
+        let version = BuildVersion::min();
+        // The newest canister isn't favoured
+        map.add(canister_id(1), version, 1);
+        map.add(canister_id(2), version, 2);
+        map.add(canister_id(3), version, 3);
+        for (canister, users) in [(1, 1), (2, 3), (3, 2)] {
+            for _ in 0..users {
+                map.on_user_added(&canister_id(canister));
+            }
+        }
+        assert_eq!(map.canister_for_new_user(), Some((canister_id(1), version)));
+
+        // Canisters being upgraded are skipped
+        map.get_mut(&canister_id(1)).unwrap().set_canister_upgrade_status(true, None);
+        assert_eq!(map.canister_for_new_user(), Some((canister_id(3), version)));
+
+        // As are full ones, however few users they hold
+        map.mark_full(&canister_id(3));
+        map.on_user_removed(&canister_id(3));
+        map.on_user_removed(&canister_id(3));
+        assert_eq!(map.canister_for_new_user(), Some((canister_id(2), version)));
+
+        map.mark_full(&canister_id(2));
+        assert_eq!(map.canister_for_new_user(), None);
     }
 }

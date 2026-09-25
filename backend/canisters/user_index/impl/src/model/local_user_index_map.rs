@@ -64,6 +64,10 @@ impl LocalUserIndexMap {
             .map(|(k, _)| *k)
     }
 
+    pub fn is_accepting_users(&self, index_id: &CanisterId) -> bool {
+        self.index_map.get(index_id).is_some_and(|i| !i.full)
+    }
+
     pub fn contains_key(&self, index_id: &CanisterId) -> bool {
         self.index_map.contains_key(index_id)
     }
