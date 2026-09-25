@@ -6,6 +6,7 @@ pub mod external_achievements;
 pub mod group_index_event_batch;
 pub mod local_user_index_map;
 pub mod moderation;
+pub mod multi_user_canister_map;
 pub mod pending_payments_queue;
 pub mod premium_items;
 pub mod protected_actions;

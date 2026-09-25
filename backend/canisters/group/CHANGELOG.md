@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Tell a member's canister of each P2P swap they create directly in the group, so it is recorded against them ([#9563](https://github.com/open-chat-labs/open-chat/pull/9563))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Accept a `user_id` in `c2c_leave_group` and `c2c_delete_group`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))
 - Include the call facts (message id, call type, `audio_only`, start time, whether the group is public, member count) in the notification when a call starts, send the joiner an `answered_elsewhere` dismissal on join, and when the call ends send `answered_elsewhere` to participants and `ended` to unmuted members who did not join, only while the group has 50 members or fewer ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
