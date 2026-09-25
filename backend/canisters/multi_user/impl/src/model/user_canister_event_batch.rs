@@ -2,7 +2,7 @@ use crate::{mutate_state, read_state};
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
 use user_canister::c2c_user_canister_v2::Event;
-use utils::canister::{delay_if_should_retry_failed_c2c_call_to_new_method, is_target_canister_uninstalled_or_deleted};
+use utils::canister::{delay_if_should_retry_failed_c2c_call_to_new_method, is_user_canister_possibly_migrated};
 
 // The direct chat events from this canister's users for users in other canisters, batched per
 // canister, so that those for every user a canister holds are sent to it together. They are always
@@ -22,9 +22,9 @@ impl TimerJobItem for UserCanisterEventBatch {
         match response {
             Ok(user_canister::c2c_user_canister_v2::Response::Success) => Ok(()),
             Err(error) => {
-                // A User canister is uninstalled once its user has been migrated to a MultiUser
-                // canister, so if they have been, their events are sent on to them there instead
-                if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) {
+                // If the user has been migrated to a MultiUser canister, their events are sent on
+                // to them there instead
+                if is_user_canister_possibly_migrated(&error) {
                     match latest_id_if_migrated(self.key.into()).await {
                         Ok(Some(new_user_id)) => {
                             mutate_state(|state| {
