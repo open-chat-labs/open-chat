@@ -18,6 +18,7 @@ pub enum Response {
 // deserialize the `GroupChatCore` ignore it, and groups which don't export it send nothing after
 // the `GroupChatCore`.
 #[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(default)]
 pub struct ExportExtras {
     pub former_members: Vec<UserId>,
     // Each migration from a user's old id to their new id

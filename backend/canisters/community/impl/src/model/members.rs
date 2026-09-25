@@ -936,6 +936,35 @@ mod tests {
     }
 
     #[test]
+    fn former_members_maintained_correctly() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let principal = |i: u8| Principal::from_slice(&[i]);
+        let user_id = |i: u8| UserId::from(Principal::from_slice(&[10 + i]));
+
+        let mut members = CommunityMembers::new(principal(1), user_id(1), UserType::User, Vec::new(), 0);
+        members.add(user_id(2), principal(2), UserType::User, None, 0);
+        members.add(user_id(3), principal(3), UserType::User, None, 0);
+
+        members.remove(user_id(2), None, false, 0);
+        members.remove(user_id(3), None, true, 0);
+        members.add_former_members([user_id(1), user_id(4)]);
+
+        assert!(members.is_former_member(&user_id(2)));
+        assert!(!members.is_former_member(&user_id(3)), "deleted users aren't recorded");
+        assert!(!members.is_former_member(&user_id(1)), "members are skipped");
+        assert!(members.is_former_member(&user_id(4)));
+
+        members.add(user_id(2), principal(2), UserType::User, None, 0);
+        members.add(user_id(4), principal(4), UserType::User, None, 0);
+
+        assert!(!members.is_former_member(&user_id(2)));
+        assert!(!members.is_former_member(&user_id(4)));
+        members.check_invariants();
+    }
+
+    #[test]
     fn member_principals_populated() {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init(memory.get(MemoryId::new(1)));

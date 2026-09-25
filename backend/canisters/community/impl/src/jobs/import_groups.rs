@@ -18,7 +18,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
-use tracing::{info, trace};
+use tracing::{error, info, trace};
 use types::{
     C2CError, Caller, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, MultiUserChat, UserId,
     UserType,
@@ -192,11 +192,16 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
             let mut bytes = group.bytes();
             let mut chat: GroupChatCore = msgpack::deserialize(&mut bytes).unwrap();
-            // Groups on earlier versions export their `GroupChatCore` alone
+            // Groups on earlier versions export their `GroupChatCore` alone. The extras are not
+            // essential to the import, and this also runs in `post_upgrade`, so failing to
+            // deserialize them must not trap.
             let extras: ExportExtras = if bytes.is_empty() {
                 ExportExtras::default()
             } else {
-                msgpack::deserialize_then_unwrap(bytes)
+                msgpack::deserialize(bytes).unwrap_or_else(|error| {
+                    error!(%group_id, ?error, "Failed to deserialize the group's export extras");
+                    ExportExtras::default()
+                })
             };
             // The channel's events refer to the group's former members, so they are recorded as the
             // community's former members too
