@@ -32,7 +32,7 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -662,6 +662,11 @@ struct Data {
     // have changed
     #[serde(default)]
     migrated_user_ids: MigratedUserIds,
+    // Users who were members of the community but no longer are. A user who rejoins is removed again. Recorded
+    // so that a user who rejoins under a new id, having been migrated to a MultiUser canister, can be recognised
+    // as having events under their earlier ids.
+    #[serde(default)]
+    former_members: BTreeSet<UserId>,
 }
 
 impl Data {
@@ -794,6 +799,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
+            former_members: BTreeSet::new(),
             public_channel_list_updated: now,
         }
     }
@@ -895,6 +901,9 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
+        if removed.is_some() {
+            self.former_members.insert(user_id);
+        }
         removed
     }
 

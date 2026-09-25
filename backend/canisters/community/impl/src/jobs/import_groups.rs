@@ -302,6 +302,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                     ) {
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&user_id, now);
+                            state.data.former_members.remove(&user_id);
 
                             let user_type = state.data.members.bots().get(&user_id).copied().unwrap_or_default();
 
