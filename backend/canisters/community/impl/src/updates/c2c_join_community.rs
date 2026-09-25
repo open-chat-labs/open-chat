@@ -4,6 +4,7 @@ use crate::model::events::{CommunityEventInternal, CommunityMemberJoinedInternal
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_synchronously;
 use crate::{RuntimeState, execute_update_async, jobs, mutate_state, read_state};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
@@ -12,29 +13,32 @@ use gated_groups::{
 };
 use group_community_common::{ExpiringMember, PaymentLockGuard};
 use oc_error_codes::OCErrorCode;
-use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UserIdAndPrincipal, UsersUnblocked};
+use types::{AccessGate, ChannelId, CommunityCanisterCommunitySummary, OCResult, UserId, UserIdAndPrincipal, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_community(args: Args) -> Response {
-    execute_update_async(|| join_community(args)).await
+    execute_update_async(|| async {
+        migrate_previous_user_ids(args.user_id, args.principal, &args.previous_user_ids);
+        join_community(args).await
+    })
+    .await
 }
 
-pub(crate) async fn join_community(args: Args) -> Response {
-    // Anything held under the user's previous ids, such as a membership or block, is moved onto their
-    // current id, so that the checks below only need to look at their current id
-    if !args.previous_user_ids.is_empty() {
+// Moves anything held under a joining user's previous ids, such as a membership or block, onto their
+// current id, so that the checks made when they join only need to look at their current id
+pub(crate) fn migrate_previous_user_ids(user_id: UserId, principal: Principal, previous_user_ids: &[UserId]) {
+    if !previous_user_ids.is_empty() {
         mutate_state(|state| {
             let now = state.env.now();
-            if state
-                .data
-                .migrate_user_ids(&args.previous_user_ids, args.user_id, Some(args.principal), now)
-            {
+            if state.data.migrate_user_ids(previous_user_ids, user_id, Some(principal), now) {
                 handle_activity_notification(state);
             }
         });
     }
+}
 
+pub(crate) async fn join_community(args: Args) -> Response {
     let payments = match read_state(|state| is_permitted_to_join(&args, state)) {
         Ok(IsPermittedToJoinSuccess::NoGate) => Vec::new(),
         Ok(IsPermittedToJoinSuccess::RequiresGate(gate, check_gate_args)) => {
