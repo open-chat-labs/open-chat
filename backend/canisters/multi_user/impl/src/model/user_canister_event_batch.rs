@@ -22,9 +22,15 @@ impl TimerJobItem for UserCanisterEventBatch {
         match response {
             Ok(user_canister::c2c_user_canister_v2::Response::Success) => Ok(()),
             Err(error) => {
-                // A User canister is uninstalled once its user has been migrated to a MultiUser
-                // canister, so if they have been, their events are sent on to them there instead
-                if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) {
+                // If the user has been migrated to a MultiUser canister, their events are sent on
+                // to them there instead. Only a canister which holds a user alone is ever migrated.
+                // A missing method isn't taken as a sign of a migration here, since every User
+                // canister is missing `c2c_user_canister_v2` until upgraded, and it is retried
+                // anyway, so the migration is found once the cycles refunder is uninstalled again.
+                // TODO use `is_user_canister_possibly_migrated` once every User canister has it
+                if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message())
+                    && self.items.iter().all(|event| event.value.recipient.index() == 0)
+                {
                     match latest_id_if_migrated(self.key.into()).await {
                         Ok(Some(new_user_id)) => {
                             mutate_state(|state| {
