@@ -345,6 +345,7 @@ import {
     type WithdrawCryptocurrencyResponse,
     type OCError,
     type ProposedProtectedAction,
+    buildBlobUrl,
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
@@ -507,7 +508,6 @@ import {
 import {
     activeUserIdFromEvent,
     applyTranslation,
-    buildBlobUrl,
     buildCryptoTransferText,
     buildIdenticonUrl,
     buildTransactionLink,

@@ -1,7 +1,6 @@
 import Identicon from "identicon.js";
 import md5 from "md5";
 import type {
-    ChannelIdentifier,
     CommunityCanisterCommunitySummaryUpdates,
     CommunityDetails,
     CommunityDetailsUpdates,
@@ -25,6 +24,7 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
+    buildBlobUrl,
     ChatMap,
     mapOptionUpdate,
     OPENCHAT_BOT_AVATAR_URL,
@@ -459,32 +459,6 @@ export function getUpdatedEvents(
         .forEach((c) => result.set(c.id, c.updatedEvents));
 
     return result;
-}
-
-export function buildBlobUrl(
-    pattern: string,
-    canisterId: string,
-    blobId: bigint,
-    blobType: "blobs" | "avatar" | "banner",
-    channelId?: ChannelIdentifier,
-): string {
-    const blobTypeFragment =
-        channelId === undefined ? blobType : `channel/${channelId.channelId}/${blobType}`;
-
-    return `${pattern
-        .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobTypeFragment)}/${blobId}`;
-}
-
-export function buildTokenLogoUrl(
-    pattern: string,
-    canisterId: string,
-    ledger: string,
-    logoId: bigint,
-): string {
-    return `${pattern
-        .replace("{canisterId}", canisterId)
-        .replace("{blobType}", "logo")}?ledger=${ledger}&id=${logoId}`;
 }
 
 export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: bigint): string {

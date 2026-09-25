@@ -24,6 +24,7 @@ use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
+use model::users_last_online::{UsersLastOnline, UsersLastOnlineMetrics};
 use p256_key_pair::P256KeyPair;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -298,6 +299,7 @@ impl RuntimeState {
             multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, i)| (*c, *i)).collect(),
             multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
             migrated_user_ids: self.data.migrated_user_ids.len(),
+            users_last_online: self.data.users_last_online.metrics(),
             call_push_enabled: self.data.call_push_enabled,
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
@@ -493,6 +495,10 @@ struct Data {
     // LocalUserIndexes, including any added later
     #[serde(default)]
     pub migrated_user_ids: MigratedUserIds,
+    // Temporary: each user's last online date, used to decide which users to migrate first
+    // TODO remove once the users have been migrated
+    #[serde(default)]
+    pub users_last_online: UsersLastOnline,
 }
 
 impl Data {
@@ -602,6 +608,7 @@ impl Data {
             daily_puzzle_canister_id: None,
             deleted_user_cycles_refund_queued: false,
             migrated_user_ids: MigratedUserIds::default(),
+            users_last_online: UsersLastOnline::default(),
         };
 
         // Register the ProposalsBot
@@ -730,6 +737,7 @@ impl Default for Data {
             daily_puzzle_canister_id: None,
             deleted_user_cycles_refund_queued: false,
             migrated_user_ids: MigratedUserIds::default(),
+            users_last_online: UsersLastOnline::default(),
         }
     }
 }
@@ -762,6 +770,7 @@ pub struct Metrics {
     pub multi_user_canisters: Vec<(CanisterId, CanisterId)>,
     pub multi_user_canisters_enabled: bool,
     pub migrated_user_ids: usize,
+    pub users_last_online: UsersLastOnlineMetrics,
     pub call_push_enabled: bool,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,

@@ -59,6 +59,13 @@ describe("buildUserAvatarUrl", () => {
         );
     });
 
+    test("a user in a MultiUser canister gets a url under their index within it", () => {
+        // `UserId::new_indexed(dfdal-2uaaa-aaaaa-qaama-cai, 1000)`
+        expect(buildUserAvatarUrl(PATTERN, "svgk6-q4aaa-aaaaa-qaamo-ray", 5n)).toBe(
+            "https://dfdal-2uaaa-aaaaa-qaama-cai.raw.icp0.io/user/1000/avatar/5",
+        );
+    });
+
     test("a user with no avatar id gets their identicon", () => {
         expect(buildUserAvatarUrl(PATTERN, "xyz", undefined)).toBe(XYZ_IDENTICON);
     });
