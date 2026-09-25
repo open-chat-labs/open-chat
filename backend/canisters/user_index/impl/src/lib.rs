@@ -205,7 +205,10 @@ impl RuntimeState {
         let now = self.env.now();
         if let Some(user) = self.data.users.delete_user(user_id, now) {
             self.data.local_index_map.remove_user(&user_id);
-            self.data.multi_user_canisters.on_user_removed(&user_id);
+            // A migrated user may still be held under their old id, so decrement the count of the
+            // canister holding them now
+            let latest_user_id = self.data.migrated_user_ids.latest(user_id);
+            self.data.multi_user_canisters.on_user_removed(&latest_user_id);
             self.data.empty_users.remove(&user_id);
 
             #[derive(Serialize)]

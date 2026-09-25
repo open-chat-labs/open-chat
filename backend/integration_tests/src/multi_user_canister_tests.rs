@@ -134,12 +134,42 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
             .or_insert_with(|| user_count(&multi_user_canisters_before, user.canister())) += 1;
         assert_eq!(
             multi_user_canisters_after.get(&user.canister()).map(|c| c.local_user_index),
-            Some(local_user_index)
+            Some(user.local_user_index)
         );
     }
     for (canister_id, expected) in expected_user_counts {
         assert_eq!(user_count(&multi_user_canisters_after, canister_id), expected);
     }
+}
+
+#[test]
+fn deleting_a_user_decrements_their_multi_user_canisters_user_count() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (user, user_auth) = client::register_user_in_multi_user_canister_and_include_auth(env, canister_ids);
+    tick_many(env, 5);
+    let user_count_before = multi_user_canisters(env, canister_ids.user_index)[&user.canister()].user_count;
+
+    let response = client::identity::delete_user(
+        env,
+        user_auth.auth_principal(),
+        canister_ids.identity,
+        &identity_canister::delete_user::Args {
+            public_key: user_auth.auth_public_key.clone(),
+            delegation: user_auth.auth_delegation.clone(),
+        },
+    );
+    assert!(
+        matches!(response, identity_canister::delete_user::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 5);
+
+    assert_eq!(
+        multi_user_canisters(env, canister_ids.user_index)[&user.canister()].user_count,
+        user_count_before - 1
+    );
 }
 
 #[test]
@@ -194,8 +224,10 @@ fn create_then_upgrade_multi_user_canister() {
 
     let multi_user_canister_count_before = multi_user_canister_count(env, local_user_index);
 
+    let created_after = now_millis(env);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let created_before = now_millis(env);
 
     let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
     assert_eq!(status.module_hash, Some(sha256(&wasms::MULTI_USER.module).to_vec()));
@@ -214,7 +246,7 @@ fn create_then_upgrade_multi_user_canister() {
         .expect("MultiUser canister not registered with the UserIndex");
     assert_eq!(multi_user_canister.local_user_index, local_user_index);
     assert_eq!(multi_user_canister.user_count, 0);
-    assert!(multi_user_canister.date_created > 0);
+    assert!((created_after..=created_before).contains(&multi_user_canister.date_created));
 
     let new_version = BuildVersion::new(0, 0, 1);
     client::user_index::happy_path::upgrade_multi_user_canister_wasm(

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use types::{CanisterId, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -18,19 +19,17 @@ pub struct MultiUserCanister {
 impl MultiUserCanisterMap {
     // Returns false if the canister is already known, in which case it is left untouched
     pub fn add(&mut self, canister_id: CanisterId, local_user_index: CanisterId, now: TimestampMillis) -> bool {
-        if self.canisters.contains_key(&canister_id) {
-            return false;
+        match self.canisters.entry(canister_id) {
+            Entry::Vacant(e) => {
+                e.insert(MultiUserCanister {
+                    date_created: now,
+                    local_user_index,
+                    user_count: 0,
+                });
+                true
+            }
+            Entry::Occupied(_) => false,
         }
-
-        self.canisters.insert(
-            canister_id,
-            MultiUserCanister {
-                date_created: now,
-                local_user_index,
-                user_count: 0,
-            },
-        );
-        true
     }
 
     pub fn contains(&self, canister_id: &CanisterId) -> bool {

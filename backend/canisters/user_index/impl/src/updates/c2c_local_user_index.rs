@@ -245,8 +245,9 @@ fn process_new_user(
         None,
     );
 
-    state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
-    state.data.multi_user_canisters.on_user_added(&user_id);
+    if state.data.local_index_map.add_user(local_user_index_canister_id, user_id) {
+        state.data.multi_user_canisters.on_user_added(&user_id);
+    }
 
     state.push_event_to_all_local_user_indexes(
         UserIndexEvent::UserRegistered(UserRegistered {
