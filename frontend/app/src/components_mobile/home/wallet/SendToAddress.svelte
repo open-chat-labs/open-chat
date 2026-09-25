@@ -329,12 +329,12 @@
                 background={ColourVars.surface2}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("Recipient")} />
-                    {#if account}
-                        ({account})
+                    {#if namedAccount}
+                        ({namedAccount.name})
                     {/if}
                 </BodySmall>
                 <Body fontWeight={"bold"}>
-                    {account}
+                    {targetAccount}
                 </Body>
             </Container>
             <Container
