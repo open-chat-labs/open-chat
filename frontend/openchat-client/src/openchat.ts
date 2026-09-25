@@ -8663,6 +8663,41 @@ export class OpenChat {
         });
     }
 
+    // Declining a ringing call (#9534). For a direct call the bridge ends it for both sides;
+    // for a group call it only stops the ring on this user's other devices. Nothing records
+    // that the user declined, and a failure is logged and otherwise ignored.
+    declineVideoCall(chatId: ChatIdentifier): Promise<void> {
+        const chat = allChatsStore.value.get(chatId);
+        if (chat === undefined) {
+            return Promise.resolve();
+        }
+        return this.#getLocalUserIndex(chat)
+            .then((localUserIndex) =>
+                this.#worker.send({
+                    kind: "getAccessToken",
+                    accessTokenType: { kind: "join_video_call", chatId },
+                    localUserIndex,
+                }),
+            )
+            .then((token) => {
+                if (token === undefined) {
+                    throw new Error("Didn't get an access token");
+                }
+                const headers = new Headers();
+                headers.append("x-auth-jwt", token);
+                return fetch(`${this.config.videoBridgeUrl}/room/decline`, {
+                    method: "POST",
+                    headers,
+                });
+            })
+            .then((res) => {
+                if (!res.ok) {
+                    console.error(`Unable to decline the call: ${res.status}, ${res.statusText}`);
+                }
+            })
+            .catch((err) => console.error("Unable to decline the call", err));
+    }
+
     endVideoCall(chatId: ChatIdentifier, messageId?: bigint) {
         const chat = allChatsStore.value.get(chatId);
         if (chat === undefined) {

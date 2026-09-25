@@ -4,12 +4,19 @@ use crate::env::{ENV, VIDEO_CALL_OPERATOR};
 use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
+use jwt_simple::common::VerificationOptions;
+use jwt_simple::prelude::UnixTimeStamp;
 use pocket_ic::PocketIc;
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{CanisterId, ChatId, FcmToken, MessageId, Milliseconds, NotificationEnvelope, UnitResult, UserId, VideoCallType};
+use types::{
+    CanisterId, Chat, ChatId, DeclineVideoCallClaims, FcmToken, MessageId, Milliseconds, NotificationEnvelope, UnitResult,
+    UserId, VideoCallType,
+};
 
 struct Push {
     recipients: Vec<UserId>,
@@ -593,4 +600,209 @@ fn invariant_16_only_a_platform_operator_can_flip_the_switch() {
             client::user_index::call_push_enabled(env, user.principal, canister_ids.user_index, &types::Empty {});
         assert_eq!(reported, enabled);
     }
+}
+
+// The decline token as the bridge reads it: the claim type at the top level next to the claims.
+#[derive(Deserialize)]
+struct DeclineToken {
+    claim_type: String,
+    #[serde(flatten)]
+    claims: DeclineVideoCallClaims,
+}
+
+// Verified at the test env's own clock: the token's expiry is in PocketIC time, not wall time.
+fn decode_decline_token(env: &PocketIc, token: &str, public_key_pem: &str) -> (DeclineToken, u64) {
+    let public_key = ES256PublicKey::from_pem(public_key_pem).unwrap();
+    let now_ms = env.get_time().as_nanos_since_unix_epoch() / 1_000_000;
+    let options = VerificationOptions {
+        artificial_time: Some(UnixTimeStamp::from_millis(now_ms)),
+        ..Default::default()
+    };
+    let claims = public_key
+        .verify_token::<DeclineToken>(token, Some(options))
+        .expect("Expected the decline token to verify against the OpenChat public key");
+    let expires_at = claims.expires_at.unwrap().as_secs();
+    (claims.custom, expires_at)
+}
+
+// #9534 invariants 1 and 9: a ring push to a phone carries a decline token that names that
+// user, the chat and the call, expires at the end of the ring window and verifies against the
+// OpenChat public key. It goes only to the envelope for that user; a web-only recipient's ring
+// push and every non-ring push carry no token, and the ring push is otherwise the M1 ring push.
+#[test]
+fn invariants_1_9_a_decline_token_reaches_only_the_phone_it_names() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let caller = register_phone_caller(env, canister_ids, *controller);
+    let callee = register_phone_user(env, canister_ids);
+    let web_member = register_web_user(env, canister_ids);
+    let feed = Feed::new(
+        env,
+        canister_ids,
+        &[caller.canister(), callee.canister(), web_member.canister()],
+    );
+    feed.enable_call_push(env, canister_ids, *controller);
+    let public_key = user_index::happy_path::public_key(env, canister_ids.user_index);
+
+    // direct call: the callee's ring push carries a token for the callee and this call
+    let index = feed.snapshot(env, *controller);
+    let message_id = start_direct_call(env, &caller, callee.user_id, true);
+    let pushes = feed.pushes_since(env, *controller, &index);
+    let ring = pushes_for(&pushes, callee.user_id);
+    assert_eq!(ring.len(), 1);
+    assert_eq!(ring[0].recipients, vec![callee.user_id]);
+    assert_eq!(ring[0].data["callMessageId"], message_id.to_string());
+    let (token, expires_at) = decode_decline_token(env, &ring[0].data["callDeclineToken"], &public_key);
+    assert_eq!(token.claim_type, "DeclineVideoCall");
+    assert_eq!(token.claims.user_id, callee.user_id);
+    assert_eq!(token.claims.chat_id, Chat::Direct(caller.user_id.into()));
+    assert_eq!(token.claims.message_id, message_id.to_string());
+    assert_eq!(
+        token.claims.local_user_index,
+        canister_ids.local_user_index(env, callee.canister())
+    );
+    let started: u64 = ring[0].data["callStarted"].parse().unwrap();
+    assert_eq!(expires_at, (started + 40_000) / 1000);
+
+    // the token is the only addition: every other key matches a ring push for a web-only user
+    let index = feed.snapshot(env, *controller);
+    let web_message_id = start_direct_call(env, &caller, web_member.user_id, true);
+    let pushes = feed.pushes_since(env, *controller, &index);
+    let web_ring = pushes_for(&pushes, web_member.user_id);
+    assert_eq!(web_ring.len(), 1);
+    assert!(!web_ring[0].data.contains_key("callDeclineToken"));
+    let mut phone_keys: Vec<_> = ring[0].data.keys().filter(|k| *k != "callDeclineToken").collect();
+    let mut web_keys: Vec<_> = web_ring[0].data.keys().collect();
+    phone_keys.sort();
+    web_keys.sort();
+    assert_eq!(phone_keys, web_keys);
+    end_direct_call(env, caller.user_id, web_member.user_id, web_message_id);
+
+    // a dismissal and an ordinary message carry no token
+    let index = feed.snapshot(env, *controller);
+    end_direct_call(env, caller.user_id, callee.user_id, message_id);
+    client::user::happy_path::send_text_message(env, &caller, callee.user_id, random_string(), None);
+    let pushes = feed.pushes_since(env, *controller, &index);
+    let after = pushes_for(&pushes, callee.user_id);
+    assert_eq!(after.len(), 2);
+    assert!(after.iter().all(|p| !p.data.contains_key("callDeclineToken")));
+
+    // group call with a phone member and a web member: one envelope each, the token only in the
+    // phone member's and naming the phone member
+    let group = client::user::happy_path::create_group(env, &caller, &random_string(), false, true);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &caller,
+        canister_ids.local_user_index(env, group),
+        group,
+        vec![(callee.user_id, callee.principal), (web_member.user_id, web_member.principal)],
+    );
+    tick_many(env, 3);
+    let index = feed.snapshot(env, *controller);
+    let group_message_id = start_group_call(env, &caller, group, VideoCallType::Default);
+    let pushes = feed.pushes_since(env, *controller, &index);
+    let phone_ring = pushes_for(&pushes, callee.user_id);
+    let web_ring = pushes_for(&pushes, web_member.user_id);
+    assert_eq!(phone_ring.len(), 1);
+    assert_eq!(web_ring.len(), 1);
+    assert_eq!(phone_ring[0].recipients, vec![callee.user_id]);
+    assert!(!web_ring[0].recipients.contains(&callee.user_id));
+    assert!(!web_ring[0].data.contains_key("callDeclineToken"));
+    let (token, _) = decode_decline_token(env, &phone_ring[0].data["callDeclineToken"], &public_key);
+    assert_eq!(token.claims.user_id, callee.user_id);
+    assert_eq!(token.claims.chat_id, Chat::Group(group));
+    assert_eq!(token.claims.message_id, group_message_id.to_string());
+}
+
+// #9534 invariants 4, 5 and 8: only a video call operator can report a decline; the report
+// delivers `declined_elsewhere` to the named user's phones and to nobody else; a web-only user
+// or a user whose local user index has the switch off gets nothing; and nothing about the
+// decline is recorded in the chat.
+#[test]
+fn invariants_4_5_8_a_reported_decline_dismisses_only_the_decliner() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let caller = register_phone_caller(env, canister_ids, *controller);
+    let callee = register_phone_user(env, canister_ids);
+    let web_user = register_web_user(env, canister_ids);
+    let feed = Feed::new(
+        env,
+        canister_ids,
+        &[caller.canister(), callee.canister(), web_user.canister()],
+    );
+    feed.enable_call_push(env, canister_ids, *controller);
+    let lui = canister_ids.local_user_index(env, callee.canister());
+
+    let message_id = start_direct_call(env, &caller, callee.user_id, false);
+    tick_many(env, 3);
+    let args = local_user_index_canister::video_call_declined::Args {
+        user_id: callee.user_id,
+        chat_id: Chat::Direct(caller.user_id.into()),
+        message_id,
+    };
+
+    // the callee themselves, and the caller, are refused at the door
+    let index = feed.snapshot(env, *controller);
+    for principal in [callee.principal, caller.principal] {
+        let response = env.update_call(
+            lui,
+            principal,
+            "video_call_declined_msgpack",
+            msgpack::serialize_then_unwrap(&args),
+        );
+        assert!(response.is_err(), "{principal} was allowed to report a decline");
+    }
+    assert!(feed.pushes_since(env, *controller, &index).is_empty());
+
+    // the operator's report reaches the callee's phones and nobody else
+    let index = feed.snapshot(env, *controller);
+    let chat_before = client::user::happy_path::events(env, &caller, callee.user_id, 0.into(), true, 50, 50);
+    let response = local_user_index::video_call_declined(env, VIDEO_CALL_OPERATOR, lui, &args);
+    assert!(matches!(response, UnitResult::Success));
+    let pushes = feed.pushes_since(env, *controller, &index);
+    assert_eq!(dismissal_kinds(&pushes, callee.user_id), vec!["declined_elsewhere"]);
+    let dismissal = &dismissals_for(&pushes, callee.user_id)[0];
+    assert_eq!(dismissal.recipients, vec![callee.user_id]);
+    assert_eq!(dismissal.data["callMessageId"], message_id.to_string());
+    assert_eq!(dismissal.data["type"], "call_dismissed");
+    assert!(pushes_for(&pushes, caller.user_id).is_empty());
+    assert_eq!(pushes.len(), 1);
+
+    // nothing in the chat says anyone declined: the events are exactly what they were
+    let chat_after = client::user::happy_path::events(env, &caller, callee.user_id, 0.into(), true, 50, 50);
+    assert_eq!(format!("{:?}", chat_after.events), format!("{:?}", chat_before.events));
+
+    // a web-only user's report produces nothing
+    let index = feed.snapshot(env, *controller);
+    let response = local_user_index::video_call_declined(
+        env,
+        VIDEO_CALL_OPERATOR,
+        canister_ids.local_user_index(env, web_user.canister()),
+        &local_user_index_canister::video_call_declined::Args {
+            user_id: web_user.user_id,
+            chat_id: Chat::Direct(caller.user_id.into()),
+            message_id,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success));
+    assert!(feed.pushes_since(env, *controller, &index).is_empty());
+
+    // switch off: the report is accepted and produces nothing
+    feed.set_call_push(env, canister_ids, *controller, false);
+    let index = feed.snapshot(env, *controller);
+    let response = local_user_index::video_call_declined(env, VIDEO_CALL_OPERATOR, lui, &args);
+    assert!(matches!(response, UnitResult::Success));
+    assert!(feed.pushes_since(env, *controller, &index).is_empty());
 }
