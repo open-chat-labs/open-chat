@@ -11,23 +11,23 @@ class BlobLocationTest {
     @Test
     fun `a user in a MultiUser canister is served by it under their index`() {
         assertEquals(
-            BlobLocation(canisterId, "1/avatar"),
+            BlobLocation(canisterId, "user/1/avatar"),
             BlobLocation.of("qp43m-xeaaa-aaaaa-qaama-daa", "avatar"),
         )
         assertEquals(
-            BlobLocation(canisterId, "255/avatar"),
+            BlobLocation(canisterId, "user/255/avatar"),
             BlobLocation.of("bhdhu-34aaa-aaaaa-qaamp-7aa", "avatar"),
         )
         assertEquals(
-            BlobLocation(canisterId, "256/avatar"),
+            BlobLocation(canisterId, "user/256/avatar"),
             BlobLocation.of("5xs3p-c4aaa-aaaaa-qaama-bai", "avatar"),
         )
         assertEquals(
-            BlobLocation(canisterId, "1000/avatar"),
+            BlobLocation(canisterId, "user/1000/avatar"),
             BlobLocation.of("svgk6-q4aaa-aaaaa-qaamo-ray", "avatar"),
         )
         assertEquals(
-            BlobLocation(canisterId, "32767/avatar"),
+            BlobLocation(canisterId, "user/32767/avatar"),
             BlobLocation.of("zf6bn-quaaa-aaaaa-qaamp-77y", "avatar"),
         )
     }

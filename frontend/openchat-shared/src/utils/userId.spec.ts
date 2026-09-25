@@ -77,11 +77,11 @@ describe("blobLocation", () => {
     test("a user in a MultiUser canister is served by it under their index", () => {
         expect(blobLocation("svgk6-q4aaa-aaaaa-qaamo-ray", "avatar")).toEqual({
             canisterId,
-            path: "1000/avatar",
+            path: "user/1000/avatar",
         });
         expect(blobLocation("qp43m-xeaaa-aaaaa-qaama-daa", "profile_background")).toEqual({
             canisterId,
-            path: "1/profile_background",
+            path: "user/1/profile_background",
         });
     });
 

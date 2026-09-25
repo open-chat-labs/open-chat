@@ -416,10 +416,10 @@ describe("user avatar and background urls", () => {
 
     test("a user in a MultiUser canister is served by it under their index", () => {
         expect(buildUserAvatarUrl(pattern, indexedUserId, 5n)).toBe(
-            `https://${canisterId}.raw.icp0.io/1000/avatar/5`,
+            `https://${canisterId}.raw.icp0.io/user/1000/avatar/5`,
         );
         expect(buildUserBackgroundUrl(pattern, indexedUserId, 6n)).toBe(
-            `https://${canisterId}.raw.icp0.io/1000/profile_background/6`,
+            `https://${canisterId}.raw.icp0.io/user/1000/profile_background/6`,
         );
     });
 });

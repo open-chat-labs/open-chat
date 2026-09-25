@@ -5,7 +5,7 @@ import java.util.zip.CRC32
 // Where the blobs of an entity, such as its avatar, are served: the canister to fetch them from and
 // the path under which that canister serves blobs of a given type. A group, community or user alone
 // in their canister serves its own at its root. A MultiUser canister serves those of each of its
-// users under the user's index within it. Mirrors `blobLocation` in
+// users under `user/{index}`, where `index` is the user's index within it. Mirrors `blobLocation` in
 // frontend/openchat-shared/src/utils/userId.ts.
 data class BlobLocation(val canisterId: String, val path: String) {
     companion object {
@@ -24,7 +24,7 @@ data class BlobLocation(val canisterId: String, val path: String) {
 
             val index = (bytes[8].toInt() and 0xff) or ((bytes[9].toInt() and INDEXED_TAG.inv() and 0xff) shl 8)
             val canisterId = encodePrincipal(bytes.copyOfRange(0, 8) + CANISTER_ID_TAG)
-            return BlobLocation(canisterId, "$index/$blobType")
+            return BlobLocation(canisterId, "user/$index/$blobType")
         }
 
         private const val ALPHABET = "abcdefghijklmnopqrstuvwxyz234567"
