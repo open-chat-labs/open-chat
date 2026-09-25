@@ -655,7 +655,8 @@ impl RuntimeState {
                 .data
                 .local_users
                 .iter_user_canisters()
-                .map(|u| u.1.wasm_version.to_string())
+                .filter_map(|u| u.1.wasm_version)
+                .map(|v| v.to_string())
                 .count_per_value(),
             group_versions: self
                 .data

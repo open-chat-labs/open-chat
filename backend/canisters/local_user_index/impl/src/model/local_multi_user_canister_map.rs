@@ -45,12 +45,12 @@ impl LocalMultiUserCanisterMap {
 
     // Of the canisters which are neither full nor being upgraded, the one with the fewest users, so
     // that users are spread evenly across them
-    pub fn canister_for_new_user(&self) -> Option<(CanisterId, BuildVersion)> {
+    pub fn canister_for_new_user(&self) -> Option<CanisterId> {
         self.canisters
             .iter()
             .filter(|(_, c)| !c.full && !c.upgrade_in_progress)
             .min_by_key(|(canister_id, c)| (c.user_count, **canister_id))
-            .map(|(canister_id, c)| (*canister_id, c.wasm_version))
+            .map(|(canister_id, _)| *canister_id)
     }
 
     pub fn mark_full(&mut self, canister_id: &CanisterId) {
@@ -128,17 +128,17 @@ mod tests {
                 map.on_user_added(&canister_id(canister));
             }
         }
-        assert_eq!(map.canister_for_new_user(), Some((canister_id(1), version)));
+        assert_eq!(map.canister_for_new_user(), Some(canister_id(1)));
 
         // Canisters being upgraded are skipped
         map.get_mut(&canister_id(1)).unwrap().set_canister_upgrade_status(true, None);
-        assert_eq!(map.canister_for_new_user(), Some((canister_id(3), version)));
+        assert_eq!(map.canister_for_new_user(), Some(canister_id(3)));
 
         // As are full ones, however few users they hold
         map.mark_full(&canister_id(3));
         map.on_user_removed(&canister_id(3));
         map.on_user_removed(&canister_id(3));
-        assert_eq!(map.canister_for_new_user(), Some((canister_id(2), version)));
+        assert_eq!(map.canister_for_new_user(), Some(canister_id(2)));
 
         map.mark_full(&canister_id(2));
         assert_eq!(map.canister_for_new_user(), None);

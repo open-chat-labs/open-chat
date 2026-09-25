@@ -12,7 +12,7 @@ pub struct LocalUserMap {
 }
 
 impl LocalUserMap {
-    pub fn add(&mut self, user_id: UserId, principal: Principal, wasm_version: BuildVersion, now: TimestampMillis) {
+    pub fn add(&mut self, user_id: UserId, principal: Principal, wasm_version: Option<BuildVersion>, now: TimestampMillis) {
         let user = LocalUser::new(now, wasm_version);
         self.users.insert(user_id, user);
         self.registration_in_progress.remove(&principal);
@@ -74,9 +74,9 @@ impl LocalUserMap {
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct LocalUser {
     pub date_created: TimestampMillis,
-    // For a user held in a MultiUser canister this is the canister's version when they registered,
-    // and isn't kept up to date, since the version is tracked per MultiUser canister
-    pub wasm_version: BuildVersion,
+    // The version of the user's own canister. Not set for a user held in a MultiUser canister, since
+    // the version is tracked per MultiUser canister
+    pub wasm_version: Option<BuildVersion>,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
@@ -85,7 +85,7 @@ impl LocalUser {
     pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
         self.upgrade_in_progress = upgrade_in_progress;
         if let Some(version) = new_version {
-            self.wasm_version = version;
+            self.wasm_version = Some(version);
         }
     }
 
@@ -95,12 +95,39 @@ impl LocalUser {
 }
 
 impl LocalUser {
-    pub fn new(now: TimestampMillis, wasm_version: BuildVersion) -> LocalUser {
+    pub fn new(now: TimestampMillis, wasm_version: Option<BuildVersion>) -> LocalUser {
         LocalUser {
             date_created: now,
             wasm_version,
             upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Users were previously stored with a version whether or not they had a canister of their own
+    #[test]
+    fn deserializes_from_the_previous_version() {
+        #[derive(Serialize)]
+        struct LocalUserPrevious {
+            date_created: TimestampMillis,
+            wasm_version: BuildVersion,
+            upgrade_in_progress: bool,
+            cycle_top_ups: Vec<CyclesTopUp>,
+        }
+
+        let version = BuildVersion::new(1, 2, 3);
+        let bytes = msgpack::serialize_then_unwrap(LocalUserPrevious {
+            date_created: 1,
+            wasm_version: version,
+            upgrade_in_progress: false,
+            cycle_top_ups: Vec::new(),
+        });
+        let user: LocalUser = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(user.wasm_version, Some(version));
     }
 }

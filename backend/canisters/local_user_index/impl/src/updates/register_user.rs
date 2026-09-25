@@ -41,9 +41,13 @@ async fn register_user(args: Args) -> Response {
             canister_wasm,
             cycles_to_use,
             init_canister_args,
-        } => create_user_canister(canister_id, canister_wasm, cycles_to_use, init_canister_args).await,
+        } => create_user_canister(canister_id, canister_wasm, cycles_to_use, init_canister_args)
+            .await
+            .map(|(user_id, wasm_version)| (user_id, Some(wasm_version))),
         Target::MultiUserCanister(existing) => {
-            create_user_in_multi_user_canister(existing, caller, args.username.clone(), referred_by).await
+            create_user_in_multi_user_canister(existing, caller, args.username.clone(), referred_by)
+                .await
+                .map(|user_id| (user_id, None))
         }
     };
 
@@ -113,12 +117,12 @@ async fn create_user_canister(
 }
 
 async fn create_user_in_multi_user_canister(
-    mut existing: Option<(CanisterId, BuildVersion)>,
+    mut existing: Option<CanisterId>,
     principal: Principal,
     username: String,
     referred_by: Option<UserId>,
-) -> Result<(UserId, BuildVersion), OCError> {
-    while let Some((canister_id, wasm_version)) = existing {
+) -> Result<UserId, OCError> {
+    while let Some(canister_id) = existing {
         match c2c_create_user(canister_id, principal, username.clone(), referred_by).await {
             // The canister is full, so stop offering it and try whichever has the fewest users
             // now, only creating a new one once there are none left. Each canister is only tried
@@ -129,13 +133,12 @@ async fn create_user_in_multi_user_canister(
                     state.data.local_multi_user_canisters.canister_for_new_user()
                 });
             }
-            result => return result.map(|user_id| (user_id, wasm_version)),
+            result => return result,
         }
     }
 
-    let (canister_id, wasm_version) = create_multi_user_canister().await?;
-    let user_id = c2c_create_user(canister_id, principal, username, referred_by).await?;
-    Ok((user_id, wasm_version))
+    let (canister_id, _) = create_multi_user_canister().await?;
+    c2c_create_user(canister_id, principal, username, referred_by).await
 }
 
 async fn c2c_create_user(
@@ -175,7 +178,7 @@ enum Target {
     },
     // The canister to add the user to, being the one with the fewest users. If there is none, or it
     // is full, a new one is created
-    MultiUserCanister(Option<(CanisterId, BuildVersion)>),
+    MultiUserCanister(Option<CanisterId>),
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
@@ -192,17 +195,13 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
             OCErrorCode::InvalidRequest.with_message("MultiUser canisters can only be requested in test mode"),
         ));
     }
-    let requested_multi_user_canister = match args.multi_user_canister_id {
-        Some(canister_id) => match state.data.local_multi_user_canisters.get(&canister_id) {
-            Some(canister) => Some((canister_id, canister.wasm_version)),
-            None => {
-                return Err(Error(
-                    OCErrorCode::InvalidRequest.with_message("MultiUser canister not found on this LocalUserIndex"),
-                ));
-            }
-        },
-        None => None,
-    };
+    if let Some(canister_id) = args.multi_user_canister_id
+        && !state.data.local_multi_user_canisters.contains(&canister_id)
+    {
+        return Err(Error(
+            OCErrorCode::InvalidRequest.with_message("MultiUser canister not found on this LocalUserIndex"),
+        ));
+    }
     let use_multi_user_canister = multi_user_canister_requested || state.data.multi_user_canisters_enabled;
 
     let now = state.env.now();
@@ -259,7 +258,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
             referred_by,
             is_from_identity_canister,
             target: Target::MultiUserCanister(
-                requested_multi_user_canister.or_else(|| state.data.local_multi_user_canisters.canister_for_new_user()),
+                args.multi_user_canister_id
+                    .or_else(|| state.data.local_multi_user_canisters.canister_for_new_user()),
             ),
         });
     }
@@ -334,7 +334,7 @@ fn commit(
     user_id: UserId,
     username: String,
     email: Option<String>,
-    wasm_version: BuildVersion,
+    wasm_version: Option<BuildVersion>,
     referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     state: &mut RuntimeState,
