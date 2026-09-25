@@ -83,3 +83,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 
+### Fixed
+
+- Apply a change to a direct chat's message TTL which the recipient receives after the chat was created on their side, eg. because the sender's events were batched, rather than dropping it as older than the chat ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))

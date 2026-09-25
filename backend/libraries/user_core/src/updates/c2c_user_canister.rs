@@ -301,15 +301,106 @@ pub fn set_events_ttl(
     anonymized_chat_id: impl FnOnce() -> u128,
     now: TimestampMillis,
 ) {
-    let is_new_chat = !user.direct_chats.exists(&sender.into());
     let chat = user
         .direct_chats
         .get_or_create(my_user_id, sender, UserType::User, anonymized_chat_id, now);
     let last_updated_timestamp = chat.events().get_events_time_to_live().timestamp;
-    if is_new_chat
+    // Until the TTL is changed it is timestamped with when the chat was created, which may be after
+    // the sender changed it, eg. if the chat was created by an earlier event from the sender which
+    // was delivered in the same batch as this one. The recipient hasn't changed it, so the sender's
+    // change is applied.
+    let changed_since_created = last_updated_timestamp > chat.date_created();
+    if !changed_since_created
         || last_updated_timestamp < args.timestamp
         || (last_updated_timestamp == args.timestamp && sender.as_slice() < my_user_id.as_slice())
     {
         chat.set_events_time_to_live(sender, args.events_ttl, now);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    fn user() -> User {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+        User::new(Principal::from_slice(&[9]), "username".to_string(), None, 100)
+    }
+
+    fn user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
+    }
+
+    fn events_ttl(user: &User, them: UserId) -> Option<u64> {
+        user.direct_chats
+            .get(&them.into())
+            .unwrap()
+            .events()
+            .get_events_time_to_live()
+            .value
+    }
+
+    fn set_events_ttl_at(
+        user: &mut User,
+        me: UserId,
+        sender: UserId,
+        value: u64,
+        timestamp: TimestampMillis,
+        now: TimestampMillis,
+    ) {
+        set_events_ttl(
+            user,
+            me,
+            sender,
+            SetEventsTtl {
+                events_ttl: Some(value),
+                timestamp,
+            },
+            || 1,
+            now,
+        );
+    }
+
+    #[test]
+    fn change_is_applied_to_a_chat_created_after_it_was_made() {
+        // The sender's earlier message created the chat after they changed the TTL, as happens
+        // when their events are batched
+        let (me, sender) = (user_id(1), user_id(2));
+        let mut user = user();
+        user.direct_chats.get_or_create(me, sender, UserType::User, || 1, 100);
+
+        set_events_ttl_at(&mut user, me, sender, 1000, 50, 100);
+
+        assert_eq!(events_ttl(&user, sender), Some(1000));
+    }
+
+    #[test]
+    fn change_older_than_the_recipients_own_is_ignored() {
+        let (me, sender) = (user_id(1), user_id(2));
+        let mut user = user();
+        user.direct_chats
+            .get_or_create(me, sender, UserType::User, || 1, 100)
+            .set_events_time_to_live(me, Some(2000), 200);
+
+        set_events_ttl_at(&mut user, me, sender, 1000, 150, 300);
+
+        assert_eq!(events_ttl(&user, sender), Some(2000));
+    }
+
+    #[test]
+    fn change_newer_than_the_recipients_own_is_applied() {
+        let (me, sender) = (user_id(1), user_id(2));
+        let mut user = user();
+        user.direct_chats
+            .get_or_create(me, sender, UserType::User, || 1, 100)
+            .set_events_time_to_live(me, Some(2000), 200);
+
+        set_events_ttl_at(&mut user, me, sender, 1000, 250, 300);
+
+        assert_eq!(events_ttl(&user, sender), Some(1000));
     }
 }
