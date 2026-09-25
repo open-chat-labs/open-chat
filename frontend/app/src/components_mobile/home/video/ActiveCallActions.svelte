@@ -8,9 +8,13 @@
     import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
+    import VolumeHigh from "svelte-material-icons/VolumeHigh.svelte";
+    import VolumeMedium from "svelte-material-icons/VolumeMedium.svelte";
     import WindowMinimize from "svelte-material-icons/WindowMinimize.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { activeVideoCall, hasPresence } from "../../../stores/video";
+    import { activeVideoCall, hasPresence, speaker } from "../../../stores/video";
+    import { setCallSpeaker } from "@utils/native/call_bridge";
+    import { isAndroidTauriApp } from "@shared";
     import { removeQueryStringParam } from "../../../utils/urls";
     import Translatable from "../../Translatable.svelte";
     import type { VideoCallChat } from "./callChat";
@@ -28,6 +32,11 @@
     let threadOpen = $derived($activeVideoCall?.threadOpen ?? false);
     let participantsOpen = $derived($activeVideoCall?.participantsOpen ?? false);
     let isOwner = $derived($activeVideoCall?.isOwner ?? false);
+
+    // The shell owns the route (native calls M4, #9559); the store follows what it reports.
+    function toggleSpeaker() {
+        setCallSpeaker(!$speaker);
+    }
 
     function toggleThread() {
         if (chat.chatId !== undefined && chat.videoCallInProgress?.messageIndex !== undefined) {
@@ -89,6 +98,14 @@
                 <MessageOutline {size} {color} />
             {/snippet}
             <Translatable resourceKey={i18nKey("videoCall.chat")} />
+        </MenuItem>
+    {/if}
+    {#if isAndroidTauriApp()}
+        <MenuItem onclick={toggleSpeaker}>
+            {#snippet icon(color, size)}
+                {#if $speaker}<VolumeMedium {size} {color} />{:else}<VolumeHigh {size} {color} />{/if}
+            {/snippet}
+            <Translatable resourceKey={i18nKey($speaker ? "videoCall.speakerOff" : "videoCall.speakerOn")} />
         </MenuItem>
     {/if}
     <MenuItem onclick={onMinimise}>

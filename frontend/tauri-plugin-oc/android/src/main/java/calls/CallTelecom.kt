@@ -442,6 +442,8 @@ class CallConnection(private val context: Context, override val call: IncomingCa
         main.removeCallbacks(claimBackstop)
         if (state != STATE_ACTIVE) setActive()
         routes.reapply()
+        // The route Telecom reported while ringing is the call's route now.
+        lastAudioState?.let { routes.onRouteStateChanged(routeStateOf(it)) }
     }
 
     override fun setSpeaker(speaker: Boolean, isDefault: Boolean) {

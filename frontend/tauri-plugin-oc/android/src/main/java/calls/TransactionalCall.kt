@@ -145,6 +145,8 @@ class TransactionalCall(
             override fun onResult(result: Void?) {
                 active = true
                 routes.reapply()
+                // The route Telecom reported while ringing is the call's route now.
+                routeStateChanged()
             }
             override fun onError(error: CallException) {
                 Log.w(LOG_TAG, "Telecom refused to activate the call: ${error.code}")
@@ -260,6 +262,7 @@ class TransactionalCall(
             active = true
             wasCompleted.accept(true)
             routes.reapply()
+            routeStateChanged()
         }
 
         // Hold is not something an OpenChat call can do.
@@ -275,6 +278,7 @@ class TransactionalCall(
             wasCompleted.accept(true)
             CallRinger.accept(context, call)
             routes.reapply()
+            routeStateChanged()
         }
 
         // As CallConnection.onReject / onDisconnect, told apart by the cause. Telecom
