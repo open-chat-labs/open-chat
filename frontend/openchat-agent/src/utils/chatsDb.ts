@@ -1167,12 +1167,18 @@ export class ChatsDb {
         const current = await this.getCachedCurrentUser();
         if (current) {
             const merged = updateCreatedUser(current, updated);
-            (await this.getDb()).put("currentUser", merged, this.principalString);
+            await (await this.getDb()).put("currentUser", merged, this.principalString);
         }
     }
 
-    setCachedCurrentUser(user: CreatedUser): void {
-        this.getDb().then((db) => db.put("currentUser", user, this.principalString));
+    async setCachedCurrentUser(user: CreatedUser): Promise<void> {
+        await (await this.getDb()).put("currentUser", user, this.principalString);
+    }
+
+    // Drops the cached chat state, so the next update loads the chats in full. The rows stay, so
+    // that load can tombstone whatever it no longer finds.
+    async forgetCachedChatState(): Promise<void> {
+        await (await this.getDb()).delete("chats", this.principalString);
     }
 
     async patchCachedCurrentUser(patch: Partial<CreatedUser>): Promise<void> {

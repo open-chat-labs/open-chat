@@ -2,6 +2,7 @@
     import "@styles/global.scss";
 
     import "@i18n/i18n";
+    import { invoke } from "@tauri-apps/api/core";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
     import {
@@ -150,6 +151,14 @@
             subscribe("askToSpeak", askToSpeak),
             subscribe("userLoggedIn", onUserLoggedIn),
             subscribe("sessionExpired", () => client.logout()),
+            // The current user has been migrated to a new user id, so start again under it
+            subscribe("currentUserIdChanged", () => {
+                if (client.isNativeApp()) {
+                    invoke("plugin:oc|restart_app");
+                } else {
+                    window.location.reload();
+                }
+            }),
         ];
         // Registered rather than called at each logout site: an expired session logs out from
         // the worker agent now, not just from the handler below, and the previous user's

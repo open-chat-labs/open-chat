@@ -13,9 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Include in `UserIdMigrated` the groups and communities the migrated user is in, for the LocalUserIndexes to notify. The LocalUserIndexes must be upgraded first ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Add `start_user_migration`, for governance principals in test mode only, which starts migrating a user via their User canister's `c2c_try_start_migration`, until the UserIndex migrates users itself. The User canisters must be upgraded first ([#9544](https://github.com/open-chat-labs/open-chat/pull/9544))
 - Add `export_migrating_user`, for governance principals in test mode only, which pulls everything a user being migrated exports, as the MultiUser canister will. The User canisters must be upgraded first ([#9547](https://github.com/open-chat-labs/open-chat/pull/9547))
+- Add `cancel_user_migration`, for governance principals in test mode only, which cancels a user's migration via their User canister's `c2c_cancel_migration`. The User canisters must be upgraded first
 
 ### Changed
 
+- Return a user migrated to a MultiUser canister under their latest id from `users` and `user` when they are looked up by an earlier one, with the earlier ids they were looked up by as `previous_user_ids` so the client can map them to their latest id. `users` returns each such user once and in full, whether or not they have been updated since, and returns `current_user` whether or not they have been updated if the caller is looked up by an earlier id
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 
 ### Fixed

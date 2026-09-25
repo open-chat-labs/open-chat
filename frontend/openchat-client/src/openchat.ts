@@ -42,6 +42,7 @@ import {
     ROLE_OWNER,
     Stream,
     WEBAUTHN_ORIGINATING_CANISTER,
+    ANON_USER_ID,
     anonymousUser,
     buildDelegationChain,
     canRetryMessage,
@@ -648,6 +649,7 @@ import {
     compareUsername,
     formatLastOnlineDate,
     missingUserIds,
+    shouldRestartForNewUserId,
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
@@ -709,6 +711,7 @@ export class OpenChat {
         { userIds: Set<string>; promise: Promise<Record<string, DailyPuzzleResult>> }
     >();
     #membershipCheck: number | undefined;
+    #currentUserIdChangedPublished = false;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
     #chatsPoller: Poller | undefined = undefined;
@@ -5771,7 +5774,8 @@ export class OpenChat {
             let resolved = false;
             this.#worker.stream({ kind: "getCurrentUser" }).subscribe({
                 onResult: (user) => {
-                    if (user.kind === "created_user") {
+                    // If the id has changed, the session restarts under the new one
+                    if (user.kind === "created_user" && !this.#currentUserIdChanged(user.userId)) {
                         userCreatedStore.set(true);
                         currentUserStore.set(user);
                         this.#setDiamondStatus(user.diamondStatus);
@@ -6379,16 +6383,21 @@ export class OpenChat {
             })
             .then((resp) => {
                 const deletedUsers = [...resp.deletedUserIds].map(deletedUser);
+                // Users requested by an id from before they were migrated to a MultiUser canister
+                // are returned under their latest id, but are still looked up by the earlier one
+                if (resp.migratedUserIds !== undefined) {
+                    userStore.addMigratedUserIds(resp.migratedUserIds);
+                }
                 userStore.addMany([...resp.users, ...deletedUsers]);
                 if (resp.serverTimestamp !== undefined) {
                     // If we went to the server, all users not returned are still up to date, so we mark them as such
                     const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
                     const allOtherUsers = userArgs.userGroups.flatMap((g) =>
-                        g.users.filter((u) => !usersReturned.has(u)),
+                        g.users.filter((u) => !usersReturned.has(userStore.latestUserId(u))),
                     );
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
-                if (resp.currentUser) {
+                if (resp.currentUser && !this.#currentUserIdChanged(resp.currentUser.userId)) {
                     currentUserStore.set(
                         updateCreatedUser(currentUserStore.value, resp.currentUser),
                     );
@@ -6399,19 +6408,12 @@ export class OpenChat {
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
-        return this.#worker
-            .send({
-                kind: "getUser",
-                userId,
-                allowStale,
-            })
-            .then((resp) => {
-                if (resp !== undefined) {
-                    userStore.addUser(resp);
-                }
-                return resp;
-            })
-            .catch(() => undefined);
+        // Via getUsers, which adds the user to the store, including under the id they were asked
+        // for if that's one from before they were migrated to a MultiUser canister
+        return this.getUsers(
+            { userGroups: [{ users: [userId], updatedSince: BigInt(0) }] },
+            allowStale,
+        ).then((resp) => resp.users.find((u) => u.userId === userStore.latestUserId(userId)));
     }
 
     getUserStatus(userId: string, now: number): Promise<UserStatus> {
@@ -7707,6 +7709,36 @@ export class OpenChat {
         });
     }
 
+    // When the current user is migrated to a MultiUser canister, they get a new user id. The session
+    // (the user client, the chats and everything else keyed by user id) was built for the old one,
+    // so rather than swap the id out from under it, we have the app restart under the new one.
+    // Returns whether the id has changed.
+    #currentUserIdChanged(userId: string): boolean {
+        const currentUserId = currentUserStore.value.userId;
+        if (currentUserId === ANON_USER_ID || currentUserId === userId) return false;
+
+        if (!this.#currentUserIdChangedPublished) {
+            this.#currentUserIdChangedPublished = true;
+            if (shouldRestartForNewUserId(currentUserId, userId)) {
+                this.#logger.log("Current user id changed, restarting the session", {
+                    from: currentUserId,
+                    to: userId,
+                });
+                publish("currentUserIdChanged");
+            } else {
+                // We've already restarted for this change, yet the session started under the old
+                // id again, so caching the new one must have failed. The session carries on under
+                // the old id rather than restarting over and over.
+                this.#logger.error(
+                    "Current user id changed again after restarting for it",
+                    new Error("Current user id changed"),
+                    { from: currentUserId, to: userId },
+                );
+            }
+        }
+        return true;
+    }
+
     #setDiamondStatus(status: DiamondMembershipStatus): void {
         const now = Date.now();
         this.#updateDiamondStatusInUserStore(status);
@@ -7721,7 +7753,9 @@ export class OpenChat {
                     () => {
                         this.getCurrentUser().then((user) => {
                             if (user.kind === "created_user") {
-                                currentUserStore.set(user);
+                                if (!this.#currentUserIdChanged(user.userId)) {
+                                    currentUserStore.set(user);
+                                }
                             } else {
                                 this.logout();
                             }

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { dropInvalidUserIds } from "./mappers";
+import { principalStringToBytes } from "../../utils/mapping";
+import { dropInvalidUserIds, userSummaryUpdate } from "./mappers";
 
 describe("dropInvalidUserIds", () => {
     // Invariant: a user id that is not a principal never reaches Principal.fromText. Referral
@@ -21,5 +22,24 @@ describe("dropInvalidUserIds", () => {
                 { users: [], updatedSince: 5n },
             ],
         });
+    });
+});
+
+describe("userSummaryUpdate", () => {
+    const latest = "dfdal-2uaaa-aaaaa-qaama-cai";
+    const previous = ["ryjl3-tyaaa-aaaaa-aaaba-cai", "rrkah-fqaaa-aaaaa-aaaaq-cai"];
+
+    test("maps the ids a migrated user had before their latest one", () => {
+        const update = userSummaryUpdate({
+            user_id: principalStringToBytes(latest),
+            previous_user_ids: previous.map(principalStringToBytes),
+        });
+        expect(update.userId).toEqual(latest);
+        expect(update.previousUserIds).toEqual(previous);
+    });
+
+    test("leaves previousUserIds undefined when the field is omitted", () => {
+        const update = userSummaryUpdate({ user_id: principalStringToBytes(latest) });
+        expect(update.previousUserIds).toBeUndefined();
     });
 });

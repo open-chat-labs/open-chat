@@ -29,6 +29,7 @@ generate_c2c_call!(c2c_remove_from_group);
 generate_c2c_call!(c2c_revoke_super_admin);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_try_start_migration);
+generate_c2c_call!(c2c_cancel_migration);
 generate_c2c_call!(c2c_export_user);
 generate_c2c_call!(c2c_export_user_stable_memory);
 generate_c2c_call!(c2c_uninstall_bot);
