@@ -172,6 +172,9 @@ impl RuntimeState {
     // Queues an event for `recipient`, batched with the others for the canister holding them
     pub fn push_user_canister_event(&mut self, recipient: UserId, event: UserCanisterEvent) {
         if recipient != OPENCHAT_BOT_USER_ID && recipient != self.env.canister_id().into() {
+            // Sent to the recipient's latest id if they are known to have been migrated since
+            // having `recipient`
+            let recipient = self.data.migrated_user_ids.latest(recipient);
             self.data.user_canister_events_by_canister.push(
                 recipient.canister_id(),
                 IdempotentEnvelope {
