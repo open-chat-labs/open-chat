@@ -207,4 +207,13 @@ class CallSessionTest {
             assertFalse(file.name, text.contains("PictureInPicture") || text.contains("enterPictureInPictureMode"))
         }
     }
+
+    @Test
+    fun `invariant 5 a route default that beats Telecom's registration of the call is applied on registration`() {
+        val telecom = File("src/main/java/calls/CallTelecom.kt").readText()
+        val setSpeaker = telecom.substring(telecom.indexOf("fun setSpeaker(id: CallId"), telecom.indexOf("fun route(id: CallId)"))
+        assertTrue("pendingSpeaker[id] = speaker to isDefault" in setSpeaker)
+        val register = telecom.substring(telecom.indexOf("internal fun register("), telecom.indexOf("internal fun unregister("))
+        assertTrue("pendingSpeaker.remove(id)?.let" in register)
+    }
 }

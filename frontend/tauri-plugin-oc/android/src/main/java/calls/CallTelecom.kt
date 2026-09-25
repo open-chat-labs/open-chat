@@ -73,6 +73,11 @@ object CallTelecom {
     // Ends and answers that arrived before Telecom created the call. Applied on arrival.
     private val pendingEnd = ConcurrentHashMap<CallId, CallRegistry.End>()
 
+    // A route default that arrived before Telecom created the call: an outgoing call's
+    // default lands before addCall's callback (found on the device: video calls the phone
+    // started stayed on the earpiece).
+    private val pendingSpeaker = ConcurrentHashMap<CallId, Pair<Boolean, Boolean>>()
+
     private fun handle(context: Context) = PhoneAccountHandle(
         ComponentName(context, CallConnectionService::class.java),
         ACCOUNT_ID,
@@ -243,7 +248,12 @@ object CallTelecom {
 
     // The app's route request: the connect-time default, or a user's tap.
     fun setSpeaker(id: CallId, speaker: Boolean, isDefault: Boolean) {
-        live[id]?.setSpeaker(speaker, isDefault)
+        val call = live[id]
+        if (call == null) {
+            pendingSpeaker[id] = speaker to isDefault
+            return
+        }
+        call.setSpeaker(speaker, isDefault)
     }
 
     fun route(id: CallId): CallRoutePolicy.Route? = live[id]?.route
@@ -252,6 +262,7 @@ object CallTelecom {
         val all = live.values.toList()
         live.clear()
         pendingEnd.clear()
+        pendingSpeaker.clear()
         all.forEach { it.finish(end) }
     }
 
@@ -261,6 +272,7 @@ object CallTelecom {
         val id = call.call.id
         val early = pendingEnd.remove(id)
         live[id] = call
+        pendingSpeaker.remove(id)?.let { (speaker, isDefault) -> call.setSpeaker(speaker, isDefault) }
         if (early != null) {
             if (early == CallRegistry.End.ANSWERED_HERE) call.answered() else end(id, early)
         }
