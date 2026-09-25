@@ -11,9 +11,8 @@ import type {
     StoredMediaContent,
     UploadFileResponse,
 } from "@shared";
-import { random128, StorageUpdated } from "@shared";
+import { buildBlobUrl, random128, StorageUpdated } from "@shared";
 import type { AgentConfig } from "../../config";
-import { buildBlobUrl } from "../../utils/chat";
 import { StorageBucketClient } from "../storageBucket/storageBucket.client";
 import { StorageIndexClient } from "../storageIndex/storageIndex.client";
 

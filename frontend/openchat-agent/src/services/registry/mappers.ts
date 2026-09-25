@@ -7,12 +7,12 @@ import type {
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
     BTC_SYMBOL,
+    buildTokenLogoUrl,
     CKBTC_SYMBOL,
     INDEX_CANISTER_ICP,
     LEDGER_CANISTER_ICP,
     UnsupportedValueError,
 } from "@shared";
-import { buildTokenLogoUrl } from "../../utils/chat";
 import type {
     ExchangeId as TExchangeId,
     RegistryNervousSystemSummary,

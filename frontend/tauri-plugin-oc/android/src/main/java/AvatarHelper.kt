@@ -44,8 +44,10 @@ object AvatarHelper {
         fun urlBase(entityId: String) =
             String.format(BuildConfig.AVATAR_BASE_URL, entityId)
 
-        fun mainAvatarUrl(entityId: String, avatarId: String) =
-            "${urlBase(entityId)}/avatar/$avatarId"
+        fun mainAvatarUrl(entityId: String, avatarId: String): String {
+            val location = BlobLocation.of(entityId, "avatar")
+            return "${urlBase(location.canisterId)}/${location.path}/$avatarId"
+        }
 
         fun channelAvatarUrl(entityId: String, channelId: UInt, avatarId: String) =
             "${urlBase(entityId)}/channel/$channelId/avatar/$avatarId"
@@ -74,7 +76,8 @@ object AvatarHelper {
     }
 
     suspend fun loadBitmapForUser(context: Context, senderId: SenderId, avatarId: String): Bitmap? {
-        val url = "${String.format(BuildConfig.AVATAR_BASE_URL, senderId.value)}/avatar/${avatarId}"
+        val location = BlobLocation.of(senderId.value, "avatar")
+        val url = "${String.format(BuildConfig.AVATAR_BASE_URL, location.canisterId)}/${location.path}/${avatarId}"
 
         return loadBitmap(context, url)
     }
