@@ -120,7 +120,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reject paying for streak insurance which would take the days insured over 30, the most the UI allows, since the price and the count of days overflow otherwise ([#9441](https://github.com/open-chat-labs/open-chat/pull/9441))
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 - Ignore swap status notifications whose swap id doesn't match the swap on the message they name, since anyone can create a swap in the escrow canister naming any message and then cancel it ([#9530](https://github.com/open-chat-labs/open-chat/pull/9530))
-- Apply a change to a direct chat's message TTL which the recipient receives after the chat was created on their side, eg. because the sender's events were batched, rather than dropping it as older than the chat ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Apply a change to a direct chat's message TTL which the recipient receives after the chat was created on their side, eg. because the sender's events were batched, rather than dropping it as older than the chat ([#9584](https://github.com/open-chat-labs/open-chat/pull/9584))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-12
 

@@ -85,4 +85,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Apply a change to a direct chat's message TTL which the recipient receives after the chat was created on their side, eg. because the sender's events were batched, rather than dropping it as older than the chat ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Apply a change to a direct chat's message TTL which the recipient receives after the chat was created on their side, eg. because the sender's events were batched, rather than dropping it as older than the chat ([#9584](https://github.com/open-chat-labs/open-chat/pull/9584))
