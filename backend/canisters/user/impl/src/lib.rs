@@ -5,7 +5,7 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
-use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
+use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
@@ -21,9 +21,8 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotNotification, BuildVersion, CanisterId, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Milliseconds, Notification, NotifyChit, OCResult,
-    TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotification,
+    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis,
+    Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::UserCanisterEvent;
 use user_core::{Community, GroupChat, User};
@@ -51,11 +50,6 @@ mod updates;
 // The most exported in a single page when the user is being migrated to a MultiUser canister,
 // leaving room within the 2MB limit on a reply
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
-
-// How long after a P2P swap expires the user must wait to be migrated, which leaves the Escrow time
-// to finish paying out or refunding it, and to notify this canister. The Escrow retries a payment
-// until the ledger rejects it as too old, which is a day after it was first attempted.
-const P2P_SWAP_SETTLEMENT_PERIOD: Milliseconds = 3 * DAY_IN_MS;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -433,11 +427,6 @@ struct Data {
     // have changed
     #[serde(default)]
     pub migrated_user_ids: MigratedUserIds,
-    // The latest expiry of the P2P swaps the user has created or accepted, or been offered in a
-    // direct chat. Until the Escrow has settled a swap it may still pay the user or notify this
-    // canister, so the user isn't migrated until a while after this.
-    #[serde(default)]
-    pub p2p_swaps_open_until: Option<TimestampMillis>,
     // Set while the canister's state must not change, during which every update call is rejected.
     // Queries are still served.
     #[serde(default)]
@@ -479,7 +468,7 @@ impl Data {
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
             None => {
-                if let Some(reason) = self.reason_not_ready_for_migration(now) {
+                if let Some(reason) = self.reason_not_ready_for_migration() {
                     return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
                 }
 
@@ -526,16 +515,14 @@ impl Data {
     // have no work outstanding which would change or read them, nor anything else which isn't
     // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
     // state may remain.
-    fn reason_not_ready_for_migration(&self, now: TimestampMillis) -> Option<&'static str> {
+    fn reason_not_ready_for_migration(&self) -> Option<&'static str> {
         if self.frozen.is_some() {
             Some("Canister is frozen")
-        } else if self
-            .p2p_swaps_open_until
-            .is_some_and(|t| now < t.saturating_add(P2P_SWAP_SETTLEMENT_PERIOD))
-        {
-            // The Escrow pays out and refunds swaps to this canister's account, and notifies this
-            // canister of them, neither of which the user could receive once migrated
-            Some("P2P swaps may still be open")
+        } else if !self.user.p2p_swaps.is_empty() {
+            // The Escrow pays out and refunds swaps to this canister's account, and funds from a swap
+            // may still be there even once it has been settled, so for now a user who has created or
+            // accepted a swap isn't migrated
+            Some("User has P2P swaps")
         } else if async_work_in_progress() {
             Some("Async work is in progress")
         } else if self.timer_jobs.iter().any(|(_, wrapper)| {
@@ -620,16 +607,9 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             known_multi_user_canisters: HashSet::new(),
             migrated_user_ids: MigratedUserIds::default(),
-            p2p_swaps_open_until: None,
             frozen: None,
             migration: None,
         }
-    }
-
-    // Records a P2P swap the user has created or accepted, or been offered in a direct chat, so that
-    // they aren't migrated while it may still be open
-    pub fn record_p2p_swap(&mut self, expires_at: TimestampMillis) {
-        self.p2p_swaps_open_until = Some(self.p2p_swaps_open_until.map_or(expires_at, |t| t.max(expires_at)));
     }
 
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {

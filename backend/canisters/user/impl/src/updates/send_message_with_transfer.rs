@@ -376,7 +376,6 @@ pub(crate) async fn set_up_p2p_swap(
             .user
             .p2p_swaps
             .add(user_core::updates::offer_p2p_swap::swap_offered(id, &args, my_user_id, now));
-        state.data.record_p2p_swap(args.expires_at);
 
         // A user alone in their canister holds their funds in its account, which escrow knows them by
         let to = user_core::updates::offer_p2p_swap::deposit_account(escrow_canister_id, my_user_id.as_principal(), id);

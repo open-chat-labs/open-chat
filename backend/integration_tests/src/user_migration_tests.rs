@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
-use constants::{DAY_IN_MS, HOUR_IN_MS};
+use constants::HOUR_IN_MS;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -109,7 +109,7 @@ fn user_with_a_message_reminder_is_not_ready_for_migration() {
 }
 
 #[test]
-fn users_with_a_p2p_swap_in_a_group_are_not_ready_for_migration_until_it_has_settled() {
+fn users_with_a_p2p_swap_are_not_ready_for_migration() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -183,22 +183,15 @@ fn users_with_a_p2p_swap_in_a_group_are_not_ready_for_migration_until_it_has_set
 
     tick_many(env, 10);
 
-    // Neither the user who created the swap nor the one who accepted it can be migrated until 3 days
-    // after it expires, by when the Escrow will have settled it
+    // Neither the user who created the swap nor the one who accepted it can be migrated, even once it
+    // has been settled
     for user in [&user1, &user2] {
         let response = try_start_user_migration(env, *controller, canister_ids.user_index, user, multi_user_canister(1));
         assert!(
             matches!(response, Response::Error(ref e) if e.matches_code(OCErrorCode::NotReadyForMigration)
-                && e.message() == Some("P2P swaps may still be open")),
+                && e.message() == Some("User has P2P swaps")),
             "{response:?}"
         );
-    }
-
-    env.advance_time(Duration::from_millis(HOUR_IN_MS + 3 * DAY_IN_MS));
-    tick_many(env, 10);
-
-    for user in [&user1, &user2] {
-        start_user_migration(env, *controller, canister_ids.user_index, user, multi_user_canister(1));
     }
 }
 

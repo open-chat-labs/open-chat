@@ -2,14 +2,12 @@ use crate::data_previous::{DataPrevious, data_is_current_layout};
 use crate::jobs::migrate_direct_chat_events_to_key_id_keys;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
-use crate::timer_job_types::TimerJob;
 use crate::{Data, mutate_state};
 use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use stable_memory::get_reader;
 use stable_memory_map::ProfileDocumentType;
-use std::ops::Deref;
 use tracing::info;
 use types::MultiUserChat;
 use user_canister::post_upgrade::Args;
@@ -109,24 +107,6 @@ fn post_upgrade(args: Args) {
     // TODO: Remove this after next release
     let p2p_swaps_migrated = data.user.p2p_swaps.migrate_to_stable_memory();
     info!(p2p_swaps_migrated, "Migrated P2P swaps to stable memory");
-
-    // Record the latest expiry of the P2P swaps from before they were recorded as they happen: those
-    // the user created or accepted, and those they were offered in a direct chat, each of which has a
-    // pending job to mark it expired
-    // TODO: Remove this after next release
-    let latest_p2p_swap_expiry = data
-        .user
-        .p2p_swaps
-        .latest_expiry()
-        .into_iter()
-        .chain(data.timer_jobs.iter().filter_map(|(due, wrapper)| {
-            matches!(wrapper.deref().borrow().as_ref(), Some(TimerJob::MarkP2PSwapExpired(_))).then_some(*due)
-        }))
-        .max();
-    if let Some(expires_at) = latest_p2p_swap_expiry {
-        data.record_p2p_swap(expires_at);
-    }
-    info!(?latest_p2p_swap_expiry, "Recorded the latest P2P swap expiry");
 
     // Move the streak insurance payments and claims into stable memory
     // TODO: Remove this after next release

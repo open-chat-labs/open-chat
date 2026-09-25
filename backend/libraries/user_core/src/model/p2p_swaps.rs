@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{KeyPrefix, P2PSwapKey, P2PSwapKeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{KeyPrefix, P2PSwapKeyPrefix, with_map_mut};
 use std::collections::HashMap;
 use types::{P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 
@@ -31,21 +31,6 @@ impl P2PSwaps {
 
     pub fn len(&self) -> usize {
         self.count as usize
-    }
-
-    // The latest expiry of the user's swaps, read from stable memory
-    // TODO: Remove this after next release
-    pub fn latest_expiry(&self) -> Option<TimestampMillis> {
-        if self.is_empty() {
-            return None;
-        }
-
-        let prefix = P2PSwapKeyPrefix::new();
-        with_map(|m| {
-            m.range::<P2PSwapKey, _>(prefix.create_key(&0)..=prefix.create_key(&u32::MAX))
-                .map(|(_, bytes)| msgpack::deserialize_then_unwrap::<P2PSwap>(&bytes).expires_at)
-                .max()
-        })
     }
 
     // Moves the swaps which were held on the heap into stable memory, returning how many were moved
@@ -93,6 +78,7 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use stable_memory_map::{P2PSwapKey, with_map};
     use types::{Chat, MessageId};
 
     #[test]
@@ -110,19 +96,6 @@ mod tests {
             msgpack::deserialize_then_unwrap(&with_map(|m| m.get(P2PSwapKeyPrefix::new().create_key(&2))).unwrap());
         assert_eq!(stored.token0_amount, 200);
         assert!(matches!(stored.location, P2PSwapLocation::Message(_)));
-    }
-
-    #[test]
-    fn latest_expiry_is_the_latest_of_the_swaps() {
-        init_stable_memory_map();
-        let mut swaps = P2PSwaps::default();
-        assert_eq!(swaps.latest_expiry(), None);
-
-        for id in [3, 7, 2] {
-            swaps.add(swap(id));
-        }
-
-        assert_eq!(swaps.latest_expiry(), Some(1007));
     }
 
     #[test]

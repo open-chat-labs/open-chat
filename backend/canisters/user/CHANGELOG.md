@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Don't start migrating a user while any of their P2P swaps may still be open ([#9561](https://github.com/open-chat-labs/open-chat/pull/9561))
+- Don't migrate users who have created or accepted P2P swaps ([#9561](https://github.com/open-chat-labs/open-chat/pull/9561))
 - Support leaving tips from external wallets using ICRC2 ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Return a distinct `InsufficientAllowance` error when an ICRC-2 transfer exceeds the approval ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))

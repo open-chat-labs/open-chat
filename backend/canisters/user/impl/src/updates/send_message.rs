@@ -507,7 +507,6 @@ pub(crate) fn register_timer_jobs(
     }
 
     if let MessageContent::P2PSwap(c) = &message_event.event.content {
-        data.record_p2p_swap(c.expires_at);
         data.timer_jobs.enqueue_job(
             TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
                 chat_id,
