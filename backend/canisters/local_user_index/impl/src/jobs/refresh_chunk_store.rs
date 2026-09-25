@@ -62,9 +62,7 @@ async fn refresh() {
         Err(error) => error!(?error, "Failed to clear chunk store"),
     }
 
-    for canister_type in CHILD_CANISTER_TYPES {
-        upload_chunks(canister_id, canister_type).await;
-    }
+    futures::future::join_all(CHILD_CANISTER_TYPES.map(|canister_type| upload_chunks(canister_id, canister_type))).await;
 }
 
 // Uploads the chunks of the current wasm, then records their hashes, unless the wasm was replaced
