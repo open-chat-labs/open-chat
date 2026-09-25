@@ -891,7 +891,7 @@ impl Data {
         principal: Option<Principal>,
         now: TimestampMillis,
     ) -> Option<CommunityMemberInternal> {
-        let removed = self.members.remove(user_id, principal, now);
+        let removed = self.members.remove(user_id, principal, false, now);
         self.channels.leave_all_channels(user_id, now);
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);

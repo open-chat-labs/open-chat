@@ -203,6 +203,8 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
         LocalIndexEvent::UserDeleted(user_id) => {
             state.data.chat.members.remove(user_id, **now);
             state.data.remove_user(user_id, None);
+            // A deleted user never rejoins
+            state.data.former_members.remove(&user_id);
         }
         LocalIndexEvent::BotRemoved(bot_id) => {
             state.data.uninstall_bot(OPENCHAT_BOT_USER_ID, bot_id, **now);
