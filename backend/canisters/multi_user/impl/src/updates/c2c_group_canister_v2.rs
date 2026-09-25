@@ -45,6 +45,7 @@ fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response 
                         awarded_achievement.insert(user_index);
                     }
                 }
+                GroupCanisterEvent::P2PSwapCreated(swap) => user.p2p_swaps.add_created_in_chat(*swap, user_id),
             }
         });
     }

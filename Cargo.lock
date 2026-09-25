@@ -4675,6 +4675,7 @@ dependencies = [
  "serde_repr",
  "tracing",
  "types",
+ "user_canister",
  "utils",
 ]
 
