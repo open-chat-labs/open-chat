@@ -58,12 +58,24 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         })
     }
 
+    fn get_online_since(qs: HashMap<String, String>, state: &RuntimeState) -> HttpResponse {
+        let Some(since) = qs.get("since").and_then(|s| TimestampMillis::from_str(s).ok()) else {
+            return HttpResponse::bad_request("'since' must be a timestamp in milliseconds");
+        };
+
+        build_json_response(&OnlineSince {
+            since,
+            count: state.data.last_online_dates.count_online_since(since),
+        })
+    }
+
     match extract_route(&request.url) {
         Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(p, qs) if p == "minutes_online" => read_state(|state| get_minutes_online(qs, state)),
+        Route::Other(p, qs) if p == "online_since" => read_state(|state| get_online_since(qs, state)),
         _ => HttpResponse::not_found(),
     }
 }
@@ -72,4 +84,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 struct UserOnlineMinutes {
     total: u32,
     users: Vec<(UserId, u16)>,
+}
+
+#[derive(Serialize)]
+struct OnlineSince {
+    since: TimestampMillis,
+    count: u32,
 }

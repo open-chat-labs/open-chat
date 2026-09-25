@@ -172,6 +172,9 @@ impl RuntimeState {
     // Queues an event for `recipient`, batched with the others for the canister holding them
     pub fn push_user_canister_event(&mut self, recipient: UserId, event: UserCanisterEvent) {
         if recipient != OPENCHAT_BOT_USER_ID && recipient != self.env.canister_id().into() {
+            // Sent to the recipient's latest id if they are known to have been migrated since
+            // having `recipient`
+            let recipient = self.data.migrated_user_ids.latest(recipient);
             self.data.user_canister_events_by_canister.push(
                 recipient.canister_id(),
                 IdempotentEnvelope {
@@ -518,6 +521,11 @@ impl Data {
     fn reason_not_ready_for_migration(&self) -> Option<&'static str> {
         if self.frozen.is_some() {
             Some("Canister is frozen")
+        } else if !self.user.p2p_swaps.is_empty() {
+            // The Escrow pays out and refunds swaps to this canister's account, and funds from a swap
+            // may still be there even once it has been settled, so for now a user who has created or
+            // accepted a swap isn't migrated
+            Some("User has P2P swaps")
         } else if async_work_in_progress() {
             Some("Async work is in progress")
         } else if self.timer_jobs.iter().any(|(_, wrapper)| {

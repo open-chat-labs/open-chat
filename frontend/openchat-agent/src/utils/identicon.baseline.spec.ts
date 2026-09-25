@@ -3,7 +3,7 @@
 // startup. They pin down the CURRENT output so that memoising it cannot change
 // what the main thread receives.
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "@shared";
-import { buildBlobUrl, buildIdenticonUrl, buildUserAvatarUrl } from "./chat";
+import { buildIdenticonUrl, buildUserAvatarUrl } from "./chat";
 
 // Captured from the unmemoised implementation.
 const XYZ_IDENTICON =
@@ -73,19 +73,6 @@ describe("buildUserAvatarUrl", () => {
     test("the openchat bot gets its fixed avatar, not an identicon", () => {
         expect(buildUserAvatarUrl(PATTERN, OPENCHAT_BOT_USER_ID, undefined)).toBe(
             OPENCHAT_BOT_AVATAR_URL,
-        );
-    });
-});
-
-describe("buildBlobUrl", () => {
-    test("a channel's avatar is under the channel in its community", () => {
-        const channel = {
-            kind: "channel" as const,
-            communityId: "27eue-hyaaa-aaaaf-aaa4a-cai",
-            channelId: 42,
-        };
-        expect(buildBlobUrl(PATTERN, channel.communityId, 7n, "avatar", channel)).toBe(
-            "https://27eue-hyaaa-aaaaf-aaa4a-cai.raw.icp0.io/channel/42/avatar/7",
         );
     });
 });

@@ -15,6 +15,7 @@ pub mod storage_index_users_to_remove_batch;
 pub mod streak_insurance_logs;
 pub mod user;
 pub mod user_map;
+pub mod users_last_online;
 
 pub const MAX_AVATAR_SIZE: usize = 250_000;
 pub const MAX_DESCRIPTION_LEN: usize = 10_000;
