@@ -14,6 +14,7 @@ pub const CLAIM_TYPE_DIAMOND_MEMBERSHIP: &str = "diamond_membership";
 pub const CLAIM_TYPE_START_VIDEO_CALL: &str = "StartVideoCall";
 pub const CLAIM_TYPE_JOIN_VIDEO_CALL: &str = "JoinVideoCall";
 pub const CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED: &str = "MarkVideoCallAsEnded";
+pub const CLAIM_TYPE_DECLINE_VIDEO_CALL: &str = "DeclineVideoCall";
 pub const CLAIM_TYPE_BOT_ACTION_BY_COMMAND: &str = "BotActionByCommand";
 pub const CLAIM_TYPE_NCA_VAULT_EXPORT: &str = "NcaVaultExport";
 pub const CLAIM_TYPE_NCA_SUBMITTER: &str = "NcaSubmitter";
@@ -22,6 +23,22 @@ pub const CLAIM_TYPE_NCA_SUBMITTER: &str = "NcaSubmitter";
 pub struct JoinOrEndVideoCallClaims {
     pub user_id: UserId,
     pub chat_id: Chat,
+    // The local user index that signed the token, so the video bridge can route a decline
+    // back to it. Absent from tokens signed before declines existed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local_user_index: Option<CanisterId>,
+}
+
+// Carried in a ring push, one per recipient, so a phone whose app is not running can decline
+// the call without an identity. It names one user, one call and the local user index that
+// signed it, and expires with the ring window. See open-chat #9534.
+#[derive(Serialize, Deserialize)]
+pub struct DeclineVideoCallClaims {
+    pub user_id: UserId,
+    pub chat_id: Chat,
+    // As a string: the bridge reads it in JavaScript, where a number this size loses digits
+    pub message_id: String,
+    pub local_user_index: CanisterId,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -78,8 +78,19 @@
         }
     }
 
+    // The ring UI goes but the call keeps ringing elsewhere. Also fires when the sheet or
+    // overlay unmounts, so it must never decline.
     function cancel() {
         incomingVideoCall.set(undefined);
+    }
+
+    // The hangup button: a direct call ends for the caller too
+    function decline() {
+        const call = $incomingVideoCall;
+        incomingVideoCall.set(undefined);
+        if (call !== undefined) {
+            client.declineVideoCall(call.chatId);
+        }
     }
 </script>
 
@@ -110,7 +121,7 @@
                 gap={"lg"}
                 crossAxisAlignment={"center"}
                 mainAxisAlignment={"spaceAround"}>
-                {@render button(PhoneHangup, ColourVars.validationError, cancel)}
+                {@render button(PhoneHangup, ColourVars.validationError, decline)}
                 {@render button(Phone, ColourVars.validationSuccess, join)}
             </Row>
         </Column>

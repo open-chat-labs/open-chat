@@ -12,6 +12,13 @@ export function ringOutApplies(chatId: ChatIdentifier, joining: boolean): boolea
     return chatId.kind === "direct_chat" && !joining;
 }
 
+// #9534 invariant 14: a direct call is two people, so when the other one leaves the call is
+// over for the one left behind; they hang up as the last one there, which ends the call for
+// both. A group call carries on without whoever left.
+export function peerLeftEndsCall(chatId: ChatIdentifier, participantIsLocal: boolean): boolean {
+    return chatId.kind === "direct_chat" && !participantIsLocal;
+}
+
 export type RingOutHandle = {
     // A remote participant joined, or the call ended: stop the timer.
     cancel: () => void;

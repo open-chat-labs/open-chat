@@ -143,7 +143,10 @@ mod tests {
     use candid::Principal;
     use p256_key_pair::P256KeyPair;
     use std::time::{SystemTime, UNIX_EPOCH};
-    use types::{Chat, StartVideoCallClaims, VideoCallType};
+    use types::{
+        CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_JOIN_VIDEO_CALL, Chat, DeclineVideoCallClaims, StartVideoCallClaims,
+        VideoCallType,
+    };
 
     #[test]
     fn sign_and_encode_token_then_verify_succeeds() {
@@ -212,5 +215,34 @@ mod tests {
         assert!(verify(&jwt, pk_pem).is_ok());
         assert!(verify_and_decode::<SubsetClaims>(&jwt, pk_pem, "some_other_claim_type").is_ok());
         assert!(verify_and_decode::<SubsetClaims>(&jwt, pk_pem, "user_signed_in").is_err());
+    }
+
+    // #9534 invariant 2: a decline token round-trips with its own claim type and is refused
+    // under any other, so a join token can never stand in for a decline or the reverse.
+    #[test]
+    fn invariant_2_a_decline_token_verifies_only_as_a_decline() {
+        let mut rng = rand::rng();
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
+        let kp = P256KeyPair::new(&mut rng);
+        let user = Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap();
+        let lui = Principal::from_text("6nb6r-kyaaa-aaaar-asvgq-cai").unwrap();
+        let claims = Claims::new(
+            now + 40_000,
+            CLAIM_TYPE_DECLINE_VIDEO_CALL.to_string(),
+            DeclineVideoCallClaims {
+                user_id: user.into(),
+                chat_id: Chat::Direct(lui.into()),
+                message_id: "18446744073709551615".to_string(),
+                local_user_index: lui,
+            },
+        );
+        let jwt = sign_and_encode_token(kp.secret_key_der(), claims, &mut rng).unwrap();
+
+        let decoded: Claims<DeclineVideoCallClaims> =
+            verify_and_decode(&jwt, kp.public_key_pem(), CLAIM_TYPE_DECLINE_VIDEO_CALL).unwrap();
+        assert_eq!(decoded.exp(), (now + 40_000) / 1000);
+        assert_eq!(decoded.custom().message_id, "18446744073709551615");
+        assert_eq!(decoded.custom().local_user_index, lui);
+        assert!(verify_and_decode::<DeclineVideoCallClaims>(&jwt, kp.public_key_pem(), CLAIM_TYPE_JOIN_VIDEO_CALL).is_err());
     }
 }

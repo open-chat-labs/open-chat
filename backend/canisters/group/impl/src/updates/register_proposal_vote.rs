@@ -49,6 +49,15 @@ struct PrepareResult {
 
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     let member = state.get_calling_member(None, true)?;
+
+    // This votes via the member's User canister, which a MultiUser canister can't do on its users'
+    // behalf, since they share its principal. They vote from the frontend with their own neurons
+    // instead, then record the vote via `register_proposal_vote_v2`.
+    if member.user_id().is_indexed() {
+        return Err(OCErrorCode::InvalidRequest
+            .with_message("Users in MultiUser canisters must record their votes via register_proposal_vote_v2"));
+    }
+
     let min_visible_event_index = member.min_visible_event_index();
 
     if let Some(proposal) = state

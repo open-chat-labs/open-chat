@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { armRingOut, RING_OUT_MS, ringOutApplies } from "./callRingOut";
+import { armRingOut, peerLeftEndsCall, RING_OUT_MS, ringOutApplies } from "./callRingOut";
 
 // A direct call the caller started ends by itself when nobody joins within the ring
 // window. Each test names the invariant it pins.
@@ -78,5 +78,18 @@ describe("direct call ring-out", () => {
         t.fire();
         handle.cancel();
         expect(onNoAnswer).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("peerLeftEndsCall (#9534 invariant 14)", () => {
+    const direct = { kind: "direct_chat", userId: "u" } as const;
+    const group = { kind: "group_chat", groupId: "g" } as const;
+    test("invariant 14 the other party leaving a direct call ends it for the one left behind", () => {
+        expect(peerLeftEndsCall(direct, false)).toBe(true);
+    });
+    test("invariant 14 my own leave and any leave from a group call end nothing here", () => {
+        expect(peerLeftEndsCall(direct, true)).toBe(false);
+        expect(peerLeftEndsCall(group, false)).toBe(false);
+        expect(peerLeftEndsCall(group, true)).toBe(false);
     });
 });

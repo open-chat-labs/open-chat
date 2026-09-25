@@ -77,6 +77,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                 let custom_claims = JoinOrEndVideoCallClaims {
                     user_id: args.initiator,
                     chat_id: chat.unwrap(),
+                    local_user_index: Some(state.env.canister_id()),
                 };
                 build_token(token_type_name, custom_claims, DEFAULT_TOKEN_VALIDITY, state)
             }
@@ -84,6 +85,7 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
                 let custom_claims = JoinOrEndVideoCallClaims {
                     user_id: args.initiator,
                     chat_id: chat.unwrap(),
+                    local_user_index: Some(state.env.canister_id()),
                 };
                 build_token(token_type_name, custom_claims, DEFAULT_TOKEN_VALIDITY, state)
             }

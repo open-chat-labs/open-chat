@@ -29,7 +29,12 @@
         sharing,
         type InterCallMessage,
     } from "../../../stores/video";
-    import { armRingOut, ringOutApplies, type RingOutHandle } from "../../../utils/callRingOut";
+    import {
+        armRingOut,
+        peerLeftEndsCall,
+        ringOutApplies,
+        type RingOutHandle,
+    } from "../../../utils/callRingOut";
     import { currentTheme } from "../../../theme/themes";
     import type { Theme } from "../../../theme/types";
     import { removeQueryStringParam } from "../../../utils/urls";
@@ -205,12 +210,23 @@
                 activeVideoCall.endCall();
             });
 
+            // A fatal error, such as "Meeting has ended" when the bridge deletes the room
+            // because the other side declined. The call object is finished; end the call here
+            // rather than leave Daily reporting an unhandled error.
+            call.on("error", (ev) => {
+                console.warn("Video call ended with an error", ev?.errorMsg);
+                ringOut?.cancel();
+                activeVideoCall.endCall();
+            });
+
             // this fires when a remote participant leaves the meeting
             call.on("participant-left", (ev) => {
                 // if the owner leaves, end the call
                 if (ev?.participant.owner && !ev.participant.local && callType === "broadcast") {
                     hangup();
                     hostEnded = true;
+                } else if (ev && peerLeftEndsCall(chatId, ev.participant.local)) {
+                    leave(true);
                 }
             });
 
@@ -318,13 +334,18 @@
     }
 
     export function hangup() {
+        leave(false);
+    }
+
+    // `lastOneHere` when the caller already knows nobody else is in the call (the other
+    // party of a direct call left), so the end does not depend on presence having been
+    // reported yet. Not exported: `hangup` is bound to clicks and must take no argument.
+    function leave(lastOneHere: boolean) {
         if ($activeVideoCall?.call) {
-            if ($hasPresence) {
-                const present = $activeVideoCall.call.participantCounts().present;
-                if (present === 1) {
-                    // I must be the last person left in the call
-                    client.endVideoCall($activeVideoCall.chatId, $activeVideoCall.messageId);
-                }
+            const present = $hasPresence ? $activeVideoCall.call.participantCounts().present : 0;
+            if (lastOneHere || present === 1) {
+                // I must be the last person left in the call
+                client.endVideoCall($activeVideoCall.chatId, $activeVideoCall.messageId);
             }
 
             // this will trigger the left-meeting event which will in turn end the call

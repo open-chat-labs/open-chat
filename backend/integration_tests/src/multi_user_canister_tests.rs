@@ -5753,3 +5753,158 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
         assert!(matches!(status, P2PSwapStatus::Expired(_)), "{status:?}");
     }
 }
+
+// `register_proposal_vote` votes via the member's User canister, which a MultiUser canister can't do
+// for its users, so they are pointed at `register_proposal_vote_v2`. Proposal messages can't be sent
+// in these tests, but users in MultiUser canisters are turned away before the message is looked up,
+// while anyone else gets as far as finding that it isn't a proposal.
+#[test]
+fn register_proposal_vote_rejects_users_in_multi_user_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let alice = client::register_user_in_multi_user_canister(env, canister_ids);
+
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    client::group::happy_path::join_group(env, alice.principal, group_id);
+    let group_message_index =
+        client::group::happy_path::send_text_message(env, &owner, group_id, None, random_string(), None).message_index;
+
+    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+    client::community::happy_path::join_community(env, alice.principal, community_id);
+    client::community::happy_path::join_channel(env, alice.principal, community_id, channel_id);
+    let channel_message_index =
+        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None)
+            .message_index;
+    env.tick();
+
+    for (user, in_multi_user_canister) in [(&alice, true), (&owner, false)] {
+        let expected = || {
+            if in_multi_user_canister { OCErrorCode::InvalidRequest } else { OCErrorCode::MessageNotFound }
+        };
+        let response = client::group::register_proposal_vote(
+            env,
+            user.principal,
+            group_id.into(),
+            &group_canister::register_proposal_vote::Args {
+                message_index: group_message_index,
+                adopt: true,
+            },
+        );
+        assert!(
+            matches!(&response, UnitResult::Error(e) if e.matches_code(expected())),
+            "{response:?}"
+        );
+
+        let response = client::community::register_proposal_vote(
+            env,
+            user.principal,
+            community_id.into(),
+            &community_canister::register_proposal_vote::Args {
+                channel_id,
+                message_index: channel_message_index,
+                adopt: true,
+            },
+        );
+        assert!(
+            matches!(&response, UnitResult::Error(e) if e.matches_code(expected())),
+            "{response:?}"
+        );
+    }
+}
+
+// Each user's avatar and profile background are served under their index within the canister, as a
+// User canister serves its user's at the root
+#[test]
+fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids.user_index, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let avatar = document(100);
+    let profile_background = document(200);
+    set_avatar(env, a_principal, canister_id, Some(avatar.clone()));
+    let response = client::user::set_profile_background(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_profile_background::Args {
+            profile_background: Some(profile_background.clone()),
+        },
+    );
+    assert!(matches!(response, user_canister::set_profile_background::Response::Success));
+
+    let get = |env: &PocketIc, url: String| {
+        client::http_request(
+            env,
+            Principal::anonymous(),
+            canister_id,
+            &types::HttpRequest {
+                method: "GET".to_string(),
+                url,
+                headers: Vec::new(),
+                body: Vec::new(),
+            },
+        )
+    };
+    let location = |response: &types::HttpResponse| response.headers.iter().find(|h| h.0 == "Location").map(|h| h.1.clone());
+
+    let a_index = a.index();
+    for (path, document) in [("avatar", &avatar), ("profile_background", &profile_background)] {
+        // The document itself, under its id
+        let response = get(env, format!("/user/{a_index}/{path}/{}", document.id));
+        assert_eq!(response.status_code, 200);
+        assert_eq!(response.body, document.data);
+
+        // Without an id, or with an old one, the request is redirected to the latest, keeping the
+        // user's index
+        let expected_location = Some(format!("/user/{a_index}/{path}/{}", document.id));
+        let response = get(env, format!("/user/{a_index}/{path}"));
+        assert_eq!(response.status_code, 302);
+        assert_eq!(location(&response), expected_location);
+        let response = get(env, format!("/user/{a_index}/{path}/{}", document.id + 1));
+        assert_eq!(response.status_code, 301);
+        assert_eq!(location(&response), expected_location);
+
+        // B has none, a user who isn't in the canister has none, and there is nothing at the root
+        assert_eq!(get(env, format!("/user/{}/{path}", b.index())).status_code, 404);
+        assert_eq!(get(env, format!("/user/{}/{path}", b.index() + 1)).status_code, 404);
+        assert_eq!(get(env, format!("/{path}/{}", document.id)).status_code, 404);
+    }
+
+    // Once B has an avatar too, each user's is served under their own index, and A's id under B's
+    // index redirects to B's
+    let b_avatar = document(150);
+    set_avatar(env, b_principal, canister_id, Some(b_avatar.clone()));
+    let response = get(env, format!("/user/{}/avatar/{}", b.index(), b_avatar.id));
+    assert_eq!(response.status_code, 200);
+    assert_eq!(response.body, b_avatar.data);
+    let response = get(env, format!("/user/{a_index}/avatar/{}", avatar.id));
+    assert_eq!(response.status_code, 200);
+    assert_eq!(response.body, avatar.data);
+    let response = get(env, format!("/user/{}/avatar/{}", b.index(), avatar.id));
+    assert_eq!(response.status_code, 301);
+    assert_eq!(
+        location(&response),
+        Some(format!("/user/{}/avatar/{}", b.index(), b_avatar.id))
+    );
+
+    // Once removed, a request for the old avatar is told it's gone
+    set_avatar(env, a_principal, canister_id, None);
+    assert_eq!(get(env, format!("/user/{a_index}/avatar/{}", avatar.id)).status_code, 410);
+}
