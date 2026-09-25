@@ -25,6 +25,7 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
+    blobLocation,
     ChatMap,
     mapOptionUpdate,
     OPENCHAT_BOT_AVATAR_URL,
@@ -461,19 +462,24 @@ export function getUpdatedEvents(
     return result;
 }
 
+// The url of a blob belonging to `ownerId`: the canister which serves it, such as a group, community
+// or storage bucket, or a user, whose blobs are served by the canister holding them (see
+// `blobLocation`)
 export function buildBlobUrl(
     pattern: string,
-    canisterId: string,
+    ownerId: string,
     blobId: bigint,
     blobType: "blobs" | "avatar" | "banner",
     channelId?: ChannelIdentifier,
 ): string {
-    const blobTypeFragment =
-        channelId === undefined ? blobType : `channel/${channelId.channelId}/${blobType}`;
+    const location =
+        channelId === undefined
+            ? blobLocation(ownerId, blobType)
+            : { canisterId: ownerId, path: `channel/${channelId.channelId}/${blobType}` };
 
     return `${pattern
-        .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobTypeFragment)}/${blobId}`;
+        .replace("{canisterId}", location.canisterId)
+        .replace("{blobType}", location.path)}/${blobId}`;
 }
 
 export function buildTokenLogoUrl(
