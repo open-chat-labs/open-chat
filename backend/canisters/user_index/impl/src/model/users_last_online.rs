@@ -1,6 +1,9 @@
+use constants::DAY_IN_MS;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
-use types::{TimestampMillis, UserId};
+use std::collections::{BTreeMap, HashMap, VecDeque};
+use types::{Milliseconds, TimestampMillis, UserId};
+
+const YEAR_IN_MS: Milliseconds = 365 * DAY_IN_MS;
 
 // Temporary: a snapshot of each user's last online date, fetched once from the OnlineUsers canister
 // so that we can migrate the users who haven't signed in for the longest first.
@@ -61,6 +64,30 @@ impl UsersLastOnline {
             not_found: self.not_found,
         }
     }
+
+    // For each whole number of years N (from 1), the number of users last online at least N years ago.
+    // Users with no last online date are excluded (they are counted in `not_found`)
+    pub fn users_offline_for_years(&self, now: TimestampMillis) -> BTreeMap<u64, usize> {
+        let mut by_years: BTreeMap<u64, usize> = BTreeMap::new();
+        for years in self
+            .last_online
+            .values()
+            .flatten()
+            .map(|ts| now.saturating_sub(*ts) / YEAR_IN_MS)
+            .filter(|years| *years > 0)
+        {
+            *by_years.entry(years).or_default() += 1;
+        }
+
+        let max_years = by_years.keys().last().copied().unwrap_or_default();
+        let mut cumulative = BTreeMap::new();
+        let mut total = 0;
+        for years in (1..=max_years).rev() {
+            total += by_years.get(&years).copied().unwrap_or_default();
+            cumulative.insert(years, total);
+        }
+        cumulative
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -112,5 +139,28 @@ mod tests {
         assert_eq!(users_last_online.last_online.get(&user_id(2)), Some(&None));
         assert_eq!(users_last_online.last_online.get(&user_id(3)), Some(&Some(300)));
         assert_eq!(users_last_online.last_online.get(&user_id(6)), None);
+    }
+
+    #[test]
+    fn users_offline_for_years_is_cumulative() {
+        let now = 10 * YEAR_IN_MS;
+        let mut users_last_online = UsersLastOnline::default();
+        users_last_online.start_if_required((1..=6).map(user_id));
+        let batch = users_last_online.take_next_batch(6);
+        users_last_online.record_batch(
+            batch,
+            [
+                (user_id(1), now - DAY_IN_MS),
+                (user_id(2), now - YEAR_IN_MS),
+                (user_id(3), now - YEAR_IN_MS - DAY_IN_MS),
+                (user_id(4), now - 3 * YEAR_IN_MS),
+                // user 5 has no last online date
+                (user_id(6), now - 3 * YEAR_IN_MS - DAY_IN_MS),
+            ]
+            .into_iter(),
+        );
+
+        let result = users_last_online.users_offline_for_years(now);
+        assert_eq!(result, BTreeMap::from([(1, 4), (2, 2), (3, 2)]));
     }
 }

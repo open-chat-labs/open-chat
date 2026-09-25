@@ -87,5 +87,10 @@ async fn fetch_batch(canister_id: CanisterId, user_ids: Vec<UserId>) {
 }
 
 fn log_completed(state: &RuntimeState) {
-    info!(metrics = ?state.data.users_last_online.metrics(), "Fetched users' last online dates");
+    let now = state.env.now();
+    info!(
+        metrics = ?state.data.users_last_online.metrics(),
+        users_offline_for_years = ?state.data.users_last_online.users_offline_for_years(now),
+        "Fetched users' last online dates"
+    );
 }
