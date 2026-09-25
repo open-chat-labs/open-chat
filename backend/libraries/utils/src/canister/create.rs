@@ -1,18 +1,23 @@
-use crate::canister::{convert_cdk_error, install_basic_raw};
+use crate::canister::{
+    CanisterToInstall, ChunkedInstallGuard, VersionedWasmToInstall, convert_cdk_error, install, install_basic_raw,
+};
 use candid::Principal;
-use ic_cdk_management_canister::{self as management_canister, CanisterSettings, CreateCanisterArgs};
+use ic_cdk_management_canister::{self as management_canister, CanisterInstallMode, CanisterSettings, CreateCanisterArgs};
 use serde::Serialize;
 use tracing::error;
-use types::{C2CError, CanisterId, CanisterWasm, Cycles};
+use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, Cycles};
 
 pub async fn create_and_install(
     existing_canister_id: Option<CanisterId>,
     additional_controller: Option<Principal>,
-    wasm: CanisterWasm,
+    wasm: VersionedWasmToInstall,
     init_args: Vec<u8>,
     cycles_to_use: Cycles,
     on_canister_created: fn(Cycles) -> (),
 ) -> Result<CanisterId, (Option<CanisterId>, C2CError)> {
+    // Counted from before the canister is created, since the chunks to install were chosen already
+    let _guard = ChunkedInstallGuard::new_if_chunked(&wasm.wasm);
+
     let canister_id = match existing_canister_id {
         Some(id) => id,
         None => match create(cycles_to_use, additional_controller).await {
@@ -26,7 +31,18 @@ pub async fn create_and_install(
         },
     };
 
-    match install_basic_raw(canister_id, wasm, init_args).await {
+    match install(CanisterToInstall {
+        canister_id,
+        current_wasm_version: BuildVersion::default(),
+        new_wasm_version: wasm.version,
+        new_wasm: wasm.wasm,
+        deposit_cycles_if_needed: true,
+        args: init_args,
+        mode: CanisterInstallMode::Reinstall,
+        stop_start_canister: false,
+    })
+    .await
+    {
         Ok(_) => Ok(canister_id),
         Err(error) => Err((Some(canister_id), error)),
     }

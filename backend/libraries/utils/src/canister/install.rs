@@ -3,6 +3,7 @@ use crate::canister::{convert_cdk_error, is_out_of_cycles_error};
 use candid::CandidType;
 use constants::CYCLES_REQUIRED_FOR_UPGRADE;
 use ic_cdk_management_canister::{self as management_canister, CanisterInstallMode, ChunkHash};
+use std::cell::Cell;
 use tracing::{error, trace};
 use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, CanisterWasmBytes, Cycles, Hash};
 
@@ -20,6 +21,40 @@ pub struct CanisterToInstall {
 pub enum WasmToInstall {
     Default(CanisterWasmBytes),
     Chunked(ChunkedWasmToInstall),
+}
+
+thread_local! {
+    static CHUNKED_INSTALLS_IN_PROGRESS: Cell<usize> = Cell::default();
+}
+
+// The number of installs from a chunk store in progress, which must be none before the chunk store
+// is cleared, since the management canister may run an install sent before the clear after it
+pub fn chunked_installs_in_progress() -> usize {
+    CHUNKED_INSTALLS_IN_PROGRESS.get()
+}
+
+// Counts an install from a chunk store as in progress while held
+pub(crate) struct ChunkedInstallGuard;
+
+impl ChunkedInstallGuard {
+    pub(crate) fn new_if_chunked(wasm: &WasmToInstall) -> Option<ChunkedInstallGuard> {
+        matches!(wasm, WasmToInstall::Chunked(_)).then(|| {
+            CHUNKED_INSTALLS_IN_PROGRESS.set(CHUNKED_INSTALLS_IN_PROGRESS.get() + 1);
+            ChunkedInstallGuard
+        })
+    }
+}
+
+impl Drop for ChunkedInstallGuard {
+    fn drop(&mut self) {
+        CHUNKED_INSTALLS_IN_PROGRESS.set(CHUNKED_INSTALLS_IN_PROGRESS.get().saturating_sub(1));
+    }
+}
+
+// A wasm to install along with its version
+pub struct VersionedWasmToInstall {
+    pub version: BuildVersion,
+    pub wasm: WasmToInstall,
 }
 
 pub struct ChunkedWasmToInstall {
@@ -52,6 +87,7 @@ pub async fn install_basic_raw(canister_id: CanisterId, wasm: CanisterWasm, init
 pub async fn install(canister_to_install: CanisterToInstall) -> Result<Option<Cycles>, C2CError> {
     let canister_id = canister_to_install.canister_id;
     let mode = canister_to_install.mode;
+    let _guard = ChunkedInstallGuard::new_if_chunked(&canister_to_install.new_wasm);
 
     trace!(%canister_id, ?mode, "Canister install starting");
 
