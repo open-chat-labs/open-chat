@@ -176,8 +176,8 @@ enum Target {
         cycles_to_use: Cycles,
         init_canister_args: Box<InitUserCanisterArgs>,
     },
-    // The canister to add the user to, being the one with the fewest users. If there is none, or it
-    // is full, a new one is created
+    // The canister to add the user to, being the one with the fewest users. If it is full, whichever
+    // has the fewest users next is tried, and a new one is only created once none remain
     MultiUserCanister(Option<CanisterId>),
 }
 

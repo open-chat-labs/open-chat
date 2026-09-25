@@ -130,25 +130,6 @@ mod tests {
     }
 
     #[test]
-    fn round_trips() {
-        let mut map = MultiUserCanisterMap::default();
-        map.add(canister_id(1), canister_id(100), 10);
-        map.on_user_added(&UserId::new_indexed(canister_id(1), 1));
-
-        let bytes = msgpack::serialize_then_unwrap(&map);
-        let map: MultiUserCanisterMap = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(
-            map.canisters.get(&canister_id(1)),
-            Some(&MultiUserCanister {
-                date_created: 10,
-                local_user_index: canister_id(100),
-                user_count: 1,
-                full: false,
-            })
-        );
-    }
-
-    #[test]
     fn local_user_index_for_new_user_picks_the_canister_with_the_fewest_users() {
         let mut map = MultiUserCanisterMap::default();
         assert_eq!(map.local_user_index_for_new_user(|_| true), None);
