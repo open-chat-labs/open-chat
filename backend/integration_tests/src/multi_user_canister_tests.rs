@@ -1088,8 +1088,8 @@ fn mark_read(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, the
     );
 }
 
-// Registers a user via the LocalUserIndex, which puts them in its newest MultiUser canister, which
-// must be `canister_id`
+// Registers a user via the LocalUserIndex, asking for them to be put in the MultiUser canister
+// `canister_id`
 fn create_user(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
@@ -1510,6 +1510,65 @@ fn multi_user_canisters_enabled_flag_fans_out_to_local_user_indexes() {
 
     assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));
     assert!(!multi_user_canisters_enabled(env, local_user_index));
+}
+
+#[test]
+fn once_enabled_new_users_are_placed_in_the_multi_user_canister_with_the_fewest_users() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    client::user_index::happy_path::set_multi_user_canisters_enabled(env, operator.principal, canister_ids.user_index, true);
+    tick_many(env, 5);
+
+    // The environment holds the MultiUser canisters of every test which has run in it, so which
+    // has the fewest users isn't known up front
+    for _ in 0..3 {
+        let canisters_before = multi_user_canisters(env, canister_ids.user_index);
+        let fewest_users = |local_user_index: Option<CanisterId>| {
+            canisters_before
+                .values()
+                .filter(|c| local_user_index.is_none_or(|l| c.local_user_index == l))
+                .map(|c| c.user_count)
+                .min()
+                .unwrap()
+        };
+
+        // The UserIndex routes the user to the LocalUserIndex of a canister with the fewest users
+        let registration_canister = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+        assert!(
+            canisters_before
+                .values()
+                .any(|c| c.local_user_index == registration_canister && c.user_count == fewest_users(None))
+        );
+
+        // Which, without being asked to, places them in whichever of its canisters has the fewest
+        let user = client::register_user(env, canister_ids);
+        tick_many(env, 5);
+        assert_eq!(user.local_user_index, registration_canister);
+        assert_ne!(user.user_id.index(), 0);
+        assert_eq!(
+            canisters_before[&user.canister()].user_count,
+            fewest_users(Some(registration_canister))
+        );
+        assert_eq!(
+            multi_user_canisters(env, canister_ids.user_index)[&user.canister()].user_count,
+            canisters_before[&user.canister()].user_count + 1
+        );
+    }
+
+    // Once disabled, new users get a canister of their own again
+    client::user_index::happy_path::set_multi_user_canisters_enabled(env, operator.principal, canister_ids.user_index, false);
+    tick_many(env, 5);
+    let user = client::register_user(env, canister_ids);
+    assert_eq!(user.user_id.index(), 0);
 }
 
 fn multi_user_canisters_enabled(env: &PocketIc, canister_id: CanisterId) -> bool {
@@ -3634,6 +3693,7 @@ fn create_user_referred_by(
         env,
         canister_ids,
         local_user_index,
+        canister_id,
         referred_by.map(|user_id| user_id.to_string()),
     );
     assert_eq!(
@@ -4898,8 +4958,6 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
     } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    // Users are registered in the newest MultiUser canister, so each canister is filled before the
-    // next is created
     let first = client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
     let (_, alice_id) = create_user(env, canister_ids, local_user_index, first);
     let (_, bob_id) = create_user(env, canister_ids, local_user_index, first);

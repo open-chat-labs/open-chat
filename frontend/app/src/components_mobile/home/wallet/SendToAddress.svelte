@@ -260,17 +260,21 @@
     bind:value={targetAccount}
     countdown={false}
     maxlength={100}
+    disabled={busy}
     error={targetAccount.length > 0 && !targetAccountValid}
     placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
     {#snippet iconButtons(color)}
-        {#if $namedAccountsStore.length > 0}
-            <InputIconButton onClick={() => (showAddressBook = true)}>
-                <Account {color} />
+        <!-- The target can't change mid-send, since the success sheet shows it as the recipient -->
+        {#if !busy}
+            {#if $namedAccountsStore.length > 0}
+                <InputIconButton onClick={() => (showAddressBook = true)}>
+                    <Account {color} />
+                </InputIconButton>
+            {/if}
+            <InputIconButton onClick={scan}>
+                <QrcodeScan {color} />
             </InputIconButton>
         {/if}
-        <InputIconButton onClick={scan}>
-            <QrcodeScan {color} />
-        </InputIconButton>
     {/snippet}
     {#snippet subtext()}
         <Translatable
@@ -338,12 +342,12 @@
                 background={ColourVars.surface2}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("Recipient")} />
-                    {#if account}
-                        ({account})
+                    {#if namedAccount}
+                        ({namedAccount.name})
                     {/if}
                 </BodySmall>
                 <Body fontWeight={"bold"}>
-                    {account}
+                    {targetAccount}
                 </Body>
             </Container>
             <Container
