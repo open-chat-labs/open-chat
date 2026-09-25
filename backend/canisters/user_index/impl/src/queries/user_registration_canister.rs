@@ -14,7 +14,7 @@ fn user_registration_canister_impl(state: &RuntimeState) -> Response {
     let multi_user_local_user_index = if state.data.multi_user_canisters_enabled {
         state
             .data
-            .multi_user_canisters_v2
+            .multi_user_canisters
             .local_user_index_for_new_user(|c| state.data.local_index_map.is_accepting_users(c))
     } else {
         None
@@ -47,12 +47,12 @@ mod tests {
         for index in 1..=3 {
             data.local_index_map.add_user(busy, UserId::new_indexed(more, index));
         }
-        data.multi_user_canisters_v2.add(more, quiet, 0);
-        data.multi_user_canisters_v2.add(fewer, busy, 0);
+        data.multi_user_canisters.add(more, quiet, 0);
+        data.multi_user_canisters.add(fewer, busy, 0);
         for index in 1..=3 {
-            data.multi_user_canisters_v2.on_user_added(&UserId::new_indexed(more, index));
+            data.multi_user_canisters.on_user_added(&UserId::new_indexed(more, index));
         }
-        data.multi_user_canisters_v2.on_user_added(&UserId::new_indexed(fewer, 1));
+        data.multi_user_canisters.on_user_added(&UserId::new_indexed(fewer, 1));
 
         let registration_canister = |state: &RuntimeState| match user_registration_canister_impl(state) {
             Success(canister_id) => Some(canister_id),
@@ -67,7 +67,7 @@ mod tests {
         // A full MultiUser canister is skipped, however few users it holds
         state
             .data
-            .multi_user_canisters_v2
+            .multi_user_canisters
             .on_user_added(&UserId::new_indexed(fewer, MAX_USER_INDEX));
         assert_eq!(registration_canister(&state), Some(quiet));
 

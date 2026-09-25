@@ -89,7 +89,7 @@ impl RuntimeState {
 
     // A MultiUser canister acts for any of the users it holds
     pub fn is_caller_multi_user_canister(&self) -> bool {
-        self.data.multi_user_canisters_v2.contains(&self.env.caller())
+        self.data.multi_user_canisters.contains(&self.env.caller())
     }
 
     pub fn is_caller_governance_principal(&self) -> bool {
@@ -177,8 +177,8 @@ impl RuntimeState {
     #[expect(dead_code, reason = "Called once the UserIndex orchestrates migrations")]
     pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, canisters_to_notify: Vec<CanisterId>) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
-            self.data.multi_user_canisters_v2.on_user_removed(&old_user_id);
-            self.data.multi_user_canisters_v2.on_user_added(&new_user_id);
+            self.data.multi_user_canisters.on_user_removed(&old_user_id);
+            self.data.multi_user_canisters.on_user_added(&new_user_id);
             self.push_event_to_all_local_user_indexes(
                 LocalUserIndexEvent::UserIdMigrated(UserIdMigrated {
                     old_user_id,
@@ -208,7 +208,7 @@ impl RuntimeState {
             // A migrated user may still be held under their old id, so decrement the count of the
             // canister holding them now
             let latest_user_id = self.data.migrated_user_ids.latest(user_id);
-            self.data.multi_user_canisters_v2.on_user_removed(&latest_user_id);
+            self.data.multi_user_canisters.on_user_removed(&latest_user_id);
             self.data.empty_users.remove(&user_id);
 
             #[derive(Serialize)]
@@ -303,12 +303,7 @@ impl RuntimeState {
             platform_operators: self.data.platform_operators.len() as u8,
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
-            multi_user_canisters: self
-                .data
-                .multi_user_canisters_v2
-                .iter()
-                .map(|(c, m)| (*c, m.clone()))
-                .collect(),
+            multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, m)| (*c, m.clone())).collect(),
             multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
             migrated_user_ids: self.data.migrated_user_ids.len(),
             users_last_online: self.data.users_last_online.metrics(),
@@ -487,9 +482,10 @@ struct Data {
     #[serde(default)]
     pub blocked_attempt_notice_throttle: HashMap<(u64, Principal), (TimestampMillis, u32)>,
     // Each MultiUser canister, along with when it was created, the LocalUserIndex which controls it
-    // and how many users it holds
-    #[serde(default)]
-    pub multi_user_canisters_v2: MultiUserCanisterMap,
+    // and how many users it holds. Stored under a new name since the previous shape, a map of
+    // canister id -> LocalUserIndex, is still held under the old one
+    #[serde(rename = "multi_user_canisters_v2", default)]
+    pub multi_user_canisters: MultiUserCanisterMap,
     // Set by a platform operator and fanned out to the LocalUserIndexes. While set, new users are
     // routed to the LocalUserIndex controlling the MultiUser canister with the fewest users
     #[serde(default)]
@@ -616,7 +612,7 @@ impl Data {
             media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
             blocked_attempt_notice_throttle: HashMap::new(),
-            multi_user_canisters_v2: MultiUserCanisterMap::default(),
+            multi_user_canisters: MultiUserCanisterMap::default(),
             multi_user_canisters_enabled: false,
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
@@ -745,7 +741,7 @@ impl Default for Data {
             media_scan_config: MediaScanConfig::default(),
             internal_moderation_channel: None,
             blocked_attempt_notice_throttle: HashMap::new(),
-            multi_user_canisters_v2: MultiUserCanisterMap::default(),
+            multi_user_canisters: MultiUserCanisterMap::default(),
             multi_user_canisters_enabled: false,
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
