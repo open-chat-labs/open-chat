@@ -80,7 +80,9 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
     let new_wasm_version = user_canister_wasm.wasm.version;
     let deposit_cycles_if_needed = ic_cdk::api::canister_cycle_balance() > min_cycles_balance(state.data.test_mode);
 
-    if current_wasm_version == new_wasm_version && !force {
+    // A user's canister may be being upgraded by the `start_user_migrations` job, which upgrades it
+    // to the latest wasm
+    if (current_wasm_version == new_wasm_version && !force) || user.upgrade_in_progress {
         return None;
     }
 

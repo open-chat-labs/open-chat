@@ -48,6 +48,8 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_moderation_referral_config"
         | "set_premium_item_cost"
         | "set_user_upgrade_concurrency"
+        | "migrate_users"
+        | "set_user_migration_concurrency"
         | "create_multi_user_canister"
         | "set_multi_user_canisters_enabled"
         | "update_blocked_username_patterns" => state.is_caller_platform_operator(),

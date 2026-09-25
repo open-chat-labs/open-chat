@@ -54,6 +54,19 @@ impl MultiUserCanisterMap {
         }
     }
 
+    // The MultiUser canister to migrate a user to, which is the one with the fewest users, counting
+    // those being migrated to each canister, since a canister's `user_count` is only updated once a
+    // migration completes
+    pub fn canister_for_migrating_user(&self, in_progress: &HashMap<CanisterId, u32>) -> Option<CanisterId> {
+        self.canisters
+            .iter()
+            .min_by_key(|(canister_id, c)| {
+                let migrating = in_progress.get(*canister_id).copied().unwrap_or_default();
+                (c.user_count.saturating_add(migrating), **canister_id)
+            })
+            .map(|(canister_id, _)| *canister_id)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &MultiUserCanister)> {
         self.canisters.iter()
     }
@@ -108,5 +121,25 @@ mod tests {
         assert_eq!(user_count(1), Some(2));
         assert_eq!(user_count(2), Some(0));
         assert_eq!(user_count(3), None);
+    }
+
+    #[test]
+    fn migrating_user_goes_to_canister_with_fewest_users() {
+        let mut map = MultiUserCanisterMap::default();
+        assert_eq!(map.canister_for_migrating_user(&HashMap::new()), None);
+
+        map.add(canister_id(1), canister_id(100), 10);
+        map.add(canister_id(2), canister_id(101), 20);
+        map.add(canister_id(3), canister_id(100), 30);
+        for (canister, users) in [(1, 3), (2, 1), (3, 2)] {
+            for i in 0..users {
+                map.on_user_added(&UserId::new_indexed(canister_id(canister), i + 1));
+            }
+        }
+
+        assert_eq!(map.canister_for_migrating_user(&HashMap::new()), Some(canister_id(2)));
+        // Users being migrated to a canister count towards its users
+        let in_progress = HashMap::from([(canister_id(2), 2)]);
+        assert_eq!(map.canister_for_migrating_user(&in_progress), Some(canister_id(3)));
     }
 }

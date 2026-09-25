@@ -178,6 +178,27 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // event until it is acked, and re-adding is a no-op
             if state.data.multi_user_canisters.add(canister_id, caller, event_timestamp) {
                 info!(%canister_id, local_user_index_canister_id = %caller, "MultiUser canister registered");
+                // Users may be queued for migration, waiting for a MultiUser canister
+                crate::jobs::start_user_migrations::run(state);
+            }
+        }
+        LocalUserIndexEvent::UserMigrationStarted(ev) => {
+            if state
+                .data
+                .user_migrations
+                .mark_started(ev.user_id, ev.multi_user_canister_id, **now)
+            {
+                info!(user_id = %ev.user_id, multi_user_canister_id = %ev.multi_user_canister_id, "User migration started");
+            }
+        }
+        LocalUserIndexEvent::UserMigrationFailedToStart(ev) => {
+            if state
+                .data
+                .user_migrations
+                .mark_failed(ev.user_id, ev.multi_user_canister_id, ev.error.clone(), **now)
+            {
+                info!(user_id = %ev.user_id, multi_user_canister_id = %ev.multi_user_canister_id, error = ?ev.error, "User migration failed to start");
+                crate::jobs::start_user_migrations::run(state);
             }
         }
         LocalUserIndexEvent::NotifyOfUserDeleted(c, u) => state.data.group_index_event_sync_queue.push(IdempotentEnvelope {

@@ -64,6 +64,7 @@ pub enum UserIndexEvent {
     SetDailyPuzzleCanisterId(CanisterId),
     RefundDeletedUserCycles(Vec<CanisterId>),
     UserIdMigrated(UserIdMigrated),
+    StartUserMigration(StartUserMigration),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -269,6 +270,16 @@ pub struct UserIdMigrated {
     // tells of the user's new id. Empty when sent to a LocalUserIndex added after the migration.
     #[serde(rename = "c", default, skip_serializing_if = "Vec::is_empty")]
     pub canisters_to_notify: Vec<CanisterId>,
+}
+
+// Tells the LocalUserIndex controlling a user's canister to start migrating the user to the given
+// MultiUser canister, first upgrading the user's canister to the latest wasm if it is behind
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct StartUserMigration {
+    #[serde(rename = "u")]
+    pub user_id: UserId,
+    #[serde(rename = "m")]
+    pub multi_user_canister_id: CanisterId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -1,4 +1,5 @@
 use crate::guards::caller_is_user_index;
+use crate::model::users_to_migrate::UserToMigrate;
 use crate::{CanisterToRefund, CommunityEvent, GroupEvent, RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
@@ -357,6 +358,15 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
             state.set_daily_puzzle_canister_id(canister_id);
+        }
+        UserIndexEvent::StartUserMigration(ev) => {
+            state.data.users_to_migrate.push(UserToMigrate {
+                user_id: ev.user_id,
+                multi_user_canister_id: ev.multi_user_canister_id,
+                attempt: 0,
+                not_before: 0,
+            });
+            jobs::start_user_migrations::start_job_if_required(state);
         }
         UserIndexEvent::UserIdMigrated(ev) => {
             if state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id) {

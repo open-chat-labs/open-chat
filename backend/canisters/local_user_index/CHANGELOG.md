@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Sign a decline token into each phone's ring push and add the `video_call_declined` endpoint for the video bridge, which dismisses the ring on the decliner's other phones ([#9542](https://github.com/open-chat-labs/open-chat/pull/9542))
 - Pass `UserIdMigrated` on to each of the listed groups and communities which this LocalUserIndex controls. The groups and communities must be upgraded first ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Pass a joining user's previous ids to the group or community they are joining ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
+- Handle `StartUserMigration` from the UserIndex by upgrading the user's canister to the latest wasm if it is behind, then calling its `c2c_try_start_migration`, and reporting back to the UserIndex whether the migration started. The User canisters must be upgraded first ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
 
 ### Changed
 

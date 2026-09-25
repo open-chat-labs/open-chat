@@ -56,6 +56,25 @@ impl UsersLastOnline {
         self.not_found += requested_count.saturating_sub(found);
     }
 
+    // The users who have been offline the longest first, with users who have no last online date
+    // (since they haven't been online since the OnlineUsers canister started tracking them) before
+    // all others. Only users for which `filter` returns true are included
+    pub fn longest_offline(&self, count: usize, filter: impl Fn(&UserId) -> bool) -> Vec<UserId> {
+        let mut users: Vec<_> = self
+            .last_online
+            .iter()
+            .filter(|(user_id, _)| filter(user_id))
+            .map(|(user_id, last_online)| (last_online.unwrap_or_default(), *user_id))
+            .collect();
+
+        if users.len() > count {
+            users.select_nth_unstable(count);
+            users.truncate(count);
+        }
+        users.sort_unstable();
+        users.into_iter().map(|(_, user_id)| user_id).collect()
+    }
+
     pub fn metrics(&self) -> UsersLastOnlineMetrics {
         UsersLastOnlineMetrics {
             started: self.started,
@@ -162,5 +181,27 @@ mod tests {
 
         let result = users_last_online.users_offline_for_years(now);
         assert_eq!(result, BTreeMap::from([(1, 4), (2, 2), (3, 2)]));
+    }
+
+    #[test]
+    fn longest_offline_users_come_first() {
+        let mut users_last_online = UsersLastOnline::default();
+        users_last_online.start_if_required((1..=5).map(user_id));
+        let batch = users_last_online.take_next_batch(5);
+        users_last_online.record_batch(
+            batch,
+            [(user_id(1), 300), (user_id(2), 100), (user_id(4), 200), (user_id(5), 50)].into_iter(),
+        );
+
+        // User 3 has no last online date, so comes first
+        assert_eq!(
+            users_last_online.longest_offline(3, |_| true),
+            vec![user_id(3), user_id(5), user_id(2)]
+        );
+        assert_eq!(
+            users_last_online.longest_offline(3, |u| *u != user_id(5)),
+            vec![user_id(3), user_id(2), user_id(4)]
+        );
+        assert_eq!(users_last_online.longest_offline(10, |_| true).len(), 5);
     }
 }
