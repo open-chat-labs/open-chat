@@ -463,6 +463,11 @@ export type PayForDiamondMembershipResponse =
 
 export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
 
+export type CreateMultiUserCanisterResponse =
+    | { kind: "success"; canisterId: string }
+    | { kind: "local_user_index_not_found" }
+    | InternalError;
+
 export type SetMessageReminderResponse = Success | OCError | Offline;
 
 export type ModerationFlag = 1 | 2 | 4;
