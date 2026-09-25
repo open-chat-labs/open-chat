@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `remove_fcm_tokens` endpoint so the notification pusher can drop FCM tokens that Firebase reports as `UNREGISTERED`
+- Add `remove_fcm_tokens` endpoint so the notification pusher can drop FCM tokens that Firebase reports as `UNREGISTERED` ([#9044](https://github.com/open-chat-labs/open-chat/pull/9044))
 
 ### Changed
 

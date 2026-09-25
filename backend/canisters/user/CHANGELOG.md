@@ -22,7 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Add `c2c_try_start_migration` for the UserIndex, which checks the canister has no work outstanding, then freezes it and stores the user serialized, for the given MultiUser canister to pull, returning its size ([#9544](https://github.com/open-chat-labs/open-chat/pull/9544))
 - Add `c2c_export_user` and `c2c_export_user_stable_memory`, through which the MultiUser canister a user is being migrated to pulls, in pages, the user as serialized when the migration started and the raw entries of the stable memory map ([#9547](https://github.com/open-chat-labs/open-chat/pull/9547))
-- Add `c2c_cancel_migration`, through which the UserIndex or the MultiUser canister the user is being migrated to cancels the migration to that canister, unfreezing the canister and scheduling again the timer jobs cancelled when it started
+- Retry sending events for migrated users to their new canister ([#9551](https://github.com/open-chat-labs/open-chat/pull/9551))
+- Add `c2c_cancel_migration`, through which the UserIndex or the MultiUser canister the user is being migrated to cancels the migration to that canister, unfreezing the canister and scheduling again the timer jobs cancelled when it started ([#9553](https://github.com/open-chat-labs/open-chat/pull/9553))
+- Don't migrate users who have created or accepted P2P swaps ([#9561](https://github.com/open-chat-labs/open-chat/pull/9561))
 
 ### Changed
 
@@ -98,6 +100,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pass in the canister's cache of migrated user ids when interacting with the chat events ([#9541](https://github.com/open-chat-labs/open-chat/pull/9541))
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Skip running the regular jobs while frozen ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
+- Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 
 ### Removed
 

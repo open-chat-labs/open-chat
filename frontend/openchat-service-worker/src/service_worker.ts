@@ -25,7 +25,7 @@ import { UnsupportedValueError } from "@shared/domain/error";
 import { isMessageNotification } from "@shared/utils/notifications";
 import { routeForChatIdentifier, routeForMessage, routeForMessageContext } from "@shared/utils/routes";
 import { toTitleCase } from "@shared/utils/string";
-import { blobLocation } from "@shared/utils/userId";
+import { buildBlobUrl } from "@shared/utils/blobs";
 import { ExpirationPlugin } from "workbox-expiration";
 import { staticResourceCache } from "workbox-recipes";
 import { registerRoute } from "workbox-routing";
@@ -637,13 +637,17 @@ function isChannelNotification(
     );
 }
 
+// The service worker has no config, so it always fetches avatars from the canisters directly
+const BLOB_URL_PATTERN = "https://{canisterId}.raw.icp0.io/{blobType}";
+
 function avatarUrl(ownerId: string, avatarId: bigint): string {
-    const { canisterId, path } = blobLocation(ownerId, "avatar");
-    return `https://${canisterId}.raw.icp0.io/${path}/${avatarId}`;
+    return buildBlobUrl(BLOB_URL_PATTERN, ownerId, avatarId, "avatar");
 }
 
 function channelAvatarUrl(channel: ChannelIdentifier, avatarId: bigint): string {
-    return `https://${channel.communityId}.raw.icp0.io/channel/${channel.channelId}/avatar/${avatarId}`;
+    return buildBlobUrl(BLOB_URL_PATTERN, channel.communityId, avatarId, "avatar", {
+        channelId: channel.channelId,
+    });
 }
 
 function delay(ms: number): Promise<void> {

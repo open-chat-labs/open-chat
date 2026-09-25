@@ -32,7 +32,7 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -496,6 +496,8 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: CommunityCanisterEvent, now: TimestampMillis) {
+        // Sent to the user's latest id if they are known to have been migrated since having `user_id`
+        let user_id = self.data.migrated_user_ids.latest(user_id);
         self.data.user_events_queue.push(
             user_id.canister_id(),
             IdempotentEnvelope {
@@ -662,11 +664,6 @@ struct Data {
     // have changed
     #[serde(default)]
     migrated_user_ids: MigratedUserIds,
-    // Users who were members of the community but no longer are. A user who rejoins is removed again. Recorded
-    // so that a user who rejoins under a new id, having been migrated to a MultiUser canister, can be recognised
-    // as having events under their earlier ids.
-    #[serde(default)]
-    former_members: BTreeSet<UserId>,
 }
 
 impl Data {
@@ -799,7 +796,6 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
-            former_members: BTreeSet::new(),
             public_channel_list_updated: now,
         }
     }
@@ -895,15 +891,12 @@ impl Data {
         principal: Option<Principal>,
         now: TimestampMillis,
     ) -> Option<CommunityMemberInternal> {
-        let removed = self.members.remove(user_id, principal, now);
+        let removed = self.members.remove(user_id, principal, false, now);
         self.channels.leave_all_channels(user_id, now);
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
-        if removed.is_some() {
-            self.former_members.insert(user_id);
-        }
         removed
     }
 
@@ -911,7 +904,7 @@ impl Data {
     // by those ids, so the migrations through to their current id are cached. Otherwise no events
     // refer to them by their previous ids, so there is nothing to cache.
     pub fn cache_migrations_if_former_member(&mut self, user_id: UserId, previous_user_ids: &[UserId]) {
-        if previous_user_ids.iter().any(|u| self.former_members.contains(u)) {
+        if previous_user_ids.iter().any(|u| self.members.is_former_member(u)) {
             self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
         }
     }
