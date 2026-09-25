@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-call-ended"
+description = "Enables the call_ended command without any pre-configured scope."
+commands.allow = ["call_ended"]
+
+[[permission]]
+identifier = "deny-call-ended"
+description = "Denies the call_ended command without any pre-configured scope."
+commands.deny = ["call_ended"]

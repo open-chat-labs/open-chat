@@ -268,7 +268,7 @@
 
             await call.join();
 
-            activeVideoCall.setCall(chatId, BigInt(messageId), call);
+            activeVideoCall.setCall(chatId, BigInt(messageId), call, chat?.name ?? "");
 
             if (ringOutApplies(chatId, joining)) {
                 ringOut?.cancel();

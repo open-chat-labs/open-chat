@@ -6,6 +6,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.ConnectionService
@@ -20,9 +22,10 @@ import java.util.concurrent.ConcurrentHashMap
 // Self-managed Telecom integration: the phone account, incoming call reports, and the
 // mapping from how a ring ended to the disconnect cause the call log records.
 //
-// A connection in this milestone never outlives the ring. An accepted call goes active
-// and disconnects at once, so the log shows an answered call and nothing can leak; the
-// in-call milestone keeps it alive for the call.
+// A connection lives for the call (#9559): an answered ring goes active and stays until
+// the web layer reports the call ended, and an outgoing call gets a connection of its own
+// when the web layer reports it active. An answered connection that the web layer never
+// claims is ended by a backstop, so nothing can leak.
 object CallTelecom {
     private const val ACCOUNT_ID = "oc_self_managed"
     private const val ACCOUNT_LABEL = "OpenChat"
@@ -92,6 +95,12 @@ object CallTelecom {
         Uri.fromParts(PhoneAccount.SCHEME_TEL, CallHandleDirectory.token(context, chat), null)
 
     fun end(id: CallId, end: CallRegistry.End) {
+        if (end == CallRegistry.End.ANSWERED_HERE) {
+            // The ring ended by an answer here: the connection carries on into the call.
+            val connection = live[id]
+            if (connection == null) pendingEnd[id] = end else connection.answered()
+            return
+        }
         val connection = live.remove(id)
         if (connection == null) {
             pendingEnd[id] = end
@@ -99,6 +108,50 @@ object CallTelecom {
         }
         connection.finish(end)
     }
+
+    // The web layer claimed the call: the connection goes active. False when Telecom holds
+    // no connection for it, which is the case for an outgoing call.
+    fun activate(id: CallId): Boolean {
+        val connection = live[id] ?: return false
+        connection.activate()
+        return true
+    }
+
+    // An outgoing call the web layer started. Telecom asks the connection service for the
+    // connection, which is marked as ours through the extras; a request without that mark is
+    // a dialler redial and is handled as one.
+    fun placeOutgoing(context: Context, call: IncomingCall, video: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        ensureRegistered(context)
+        if (!registered) return
+        try {
+            val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+            if (!tm.isOutgoingCallPermitted(handle(context))) {
+                Log.w(LOG_TAG, "Telecom does not permit an outgoing call now")
+                return
+            }
+            val extras = Bundle().apply {
+                putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle(context))
+                putBundle(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, call.toBundle().apply { putBoolean(EXTRA_OC_OUTGOING, true) })
+                putInt(
+                    TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE,
+                    if (video) android.telecom.VideoProfile.STATE_BIDIRECTIONAL else android.telecom.VideoProfile.STATE_AUDIO_ONLY,
+                )
+            }
+            tm.placeCall(address(context, call.id.chat), extras)
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Telecom refused the outgoing call", e)
+        }
+    }
+
+    fun endAll(end: CallRegistry.End) {
+        val all = live.values.toList()
+        live.clear()
+        pendingEnd.clear()
+        all.forEach { it.finish(end) }
+    }
+
+    const val EXTRA_OC_OUTGOING = "oc_outgoing_call"
 
     internal fun register(connection: CallConnection) {
         val id = connection.call.id
@@ -121,6 +174,7 @@ object CallTelecom {
         CallRegistry.End.ANSWERED_ELSEWHERE -> DisconnectCause.ANSWERED_ELSEWHERE
         CallRegistry.End.DECLINED_ELSEWHERE -> DisconnectCause.REJECTED
         CallRegistry.End.ANSWERED_HERE -> DisconnectCause.LOCAL
+        CallRegistry.End.HUNG_UP -> DisconnectCause.LOCAL
     }
 }
 
@@ -152,12 +206,24 @@ class CallConnectionService : ConnectionService() {
         IncomingCall.fromBundle(request?.extras)?.let { CallRinger.telecomRefused(applicationContext, it) }
     }
 
-    // A call log redial. The address is one of our handles; resolve it and hand the web
-    // layer a call to start. No outgoing connection lives in this milestone.
+    // Either our own outgoing call (marked in the extras) or a call log redial. A redial
+    // resolves the handle and hands the web layer a call to start; its bare connection is
+    // cancelled and the real one placed once the web layer reports the call active.
     override fun onCreateOutgoingConnection(
         account: PhoneAccountHandle?,
         request: ConnectionRequest,
     ): Connection {
+        val extras = request.extras
+        if (extras?.getBoolean(CallTelecom.EXTRA_OC_OUTGOING) == true) {
+            val call = IncomingCall.fromBundle(extras)
+                ?: return Connection.createFailedConnection(DisconnectCause(DisconnectCause.ERROR, "no call"))
+            val connection = CallConnection(applicationContext, call, request.address)
+            connection.setDialing()
+            CallTelecom.register(connection)
+            // State changes made inside this callback are dropped; activate on the next loop.
+            Handler(Looper.getMainLooper()).post { connection.activate() }
+            return connection
+        }
         val chat = CallHandleDirectory.chat(applicationContext, request.address?.toString())
             ?: return Connection.createFailedConnection(DisconnectCause(DisconnectCause.ERROR, "unknown call"))
         CallRinger.redial(applicationContext, chat)
@@ -168,6 +234,20 @@ class CallConnectionService : ConnectionService() {
 class CallConnection(private val context: Context, val call: IncomingCall, address: Uri?) : Connection() {
     @Volatile
     private var finished = false
+
+    // The ring was answered here; the connection now belongs to the call.
+    @Volatile
+    private var answered = false
+
+    private val main = Handler(Looper.getMainLooper())
+
+    // An answered connection the web layer never claims ends itself.
+    private val claimBackstop = Runnable {
+        if (!finished && answered && CallSession.state.active?.id != call.id) {
+            Log.w(LOG_TAG, "Answered call never claimed by the web layer; ending")
+            finish(CallRegistry.End.HUNG_UP)
+        }
+    }
 
     init {
         connectionProperties = PROPERTY_SELF_MANAGED
@@ -197,20 +277,41 @@ class CallConnection(private val context: Context, val call: IncomingCall, addre
         CallRinger.decline(context, call.id)
     }
 
+    // A headset button, a car, or a cellular call taking over. While ringing it is a
+    // decline; in the call it is a hang-up.
     override fun onDisconnect() {
-        CallRinger.decline(context, call.id)
+        if (answered) CallSession.hangUp(context, call.id, "telecom") else CallRinger.decline(context, call.id)
     }
 
     override fun onAbort() {
-        finish(CallRegistry.End.MISSED)
+        finish(if (answered) CallRegistry.End.HUNG_UP else CallRegistry.End.MISSED)
+    }
+
+    fun answered() {
+        if (finished || answered) return
+        answered = true
+        setActive()
+        main.postDelayed(claimBackstop, CLAIM_BACKSTOP_MS)
+    }
+
+    // The web layer is in the call.
+    fun activate() {
+        if (finished) return
+        answered = true
+        main.removeCallbacks(claimBackstop)
+        if (state != STATE_ACTIVE) setActive()
     }
 
     fun finish(end: CallRegistry.End) {
         if (finished) return
         finished = true
+        main.removeCallbacks(claimBackstop)
         CallTelecom.unregister(call.id)
-        if (end == CallRegistry.End.ANSWERED_HERE) setActive()
         setDisconnected(DisconnectCause(CallTelecom.disconnectCode(end)))
         destroy()
+    }
+
+    companion object {
+        const val CLAIM_BACKSTOP_MS = 60_000L
     }
 }

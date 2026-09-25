@@ -14,7 +14,12 @@ import app.tauri.plugin.JSArray
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import com.google.firebase.messaging.FirebaseMessaging
+import com.ocplugin.app.calls.CallChat
 import com.ocplugin.app.calls.CallConfig
+import com.ocplugin.app.calls.CallId
+import com.ocplugin.app.calls.CallKind
+import com.ocplugin.app.calls.CallSession
+import com.ocplugin.app.calls.IncomingCall
 import com.ocplugin.app.calls.CallRinger
 import com.ocplugin.app.calls.CallTelecom
 import com.ocplugin.app.calls.IncomingCallNotifications
@@ -177,6 +182,44 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         CallConfig.set(activity, args.videoBridgeUrl)
         invoke.resolve()
     }
+
+    // The web layer is in a call (joined or started).
+    @Command
+    fun callActive(invoke: Invoke) {
+        val args = invoke.parseArgs(CallActiveArgs::class.java)
+        val chatType = args.chatType
+        val chatId = args.chatId
+        val messageId = args.messageId
+        if (chatType == null || chatId == null || messageId == null) {
+            invoke.reject("chatType, chatId and messageId are required")
+            return
+        }
+        val call = IncomingCall(
+            id = CallId(CallChat(chatType, chatId, args.communityId), messageId),
+            kind = if (args.video) CallKind.VIDEO else CallKind.AUDIO,
+            started = System.currentTimeMillis(),
+            title = args.title ?: "",
+            callerName = null,
+            avatarUrl = null,
+        )
+        CallSession.active(activity, call, args.video, activity.taskId)
+        invoke.resolve()
+    }
+
+    // The web layer left the call.
+    @Command
+    fun callEnded(invoke: Invoke) {
+        val args = invoke.parseArgs(CallEndedArgs::class.java)
+        val chatType = args.chatType
+        val chatId = args.chatId
+        val messageId = args.messageId
+        if (chatType == null || chatId == null || messageId == null) {
+            invoke.reject("chatType, chatId and messageId are required")
+            return
+        }
+        CallSession.ended(activity, CallId(CallChat(chatType, chatId, args.communityId), messageId))
+        invoke.resolve()
+    }
 }
 
 @InvokeArg
@@ -187,6 +230,24 @@ class CallRingHandledArgs {
 @InvokeArg
 class SetCallConfigArgs {
     var videoBridgeUrl: String? = null
+}
+
+@InvokeArg
+class CallActiveArgs {
+    var chatType: String? = null
+    var chatId: String? = null
+    var communityId: String? = null
+    var messageId: String? = null
+    var video: Boolean = false
+    var title: String? = null
+}
+
+@InvokeArg
+class CallEndedArgs {
+    var chatType: String? = null
+    var chatId: String? = null
+    var communityId: String? = null
+    var messageId: String? = null
 }
 
 object OCPluginCompanion {

@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import com.ocplugin.app.calls.CallSession
 import android.webkit.WebView
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
@@ -248,6 +249,14 @@ class MainActivity : TauriActivity() {
             // val isDarkMode = (resources.configuration.uiMode and
             //     Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         }
+    }
+
+    // The WebView dies with this activity. If a call is running, nothing on the web side can
+    // end it now, so the native side does (#9559). A configuration change keeps the task and
+    // the call; only a finishing activity counts.
+    override fun onDestroy() {
+        if (isFinishing) CallSession.endAll(this)
+        super.onDestroy()
     }
 
     override fun onRequestPermissionsResult(
