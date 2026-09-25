@@ -129,6 +129,7 @@ pub(crate) fn send_message_impl(
         },
         finalised,
         args.og_previews,
+        &state.data.migrated_user_ids,
         now,
     )?;
 
@@ -200,6 +201,7 @@ pub(crate) fn send_message_with_completed_transfer(
             },
             true,
             args.og_previews,
+            &state.data.migrated_user_ids,
             now,
         )?;
 

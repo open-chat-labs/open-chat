@@ -169,6 +169,7 @@ import {
     type CompletedCryptocurrencyTransfer,
     type CreateCommunityResponse,
     type CreateGroupResponse,
+    type CreateMultiUserCanisterResponse,
     type CreateUserGroupResponse,
     type CreatedUser,
     type CryptocurrencyContent,
@@ -6834,6 +6835,22 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "setUserUpgradeConcurrency", value })
             .then((resp) => resp === "success")
+            .catch(() => false);
+    }
+
+    // Platform operators only
+    createMultiUserCanister(
+        localUserIndexCanisterId: string,
+    ): Promise<CreateMultiUserCanisterResponse> {
+        return this.#worker
+            .send({ kind: "createMultiUserCanister", localUserIndexCanisterId })
+            .catch((err) => ({ kind: "internal_error", error: String(err) }));
+    }
+
+    // Platform operators only
+    setMultiUserCanistersEnabled(enabled: boolean): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setMultiUserCanistersEnabled", enabled })
             .catch(() => false);
     }
 

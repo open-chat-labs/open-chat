@@ -1,7 +1,7 @@
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::channels::Channel;
 use crate::model::members::CommunityMembers;
-use crate::updates::c2c_join_community::join_community;
+use crate::updates::c2c_join_community::{join_community, migrate_previous_user_ids};
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state};
 use crate::{execute_update_async, jobs};
 use canister_api_macros::update;
@@ -28,6 +28,8 @@ async fn c2c_join_channel(args: Args) -> Response {
 }
 
 async fn c2c_join_channel_impl(mut args: Args) -> Response {
+    migrate_previous_user_ids(args.user_id, args.principal, &args.previous_user_ids);
+
     if read_state(|state| {
         state
             .data
@@ -50,6 +52,7 @@ async fn c2c_join_channel_impl(mut args: Args) -> Response {
             unique_person_proof: args.unique_person_proof.clone(),
             total_chit_earned: args.total_chit_earned,
             composite_gate_index: None,
+            previous_user_ids: args.previous_user_ids.clone(),
         })
         .await
         {

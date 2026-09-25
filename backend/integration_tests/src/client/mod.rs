@@ -200,9 +200,31 @@ pub fn register_user_with_options(
 }
 
 pub fn register_user_and_include_auth(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, UserAuth) {
+    register_user_and_include_auth_with_options(env, canister_ids, false)
+}
+
+pub fn register_user_in_multi_user_canister_and_include_auth(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+) -> (User, UserAuth) {
+    register_user_and_include_auth_with_options(env, canister_ids, true)
+}
+
+fn register_user_and_include_auth_with_options(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    use_multi_user_canister: bool,
+) -> (User, UserAuth) {
     let (auth_principal, auth_public_key, auth_delegation) = sign_in_with_email(env, canister_ids);
-    let (user, oc_public_key, oc_delegation) =
-        register_user_internal(env, canister_ids, None, auth_principal, auth_public_key.clone(), None, false);
+    let (user, oc_public_key, oc_delegation) = register_user_internal(
+        env,
+        canister_ids,
+        None,
+        auth_principal,
+        auth_public_key.clone(),
+        None,
+        use_multi_user_canister,
+    );
 
     let user_auth = UserAuth {
         auth_public_key,

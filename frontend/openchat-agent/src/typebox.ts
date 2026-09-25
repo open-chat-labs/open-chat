@@ -2156,6 +2156,26 @@ export const UserIndexUpdateDiamondMembershipSubscriptionResponse = /* @__PURE__
     }),
 ]);
 
+export type UserIndexCreateMultiUserCanisterArgs = Static<
+    typeof UserIndexCreateMultiUserCanisterArgs
+>;
+export const UserIndexCreateMultiUserCanisterArgs = /* @__PURE__ */ Type.Object({
+    local_user_index_canister_id: TSPrincipal,
+});
+
+export type UserIndexCreateMultiUserCanisterResponse = Static<
+    typeof UserIndexCreateMultiUserCanisterResponse
+>;
+export const UserIndexCreateMultiUserCanisterResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: TSPrincipal,
+    }),
+    Type.Literal("LocalUserIndexNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type UserIndexSuspendUserResponse = Static<typeof UserIndexSuspendUserResponse>;
 export const UserIndexSuspendUserResponse = /* @__PURE__ */ Type.Union([
     Type.Literal("Success"),
@@ -2428,6 +2448,13 @@ export const UserIndexRemoveBotResponse = /* @__PURE__ */ Type.Union([
 export type UserIndexSetHideOnlineStatusArgs = Static<typeof UserIndexSetHideOnlineStatusArgs>;
 export const UserIndexSetHideOnlineStatusArgs = /* @__PURE__ */ Type.Object({
     hide_online_status: Type.Boolean(),
+});
+
+export type UserIndexSetMultiUserCanistersEnabledArgs = Static<
+    typeof UserIndexSetMultiUserCanistersEnabledArgs
+>;
+export const UserIndexSetMultiUserCanistersEnabledArgs = /* @__PURE__ */ Type.Object({
+    enabled: Type.Boolean(),
 });
 
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;

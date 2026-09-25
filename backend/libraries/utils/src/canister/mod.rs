@@ -77,6 +77,14 @@ pub fn is_target_canister_uninstalled_or_deleted(reject_code: RejectCode, messag
     }
 }
 
+// Whether a call to a User canister failed in a way it does once its user has been migrated to a
+// MultiUser canister: the canister is uninstalled, then briefly installed with the cycles refunder,
+// which has none of the User canister's methods, and then uninstalled again. A caller finding this
+// checks whether the user has been migrated, so that it can send the call on to them.
+pub fn is_user_canister_possibly_migrated(error: &C2CError) -> bool {
+    is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) || error.is_method_not_found()
+}
+
 // Rejects an update call made while the canister is frozen. It traps rather than returning an
 // error, since a trap is a `CanisterError`, which the queues sending events to the canister retry,
 // whereas a reject from a guard is a `CanisterReject`, which they drop.
@@ -149,6 +157,28 @@ mod tests {
             RejectCode::SysTransient,
             "Canister x is out of cycles"
         ));
+    }
+
+    #[test]
+    fn a_user_canister_may_have_been_migrated_if_uninstalled_deleted_or_missing_the_method() {
+        let error =
+            |reject_code, message: &str| C2CError::new(CanisterId::anonymous(), "method", reject_code, message.to_string());
+
+        assert!(is_user_canister_possibly_migrated(&error(
+            RejectCode::CanisterError,
+            NO_WASM_MODULE_REJECT_MESSAGE
+        )));
+        assert!(is_user_canister_possibly_migrated(&error(RejectCode::DestinationInvalid, "")));
+        // As when the cycles refunder is installed in place of the User canister
+        assert!(is_user_canister_possibly_migrated(&error(
+            RejectCode::CanisterError,
+            "Canister has no update method 'method_msgpack'"
+        )));
+        assert!(!is_user_canister_possibly_migrated(&error(
+            RejectCode::CanisterError,
+            "trapped explicitly: something went wrong"
+        )));
+        assert!(!is_user_canister_possibly_migrated(&error(RejectCode::CanisterReject, "")));
     }
 
     // Which policy a given failure maps to is covered by the tests alongside
