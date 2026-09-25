@@ -58,11 +58,16 @@ impl UserMigrations {
         self.queued.contains(user_id) || self.in_progress.contains_key(user_id) || self.failed.contains_key(user_id)
     }
 
-    // Returns false if the user is already queued, being migrated or has failed to be migrated
-    pub fn enqueue(&mut self, user_id: UserId) -> bool {
-        if self.contains(&user_id) {
+    // Returns false if the user is already queued or being migrated, or has failed to be migrated
+    // and `retry_failed` is false
+    pub fn enqueue(&mut self, user_id: UserId, retry_failed: bool) -> bool {
+        if self.queued.contains(&user_id)
+            || self.in_progress.contains_key(&user_id)
+            || (!retry_failed && self.failed.contains_key(&user_id))
+        {
             false
         } else {
+            self.failed.remove(&user_id);
             self.queue.push_back(user_id);
             self.queued.insert(user_id);
             true
@@ -104,6 +109,20 @@ impl UserMigrations {
                 true
             }
             _ => false,
+        }
+    }
+
+    // Returns false if the user isn't being migrated to the given MultiUser canister
+    pub fn mark_cancelled(&mut self, user_id: UserId, multi_user_canister_id: CanisterId) -> bool {
+        if self
+            .in_progress
+            .get(&user_id)
+            .is_some_and(|m| m.multi_user_canister_id == multi_user_canister_id)
+        {
+            self.in_progress.remove(&user_id);
+            true
+        } else {
+            false
         }
     }
 
@@ -187,15 +206,36 @@ mod tests {
     fn users_are_only_queued_once() {
         let mut migrations = UserMigrations::default();
 
-        assert!(migrations.enqueue(user_id(1)));
-        assert!(!migrations.enqueue(user_id(1)));
+        assert!(migrations.enqueue(user_id(1), true));
+        assert!(!migrations.enqueue(user_id(1), true));
 
         let next = migrations.try_take_next().unwrap();
         migrations.mark_requested(next, canister_id(1), 1);
-        assert!(!migrations.enqueue(user_id(1)));
+        assert!(!migrations.enqueue(user_id(1), true));
 
+        // A user who failed to be migrated is only queued again if asked
         migrations.mark_failed(next, canister_id(1), OCErrorCode::NotReadyForMigration.into(), 2);
-        assert!(!migrations.enqueue(user_id(1)));
+        assert!(!migrations.enqueue(user_id(1), false));
+        assert!(migrations.enqueue(user_id(1), true));
+        assert_eq!(migrations.metrics().failed, 0);
+    }
+
+    #[test]
+    fn cancelled_migration_frees_its_slot() {
+        let mut migrations = UserMigrations::default();
+        migrations.set_concurrency(1);
+        migrations.enqueue(user_id(1), false);
+        migrations.enqueue(user_id(2), false);
+        let next = migrations.try_take_next().unwrap();
+        migrations.mark_requested(next, canister_id(1), 1);
+        migrations.mark_started(next, canister_id(1), 2);
+
+        assert!(!migrations.mark_cancelled(user_id(1), canister_id(2)));
+        assert!(migrations.try_take_next().is_none());
+
+        assert!(migrations.mark_cancelled(user_id(1), canister_id(1)));
+        assert_eq!(migrations.try_take_next(), Some(user_id(2)));
+        assert!(migrations.enqueue(user_id(1), false));
     }
 
     #[test]
@@ -203,7 +243,7 @@ mod tests {
         let mut migrations = UserMigrations::default();
         migrations.set_concurrency(2);
         for i in 1..=3 {
-            migrations.enqueue(user_id(i));
+            migrations.enqueue(user_id(i), false);
         }
 
         for i in 1..=2 {
@@ -225,7 +265,7 @@ mod tests {
     #[test]
     fn results_for_another_canister_are_ignored() {
         let mut migrations = UserMigrations::default();
-        migrations.enqueue(user_id(1));
+        migrations.enqueue(user_id(1), false);
         let next = migrations.try_take_next().unwrap();
         migrations.mark_requested(next, canister_id(1), 1);
 
@@ -241,7 +281,7 @@ mod tests {
     #[test]
     fn started_migration_is_not_marked_failed() {
         let mut migrations = UserMigrations::default();
-        migrations.enqueue(user_id(1));
+        migrations.enqueue(user_id(1), false);
         let next = migrations.try_take_next().unwrap();
         migrations.mark_requested(next, canister_id(1), 1);
         migrations.mark_started(user_id(1), canister_id(1), 2);
@@ -254,7 +294,7 @@ mod tests {
     fn metrics_group_failures_by_error_code() {
         let mut migrations = UserMigrations::default();
         for i in 1..=3 {
-            migrations.enqueue(user_id(i));
+            migrations.enqueue(user_id(i), false);
             let next = migrations.try_take_next().unwrap();
             migrations.mark_requested(next, canister_id(1), 1);
         }

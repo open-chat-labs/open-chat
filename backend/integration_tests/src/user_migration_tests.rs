@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::Principal;
-use constants::HOUR_IN_MS;
+use constants::{DAY_IN_MS, HOUR_IN_MS};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::BTreeMap;
@@ -386,7 +386,7 @@ fn migrate_users_starts_migrating_each_user_to_a_multi_user_canister() {
 }
 
 #[test]
-fn user_whose_canister_is_not_ready_fails_to_start_migrating() {
+fn migration_is_retried_until_the_user_canister_is_ready() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -401,40 +401,64 @@ fn user_whose_canister_is_not_ready_fails_to_start_migrating() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    // A pending message reminder means the canister isn't ready to be migrated
-    client::user::set_message_reminder_v2(
-        env,
-        user1.principal,
-        user1.canister(),
-        &user_canister::set_message_reminder_v2::Args {
-            chat: Chat::Direct(user2.user_id.into()),
-            thread_root_message_index: None,
-            event_index: 10.into(),
-            notes: None,
-            remind_at: now_millis(env) + 60_000,
-        },
-    );
+    // A pending message reminder means the canister isn't ready to be migrated until it fires
+    set_message_reminder(env, &user1, &user2, 60_000);
     let before = user_migration_metrics(env, canister_ids.user_index);
 
     migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id]);
     tick_many(env, 10);
 
+    let metrics = user_migration_metrics(env, canister_ids.user_index);
+    assert_eq!(metrics.started, before.started);
+    assert_eq!(metrics.failed, before.failed);
+
+    for _ in 0..5 {
+        env.advance_time(Duration::from_secs(31));
+        tick_many(env, 5);
+    }
+
+    let metrics = user_migration_metrics(env, canister_ids.user_index);
+    assert_eq!(metrics.started, before.started + 1);
+    assert_eq!(metrics.failed, before.failed);
+}
+
+#[test]
+fn user_whose_canister_is_never_ready_fails_to_start_migrating() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    set_message_reminder(env, &user1, &user2, DAY_IN_MS);
+    let before = user_migration_metrics(env, canister_ids.user_index);
+
+    migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id]);
+
+    // The LocalUserIndex gives up once its attempts run out
+    for _ in 0..25 {
+        env.advance_time(Duration::from_secs(31));
+        tick_many(env, 3);
+    }
+
     let after = user_migration_metrics(env, canister_ids.user_index);
     assert_eq!(after.started, before.started);
     assert_eq!(after.failed, before.failed + 1);
-    assert_eq!(
-        after
-            .failed_by_error_code
-            .get(&(OCErrorCode::NotReadyForMigration as u16))
-            .copied()
-            .unwrap_or_default(),
-        before
-            .failed_by_error_code
+    let not_ready = |m: &UserMigrationMetrics| {
+        m.failed_by_error_code
             .get(&(OCErrorCode::NotReadyForMigration as u16))
             .copied()
             .unwrap_or_default()
-            + 1
-    );
+    };
+    assert_eq!(not_ready(&after), not_ready(&before) + 1);
 
     // The canister isn't frozen, so its owner can still change it
     let response = client::user::set_bio(
@@ -445,8 +469,11 @@ fn user_whose_canister_is_not_ready_fails_to_start_migrating() {
     );
     assert!(matches!(response, types::UnitResult::Success), "{response:?}");
 
-    // A user who failed to be migrated isn't queued again
-    assert!(migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id]).is_empty());
+    // A user who failed to be migrated can be queued again by naming them
+    assert_eq!(
+        migrate_users(env, operator.principal, canister_ids.user_index, vec![user1.user_id]),
+        vec![user1.user_id]
+    );
 }
 
 #[test]
@@ -611,4 +638,19 @@ fn migrate_users(env: &mut PocketIc, sender: Principal, user_index: CanisterId, 
         user_index_canister::migrate_users::Response::Success(result) => result.queued,
         response => panic!("'migrate_users' error: {response:?}"),
     }
+}
+
+fn set_message_reminder(env: &mut PocketIc, user: &User, other_user: &User, remind_in: u64) {
+    client::user::set_message_reminder_v2(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::set_message_reminder_v2::Args {
+            chat: Chat::Direct(other_user.user_id.into()),
+            thread_root_message_index: None,
+            event_index: 10.into(),
+            notes: None,
+            remind_at: now_millis(env) + remind_in,
+        },
+    );
 }

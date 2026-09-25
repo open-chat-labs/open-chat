@@ -1,5 +1,6 @@
 use crate::guards::caller_is_governance_principal;
-use crate::read_state;
+use crate::jobs::start_user_migrations;
+use crate::{mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -32,7 +33,18 @@ async fn cancel_user_migration(args: Args) -> Response {
     )
     .await
     {
-        Ok(user_canister::c2c_cancel_migration::Response::Success) => Success,
+        Ok(user_canister::c2c_cancel_migration::Response::Success) => {
+            mutate_state(|state| {
+                if state
+                    .data
+                    .user_migrations
+                    .mark_cancelled(args.user_id, args.multi_user_canister_id)
+                {
+                    start_user_migrations::run(state);
+                }
+            });
+            Success
+        }
         Ok(user_canister::c2c_cancel_migration::Response::Error(error)) => Error(error),
         Err(error) => Error(error.into()),
     }
