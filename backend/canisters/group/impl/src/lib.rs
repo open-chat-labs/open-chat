@@ -10,6 +10,7 @@ use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER
 use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
+use group_canister::c2c_export_group::ExportExtras;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
@@ -395,7 +396,14 @@ impl RuntimeState {
             // metrics and the message event indexes in stable memory must be copied onto the heap to
             // be carried over
             self.data.chat.events.copy_to_heap_for_export();
-            let serialized = serialize_then_unwrap(&self.data.chat);
+            let mut serialized = serialize_then_unwrap(&self.data.chat);
+            // The channel's events still refer to users by their ids from before any migrations to
+            // MultiUser canisters, so the community needs these to recognise them
+            let extras = ExportExtras {
+                former_members: self.data.former_members.iter().copied().collect(),
+                migrated_user_ids: self.data.migrated_user_ids.iter().collect(),
+            };
+            msgpack::serialize(&extras, &mut serialized).unwrap();
             let total_bytes = serialized.len() as u64;
 
             if let Some(community_id) = community.community_id() {

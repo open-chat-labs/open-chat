@@ -11,7 +11,7 @@ use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{RuntimeState, mutate_state, read_state};
 use chat_events::ChatEvents;
 use constants::OPENCHAT_BOT_USER_ID;
-use group_canister::c2c_export_group::{Args, Response};
+use group_canister::c2c_export_group::{Args, ExportExtras, Response};
 use group_chat_core::{GroupChatCore, GroupMembers};
 use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
@@ -190,7 +190,21 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             let community_id = state.env.canister_id().into();
             let channel_id = group.channel_id();
 
-            let mut chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
+            let mut bytes = group.bytes();
+            let mut chat: GroupChatCore = msgpack::deserialize(&mut bytes).unwrap();
+            // Groups on earlier versions export their `GroupChatCore` alone
+            let extras: ExportExtras = if bytes.is_empty() {
+                ExportExtras::default()
+            } else {
+                msgpack::deserialize_then_unwrap(bytes)
+            };
+            // The channel's events refer to the group's former members, so they are recorded as the
+            // community's former members too
+            state.data.members.add_former_members(extras.former_members);
+            for (old_user_id, new_user_id) in extras.migrated_user_ids {
+                state.data.migrated_user_ids.insert(old_user_id, new_user_id);
+            }
+
             chat.events.set_chat(Chat::Channel(community_id, channel_id));
             chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
             // The message ids and expiring events were written to stable memory as the events were

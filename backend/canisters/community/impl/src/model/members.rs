@@ -39,9 +39,10 @@ pub struct CommunityMembers {
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
-    // Users who were members of the community but no longer are, other than deleted users. A user who rejoins is
-    // removed again. Recorded so that a user who rejoins under a new id, having been migrated to a MultiUser
-    // canister, can be recognised as having events under their earlier ids.
+    // Users who were members of the community but no longer are, other than deleted users, plus the former members
+    // of any groups imported into it who are not in the community, since the imported channels' events refer to
+    // them too. A user who joins is removed again. Recorded so that a user who rejoins under a new id, having been
+    // migrated to a MultiUser canister, can be recognised as having events under their earlier ids.
     #[serde(default)]
     former_members: BTreeSet<UserId>,
 }
@@ -470,6 +471,15 @@ impl CommunityMembers {
 
     pub fn is_former_member(&self, user_id: &UserId) -> bool {
         self.former_members.contains(user_id)
+    }
+
+    // Skips any who are members, since they are not former members
+    pub fn add_former_members(&mut self, user_ids: impl IntoIterator<Item = UserId>) {
+        for user_id in user_ids {
+            if !self.members_and_channels.contains_key(&user_id) {
+                self.former_members.insert(user_id);
+            }
+        }
     }
 
     pub fn len(&self) -> usize {
