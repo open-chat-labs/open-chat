@@ -43,6 +43,13 @@ pub struct DirectChat {
     // Whether the chat is the user's chat with themselves, in which case the messages they send
     // are read by "them" too
     self_chat: bool,
+    // When the events' TTL was last changed, by either user, as given by whoever changed it. Unlike
+    // the TTL's own timestamp, which is when this copy was updated, so is later than when they
+    // changed it for a change made by them, this is the same in both copies once each has the
+    // other's changes, so it is what their changes are compared against. `None` until the TTL is
+    // next changed, for chats from before this was recorded.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    events_ttl_changed_at: Option<TimestampMillis>,
 }
 
 impl DirectChat {
@@ -66,6 +73,7 @@ impl DirectChat {
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),
             self_chat: my_user_id == them,
+            events_ttl_changed_at: None,
         }
     }
 
@@ -533,13 +541,24 @@ impl DirectChat {
         self.events.end_video_call(event_key, now, event_pusher)
     }
 
+    pub fn events_ttl_changed_at(&self) -> Option<TimestampMillis> {
+        self.events_ttl_changed_at
+    }
+
+    // Sets the TTL, which `user_id` changed at `changed_at`. For a change made by the other user
+    // this is when they made it, which is before `now`, the time this copy is updated.
     pub fn set_events_time_to_live(
         &mut self,
         user_id: UserId,
         events_ttl: Option<Milliseconds>,
+        changed_at: TimestampMillis,
         now: TimestampMillis,
     ) -> Option<PushEventResultInternal> {
-        self.events.set_events_time_to_live(user_id, events_ttl, now)
+        let result = self.events.set_events_time_to_live(user_id, events_ttl, now);
+        if result.is_some() {
+            self.events_ttl_changed_at = Some(changed_at);
+        }
+        result
     }
 
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
@@ -609,6 +628,8 @@ struct DirectChatSerde {
     read_by_them_up_to: Option<Timestamped<Option<MessageIndex>>>,
     #[serde(default)]
     core: Option<LegacyDirectChatCore>,
+    #[serde(default)]
+    events_ttl_changed_at: Option<TimestampMillis>,
 }
 
 #[derive(Deserialize)]
@@ -651,6 +672,7 @@ impl From<DirectChatSerde> for DirectChat {
             read_by_me_up_to,
             read_by_them_up_to,
             self_chat: value.self_chat,
+            events_ttl_changed_at: value.events_ttl_changed_at,
         };
         if chat.self_chat {
             chat.align_self_chat_read_positions();
@@ -803,6 +825,25 @@ mod tests {
         assert_eq!(unmarked.read_by_me_up_to(), &Timestamped::new(Some(2.into()), 300));
         assert_eq!(unmarked.read_by_them_up_to(), &Timestamped::new(Some(2.into()), 300));
         assert!(!unmarked.mark_as_self_chat(), "already marked");
+    }
+
+    #[test]
+    fn events_ttl_changed_at_is_recorded_only_when_the_ttl_changes_and_survives_serialization() {
+        init_stable_memory_map();
+        let mut chat = DirectChat::new(user(1), user(2), UserType::User, 1, None, 123, 1);
+        assert_eq!(chat.events_ttl_changed_at(), None);
+
+        // Setting the TTL it already has is not a change
+        assert!(chat.set_events_time_to_live(user(2), None, 5, 10).is_none());
+        assert_eq!(chat.events_ttl_changed_at(), None);
+
+        // A change the other user made at 5 is applied at 10, the time this copy is updated
+        assert!(chat.set_events_time_to_live(user(2), Some(1000), 5, 10).is_some());
+        assert_eq!(chat.events_ttl_changed_at(), Some(5));
+        assert_eq!(chat.events().get_events_time_to_live().timestamp, 10);
+
+        let deserialized: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
+        assert_eq!(deserialized.events_ttl_changed_at(), Some(5));
     }
 
     #[test]

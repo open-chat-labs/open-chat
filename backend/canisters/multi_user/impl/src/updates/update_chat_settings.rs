@@ -76,7 +76,7 @@ fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 .direct_chats
                 .get_or_create(my_user_id, them, their_user_type, || anonymized_id, now);
 
-            events_ttl.is_some_and(|events_ttl| chat.set_events_time_to_live(my_user_id, events_ttl, now).is_some())
+            events_ttl.is_some_and(|events_ttl| chat.set_events_time_to_live(my_user_id, events_ttl, now, now).is_some())
         })
         .unwrap_or_default();
 
@@ -122,6 +122,6 @@ fn set_their_events_ttl(
         // copies are updated here within the one call, so the latest call wins in both
         user.direct_chats
             .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now)
-            .set_events_time_to_live(sender, events_ttl, now);
+            .set_events_time_to_live(sender, events_ttl, now, now);
     });
 }
