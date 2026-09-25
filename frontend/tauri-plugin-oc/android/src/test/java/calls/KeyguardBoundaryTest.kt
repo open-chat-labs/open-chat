@@ -113,4 +113,25 @@ class KeyguardBoundaryTest {
         assertFalse(main.contains("callAction"))
         assertFalse(main.contains("oc_call_"))
     }
+
+    // #9559 invariant 8: the WebView is granted camera or microphone only after the matching
+    // runtime permission is held. The generated chrome client does that (it launches the
+    // permission request and grants on the result); the main activity must not replace it.
+    @Test
+    fun `invariant 8 the main activity keeps the generated chrome client which prompts before granting`() {
+        val mainActivity = File(app, "java/com/oclabs/openchat/MainActivity.kt").readText()
+        assertFalse(mainActivity.contains("webChromeClient ="))
+        assertFalse(mainActivity.contains("onPermissionRequest"))
+        val generated = File(app, "java/com/oclabs/openchat/generated/RustWebChromeClient.kt").readText()
+        val handler = generated.substring(generated.indexOf("override fun onPermissionRequest"))
+        // up to the next class-level member (two-space indent); the nested listener's own
+        // override sits deeper
+        val next = handler.indexOf("\n  override fun", 1)
+        val body = if (next > 0) handler.substring(0, next) else handler
+        val launch = body.indexOf("permissionLauncher.launch(")
+        val grantOnResult = body.indexOf("if (isGranted == true)")
+        assertTrue(launch > 0 && grantOnResult > 0)
+        assertTrue(body.indexOf("request.grant(request.resources)", grantOnResult) > grantOnResult)
+        assertTrue("request.deny()" in body)
+    }
 }
