@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Retry sending events for migrated users to their new canister ([#9551](https://github.com/open-chat-labs/open-chat/pull/9551))
 - Record the users who have left or been removed from the group ([#9564](https://github.com/open-chat-labs/open-chat/pull/9564))
 - Accept the `previous_user_ids` of a user joining via `c2c_join_group`, and if the user was a member under any of them, cache their migrations to the user's current id ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
-- Act on `UserIdMigrated`, moving everything held under the user's old id (their membership, block, invitation, metrics, etc) onto their new id ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Act on `UserIdMigrated`, moving everything held under the user's old id (their membership, block, invitation, metrics, etc) onto their new id ([#9572](https://github.com/open-chat-labs/open-chat/pull/9572))
 
 ### Changed
 
