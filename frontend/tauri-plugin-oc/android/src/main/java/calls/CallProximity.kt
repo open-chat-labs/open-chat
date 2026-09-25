@@ -20,11 +20,13 @@ object CallProximity {
                 val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
                 if (!pm.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK)) return
                 lock = pm.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "oc:call_proximity").also { it.acquire() }
+                Log.i(LOG_TAG, "Proximity lock held")
             } catch (e: Exception) {
                 Log.w(LOG_TAG, "Proximity lock refused", e)
             }
         } else if (!wanted && current != null) {
             lock = null
+            Log.i(LOG_TAG, "Proximity lock released")
             try {
                 current.release(PowerManager.RELEASE_FLAG_WAIT_FOR_NO_PROXIMITY)
             } catch (e: Exception) {
