@@ -53,8 +53,9 @@ mod updates;
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
 
 // How long after a P2P swap expires the user must wait to be migrated, which leaves the Escrow time
-// to finish paying out or refunding it, and to notify this canister
-const P2P_SWAP_SETTLEMENT_PERIOD: Milliseconds = DAY_IN_MS;
+// to finish paying out or refunding it, and to notify this canister. The Escrow retries a payment
+// until the ledger rejects it as too old, which is a day after it was first attempted.
+const P2P_SWAP_SETTLEMENT_PERIOD: Milliseconds = 3 * DAY_IN_MS;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();

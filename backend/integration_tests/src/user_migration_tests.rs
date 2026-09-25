@@ -183,7 +183,7 @@ fn users_with_a_p2p_swap_in_a_group_are_not_ready_for_migration_until_it_has_set
 
     tick_many(env, 10);
 
-    // Neither the user who created the swap nor the one who accepted it can be migrated until a day
+    // Neither the user who created the swap nor the one who accepted it can be migrated until 3 days
     // after it expires, by when the Escrow will have settled it
     for user in [&user1, &user2] {
         let response = try_start_user_migration(env, *controller, canister_ids.user_index, user, multi_user_canister(1));
@@ -194,7 +194,7 @@ fn users_with_a_p2p_swap_in_a_group_are_not_ready_for_migration_until_it_has_set
         );
     }
 
-    env.advance_time(Duration::from_millis(HOUR_IN_MS + DAY_IN_MS));
+    env.advance_time(Duration::from_millis(HOUR_IN_MS + 3 * DAY_IN_MS));
     tick_many(env, 10);
 
     for user in [&user1, &user2] {
