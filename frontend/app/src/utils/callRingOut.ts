@@ -25,19 +25,24 @@ export type RingOutHandle = {
 };
 
 // Starts the ring-out timer. `answered` is asked at the deadline so a join the caller
-// missed the event for still counts.
+// missed the event for still counts. `ringback` (#9559 invariant 14) is on for exactly the
+// life of the timer: from arming until a join cancels it, the call ends, or the window
+// elapses.
 export function armRingOut(
     answered: () => boolean,
     onNoAnswer: () => void,
+    ringback: (on: boolean) => void = () => undefined,
     timers: {
         set: (fn: () => void, ms: number) => number;
         clear: (id: number) => void;
     } = { set: (fn, ms) => window.setTimeout(fn, ms), clear: (id) => window.clearTimeout(id) },
 ): RingOutHandle {
     let live = true;
+    ringback(true);
     const id = timers.set(() => {
         if (!live) return;
         live = false;
+        ringback(false);
         if (!answered()) onNoAnswer();
     }, RING_OUT_MS);
     return {
@@ -45,6 +50,7 @@ export function armRingOut(
             if (!live) return;
             live = false;
             timers.clear(id);
+            ringback(false);
         },
     };
 }

@@ -295,6 +295,30 @@
       "type": "string",
       "oneOf": [
         {
+          "description": "Enables the call_active command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-call-active",
+          "markdownDescription": "Enables the call_active command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the call_active command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-call-active",
+          "markdownDescription": "Denies the call_active command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the call_ended command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-call-ended",
+          "markdownDescription": "Enables the call_ended command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the call_ended command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-call-ended",
+          "markdownDescription": "Denies the call_ended command without any pre-configured scope."
+        },
+        {
           "description": "Enables the call_ring_handled command without any pre-configured scope.",
           "type": "string",
           "const": "allow-call-ring-handled",
@@ -559,6 +583,42 @@
           "markdownDescription": "Denies the set_call_config command without any pre-configured scope."
         },
         {
+          "description": "Enables the set_call_end_token command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-set-call-end-token",
+          "markdownDescription": "Enables the set_call_end_token command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_call_end_token command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-set-call-end-token",
+          "markdownDescription": "Denies the set_call_end_token command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_call_ringback command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-set-call-ringback",
+          "markdownDescription": "Enables the set_call_ringback command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_call_ringback command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-set-call-ringback",
+          "markdownDescription": "Denies the set_call_ringback command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_call_speaker command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-set-call-speaker",
+          "markdownDescription": "Enables the set_call_speaker command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_call_speaker command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-set-call-speaker",
+          "markdownDescription": "Denies the set_call_speaker command without any pre-configured scope."
+        },
+        {
           "description": "Enables the show_notification command without any pre-configured scope.",
           "type": "string",
           "const": "allow-show-notification",
@@ -619,10 +679,10 @@
           "markdownDescription": "Denies the update_chat_shortcuts command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-get-shell-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-export-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-get-pending-call-action`\n- `allow-call-ring-handled`\n- `allow-set-call-config`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-get-shell-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-export-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-get-pending-call-action`\n- `allow-call-ring-handled`\n- `allow-set-call-config`\n- `allow-call-active`\n- `allow-call-ended`\n- `allow-set-call-speaker`\n- `allow-set-call-ringback`\n- `allow-set-call-end-token`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-get-shell-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-export-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-get-pending-call-action`\n- `allow-call-ring-handled`\n- `allow-set-call-config`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-get-shell-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-export-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-get-pending-call-action`\n- `allow-call-ring-handled`\n- `allow-set-call-config`\n- `allow-call-active`\n- `allow-call-ended`\n- `allow-set-call-speaker`\n- `allow-set-call-ringback`\n- `allow-set-call-end-token`"
         }
       ]
     }

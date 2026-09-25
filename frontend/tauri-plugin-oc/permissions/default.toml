@@ -28,4 +28,9 @@ permissions = [
     "allow-get-pending-call-action",
     "allow-call-ring-handled",
     "allow-set-call-config",
+    "allow-call-active",
+    "allow-call-ended",
+    "allow-set-call-speaker",
+    "allow-set-call-ringback",
+    "allow-set-call-end-token",
 ]

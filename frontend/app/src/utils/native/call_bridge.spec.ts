@@ -180,6 +180,127 @@ describe("native call bridge", () => {
         expect(tauri.invoke).not.toHaveBeenCalled();
     });
 
+    test("invariant 12 (#9559) the in-call reports are no-ops off Android and in a shell without them", async () => {
+        const { reportCallActive, reportCallEnded, expectCallControls } =
+            await import("./call_bridge");
+        const direct = { kind: "direct_chat", userId: "u" } as const;
+        tauri.invoke.mockRejectedValue(new Error("plugin:oc|call_active not found"));
+        await expect(reportCallActive(direct, 7n, true, "Alice")).resolves.toBeUndefined();
+        expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|call_active", {
+            chatType: "direct",
+            chatId: "u",
+            messageId: "7",
+            video: true,
+            title: "Alice",
+        });
+        await expect(reportCallEnded(direct, 7n)).resolves.toBeUndefined();
+        tauri.addPluginListener.mockRejectedValue(new Error("no such event"));
+        await expect(expectCallControls(vi.fn())).resolves.toBeUndefined();
+
+        tauri.invoke.mockClear();
+        shared.isAndroidTauriApp.mockReturnValue(false);
+        await reportCallActive(direct, 7n, true, "Alice");
+        await reportCallEnded(direct, 7n);
+        await expectCallControls(vi.fn());
+        expect(tauri.invoke).not.toHaveBeenCalled();
+        shared.isAndroidTauriApp.mockReturnValue(true);
+    });
+
+    test("invariant 2 (#9559) a native control names its call and anything malformed is dropped", async () => {
+        const { parseCallControl } = await import("./call_bridge");
+        expect(parseCallControl({ kind: "hangup", messageId: "7" })).toEqual({
+            kind: "hangup",
+            messageId: 7n,
+        });
+        expect(parseCallControl({ kind: "mute", messageId: "7", muted: true })).toEqual({
+            kind: "mute",
+            messageId: 7n,
+            muted: true,
+        });
+        expect(parseCallControl({ kind: "route", messageId: "7", speaker: false })).toEqual({
+            kind: "route",
+            messageId: 7n,
+            speaker: false,
+        });
+        expect(parseCallControl({ kind: "hangup" })).toBeUndefined();
+        expect(parseCallControl({ kind: "mute", messageId: "7" })).toBeUndefined();
+        expect(parseCallControl({ kind: "explode", messageId: "7" })).toBeUndefined();
+        expect(parseCallControl("hangup")).toBeUndefined();
+    });
+
+    test("invariant 2 (#9559) the teardown token is refreshed for the life of a call, and the kind the shell holds is the kind it was fetched for", async () => {
+        const { keepCallTeardownTokenFresh, teardownKind, TEARDOWN_TOKEN_REFRESH_MS } =
+            await import("./call_bridge");
+        const direct = { kind: "direct_chat", userId: "u" } as const;
+        const group = { kind: "group_chat", groupId: "g" } as const;
+        // a direct call ends for both; a group call is only left
+        expect(teardownKind(direct)).toBe("end");
+        expect(teardownKind(group)).toBe("leave");
+        // refreshed before the token can lapse: the local user index signs them for five minutes
+        expect(TEARDOWN_TOKEN_REFRESH_MS).toBeLessThan(5 * 60 * 1000);
+        vi.useFakeTimers();
+        try {
+            const fetchToken = vi.fn(async (kind: "end" | "leave") => `tok-${kind}`);
+            const stop = keepCallTeardownTokenFresh(group, 7n, fetchToken, "sess-1", 1000);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(fetchToken).toHaveBeenCalledWith("leave");
+            expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|set_call_end_token", {
+                chatType: "group",
+                chatId: "g",
+                messageId: "7",
+                token: "tok-leave",
+                kind: "leave",
+                sessionId: "sess-1",
+            });
+            keepCallTeardownTokenFresh(direct, 8n, fetchToken, undefined, 1000)();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(fetchToken).toHaveBeenLastCalledWith("end");
+            expect(tauri.invoke).toHaveBeenLastCalledWith("plugin:oc|set_call_end_token", {
+                chatType: "direct",
+                chatId: "u",
+                messageId: "8",
+                token: "tok-end",
+                kind: "end",
+                sessionId: undefined,
+            });
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(fetchToken).toHaveBeenCalledTimes(4);
+            stop();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(fetchToken).toHaveBeenCalledTimes(4);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("invariant 12 (#9559) every in-call command is a no-op off Android and in a shell without it", async () => {
+        const {
+            setCallSpeaker,
+            setCallRingback,
+            setCallTeardownToken,
+            keepCallTeardownTokenFresh,
+        } = await import("./call_bridge");
+        const direct = { kind: "direct_chat", userId: "u" } as const;
+        tauri.invoke.mockRejectedValue(new Error("not found"));
+        await expect(setCallSpeaker(true)).resolves.toBeUndefined();
+        await expect(setCallRingback(true)).resolves.toBeUndefined();
+        await expect(
+            setCallTeardownToken(direct, 7n, "t", "end", undefined),
+        ).resolves.toBeUndefined();
+        expect(tauri.invoke).toHaveBeenCalledTimes(3);
+
+        tauri.invoke.mockClear();
+        shared.isAndroidTauriApp.mockReturnValue(false);
+        const fetchToken = vi.fn(async () => "t");
+        await setCallSpeaker(true);
+        await setCallRingback(true);
+        await setCallTeardownToken(direct, 7n, "t", "end", undefined);
+        keepCallTeardownTokenFresh(direct, 7n, fetchToken, undefined, 1)();
+        expect(tauri.invoke).not.toHaveBeenCalled();
+        expect(fetchToken).not.toHaveBeenCalled();
+        shared.isAndroidTauriApp.mockReturnValue(true);
+    });
+
     test("invariant 16 the joined notice is only sent from the Android shell", async () => {
         shared.isAndroidTauriApp.mockReturnValueOnce(false);
         const { notifyCallJoined } = await import("./call_bridge");

@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-set-call-speaker"
+description = "Enables the set_call_speaker command without any pre-configured scope."
+commands.allow = ["set_call_speaker"]
+
+[[permission]]
+identifier = "deny-set-call-speaker"
+description = "Denies the set_call_speaker command without any pre-configured scope."
+commands.deny = ["set_call_speaker"]
