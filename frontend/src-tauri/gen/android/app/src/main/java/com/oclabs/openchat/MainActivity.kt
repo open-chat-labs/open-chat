@@ -5,6 +5,8 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.content.res.Configuration
+import com.ocplugin.app.calls.CallPip
 import com.ocplugin.app.calls.CallSession
 import android.webkit.WebView
 import androidx.activity.addCallback
@@ -245,6 +247,16 @@ class MainActivity : TauriActivity() {
     // The WebView dies with this activity. If a call is running, nothing on the web side can
     // end it now, so the native side does (#9559). A configuration change keeps the task and
     // the call; only a finishing activity counts.
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        CallPip.onUserLeaveHint(this)
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        CallPip.changed(this, isInPictureInPictureMode)
+    }
+
     override fun onDestroy() {
         if (isFinishing) CallSession.endAll(this)
         super.onDestroy()

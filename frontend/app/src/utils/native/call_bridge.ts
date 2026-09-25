@@ -19,6 +19,7 @@ import { navigate } from "@utils/navigation";
 const TAURI_PLUGIN_NAME = "oc";
 const CALL_ACTION_EVENT = "call-action";
 const CALL_CONTROL_EVENT = "call-control";
+const PIP_EVENT = "pip-changed";
 
 export type NativeCallAction =
     | { kind: "accept"; chatId: ChatIdentifier; messageId: bigint; callType: VideoCallType }
@@ -178,6 +179,23 @@ function chatArgs(chatId: ChatIdentifier): {
                 chatId: chatId.channelId.toString(),
                 communityId: chatId.communityId,
             };
+    }
+}
+
+// The shell entered or left picture in picture with the call (#9559): the call view goes
+// full bleed while in the tile.
+export async function expectPipChanges(
+    onChange: (active: boolean) => void,
+): Promise<PluginListener | undefined> {
+    if (!isAndroidTauriApp()) return undefined;
+    try {
+        return await addPluginListener(TAURI_PLUGIN_NAME, PIP_EVENT, (raw: unknown) => {
+            const active = (raw as { active?: unknown } | null)?.active;
+            if (typeof active === "boolean") onChange(active);
+        });
+    } catch (e) {
+        console.error("PiP: listener registration failed", e);
+        return undefined;
     }
 }
 

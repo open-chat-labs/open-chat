@@ -38,6 +38,7 @@ object CallSession {
         speaker = video
         CallTelecom.setSpeaker(call.id, speaker, isDefault = true)
         CallProximity.update(context, active = true, video = video, speaker = speaker)
+        CallPip.update(active = true, video = video)
         CallForegroundService.start(context, call, now, sharing = false)
     }
 
@@ -78,6 +79,7 @@ object CallSession {
             is CallSessionState.Ended.StopAfterGrace -> {
                 CallTelecom.end(id, CallRegistry.End.HUNG_UP)
                 CallProximity.update(context, active = false, video = false, speaker = false)
+                CallPip.update(active = false, video = false)
                 armStopTimer(context)
             }
             CallSessionState.Ended.Ignore -> Unit
@@ -100,6 +102,7 @@ object CallSession {
         state.endAll(System.currentTimeMillis())
         cancelStopTimer()
         CallProximity.update(context, active = false, video = false, speaker = false)
+        CallPip.update(active = false, video = false)
         CallTelecom.endAll(CallRegistry.End.HUNG_UP)
         CallForegroundService.stop(context)
         ownerTaskId = -1

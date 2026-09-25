@@ -126,4 +126,26 @@ class CallSessionTest {
         val activate = telecom.substring(telecom.indexOf("fun activate()"), telecom.indexOf("fun finish("))
         assertTrue("removeCallbacks(claimBackstop)" in activate)
     }
+
+    @Test
+    fun `invariant 9 picture in picture is armed only for an active video call and the session drives it`() {
+        assertTrue(PipRule.armed(active = true, video = true))
+        assertFalse(PipRule.armed(active = true, video = false))
+        assertFalse(PipRule.armed(active = false, video = true))
+        val session = File("src/main/java/calls/CallSession.kt").readText()
+        val active = session.substring(session.indexOf("fun active("), session.indexOf("fun setSpeaker("))
+        assertTrue("CallPip.update(active = true, video = video)" in active)
+        val ended = session.substring(session.indexOf("fun ended("), session.indexOf("fun hangUp("))
+        assertTrue("CallPip.update(active = false" in ended)
+        val endAll = session.substring(session.indexOf("fun endAll("), session.indexOf("fun ownerTaskAlive"))
+        assertTrue("CallPip.update(active = false" in endAll)
+        // entry and exit are reported, and a tile with no armed call is left
+        val pip = File("src/main/java/calls/CallPip.kt").readText()
+        val changed = pip.substring(pip.indexOf("fun changed("), pip.indexOf("private fun leaveTile"))
+        assertTrue("\"pip-changed\"" in changed)
+        assertTrue("moveTaskToBack(true)" in changed)
+        // a call ending in the tile leaves it
+        val update = pip.substring(pip.indexOf("fun update("), pip.indexOf("fun onUserLeaveHint"))
+        assertTrue("if (!wanted && inPip) leaveTile()" in update)
+    }
 }

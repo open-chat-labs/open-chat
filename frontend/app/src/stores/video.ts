@@ -79,6 +79,8 @@ const incomingStore = writable<IncomingVideoCall | undefined>(undefined);
 export const microphone = writable<boolean>(false);
 // The audio route the platform reports for the active call in the Android shell (#9559).
 export const speaker = writable<boolean>(false);
+// The Android shell has the call in a picture-in-picture tile (#9559).
+export const pictureInPicture = writable<boolean>(false);
 export const hasPresence = writable<boolean>(false);
 export const camera = writable<boolean>(false);
 export const sharing = writable<boolean>(false);

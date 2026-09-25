@@ -18,6 +18,7 @@ import com.ocplugin.app.calls.CallChat
 import com.ocplugin.app.calls.CallConfig
 import com.ocplugin.app.calls.CallId
 import com.ocplugin.app.calls.CallKind
+import com.ocplugin.app.calls.CallPip
 import com.ocplugin.app.calls.CallSession
 import com.ocplugin.app.calls.IncomingCall
 import com.ocplugin.app.calls.CallRinger
@@ -40,6 +41,7 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         NotificationsChannel.createSummaryChannel(activity)
         IncomingCallNotifications.createChannel(activity)
         CallTelecom.ensureRegistered(activity)
+        CallPip.attach(activity)
 
         // Init the trigger fn!
         OCPluginCompanion.setTriggerRef(this)
