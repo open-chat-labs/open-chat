@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Let members send crypto, prizes and P2P swaps via `send_message_v2`, and tip messages via a new `tip_message`, in a group directly rather than via their User canister, using ICRC2 transfers or certified transfers they have already made ([#9514](https://github.com/open-chat-labs/open-chat/pull/9514))
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Accept `UserIdMigrated` from the LocalUserIndex, for members migrated to a MultiUser canister and given a new id. Not acted on yet ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
-- Record the users who have left or been removed from the group, which nothing reads yet ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Record the users who have left or been removed from the group, which nothing reads yet ([#9564](https://github.com/open-chat-labs/open-chat/pull/9564))
 
 ### Changed
 
