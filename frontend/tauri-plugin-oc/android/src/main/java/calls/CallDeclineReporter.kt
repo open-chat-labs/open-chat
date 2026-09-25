@@ -30,6 +30,11 @@ object CallDeclineReporter {
     suspend fun reportEnd(videoBridgeUrl: String, endToken: String, timeoutMs: Long = TIMEOUT_MS): Boolean =
         send("$videoBridgeUrl/room/end_meeting", endToken, timeoutMs)
 
+    // A group call the phone was in ended natively: the bridge takes the phone out of the
+    // room with the join token the web layer handed over; the call carries on.
+    suspend fun reportLeave(videoBridgeUrl: String, joinToken: String, timeoutMs: Long = TIMEOUT_MS): Boolean =
+        send("$videoBridgeUrl/room/leave", joinToken, timeoutMs)
+
     private suspend fun send(url: String, token: String, timeoutMs: Long): Boolean {
         val status = try {
             // The post runs detached: a cancelled `withContext` would still wait for the

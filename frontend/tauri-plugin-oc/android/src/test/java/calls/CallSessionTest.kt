@@ -218,29 +218,32 @@ class CallSessionTest {
     }
 
     @Test
-    fun `invariant 2 a native teardown ends a direct call for the other side with the held token and only then stops the service`() {
+    fun `invariant 2 a native teardown ends a direct call or leaves a group call through the bridge before the service stops`() {
         val s = CallSessionState()
+        val end = CallSessionState.Teardown(CallSessionState.TeardownKind.END, "t1")
+        val leave = CallSessionState.Teardown(CallSessionState.TeardownKind.LEAVE, "t2")
         // no token before the web layer hands one over, and only for the active call
-        assertFalse(s.setEndToken(alice, "t"))
+        assertFalse(s.setTeardown(alice, end))
         s.started(alice, video = false, title = "Alice", now = now)
-        assertFalse(s.setEndToken(bob, "t"))
-        assertTrue(s.setEndToken(alice, "t1"))
-        assertTrue(s.setEndToken(alice, "t2"))
-        assertEquals("t2", s.endAll(now + 1)?.endToken)
+        assertFalse(s.setTeardown(bob, end))
+        assertTrue(s.setTeardown(alice, end))
+        assertTrue(s.setTeardown(alice, leave))
+        assertEquals(leave, s.endAll(now + 1)?.teardown)
         assertNull(s.active)
-        // the session posts end_meeting before stopping the service when a token is held,
-        // and stops at once when none is (a group call never has one)
+        // the session posts end_meeting for an end and leave for a leave, waited for and
+        // bounded, before Telecom and the service are released; nothing when no token
         val session = File("src/main/java/calls/CallSession.kt").readText()
         val endAll = session.substring(session.indexOf("fun endAll("), session.indexOf("fun ownerTaskAlive"))
-        val report = endAll.indexOf("CallDeclineReporter.reportEnd(bridge, token, END_REPORT_WAIT_MS)")
+        val report = endAll.indexOf("runBlocking {")
         assertTrue(report > 0)
-        // waited for, bounded, and before Telecom and the service are released
-        assertTrue(endAll.substring(0, report).contains("runBlocking {"))
+        assertTrue("TeardownKind.END -> CallDeclineReporter.reportEnd(bridge, teardown.token, END_REPORT_WAIT_MS)" in endAll)
+        assertTrue("TeardownKind.LEAVE -> CallDeclineReporter.reportLeave(bridge, teardown.token, END_REPORT_WAIT_MS)" in endAll)
         assertTrue(endAll.indexOf("CallTelecom.endAll(", report) > report)
         assertTrue(endAll.indexOf("CallForegroundService.stop(context)", report) > report)
         assertTrue(CallSession.END_REPORT_WAIT_MS in 1_000L..5_000L)
         val reporter = File("src/main/java/calls/CallDeclineReporter.kt").readText()
         assertTrue("/room/end_meeting" in reporter.substring(reporter.indexOf("fun reportEnd(")))
+        assertTrue("/room/leave" in reporter.substring(reporter.indexOf("fun reportLeave(")))
     }
 
     @Test

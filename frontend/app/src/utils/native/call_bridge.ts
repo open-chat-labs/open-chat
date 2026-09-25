@@ -187,40 +187,47 @@ export function trace(line: string): void {
     (w.__ocCallTrace ??= []).push(new Date().toISOString().slice(11, 23) + " " + line);
 }
 
-// The bridge token that ends the active direct call, for the shell to use when the app
-// is killed mid-call. Sent only for a direct chat: ending a room ends it for everyone.
-export function setCallEndToken(
+// What the shell does with the token when the app is killed mid-call: a direct call is
+// ended for both sides; a group or channel call is only left, since ending a room ends
+// it for everyone.
+export function teardownKind(chatId: ChatIdentifier): "end" | "leave" {
+    return chatId.kind === "direct_chat" ? "end" : "leave";
+}
+
+// The bridge token for the shell's native teardown of the active call.
+export function setCallTeardownToken(
     chatId: ChatIdentifier,
     messageId: bigint,
     token: string,
 ): Promise<void> {
-    if (!isAndroidTauriApp() || chatId.kind !== "direct_chat") return Promise.resolve();
+    if (!isAndroidTauriApp()) return Promise.resolve();
     return invoke<void>("plugin:oc|set_call_end_token", {
         ...chatArgs(chatId),
         messageId: messageId.toString(),
         token,
+        kind: teardownKind(chatId),
     }).catch(() => undefined);
 }
 
-// Keeps the shell's end token fresh for the life of a direct call: tokens last five
-// minutes. Returns the stop function. Never for a group or channel call.
-export function keepCallEndTokenFresh(
+// Keeps the shell's teardown token fresh for the life of a call: tokens last five
+// minutes. Returns the stop function.
+export function keepCallTeardownTokenFresh(
     chatId: ChatIdentifier,
     messageId: bigint,
     fetchToken: () => Promise<string>,
-    intervalMs = END_TOKEN_REFRESH_MS,
+    intervalMs = TEARDOWN_TOKEN_REFRESH_MS,
 ): () => void {
-    if (!isAndroidTauriApp() || chatId.kind !== "direct_chat") return () => undefined;
+    if (!isAndroidTauriApp()) return () => undefined;
     const refresh = () =>
         fetchToken()
-            .then((token) => setCallEndToken(chatId, messageId, token))
-            .catch((e) => console.warn("Call end token refresh failed", e));
+            .then((token) => setCallTeardownToken(chatId, messageId, token))
+            .catch((e) => console.warn("Call teardown token refresh failed", e));
     refresh();
     const timer = window.setInterval(refresh, intervalMs);
     return () => window.clearInterval(timer);
 }
 
-export const END_TOKEN_REFRESH_MS = 4 * 60 * 1000;
+export const TEARDOWN_TOKEN_REFRESH_MS = 4 * 60 * 1000;
 
 // The caller's ringback while a direct call they started rings out (#9559).
 export function setCallRingback(on: boolean): Promise<void> {

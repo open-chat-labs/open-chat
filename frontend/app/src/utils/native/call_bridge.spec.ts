@@ -228,30 +228,25 @@ describe("native call bridge", () => {
         expect(parseCallControl("hangup")).toBeUndefined();
     });
 
-    test("invariant 2 (#9559) the end token is held for a direct call only, refreshed, and dropped on stop", async () => {
-        const { keepCallEndTokenFresh, setCallEndToken } = await import("./call_bridge");
+    test("invariant 2 (#9559) the teardown token is refreshed for the life of a call and names what it is for", async () => {
+        const { keepCallTeardownTokenFresh, teardownKind } = await import("./call_bridge");
         const direct = { kind: "direct_chat", userId: "u" } as const;
         const group = { kind: "group_chat", groupId: "g" } as const;
+        // a direct call ends for both; a group call is only left
+        expect(teardownKind(direct)).toBe("end");
+        expect(teardownKind(group)).toBe("leave");
         vi.useFakeTimers();
         try {
             const fetchToken = vi.fn(async () => "tok");
-            // a group call never hands the shell a token: ending a room ends it for everyone
-            keepCallEndTokenFresh(group, 7n, fetchToken, 1000);
-            await setCallEndToken(group, 7n, "tok");
-            expect(fetchToken).not.toHaveBeenCalled();
-            expect(tauri.invoke).not.toHaveBeenCalledWith(
-                "plugin:oc|set_call_end_token",
-                expect.anything(),
-            );
-
-            const stop = keepCallEndTokenFresh(direct, 7n, fetchToken, 1000);
+            const stop = keepCallTeardownTokenFresh(group, 7n, fetchToken, 1000);
             await vi.advanceTimersByTimeAsync(0);
             expect(fetchToken).toHaveBeenCalledTimes(1);
             expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|set_call_end_token", {
-                chatType: "direct",
-                chatId: "u",
+                chatType: "group",
+                chatId: "g",
                 messageId: "7",
                 token: "tok",
+                kind: "leave",
             });
             await vi.advanceTimersByTimeAsync(2000);
             expect(fetchToken).toHaveBeenCalledTimes(3);

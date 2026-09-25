@@ -4,9 +4,12 @@ package com.ocplugin.app.calls
 // foreground service runs, and which foreground service types to ask for. CallSession is
 // the adapter that drives Telecom, the service and the web layer from these answers.
 class CallSessionState(private val graceMs: Long = STOP_GRACE_MS) {
-    // endToken: the bridge token that ends a direct call for both sides, refreshed by the
-    // web layer while the call runs; a group call never has one.
-    data class Active(val id: CallId, val video: Boolean, val title: String, val startedAt: Long, val endToken: String? = null)
+    // What a native teardown does through the bridge: end a direct call for both sides, or
+    // leave a group call. The web layer refreshes the token while the call runs.
+    enum class TeardownKind { END, LEAVE }
+    data class Teardown(val kind: TeardownKind, val token: String)
+
+    data class Active(val id: CallId, val video: Boolean, val title: String, val startedAt: Long, val teardown: Teardown? = null)
 
     sealed class Ended {
         // The call this state was tracking ended; stop the service once the grace elapses.
@@ -44,10 +47,10 @@ class CallSessionState(private val graceMs: Long = STOP_GRACE_MS) {
     }
 
     @Synchronized
-    fun setEndToken(id: CallId, token: String): Boolean {
+    fun setTeardown(id: CallId, teardown: Teardown): Boolean {
         val current = active ?: return false
         if (current.id != id) return false
-        active = current.copy(endToken = token)
+        active = current.copy(teardown = teardown)
         return true
     }
 

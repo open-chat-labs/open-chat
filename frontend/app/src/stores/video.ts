@@ -11,7 +11,7 @@ import type {
     DailyThemeConfig,
 } from "@daily-co/daily-js";
 import {
-    keepCallEndTokenFresh,
+    keepCallTeardownTokenFresh,
     reportCallActive,
     reportCallEnded,
     type NativeCallControl,
@@ -167,7 +167,7 @@ export const activeVideoCall = {
         messageId: bigint,
         call: DailyCall,
         title = "",
-        endToken?: () => Promise<string>,
+        teardownToken?: () => Promise<string>,
     ) => {
         // The shell keeps the process alive and owns the audio route for an active call
         // (native calls M4, #9559). Video is anything with a camera, so audio-only is the
@@ -175,8 +175,8 @@ export const activeVideoCall = {
         const current = get(activeStore);
         reportCallActive(chatId, messageId, current?.callType !== "audio", title);
         stopEndTokenRefresh();
-        if (endToken !== undefined) {
-            stopEndTokenRefresh = keepCallEndTokenFresh(chatId, messageId, endToken);
+        if (teardownToken !== undefined) {
+            stopEndTokenRefresh = keepCallTeardownTokenFresh(chatId, messageId, teardownToken);
         }
         return updateCall((current) => ({
             ...current,

@@ -20,6 +20,7 @@ import com.ocplugin.app.calls.CallId
 import com.ocplugin.app.calls.CallKind
 import com.ocplugin.app.calls.CallRingback
 import com.ocplugin.app.calls.CallSession
+import com.ocplugin.app.calls.CallSessionState
 import com.ocplugin.app.calls.IncomingCall
 import com.ocplugin.app.calls.CallRinger
 import com.ocplugin.app.calls.CallTelecom
@@ -236,7 +237,8 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
             invoke.reject("chatType, chatId, messageId and token are required")
             return
         }
-        CallSession.setEndToken(activity, CallId(CallChat(chatType, chatId, args.communityId), messageId), token)
+        val kind = if (args.kind == "leave") CallSessionState.TeardownKind.LEAVE else CallSessionState.TeardownKind.END
+        CallSession.setTeardown(CallId(CallChat(chatType, chatId, args.communityId), messageId), CallSessionState.Teardown(kind, token))
         invoke.resolve()
     }
 
@@ -293,6 +295,8 @@ class SetCallEndTokenArgs {
     var communityId: String? = null
     var messageId: String? = null
     var token: String? = null
+    // "end" or "leave"
+    var kind: String? = null
 }
 
 @InvokeArg

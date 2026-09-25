@@ -110,25 +110,30 @@ object CallSession {
         ended(context, id)
     }
 
-    // The web layer handed over (or refreshed) the token that ends this direct call.
-    fun setEndToken(context: Context, id: CallId, token: String) {
-        state.setEndToken(id, token)
+    // The web layer handed over (or refreshed) the token for this call's native teardown.
+    fun setTeardown(id: CallId, teardown: CallSessionState.Teardown) {
+        state.setTeardown(id, teardown)
     }
 
-    // The web layer is gone: end whatever is live, now. A direct call is ended for the
-    // other side too, through the bridge, and that report is waited for (briefly) before
-    // anything else is released: the process is on its way out (on the device the
-    // WebView's own crash followed within a second), so an asynchronous report never
-    // landed. A group call is only left.
+    // The web layer is gone: end whatever is live, now. Through the bridge a direct call
+    // is ended for the other side and a group call is left (the phone is taken out of the
+    // room), and that report is waited for (briefly) before anything else is released:
+    // the process is on its way out (on the device the WebView's own crash followed
+    // within a second), so an asynchronous report never landed.
     fun endAll(context: Context) {
         val ended = state.endAll(System.currentTimeMillis())
-        Log.i(LOG_TAG, "Native teardown; active=${ended?.id?.messageId} endToken=${ended?.endToken != null}")
+        Log.i(LOG_TAG, "Native teardown; active=${ended?.id?.messageId} teardown=${ended?.teardown?.kind}")
         cancelStopTimer()
-        val token = ended?.endToken
+        val teardown = ended?.teardown
         val bridge = CallConfig.videoBridgeUrl(context)
-        if (token != null && bridge != null) {
-            val reported = runBlocking { CallDeclineReporter.reportEnd(bridge, token, END_REPORT_WAIT_MS) }
-            Log.i(LOG_TAG, "End reported to the bridge: $reported")
+        if (teardown != null && bridge != null) {
+            val reported = runBlocking {
+                when (teardown.kind) {
+                    CallSessionState.TeardownKind.END -> CallDeclineReporter.reportEnd(bridge, teardown.token, END_REPORT_WAIT_MS)
+                    CallSessionState.TeardownKind.LEAVE -> CallDeclineReporter.reportLeave(bridge, teardown.token, END_REPORT_WAIT_MS)
+                }
+            }
+            Log.i(LOG_TAG, "${teardown.kind} reported to the bridge: $reported")
         }
         CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
         CallRingback.stop()
