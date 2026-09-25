@@ -209,4 +209,13 @@ class CallSessionTest {
         val ringback = File("src/main/java/calls/CallRingback.kt").readText()
         assertTrue("STREAM_VOICE_CALL" in ringback && "TONE_SUP_RINGTONE" in ringback)
     }
+
+    @Test
+    fun `invariant 6 the route Telecom settled before the web layer claimed the call is applied on the claim`() {
+        val session = File("src/main/java/calls/CallSession.kt").readText()
+        val active = session.substring(session.indexOf("fun active("), session.indexOf("// The route the call is on"))
+        assertTrue("CallTelecom.route(call.id)?.let { routeReflected(context, call.id, it) }" in active)
+        // and it is applied after the service start, once the session counts as active
+        assertTrue(active.indexOf("CallForegroundService.start(") < active.indexOf("CallTelecom.route(call.id)"))
+    }
 }

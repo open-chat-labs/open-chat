@@ -68,6 +68,9 @@ class TransactionalCall(
     @Volatile
     private var lastMuted: Boolean? = null
 
+    override val route: CallRoutePolicy.Route?
+        get() = endpoint?.let { routeOf(it) }
+
     private val routes = CallRoutePolicy(object : CallRoutePolicy.Port {
         override fun routeState(): CallRoutePolicy.RouteState? {
             val current = endpoint

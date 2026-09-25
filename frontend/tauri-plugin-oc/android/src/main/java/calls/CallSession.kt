@@ -41,6 +41,9 @@ object CallSession {
         CallProximity.update(context, active = true, video = video, route = route)
         CallPip.update(active = true, video = video)
         CallForegroundService.start(context, call, now, sharing = false)
+        // Telecom usually settled the route before the web layer got here; a report made
+        // then belonged to no active call and was dropped, so ask for it now (device run).
+        CallTelecom.route(call.id)?.let { routeReflected(context, call.id, it) }
     }
 
     // The route the call is on, as the platform last reported it for an active call.

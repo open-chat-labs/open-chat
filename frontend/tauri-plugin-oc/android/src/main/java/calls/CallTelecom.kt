@@ -27,6 +27,8 @@ interface TelecomCall {
     val call: IncomingCall
     // Answered on this device, as far as the call log is concerned.
     val answered: Boolean
+    // The route the platform last reported, or null before it reported one.
+    val route: CallRoutePolicy.Route?
     // The ring was answered on this device; the call carries on.
     fun answered()
     // The web layer is in the call.
@@ -244,6 +246,8 @@ object CallTelecom {
         live[id]?.setSpeaker(speaker, isDefault)
     }
 
+    fun route(id: CallId): CallRoutePolicy.Route? = live[id]?.route
+
     fun endAll(end: CallRegistry.End) {
         val all = live.values.toList()
         live.clear()
@@ -359,6 +363,9 @@ class CallConnection(private val context: Context, override val call: IncomingCa
 
     @Volatile
     private var lastMuted: Boolean? = null
+
+    override val route: CallRoutePolicy.Route?
+        get() = lastAudioState?.let { routeStateOf(it).route }
 
     private val routes = CallRoutePolicy(object : CallRoutePolicy.Port {
         override fun routeState(): CallRoutePolicy.RouteState? = lastAudioState?.let { routeStateOf(it) }
