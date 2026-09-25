@@ -155,15 +155,14 @@ impl CommunityMembers {
 
     pub fn remove_by_principal(&mut self, principal: Principal, now: TimestampMillis) -> Option<CommunityMemberInternal> {
         let user_id = self.principal_to_user_id_map.remove(&principal)?.into_value();
-        self.remove(user_id, Some(principal), true, now)
+        self.remove(user_id, Some(principal), false, now)
     }
 
-    // `record_as_former_member` should only be false for users who have been deleted, since they never rejoin
     pub fn remove(
         &mut self,
         user_id: UserId,
         principal: Option<Principal>,
-        record_as_former_member: bool,
+        user_deleted: bool,
         now: TimestampMillis,
     ) -> Option<CommunityMemberInternal> {
         if let Some(principal) = principal {
@@ -213,7 +212,8 @@ impl CommunityMembers {
         }
         self.user_groups.remove_user_from_all(&member.user_id, now);
         self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
-        if record_as_former_member {
+        // A deleted user never rejoins, so there is no need to record them
+        if !user_deleted {
             self.former_members.insert(user_id);
         }
 
@@ -916,7 +916,7 @@ mod tests {
             assert_eq!(removed, (1u32..25).map(ChannelId::from).collect::<Vec<_>>());
         }
 
-        members.remove(user_id2, Some(principal2), true, 0);
+        members.remove(user_id2, Some(principal2), false, 0);
         assert!(members.channels_for_member(user_id2).is_empty());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
     }
