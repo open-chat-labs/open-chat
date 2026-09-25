@@ -1,4 +1,6 @@
-use crate::RuntimeState;
+use crate::{RuntimeState, read_state};
+use types::{C2CError, UserId};
+use utils::canister::is_target_canister_uninstalled_or_deleted;
 
 mod calculate_hot_groups;
 mod calculate_hotness;
@@ -12,4 +14,19 @@ pub(crate) fn start(state: &RuntimeState) {
     calculate_hotness::start_job();
     push_community_deleted_notifications::start_job_if_required(state);
     push_group_deleted_notifications::start_job_if_required(state);
+}
+
+// The user's latest id, if the call to their canister failed because it has been uninstalled, as a
+// User canister is once its user has been migrated to a MultiUser canister, and the UserIndex says
+// they have been migrated since having `user_id`. If the lookup fails, the call is retried as usual.
+async fn latest_id_if_migrated(user_id: UserId, error: &C2CError) -> Option<UserId> {
+    if !is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) {
+        return None;
+    }
+
+    let user_index_canister_id = read_state(|state| state.data.user_index_canister_id);
+    user_index_canister_c2c_client::lookup_migrated_user_id(user_id, user_index_canister_id)
+        .await
+        .ok()
+        .flatten()
 }
