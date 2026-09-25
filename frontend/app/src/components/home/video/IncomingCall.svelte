@@ -83,8 +83,19 @@
         }
     }
 
+    // The ring UI goes but the call keeps ringing elsewhere. Also fires when the sheet or
+    // overlay unmounts, so it must never decline.
     function cancel() {
         incomingVideoCall.set(undefined);
+    }
+
+    // The hangup button: a direct call ends for the caller too
+    function decline() {
+        const call = $incomingVideoCall;
+        incomingVideoCall.set(undefined);
+        if (call !== undefined) {
+            client.declineVideoCall(call.chatId);
+        }
     }
 </script>
 
@@ -119,7 +130,7 @@
                     </div>
                     <div class="btns">
                         <Tooltip position={"top"} align={"middle"}>
-                            <div role="button" onclick={cancel} class="btn ignore">
+                            <div role="button" onclick={decline} class="btn ignore">
                                 <PhoneHangup size={$iconSize} color={"var(--txt)"} />
                             </div>
                             {#snippet popupTemplate()}
