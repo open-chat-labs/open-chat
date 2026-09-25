@@ -73,15 +73,19 @@ class CallForegroundService : Service() {
             sharing = sharing,
         )
         val notification = buildNotification(title, startedAt, callBundle)
-        for (type in tiers) {
+        val accepted = ServiceTypes.firstAccepted(tiers) { type ->
             try {
                 ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, type)
-                isForeground = true
-                Log.i(LOG_TAG, "Call service up, type=$type")
-                return
+                true
             } catch (e: Exception) {
                 Log.w(LOG_TAG, "startForeground refused type=$type", e)
+                false
             }
+        }
+        if (accepted != null) {
+            isForeground = true
+            Log.i(LOG_TAG, "Call service up, type=$accepted")
+            return
         }
         // A mid-call re-issue that the platform refused: the service is running with its
         // previous type, and tearing it down would drop a live call's service.

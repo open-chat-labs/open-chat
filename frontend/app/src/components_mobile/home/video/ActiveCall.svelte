@@ -264,8 +264,8 @@
 
             await call.join();
 
-            activeVideoCall.setCall(chatId, BigInt(messageId), call, chat?.name ?? "", () =>
-                client.getVideoCallTeardownToken(chatId),
+            activeVideoCall.setCall(chatId, BigInt(messageId), call, chat?.name ?? "", (kind) =>
+                client.getVideoCallTeardownToken(chatId, kind),
             );
 
             if (ringOutApplies(chatId, joining)) {

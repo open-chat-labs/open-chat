@@ -193,28 +193,36 @@ export function setCallTeardownToken(
     chatId: ChatIdentifier,
     messageId: bigint,
     token: string,
+    kind: "end" | "leave",
+    sessionId: string | undefined,
 ): Promise<void> {
     if (!isAndroidTauriApp()) return Promise.resolve();
     return invoke<void>("plugin:oc|set_call_end_token", {
         ...chatArgs(chatId),
         messageId: messageId.toString(),
         token,
-        kind: teardownKind(chatId),
+        kind,
+        sessionId,
     }).catch(() => undefined);
 }
 
 // Keeps the shell's teardown token fresh for the life of a call: tokens last five
-// minutes. Returns the stop function.
+// minutes. The kind is decided once here and given to both the token fetch and the
+// shell, so the token the shell holds is always the one its teardown needs. `sessionId`
+// is this device's Daily session, so a leave ejects this device and no other of the same
+// user's. Returns the stop function.
 export function keepCallTeardownTokenFresh(
     chatId: ChatIdentifier,
     messageId: bigint,
-    fetchToken: () => Promise<string>,
+    fetchToken: (kind: "end" | "leave") => Promise<string>,
+    sessionId: string | undefined,
     intervalMs = TEARDOWN_TOKEN_REFRESH_MS,
 ): () => void {
     if (!isAndroidTauriApp()) return () => undefined;
+    const kind = teardownKind(chatId);
     const refresh = () =>
-        fetchToken()
-            .then((token) => setCallTeardownToken(chatId, messageId, token))
+        fetchToken(kind)
+            .then((token) => setCallTeardownToken(chatId, messageId, token, kind, sessionId))
             .catch((e) => console.warn("Call teardown token refresh failed", e));
     refresh();
     const timer = window.setInterval(refresh, intervalMs);

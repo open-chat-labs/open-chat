@@ -130,14 +130,15 @@ object CallSession {
             val reported = runBlocking {
                 when (teardown.kind) {
                     CallSessionState.TeardownKind.END -> CallDeclineReporter.reportEnd(bridge, teardown.token, END_REPORT_WAIT_MS)
-                    CallSessionState.TeardownKind.LEAVE -> CallDeclineReporter.reportLeave(bridge, teardown.token, END_REPORT_WAIT_MS)
+                    CallSessionState.TeardownKind.LEAVE -> CallDeclineReporter.reportLeave(bridge, teardown.token, teardown.sessionId, END_REPORT_WAIT_MS)
                 }
             }
             Log.i(LOG_TAG, "${teardown.kind} reported to the bridge: $reported")
         }
         CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
         CallRingback.stop()
-        CallTelecom.endAll(CallRegistry.End.HUNG_UP)
+        // Only what was answered: a call still ringing keeps ringing through the ringer.
+        CallTelecom.endAnswered(CallRegistry.End.HUNG_UP)
         ownerTaskId = -1
         CallForegroundService.stop(context)
     }

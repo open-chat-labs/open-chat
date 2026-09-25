@@ -8701,7 +8701,7 @@ export class OpenChat {
     // The bridge token the Android shell uses when the app is killed mid-call (#9559):
     // for a direct call one that marks the call ended, for a group or channel call a join
     // token with which the bridge takes the phone out of the room. Five minutes' validity.
-    getVideoCallTeardownToken(chatId: ChatIdentifier): Promise<string> {
+    getVideoCallTeardownToken(chatId: ChatIdentifier, kind: "end" | "leave"): Promise<string> {
         const chat = allChatsStore.value.get(chatId);
         if (chat === undefined) {
             return Promise.reject(new Error(`Unknown chat: ${chatId}`));
@@ -8711,7 +8711,7 @@ export class OpenChat {
                 this.#worker.send({
                     kind: "getAccessToken",
                     accessTokenType:
-                        chatId.kind === "direct_chat"
+                        kind === "end"
                             ? { kind: "mark_video_call_ended", chatId }
                             : { kind: "join_video_call", chatId },
                     localUserIndex,

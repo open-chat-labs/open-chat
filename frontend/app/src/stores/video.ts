@@ -167,7 +167,7 @@ export const activeVideoCall = {
         messageId: bigint,
         call: DailyCall,
         title = "",
-        teardownToken?: () => Promise<string>,
+        teardownToken?: (kind: "end" | "leave") => Promise<string>,
     ) => {
         // The shell keeps the process alive and owns the audio route for an active call
         // (native calls M4, #9559). Video is anything with a camera, so audio-only is the
@@ -176,7 +176,18 @@ export const activeVideoCall = {
         reportCallActive(chatId, messageId, current?.callType !== "audio", title);
         stopEndTokenRefresh();
         if (teardownToken !== undefined) {
-            stopEndTokenRefresh = keepCallTeardownTokenFresh(chatId, messageId, teardownToken);
+            let sessionId: string | undefined;
+            try {
+                sessionId = call.participants().local?.session_id;
+            } catch {
+                sessionId = undefined;
+            }
+            stopEndTokenRefresh = keepCallTeardownTokenFresh(
+                chatId,
+                messageId,
+                teardownToken,
+                sessionId,
+            );
         }
         return updateCall((current) => ({
             ...current,

@@ -228,34 +228,77 @@ describe("native call bridge", () => {
         expect(parseCallControl("hangup")).toBeUndefined();
     });
 
-    test("invariant 2 (#9559) the teardown token is refreshed for the life of a call and names what it is for", async () => {
-        const { keepCallTeardownTokenFresh, teardownKind } = await import("./call_bridge");
+    test("invariant 2 (#9559) the teardown token is refreshed for the life of a call, and the kind the shell holds is the kind it was fetched for", async () => {
+        const { keepCallTeardownTokenFresh, teardownKind, TEARDOWN_TOKEN_REFRESH_MS } =
+            await import("./call_bridge");
         const direct = { kind: "direct_chat", userId: "u" } as const;
         const group = { kind: "group_chat", groupId: "g" } as const;
         // a direct call ends for both; a group call is only left
         expect(teardownKind(direct)).toBe("end");
         expect(teardownKind(group)).toBe("leave");
+        // refreshed before the token can lapse: the local user index signs them for five minutes
+        expect(TEARDOWN_TOKEN_REFRESH_MS).toBeLessThan(5 * 60 * 1000);
         vi.useFakeTimers();
         try {
-            const fetchToken = vi.fn(async () => "tok");
-            const stop = keepCallTeardownTokenFresh(group, 7n, fetchToken, 1000);
+            const fetchToken = vi.fn(async (kind: "end" | "leave") => `tok-${kind}`);
+            const stop = keepCallTeardownTokenFresh(group, 7n, fetchToken, "sess-1", 1000);
             await vi.advanceTimersByTimeAsync(0);
-            expect(fetchToken).toHaveBeenCalledTimes(1);
+            expect(fetchToken).toHaveBeenCalledWith("leave");
             expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|set_call_end_token", {
                 chatType: "group",
                 chatId: "g",
                 messageId: "7",
-                token: "tok",
+                token: "tok-leave",
                 kind: "leave",
+                sessionId: "sess-1",
+            });
+            keepCallTeardownTokenFresh(direct, 8n, fetchToken, undefined, 1000)();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(fetchToken).toHaveBeenLastCalledWith("end");
+            expect(tauri.invoke).toHaveBeenLastCalledWith("plugin:oc|set_call_end_token", {
+                chatType: "direct",
+                chatId: "u",
+                messageId: "8",
+                token: "tok-end",
+                kind: "end",
+                sessionId: undefined,
             });
             await vi.advanceTimersByTimeAsync(2000);
-            expect(fetchToken).toHaveBeenCalledTimes(3);
+            expect(fetchToken).toHaveBeenCalledTimes(4);
             stop();
             await vi.advanceTimersByTimeAsync(2000);
-            expect(fetchToken).toHaveBeenCalledTimes(3);
+            expect(fetchToken).toHaveBeenCalledTimes(4);
         } finally {
             vi.useRealTimers();
         }
+    });
+
+    test("invariant 12 (#9559) every in-call command is a no-op off Android and in a shell without it", async () => {
+        const {
+            setCallSpeaker,
+            setCallRingback,
+            setCallTeardownToken,
+            keepCallTeardownTokenFresh,
+        } = await import("./call_bridge");
+        const direct = { kind: "direct_chat", userId: "u" } as const;
+        tauri.invoke.mockRejectedValue(new Error("not found"));
+        await expect(setCallSpeaker(true)).resolves.toBeUndefined();
+        await expect(setCallRingback(true)).resolves.toBeUndefined();
+        await expect(
+            setCallTeardownToken(direct, 7n, "t", "end", undefined),
+        ).resolves.toBeUndefined();
+        expect(tauri.invoke).toHaveBeenCalledTimes(3);
+
+        tauri.invoke.mockClear();
+        shared.isAndroidTauriApp.mockReturnValue(false);
+        const fetchToken = vi.fn(async () => "t");
+        await setCallSpeaker(true);
+        await setCallRingback(true);
+        await setCallTeardownToken(direct, 7n, "t", "end", undefined);
+        keepCallTeardownTokenFresh(direct, 7n, fetchToken, undefined, 1)();
+        expect(tauri.invoke).not.toHaveBeenCalled();
+        expect(fetchToken).not.toHaveBeenCalled();
+        shared.isAndroidTauriApp.mockReturnValue(true);
     });
 
     test("invariant 16 the joined notice is only sent from the Android shell", async () => {

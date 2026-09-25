@@ -7,7 +7,9 @@ class CallSessionState(private val graceMs: Long = STOP_GRACE_MS) {
     // What a native teardown does through the bridge: end a direct call for both sides, or
     // leave a group call. The web layer refreshes the token while the call runs.
     enum class TeardownKind { END, LEAVE }
-    data class Teardown(val kind: TeardownKind, val token: String)
+    // sessionId: the Daily session of this device, so a leave ejects this device and not
+    // another of the same user's.
+    data class Teardown(val kind: TeardownKind, val token: String, val sessionId: String? = null)
 
     data class Active(val id: CallId, val video: Boolean, val title: String, val startedAt: Long, val teardown: Teardown? = null)
 
@@ -101,5 +103,13 @@ object ServiceTypes {
         val projectionOnly = full and MEDIA_PROJECTION
         if (projectionOnly != 0) tiers.add(projectionOnly)
         return tiers.distinct()
+    }
+
+    // Tries every tier in order until one is accepted; null when none is (#9559 invariant 3).
+    fun firstAccepted(tiers: List<Int>, tryStart: (Int) -> Boolean): Int? {
+        for (type in tiers) {
+            if (tryStart(type)) return type
+        }
+        return null
     }
 }

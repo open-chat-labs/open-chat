@@ -39,9 +39,10 @@ class CallSessionTest {
     @Test
     fun `invariant 3 every tier is tried and a refusal of all stops the service unless it is already up`() {
         val src = File("src/main/java/calls/CallForegroundService.kt").readText()
-        val loop = src.substring(src.indexOf("for (type in tiers)"))
-        assertTrue(loop.indexOf("catch (e: Exception)") in 1 until loop.indexOf("if (isForeground) return"))
-        assertTrue(loop.indexOf("if (isForeground) return") < loop.indexOf("stopSelf()"))
+        val start = src.substring(src.indexOf("ServiceTypes.firstAccepted(tiers)"))
+        // a refusal is caught and reported as not accepted, so the next tier is tried
+        assertTrue(start.indexOf("catch (e: Exception)") in 1 until start.indexOf("if (accepted != null)"))
+        assertTrue(start.indexOf("if (isForeground) return") in 1 until start.indexOf("stopSelf()"))
     }
 
     @Test
@@ -84,7 +85,7 @@ class CallSessionTest {
     fun `invariant 2 every native end path goes through the session and the session ends Telecom and the service`() {
         val session = File("src/main/java/calls/CallSession.kt").readText()
         val endAll = session.substring(session.indexOf("fun endAll("))
-        assertTrue("CallTelecom.endAll(" in endAll.substring(0, endAll.indexOf("fun ownerTaskAlive")))
+        assertTrue("CallTelecom.endAnswered(" in endAll.substring(0, endAll.indexOf("fun ownerTaskAlive")))
         assertTrue("CallForegroundService.stop(" in endAll.substring(0, endAll.indexOf("fun ownerTaskAlive")))
         val ended = session.substring(session.indexOf("fun ended("), session.indexOf("fun hangUp("))
         assertTrue("CallTelecom.end(id, CallRegistry.End.HUNG_UP)" in ended)
@@ -98,7 +99,8 @@ class CallSessionTest {
         val service = File("src/main/java/calls/CallForegroundService.kt").readText()
         assertTrue("CallSession.endAll(" in service.substring(service.indexOf("override fun onTaskRemoved")))
         val mainActivity = File("../../src-tauri/gen/android/app/src/main/java/com/oclabs/openchat/MainActivity.kt").readText()
-        assertTrue("CallSession.endAll(" in mainActivity.substring(mainActivity.indexOf("override fun onDestroy")))
+        // only a finishing activity: a background destroy must not end a live call
+        assertTrue("if (isFinishing) CallSession.endAll(this)" in mainActivity.substring(mainActivity.indexOf("override fun onDestroy")))
     }
 
     @Test
@@ -134,7 +136,7 @@ class CallSessionTest {
         val telecom = File("src/main/java/calls/CallTelecom.kt").readText()
         val gate = telecom.substring(telecom.indexOf("private fun transactionalSupported()"), telecom.indexOf("fun ensureRegistered"))
         assertTrue("Build.VERSION.SDK_INT >= TRANSACTIONAL_FROM_API" in gate)
-        assertTrue("Build.VERSION.SDK_INT_FULL >= TRANSACTIONAL_FROM_RELEASE" in gate)
+        assertTrue("transactionalSupported(Build.VERSION.SDK_INT, Build.VERSION.SDK_INT_FULL)" in gate)
         // no probing: usesTransactional is the gate plus a successful registration
         assertTrue("fun usesTransactional(): Boolean = transactionalSupported() && transactionalReady" in telecom)
         // both accounts carry the call log extra
@@ -173,8 +175,10 @@ class CallSessionTest {
         assertTrue("?: return Connection.createFailedConnection(DisconnectCause(DisconnectCause.ERROR, \"unknown call\"))" in body)
         assertTrue(body.indexOf("CallRinger.redial(") > body.indexOf("\"unknown call\""))
         val callBack = File("src/main/java/calls/CallBackActivity.kt").readText()
-        assertTrue("CallHandleDirectory.chat(" in callBack)
-        assertTrue(callBack.indexOf("?: return") < callBack.indexOf("CallRinger.redial(") || callBack.indexOf("?.let") > 0)
+        val resolve = callBack.indexOf("CallHandleDirectory.chat(")
+        val guard = callBack.indexOf("if (chat != null)")
+        val redial = callBack.indexOf("CallRinger.redial(")
+        assertTrue(resolve in 1 until guard && guard < redial)
     }
 
     @Test
@@ -237,8 +241,8 @@ class CallSessionTest {
         val report = endAll.indexOf("runBlocking {")
         assertTrue(report > 0)
         assertTrue("TeardownKind.END -> CallDeclineReporter.reportEnd(bridge, teardown.token, END_REPORT_WAIT_MS)" in endAll)
-        assertTrue("TeardownKind.LEAVE -> CallDeclineReporter.reportLeave(bridge, teardown.token, END_REPORT_WAIT_MS)" in endAll)
-        assertTrue(endAll.indexOf("CallTelecom.endAll(", report) > report)
+        assertTrue("TeardownKind.LEAVE -> CallDeclineReporter.reportLeave(bridge, teardown.token, teardown.sessionId, END_REPORT_WAIT_MS)" in endAll)
+        assertTrue(endAll.indexOf("CallTelecom.endAnswered(", report) > report)
         assertTrue(endAll.indexOf("CallForegroundService.stop(context)", report) > report)
         assertTrue(CallSession.END_REPORT_WAIT_MS in 1_000L..5_000L)
         val reporter = File("src/main/java/calls/CallDeclineReporter.kt").readText()
@@ -255,5 +259,66 @@ class CallSessionTest {
         val stop = service.substring(service.indexOf("fun stop(context: Context)"), service.indexOf("fun ensureChannel"))
         assertTrue("context.stopService(" in stop)
         assertFalse("startService(" in stop)
+    }
+
+    // A TelecomCall with no Telecom in it, for the object's bookkeeping.
+    private class FakeCall(override val call: IncomingCall, override var answered: Boolean) : TelecomCall {
+        var finishedWith: CallRegistry.End? = null
+        override val route: CallRoutePolicy.Route? = null
+        override fun answered() { answered = true }
+        override fun activate() { answered = true }
+        override fun setSpeaker(speaker: Boolean, isDefault: Boolean) {}
+        override fun finish(end: CallRegistry.End) { finishedWith = end }
+    }
+
+    private fun incoming(id: CallId) = IncomingCall(id, CallKind.AUDIO, now, "x", null, null)
+
+    @Test
+    fun `invariant 15 a native teardown ends only answered calls and leaves a ringing call to the ringer`() {
+        CallTelecom.endAll(CallRegistry.End.HUNG_UP)
+        val ringing = FakeCall(incoming(alice), answered = false)
+        val inCall = FakeCall(incoming(bob), answered = true)
+        CallTelecom.register(ringing)
+        CallTelecom.register(inCall)
+        CallTelecom.endAnswered(CallRegistry.End.HUNG_UP)
+        assertEquals(CallRegistry.End.HUNG_UP, inCall.finishedWith)
+        assertNull(ringing.finishedWith)
+        // the ring is still Telecom's: a later end reaches it
+        CallTelecom.end(alice, CallRegistry.End.MISSED)
+        assertEquals(CallRegistry.End.MISSED, ringing.finishedWith)
+        // and the session's teardown goes through endAnswered, not endAll
+        val session = File("src/main/java/calls/CallSession.kt").readText()
+        val endAll = session.substring(session.indexOf("fun endAll("), session.indexOf("fun ownerTaskAlive"))
+        assertTrue("CallTelecom.endAnswered(CallRegistry.End.HUNG_UP)" in endAll)
+        assertFalse("CallTelecom.endAll(" in endAll)
+    }
+
+    @Test
+    fun `invariant 3 every tier is tried in order until one is accepted`() {
+        val tried = mutableListOf<Int>()
+        assertEquals(3, ServiceTypes.firstAccepted(listOf(1, 2, 3, 4)) { tried.add(it); it == 3 })
+        assertEquals(listOf(1, 2, 3), tried)
+        assertNull(ServiceTypes.firstAccepted(listOf(1, 2)) { false })
+        val service = File("src/main/java/calls/CallForegroundService.kt").readText()
+        assertTrue("ServiceTypes.firstAccepted(tiers)" in service)
+    }
+
+    @Test
+    fun `invariant 10 the release gate is a conjunction of the API level and the full version`() {
+        assertTrue(CallTelecom.transactionalSupported(36, 3_600_001))
+        assertTrue(CallTelecom.transactionalSupported(37, 3_700_000))
+        assertFalse(CallTelecom.transactionalSupported(36, 3_600_000))
+        assertFalse(CallTelecom.transactionalSupported(35, 3_600_001))
+        val telecom = File("src/main/java/calls/CallTelecom.kt").readText()
+        assertTrue("transactionalSupported(Build.VERSION.SDK_INT, Build.VERSION.SDK_INT_FULL)" in telecom)
+    }
+
+    @Test
+    fun `invariant 16 a leave names this device's session, and never a forged one`() {
+        assertNull(CallDeclineReporter.leaveBody(null))
+        assertEquals("{\"sessionId\":\"sess-1\"}", CallDeclineReporter.leaveBody("sess-1"))
+        assertEquals("{\"sessionId\":\"ab\"}", CallDeclineReporter.leaveBody("a\"b"))
+        val session = File("src/main/java/calls/CallSession.kt").readText()
+        assertTrue("CallDeclineReporter.reportLeave(bridge, teardown.token, teardown.sessionId, END_REPORT_WAIT_MS)" in session)
     }
 }

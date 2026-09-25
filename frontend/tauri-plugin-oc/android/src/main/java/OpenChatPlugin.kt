@@ -238,7 +238,7 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
             return
         }
         val kind = if (args.kind == "leave") CallSessionState.TeardownKind.LEAVE else CallSessionState.TeardownKind.END
-        CallSession.setTeardown(CallId(CallChat(chatType, chatId, args.communityId), messageId), CallSessionState.Teardown(kind, token))
+        CallSession.setTeardown(CallId(CallChat(chatType, chatId, args.communityId), messageId), CallSessionState.Teardown(kind, token, args.sessionId))
         invoke.resolve()
     }
 
@@ -297,6 +297,8 @@ class SetCallEndTokenArgs {
     var token: String? = null
     // "end" or "leave"
     var kind: String? = null
+    // This device's Daily session, for a leave
+    var sessionId: String? = null
 }
 
 @InvokeArg

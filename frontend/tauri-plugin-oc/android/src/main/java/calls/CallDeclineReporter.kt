@@ -19,7 +19,7 @@ object CallDeclineReporter {
 
     // The HTTP call, replaceable under test. Returns the status code.
     @Volatile
-    var post: (url: String, token: String) -> Int = ::httpPost
+    var post: (url: String, token: String, body: String?) -> Int = ::httpPost
 
     suspend fun report(videoBridgeUrl: String, token: String, timeoutMs: Long = TIMEOUT_MS): Boolean =
         send("$videoBridgeUrl/room/decline", token, timeoutMs)
@@ -32,16 +32,21 @@ object CallDeclineReporter {
 
     // A group call the phone was in ended natively: the bridge takes the phone out of the
     // room with the join token the web layer handed over; the call carries on.
-    suspend fun reportLeave(videoBridgeUrl: String, joinToken: String, timeoutMs: Long = TIMEOUT_MS): Boolean =
-        send("$videoBridgeUrl/room/leave", joinToken, timeoutMs)
+    suspend fun reportLeave(videoBridgeUrl: String, joinToken: String, sessionId: String?, timeoutMs: Long = TIMEOUT_MS): Boolean =
+        send("$videoBridgeUrl/room/leave", joinToken, timeoutMs, leaveBody(sessionId))
 
-    private suspend fun send(url: String, token: String, timeoutMs: Long): Boolean {
+    // The leave names this device's Daily session; without one the bridge ejects only
+    // when the user has a single session in the room.
+    fun leaveBody(sessionId: String?): String? =
+        sessionId?.let { "{\"sessionId\":\"${it.replace("\\", "").replace("\"", "")}\"}" }
+
+    private suspend fun send(url: String, token: String, timeoutMs: Long, body: String? = null): Boolean {
         val status = try {
             // The post runs detached: a cancelled `withContext` would still wait for the
             // blocking call, so the wait is on the deferred instead. The socket timeouts
             // end the lingering thread.
             withTimeoutOrNull(timeoutMs) {
-                CoroutineScope(Dispatchers.IO).async { post(url, token) }.await()
+                CoroutineScope(Dispatchers.IO).async { post(url, token, body) }.await()
             }
         } catch (e: Exception) {
             Log.w(LOG_TAG, "Decline report failed", e)
@@ -54,16 +59,18 @@ object CallDeclineReporter {
         return true
     }
 
-    private fun httpPost(url: String, token: String): Int {
+    private fun httpPost(url: String, token: String, body: String?): Int {
         val connection = URL(url).openConnection() as HttpURLConnection
         try {
             connection.requestMethod = "POST"
             connection.connectTimeout = SOCKET_TIMEOUT_MS
             connection.readTimeout = SOCKET_TIMEOUT_MS
             connection.setRequestProperty("x-auth-jwt", token)
-            connection.setFixedLengthStreamingMode(0)
+            val bytes = body?.toByteArray(Charsets.UTF_8) ?: ByteArray(0)
+            if (body != null) connection.setRequestProperty("Content-Type", "application/json")
+            connection.setFixedLengthStreamingMode(bytes.size)
             connection.doOutput = true
-            connection.outputStream.close()
+            connection.outputStream.use { it.write(bytes) }
             return connection.responseCode
         } finally {
             connection.disconnect()

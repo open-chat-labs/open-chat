@@ -93,7 +93,7 @@ object CallTelecom {
     fun usesTransactional(): Boolean = transactionalSupported() && transactionalReady
 
     private fun transactionalSupported(): Boolean =
-        Build.VERSION.SDK_INT >= TRANSACTIONAL_FROM_API && Build.VERSION.SDK_INT_FULL >= TRANSACTIONAL_FROM_RELEASE
+        Build.VERSION.SDK_INT >= TRANSACTIONAL_FROM_API && transactionalSupported(Build.VERSION.SDK_INT, Build.VERSION.SDK_INT_FULL)
 
     fun ensureRegistered(context: Context) {
         if (registered || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -258,6 +258,17 @@ object CallTelecom {
 
     fun route(id: CallId): CallRoutePolicy.Route? = live[id]?.route
 
+    // Ends every call that was answered here (#9559 invariant 15). A ringing call is left
+    // alone: Telecom keeps this process bound while it rings, so the ring, its timeout, the
+    // missed-call notification and the log row all still happen through the ringer.
+    fun endAnswered(end: CallRegistry.End) {
+        val answered = live.values.filter { it.answered }
+        answered.forEach { live.remove(it.call.id) }
+        pendingSpeaker.clear()
+        answered.forEach { it.finish(end) }
+    }
+
+    // Every call, ringing or not. Only for tests and a process that is truly finished.
     fun endAll(end: CallRegistry.End) {
         val all = live.values.toList()
         live.clear()
@@ -265,6 +276,10 @@ object CallTelecom {
         pendingSpeaker.clear()
         all.forEach { it.finish(end) }
     }
+
+    // The pure part of the release gate (#9559 invariant 10): Android 16 QPR2 and later.
+    fun transactionalSupported(sdkInt: Int, sdkIntFull: Int): Boolean =
+        sdkInt >= TRANSACTIONAL_FROM_API && sdkIntFull >= TRANSACTIONAL_FROM_RELEASE
 
     const val EXTRA_OC_OUTGOING = "oc_outgoing_call"
 
