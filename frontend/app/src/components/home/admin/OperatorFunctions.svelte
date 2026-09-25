@@ -342,6 +342,31 @@
             });
     }
 
+    // Recorded on the UserIndex and fanned out to every LocalUserIndex. There is no query for the
+    // current value (it is only surfaced in metrics), hence separate Enable / Disable buttons
+    // rather than a toggle
+    function setMultiUserCanistersEnabled(enabled: boolean): void {
+        error = undefined;
+        addBusy(16);
+        client
+            .setMultiUserCanistersEnabled(enabled)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(
+                        i18nKey(`MultiUser canisters ${enabled ? "enabled" : "disabled"}`),
+                    );
+                } else {
+                    error = i18nKey(
+                        `Failed to ${enabled ? "enable" : "disable"} MultiUser canisters`,
+                    );
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => {
+                removeBusy(16);
+            });
+    }
+
     function strToBigInt(str: string): bigint | undefined {
         const n = Number(str);
         return isNaN(n) ? undefined : BigInt(n);
@@ -803,6 +828,23 @@
                 disabled={busy.has(15) || multiUserCanisterLocalUserIndexInvalid}
                 loading={busy.has(15)}
                 onClick={createMultiUserCanister}>Create</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">MultiUser canisters</div>
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                disabled={busy.has(16)}
+                loading={busy.has(16)}
+                onClick={() => setMultiUserCanistersEnabled(true)}>Enable</Button>
+            <Button
+                tiny
+                secondary
+                disabled={busy.has(16)}
+                loading={busy.has(16)}
+                onClick={() => setMultiUserCanistersEnabled(false)}>Disable</Button>
         </ButtonGroup>
     </section>
 

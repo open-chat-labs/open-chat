@@ -1446,18 +1446,34 @@ fn multi_user_canisters_enabled_flag_fans_out_to_local_user_indexes() {
     } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let user = client::register_user(env, canister_ids);
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
 
     assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));
     assert!(!multi_user_canisters_enabled(env, local_user_index));
 
-    client::user_index::happy_path::set_multi_user_canisters_enabled(env, *controller, canister_ids.user_index, true);
+    // Neither an ordinary user nor the governance principal can set it
+    let args = msgpack::serialize_then_unwrap(user_index_canister::set_multi_user_canisters_enabled::Args { enabled: true });
+    for sender in [user.principal, *controller] {
+        let response = env.update_call(
+            canister_ids.user_index,
+            sender,
+            "set_multi_user_canisters_enabled_msgpack",
+            args.clone(),
+        );
+        assert!(response.is_err(), "{sender} was allowed to set multi_user_canisters_enabled");
+    }
+    assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));
+
+    client::user_index::happy_path::set_multi_user_canisters_enabled(env, operator.principal, canister_ids.user_index, true);
 
     // The UserIndex records it immediately, the LocalUserIndex receives it over the event queue
     assert!(multi_user_canisters_enabled(env, canister_ids.user_index));
     tick_many(env, 5);
     assert!(multi_user_canisters_enabled(env, local_user_index));
 
-    client::user_index::happy_path::set_multi_user_canisters_enabled(env, *controller, canister_ids.user_index, false);
+    client::user_index::happy_path::set_multi_user_canisters_enabled(env, operator.principal, canister_ids.user_index, false);
     tick_many(env, 5);
 
     assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));

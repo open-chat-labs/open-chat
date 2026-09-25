@@ -2450,6 +2450,13 @@ export const UserIndexSetHideOnlineStatusArgs = /* @__PURE__ */ Type.Object({
     hide_online_status: Type.Boolean(),
 });
 
+export type UserIndexSetMultiUserCanistersEnabledArgs = Static<
+    typeof UserIndexSetMultiUserCanistersEnabledArgs
+>;
+export const UserIndexSetMultiUserCanistersEnabledArgs = /* @__PURE__ */ Type.Object({
+    enabled: Type.Boolean(),
+});
+
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
 export const UserIndexUnsuspendUserArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,
