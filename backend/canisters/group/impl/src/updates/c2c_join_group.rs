@@ -20,6 +20,20 @@ async fn c2c_join_group(args: Args) -> Response {
 }
 
 async fn c2c_join_group_impl(args: Args) -> Response {
+    // Anything held under the user's previous ids, such as a membership or block, is moved onto their
+    // current id, so that the checks below only need to look at their current id
+    if !args.previous_user_ids.is_empty() {
+        mutate_state(|state| {
+            let now = state.env.now();
+            if state
+                .data
+                .migrate_user_ids(&args.previous_user_ids, args.user_id, Some(args.principal), now)
+            {
+                handle_activity_notification(state);
+            }
+        });
+    }
+
     let payments = match read_state(|state| is_permitted_to_join(&args, state)) {
         Ok(IsPermittedToJoinSuccess::NoGate) => Vec::new(),
         Ok(IsPermittedToJoinSuccess::RequiresGate(gate, check_gate_args)) => {
@@ -133,10 +147,6 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
         user_type: args.user_type,
     }) {
         AddResult::Success(mut result) => {
-            state
-                .data
-                .cache_migrations_if_former_member(args.user_id, &args.previous_user_ids);
-
             let invitation = state.data.chat.invited_users.remove(&args.user_id, now);
 
             let event = MemberJoinedInternal {
