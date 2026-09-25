@@ -84,6 +84,24 @@ impl UserGroups {
         }
     }
 
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
+        for group in self.groups.iter_mut() {
+            if group.members.update(
+                |u| {
+                    if u.remove(&old_user_id) {
+                        u.insert(new_user_id);
+                        true
+                    } else {
+                        false
+                    }
+                },
+                now,
+            ) {
+                self.last_updated = now;
+            }
+        }
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }

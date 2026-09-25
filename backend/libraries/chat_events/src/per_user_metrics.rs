@@ -112,6 +112,41 @@ impl PerUserMetrics {
         count
     }
 
+    // Moves the metrics of a user who has been given a new id, having been migrated to a MultiUser
+    // canister, onto their new id, merging them with any the new id already has. Returns whether the
+    // old id had any metrics.
+    pub fn migrate_user(&mut self, events_prefix: &ChatEventKeyPrefix, old_user_id: UserId, new_user_id: UserId) -> bool {
+        if old_user_id == new_user_id {
+            return false;
+        }
+
+        let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
+
+        with_map_mut(|m| {
+            // A user with an entry on the heap may also have a copy of it in stable memory (see
+            // `copy_to_heap`), so both are removed
+            let old_on_stable_memory = m.remove(prefix.create_key(&old_user_id));
+            let Some(old_metrics) = self
+                .on_heap
+                .remove(&old_user_id)
+                .or_else(|| old_on_stable_memory.map(|bytes| ChatMetricsInternal::from_bytes(&bytes)))
+            else {
+                return false;
+            };
+
+            let entry = m.entry(prefix.create_key(&new_user_id));
+            let mut metrics = self.on_heap.remove(&new_user_id).unwrap_or_else(|| {
+                entry
+                    .value()
+                    .map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
+                    .unwrap_or_default()
+            });
+            metrics.merge(&old_metrics);
+            entry.set(metrics.to_bytes());
+            true
+        })
+    }
+
     pub fn on_heap_count(&self) -> usize {
         self.on_heap.len()
     }
@@ -394,6 +429,47 @@ mod tests {
         assert_eq!(metrics.migrate_to_stable_memory(&p(chat), usize::MAX), 1);
         assert_eq!(stable_user_ids(chat), vec![me]);
         assert_matches_model(&metrics, chat, &model);
+    }
+
+    #[test]
+    fn migrated_users_metrics_are_merged_into_their_new_id() {
+        init_stable_memory_map();
+        let chat = Chat::Group(Principal::anonymous().into());
+        let [old, new, other, legacy_old, legacy_new] = [1, 2, 3, 4, 5].map(user_id);
+        let (mut metrics, mut model) = legacy_metrics(&[legacy_old, legacy_new]);
+
+        for (i, user_id) in [old, old, new, other].into_iter().enumerate() {
+            apply(
+                &mut metrics,
+                &mut model,
+                chat,
+                false,
+                user_id,
+                MetricKey::TextMessages,
+                true,
+                1000 + i as u64,
+            );
+        }
+
+        for (old, new) in [(old, new), (legacy_old, legacy_new)] {
+            assert!(metrics.migrate_user(&p(chat), old, new));
+            let old_metrics = model.remove(&old).unwrap();
+            model.get_mut(&new).unwrap().merge(&old_metrics);
+            assert!(metrics.get(&p(chat), &old).is_none());
+            assert!(!metrics.migrate_user(&p(chat), old, new));
+        }
+        assert_eq!(model[&new].hydrate().text_messages, 3);
+        assert_eq!(model[&new].last_active, 1002);
+        assert_matches_model(&metrics, chat, &model);
+        assert_eq!(metrics.on_heap_count(), 0);
+
+        // A user with no metrics under their new id takes on those under their old id
+        let newest = user_id(6);
+        assert!(metrics.migrate_user(&p(chat), new, newest));
+        let new_metrics = model.remove(&new).unwrap();
+        model.insert(newest, new_metrics);
+        assert_matches_model(&metrics, chat, &model);
+        assert_eq!(stable_user_ids(chat), vec![other, legacy_new, newest]);
     }
 
     #[allow(clippy::too_many_arguments)]
