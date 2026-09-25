@@ -265,6 +265,16 @@ impl GroupMembers {
         self.blocked.contains(user_id)
     }
 
+    // Returns those of the user's previous ids and current id which are blocked, oldest first
+    pub fn blocked_ids(&self, user_id: UserId, previous_user_ids: &[UserId]) -> Vec<UserId> {
+        previous_user_ids
+            .iter()
+            .copied()
+            .chain([user_id])
+            .filter(|u| self.blocked.contains(u))
+            .collect()
+    }
+
     pub fn user_limit_reached(&self) -> Option<u32> {
         if self.member_ids.len() >= MAX_MEMBERS_PER_GROUP as usize {
             Some(MAX_MEMBERS_PER_GROUP)

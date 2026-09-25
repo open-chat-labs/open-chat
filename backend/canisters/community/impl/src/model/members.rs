@@ -422,6 +422,16 @@ impl CommunityMembers {
         self.blocked.contains(user_id)
     }
 
+    // Returns those of the user's previous ids and current id which are blocked, oldest first
+    pub fn blocked_ids(&self, user_id: UserId, previous_user_ids: &[UserId]) -> Vec<UserId> {
+        previous_user_ids
+            .iter()
+            .copied()
+            .chain([user_id])
+            .filter(|u| self.blocked.contains(u))
+            .collect()
+    }
+
     pub fn blocked(&self) -> Vec<UserId> {
         self.blocked.iter().copied().collect()
     }
@@ -906,6 +916,30 @@ mod tests {
         members.remove(user_id2, Some(principal2), 0);
         assert!(members.channels_for_member(user_id2).is_empty());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
+    }
+
+    #[test]
+    fn blocked_ids_include_previous_ids_oldest_first() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let principal1 = Principal::from_slice(&[1]);
+        let user_id1 = principal1.into();
+        let [old_id, middle_id, new_id]: [UserId; 3] = [2, 3, 4].map(|i| Principal::from_slice(&[i]).into());
+
+        let mut members = CommunityMembers::new(principal1, user_id1, UserType::User, Vec::new(), 0);
+        assert!(members.blocked_ids(new_id, &[old_id, middle_id]).is_empty());
+
+        members.block(middle_id, 0);
+        assert_eq!(members.blocked_ids(new_id, &[old_id, middle_id]), vec![middle_id]);
+
+        members.block(new_id, 0);
+        members.block(old_id, 0);
+        assert_eq!(
+            members.blocked_ids(new_id, &[old_id, middle_id]),
+            vec![old_id, middle_id, new_id]
+        );
+        assert_eq!(members.blocked_ids(new_id, &[]), vec![new_id]);
     }
 
     #[test]

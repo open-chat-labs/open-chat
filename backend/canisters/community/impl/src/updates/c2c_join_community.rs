@@ -81,7 +81,13 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
                 state.summary(Some(&member), None),
             )));
         }
-    } else if state.data.members.is_blocked(&args.user_id) {
+    } else if !state
+        .data
+        .members
+        .blocked_ids(args.user_id, &args.previous_user_ids)
+        .is_empty()
+    {
+        // A user blocked under any of their previous ids stays blocked after being migrated
         return Err(OCErrorCode::InitiatorBlocked.into());
     } else if let Some(limit) = state.data.members.user_limit_reached() {
         return Err(OCErrorCode::UserLimitReached.with_message(limit));
@@ -129,12 +135,26 @@ pub(crate) fn join_community_impl(
 ) -> Result<Vec<ChannelId>, Response> {
     let now = state.env.now();
 
-    // Unblock "platform moderator" if necessary
-    if args.is_platform_moderator && state.data.members.is_blocked(&args.user_id) {
-        state.data.members.unblock(args.user_id, now);
+    // Check again whether the user is blocked under any of their ids, since the check in
+    // `is_permitted_to_join` may have been before an await. Unblock "platform moderator" if necessary,
+    // under each of their ids they are blocked under. As in `is_permitted_to_join`, existing members
+    // aren't checked.
+    let blocked_ids = if state.data.members.contains(&args.user_id) {
+        Vec::new()
+    } else {
+        state.data.members.blocked_ids(args.user_id, &args.previous_user_ids)
+    };
+    if !blocked_ids.is_empty() {
+        if !args.is_platform_moderator {
+            return Err(Error(OCErrorCode::InitiatorBlocked.into()));
+        }
+
+        for user_id in blocked_ids.iter() {
+            state.data.members.unblock(*user_id, now);
+        }
 
         let event = UsersUnblocked {
-            user_ids: vec![args.user_id],
+            user_ids: blocked_ids,
             unblocked_by: args.user_id,
         };
 

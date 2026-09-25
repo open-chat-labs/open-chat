@@ -55,7 +55,14 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
             let summary = state.summary(&member);
             return Ok(IsPermittedToJoinSuccess::AlreadyInGroup(Box::new(summary)));
         }
-    } else if state.data.chat.members.is_blocked(&args.user_id) {
+    } else if !state
+        .data
+        .chat
+        .members
+        .blocked_ids(args.user_id, &args.previous_user_ids)
+        .is_empty()
+    {
+        // A user blocked under any of their previous ids stays blocked after being migrated
         return Err(OCErrorCode::InitiatorBlocked.into());
     } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
         return Err(OCErrorCode::UserLimitReached.with_message(limit));
@@ -104,13 +111,27 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
             state.data.chat.min_visible_indexes_for_new_members()
         };
 
-    // Unblock "platform moderator" if necessary
+    // Check again whether the user is blocked under any of their ids, since the check in
+    // `is_permitted_to_join` may have been before an await. Unblock "platform moderator" if necessary,
+    // under each of their ids they are blocked under. As in `is_permitted_to_join`, existing members
+    // aren't checked.
     let mut new_event = false;
-    if args.is_platform_moderator && state.data.chat.members.is_blocked(&args.user_id) {
-        state.data.chat.members.unblock(args.user_id, now);
+    let blocked_ids = if state.data.chat.members.contains(&args.user_id) {
+        Vec::new()
+    } else {
+        state.data.chat.members.blocked_ids(args.user_id, &args.previous_user_ids)
+    };
+    if !blocked_ids.is_empty() {
+        if !args.is_platform_moderator {
+            return Error(OCErrorCode::InitiatorBlocked.into());
+        }
+
+        for user_id in blocked_ids.iter() {
+            state.data.chat.members.unblock(*user_id, now);
+        }
 
         let event = UsersUnblocked {
-            user_ids: vec![args.user_id],
+            user_ids: blocked_ids,
             unblocked_by: args.user_id,
         };
 
