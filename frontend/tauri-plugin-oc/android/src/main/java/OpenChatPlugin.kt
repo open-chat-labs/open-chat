@@ -19,6 +19,7 @@ import com.ocplugin.app.calls.CallConfig
 import com.ocplugin.app.calls.CallId
 import com.ocplugin.app.calls.CallKind
 import com.ocplugin.app.calls.CallPip
+import com.ocplugin.app.calls.CallRingback
 import com.ocplugin.app.calls.CallSession
 import com.ocplugin.app.calls.IncomingCall
 import com.ocplugin.app.calls.CallRinger
@@ -216,6 +217,14 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve()
     }
 
+    // The caller's ringback while a direct call rings out.
+    @Command
+    fun setCallRingback(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallRingbackArgs::class.java)
+        CallRingback.set(args.on)
+        invoke.resolve()
+    }
+
     // The web layer left the call.
     @Command
     fun callEnded(invoke: Invoke) {
@@ -255,6 +264,11 @@ class CallActiveArgs {
 @InvokeArg
 class SetCallSpeakerArgs {
     var speaker: Boolean = false
+}
+
+@InvokeArg
+class SetCallRingbackArgs {
+    var on: Boolean = false
 }
 
 @InvokeArg

@@ -21,6 +21,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
+    import { setCallRingback } from "@utils/native/call_bridge";
     import {
         activeVideoCall,
         camera,
@@ -278,6 +279,7 @@
                         toastStore.showSuccessToast(i18nKey("videoCall.noAnswer"));
                         hangup();
                     },
+                    setCallRingback,
                 );
             }
 

@@ -199,6 +199,12 @@ export async function expectPipChanges(
     }
 }
 
+// The caller's ringback while a direct call they started rings out (#9559).
+export function setCallRingback(on: boolean): Promise<void> {
+    if (!isAndroidTauriApp()) return Promise.resolve();
+    return invoke<void>("plugin:oc|set_call_ringback", { on }).catch(() => undefined);
+}
+
 // The in-app speaker control. Telecom owns the route in the shell; this is a request.
 export function setCallSpeaker(speaker: boolean): Promise<void> {
     if (!isAndroidTauriApp()) return Promise.resolve();

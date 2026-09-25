@@ -80,6 +80,7 @@ object CallSession {
                 CallTelecom.end(id, CallRegistry.End.HUNG_UP)
                 CallProximity.update(context, active = false, video = false, speaker = false)
                 CallPip.update(active = false, video = false)
+                CallRingback.stop()
                 armStopTimer(context)
             }
             CallSessionState.Ended.Ignore -> Unit
@@ -103,6 +104,7 @@ object CallSession {
         cancelStopTimer()
         CallProximity.update(context, active = false, video = false, speaker = false)
         CallPip.update(active = false, video = false)
+        CallRingback.stop()
         CallTelecom.endAll(CallRegistry.End.HUNG_UP)
         CallForegroundService.stop(context)
         ownerTaskId = -1

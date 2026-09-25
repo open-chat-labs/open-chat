@@ -198,4 +198,15 @@ class CallSessionTest {
         assertTrue("CallHandleDirectory.chat(" in callBack)
         assertTrue(callBack.indexOf("?: return") < callBack.indexOf("CallRinger.redial(") || callBack.indexOf("?.let") > 0)
     }
+
+    @Test
+    fun `invariant 14 the session silences the ringback on every end`() {
+        val session = File("src/main/java/calls/CallSession.kt").readText()
+        val ended = session.substring(session.indexOf("fun ended("), session.indexOf("fun hangUp("))
+        assertTrue("CallRingback.stop()" in ended)
+        val endAll = session.substring(session.indexOf("fun endAll("), session.indexOf("fun ownerTaskAlive"))
+        assertTrue("CallRingback.stop()" in endAll)
+        val ringback = File("src/main/java/calls/CallRingback.kt").readText()
+        assertTrue("STREAM_VOICE_CALL" in ringback && "TONE_SUP_RINGTONE" in ringback)
+    }
 }
