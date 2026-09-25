@@ -42,11 +42,23 @@ class CallForegroundService : Service() {
                 return START_NOT_STICKY
             }
             ACTION_START, ACTION_REFRESH -> {
+                // A start redelivered to a fresh process after a crash names a call the
+                // session no longer has: stop without posting (found on the device: the
+                // system rejected that notification and killed the process again).
+                val call = IncomingCall.fromBundle(intent.getBundleExtra(EXTRA_CALL))
+                if (call == null || CallSession.state.active?.id != call.id) {
+                    Log.w(LOG_TAG, "Call service started for a call that is not active; stopping")
+                    stopNow()
+                    return START_NOT_STICKY
+                }
                 val title = intent.getStringExtra(EXTRA_TITLE) ?: "Call in progress"
                 val startedAt = intent.getLongExtra(EXTRA_STARTED_AT, System.currentTimeMillis())
                 val sharing = intent.getBooleanExtra(EXTRA_SHARING, false)
-                val callBundle = intent.getBundleExtra(EXTRA_CALL)
-                startForegroundCompat(title, startedAt, sharing, callBundle)
+                startForegroundCompat(title, startedAt, sharing, intent.getBundleExtra(EXTRA_CALL))
+            }
+            else -> {
+                // A null intent: the system restarting the service after a crash.
+                stopNow()
             }
         }
         return START_NOT_STICKY
@@ -85,6 +97,12 @@ class CallForegroundService : Service() {
         isForeground = false
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    override fun onDestroy() {
+        isForeground = false
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        super.onDestroy()
     }
 
     // The task was swiped away while a call ran. The WebView died with it, and nothing on
@@ -162,9 +180,11 @@ class CallForegroundService : Service() {
             }
         }
 
+        // stopService, not a start with a stop action: a start still pending when the
+        // process dies is redelivered to a fresh process, which then has no call.
         fun stop(context: Context) {
             try {
-                context.startService(Intent(context, CallForegroundService::class.java).apply { action = ACTION_STOP })
+                context.stopService(Intent(context, CallForegroundService::class.java))
             } catch (e: Exception) {
                 // Not running, or the process is on its way out. Either way there is nothing to stop.
                 Log.d(LOG_TAG, "Call service stop skipped: ${e.message}")

@@ -242,4 +242,15 @@ class CallSessionTest {
         val reporter = File("src/main/java/calls/CallDeclineReporter.kt").readText()
         assertTrue("/room/end_meeting" in reporter.substring(reporter.indexOf("fun reportEnd(")))
     }
+
+    @Test
+    fun `invariant 4 a start for a call the session does not hold stops the service without posting, and stops are not starts`() {
+        val service = File("src/main/java/calls/CallForegroundService.kt").readText()
+        val start = service.substring(service.indexOf("ACTION_START, ACTION_REFRESH ->"), service.indexOf("else -> {"))
+        assertTrue("CallSession.state.active?.id != call.id" in start)
+        assertTrue(start.indexOf("stopNow()") < start.indexOf("startForegroundCompat("))
+        val stop = service.substring(service.indexOf("fun stop(context: Context)"), service.indexOf("fun ensureChannel"))
+        assertTrue("context.stopService(" in stop)
+        assertFalse("startService(" in stop)
+    }
 }

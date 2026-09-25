@@ -38,6 +38,7 @@ object CallSession {
         // Voice to the earpiece, video to the speaker, unless a headset is on. The lock
         // follows the route the platform reports, not the request.
         route = CallRoutePolicy.Route.OTHER
+        speakerUnknown = true
         CallTelecom.setSpeaker(call.id, video, isDefault = true)
         CallProximity.update(context, active = true, video = video, route = route)
         CallForegroundService.start(context, call, now, sharing = false)
@@ -50,6 +51,10 @@ object CallSession {
     @Volatile
     private var route = CallRoutePolicy.Route.OTHER
 
+    // True until the first reflection of a call, so it is passed on whatever it is.
+    @Volatile
+    private var speakerUnknown = true
+
     // A tap on the in-app speaker control.
     fun setSpeaker(context: Context, speaker: Boolean) {
         val current = state.active
@@ -61,7 +66,8 @@ object CallSession {
     // The platform put the call on this route.
     fun routeReflected(context: Context, id: CallId, route: CallRoutePolicy.Route) {
         val current = state.active ?: return
-        if (current.id != id) return
+        if (current.id != id || (route == this.route && !speakerUnknown)) return
+        speakerUnknown = false
         Log.i(LOG_TAG, "Route is now $route")
         this.route = route
         CallProximity.update(context, active = true, video = current.video, route = route)
