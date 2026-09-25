@@ -39,7 +39,6 @@ object CallSession {
         route = CallRoutePolicy.Route.OTHER
         CallTelecom.setSpeaker(call.id, video, isDefault = true)
         CallProximity.update(context, active = true, video = video, route = route)
-        CallPip.update(active = true, video = video, call = call)
         CallForegroundService.start(context, call, now, sharing = false)
         // Telecom usually settled the route before the web layer got here; a report made
         // then belonged to no active call and was dropped, so ask for it now (device run).
@@ -86,7 +85,6 @@ object CallSession {
             is CallSessionState.Ended.StopAfterGrace -> {
                 CallTelecom.end(id, CallRegistry.End.HUNG_UP)
                 CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
-                CallPip.update(active = false, video = false)
                 CallRingback.stop()
                 armStopTimer(context)
             }
@@ -110,7 +108,6 @@ object CallSession {
         state.endAll(System.currentTimeMillis())
         cancelStopTimer()
         CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
-        CallPip.update(active = false, video = false)
         CallRingback.stop()
         CallTelecom.endAll(CallRegistry.End.HUNG_UP)
         CallForegroundService.stop(context)

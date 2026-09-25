@@ -19,7 +19,6 @@ import { navigate } from "@utils/navigation";
 const TAURI_PLUGIN_NAME = "oc";
 const CALL_ACTION_EVENT = "call-action";
 const CALL_CONTROL_EVENT = "call-control";
-const PIP_EVENT = "pip-changed";
 
 export type NativeCallAction =
     | { kind: "accept"; chatId: ChatIdentifier; messageId: bigint; callType: VideoCallType }
@@ -182,22 +181,10 @@ function chatArgs(chatId: ChatIdentifier): {
     }
 }
 
-// The shell entered or left picture in picture with the call (#9559): the call view goes
-// full bleed while in the tile.
-export async function expectPipChanges(
-    onChange: (active: boolean) => void,
-): Promise<PluginListener | undefined> {
-    if (!isAndroidTauriApp()) return undefined;
-    try {
-        return await addPluginListener(TAURI_PLUGIN_NAME, PIP_EVENT, (raw: unknown) => {
-            console.log("[calls] pip event", JSON.stringify(raw));
-            const active = (raw as { active?: unknown } | null)?.active;
-            if (typeof active === "boolean") onChange(active);
-        });
-    } catch (e) {
-        console.error("PiP: listener registration failed", e);
-        return undefined;
-    }
+// Device-run tracing, read back over DevTools as window.__ocCallTrace.
+export function trace(line: string): void {
+    const w = window as unknown as { __ocCallTrace?: string[] };
+    (w.__ocCallTrace ??= []).push(new Date().toISOString().slice(11, 23) + " " + line);
 }
 
 // The caller's ringback while a direct call they started rings out (#9559).
@@ -209,6 +196,12 @@ export function setCallRingback(on: boolean): Promise<void> {
 // The in-app speaker control. Telecom owns the route in the shell; this is a request.
 export function setCallSpeaker(speaker: boolean): Promise<void> {
     if (!isAndroidTauriApp()) return Promise.resolve();
+    trace(
+        "setCallSpeaker " +
+            speaker +
+            " from " +
+            (new Error().stack ?? "").split("\n").slice(2, 5).join(" | "),
+    );
     return invoke<void>("plugin:oc|set_call_speaker", { speaker }).catch(() => undefined);
 }
 

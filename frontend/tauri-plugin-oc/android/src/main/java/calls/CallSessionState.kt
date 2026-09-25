@@ -63,11 +63,6 @@ class CallSessionState(private val graceMs: Long = STOP_GRACE_MS) {
     }
 }
 
-// Picture in picture is for an active video call and nothing else (#9559 invariant 9).
-object PipRule {
-    fun armed(active: Boolean, video: Boolean): Boolean = active && video
-}
-
 // The foreground service types to try, best first (#9559 invariant 3). The phone-call type
 // needs no runtime permission, so it keeps the type non-empty when a one-time microphone
 // grant has lapsed; Android 14+ refuses a media type whose runtime permission is not held,

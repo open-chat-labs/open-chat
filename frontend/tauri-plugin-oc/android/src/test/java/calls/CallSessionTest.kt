@@ -128,28 +128,6 @@ class CallSessionTest {
     }
 
     @Test
-    fun `invariant 9 picture in picture is armed only for an active video call and the session drives it`() {
-        assertTrue(PipRule.armed(active = true, video = true))
-        assertFalse(PipRule.armed(active = true, video = false))
-        assertFalse(PipRule.armed(active = false, video = true))
-        val session = File("src/main/java/calls/CallSession.kt").readText()
-        val active = session.substring(session.indexOf("fun active("), session.indexOf("fun setSpeaker("))
-        assertTrue("CallPip.update(active = true, video = video, call = call)" in active)
-        val ended = session.substring(session.indexOf("fun ended("), session.indexOf("fun hangUp("))
-        assertTrue("CallPip.update(active = false" in ended)
-        val endAll = session.substring(session.indexOf("fun endAll("), session.indexOf("fun ownerTaskAlive"))
-        assertTrue("CallPip.update(active = false" in endAll)
-        // entry and exit are reported, and a tile with no armed call is left
-        val pip = File("src/main/java/calls/CallPip.kt").readText()
-        val changed = pip.substring(pip.indexOf("fun changed("), pip.indexOf("private fun leaveTile"))
-        assertTrue("\"pip-changed\"" in changed)
-        assertTrue("moveTaskToBack(true)" in changed)
-        // a call ending in the tile leaves it
-        val update = pip.substring(pip.indexOf("fun update("), pip.indexOf("fun onUserLeaveHint"))
-        assertTrue("if (!wanted && inPip) leaveTile()" in update)
-    }
-
-    @Test
     fun `invariant 10 the transactional account is used only from Android 16 QPR2 by release and both accounts opt in to the call log`() {
         assertEquals(36, CallTelecom.TRANSACTIONAL_FROM_API)
         assertEquals(3_600_001, CallTelecom.TRANSACTIONAL_FROM_RELEASE)
@@ -220,12 +198,13 @@ class CallSessionTest {
     }
 
     @Test
-    fun `invariant 9 closing the tile with the app not coming back is a hang-up`() {
-        val pip = File("src/main/java/calls/CallPip.kt").readText()
-        val changed = pip.substring(pip.indexOf("fun changed("), pip.indexOf("private fun leaveTile"))
-        assertTrue("if (!isInPip && armed)" in changed)
-        assertTrue("CallSession.hangUp(activity, it.id, \"pip-dismissed\")" in changed)
-        // only when the app did not come back on screen
-        assertTrue(changed.indexOf("if (!onScreen)") < changed.indexOf("CallSession.hangUp("))
+    fun `invariant 9 there is no picture in picture, a call in the background leaves only the notification`() {
+        val app = File("../../src-tauri/gen/android/app/src/main")
+        assertFalse(File(app, "AndroidManifest.xml").readText().contains("supportsPictureInPicture"))
+        val sources = (File("src/main").walkTopDown() + app.walkTopDown()).filter { it.isFile && it.extension == "kt" }
+        for (file in sources) {
+            val text = file.readText()
+            assertFalse(file.name, text.contains("PictureInPicture") || text.contains("enterPictureInPictureMode"))
+        }
     }
 }

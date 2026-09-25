@@ -24,7 +24,6 @@
     import {
         expectCallActions,
         expectCallControls,
-        expectPipChanges,
         notifyCallJoined,
         runCallAction,
         setCallConfig,
@@ -290,9 +289,6 @@
 
             // Hang-up, mute and route changes from the phone's own call surfaces
             expectCallControls(activeVideoCall.applyNativeControl),
-
-            // The call view goes full bleed while the shell shows it in a tile
-            expectPipChanges(activeVideoCall.setPictureInPicture),
         ]);
         listenersRegistered.then((results) => {
             results

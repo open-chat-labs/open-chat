@@ -27,7 +27,6 @@
         camera,
         hasPresence,
         microphone,
-        pictureInPicture,
         sharing,
         type InterCallMessage,
     } from "../../../stores/video";
@@ -389,28 +388,18 @@
 <div
     id="video-call-container"
     class="video-call-container"
-    class:pip={$pictureInPicture}
-    class:visible={$pictureInPicture ||
-        ($activeVideoCall &&
-            $activeVideoCall.view !== "minimised" &&
-            !threadOpen &&
-            !participantsOpen &&
-            chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id))}>
-    {#if chat !== undefined && !$pictureInPicture}
+    class:visible={$activeVideoCall &&
+        $activeVideoCall.view !== "minimised" &&
+        !threadOpen &&
+        !participantsOpen &&
+        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id)}>
+    {#if chat !== undefined}
         <ActiveCallHeader {onClearSelection} onAskToSpeak={askToSpeak} {chat} {askedToSpeak} />
     {/if}
     <div class="iframe-container" bind:this={iframeContainer}></div>
 </div>
 
 <style lang="scss">
-    // In the shell's picture-in-picture tile the call is the whole window: no app chrome,
-    // above everything.
-    .video-call-container.pip {
-        position: fixed;
-        inset: 0;
-        z-index: 1000;
-    }
-
     :global(.video-call-container .section-header) {
         background-color: var(--daily-header);
     }
