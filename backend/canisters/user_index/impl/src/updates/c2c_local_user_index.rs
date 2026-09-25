@@ -176,7 +176,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // Recorded here rather than in the `create_multi_user_canister` handler so
             // that the mapping survives a dropped reply - the local index keeps retrying this
             // event until it is acked, and re-adding is a no-op
-            if state.data.multi_user_canisters.add(canister_id, caller, event_timestamp) {
+            if state.data.multi_user_canisters_v2.add(canister_id, caller, event_timestamp) {
                 info!(%canister_id, local_user_index_canister_id = %caller, "MultiUser canister registered");
             }
         }
@@ -246,7 +246,7 @@ fn process_new_user(
     );
 
     if state.data.local_index_map.add_user(local_user_index_canister_id, user_id) {
-        state.data.multi_user_canisters.on_user_added(&user_id);
+        state.data.multi_user_canisters_v2.on_user_added(&user_id);
     }
 
     state.push_event_to_all_local_user_indexes(
