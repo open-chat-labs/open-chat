@@ -218,4 +218,14 @@ class CallSessionTest {
         // and it is applied after the service start, once the session counts as active
         assertTrue(active.indexOf("CallForegroundService.start(") < active.indexOf("CallTelecom.route(call.id)"))
     }
+
+    @Test
+    fun `invariant 9 closing the tile with the app not coming back is a hang-up`() {
+        val pip = File("src/main/java/calls/CallPip.kt").readText()
+        val changed = pip.substring(pip.indexOf("fun changed("), pip.indexOf("private fun leaveTile"))
+        assertTrue("if (!isInPip && armed)" in changed)
+        assertTrue("CallSession.hangUp(activity, it.id, \"pip-dismissed\")" in changed)
+        // only when the app did not come back on screen
+        assertTrue(changed.indexOf("if (!onScreen)") < changed.indexOf("CallSession.hangUp("))
+    }
 }

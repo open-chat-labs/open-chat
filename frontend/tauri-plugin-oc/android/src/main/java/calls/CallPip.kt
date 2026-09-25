@@ -8,7 +8,11 @@ import android.content.Intent
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Log
+import android.os.Handler
+import android.os.Looper
 import android.util.Rational
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.OCPluginCompanion
@@ -72,7 +76,20 @@ object CallPip {
         OCPluginCompanion.triggerRef("pip-changed", JSObject().put("active", isInPip))
         // Entered with nothing to show: the tile would be an empty app. Leave it.
         if (isInPip && !armed) activity.moveTaskToBack(true)
+        // Left the tile without the app coming back on screen: the user closed the tile,
+        // which is a hang-up (found on the device: the call carried on behind it).
+        if (!isInPip && armed) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                val lifecycle = (activity as? LifecycleOwner)?.lifecycle
+                val onScreen = lifecycle?.currentState?.isAtLeast(Lifecycle.State.STARTED) ?: !activity.isFinishing
+                if (!onScreen) {
+                    CallSession.state.active?.let { CallSession.hangUp(activity, it.id, "pip-dismissed") }
+                }
+            }, DISMISS_CHECK_MS)
+        }
     }
+
+    const val DISMISS_CHECK_MS = 700L
 
     private fun leaveTile() {
         val activity = activity.get() ?: return
@@ -100,7 +117,7 @@ object CallPip {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             builder.setActions(
-                listOf(RemoteAction(Icon.createWithResource(activity, R.drawable.ic_notification_small), "Hang up", "Hang up", hangUp)),
+                listOf(RemoteAction(Icon.createWithResource(activity, R.drawable.ic_call_end), "Hang up", "Hang up", hangUp)),
             )
         }
         return builder.build()

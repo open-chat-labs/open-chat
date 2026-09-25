@@ -147,9 +147,13 @@ export const activeVideoCall = {
     // tile the other person's video is the whole window: active-speaker view, no
     // participants bar, no self view.
     setPictureInPicture: (active: boolean) => {
+        console.log("[calls] picture in picture", active);
         pictureInPicture.set(active);
         const current = get(activeStore);
-        if (current?.call === undefined) return;
+        if (current?.call === undefined) {
+            console.log("[calls] no active call to reshape");
+            return;
+        }
         try {
             current.call.setShowParticipantsBar(!active);
             current.call.setShowLocalVideo(!active);

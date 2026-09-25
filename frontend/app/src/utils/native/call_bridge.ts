@@ -190,6 +190,7 @@ export async function expectPipChanges(
     if (!isAndroidTauriApp()) return undefined;
     try {
         return await addPluginListener(TAURI_PLUGIN_NAME, PIP_EVENT, (raw: unknown) => {
+            console.log("[calls] pip event", JSON.stringify(raw));
             const active = (raw as { active?: unknown } | null)?.active;
             if (typeof active === "boolean") onChange(active);
         });
