@@ -373,6 +373,7 @@ export type WorkerRequest =
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
     | CreateMultiUserCanister
+    | SetMultiUserCanistersEnabled
     | MarkLocalGroupIndexFull
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
@@ -1773,6 +1774,11 @@ type CreateMultiUserCanister = {
     kind: "createMultiUserCanister";
 };
 
+type SetMultiUserCanistersEnabled = {
+    enabled: boolean;
+    kind: "setMultiUserCanistersEnabled";
+};
+
 type MarkLocalGroupIndexFull = {
     canisterId: string;
     full: boolean;
@@ -2720,6 +2726,8 @@ export type WorkerResult<T> = T extends Init
     ? SetUserUpgradeConcurrencyResponse
     : T extends CreateMultiUserCanister
     ? CreateMultiUserCanisterResponse
+    : T extends SetMultiUserCanistersEnabled
+    ? boolean
     : T extends MarkLocalGroupIndexFull
     ? boolean
     : T extends SetDiamondMembershipFees
