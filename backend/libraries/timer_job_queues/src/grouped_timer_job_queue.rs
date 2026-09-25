@@ -83,6 +83,18 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         })
     }
 
+    // Removes and returns the items queued for `grouping_key`, in order. Items in a batch which is
+    // already being processed are unaffected.
+    pub fn take(&mut self, grouping_key: &T::Key) -> Vec<T::Item> {
+        self.within_lock(|i| {
+            let items = i.items_map.remove(grouping_key).map(Vec::from).unwrap_or_default();
+            if !items.is_empty() {
+                i.queue.retain(|key| key != grouping_key);
+            }
+            items
+        })
+    }
+
     // Removes the queued items for which `f` returns false. Items in a batch which is already
     // being processed are unaffected.
     pub fn retain(&mut self, f: impl Fn(&T::Item) -> bool) {
