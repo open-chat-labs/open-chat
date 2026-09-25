@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `cancel_user_migration`, for governance principals in test mode only, which cancels a user's migration via their User canister's `c2c_cancel_migration`. The User canisters must be upgraded first ([#9553](https://github.com/open-chat-labs/open-chat/pull/9553))
 - Add a one-off job which fetches the last online date of every user from the OnlineUsers canister in batches of 500, storing them in a temporary map separate from the `UserMap`, so that the users who haven't been online for the longest can be migrated first ([#9557](https://github.com/open-chat-labs/open-chat/pull/9557))
 - Accept a `user_id` in `c2c_set_avatar`, so a MultiUser canister can set the avatar id of one of its users ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
+- One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal. The LocalUserIndexes must be upgraded first ([#9581](https://github.com/open-chat-labs/open-chat/pull/9581))
 - Add `migrate_users`, for platform operators in test mode only, which queues users to be migrated to MultiUser canisters, and `set_user_migration_concurrency`. Each queued user is assigned the MultiUser canister with the fewest users and sent to their LocalUserIndex in a `StartUserMigration` event, and the LocalUserIndex reports back whether the migration started. The LocalUserIndexes must be upgraded first ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
 
 ### Changed
@@ -25,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make `create_multi_user_canister` callable by platform operators ([#9569](https://github.com/open-chat-labs/open-chat/pull/9569))
 - Make `set_multi_user_canisters_enabled` callable by platform operators ([#9574](https://github.com/open-chat-labs/open-chat/pull/9574))
 - Store the date created and user count of each MultiUser canister alongside its LocalUserIndex, keeping the count up to date as users are created, deleted and migrated, and include them in `metrics` ([#9575](https://github.com/open-chat-labs/open-chat/pull/9575))
+- Once enabled, route newly registering users to the MultiUser canister with the fewest users ([#9579](https://github.com/open-chat-labs/open-chat/pull/9579))
 
 ### Fixed
 

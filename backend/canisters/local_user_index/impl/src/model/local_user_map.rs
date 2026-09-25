@@ -12,7 +12,7 @@ pub struct LocalUserMap {
 }
 
 impl LocalUserMap {
-    pub fn add(&mut self, user_id: UserId, principal: Principal, wasm_version: BuildVersion, now: TimestampMillis) {
+    pub fn add(&mut self, user_id: UserId, principal: Principal, wasm_version: Option<BuildVersion>, now: TimestampMillis) {
         let user = LocalUser::new(now, wasm_version);
         self.users.insert(user_id, user);
         self.registration_in_progress.remove(&principal);
@@ -74,9 +74,9 @@ impl LocalUserMap {
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct LocalUser {
     pub date_created: TimestampMillis,
-    // For a user held in a MultiUser canister this is the canister's version when they registered,
-    // and isn't kept up to date, since the version is tracked per MultiUser canister
-    pub wasm_version: BuildVersion,
+    // The version of the user's own canister. Not set for a user held in a MultiUser canister, since
+    // the version is tracked per MultiUser canister
+    pub wasm_version: Option<BuildVersion>,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
@@ -85,7 +85,7 @@ impl LocalUser {
     pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
         self.upgrade_in_progress = upgrade_in_progress;
         if let Some(version) = new_version {
-            self.wasm_version = version;
+            self.wasm_version = Some(version);
         }
     }
 
@@ -95,7 +95,7 @@ impl LocalUser {
 }
 
 impl LocalUser {
-    pub fn new(now: TimestampMillis, wasm_version: BuildVersion) -> LocalUser {
+    pub fn new(now: TimestampMillis, wasm_version: Option<BuildVersion>) -> LocalUser {
         LocalUser {
             date_created: now,
             wasm_version,

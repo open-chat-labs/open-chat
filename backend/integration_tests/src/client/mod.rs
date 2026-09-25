@@ -135,12 +135,12 @@ pub fn register_user_in_multi_user_canister(env: &mut PocketIc, canister_ids: &C
     register_user_with_options(env, canister_ids, None, true)
 }
 
-// Registers the user in the given LocalUserIndex's newest MultiUser canister, creating one if it has
-// none
+// Registers the user in the given MultiUser canister on the given LocalUserIndex
 pub fn register_user_in_multi_user_canister_on(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
     local_user_index: CanisterId,
+    multi_user_canister_id: CanisterId,
     referral_code: Option<String>,
 ) -> User {
     let (auth_principal, public_key) = random_internet_identity_principal();
@@ -152,6 +152,7 @@ pub fn register_user_in_multi_user_canister_on(
         public_key,
         Some(local_user_index),
         true,
+        Some(multi_user_canister_id),
     )
     .0
 }
@@ -172,6 +173,7 @@ pub fn register_user_on_subnet(env: &mut PocketIc, canister_ids: &CanisterIds, s
         public_key,
         Some(local_user_index),
         false,
+        None,
     )
     .0
 }
@@ -195,6 +197,7 @@ pub fn register_user_with_options(
         public_key,
         None,
         use_multi_user_canister,
+        None,
     )
     .0
 }
@@ -224,6 +227,7 @@ fn register_user_and_include_auth_with_options(
         auth_public_key.clone(),
         None,
         use_multi_user_canister,
+        None,
     );
 
     let user_auth = UserAuth {
@@ -271,6 +275,7 @@ pub fn upgrade_user(
     tick_many(env, 4);
 }
 
+#[expect(clippy::too_many_arguments)]
 fn register_user_internal(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
@@ -279,6 +284,7 @@ fn register_user_internal(
     public_key: Vec<u8>,
     local_user_index: Option<CanisterId>,
     use_multi_user_canister: bool,
+    multi_user_canister_id: Option<CanisterId>,
 ) -> (User, Vec<u8>, SignedDelegation) {
     let session_key = random::<[u8; 32]>().to_vec();
     let create_identity_result = identity::happy_path::create_identity(
@@ -308,6 +314,7 @@ fn register_user_internal(
         create_identity_result.user_key.clone(),
         referral_code,
         use_multi_user_canister,
+        multi_user_canister_id,
     );
 
     (user, create_identity_result.user_key, delegation)

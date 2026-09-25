@@ -656,7 +656,8 @@ impl RuntimeState {
                 .data
                 .local_users
                 .iter_user_canisters()
-                .map(|u| u.1.wasm_version.to_string())
+                .filter_map(|u| u.1.wasm_version)
+                .map(|v| v.to_string())
                 .count_per_value(),
             group_versions: self
                 .data
@@ -821,7 +822,8 @@ struct Data {
     pub media_scan_config: MediaScanConfig,
     #[serde(default)]
     pub media_scan_job_log: MediaScanJobLog,
-    // Mirrors the flag on the UserIndex. Not acted on yet
+    // Mirrors the flag on the UserIndex. While set, new users are placed in whichever MultiUser
+    // canister has the fewest users
     #[serde(default)]
     pub multi_user_canisters_enabled: bool,
     // The native call push kill switch (#9456). Off until the Android shell can ring.
