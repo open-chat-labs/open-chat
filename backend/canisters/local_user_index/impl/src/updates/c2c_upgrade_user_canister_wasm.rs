@@ -85,13 +85,9 @@ fn commit(
         .iter_user_canisters()
         .filter(|(user_id, _)| active_users_filter.as_ref().is_none_or(|a| a.contains(user_id)))
         .filter(|(user_id, user)| {
-            should_perform_upgrade(
-                user_id.canister_id(),
-                user.wasm_version,
-                version,
-                &filter,
-                state.data.test_mode,
-            ) && !state.data.global_users.is_bot(user_id)
+            user.wasm_version.is_some_and(|wasm_version| {
+                should_perform_upgrade(user_id.canister_id(), wasm_version, version, &filter, state.data.test_mode)
+            }) && !state.data.global_users.is_bot(user_id)
         })
         .map(|(user_id, _)| user_id.canister_id())
         .sorted_by_key(|&c| Reverse(state.data.global_users.diamond_membership_expiry_date(&c.into())))
@@ -112,7 +108,10 @@ fn commit(
 }
 
 fn min_canister_version(data: &Data) -> Option<BuildVersion> {
-    data.local_users.iter_user_canisters().map(|(_, u)| u.wasm_version).min()
+    data.local_users
+        .iter_user_canisters()
+        .filter_map(|(_, u)| u.wasm_version)
+        .min()
 }
 
 // Compiles the list of users who have been active since the specified timestamp.
