@@ -11,6 +11,7 @@ import type {
     DailyThemeConfig,
 } from "@daily-co/daily-js";
 import {
+    keepCallEndTokenFresh,
     reportCallActive,
     reportCallEnded,
     type NativeCallControl,
@@ -74,6 +75,8 @@ export type ActiveVideoCall = {
 };
 
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
+// Stops the shell's end-token refresh for the active direct call (#9559).
+let stopEndTokenRefresh: () => void = () => undefined;
 const incomingStore = writable<IncomingVideoCall | undefined>(undefined);
 
 export const microphone = writable<boolean>(false);
@@ -159,12 +162,22 @@ export const activeVideoCall = {
                 break;
         }
     },
-    setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall, title = "") => {
+    setCall: (
+        chatId: ChatIdentifier,
+        messageId: bigint,
+        call: DailyCall,
+        title = "",
+        endToken?: () => Promise<string>,
+    ) => {
         // The shell keeps the process alive and owns the audio route for an active call
         // (native calls M4, #9559). Video is anything with a camera, so audio-only is the
         // only voice call.
         const current = get(activeStore);
         reportCallActive(chatId, messageId, current?.callType !== "audio", title);
+        stopEndTokenRefresh();
+        if (endToken !== undefined) {
+            stopEndTokenRefresh = keepCallEndTokenFresh(chatId, messageId, endToken);
+        }
         return updateCall((current) => ({
             ...current,
             chatId,
@@ -297,6 +310,8 @@ export const activeVideoCall = {
         }));
     },
     endCall: () => {
+        stopEndTokenRefresh();
+        stopEndTokenRefresh = () => undefined;
         return activeStore.update((current) => {
             if (current?.messageId !== undefined) {
                 reportCallEnded(current.chatId, current.messageId);

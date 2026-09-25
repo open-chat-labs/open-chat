@@ -21,13 +21,22 @@ object CallDeclineReporter {
     @Volatile
     var post: (url: String, token: String) -> Int = ::httpPost
 
-    suspend fun report(videoBridgeUrl: String, token: String, timeoutMs: Long = TIMEOUT_MS): Boolean {
+    suspend fun report(videoBridgeUrl: String, token: String, timeoutMs: Long = TIMEOUT_MS): Boolean =
+        send("$videoBridgeUrl/room/decline", token, timeoutMs)
+
+    // A direct call the phone was in ended natively (task swiped away, activity destroyed):
+    // the bridge ends it for the other side too, with the end token the web layer handed
+    // over while the call ran. Only a direct call ever has one (#9559 invariant 2).
+    suspend fun reportEnd(videoBridgeUrl: String, endToken: String, timeoutMs: Long = TIMEOUT_MS): Boolean =
+        send("$videoBridgeUrl/room/end_meeting", endToken, timeoutMs)
+
+    private suspend fun send(url: String, token: String, timeoutMs: Long): Boolean {
         val status = try {
             // The post runs detached: a cancelled `withContext` would still wait for the
             // blocking call, so the wait is on the deferred instead. The socket timeouts
             // end the lingering thread.
             withTimeoutOrNull(timeoutMs) {
-                CoroutineScope(Dispatchers.IO).async { post("$videoBridgeUrl/room/decline", token) }.await()
+                CoroutineScope(Dispatchers.IO).async { post(url, token) }.await()
             }
         } catch (e: Exception) {
             Log.w(LOG_TAG, "Decline report failed", e)

@@ -30,6 +30,7 @@ const COMMANDS: &[&str] = &[
     "call_ended",
     "set_call_speaker",
     "set_call_ringback",
+    "set_call_end_token",
 ];
 
 fn main() {

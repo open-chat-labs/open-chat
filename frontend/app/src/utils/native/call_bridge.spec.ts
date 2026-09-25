@@ -228,6 +228,41 @@ describe("native call bridge", () => {
         expect(parseCallControl("hangup")).toBeUndefined();
     });
 
+    test("invariant 2 (#9559) the end token is held for a direct call only, refreshed, and dropped on stop", async () => {
+        const { keepCallEndTokenFresh, setCallEndToken } = await import("./call_bridge");
+        const direct = { kind: "direct_chat", userId: "u" } as const;
+        const group = { kind: "group_chat", groupId: "g" } as const;
+        vi.useFakeTimers();
+        try {
+            const fetchToken = vi.fn(async () => "tok");
+            // a group call never hands the shell a token: ending a room ends it for everyone
+            keepCallEndTokenFresh(group, 7n, fetchToken, 1000);
+            await setCallEndToken(group, 7n, "tok");
+            expect(fetchToken).not.toHaveBeenCalled();
+            expect(tauri.invoke).not.toHaveBeenCalledWith(
+                "plugin:oc|set_call_end_token",
+                expect.anything(),
+            );
+
+            const stop = keepCallEndTokenFresh(direct, 7n, fetchToken, 1000);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(fetchToken).toHaveBeenCalledTimes(1);
+            expect(tauri.invoke).toHaveBeenCalledWith("plugin:oc|set_call_end_token", {
+                chatType: "direct",
+                chatId: "u",
+                messageId: "7",
+                token: "tok",
+            });
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(fetchToken).toHaveBeenCalledTimes(3);
+            stop();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(fetchToken).toHaveBeenCalledTimes(3);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("invariant 16 the joined notice is only sent from the Android shell", async () => {
         shared.isAndroidTauriApp.mockReturnValueOnce(false);
         const { notifyCallJoined } = await import("./call_bridge");

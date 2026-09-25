@@ -7,6 +7,10 @@ import android.util.Log
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.OCPluginCompanion
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 // The active call (#9559): drives Telecom, the foreground service and the web layer from
 // CallSessionState's answers. The web layer says when a call is active and when it ended;
@@ -17,6 +21,7 @@ object CallSession {
     val state = CallSessionState()
 
     private val main = Handler(Looper.getMainLooper())
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var stopTimer: Runnable? = null
 
     // The task hosting the call's main activity. A second main activity can live in another
@@ -103,15 +108,35 @@ object CallSession {
         ended(context, id)
     }
 
-    // The web layer is gone: end whatever is live, now.
+    // The web layer handed over (or refreshed) the token that ends this direct call.
+    fun setEndToken(context: Context, id: CallId, token: String) {
+        state.setEndToken(id, token)
+    }
+
+    // The web layer is gone: end whatever is live, now. A direct call is ended for the
+    // other side too, through the bridge, before the service that keeps this process
+    // alive is stopped; a group call is only left.
     fun endAll(context: Context) {
-        state.endAll(System.currentTimeMillis())
+        val ended = state.endAll(System.currentTimeMillis())
+        Log.i(LOG_TAG, "Native teardown; active=${ended?.id?.messageId} endToken=${ended?.endToken != null}")
         cancelStopTimer()
         CallProximity.update(context, active = false, video = false, route = CallRoutePolicy.Route.OTHER)
         CallRingback.stop()
         CallTelecom.endAll(CallRegistry.End.HUNG_UP)
-        CallForegroundService.stop(context)
         ownerTaskId = -1
+        val token = ended?.endToken
+        val bridge = CallConfig.videoBridgeUrl(context)
+        if (token != null && bridge != null) {
+            scope.launch {
+                try {
+                    CallDeclineReporter.reportEnd(bridge, token)
+                } finally {
+                    CallForegroundService.stop(context)
+                }
+            }
+        } else {
+            CallForegroundService.stop(context)
+        }
     }
 
     fun ownerTaskAlive(context: Context): Boolean = CallForegroundService.taskAlive(context, ownerTaskId)

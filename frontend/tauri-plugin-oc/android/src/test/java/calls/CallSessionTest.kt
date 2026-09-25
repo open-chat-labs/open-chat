@@ -75,7 +75,7 @@ class CallSessionTest {
         val s = CallSessionState()
         assertNull(s.endAll(now))
         s.started(alice, video = false, title = "Alice", now = now)
-        assertEquals(alice, s.endAll(now + 1))
+        assertEquals(alice, s.endAll(now + 1)?.id)
         assertNull(s.active)
         assertTrue(s.shouldStop(now + 1 + CallSessionState.STOP_GRACE_MS))
     }
@@ -215,5 +215,28 @@ class CallSessionTest {
         assertTrue("pendingSpeaker[id] = speaker to isDefault" in setSpeaker)
         val register = telecom.substring(telecom.indexOf("internal fun register("), telecom.indexOf("internal fun unregister("))
         assertTrue("pendingSpeaker.remove(id)?.let" in register)
+    }
+
+    @Test
+    fun `invariant 2 a native teardown ends a direct call for the other side with the held token and only then stops the service`() {
+        val s = CallSessionState()
+        // no token before the web layer hands one over, and only for the active call
+        assertFalse(s.setEndToken(alice, "t"))
+        s.started(alice, video = false, title = "Alice", now = now)
+        assertFalse(s.setEndToken(bob, "t"))
+        assertTrue(s.setEndToken(alice, "t1"))
+        assertTrue(s.setEndToken(alice, "t2"))
+        assertEquals("t2", s.endAll(now + 1)?.endToken)
+        assertNull(s.active)
+        // the session posts end_meeting before stopping the service when a token is held,
+        // and stops at once when none is (a group call never has one)
+        val session = File("src/main/java/calls/CallSession.kt").readText()
+        val endAll = session.substring(session.indexOf("fun endAll("), session.indexOf("fun ownerTaskAlive"))
+        val report = endAll.indexOf("CallDeclineReporter.reportEnd(bridge, token)")
+        assertTrue(report > 0)
+        assertTrue(endAll.indexOf("CallForegroundService.stop(context)", report) > report)
+        assertTrue("} else {" in endAll)
+        val reporter = File("src/main/java/calls/CallDeclineReporter.kt").readText()
+        assertTrue("/room/end_meeting" in reporter.substring(reporter.indexOf("fun reportEnd(")))
     }
 }

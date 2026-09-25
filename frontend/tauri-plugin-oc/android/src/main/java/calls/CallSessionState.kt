@@ -4,7 +4,9 @@ package com.ocplugin.app.calls
 // foreground service runs, and which foreground service types to ask for. CallSession is
 // the adapter that drives Telecom, the service and the web layer from these answers.
 class CallSessionState(private val graceMs: Long = STOP_GRACE_MS) {
-    data class Active(val id: CallId, val video: Boolean, val title: String, val startedAt: Long)
+    // endToken: the bridge token that ends a direct call for both sides, refreshed by the
+    // web layer while the call runs; a group call never has one.
+    data class Active(val id: CallId, val video: Boolean, val title: String, val startedAt: Long, val endToken: String? = null)
 
     sealed class Ended {
         // The call this state was tracking ended; stop the service once the grace elapses.
@@ -41,13 +43,21 @@ class CallSessionState(private val graceMs: Long = STOP_GRACE_MS) {
         return Ended.StopAfterGrace(id, now)
     }
 
+    @Synchronized
+    fun setEndToken(id: CallId, token: String): Boolean {
+        val current = active ?: return false
+        if (current.id != id) return false
+        active = current.copy(endToken = token)
+        return true
+    }
+
     // Everything ends, whatever was active. For the paths where the web layer is gone.
     @Synchronized
-    fun endAll(now: Long): CallId? {
+    fun endAll(now: Long): Active? {
         val current = active ?: return null
         active = null
         endedAt = now
-        return current.id
+        return current
     }
 
     // Called when a grace timer fires: true only if no call started in the meantime.

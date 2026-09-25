@@ -8698,6 +8698,29 @@ export class OpenChat {
             .catch((err) => console.error("Unable to decline the call", err));
     }
 
+    // The bridge token that marks a call ended. Five minutes' validity; the Android shell
+    // holds a fresh one for a direct call so a killed app can still end it (#9559).
+    getVideoCallEndToken(chatId: ChatIdentifier): Promise<string> {
+        const chat = allChatsStore.value.get(chatId);
+        if (chat === undefined) {
+            return Promise.reject(new Error(`Unknown chat: ${chatId}`));
+        }
+        return this.#getLocalUserIndex(chat)
+            .then((localUserIndex) =>
+                this.#worker.send({
+                    kind: "getAccessToken",
+                    accessTokenType: { kind: "mark_video_call_ended", chatId },
+                    localUserIndex,
+                }),
+            )
+            .then((token) => {
+                if (token === undefined) {
+                    throw new Error("Didn't get an access token");
+                }
+                return token;
+            });
+    }
+
     endVideoCall(chatId: ChatIdentifier, messageId?: bigint) {
         const chat = allChatsStore.value.get(chatId);
         if (chat === undefined) {

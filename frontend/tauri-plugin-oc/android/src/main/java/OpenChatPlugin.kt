@@ -223,6 +223,23 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         invoke.resolve()
     }
 
+    // The bridge token that ends the active direct call for both sides, refreshed while
+    // the call runs.
+    @Command
+    fun setCallEndToken(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallEndTokenArgs::class.java)
+        val chatType = args.chatType
+        val chatId = args.chatId
+        val messageId = args.messageId
+        val token = args.token
+        if (chatType == null || chatId == null || messageId == null || token == null) {
+            invoke.reject("chatType, chatId, messageId and token are required")
+            return
+        }
+        CallSession.setEndToken(activity, CallId(CallChat(chatType, chatId, args.communityId), messageId), token)
+        invoke.resolve()
+    }
+
     // The web layer left the call.
     @Command
     fun callEnded(invoke: Invoke) {
@@ -267,6 +284,15 @@ class SetCallSpeakerArgs {
 @InvokeArg
 class SetCallRingbackArgs {
     var on: Boolean = false
+}
+
+@InvokeArg
+class SetCallEndTokenArgs {
+    var chatType: String? = null
+    var chatId: String? = null
+    var communityId: String? = null
+    var messageId: String? = null
+    var token: String? = null
 }
 
 @InvokeArg
