@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use types::{CanisterId, TimestampMillis, UserId};
+use types::{CanisterId, MAX_USER_INDEX, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct MultiUserCanisterMap {
@@ -14,6 +14,10 @@ pub struct MultiUserCanister {
     // The LocalUserIndex which controls the canister
     pub local_user_index: CanisterId,
     pub user_count: u32,
+    // Set once a user has been given the last index, since indexes aren't reused so the canister
+    // can take no more users, however many have since been deleted
+    #[serde(default)]
+    pub full: bool,
 }
 
 impl MultiUserCanisterMap {
@@ -25,6 +29,7 @@ impl MultiUserCanisterMap {
                     date_created: now,
                     local_user_index,
                     user_count: 0,
+                    full: false,
                 });
                 true
             }
@@ -40,10 +45,23 @@ impl MultiUserCanisterMap {
         self.canisters.get(canister_id).map(|c| c.local_user_index)
     }
 
+    // The LocalUserIndex controlling whichever of the canisters which aren't full has the fewest
+    // users, skipping those controlled by a LocalUserIndex which isn't `accepting_users`
+    pub fn local_user_index_for_new_user(&self, accepting_users: impl Fn(&CanisterId) -> bool) -> Option<CanisterId> {
+        self.canisters
+            .iter()
+            .filter(|(_, c)| !c.full && accepting_users(&c.local_user_index))
+            .min_by_key(|(canister_id, c)| (c.user_count, **canister_id))
+            .map(|(_, c)| c.local_user_index)
+    }
+
     // Users held in their own canister are ignored, so this can be called for any user
     pub fn on_user_added(&mut self, user_id: &UserId) {
         if let Some(canister) = self.canister_holding_mut(user_id) {
             canister.user_count = canister.user_count.saturating_add(1);
+            if user_id.index() == MAX_USER_INDEX {
+                canister.full = true;
+            }
         }
     }
 
@@ -85,6 +103,7 @@ mod tests {
                 date_created: 10,
                 local_user_index: canister_id(100),
                 user_count: 1,
+                full: false,
             })
         );
     }
@@ -108,5 +127,34 @@ mod tests {
         assert_eq!(user_count(1), Some(2));
         assert_eq!(user_count(2), Some(0));
         assert_eq!(user_count(3), None);
+    }
+
+    #[test]
+    fn local_user_index_for_new_user_picks_the_canister_with_the_fewest_users() {
+        let mut map = MultiUserCanisterMap::default();
+        assert_eq!(map.local_user_index_for_new_user(|_| true), None);
+
+        map.add(canister_id(1), canister_id(101), 0);
+        map.add(canister_id(2), canister_id(102), 0);
+        map.add(canister_id(3), canister_id(103), 0);
+        for (canister, users) in [(1, 3), (2, 1), (3, 2)] {
+            for index in 1..=users {
+                map.on_user_added(&UserId::new_indexed(canister_id(canister), index));
+            }
+        }
+        assert_eq!(map.local_user_index_for_new_user(|_| true), Some(canister_id(102)));
+
+        // Canisters controlled by a LocalUserIndex which isn't accepting users are skipped
+        assert_eq!(
+            map.local_user_index_for_new_user(|c| *c != canister_id(102)),
+            Some(canister_id(103))
+        );
+
+        // As are full ones, however few users they hold
+        map.on_user_added(&UserId::new_indexed(canister_id(2), MAX_USER_INDEX));
+        map.on_user_removed(&UserId::new_indexed(canister_id(2), 1));
+        map.on_user_removed(&UserId::new_indexed(canister_id(2), MAX_USER_INDEX));
+        assert_eq!(map.local_user_index_for_new_user(|_| true), Some(canister_id(103)));
+        assert_eq!(map.local_user_index_for_new_user(|c| *c == canister_id(102)), None);
     }
 }
