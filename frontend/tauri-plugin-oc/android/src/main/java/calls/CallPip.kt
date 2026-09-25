@@ -1,13 +1,18 @@
 package com.ocplugin.app.calls
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.app.PictureInPictureParams
+import android.app.RemoteAction
+import android.content.Intent
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Log
 import android.util.Rational
 import app.tauri.plugin.JSObject
 import com.ocplugin.app.LOG_TAG
 import com.ocplugin.app.OCPluginCompanion
+import com.ocplugin.app.R
 import java.lang.ref.WeakReference
 
 // Picture in picture for video calls (#9559 invariant 9). Armed only while a video call is
@@ -25,11 +30,16 @@ object CallPip {
     var inPip = false
         private set
 
+    // The call the tile is for: its hang-up action names it.
+    @Volatile
+    private var call: IncomingCall? = null
+
     fun attach(activity: Activity) {
         this.activity = WeakReference(activity)
     }
 
-    fun update(active: Boolean, video: Boolean) {
+    fun update(active: Boolean, video: Boolean, call: IncomingCall? = null) {
+        if (call != null) this.call = call
         val wanted = PipRule.armed(active, video)
         if (wanted == armed) {
             if (!wanted && inPip) leaveTile()
@@ -76,6 +86,23 @@ object CallPip {
     private fun params(autoEnter: Boolean): PictureInPictureParams {
         val builder = PictureInPictureParams.Builder().setAspectRatio(Rational(3, 5))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) builder.setAutoEnterEnabled(autoEnter)
+        // The tile's one control: hang up, through the same receiver as the notification.
+        val activity = activity.get()
+        val call = call
+        if (autoEnter && activity != null && call != null) {
+            val hangUp = PendingIntent.getBroadcast(
+                activity,
+                CallForegroundService.NOTIFICATION_ID + 1,
+                Intent(activity, CallActionReceiver::class.java).apply {
+                    action = CallForegroundService.ACTION_HANG_UP
+                    putExtras(call.toBundle())
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            builder.setActions(
+                listOf(RemoteAction(Icon.createWithResource(activity, R.drawable.ic_notification_small), "Hang up", "Hang up", hangUp)),
+            )
+        }
         return builder.build()
     }
 }

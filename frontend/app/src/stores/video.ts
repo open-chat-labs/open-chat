@@ -19,6 +19,7 @@ import { isAndroidTauriApp } from "@shared";
 import { type ChatIdentifier, type VideoCallType } from "@client";
 import { get, type Subscriber, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
+import { videoSpeakerView } from "./settings";
 
 export type InterCallMessage =
     | RequestToSpeakMessage
@@ -142,6 +143,23 @@ export type ActiveVideoCallStore = typeof activeVideoCall;
 export const activeVideoCall = {
     subscribe: (subscriber: Subscriber<ActiveVideoCall | undefined>, invalidate?: () => void) =>
         activeStore.subscribe(subscriber, invalidate),
+    // The shell put the call in a picture-in-picture tile, or took it out (#9559). In the
+    // tile the other person's video is the whole window: active-speaker view, no
+    // participants bar, no self view.
+    setPictureInPicture: (active: boolean) => {
+        pictureInPicture.set(active);
+        const current = get(activeStore);
+        if (current?.call === undefined) return;
+        try {
+            current.call.setShowParticipantsBar(!active);
+            current.call.setShowLocalVideo(!active);
+            current.call.setActiveSpeakerMode(
+                active || current.callType === "broadcast" || get(videoSpeakerView),
+            );
+        } catch (e) {
+            console.warn("Could not change the call view for picture in picture", e);
+        }
+    },
     // A native surface acted on the call (#9559): the ongoing notification's hang-up, a
     // headset, Telecom. Applied only to the call that is active, by message id.
     applyNativeControl: (control: NativeCallControl) => {

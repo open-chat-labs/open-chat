@@ -39,7 +39,7 @@ object CallSession {
         route = CallRoutePolicy.Route.OTHER
         CallTelecom.setSpeaker(call.id, video, isDefault = true)
         CallProximity.update(context, active = true, video = video, route = route)
-        CallPip.update(active = true, video = video)
+        CallPip.update(active = true, video = video, call = call)
         CallForegroundService.start(context, call, now, sharing = false)
         // Telecom usually settled the route before the web layer got here; a report made
         // then belonged to no active call and was dropped, so ask for it now (device run).

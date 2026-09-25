@@ -11,7 +11,7 @@
     } from "@stores/androidInterfaceSizes";
     import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
-    import { activeVideoCall, incomingVideoCall, pictureInPicture } from "@stores/video";
+    import { activeVideoCall, incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
@@ -292,7 +292,7 @@
             expectCallControls(activeVideoCall.applyNativeControl),
 
             // The call view goes full bleed while the shell shows it in a tile
-            expectPipChanges(pictureInPicture.set),
+            expectPipChanges(activeVideoCall.setPictureInPicture),
         ]);
         listenersRegistered.then((results) => {
             results

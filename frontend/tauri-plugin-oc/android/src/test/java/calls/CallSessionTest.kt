@@ -134,7 +134,7 @@ class CallSessionTest {
         assertFalse(PipRule.armed(active = false, video = true))
         val session = File("src/main/java/calls/CallSession.kt").readText()
         val active = session.substring(session.indexOf("fun active("), session.indexOf("fun setSpeaker("))
-        assertTrue("CallPip.update(active = true, video = video)" in active)
+        assertTrue("CallPip.update(active = true, video = video, call = call)" in active)
         val ended = session.substring(session.indexOf("fun ended("), session.indexOf("fun hangUp("))
         assertTrue("CallPip.update(active = false" in ended)
         val endAll = session.substring(session.indexOf("fun endAll("), session.indexOf("fun ownerTaskAlive"))

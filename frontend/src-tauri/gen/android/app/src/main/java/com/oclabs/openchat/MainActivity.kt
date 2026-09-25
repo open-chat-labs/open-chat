@@ -255,6 +255,13 @@ class MainActivity : TauriActivity() {
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         CallPip.changed(this, isInPictureInPictureMode)
+        if (!isInPictureInPictureMode) {
+            // Back from the tile the window has its insets again; the web layer is told
+            // even when they match the last values it was sent (found on the device: the
+            // content sat under the status bar).
+            lastInsetSignature = null
+            ViewCompat.requestApplyInsets(findViewById(android.R.id.content))
+        }
     }
 
     override fun onDestroy() {
