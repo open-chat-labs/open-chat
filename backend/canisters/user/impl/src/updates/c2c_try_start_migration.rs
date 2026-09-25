@@ -26,6 +26,7 @@ fn c2c_try_start_migration(args: Args) -> Response {
 mod tests {
     use crate::{Data, WASM_VERSION};
     use candid::Principal;
+    use constants::DAY_IN_MS;
     use oc_error_codes::OCErrorCode;
     use types::{BuildVersion, CanisterId, FrozenUserInfo, Timestamped};
     use user_core::User;
@@ -126,6 +127,23 @@ mod tests {
 
         assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
         assert!(data.migration.is_none());
+    }
+
+    #[test]
+    fn canister_with_a_p2p_swap_which_may_still_be_open_is_not_ready() {
+        let mut data = data();
+        set_wasm_version(1);
+        data.record_p2p_swap(100);
+
+        // Until a day after the swap expires, the Escrow may still settle it
+        let error = data
+            .try_start_migration(multi_user_canister(1), 100 + DAY_IN_MS - 1)
+            .map(|_| ())
+            .unwrap_err();
+        assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
+        assert!(data.migration.is_none());
+
+        assert!(data.try_start_migration(multi_user_canister(1), 100 + DAY_IN_MS).is_ok());
     }
 
     #[test]

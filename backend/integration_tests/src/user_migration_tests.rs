@@ -1,13 +1,14 @@
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_many};
+use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
+use constants::{DAY_IN_MS, HOUR_IN_MS};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{CanisterId, Chat, Document, OptionUpdate};
+use types::{CanisterId, Chat, Document, MessageContentInitial, OptionUpdate, P2PSwapContentInitial};
 use user_index_canister::start_user_migration::{Response, SuccessResult};
 
 #[test]
@@ -105,6 +106,100 @@ fn user_with_a_message_reminder_is_not_ready_for_migration() {
         &user_canister::set_bio::Args { text: random_string() },
     );
     assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+}
+
+#[test]
+fn users_with_a_p2p_swap_in_a_group_are_not_ready_for_migration_until_it_has_settled() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
+    let user2 = client::register_user(env, canister_ids);
+
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
+
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
+
+    let message_id = random_from_u128();
+    let response = client::user::send_message_with_transfer_to_group(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+                token0: icp_token_info(),
+                token0_amount: 1_000_000_000,
+                token1: chat_token_info(),
+                token1_amount: 10_000_000_000,
+                expires_in: HOUR_IN_MS,
+                caption: None,
+                from_account: None,
+            }),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(
+            response,
+            user_canister::send_message_with_transfer_to_group::Response::Success(_)
+        ),
+        "{response:?}"
+    );
+
+    let response = client::group::accept_p2p_swap(
+        env,
+        user2.principal,
+        group_id.into(),
+        &group_canister::accept_p2p_swap::Args {
+            thread_root_message_index: None,
+            message_id,
+            pin: None,
+            new_achievement: false,
+            from_account: None,
+        },
+    );
+    assert!(
+        matches!(response, group_canister::accept_p2p_swap::Response::Success(_)),
+        "{response:?}"
+    );
+
+    tick_many(env, 10);
+
+    // Neither the user who created the swap nor the one who accepted it can be migrated until a day
+    // after it expires, by when the Escrow will have settled it
+    for user in [&user1, &user2] {
+        let response = try_start_user_migration(env, *controller, canister_ids.user_index, user, multi_user_canister(1));
+        assert!(
+            matches!(response, Response::Error(ref e) if e.matches_code(OCErrorCode::NotReadyForMigration)
+                && e.message() == Some("P2P swaps may still be open")),
+            "{response:?}"
+        );
+    }
+
+    env.advance_time(Duration::from_millis(HOUR_IN_MS + DAY_IN_MS));
+    tick_many(env, 10);
+
+    for user in [&user1, &user2] {
+        start_user_migration(env, *controller, canister_ids.user_index, user, multi_user_canister(1));
+    }
 }
 
 #[test]
@@ -262,19 +357,28 @@ fn start_user_migration(
     user: &User,
     multi_user_canister_id: CanisterId,
 ) -> SuccessResult {
-    let response = client::user_index::start_user_migration(
+    match try_start_user_migration(env, sender, user_index, user, multi_user_canister_id) {
+        Response::Success(result) => result,
+        response => panic!("'start_user_migration' error: {response:?}"),
+    }
+}
+
+fn try_start_user_migration(
+    env: &mut PocketIc,
+    controller: Principal,
+    user_index_canister_id: CanisterId,
+    user: &User,
+    multi_user_canister_id: CanisterId,
+) -> Response {
+    client::user_index::start_user_migration(
         env,
-        sender,
-        user_index,
+        controller,
+        user_index_canister_id,
         &user_index_canister::start_user_migration::Args {
             user_id: user.user_id,
             multi_user_canister_id,
         },
-    );
-    match response {
-        Response::Success(result) => result,
-        response => panic!("'start_user_migration' error: {response:?}"),
-    }
+    )
 }
 
 fn cancel_user_migration(

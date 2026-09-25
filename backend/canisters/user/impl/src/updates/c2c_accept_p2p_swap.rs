@@ -61,6 +61,8 @@ fn prepare_impl(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareRe
     let now = state.env.now();
     let my_canister_id = state.env.canister_id();
     prepare(&mut state.data.user, my_canister_id, args, now)?;
+    // Recorded before the deposit is made, since the swap can then only be settled by the Escrow
+    state.data.record_p2p_swap(args.expires_at);
 
     Ok(PrepareResult {
         my_canister_id,
