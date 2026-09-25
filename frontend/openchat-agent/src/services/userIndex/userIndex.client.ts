@@ -6,6 +6,7 @@ import type {
     BotInstallationLocation,
     BotsResponse,
     CheckUsernameResponse,
+    CreateMultiUserCanisterResponse,
     ChitLeaderboardResponse,
     CurrentUserResponse,
     DiamondMembershipDuration,
@@ -79,6 +80,8 @@ import {
     UserIndexAuthorityReportTokenArgs,
     UserIndexAuthorityReportTokenResponse,
     UserIndexClearAuthorityReportAttemptArgs,
+    UserIndexCreateMultiUserCanisterArgs,
+    UserIndexCreateMultiUserCanisterResponse,
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
     UserIndexSetCallPushEnabledArgs,
@@ -1071,6 +1074,26 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             () => "success",
             UserIndexSetUserUpgradeConcurrencyArgs,
             SuccessOnly,
+        );
+    }
+
+    createMultiUserCanister(
+        localUserIndexCanisterId: string,
+    ): Promise<CreateMultiUserCanisterResponse> {
+        return this.update(
+            "create_multi_user_canister",
+            { local_user_index_canister_id: principalStringToBytes(localUserIndexCanisterId) },
+            (resp): CreateMultiUserCanisterResponse => {
+                if (resp === "LocalUserIndexNotFound") {
+                    return { kind: "local_user_index_not_found" };
+                } else if ("Success" in resp) {
+                    return { kind: "success", canisterId: principalBytesToString(resp.Success) };
+                } else {
+                    return { kind: "internal_error", error: resp.InternalError };
+                }
+            },
+            UserIndexCreateMultiUserCanisterArgs,
+            UserIndexCreateMultiUserCanisterResponse,
         );
     }
 

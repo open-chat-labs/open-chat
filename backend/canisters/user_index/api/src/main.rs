@@ -61,6 +61,7 @@ fn main() {
     generate_ts_method!(user_index, users_chit);
     generate_ts_method!(user_index, update_diamond_membership_subscription);
 
+    generate_ts_method!(user_index, create_multi_user_canister);
     generate_ts_method!(user_index, pay_for_diamond_membership);
     generate_ts_method!(user_index, register_bot);
     generate_ts_method!(user_index, remove_bot);
