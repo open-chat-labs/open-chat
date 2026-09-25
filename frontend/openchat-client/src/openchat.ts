@@ -6847,6 +6847,13 @@ export class OpenChat {
             .catch((err) => ({ kind: "internal_error", error: String(err) }));
     }
 
+    // Platform operators only
+    setMultiUserCanistersEnabled(enabled: boolean): Promise<boolean> {
+        return this.#worker
+            .send({ kind: "setMultiUserCanistersEnabled", enabled })
+            .catch(() => false);
+    }
+
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
         return this.#worker
             .send({ kind: "markLocalGroupIndexFull", canisterId, full })

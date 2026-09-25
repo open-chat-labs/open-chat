@@ -39,9 +39,10 @@ pub struct CommunityMembers {
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
-    // Users who were members of the community but no longer are, other than deleted users. A user who rejoins is
-    // removed again. Recorded so that a user who rejoins under a new id, having been migrated to a MultiUser
-    // canister, can be recognised as having events under their earlier ids.
+    // Users who were members of the community but no longer are, other than deleted users, plus the former members
+    // of any groups imported into it who are not in the community, since the imported channels' events refer to
+    // them too. A user who joins is removed again. Recorded so that a user who rejoins under a new id, having been
+    // migrated to a MultiUser canister, can be recognised as having events under their earlier ids.
     #[serde(default)]
     former_members: BTreeSet<UserId>,
 }
@@ -612,6 +613,15 @@ impl CommunityMembers {
         self.former_members.contains(user_id)
     }
 
+    // Skips any who are members, since they are not former members
+    pub fn add_former_members(&mut self, user_ids: impl IntoIterator<Item = UserId>) {
+        for user_id in user_ids {
+            if !self.members_and_channels.contains_key(&user_id) {
+                self.former_members.insert(user_id);
+            }
+        }
+    }
+
     pub fn len(&self) -> usize {
         self.members_and_channels.len()
     }
@@ -1063,6 +1073,35 @@ mod tests {
         members.remove(user_id2, Some(principal2), false, 0);
         assert!(members.channels_for_member(user_id2).is_empty());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
+    }
+
+    #[test]
+    fn former_members_maintained_correctly() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_id = test_user_id;
+        let principal = |i: u8| test_principal(test_user_id(i));
+
+        let mut members = CommunityMembers::new(principal(1), user_id(1), UserType::User, Vec::new(), 0);
+        members.add(user_id(2), principal(2), UserType::User, None, 0);
+        members.add(user_id(3), principal(3), UserType::User, None, 0);
+
+        members.remove(user_id(2), None, false, 0);
+        members.remove(user_id(3), None, true, 0);
+        members.add_former_members([user_id(1), user_id(4)]);
+
+        assert!(members.is_former_member(&user_id(2)));
+        assert!(!members.is_former_member(&user_id(3)), "deleted users aren't recorded");
+        assert!(!members.is_former_member(&user_id(1)), "members are skipped");
+        assert!(members.is_former_member(&user_id(4)));
+
+        members.add(user_id(2), principal(2), UserType::User, None, 0);
+        members.add(user_id(4), principal(4), UserType::User, None, 0);
+
+        assert!(!members.is_former_member(&user_id(2)));
+        assert!(!members.is_former_member(&user_id(4)));
+        members.check_invariants();
     }
 
     #[test]
