@@ -15,4 +15,30 @@ PROPOSAL=$1
 # The neuron's subaccount is the neuron id, formatted as a candid blob
 SUBACCOUNT=$(echo $PROPOSER_NEURON_ID | sed 's/../\\&/g')
 
-dfx canister --identity $IDENTITY --network $NETWORK call sns_governance manage_neuron "(record { subaccount=blob \"$SUBACCOUNT\"; command=opt variant { MakeProposal=$PROPOSAL } })"
+ARGS="(record { subaccount=blob \"$SUBACCOUNT\"; command=opt variant { MakeProposal=$PROPOSAL } })"
+
+# Show the message and ask for confirmation before sending it, as quill does. If didc is available, round trip the
+# args through the SNS governance candid so they are shown formatted, exactly as the canister will receive them
+echo "Sending message with"
+echo
+echo "  Identity:    $IDENTITY ($(dfx identity get-principal --identity $IDENTITY))"
+echo "  Canister:    sns_governance ($NETWORK)"
+echo "  Method name: manage_neuron"
+if command -v didc > /dev/null
+then
+  CANDID=../../candid/sns_governance.did
+  ENCODED=$(didc encode -d $CANDID -m manage_neuron "$ARGS") || exit 1
+  echo "  Arguments:   $(didc decode -d $CANDID -t "(ManageNeuron)" "$ENCODED")"
+else
+  echo "  Arguments:   $ARGS"
+fi
+echo
+
+read -r -p "Do you want to send this message? [y/N] " CONFIRM
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]
+then
+  echo "Not sent"
+  exit 0
+fi
+
+dfx canister --identity $IDENTITY --network $NETWORK call sns_governance manage_neuron "$ARGS"
