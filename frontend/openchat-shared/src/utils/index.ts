@@ -1,6 +1,7 @@
 export * from "./array";
 export * from "./bandwidthMonitor";
 export * from "./bigint";
+export * from "./blobs";
 export * from "./chat";
 export * from "./emailSignInSessionStorage";
 export * from "./error";
