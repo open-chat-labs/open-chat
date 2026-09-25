@@ -1,7 +1,6 @@
 import Identicon from "identicon.js";
 import md5 from "md5";
 import type {
-    ChannelIdentifier,
     CommunityCanisterCommunitySummaryUpdates,
     CommunityDetails,
     CommunityDetailsUpdates,
@@ -25,7 +24,7 @@ import type {
 import {
     applyOptionUpdate,
     bigIntMax,
-    blobLocation,
+    buildBlobUrl,
     ChatMap,
     mapOptionUpdate,
     OPENCHAT_BOT_AVATAR_URL,
@@ -460,37 +459,6 @@ export function getUpdatedEvents(
         .forEach((c) => result.set(c.id, c.updatedEvents));
 
     return result;
-}
-
-// The url of a blob belonging to `ownerId`: the canister which serves it, such as a group, community
-// or storage bucket, or a user, whose blobs are served by the canister holding them (see
-// `blobLocation`)
-export function buildBlobUrl(
-    pattern: string,
-    ownerId: string,
-    blobId: bigint,
-    blobType: "blobs" | "avatar" | "banner",
-    channelId?: ChannelIdentifier,
-): string {
-    const location =
-        channelId === undefined
-            ? blobLocation(ownerId, blobType)
-            : { canisterId: ownerId, path: `channel/${channelId.channelId}/${blobType}` };
-
-    return `${pattern
-        .replace("{canisterId}", location.canisterId)
-        .replace("{blobType}", location.path)}/${blobId}`;
-}
-
-export function buildTokenLogoUrl(
-    pattern: string,
-    canisterId: string,
-    ledger: string,
-    logoId: bigint,
-): string {
-    return `${pattern
-        .replace("{canisterId}", canisterId)
-        .replace("{blobType}", "logo")}?ledger=${ledger}&id=${logoId}`;
 }
 
 export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: bigint): string {

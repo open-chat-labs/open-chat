@@ -244,11 +244,11 @@ import {
     offline,
     textToCode,
     waitAll,
+    buildBlobUrl,
 } from "@shared";
 import type { AgentConfig } from "../config";
 import { CachePrimer } from "../utils/cachePrimer";
 import {
-    buildBlobUrl,
     buildUserAvatarUrl,
     getUpdatedEvents,
     isExpired,
@@ -1308,11 +1308,13 @@ export class OpenChatAgent extends EventTarget {
                 blobUrl:
                     ref?.blobId === undefined
                         ? "/assets/bot_avatar.svg"
-                        : `${this.config.blobUrlPattern
-                              .replace("{canisterId}", this.config.userIndexCanister)
-                              .replace("{blobType}", "avatar")}/${userSummary.userId}/${
-                              ref?.blobId
-                          }`,
+                        : buildBlobUrl(
+                              this.config.blobUrlPattern,
+                              this.config.userIndexCanister,
+                              ref.blobId,
+                              "avatar",
+                              { botId: userSummary.userId },
+                          ),
             };
         }
         return userSummary.blobUrl
@@ -1358,7 +1360,7 @@ export class OpenChatAgent extends EventTarget {
                       ref.canisterId,
                       ref.blobId,
                       blobType,
-                      channelId,
+                      { channelId: channelId?.channelId },
                   ),
               }
             : dataContent;
