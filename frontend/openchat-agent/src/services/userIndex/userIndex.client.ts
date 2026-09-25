@@ -82,6 +82,7 @@ import {
     UserIndexClearAuthorityReportAttemptArgs,
     UserIndexCreateMultiUserCanisterArgs,
     UserIndexCreateMultiUserCanisterResponse,
+    UserIndexSetMultiUserCanistersEnabledArgs,
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
     UserIndexSetCallPushEnabledArgs,
@@ -1094,6 +1095,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             },
             UserIndexCreateMultiUserCanisterArgs,
             UserIndexCreateMultiUserCanisterResponse,
+        );
+    }
+
+    setMultiUserCanistersEnabled(enabled: boolean): Promise<boolean> {
+        return this.update(
+            "set_multi_user_canisters_enabled",
+            { enabled },
+            () => true,
+            UserIndexSetMultiUserCanistersEnabledArgs,
+            SuccessOnly,
         );
     }
 

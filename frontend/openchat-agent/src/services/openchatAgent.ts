@@ -3813,6 +3813,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.createMultiUserCanister(localUserIndexCanisterId);
     }
 
+    setMultiUserCanistersEnabled(enabled: boolean): Promise<boolean> {
+        return this._userIndexClient.setMultiUserCanistersEnabled(enabled);
+    }
+
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
         return this._groupIndexClient.markLocalGroupIndexFull(canisterId, full);
     }

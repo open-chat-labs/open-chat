@@ -868,6 +868,9 @@ function getAction(
         case "createMultiUserCanister":
             return agent.createMultiUserCanister(payload.localUserIndexCanisterId);
 
+        case "setMultiUserCanistersEnabled":
+            return agent.setMultiUserCanistersEnabled(payload.enabled);
+
         case "markLocalGroupIndexFull":
             return agent.markLocalGroupIndexFull(payload.canisterId, payload.full);
 
