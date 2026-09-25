@@ -39,6 +39,11 @@ pub struct CommunityMembers {
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
+    // Users who were members of the community but no longer are, other than deleted users. A user who rejoins is
+    // removed again. Recorded so that a user who rejoins under a new id, having been migrated to a MultiUser
+    // canister, can be recognised as having events under their earlier ids.
+    #[serde(default)]
+    former_members: BTreeSet<UserId>,
 }
 
 impl CommunityMembers {
@@ -87,6 +92,7 @@ impl CommunityMembers {
             members_with_referrals: BTreeSet::new(),
             updates: BTreeSet::new(),
             latest_update_removed: 0,
+            former_members: BTreeSet::new(),
         }
     }
 
@@ -123,6 +129,7 @@ impl CommunityMembers {
             };
             self.add_user_id(principal, user_id);
             self.members_map.insert(member.user_id, member.clone());
+            self.former_members.remove(&user_id);
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
             if let Some(referrer) = referred_by
@@ -148,13 +155,15 @@ impl CommunityMembers {
 
     pub fn remove_by_principal(&mut self, principal: Principal, now: TimestampMillis) -> Option<CommunityMemberInternal> {
         let user_id = self.principal_to_user_id_map.remove(&principal)?.into_value();
-        self.remove(user_id, Some(principal), now)
+        self.remove(user_id, Some(principal), true, now)
     }
 
+    // `record_as_former_member` should only be false for users who have been deleted, since they never rejoin
     pub fn remove(
         &mut self,
         user_id: UserId,
         principal: Option<Principal>,
+        record_as_former_member: bool,
         now: TimestampMillis,
     ) -> Option<CommunityMemberInternal> {
         if let Some(principal) = principal {
@@ -204,6 +213,9 @@ impl CommunityMembers {
         }
         self.user_groups.remove_user_from_all(&member.user_id, now);
         self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
+        if record_as_former_member {
+            self.former_members.insert(user_id);
+        }
 
         Some(member)
     }
@@ -677,6 +689,7 @@ impl CommunityMembers {
         assert_eq!(suspended, self.suspended);
         assert_eq!(members_with_display_names, self.members_with_display_names);
         assert_eq!(members_with_referrals, self.members_with_referrals);
+        assert!(self.former_members.is_disjoint(&member_ids));
     }
 }
 
@@ -903,7 +916,7 @@ mod tests {
             assert_eq!(removed, (1u32..25).map(ChannelId::from).collect::<Vec<_>>());
         }
 
-        members.remove(user_id2, Some(principal2), 0);
+        members.remove(user_id2, Some(principal2), true, 0);
         assert!(members.channels_for_member(user_id2).is_empty());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
     }

@@ -154,9 +154,7 @@ pub(crate) fn join_community_impl(
         .add(args.user_id, args.principal, args.user_type, referred_by, now);
 
     match result {
-        AddResult::Success(_) => {
-            state.data.former_members.remove(&args.user_id);
-        }
+        AddResult::Success(_) => {}
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
             if !member.lapsed().value {
