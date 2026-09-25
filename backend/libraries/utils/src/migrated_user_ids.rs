@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
 use types::UserId;
 
@@ -7,10 +7,14 @@ use types::UserId;
 // Each migration is stored as its own entry, and a user migrated more than once is found by
 // following their entries through to their latest id. So the map ends up the same whatever order
 // the migrations are inserted in, and however many times each one is.
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(transparent)]
+//
+// Only `map` is serialized, and `previous` is rebuilt from it when deserializing.
+#[derive(Clone, Debug, Default)]
 pub struct MigratedUserIds {
     map: HashMap<UserId, UserId>,
+    // The reverse of `map`, from each migration's new id to its old id. `insert` never migrates
+    // two ids to the same id, so each new id has only one old id.
+    previous: HashMap<UserId, UserId>,
 }
 
 impl MigratedUserIds {
@@ -21,12 +25,22 @@ impl MigratedUserIds {
     pub fn insert(&mut self, old_user_id: UserId, new_user_id: UserId) -> bool {
         if self.map.contains_key(&old_user_id)
             || self.latest(new_user_id) == old_user_id
-            || self.map.values().any(|u| *u == new_user_id)
+            || self.previous.contains_key(&new_user_id)
         {
             return false;
         }
         self.map.insert(old_user_id, new_user_id);
+        self.previous.insert(new_user_id, old_user_id);
         true
+    }
+
+    // Inserts the migrations from each of the user's previous ids, ordered oldest first as
+    // returned by `previous_ids`, through to `user_id`
+    pub fn insert_previous_ids(&mut self, previous_user_ids: &[UserId], user_id: UserId) {
+        let next_ids = previous_user_ids.iter().skip(1).chain([&user_id]);
+        for (old_user_id, new_user_id) in previous_user_ids.iter().zip(next_ids) {
+            self.insert(*old_user_id, *new_user_id);
+        }
     }
 
     // The user's latest id, if they have been migrated since having `old_user_id`
@@ -62,6 +76,18 @@ impl MigratedUserIds {
         user_id1 == user_id2 || (!self.map.is_empty() && self.latest(user_id1) == self.latest(user_id2))
     }
 
+    // Each of the ids the user had before `user_id`, ordered oldest first, found by following
+    // their migrations back from `user_id`. Empty if `user_id` was not migrated to.
+    pub fn previous_ids(&self, mut user_id: UserId) -> Vec<UserId> {
+        let mut previous_ids = Vec::new();
+        while let Some(previous) = self.previous.get(&user_id) {
+            previous_ids.push(*previous);
+            user_id = *previous;
+        }
+        previous_ids.reverse();
+        previous_ids
+    }
+
     // Follows the user's migrations from `user_id` through to their latest id, which is `user_id`
     // itself if they have not been migrated since having it. `insert` never adds a migration which
     // would lead back to an earlier id, so this always ends.
@@ -70,6 +96,20 @@ impl MigratedUserIds {
             user_id = *next;
         }
         user_id
+    }
+}
+
+impl Serialize for MigratedUserIds {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.map.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for MigratedUserIds {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let map: HashMap<UserId, UserId> = HashMap::deserialize(deserializer)?;
+        let previous = map.iter().map(|(old, new)| (*new, *old)).collect();
+        Ok(MigratedUserIds { map, previous })
     }
 }
 
@@ -234,5 +274,54 @@ mod tests {
         let deserialized: MigratedUserIds = msgpack::deserialize_then_unwrap(&bytes);
 
         assert_eq!(deserialized.get(&user_id(1)), Some(user_id(2)));
+        assert_eq!(deserialized.previous_ids(user_id(2)), vec![user_id(1)]);
+    }
+
+    #[test]
+    fn serialized_as_the_map_alone() {
+        let mut ids = MigratedUserIds::default();
+        ids.insert(user_id(1), user_id(2));
+
+        let bytes = msgpack::serialize_then_unwrap(&ids);
+        let map: HashMap<UserId, UserId> = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(map, HashMap::from([(user_id(1), user_id(2))]));
+    }
+
+    #[test]
+    fn previous_ids_are_ordered_oldest_first() {
+        let mut ids = MigratedUserIds::default();
+        ids.insert(user_id(2), user_id(3));
+        ids.insert(user_id(1), user_id(2));
+        ids.insert(user_id(4), user_id(5));
+
+        assert_eq!(ids.previous_ids(user_id(3)), vec![user_id(1), user_id(2)]);
+        assert_eq!(ids.previous_ids(user_id(2)), vec![user_id(1)]);
+        assert!(ids.previous_ids(user_id(1)).is_empty());
+        assert!(ids.previous_ids(user_id(6)).is_empty());
+    }
+
+    #[test]
+    fn insert_previous_ids_rebuilds_the_migrations() {
+        let mut source = MigratedUserIds::default();
+        source.insert(user_id(1), user_id(2));
+        source.insert(user_id(2), user_id(3));
+
+        let mut ids = MigratedUserIds::default();
+        ids.insert_previous_ids(&source.previous_ids(user_id(3)), user_id(3));
+
+        assert_eq!(ids.get(&user_id(1)), Some(user_id(3)));
+        assert_eq!(ids.get(&user_id(2)), Some(user_id(3)));
+        assert_eq!(ids.previous_ids(user_id(3)), vec![user_id(1), user_id(2)]);
+        assert_eq!(ids.len(), 2);
+    }
+
+    #[test]
+    fn insert_previous_ids_with_none_is_a_no_op() {
+        let mut ids = MigratedUserIds::default();
+
+        ids.insert_previous_ids(&[], user_id(1));
+
+        assert!(ids.is_empty());
     }
 }

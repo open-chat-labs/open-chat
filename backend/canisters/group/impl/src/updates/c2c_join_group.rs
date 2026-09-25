@@ -133,6 +133,10 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
         user_type: args.user_type,
     }) {
         AddResult::Success(mut result) => {
+            state
+                .data
+                .cache_migrations_if_former_member(args.user_id, &args.previous_user_ids);
+
             let invitation = state.data.chat.invited_users.remove(&args.user_id, now);
 
             let event = MemberJoinedInternal {
