@@ -865,6 +865,9 @@ function getAction(
         case "setUserUpgradeConcurrency":
             return agent.setUserUpgradeConcurrency(payload.value);
 
+        case "createMultiUserCanister":
+            return agent.createMultiUserCanister(payload.localUserIndexCanisterId);
+
         case "markLocalGroupIndexFull":
             return agent.markLocalGroupIndexFull(payload.canisterId, payload.full);
 

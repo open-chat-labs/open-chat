@@ -569,6 +569,7 @@ impl GroupChatCore {
         event_pusher: P,
         finalised: bool,
         og_previews: Vec<OgPreview>,
+        migrated_user_ids: &MigratedUserIds,
         now: TimestampMillis,
     ) -> OCResult<SendMessageSuccess> {
         // If there is an existing message with the same message id then this is invalid unless
@@ -596,6 +597,7 @@ impl GroupChatCore {
                     suppressed,
                     block_level_markdown,
                     og_previews,
+                    migrated_user_ids,
                     now,
                 );
             }
@@ -654,6 +656,7 @@ impl GroupChatCore {
                 mentioned,
                 everyone_mentioned,
                 suppressed,
+                migrated_user_ids,
                 now,
             )
         };
@@ -723,6 +726,7 @@ impl GroupChatCore {
         suppressed: bool,
         block_level_markdown: bool,
         og_previews: Vec<OgPreview>,
+        migrated_user_ids: &MigratedUserIds,
         now: TimestampMillis,
     ) -> OCResult<SendMessageSuccess> {
         let PrepareSendMessageSuccess {
@@ -766,6 +770,7 @@ impl GroupChatCore {
                 mentioned,
                 everyone_mentioned,
                 suppressed,
+                migrated_user_ids,
                 now,
             )
         } else {
@@ -789,6 +794,7 @@ impl GroupChatCore {
         mentioned: &[UserId],
         everyone_mentioned: bool,
         suppressed: bool,
+        migrated_user_ids: &MigratedUserIds,
         now: TimestampMillis,
     ) -> Vec<UserId> {
         let message = &message_event.event;
@@ -799,9 +805,12 @@ impl GroupChatCore {
             .unwrap_or(message.sender);
         let message_id = message.message_id;
 
+        // Events refer to users by the ids they had at the time, so these are mapped to the latest ids
+        // of any users since migrated to a MultiUser canister, since that is what they are members as
         let user_being_replied_to = replies_to
             .as_ref()
-            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
+            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index))
+            .map(|u| migrated_user_ids.latest(u));
 
         let mentions: HashSet<_> = mentioned.iter().copied().chain(user_being_replied_to).collect();
 
@@ -813,10 +822,15 @@ impl GroupChatCore {
                     .events
                     .visible_main_events_reader(min_visible_event_index)
                     .message_internal(root_message_index.into())
-                    .and_then(|m| m.thread_summary.map(|s| (m.sender, s)))
+                    .and_then(|m| m.thread_summary.map(|s| (migrated_user_ids.latest(m.sender), s)))
                 {
                     let is_first_reply = message_index == MessageIndex::default();
-                    for follower in thread_summary.followers {
+                    let followers: HashSet<_> = thread_summary
+                        .followers
+                        .into_iter()
+                        .map(|f| migrated_user_ids.latest(f))
+                        .collect();
+                    for follower in followers {
                         self.members.update_member(&follower, |m| {
                             // Bump the thread timestamp for all followers
                             m.followed_threads.insert(root_message_index, now);
@@ -1451,6 +1465,16 @@ impl GroupChatCore {
             member: removed,
             bot_notification: result.bot_notification,
         })
+    }
+
+    // Moves the membership, block, invitation and metrics of a user migrated to a MultiUser canister
+    // onto their new id. Events which refer to the user by their old id are left as they are. Returns
+    // whether anything changed.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> bool {
+        let members_updated = self.members.migrate_user_id(old_user_id, new_user_id, now);
+        let invitations_updated = self.invited_users.migrate_user_id(old_user_id, new_user_id, now);
+        let metrics_updated = self.events.migrate_user_metrics(old_user_id, new_user_id);
+        members_updated || invitations_updated || metrics_updated
     }
 
     pub fn remove_member(
@@ -2424,6 +2448,7 @@ mod tests {
             NullEventPusher,
             finalised,
             Vec::new(),
+            &MigratedUserIds::default(),
             now,
         )
         .unwrap()

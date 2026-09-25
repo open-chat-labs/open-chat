@@ -2156,6 +2156,26 @@ export const UserIndexUpdateDiamondMembershipSubscriptionResponse = /* @__PURE__
     }),
 ]);
 
+export type UserIndexCreateMultiUserCanisterArgs = Static<
+    typeof UserIndexCreateMultiUserCanisterArgs
+>;
+export const UserIndexCreateMultiUserCanisterArgs = /* @__PURE__ */ Type.Object({
+    local_user_index_canister_id: TSPrincipal,
+});
+
+export type UserIndexCreateMultiUserCanisterResponse = Static<
+    typeof UserIndexCreateMultiUserCanisterResponse
+>;
+export const UserIndexCreateMultiUserCanisterResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: TSPrincipal,
+    }),
+    Type.Literal("LocalUserIndexNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type UserIndexSuspendUserResponse = Static<typeof UserIndexSuspendUserResponse>;
 export const UserIndexSuspendUserResponse = /* @__PURE__ */ Type.Union([
     Type.Literal("Success"),
