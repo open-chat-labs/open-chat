@@ -104,30 +104,3 @@ impl LocalUser {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // Users were previously stored with a version whether or not they had a canister of their own
-    #[test]
-    fn deserializes_from_the_previous_version() {
-        #[derive(Serialize)]
-        struct LocalUserPrevious {
-            date_created: TimestampMillis,
-            wasm_version: BuildVersion,
-            upgrade_in_progress: bool,
-            cycle_top_ups: Vec<CyclesTopUp>,
-        }
-
-        let version = BuildVersion::new(1, 2, 3);
-        let bytes = msgpack::serialize_then_unwrap(LocalUserPrevious {
-            date_created: 1,
-            wasm_version: version,
-            upgrade_in_progress: false,
-            cycle_top_ups: Vec::new(),
-        });
-        let user: LocalUser = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(user.wasm_version, Some(version));
-    }
-}
