@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Return a user migrated to a MultiUser canister under their latest id from `users` and `user` when they are looked up by an earlier one, with the earlier ids they were looked up by as `previous_user_ids` so the client can map them to their latest id. `users` returns each such user once and in full, whether or not they have been updated since, and returns `current_user` whether or not they have been updated if the caller is looked up by an earlier id ([#9549](https://github.com/open-chat-labs/open-chat/pull/9549))
 - Make `create_multi_user_canister` callable by platform operators ([#9569](https://github.com/open-chat-labs/open-chat/pull/9569))
 - Make `set_multi_user_canisters_enabled` callable by platform operators ([#9574](https://github.com/open-chat-labs/open-chat/pull/9574))
+- Store the date created and user count of each MultiUser canister alongside its LocalUserIndex, keeping the count up to date as users are created, deleted and migrated, and include them in `metrics` ([#9575](https://github.com/open-chat-labs/open-chat/pull/9575))
 
 ### Fixed
 

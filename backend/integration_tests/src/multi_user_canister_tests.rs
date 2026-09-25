@@ -6,6 +6,7 @@ use candid::Principal;
 use constants::{HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
+use serde::Deserialize;
 use sha256::sha256;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
@@ -65,6 +66,7 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let user_counts_before = local_user_counts(env, local_user_index);
+    let multi_user_canisters_before = multi_user_canisters(env, canister_ids.user_index);
 
     let alice = client::register_user_in_multi_user_canister(env, canister_ids);
     assert_eq!(alice.local_user_index, local_user_index);
@@ -118,6 +120,56 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
     tick_many(env, 5);
     let bob_events = events(env, bob.principal, bob.canister(), bob.user_id, alice.user_id);
     assert_eq!(messages(&bob_events), vec![(alice.user_id, "hello".to_string())]);
+
+    // The UserIndex counts each of them against their MultiUser canister, which it has recorded
+    // against their LocalUserIndex
+    let multi_user_canisters_after = multi_user_canisters(env, canister_ids.user_index);
+    let user_count = |canisters: &BTreeMap<CanisterId, MultiUserCanister>, canister_id| {
+        canisters.get(&canister_id).map_or(0, |c| c.user_count)
+    };
+    let mut expected_user_counts: BTreeMap<CanisterId, u32> = BTreeMap::new();
+    for user in [&alice, &bob] {
+        *expected_user_counts
+            .entry(user.canister())
+            .or_insert_with(|| user_count(&multi_user_canisters_before, user.canister())) += 1;
+        assert_eq!(
+            multi_user_canisters_after.get(&user.canister()).map(|c| c.local_user_index),
+            Some(user.local_user_index)
+        );
+    }
+    for (canister_id, expected) in expected_user_counts {
+        assert_eq!(user_count(&multi_user_canisters_after, canister_id), expected);
+    }
+}
+
+#[test]
+fn deleting_a_user_decrements_their_multi_user_canisters_user_count() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (user, user_auth) = client::register_user_in_multi_user_canister_and_include_auth(env, canister_ids);
+    tick_many(env, 5);
+    let user_count_before = multi_user_canisters(env, canister_ids.user_index)[&user.canister()].user_count;
+
+    let response = client::identity::delete_user(
+        env,
+        user_auth.auth_principal(),
+        canister_ids.identity,
+        &identity_canister::delete_user::Args {
+            public_key: user_auth.auth_public_key.clone(),
+            delegation: user_auth.auth_delegation.clone(),
+        },
+    );
+    assert!(
+        matches!(response, identity_canister::delete_user::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 5);
+
+    assert_eq!(
+        multi_user_canisters(env, canister_ids.user_index)[&user.canister()].user_count,
+        user_count_before - 1
+    );
 }
 
 #[test]
@@ -172,8 +224,10 @@ fn create_then_upgrade_multi_user_canister() {
 
     let multi_user_canister_count_before = multi_user_canister_count(env, local_user_index);
 
+    let created_after = now_millis(env);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let created_before = now_millis(env);
 
     let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
     assert_eq!(status.module_hash, Some(sha256(&wasms::MULTI_USER.module).to_vec()));
@@ -187,10 +241,12 @@ fn create_then_upgrade_multi_user_canister() {
     // The canister id -> LocalUserIndex mapping reaches the UserIndex over the idempotent event
     // queue rather than in the reply, so it takes a few rounds to arrive
     tick_many(env, 5);
-    assert!(
-        multi_user_canisters(env, canister_ids.user_index).contains(&(canister_id, local_user_index)),
-        "MultiUser canister not registered against its LocalUserIndex"
-    );
+    let multi_user_canister = multi_user_canisters(env, canister_ids.user_index)
+        .remove(&canister_id)
+        .expect("MultiUser canister not registered with the UserIndex");
+    assert_eq!(multi_user_canister.local_user_index, local_user_index);
+    assert_eq!(multi_user_canister.user_count, 0);
+    assert!((created_after..=created_before).contains(&multi_user_canister.date_created));
 
     let new_version = BuildVersion::new(0, 0, 1);
     client::user_index::happy_path::upgrade_multi_user_canister_wasm(
@@ -1504,8 +1560,17 @@ fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
     serde_json::from_value(metrics(env, canister_id)["wasm_version"].clone()).unwrap()
 }
 
-fn multi_user_canisters(env: &PocketIc, user_index_canister_id: CanisterId) -> Vec<(CanisterId, CanisterId)> {
-    serde_json::from_value(metrics(env, user_index_canister_id)["multi_user_canisters"].clone()).unwrap()
+#[derive(Deserialize)]
+struct MultiUserCanister {
+    date_created: TimestampMillis,
+    local_user_index: CanisterId,
+    user_count: u32,
+}
+
+fn multi_user_canisters(env: &PocketIc, user_index_canister_id: CanisterId) -> BTreeMap<CanisterId, MultiUserCanister> {
+    let canisters: Vec<(CanisterId, MultiUserCanister)> =
+        serde_json::from_value(metrics(env, user_index_canister_id)["multi_user_canisters"].clone()).unwrap();
+    canisters.into_iter().collect()
 }
 
 fn unblock_user(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId) {
