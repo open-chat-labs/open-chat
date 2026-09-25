@@ -375,8 +375,6 @@ impl RuntimeState {
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
             self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
-        }
-        if matches!(result, AddMemberResult::Success(_)) {
             self.data.former_members.remove(&args.user_id);
         }
 
