@@ -19,6 +19,8 @@ class CallRegistry(
         REJECTED(false),
         // Answered on another of the user's devices.
         ANSWERED_ELSEWHERE(false),
+        // Declined on another of the user's devices.
+        DECLINED_ELSEWHERE(false),
         // Answered on this device, from the ring screen, Telecom, or inside the app.
         ANSWERED_HERE(false),
     }
@@ -75,7 +77,14 @@ class CallRegistry(
             trimEarly()
             return null
         }
-        return end(id, if (dismissal.kind == DismissalKind.ENDED) End.MISSED else End.ANSWERED_ELSEWHERE)
+        return end(
+            id,
+            when (dismissal.kind) {
+                DismissalKind.ENDED -> End.MISSED
+                DismissalKind.ANSWERED_ELSEWHERE -> End.ANSWERED_ELSEWHERE
+                DismissalKind.DECLINED_ELSEWHERE -> End.DECLINED_ELSEWHERE
+            },
+        )
     }
 
     // Each returns how the ring ended, or null when the call was not ringing here.

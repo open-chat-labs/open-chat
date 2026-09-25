@@ -25,6 +25,7 @@ const COMMANDS: &[&str] = &[
     "delete_fcm_token",
     "get_pending_call_action",
     "call_ring_handled",
+    "set_call_config",
 ];
 
 fn main() {

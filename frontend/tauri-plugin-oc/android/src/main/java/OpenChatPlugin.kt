@@ -14,6 +14,7 @@ import app.tauri.plugin.JSArray
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import com.google.firebase.messaging.FirebaseMessaging
+import com.ocplugin.app.calls.CallConfig
 import com.ocplugin.app.calls.CallRinger
 import com.ocplugin.app.calls.CallTelecom
 import com.ocplugin.app.calls.IncomingCallNotifications
@@ -169,11 +170,23 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         args.messageId?.let { CallRinger.ringHandled(activity, it) }
         invoke.resolve()
     }
+
+    @Command
+    fun setCallConfig(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallConfigArgs::class.java)
+        CallConfig.set(activity, args.videoBridgeUrl)
+        invoke.resolve()
+    }
 }
 
 @InvokeArg
 class CallRingHandledArgs {
     var messageId: String? = null
+}
+
+@InvokeArg
+class SetCallConfigArgs {
+    var videoBridgeUrl: String? = null
 }
 
 object OCPluginCompanion {

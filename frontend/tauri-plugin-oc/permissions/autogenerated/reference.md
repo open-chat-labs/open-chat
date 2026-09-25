@@ -30,6 +30,7 @@ Default permissions for the plugin
 - `allow-delete-fcm-token`
 - `allow-get-pending-call-action`
 - `allow-call-ring-handled`
+- `allow-set-call-config`
 
 ## Permission Table
 
@@ -582,6 +583,32 @@ Enables the save_media command without any pre-configured scope.
 <td>
 
 Denies the save_media command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-set-call-config`
+
+</td>
+<td>
+
+Enables the set_call_config command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-set-call-config`
+
+</td>
+<td>
+
+Denies the set_call_config command without any pre-configured scope.
 
 </td>
 </tr>
