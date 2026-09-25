@@ -38,6 +38,27 @@ impl ExpiringMembers {
             .retain(|m| !(m.user_id == user_id && (channel_id.is_none() || channel_id == m.channel_id)));
     }
 
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        // The user id is part of each entry's ordering, so the user's entries are taken out and pushed
+        // back in under their new id
+        let mut migrated = Vec::new();
+        self.heap.retain(|m| {
+            if m.user_id == old_user_id {
+                migrated.push(ExpiringMember {
+                    expires: m.expires,
+                    channel_id: m.channel_id,
+                    user_id: new_user_id,
+                });
+                false
+            } else {
+                true
+            }
+        });
+        for member in migrated {
+            self.heap.push(member);
+        }
+    }
+
     pub fn change_gate_expiry(&mut self, channel_id: Option<ChannelId>, expiry_difference: i64) {
         if expiry_difference == 0 {
             return;

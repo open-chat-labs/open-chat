@@ -2329,6 +2329,12 @@ impl ChatEvents {
             .filter(|m| if let Some(since) = if_updated_since { m.last_active > since } else { true })
     }
 
+    // Moves the metrics of a user migrated to a MultiUser canister onto their new id
+    pub fn migrate_user_metrics(&mut self, old_user_id: UserId, new_user_id: UserId) -> bool {
+        self.per_user_metrics
+            .migrate_user(self.main.stable_memory_prefix(), old_user_id, new_user_id)
+    }
+
     pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: F) -> usize {
         self.main.event_count_since(since, &filter)
             + self

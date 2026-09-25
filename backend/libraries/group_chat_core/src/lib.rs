@@ -1453,6 +1453,16 @@ impl GroupChatCore {
         })
     }
 
+    // Moves the membership, block, invitation and metrics of a user migrated to a MultiUser canister
+    // onto their new id. Events which refer to the user by their old id are left as they are. Returns
+    // whether anything changed.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> bool {
+        let members_updated = self.members.migrate_user_id(old_user_id, new_user_id, now);
+        let invitations_updated = self.invited_users.migrate_user_id(old_user_id, new_user_id, now);
+        let metrics_updated = self.events.migrate_user_metrics(old_user_id, new_user_id);
+        members_updated || invitations_updated || metrics_updated
+    }
+
     pub fn remove_member(
         &mut self,
         caller: Caller,
