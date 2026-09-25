@@ -462,17 +462,20 @@ export function getUpdatedEvents(
     return result;
 }
 
+// The url of a blob belonging to `ownerId`: the canister which serves it, such as a group, community
+// or storage bucket, or a user, whose blobs are served by the canister holding them (see
+// `blobLocation`)
 export function buildBlobUrl(
     pattern: string,
-    canisterId: string,
+    ownerId: string,
     blobId: bigint,
     blobType: "blobs" | "avatar" | "banner",
     channelId?: ChannelIdentifier,
 ): string {
     const location =
         channelId === undefined
-            ? blobLocation(canisterId, blobType)
-            : { canisterId, path: `channel/${channelId.channelId}/${blobType}` };
+            ? blobLocation(ownerId, blobType)
+            : { canisterId: ownerId, path: `channel/${channelId.channelId}/${blobType}` };
 
     return `${pattern
         .replace("{canisterId}", location.canisterId)

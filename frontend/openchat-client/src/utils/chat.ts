@@ -1517,13 +1517,16 @@ export function buildUserBackgroundUrl(
         : undefined;
 }
 
+// The url of a blob belonging to `ownerId`: the canister which serves it, such as a group, community
+// or storage bucket, or a user, whose blobs are served by the canister holding them (see
+// `blobLocation`)
 export function buildBlobUrl(
     pattern: string,
-    canisterId: string,
+    ownerId: string,
     blobId: bigint,
     blobType: "blobs" | "avatar" | "profile_background",
 ): string {
-    const location = blobLocation(canisterId, blobType);
+    const location = blobLocation(ownerId, blobType);
 
     return `${pattern
         .replace("{canisterId}", location.canisterId)
