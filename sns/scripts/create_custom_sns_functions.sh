@@ -14,6 +14,9 @@ FILTER=${1:-*}
 
 for file in ./proposals/create_custom_sns_functions/$FILTER
 do
+    # Clear values set by the previous file, otherwise they carry over (eg. its validator)
+    unset FUNCTION_NAME FUNCTION_DESC URL TOPIC TITLE TARGET_CANISTER_ID VALIDATOR_CANISTER_ID VALIDATOR_NAME
+
     # Extract the FUNCTION_ID, TARGET_CANISTER and TARGET_NAME from the filename
     FILENAME="${file##*/}"
     IFS='.' read -ra ADDR <<< "$FILENAME"
