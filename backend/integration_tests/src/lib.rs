@@ -14,6 +14,7 @@ mod bot_tests;
 mod call_push_tests;
 mod change_group_role_tests;
 mod chit_tests;
+mod chunk_store_tests;
 mod client;
 mod communities;
 mod cycles_dispenser_tests;

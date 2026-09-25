@@ -1,12 +1,11 @@
-use crate::{RuntimeState, read_state};
-use ic_cdk_management_canister::ClearChunkStoreArgs;
-use tracing::info;
+use crate::RuntimeState;
 
 pub mod aggregate_top_ups;
 pub mod check_media_scan_stall;
 pub mod delete_users;
 pub mod moderate_messages;
 pub mod pull_daily_puzzle;
+pub mod refresh_chunk_store;
 pub mod refund_cycles;
 pub mod start_user_migrations;
 pub mod topup_canister_pool;
@@ -22,6 +21,7 @@ pub(crate) fn start(state: &RuntimeState) {
     delete_users::start_job_if_required(state, None);
     moderate_messages::start_job_if_required(state);
     pull_daily_puzzle::start_job();
+    refresh_chunk_store::start_job();
     refund_cycles::start_job_if_required(state, None);
     start_user_migrations::start_job_if_required(state);
     topup_canister_pool::start_job_if_required(state, None);
@@ -30,23 +30,4 @@ pub(crate) fn start(state: &RuntimeState) {
     upgrade_groups::start_job_if_required(state);
     upgrade_multi_users::start_job_if_required(state);
     upgrade_users::start_job_if_required(state);
-}
-
-fn clear_chunk_store_if_no_pending_upgrades() {
-    if let Some(canister_id) = read_state(|state| {
-        let should_clear_chunk_store = state.data.users_requiring_upgrade.is_empty()
-            && state.data.groups_requiring_upgrade.is_empty()
-            && state.data.communities_requiring_upgrade.is_empty()
-            && state.data.multi_users_requiring_upgrade.is_empty();
-
-        if should_clear_chunk_store { Some(state.env.canister_id()) } else { None }
-    }) {
-        utils::async_work::spawn_tracked(async move {
-            ic_cdk_management_canister::clear_chunk_store(&ClearChunkStoreArgs { canister_id })
-                .await
-                .unwrap();
-
-            info!("Chunk store cleared");
-        });
-    }
 }

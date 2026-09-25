@@ -8,8 +8,8 @@ use local_user_index_canister::c2c_create_multi_user_canister::{Response::*, *};
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::RngExt;
 use tracing::{error, info};
-use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, Cycles, OCResult};
-use utils::canister;
+use types::{BuildVersion, C2CError, CanisterId, Cycles, OCResult};
+use utils::canister::{self, VersionedWasmToInstall};
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
@@ -49,16 +49,23 @@ pub(crate) async fn create_multi_user_canister() -> Result<(CanisterId, BuildVer
 
 struct PrepareOk {
     canister_id: Option<CanisterId>,
-    canister_wasm: CanisterWasm,
+    canister_wasm: VersionedWasmToInstall,
     cycles_to_use: Cycles,
     init_canister_args: multi_user_canister::init::Args,
 }
 
 fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
-    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.clone();
-    if canister_wasm.module.is_empty() {
+    if state
+        .data
+        .child_canister_wasms
+        .get(ChildCanisterType::MultiUser)
+        .wasm
+        .module
+        .is_empty()
+    {
         return Err(OCErrorCode::NotInitialized.with_message("MultiUser canister wasm not set"));
     }
+    let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::MultiUser);
 
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;

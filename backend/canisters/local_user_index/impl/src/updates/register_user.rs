@@ -11,13 +11,11 @@ use local_user_index_canister::register_user::{Response::*, *};
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::RngExt;
 use tracing::error;
-use types::{
-    BuildVersion, CanisterId, CanisterWasm, Cycles, MAX_USER_INDEX, MessageContentInitial, TextContent, UserId, UserType,
-};
+use types::{BuildVersion, CanisterId, Cycles, MAX_USER_INDEX, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::ReferredUserRegistered;
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::UserRegistered;
-use utils::canister;
+use utils::canister::{self, VersionedWasmToInstall};
 use utils::text_validation::{UsernameValidationError, validate_username};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -79,7 +77,7 @@ async fn register_user(args: Args) -> Response {
 
 async fn create_user_canister(
     canister_id: Option<CanisterId>,
-    canister_wasm: CanisterWasm,
+    canister_wasm: VersionedWasmToInstall,
     cycles_to_use: Cycles,
     init_canister_args: Box<InitUserCanisterArgs>,
 ) -> Result<(UserId, BuildVersion), OCError> {
@@ -172,7 +170,7 @@ struct PrepareOk {
 enum Target {
     UserCanister {
         canister_id: Option<CanisterId>,
-        canister_wasm: CanisterWasm,
+        canister_wasm: VersionedWasmToInstall,
         cycles_to_use: Cycles,
         init_canister_args: Box<InitUserCanisterArgs>,
     },
@@ -291,7 +289,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User).wasm.clone();
+    let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::User);
 
     #[expect(deprecated)]
     let init_canister_args = InitUserCanisterArgs {
