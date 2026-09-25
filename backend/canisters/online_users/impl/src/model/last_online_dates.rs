@@ -23,6 +23,10 @@ impl LastOnlineDates {
         self.map.remove(&user_id.as_principal())
     }
 
+    pub fn count_online_since(&self, since: TimestampMillis) -> u32 {
+        self.map.values().filter(|last_online| *last_online >= since).count() as u32
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = (Principal, TimestampMillis)> + '_ {
         self.map.iter().map(|e| e.into_pair())
     }
