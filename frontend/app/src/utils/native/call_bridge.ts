@@ -181,12 +181,6 @@ function chatArgs(chatId: ChatIdentifier): {
     }
 }
 
-// Device-run tracing, read back over DevTools as window.__ocCallTrace.
-export function trace(line: string): void {
-    const w = window as unknown as { __ocCallTrace?: string[] };
-    (w.__ocCallTrace ??= []).push(new Date().toISOString().slice(11, 23) + " " + line);
-}
-
 // What the shell does with the token when the app is killed mid-call: a direct call is
 // ended for both sides; a group or channel call is only left, since ending a room ends
 // it for everyone.
@@ -238,12 +232,6 @@ export function setCallRingback(on: boolean): Promise<void> {
 // The in-app speaker control. Telecom owns the route in the shell; this is a request.
 export function setCallSpeaker(speaker: boolean): Promise<void> {
     if (!isAndroidTauriApp()) return Promise.resolve();
-    trace(
-        "setCallSpeaker " +
-            speaker +
-            " from " +
-            (new Error().stack ?? "").split("\n").slice(2, 5).join(" | "),
-    );
     return invoke<void>("plugin:oc|set_call_speaker", { speaker }).catch(() => undefined);
 }
 
