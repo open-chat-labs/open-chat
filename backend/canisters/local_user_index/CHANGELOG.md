@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
-- Once MultiUser canisters are enabled, register new users in whichever MultiUser canister has the fewest users (rather than the newest), skipping those which are full, and accept a `multi_user_canister_id` in `register_user`, in test mode only, to register the user in a given one ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Once MultiUser canisters are enabled, register new users in whichever MultiUser canister has the fewest users (rather than the newest), skipping those which are full, and accept a `multi_user_canister_id` in `register_user`, in test mode only, to register the user in a given one ([#9579](https://github.com/open-chat-labs/open-chat/pull/9579))
 
 ### Fixed
 
