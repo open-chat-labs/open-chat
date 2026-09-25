@@ -42,6 +42,7 @@ fn c2c_send_moderation_notice_impl(args: Args, state: &mut RuntimeState) -> OCRe
         },
         true,
         Vec::new(),
+        &state.data.migrated_user_ids,
         now,
     )?;
 

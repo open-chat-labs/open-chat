@@ -900,13 +900,62 @@ impl Data {
         removed
     }
 
-    // If the user was a member under any of their previous ids then the events may refer to them
-    // by those ids, so the migrations through to their current id are cached. Otherwise no events
-    // refer to them by their previous ids, so there is nothing to cache.
-    pub fn cache_migrations_if_former_member(&mut self, user_id: UserId, previous_user_ids: &[UserId]) {
-        if previous_user_ids.iter().any(|u| self.members.is_former_member(u)) {
+    // Moves everything held under the previous ids of a user migrated to a MultiUser canister (their
+    // membership of the community and its channels, block, invitations, metrics, etc) onto their
+    // latest id, stepping through each migration in turn, so that from then on they only need to be
+    // looked up by their latest id. `previous_user_ids` must be ordered oldest first. `principal` is
+    // the user's principal, if known, which is needed to update the lookup of an invited user who
+    // isn't a member. If anything was held under a previous id, the migrations are also cached, since
+    // events may refer to the user by their previous ids. Returns whether anything was moved.
+    pub fn migrate_user_ids(
+        &mut self,
+        previous_user_ids: &[UserId],
+        user_id: UserId,
+        principal: Option<Principal>,
+        now: TimestampMillis,
+    ) -> bool {
+        let next_ids = previous_user_ids.iter().skip(1).chain([&user_id]);
+        let mut migrated = false;
+        for (&old_user_id, &new_user_id) in previous_user_ids.iter().zip(next_ids) {
+            migrated |= self.migrate_user_id(old_user_id, new_user_id, principal, now);
+        }
+        if migrated {
             self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
         }
+        migrated
+    }
+
+    fn migrate_user_id(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        principal: Option<Principal>,
+        now: TimestampMillis,
+    ) -> bool {
+        if old_user_id == new_user_id {
+            return false;
+        }
+
+        let was_member = self.members.contains(&old_user_id);
+        let mut migrated = self.members.migrate_user_id(old_user_id, new_user_id, principal, now);
+        if was_member && !self.members.contains(&new_user_id) {
+            // The user has been blocked under their new id, so their membership under the old id was
+            // dropped, and they are removed from the community's channels as well
+            self.channels.leave_all_channels(old_user_id, now);
+            self.expiring_members.remove_member(old_user_id, None);
+            self.expiring_member_actions.remove_member(old_user_id, None);
+            self.achievements.remove_user(&old_user_id);
+            self.user_cache.delete(old_user_id);
+        }
+        for channel in self.channels.iter_mut() {
+            migrated |= channel.chat.migrate_user_id(old_user_id, new_user_id, now);
+        }
+        self.invited_users.migrate_user_id(old_user_id, new_user_id, now);
+        self.expiring_members.migrate_user_id(old_user_id, new_user_id);
+        self.expiring_member_actions.migrate_user_id(old_user_id, new_user_id);
+        self.achievements.migrate_user_id(old_user_id, new_user_id);
+        self.user_cache.migrate_user_id(old_user_id, new_user_id);
+        migrated
     }
 
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
