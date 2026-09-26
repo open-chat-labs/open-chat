@@ -368,6 +368,15 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             });
             jobs::start_user_migrations::start_job_if_required(state);
         }
+        UserIndexEvent::ImportUser(ev) => {
+            state.data.users_to_import.push(UserToMigrate {
+                user_id: ev.user_id,
+                multi_user_canister_id: ev.multi_user_canister_id,
+                attempt: 0,
+                not_before: 0,
+            });
+            jobs::import_users::start_job_if_required(state);
+        }
         UserIndexEvent::UserIdMigrated(ev) => {
             if state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id) {
                 for canister_id in ev.canisters_to_notify {

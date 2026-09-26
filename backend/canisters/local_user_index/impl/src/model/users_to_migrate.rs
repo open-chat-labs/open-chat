@@ -3,7 +3,7 @@ use std::collections::{HashSet, VecDeque};
 use types::{CanisterId, TimestampMillis, UserId};
 
 // The users in canisters of their own which the UserIndex has asked this LocalUserIndex to start
-// migrating to MultiUser canisters
+// migrating to MultiUser canisters, or to have one of its MultiUser canisters import
 #[derive(Serialize, Deserialize, Default)]
 pub struct UsersToMigrate {
     pending: VecDeque<UserToMigrate>,

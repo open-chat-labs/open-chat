@@ -42,6 +42,14 @@ pub struct StartedUserMigration {
     pub timestamp: TimestampMillis,
     pub user_bytes: u64,
     pub wasm_version: BuildVersion,
+    // Set once the MultiUser canister has imported the user
+    pub imported: Option<ImportedUserMigration>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ImportedUserMigration {
+    pub timestamp: TimestampMillis,
+    pub new_user_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -132,6 +140,7 @@ impl UserMigrations {
                     timestamp: now,
                     user_bytes,
                     wasm_version,
+                    imported: None,
                 });
                 true
             }
@@ -179,9 +188,64 @@ impl UserMigrations {
         }
     }
 
+    // Returns false if the user's migration hasn't started, if they have already been imported, or
+    // if their new id isn't in the MultiUser canister they are being migrated to
+    pub fn mark_imported(&mut self, user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> bool {
+        let Some(migration) = self.in_progress.get_mut(&user_id) else {
+            return false;
+        };
+        match migration.started.as_mut() {
+            Some(started) if started.imported.is_none() && new_user_id.canister_id() == migration.multi_user_canister_id => {
+                started.imported = Some(ImportedUserMigration {
+                    timestamp: now,
+                    new_user_id,
+                });
+                true
+            }
+            _ => false,
+        }
+    }
+
+    // Returns false if the user's migration to the given MultiUser canister hasn't started, or if
+    // they have already been imported
+    pub fn mark_import_failed(
+        &mut self,
+        user_id: UserId,
+        multi_user_canister_id: CanisterId,
+        error: OCError,
+        now: TimestampMillis,
+    ) -> bool {
+        match self.in_progress.get(&user_id) {
+            Some(migration)
+                if migration.multi_user_canister_id == multi_user_canister_id
+                    && migration.started.as_ref().is_some_and(|s| s.imported.is_none()) =>
+            {
+                self.in_progress.remove(&user_id);
+                self.failed.insert(
+                    user_id,
+                    FailedUserMigration {
+                        multi_user_canister_id,
+                        timestamp: now,
+                        error,
+                    },
+                );
+                true
+            }
+            _ => false,
+        }
+    }
+
     pub fn status(&self, user_id: &UserId) -> Option<UserMigrationStatus> {
         if let Some(migration) = self.in_progress.get(user_id) {
             Some(match &migration.started {
+                Some(StartedUserMigration {
+                    imported: Some(imported),
+                    ..
+                }) => UserMigrationStatus::Imported {
+                    multi_user_canister_id: migration.multi_user_canister_id,
+                    timestamp: imported.timestamp,
+                    new_user_id: imported.new_user_id,
+                },
                 Some(started) => UserMigrationStatus::Started {
                     multi_user_canister_id: migration.multi_user_canister_id,
                     timestamp: started.timestamp,
@@ -223,7 +287,16 @@ impl UserMigrations {
             concurrency: self.concurrency,
             queued: self.queue.len(),
             requested: self.in_progress.values().filter(|m| m.started.is_none()).count(),
-            started: self.in_progress.values().filter(|m| m.started.is_some()).count(),
+            started: self
+                .in_progress
+                .values()
+                .filter(|m| m.started.as_ref().is_some_and(|s| s.imported.is_none()))
+                .count(),
+            imported: self
+                .in_progress
+                .values()
+                .filter(|m| m.started.as_ref().is_some_and(|s| s.imported.is_some()))
+                .count(),
             failed: self.failed.len(),
             failed_by_error_code,
         }
@@ -236,6 +309,7 @@ pub struct UserMigrationsMetrics {
     pub queued: usize,
     pub requested: usize,
     pub started: usize,
+    pub imported: usize,
     pub failed: usize,
     pub failed_by_error_code: BTreeMap<u16, usize>,
 }
@@ -258,7 +332,7 @@ mod tests {
     }
 
     fn canister_id(i: u8) -> CanisterId {
-        Principal::from_slice(&[10, i])
+        Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
     }
 
     #[test]
@@ -413,5 +487,58 @@ mod tests {
                 error: OCErrorCode::NotReadyForMigration.into(),
             })
         );
+    }
+
+    #[test]
+    fn started_migration_is_imported_with_the_new_id() {
+        let mut migrations = UserMigrations::default();
+        migrations.enqueue(queued(1), false);
+        let next = migrations.try_take_next().unwrap().user_id;
+        migrations.mark_requested(next, canister_id(1), 1);
+
+        // The user can't be imported before their migration has started
+        let new_user_id = UserId::new_indexed(canister_id(1), 1);
+        assert!(!migrations.mark_imported(next, new_user_id, 2));
+
+        migrations.mark_started(next, canister_id(1), 100, BuildVersion::default(), 2);
+        // Nor with a new id in another canister
+        assert!(!migrations.mark_imported(next, UserId::new_indexed(canister_id(2), 1), 3));
+        assert!(migrations.mark_imported(next, new_user_id, 3));
+        assert!(!migrations.mark_imported(next, new_user_id, 4));
+
+        assert_eq!(
+            migrations.status(&next),
+            Some(UserMigrationStatus::Imported {
+                multi_user_canister_id: canister_id(1),
+                timestamp: 3,
+                new_user_id,
+            })
+        );
+        let metrics = migrations.metrics();
+        assert_eq!(metrics.started, 0);
+        assert_eq!(metrics.imported, 1);
+
+        // An imported user's import can no longer fail
+        assert!(!migrations.mark_import_failed(next, canister_id(1), OCErrorCode::UserImportFailed.into(), 5));
+    }
+
+    #[test]
+    fn failed_import_frees_the_migrations_slot() {
+        let mut migrations = UserMigrations::default();
+        migrations.set_concurrency(1);
+        migrations.enqueue(queued(1), false);
+        migrations.enqueue(queued(2), false);
+        let next = migrations.try_take_next().unwrap().user_id;
+        migrations.mark_requested(next, canister_id(1), 1);
+
+        // Only a started migration's import can fail
+        assert!(!migrations.mark_import_failed(next, canister_id(1), OCErrorCode::UserImportFailed.into(), 2));
+
+        migrations.mark_started(next, canister_id(1), 100, BuildVersion::default(), 2);
+        assert!(!migrations.mark_import_failed(next, canister_id(2), OCErrorCode::UserImportFailed.into(), 3));
+        assert!(migrations.mark_import_failed(next, canister_id(1), OCErrorCode::UserImportFailed.into(), 3));
+
+        assert!(matches!(migrations.status(&next), Some(UserMigrationStatus::Failed { .. })));
+        assert_eq!(migrations.try_take_next(), Some(queued(2)));
     }
 }

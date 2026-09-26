@@ -25,14 +25,14 @@ async fn export_migrating_user(args: Args) -> Response {
 async fn export(canister_id: CanisterId) -> Result<SuccessResult, C2CError> {
     let mut user_bytes = 0;
     loop {
-        let user_canister::c2c_export_user::Response::Success(page) =
+        let user_canister::c2c_export_user::Response::Success(result) =
             user_canister_c2c_client::c2c_export_user(canister_id, &user_canister::c2c_export_user::Args { from: user_bytes })
                 .await?;
 
-        if page.is_empty() {
+        user_bytes += result.page.len() as u64;
+        if result.page.is_empty() || user_bytes >= result.total_bytes {
             break;
         }
-        user_bytes += page.len() as u64;
     }
 
     let mut stable_memory_entries = 0;

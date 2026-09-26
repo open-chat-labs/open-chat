@@ -7380,6 +7380,8 @@ dependencies = [
  "oc_error_codes",
  "rand 0.10.2",
  "serde",
+ "serde_bytes",
+ "sha256",
  "stable_memory",
  "stable_memory_map",
  "timer_job_queues",

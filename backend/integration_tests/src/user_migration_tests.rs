@@ -10,7 +10,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, Document, MessageContentInitial, OptionUpdate, P2PSwapContentInitial, UserId,
+    BuildVersion, CanisterId, CanisterWasm, Chat, Document, MessageContent, MessageContentInitial, OptionUpdate,
+    P2PSwapContentInitial, UserId,
 };
 use user_index_canister::user_migration::UserMigrationStatus;
 
@@ -297,7 +298,7 @@ fn migrate_users_starts_migrating_each_user_to_a_multi_user_canister() {
     tick_many(env, 10);
 
     let after = user_migration_metrics(env, canister_ids.user_index);
-    assert_eq!(after.started, before.started + 1);
+    assert_eq!(after.started_or_imported(), before.started_or_imported() + 1);
     assert_eq!(after.failed, before.failed);
 
     // The canister is frozen, so its owner can't change it
@@ -313,6 +314,79 @@ fn migrate_users_starts_migrating_each_user_to_a_multi_user_canister() {
 
     // A user already being migrated isn't queued again
     assert!(migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id], None).is_empty());
+}
+
+#[test]
+fn migrated_user_is_imported_into_the_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    // Enough messages that the stable memory map entries are pulled in more than one page, then one
+    // to themselves, and an avatar
+    for _ in 0..40 {
+        client::user::happy_path::send_text_message(env, &user1, user2.user_id, "x".repeat(5000), None);
+    }
+    let message_to_user2 = random_string();
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, message_to_user2.clone(), None);
+    let message_to_self = random_string();
+    client::user::happy_path::send_text_message(env, &user1, user1.user_id, message_to_self.clone(), None);
+    let avatar = document(100 * 1024);
+    let avatar_id = avatar.id;
+    client::user::happy_path::set_avatar(env, &user1, Some(avatar));
+    tick_many(env, 3);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+    assert_eq!(new_user_id.canister_id(), multi_user_canister);
+    assert_eq!(metrics(env, multi_user_canister)["user_imports_in_progress"], 0);
+
+    // The user, now held by the MultiUser canister, has their chats and avatar, with their chat with
+    // themselves under their new id
+    let user_canister::initial_state::Response::Success(state) = client::user::initial_state(
+        env,
+        user1.principal,
+        multi_user_canister,
+        &user_canister::initial_state::Args {},
+    );
+    assert_eq!(state.avatar_id, Some(avatar_id));
+    let latest_message = |them: UserId| {
+        let chat = state
+            .direct_chats
+            .summaries
+            .iter()
+            .find(|c| c.them == them)
+            .unwrap_or_else(|| panic!("No chat with {them}"));
+        match &chat.latest_message.as_ref().unwrap().event.content {
+            MessageContent::Text(text) => text.text.clone(),
+            content => panic!("Unexpected content: {content:?}"),
+        }
+    };
+    assert_eq!(latest_message(user2.user_id), message_to_user2);
+    assert_eq!(latest_message(new_user_id), message_to_self);
+    assert!(!state.direct_chats.summaries.iter().any(|c| c.them == user1.user_id));
 }
 
 #[test]
@@ -391,7 +465,7 @@ fn migration_is_retried_until_the_user_canister_is_ready() {
     tick_many(env, 10);
 
     let metrics = user_migration_metrics(env, canister_ids.user_index);
-    assert_eq!(metrics.started, before.started);
+    assert_eq!(metrics.started_or_imported(), before.started_or_imported());
     assert_eq!(metrics.failed, before.failed);
 
     for _ in 0..5 {
@@ -400,7 +474,7 @@ fn migration_is_retried_until_the_user_canister_is_ready() {
     }
 
     let metrics = user_migration_metrics(env, canister_ids.user_index);
-    assert_eq!(metrics.started, before.started + 1);
+    assert_eq!(metrics.started_or_imported(), before.started_or_imported() + 1);
     assert_eq!(metrics.failed, before.failed);
 }
 
@@ -492,7 +566,14 @@ fn user_canister_is_upgraded_to_the_latest_wasm_before_migrating() {
     tick_many(env, 10);
     assert_ne!(wasm_version(env, user.canister()), version);
 
-    migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id], None);
+    // Migrated to a canister which doesn't import users, so that the migration stays started
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister(1)),
+    );
     tick_many(env, 10);
 
     assert_eq!(wasm_version(env, user.canister()), version);
@@ -541,8 +622,16 @@ fn multi_user_canister(i: u8) -> CanisterId {
 #[derive(serde::Deserialize)]
 struct UserMigrationMetrics {
     started: usize,
+    imported: usize,
     failed: usize,
     failed_by_error_code: BTreeMap<u16, usize>,
+}
+
+impl UserMigrationMetrics {
+    // Migrations which have started, including those whose user has since been imported
+    fn started_or_imported(&self) -> usize {
+        self.started + self.imported
+    }
 }
 
 fn user_migration_metrics(env: &PocketIc, user_index: CanisterId) -> UserMigrationMetrics {

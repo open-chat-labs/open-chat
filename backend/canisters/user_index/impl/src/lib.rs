@@ -163,6 +163,11 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_event_to_local_user_index_canister(&mut self, canister_id: CanisterId, event: LocalUserIndexEvent) {
+        self.data.user_index_event_sync_queue.push(canister_id, event);
+        jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
+    }
+
     pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
         for canister_id in self.data.local_index_map.canisters() {
             if except != Some(*canister_id) {

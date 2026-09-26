@@ -38,6 +38,23 @@ pub enum LocalUserIndexEvent {
     MultiUserCanisterCreated(CanisterId),
     UserMigrationStarted(Box<UserMigrationStarted>),
     UserMigrationFailedToStart(Box<UserMigrationFailedToStart>),
+    UserImported(Box<UserImported>),
+    UserImportFailed(Box<UserImportFailed>),
+}
+
+// The MultiUser canister the user is being migrated to has imported them, giving them a new id
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserImported {
+    pub old_user_id: UserId,
+    pub new_user_id: UserId,
+}
+
+// The MultiUser canister the user is being migrated to couldn't import them
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserImportFailed {
+    pub user_id: UserId,
+    pub multi_user_canister_id: CanisterId,
+    pub error: OCError,
 }
 
 // The user's canister has started migrating them to the MultiUser canister, and is now frozen
