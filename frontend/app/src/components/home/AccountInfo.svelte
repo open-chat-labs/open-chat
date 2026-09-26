@@ -10,7 +10,7 @@
         Lazy,
         type OneSecTransferFees,
         OpenChat,
-        userIdToIcrcAccount,
+        userWalletAccount,
     } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
@@ -70,9 +70,11 @@
         } else if (isOneSecNetwork) {
             return oneSecAddress;
         } else {
-            // The user's wallet, which is a subaccount of their canister once a canister holds
-            // many users. For a user alone in their canister this is just their user id.
-            return encodeIcrcAccount(userIdToIcrcAccount($currentUserIdStore));
+            // The user's wallet, which is their principal's account if they are in a MultiUser
+            // canister. For a user alone in their canister this is just their user id.
+            return encodeIcrcAccount(
+                userWalletAccount($currentUserIdStore, client.OcIdentityPrincipal),
+            );
         }
     });
 

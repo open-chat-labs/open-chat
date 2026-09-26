@@ -1,25 +1,22 @@
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
-import { userIdToApiIcrcAccount } from "./icrcAccount";
+import { apiIcrcAccount } from "./icrcAccount";
 
-describe("userIdToApiIcrcAccount", () => {
-    const canisterId = "dfdal-2uaaa-aaaaa-qaama-cai";
+describe("apiIcrcAccount", () => {
+    const owner = Principal.fromText("dfdal-2uaaa-aaaaa-qaama-cai");
 
-    test("a user alone in their canister is the canister's default account", () => {
-        const account = userIdToApiIcrcAccount(canisterId);
+    test("the default subaccount is an empty option", () => {
+        const account = apiIcrcAccount({ owner });
 
-        expect(account.owner.toText()).toBe(canisterId);
+        expect(account.owner).toBe(owner);
         expect(account.subaccount).toEqual([]);
     });
 
-    test("an indexed user is a subaccount of the canister holding them", () => {
-        // `UserId::new_indexed(canisterId, 1000)`, per the vector in openchat-shared
-        const account = userIdToApiIcrcAccount("svgk6-q4aaa-aaaaa-qaamo-ray");
+    test("a subaccount is wrapped in an option", () => {
+        const subaccount = new Uint8Array(32).fill(1);
+        const account = apiIcrcAccount({ owner, subaccount });
 
-        expect(account.owner.toText()).toBe(canisterId);
-        expect(account.subaccount).toHaveLength(1);
-        const subaccount = account.subaccount[0]!;
-        expect(subaccount).toHaveLength(32);
-        expect(Array.from(subaccount.subarray(30))).toEqual([0x03, 0xe8]);
-        expect(subaccount.subarray(0, 30).every((b) => b === 0)).toBe(true);
+        expect(account.owner).toBe(owner);
+        expect(account.subaccount).toEqual([subaccount]);
     });
 });

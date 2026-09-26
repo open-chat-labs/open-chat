@@ -350,7 +350,7 @@ import {
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
-    userIdToIcrcAccount,
+    userCanisterSpenderAccount,
 } from "@shared";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
@@ -7821,9 +7821,12 @@ export class OpenChat {
                 wallet,
                 ledger,
                 amount,
-                // The user's canister pulls the funds, spending as the same account which holds the
-                // user's own OpenChat balance, so that is what the wallet has to name as spender
-                spender: userIdToIcrcAccount(currentUserIdStore.value),
+                // The user's canister pulls the funds, so the wallet has to name the account it
+                // spends as for this user as the spender
+                spender: userCanisterSpenderAccount(
+                    currentUserIdStore.value,
+                    this.OcIdentityPrincipal,
+                ),
             },
             this.config.icUrl ?? window.location.origin,
             chooseAccount,

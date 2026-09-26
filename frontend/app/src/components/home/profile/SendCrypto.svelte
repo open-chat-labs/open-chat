@@ -17,7 +17,13 @@
         type OpenChat,
         type ResourceKey,
     } from "@client";
-    import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "@shared";
+    import {
+        encodeIcrcAccount,
+        ErrorCode,
+        isAccountIdentifierValid,
+        isICRCAddressValid,
+        userWalletAccount,
+    } from "@shared";
     import { getContext, onMount } from "svelte";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -64,8 +70,11 @@
 
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    // The user's own wallet, which they can't send to
     let account = $derived(
-        tokenDetails?.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
+        tokenDetails?.symbol === ICP_SYMBOL
+            ? $currentUserStore.cryptoAccount
+            : encodeIcrcAccount(userWalletAccount($currentUserIdStore, client.OcIdentityPrincipal)),
     );
     let symbol = $derived(tokenDetails.symbol);
     let selectedNetwork = $state<string>();
