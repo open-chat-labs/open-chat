@@ -6,7 +6,7 @@ use crate::User;
 use chat_events::{
     AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, NullEventPusher, Reader, TipMessageArgs,
 };
-use direct_chat::{DirectChat, EventsTtlChange};
+use direct_chat::{DirectChat, EventsTtlChange, EventsTtlLatestChange};
 use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use types::{
@@ -310,24 +310,19 @@ pub fn set_events_ttl(
         at: args.timestamp,
     };
     let apply = match chat.events_ttl_latest_change() {
+        // Even if the chat was created by an earlier event from the sender, delivered after they
+        // changed the TTL, eg. in the same batch as this one
+        EventsTtlLatestChange::NeverChanged => true,
         // Events from a canister arrive in the order they were sent, so the sender's change
         // follows their previous one, even if both were given the same time
-        Some(latest) if latest.by == sender => true,
-        Some(latest) => change.supersedes(&latest),
-        None => {
-            let events_ttl = chat.events().get_events_time_to_live();
-            // Until the TTL is set it is `None`, timestamped with when the chat was created, which
-            // may be after the sender set it, eg. if the chat was created by an earlier event from
-            // the sender delivered in the same batch as this one, so the sender's change is applied
-            let never_set = events_ttl.value.is_none() && events_ttl.timestamp == chat.date_created();
-            // Otherwise the chat is from before the latest change was recorded, so the latest
-            // change is taken to be the recipient's, at the time the TTL was last set
-            never_set
-                || change.supersedes(&EventsTtlChange {
-                    by: my_user_id,
-                    at: events_ttl.timestamp,
-                })
-        }
+        EventsTtlLatestChange::Changed(latest) if latest.by == sender => true,
+        EventsTtlLatestChange::Changed(latest) => change.supersedes(&latest),
+        // The chat is from before the latest change was recorded, so the latest change is taken
+        // to be the recipient's, at the time the TTL was last set
+        EventsTtlLatestChange::Unknown => change.supersedes(&EventsTtlChange {
+            by: my_user_id,
+            at: chat.events().get_events_time_to_live().timestamp,
+        }),
     };
     if apply {
         chat.apply_their_events_time_to_live(args.events_ttl, args.timestamp, now);
