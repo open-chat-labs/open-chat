@@ -8,8 +8,6 @@ use oc_error_codes::OCErrorCode;
 use tracing::info;
 use user_index_canister::migrate_users::{Response::*, *};
 
-// Only available in test mode until the MultiUser canister imports users, since until then a
-// migrated user's canister stays frozen
 #[update(guard = "caller_is_platform_operator", msgpack = true)]
 #[trace]
 fn migrate_users(args: Args) -> Response {
@@ -17,9 +15,6 @@ fn migrate_users(args: Args) -> Response {
 }
 
 fn migrate_users_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if !state.data.test_mode {
-        return Error(OCErrorCode::InitiatorNotAuthorized.into());
-    }
     let multi_user_canister_id = args.multi_user_canister_id;
     if multi_user_canister_id.is_some() && !state.data.test_mode {
         return Error(OCErrorCode::InitiatorNotAuthorized.with_message("Overriding the MultiUser canister is test only"));

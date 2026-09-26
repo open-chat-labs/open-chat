@@ -205,6 +205,7 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
         ..
     } = wrapper.env();
 
+    let operator = platform_operator(env, canister_ids, *controller);
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
@@ -224,7 +225,7 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
     // A cancellation of a migration to another MultiUser canister is rejected
     let response = client::user_index::cancel_user_migration(
         env,
-        *controller,
+        operator.principal,
         canister_ids.user_index,
         &user_index_canister::cancel_user_migration::Args {
             user_id: user1.user_id,
@@ -236,7 +237,13 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
         "{response:?}"
     );
 
-    cancel_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
+    cancel_user_migration(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user1,
+        multi_user_canister(1),
+    );
 
     // The canister is no longer frozen, so its owner can change it again
     let response = client::user::set_bio(
@@ -257,7 +264,13 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
     );
 
     // Cancelling again succeeds, since there is nothing left to cancel
-    cancel_user_migration(env, *controller, canister_ids.user_index, &user1, multi_user_canister(1));
+    cancel_user_migration(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user1,
+        multi_user_canister(1),
+    );
 
     // And the migration can be started again, to another MultiUser canister
     start_migration(env, canister_ids, *controller, &user1, multi_user_canister(2));
