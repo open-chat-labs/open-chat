@@ -474,6 +474,17 @@ pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntrie
     })
 }
 
+// Inserts entries as returned by `read_all_entries`, eg. those exported from a canister which held a
+// single user, into the current key scope, each into whichever map its key belongs in
+pub fn insert_raw_entries(entries: Vec<(Vec<u8>, Vec<u8>)>) {
+    with_map_mut(|m| {
+        for (key, value) in entries {
+            let (key, class) = scoped(BaseKey::new(key));
+            m.map_mut(class).insert(key, value);
+        }
+    })
+}
+
 // The most an entry's encoding adds to its key and value, eg. with msgpack a 2 element array (1 byte)
 // holding 2 byte arrays (each with a header of up to 5 bytes)
 pub const ENTRY_ENCODING_OVERHEAD: usize = 11;
@@ -1079,6 +1090,37 @@ mod tests {
             let ReadAllEntriesResult { entries, finished } = read_all_entries(Some(&unscoped_keys[1]), usize::MAX);
             assert!(finished);
             assert_eq!(entries.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>(), unscoped_keys[2..]);
+        });
+    }
+
+    #[test]
+    fn raw_entries_are_inserted_into_the_current_scope() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        let entries: Vec<(Vec<u8>, Vec<u8>)> = {
+            let mut entries: Vec<_> = (0..3)
+                .map(|i| (BaseKey::from(small_key(i)).into_vec(), vec![i as u8]))
+                .collect();
+            entries.push((BaseKey::from(default_key()).into_vec(), vec![10]));
+            entries.sort();
+            entries
+        };
+
+        with_key_scope(KeyScope::User(1), || insert_raw_entries(entries.clone()));
+
+        with_key_scope(KeyScope::User(1), || {
+            let ReadAllEntriesResult { entries: read, finished } = read_all_entries(None, usize::MAX);
+            assert!(finished);
+            assert_eq!(read, entries);
+            // Each entry is in the map its key belongs in
+            with_map(|m| {
+                assert_eq!(m.get(small_key(0)), Some(vec![0]));
+                assert_eq!(m.get(default_key()), Some(vec![10]));
+            });
+        });
+        with_key_scope(KeyScope::User(2), || {
+            assert!(read_all_entries(None, usize::MAX).entries.is_empty());
         });
     }
 
