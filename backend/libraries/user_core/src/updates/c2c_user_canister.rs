@@ -507,6 +507,27 @@ mod tests {
     }
 
     #[test]
+    fn changes_made_after_one_given_a_later_time_are_not_given_an_earlier_one() {
+        // B's id sorts before A's. In the same round, A applies B's change, then changes the TTL
+        // twice, while B changes it again.
+        let (a, b) = (user_id(2), user_id(1));
+        let (mut user_a, mut user_b) = (user(), user());
+
+        let b_first = change(&mut user_b, b, a, 500, 200);
+        receive(&mut user_a, a, b, 500, b_first, 200);
+        let a_first = change(&mut user_a, a, b, 1000, 200);
+        let a_second = change(&mut user_a, a, b, 2000, 200);
+        assert!(a_second >= a_first);
+        let b_second = change(&mut user_b, b, a, 3000, 200);
+
+        receive(&mut user_b, b, a, 1000, a_first, 210);
+        receive(&mut user_b, b, a, 2000, a_second, 210);
+        receive(&mut user_a, a, b, 3000, b_second, 210);
+
+        assert_eq!(events_ttl(&user_a, b), events_ttl(&user_b, a));
+    }
+
+    #[test]
     fn changes_from_one_user_at_the_same_time_are_applied_in_order() {
         // B's id sorts after A's, so the tie-break on user ids alone wouldn't apply B's second change
         let (a, b) = (user_id(1), user_id(2));

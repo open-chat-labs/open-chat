@@ -568,9 +568,11 @@ impl DirectChat {
 
     // Sets the TTL as changed by the user `user_id`, returning the time the change is given, to be
     // sent to the other user, or `None` if the TTL already had the value, in which case nothing is
-    // changed. A change made after applying the other user's change is given a later time than
-    // theirs, since if both had the same time the tie-break on user ids might settle in favour of
-    // theirs, though the user's change was made after it.
+    // changed. A change is never given an earlier time than the latest change, so that each copy's
+    // latest change is the latest either copy has seen. A change made after applying the other
+    // user's change is given a later time than theirs, since if both had the same time the
+    // tie-break on user ids might settle in favour of theirs, though the user's change was made
+    // after it.
     pub fn set_events_time_to_live(
         &mut self,
         user_id: UserId,
@@ -578,7 +580,8 @@ impl DirectChat {
         now: TimestampMillis,
     ) -> Option<TimestampMillis> {
         let changed_at = match self.events_ttl_latest_change {
-            EventsTtlLatestChange::Changed(latest) if latest.by != user_id => max(now, latest.at + 1),
+            EventsTtlLatestChange::Changed(latest) if latest.by == user_id => max(now, latest.at),
+            EventsTtlLatestChange::Changed(latest) => max(now, latest.at + 1),
             _ => now,
         };
         self.events.set_events_time_to_live(user_id, events_ttl, now)?;
@@ -895,8 +898,9 @@ mod tests {
         assert_eq!(chat.set_events_time_to_live(user(1), Some(2000), 20), Some(21));
         assert_eq!(chat.events_ttl_latest_change(), changed(1, 21));
 
-        // Following the user's own change, a change is given the current time
-        assert_eq!(chat.set_events_time_to_live(user(1), Some(3000), 21), Some(21));
+        // Following the user's own change, a change is given the current time, but no earlier than
+        // that change
+        assert_eq!(chat.set_events_time_to_live(user(1), Some(3000), 20), Some(21));
         assert_eq!(chat.set_events_time_to_live(user(1), Some(4000), 50), Some(50));
     }
 
