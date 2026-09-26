@@ -38,15 +38,20 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
         if let Some(events_ttl) = args.events_ttl.expand() {
             let now = state.env.now();
 
-            chat.set_events_time_to_live(state.env.canister_id().into(), events_ttl, now);
-
-            state.push_user_canister_event(
-                args.user_id,
-                UserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {
-                    events_ttl,
-                    timestamp: now,
-                })),
-            );
+            // Only a change is sent, since sending the TTL the chat already has would count as
+            // setting it in the other user's copy, which may not have it
+            if chat
+                .set_events_time_to_live(state.env.canister_id().into(), events_ttl, now)
+                .is_some()
+            {
+                state.push_user_canister_event(
+                    args.user_id,
+                    UserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {
+                        events_ttl,
+                        timestamp: now,
+                    })),
+                );
+            }
         }
     });
 
