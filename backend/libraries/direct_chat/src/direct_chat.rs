@@ -9,7 +9,7 @@ use chat_events::{
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::collections::HashSet;
 use types::{
     BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex,
@@ -43,6 +43,34 @@ pub struct DirectChat {
     // Whether the chat is the user's chat with themselves, in which case the messages they send
     // are read by "them" too
     self_chat: bool,
+    // The latest change to the events' TTL, by either user, which a change from the other user must
+    // supersede to be applied
+    events_ttl_latest_change: EventsTtlLatestChange,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum EventsTtlLatestChange {
+    // The chat is from before the latest change was recorded, and its TTL hasn't changed since
+    #[default]
+    Unknown,
+    NeverChanged,
+    Changed(EventsTtlChange),
+}
+
+// A change to a direct chat's TTL, by the user who made it, at the time they gave it. Both copies
+// of a chat record the same change, so they agree on which of two changes supersedes the other.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EventsTtlChange {
+    pub by: UserId,
+    pub at: TimestampMillis,
+}
+
+impl EventsTtlChange {
+    // The later change supersedes the other, with two changes made at the same time settled in
+    // favour of whichever user's id has the lower bytes
+    pub fn supersedes(&self, other: &EventsTtlChange) -> bool {
+        self.at > other.at || (self.at == other.at && self.by.as_slice() < other.by.as_slice())
+    }
 }
 
 impl DirectChat {
@@ -66,6 +94,7 @@ impl DirectChat {
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),
             self_chat: my_user_id == them,
+            events_ttl_latest_change: EventsTtlLatestChange::NeverChanged,
         }
     }
 
@@ -533,13 +562,49 @@ impl DirectChat {
         self.events.end_video_call(event_key, now, event_pusher)
     }
 
+    pub fn events_ttl_latest_change(&self) -> EventsTtlLatestChange {
+        self.events_ttl_latest_change
+    }
+
+    // Sets the TTL as changed by the user `user_id`, returning the time the change is given, to be
+    // sent to the other user, or `None` if the TTL already had the value, in which case nothing is
+    // changed. A change is never given an earlier time than the latest change, so that each copy's
+    // latest change is the latest either copy has seen. A change made after applying the other
+    // user's change is given a later time than theirs, since if both had the same time the
+    // tie-break on user ids might settle in favour of theirs, though the user's change was made
+    // after it.
     pub fn set_events_time_to_live(
         &mut self,
         user_id: UserId,
         events_ttl: Option<Milliseconds>,
         now: TimestampMillis,
-    ) -> Option<PushEventResultInternal> {
-        self.events.set_events_time_to_live(user_id, events_ttl, now)
+    ) -> Option<TimestampMillis> {
+        let changed_at = match self.events_ttl_latest_change {
+            EventsTtlLatestChange::Changed(latest) if latest.by == user_id => max(now, latest.at),
+            EventsTtlLatestChange::Changed(latest) => max(now, latest.at + 1),
+            _ => now,
+        };
+        self.events.set_events_time_to_live(user_id, events_ttl, now)?;
+        self.events_ttl_latest_change = EventsTtlLatestChange::Changed(EventsTtlChange {
+            by: user_id,
+            at: changed_at,
+        });
+        Some(changed_at)
+    }
+
+    // Applies the other user's change to the TTL, which they made at `changed_at`. Their change is
+    // recorded as the latest even if the TTL already had the value, since it is in their copy.
+    pub fn apply_their_events_time_to_live(
+        &mut self,
+        events_ttl: Option<Milliseconds>,
+        changed_at: TimestampMillis,
+        now: TimestampMillis,
+    ) {
+        self.events.set_events_time_to_live(self.them, events_ttl, now);
+        self.events_ttl_latest_change = EventsTtlLatestChange::Changed(EventsTtlChange {
+            by: self.them,
+            at: changed_at,
+        });
     }
 
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
@@ -609,6 +674,8 @@ struct DirectChatSerde {
     read_by_them_up_to: Option<Timestamped<Option<MessageIndex>>>,
     #[serde(default)]
     core: Option<LegacyDirectChatCore>,
+    #[serde(default)]
+    events_ttl_latest_change: EventsTtlLatestChange,
 }
 
 #[derive(Deserialize)]
@@ -651,6 +718,7 @@ impl From<DirectChatSerde> for DirectChat {
             read_by_me_up_to,
             read_by_them_up_to,
             self_chat: value.self_chat,
+            events_ttl_latest_change: value.events_ttl_latest_change,
         };
         if chat.self_chat {
             chat.align_self_chat_read_positions();
@@ -806,6 +874,52 @@ mod tests {
     }
 
     #[test]
+    fn events_ttl_records_the_latest_change() {
+        init_stable_memory_map();
+        let mut chat = DirectChat::new(user(1), user(2), UserType::User, 1, None, 123, 1);
+        assert_eq!(chat.events_ttl_latest_change(), EventsTtlLatestChange::NeverChanged);
+
+        // Setting the TTL it already has changes nothing
+        assert!(chat.set_events_time_to_live(user(1), None, 10).is_none());
+        assert_eq!(chat.events_ttl_latest_change(), EventsTtlLatestChange::NeverChanged);
+
+        assert_eq!(chat.set_events_time_to_live(user(1), Some(1000), 10), Some(10));
+        assert_eq!(chat.events_ttl_latest_change(), changed(1, 10));
+
+        // The other user's change, made at 20, is recorded with that time, even though it's applied
+        // at 30 and the TTL already has the value
+        chat.apply_their_events_time_to_live(Some(1000), 20, 30);
+        assert_eq!(chat.events_ttl_latest_change(), changed(2, 20));
+
+        let deserialized: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
+        assert_eq!(deserialized.events_ttl_latest_change(), changed(2, 20));
+
+        // A change made at the same time as the other user's, after applying it, is given a later time
+        assert_eq!(chat.set_events_time_to_live(user(1), Some(2000), 20), Some(21));
+        assert_eq!(chat.events_ttl_latest_change(), changed(1, 21));
+
+        // Following the user's own change, a change is given the current time, but no earlier than
+        // that change
+        assert_eq!(chat.set_events_time_to_live(user(1), Some(3000), 20), Some(21));
+        assert_eq!(chat.set_events_time_to_live(user(1), Some(4000), 50), Some(50));
+    }
+
+    fn changed(by: u8, at: TimestampMillis) -> EventsTtlLatestChange {
+        EventsTtlLatestChange::Changed(EventsTtlChange { by: user(by), at })
+    }
+
+    #[test]
+    fn later_ttl_change_supersedes_with_ties_settled_by_user_id() {
+        let change = |by: u8, at| EventsTtlChange { by: user(by), at };
+
+        assert!(change(2, 20).supersedes(&change(1, 10)));
+        assert!(!change(1, 10).supersedes(&change(2, 20)));
+        assert!(change(1, 10).supersedes(&change(2, 10)));
+        assert!(!change(2, 10).supersedes(&change(1, 10)));
+        assert!(!change(1, 10).supersedes(&change(1, 10)));
+    }
+
+    #[test]
     fn muting_or_archiving_counts_as_an_update() {
         init_stable_memory_map();
         let mut chat = DirectChat::new(user(1), user(2), UserType::User, 1, None, 123, 1);
@@ -932,6 +1046,12 @@ mod tests {
         let from_split_with_date_created_on_core: DirectChat =
             msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(split(true)));
         let round_tripped: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
+
+        // Chats from before the latest change to the TTL was recorded don't know it
+        for deserialized in [&from_flat, &from_split, &from_split_with_date_created_on_core] {
+            assert_eq!(deserialized.events_ttl_latest_change(), EventsTtlLatestChange::Unknown);
+        }
+        assert_eq!(round_tripped.events_ttl_latest_change(), EventsTtlLatestChange::NeverChanged);
 
         for deserialized in [from_flat, from_split, from_split_with_date_created_on_core, round_tripped] {
             assert_eq!(deserialized.them, them);
