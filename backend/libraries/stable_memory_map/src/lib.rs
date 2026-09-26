@@ -475,14 +475,38 @@ pub fn read_all_entries(after: Option<&[u8]>, max_bytes: usize) -> ReadAllEntrie
 }
 
 // Inserts entries as returned by `read_all_entries`, eg. those exported from a canister which held a
-// single user, into the current key scope, each into whichever map its key belongs in
-pub fn insert_raw_entries(entries: Vec<(Vec<u8>, Vec<u8>)>) {
-    with_map_mut(|m| {
-        for (key, value) in entries {
-            let (key, class) = scoped(BaseKey::new(key));
-            m.map_mut(class).insert(key, value);
+// single user, into the current key scope, each into whichever map its key belongs in. The entries
+// of each map are inserted with the map's `insert_many`, which is far cheaper than inserting them
+// one at a time when they are in key order, as `read_all_entries` returns them. Entries already in
+// the scope under the same keys are overwritten, so a page of entries can safely be inserted again.
+//
+// Nothing is inserted if any key is of an unknown type, eg. one added in a newer version of the
+// canister the entries came from, since which map it belongs in can't be known. The first such key is
+// returned.
+pub fn insert_raw_entries(entries: Vec<(Vec<u8>, Vec<u8>)>) -> Result<(), Vec<u8>> {
+    if let Some((key, _)) = entries.iter().find(|(key, _)| keys::extract_key_type(key).is_none()) {
+        return Err(key.clone());
+    }
+
+    let mut default_entries = Vec::new();
+    let mut small_entries = Vec::new();
+    for (key, value) in entries {
+        let (key, class) = scoped(BaseKey::new(key));
+        match class {
+            MapClass::Default => default_entries.push((key, value)),
+            MapClass::SmallEntries => small_entries.push((key, value)),
         }
-    })
+    }
+
+    with_map_mut(|m| {
+        if !default_entries.is_empty() {
+            m.map_mut(MapClass::Default).insert_many(default_entries);
+        }
+        if !small_entries.is_empty() {
+            m.map_mut(MapClass::SmallEntries).insert_many(small_entries);
+        }
+    });
+    Ok(())
 }
 
 // The most an entry's encoding adds to its key and value, eg. with msgpack a 2 element array (1 byte)
@@ -1094,6 +1118,71 @@ mod tests {
     }
 
     #[test]
+    fn entries_exported_from_a_single_user_map_are_imported_into_a_user_scope() {
+        // Export in several pages from a map holding a single user, as the User canister does
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
+        with_map_mut(|m| {
+            for i in 0..20 {
+                m.insert(small_key(i), vec![i as u8]);
+            }
+            m.insert(default_key(), vec![100; 50]);
+        });
+        let mut pages = Vec::new();
+        let mut after: Option<Vec<u8>> = None;
+        loop {
+            let ReadAllEntriesResult { entries, finished } = read_all_entries(after.as_deref(), 100);
+            after = entries.last().map(|(key, _)| key.clone());
+            pages.push(entries);
+            if finished {
+                break;
+            }
+        }
+        assert!(pages.len() > 1);
+        let exported: Vec<_> = pages.iter().flatten().cloned().collect();
+
+        // Then import them into a user's scope in a map holding many users, which also holds other
+        // users' entries and the canister's own
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+        for scope in [KeyScope::User(2), KeyScope::Canister] {
+            with_key_scope(scope, || with_map_mut(|m| m.insert(small_key(0), vec![200])));
+        }
+
+        with_key_scope(KeyScope::User(1), || {
+            for page in pages {
+                insert_raw_entries(page).unwrap();
+            }
+            assert_eq!(read_all_entries(None, usize::MAX).entries, exported);
+        });
+        for scope in [KeyScope::User(2), KeyScope::Canister] {
+            with_key_scope(scope, || {
+                assert_eq!(
+                    read_all_entries(None, usize::MAX).entries,
+                    vec![(BaseKey::from(small_key(0)).into_vec(), vec![200])]
+                );
+            });
+        }
+    }
+
+    #[test]
+    fn raw_entries_with_a_key_of_an_unknown_type_are_not_inserted() {
+        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
+        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
+
+        let unknown_key = vec![200, 1, 2, 3];
+        let entries = vec![
+            (BaseKey::from(small_key(0)).into_vec(), vec![1]),
+            (unknown_key.clone(), vec![2]),
+        ];
+
+        with_key_scope(KeyScope::User(1), || {
+            assert_eq!(insert_raw_entries(entries), Err(unknown_key));
+            assert!(read_all_entries(None, usize::MAX).entries.is_empty());
+        });
+    }
+
+    #[test]
     fn raw_entries_are_inserted_into_the_current_scope() {
         let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
         init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
@@ -1107,7 +1196,7 @@ mod tests {
             entries
         };
 
-        with_key_scope(KeyScope::User(1), || insert_raw_entries(entries.clone()));
+        with_key_scope(KeyScope::User(1), || insert_raw_entries(entries.clone()).unwrap());
 
         with_key_scope(KeyScope::User(1), || {
             let ReadAllEntriesResult { entries: read, finished } = read_all_entries(None, usize::MAX);
