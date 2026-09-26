@@ -67,17 +67,20 @@ fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     // The OpenChat bot has no canister to be told of the change, so it applies to the user's copy of
     // the chat alone, as in the User canister
     let their_user_type = if them == OPENCHAT_BOT_USER_ID { UserType::OcControlledBot } else { UserType::User };
-    state.data.users.with_user_mut(my_index, |user| {
-        let chat = user
-            .direct_chats
-            .get_or_create(my_user_id, them, their_user_type, || anonymized_id, now);
+    // As in the User canister, only a change is passed on to the other user
+    let changed = state
+        .data
+        .users
+        .with_user_mut(my_index, |user| {
+            let chat = user
+                .direct_chats
+                .get_or_create(my_user_id, them, their_user_type, || anonymized_id, now);
 
-        if let Some(events_ttl) = events_ttl {
-            chat.set_events_time_to_live(my_user_id, events_ttl, now);
-        }
-    });
+            events_ttl.is_some_and(|events_ttl| chat.set_events_time_to_live(my_user_id, events_ttl, now).is_some())
+        })
+        .unwrap_or_default();
 
-    if let Some(events_ttl) = events_ttl {
+    if let Some(events_ttl) = events_ttl.filter(|_| changed) {
         if let Some(their_index) = their_index {
             set_their_events_ttl(their_index, my_user_id, events_ttl, now, state);
         } else if them != my_user_id {
