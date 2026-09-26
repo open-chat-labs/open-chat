@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use types::{BuildVersion, CanisterId, TimestampMillis, UserId};
 use user_index_canister::user_migration::UserMigrationStatus;
 
-const DEFAULT_CONCURRENCY: u32 = 10;
+const DEFAULT_CONCURRENCY: u32 = 5;
 
 // The users being migrated from canisters of their own to MultiUser canisters. Users are queued,
 // then taken from the queue while fewer than `concurrency` are being migrated, each being assigned a
