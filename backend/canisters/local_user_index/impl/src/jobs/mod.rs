@@ -7,6 +7,7 @@ pub mod moderate_messages;
 pub mod pull_daily_puzzle;
 pub mod refresh_chunk_store;
 pub mod refund_cycles;
+pub mod start_user_migrations;
 pub mod topup_canister_pool;
 pub mod topup_canisters;
 pub mod upgrade_communities;
@@ -22,6 +23,7 @@ pub(crate) fn start(state: &RuntimeState) {
     pull_daily_puzzle::start_job();
     refresh_chunk_store::start_job();
     refund_cycles::start_job_if_required(state, None);
+    start_user_migrations::start_job_if_required(state);
     topup_canister_pool::start_job_if_required(state, None);
     topup_canisters::start_job();
     upgrade_communities::start_job_if_required(state);

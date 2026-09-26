@@ -14,6 +14,7 @@ use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::top_up_leaderboards::TopUpLeaderboards;
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
+use crate::model::users_to_migrate::UsersToMigrate;
 use crate::model::web_push_subscriptions::WebPushSubscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -707,6 +708,8 @@ impl RuntimeState {
             user_events_queue_length: self.data.user_events_queue.len(),
             user_events_queue_in_progress: self.data.user_events_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
+            users_to_migrate_pending: self.data.users_to_migrate.pending(),
+            users_to_migrate_in_progress: self.data.users_to_migrate.in_progress(),
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
@@ -861,6 +864,9 @@ struct Data {
     // UserIndex
     #[serde(default)]
     pub migrated_user_ids: MigratedUserIds,
+    // Users the UserIndex has asked this LocalUserIndex to start migrating to MultiUser canisters
+    #[serde(default)]
+    pub users_to_migrate: UsersToMigrate,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -1013,6 +1019,7 @@ impl Data {
             daily_puzzle_results_queue: None,
             game_chit_credit_retry_queue: new_retry_queue(),
             migrated_user_ids: MigratedUserIds::default(),
+            users_to_migrate: UsersToMigrate::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -1069,6 +1076,8 @@ pub struct Metrics {
     // whose last batch is still awaiting its reply
     pub user_events_queue_in_progress: usize,
     pub users_to_delete_queue_length: usize,
+    pub users_to_migrate_pending: usize,
+    pub users_to_migrate_in_progress: usize,
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
