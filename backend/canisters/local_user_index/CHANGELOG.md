@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pass `UserIdMigrated` on to each of the listed groups and communities which this LocalUserIndex controls ([#9543](https://github.com/open-chat-labs/open-chat/pull/9543))
 - Pass a joining user's previous ids to the group or community they are joining ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
 - Handle `StartUserMigration` from the UserIndex by upgrading the user's canister to the latest wasm if it is behind, then calling its `c2c_try_start_migration`, and reporting back to the UserIndex whether the migration started ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
-- Handle `ImportUser` from the UserIndex by having the MultiUser canister import the user, and pass on to the UserIndex whether the MultiUser canister imported them. The MultiUser canisters must be upgraded first ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Handle `ImportUser` from the UserIndex by having the MultiUser canister import the user, and pass on to the UserIndex whether the MultiUser canister imported them. The MultiUser canisters must be upgraded first ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 
 ### Changed
 

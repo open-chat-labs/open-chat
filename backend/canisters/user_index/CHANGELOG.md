@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Accept a `user_id` in `c2c_set_avatar`, so a MultiUser canister can set the avatar id of one of its users ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
 - One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal ([#9581](https://github.com/open-chat-labs/open-chat/pull/9581))
 - Add `migrate_users` which queues users to be migrated to MultiUser canisters ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
-- Once a user's canister has started migrating them, tell the LocalUserIndex which controls the MultiUser canister they are being migrated to to have it import them, recording when they are imported, or, if they can't be, cancelling their migration. The LocalUserIndexes must be upgraded first ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
+- Once a user's canister has started migrating them, tell the LocalUserIndex which controls the MultiUser canister they are being migrated to to have it import them, recording when they are imported, or, if they can't be, cancelling their migration. The LocalUserIndexes must be upgraded first ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 
 ### Changed
 
