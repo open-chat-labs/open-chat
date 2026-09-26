@@ -67,9 +67,8 @@ fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     // The OpenChat bot has no canister to be told of the change, so it applies to the user's copy of
     // the chat alone, as in the User canister
     let their_user_type = if them == OPENCHAT_BOT_USER_ID { UserType::OcControlledBot } else { UserType::User };
-    // As in the User canister, only a change is passed on to the other user, with the time the
-    // change was given
-    let changed_at = state
+    // As in the User canister, only a change is passed on to the other user
+    let changed = state
         .data
         .users
         .with_user_mut(my_index, |user| {
@@ -77,20 +76,20 @@ fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 .direct_chats
                 .get_or_create(my_user_id, them, their_user_type, || anonymized_id, now);
 
-            events_ttl.and_then(|events_ttl| chat.set_events_time_to_live(my_user_id, events_ttl, now))
+            events_ttl.is_some_and(|events_ttl| chat.set_events_time_to_live(my_user_id, events_ttl, now).is_some())
         })
-        .flatten();
+        .unwrap_or_default();
 
-    if let (Some(events_ttl), Some(changed_at)) = (events_ttl, changed_at) {
+    if let Some(events_ttl) = events_ttl.filter(|_| changed) {
         if let Some(their_index) = their_index {
-            set_their_events_ttl(their_index, my_user_id, events_ttl, changed_at, now, state);
+            set_their_events_ttl(their_index, my_user_id, events_ttl, now, state);
         } else if them != my_user_id {
             state.push_user_canister_event(
                 my_index,
                 them,
                 UserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {
                     events_ttl,
-                    timestamp: changed_at,
+                    timestamp: now,
                 })),
             );
         }
@@ -107,7 +106,6 @@ fn set_their_events_ttl(
     their_index: u16,
     sender: UserId,
     events_ttl: Option<Milliseconds>,
-    changed_at: TimestampMillis,
     now: TimestampMillis,
     state: &mut RuntimeState,
 ) {
@@ -121,10 +119,9 @@ fn set_their_events_ttl(
 
         // Unlike between User canisters, where each side applies the other's change some time
         // after its own and so needs a rule to settle two changes made at the same time, both
-        // copies are updated here within the one call, so the latest call wins in both, and both
-        // record the same time for the change
+        // copies are updated here within the one call, so the latest call wins in both
         user.direct_chats
             .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now)
-            .apply_their_events_time_to_live(events_ttl, changed_at, now);
+            .apply_their_events_time_to_live(events_ttl, now, now);
     });
 }

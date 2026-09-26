@@ -6,7 +6,7 @@ use crate::User;
 use chat_events::{
     AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, NullEventPusher, Reader, TipMessageArgs,
 };
-use direct_chat::DirectChat;
+use direct_chat::{DirectChat, EventsTtlChange};
 use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use types::{
@@ -291,8 +291,9 @@ pub fn join_video_call(chat: &mut DirectChat, sender: UserId, message_id: Messag
 }
 
 // Applies the sender's change to the chat's message TTL, creating the chat if the recipient doesn't
-// have it yet. The change is applied if it is the latest; two changes made at the same time are
-// settled in favour of whichever user's id has the lower bytes, so that both copies agree.
+// have it yet. Each copy of the chat records the latest change, by who made it and the time they
+// gave it, and the sender's change is applied if it supersedes that, so both copies settle on the
+// same change.
 pub fn set_events_ttl(
     user: &mut User,
     my_user_id: UserId,
@@ -304,20 +305,31 @@ pub fn set_events_ttl(
     let chat = user
         .direct_chats
         .get_or_create(my_user_id, sender, UserType::User, anonymized_chat_id, now);
-    let events_ttl = chat.events().get_events_time_to_live();
-    // Changes are compared by when they were made, not by when this copy was updated
-    let last_changed_at = chat.events_ttl_last_changed();
-    // Until the TTL is set it is `None`, timestamped with when the chat was created, which may be
-    // after the sender set it, eg. if the chat was created by an earlier event from the sender
-    // which was delivered in the same batch as this one. The recipient hasn't set it, so the
-    // sender's change is applied. A TTL the recipient set when creating the chat has the same
-    // timestamp but isn't `None`, since setting the TTL to the value it already has does nothing.
-    let never_set =
-        chat.events_ttl_changed_at().is_none() && events_ttl.value.is_none() && events_ttl.timestamp == chat.date_created();
-    if never_set
-        || last_changed_at < args.timestamp
-        || (last_changed_at == args.timestamp && sender.as_slice() < my_user_id.as_slice())
-    {
+    let change = EventsTtlChange {
+        by: sender,
+        at: args.timestamp,
+    };
+    let apply = match chat.events_ttl_latest_change() {
+        // Events from a canister arrive in the order they were sent, so the sender's change
+        // follows their previous one, even if both were given the same time
+        Some(latest) if latest.by == sender => true,
+        Some(latest) => change.supersedes(&latest),
+        None => {
+            let events_ttl = chat.events().get_events_time_to_live();
+            // Until the TTL is set it is `None`, timestamped with when the chat was created, which
+            // may be after the sender set it, eg. if the chat was created by an earlier event from
+            // the sender delivered in the same batch as this one, so the sender's change is applied
+            let never_set = events_ttl.value.is_none() && events_ttl.timestamp == chat.date_created();
+            // Otherwise the chat is from before the latest change was recorded, so the latest
+            // change is taken to be the recipient's, at the time the TTL was last set
+            never_set
+                || change.supersedes(&EventsTtlChange {
+                    by: my_user_id,
+                    at: events_ttl.timestamp,
+                })
+        }
+    };
+    if apply {
         chat.apply_their_events_time_to_live(args.events_ttl, args.timestamp, now);
     }
 }
@@ -348,13 +360,12 @@ mod tests {
             .value
     }
 
-    // The user `me` changes the TTL at `now`, creating the chat if they don't have it, returning
-    // the time the change is given, which is what is sent to the other user
-    fn change(user: &mut User, me: UserId, them: UserId, value: u64, now: TimestampMillis) -> TimestampMillis {
+    // The user `me` changes the TTL at `now`, creating the chat if they don't have it. The change
+    // is sent to the other user with the time `now`.
+    fn change(user: &mut User, me: UserId, them: UserId, value: u64, now: TimestampMillis) {
         user.direct_chats
             .get_or_create(me, them, UserType::User, || 1, now)
-            .set_events_time_to_live(me, Some(value), now)
-            .unwrap()
+            .set_events_time_to_live(me, Some(value), now);
     }
 
     // The user `me` receives the other user's change, which they made at `timestamp`
@@ -401,7 +412,6 @@ mod tests {
     fn change_older_than_the_recipients_own_is_ignored() {
         let (me, sender) = (user_id(1), user_id(2));
         let mut user = user();
-        user.direct_chats.get_or_create(me, sender, UserType::User, || 1, 100);
         change(&mut user, me, sender, 2000, 200);
 
         receive(&mut user, me, sender, 1000, 150, 300);
@@ -413,7 +423,6 @@ mod tests {
     fn change_newer_than_the_recipients_own_is_applied() {
         let (me, sender) = (user_id(1), user_id(2));
         let mut user = user();
-        user.direct_chats.get_or_create(me, sender, UserType::User, || 1, 100);
         change(&mut user, me, sender, 2000, 200);
 
         receive(&mut user, me, sender, 1000, 250, 300);
@@ -422,23 +431,37 @@ mod tests {
     }
 
     #[test]
+    fn changes_made_at_the_same_time_are_settled_by_user_id() {
+        // Each user changed the TTL at 100, and the user with the lower id wins in both copies
+        let (a, b) = (user_id(1), user_id(2));
+        let (mut user_a, mut user_b) = (user(), user());
+
+        change(&mut user_a, a, b, 1000, 100);
+        change(&mut user_b, b, a, 2000, 100);
+        receive(&mut user_a, a, b, 2000, 100, 110);
+        receive(&mut user_b, b, a, 1000, 100, 110);
+
+        assert_eq!(events_ttl(&user_a, b), Some(1000));
+        assert_eq!(events_ttl(&user_b, a), Some(1000));
+    }
+
+    #[test]
     fn copies_converge_when_both_users_set_the_ttl_on_a_new_chat() {
         let (a, b) = (user_id(1), user_id(2));
         let (mut user_a, mut user_b) = (user(), user());
 
-        let a_changed_at = change(&mut user_a, a, b, 1000, 50);
-        let b_changed_at = change(&mut user_b, b, a, 2000, 100);
-        receive(&mut user_a, a, b, 2000, b_changed_at, 110);
-        receive(&mut user_b, b, a, 1000, a_changed_at, 110);
+        change(&mut user_a, a, b, 1000, 50);
+        change(&mut user_b, b, a, 2000, 100);
+        receive(&mut user_a, a, b, 2000, 100, 110);
+        receive(&mut user_b, b, a, 1000, 50, 110);
 
         assert_eq!(events_ttl(&user_a, b), Some(2000));
         assert_eq!(events_ttl(&user_b, a), Some(2000));
     }
 
     #[test]
-    fn changes_delivered_together_are_compared_by_when_they_were_made() {
-        // The sender changed the TTL twice before either change was delivered. Once the first is
-        // applied, the second must be compared with when the first was made, not delivered.
+    fn changes_delivered_together_are_applied_in_order() {
+        // The sender changed the TTL twice before either change was delivered
         let (me, sender) = (user_id(1), user_id(2));
         let mut user = user();
         user.direct_chats.get_or_create(me, sender, UserType::User, || 1, 0);
@@ -454,62 +477,30 @@ mod tests {
         let (a, b) = (user_id(1), user_id(2));
         let (mut user_a, mut user_b) = (user(), user());
 
-        let b_changed_at = change(&mut user_b, b, a, 500, 5);
-        receive(&mut user_a, a, b, 500, b_changed_at, 7);
-        let first = change(&mut user_a, a, b, 1000, 10);
-        let second = change(&mut user_a, a, b, 2000, 20);
+        change(&mut user_b, b, a, 500, 5);
+        receive(&mut user_a, a, b, 500, 5, 7);
+        change(&mut user_a, a, b, 1000, 10);
+        change(&mut user_a, a, b, 2000, 20);
 
         // B receives both of A's changes together
-        receive(&mut user_b, b, a, 1000, first, 100);
-        receive(&mut user_b, b, a, 2000, second, 100);
+        receive(&mut user_b, b, a, 1000, 10, 100);
+        receive(&mut user_b, b, a, 2000, 20, 100);
 
         assert_eq!(events_ttl(&user_a, b), Some(2000));
         assert_eq!(events_ttl(&user_b, a), Some(2000));
     }
 
     #[test]
-    fn change_which_leaves_the_ttl_as_it_was_still_counts_as_the_latest() {
-        // B changed the TTL to 2000, then back to 1000, which A already had. The second change
-        // arrives first, then the first arrives late, and must not be applied.
-        let (a, b) = (user_id(1), user_id(2));
-        let mut user_a = user();
-        change(&mut user_a, a, b, 1000, 10);
-
-        receive(&mut user_a, a, b, 1000, 20, 30);
-        receive(&mut user_a, a, b, 2000, 15, 31);
-
-        assert_eq!(events_ttl(&user_a, b), Some(1000));
-    }
-
-    #[test]
-    fn changes_made_in_the_same_millisecond_are_ordered() {
-        // B's id sorts after A's, so the tie-break on user ids wouldn't favour B's second change
+    fn changes_from_one_user_at_the_same_time_are_applied_in_order() {
+        // B's id sorts after A's, so the tie-break on user ids alone wouldn't apply B's second change
         let (a, b) = (user_id(1), user_id(2));
         let (mut user_a, mut user_b) = (user(), user());
         user_a.direct_chats.get_or_create(a, b, UserType::User, || 1, 0);
 
-        let first = change(&mut user_b, b, a, 1000, 100);
-        let second = change(&mut user_b, b, a, 2000, 100);
-        assert!(second > first);
-        receive(&mut user_a, a, b, 1000, first, 110);
-        receive(&mut user_a, a, b, 2000, second, 110);
-
-        assert_eq!(events_ttl(&user_a, b), Some(2000));
-        assert_eq!(events_ttl(&user_b, a), Some(2000));
-    }
-
-    #[test]
-    fn change_made_after_one_from_a_clock_which_is_ahead_is_ordered_after_it() {
-        // A receives B's change, made at 20 by B's clock, while A's clock is at 12, then changes
-        // the TTL at 13 by A's clock
-        let (a, b) = (user_id(1), user_id(2));
-        let (mut user_a, mut user_b) = (user(), user());
-        user_a.direct_chats.get_or_create(a, b, UserType::User, || 1, 0);
-
-        let b_changed_at = change(&mut user_b, b, a, 1000, 20);
-        receive(&mut user_a, a, b, 1000, b_changed_at, 12);
-        let a_changed_at = change(&mut user_a, a, b, 2000, 13);
-        receive(&mut user_b, b, a, 2000, a_changed_at, 30);
+        change(&mut user_b, b, a, 1000, 100);
+        change(&mut user_b, b, a, 2000, 100);
+        receive(&mut user_a, a, b, 1000, 100, 110);
+        receive(&mut user_a, a, b, 2000, 100, 110);
 
         assert_eq!(events_ttl(&user_a, b), Some(2000));
         assert_eq!(events_ttl(&user_b, a), Some(2000));
