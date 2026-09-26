@@ -25,6 +25,7 @@ use model::multi_user_canister_map::{MultiUserCanister, MultiUserCanisterMap};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
+use model::user_migrations::{UserMigrations, UserMigrationsMetrics};
 use model::users_last_online::{UsersLastOnline, UsersLastOnlineMetrics};
 use p256_key_pair::P256KeyPair;
 use rand::Rng;
@@ -307,6 +308,7 @@ impl RuntimeState {
             multi_user_canisters_enabled: self.data.multi_user_canisters_enabled,
             migrated_user_ids: self.data.migrated_user_ids.len(),
             users_last_online: self.data.users_last_online.metrics(),
+            user_migrations: self.data.user_migrations.metrics(),
             call_push_enabled: self.data.call_push_enabled,
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
@@ -509,6 +511,9 @@ struct Data {
     // TODO remove once the users have been migrated
     #[serde(default)]
     pub users_last_online: UsersLastOnline,
+    // The users being migrated from canisters of their own to MultiUser canisters
+    #[serde(default)]
+    pub user_migrations: UserMigrations,
 }
 
 impl Data {
@@ -619,6 +624,7 @@ impl Data {
             deleted_user_cycles_refund_queued: false,
             migrated_user_ids: MigratedUserIds::default(),
             users_last_online: UsersLastOnline::default(),
+            user_migrations: UserMigrations::default(),
         };
 
         // Register the ProposalsBot
@@ -748,6 +754,7 @@ impl Default for Data {
             deleted_user_cycles_refund_queued: false,
             migrated_user_ids: MigratedUserIds::default(),
             users_last_online: UsersLastOnline::default(),
+            user_migrations: UserMigrations::default(),
         }
     }
 }
@@ -781,6 +788,7 @@ pub struct Metrics {
     pub multi_user_canisters_enabled: bool,
     pub migrated_user_ids: usize,
     pub users_last_online: UsersLastOnlineMetrics,
+    pub user_migrations: UserMigrationsMetrics,
     pub call_push_enabled: bool,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,

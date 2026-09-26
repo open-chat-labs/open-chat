@@ -72,7 +72,8 @@ fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToInstall> {
     })
 }
 
-fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToInstall> {
+// Also used by the `start_user_migrations` job
+pub(crate) fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToInstall> {
     let user_id = canister_id.into();
     let user = state.data.local_users.get_mut(&user_id)?;
     let user_canister_wasm = &state.data.child_canister_wasms.get(ChildCanisterType::User);
@@ -81,7 +82,9 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
     let new_wasm_version = user_canister_wasm.wasm.version;
     let deposit_cycles_if_needed = ic_cdk::api::canister_cycle_balance() > min_cycles_balance(state.data.test_mode);
 
-    if current_wasm_version == new_wasm_version && !force {
+    // A user's canister may be being upgraded by the `start_user_migrations` job, which upgrades it
+    // to the latest wasm
+    if (current_wasm_version == new_wasm_version && !force) || user.upgrade_in_progress {
         return None;
     }
 
@@ -123,7 +126,12 @@ async fn perform_upgrade(canister_to_upgrade: CanisterToInstall) {
 }
 
 fn on_success(canister_id: CanisterId, to_version: BuildVersion, top_up: Option<Cycles>, state: &mut RuntimeState) {
-    let user_id = canister_id.into();
+    on_upgraded(canister_id.into(), to_version, top_up, state);
+    state.data.users_requiring_upgrade.mark_success(&canister_id);
+}
+
+// Also used by the `start_user_migrations` job
+pub(crate) fn on_upgraded(user_id: UserId, to_version: BuildVersion, top_up: Option<Cycles>, state: &mut RuntimeState) {
     mark_upgrade_complete(user_id, Some(to_version), state);
 
     if let Some(top_up) = top_up {
@@ -135,8 +143,6 @@ fn on_success(canister_id: CanisterId, to_version: BuildVersion, top_up: Option<
             },
         );
     }
-
-    state.data.users_requiring_upgrade.mark_success(&canister_id);
 }
 
 fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: BuildVersion, state: &mut RuntimeState) {
@@ -149,7 +155,7 @@ fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: B
     });
 }
 
-fn mark_upgrade_complete(canister_id: UserId, new_wasm_version: Option<BuildVersion>, state: &mut RuntimeState) {
+pub(crate) fn mark_upgrade_complete(canister_id: UserId, new_wasm_version: Option<BuildVersion>, state: &mut RuntimeState) {
     if let Some(user) = state.data.local_users.get_mut(&canister_id) {
         user.set_canister_upgrade_status(false, new_wasm_version);
     }
