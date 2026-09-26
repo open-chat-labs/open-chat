@@ -206,6 +206,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.multi_user_canister_id,
                 ev.user_bytes,
                 ev.wasm_version,
+                ev.user_hash,
                 **now,
             ) {
                 info!(user_id = %ev.user_id, multi_user_canister_id = %ev.multi_user_canister_id, "User migration started");
@@ -217,6 +218,8 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         UserIndexEvent::ImportUser(ImportUser {
                             user_id: ev.user_id,
                             multi_user_canister_id: ev.multi_user_canister_id,
+                            user_hash: ev.user_hash,
+                            wasm_version: ev.wasm_version,
                         }),
                     );
                 }

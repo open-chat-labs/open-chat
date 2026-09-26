@@ -9,7 +9,7 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
 use std::time::Duration;
 use tracing::{error, info, trace};
-use types::{Milliseconds, UserId};
+use types::{Hash, Milliseconds, UserId};
 use user_core::User;
 
 // Few users are imported at once, since each page pulled is up to ~2MB
@@ -62,10 +62,27 @@ fn run() {
     });
 
     for user_id in user_ids {
-        IN_PROGRESS.with_borrow_mut(|p| p.insert(user_id));
-        utils::async_work::spawn_tracked(pull_next_page(user_id));
+        let guard = InProgressGuard::new(user_id);
+        utils::async_work::spawn_tracked(pull_next_page(user_id, guard));
     }
     read_state(start_job_if_required);
+}
+
+// Marks the user's import as having a call in flight while held. Dropped when the pull completes,
+// including if it traps after the call, so that the import is never left marked as in progress.
+struct InProgressGuard(UserId);
+
+impl InProgressGuard {
+    fn new(user_id: UserId) -> InProgressGuard {
+        IN_PROGRESS.with_borrow_mut(|p| p.insert(user_id));
+        InProgressGuard(user_id)
+    }
+}
+
+impl Drop for InProgressGuard {
+    fn drop(&mut self) {
+        IN_PROGRESS.with_borrow_mut(|p| p.remove(&self.0));
+    }
 }
 
 enum PullResult {
@@ -74,13 +91,15 @@ enum PullResult {
     // The page may be pulled if tried again, eg. if the user's canister couldn't be reached
     Retry(OCError),
     Failed(OCError),
+    // The import was replaced by one for a later migration of the user while the page was pulled
+    Stale,
 }
 
 // Pulls the next page of the user, then once all of them have been pulled, the next page of their
 // entries in the stable memory map, which are inserted under the user's index
-async fn pull_next_page(user_id: UserId) {
+async fn pull_next_page(user_id: UserId, guard: InProgressGuard) {
     let result = pull_next_page_inner(user_id).await;
-    IN_PROGRESS.with_borrow_mut(|p| p.remove(&user_id));
+    drop(guard);
 
     mutate_state(|state| {
         match result {
@@ -101,22 +120,43 @@ async fn pull_next_page(user_id: UserId) {
                 }
             }
             PullResult::Failed(error) => fail_import(user_id, error, state),
+            PullResult::Stale => {}
         }
         start_job_if_required(state);
     });
 }
 
 async fn pull_next_page_inner(user_id: UserId) -> PullResult {
-    let Some((index, from, user_pulled, after)) = read_state(|state| {
-        state
-            .data
-            .user_imports
-            .get(&user_id)
-            .map(|i| (i.index, i.user.len() as u64, i.user_pulled, i.stable_memory_after.clone()))
+    let Some((index, user_hash, from, user_pulled, after)) = read_state(|state| {
+        state.data.user_imports.get(&user_id).map(|i| {
+            (
+                i.index,
+                i.user_hash,
+                i.user.len() as u64,
+                i.user_pulled,
+                i.stable_memory_after.clone(),
+            )
+        })
     }) else {
-        return PullResult::Failed(OCErrorCode::UserImportFailed.with_message("Import not found"));
+        return PullResult::Stale;
     };
     let canister_id = user_id.canister_id();
+
+    // Each page carries the hash of the user serialized when the migration it belongs to started,
+    // so that no page of another migration of the user, eg. one started after this one was
+    // cancelled, is mixed in
+    let check_page = |state: &RuntimeState, page_user_hash: Hash| match state.data.user_imports.get(&user_id) {
+        Some(import) if import.index == index => {
+            if page_user_hash == user_hash {
+                None
+            } else {
+                Some(PullResult::Failed(
+                    OCErrorCode::UserImportFailed.with_message("The user's migration has changed since the import started"),
+                ))
+            }
+        }
+        _ => Some(PullResult::Stale),
+    };
 
     if !user_pulled {
         let result = match user_canister_c2c_client::c2c_export_user(
@@ -130,15 +170,16 @@ async fn pull_next_page_inner(user_id: UserId) -> PullResult {
         };
 
         mutate_state(|state| {
-            let Some(import) = state.data.user_imports.get_mut(&user_id) else {
-                return PullResult::Failed(OCErrorCode::UserImportFailed.with_message("Import not found"));
-            };
+            if let Some(result) = check_page(state, result.hash) {
+                return result;
+            }
+            let import = state.data.user_imports.get_mut(&user_id).unwrap();
             let page_is_empty = result.page.is_empty();
             import.user.extend_from_slice(&result.page);
 
             if (import.user.len() as u64) < result.total_bytes && !page_is_empty {
                 PullResult::MoreToPull
-            } else if import.user.len() as u64 == result.total_bytes && sha256::sha256(&import.user) == result.hash {
+            } else if import.user.len() as u64 == result.total_bytes && sha256::sha256(&import.user) == user_hash {
                 import.user_pulled = true;
                 PullResult::MoreToPull
             } else {
@@ -156,6 +197,10 @@ async fn pull_next_page_inner(user_id: UserId) -> PullResult {
             Err(error) => return PullResult::Retry(error.into()),
         };
 
+        if let Some(result) = read_state(|state| check_page(state, result.user_hash)) {
+            return result;
+        }
+
         let last_key = result.entries.last().map(|(key, _)| key.clone());
         let entries = result
             .entries
@@ -170,9 +215,7 @@ async fn pull_next_page_inner(user_id: UserId) -> PullResult {
         }
 
         mutate_state(|state| {
-            let Some(import) = state.data.user_imports.get_mut(&user_id) else {
-                return PullResult::Failed(OCErrorCode::UserImportFailed.with_message("Import not found"));
-            };
+            let import = state.data.user_imports.get_mut(&user_id).unwrap();
             if last_key.is_some() {
                 import.stable_memory_after = last_key;
             }
@@ -198,9 +241,7 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
             return;
         }
     };
-    with_key_scope(KeyScope::User(index), || {
-        user.direct_chats.migrate_own_user_id(old_user_id, new_user_id)
-    });
+    with_key_scope(KeyScope::User(index), || user.migrate_own_user_id(old_user_id, new_user_id));
     let next_event_expiry = user.next_event_expiry;
 
     if state.data.users.add_imported(index, user).is_err() {

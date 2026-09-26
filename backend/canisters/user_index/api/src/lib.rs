@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{
-    BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId,
+    BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Hash,
     MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim,
     StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
 };
@@ -67,6 +67,9 @@ pub struct UserMigrationStarted {
     pub user_bytes: u64,
     // The version of the User canister the user was serialized by
     pub wasm_version: BuildVersion,
+    // The hash of the user serialized, which identifies the migration
+    #[serde(default)]
+    pub user_hash: Hash,
 }
 
 // The user couldn't be migrated to the MultiUser canister, either because their canister couldn't

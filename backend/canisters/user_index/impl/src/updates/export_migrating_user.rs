@@ -7,8 +7,8 @@ use types::{C2CError, CanisterId};
 use user_index_canister::export_migrating_user::{Response::*, *};
 
 // Pulls everything a user being migrated exports, in pages, as the MultiUser canister does, so that
-// the export can be tested until the MultiUser canister imports users itself. Only available in test
-// mode, and only for a migration started with the UserIndex as the MultiUser canister.
+// the export can be tested on its own. Only available in test mode, and only for a migration started
+// with the UserIndex as the MultiUser canister.
 #[update(guard = "caller_is_governance_principal", msgpack = true)]
 #[trace]
 async fn export_migrating_user(args: Args) -> Response {

@@ -292,6 +292,12 @@ pub struct ImportUser {
     pub user_id: UserId,
     #[serde(rename = "m")]
     pub multi_user_canister_id: CanisterId,
+    // The hash of the user as serialized when their migration started, which identifies it
+    #[serde(rename = "h")]
+    pub user_hash: types::Hash,
+    // The version of the User canister the user was serialized by
+    #[serde(rename = "v")]
+    pub wasm_version: BuildVersion,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

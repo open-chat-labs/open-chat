@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
-use types::{CanisterId, TimestampMillis, UserId};
+use types::{BuildVersion, CanisterId, Hash, TimestampMillis, UserId};
 
 // The users in canisters of their own which the UserIndex has asked this LocalUserIndex to start
 // migrating to MultiUser canisters, or to have one of its MultiUser canisters import
@@ -17,6 +17,17 @@ pub struct UserToMigrate {
     pub attempt: u32,
     // Set when retrying, so that the user isn't retried straight away
     pub not_before: TimestampMillis,
+    // Set for a user to import, identifying the migration
+    #[serde(default)]
+    pub import: Option<ImportDetails>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ImportDetails {
+    // The hash of the user as serialized when their migration started
+    pub user_hash: Hash,
+    // The version of the User canister the user was serialized by
+    pub wasm_version: BuildVersion,
 }
 
 impl UsersToMigrate {
@@ -77,6 +88,7 @@ mod tests {
             multi_user_canister_id: Principal::from_slice(&[10]),
             attempt: 0,
             not_before: 0,
+            import: None,
         }
     }
 

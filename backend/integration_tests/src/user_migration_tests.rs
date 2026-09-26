@@ -333,8 +333,8 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    // Enough messages that the stable memory map entries are pulled in more than one page, then one
-    // to themselves, and an avatar
+    // Messages to another user and to themselves, and an avatar and profile background large enough
+    // that the stable memory map entries are pulled in more than one page
     for _ in 0..40 {
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, "x".repeat(5000), None);
     }
@@ -342,9 +342,16 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, message_to_user2.clone(), None);
     let message_to_self = random_string();
     client::user::happy_path::send_text_message(env, &user1, user1.user_id, message_to_self.clone(), None);
-    let avatar = document(100 * 1024);
+    let avatar = document(800 * 1024);
     let avatar_id = avatar.id;
     client::user::happy_path::set_avatar(env, &user1, Some(avatar));
+    client::user::happy_path::set_profile_background(
+        env,
+        &user1,
+        &user_canister::set_profile_background::Args {
+            profile_background: Some(document(1024 * 1024)),
+        },
+    );
     tick_many(env, 3);
 
     migrate_users(
@@ -362,6 +369,31 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     };
     assert_eq!(new_user_id.canister_id(), multi_user_canister);
     assert_eq!(metrics(env, multi_user_canister)["user_imports_in_progress"], 0);
+
+    // The user's canister stays frozen until the migration completes
+    assert!(
+        env.update_call(
+            user1.canister(),
+            user1.principal,
+            "set_bio_msgpack",
+            msgpack::serialize_then_unwrap(&user_canister::set_bio::Args { text: random_string() }),
+        )
+        .is_err()
+    );
+    // And the migration can no longer be cancelled
+    let response = client::user_index::cancel_user_migration(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user_index_canister::cancel_user_migration::Args {
+            user_id: user1.user_id,
+            multi_user_canister_id: multi_user_canister,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::cancel_user_migration::Response::Error(ref e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
 
     // The user, now held by the MultiUser canister, has their chats and avatar, with their chat with
     // themselves under their new id
@@ -614,7 +646,8 @@ fn document(len: usize) -> Document {
     }
 }
 
-// The id isn't checked, since the MultiUser canister doesn't import users yet
+// A stand-in MultiUser canister id. The UserIndex only tells real MultiUser canisters to import
+// users, so migrations to these stay started.
 fn multi_user_canister(i: u8) -> CanisterId {
     Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
 }

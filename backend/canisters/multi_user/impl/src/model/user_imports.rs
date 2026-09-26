@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::BTreeMap;
-use types::{TimestampMillis, UserId};
+use types::{Hash, TimestampMillis, UserId};
 
 // The users being imported from canisters of their own, keyed by their old id, each of whom has
 // been assigned an index. The user is pulled from their canister in pages, followed by their entries
@@ -16,6 +16,8 @@ pub struct UserImports {
 pub struct UserImport {
     pub index: u16,
     pub started: TimestampMillis,
+    // The hash of the user as serialized when their migration started, which identifies it
+    pub user_hash: Hash,
     // The user as serialized by their canister, pulled so far
     #[serde(with = "serde_bytes")]
     pub user: Vec<u8>,
@@ -30,12 +32,13 @@ pub struct UserImport {
 }
 
 impl UserImports {
-    pub fn add(&mut self, user_id: UserId, index: u16, now: TimestampMillis) {
+    pub fn add(&mut self, user_id: UserId, index: u16, user_hash: Hash, now: TimestampMillis) {
         self.imports.insert(
             user_id,
             UserImport {
                 index,
                 started: now,
+                user_hash,
                 user: Vec::new(),
                 user_pulled: false,
                 stable_memory_after: None,
