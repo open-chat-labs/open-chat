@@ -494,6 +494,19 @@ export class OpenChatAgent extends EventTarget {
         return this.identity.getPrincipal();
     }
 
+    // A client for another user's canister. Throws if `userId` isn't a principal, since the canister
+    // to call is derived from it.
+    private otherUserClient(userId: string): UserClient {
+        return new UserClient(
+            userId,
+            this.identity,
+            this._agent,
+            this.config,
+            this._chatsDb,
+            this._userDb,
+        );
+    }
+
     // The ledger account holding the funds of `userId`. That is the principal's account for anyone
     // but a user alone in their canister, and only the current user's principal is known here, so
     // for anyone else `userId` has to be a canister, such as a User canister or the translations
@@ -3120,16 +3133,12 @@ export class OpenChatAgent extends EventTarget {
     getBio(userId?: string): Promise<string> {
         if (offline()) return Promise.resolve("");
 
-        const userClient = userId
-            ? new UserClient(
-                  userId,
-                  this.identity,
-                  this._agent,
-                  this.config,
-                  this._chatsDb,
-                  this._userDb,
-              )
-            : this.userClient;
+        let userClient: UserClient | AnonUserClient;
+        try {
+            userClient = userId ? this.otherUserClient(userId) : this.userClient;
+        } catch (err) {
+            return Promise.reject(err);
+        }
         return userClient.getBio();
     }
 
@@ -3140,14 +3149,13 @@ export class OpenChatAgent extends EventTarget {
                 if (deleted) {
                     resolve(undefined, true);
                 }
-                const userClient = new UserClient(
-                    userId,
-                    this.identity,
-                    this._agent,
-                    this.config,
-                    this._chatsDb,
-                    this._userDb,
-                );
+                let userClient: UserClient;
+                try {
+                    userClient = this.otherUserClient(userId);
+                } catch (err) {
+                    reject(err);
+                    return;
+                }
                 const result = userClient.getPublicProfile();
                 result.subscribe({
                     onResult: (res, final) => {
@@ -4457,14 +4465,7 @@ export class OpenChatAgent extends EventTarget {
         if (localUserIndexFromCache !== undefined) {
             return localUserIndexFromCache;
         }
-        return new UserClient(
-            userId,
-            this.identity,
-            this._agent,
-            this.config,
-            this._chatsDb,
-            this._userDb,
-        )
+        return this.otherUserClient(userId)
             .localUserIndex()
             .then((localUserIndex) => {
                 return this._chatsDb.cacheLocalUserIndexForUser(userId, localUserIndex);
