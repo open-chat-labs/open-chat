@@ -74,7 +74,9 @@
     let account = $derived(
         tokenDetails?.symbol === ICP_SYMBOL
             ? $currentUserStore.cryptoAccount
-            : encodeIcrcAccount(userWalletAccount($currentUserIdStore, client.OcIdentityPrincipal)),
+            : encodeIcrcAccount(
+                  userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
+              ),
     );
     let symbol = $derived(tokenDetails.symbol);
     let selectedNetwork = $state<string>();

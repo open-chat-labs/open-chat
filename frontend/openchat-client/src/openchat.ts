@@ -7825,7 +7825,7 @@ export class OpenChat {
                 // spends as for this user as the spender
                 spender: userCanisterSpenderAccount(
                     currentUserIdStore.value,
-                    this.OcIdentityPrincipal,
+                    () => this.OcIdentityPrincipal,
                 ),
             },
             this.config.icUrl ?? window.location.origin,

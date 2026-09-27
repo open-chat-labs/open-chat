@@ -502,7 +502,7 @@ export class OpenChatAgent extends EventTarget {
         if (userId !== this._userClient.userId && !isCanisterId(Principal.fromText(userId))) {
             throw new Error(`Only the current user's wallet is known, not ${userId}'s`);
         }
-        return userWalletAccount(userId, this.principal.toText());
+        return userWalletAccount(userId, () => this.principal.toText());
     }
 
     getAllCachedUsers(): Promise<UserSummary[]> {

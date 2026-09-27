@@ -79,7 +79,9 @@
     let account = $derived(
         tokenState.symbol === ICP_SYMBOL
             ? $currentUserStore.cryptoAccount
-            : encodeIcrcAccount(userWalletAccount($currentUserIdStore, client.OcIdentityPrincipal)),
+            : encodeIcrcAccount(
+                  userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
+              ),
     );
     let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenState.symbol === BTC_SYMBOL);

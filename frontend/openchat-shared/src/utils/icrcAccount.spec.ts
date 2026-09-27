@@ -13,37 +13,42 @@ const canisterId = "dfdal-2uaaa-aaaaa-qaama-cai";
 const indexedUserId = "qp43m-xeaaa-aaaaa-qaama-daa";
 // A self-authenticating principal, as users sign in with
 const principal = Principal.fromUint8Array(new Uint8Array(29).fill(7)).toText();
+const getPrincipal = () => principal;
+// A user alone in their canister has no need of their principal, so it must never be asked for
+const noPrincipal = (): string => {
+    throw new Error("The principal was asked for");
+};
 
 describe("userWalletAccount", () => {
     test("a user alone in their canister holds their funds in its account", () => {
-        const account = userWalletAccount(canisterId, principal);
+        const account = userWalletAccount(canisterId, noPrincipal);
 
         expect(account.owner.toText()).toBe(canisterId);
         expect(account.subaccount).toBeUndefined();
     });
 
     test("a user in a MultiUser canister holds their funds in their principal's account", () => {
-        const account = userWalletAccount(indexedUserId, principal);
+        const account = userWalletAccount(indexedUserId, getPrincipal);
 
         expect(account.owner.toText()).toBe(principal);
         expect(account.subaccount).toBeUndefined();
     });
 
     test("the wallet of a user alone in their canister encodes to their user id", () => {
-        expect(encodeIcrcAccount(userWalletAccount(canisterId, principal))).toBe(canisterId);
+        expect(encodeIcrcAccount(userWalletAccount(canisterId, noPrincipal))).toBe(canisterId);
     });
 });
 
 describe("userCanisterSpenderAccount", () => {
     test("a User canister spends as itself", () => {
-        const account = userCanisterSpenderAccount(canisterId, principal);
+        const account = userCanisterSpenderAccount(canisterId, noPrincipal);
 
         expect(account.owner.toText()).toBe(canisterId);
         expect(account.subaccount).toBeUndefined();
     });
 
     test("a MultiUser canister spends under the user's own subaccount", () => {
-        const account = userCanisterSpenderAccount(indexedUserId, principal);
+        const account = userCanisterSpenderAccount(indexedUserId, getPrincipal);
 
         expect(account.owner.toText()).toBe(canisterId);
         expect(account.subaccount).toEqual(spenderSubaccount(Principal.fromText(principal)));

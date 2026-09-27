@@ -73,7 +73,7 @@
             // The user's wallet, which is their principal's account if they are in a MultiUser
             // canister. For a user alone in their canister this is just their user id.
             return encodeIcrcAccount(
-                userWalletAccount($currentUserIdStore, client.OcIdentityPrincipal),
+                userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
             );
         }
     });

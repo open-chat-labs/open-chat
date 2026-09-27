@@ -130,24 +130,26 @@ const SUBACCOUNT_LENGTH = 32;
 // The ledger account holding a user's funds. Mirrors `impl From<UserIdAndPrincipal> for Account` in
 // backend/libraries/types/src/user.rs: a user alone in their canister holds their funds in that
 // canister's account, whose id is their user id, while anyone else, such as a user in a MultiUser
-// canister, holds their own funds in the account of the principal they sign in with.
-export function userWalletAccount(userId: string, principal: string): IcrcAccount {
+// canister, holds their own funds in the account of the principal they sign in with. `principal` is
+// only called for the latter, so a user alone in their canister never needs it.
+export function userWalletAccount(userId: string, principal: () => string): IcrcAccount {
     const userIdPrincipal = Principal.fromText(userId);
     return {
-        owner: isCanisterId(userIdPrincipal) ? userIdPrincipal : Principal.fromText(principal),
+        owner: isCanisterId(userIdPrincipal) ? userIdPrincipal : Principal.fromText(principal()),
     };
 }
 
 // The account a user's canister spends as when it pulls funds the user has approved via ICRC-2, so
 // the spender the user has to approve. A User canister spends as itself. A canister holding many
 // users spends each user's approval under a subaccount derived from their principal, mirroring
-// `ledger_utils::spender_subaccount`, so that it only ever spends a user's own approval.
-export function userCanisterSpenderAccount(userId: string, principal: string): IcrcAccount {
+// `ledger_utils::spender_subaccount`, so that it only ever spends a user's own approval. As with
+// `userWalletAccount`, `principal` is only called for a user in a MultiUser canister.
+export function userCanisterSpenderAccount(userId: string, principal: () => string): IcrcAccount {
     const owner = userCanisterId(userId);
     if (!isMultiUserCanisterUser(userId)) {
         return { owner };
     }
-    return { owner, subaccount: spenderSubaccount(Principal.fromText(principal)) };
+    return { owner, subaccount: spenderSubaccount(Principal.fromText(principal())) };
 }
 
 // Mirrors `ledger_utils::convert_to_subaccount`: the principal's length followed by its bytes.
