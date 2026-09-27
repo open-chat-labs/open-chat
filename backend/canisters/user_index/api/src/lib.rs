@@ -1,9 +1,10 @@
 use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{
-    BotInstallationLocation, BotPermissions, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContentInitial,
-    MessageId, MessageIndex, Milliseconds, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment,
-    TimestampMillis, UniquePersonProof, User, UserId,
+    BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim,
+    StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -35,6 +36,29 @@ pub enum LocalUserIndexEvent {
     MediaScanStalled(Box<MediaScanStalled>),
     MediaScanRecovered,
     MultiUserCanisterCreated(CanisterId),
+    UserMigrationStarted(Box<UserMigrationStarted>),
+    UserMigrationFailedToStart(Box<UserMigrationFailedToStart>),
+}
+
+// The user's canister has started migrating them to the MultiUser canister, and is now frozen
+// until the MultiUser canister has pulled them
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserMigrationStarted {
+    pub user_id: UserId,
+    pub multi_user_canister_id: CanisterId,
+    // The size of the user serialized with msgpack, which the MultiUser canister pulls
+    pub user_bytes: u64,
+    // The version of the User canister the user was serialized by
+    pub wasm_version: BuildVersion,
+}
+
+// The user couldn't be migrated to the MultiUser canister, either because their canister couldn't
+// be upgraded to the latest wasm or because it wasn't ready to be migrated
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserMigrationFailedToStart {
+    pub user_id: UserId,
+    pub multi_user_canister_id: CanisterId,
+    pub error: OCError,
 }
 
 // Raised by a local index when media scan jobs are queued but no verdicts are arriving: the

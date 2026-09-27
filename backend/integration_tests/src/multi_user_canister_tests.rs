@@ -4607,8 +4607,6 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         alice.user_id,
         UserCanisterEvent::MarkMessagesRead(user_canister::MarkMessagesReadArgs { read_up_to: 0.into() }),
     );
-    // Set after the chat was created, otherwise the two timestamps tie
-    env.advance_time(Duration::from_millis(1));
     send(
         env,
         alice.canister(),

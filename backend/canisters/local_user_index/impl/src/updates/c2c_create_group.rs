@@ -10,10 +10,8 @@ use local_user_index_canister::c2c_create_group::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use tracing::error;
-use types::{
-    BuildVersion, C2CError, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, OCResult, UserId, UserType,
-};
-use utils::canister;
+use types::{BuildVersion, C2CError, CanisterId, ChatId, Cycles, GroupCreatedEventPayload, OCResult, UserId, UserType};
+use utils::canister::{self, VersionedWasmToInstall};
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
@@ -73,7 +71,7 @@ async fn c2c_create_group(args: Args) -> Response {
 struct PrepareOk {
     canister_id: Option<CanisterId>,
     local_user_index_canister_id: CanisterId,
-    canister_wasm: CanisterWasm,
+    canister_wasm: VersionedWasmToInstall,
     cycles_to_use: Cycles,
     init_canister_args: InitGroupCanisterArgs,
 }
@@ -90,7 +88,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.clone();
+    let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::Group);
     let local_user_index_canister_id = state.env.canister_id();
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,

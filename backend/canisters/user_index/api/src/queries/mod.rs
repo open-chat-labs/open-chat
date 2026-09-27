@@ -21,6 +21,7 @@ pub mod reported_messages;
 pub mod search;
 pub mod suspected_bots;
 pub mod user;
+pub mod user_migration;
 pub mod user_registration_canister;
 pub mod users;
 pub mod users_chit;
