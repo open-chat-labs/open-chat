@@ -1,9 +1,11 @@
+use crate::guards::caller_is_hosted_user;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use oc_error_codes::OCErrorCode;
 use user_canister::swap_tokens::*;
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-async fn swap_tokens(_args: Args) -> Response {
-    unimplemented!()
+fn swap_tokens(_args: Args) -> Response {
+    Response::Error(OCErrorCode::InvalidRequest.with_message("Token swaps are not yet supported by the MultiUser canister"))
 }
