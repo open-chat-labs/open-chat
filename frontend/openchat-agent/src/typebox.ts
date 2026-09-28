@@ -8420,6 +8420,7 @@ export const UserIndexCurrentUserSuccessResult = /* @__PURE__ */ Type.Object({
     hide_online_status: Type.Optional(Type.Boolean()),
     accepted_terms_version: Type.Optional(Type.Number()),
     current_terms_version: Type.Optional(Type.Number()),
+    previous_user_ids: Type.Optional(Type.Array(UserId)),
 });
 
 export type UserIndexCurrentUserResponse = Static<typeof UserIndexCurrentUserResponse>;
