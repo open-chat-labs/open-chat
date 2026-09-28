@@ -177,11 +177,56 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
+    // Switches a user migrated to a MultiUser canister over from their old id to the new one it gave
+    // them, once it has imported them. From then on they are known here by their new id, as they are
+    // by the Identity canister and by each LocalUserIndex once told.
+    pub fn switch_over_migrated_user(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        canisters_to_notify: Vec<CanisterId>,
+    ) -> bool {
+        let now = self.env.now();
+        let Some(principal) = self.data.users.migrate_user_id(old_user_id, new_user_id, now) else {
+            return false;
+        };
+
+        self.data.local_index_map.remove_user(&old_user_id);
+        if let Some(local_user_index) = self.data.multi_user_canisters.local_user_index(&new_user_id.canister_id()) {
+            self.data.local_index_map.add_user(local_user_index, new_user_id);
+        }
+        for user_ids in [
+            &mut self.data.platform_moderators,
+            &mut self.data.platform_operators,
+            &mut self.data.vault_reviewers,
+        ] {
+            if user_ids.remove(&old_user_id) {
+                user_ids.insert(new_user_id);
+            }
+        }
+        self.data.chit_leaderboard.migrate_user_id(old_user_id, new_user_id);
+        self.data.external_achievements.migrate_user_id(old_user_id, new_user_id);
+        for (_, job) in self.data.timer_jobs.iter() {
+            if let Some(job) = job.borrow_mut().as_mut() {
+                job.migrate_user_id(old_user_id, new_user_id);
+            }
+        }
+
+        self.data.identity_canister_user_sync_queue.push_back(UserIdentity {
+            principal,
+            user_id: Some(new_user_id),
+            email: None,
+        });
+        jobs::sync_users_to_identity_canister::try_run_now(self);
+
+        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify);
+        true
+    }
+
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
     // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls.
     // Only the first call for a migration is acted on, so it must list all of them.
-    #[expect(dead_code, reason = "Called once the UserIndex orchestrates migrations")]
-    pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, canisters_to_notify: Vec<CanisterId>) {
+    fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, canisters_to_notify: Vec<CanisterId>) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.data.multi_user_canisters.on_user_removed(&old_user_id);
             self.data.multi_user_canisters.on_user_added(&new_user_id);
@@ -211,10 +256,7 @@ impl RuntimeState {
         let now = self.env.now();
         if let Some(user) = self.data.users.delete_user(user_id, now) {
             self.data.local_index_map.remove_user(&user_id);
-            // A migrated user may still be held under their old id, so decrement the count of the
-            // canister holding them now
-            let latest_user_id = self.data.migrated_user_ids.latest(user_id);
-            self.data.multi_user_canisters.on_user_removed(&latest_user_id);
+            self.data.multi_user_canisters.on_user_removed(&user_id);
             self.data.empty_users.remove(&user_id);
 
             #[derive(Serialize)]

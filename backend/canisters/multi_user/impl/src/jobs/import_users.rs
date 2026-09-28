@@ -2,7 +2,7 @@ use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use crate::{RuntimeState, jobs, mutate_state, read_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
-use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserImported};
 use oc_error_codes::{OCError, OCErrorCode};
 use stable_memory_map::{KeyScope, with_key_scope};
 use std::cell::{Cell, RefCell};
@@ -243,6 +243,7 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
     };
     with_key_scope(KeyScope::User(index), || user.migrate_own_user_id(old_user_id, new_user_id));
     let next_event_expiry = user.next_event_expiry;
+    let canisters_to_notify = user.group_and_community_canisters();
 
     if state.data.users.add_imported(index, user).is_err() {
         let error = OCErrorCode::UserImportFailed.with_message("The user's principal is already registered");
@@ -262,7 +263,14 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
     }
     state.set_up_streak_insurance_timer_job(index);
 
-    state.push_local_user_index_canister_event(index, LocalUserIndexEvent::UserImported(old_user_id), now);
+    state.push_local_user_index_canister_event(
+        index,
+        LocalUserIndexEvent::UserImported(UserImported {
+            old_user_id,
+            canisters_to_notify,
+        }),
+        now,
+    );
     info!(%old_user_id, %new_user_id, "User imported");
 }
 

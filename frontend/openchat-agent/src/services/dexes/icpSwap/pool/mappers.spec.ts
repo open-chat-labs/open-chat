@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { quoteResponse } from "./mappers";
+import { quoteResponse, swapResponse } from "./mappers";
 
 // A decline (undefined) is dropped by quoteSwap and costs nothing; a throw is retried by
 // executeQuery seven times with backoff and, if every pool throws, reaches the error tracker.
@@ -27,5 +27,19 @@ describe("ICPSwap quoteResponse", () => {
             /Unable to get quote/,
         );
         expect(() => quoteResponse({ err: { CommonError: null } })).toThrow(/Unable to get quote/);
+    });
+});
+
+describe("ICPSwap swapResponse", () => {
+    test("ok is a success with what reaches the wallet, after the output token's fee", () => {
+        expect(swapResponse({ ok: 123n }, 10n)).toEqual({ kind: "success", amountOut: 113n });
+        expect(swapResponse({ ok: 10n }, 10n)).toEqual({ kind: "success", amountOut: 0n });
+    });
+
+    test("err is an error rather than a throw, since the swap was made and declined", () => {
+        expect(swapResponse({ err: { InternalError: "Slippage check failed" } }, 10n)).toEqual({
+            kind: "error",
+            error: '{"InternalError":"Slippage check failed"}',
+        });
     });
 });

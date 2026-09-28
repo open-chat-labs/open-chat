@@ -548,6 +548,64 @@ impl UserMap {
         Some(user)
     }
 
+    // Moves the user from their old id onto the new one they were given when migrated to a MultiUser
+    // canister, returning their principal. Their referrals and suspension history move with them,
+    // and the users they referred and the bots they own are from then on referred by and owned by
+    // their new id. Returns None if there is no user with the old id, or there is already one with
+    // the new id.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> Option<Principal> {
+        if self.users.contains_key(&new_user_id) {
+            return None;
+        }
+        let mut user = self.users.remove(&old_user_id)?;
+        user.user_id = new_user_id;
+        let principal = user.principal;
+
+        if self.principal_to_user_id.get(&principal) == Some(&old_user_id) {
+            self.principal_to_user_id.insert(principal, new_user_id);
+        }
+        if self.username_to_user_id.get(&user.username) == Some(&old_user_id) {
+            self.username_to_user_id.insert(&user.username, new_user_id);
+        }
+        if let Some(referred_by) = user.referred_by
+            && let Some(referrals) = self.user_referrals.get_mut(&referred_by)
+        {
+            referrals
+                .iter_mut()
+                .filter(|u| **u == old_user_id)
+                .for_each(|u| *u = new_user_id);
+        }
+        if let Some(referrals) = self.user_referrals.remove(&old_user_id) {
+            for referred in referrals.iter() {
+                if let Some(referred_user) = self.users.get_mut(referred) {
+                    referred_user.referred_by = Some(new_user_id);
+                }
+            }
+            self.user_referrals.insert(new_user_id, referrals);
+        }
+        if self.suspected_bots.remove(&old_user_id) {
+            self.suspected_bots.insert(new_user_id);
+        }
+        let suspensions: Vec<_> = self
+            .suspended_or_unsuspended_users
+            .iter()
+            .filter(|(_, u)| *u == old_user_id)
+            .map(|(timestamp, _)| *timestamp)
+            .collect();
+        for timestamp in suspensions {
+            self.suspended_or_unsuspended_users.remove(&(timestamp, old_user_id));
+            self.suspended_or_unsuspended_users.insert((timestamp, new_user_id));
+        }
+        for (bot_id, bot) in self.bots.iter_mut().filter(|(_, b)| b.owner == old_user_id) {
+            bot.owner = new_user_id;
+            bot.last_updated = now;
+            self.bot_updates.insert((now, BotUpdate::Updated(*bot_id)));
+        }
+
+        self.users.insert(new_user_id, user);
+        Some(principal)
+    }
+
     #[expect(clippy::too_many_arguments)]
     pub fn add_bot_installation(
         &mut self,
@@ -1423,5 +1481,116 @@ mod tests {
         updated.username = "ABC".to_string();
 
         assert!(matches!(user_map.update(updated, 2, false, false), UpdateUserResult::Success));
+    }
+
+    #[test]
+    fn migrated_user_is_moved_onto_their_new_id() {
+        let mut user_map = UserMap::default();
+        let referrer_principal = Principal::from_slice(&[1]);
+        let principal = Principal::from_slice(&[2]);
+        let referred_principal = Principal::from_slice(&[3]);
+        let referrer: UserId = Principal::from_slice(&[3, 1]).into();
+        let old_user_id: UserId = Principal::from_slice(&[3, 2]).into();
+        let referred: UserId = Principal::from_slice(&[3, 3]).into();
+        let new_user_id = UserId::new_indexed(Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]), 1);
+
+        user_map.register(
+            referrer_principal,
+            referrer,
+            "referrer".to_string(),
+            None,
+            1,
+            None,
+            UserType::User,
+            None,
+        );
+        user_map.register(
+            principal,
+            old_user_id,
+            "user".to_string(),
+            None,
+            2,
+            Some(referrer),
+            UserType::User,
+            None,
+        );
+        user_map.register(
+            referred_principal,
+            referred,
+            "referred".to_string(),
+            None,
+            3,
+            Some(old_user_id),
+            UserType::User,
+            None,
+        );
+        user_map.suspend_user(old_user_id, None, "reason".to_string(), referrer, 4);
+        user_map.mark_suspected_bot(&principal);
+
+        let mut bot = test_bot();
+        bot.owner = old_user_id;
+        let bot_id: UserId = Principal::from_slice(&[3, 4]).into();
+        user_map.register(
+            Principal::from_slice(&[4]),
+            bot_id,
+            "bot".to_string(),
+            None,
+            5,
+            None,
+            UserType::BotV2,
+            Some(bot),
+        );
+
+        assert_eq!(user_map.migrate_user_id(old_user_id, new_user_id, 6), Some(principal));
+
+        assert!(user_map.get_by_user_id(&old_user_id).is_none());
+        assert_eq!(user_map.get_by_user_id(&new_user_id).unwrap().user_id, new_user_id);
+        assert_eq!(user_map.get_user_id_by_principal(&principal), Some(new_user_id));
+        assert_eq!(user_map.get_by_username("user").unwrap().user_id, new_user_id);
+        assert_eq!(user_map.referrals(&referrer), vec![new_user_id]);
+        assert_eq!(user_map.referrals(&new_user_id), vec![referred]);
+        assert!(user_map.referrals(&old_user_id).is_empty());
+        assert_eq!(user_map.get_by_user_id(&referred).unwrap().referred_by, Some(new_user_id));
+        assert!(user_map.is_suspected_bot(&new_user_id));
+        assert!(!user_map.is_suspected_bot(&old_user_id));
+        assert_eq!(
+            user_map.iter_suspended_or_unsuspended_users(0).collect_vec(),
+            vec![new_user_id]
+        );
+        assert_eq!(user_map.get_bot(&bot_id).unwrap().owner, new_user_id);
+        assert!(user_map.iter_bot_updates(5).any(|(_, u)| u == BotUpdate::Updated(bot_id)));
+
+        // Migrating the old id again finds nothing to move
+        assert_eq!(user_map.migrate_user_id(old_user_id, new_user_id, 7), None);
+    }
+
+    #[test]
+    fn user_is_not_migrated_onto_an_id_already_taken() {
+        let mut user_map = UserMap::default();
+        let user_id1: UserId = Principal::from_slice(&[3, 1]).into();
+        let user_id2: UserId = Principal::from_slice(&[3, 2]).into();
+        user_map.register(
+            Principal::from_slice(&[1]),
+            user_id1,
+            "1".to_string(),
+            None,
+            1,
+            None,
+            UserType::User,
+            None,
+        );
+        user_map.register(
+            Principal::from_slice(&[2]),
+            user_id2,
+            "2".to_string(),
+            None,
+            2,
+            None,
+            UserType::User,
+            None,
+        );
+
+        assert_eq!(user_map.migrate_user_id(user_id1, user_id2, 3), None);
+        assert!(user_map.get_by_user_id(&user_id1).is_some());
     }
 }

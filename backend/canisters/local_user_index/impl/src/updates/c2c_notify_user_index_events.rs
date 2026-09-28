@@ -13,8 +13,8 @@ use std::cmp::min;
 use std::collections::HashSet;
 use tracing::info;
 use types::{
-    BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, CanisterId, PushIfNotContains,
-    TimestampMillis,
+    BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, CanisterId, MAX_USER_INDEX,
+    PushIfNotContains, TimestampMillis,
 };
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
@@ -380,6 +380,20 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::UserIdMigrated(ev) => {
             if state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id) {
+                // The user's old canister stays in `local_users` on the LocalUserIndex controlling it,
+                // since it is kept until the user's funds have been moved out of it
+                if let Some(principal) = state.data.global_users.migrate_user_id(ev.old_user_id, ev.new_user_id) {
+                    let canister_id = ev.new_user_id.canister_id();
+                    if state.data.local_multi_user_canisters.contains(&canister_id)
+                        && !state.data.local_users.contains(&ev.new_user_id)
+                    {
+                        state.data.local_users.add(ev.new_user_id, principal, None, **now);
+                        state.data.local_multi_user_canisters.on_user_added(&canister_id);
+                        if ev.new_user_id.index() == MAX_USER_INDEX {
+                            state.data.local_multi_user_canisters.mark_full(&canister_id);
+                        }
+                    }
+                }
                 for canister_id in ev.canisters_to_notify {
                     if state.data.local_groups.get(&canister_id.into()).is_some() {
                         state.push_event_to_group(

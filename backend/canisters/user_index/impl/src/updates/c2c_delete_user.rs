@@ -13,10 +13,19 @@ fn c2c_delete_user(args: Args) -> Response {
 }
 
 fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.delete_user(args.user_id, true) {
+    // The Identity canister may not yet have been told the new id of a user migrated to a MultiUser
+    // canister
+    let user_id = state.data.migrated_user_ids.latest(args.user_id);
+    // A user being migrated isn't deleted, since the MultiUser canister may be importing them, and
+    // the copy it ends up with would be left behind. They can try again once the migration is over.
+    if state.data.user_migrations.is_in_progress(&user_id) {
+        return Response::Error(OCErrorCode::AlreadyInProgress.with_message("The user is being migrated"));
+    }
+
+    if state.delete_user(user_id, true) {
         state.push_event_to_all_local_user_indexes(
             UserIndexEvent::DeleteUser(DeleteUser {
-                user_id: args.user_id,
+                user_id,
                 #[allow(deprecated)]
                 triggered_by_user: true,
             }),

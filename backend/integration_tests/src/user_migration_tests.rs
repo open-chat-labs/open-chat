@@ -10,7 +10,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, Document, MessageContent, MessageContentInitial, OptionUpdate,
+    BuildVersion, CanisterId, CanisterWasm, Chat, Document, Empty, MessageContent, MessageContentInitial, OptionUpdate,
     P2PSwapContentInitial, UserId,
 };
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -351,8 +351,10 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let (user1, user1_auth) = client::register_user_and_include_auth(env, canister_ids);
+    let user2 = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &user2, &random_string(), true, true);
+    client::group::happy_path::join_group(env, user1.principal, group_id);
 
     // Messages to another user and to themselves, and an avatar and profile background large enough
     // that the stable memory map entries are pulled in more than one page
@@ -391,7 +393,25 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     assert_eq!(new_user_id.canister_id(), multi_user_canister);
     assert_eq!(metrics(env, multi_user_canister)["user_imports_in_progress"], 0);
 
-    // The user's canister stays frozen until the migration completes
+    // The user is switched over to their new id, which they are found by from then on
+    let current_user = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
+    assert_eq!(current_user.user_id, new_user_id);
+    let summary = client::user_index::happy_path::user(env, canister_ids.user_index, user1.user_id);
+    assert_eq!(summary.user_id, new_user_id);
+    assert_eq!(summary.previous_user_ids, vec![user1.user_id]);
+    let identity_canister::check_auth_principal_v2::Response::Success(auth) =
+        client::identity::check_auth_principal_v2(env, user1_auth.auth_principal(), canister_ids.identity, &Empty {})
+    else {
+        panic!("Auth principal not found");
+    };
+    assert_eq!(auth.user_id, Some(new_user_id));
+    // As they are by their groups, once each has been told
+    tick_many(env, 10);
+    let members = client::group::happy_path::selected_initial(env, user2.principal, group_id).basic_members;
+    assert!(members.contains(&new_user_id));
+    assert!(!members.contains(&user1.user_id));
+
+    // The user's old canister stays frozen
     assert!(
         env.update_call(
             user1.canister(),
@@ -627,7 +647,13 @@ fn user_canister_is_upgraded_to_the_latest_wasm_before_migrating() {
         vec![user.user_id],
         Some(multi_user_canister(1)),
     );
-    tick_many(env, 10);
+    // The canister may not be ready to migrate straight after being upgraded, in which case starting
+    // the migration is retried 30s later
+    for _ in 0..3 {
+        tick_many(env, 5);
+        env.advance_time(Duration::from_secs(31));
+    }
+    tick_many(env, 5);
 
     assert_eq!(wasm_version(env, user.canister()), version);
     let started = started_migration(env, operator.principal, canister_ids.user_index, user.user_id);

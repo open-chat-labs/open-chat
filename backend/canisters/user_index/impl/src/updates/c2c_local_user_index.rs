@@ -230,7 +230,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 .user_migrations
                 .mark_imported(ev.old_user_id, ev.new_user_id, **now)
             {
-                info!(old_user_id = %ev.old_user_id, new_user_id = %ev.new_user_id, "User imported");
+                if state.switch_over_migrated_user(ev.old_user_id, ev.new_user_id, ev.canisters_to_notify) {
+                    info!(old_user_id = %ev.old_user_id, new_user_id = %ev.new_user_id, "User imported and switched over");
+                } else {
+                    error!(old_user_id = %ev.old_user_id, new_user_id = %ev.new_user_id, "User imported but not switched over");
+                }
+                crate::jobs::start_user_migrations::run(state);
             }
         }
         LocalUserIndexEvent::UserImportFailed(ev) => {
