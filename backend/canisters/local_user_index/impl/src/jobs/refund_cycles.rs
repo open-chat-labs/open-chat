@@ -24,9 +24,9 @@ const MAX_ATTEMPTS: usize = 10;
 // worth refunding. This also makes it cheap to queue a canister which has already been refunded.
 const MIN_CYCLES_TO_REFUND: Cycles = 100 * B;
 
-// `install_code` prepays for its execution, so the canister must hold this much above its
-// freezing threshold, else it is topped up first. The top-up comes back along with the rest, so
-// erring on the generous side costs nothing.
+// `install_code` prepays for its execution, so the canister must hold this much (its freezing
+// threshold having been set to 0), else it is topped up first. The top-up comes back along with
+// the rest, so erring on the generous side costs nothing.
 const CYCLES_REQUIRED_FOR_INSTALL: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 100 * B;
 
 thread_local! {
@@ -177,9 +177,14 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
                 return Err(RefundError::TooFewCycles(balance));
             }
 
-            let required = status.freezing_threshold_cycles() + CYCLES_REQUIRED_FOR_INSTALL;
-            if balance < required {
-                let top_up = required - balance;
+            // The refunder can only send the canister's liquid balance, which excludes the cycles
+            // held back by its freezing threshold, so set the threshold to 0 to refund those too
+            if status.settings.freezing_threshold != 0u32 {
+                utils::canister::set_freezing_threshold(canister_id, 0).await?;
+            }
+
+            if balance < CYCLES_REQUIRED_FOR_INSTALL {
+                let top_up = CYCLES_REQUIRED_FOR_INSTALL - balance;
                 utils::canister::deposit_cycles(canister_id, top_up).await?;
                 mutate_state(|state| state.data.cycles_topped_up_for_refunds += top_up);
             }

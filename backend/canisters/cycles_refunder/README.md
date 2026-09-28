@@ -12,7 +12,9 @@ cycles. To recover them, for each such canister:
 
 The LocalUserIndex embeds `cycles_refunder.wasm` and does exactly this (see its `refund_cycles`
 job), both as part of deleting a user and, for users deleted before that was the case, when a
-platform operator calls `refund_deleted_user_cycles` on the UserIndex. It passes its own
+platform operator calls `refund_deleted_user_cycles` on the UserIndex. It first sets the
+canister's freezing threshold to 0, since `refund` can only send the canister's liquid balance,
+which excludes the cycles held back by the freezing threshold. It passes its own
 CyclesDispenser canister ID as the init arg, so works on any network. `install_code` alone needs
 ~300B cycles up front, so canisters holding less are topped up first (the top-up comes back with
 the refund), and canisters holding under 100B are skipped as not worth it.

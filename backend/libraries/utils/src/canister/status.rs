@@ -31,11 +31,6 @@ impl CanisterStatusMinimal {
     pub fn cycles(&self) -> u128 {
         nat_to_u128(&self.cycles)
     }
-
-    // The balance below which the canister is frozen, which it can't spend
-    pub fn freezing_threshold_cycles(&self) -> u128 {
-        nat_to_u128(&self.idle_cycles_burned_per_day) * nat_to_u128(&self.settings.freezing_threshold) / (24 * 60 * 60)
-    }
 }
 
 fn nat_to_u128(nat: &Nat) -> u128 {
