@@ -1,5 +1,6 @@
 use crate::client::create_canister;
 use crate::env::ENV;
+use crate::utils::assert_wasm_built_from_wat;
 use crate::{TestEnv, client};
 use candid::{Nat, Principal};
 use icrc_ledger_types::icrc1::account::Account;
@@ -13,7 +14,8 @@ const CALL_RELAY_WAT: &str = include_str!("../../canisters/call_relay/call_relay
 // The wasm to be embedded in the LocalUserIndex, built from the wat above
 const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
 
-// A callee which replies with its args, or rejects with them as the message
+// A callee which replies with its args, or rejects with them as the message, or replies with
+// 200KB of zeros whatever its args
 const ECHO_WAT: &str = r#"
 (module
   (import "ic0" "msg_arg_data_size" (func $msg_arg_data_size (result i32)))
@@ -32,8 +34,12 @@ const ECHO_WAT: &str = r#"
     (call $msg_reply))
   (func $reject
     (call $msg_reject (i32.const 0) (call $copy_args)))
+  (func $large
+    (call $msg_reply_data_append (i32.const 0) (i32.const 200000))
+    (call $msg_reply))
   (export "canister_update echo" (func $echo))
-  (export "canister_update reject" (func $reject)))
+  (export "canister_update reject" (func $reject))
+  (export "canister_update large" (func $large)))
 "#;
 
 const ICP_TRANSFER_FEE: u128 = 10_000;
@@ -110,7 +116,14 @@ fn call_relay_returns_the_callees_reply_or_reject_as_is() {
     let echo = create_canister(env, *controller);
     env.install_canister(echo, wat::parse_str(ECHO_WAT).unwrap(), vec![], Some(*controller));
 
-    // Large enough that the relay has to grow its memory to hold the args and then the reply
+    // Large enough that the relay has to grow its memory to hold the reply, doing so before
+    // any args have made it grow
+    assert_eq!(
+        relay(env, *controller, canister_id, echo, "large", &[]).unwrap(),
+        (0, vec![0; 200_000])
+    );
+
+    // The largest of which makes the relay grow its memory to hold the args
     for payload in [b"hello".to_vec(), vec![], (0..200_000).map(|i| i as u8).collect()] {
         assert_eq!(
             relay(env, *controller, canister_id, echo, "echo", &payload).unwrap(),
@@ -194,15 +207,7 @@ fn call_relay_rejects_invalid_args() {
 
 #[test]
 fn committed_call_relay_wasm_matches_the_wat() {
-    let from_wat = wat::parse_str(CALL_RELAY_WAT).unwrap();
-
-    // The `wat` crate appends a "name" custom section (id 0) which `wat2wasm` doesn't emit,
-    // otherwise the two are identical
-    assert!(
-        from_wat.starts_with(CALL_RELAY_WASM),
-        "call_relay.wasm is out of date, rebuild it from the wat"
-    );
-    assert_eq!(from_wat.get(CALL_RELAY_WASM.len()), Some(&0));
+    assert_wasm_built_from_wat(CALL_RELAY_WASM, CALL_RELAY_WAT, "call_relay.wasm");
 }
 
 fn wasm() -> Vec<u8> {

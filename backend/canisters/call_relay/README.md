@@ -12,6 +12,10 @@ recover them, for each such canister which holds funds:
    account,
 3. uninstall it again.
 
+This must happen before the canister's cycles are refunded, or else it must be topped up first:
+`install_code` needs ~300B cycles up front, and each relayed call reserves cycles for its
+response.
+
 Only a controller can call `relay`, which gives them nothing they don't already have, since they
 could install any code they like on the canister. While it is installed, calls to any of the
 User canister's methods fail as "method not found", which callers already treat as meaning the
@@ -35,9 +39,10 @@ reject code (4 bytes, u32 LE) | the callee's reply or reject message
 
 where the reject code is 0 if the callee replied. So its outcome, reply or reject, comes back
 exactly as the callee gave it, and a reject from `relay` itself means the call was never made:
-the caller isn't a controller, the args are invalid, or `call_perform` failed. The one exception
-is a reply within 4 bytes of the 2MiB limit, which can't be relayed since the relay's reply is 4
-bytes longer, so the relay traps having made the call.
+the caller isn't a controller, the args are invalid, or `call_perform` failed. The exceptions,
+where the relay traps having made the call, are a reply within 4 bytes of the 2MiB limit, which
+can't be relayed since the relay's reply is 4 bytes longer, and a reply or reject message larger
+than the memory can be grown to hold. Neither arises for ledger transfers.
 
 Being a guaranteed response call, `relay` always learns the outcome, but the caller, if it makes
 a bounded wait call, may not. A transfer can be retried safely by setting `created_at_time`, in
