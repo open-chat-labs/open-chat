@@ -810,9 +810,9 @@
                     "2": "Una tenda tocca già questa cella, quindi questa cella non può contenerne una.",
                     "3": "A questo albero resta una sola cella dove mettere la sua tenda, quindi quella cella deve essere una tenda.",
                     "4": "La tenda di questo albero deve andare in una di due celle, ed entrambe toccano questa cella, quindi questa cella non può contenere una tenda.",
-                    "5": "Solo queste celle in questa riga o colonna possono ancora ospitare una tenda, e ogni modo di sistemare quelle che le servono concorda sulle celle segnate, quindi puoi riempirle.",
-                    "6": "Solo queste celle in questa riga o colonna possono ancora ospitare una tenda, e ogni modo di sistemare quelle che le servono ne mette una accanto alle celle segnate, quindi puoi escluderle.",
-                    "7": "Questa riga o colonna ha bisogno di tante tende quante sono le celle rimaste che potrebbero contenerne una, quindi ognuna di loro è una tenda.",
+                    "5": "Prova ogni modo di sistemare le tende che servono ancora a questa riga o colonna, usando solo le celle evidenziate e senza che due si tocchino. Alcune di quelle celle risultano uguali ogni volta, tenda o vuota, quindi puoi riempirle.",
+                    "6": "Prova ogni modo di sistemare le tende che servono ancora a questa riga o colonna, usando solo le sue celle evidenziate. Alcune celle evidenziate accanto alla riga o colonna toccano una tenda ogni volta, quindi non possono contenerne una.",
+                    "7": "Escludi le celle che non possono contenere una tenda: nessun albero accanto ha ancora bisogno di una tenda, oppure toccano una tenda. Questa riga o colonna ha bisogno di tante tende quante sono le celle rimaste, quindi ognuna di loro è una tenda.",
                     "8": "Questa riga o colonna ha già tutte le sue tende, quindi nessun'altra cella al suo interno può contenerne una."
                 },
                 "demo": {

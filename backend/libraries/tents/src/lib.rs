@@ -58,8 +58,8 @@
 //! | 2 | TentTouches | A tent already touches this cell, so it can't hold a tent. |
 //! | 3 | TreeNeedsTent | This tree has only one cell left where its tent can go, so that cell is a tent. |
 //! | 4 | TreeCorner | This tree's tent must be in one of two cells that both touch this cell, so this cell can't hold a tent. (Tricky) |
-//! | 5 | LineCount | Only these cells in the row or column can still take a tent, and every way of fitting in the ones it needs agrees about the marked cells. |
-//! | 6 | LineNeighbour | Only these cells in the row or column can still take a tent, and every way of fitting in the ones it needs puts one next to the marked cells. (Tricky) |
+//! | 5 | LineCount | Every way of fitting the tents the line still needs into its viable cells, never touching, agrees about some of those cells. |
+//! | 6 | LineNeighbour | Every way of fitting the tents the line still needs into its viable cells puts one next to some cells beside the line. (Tricky) |
 //! | 7 | LineExact | Leave out the cells that cannot hold a tent: no free tree beside them, or touching a tent. This row or column needs as many tents as it has cells left, so every one of them is a tent. |
 //! | 8 | LineFull | This row or column already has all its tents, so no other cell in it can hold one. |
 

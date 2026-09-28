@@ -810,9 +810,9 @@
                     "2": "Ein Zelt berührt diese Zelle bereits, also kann diese Zelle keins enthalten.",
                     "3": "Für diesen Baum ist nur noch eine Zelle übrig, in die sein Zelt passt, also muss diese Zelle ein Zelt sein.",
                     "4": "Das Zelt dieses Baums muss in eine von zwei Zellen, und beide berühren diese Zelle, also kann diese Zelle kein Zelt enthalten.",
-                    "5": "Nur diese Zellen in dieser Zeile oder Spalte können noch ein Zelt aufnehmen, und jede Möglichkeit, die benötigten unterzubringen, stimmt bei den markierten Zellen überein. Sie können sie also ausfüllen.",
-                    "6": "Nur diese Zellen in dieser Zeile oder Spalte können noch ein Zelt aufnehmen, und jede Möglichkeit, die benötigten unterzubringen, setzt eins neben die markierten Zellen. Sie können sie also ausschließen.",
-                    "7": "Diese Zeile oder Spalte braucht so viele Zelte, wie sie noch Zellen hat, die eins aufnehmen könnten, also ist jede davon ein Zelt.",
+                    "5": "Probieren Sie jede Möglichkeit aus, die Zelte, die diese Zeile oder Spalte noch braucht, nur in den hervorgehobenen Zellen unterzubringen, ohne dass sich zwei berühren. Einige dieser Zellen fallen jedes Mal gleich aus, Zelt oder leer. Sie können sie also ausfüllen.",
+                    "6": "Probieren Sie jede Möglichkeit aus, die Zelte, die diese Zeile oder Spalte noch braucht, nur in ihren hervorgehobenen Zellen unterzubringen. Einige hervorgehobene Zellen neben der Zeile oder Spalte berühren jedes Mal ein Zelt, also kann dort keins stehen.",
+                    "7": "Lassen Sie die Zellen weg, die kein Zelt aufnehmen können: Kein Baum daneben braucht noch ein Zelt, oder sie berühren ein Zelt. Diese Zeile oder Spalte braucht so viele Zelte, wie ihr Zellen bleiben, also ist jede davon ein Zelt.",
                     "8": "Diese Zeile oder Spalte hat bereits alle ihre Zelte, also kann keine andere Zelle darin eins enthalten."
                 },
                 "demo": {
