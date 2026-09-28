@@ -77,48 +77,15 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     );
 
     // Then in the other user's copy, where the thread is identified by the id of its root message
-    // since message indexes differ between the copies. A user in another canister is sent the
-    // undeletion.
+    // since message indexes differ between the copies
     if !undeleted.is_empty() {
-        state.push_user_canister_event(
+        state.send_user_canister_event(
             my_index,
             args.user_id,
             UserCanisterEvent::UndeleteMessages(Box::new(C2CDeleteUndeleteMessagesArgs {
                 thread_root_message_id,
-                message_ids: undeleted.clone(),
+                message_ids: undeleted,
             })),
-        );
-    }
-    if !undeleted.is_empty()
-        && let Some(their_index) = state.index_of_local_user(args.user_id)
-        && let Some((thread_root_message_index, undeleted_in_theirs)) = state
-            .with_their_direct_chat_mut(my_user_id, args.user_id, |chat, migrated_user_ids| {
-                let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;
-                let undeleted: Vec<_> = chat
-                    .undelete_messages(
-                        DeleteUndeleteMessagesArgs {
-                            caller: my_user_id,
-                            is_admin: false,
-                            min_visible_event_index: EventIndex::default(),
-                            thread_root_message_index,
-                            message_ids: undeleted,
-                            now,
-                        },
-                        migrated_user_ids,
-                    )
-                    .into_iter()
-                    .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
-                    .collect();
-                Some((thread_root_message_index, undeleted))
-            })
-            .flatten()
-    {
-        HardDeleteMessageContentJob::cancel(
-            &mut state.data.timer_jobs,
-            their_index,
-            my_user_id.into(),
-            thread_root_message_index,
-            &undeleted_in_theirs,
         );
     }
 

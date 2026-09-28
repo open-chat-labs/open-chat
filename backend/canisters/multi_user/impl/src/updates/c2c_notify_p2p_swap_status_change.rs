@@ -1,10 +1,10 @@
 use crate::guards::caller_is_escrow_canister;
-use crate::updates::c2c_user_canister_v2::send_p2p_swap_status_change;
 use crate::{MultiUserEventPusher, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::SwapStatusChange as Args;
 use types::{Chat, P2PSwapLocation, UserId};
+use user_canister::UserCanisterEvent;
 use user_core::updates::c2c_notify_p2p_swap_status_change::{apply_status_change, offerer_user_id};
 
 // The User canister's `c2c_notify_p2p_swap_status_change`, for swaps offered in direct chats. The
@@ -61,7 +61,11 @@ async fn c2c_notify_p2p_swap_status_change(args: Args) {
             })
             .flatten();
         if let Some(change) = change {
-            send_p2p_swap_status_change(recipient_index, other, change, state);
+            state.send_user_canister_event(
+                recipient_index,
+                other,
+                UserCanisterEvent::P2PSwapStatusChange(Box::new(change)),
+            );
         }
     })
 }

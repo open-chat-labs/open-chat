@@ -1,6 +1,5 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
-use crate::updates::c2c_user_canister_v2::receive_start_video_call;
 use crate::{MultiUserEventPusher, RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use constants::HOUR_IN_MS;
@@ -13,8 +12,7 @@ use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 use user_core::updates::start_video_call::{Started, notification, prepare};
 
 // As in the User canister, the video call operator starts the call in the callee's copy of the
-// chat, naming the callee since this canister holds many users, and the initiator's canister is
-// told: directly if they are in this canister too
+// chat, naming the callee since this canister holds many users, and the initiator is told
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
 fn start_video_call_v2(args: Args) -> Response {
@@ -59,11 +57,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         max_duration: args.max_duration,
         audio_only: call_kind.audio_only(),
     };
-    if let Some(their_index) = state.index_of_local_user(sender) {
-        receive_start_video_call(start_args, my_user_id, their_index, state);
-    } else {
-        state.push_user_canister_event(user_index, sender, UserCanisterEvent::StartVideoCall(Box::new(start_args)));
-    }
+    state.send_user_canister_event(user_index, sender, UserCanisterEvent::StartVideoCall(Box::new(start_args)));
     Ok(())
 }
 

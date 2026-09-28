@@ -20,18 +20,6 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let my_user_id = state.user_id(my_index);
     let now = state.env.now();
 
-    let edit_message_args = |sender, thread_root_message_index| EditMessageArgs {
-        sender,
-        min_visible_event_index: EventIndex::default(),
-        thread_root_message_index,
-        message_id: args.message_id,
-        content: args.content.clone().into(),
-        block_level_markdown: args.block_level_markdown,
-        og_previews: args.og_previews.clone(),
-        finalise_bot_message: false,
-        now,
-    };
-
     // Edit the message in the sender's copy of the chat. Unlike the User canister, which passes no
     // thread, this edits messages within threads too.
     let thread_root_message_id = state
@@ -48,7 +36,17 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
             // TODO: Push the edit to the event store (`UserEventPusher` in the User canister)
             chat.edit_message::<NullEventPusher>(
-                edit_message_args(my_user_id, args.thread_root_message_index),
+                EditMessageArgs {
+                    sender: my_user_id,
+                    min_visible_event_index: EventIndex::default(),
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_id: args.message_id,
+                    content: args.content.clone().into(),
+                    block_level_markdown: args.block_level_markdown,
+                    og_previews: args.og_previews.clone(),
+                    finalise_bot_message: false,
+                    now,
+                },
                 &state.data.migrated_user_ids,
                 None,
             )?;
@@ -57,27 +55,18 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .ok_or(OCErrorCode::TargetUserNotFound)??;
 
     // Then in the other user's copy, where the thread is identified by the id of its root message
-    // since message indexes differ between the copies. A user in another canister is sent the edit.
-    state.push_user_canister_event(
+    // since message indexes differ between the copies
+    state.send_user_canister_event(
         my_index,
         args.user_id,
         UserCanisterEvent::EditMessage(Box::new(C2CEditMessageArgs {
             thread_root_message_id,
             message_id: args.message_id,
-            content: args.content.clone().into(),
+            content: args.content.into(),
             block_level_markdown: args.block_level_markdown,
-            og_previews: args.og_previews.clone(),
+            og_previews: args.og_previews,
         })),
     );
-    state.with_their_direct_chat_mut(my_user_id, args.user_id, |chat, migrated_user_ids| {
-        if let Ok(thread_root_message_index) = chat.thread_root_message_index(thread_root_message_id) {
-            let _ = chat.edit_message::<NullEventPusher>(
-                edit_message_args(my_user_id, thread_root_message_index),
-                migrated_user_ids,
-                None,
-            );
-        }
-    });
 
     // As in the User canister, which doesn't award it for the chat with the OpenChat bot
     if args.user_id != OPENCHAT_BOT_USER_ID {
