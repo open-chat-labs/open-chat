@@ -407,14 +407,14 @@ fn stalled_migration_is_cancelled() {
 
     // Migrated to a canister which doesn't import users, so the migration makes no more progress
     start_migration(env, canister_ids, *controller, &user, multi_user_canister(1));
-    env.advance_time(Duration::from_millis(HOUR_IN_MS));
+    env.advance_time(Duration::from_millis(30 * MINUTE_IN_MS));
     tick_many(env, 5);
     assert!(matches!(
         user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
         Some(UserMigrationStatus::Started { .. })
     ));
 
-    env.advance_time(Duration::from_millis(HOUR_IN_MS + 10 * MINUTE_IN_MS));
+    env.advance_time(Duration::from_millis(40 * MINUTE_IN_MS));
     tick_many(env, 10);
 
     let status = user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id);
@@ -423,6 +423,59 @@ fn stalled_migration_is_cancelled() {
         "{status:?}"
     );
     // The canister is no longer frozen, so its owner can change it again
+    let response = client::user::set_bio(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::set_bio::Args { text: random_string() },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+}
+
+#[test]
+fn migration_which_fails_to_start_is_tracked_until_cancelled() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+
+    // The user's canister is stopped, so every call to start the migration fails, as would one whose
+    // reply was lost after it had frozen the canister
+    env.stop_canister(user.canister(), Some(user.local_user_index)).unwrap();
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister(1)),
+    );
+    for _ in 0..25 {
+        env.advance_time(Duration::from_secs(31));
+        tick_many(env, 3);
+    }
+
+    // The migration can't be cancelled while the canister can't be reached, so it isn't recorded as
+    // having failed, but is kept track of
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        Some(UserMigrationStatus::Requested { .. })
+    ));
+
+    // Once the canister can be reached, the migration is cancelled when it stalls
+    env.start_canister(user.canister(), Some(user.local_user_index)).unwrap();
+    env.advance_time(Duration::from_millis(HOUR_IN_MS));
+    tick_many(env, 10);
+    let status = user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id);
+    assert!(
+        matches!(status, Some(UserMigrationStatus::Failed { ref error, .. }) if error.matches_code(OCErrorCode::UserMigrationStalled)),
+        "{status:?}"
+    );
     let response = client::user::set_bio(
         env,
         user.principal,

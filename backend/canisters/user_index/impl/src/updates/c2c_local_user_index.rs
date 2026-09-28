@@ -11,6 +11,7 @@ use local_user_index_canister::{
     ChitBalance, ImportUser, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
     UserRegistered, UsernameChanged,
 };
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
@@ -18,7 +19,7 @@ use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::{error, info};
 use types::{CanisterId, Hash, IdempotentEnvelope, MessageContentInitial, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::c2c_local_user_index::*;
-use user_index_canister::{LocalUserIndexEvent, UserImportFailed};
+use user_index_canister::{LocalUserIndexEvent, UserImportFailed, UserMigrationFailedToStart};
 
 #[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]
@@ -69,6 +70,22 @@ async fn cancel_failed_import(ev: UserImportFailed) {
             }
         }),
         Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to cancel user migration after its import failed"),
+    }
+}
+
+async fn cancel_failed_start(ev: UserMigrationFailedToStart) {
+    match crate::updates::cancel_user_migration::cancel_migration(ev.user_id, ev.multi_user_canister_id, None).await {
+        Ok(()) => mutate_state(|state| {
+            let now = state.env.now();
+            if state
+                .data
+                .user_migrations
+                .mark_failed(ev.user_id, ev.multi_user_canister_id, ev.error, now)
+            {
+                crate::jobs::start_user_migrations::run(state);
+            }
+        }),
+        Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to cancel user migration after it failed to start"),
     }
 }
 
@@ -274,7 +291,21 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         LocalUserIndexEvent::UserMigrationFailedToStart(ev) => {
-            if state
+            if ev.error.matches_code(OCErrorCode::C2CError) {
+                // The call to start the migration may have frozen the user's canister even though its
+                // reply was lost, so the migration is cancelled before being recorded as failed. If
+                // it can't be, eg. because the canister still can't be reached, it is left in
+                // progress, to be cancelled once it has stalled.
+                if state
+                    .data
+                    .user_migrations
+                    .get(&ev.user_id)
+                    .is_some_and(|m| m.multi_user_canister_id == ev.multi_user_canister_id && m.started.is_none())
+                {
+                    info!(user_id = %ev.user_id, multi_user_canister_id = %ev.multi_user_canister_id, error = ?ev.error, "User migration failed to start");
+                    utils::async_work::spawn_tracked(cancel_failed_start(*ev));
+                }
+            } else if state
                 .data
                 .user_migrations
                 .mark_failed(ev.user_id, ev.multi_user_canister_id, ev.error.clone(), **now)

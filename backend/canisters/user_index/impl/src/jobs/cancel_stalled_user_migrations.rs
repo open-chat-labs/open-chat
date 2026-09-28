@@ -13,7 +13,7 @@ use types::{CanisterId, Hash, Milliseconds, UserId};
 // and a MultiUser canister only pulls a couple of users at a time, so this must cover a user waiting
 // behind the others being migrated to the same canister as well as their own import. It should be
 // raised along with the migration concurrency if that is raised much.
-const STALL_TIMEOUT: Milliseconds = 2 * HOUR_IN_MS;
+const STALL_TIMEOUT: Milliseconds = HOUR_IN_MS;
 // The job doesn't run more often than this, so that a stalled migration which fails to be cancelled
 // is only tried again after a while
 const MIN_INTERVAL: Milliseconds = 10 * MINUTE_IN_MS;
