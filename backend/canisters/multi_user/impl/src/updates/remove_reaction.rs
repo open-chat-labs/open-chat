@@ -1,8 +1,8 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{MultiUserEventPusher, RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{AddRemoveReactionArgs, NullEventPusher};
+use chat_events::AddRemoveReactionArgs;
 use oc_error_codes::OCErrorCode;
 use types::{EventIndex, MessageId, MessageIndex, OCResult, Reaction, UserId};
 use user_canister::remove_reaction::*;
@@ -42,6 +42,12 @@ pub(crate) fn toggle_reaction(
     let my_user_id = state.user_id(my_index);
     let now = state.env.now();
 
+    let event_pusher = MultiUserEventPusher {
+        user_id: my_user_id,
+        now,
+        rng: state.env.rng(),
+        queue: &mut state.data.local_user_index_event_sync_queue,
+    };
     let (thread_root_message_id, username, display_name, user_avatar_id) = state
         .data
         .users
@@ -59,8 +65,7 @@ pub(crate) fn toggle_reaction(
             };
             let migrated_user_ids = &state.data.migrated_user_ids;
             if added {
-                // TODO: Push the reaction to the event store (`UserEventPusher` in the User canister)
-                chat.add_reaction::<NullEventPusher>(args, migrated_user_ids, None)?;
+                chat.add_reaction(args, migrated_user_ids, Some(event_pusher))?;
             } else {
                 chat.remove_reaction(args, migrated_user_ids)?;
             }

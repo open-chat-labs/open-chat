@@ -1,5 +1,5 @@
-use crate::RuntimeState;
-use chat_events::{MessageContentInternal, NullEventPusher, PushMessageArgs, ReplyContextInternal, TextContentInternal};
+use crate::{MultiUserEventPusher, RuntimeState};
+use chat_events::{MessageContentInternal, PushMessageArgs, ReplyContextInternal, TextContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
 use rand::RngExt;
 use types::{DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, User, UserId, UserType};
@@ -78,6 +78,14 @@ pub(crate) fn send_message_with_reply(
         _ => None,
     });
 
+    // As in the User canister, the OpenChat bot's messages are pushed to the event store
+    let event_pusher = MultiUserEventPusher {
+        user_id: my_user_id,
+        now,
+        rng: state.env.rng(),
+        queue: &mut state.data.local_user_index_event_sync_queue,
+    };
+
     let (message_event, notification) = state.data.users.with_user_mut(user_index, |user| {
         let chat = user.direct_chats.get_or_create(
             my_user_id,
@@ -87,8 +95,7 @@ pub(crate) fn send_message_with_reply(
             now,
         );
 
-        // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
-        let message_event = chat.push_message::<NullEventPusher>(
+        let message_event = chat.push_message(
             PushMessageArgs {
                 thread_root_message_index: None,
                 message_id,
@@ -104,7 +111,7 @@ pub(crate) fn send_message_with_reply(
                 sender_context: None,
             },
             None,
-            None,
+            Some(event_pusher),
         );
 
         // As with any bot, the OpenChat bot has read its own messages
