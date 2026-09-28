@@ -6135,3 +6135,43 @@ fn the_user_index_is_told_of_avatars_set_in_multi_user_canisters() {
     tick_many(env, 3);
     assert_eq!(avatar_id(env, a), None);
 }
+
+#[test]
+fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    // An OpenChat user, but not one this canister holds
+    let outsider = client::register_user(env, canister_ids);
+
+    // Rejected by `inspect_message` as the call is submitted, before it can cost the canister
+    // anything, rather than by the endpoint's guard once it runs
+    let set_bio = msgpack::serialize_then_unwrap(user_canister::set_bio::Args { text: "bio".to_string() });
+    let error = env
+        .submit_call(canister_id, outsider.principal, "set_bio_msgpack", set_bio.clone())
+        .unwrap_err();
+    assert_eq!(error.error_code, pocket_ic::ErrorCode::CanisterRejectedMessage, "{error:?}");
+
+    // Nor may even one of its users call a c2c method, which only canisters call
+    let game_chit = msgpack::serialize_then_unwrap(user_canister::c2c_game_chit::Args {
+        user_id,
+        game_id: "game".to_string(),
+        key: "key".to_string(),
+        amount: 1,
+    });
+    let error = env
+        .submit_call(canister_id, principal, "c2c_game_chit_msgpack", game_chit)
+        .unwrap_err();
+    assert_eq!(error.error_code, pocket_ic::ErrorCode::CanisterRejectedMessage, "{error:?}");
+
+    let message_id = env.submit_call(canister_id, principal, "set_bio_msgpack", set_bio).unwrap();
+    assert!(env.await_call(message_id).is_ok());
+}
