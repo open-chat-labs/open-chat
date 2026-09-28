@@ -1,10 +1,13 @@
-// Trimmed candid for the TACO exchange — only the slice OpenChat queries for
-// per-pool quotes. Full canister exposed at:
+// Trimmed candid for the TACO exchange — only the slice OpenChat uses. Full canister exposed at:
 // https://dashboard.internetcomputer.org/canister/qioex-5iaaa-aaaan-q52ba-cai
 //
 // OC uses getExpectedReceiveAmountBatchMultiOptimal — TACO runs the 10-fraction
 // probe grid AND the 2/3-leg split-route optimizer internally and returns the
 // chosen plan. One source of truth on the canister side.
+//
+// The V2 methods are for swapping straight from the user's wallet: TACO pulls the input from the
+// caller via ICRC2, so the caller must first have approved the exchange, and sends the output back
+// to the caller.
 
 type SwapHop = record { tokenIn : text; tokenOut : text };
 
@@ -25,6 +28,52 @@ type OptimalSwapPlan = record {
   legs : vec OptimalSwapLeg;
 };
 
+type SplitLeg = record {
+  amountIn : nat;
+  minLegOut : nat;
+  route : vec SwapHop;
+};
+
+type SwapOk = record {
+  amountIn : nat;
+  amountOut : nat;
+  fee : nat;
+  firstHopOrderbookMatch : bool;
+  hops : nat;
+  lastHopAMMOnly : bool;
+  route : vec text;
+  swapId : nat;
+  tokenIn : text;
+  tokenOut : text;
+};
+
+type ExchangeError = variant {
+  Banned;
+  ExchangeFrozen;
+  InsufficientFunds : text;
+  InvalidInput : text;
+  NotAuthorized;
+  OrderNotFound : text;
+  PoolNotFound : text;
+  RouteFailed : record { hop : nat; reason : text };
+  SlippageExceeded : record { expected : nat; got : nat };
+  SystemError : text;
+  TokenNotAccepted : text;
+  TokenPaused : text;
+  TransferFailed : text;
+};
+
+type SwapResult = variant {
+  Err : ExchangeError;
+  Ok : SwapOk;
+};
+
 service : {
   getExpectedReceiveAmountBatchMultiOptimal: (text, text, nat) -> (OptimalSwapPlan) query;
+  getV2AllowedTokens: () -> (vec text) query;
+  getV2Enabled: () -> (bool) query;
+  netToGrossV2: (text, nat) -> (nat) query;
+  requiredAllowanceV2: (text, nat) -> (nat) query;
+  swapMultiHopV2: (text, text, nat, vec SwapHop, nat) -> (SwapResult);
+  swapSplitRoutesV2: (text, text, vec SplitLeg, nat) -> (SwapResult);
 }

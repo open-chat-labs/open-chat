@@ -1,4 +1,5 @@
-import type { ApiQuoteResponse } from "./candid/idl";
+import type { DexSwapResult } from "@shared";
+import type { ApiNatResult } from "./candid/idl";
 import type { Error as ApiQuoteError } from "./candid/types";
 
 // A decoded `err` variant is ICPSwap declining to quote - "amount of input token is too small"
@@ -6,7 +7,7 @@ import type { Error as ApiQuoteError } from "./candid/types";
 // decline indistinguishable from a transport failure: executeQuery retried it seven times with
 // backoff (roughly twelve seconds for a dust amount), quoteSwap could not tell "every pool
 // declined" from "every pool is down", and the error tracker filled with non-events.
-export function quoteResponse(candid: ApiQuoteResponse): bigint | undefined {
+export function quoteResponse(candid: ApiNatResult): bigint | undefined {
     if ("ok" in candid) {
         return candid.ok;
     }
@@ -26,4 +27,16 @@ export function quoteResponse(candid: ApiQuoteResponse): bigint | undefined {
 function isDecline(err: ApiQuoteError): boolean {
     if ("InsufficientFunds" in err || "UnsupportedToken" in err) return true;
     return "InternalError" in err && /too small/i.test(err.InternalError);
+}
+
+// The pool reports the output before taking the output token's fee to send it to the wallet, so the
+// fee is deducted here to give what reaches the wallet, as the backend's swaps do
+export function swapResponse(candid: ApiNatResult, outputTokenFee: bigint): DexSwapResult {
+    if ("ok" in candid) {
+        return {
+            kind: "success",
+            amountOut: candid.ok > outputTokenFee ? candid.ok - outputTokenFee : 0n,
+        };
+    }
+    return { kind: "error", error: JSON.stringify(candid.err) };
 }
