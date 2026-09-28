@@ -469,17 +469,12 @@ impl Data {
     // and its remaining timer jobs are cancelled, since the MultiUser canister schedules them again
     // from the user's state. A repeated call for the same MultiUser canister returns the same
     // migration again.
-    pub fn try_start_migration(
-        &mut self,
-        user_id: UserId,
-        multi_user_canister_id: CanisterId,
-        now: TimestampMillis,
-    ) -> OCResult<&Migration> {
+    pub fn try_start_migration(&mut self, multi_user_canister_id: CanisterId, now: TimestampMillis) -> OCResult<&Migration> {
         match &self.migration {
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
             None => {
-                if let Some(reason) = self.reason_not_ready_for_migration(user_id, now) {
+                if let Some(reason) = self.reason_not_ready_for_migration(now) {
                     return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
                 }
 
@@ -528,15 +523,11 @@ impl Data {
     // have no work outstanding which would change or read them, nor anything else which isn't
     // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
     // state may remain.
-    fn reason_not_ready_for_migration(&self, user_id: UserId, now: TimestampMillis) -> Option<&'static str> {
-        if self
-            .user
-            .p2p_swaps
-            .any_created_by_expiring_after(user_id, now.saturating_sub(HOUR_IN_MS))
-        {
-            // The Escrow canister pays out and refunds a swap to this canister's account, so the user
-            // isn't migrated until each swap they created has expired, allowing an hour for its refund
-            Some("User has an open P2P swap")
+    fn reason_not_ready_for_migration(&self, now: TimestampMillis) -> Option<&'static str> {
+        if self.user.p2p_swaps.any_expiring_after(now.saturating_sub(HOUR_IN_MS)) {
+            // The Escrow canister pays out and refunds swaps to this canister's account, so the user
+            // isn't migrated until each of their swaps has expired, allowing an hour for its refund
+            Some("User has a P2P swap which hasn't yet expired")
         } else if async_work_in_progress() {
             Some("Async work is in progress")
         } else if self.timer_jobs.iter().any(|(_, wrapper)| {

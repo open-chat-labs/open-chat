@@ -16,7 +16,7 @@ use types::{
 use user_index_canister::user_migration::UserMigrationStatus;
 
 #[test]
-fn user_with_an_open_p2p_swap_is_not_migrated_until_it_has_expired() {
+fn users_with_a_p2p_swap_are_not_migrated_until_an_hour_after_it_expires() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -100,28 +100,32 @@ fn user_with_an_open_p2p_swap_is_not_migrated_until_it_has_expired() {
     );
     wait_for_migration_attempts_to_run_out(env);
 
-    // The user who accepted the swap is migrated, but the one who created it isn't while it may still
+    // Neither the user who created the swap nor the one who accepted it is migrated while it may still
     // pay out or refund to their canister, even though it has been settled
-    started_migration(env, operator.principal, canister_ids.user_index, user2.user_id);
-    let status = user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id);
-    assert!(
-        matches!(status, Some(UserMigrationStatus::Failed { ref error, .. })
-            if error.matches_code(OCErrorCode::NotReadyForMigration) && error.message() == Some("User has an open P2P swap")),
-        "{status:?}"
-    );
+    for user in [&user1, &user2] {
+        let status = user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id);
+        assert!(
+            matches!(status, Some(UserMigrationStatus::Failed { ref error, .. })
+                if error.matches_code(OCErrorCode::NotReadyForMigration)
+                    && error.message() == Some("User has a P2P swap which hasn't yet expired")),
+            "{status:?}"
+        );
+    }
 
-    // An hour after the swap has expired, the user who created it is migrated
+    // An hour after the swap has expired, both are migrated
     env.advance_time(Duration::from_millis(2 * HOUR_IN_MS));
     migrate_users(
         env,
         operator.principal,
         canister_ids.user_index,
-        vec![user1.user_id],
+        vec![user1.user_id, user2.user_id],
         Some(multi_user_canister(1)),
     );
     tick_many(env, 10);
 
-    started_migration(env, operator.principal, canister_ids.user_index, user1.user_id);
+    for user in [&user1, &user2] {
+        started_migration(env, operator.principal, canister_ids.user_index, user.user_id);
+    }
 }
 
 #[test]

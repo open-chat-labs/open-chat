@@ -40,7 +40,7 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use oc_error_codes::OCErrorCode;
-    use types::{CanisterId, UserId};
+    use types::CanisterId;
 
     fn data() -> Data {
         init_stable_memory_map();
@@ -63,10 +63,6 @@ mod tests {
         Principal::from_slice(&[10, i])
     }
 
-    fn user_id() -> UserId {
-        Principal::from_slice(&[20]).into()
-    }
-
     fn init_stable_memory_map() {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
@@ -75,7 +71,7 @@ mod tests {
     #[test]
     fn cancelling_unfreezes_the_canister() {
         let mut data = data();
-        data.try_start_migration(user_id(), multi_user_canister(1), 2).unwrap();
+        data.try_start_migration(multi_user_canister(1), 2).unwrap();
 
         assert!(data.cancel_migration(multi_user_canister(1), 3).unwrap());
 
@@ -94,7 +90,7 @@ mod tests {
     #[test]
     fn migration_to_another_canister_is_not_cancelled() {
         let mut data = data();
-        data.try_start_migration(user_id(), multi_user_canister(1), 2).unwrap();
+        data.try_start_migration(multi_user_canister(1), 2).unwrap();
 
         let error = data.cancel_migration(multi_user_canister(2), 3).unwrap_err();
 
@@ -105,10 +101,10 @@ mod tests {
     #[test]
     fn migration_can_start_again_once_cancelled() {
         let mut data = data();
-        data.try_start_migration(user_id(), multi_user_canister(1), 2).unwrap();
+        data.try_start_migration(multi_user_canister(1), 2).unwrap();
         data.cancel_migration(multi_user_canister(1), 3).unwrap();
 
-        let migration = data.try_start_migration(user_id(), multi_user_canister(2), 4).unwrap();
+        let migration = data.try_start_migration(multi_user_canister(2), 4).unwrap();
 
         assert_eq!(migration.multi_user_canister_id, multi_user_canister(2));
         assert_eq!(migration.started, 4);

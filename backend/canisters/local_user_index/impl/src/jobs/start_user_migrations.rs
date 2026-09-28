@@ -129,7 +129,7 @@ async fn start_migration(
         Ok(user_canister::c2c_try_start_migration::Response::Success(result)) => Ok(result),
         // Most reasons for a canister not being ready clear by themselves, eg. work left over from
         // the upgrade above, so these are retried. Those which don't clear in time, such as the user
-        // having an open P2P swap, are reported once the attempts run out
+        // having a P2P swap which hasn't yet expired, are reported once the attempts run out
         Ok(user_canister::c2c_try_start_migration::Response::Error(error))
             if error.matches_code(OCErrorCode::NotReadyForMigration) =>
         {
