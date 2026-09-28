@@ -100,7 +100,8 @@ fn users_with_a_p2p_swap_are_not_ready_for_migration() {
         vec![user1.user_id, user2.user_id],
         Some(multi_user_canister(1)),
     );
-    wait_for_migration_attempts_to_run_out(env);
+    // Which fails straight away, without the migration being retried
+    tick_many(env, 10);
 
     for user in [&user1, &user2] {
         assert_failed_with_p2p_swaps(env, operator.principal, canister_ids.user_index, user.user_id);
@@ -731,7 +732,7 @@ pub(crate) fn assert_failed_with_p2p_swaps(env: &PocketIc, sender: Principal, us
     let status = user_migration_status(env, sender, user_index, user_id);
     assert!(
         matches!(status, Some(UserMigrationStatus::Failed { ref error, .. })
-            if error.matches_code(OCErrorCode::NotReadyForMigration) && error.message() == Some("User has P2P swaps")),
+            if error.matches_code(OCErrorCode::CannotBeMigrated) && error.message() == Some("User has P2P swaps")),
         "{status:?}"
     );
 }

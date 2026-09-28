@@ -10,7 +10,7 @@ use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use rand::Rng;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
@@ -474,8 +474,8 @@ impl Data {
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
             None => {
-                if let Some(reason) = self.reason_not_ready_for_migration() {
-                    return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
+                if let Some(error) = self.migration_blocker() {
+                    return Err(error);
                 }
 
                 self.timer_jobs.cancel_jobs(|_| true);
@@ -519,19 +519,29 @@ impl Data {
         Ok(true)
     }
 
-    // The user is migrated along with their entries in the stable memory map, so the canister must
-    // have no work outstanding which would change or read them, nor anything else which isn't
-    // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
-    // state may remain.
-    fn reason_not_ready_for_migration(&self) -> Option<&'static str> {
+    // Why the user can't be migrated now, if they can't: `CannotBeMigrated` for a reason which won't
+    // clear by itself, else `NotReadyForMigration` for work still outstanding, which is worth trying
+    // again once it is done
+    fn migration_blocker(&self) -> Option<OCError> {
         if self.frozen.is_some() {
-            Some("Canister is frozen")
+            Some(OCErrorCode::CannotBeMigrated.with_message("Canister is frozen"))
         } else if !self.user.p2p_swaps.is_empty() {
             // The Escrow pays out and refunds swaps to this canister's account, and funds from a swap
             // may still be there even once it has been settled, so for now a user who has created or
             // accepted a swap isn't migrated
-            Some("User has P2P swaps")
-        } else if async_work_in_progress() {
+            Some(OCErrorCode::CannotBeMigrated.with_message("User has P2P swaps"))
+        } else {
+            self.outstanding_work()
+                .map(|reason| OCErrorCode::NotReadyForMigration.with_message(reason))
+        }
+    }
+
+    // The user is migrated along with their entries in the stable memory map, so the canister must
+    // have no work outstanding which would change or read them, nor anything else which isn't
+    // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
+    // state may remain.
+    fn outstanding_work(&self) -> Option<&'static str> {
+        if async_work_in_progress() {
             Some("Async work is in progress")
         } else if self.timer_jobs.iter().any(|(_, wrapper)| {
             // A job which has already run leaves an empty entry behind

@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn frozen_canister_is_not_ready() {
+    fn frozen_canister_cannot_be_migrated() {
         let mut data = data();
         data.frozen = Some(FrozenUserInfo {
             timestamp: 1,
@@ -125,7 +125,7 @@ mod tests {
 
         let error = data.try_start_migration(multi_user_canister(1), 2).map(|_| ()).unwrap_err();
 
-        assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
+        assert!(error.matches_code(OCErrorCode::CannotBeMigrated));
         assert!(data.migration.is_none());
     }
 

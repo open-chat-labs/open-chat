@@ -194,6 +194,7 @@ pub enum OCErrorCode {
     InsufficientAllowance = 350,
     NotReadyForMigration = 351,
     UserImportFailed = 352,
+    CannotBeMigrated = 353,
 
     // InternalError
     C2CError = 500,

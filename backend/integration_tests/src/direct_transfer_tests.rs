@@ -233,7 +233,7 @@ fn create_p2p_swap_directly_succeeds(in_channel: bool) {
         vec![user1.user_id],
         Some(Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1])),
     );
-    crate::user_migration_tests::wait_for_migration_attempts_to_run_out(env);
+    tick_many(env, 10);
     crate::user_migration_tests::assert_failed_with_p2p_swaps(env, operator.principal, canister_ids.user_index, user1.user_id);
 }
 
