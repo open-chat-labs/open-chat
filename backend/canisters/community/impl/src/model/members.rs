@@ -607,7 +607,7 @@ impl CommunityMembers {
     pub fn add_former_members(&mut self, user_ids: impl IntoIterator<Item = UserId>) {
         for user_id in user_ids {
             if !self.members_and_channels.contains_key(&user_id) {
-                self.former_members.add(user_id);
+                self.former_members.record(user_id);
             }
         }
     }
