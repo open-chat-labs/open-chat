@@ -80,7 +80,7 @@ fn update_block_level_markdown_succeeds(starting_value: bool) {
     let new_value = !starting_value;
     client::user::happy_path::edit_text_message(env, &user1, user2.user_id, message_id, "TEXT", Some(new_value));
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     let user1_event =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_result.event_index])
@@ -126,7 +126,7 @@ fn edit_thread_reply_in_direct_chat_succeeds() {
         Some(message_id),
     );
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     let new_text = "REPLY!";
     let response = client::user::edit_message_v2(
@@ -149,7 +149,7 @@ fn edit_thread_reply_in_direct_chat_succeeds() {
         "{response:?}"
     );
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
         let message = client::user::happy_path::thread_message(env, user, them, root.message_index, message_id);

@@ -31,10 +31,13 @@ fn retries_after_failures(failures: usize) {
     stop_canister(env, user2.local_user_index, user2.user_id.canister_id());
 
     client::user::happy_path::add_reaction(env, &user1, user2.user_id, "1", message_id);
+    // Long enough for each attempt to reach the stopped canister and the failure to come back, even
+    // if the canisters are on different subnets
+    tick_many(env, 25);
 
     for _ in 1..failures {
         env.advance_time(Duration::from_secs(100));
-        env.tick();
+        tick_many(env, 25);
     }
 
     start_canister(env, user2.local_user_index, user2.user_id.canister_id());

@@ -276,7 +276,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    env.tick();
+    tick_many(env, 10);
 
     let accept_offer_response = client::user::accept_p2p_swap(
         env,

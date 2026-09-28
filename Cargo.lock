@@ -6770,12 +6770,13 @@ dependencies = [
 name = "local_canister_creator"
 version = "0.1.0"
 dependencies = [
+ "base64 0.23.0",
  "canister_agent_utils",
  "clap 4.6.3",
  "futures",
  "ic-agent",
  "ic-utils",
- "pocket-ic",
+ "reqwest 0.13.4",
  "serde",
  "serde_json",
  "tokio",

@@ -94,7 +94,7 @@ fn disappearing_messages_in_direct_chats() {
     let send_message_response2 = client::user::happy_path::send_text_message(env, &user2, user1.user_id, random_string(), None);
 
     env.advance_time(Duration::from_secs(100000));
-    env.tick();
+    tick_many(env, 10);
 
     for b in [true, false] {
         let (user_a, user_b) = if b { (&user1, &user2) } else { (&user2, &user1) };
