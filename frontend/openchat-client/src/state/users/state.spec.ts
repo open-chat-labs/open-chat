@@ -1,4 +1,4 @@
-import type { UserSummary } from "@shared";
+import { deletedUser, isDeletedUser, type UserSummary } from "@shared";
 import { allUsersStore, suspendedUsersStore } from "./stores";
 import { UsersState, userStore } from "./state";
 
@@ -66,6 +66,15 @@ describe("user store no-op publishes", () => {
         test("mix of known and unknown users publishes once", () => {
             userStore.setUpdated(["x", "a"], BigInt(5));
             expect(publishes).toBe(1);
+            expect(userStore.get("a")?.updated).toBe(BigInt(5));
+        });
+
+        test("deleted users are left as they are", () => {
+            userStore.addMany([deletedUser("d")]);
+            publishes = 0;
+            userStore.setUpdated(["d", "a"], BigInt(5));
+            expect(publishes).toBe(1);
+            expect(isDeletedUser(userStore.get("d"))).toBe(true);
             expect(userStore.get("a")?.updated).toBe(BigInt(5));
         });
     });

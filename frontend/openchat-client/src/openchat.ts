@@ -71,6 +71,7 @@ import {
     isChitEarnedGate,
     isCompositeGate,
     isCredentialGate,
+    isDeletedUser,
     isEditableContent,
     isNeuronGate,
     isPaymentGate,
@@ -6978,9 +6979,9 @@ export class OpenChat {
                 }
             }
 
-            // Update all users we have direct chats with
+            // Update all users we have direct chats with, other than those who've been deleted
             for (const chat of chatSummariesStore.value.values()) {
-                if (chat.kind == "direct_chat") {
+                if (chat.kind == "direct_chat" && !isDeletedUser(allUsers.get(chat.them.userId))) {
                     usersToUpdate.add(chat.them.userId);
                 }
             }
