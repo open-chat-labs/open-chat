@@ -10,11 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Skip the web push arm for call dismissal notifications, which only an FCM device can act on ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))
 
+## [[2.0.1942](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1942-notification_pusher)] - 2026-01-02
+
 ### Fixed
 
 - Fix Base64 encoding of notifications ([#8743](https://github.com/open-chat-labs/open-chat/pull/8743))
 
-## [[2.0.1940](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1940-notification_pusher)] - 2025-12-30
+## [[2.0.1938](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1938-notification_pusher)] - 2025-12-30
 
 ### Changed
 

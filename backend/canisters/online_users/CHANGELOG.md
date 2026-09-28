@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the syncing of users' minutes online to the deprecated AirdropBot ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))
+
+## [[2.0.2065](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2065-online_users)] - 2026-09-25
+
 ### Added
 
 - Add `last_90_days`, `last_year` and `last_2_years` to the active users metrics ([#9443](https://github.com/open-chat-labs/open-chat/pull/9443), [#9445](https://github.com/open-chat-labs/open-chat/pull/9445))
@@ -15,10 +21,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
-
-### Removed
-
-- Remove the syncing of users' minutes online to the deprecated AirdropBot ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))
 
 ### Fixed
 
