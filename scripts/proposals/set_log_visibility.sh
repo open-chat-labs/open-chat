@@ -10,7 +10,6 @@ URL=""
 SUMMARY="This will open up the canister logs so that error details can be viewed.
 
 This change will be applied to the following canisters -
-- AirdropBot
 - CyclesDispenser
 - Escrow
 - EventRelay

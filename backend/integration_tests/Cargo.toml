@@ -6,7 +6,6 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dev-dependencies]
-airdrop_bot_canister = { path = "../canisters/airdrop_bot/api" }
 bridges = { path = "../libraries/bridges" }
 candid = { workspace = true }
 chat_events = { path = "../libraries/chat_events" }
