@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 - Send `c2c_bot_send_message` for a direct chat to the canister holding the user, rather than to their user id, which for a user in a MultiUser canister is not a canister id ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
 - Serve a daily puzzle hint step at level 1 until it has been served, whatever level is asked for, so a client still climbing a finished step's ladder is not sold a new step's answer ([#9535](https://github.com/open-chat-labs/open-chat/pull/9535))
+- Serve a daily puzzle hint's premise first: an earlier negatives-only step that rules out a key the hint looks at, and is not yet marked on the board, rather than a hint whose reasoning doesn't hold on the player's board, but never in place of a hint already bought ([#9614](https://github.com/open-chat-labs/open-chat/pull/9614))
 
 ## [[2.0.2063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2063-local_user_index)] - 2026-09-23
 
@@ -345,7 +346,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Removed unused fields from BotChatEvent (must go ahead of groups/communities) ([#8291](https://github.com/open-chat-labs/open-chat/pull/8291))
+- Removed unused fields from BotChatEvent ([#8291](https://github.com/open-chat-labs/open-chat/pull/8291))
 - Remove the now unused `group_and_community_summary_updates` ([#8311](https://github.com/open-chat-labs/open-chat/pull/8311))
 - Remove the now unused `notifications_v2` ([#8312](https://github.com/open-chat-labs/open-chat/pull/8312))
 
