@@ -167,6 +167,22 @@ mod tests {
         UserId::from(random_principal())
     }
 
+    #[test]
+    fn migrated_user_is_moved_onto_their_new_id() {
+        let mut leaderboard = ChitLeaderboard::new(0);
+        let old_user_id = rnd_user();
+        let new_user_id = rnd_user();
+        leaderboard.update_position(old_user_id, 100, 10, 1, 1);
+        leaderboard.update_position(rnd_user(), 200, 20, 1, 1);
+
+        leaderboard.migrate_user_id(old_user_id, new_user_id);
+
+        for leaders in [leaderboard.all_time(), leaderboard.this_month()] {
+            assert!(leaders.iter().any(|b| b.user_id == new_user_id));
+            assert!(!leaders.iter().any(|b| b.user_id == old_user_id));
+        }
+    }
+
     fn rnd_balance() -> i32 {
         (rand::rng().next_u32() % 1000) as i32
     }

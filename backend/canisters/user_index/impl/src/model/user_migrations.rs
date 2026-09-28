@@ -52,7 +52,6 @@ pub struct StartedUserMigration {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ImportedUserMigration {
-    pub multi_user_canister_id: CanisterId,
     pub timestamp: TimestampMillis,
     pub new_user_id: UserId,
 }
@@ -215,7 +214,6 @@ impl UserMigrations {
         self.imported.insert(
             user_id,
             ImportedUserMigration {
-                multi_user_canister_id: new_user_id.canister_id(),
                 timestamp: now,
                 new_user_id,
             },
@@ -249,6 +247,11 @@ impl UserMigrations {
         }
     }
 
+    // Whether the user has been taken from the queue to be migrated, and hasn't yet been imported
+    pub fn is_in_progress(&self, user_id: &UserId) -> bool {
+        self.in_progress.contains_key(user_id)
+    }
+
     pub fn is_imported(&self, user_id: &UserId) -> bool {
         self.imported.contains_key(user_id)
     }
@@ -269,7 +272,7 @@ impl UserMigrations {
             })
         } else if let Some(imported) = self.imported.get(user_id) {
             Some(UserMigrationStatus::Imported {
-                multi_user_canister_id: imported.multi_user_canister_id,
+                multi_user_canister_id: imported.new_user_id.canister_id(),
                 timestamp: imported.timestamp,
                 new_user_id: imported.new_user_id,
             })
@@ -511,8 +514,10 @@ mod tests {
         migrations.mark_started(next, canister_id(1), 100, BuildVersion::default(), [0; 32], 2);
         // Nor with a new id in another canister
         assert!(!migrations.mark_imported(next, UserId::new_indexed(canister_id(2), 1), 3));
+        assert!(migrations.is_in_progress(&next));
         assert!(migrations.mark_imported(next, new_user_id, 3));
         assert!(!migrations.mark_imported(next, new_user_id, 4));
+        assert!(!migrations.is_in_progress(&next));
         assert_eq!(migrations.in_progress_per_canister().get(&canister_id(1)), None);
 
         assert_eq!(

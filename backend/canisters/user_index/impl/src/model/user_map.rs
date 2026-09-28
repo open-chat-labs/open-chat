@@ -550,9 +550,10 @@ impl UserMap {
 
     // Moves the user from their old id onto the new one they were given when migrated to a MultiUser
     // canister, returning their principal. Their referrals and suspension history move with them,
-    // and the users they referred are from then on referred by their new id. Returns None if there
-    // is no user with the old id, or there is already one with the new id.
-    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) -> Option<Principal> {
+    // and the users they referred and the bots they own are from then on referred by and owned by
+    // their new id. Returns None if there is no user with the old id, or there is already one with
+    // the new id.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> Option<Principal> {
         if self.users.contains_key(&new_user_id) {
             return None;
         }
@@ -594,6 +595,11 @@ impl UserMap {
         for timestamp in suspensions {
             self.suspended_or_unsuspended_users.remove(&(timestamp, old_user_id));
             self.suspended_or_unsuspended_users.insert((timestamp, new_user_id));
+        }
+        for (bot_id, bot) in self.bots.iter_mut().filter(|(_, b)| b.owner == old_user_id) {
+            bot.owner = new_user_id;
+            bot.last_updated = now;
+            self.bot_updates.insert((now, BotUpdate::Updated(*bot_id)));
         }
 
         self.users.insert(new_user_id, user);
@@ -1521,7 +1527,21 @@ mod tests {
         user_map.suspend_user(old_user_id, None, "reason".to_string(), referrer, 4);
         user_map.mark_suspected_bot(&principal);
 
-        assert_eq!(user_map.migrate_user_id(old_user_id, new_user_id), Some(principal));
+        let mut bot = test_bot();
+        bot.owner = old_user_id;
+        let bot_id: UserId = Principal::from_slice(&[3, 4]).into();
+        user_map.register(
+            Principal::from_slice(&[4]),
+            bot_id,
+            "bot".to_string(),
+            None,
+            5,
+            None,
+            UserType::BotV2,
+            Some(bot),
+        );
+
+        assert_eq!(user_map.migrate_user_id(old_user_id, new_user_id, 6), Some(principal));
 
         assert!(user_map.get_by_user_id(&old_user_id).is_none());
         assert_eq!(user_map.get_by_user_id(&new_user_id).unwrap().user_id, new_user_id);
@@ -1537,9 +1557,11 @@ mod tests {
             user_map.iter_suspended_or_unsuspended_users(0).collect_vec(),
             vec![new_user_id]
         );
+        assert_eq!(user_map.get_bot(&bot_id).unwrap().owner, new_user_id);
+        assert!(user_map.iter_bot_updates(5).any(|(_, u)| u == BotUpdate::Updated(bot_id)));
 
         // Migrating the old id again finds nothing to move
-        assert_eq!(user_map.migrate_user_id(old_user_id, new_user_id), None);
+        assert_eq!(user_map.migrate_user_id(old_user_id, new_user_id, 7), None);
     }
 
     #[test]
@@ -1568,7 +1590,7 @@ mod tests {
             None,
         );
 
-        assert_eq!(user_map.migrate_user_id(user_id1, user_id2), None);
+        assert_eq!(user_map.migrate_user_id(user_id1, user_id2, 3), None);
         assert!(user_map.get_by_user_id(&user_id1).is_some());
     }
 }

@@ -417,3 +417,29 @@ impl Job for UnsuspendUser {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    #[test]
+    fn only_jobs_for_the_migrated_user_are_moved_onto_their_new_id() {
+        let old_user_id: UserId = Principal::from_slice(&[1]).into();
+        let other_user_id: UserId = Principal::from_slice(&[2]).into();
+        let new_user_id: UserId = Principal::from_slice(&[3]).into();
+        let job = |user_id| TimerJob::RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment { user_id });
+        let user_id = |job: &TimerJob| match job {
+            TimerJob::RecurringDiamondMembershipPayment(j) => j.user_id,
+            _ => unreachable!(),
+        };
+
+        let mut migrated = job(old_user_id);
+        let mut other = job(other_user_id);
+        migrated.migrate_user_id(old_user_id, new_user_id);
+        other.migrate_user_id(old_user_id, new_user_id);
+
+        assert_eq!(user_id(&migrated), new_user_id);
+        assert_eq!(user_id(&other), other_user_id);
+    }
+}

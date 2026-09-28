@@ -186,7 +186,8 @@ impl RuntimeState {
         new_user_id: UserId,
         canisters_to_notify: Vec<CanisterId>,
     ) -> bool {
-        let Some(principal) = self.data.users.migrate_user_id(old_user_id, new_user_id) else {
+        let now = self.env.now();
+        let Some(principal) = self.data.users.migrate_user_id(old_user_id, new_user_id, now) else {
             return false;
         };
 
@@ -204,6 +205,7 @@ impl RuntimeState {
             }
         }
         self.data.chit_leaderboard.migrate_user_id(old_user_id, new_user_id);
+        self.data.external_achievements.migrate_user_id(old_user_id, new_user_id);
         for (_, job) in self.data.timer_jobs.iter() {
             if let Some(job) = job.borrow_mut().as_mut() {
                 job.migrate_user_id(old_user_id, new_user_id);

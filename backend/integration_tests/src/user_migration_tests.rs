@@ -531,7 +531,13 @@ fn user_canister_is_upgraded_to_the_latest_wasm_before_migrating() {
         vec![user.user_id],
         Some(multi_user_canister(1)),
     );
-    tick_many(env, 10);
+    // The canister may not be ready to migrate straight after being upgraded, in which case starting
+    // the migration is retried 30s later
+    for _ in 0..3 {
+        tick_many(env, 5);
+        env.advance_time(Duration::from_secs(31));
+    }
+    tick_many(env, 5);
 
     assert_eq!(wasm_version(env, user.canister()), version);
     let started = started_migration(env, operator.principal, canister_ids.user_index, user.user_id);
