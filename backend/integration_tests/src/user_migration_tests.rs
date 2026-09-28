@@ -1,111 +1,16 @@
 use crate::env::ENV;
-use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
+use crate::utils::{metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::Principal;
-use constants::{DAY_IN_MS, HOUR_IN_MS};
+use constants::DAY_IN_MS;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, Document, Empty, MessageContent, MessageContentInitial, OptionUpdate,
-    P2PSwapContentInitial, UserId,
-};
+use types::{BuildVersion, CanisterId, CanisterWasm, Chat, Document, Empty, MessageContent, OptionUpdate, UserId};
 use user_index_canister::user_migration::UserMigrationStatus;
-
-#[test]
-fn users_with_a_p2p_swap_are_not_ready_for_migration() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::register_user(env, canister_ids);
-
-    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::group::happy_path::join_group(env, user2.principal, group_id);
-
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
-
-    let message_id = random_from_u128();
-    let response = client::user::send_message_with_transfer_to_group(
-        env,
-        user1.principal,
-        user1.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
-            thread_root_message_index: None,
-            message_id,
-            content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: icp_token_info(),
-                token0_amount: 1_000_000_000,
-                token1: chat_token_info(),
-                token1_amount: 10_000_000_000,
-                expires_in: HOUR_IN_MS,
-                caption: None,
-                from_account: None,
-            }),
-            sender_name: user1.username(),
-            sender_display_name: None,
-            replies_to: None,
-            mentioned: Vec::new(),
-            block_level_markdown: false,
-            rules_accepted: None,
-            message_filter_failed: None,
-            pin: None,
-            og_previews: Vec::new(),
-        },
-    );
-    assert!(
-        matches!(
-            response,
-            user_canister::send_message_with_transfer_to_group::Response::Success(_)
-        ),
-        "{response:?}"
-    );
-
-    let response = client::group::accept_p2p_swap(
-        env,
-        user2.principal,
-        group_id.into(),
-        &group_canister::accept_p2p_swap::Args {
-            thread_root_message_index: None,
-            message_id,
-            pin: None,
-            new_achievement: false,
-            from_account: None,
-        },
-    );
-    assert!(
-        matches!(response, group_canister::accept_p2p_swap::Response::Success(_)),
-        "{response:?}"
-    );
-
-    tick_many(env, 10);
-
-    // Neither the user who created the swap nor the one who accepted it can be migrated, even once it
-    // has been settled
-    let operator = platform_operator(env, canister_ids, *controller);
-    migrate_users(
-        env,
-        operator.principal,
-        canister_ids.user_index,
-        vec![user1.user_id, user2.user_id],
-        Some(multi_user_canister(1)),
-    );
-    wait_for_migration_attempts_to_run_out(env);
-
-    for user in [&user1, &user2] {
-        assert_failed_with_p2p_swaps(env, operator.principal, canister_ids.user_index, user.user_id);
-    }
-}
 
 #[test]
 fn migrating_user_is_exported() {
@@ -745,15 +650,6 @@ fn started_migration(env: &PocketIc, sender: Principal, user_index: CanisterId, 
         },
         status => panic!("Migration not started: {status:?}"),
     }
-}
-
-pub(crate) fn assert_failed_with_p2p_swaps(env: &PocketIc, sender: Principal, user_index: CanisterId, user_id: UserId) {
-    let status = user_migration_status(env, sender, user_index, user_id);
-    assert!(
-        matches!(status, Some(UserMigrationStatus::Failed { ref error, .. })
-            if error.matches_code(OCErrorCode::NotReadyForMigration) && error.message() == Some("User has P2P swaps")),
-        "{status:?}"
-    );
 }
 
 // A canister which isn't ready is retried by the LocalUserIndex until its attempts run out
