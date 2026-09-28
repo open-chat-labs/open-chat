@@ -5,7 +5,7 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
-use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
+use constants::{HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
@@ -474,7 +474,7 @@ impl Data {
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.into()),
             None => {
-                if let Some(reason) = self.reason_not_ready_for_migration() {
+                if let Some(reason) = self.reason_not_ready_for_migration(now) {
                     return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
                 }
 
@@ -523,8 +523,12 @@ impl Data {
     // have no work outstanding which would change or read them, nor anything else which isn't
     // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
     // state may remain.
-    fn reason_not_ready_for_migration(&self) -> Option<&'static str> {
-        if async_work_in_progress() {
+    fn reason_not_ready_for_migration(&self, now: TimestampMillis) -> Option<&'static str> {
+        if self.user.p2p_swaps.any_expiring_after(now.saturating_sub(HOUR_IN_MS)) {
+            // The Escrow canister pays out and refunds swaps to this canister's account, so the user
+            // isn't migrated until each of their swaps has expired, allowing an hour for its refund
+            Some("User has a P2P swap which hasn't yet expired")
+        } else if async_work_in_progress() {
             Some("Async work is in progress")
         } else if self.timer_jobs.iter().any(|(_, wrapper)| {
             // A job which has already run leaves an empty entry behind
