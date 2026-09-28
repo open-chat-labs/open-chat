@@ -94,6 +94,13 @@ pub struct User {
 }
 
 impl User {
+    // Moves what the user holds under their own id onto their new id once they are migrated from a
+    // canister of their own to a MultiUser canister
+    pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        self.direct_chats.migrate_own_user_id(old_user_id, new_user_id);
+        self.favourite_chats.migrate_own_user_id(old_user_id, new_user_id);
+    }
+
     pub fn new(principal: Principal, username: String, referred_by: Option<UserId>, now: TimestampMillis) -> User {
         User {
             principal,

@@ -98,6 +98,16 @@ impl DirectChat {
         }
     }
 
+    // Moves what the chat holds under the user's id onto their new id, once they are migrated to a
+    // MultiUser canister: their metrics and, if the chat is with themselves, the other user
+    pub(crate) fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        self.events.migrate_user_metrics(old_user_id, new_user_id);
+        if self.them == old_user_id {
+            self.them = new_user_id;
+            self.events.set_direct_chat_user(new_user_id);
+        }
+    }
+
     // TODO: Remove this after next release
     pub(crate) fn mark_as_self_chat(&mut self) -> bool {
         if std::mem::replace(&mut self.self_chat, true) {

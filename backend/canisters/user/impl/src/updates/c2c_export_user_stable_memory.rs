@@ -1,5 +1,5 @@
-use crate::PAGE_SIZE;
 use crate::guards::caller_is_multi_user_canister_migrating_to;
+use crate::{PAGE_SIZE, read_state};
 use canister_api_macros::update;
 use serde_bytes::ByteBuf;
 use user_canister::c2c_export_user_stable_memory::{Response::*, *};
@@ -8,6 +8,8 @@ use user_canister::c2c_export_user_stable_memory::{Response::*, *};
 // memory map, all of which are the user's. The canister is frozen, so they can't change meanwhile.
 #[update(guard = "caller_is_multi_user_canister_migrating_to", msgpack = true)]
 fn c2c_export_user_stable_memory(args: Args) -> Response {
+    // The guard ensures the user is being migrated
+    let user_hash = read_state(|state| state.data.migration.as_ref().unwrap().user_hash);
     let result = stable_memory_map::read_all_entries(args.after.as_deref().map(|k| k.as_slice()), PAGE_SIZE as usize);
 
     Success(SuccessResult {
@@ -17,5 +19,6 @@ fn c2c_export_user_stable_memory(args: Args) -> Response {
             .map(|(key, value)| (ByteBuf::from(key), ByteBuf::from(value)))
             .collect(),
         finished: result.finished,
+        user_hash,
     })
 }

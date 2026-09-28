@@ -8,14 +8,14 @@ use constants::ONE_MB;
 use event_store_producer::EventBuilder;
 use group_index_canister::UserIndexEvent as GroupIndexEvent;
 use local_user_index_canister::{
-    ChitBalance, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup, UserRegistered,
-    UsernameChanged,
+    ChitBalance, ImportUser, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserRegistered, UsernameChanged,
 };
 use rand::Rng;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
-use tracing::info;
+use tracing::{error, info};
 use types::{CanisterId, IdempotentEnvelope, MessageContentInitial, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::LocalUserIndexEvent;
 use user_index_canister::c2c_local_user_index::*;
@@ -40,6 +40,24 @@ fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     Response::Success
+}
+
+// Cancels the user's migration, unfreezing their canister, once the MultiUser canister has failed to
+// import them. If this fails the migration can be cancelled with `cancel_user_migration`.
+fn cancel_migration(user_id: UserId, multi_user_canister_id: CanisterId) {
+    utils::async_work::spawn_tracked(async move {
+        match user_canister_c2c_client::c2c_cancel_migration(
+            user_id.canister_id(),
+            &user_canister::c2c_cancel_migration::Args { multi_user_canister_id },
+        )
+        .await
+        {
+            Ok(user_canister::c2c_cancel_migration::Response::Success) => {
+                info!(%user_id, "User migration cancelled");
+            }
+            response => error!(%user_id, ?response, "Failed to cancel user migration"),
+        }
+    });
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(
@@ -188,9 +206,42 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 ev.multi_user_canister_id,
                 ev.user_bytes,
                 ev.wasm_version,
+                ev.user_hash,
                 **now,
             ) {
                 info!(user_id = %ev.user_id, multi_user_canister_id = %ev.multi_user_canister_id, "User migration started");
+                // The MultiUser canister is told to import the user by the LocalUserIndex which
+                // controls it. Tests may migrate users to other canisters, which aren't told.
+                if let Some(local_user_index) = state.data.multi_user_canisters.local_user_index(&ev.multi_user_canister_id) {
+                    state.push_event_to_local_user_index_canister(
+                        local_user_index,
+                        UserIndexEvent::ImportUser(ImportUser {
+                            user_id: ev.user_id,
+                            multi_user_canister_id: ev.multi_user_canister_id,
+                            user_hash: ev.user_hash,
+                        }),
+                    );
+                }
+            }
+        }
+        LocalUserIndexEvent::UserImported(ev) => {
+            if state
+                .data
+                .user_migrations
+                .mark_imported(ev.old_user_id, ev.new_user_id, **now)
+            {
+                info!(old_user_id = %ev.old_user_id, new_user_id = %ev.new_user_id, "User imported");
+            }
+        }
+        LocalUserIndexEvent::UserImportFailed(ev) => {
+            if state
+                .data
+                .user_migrations
+                .mark_import_failed(ev.user_id, ev.multi_user_canister_id, ev.error.clone(), **now)
+            {
+                info!(user_id = %ev.user_id, multi_user_canister_id = %ev.multi_user_canister_id, error = ?ev.error, "User import failed");
+                cancel_migration(ev.user_id, ev.multi_user_canister_id);
+                crate::jobs::start_user_migrations::run(state);
             }
         }
         LocalUserIndexEvent::UserMigrationFailedToStart(ev) => {

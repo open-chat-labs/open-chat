@@ -54,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Retry sending events for migrated users to their new canister ([#9551](https://github.com/open-chat-labs/open-chat/pull/9551))
 - Serve each user's avatar and profile background over HTTP at `/user/{user_index}/avatar` and `/user/{user_index}/profile_background` ([#9555](https://github.com/open-chat-labs/open-chat/pull/9555))
 - Tell the UserIndex a user's new avatar id when they set or remove their avatar, as the User canister does. The UserIndex must be upgraded first ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
+- Add `c2c_import_user` which starts the `import_user` job for the given user, callable by the LocalUserIndex ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 - Add `inspect_message`, accepting ingress messages only from the canister's users (and from the video call operators to start and end calls), and none to c2c methods, as the User canister does ([#9597](https://github.com/open-chat-labs/open-chat/pull/9597))
 
 ### Changed

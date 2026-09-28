@@ -3,6 +3,7 @@ use crate::RuntimeState;
 pub mod aggregate_top_ups;
 pub mod check_media_scan_stall;
 pub mod delete_users;
+pub mod import_users;
 pub mod moderate_messages;
 pub mod pull_daily_puzzle;
 pub mod refresh_chunk_store;
@@ -19,6 +20,7 @@ pub(crate) fn start(state: &RuntimeState) {
     aggregate_top_ups::start_job();
     check_media_scan_stall::start_job();
     delete_users::start_job_if_required(state, None);
+    import_users::start_job_if_required(state);
     moderate_messages::start_job_if_required(state);
     pull_daily_puzzle::start_job();
     refresh_chunk_store::start_job();

@@ -74,6 +74,7 @@ async fn process_user(user: UserToMigrate) {
                         multi_user_canister_id,
                         user_bytes: result.user_bytes,
                         wasm_version: result.wasm_version,
+                        user_hash: result.user_hash,
                     })),
                     now,
                 );

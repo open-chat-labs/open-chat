@@ -1,5 +1,6 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
+use crate::model::user_imports::UserImports;
 use crate::model::users::Users;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -591,6 +592,7 @@ impl RuntimeState {
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
+            user_imports_in_progress: self.data.user_imports.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -632,6 +634,9 @@ struct Data {
     // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
     // have changed
     pub migrated_user_ids: MigratedUserIds,
+    // The users being imported from canisters of their own, keyed by their old id
+    #[serde(default)]
+    pub user_imports: UserImports,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -665,6 +670,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
+            user_imports: UserImports::default(),
             rng_seed,
             test_mode,
         }
@@ -710,6 +716,7 @@ pub struct Metrics {
     pub queued_local_user_index_events: u32,
     pub queued_user_canister_events: u32,
     pub known_multi_user_canisters: u32,
+    pub user_imports_in_progress: u32,
     pub canister_ids: CanisterIds,
 }
 

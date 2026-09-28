@@ -193,6 +193,7 @@ pub enum OCErrorCode {
     NoEventsToDelete = 349,
     InsufficientAllowance = 350,
     NotReadyForMigration = 351,
+    UserImportFailed = 352,
 
     // InternalError
     C2CError = 500,
