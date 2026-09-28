@@ -1471,27 +1471,31 @@ fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
         tick_many(env, 3);
     }
 
+    // Each is pushed once, by the user who acted, even though both users' copies of the chat are in
+    // this canister
     for (name, timestamp) in [
         ("message_sent", sent),
         ("message_edited", edited),
         ("reaction_added", reacted),
     ] {
-        assert!(
-            event_store_has_event(env, *controller, canister_ids, name, timestamp),
-            "no {name} event at {timestamp}"
+        assert_eq!(
+            event_store_count(env, *controller, canister_ids, name, timestamp),
+            1,
+            "{name} at {timestamp}"
         );
     }
 }
 
-// Whether the event is among the most recent in the event store, which is shared with every other
-// test running against the env, so events from other tests may have landed after it
-fn event_store_has_event(
+// The number of events with the name and timestamp among the most recent in the event store, which
+// is shared with every other test running against the env, so events from other tests may have
+// landed after them
+fn event_store_count(
     env: &mut PocketIc,
     controller: Principal,
     canister_ids: &CanisterIds,
     name: &str,
     timestamp: TimestampMillis,
-) -> bool {
+) -> usize {
     let latest_event_index = client::event_store::happy_path::events(env, controller, canister_ids.event_store, 0, 0)
         .latest_event_index
         .unwrap_or_default();
@@ -1505,7 +1509,8 @@ fn event_store_has_event(
     )
     .events
     .iter()
-    .any(|e| e.name == name && e.timestamp == timestamp)
+    .filter(|e| e.name == name && e.timestamp == timestamp)
+    .count()
 }
 
 fn queued_local_user_index_events(env: &PocketIc, canister_id: CanisterId) -> u32 {
@@ -5387,6 +5392,8 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         matches!(response, user_canister::tip_message::Response::Success),
         "{response:?}"
     );
+    // So that no later tip, eg. one from a User canister, has the same timestamp as this one
+    env.advance_time(Duration::from_millis(1));
     assert_eq!(
         tips_on(message(&events(env, alice, canister_id, alice_id, bob_id), message_id)),
         tipped_by(alice_id)
@@ -5522,13 +5529,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         env.advance_time(Duration::from_millis(60_000));
         tick_many(env, 3);
     }
-    assert!(event_store_has_event(
-        env,
-        *controller,
-        canister_ids,
-        "message_tipped",
-        tipped
-    ));
+    assert_eq!(event_store_count(env, *controller, canister_ids, "message_tipped", tipped), 1);
 }
 
 #[test]

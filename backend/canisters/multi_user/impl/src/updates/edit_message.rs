@@ -20,14 +20,14 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let my_user_id = state.user_id(my_index);
     let now = state.env.now();
 
-    // Edit the message in the sender's copy of the chat. Unlike the User canister, which passes no
-    // thread, this edits messages within threads too.
     let event_pusher = MultiUserEventPusher {
         user_id: my_user_id,
         now,
         rng: state.env.rng(),
         queue: &mut state.data.local_user_index_event_sync_queue,
     };
+
+    // Edit the message in the sender's copy of the chat
     let thread_root_message_id = state
         .data
         .users
