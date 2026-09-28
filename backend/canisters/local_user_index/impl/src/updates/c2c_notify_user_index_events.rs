@@ -375,10 +375,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 multi_user_canister_id: ev.multi_user_canister_id,
                 attempt: 0,
                 not_before: 0,
-                import: Some(ImportDetails {
-                    user_hash: ev.user_hash,
-                    wasm_version: ev.wasm_version,
-                }),
+                import: Some(ImportDetails { user_hash: ev.user_hash }),
             });
             jobs::import_users::start_job_if_required(state);
         }

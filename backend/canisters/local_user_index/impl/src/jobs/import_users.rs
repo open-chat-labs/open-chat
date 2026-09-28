@@ -2,7 +2,6 @@ use crate::model::users_to_migrate::UserToMigrate;
 use crate::{RuntimeState, UserIndexEvent, mutate_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
-use local_user_index_canister::ChildCanisterType;
 use oc_error_codes::{OCError, OCErrorCode};
 use std::cell::Cell;
 use std::time::Duration;
@@ -96,23 +95,9 @@ async fn start_import(user: &UserToMigrate) -> Result<(), ImportError> {
     let Some(import) = user.import else {
         return Err(ImportError::Failed(OCErrorCode::InvalidRequest.into()));
     };
-    let (is_local, user_wasm_version) = crate::read_state(|state| {
-        (
-            state.data.local_multi_user_canisters.contains(&multi_user_canister_id),
-            state.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
-        )
-    });
-    if !is_local {
+    if !crate::read_state(|state| state.data.local_multi_user_canisters.contains(&multi_user_canister_id)) {
         return Err(ImportError::Failed(
             OCErrorCode::CanisterNotFound.with_message("Not one of this LocalUserIndex's MultiUser canisters"),
-        ));
-    }
-    // A User wasm released since the migration started may include data migrations which the user's
-    // canister skipped while it was migrating, and which the MultiUser canister wouldn't run, so the
-    // migration fails and the user can be migrated again once their canister is upgraded
-    if import.wasm_version != user_wasm_version {
-        return Err(ImportError::Failed(
-            OCErrorCode::NotReadyForMigration.with_message("A User wasm has been released since the migration started"),
         ));
     }
 

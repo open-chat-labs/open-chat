@@ -219,7 +219,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                             user_id: ev.user_id,
                             multi_user_canister_id: ev.multi_user_canister_id,
                             user_hash: ev.user_hash,
-                            wasm_version: ev.wasm_version,
                         }),
                     );
                 }
