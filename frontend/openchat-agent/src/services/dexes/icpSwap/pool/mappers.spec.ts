@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { quoteResponse, swapResponse, unusedBalancesResponse } from "./mappers";
+import { quoteResponse, swapResponse } from "./mappers";
 
 // A decline (undefined) is dropped by quoteSwap and costs nothing; a throw is retried by
 // executeQuery seven times with backoff and, if every pool throws, reaches the error tracker.
@@ -31,22 +31,15 @@ describe("ICPSwap quoteResponse", () => {
 });
 
 describe("ICPSwap swapResponse", () => {
-    test("ok is a success with the amount out", () => {
-        expect(swapResponse({ ok: 123n })).toEqual({ kind: "success", amountOut: 123n });
+    test("ok is a success with what reaches the wallet, after the output token's fee", () => {
+        expect(swapResponse({ ok: 123n }, 10n)).toEqual({ kind: "success", amountOut: 113n });
+        expect(swapResponse({ ok: 10n }, 10n)).toEqual({ kind: "success", amountOut: 0n });
     });
 
     test("err is an error rather than a throw, since the swap was made and declined", () => {
-        expect(swapResponse({ err: { InternalError: "Slippage check failed" } })).toEqual({
+        expect(swapResponse({ err: { InternalError: "Slippage check failed" } }, 10n)).toEqual({
             kind: "error",
             error: '{"InternalError":"Slippage check failed"}',
         });
-    });
-});
-
-describe("ICPSwap unusedBalancesResponse", () => {
-    test("balances are keyed by each token's ledger", () => {
-        expect(
-            unusedBalancesResponse({ ok: { balance0: 1n, balance1: 2n } }, "ledger0", "ledger1"),
-        ).toEqual({ ledger0: 1n, ledger1: 2n });
     });
 });

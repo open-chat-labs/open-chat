@@ -64,8 +64,9 @@ export class TacoPoolClient
     // so the caller must first get it from `grossAmountIn` and approve the exchange canister for
     // `requiredAllowance(inputToken, grossAmountIn)`. It is passed in rather than looked up again so
     // the amount pulled is the amount approved. TACO queues the output's transfer back to the wallet,
-    // so it can land a few seconds after this returns. A failed swap either pulled nothing or leaves
-    // a pending pull, which TACO tracks on chain.
+    // so it can land a few seconds after this returns. A failed swap can still have moved funds, eg.
+    // a SlippageExceeded one settles on chain and a SystemError one leaves a pending pull, which TACO
+    // tracks, so balances should be read again after an error.
     async swapFromWallet(
         inputToken: string,
         outputToken: string,

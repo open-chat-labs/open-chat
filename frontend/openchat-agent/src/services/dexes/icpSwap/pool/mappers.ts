@@ -1,5 +1,5 @@
 import type { DexSwapResult } from "@shared";
-import type { ApiNatResult, ApiUnusedBalanceResult } from "./candid/idl";
+import type { ApiNatResult } from "./candid/idl";
 import type { Error as ApiQuoteError } from "./candid/types";
 
 // A decoded `err` variant is ICPSwap declining to quote - "amount of input token is too small"
@@ -29,27 +29,14 @@ function isDecline(err: ApiQuoteError): boolean {
     return "InternalError" in err && /too small/i.test(err.InternalError);
 }
 
-export function swapResponse(candid: ApiNatResult): DexSwapResult {
+// The pool reports the output before taking the output token's fee to send it to the wallet, so the
+// fee is deducted here to give what reaches the wallet, as the backend's swaps do
+export function swapResponse(candid: ApiNatResult, outputTokenFee: bigint): DexSwapResult {
     if ("ok" in candid) {
-        return { kind: "success", amountOut: candid.ok };
+        return {
+            kind: "success",
+            amountOut: candid.ok > outputTokenFee ? candid.ok - outputTokenFee : 0n,
+        };
     }
     return { kind: "error", error: JSON.stringify(candid.err) };
-}
-
-export function withdrawResponse(candid: ApiNatResult): bigint {
-    if ("ok" in candid) {
-        return candid.ok;
-    }
-    throw new Error("Unable to withdraw from ICPSwap: " + JSON.stringify(candid.err));
-}
-
-export function unusedBalancesResponse(
-    candid: ApiUnusedBalanceResult,
-    token0: string,
-    token1: string,
-): Record<string, bigint> {
-    if ("ok" in candid) {
-        return { [token0]: candid.ok.balance0, [token1]: candid.ok.balance1 };
-    }
-    throw new Error("Unable to get unused balances from ICPSwap: " + JSON.stringify(candid.err));
 }
