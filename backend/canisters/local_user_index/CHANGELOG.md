@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Once enabled, register new users in whichever MultiUser canister has the fewest users ([#9579](https://github.com/open-chat-labs/open-chat/pull/9579))
 - Once the last upgrade in a series completes, and on start up, clear the chunk store then upload the chunks of the current User, Group, Community and MultiUser wasms again, rather than leaving the store empty, and install new canisters from those chunks ([#9583](https://github.com/open-chat-labs/open-chat/pull/9583))
+- Hold the weekly cycles balance checks, as a one-off, until 09:00 UTC on 5 October 2026, rather than running them as soon as the LocalUserIndex is upgraded ([#9598](https://github.com/open-chat-labs/open-chat/pull/9598))
 
 ### Fixed
 

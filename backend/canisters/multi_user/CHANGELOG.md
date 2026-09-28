@@ -55,6 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Serve each user's avatar and profile background over HTTP at `/user/{user_index}/avatar` and `/user/{user_index}/profile_background` ([#9555](https://github.com/open-chat-labs/open-chat/pull/9555))
 - Tell the UserIndex a user's new avatar id when they set or remove their avatar, as the User canister does. The UserIndex must be upgraded first ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
 - Add `c2c_import_user` which starts the `import_user` job for the given user, callable by the LocalUserIndex ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
+- Add `inspect_message`, accepting ingress messages only from the canister's users and the video call operators ([#9597](https://github.com/open-chat-labs/open-chat/pull/9597))
 
 ### Changed
 
@@ -84,6 +85,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 - Rename `send_message` back to `send_message_v2`, the name the User canister gives the endpoint whose args and response it takes, so that clients call both canisters the same way ([#9590](https://github.com/open-chat-labs/open-chat/pull/9590))
+- Apply direct chat events between users in the same canister as those from other canisters, so their recipients get the same achievements and notifications ([#9594](https://github.com/open-chat-labs/open-chat/pull/9594))
 
 ### Fixed
 

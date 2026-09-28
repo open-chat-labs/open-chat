@@ -14,7 +14,6 @@ fn mark_read(args: Args) -> Response {
 
 fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
     let my_index = state.caller_user_index_or_trap();
-    let my_user_id = state.user_id(my_index);
     let now = state.env.now();
 
     for ChatMessagesRead {
@@ -59,28 +58,15 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
             .ok()
             .flatten();
 
-        // Tell the other user how far this user has read, which for a user in this canister means
-        // updating their copy of the chat directly, and for one in another canister sending it to
-        // them. As between User canisters, a user who has blocked this one isn't told.
+        // Tell the other user how far this user has read
         if let Some(read_up_to_of_theirs) = read_up_to_of_theirs {
-            state.push_user_canister_event(
+            state.send_user_canister_event(
                 my_index,
                 chat_id.into(),
                 UserCanisterEvent::MarkMessagesRead(MarkMessagesReadArgs {
                     read_up_to: read_up_to_of_theirs,
                 }),
             );
-        }
-        if let Some(read_up_to_of_theirs) = read_up_to_of_theirs
-            && let Some(their_index) = state.index_of_local_user(chat_id.into())
-        {
-            state.data.users.with_user_mut(their_index, |user| {
-                if !user.blocked_users.contains(&my_user_id)
-                    && let Some(chat) = user.direct_chats.get_mut(&my_user_id.into())
-                {
-                    chat.mark_read_by_them_up_to(read_up_to_of_theirs, now);
-                }
-            });
         }
     }
 

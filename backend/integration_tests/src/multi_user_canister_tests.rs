@@ -1922,6 +1922,17 @@ fn reactions_to_a_users_messages_appear_in_their_message_activity_feed() {
     assert_eq!(event.user_id, Some(b));
     assert_eq!(message_activity_feed(env, b_principal, canister_id, 0).total, 0);
 
+    // As when the users are in different canisters, having a message reacted to earns A an
+    // achievement
+    assert!(has_achievement(
+        &initial_state(env, a_principal, canister_id),
+        Achievement::HadMessageReactedTo
+    ));
+    assert!(!has_achievement(
+        &initial_state(env, b_principal, canister_id),
+        Achievement::HadMessageReactedTo
+    ));
+
     let summary = initial_state(env, a_principal, canister_id).message_activity_summary;
     assert_eq!(summary.unread_count, 1);
     assert_eq!(summary.latest_event_timestamp, event.timestamp);
@@ -2262,12 +2273,14 @@ fn chit_streaks_and_achievements_are_held_per_user_in_a_multi_user_canister() {
     let a_chit_events = chit_events(env, a_principal, canister_id);
     assert_eq!(a_chit_events.total, 4);
 
-    // The other user, in the same canister, has none of it
+    // The other user, in the same canister, has none of it, only the achievement for receiving a
+    // direct message, as when the users are in different canisters
     let b_state = initial_state(env, b_principal, canister_id);
-    assert_eq!(b_state.chit_balance, 0);
+    assert_eq!(b_state.chit_balance, Achievement::ReceivedDirectMessage.chit_reward() as i32);
     assert_eq!(b_state.streak, 0);
-    assert!(b_state.achievements.is_empty());
-    assert_eq!(chit_events(env, b_principal, canister_id).total, 0);
+    assert_eq!(b_state.achievements.len(), 1);
+    assert!(has_achievement(&b_state, Achievement::ReceivedDirectMessage));
+    assert_eq!(chit_events(env, b_principal, canister_id).total, 1);
 
     // Claiming on the next day extends the streak
     env.advance_time(Duration::from_millis(
@@ -5126,6 +5139,11 @@ fn users_send_crypto_from_their_own_wallets() {
         events(env, b_principal, canister_id, b, a).events.last().unwrap().event,
         ChatEvent::Message(ref m) if matches!(m.content, MessageContent::Crypto(_))
     ));
+    // As when the users are in different canisters, receiving crypto earns B an achievement
+    assert!(has_achievement(
+        &initial_state(env, b_principal, canister_id),
+        Achievement::ReceivedCrypto
+    ));
 
     // To Carol, in a User canister
     let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(carol.user_id));
@@ -6116,4 +6134,44 @@ fn the_user_index_is_told_of_avatars_set_in_multi_user_canisters() {
     set_avatar(env, a_principal, canister_id, None);
     tick_many(env, 3);
     assert_eq!(avatar_id(env, a), None);
+}
+
+#[test]
+fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    // An OpenChat user, but not one this canister holds
+    let outsider = client::register_user(env, canister_ids);
+
+    // Rejected by `inspect_message` as the call is submitted, before it can cost the canister
+    // anything, rather than by the endpoint's guard once it runs
+    let set_bio = msgpack::serialize_then_unwrap(user_canister::set_bio::Args { text: "bio".to_string() });
+    let error = env
+        .submit_call(canister_id, outsider.principal, "set_bio_msgpack", set_bio.clone())
+        .unwrap_err();
+    assert_eq!(error.error_code, pocket_ic::ErrorCode::CanisterRejectedMessage, "{error:?}");
+
+    // Nor may even one of its users call a c2c method, which only canisters call
+    let game_chit = msgpack::serialize_then_unwrap(user_canister::c2c_game_chit::Args {
+        user_id,
+        game_id: "game".to_string(),
+        key: "key".to_string(),
+        amount: 1,
+    });
+    let error = env
+        .submit_call(canister_id, principal, "c2c_game_chit_msgpack", game_chit)
+        .unwrap_err();
+    assert_eq!(error.error_code, pocket_ic::ErrorCode::CanisterRejectedMessage, "{error:?}");
+
+    let message_id = env.submit_call(canister_id, principal, "set_bio_msgpack", set_bio).unwrap();
+    assert!(env.await_call(message_id).is_ok());
 }

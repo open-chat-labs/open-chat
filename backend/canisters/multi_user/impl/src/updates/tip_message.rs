@@ -1,6 +1,5 @@
 use crate::crypto::user_wallet;
 use crate::guards::caller_is_hosted_user;
-use crate::updates::c2c_user_canister_v2::receive_tip;
 use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -21,7 +20,6 @@ use user_canister::tip_message::{Response::*, *};
 async fn tip_message(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
-        my_user_id,
         my_principal,
         tip_args,
         their_index,
@@ -64,13 +62,12 @@ async fn tip_message(mut args: Args) -> Response {
     mutate_state(|state| {
         let now = state.env.now();
         state.award_achievement_and_notify(my_index, Achievement::TippedMessage, now);
-        tip_direct_chat_message(my_index, my_user_id, their_index, tip_args, args.decimals, state)
+        tip_direct_chat_message(my_index, tip_args, args.decimals, state)
     })
 }
 
 struct PrepareOk {
     my_index: u16,
-    my_user_id: UserId,
     my_principal: Principal,
     tip_args: TipMessageArgs,
     their_index: Option<u16>,
@@ -83,11 +80,11 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     }
     let this_canister_id = state.env.canister_id();
     let now = state.env.now();
-    let (my_index, my_user_id, my_principal, tip_args) = state.with_caller_user_mut(|my_index, user| {
+    let (my_index, my_principal, tip_args) = state.with_caller_user_mut(|my_index, user| {
         let my_user_id = UserId::new_indexed(this_canister_id, my_index);
         user_core::updates::tip_message::verify(user, my_user_id, args, this_canister_id, now)?;
         let tip_args = user_core::updates::tip_message::direct_tip_args(user, my_user_id, args, now)?;
-        OCResult::Ok((my_index, my_user_id, user.principal, tip_args))
+        OCResult::Ok((my_index, user.principal, tip_args))
     })?;
     let their_index = state.index_of_local_user(args.recipient);
     if their_index.is_none() && state.user_index(args.recipient).is_some() {
@@ -96,7 +93,6 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     }
     Ok(PrepareOk {
         my_index,
-        my_user_id,
         my_principal,
         tip_args,
         their_index,
@@ -104,16 +100,9 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     })
 }
 
-// Records the tip in the tipper's copy of the chat, then the recipient's: directly if they are in
-// this canister, else via their canister as the User canister does
-fn tip_direct_chat_message(
-    my_index: u16,
-    my_user_id: UserId,
-    their_index: Option<u16>,
-    args: TipMessageArgs,
-    decimals: u8,
-    state: &mut RuntimeState,
-) -> Response {
+// Records the tip in the tipper's copy of the chat, then sends it to the recipient, as the User
+// canister does
+fn tip_direct_chat_message(my_index: u16, args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
     let recipient = args.recipient;
     // TODO: Push the tip to the event store (`UserEventPusher` in the User canister)
     let c2c_args = match state.data.users.with_user_mut(my_index, |user| {
@@ -131,12 +120,6 @@ fn tip_direct_chat_message(
         None => return Error(OCErrorCode::InitiatorNotFound.into()),
     };
 
-    match their_index {
-        Some(their_index) => {
-            let now = state.env.now();
-            receive_tip(c2c_args, my_user_id, recipient, their_index, now, state);
-        }
-        None => state.push_user_canister_event(my_index, recipient, UserCanisterEvent::TipMessage(Box::new(c2c_args))),
-    }
+    state.send_user_canister_event(my_index, recipient, UserCanisterEvent::TipMessage(Box::new(c2c_args)));
     Success
 }
