@@ -1922,6 +1922,17 @@ fn reactions_to_a_users_messages_appear_in_their_message_activity_feed() {
     assert_eq!(event.user_id, Some(b));
     assert_eq!(message_activity_feed(env, b_principal, canister_id, 0).total, 0);
 
+    // As when the users are in different canisters, having a message reacted to earns A an
+    // achievement
+    assert!(has_achievement(
+        &initial_state(env, a_principal, canister_id),
+        Achievement::HadMessageReactedTo
+    ));
+    assert!(!has_achievement(
+        &initial_state(env, b_principal, canister_id),
+        Achievement::HadMessageReactedTo
+    ));
+
     let summary = initial_state(env, a_principal, canister_id).message_activity_summary;
     assert_eq!(summary.unread_count, 1);
     assert_eq!(summary.latest_event_timestamp, event.timestamp);
@@ -2262,12 +2273,14 @@ fn chit_streaks_and_achievements_are_held_per_user_in_a_multi_user_canister() {
     let a_chit_events = chit_events(env, a_principal, canister_id);
     assert_eq!(a_chit_events.total, 4);
 
-    // The other user, in the same canister, has none of it
+    // The other user, in the same canister, has none of it, only the achievement for receiving a
+    // direct message, as when the users are in different canisters
     let b_state = initial_state(env, b_principal, canister_id);
-    assert_eq!(b_state.chit_balance, 0);
+    assert_eq!(b_state.chit_balance, Achievement::ReceivedDirectMessage.chit_reward() as i32);
     assert_eq!(b_state.streak, 0);
-    assert!(b_state.achievements.is_empty());
-    assert_eq!(chit_events(env, b_principal, canister_id).total, 0);
+    assert_eq!(b_state.achievements.len(), 1);
+    assert!(has_achievement(&b_state, Achievement::ReceivedDirectMessage));
+    assert_eq!(chit_events(env, b_principal, canister_id).total, 1);
 
     // Claiming on the next day extends the streak
     env.advance_time(Duration::from_millis(
