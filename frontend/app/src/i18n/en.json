@@ -788,8 +788,8 @@
                     "2": "A tent already touches this cell, so this cell can't hold one.",
                     "3": "This tree has only one cell left where its tent can go, so that cell must be a tent.",
                     "4": "This tree's tent must go in one of two cells, and both of them touch this cell, so this cell can't hold a tent.",
-                    "5": "Only these cells in this row or column can still take a tent, and every way of fitting in the ones it needs agrees about the marked cells, so you can fill them in.",
-                    "6": "Only these cells in this row or column can still take a tent, and every way of fitting in the ones it needs puts one next to the marked cells, so you can rule them out.",
+                    "5": "Try every way of fitting in the tents this row or column still needs, using only the highlighted cells and never letting two touch. Some of those cells come out the same every time, tent or empty, so fill them in.",
+                    "6": "Try every way of fitting in the tents this row or column still needs, using only the highlighted cells in it. Some highlighted cells beside the line touch a tent every time, so they can't hold one.",
                     "7": "Leave out the cells that cannot hold a tent: no free tree beside them, or touching a tent. This row or column needs as many tents as it has cells left, so every one of them is a tent.",
                     "8": "This row or column already has all its tents, so no other cell in it can hold one."
                 },

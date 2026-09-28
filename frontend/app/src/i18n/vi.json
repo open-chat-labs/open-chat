@@ -810,9 +810,9 @@
                     "2": "Đã có một lều chạm vào ô này, nên ô này không thể có lều.",
                     "3": "Cây này chỉ còn một ô để đặt lều, nên ô đó phải là lều.",
                     "4": "Lều của cây này phải nằm ở một trong hai ô, và cả hai ô đó đều chạm vào ô này, nên ô này không thể có lều.",
-                    "5": "Trong hàng hoặc cột này chỉ còn những ô này có thể đặt lều, và mọi cách xếp đủ số lều cần thiết đều thống nhất về các ô được đánh dấu, nên bạn có thể điền chúng.",
-                    "6": "Trong hàng hoặc cột này chỉ còn những ô này có thể đặt lều, và mọi cách xếp đủ số lều cần thiết đều đặt một lều cạnh các ô được đánh dấu, nên bạn có thể loại chúng.",
-                    "7": "Hàng hoặc cột này cần số lều đúng bằng số ô còn có thể đặt lều, nên mọi ô đó đều là lều.",
+                    "5": "Thử mọi cách đặt số lều mà hàng hoặc cột này còn cần, chỉ dùng các ô được tô sáng và không để hai lều nào chạm nhau. Một số ô trong đó lần nào cũng ra giống nhau, là lều hoặc trống, nên bạn có thể điền chúng.",
+                    "6": "Thử mọi cách đặt số lều mà hàng hoặc cột này còn cần, chỉ dùng các ô được tô sáng của nó. Một số ô được tô sáng bên cạnh hàng hoặc cột lần nào cũng chạm vào một lều, nên chúng không thể có lều.",
+                    "7": "Bỏ qua các ô không thể có lều: không cây nào cạnh chúng còn cần lều, hoặc chúng chạm vào một lều. Hàng hoặc cột này cần số lều đúng bằng số ô còn lại, nên mọi ô đó đều là lều.",
                     "8": "Hàng hoặc cột này đã có đủ lều, nên không ô nào khác trong đó có thể có lều."
                 },
                 "demo": {

@@ -810,9 +810,9 @@
                     "2": "Una tienda ya toca esta casilla, así que esta casilla no puede tener una.",
                     "3": "A este árbol solo le queda una casilla donde poner su tienda, así que esa casilla debe ser una tienda.",
                     "4": "La tienda de este árbol debe ir en una de dos casillas, y ambas tocan esta casilla, así que esta casilla no puede tener una tienda.",
-                    "5": "Solo estas casillas de esta fila o columna pueden llevar todavía una tienda, y todas las formas de colocar las que necesita coinciden en las casillas marcadas, así que puedes rellenarlas.",
-                    "6": "Solo estas casillas de esta fila o columna pueden llevar todavía una tienda, y todas las formas de colocar las que necesita ponen una junto a las casillas marcadas, así que puedes descartarlas.",
-                    "7": "Esta fila o columna necesita tantas tiendas como casillas le quedan que puedan tener una, así que todas ellas son tiendas.",
+                    "5": "Prueba todas las formas de colocar las tiendas que aún necesita esta fila o columna, usando solo las casillas resaltadas y sin que dos se toquen. Algunas de esas casillas salen igual todas las veces, tienda o vacía, así que puedes rellenarlas.",
+                    "6": "Prueba todas las formas de colocar las tiendas que aún necesita esta fila o columna, usando solo sus casillas resaltadas. Algunas casillas resaltadas junto a la fila o columna tocan una tienda todas las veces, así que no pueden tener una.",
+                    "7": "Descarta las casillas que no pueden tener una tienda: ningún árbol a su lado necesita ya una tienda, o tocan una tienda. Esta fila o columna necesita tantas tiendas como casillas le quedan, así que todas ellas son tiendas.",
                     "8": "Esta fila o columna ya tiene todas sus tiendas, así que ninguna otra casilla en ella puede tener una."
                 },
                 "demo": {

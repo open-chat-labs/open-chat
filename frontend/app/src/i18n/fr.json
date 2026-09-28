@@ -810,9 +810,9 @@
                     "2": "Une tente touche déjà cette case, donc cette case ne peut pas en contenir.",
                     "3": "Il ne reste à cet arbre qu'une seule case où placer sa tente, donc cette case doit être une tente.",
                     "4": "La tente de cet arbre doit aller dans l'une de deux cases, et toutes deux touchent cette case, donc cette case ne peut pas contenir de tente.",
-                    "5": "Seules ces cases de cette ligne ou colonne peuvent encore recevoir une tente, et toutes les façons de placer celles qu'il lui faut s'accordent sur les cases marquées, donc vous pouvez les remplir.",
-                    "6": "Seules ces cases de cette ligne ou colonne peuvent encore recevoir une tente, et toutes les façons de placer celles qu'il lui faut en mettent une à côté des cases marquées, donc vous pouvez les exclure.",
-                    "7": "Cette ligne ou colonne a besoin d'autant de tentes qu'il lui reste de cases pouvant en contenir, donc chacune d'elles est une tente.",
+                    "5": "Essayez toutes les façons de placer les tentes dont cette ligne ou colonne a encore besoin, en n'utilisant que les cases surlignées et sans que deux se touchent. Certaines de ces cases donnent le même résultat à chaque fois, tente ou vide, donc vous pouvez les remplir.",
+                    "6": "Essayez toutes les façons de placer les tentes dont cette ligne ou colonne a encore besoin, en n'utilisant que ses cases surlignées. Certaines cases surlignées à côté de la ligne ou colonne touchent une tente à chaque fois, donc elles ne peuvent pas en contenir.",
+                    "7": "Écartez les cases qui ne peuvent pas contenir de tente : aucun arbre voisin n'a encore besoin d'une tente, ou elles touchent une tente. Cette ligne ou colonne a besoin d'autant de tentes qu'il lui reste de cases, donc chacune d'elles est une tente.",
                     "8": "Cette ligne ou colonne a déjà toutes ses tentes, donc aucune autre case ne peut en contenir."
                 },
                 "demo": {
