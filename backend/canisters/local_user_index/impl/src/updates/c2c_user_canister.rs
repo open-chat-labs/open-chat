@@ -8,7 +8,7 @@ use local_user_index_canister::c2c_user_canister::*;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use types::{BotEvent, BotLifecycleEvent, Notification, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
-use user_index_canister::BotInstalled;
+use user_index_canister::{BotInstalled, UserImportFailed, UserImported};
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
 #[trace]
@@ -86,6 +86,27 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
+        // Only a MultiUser canister imports users, and it names the user by their new id
+        UserEvent::UserImported(old_user_id) if user_id.index() != 0 => {
+            state.push_event_to_user_index(
+                UserIndexEvent::UserImported(Box::new(UserImported {
+                    old_user_id,
+                    new_user_id: user_id,
+                })),
+                **now,
+            );
+        }
+        UserEvent::UserImportFailed(old_user_id, error) if user_id.index() != 0 => {
+            state.push_event_to_user_index(
+                UserIndexEvent::UserImportFailed(Box::new(UserImportFailed {
+                    user_id: old_user_id,
+                    multi_user_canister_id: user_id.canister_id(),
+                    error,
+                })),
+                **now,
+            );
+        }
+        UserEvent::UserImported(_) | UserEvent::UserImportFailed(..) => {}
         UserEvent::Notification(mut notification) => {
             if let Notification::Bot(bot_notification) = &mut *notification
                 && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event

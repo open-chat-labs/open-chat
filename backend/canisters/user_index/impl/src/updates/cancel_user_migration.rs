@@ -11,10 +11,19 @@ use user_index_canister::cancel_user_migration::{Response::*, *};
 #[update(guard = "caller_is_platform_operator", msgpack = true)]
 #[trace]
 async fn cancel_user_migration(args: Args) -> Response {
-    let is_single_user =
-        read_state(|state| state.data.users.get_by_user_id(&args.user_id).is_some() && args.user_id.is_canister());
+    let (is_single_user, is_imported) = read_state(|state| {
+        (
+            state.data.users.get_by_user_id(&args.user_id).is_some() && args.user_id.is_canister(),
+            state.data.user_migrations.is_imported(&args.user_id),
+        )
+    });
     if !is_single_user {
         return Error(OCErrorCode::TargetUserNotFound.into());
+    }
+    // Once the MultiUser canister has imported the user it holds a copy of them, so the migration
+    // can no longer be cancelled
+    if is_imported {
+        return Error(OCErrorCode::InvalidRequest.with_message("The user has already been imported"));
     }
 
     match user_canister_c2c_client::c2c_cancel_migration(

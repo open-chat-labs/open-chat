@@ -110,67 +110,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "airdrop_bot_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "candid_gen",
- "legacy_bot_api",
- "serde",
- "types",
-]
-
-[[package]]
-name = "airdrop_bot_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "airdrop_bot_canister",
- "canister_client",
- "ic-cdk 0.20.2",
- "msgpack",
- "tracing",
- "types",
-]
-
-[[package]]
-name = "airdrop_bot_canister_impl"
-version = "0.1.0"
-dependencies = [
- "airdrop_bot_canister",
- "candid",
- "canister_api_macros",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "community_canister",
- "community_canister_c2c_client",
- "constants",
- "git_commit_id",
- "http_request",
- "ic-cdk 0.20.2",
- "ic-cdk-timers",
- "ic-stable-structures",
- "icrc-ledger-types",
- "icrc_ledger_canister",
- "icrc_ledger_canister_c2c_client",
- "local_user_index_canister",
- "local_user_index_canister_c2c_client",
- "msgpack",
- "rand 0.10.2",
- "serde",
- "stable_memory",
- "testing",
- "timer_job_queues",
- "tracing",
- "types",
- "user_canister",
- "user_canister_c2c_client",
- "user_index_canister",
- "user_index_canister_c2c_client",
- "utils",
-]
-
-[[package]]
 name = "alloc-no-stdlib"
 version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1588,7 +1527,6 @@ version = "0.1.0"
 name = "canister_installer"
 version = "0.1.0"
 dependencies = [
- "airdrop_bot_canister",
  "candid",
  "canister_agent_utils",
  "clap 4.6.3",
@@ -1681,7 +1619,6 @@ dependencies = [
 name = "canister_upgrader"
 version = "0.1.0"
 dependencies = [
- "airdrop_bot_canister",
  "candid",
  "canister_agent_utils",
  "clap 4.6.3",
@@ -6300,7 +6237,6 @@ dependencies = [
 name = "integration_tests"
 version = "0.1.0"
 dependencies = [
- "airdrop_bot_canister",
  "bridges",
  "candid",
  "chat_events",
@@ -7380,6 +7316,8 @@ dependencies = [
  "oc_error_codes",
  "rand 0.10.2",
  "serde",
+ "serde_bytes",
+ "sha256",
  "stable_memory",
  "stable_memory_map",
  "timer_job_queues",
@@ -8142,8 +8080,6 @@ dependencies = [
 name = "online_users_canister_impl"
 version = "0.1.0"
 dependencies = [
- "airdrop_bot_canister",
- "airdrop_bot_canister_c2c_client",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -8164,7 +8100,6 @@ dependencies = [
  "serde",
  "stable_memory",
  "stable_memory_map",
- "timer_job_queues",
  "tracing",
  "types",
  "user_index_canister",

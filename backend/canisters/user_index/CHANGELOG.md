@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Accept a `user_id` in `c2c_set_avatar`, so a MultiUser canister can set the avatar id of one of its users ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
 - One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal ([#9581](https://github.com/open-chat-labs/open-chat/pull/9581))
 - Add `migrate_users` which queues users to be migrated to MultiUser canisters ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
+- Once a User canister is ready for migration, instruct the destination MultiUser canister that it should start the import ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 
 ### Changed
 
@@ -26,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make `set_multi_user_canisters_enabled` callable by platform operators ([#9574](https://github.com/open-chat-labs/open-chat/pull/9574))
 - Store the date created and user count of each MultiUser canister alongside its LocalUserIndex, keeping the count up to date as users are created, deleted and migrated, and include them in `metrics` ([#9575](https://github.com/open-chat-labs/open-chat/pull/9575))
 - Once enabled, route newly registering users to the MultiUser canister with the fewest users ([#9579](https://github.com/open-chat-labs/open-chat/pull/9579))
+
+### Removed
+
+- Remove the deprecated AirdropBot's canister id, and its registration as a user on a fresh install ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))
 
 ### Fixed
 

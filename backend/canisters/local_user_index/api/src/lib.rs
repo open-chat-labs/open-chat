@@ -1,5 +1,6 @@
 use candid::{CandidType, Principal};
 use event_store_types::Event;
+use oc_error_codes::OCError;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
@@ -65,6 +66,7 @@ pub enum UserIndexEvent {
     RefundDeletedUserCycles(Vec<CanisterId>),
     UserIdMigrated(UserIdMigrated),
     StartUserMigration(StartUserMigration),
+    ImportUser(ImportUser),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -282,6 +284,19 @@ pub struct StartUserMigration {
     pub multi_user_canister_id: CanisterId,
 }
 
+// Tells the LocalUserIndex controlling a MultiUser canister to have it import the user, whose
+// canister has started migrating them to it
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ImportUser {
+    #[serde(rename = "u")]
+    pub user_id: UserId,
+    #[serde(rename = "m")]
+    pub multi_user_canister_id: CanisterId,
+    // The hash of the user as serialized when their migration started, which identifies it
+    #[serde(rename = "h")]
+    pub user_hash: types::Hash,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DeleteUser {
     pub user_id: UserId,
@@ -357,6 +372,12 @@ pub enum UserEvent<T = UserNotificationPayload> {
     SetMaxStreak(u16),
     EventStoreEvent(Event),
     Notification(Box<Notification<T>>),
+    // From a MultiUser canister, naming the user's new id: the user with the given old id, who was
+    // being migrated from a canister of their own, has been imported
+    UserImported(UserId),
+    // From a MultiUser canister, naming the id the user was assigned: the user with the given old
+    // id couldn't be imported
+    UserImportFailed(UserId, OCError),
 }
 
 // An event along with the user it is from, as taken by `c2c_user_canister_v2`. A User canister

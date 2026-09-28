@@ -16,6 +16,7 @@ fn c2c_try_start_migration(args: Args) -> Response {
             Ok(migration) => Success(SuccessResult {
                 user_bytes: migration.user.len() as u64,
                 wasm_version: migration.wasm_version,
+                user_hash: migration.user_hash,
             }),
             Err(error) => Error(error),
         }

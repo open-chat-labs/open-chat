@@ -1,4 +1,4 @@
-use canister_client::{generate_c2c_call, generate_candid_c2c_call};
+use canister_client::generate_c2c_call;
 use user_canister::*;
 
 // Queries
@@ -17,7 +17,6 @@ generate_c2c_call!(c2c_game_chit);
 generate_c2c_call!(c2c_grant_super_admin);
 generate_c2c_call!(c2c_group_canister, 300);
 generate_c2c_call!(c2c_group_canister_v2, 300);
-generate_candid_c2c_call!(c2c_handle_bot_messages);
 generate_c2c_call!(c2c_install_bot);
 generate_c2c_call!(c2c_notify_community_deleted);
 generate_c2c_call!(c2c_local_user_index, 300);

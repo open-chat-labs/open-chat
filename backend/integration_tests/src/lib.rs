@@ -8,7 +8,6 @@ use std::fmt::{Debug, Formatter};
 use types::{CanisterId, Cycles, SignedDelegation, UserId};
 
 mod account_linking_tests;
-mod airdrop_bot_tests;
 mod batched_summary_and_event_tests;
 mod bot_tests;
 mod call_push_tests;
@@ -136,7 +135,6 @@ pub struct CanisterIds {
     pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
-    pub airdrop_bot: CanisterId,
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub daily_puzzle: CanisterId,
@@ -172,7 +170,6 @@ impl Debug for CanisterIds {
         w.field("identity", &self.identity.to_string());
         w.field("online_users", &self.online_users.to_string());
         w.field("proposals_bot", &self.proposals_bot.to_string());
-        w.field("airdrop_bot", &self.airdrop_bot.to_string());
         w.field("storage_index", &self.storage_index.to_string());
         w.field("cycles_dispenser", &self.cycles_dispenser.to_string());
         w.field("daily_puzzle", &self.daily_puzzle.to_string());
