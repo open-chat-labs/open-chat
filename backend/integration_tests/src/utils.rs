@@ -93,3 +93,33 @@ pub fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {
 
     serde_json::from_slice(&response.body).unwrap()
 }
+
+// Checks that a wasm committed alongside its wat was built from it with `wat2wasm`. The `wat`
+// crate's output is identical but for a "name" custom section which it appends, so what follows
+// the committed wasm must be exactly that section.
+pub fn assert_wasm_built_from_wat(wasm: &[u8], wat: &str, file_name: &str) {
+    let from_wat = wat::parse_str(wat).unwrap();
+    let is_name_section = |section: &[u8]| {
+        let Some((&id, rest)) = section.split_first() else {
+            return false;
+        };
+        let (size, content) = read_leb128(rest);
+        id == 0 && content.len() == size && content.starts_with(b"\x04name")
+    };
+
+    assert!(
+        from_wat.strip_prefix(wasm).is_some_and(is_name_section),
+        "{file_name} is out of date, rebuild it from the wat"
+    );
+}
+
+fn read_leb128(bytes: &[u8]) -> (usize, &[u8]) {
+    let mut value = 0;
+    for (i, byte) in bytes.iter().enumerate().take(5) {
+        value |= usize::from(byte & 0x7f) << (7 * i);
+        if byte & 0x80 == 0 {
+            return (value, &bytes[i + 1..]);
+        }
+    }
+    (usize::MAX, &[])
+}
