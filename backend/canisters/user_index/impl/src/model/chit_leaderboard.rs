@@ -88,6 +88,19 @@ impl ChitLeaderboard {
         leaderboard.sort_unstable_by_key(|i| Reverse(i.balance));
     }
 
+    // Moves the user's entries onto the new id they were given when migrated to a MultiUser canister
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        for balance in self
+            .all_time
+            .iter_mut()
+            .chain(self.this_month.iter_mut())
+            .chain(self.last_month.iter_mut())
+            .filter(|b| b.user_id == old_user_id)
+        {
+            balance.user_id = new_user_id;
+        }
+    }
+
     pub fn all_time(&self) -> &[ChitUserBalance] {
         &self.all_time
     }

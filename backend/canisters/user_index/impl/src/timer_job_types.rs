@@ -27,6 +27,23 @@ pub enum TimerJob {
     ProcessReportClassification(ProcessReportClassification),
 }
 
+impl TimerJob {
+    // Moves a job for a user onto the new id they were given when migrated to a MultiUser canister
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let user_id = match self {
+            TimerJob::RecurringDiamondMembershipPayment(job) => &mut job.user_id,
+            TimerJob::SetUserSuspended(job) => &mut job.user_id,
+            TimerJob::SetUserSuspendedInGroup(job) => &mut job.user_id,
+            TimerJob::SetUserSuspendedInCommunity(job) => &mut job.user_id,
+            TimerJob::UnsuspendUser(job) => &mut job.user_id,
+            TimerJob::ProcessReportClassification(_) => return,
+        };
+        if *user_id == old_user_id {
+            *user_id = new_user_id;
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RecurringDiamondMembershipPayment {
     pub user_id: UserId,

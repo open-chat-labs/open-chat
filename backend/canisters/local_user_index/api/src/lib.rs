@@ -372,12 +372,19 @@ pub enum UserEvent<T = UserNotificationPayload> {
     SetMaxStreak(u16),
     EventStoreEvent(Event),
     Notification(Box<Notification<T>>),
-    // From a MultiUser canister, naming the user's new id: the user with the given old id, who was
-    // being migrated from a canister of their own, has been imported
-    UserImported(UserId),
+    // From a MultiUser canister, naming the user's new id: the user who was being migrated from a
+    // canister of their own has been imported
+    UserImported(UserImported),
     // From a MultiUser canister, naming the id the user was assigned: the user with the given old
     // id couldn't be imported
     UserImportFailed(UserId, OCError),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserImported {
+    pub old_user_id: UserId,
+    // The groups and communities the user is in, each of which is told of the user's new id
+    pub canisters_to_notify: Vec<CanisterId>,
 }
 
 // An event along with the user it is from, as taken by `c2c_user_canister_v2`. A User canister

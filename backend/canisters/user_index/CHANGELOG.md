@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal ([#9581](https://github.com/open-chat-labs/open-chat/pull/9581))
 - Add `migrate_users` which queues users to be migrated to MultiUser canisters ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
 - Once a User canister is ready for migration, instruct the destination MultiUser canister that it should start the import ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
+- Once a MultiUser canister has imported a migrating user, switch them over to their new id, re-keying them here and telling the Identity canister and every LocalUserIndex ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ### Changed
 
