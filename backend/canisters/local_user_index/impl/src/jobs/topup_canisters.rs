@@ -18,7 +18,8 @@ const CYCLES_CHECK_INTERVAL: Milliseconds = 7 * DAY_IN_MS;
 // One-off: hold off checking balances and topping canisters up until 00:00 UTC on Monday
 // 5 October 2026, so that cycles can be recouped first. Otherwise the job runs as soon as the
 // LocalUserIndex is upgraded.
-// TODO remove after the release containing this has been deployed
+// TODO remove in a release deployed after 2026-10-05T00:00:00Z. Removing it in an earlier release
+// would run the checks as soon as that release is deployed.
 const FIRST_RUN_NOT_BEFORE: TimestampMillis = 1_791_158_400_000; // 2026-10-05T00:00:00Z
 
 pub fn start_job(now: TimestampMillis) {
