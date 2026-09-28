@@ -6134,10 +6134,11 @@ fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
     // An OpenChat user, but not one this canister holds
     let outsider = client::register_user(env, canister_ids);
 
-    // Rejected by `inspect_message`, before the call can cost the canister anything
+    // Rejected by `inspect_message` as the call is submitted, before it can cost the canister
+    // anything, rather than by the endpoint's guard once it runs
     let set_bio = msgpack::serialize_then_unwrap(user_canister::set_bio::Args { text: "bio".to_string() });
     let error = env
-        .update_call(canister_id, outsider.principal, "set_bio_msgpack", set_bio.clone())
+        .submit_call(canister_id, outsider.principal, "set_bio_msgpack", set_bio.clone())
         .unwrap_err();
     assert_eq!(error.error_code, pocket_ic::ErrorCode::CanisterRejectedMessage, "{error:?}");
 
@@ -6149,9 +6150,10 @@ fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
         amount: 1,
     });
     let error = env
-        .update_call(canister_id, principal, "c2c_game_chit_msgpack", game_chit)
+        .submit_call(canister_id, principal, "c2c_game_chit_msgpack", game_chit)
         .unwrap_err();
     assert_eq!(error.error_code, pocket_ic::ErrorCode::CanisterRejectedMessage, "{error:?}");
 
-    assert!(env.update_call(canister_id, principal, "set_bio_msgpack", set_bio).is_ok());
+    let message_id = env.submit_call(canister_id, principal, "set_bio_msgpack", set_bio).unwrap();
+    assert!(env.await_call(message_id).is_ok());
 }

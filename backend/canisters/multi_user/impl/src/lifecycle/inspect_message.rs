@@ -50,7 +50,9 @@ mod tests {
     fn only_self_authenticating_and_anonymous_principals_can_send_ingress() {
         assert!(can_send_ingress(Principal::self_authenticating([1, 2, 3])));
         assert!(can_send_ingress(Principal::anonymous()));
-        assert!(!can_send_ingress(Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap()));
+        assert!(!can_send_ingress(
+            Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap()
+        ));
         assert!(!can_send_ingress(Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8])));
     }
 }
