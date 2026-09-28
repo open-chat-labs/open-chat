@@ -25,7 +25,13 @@
         type OpenChat,
         type ResourceKey,
     } from "@client";
-    import { isAccountIdentifierValid, isICRCAddressValid, publish } from "@shared";
+    import {
+        encodeIcrcAccount,
+        isAccountIdentifierValid,
+        isICRCAddressValid,
+        publish,
+        userWalletAccount,
+    } from "@shared";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountBoxOutline.svelte";
@@ -69,8 +75,13 @@
     let scanner: Scanner;
     const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
 
+    // The user's own wallet, which they can't send to
     let account = $derived(
-        tokenState.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
+        tokenState.symbol === ICP_SYMBOL
+            ? $currentUserStore.cryptoAccount
+            : encodeIcrcAccount(
+                  userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
+              ),
     );
     let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenState.symbol === BTC_SYMBOL);
@@ -251,17 +262,21 @@
     bind:value={targetAccount}
     countdown={false}
     maxlength={100}
+    disabled={busy}
     error={targetAccount.length > 0 && !targetAccountValid}
     placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
     {#snippet iconButtons(color)}
-        {#if $namedAccountsStore.length > 0}
-            <InputIconButton onClick={() => (showAddressBook = true)}>
-                <Account {color} />
+        <!-- The target can't change mid-send, since the success sheet shows it as the recipient -->
+        {#if !busy}
+            {#if $namedAccountsStore.length > 0}
+                <InputIconButton onClick={() => (showAddressBook = true)}>
+                    <Account {color} />
+                </InputIconButton>
+            {/if}
+            <InputIconButton onClick={scan}>
+                <QrcodeScan {color} />
             </InputIconButton>
         {/if}
-        <InputIconButton onClick={scan}>
-            <QrcodeScan {color} />
-        </InputIconButton>
     {/snippet}
     {#snippet subtext()}
         <Translatable
@@ -329,12 +344,12 @@
                 background={ColourVars.surface2}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("Recipient")} />
-                    {#if account}
-                        ({account})
+                    {#if namedAccount}
+                        ({namedAccount.name})
                     {/if}
                 </BodySmall>
                 <Body fontWeight={"bold"}>
-                    {account}
+                    {targetAccount}
                 </Body>
             </Container>
             <Container

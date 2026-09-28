@@ -9,7 +9,7 @@ cd $SCRIPT_DIR
 set -o allexport; source .env; set +o allexport
 ./utils/setup_env.sh
 
-# Optional filename filter, e.g. '1018*' or 'daily_puzzle*', to propose a single entry
+# Optional filename filter, e.g. '1017*' or 'daily_puzzle*', to propose a single entry
 FILTER=${1:-*}
 
 for file in ./proposals/create_custom_sns_functions/$FILTER

@@ -314,7 +314,7 @@ pub(crate) fn map_class(key_bytes: &[u8]) -> MapClass {
     extract_key_type(key_bytes).map_or(MapClass::Default, KeyType::map_class)
 }
 
-fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
+pub(crate) fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
     bytes.first().and_then(|b| KeyType::try_from(*b).ok())
 }
 

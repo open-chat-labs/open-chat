@@ -1,13 +1,13 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { Type } from "@sinclair/typebox";
 import {
-    isMultiUserCanisterUser,
     MAX_EVENTS,
     MAX_MESSAGES,
     offline,
     random32,
     Stream,
     toBigInt32,
+    userCanisterId,
     type AcceptP2PSwapResponse,
     type AddRemoveReactionResponse,
     type ApproveTransferResponse,
@@ -252,7 +252,8 @@ export class UserClient
         private readonly chatsDb: ChatsDb,
         private readonly userDb: UserDb,
     ) {
-        super(identity, agent, userId, "User");
+        // A MultiUser canister holds many users, so the canister is not always the user id
+        super(identity, agent, userCanisterId(userId).toText(), "User");
         this.userId = userId;
     }
 
@@ -614,8 +615,7 @@ export class UserClient
                 og_previews: newEvent.event.ogPreviews.map(apiOgPreview),
             };
             return this.update(
-                // The MultiUser canister takes the same args under the name `send_message`
-                isMultiUserCanisterUser(this.userId) ? "send_message" : "send_message_v2",
+                "send_message_v2",
                 req,
                 (resp) => sendMessageResponse(resp, newEvent.event.sender, chatId.userId),
                 UserSendMessageArgs,

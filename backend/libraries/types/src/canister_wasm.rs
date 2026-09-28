@@ -118,6 +118,12 @@ impl CanisterWasmManager {
         self.wasm = wasm;
     }
 
+    // Sets the hashes of the wasm's chunks in the chunk store, leaving any chunks being pushed
+    // untouched
+    pub fn set_chunk_hashes(&mut self, chunks: Vec<Hash>) {
+        self.wasm.chunks = chunks;
+    }
+
     pub fn push_chunk(&mut self, chunk: CanisterWasmBytes, index: u8) -> Result<(u32, Hash), u8> {
         if index == 0 {
             self.chunks.clear();
@@ -175,6 +181,10 @@ impl<T: Eq + std::hash::Hash> ChildCanisterWasms<T> {
         let manager = self.manager_mut(canister_type);
         manager.set(wasm.into());
         manager.chunks.clear();
+    }
+
+    pub fn set_chunk_hashes(&mut self, canister_type: T, chunks: Vec<Hash>) {
+        self.manager_mut(canister_type).set_chunk_hashes(chunks);
     }
 
     pub fn push_chunk(&mut self, canister_type: T, chunk: CanisterWasmBytes, index: u8) -> Result<(u32, Hash), u8> {

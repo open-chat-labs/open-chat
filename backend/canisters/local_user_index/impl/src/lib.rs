@@ -14,6 +14,7 @@ use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::top_up_leaderboards::TopUpLeaderboards;
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
+use crate::model::users_to_migrate::UsersToMigrate;
 use crate::model::web_push_subscriptions::WebPushSubscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -54,7 +55,9 @@ use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
-use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
+use utils::canister::{
+    CanistersRequiringUpgrade, ChunkedWasmToInstall, FailedUpgradeCount, VersionedWasmToInstall, WasmToInstall,
+};
 use utils::env::Environment;
 use utils::event_stream::EventStream;
 use utils::fcm_token_store::FcmTokenStore;
@@ -244,6 +247,24 @@ impl RuntimeState {
             queue.push(result);
         } else {
             error!(number = result.number, user_id = %result.user_id, "Daily puzzle canister id not set, result dropped");
+        }
+    }
+
+    // A child canister's wasm to install. Its chunks are only recorded while they are in this
+    // canister's chunk store, so it is installed from the chunks if there are any, else in full
+    pub fn child_canister_wasm_to_install(&self, canister_type: ChildCanisterType) -> VersionedWasmToInstall {
+        let wasm = self.data.child_canister_wasms.get(canister_type);
+        VersionedWasmToInstall {
+            version: wasm.wasm.version,
+            wasm: if wasm.chunks.is_empty() {
+                WasmToInstall::Default(wasm.wasm.module.clone())
+            } else {
+                WasmToInstall::Chunked(ChunkedWasmToInstall {
+                    chunks: wasm.chunks.clone(),
+                    wasm_hash: wasm.wasm_hash,
+                    store_canister_id: self.env.canister_id(),
+                })
+            },
         }
     }
 
@@ -687,6 +708,9 @@ impl RuntimeState {
             user_events_queue_length: self.data.user_events_queue.len(),
             user_events_queue_in_progress: self.data.user_events_queue.in_progress(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
+            users_to_migrate_pending: self.data.users_to_migrate.pending(),
+            users_to_migrate_in_progress: self.data.users_to_migrate.in_progress(),
+            chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
@@ -840,6 +864,9 @@ struct Data {
     // UserIndex
     #[serde(default)]
     pub migrated_user_ids: MigratedUserIds,
+    // Users the UserIndex has asked this LocalUserIndex to start migrating to MultiUser canisters
+    #[serde(default)]
+    pub users_to_migrate: UsersToMigrate,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -992,6 +1019,7 @@ impl Data {
             daily_puzzle_results_queue: None,
             game_chit_credit_retry_queue: new_retry_queue(),
             migrated_user_ids: MigratedUserIds::default(),
+            users_to_migrate: UsersToMigrate::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -1048,6 +1076,9 @@ pub struct Metrics {
     // whose last batch is still awaiting its reply
     pub user_events_queue_in_progress: usize,
     pub users_to_delete_queue_length: usize,
+    pub users_to_migrate_pending: usize,
+    pub users_to_migrate_in_progress: usize,
+    pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,
