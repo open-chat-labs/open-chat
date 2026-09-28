@@ -359,7 +359,6 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
-                airdrop_bot: self.data.airdrop_bot_canister_id,
                 online_users: self.data.online_users_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
@@ -413,7 +412,6 @@ struct Data {
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
-    pub airdrop_bot_canister_id: CanisterId,
     pub online_users_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -535,7 +533,6 @@ impl Data {
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
-        airdrop_bot_canister_id: CanisterId,
         online_users_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
@@ -559,7 +556,6 @@ impl Data {
             notifications_index_canister_id,
             identity_canister_id,
             proposals_bot_canister_id,
-            airdrop_bot_canister_id,
             online_users_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
@@ -639,18 +635,6 @@ impl Data {
             None,
         );
 
-        // Register the AirdropBot
-        data.users.register(
-            airdrop_bot_canister_id,
-            airdrop_bot_canister_id.into(),
-            "AirdropBot".to_string(),
-            None,
-            now,
-            None,
-            UserType::OcControlledBot,
-            None,
-        );
-
         data
     }
 
@@ -691,7 +675,6 @@ impl Default for Data {
             notifications_index_canister_id: Principal::anonymous(),
             identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
-            airdrop_bot_canister_id: Principal::anonymous(),
             online_users_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
@@ -905,7 +888,6 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
     pub proposals_bot: CanisterId,
-    pub airdrop_bot: CanisterId,
     pub online_users: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,

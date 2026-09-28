@@ -27,6 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store the date created and user count of each MultiUser canister alongside its LocalUserIndex, keeping the count up to date as users are created, deleted and migrated, and include them in `metrics` ([#9575](https://github.com/open-chat-labs/open-chat/pull/9575))
 - Once enabled, route newly registering users to the MultiUser canister with the fewest users ([#9579](https://github.com/open-chat-labs/open-chat/pull/9579))
 
+### Removed
+
+- Remove the deprecated AirdropBot's canister id, and its registration as a user on a fresh install ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))
+
 ### Fixed
 
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))

@@ -15,7 +15,6 @@ then
 fi
 
 CANISTERS=(
-  airdrop_bot
   community
   cycles_dispenser
   daily_puzzle
