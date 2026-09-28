@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::model::users_to_migrate::{ImportDetails, UserToMigrate};
+use crate::model::users_to_migrate::{UserToImport, UserToMigrate};
 use crate::{CanisterToRefund, CommunityEvent, GroupEvent, RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
@@ -365,17 +365,16 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 multi_user_canister_id: ev.multi_user_canister_id,
                 attempt: 0,
                 not_before: 0,
-                import: None,
             });
             jobs::start_user_migrations::start_job_if_required(state);
         }
         UserIndexEvent::ImportUser(ev) => {
-            state.data.users_to_import.push(UserToMigrate {
+            state.data.users_to_import.push(UserToImport {
                 user_id: ev.user_id,
                 multi_user_canister_id: ev.multi_user_canister_id,
+                user_hash: ev.user_hash,
                 attempt: 0,
                 not_before: 0,
-                import: Some(ImportDetails { user_hash: ev.user_hash }),
             });
             jobs::import_users::start_job_if_required(state);
         }

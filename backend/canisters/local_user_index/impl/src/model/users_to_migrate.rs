@@ -3,35 +3,74 @@ use std::collections::{HashSet, VecDeque};
 use types::{CanisterId, Hash, TimestampMillis, UserId};
 
 // The users in canisters of their own which the UserIndex has asked this LocalUserIndex to start
-// migrating to MultiUser canisters, or to have one of its MultiUser canisters import
-#[derive(Serialize, Deserialize, Default)]
-pub struct UsersToMigrate {
-    pending: VecDeque<UserToMigrate>,
+// migrating to MultiUser canisters, or to have one of its MultiUser canisters import, depending on
+// the type of user queued
+#[derive(Serialize, Deserialize)]
+pub struct UsersToMigrate<T = UserToMigrate> {
+    pending: VecDeque<T>,
     in_progress: HashSet<UserId>,
 }
 
+impl<T> Default for UsersToMigrate<T> {
+    fn default() -> Self {
+        UsersToMigrate {
+            pending: VecDeque::new(),
+            in_progress: HashSet::new(),
+        }
+    }
+}
+
+pub trait QueuedUser {
+    fn user_id(&self) -> UserId;
+    // Set when retrying, so that the user isn't retried straight away
+    fn not_before(&self) -> TimestampMillis;
+}
+
+// A user whose migration is to be started
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct UserToMigrate {
     pub user_id: UserId,
     pub multi_user_canister_id: CanisterId,
     pub attempt: u32,
-    // Set when retrying, so that the user isn't retried straight away
     pub not_before: TimestampMillis,
-    // Set for a user to import, identifying the migration
-    #[serde(default)]
-    pub import: Option<ImportDetails>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ImportDetails {
-    // The hash of the user as serialized when their migration started
+// A user whose canister has started migrating them, who is to be imported by the MultiUser canister
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct UserToImport {
+    pub user_id: UserId,
+    pub multi_user_canister_id: CanisterId,
+    // The hash of the user as serialized when their migration started, which identifies it
     pub user_hash: Hash,
+    pub attempt: u32,
+    pub not_before: TimestampMillis,
 }
 
-impl UsersToMigrate {
+impl QueuedUser for UserToMigrate {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn not_before(&self) -> TimestampMillis {
+        self.not_before
+    }
+}
+
+impl QueuedUser for UserToImport {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn not_before(&self) -> TimestampMillis {
+        self.not_before
+    }
+}
+
+impl<T: QueuedUser> UsersToMigrate<T> {
     // Returns false if the user is already pending or in progress
-    pub fn push(&mut self, user: UserToMigrate) -> bool {
-        if self.in_progress.contains(&user.user_id) || self.pending.iter().any(|u| u.user_id == user.user_id) {
+    pub fn push(&mut self, user: T) -> bool {
+        let user_id = user.user_id();
+        if self.in_progress.contains(&user_id) || self.pending.iter().any(|u| u.user_id() == user_id) {
             false
         } else {
             self.pending.push_back(user);
@@ -40,14 +79,14 @@ impl UsersToMigrate {
     }
 
     // Takes the pending users which are due, until `max_in_progress` are in progress
-    pub fn take_next_batch(&mut self, max_in_progress: usize, now: TimestampMillis) -> Vec<UserToMigrate> {
+    pub fn take_next_batch(&mut self, max_in_progress: usize, now: TimestampMillis) -> Vec<T> {
         let mut batch = Vec::new();
         while self.in_progress.len() < max_in_progress {
-            let Some(index) = self.pending.iter().position(|u| u.not_before <= now) else {
+            let Some(index) = self.pending.iter().position(|u| u.not_before() <= now) else {
                 break;
             };
             let user = self.pending.remove(index).unwrap();
-            self.in_progress.insert(user.user_id);
+            self.in_progress.insert(user.user_id());
             batch.push(user);
         }
         batch
@@ -56,7 +95,7 @@ impl UsersToMigrate {
     // When the next pending user is due, if fewer than `max_in_progress` are in progress
     pub fn next_due(&self, max_in_progress: usize) -> Option<TimestampMillis> {
         if self.in_progress.len() < max_in_progress {
-            self.pending.iter().map(|u| u.not_before).min()
+            self.pending.iter().map(|u| u.not_before()).min()
         } else {
             None
         }
@@ -86,7 +125,6 @@ mod tests {
             multi_user_canister_id: Principal::from_slice(&[10]),
             attempt: 0,
             not_before: 0,
-            import: None,
         }
     }
 

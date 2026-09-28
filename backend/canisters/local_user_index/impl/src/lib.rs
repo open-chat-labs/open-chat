@@ -14,7 +14,7 @@ use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::top_up_leaderboards::TopUpLeaderboards;
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
-use crate::model::users_to_migrate::UsersToMigrate;
+use crate::model::users_to_migrate::{UserToImport, UsersToMigrate};
 use crate::model::web_push_subscriptions::WebPushSubscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -871,7 +871,7 @@ struct Data {
     pub users_to_migrate: UsersToMigrate,
     // Users the UserIndex has asked this LocalUserIndex to have one of its MultiUser canisters import
     #[serde(default)]
-    pub users_to_import: UsersToMigrate,
+    pub users_to_import: UsersToMigrate<UserToImport>,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,

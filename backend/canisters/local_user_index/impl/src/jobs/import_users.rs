@@ -1,4 +1,4 @@
-use crate::model::users_to_migrate::UserToMigrate;
+use crate::model::users_to_migrate::UserToImport;
 use crate::{RuntimeState, UserIndexEvent, mutate_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
@@ -55,7 +55,7 @@ enum ImportError {
     Failed(OCError),
 }
 
-async fn process_user(user: UserToMigrate) {
+async fn process_user(user: UserToImport) {
     let result = start_import(&user).await;
 
     mutate_state(|state| {
@@ -67,7 +67,7 @@ async fn process_user(user: UserToMigrate) {
         match result {
             Ok(()) => {}
             Err(ImportError::Retry(_)) if user.attempt + 1 < MAX_ATTEMPTS => {
-                state.data.users_to_import.push(UserToMigrate {
+                state.data.users_to_import.push(UserToImport {
                     attempt: user.attempt + 1,
                     not_before: now + RETRY_DELAY,
                     ..user
@@ -90,11 +90,8 @@ async fn process_user(user: UserToMigrate) {
     });
 }
 
-async fn start_import(user: &UserToMigrate) -> Result<(), ImportError> {
+async fn start_import(user: &UserToImport) -> Result<(), ImportError> {
     let multi_user_canister_id = user.multi_user_canister_id;
-    let Some(import) = user.import else {
-        return Err(ImportError::Failed(OCErrorCode::InvalidRequest.into()));
-    };
     if !crate::read_state(|state| state.data.local_multi_user_canisters.contains(&multi_user_canister_id)) {
         return Err(ImportError::Failed(
             OCErrorCode::CanisterNotFound.with_message("Not one of this LocalUserIndex's MultiUser canisters"),
@@ -105,7 +102,7 @@ async fn start_import(user: &UserToMigrate) -> Result<(), ImportError> {
         multi_user_canister_id,
         &multi_user_canister::c2c_import_user::Args {
             user_id: user.user_id,
-            user_hash: import.user_hash,
+            user_hash: user.user_hash,
         },
     )
     .await

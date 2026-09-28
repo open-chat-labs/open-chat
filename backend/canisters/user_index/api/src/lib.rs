@@ -68,7 +68,6 @@ pub struct UserMigrationStarted {
     // The version of the User canister the user was serialized by
     pub wasm_version: BuildVersion,
     // The hash of the user serialized, which identifies the migration
-    #[serde(default)]
     pub user_hash: Hash,
 }
 
