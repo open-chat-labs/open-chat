@@ -654,26 +654,45 @@ impl DailyPuzzleEngine {
         // The client applies the same test when it works out which level to ask for next.
         let positive_outstanding = |h: &PuzzleHint| h.conclusions.iter().any(|c| c.1 != 0 && !filled_set.contains(c));
         let outstanding = |h: &PuzzleHint| h.conclusions.iter().any(|c| !filled_set.contains(c));
-        let (step, hint) = puzzle
+        let (mut step, mut hint) = puzzle
             .hints
             .iter()
             .enumerate()
             .find(|(_, h)| positive_outstanding(h))
             .or_else(|| puzzle.hints.iter().enumerate().find(|(_, h)| outstanding(h)))
             .ok_or(OCErrorCode::ItemNotFound)?;
-        let step = step as u16;
+        // A skipped negatives-only step is not always bookkeeping: a later step can rest on it
+        // (Light Up's "every free cell next to this 1" once set exclusion has ruled two of three
+        // out). Served alone, that step reads as wrong, so serve its premise first: the earliest
+        // negatives-only step with an unfilled conclusion on a key the step looks at, and that
+        // step's own premise in turn (#9588 invariant 1). The walk stops at a step already bought:
+        // a mark taken back off the board would otherwise sell its premise as a new step in place
+        // of the one paid for (#9588 invariant 4). A step whose first level is still being paid
+        // for counts as bought.
+        let started = |step: usize| {
+            record
+                .hints
+                .iter()
+                .any(|e| e.step as usize == step && (e.served.is_some() || e.pending_level.is_some()))
+        };
+        while !started(step)
+            && let Some(premise) = puzzle.hints[..step].iter().enumerate().find(|(_, h)| {
+                h.conclusions.iter().all(|c| c.1 == 0)
+                    && h.conclusions
+                        .iter()
+                        .any(|c| !filled_set.contains(c) && hint.focus.contains(&c.0))
+            })
+        {
+            (step, hint) = premise;
+        }
 
         // A step is climbed from where it was left, never entered above level 1 (#9517 invariant
         // 1). The client cannot tell that a level 1 or 2 step is finished, because the
         // conclusions that would show it are withheld, so it keeps asking for the next level of a
         // step the player has already completed. The server has moved on to a new step by then,
-        // and serving that at the asked-for level reveals something nobody asked about. A step
-        // whose first level is still being paid for counts as started.
-        let started = record
-            .hints
-            .iter()
-            .any(|e| e.step == step && (e.served.is_some() || e.pending_level.is_some()));
-        let level = if started { level } else { 1 };
+        // and serving that at the asked-for level reveals something nobody asked about.
+        let level = if started(step) { level } else { 1 };
+        let step = step as u16;
 
         let price_at = |level: u8| {
             puzzle
@@ -2108,6 +2127,8 @@ mod tests {
         }
     }
 
+    /// #9588 invariant 2: with no premise outstanding, the engine serves the first step with a
+    /// positive still to place, otherwise the first step with anything unfilled.
     #[test]
     fn hint_serves_first_step_with_an_unfilled_conclusion() {
         let mut engine = new_engine();
@@ -2137,6 +2158,224 @@ mod tests {
             engine.reserve_hint(u, GAME, NUMBER, 1, &all, 0, START),
             OCErrorCode::ItemNotFound,
         );
+    }
+
+    fn hint(technique: u8, focus: &[u16], target: &[u16], conclusions: &[(u16, u8)]) -> PuzzleHint {
+        PuzzleHint {
+            technique,
+            focus: focus.to_vec(),
+            target: target.to_vec(),
+            conclusions: conclusions.to_vec(),
+        }
+    }
+
+    fn engine_with_hints(hints: Vec<PuzzleHint>) -> DailyPuzzleEngine {
+        let mut engine = DailyPuzzleEngine::default();
+        let mut p = puzzle(NUMBER, true);
+        p.hints = hints;
+        engine.set_puzzles(vec![p]);
+        engine
+    }
+
+    /// #9588 invariant 1, on the board it was reported from: Light Up #20723 (tricky), with the
+    /// player's five bulbs and ten X marks. The first step with a bulb still to place is 15, "the
+    /// 1 at 75 needs a bulb in every free cell", whose premise is steps 12 and 14 ruling out 74
+    /// and 76. Serving 15 without them told the player to fill three cells round a 1.
+    #[test]
+    fn hint_serves_the_negatives_a_step_rests_on_first_light_up_20723() {
+        let mut engine = DailyPuzzleEngine::default();
+        let mut p = puzzle(NUMBER, true);
+        p.description = vec![
+            1, 10, 10, 16, 0, 0, 0, 18, 0, 0, 17, 0, 0, 18, 18, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 17, 0, 0, 0, 16, 0, 0, 0, 0, 16, 0, 0, 0, 18, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 18, 16, 0, 0, 18, 0, 0, 19, 0, 0, 0, 17,
+        ];
+        p.solution = vec![
+            0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+            0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0,
+            0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0,
+        ];
+        // The first 17 steps of the generator's trace, verbatim
+        p.hints = vec![
+            hint(3, &[10, 11, 0, 20], &[10], &[(20, 1)]),
+            hint(2, &[43, 42, 44, 33, 53], &[43], &[(42, 0), (44, 0), (33, 0), (53, 0)]),
+            hint(2, &[7, 6, 8, 17], &[7], &[(6, 0), (8, 0), (17, 0)]),
+            hint(2, &[99, 98, 89], &[99], &[(98, 0)]),
+            hint(1, &[6, 5], &[6], &[(5, 1)]),
+            hint(3, &[16, 15, 17, 6, 26], &[16], &[(26, 1)]),
+            hint(2, &[4, 3, 5, 14], &[4], &[(3, 0), (14, 0)]),
+            hint(4, &[2, 1, 12], &[12], &[(12, 0)]),
+            hint(3, &[11, 10, 12, 1, 21], &[11], &[(1, 1)]),
+            hint(1, &[13, 12, 14, 15, 3, 23, 33], &[13], &[(13, 1)]),
+            hint(4, &[41, 32, 31], &[31], &[(31, 0)]),
+            hint(4, &[94, 85, 84], &[84], &[(84, 0)]),
+            hint(4, &[94, 85, 74], &[74], &[(74, 0)]),
+            hint(4, &[96, 85, 86], &[86], &[(86, 0)]),
+            hint(4, &[96, 85, 76], &[76], &[(76, 0)]),
+            hint(3, &[75, 74, 76, 65, 85], &[75], &[(85, 1)]),
+            hint(3, &[88, 87, 89, 78, 98], &[88], &[(78, 1)]),
+        ];
+        engine.set_puzzles(vec![p]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        let board = [
+            (1, 1),
+            (5, 1),
+            (13, 1),
+            (20, 1),
+            (26, 1),
+            (6, 0),
+            (8, 0),
+            (12, 0),
+            (14, 0),
+            (17, 0),
+            (33, 0),
+            (42, 0),
+            (44, 0),
+            (53, 0),
+            (98, 0),
+        ];
+        assert_eq!(probe(&mut engine, u, &board), 12);
+
+        let mut board = board.to_vec();
+        board.push((74, 0));
+        assert_eq!(probe(&mut engine, u, &board), 14);
+
+        board.push((76, 0));
+        assert_eq!(probe(&mut engine, u, &board), 15);
+    }
+
+    /// #9588 invariant 1: a premise is served under the same rule, so a chain of negatives-only
+    /// steps is walked back to its first unfilled link.
+    #[test]
+    fn hint_walks_a_chain_of_premises_back_to_its_first_link() {
+        let mut engine = engine_with_hints(vec![
+            hint(2, &[3], &[], &[(3, 0)]),
+            hint(4, &[3, 5], &[], &[(5, 0)]),
+            hint(3, &[5, 7, 8], &[], &[(8, 1)]),
+        ]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        assert_eq!(probe(&mut engine, u, &[]), 0);
+        assert_eq!(probe(&mut engine, u, &[(3, 0)]), 1);
+        assert_eq!(probe(&mut engine, u, &[(3, 0), (5, 0)]), 2);
+        // A premise marked out of order leaves only the link still missing
+        assert_eq!(probe(&mut engine, u, &[(5, 0)]), 2);
+    }
+
+    /// #9588 invariant 1: only a negative on a key in the step's focus is a premise. An earlier
+    /// negatives-only step about other cells stays skipped.
+    #[test]
+    fn hint_skips_negatives_only_steps_outside_the_focus() {
+        let mut engine = engine_with_hints(vec![hint(2, &[1], &[], &[(1, 0)]), hint(3, &[5, 7, 8], &[], &[(8, 1)])]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        assert_eq!(probe(&mut engine, u, &[]), 1);
+    }
+
+    /// #9588 invariant 3: a step whose positives are placed is finished, and its unmarked
+    /// negatives never pull it back in, even when they sit in a later step's focus.
+    #[test]
+    fn hint_never_pulls_back_a_step_whose_positives_are_placed() {
+        let mut engine = engine_with_hints(vec![
+            hint(1, &[0, 2], &[], &[(0, 1), (2, 0)]),
+            hint(3, &[2, 7, 8], &[], &[(8, 1)]),
+        ]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        assert_eq!(probe(&mut engine, u, &[(0, 1)]), 1);
+    }
+
+    /// #9588 invariant 1: a premise is the conclusion that is both unfilled and in the step's
+    /// focus. A negatives-only step whose in-focus conclusion is marked stays skipped, however many
+    /// of its other conclusions are still unmarked.
+    #[test]
+    fn hint_ignores_a_premise_whose_in_focus_conclusion_is_marked() {
+        let mut engine = engine_with_hints(vec![
+            hint(2, &[3, 9], &[], &[(3, 0), (9, 0)]),
+            hint(3, &[3, 5], &[], &[(5, 1)]),
+        ]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        assert_eq!(probe(&mut engine, u, &[(3, 0)]), 1);
+    }
+
+    /// #9588 invariant 4: a step already bought is never displaced by a premise, whether it is the
+    /// step picked or a premise part way along the walk. Taking a mark back off the board re-serves
+    /// what was paid for rather than selling the premise as a new step.
+    #[test]
+    fn hint_never_displaces_a_bought_step_with_its_premise() {
+        let mut engine = engine_with_hints(vec![hint(2, &[3], &[], &[(3, 0)]), hint(3, &[3, 5], &[], &[(5, 1)])]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        let (step, _) = serve(&mut engine, u, 1, &[(3, 0)], 25);
+        assert_eq!(step, 1);
+
+        // The player takes the X at 3 back off: the premise is outstanding again
+        match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
+            HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.level, 1),
+            _ => panic!("expected the bought step re-served"),
+        }
+        // And climbing it is still an upgrade of that step, not a new one
+        let (upgraded, r) = serve(&mut engine, u, 2, &[], 50);
+        assert_eq!(upgraded, 1);
+        assert_eq!(r.hints_used, 1);
+
+        // A bought premise part way along the walk stops it there
+        let mut engine = engine_with_hints(vec![
+            hint(2, &[1], &[], &[(1, 0)]),
+            hint(4, &[1, 3], &[], &[(3, 0)]),
+            hint(3, &[3, 5], &[], &[(5, 1)]),
+        ]);
+        started(&mut engine, u, START);
+        let (step, _) = serve(&mut engine, u, 1, &[(1, 0)], 25);
+        assert_eq!(step, 1);
+        match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
+            HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.hint.focus, vec![1, 3]),
+            _ => panic!("expected the bought premise re-served"),
+        }
+    }
+
+    /// #9588 invariant 4: a step still being paid for counts as bought. A call that overlaps its
+    /// debit after a mark comes off is refused as a hint in flight, not sold the premise as a new
+    /// step.
+    #[test]
+    fn hint_never_displaces_a_step_being_paid_for_with_its_premise() {
+        let mut engine = engine_with_hints(vec![hint(2, &[3], &[], &[(3, 0)]), hint(3, &[3, 5], &[], &[(5, 1)])]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        match engine.reserve_hint(u, GAME, NUMBER, 1, &[(3, 0)], 25, START).unwrap() {
+            HintPrepared::Serve { step, .. } => assert_eq!(step, 1),
+            _ => panic!("expected a serve"),
+        }
+        assert_err(
+            engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START),
+            OCErrorCode::Throttled,
+        );
+        assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 1);
+    }
+
+    /// #9588 invariant 4 with #9517 invariant 1: the level is settled on the step the walk ends
+    /// on, so a premise already bought climbs like any other step
+    #[test]
+    fn hint_bought_premise_climbs_its_own_ladder() {
+        let mut engine = engine_with_hints(vec![hint(2, &[3], &[], &[(3, 0)]), hint(3, &[3, 5], &[], &[(5, 1)])]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        let (step, _) = serve(&mut engine, u, 1, &[], 25);
+        assert_eq!(step, 0);
+        let (step, r) = serve(&mut engine, u, 2, &[], 50);
+        assert_eq!(step, 0);
+        assert_eq!(r.hint.level, 2);
+        assert_eq!(r.hints_used, 1);
     }
 
     #[test]

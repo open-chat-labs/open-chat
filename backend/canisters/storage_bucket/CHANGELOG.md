@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the unused `user_ids_updated` field from `c2c_sync_index`. Must be released before StorageIndex ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
+- Remove the unused `user_ids_updated` field from `c2c_sync_index` ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
 
 ### Fixed
 

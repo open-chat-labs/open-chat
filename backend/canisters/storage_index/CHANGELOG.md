@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the unused `c2c_update_user_principal` endpoint and the `user_ids_updated` field it synced to buckets. StorageBuckets must be upgraded first ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
+- Remove the unused `c2c_update_user_principal` endpoint and the `user_ids_updated` field it synced to buckets ([#9508](https://github.com/open-chat-labs/open-chat/pull/9508))
 
 ### Fixed
 
