@@ -87,6 +87,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the serde defaults and `post_upgrade` fix-up for canisters created before fields existed, since no MultiUser canister has been created yet ([#9589](https://github.com/open-chat-labs/open-chat/pull/9589))
+- Remove the `c2c_handle_bot_messages` stub ([#9596](https://github.com/open-chat-labs/open-chat/pull/9596))
 
 ### Fixed
 
