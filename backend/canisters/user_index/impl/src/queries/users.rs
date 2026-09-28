@@ -54,6 +54,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
             streak: u.streak(now),
             max_streak: u.max_streak,
             hide_online_status: u.hide_online_status,
+            previous_user_ids: state.data.migrated_user_ids.previous_ids(u.user_id),
         });
     }
 
@@ -210,7 +211,9 @@ mod tests {
         let result = users(&state, vec![user_id(9)], state.env.now());
 
         assert!(result.users.is_empty());
-        assert_eq!(result.current_user.map(|u| u.user_id), Some(user_id(10)));
+        let current_user = result.current_user.unwrap();
+        assert_eq!(current_user.user_id, user_id(10));
+        assert_eq!(current_user.previous_user_ids, vec![user_id(9)]);
     }
 
     #[test]

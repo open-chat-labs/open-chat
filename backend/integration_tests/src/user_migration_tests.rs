@@ -395,6 +395,7 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     // The user is switched over to their new id, which they are found by from then on
     let current_user = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
     assert_eq!(current_user.user_id, new_user_id);
+    assert_eq!(current_user.previous_user_ids, vec![user1.user_id]);
     let summary = client::user_index::happy_path::user(env, canister_ids.user_index, user1.user_id);
     assert_eq!(summary.user_id, new_user_id);
     assert_eq!(summary.previous_user_ids, vec![user1.user_id]);
