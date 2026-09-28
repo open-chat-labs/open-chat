@@ -33,26 +33,29 @@ user may have been migrated.
 callee length (1 byte) | callee | method length (1 byte) | method | payload
 ```
 
-It calls `method` on `callee` with `payload`, with no cycles attached. An empty callee is the
-management canister. Once the callee responds, `relay` replies (also raw) with:
+It calls `method` on `callee` with `payload`, as a bounded wait (best-effort response) call with a
+5 minute timeout and no cycles attached. An empty callee is the management canister. Once the
+call completes, `relay` replies (also raw) with:
 
 ```
-reject code (4 bytes, u32 LE) | the callee's reply or reject message
+reject code (4 bytes, u32 LE) | the callee's reply or the reject message
 ```
 
 where the reject code is 0 if the callee replied. So its outcome, reply or reject, comes back
-exactly as the callee gave it, and a reject from `relay` itself means the call was never made:
+exactly as the relay received it, and a reject from `relay` itself means the call was never made:
 the caller isn't a controller, the args are invalid, or `call_perform` failed. The exceptions,
-where the relay traps having made the call, are a reply within 4 bytes of the size limit, which
+where the relay traps having made the call, are a reply within 4 bytes of the 2MiB limit, which
 can't be relayed since the relay's reply is 4 bytes longer, and a reply or reject message larger
 than the memory can be grown to hold. Neither arises for ledger transfers.
 
-The call is a bounded wait (best-effort response) call with a 30 second timeout. So a callee
-which never responds, which may be the case if the callee was chosen by a user, can't hold on to
-the cycles reserved for its response, and the relay's caller hears back within that time. If the
-call times out the reject code is `SYS_UNKNOWN` (6), and the callee may or may not have acted on
-it. A transfer can be retried safely by setting `created_at_time`, in which case the ledger
-returns a `Duplicate` error rather than making the transfer twice.
+The call is bounded wait so that a malicious or broken callee can't hold it open for ever.
+Otherwise `relay` would never reply, leaving the canister unable to be stopped, and its caller
+waiting for ever too if that made a guaranteed response call. The cost is that `relay` may not
+learn the outcome: if the call times out, or its response is dropped, the reject code is
+`SYS_UNKNOWN` (6) and the callee may or may not have acted on it. The same goes for the caller if
+it makes a bounded wait call to `relay`. Either way a transfer can be retried safely by setting
+`created_at_time`, in which case the ledger returns a `Duplicate` error rather than making the
+transfer twice.
 
 ## Building
 

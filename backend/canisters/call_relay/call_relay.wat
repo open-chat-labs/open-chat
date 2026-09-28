@@ -9,13 +9,14 @@
 ;;
 ;;   callee length (1 byte) | callee | method length (1 byte) | method | payload
 ;;
-;; and calls `method` on `callee` with `payload`, with no cycles attached. Once the callee
-;; responds it replies with the callee's reject code (u32 LE), which is 0 if the callee replied,
-;; followed by the callee's reply or reject message.
+;; and calls `method` on `callee` with `payload`, as a bounded wait (best-effort response) call
+;; with no cycles attached. Once the call completes it replies with the reject code (u32 LE),
+;; which is 0 if the callee replied, followed by the callee's reply or the reject message.
 ;;
-;; The call is a bounded wait (best-effort response) call with a 30 second timeout, so a callee
-;; which never responds can't hold on to the cycles reserved for its response for longer than
-;; that. If it times out the reject code is SYS_UNKNOWN, and the callee may or may not have acted.
+;; The call is bounded wait so that a malicious or broken callee can't hold it open for ever,
+;; which would leave `relay` never replying and the canister unable to be stopped. Instead the
+;; call times out after 5 minutes, giving a SYS_UNKNOWN (6) reject, as does a dropped response,
+;; in which case the callee may or may not have acted on the call.
 ;;
 ;; Only a controller can call `relay`, which gives them nothing they don't already have, since
 ;; they could install any code they like on the canister.
@@ -92,7 +93,8 @@
       (i32.const 0) (i32.const 0)   ;; on_reply
       (i32.const 1) (i32.const 0))  ;; on_reject
     (call $call_data_append (local.get $payload) (i32.sub (local.get $end) (local.get $payload)))
-    (call $call_with_best_effort_response (i32.const 30))
+    ;; The maximum timeout, far longer than any honest callee needs
+    (call $call_with_best_effort_response (i32.const 300))
     (if (call $call_perform)
       (then (call $trap (i32.const 96) (i32.const 19)))))
 

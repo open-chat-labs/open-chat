@@ -7,6 +7,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use pocket_ic::{PocketIc, RejectResponse};
 use std::ops::Deref;
+use std::time::Duration;
 use types::CanisterId;
 
 const CALL_RELAY_WAT: &str = include_str!("../../canisters/call_relay/call_relay.wat");
@@ -15,7 +16,7 @@ const CALL_RELAY_WAT: &str = include_str!("../../canisters/call_relay/call_relay
 const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
 
 // A callee which replies with its args, or rejects with them as the message, or replies with
-// 200KB of zeros whatever its args
+// 200KB of zeros whatever its args, or never replies at all, instead calling itself over and over
 const ECHO_WAT: &str = r#"
 (module
   (import "ic0" "msg_arg_data_size" (func $msg_arg_data_size (result i32)))
@@ -23,7 +24,14 @@ const ECHO_WAT: &str = r#"
   (import "ic0" "msg_reply_data_append" (func $msg_reply_data_append (param i32 i32)))
   (import "ic0" "msg_reply" (func $msg_reply))
   (import "ic0" "msg_reject" (func $msg_reject (param i32 i32)))
+  (import "ic0" "canister_self_size" (func $canister_self_size (result i32)))
+  (import "ic0" "canister_self_copy" (func $canister_self_copy (param i32 i32 i32)))
+  (import "ic0" "call_new" (func $call_new (param i32 i32 i32 i32 i32 i32 i32 i32)))
+  (import "ic0" "call_perform" (func $call_perform (result i32)))
   (memory 40)
+  (table 1 funcref)
+  (elem (i32.const 0) $call_self)
+  (data (i32.const 2600000) "noop")
   (func $copy_args (result i32)
     (local $size i32)
     (local.set $size (call $msg_arg_data_size))
@@ -37,15 +45,34 @@ const ECHO_WAT: &str = r#"
   (func $large
     (call $msg_reply_data_append (i32.const 0) (i32.const 200000))
     (call $msg_reply))
+  (func $hang
+    (call $call_self (i32.const 0)))
+  ;; Calls `noop` on itself, as it does again when that replies, keeping the call context of
+  ;; `hang` open for ever
+  (func $call_self (param $env i32)
+    (local $size i32)
+    (local.set $size (call $canister_self_size))
+    (call $canister_self_copy (i32.const 2600032) (i32.const 0) (local.get $size))
+    (call $call_new
+      (i32.const 2600032) (local.get $size)
+      (i32.const 2600000) (i32.const 4)
+      (i32.const 0) (i32.const 0)
+      (i32.const 0) (i32.const 0))
+    (drop (call $call_perform)))
+  (func $noop
+    (call $msg_reply))
   (export "canister_update echo" (func $echo))
   (export "canister_update reject" (func $reject))
-  (export "canister_update large" (func $large)))
+  (export "canister_update large" (func $large))
+  (export "canister_update hang" (func $hang))
+  (export "canister_update noop" (func $noop)))
 "#;
 
 const ICP_TRANSFER_FEE: u128 = 10_000;
 
 const CANISTER_REJECT: u32 = 4;
 const CANISTER_ERROR: u32 = 5;
+const SYS_UNKNOWN: u32 = 6;
 
 #[test]
 fn call_relay_transfers_the_funds_held_by_the_canister() {
@@ -155,6 +182,39 @@ fn call_relay_returns_the_callees_reply_or_reject_as_is() {
 }
 
 #[test]
+fn call_relay_times_out_if_the_callee_never_replies() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, controller, .. } = wrapper.env();
+
+    let canister_id = create_canister(env, *controller);
+    env.install_canister(canister_id, wasm(), vec![], Some(*controller));
+
+    let callee = create_canister(env, *controller);
+    env.install_canister(callee, wat::parse_str(ECHO_WAT).unwrap(), vec![], Some(*controller));
+
+    let message_id = env
+        .submit_call(canister_id, *controller, "relay", relay_args(callee, "hang", &[]))
+        .unwrap();
+
+    // Just short of the 5 minute timeout the callee is still holding the call open
+    for _ in 0..5 {
+        env.tick();
+    }
+    env.advance_time(Duration::from_secs(290));
+    env.tick();
+    assert!(env.ingress_status(message_id.clone()).is_none());
+
+    // After which the relay gives up on it
+    env.advance_time(Duration::from_secs(20));
+    let (reject_code, _) = parse_reply(env.await_call(message_id).unwrap());
+    assert_eq!(reject_code, SYS_UNKNOWN);
+
+    // Stop the callee calling itself for ever, and the relay can be uninstalled as usual
+    env.uninstall_canister(callee, Some(*controller)).unwrap();
+    env.uninstall_canister(canister_id, Some(*controller)).unwrap();
+}
+
+#[test]
 fn call_relay_rejects_callers_which_are_not_controllers() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -223,14 +283,20 @@ fn relay(
     method: &str,
     payload: &[u8],
 ) -> Result<(u32, Vec<u8>), RejectResponse> {
+    env.update_call(canister_id, sender, "relay", relay_args(callee, method, payload))
+        .map(parse_reply)
+}
+
+fn relay_args(callee: Principal, method: &str, payload: &[u8]) -> Vec<u8> {
     let mut args = vec![callee.as_slice().len() as u8];
     args.extend_from_slice(callee.as_slice());
     args.push(method.len() as u8);
     args.extend_from_slice(method.as_bytes());
     args.extend_from_slice(payload);
+    args
+}
 
-    env.update_call(canister_id, sender, "relay", args).map(|reply| {
-        let (reject_code, rest) = reply.split_at(4);
-        (u32::from_le_bytes(reject_code.try_into().unwrap()), rest.to_vec())
-    })
+fn parse_reply(reply: Vec<u8>) -> (u32, Vec<u8>) {
+    let (reject_code, rest) = reply.split_at(4);
+    (u32::from_le_bytes(reject_code.try_into().unwrap()), rest.to_vec())
 }

@@ -23,11 +23,12 @@ use utils::canister::{CanisterStatusMinimal, CanisterToInstall, WasmToInstall, i
 // or which reply with candid which is costly to decode. So each call to one times out, the calls
 // are made in a bounded number of rounds, and their replies are decoded within a quota. That way
 // a call can't hold up the move, nor keep this canister from being stopped to be upgraded, for
-// longer than the few minutes the rounds take at most.
+// longer than the 3 minutes the rounds take at most.
 const MAX_LEDGERS: usize = 20;
 const MAX_CONCURRENT_TRANSFERS: usize = 10;
 const LEDGER_CALL_TIMEOUT_SECONDS: u32 = 30;
-// Longer than the relay's own 30 second timeout, so that the relay's reply normally arrives
+// The relay's own call to the ledger only times out after 5 minutes, but an honest ledger's reply
+// comes back through the relay well within this
 const RELAY_CALL_TIMEOUT_SECONDS: u32 = 60;
 const DECODING_QUOTA: usize = 100_000;
 const SKIPPING_QUOTA: usize = 10_000;
