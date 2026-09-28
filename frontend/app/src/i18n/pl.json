@@ -810,9 +810,9 @@
                     "2": "Tego pola dotyka już namiot, więc w tym polu nie może być namiotu.",
                     "3": "Temu drzewu zostało tylko jedno pole, w którym może stanąć jego namiot, więc w tym polu musi być namiot.",
                     "4": "Namiot tego drzewa musi stanąć w jednym z dwóch pól, a oba stykają się z tym polem, więc w tym polu nie może być namiotu.",
-                    "5": "Tylko te pola w tym wierszu lub kolumnie mogą jeszcze przyjąć namiot, a każdy sposób rozmieszczenia wymaganej liczby zgadza się co do zaznaczonych pól, więc możesz je wypełnić.",
-                    "6": "Tylko te pola w tym wierszu lub kolumnie mogą jeszcze przyjąć namiot, a każdy sposób rozmieszczenia wymaganej liczby stawia jeden obok zaznaczonych pól, więc możesz je wykluczyć.",
-                    "7": "Ten wiersz lub kolumna potrzebuje tylu namiotów, ile ma jeszcze pól, w których namiot może stanąć, więc w każdym z nich jest namiot.",
+                    "5": "Wypróbuj każdy sposób rozmieszczenia namiotów, których ten wiersz lub kolumna jeszcze potrzebuje, tylko w podświetlonych polach i tak, by żadne dwa się nie stykały. Niektóre z tych pól za każdym razem wychodzą tak samo, namiot albo puste, więc możesz je wypełnić.",
+                    "6": "Wypróbuj każdy sposób rozmieszczenia namiotów, których ten wiersz lub kolumna jeszcze potrzebuje, tylko w jego podświetlonych polach. Niektóre podświetlone pola obok wiersza lub kolumny za każdym razem stykają się z namiotem, więc nie może w nich być namiotu.",
+                    "7": "Pomiń pola, w których nie może stanąć namiot: żadne drzewo obok nie potrzebuje już namiotu albo stykają się z namiotem. Ten wiersz lub kolumna potrzebuje tylu namiotów, ile zostało mu pól, więc w każdym z nich jest namiot.",
                     "8": "Ten wiersz lub kolumna ma już wszystkie swoje namioty, więc w żadnym innym jego polu nie może być namiotu."
                 },
                 "demo": {
