@@ -132,7 +132,10 @@ pub(crate) fn apply_event(event: UserCanisterEvent, sender: UserId, recipient_in
             });
         }
         UserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient_index, now, state),
-        UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, *status, now),
+        UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, &[], *status, now),
+        UserCanisterEvent::SetReferralStatusV2(args) => {
+            state.set_referral_status(recipient_index, sender, &args.previous_user_ids, args.status, now)
+        }
         UserCanisterEvent::StartVideoCall(args) => start_video_call(*args, sender, recipient_index, state),
         UserCanisterEvent::JoinVideoCall(args) => {
             with_chat_mut(recipient_index, sender, state, |chat, _| {

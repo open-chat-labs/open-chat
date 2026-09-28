@@ -10,8 +10,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, Document, Empty, MessageContent, MessageContentInitial, OptionUpdate,
-    P2PSwapContentInitial, UserId,
+    BuildVersion, CanisterId, CanisterWasm, Chat, DiamondMembershipPlanDuration, Document, Empty, MessageContent,
+    MessageContentInitial, OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
 };
 use user_index_canister::user_migration::UserMigrationStatus;
 
@@ -667,6 +667,90 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
         MessageContent::Text(text) => assert_eq!(text.text, message_to_old_id),
         content => panic!("Unexpected content: {content:?}"),
     }
+}
+
+#[test]
+fn migrated_user_is_not_rewarded_again_to_their_referrer() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let referrer = client::register_user(env, canister_ids);
+    let user = client::register_user_with_referrer(env, canister_ids, Some(referrer.user_id.to_string()));
+    client::upgrade_user(
+        &user,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        false,
+    );
+    tick_many(env, 3);
+    let chit_balance = client::user::happy_path::initial_state(env, &referrer).chit_balance;
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        Some(UserMigrationStatus::Imported { .. })
+    ));
+
+    // The user now pays from their own wallet, having approved their MultiUser canister to charge it
+    let icp = canister_ids.icp_ledger;
+    client::ledger::happy_path::transfer(env, *controller, icp, user.principal, 1_000_000_000);
+    client::ledger::happy_path::approve(
+        env,
+        user.principal,
+        icp,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: multi_user_canister,
+            subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
+        },
+        900_000_000,
+    );
+    let pay = |env: &mut PocketIc, duration| {
+        client::user_index::happy_path::pay_for_diamond_membership(
+            env,
+            user.principal,
+            canister_ids.user_index,
+            duration,
+            false,
+            false,
+        );
+        tick_many(env, 10);
+        client::user::happy_path::initial_state(env, &referrer)
+    };
+
+    // Paying for Diamond again under their new id earns their referrer nothing more
+    let referrer_state = pay(env, DiamondMembershipPlanDuration::OneMonth);
+    assert_eq!(referrer_state.chit_balance, chit_balance);
+    assert_eq!(referrer_state.referrals.len(), 1);
+    assert_eq!(referrer_state.referrals[0].user_id, user.user_id);
+
+    // While upgrading to Lifetime Diamond earns them the difference, on the referral under the user's
+    // old id
+    let referrer_state = pay(env, DiamondMembershipPlanDuration::Lifetime);
+    assert_eq!(
+        referrer_state.chit_balance as u32,
+        chit_balance as u32 + ReferralStatus::LifetimeDiamond.chit_reward() - ReferralStatus::Diamond.chit_reward()
+    );
+    assert_eq!(referrer_state.referrals.len(), 1);
+    assert_eq!(referrer_state.referrals[0].user_id, user.user_id);
+    assert!(matches!(referrer_state.referrals[0].status, ReferralStatus::LifetimeDiamond));
 }
 
 #[test]

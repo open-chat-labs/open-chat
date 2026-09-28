@@ -3,7 +3,7 @@ use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::c2c_local_user_index_v2::*;
-use user_canister::{LocalUserIndexEvent, UserCanisterEvent};
+use user_canister::{LocalUserIndexEvent, SetReferralStatus, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -49,11 +49,18 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
         openchat_bot::send_message(user_index, message.content, message.mentioned, false, state);
     }
     if let Some((referred_by, status)) = effects.referral_status {
-        state.send_user_canister_event(
-            user_index,
-            referred_by,
-            UserCanisterEvent::SetReferralStatus(Box::new(status)),
-        );
+        // A user migrated here sends the ids they had before, which their referrer may hold their
+        // referral under. Any other user sends the original event, which every User canister takes.
+        let previous_user_ids = state.data.migrated_user_ids.previous_ids(state.user_id(user_index));
+        let event = if previous_user_ids.is_empty() {
+            UserCanisterEvent::SetReferralStatus(Box::new(status))
+        } else {
+            UserCanisterEvent::SetReferralStatusV2(Box::new(SetReferralStatus {
+                status,
+                previous_user_ids,
+            }))
+        };
+        state.send_user_canister_event(user_index, referred_by, event);
     }
     state.garbage_collect_stable_memory_keys(user_index, effects.garbage_collect);
 }
