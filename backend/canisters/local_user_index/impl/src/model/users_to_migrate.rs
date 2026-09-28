@@ -98,11 +98,23 @@ impl<T: QueuedUser> UsersToMigrate<T> {
         }
     }
 
+    // Replaces any pending entry for the user, eg. one for an earlier migration of theirs. If the user
+    // is in progress, the entry is taken once they no longer are.
+    pub fn replace(&mut self, user: T) {
+        let user_id = user.user_id();
+        self.pending.retain(|u| u.user_id() != user_id);
+        self.pending.push_back(user);
+    }
+
     // Takes the pending users which are due, until `max_in_progress` are in progress
     pub fn take_next_batch(&mut self, max_in_progress: usize, now: TimestampMillis) -> Vec<T> {
         let mut batch = Vec::new();
         while self.in_progress.len() < max_in_progress {
-            let Some(index) = self.pending.iter().position(|u| u.not_before() <= now) else {
+            let Some(index) = self
+                .pending
+                .iter()
+                .position(|u| u.not_before() <= now && !self.in_progress.contains(&u.user_id()))
+            else {
                 break;
             };
             let user = self.pending.remove(index).unwrap();
@@ -115,7 +127,11 @@ impl<T: QueuedUser> UsersToMigrate<T> {
     // When the next pending user is due, if fewer than `max_in_progress` are in progress
     pub fn next_due(&self, max_in_progress: usize) -> Option<TimestampMillis> {
         if self.in_progress.len() < max_in_progress {
-            self.pending.iter().map(|u| u.not_before()).min()
+            self.pending
+                .iter()
+                .filter(|u| !self.in_progress.contains(&u.user_id()))
+                .map(|u| u.not_before())
+                .min()
         } else {
             None
         }
@@ -200,5 +216,27 @@ mod tests {
             }]
         );
         assert_eq!(users.next_due(10), None);
+    }
+
+    #[test]
+    fn replacement_is_taken_once_the_user_is_no_longer_in_progress() {
+        let mut users = UsersToMigrate::default();
+        users.push(user(1));
+        let replacement = UserToMigrate {
+            multi_user_canister_id: Principal::from_slice(&[11]),
+            ..user(1)
+        };
+
+        // A pending entry is replaced
+        users.replace(replacement.clone());
+        assert_eq!(users.pending(), 1);
+        assert_eq!(users.take_next_batch(10, 0), vec![replacement.clone()]);
+
+        // Whereas one for a user in progress waits until they no longer are
+        users.replace(user(1));
+        assert!(users.take_next_batch(10, 0).is_empty());
+        assert_eq!(users.next_due(10), None);
+        users.mark_complete(&user(1).user_id);
+        assert_eq!(users.take_next_batch(10, 0), vec![user(1)]);
     }
 }

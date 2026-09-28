@@ -375,9 +375,16 @@ pub enum UserEvent<T = UserNotificationPayload> {
     // From a MultiUser canister, naming the user's new id: the user who was being migrated from a
     // canister of their own has been imported
     UserImported(UserImported),
-    // From a MultiUser canister, naming the id the user was assigned: the user with the given old
-    // id couldn't be imported
-    UserImportFailed(UserId, OCError),
+    // From a MultiUser canister, naming the id the user was assigned: the user couldn't be imported
+    UserImportFailed(UserImportFailed),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserImportFailed {
+    pub old_user_id: UserId,
+    // The hash identifying the migration whose import failed
+    pub user_hash: types::Hash,
+    pub error: OCError,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

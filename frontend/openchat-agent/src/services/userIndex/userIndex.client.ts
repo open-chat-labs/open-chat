@@ -921,9 +921,10 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 } else {
                     users.push(cached);
                 }
-            } else {
+            } else if (!apiResponse.deletedUserIds.has(requestedId)) {
                 // if we get here it means that for this user, nothing came back from the server
-                // & nothing was in the cache - this would be odd but worth knowing if this is happening
+                // & nothing was in the cache & they've not been deleted - this would be odd but
+                // worth knowing if this is happening
                 console.debug(
                     "USERS: userId requested not in cache and not returned from server",
                     userId,
