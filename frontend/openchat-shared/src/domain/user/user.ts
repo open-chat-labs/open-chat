@@ -36,6 +36,9 @@ export type PartitionedUserIds = {
     webhooks: Set<string>;
 };
 
+// A deleted user is held as a placeholder which is never updated, so we never request updates for them
+const DELETED_USER_UPDATED = BigInt(Number.MAX_VALUE);
+
 export function deletedUser(userId: string): UserSummary {
     return {
         kind: "user",
@@ -43,7 +46,7 @@ export function deletedUser(userId: string): UserSummary {
         blobUrl: "/assets/deletedUser.svg",
         username: "Deleted User",
         displayName: undefined,
-        updated: BigInt(Number.MAX_VALUE), // we want to *never* request updates for a deleted user
+        updated: DELETED_USER_UPDATED,
         suspended: false,
         diamondStatus: "inactive",
         chitBalance: 0,
@@ -53,6 +56,10 @@ export function deletedUser(userId: string): UserSummary {
         totalChitEarned: 0,
         hideOnlineStatus: false,
     };
+}
+
+export function isDeletedUser(user: UserSummary | undefined): boolean {
+    return user?.updated === DELETED_USER_UPDATED;
 }
 
 // Note this *has* to return UserSummary | undefined because of the types, but we would not expect it to ever do so in practice
