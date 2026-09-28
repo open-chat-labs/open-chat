@@ -54,6 +54,25 @@ impl UserIdsSet {
         })
     }
 
+    // Moves every pair naming the user onto the new id they were given when migrated to a MultiUser
+    // canister. The pairs are keyed by the first user only, so those in which the user is second can
+    // only be found by scanning the whole set.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let min_user_id = UserId::new(CanisterId::from_slice(&[]));
+        let pairs: Vec<(UserId, UserId)> = with_map(|m| {
+            m.range(self.prefix.create_key(&(min_user_id, min_user_id))..)
+                .map(|(key, _)| key.user_ids())
+                .filter(|(user_id1, user_id2)| *user_id1 == old_user_id || *user_id2 == old_user_id)
+                .collect()
+        });
+
+        let migrate = |user_id| if user_id == old_user_id { new_user_id } else { user_id };
+        for (user_id1, user_id2) in pairs {
+            self.remove(&(user_id1, user_id2));
+            self.insert((migrate(user_id1), migrate(user_id2)), ());
+        }
+    }
+
     pub fn collect_all(&self) -> Vec<(UserId, Vec<UserId>)> {
         let min_user_id = UserId::new(CanisterId::from_slice(&[]));
         with_map(|m| {
@@ -64,5 +83,48 @@ impl UserIdsSet {
             }
             map.into_iter().collect()
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    #[test]
+    fn pairs_naming_a_migrated_user_are_moved_onto_their_new_id() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_id = |i: u8| -> UserId { Principal::from_slice(&[i]).into() };
+        let (old_user_id, new_user_id, user2, user3) = (user_id(1), user_id(10), user_id(2), user_id(3));
+        let mut set = UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users());
+
+        // The migrated user has blocked user2, and been blocked by user2 and user3, while user2 has
+        // also blocked user3
+        set.insert((user2, old_user_id), ());
+        set.insert((old_user_id, user2), ());
+        set.insert((old_user_id, user3), ());
+        set.insert((user3, user2), ());
+
+        set.migrate_user_id(old_user_id, new_user_id);
+
+        let mut pairs: Vec<_> = set
+            .collect_all()
+            .into_iter()
+            .flat_map(|(user_id1, user_ids)| user_ids.into_iter().map(move |user_id2| (user_id1, user_id2)))
+            .collect();
+        pairs.sort();
+        let mut expected = vec![
+            (user2, new_user_id),
+            (new_user_id, user2),
+            (new_user_id, user3),
+            (user3, user2),
+        ];
+        expected.sort();
+        assert_eq!(pairs, expected);
+        assert_eq!(set.len(), 4);
+        assert!(set.all_linked_users::<Vec<_>>(old_user_id).is_empty());
     }
 }

@@ -403,6 +403,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         }
                     }
                 }
+                state.data.blocked_users.migrate_user_id(ev.old_user_id, ev.new_user_id);
                 for canister_id in ev.canisters_to_notify {
                     if state.data.local_groups.get(&canister_id.into()).is_some() {
                         state.push_event_to_group(
