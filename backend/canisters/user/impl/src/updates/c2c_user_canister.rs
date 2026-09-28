@@ -1,15 +1,15 @@
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
-use crate::updates::c2c_send_messages::{
-    HandleMessageArgs, get_sender_status, handle_message_impl, thread_root_message_index, verify_user,
-};
+use crate::updates::send_message::{HandleMessageArgs, handle_message_impl};
 use crate::updates::start_video_call::handle_start_video_call;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
+use direct_chat::DirectChat;
+use oc_error_codes::OCErrorCode;
 use rand::RngExt;
-use types::{Achievement, CallKind, UserId, UserType};
+use types::{Achievement, CallKind, CanisterId, MessageId, MessageIndex, OCResult, UserId, UserType};
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
 
@@ -21,10 +21,10 @@ async fn c2c_user_canister(args: Args) -> Response {
 
 async fn c2c_user_canister_impl(args: Args) -> Response {
     let caller_user_id = match read_state(get_sender_status) {
-        crate::updates::c2c_send_messages::SenderStatus::Ok(user_id, UserType::User) => user_id,
-        crate::updates::c2c_send_messages::SenderStatus::Ok(..) => panic!("This request is from an OpenChat bot user"),
-        crate::updates::c2c_send_messages::SenderStatus::Blocked => return Blocked,
-        crate::updates::c2c_send_messages::SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
+        SenderStatus::Ok(user_id, UserType::User) => user_id,
+        SenderStatus::Ok(..) => panic!("This request is from an OpenChat bot user"),
+        SenderStatus::Blocked => return Blocked,
+        SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
             if !matches!(verify_user(local_user_index_canister_id, user_id).await, Some(UserType::User)) {
                 panic!("This request is not from an OpenChat user");
             }
@@ -33,6 +33,38 @@ async fn c2c_user_canister_impl(args: Args) -> Response {
     };
 
     mutate_state(|state| c2c_notify_user_canister_events_impl(args, caller_user_id, state))
+}
+
+enum SenderStatus {
+    Ok(UserId, UserType),
+    Blocked,
+    UnknownUser(CanisterId, UserId),
+}
+
+fn get_sender_status(state: &RuntimeState) -> SenderStatus {
+    let sender: UserId = state.env.caller().into();
+    if state.data.user.blocked_users.contains(&sender) {
+        SenderStatus::Blocked
+    } else if let Some(user_type) = state.data.user.direct_chats.get(&sender.into()).map(|c| c.user_type) {
+        SenderStatus::Ok(sender, user_type)
+    } else {
+        SenderStatus::UnknownUser(state.data.local_user_index_canister_id, sender)
+    }
+}
+
+async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> Option<UserType> {
+    let args = local_user_index_canister::c2c_lookup_user::Args {
+        user_id_or_principal: user_id.as_principal(),
+    };
+    if let Ok(response) = local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
+        if let local_user_index_canister::c2c_lookup_user::Response::Success(r) = response {
+            Some(r.user_type)
+        } else {
+            None
+        }
+    } else {
+        panic!("Failed to call local_user_index to verify user");
+    }
 }
 
 fn c2c_notify_user_canister_events_impl(args: Args, caller_user_id: UserId, state: &mut RuntimeState) -> Response {
@@ -174,6 +206,21 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
             },
             state,
         );
+    }
+}
+
+// The index in our copy of the chat of the thread a message received from another canister is in,
+// given the id of the thread root there (message ids are the same in both users' copies of a chat
+// while the indexes are not). Fails if there is no such message visible in the chat, including
+// when there is no chat with the sender yet.
+fn thread_root_message_index(
+    chat: Option<&DirectChat>,
+    thread_root_message_id: Option<MessageId>,
+) -> OCResult<Option<MessageIndex>> {
+    match chat {
+        Some(chat) => chat.thread_root_message_index(thread_root_message_id),
+        None if thread_root_message_id.is_none() => Ok(None),
+        None => Err(OCErrorCode::ThreadNotFound.into()),
     }
 }
 
