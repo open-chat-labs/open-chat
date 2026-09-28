@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     Achievement, BotDefinitionUpdate, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId,
-    DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OgPreview, P2PSwapLocation, P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis,
-    TokenInfo, UniquePersonProof, User, UserId,
+    DiamondMembershipPlanDuration, EventIndex, Hash, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    Milliseconds, OgPreview, P2PSwapLocation, P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration,
+    TimestampMillis, TokenInfo, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -305,6 +305,13 @@ pub struct JoinVideoCall {
 pub struct SetEventsTtl {
     pub events_ttl: Option<Milliseconds>,
     pub timestamp: TimestampMillis,
+}
+
+// Identifies a migration of a user to a MultiUser canister: the hash of the user as serialized when
+// the migration started, along with when it started, so that each migration of a user is told apart
+// even if the user hasn't changed in between
+pub fn migration_hash(user: &[u8], started: TimestampMillis) -> Hash {
+    sha256::sha256_of_parts([started.to_be_bytes().as_slice(), user])
 }
 
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {

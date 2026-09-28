@@ -48,19 +48,18 @@ fn c2c_import_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<UserId
         return Ok(latest_user_id);
     }
 
+    if state.data.abandoned_user_imports.contains(&args.user_hash) {
+        return Err(OCErrorCode::InvalidRequest.with_message("The user's migration has been cancelled"));
+    }
+
     if let Some(import) = state.data.user_imports.get(&old_user_id) {
         // The same id is returned if the user is already being imported for this migration
         if import.user_hash == args.user_hash {
             return Ok(state.user_id(import.index));
         }
         // Whereas an import for an earlier migration, eg. one which was cancelled, is abandoned,
-        // since the user may have changed since. Its entries are garbage collected, and its index
-        // is never reused.
-        let abandoned_index = import.index;
-        state.data.user_imports.remove(&old_user_id);
-        state.data.deleted_users_to_garbage_collect.push(abandoned_index);
-        jobs::garbage_collect_stable_memory::start_job_if_required(&state.data);
-        info!(%old_user_id, "Earlier user import abandoned");
+        // since the user may have changed since
+        abandon_import(old_user_id, state);
     }
 
     let index = state.data.users.reserve_index().map_err(|error| match error {
@@ -73,4 +72,17 @@ fn c2c_import_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<UserId
     let new_user_id = state.user_id(index);
     info!(%old_user_id, %new_user_id, "User import started");
     Ok(new_user_id)
+}
+
+// Abandons the user's import, if there is one in progress. Whatever has been inserted under its index
+// is garbage collected, and the index is never reused. A page being pulled for it is discarded when
+// it arrives, since the import is no longer found.
+pub(crate) fn abandon_import(old_user_id: UserId, state: &mut RuntimeState) -> bool {
+    let Some(import) = state.data.user_imports.remove(&old_user_id) else {
+        return false;
+    };
+    state.data.deleted_users_to_garbage_collect.push(import.index);
+    jobs::garbage_collect_stable_memory::start_job_if_required(&state.data);
+    info!(%old_user_id, "User import abandoned");
+    true
 }

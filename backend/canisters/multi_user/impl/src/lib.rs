@@ -590,6 +590,9 @@ struct Data {
     // The users being imported from canisters of their own, keyed by their old id
     #[serde(default)]
     pub user_imports: UserImports,
+    // The hashes of the migrations the UserIndex has cancelled, none of which are ever imported
+    #[serde(default)]
+    pub abandoned_user_imports: HashSet<types::Hash>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -624,6 +627,7 @@ impl Data {
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
             user_imports: UserImports::default(),
+            abandoned_user_imports: HashSet::new(),
             rng_seed,
             test_mode,
         }

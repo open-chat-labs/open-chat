@@ -23,5 +23,6 @@ fn c2c_export_user_impl(args: Args, state: &RuntimeState) -> Response {
         page: ByteBuf::from(bytes[from..to].to_vec()),
         total_bytes: bytes.len() as u64,
         hash: migration.user_hash,
+        started: migration.started,
     })
 }

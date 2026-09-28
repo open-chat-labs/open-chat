@@ -56,6 +56,8 @@ pub struct UserImported {
 pub struct UserImportFailed {
     pub user_id: UserId,
     pub multi_user_canister_id: CanisterId,
+    // The hash identifying the migration whose import failed
+    pub user_hash: Hash,
     pub error: OCError,
 }
 
