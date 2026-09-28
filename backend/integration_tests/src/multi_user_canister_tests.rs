@@ -5139,6 +5139,11 @@ fn users_send_crypto_from_their_own_wallets() {
         events(env, b_principal, canister_id, b, a).events.last().unwrap().event,
         ChatEvent::Message(ref m) if matches!(m.content, MessageContent::Crypto(_))
     ));
+    // As when the users are in different canisters, receiving crypto earns B an achievement
+    assert!(has_achievement(
+        &initial_state(env, b_principal, canister_id),
+        Achievement::ReceivedCrypto
+    ));
 
     // To Carol, in a User canister
     let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(carol.user_id));

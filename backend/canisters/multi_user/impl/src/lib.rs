@@ -199,9 +199,11 @@ impl RuntimeState {
     }
 
     // Sends a direct chat event from the user at `sender_index` to `recipient`, as the User canister
-    // does for its user. A recipient in this canister has it applied straight away, exactly as if it
-    // had come from another canister, while one in another canister is sent it via their canister.
-    // Nothing is sent to the sender themselves or to the OpenChat bot.
+    // does for its user. A recipient whose id is in this canister has it applied straight away,
+    // exactly as if it had come from another canister, while any other is sent it via the canister
+    // holding their latest id (which is this one for a user migrated here since having `recipient`,
+    // keeping the order of any events already queued for them). Nothing is sent to the sender
+    // themselves or to the OpenChat bot.
     pub fn send_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
         let sender = self.user_id(sender_index);
         if recipient == sender || recipient == OPENCHAT_BOT_USER_ID {
