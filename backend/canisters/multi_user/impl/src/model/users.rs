@@ -60,6 +60,28 @@ impl Users {
         Ok(index)
     }
 
+    // Reserves an index for a user being imported from a canister of their own, who is added once
+    // they have been pulled across
+    pub fn reserve_index(&mut self) -> Result<u16, AddUserError> {
+        if self.next_index > MAX_USER_INDEX {
+            return Err(AddUserError::CanisterFull);
+        }
+        let index = self.next_index;
+        self.next_index += 1;
+        Ok(index)
+    }
+
+    // Adds a user imported from a canister of their own at the index reserved for them
+    pub fn add_imported(&mut self, index: u16, user: User) -> Result<(), AddUserError> {
+        if self.principal_to_index.contains_key(&user.principal) {
+            return Err(AddUserError::PrincipalAlreadyRegistered);
+        }
+        assert!(index < self.next_index && !self.users.contains_key(&index));
+        self.principal_to_index.insert(user.principal, index);
+        self.users.insert(index, user);
+        Ok(())
+    }
+
     // Removes the user, whose index is never reused. The caller garbage collects their entries in
     // the stable memory map.
     pub fn remove(&mut self, index: u16) -> Option<User> {
@@ -146,6 +168,38 @@ mod tests {
         // The principal can register again, and is given a new index
         assert_eq!(users.add(principal(1), "a".to_string(), None, 2), Ok(2));
         assert_eq!(users.len(), 1);
+    }
+
+    #[test]
+    fn imported_users_are_added_at_their_reserved_index() {
+        let mut users = Users::default();
+
+        assert_eq!(users.reserve_index(), Ok(1));
+        // Users registering meanwhile are given the next index
+        assert_eq!(users.add(principal(1), "a".to_string(), None, 1), Ok(2));
+        assert!(!users.contains(1));
+
+        assert_eq!(
+            users.add_imported(1, User::new(principal(2), "b".to_string(), None, 2)),
+            Ok(())
+        );
+        assert!(users.contains(1));
+        assert_eq!(users.index_by_principal(&principal(2)), Some(1));
+        assert_eq!(users.len(), 2);
+    }
+
+    #[test]
+    fn imported_user_must_not_already_be_registered() {
+        let mut users = Users::default();
+
+        let index = users.reserve_index().unwrap();
+        users.add(principal(1), "a".to_string(), None, 1).unwrap();
+
+        assert_eq!(
+            users.add_imported(index, User::new(principal(1), "a".to_string(), None, 2)),
+            Err(AddUserError::PrincipalAlreadyRegistered)
+        );
+        assert!(!users.contains(index));
     }
 
     #[test]

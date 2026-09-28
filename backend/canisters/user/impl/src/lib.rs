@@ -21,8 +21,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotNotification, BuildVersion, CanisterId, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, FrozenUserInfo, IdempotentEnvelope, Notification, NotifyChit, OCResult, TimestampMillis,
-    Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification,
+    DirectChatUserNotificationPayload, FrozenUserInfo, Hash, IdempotentEnvelope, Notification, NotifyChit, OCResult,
+    TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotification,
 };
 use user_canister::UserCanisterEvent;
 use user_core::{Community, GroupChat, User};
@@ -448,6 +449,8 @@ pub struct Migration {
     // canister to pull
     #[serde(with = "serde_bytes")]
     pub user: Vec<u8>,
+    // The hash of `user`, which the MultiUser canister checks once it has pulled all of it
+    pub user_hash: Hash,
     // The version of the wasm which serialized the user, which may since have been upgraded
     pub wasm_version: BuildVersion,
 }
@@ -476,10 +479,12 @@ impl Data {
                 }
 
                 self.timer_jobs.cancel_jobs(|_| true);
+                let user = msgpack::serialize_then_unwrap(&self.user);
                 self.migration = Some(Migration {
                     multi_user_canister_id,
                     started: now,
-                    user: msgpack::serialize_then_unwrap(&self.user),
+                    user_hash: sha256::sha256(&user),
+                    user,
                     wasm_version: WASM_VERSION.with_borrow(|v| **v),
                 });
             }

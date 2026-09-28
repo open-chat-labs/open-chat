@@ -31,6 +31,13 @@ pub enum UserMigrationStatus {
         // The version of the User canister the user was serialized by
         wasm_version: BuildVersion,
     },
+    // The MultiUser canister has imported the user, giving them a new id, though the user's
+    // canister stays frozen until the migration completes
+    Imported {
+        multi_user_canister_id: CanisterId,
+        timestamp: TimestampMillis,
+        new_user_id: UserId,
+    },
     Failed {
         multi_user_canister_id: CanisterId,
         timestamp: TimestampMillis,
