@@ -77,6 +77,9 @@ impl AwsEmailSender {
                 ),
                 context: Vec::new(),
             })
+            // The transform only copies the status, so this is still far more than it needs, but
+            // without it the cycles held for each email would be sized for the query instruction limit
+            .with_expected_transform_instructions(100_000_000)
     }
 }
 
