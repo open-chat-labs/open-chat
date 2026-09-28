@@ -6899,6 +6899,7 @@ dependencies = [
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "icrc-ledger-types",
  "itertools 0.15.0",
  "json",
  "jwt",

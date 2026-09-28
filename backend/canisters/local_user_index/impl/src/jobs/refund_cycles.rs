@@ -27,7 +27,7 @@ const MIN_CYCLES_TO_REFUND: Cycles = 100 * B;
 // `install_code` prepays for its execution, so the canister must hold this much above its
 // freezing threshold, else it is topped up first. The top-up comes back along with the rest, so
 // erring on the generous side costs nothing.
-const CYCLES_REQUIRED_FOR_INSTALL: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 100 * B;
+pub(crate) const CYCLES_REQUIRED_FOR_INSTALL: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 100 * B;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -45,6 +45,17 @@ pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Millisec
     } else {
         false
     }
+}
+
+// Whether the canister's cycles are being refunded right now, which is when the canister being
+// processed is kept at the front of the queue
+pub(crate) fn is_in_progress(state: &RuntimeState, canister_id: CanisterId) -> bool {
+    IN_PROGRESS.get()
+        && state
+            .data
+            .cycles_refund_queue
+            .front()
+            .is_some_and(|c| c.canister_id == canister_id)
 }
 
 fn run() {

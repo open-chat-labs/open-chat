@@ -67,6 +67,7 @@ use utils::migrated_user_ids::MigratedUserIds;
 
 mod bots;
 mod call_push;
+mod call_relay;
 mod guards;
 mod jobs;
 mod lifecycle;

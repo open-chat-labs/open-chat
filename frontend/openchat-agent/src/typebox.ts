@@ -3075,6 +3075,31 @@ export const LocalUserIndexAccessTokenV2Response = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type LocalUserIndexMoveFundsFromOldCanisterMoveFundsResult = Static<
+    typeof LocalUserIndexMoveFundsFromOldCanisterMoveFundsResult
+>;
+export const LocalUserIndexMoveFundsFromOldCanisterMoveFundsResult = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Moved: Type.Object({
+            amount: Type.BigInt(),
+            fee: Type.BigInt(),
+            block_index: Type.BigInt(),
+        }),
+    }),
+    Type.Literal("NothingToMove"),
+    Type.Object({
+        Failed: OCError,
+    }),
+]);
+
+export type LocalUserIndexMoveFundsFromOldCanisterArgs = Static<
+    typeof LocalUserIndexMoveFundsFromOldCanisterArgs
+>;
+export const LocalUserIndexMoveFundsFromOldCanisterArgs = /* @__PURE__ */ Type.Object({
+    old_user_id: UserId,
+    ledgers: Type.Array(TSPrincipal),
+});
+
 export type LocalUserIndexBotSendMessageSuccessResult = Static<
     typeof LocalUserIndexBotSendMessageSuccessResult
 >;
@@ -7130,6 +7155,14 @@ export const LocalUserIndexInviteUsersToChannelResponse = /* @__PURE__ */ Type.U
     }),
 ]);
 
+export type LocalUserIndexMoveFundsFromOldCanisterLedgerOutcome = Static<
+    typeof LocalUserIndexMoveFundsFromOldCanisterLedgerOutcome
+>;
+export const LocalUserIndexMoveFundsFromOldCanisterLedgerOutcome = /* @__PURE__ */ Type.Object({
+    ledger: TSPrincipal,
+    result: LocalUserIndexMoveFundsFromOldCanisterMoveFundsResult,
+});
+
 export type LocalUserIndexBotSendMessageResponse = Static<
     typeof LocalUserIndexBotSendMessageResponse
 >;
@@ -8519,6 +8552,18 @@ export const LocalUserIndexBotChatEventsArgs = /* @__PURE__ */ Type.Object({
     thread: Type.Optional(MessageIndex),
     events: LocalUserIndexChatEventsEventsSelectionCriteria,
 });
+
+export type LocalUserIndexMoveFundsFromOldCanisterResponse = Static<
+    typeof LocalUserIndexMoveFundsFromOldCanisterResponse
+>;
+export const LocalUserIndexMoveFundsFromOldCanisterResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: Type.Array(LocalUserIndexMoveFundsFromOldCanisterLedgerOutcome),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type CommunityRegisterPollVoteResponse = Static<typeof CommunityRegisterPollVoteResponse>;
 export const CommunityRegisterPollVoteResponse = /* @__PURE__ */ Type.Union([

@@ -38,6 +38,7 @@ ic-cdk = { workspace = true }
 ic-cdk-management-canister = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 json = { path = "../../../libraries/json" }
 jwt = { path = "../../../libraries/jwt" }

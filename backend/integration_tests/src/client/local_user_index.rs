@@ -31,6 +31,7 @@ generate_msgpack_update_call!(join_channel);
 generate_msgpack_update_call!(set_call_push_enabled);
 generate_msgpack_update_call!(join_community);
 generate_msgpack_update_call!(join_group);
+generate_msgpack_update_call!(move_funds_from_old_canister);
 generate_msgpack_update_call!(pay_for_premium_item);
 generate_msgpack_update_call!(register_user);
 generate_msgpack_update_call!(set_daily_puzzle_canister_id);

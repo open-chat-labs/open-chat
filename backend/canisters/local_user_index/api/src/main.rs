@@ -40,6 +40,7 @@ fn main() {
     generate_ts_method!(local_user_index, join_channel);
     generate_ts_method!(local_user_index, join_community);
     generate_ts_method!(local_user_index, join_group);
+    generate_ts_method!(local_user_index, move_funds_from_old_canister);
     generate_ts_method!(local_user_index, pay_for_premium_item);
     generate_ts_method!(local_user_index, reinstate_missed_daily_claims);
     generate_ts_method!(local_user_index, register_user);

@@ -22,6 +22,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "join_channel"
         | "join_community"
         | "join_group"
+        | "move_funds_from_old_canister"
         | "pay_for_premium_item"
         | "uninstall_bot" => state.is_caller_openchat_user(),
         "reinstate_missed_daily_claims"

@@ -11,7 +11,7 @@ use types::CanisterId;
 
 const CALL_RELAY_WAT: &str = include_str!("../../canisters/call_relay/call_relay.wat");
 
-// The wasm to be embedded in the LocalUserIndex, built from the wat above
+// The wasm embedded in the LocalUserIndex, built from the wat above
 const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
 
 // A callee which replies with its args, or rejects with them as the message, or replies with
