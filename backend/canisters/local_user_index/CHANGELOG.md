@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add the `VideoCallParticipant` access token, which proves only that the caller belongs to the chat, for declining or leaving its call through the video bridge ([#9578](https://github.com/open-chat-labs/open-chat/pull/9578))
 - Handle `ImportUser` from the UserIndex by having the MultiUser canister import the user, and pass on to the UserIndex whether the MultiUser canister imported them ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 - On `UserIdMigrated`, move the user onto their new id, and start tracking them as a local user if this LocalUserIndex controls their MultiUser canister ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
-- Close out migrated users' old canisters once they are switched over, sweeping their funds into the user's account, then uninstalling them and refunding their cycles ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
+- Once a migrated user is switched over, uninstall their old canister and refund its cycles ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 
 ### Changed
 

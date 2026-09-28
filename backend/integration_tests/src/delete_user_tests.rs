@@ -336,7 +336,7 @@ fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_inde
 // deposits into the CyclesDispenser via the management canister), then uninstall_code. The user
 // canister was itself installed only moments ago though, so the IC's install_code rate limit
 // applies and the LocalUserIndex has to retry after a delay, hence time is advanced too.
-fn wait_for_cycles_to_be_refunded(env: &mut pocket_ic::PocketIc, user: &User) {
+pub(crate) fn wait_for_cycles_to_be_refunded(env: &mut pocket_ic::PocketIc, user: &User) {
     for _ in 0..200 {
         // The balance drops once `refund` completes, and the refunder is uninstalled after that
         if env.cycle_balance(user.canister()) < MAX_RESIDUAL_CYCLES

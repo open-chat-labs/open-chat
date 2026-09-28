@@ -359,10 +359,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
             state.set_daily_puzzle_canister_id(canister_id);
         }
-        UserIndexEvent::SetRegistryCanisterId(canister_id) => {
-            state.data.registry_canister_id = Some(canister_id);
-            jobs::close_out_migrated_users::start_job_if_required(state);
-        }
         UserIndexEvent::StartUserMigration(ev) => {
             state.data.users_to_migrate.push(UserToMigrate {
                 user_id: ev.user_id,
@@ -385,11 +381,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::UserIdMigrated(ev) => {
             if state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id) {
                 // The user's old canister, if this LocalUserIndex controls it, stays in `local_users`
-                // until its funds have been moved out and it has been uninstalled
+                // until it has been uninstalled
                 if ev.old_user_id.index() == 0 && state.data.local_users.contains(&ev.old_user_id) {
                     state.data.users_to_close_out.push(UserToCloseOut {
                         user_id: ev.old_user_id,
-                        ledgers_to_retry: None,
                         attempt: 0,
                         not_before: 0,
                     });

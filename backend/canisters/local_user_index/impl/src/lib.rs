@@ -875,12 +875,9 @@ struct Data {
     #[serde(default)]
     pub users_to_import: UsersToMigrate<UserToImport>,
     // Users switched over to the MultiUser canister they were migrated to, whose old canisters, which
-    // this LocalUserIndex controls, are to have their funds moved out before being uninstalled
+    // this LocalUserIndex controls, are to be uninstalled
     #[serde(default)]
     pub users_to_close_out: UsersToMigrate<UserToCloseOut>,
-    // The Registry, which lists the tokens whose ledgers a closed out canister's funds are moved from
-    #[serde(default)]
-    pub registry_canister_id: Option<CanisterId>,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -1036,7 +1033,6 @@ impl Data {
             users_to_migrate: UsersToMigrate::default(),
             users_to_import: UsersToMigrate::default(),
             users_to_close_out: UsersToMigrate::default(),
-            registry_canister_id: None,
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }

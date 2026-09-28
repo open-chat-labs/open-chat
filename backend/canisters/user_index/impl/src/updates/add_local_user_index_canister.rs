@@ -182,10 +182,6 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 UserIndexEvent::SetPremiumItemCost(SetPremiumItemCost { item_id, chit_cost }),
             )
         }
-        state.data.user_index_event_sync_queue.push(
-            canister_id,
-            UserIndexEvent::SetRegistryCanisterId(state.data.registry_canister_id),
-        );
         if let Some(daily_puzzle_canister_id) = state.data.daily_puzzle_canister_id {
             state.data.user_index_event_sync_queue.push(
                 canister_id,

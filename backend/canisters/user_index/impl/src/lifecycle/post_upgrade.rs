@@ -5,7 +5,6 @@ use crate::{Data, mutate_state, read_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
-use local_user_index_canister::UserIndexEvent;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
@@ -69,17 +68,6 @@ fn post_upgrade(args: Args) {
             });
         });
     }
-
-    // One-off: push the Registry's id to every LocalUserIndex, which takes the list of token ledgers
-    // from it when closing out migrated users' canisters. Run from a timer because the push makes c2c
-    // calls. The LocalUserIndexes must be upgraded first so that they can handle the event.
-    // TODO remove after the release containing this has been deployed
-    ic_cdk_timers::set_timer(Duration::ZERO, async {
-        mutate_state(|state| {
-            let registry_canister_id = state.data.registry_canister_id;
-            state.push_event_to_all_local_user_indexes(UserIndexEvent::SetRegistryCanisterId(registry_canister_id), None);
-        });
-    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");

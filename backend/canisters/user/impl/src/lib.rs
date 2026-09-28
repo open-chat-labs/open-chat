@@ -453,10 +453,6 @@ pub struct Migration {
     pub user_hash: Hash,
     // The version of the wasm which serialized the user, which may since have been upgraded
     pub wasm_version: BuildVersion,
-    // Set once the user has been switched over to the MultiUser canister and the canister's funds
-    // are being moved out, after which the migration can't be cancelled
-    #[serde(default)]
-    pub switched_over: bool,
 }
 
 impl Data {
@@ -490,34 +486,20 @@ impl Data {
                     user_hash: sha256::sha256(&user),
                     user,
                     wasm_version: WASM_VERSION.with_borrow(|v| **v),
-                    switched_over: false,
                 });
             }
         }
         Ok(self.migration.as_ref().unwrap())
     }
 
-    // Marks the user as having been switched over to the MultiUser canister they are being migrated to,
-    // returning their principal, which is where the canister's funds are moved to. Returns None if
-    // the user isn't being migrated.
-    pub fn mark_migration_switched_over(&mut self) -> Option<Principal> {
-        let migration = self.migration.as_mut()?;
-        migration.switched_over = true;
-        Some(self.user.principal)
-    }
-
     // Cancels the user's migration to the given MultiUser canister, if there is one, unfreezing the
     // canister and scheduling again the timer jobs which were cancelled when the migration started.
-    // Returns whether there was one. A migration to another MultiUser canister is left in place, as
-    // is one whose user has been switched over.
+    // Returns whether there was one. A migration to another MultiUser canister is left in place.
     //
     // If the canister was upgraded during the migration, `post_upgrade` skipped that upgrade's data
     // migrations, and they only run once the canister is upgraded again.
     pub fn cancel_migration(&mut self, multi_user_canister_id: CanisterId, now: TimestampMillis) -> OCResult<bool> {
         match &self.migration {
-            Some(migration) if migration.switched_over => {
-                return Err(OCErrorCode::InvalidRequest.with_message("The user has been switched over"));
-            }
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => self.migration = None,
             Some(_) => return Err(OCErrorCode::AlreadyInProgress.with_message("Migrating to another canister")),
             None => return Ok(false),

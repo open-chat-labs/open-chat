@@ -47,13 +47,11 @@ pub struct UserToImport {
 }
 
 // A user who has been switched over to the MultiUser canister they were migrated to, whose old
-// canister is to have its funds moved out before being uninstalled
+// canister is to be uninstalled
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct UserToCloseOut {
     pub user_id: UserId,
-    // Set once the canister has been swept, to the ledgers which it couldn't be swept of, so that
-    // only those are retried
-    pub ledgers_to_retry: Option<Vec<CanisterId>>,
+    // The number of failed attempts in a row, which the delay before the next attempt grows with
     pub attempt: u32,
     pub not_before: TimestampMillis,
 }

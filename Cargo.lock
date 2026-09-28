@@ -6916,8 +6916,6 @@ dependencies = [
  "principal_to_user_id_map",
  "proof_of_unique_personhood",
  "rand 0.10.2",
- "registry_canister",
- "registry_canister_c2c_client",
  "serde",
  "serde_bytes",
  "serde_json",

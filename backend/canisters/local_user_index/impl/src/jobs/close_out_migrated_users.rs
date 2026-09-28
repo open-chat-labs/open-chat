@@ -1,35 +1,28 @@
 use crate::model::users_to_migrate::UserToCloseOut;
-use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state, read_state};
+use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state};
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ic_cdk_timers::TimerId;
-use std::cell::{Cell, RefCell};
+use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, info, trace};
-use types::{CanisterId, Milliseconds, TimestampMillis};
-use user_canister::c2c_sweep_funds::LedgerToSweep;
+use types::{Milliseconds, TimestampMillis};
 
 const MAX_IN_PROGRESS: usize = 5;
-const MAX_ATTEMPTS: u32 = 50;
-// After this many attempts, any ledgers the canister still couldn't be swept of are given up on, so
-// that a ledger which is down, or no longer exists, doesn't stop the canister being uninstalled
-const MAX_SWEEP_ATTEMPTS: u32 = 20;
 const RETRY_DELAY: Milliseconds = MINUTE_IN_MS;
-// How long the list of token ledgers taken from the Registry is used for before being fetched again
-const TOKEN_LEDGERS_TTL: Milliseconds = HOUR_IN_MS;
+// Failed attempts are retried after a delay which doubles each time, up to this
+const MAX_RETRY_DELAY: Milliseconds = HOUR_IN_MS;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
-    static TOKEN_LEDGERS: RefCell<Option<(TimestampMillis, Vec<LedgerToSweep>)>> = RefCell::default();
 }
 
 // Closes out the canisters of users who have been switched over to the MultiUser canister they were
-// migrated to: each canister's balance of every token listed by the Registry is moved into the
-// user's own account, where the users of a MultiUser canister hold their funds, and then the
-// canister is uninstalled and its cycles refunded. Once it is uninstalled, whoever sends events to
-// the user's old id finds they have been migrated, and sends them on to the user's new id.
+// migrated to, by uninstalling them and then refunding their cycles. Any funds the canisters hold are
+// dealt with off chain. Once a canister is uninstalled, whoever sends events to the user's old id
+// finds they have been migrated, and sends them on to the user's new id, so a user is never dropped
+// from the queue, however many times their canister fails to be uninstalled.
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none()
-        && state.data.registry_canister_id.is_some()
         && let Some(next_due) = state.data.users_to_close_out.next_due(MAX_IN_PROGRESS)
     {
         let delay = next_due.saturating_sub(state.env.now());
@@ -58,7 +51,7 @@ fn run() {
 }
 
 async fn process_user(user: UserToCloseOut) {
-    let result = close_out(&user).await;
+    let result = utils::canister::uninstall(user.user_id.canister_id()).await;
 
     mutate_state(|state| {
         let user_id = user.user_id;
@@ -78,25 +71,12 @@ async fn process_user(user: UserToCloseOut) {
                 }
                 info!(%user_id, "Migrated user's canister closed out");
             }
-            Err(Some(ledgers)) if !ledgers.is_empty() && user.attempt + 1 >= MAX_SWEEP_ATTEMPTS => {
-                error!(%user_id, ?ledgers, "Gave up sweeping migrated user's canister of these ledgers");
-                state.data.users_to_close_out.push(UserToCloseOut {
-                    ledgers_to_retry: Some(Vec::new()),
-                    attempt: user.attempt + 1,
-                    not_before: now + RETRY_DELAY,
-                    ..user
-                });
-            }
-            Err(ledgers_to_retry) if user.attempt + 1 < MAX_ATTEMPTS => {
-                state.data.users_to_close_out.push(UserToCloseOut {
-                    ledgers_to_retry,
-                    attempt: user.attempt + 1,
-                    not_before: now + RETRY_DELAY,
-                    ..user
-                });
-            }
-            Err(ledgers_to_retry) => {
-                error!(%user_id, ?ledgers_to_retry, "Failed to close out migrated user's canister");
+            Err(error) => {
+                let next = user_to_retry(&user, now);
+                if next.attempt >= 10 {
+                    error!(%user_id, attempt = next.attempt, ?error, "Failing to uninstall migrated user's canister");
+                }
+                state.data.users_to_close_out.push(next);
             }
         }
 
@@ -104,69 +84,37 @@ async fn process_user(user: UserToCloseOut) {
     });
 }
 
-// On failure, returns the ledgers the canister is still to be swept of, which is None if it is still
-// to be swept of every ledger
-async fn close_out(user: &UserToCloseOut) -> Result<(), Option<Vec<CanisterId>>> {
-    let canister_id = user.user_id.canister_id();
-
-    if user.ledgers_to_retry.as_ref().is_none_or(|ledgers| !ledgers.is_empty()) {
-        let Ok(mut ledgers) = token_ledgers().await else {
-            return Err(user.ledgers_to_retry.clone());
-        };
-        if let Some(ledgers_to_retry) = &user.ledgers_to_retry {
-            ledgers.retain(|l| ledgers_to_retry.contains(&l.ledger_canister_id));
-        }
-
-        match user_canister_c2c_client::c2c_sweep_funds(canister_id, &user_canister::c2c_sweep_funds::Args { ledgers }).await {
-            Ok(user_canister::c2c_sweep_funds::Response::Success(result)) => {
-                if !result.failed.is_empty() {
-                    return Err(Some(result.failed));
-                }
-            }
-            Ok(user_canister::c2c_sweep_funds::Response::Error(error)) => {
-                error!(%canister_id, ?error, "Failed to sweep migrated user's canister");
-                return Err(user.ledgers_to_retry.clone());
-            }
-            Err(_) => return Err(user.ledgers_to_retry.clone()),
-        }
+fn user_to_retry(user: &UserToCloseOut, now: TimestampMillis) -> UserToCloseOut {
+    let attempt = user.attempt + 1;
+    let delay = RETRY_DELAY.saturating_mul(1 << attempt.min(16)).min(MAX_RETRY_DELAY);
+    UserToCloseOut {
+        user_id: user.user_id,
+        attempt,
+        not_before: now + delay,
     }
-
-    // Once swept, only the uninstall is retried
-    utils::canister::uninstall(canister_id).await.map_err(|_| Some(Vec::new()))
 }
 
-// The ledger of every token in the Registry, including disabled tokens, which users may still hold
-async fn token_ledgers() -> Result<Vec<LedgerToSweep>, ()> {
-    let (registry_canister_id, now) = read_state(|state| (state.data.registry_canister_id, state.env.now()));
-    if let Some(ledgers) = TOKEN_LEDGERS.with_borrow(|cached| {
-        cached
-            .as_ref()
-            .filter(|(fetched, _)| now < fetched + TOKEN_LEDGERS_TTL)
-            .map(|(_, ledgers)| ledgers.clone())
-    }) {
-        return Ok(ledgers);
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    #[test]
+    fn failed_attempt_is_retried_with_a_growing_delay_up_to_a_cap() {
+        let user = UserToCloseOut {
+            user_id: Principal::from_slice(&[1]).into(),
+            attempt: 0,
+            not_before: 0,
+        };
+
+        let first = user_to_retry(&user, 10);
+        assert_eq!(first.attempt, 1);
+        assert_eq!(first.not_before, 10 + 2 * RETRY_DELAY);
+
+        let second = user_to_retry(&first, 10);
+        assert_eq!(second.not_before, 10 + 4 * RETRY_DELAY);
+
+        let later = user_to_retry(&UserToCloseOut { attempt: 100, ..user }, 10);
+        assert_eq!(later.not_before, 10 + MAX_RETRY_DELAY);
     }
-
-    let Some(registry_canister_id) = registry_canister_id else {
-        return Err(());
-    };
-    let response =
-        registry_canister_c2c_client::updates(registry_canister_id, &registry_canister::updates::Args { since: None })
-            .await
-            .map_err(|error| error!(?error, "Failed to get token ledgers from the Registry"))?;
-
-    let ledgers: Vec<_> = match response {
-        registry_canister::updates::Response::Success(result) => result
-            .token_details
-            .unwrap_or_default()
-            .into_iter()
-            .map(|token| LedgerToSweep {
-                ledger_canister_id: token.ledger_canister_id,
-                fee: token.fee,
-            })
-            .collect(),
-        registry_canister::updates::Response::SuccessNoUpdates => Vec::new(),
-    };
-    TOKEN_LEDGERS.set(Some((now, ledgers.clone())));
-    Ok(ledgers)
 }
