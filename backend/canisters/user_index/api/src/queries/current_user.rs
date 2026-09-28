@@ -50,4 +50,10 @@ pub struct SuccessResult {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<u32>", optional)]
     pub current_terms_version: u32,
+    // Every id the user had before being migrated to a MultiUser canister, ordered oldest first, so
+    // that the client can check the wallets under those ids for anything left in them. This differs
+    // from `previous_user_ids` in `UserSummary`, which holds only the ids the user was looked up by.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
+    pub previous_user_ids: Vec<UserId>,
 }
