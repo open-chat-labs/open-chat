@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `migrate_users` which queues users to be migrated to MultiUser canisters ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
 - Once a User canister is ready for migration, instruct the destination MultiUser canister that it should start the import ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 - Once a MultiUser canister has imported a migrating user, switch them over to their new id, re-keying them here and telling the Identity canister and every LocalUserIndex ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
+- Return the ids the user had before being migrated to a MultiUser canister from `current_user` as `previous_user_ids` ([#9608](https://github.com/open-chat-labs/open-chat/pull/9608))
 
 ### Changed
 
