@@ -56,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Tell the UserIndex a user's new avatar id when they set or remove their avatar, as the User canister does. The UserIndex must be upgraded first ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
 - Add `c2c_import_user` which starts the `import_user` job for the given user, callable by the LocalUserIndex ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 - Add `inspect_message`, accepting ingress messages only from the canister's users and the video call operators ([#9597](https://github.com/open-chat-labs/open-chat/pull/9597))
-- Include the imported user's groups and communities in `UserImported`, for them to be told of the user's new id ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Include the imported user's groups and communities in `UserImported`, for them to be told of the user's new id ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
 
 ### Changed
 
