@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - On `UserIdMigrated`, move the user onto their new id, and start tracking them as a local user if this LocalUserIndex controls their MultiUser canister ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
 - Once a migrated user is switched over, uninstall their old canister and refund its cycles ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 - Pass on the migration's hash with a failed import, and let a later migration's import replace an earlier one still waiting ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
-- Add `move_funds_from_old_canister`, which moves the funds held by a migrated user's old canister to their wallet, by installing the call relay on the canister ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
+- Add `move_funds_from_old_canister`, which moves the funds held by a migrated user's old canister to their wallet, by installing the call relay on the canister ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
 
 ### Changed
 
