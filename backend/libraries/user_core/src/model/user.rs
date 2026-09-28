@@ -99,6 +99,10 @@ impl User {
     pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
         self.direct_chats.migrate_own_user_id(old_user_id, new_user_id);
         self.favourite_chats.migrate_own_user_id(old_user_id, new_user_id);
+        // The deposit addresses were generated for the account of the user's old canister, so new
+        // ones are generated for the user's own account when next asked for
+        self.btc_address = None;
+        self.one_sec_address = None;
     }
 
     // The canisters of the groups and communities the user is in

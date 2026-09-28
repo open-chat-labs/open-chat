@@ -63,6 +63,7 @@ pub enum UserIndexEvent {
     SetMultiUserCanistersEnabled(bool),
     SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
+    SetRegistryCanisterId(CanisterId),
     RefundDeletedUserCycles(Vec<CanisterId>),
     UserIdMigrated(UserIdMigrated),
     StartUserMigration(StartUserMigration),

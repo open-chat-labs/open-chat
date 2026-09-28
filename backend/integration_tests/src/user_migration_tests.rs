@@ -1,4 +1,5 @@
 use crate::env::ENV;
+use crate::setup::install_icrc_ledger;
 use crate::utils::{metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::Principal;
@@ -239,6 +240,34 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     let user2 = client::register_diamond_user(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &user2, &random_string(), true, true);
     client::group::happy_path::join_group(env, user1.principal, group_id);
+    // A token listed by the Registry, which the user's canister holds a balance of
+    let balance_in_old_canister = 1_000_000_000;
+    let token_fee = 10_000;
+    let ledger = install_icrc_ledger(
+        env,
+        *controller,
+        "Token".to_string(),
+        random_string(),
+        token_fee,
+        None,
+        vec![(user1.canister().into(), balance_in_old_canister)],
+    );
+    let response = client::registry::add_token(
+        env,
+        *controller,
+        canister_ids.registry,
+        &registry_canister::add_token::Args {
+            ledger_canister_id: ledger,
+            payer: None,
+            info_url: "info".to_string(),
+            transaction_url_format: "format".to_string(),
+            one_sec_enabled: None,
+        },
+    );
+    assert!(
+        matches!(response, registry_canister::add_token::Response::Success),
+        "{response:?}"
+    );
 
     // Messages to another user and to themselves, and an avatar and profile background large enough
     // that the stable memory map entries are pulled in more than one page
@@ -295,7 +324,7 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     assert!(members.contains(&new_user_id));
     assert!(!members.contains(&user1.user_id));
 
-    // The user's old canister stays frozen
+    // The user's old canister no longer serves them
     assert!(
         env.update_call(
             user1.canister(),
@@ -344,6 +373,34 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     assert_eq!(latest_message(user2.user_id), message_to_user2);
     assert_eq!(latest_message(new_user_id), message_to_self);
     assert!(!state.direct_chats.summaries.iter().any(|c| c.them == user1.user_id));
+
+    // The old canister's funds are moved into the user's own account, where the users of a MultiUser
+    // canister hold their funds, and then it is uninstalled
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, user1.principal),
+        (balance_in_old_canister - token_fee) as u128
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, user1.canister()), 0);
+    let status = env.canister_status(user1.canister(), Some(user1.local_user_index)).unwrap();
+    assert!(status.module_hash.is_none());
+    assert_eq!(metrics(env, user1.local_user_index)["users_to_close_out_pending"], 0);
+
+    // Messages sent to the user's old id are sent on to their new id
+    let message_to_old_id = random_string();
+    client::user::happy_path::send_text_message(env, &user2, user1.user_id, message_to_old_id.clone(), None);
+    tick_many(env, 10);
+    let user_canister::initial_state::Response::Success(state) = client::user::initial_state(
+        env,
+        user1.principal,
+        multi_user_canister,
+        &user_canister::initial_state::Args {},
+    );
+    let chat = state.direct_chats.summaries.iter().find(|c| c.them == user2.user_id).unwrap();
+    match &chat.latest_message.as_ref().unwrap().event.content {
+        MessageContent::Text(text) => assert_eq!(text.text, message_to_old_id),
+        content => panic!("Unexpected content: {content:?}"),
+    }
 }
 
 #[test]

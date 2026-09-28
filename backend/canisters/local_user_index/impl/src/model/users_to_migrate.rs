@@ -46,6 +46,28 @@ pub struct UserToImport {
     pub not_before: TimestampMillis,
 }
 
+// A user who has been switched over to the MultiUser canister they were migrated to, whose old
+// canister is to have its funds moved out before being uninstalled
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct UserToCloseOut {
+    pub user_id: UserId,
+    // Set once the canister has been swept, to the ledgers which it couldn't be swept of, so that
+    // only those are retried
+    pub ledgers_to_retry: Option<Vec<CanisterId>>,
+    pub attempt: u32,
+    pub not_before: TimestampMillis,
+}
+
+impl QueuedUser for UserToCloseOut {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn not_before(&self) -> TimestampMillis {
+        self.not_before
+    }
+}
+
 impl QueuedUser for UserToMigrate {
     fn user_id(&self) -> UserId {
         self.user_id

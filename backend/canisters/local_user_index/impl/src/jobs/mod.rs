@@ -2,6 +2,7 @@ use crate::RuntimeState;
 
 pub mod aggregate_top_ups;
 pub mod check_media_scan_stall;
+pub mod close_out_migrated_users;
 pub mod delete_users;
 pub mod import_users;
 pub mod moderate_messages;
@@ -19,6 +20,7 @@ pub mod upgrade_users;
 pub(crate) fn start(state: &RuntimeState) {
     aggregate_top_ups::start_job();
     check_media_scan_stall::start_job();
+    close_out_migrated_users::start_job_if_required(state);
     delete_users::start_job_if_required(state, None);
     import_users::start_job_if_required(state);
     moderate_messages::start_job_if_required(state);

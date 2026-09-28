@@ -91,6 +91,18 @@ mod tests {
     }
 
     #[test]
+    fn switched_over_migration_is_not_cancelled() {
+        let mut data = data();
+        data.try_start_migration(multi_user_canister(1), 2).unwrap();
+        assert_eq!(data.mark_migration_switched_over(), Some(data.user.principal));
+
+        let error = data.cancel_migration(multi_user_canister(1), 3).unwrap_err();
+
+        assert!(error.matches_code(OCErrorCode::InvalidRequest));
+        assert!(data.is_frozen());
+    }
+
+    #[test]
     fn migration_can_start_again_once_cancelled() {
         let mut data = data();
         data.try_start_migration(multi_user_canister(1), 2).unwrap();
