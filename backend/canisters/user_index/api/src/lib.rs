@@ -47,6 +47,8 @@ pub enum LocalUserIndexEvent {
 pub struct UserImported {
     pub old_user_id: UserId,
     pub new_user_id: UserId,
+    // The groups and communities the user is in, each of which is told of the user's new id
+    pub canisters_to_notify: Vec<CanisterId>,
 }
 
 // The MultiUser canister the user is being migrated to couldn't import them

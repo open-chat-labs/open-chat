@@ -17,13 +17,14 @@ async fn cancel_user_migration(args: Args) -> Response {
             state.data.user_migrations.is_imported(&args.user_id),
         )
     });
-    if !is_single_user {
-        return Error(OCErrorCode::TargetUserNotFound.into());
-    }
-    // Once the MultiUser canister has imported the user it holds a copy of them, so the migration
-    // can no longer be cancelled
+    // Once the MultiUser canister has imported the user they are switched over to it, so the
+    // migration can no longer be cancelled. This is checked first, since the user is then no longer
+    // known by the id their canister has.
     if is_imported {
         return Error(OCErrorCode::InvalidRequest.with_message("The user has already been imported"));
+    }
+    if !is_single_user {
+        return Error(OCErrorCode::TargetUserNotFound.into());
     }
 
     match user_canister_c2c_client::c2c_cancel_migration(

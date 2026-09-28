@@ -3,7 +3,7 @@ use crate::model::users::AddUserError;
 use crate::{RuntimeState, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserImported};
 use multi_user_canister::c2c_import_user::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use tracing::info;
@@ -32,7 +32,19 @@ fn c2c_import_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<UserId
     if latest_user_id != old_user_id
         && let Some(index) = state.index_of_local_user(latest_user_id)
     {
-        state.push_local_user_index_canister_event(index, LocalUserIndexEvent::UserImported(old_user_id), now);
+        let canisters_to_notify = state
+            .data
+            .users
+            .with_user(index, |user| user.group_and_community_canisters())
+            .unwrap_or_default();
+        state.push_local_user_index_canister_event(
+            index,
+            LocalUserIndexEvent::UserImported(UserImported {
+                old_user_id,
+                canisters_to_notify,
+            }),
+            now,
+        );
         return Ok(latest_user_id);
     }
 

@@ -87,11 +87,12 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
         // Only a MultiUser canister imports users, and it names the user by their new id
-        UserEvent::UserImported(old_user_id) if user_id.index() != 0 => {
+        UserEvent::UserImported(ev) if user_id.index() != 0 => {
             state.push_event_to_user_index(
                 UserIndexEvent::UserImported(Box::new(UserImported {
-                    old_user_id,
+                    old_user_id: ev.old_user_id,
                     new_user_id: user_id,
+                    canisters_to_notify: ev.canisters_to_notify,
                 })),
                 **now,
             );
