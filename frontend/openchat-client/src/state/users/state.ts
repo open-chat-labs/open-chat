@@ -1,5 +1,5 @@
 // Not really sure whether to make this separate or not yet. Feels like a thing.
-import { type ReadonlyMap, type ReadonlySet, type UserSummary } from "@shared";
+import { isDeletedUser, type ReadonlyMap, type ReadonlySet, type UserSummary } from "@shared";
 import {
     allUsersStore,
     blockedUsersStore,
@@ -114,10 +114,11 @@ export class UsersState {
         return [userId, ...(this.#previousUserIds.get(userId) ?? [])];
     }
 
+    // Deleted users are left as they are, else they'd be requested again once this goes stale
     setUpdated(userIds: string[], timestamp: bigint) {
         const toUpdate = userIds.filter((id) => {
             const user = allUsersStore.value.get(id);
-            return user !== undefined && user.updated !== timestamp;
+            return user !== undefined && !isDeletedUser(user) && user.updated !== timestamp;
         });
         if (toUpdate.length === 0) return;
 
