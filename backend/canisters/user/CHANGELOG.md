@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't migrate users who have created or accepted P2P swaps ([#9561](https://github.com/open-chat-labs/open-chat/pull/9561))
 - Only allow the LocalUserIndex to call `c2c_try_start_migration`, rather than the UserIndex ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
 - Return the size and hash of the serialized user with each page from `c2c_export_user`, for the MultiUser canister to check once it has pulled them all ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
-- Add `c2c_sweep_funds`, which moves a migrated user's balance of each given token into their own account, after which their migration can't be cancelled ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Add `c2c_sweep_funds`, which moves a migrated user's balance of each given token into their own account, after which their migration can't be cancelled ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 
 ### Changed
 
