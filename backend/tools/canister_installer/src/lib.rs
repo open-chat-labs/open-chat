@@ -69,7 +69,6 @@ async fn install_service_canisters_impl(
         notifications_index_canister_id: canister_ids.notifications_index,
         identity_canister_id: canister_ids.identity,
         proposals_bot_canister_id: canister_ids.proposals_bot,
-        airdrop_bot_canister_id: canister_ids.airdrop_bot,
         online_users_canister_id: canister_ids.online_users,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         storage_index_canister_id: canister_ids.storage_index,
@@ -160,10 +159,8 @@ async fn install_service_canisters_impl(
     let online_users_canister_wasm = get_canister_wasm(CanisterName::OnlineUsers, version);
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
-        airdrop_bot_canister_id: canister_ids.airdrop_bot,
         event_relay_canister_id: canister_ids.event_relay,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        sync_online_minutes_to_airdrop_bot_increment: 60,
         wasm_version: version,
         test_mode,
     };
@@ -177,17 +174,6 @@ async fn install_service_canisters_impl(
         nns_governance_canister_id: canister_ids.nns_governance,
         sns_wasm_canister_id: canister_ids.nns_sns_wasm,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        wasm_version: version,
-        test_mode,
-    };
-
-    let airdrop_bot_canister_wasm = get_canister_wasm(CanisterName::AirdropBot, version);
-    let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
-        admins: vec![principal],
-        user_index_canister_id: canister_ids.user_index,
-        local_user_index_canister_id: canister_ids.local_user_index,
-        online_users_canister_id: canister_ids.online_users,
-        chat_ledger_canister_id: CHAT_LEDGER_CANISTER_ID,
         wasm_version: version,
         test_mode,
     };
@@ -415,12 +401,6 @@ async fn install_service_canisters_impl(
             &canister_ids.sign_in_with_solana,
             &sign_in_with_solana_wasm.module,
             Encode!(&sign_in_with_solana_init_args).unwrap(),
-        ),
-        install_wasm(
-            management_canister,
-            &canister_ids.airdrop_bot,
-            &airdrop_bot_canister_wasm.module,
-            Encode!(&airdrop_bot_init_args).unwrap(),
         ),
     ])
     .await;

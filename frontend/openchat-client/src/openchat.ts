@@ -350,7 +350,7 @@ import {
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
-    userIdToIcrcAccount,
+    userCanisterSpenderAccount,
 } from "@shared";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
@@ -7821,9 +7821,12 @@ export class OpenChat {
                 wallet,
                 ledger,
                 amount,
-                // The user's canister pulls the funds, spending as the same account which holds the
-                // user's own OpenChat balance, so that is what the wallet has to name as spender
-                spender: userIdToIcrcAccount(currentUserIdStore.value),
+                // The user's canister pulls the funds, so the wallet has to name the account it
+                // spends as for this user as the spender
+                spender: userCanisterSpenderAccount(
+                    currentUserIdStore.value,
+                    () => this.OcIdentityPrincipal,
+                ),
             },
             this.config.icUrl ?? window.location.origin,
             chooseAccount,
@@ -8682,7 +8685,8 @@ export class OpenChat {
 
     // Declining a ringing call (#9534). For a direct call the bridge ends it for both sides;
     // for a group call it only stops the ring on this user's other devices. Nothing records
-    // that the user declined, and a failure is logged and otherwise ignored.
+    // that the user declined, and a failure is logged and otherwise ignored. The bridge takes
+    // a participant token here (proof of belonging to the chat), never a join token.
     declineVideoCall(chatId: ChatIdentifier): Promise<void> {
         const chat = allChatsStore.value.get(chatId);
         if (chat === undefined) {
@@ -8692,7 +8696,7 @@ export class OpenChat {
             .then((localUserIndex) =>
                 this.#worker.send({
                     kind: "getAccessToken",
-                    accessTokenType: { kind: "join_video_call", chatId },
+                    accessTokenType: { kind: "video_call_participant", chatId },
                     localUserIndex,
                 }),
             )
@@ -8713,6 +8717,34 @@ export class OpenChat {
                 }
             })
             .catch((err) => console.error("Unable to decline the call", err));
+    }
+
+    // The bridge token the Android shell uses when the app is killed mid-call (#9559):
+    // for a direct call one that marks the call ended, for a group or channel call a
+    // participant token with which the bridge takes the phone out of the room. Five
+    // minutes' validity.
+    getVideoCallTeardownToken(chatId: ChatIdentifier, kind: "end" | "leave"): Promise<string> {
+        const chat = allChatsStore.value.get(chatId);
+        if (chat === undefined) {
+            return Promise.reject(new Error(`Unknown chat: ${chatId}`));
+        }
+        return this.#getLocalUserIndex(chat)
+            .then((localUserIndex) =>
+                this.#worker.send({
+                    kind: "getAccessToken",
+                    accessTokenType:
+                        kind === "end"
+                            ? { kind: "mark_video_call_ended", chatId }
+                            : { kind: "video_call_participant", chatId },
+                    localUserIndex,
+                }),
+            )
+            .then((token) => {
+                if (token === undefined) {
+                    throw new Error("Didn't get an access token");
+                }
+                return token;
+            });
     }
 
     endVideoCall(chatId: ChatIdentifier, messageId?: bigint) {

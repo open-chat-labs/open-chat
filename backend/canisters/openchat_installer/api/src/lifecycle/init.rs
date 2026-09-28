@@ -11,7 +11,6 @@ pub struct Args {
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
-    pub airdrop_bot_canister_id: CanisterId,
     pub online_users_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,

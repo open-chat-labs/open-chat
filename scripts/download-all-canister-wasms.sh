@@ -23,7 +23,6 @@ echo "Downloading wasms"
 
 pids=()
 
-./download-canister-wasm.sh airdrop_bot $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh community $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh cycles_dispenser $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh daily_puzzle $WASM_SRC & pids+=($!)

@@ -16,7 +16,6 @@ async fn main() {
         identity: opts.identity,
         online_users: opts.online_users,
         proposals_bot: opts.proposals_bot,
-        airdrop_bot: opts.airdrop_bot,
         storage_index: opts.storage_index,
         cycles_dispenser: opts.cycles_dispenser,
         daily_puzzle: opts.daily_puzzle,
@@ -79,9 +78,6 @@ struct Opts {
 
     #[arg(long)]
     proposals_bot: CanisterId,
-
-    #[arg(long)]
-    airdrop_bot: CanisterId,
 
     #[arg(long)]
     storage_index: CanisterId,

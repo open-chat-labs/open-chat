@@ -12,8 +12,8 @@ use types::c2c_can_issue_access_token::{
 };
 use types::{
     AutonomousBotScope, BotActionByCommandClaims, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, CLAIM_TYPE_JOIN_VIDEO_CALL,
-    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, CallKind, Chat, JoinOrEndVideoCallClaims, Milliseconds,
-    StartVideoCallClaims, TranslateClaims, UserId,
+    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, CLAIM_TYPE_VIDEO_CALL_PARTICIPANT, CallKind, Chat,
+    JoinOrEndVideoCallClaims, Milliseconds, StartVideoCallClaims, TranslateClaims, UserId,
 };
 
 const DEFAULT_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
@@ -156,6 +156,16 @@ fn prepare(args_outer: &ArgsInternal, state: &RuntimeState) -> Result<PrepareRes
                 is_diamond,
             }),
         },
+        // Belonging to the chat is exactly what the chat canisters check for a join (a verified
+        // member, or an unblocked direct chat partner), so the same check is asked for. Only the
+        // claim type of the signed token differs, and that is what the bridge scopes on.
+        ArgsInternal::VideoCallParticipant(args) => PrepareResult {
+            scope: AutonomousBotScope::Chat(args.chat),
+            access_type_args: AccessTypeArgs::JoinVideoCall(JoinVideoCallArgs {
+                initiator: user_id,
+                is_diamond,
+            }),
+        },
         ArgsInternal::MarkVideoCallAsEnded(args) => PrepareResult {
             scope: AutonomousBotScope::Chat(args.chat),
             access_type_args: AccessTypeArgs::MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs { initiator: user_id }),
@@ -217,6 +227,7 @@ enum ArgsInternal {
     StartVideoCall(access_token_v2::StartVideoCallArgs),
     JoinVideoCall(access_token_v2::JoinVideoCallArgs),
     MarkVideoCallAsEnded(access_token_v2::MarkVideoCallAsEndedArgs),
+    VideoCallParticipant(access_token_v2::VideoCallParticipantArgs),
     BotActionByCommand(access_token_v2::BotActionByCommandArgs),
     Translate,
 }
@@ -227,6 +238,7 @@ impl ArgsInternal {
             Args::StartVideoCall(args) => Ok(ArgsInternal::StartVideoCall(args)),
             Args::JoinVideoCall(args) => Ok(ArgsInternal::JoinVideoCall(args)),
             Args::MarkVideoCallAsEnded(args) => Ok(ArgsInternal::MarkVideoCallAsEnded(args)),
+            Args::VideoCallParticipant(args) => Ok(ArgsInternal::VideoCallParticipant(args)),
             Args::BotActionByCommand(args) => Ok(ArgsInternal::BotActionByCommand(args)),
             Args::Translate => Ok(ArgsInternal::Translate),
         }
@@ -237,6 +249,7 @@ impl ArgsInternal {
             Self::StartVideoCall(_) => CLAIM_TYPE_START_VIDEO_CALL,
             Self::JoinVideoCall(_) => CLAIM_TYPE_JOIN_VIDEO_CALL,
             Self::MarkVideoCallAsEnded(_) => CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED,
+            Self::VideoCallParticipant(_) => CLAIM_TYPE_VIDEO_CALL_PARTICIPANT,
             Self::BotActionByCommand(_) => CLAIM_TYPE_BOT_ACTION_BY_COMMAND,
             Self::Translate => "Translate",
         }
@@ -247,6 +260,7 @@ impl ArgsInternal {
             Self::StartVideoCall(args) => Some(args.chat),
             Self::JoinVideoCall(args) => Some(args.chat),
             Self::MarkVideoCallAsEnded(args) => Some(args.chat),
+            Self::VideoCallParticipant(args) => Some(args.chat),
             Self::BotActionByCommand(args) => args.scope.chat(None),
             Self::Translate => None,
         }

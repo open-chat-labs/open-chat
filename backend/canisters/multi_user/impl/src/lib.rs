@@ -606,50 +606,33 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    // The defaults below cover MultiUser canisters created before these fields existed. None of
-    // those hold any users.
-    #[serde(default)]
     pub users: Users,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub identity_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub escrow_canister_id: CanisterId,
-    #[serde(default)]
     pub video_call_operators: Vec<Principal>,
-    // Events for the LocalUserIndex, each naming the user it is from. The default covers canisters
-    // created before the queue existed, whose LocalUserIndex id is set after the upgrade.
-    #[serde(default = "local_user_index_event_sync_queue_default")]
+    // Events for the LocalUserIndex, each naming the user it is from
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
-    #[serde(default = "new_user_canister_events_queue")]
     pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     // The prefixes of deleted direct chats, whose entries are removed by a background job, each
     // with the index of the user who held the chat since the entries are keyed under that user
-    #[serde(default)]
     pub stable_memory_keys_to_garbage_collect: Vec<(u16, BaseKeyPrefix)>,
     // The indexes of deleted users, all of whose entries in the stable memory map are yet to be
     // removed by the garbage collection job
-    #[serde(default)]
     pub deleted_users_to_garbage_collect: Vec<u16>,
     // Events from other canisters are checked against this, as in the User canister. Each sender
     // batches its events for this canister's users together, so one checker covers them all.
-    #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
-    // The MultiUser canisters the UserIndex has confirmed, which may send events on behalf of any of
-    // their users
-    #[serde(default)]
+    // The MultiUser canisters the LocalUserIndex has confirmed, which may send events on behalf of
+    // any of their users
     pub known_multi_user_canisters: HashSet<CanisterId>,
-    #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
     // The certified transfers users have sent messages with, so that none is used twice
-    #[serde(default)]
     pub certified_transfers: CertifiedTransfers,
     // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
     // have changed
-    #[serde(default)]
     pub migrated_user_ids: MigratedUserIds,
     // The users being imported from canisters of their own, keyed by their old id
     #[serde(default)]
@@ -679,7 +662,7 @@ impl Data {
             escrow_canister_id,
             video_call_operators,
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
-            user_canister_events_queue: new_user_canister_events_queue(),
+            user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             deleted_users_to_garbage_collect: Vec::new(),
             idempotency_checker: IdempotencyChecker::default(),
@@ -692,14 +675,6 @@ impl Data {
             test_mode,
         }
     }
-}
-
-fn new_user_canister_events_queue() -> GroupedTimerJobQueue<UserCanisterEventBatch> {
-    GroupedTimerJobQueue::new(10, true)
-}
-
-fn local_user_index_event_sync_queue_default() -> BatchedTimerJobQueue<LocalUserIndexEventBatch> {
-    BatchedTimerJobQueue::new(CanisterId::anonymous(), true)
 }
 
 // The User canister's `UserEventPusher`, but naming the user the events are from, since the

@@ -12,8 +12,12 @@ import kotlinx.coroutines.launch
 // the bridge takes.
 class CallActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != IncomingCallNotifications.ACTION_DECLINE) return
         val call = IncomingCall.fromBundle(intent.extras) ?: return
+        if (intent.action == CallForegroundService.ACTION_HANG_UP) {
+            CallSession.hangUp(context, call.id, "notification")
+            return
+        }
+        if (intent.action != IncomingCallNotifications.ACTION_DECLINE) return
         val report = CallRinger.decline(context, call.id) ?: return
         val result = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
