@@ -9,9 +9,14 @@
 ;;
 ;;   callee length (1 byte) | callee | method length (1 byte) | method | payload
 ;;
-;; and calls `method` on `callee` with `payload`, as a guaranteed response call with no cycles
-;; attached. Once the callee responds it replies with the callee's reject code (u32 LE), which
-;; is 0 if the callee replied, followed by the callee's reply or reject message.
+;; and calls `method` on `callee` with `payload`, as a bounded wait (best-effort response) call
+;; with no cycles attached. Once the call completes it replies with the reject code (u32 LE),
+;; which is 0 if the callee replied, followed by the callee's reply or the reject message.
+;;
+;; The call is bounded wait so that a malicious or broken callee can't hold it open for ever,
+;; which would leave `relay` never replying and the canister unable to be stopped. Instead the
+;; call times out after 5 minutes, giving a SYS_UNKNOWN (6) reject, as does a dropped response,
+;; in which case the callee may or may not have acted on the call.
 ;;
 ;; Only a controller can call `relay`, which gives them nothing they don't already have, since
 ;; they could install any code they like on the canister.
@@ -30,6 +35,7 @@
   (import "ic0" "msg_reply" (func $msg_reply))
   (import "ic0" "call_new" (func $call_new (param i32 i32 i32 i32 i32 i32 i32 i32)))
   (import "ic0" "call_data_append" (func $call_data_append (param i32 i32)))
+  (import "ic0" "call_with_best_effort_response" (func $call_with_best_effort_response (param i32)))
   (import "ic0" "call_perform" (func $call_perform (result i32)))
   (import "ic0" "trap" (func $trap (param i32 i32)))
 
@@ -87,6 +93,8 @@
       (i32.const 0) (i32.const 0)   ;; on_reply
       (i32.const 1) (i32.const 0))  ;; on_reject
     (call $call_data_append (local.get $payload) (i32.sub (local.get $end) (local.get $payload)))
+    ;; The maximum timeout, far longer than any honest callee needs
+    (call $call_with_best_effort_response (i32.const 300))
     (if (call $call_perform)
       (then (call $trap (i32.const 96) (i32.const 19)))))
 
