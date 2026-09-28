@@ -684,11 +684,18 @@ fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
     let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_diamond_user(env, canister_ids, *controller);
+    let user2 = client::register_user(env, canister_ids);
     let user3 = client::register_user(env, canister_ids);
-    let group_id = client::user::happy_path::create_group(env, &user2, &random_string(), true, true);
-    client::group::happy_path::join_group(env, user1.principal, group_id);
-    client::group::happy_path::join_group(env, user3.principal, group_id);
+    // A private group, since members who join a public group have its notifications muted
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let group_local_user_index = canister_ids.local_user_index(env, group_id);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &user1,
+        group_local_user_index,
+        group_id,
+        vec![(user2.user_id, user2.principal), (user3.user_id, user3.principal)],
+    );
     // user2 blocks user1, who blocks user3
     client::user::happy_path::block_user(env, &user2, user1.user_id);
     client::user::happy_path::block_user(env, &user1, user3.user_id);
@@ -711,12 +718,11 @@ fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
     subscribe_to_notifications(env, canister_ids, &user1);
     tick_many(env, 10);
 
-    let local_user_index = canister_ids.local_user_index(env, group_id);
     // user2 isn't notified of a message from user1, now under their new id
-    let recipients = group_message_notification_recipients(env, *controller, local_user_index, &user1, group_id);
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user1, group_id);
     assert!(recipients.is_empty(), "{recipients:?}");
     // Nor is user1, under their new id, notified of a message from user3, while user2 is
-    let recipients = group_message_notification_recipients(env, *controller, local_user_index, &user3, group_id);
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user3, group_id);
     assert!(!recipients.contains(&new_user_id));
     assert_eq!(recipients, vec![user2.user_id]);
 }
