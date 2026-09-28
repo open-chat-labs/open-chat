@@ -1,7 +1,10 @@
 import type { IDL } from "@icp-sdk/core/candid";
-import { OptimalSwapPlan, _SERVICE } from "./types";
+import { OptimalSwapPlan, SplitLeg, SwapHop, SwapResult, _SERVICE } from "./types";
 export {
     OptimalSwapPlan as ApiOptimalSwapPlan,
+    SplitLeg as ApiSplitLeg,
+    SwapHop as ApiSwapHop,
+    SwapResult as ApiSwapResult,
     _SERVICE as TacoExchangePoolService,
 };
 
