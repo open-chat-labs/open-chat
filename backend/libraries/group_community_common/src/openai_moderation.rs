@@ -144,6 +144,8 @@ async fn call_moderation_api(
         body: Some(serde_json::to_vec(&body).unwrap()),
         transform: None,
         is_replicated: Some(false),
+        // `None` selects the legacy pricing model, which is what `cost_http_request` prices below
+        pricing_version: None,
     };
 
     // This computes the cost of a fully replicated call which is an overestimate for a
