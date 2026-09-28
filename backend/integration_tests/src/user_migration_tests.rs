@@ -726,6 +726,17 @@ fn notifications_index_knows_migrated_user_by_their_new_id() {
         &endpoint
     ));
 
+    // Upgrading the UserIndex once users have been migrated succeeds, and the user is still known by
+    // their new id
+    crate::delete_user_tests::upgrade_user_index(env, canister_ids);
+    tick_many(env, 3);
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
     // Once pushed again, the subscription is held under their new id, so they are notified of messages
     // sent to them
     client::notifications_index::happy_path::push_subscription(
