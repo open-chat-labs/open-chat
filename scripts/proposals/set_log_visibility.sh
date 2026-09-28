@@ -29,7 +29,6 @@ This change will be applied to the following canisters -
 PROPOSAL="(record { title=\"$TITLE\"; url=\"$URL\"; summary=\"$SUMMARY\"; action=opt variant {
 ManageDappCanisterSettings = record {
     canister_ids = vec {
-        principal \"62rh2-kiaaa-aaaaf-bmy5q-cai\";
         principal \"gonut-hqaaa-aaaaf-aby7a-cai\";
         principal \"s4yi7-yiaaa-aaaar-qacpq-cai\";
         principal \"6ofpc-2aaaa-aaaaf-biibq-cai\";
