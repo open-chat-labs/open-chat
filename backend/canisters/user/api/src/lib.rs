@@ -199,7 +199,7 @@ pub enum UserCanisterEvent {
     JoinVideoCall(Box<JoinVideoCall>),
     SetReferralStatus(Box<ReferralStatus>),
     SetEventsTtl(Box<SetEventsTtl>),
-    SetReferralStatusV2(Box<SetReferralStatus>),
+    SetReferralStatusV2(Box<SetReferralStatusV2>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -309,7 +309,7 @@ pub struct SetEventsTtl {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SetReferralStatus {
+pub struct SetReferralStatusV2 {
     pub status: ReferralStatus,
     // The ids the referred user had before being migrated to a MultiUser canister, oldest first, any
     // of which the referrer may hold their referral under

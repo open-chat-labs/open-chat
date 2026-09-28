@@ -3,7 +3,7 @@ use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::c2c_local_user_index_v2::*;
-use user_canister::{LocalUserIndexEvent, SetReferralStatus, UserCanisterEvent};
+use user_canister::{LocalUserIndexEvent, SetReferralStatusV2, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -55,7 +55,7 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
         let event = if previous_user_ids.is_empty() {
             UserCanisterEvent::SetReferralStatus(Box::new(status))
         } else {
-            UserCanisterEvent::SetReferralStatusV2(Box::new(SetReferralStatus {
+            UserCanisterEvent::SetReferralStatusV2(Box::new(SetReferralStatusV2 {
                 status,
                 previous_user_ids,
             }))
