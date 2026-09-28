@@ -202,6 +202,20 @@ impl DirectChats {
             .is_some_and(|chat| chat.mark_as_self_chat())
     }
 
+    // Moves the user's chats onto their new id, once they are migrated to a MultiUser canister. Their
+    // chat with themselves is keyed by their id, so is moved to the new id, along with its pin.
+    pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        for chat in self.direct_chats.values_mut() {
+            chat.migrate_own_user_id(old_user_id, new_user_id);
+        }
+        if let Some(chat) = self.direct_chats.remove(&old_user_id.into()) {
+            self.direct_chats.insert(new_user_id.into(), chat);
+        }
+        if let Some(pinned_at) = self.pinned.value.remove(&old_user_id.into()) {
+            self.pinned.value.insert(new_user_id.into(), pinned_at);
+        }
+    }
+
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {
         if let Some(chat) = self.direct_chats.remove(&chat_id) {
             removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), chat_id.into(), now);
