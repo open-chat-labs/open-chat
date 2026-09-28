@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{KeyPrefix, P2PSwapKeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{KeyPrefix, P2PSwapKey, P2PSwapKeyPrefix, with_map, with_map_mut};
 use std::collections::HashMap;
 use types::{P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 use user_canister::P2PSwapCreated;
@@ -43,6 +43,21 @@ impl P2PSwaps {
             token1_amount: swap.token1_amount,
             expires_at: swap.expires_at,
         });
+    }
+
+    // Whether any of the user's swaps, created or accepted, expires after `time`. Until then the
+    // Escrow canister may still pay out or refund to the user's account, since it pays out an
+    // accepted swap only once told of the acceptance, which can lag, and refunds one which wasn't
+    // accepted once it expires.
+    pub fn any_expiring_after(&self, time: TimestampMillis) -> bool {
+        let prefix = P2PSwapKeyPrefix::new();
+        with_map(|m| {
+            m.range::<P2PSwapKey, _>(prefix.create_key(&0)..=prefix.create_key(&u32::MAX))
+                .any(|(_, bytes)| {
+                    let swap: P2PSwap = msgpack::deserialize_then_unwrap(&bytes);
+                    swap.expires_at > time
+                })
+        })
     }
 
     pub fn is_empty(&self) -> bool {
@@ -98,7 +113,6 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use stable_memory_map::P2PSwapKey;
     use types::{Chat, MessageId};
 
     #[test]
@@ -133,6 +147,20 @@ mod tests {
             msgpack::deserialize_then_unwrap(&with_map(|m| m.get(P2PSwapKeyPrefix::new().create_key(&4))).unwrap());
         assert_eq!(stored.created_by, created_by);
         assert_eq!(stored.token0_amount, 400);
+    }
+
+    #[test]
+    fn only_unexpired_swaps_are_found() {
+        init_stable_memory_map();
+        let mut swaps = P2PSwaps::default();
+        assert!(!swaps.any_expiring_after(0));
+
+        // Expiring at 1001 and 1002
+        swaps.add(swap(1));
+        swaps.add(swap(2));
+
+        assert!(swaps.any_expiring_after(1001));
+        assert!(!swaps.any_expiring_after(1002));
     }
 
     #[test]

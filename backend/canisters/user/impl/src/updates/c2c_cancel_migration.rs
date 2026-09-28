@@ -37,10 +37,13 @@ fn c2c_cancel_migration_impl(args: Args, state: &mut RuntimeState) -> Response {
 mod tests {
     use crate::Data;
     use candid::Principal;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use oc_error_codes::OCErrorCode;
     use types::CanisterId;
 
     fn data() -> Data {
+        init_stable_memory_map();
         Data::new(
             Principal::from_slice(&[1]),
             Principal::from_slice(&[2]),
@@ -58,6 +61,11 @@ mod tests {
 
     fn multi_user_canister(i: u8) -> CanisterId {
         Principal::from_slice(&[10, i])
+    }
+
+    fn init_stable_memory_map() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
     }
 
     #[test]
