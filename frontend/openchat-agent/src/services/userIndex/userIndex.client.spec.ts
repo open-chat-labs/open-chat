@@ -189,8 +189,8 @@ describe("UserIndexClient.getUsers with migrated users", () => {
     });
 
     test("a deleted user isn't logged as missing", async () => {
-        setup({ migratedUserIds: { [OLD]: LATEST } });
-        respond = () => ({ deletedUserIds: new Set([LATEST]) });
+        setup();
+        respond = () => ({ deletedUserIds: new Set([OLD]) });
         const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
 
         await client.getUsers(args(OLD), false);
