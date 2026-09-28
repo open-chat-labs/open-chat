@@ -9,6 +9,7 @@ pub enum Args {
     StartVideoCall(StartVideoCallArgs),
     JoinVideoCall(JoinVideoCallArgs),
     MarkVideoCallAsEnded(MarkVideoCallAsEndedArgs),
+    VideoCallParticipant(VideoCallParticipantArgs),
     BotActionByCommand(BotActionByCommandArgs),
     Translate,
 }
@@ -41,6 +42,14 @@ pub struct JoinVideoCallArgs {
 #[ts_export]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MarkVideoCallAsEndedArgs {
+    pub chat: Chat,
+}
+
+// A token that says only that the caller belongs to this chat. The video bridge takes it for
+// a decline or a leave of the chat's call; a join needs a `JoinVideoCall` token.
+#[ts_export]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct VideoCallParticipantArgs {
     pub chat: Chat,
 }
 

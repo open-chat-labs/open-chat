@@ -13,7 +13,6 @@ use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, HttpRequest
 
 mod macros;
 
-pub mod airdrop_bot;
 pub mod community;
 pub mod cycles_dispenser;
 pub mod daily_puzzle;

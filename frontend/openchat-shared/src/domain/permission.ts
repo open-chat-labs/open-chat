@@ -223,6 +223,7 @@ export type AccessTokenType =
     | JoinVideoCall
     | StartVideoCall
     | MarkVideoCallEnded
+    | VideoCallParticipantToken
     | BotActionByCommand
     | Translate;
 
@@ -243,6 +244,12 @@ export type StartVideoCall = {
 
 export type MarkVideoCallEnded = {
     kind: "mark_video_call_ended";
+    chatId: ChatIdentifier;
+};
+
+// Proof that this user belongs to the chat, for declining or leaving its call. It cannot join.
+export type VideoCallParticipantToken = {
+    kind: "video_call_participant";
     chatId: ChatIdentifier;
 };
 

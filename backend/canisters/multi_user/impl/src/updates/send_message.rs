@@ -25,12 +25,12 @@ use user_core::updates::offer_p2p_swap;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-// The User canister's `send_message_v2`. A message holding crypto is sent with a transfer the user
-// makes from their own wallet, since this canister doesn't hold its users' funds: either pulled by
-// this canister via ICRC2, against an approval made under the user's own spender subaccount (see
-// `ledger_utils::spender_subaccount`), or already made by the user and certified (see
-// `ledger_utils::UserTransfer`).
-async fn send_message(args: Args) -> Response {
+// As the User canister's `send_message_v2`, except that a message holding crypto is sent with a
+// transfer the user makes from their own wallet, since this canister doesn't hold its users' funds:
+// either pulled by this canister via ICRC2, against an approval made under the user's own spender
+// subaccount (see `ledger_utils::spender_subaccount`), or already made by the user and certified
+// (see `ledger_utils::UserTransfer`).
+async fn send_message_v2(args: Args) -> Response {
     send_message_impl_async(args).await
 }
 

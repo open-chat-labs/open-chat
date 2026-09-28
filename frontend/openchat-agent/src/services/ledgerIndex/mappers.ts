@@ -10,24 +10,37 @@ import {
     type AccountTransactionResult,
     type AccountTransaction,
     encodeIcrcAccount,
+    type IcrcAccount,
     icrcAccountToUserId,
     UnsupportedValueError,
 } from "@shared";
 
-export function accountTransactions(candid: ApiGetTransactionsResult): AccountTransactionResult {
+// The wallet whose transactions are being listed, and the user it belongs to
+export type Wallet = {
+    account: IcrcAccount;
+    userId: string;
+};
+
+export function accountTransactions(
+    candid: ApiGetTransactionsResult,
+    wallet: Wallet,
+): AccountTransactionResult {
     if ("Err" in candid) {
         return CommonResponses.failure();
     }
     if ("Ok" in candid) {
-        return getTransactions(candid.Ok);
+        return getTransactions(candid.Ok, wallet);
     }
     throw new UnsupportedValueError("Unknown ApiGetTransactionsResult type", candid);
 }
 
-function getTransactions(candid: ApiGetTransactions): AccountTransactionResult {
+function getTransactions(candid: ApiGetTransactions, wallet: Wallet): AccountTransactionResult {
+    const walletAddress = encodeIcrcAccount(wallet.account);
+    const account = (candid: ApiAccount) => accountName(candid, walletAddress, wallet.userId);
+
     return {
         kind: "success",
-        transactions: candid.transactions.map(transaction),
+        transactions: candid.transactions.map((t) => transaction(t, account)),
         oldestTransactionId: optional(candid.oldest_tx_id, identity),
     };
 }
@@ -36,7 +49,10 @@ function nanosToDate(n: bigint): Date {
     return new Date(Number(n / 1_000_000n));
 }
 
-function transaction(candid: ApiTransactionWithId): AccountTransaction {
+function transaction(
+    candid: ApiTransactionWithId,
+    account: (candid: ApiAccount) => string,
+): AccountTransaction {
     // the candid types are quite fuzzy here - the old "product type when it should be sum type" thing
     if (candid.transaction.burn[0] !== undefined) {
         const burn = candid.transaction.burn[0];
@@ -105,16 +121,23 @@ export function memoBytesToString(candid: Uint8Array | number[]): string {
     return [...candid].map((n) => String.fromCharCode(n)).join("");
 }
 
-// The counterparty as the rest of the app names it: a userId where the account is a user's wallet,
-// which is what lets the UI resolve it to that user. Anything else - an exchange's subaccount, say -
-// keeps its full textual encoding rather than being flattened to its owner, since two subaccounts of
-// one owner are different counterparties.
-function account({ owner, subaccount }: ApiAccount): string {
+// An account as the rest of the app names it: a userId where the account is a user's wallet, which
+// is what lets the UI resolve it to that user. The wallet being listed is named by its user's id,
+// since the wallet of a user in a MultiUser canister is their principal's account, which is not
+// their user id. Anything else - an exchange's subaccount, say - keeps its full textual encoding
+// rather than being flattened to its owner, since two subaccounts of one owner are different
+// counterparties.
+function accountName(
+    { owner, subaccount }: ApiAccount,
+    walletAddress: string,
+    walletUserId: string,
+): string {
     const account = {
         owner,
         subaccount: optional(subaccount, (bytes) => Uint8Array.from(bytes)),
     };
-    const userId = icrcAccountToUserId(account);
+    const address = encodeIcrcAccount(account);
+    if (address === walletAddress) return walletUserId;
 
-    return userId ?? encodeIcrcAccount(account);
+    return icrcAccountToUserId(account) ?? address;
 }

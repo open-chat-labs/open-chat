@@ -23,7 +23,6 @@ mod c2c_pay_for_premium_item;
 mod c2c_remove_from_community;
 mod c2c_remove_from_group;
 mod c2c_revoke_super_admin;
-mod c2c_send_messages;
 mod c2c_set_user_suspended;
 mod c2c_uninstall_bot;
 mod c2c_user_canister_v2;

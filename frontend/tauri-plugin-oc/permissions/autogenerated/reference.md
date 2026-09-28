@@ -31,6 +31,11 @@ Default permissions for the plugin
 - `allow-get-pending-call-action`
 - `allow-call-ring-handled`
 - `allow-set-call-config`
+- `allow-call-active`
+- `allow-call-ended`
+- `allow-set-call-speaker`
+- `allow-set-call-ringback`
+- `allow-set-call-end-token`
 
 ## Permission Table
 
@@ -40,6 +45,58 @@ Default permissions for the plugin
 <th>Description</th>
 </tr>
 
+
+<tr>
+<td>
+
+`oc:allow-call-active`
+
+</td>
+<td>
+
+Enables the call_active command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-call-active`
+
+</td>
+<td>
+
+Denies the call_active command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-call-ended`
+
+</td>
+<td>
+
+Enables the call_ended command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-call-ended`
+
+</td>
+<td>
+
+Denies the call_ended command without any pre-configured scope.
+
+</td>
+</tr>
 
 <tr>
 <td>
@@ -609,6 +666,84 @@ Enables the set_call_config command without any pre-configured scope.
 <td>
 
 Denies the set_call_config command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-set-call-end-token`
+
+</td>
+<td>
+
+Enables the set_call_end_token command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-set-call-end-token`
+
+</td>
+<td>
+
+Denies the set_call_end_token command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-set-call-ringback`
+
+</td>
+<td>
+
+Enables the set_call_ringback command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-set-call-ringback`
+
+</td>
+<td>
+
+Denies the set_call_ringback command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-set-call-speaker`
+
+</td>
+<td>
+
+Enables the set_call_speaker command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-set-call-speaker`
+
+</td>
+<td>
+
+Denies the set_call_speaker command without any pre-configured scope.
 
 </td>
 </tr>

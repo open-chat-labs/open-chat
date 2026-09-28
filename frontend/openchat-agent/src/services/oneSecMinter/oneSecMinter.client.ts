@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { EvmChain, OneSecForwardingStatus, OneSecTransferFees } from "@shared";
+import type { EvmChain, IcrcAccount, OneSecForwardingStatus, OneSecTransferFees } from "@shared";
 import { idlFactory, type OneSecMinterService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { apiForwardEvmToIcpArgs, forwardingResponse, transferFeesResponse } from "./mappers";
@@ -13,7 +13,7 @@ export class OneSecMinterClient extends CandidCanisterAgent<OneSecMinterService>
         tokenSymbol: string,
         chain: EvmChain,
         address: string,
-        receiver: string,
+        receiver: IcrcAccount,
     ): Promise<OneSecForwardingStatus> {
         const args = apiForwardEvmToIcpArgs(tokenSymbol, chain, address, receiver);
 
@@ -24,7 +24,7 @@ export class OneSecMinterClient extends CandidCanisterAgent<OneSecMinterService>
         tokenSymbol: string,
         chain: EvmChain,
         address: string,
-        receiver: string,
+        receiver: IcrcAccount,
     ): Promise<OneSecForwardingStatus> {
         const args = apiForwardEvmToIcpArgs(tokenSymbol, chain, address, receiver);
 

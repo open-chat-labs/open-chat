@@ -49,7 +49,6 @@ cargo run --package local_canister_creator -- \
   --canister identity \
   --canister online_users \
   --canister proposals_bot \
-  --canister airdrop_bot \
   --canister storage_index \
   --canister cycles_dispenser \
   --canister daily_puzzle \

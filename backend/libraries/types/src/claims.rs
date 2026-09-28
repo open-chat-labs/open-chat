@@ -15,6 +15,9 @@ pub const CLAIM_TYPE_START_VIDEO_CALL: &str = "StartVideoCall";
 pub const CLAIM_TYPE_JOIN_VIDEO_CALL: &str = "JoinVideoCall";
 pub const CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED: &str = "MarkVideoCallAsEnded";
 pub const CLAIM_TYPE_DECLINE_VIDEO_CALL: &str = "DeclineVideoCall";
+// Proof that a user belongs to a chat with a call in it, and nothing more: the bridge accepts
+// it for a decline or a leave, never for a join. See open-chat #9559.
+pub const CLAIM_TYPE_VIDEO_CALL_PARTICIPANT: &str = "VideoCallParticipant";
 pub const CLAIM_TYPE_BOT_ACTION_BY_COMMAND: &str = "BotActionByCommand";
 pub const CLAIM_TYPE_NCA_VAULT_EXPORT: &str = "NcaVaultExport";
 pub const CLAIM_TYPE_NCA_SUBMITTER: &str = "NcaSubmitter";
