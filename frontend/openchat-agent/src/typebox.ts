@@ -8882,6 +8882,7 @@ export const CurrentUserSummary = /* @__PURE__ */ Type.Object({
     streak: Type.Number(),
     max_streak: Type.Number(),
     hide_online_status: Type.Optional(Type.Boolean()),
+    previous_user_ids: Type.Optional(Type.Array(UserId)),
 });
 
 export type SenderContext = Static<typeof SenderContext>;

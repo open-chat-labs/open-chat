@@ -125,4 +125,9 @@ pub struct CurrentUserSummary {
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<bool>", optional)]
     pub hide_online_status: bool,
+    // Every id the user had before being migrated to a MultiUser canister, ordered oldest first, as
+    // returned by `current_user`
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserId>>", optional)]
+    pub previous_user_ids: Vec<UserId>,
 }
