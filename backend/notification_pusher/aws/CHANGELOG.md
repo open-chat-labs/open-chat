@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.1942](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1942-notification_pusher)] - 2026-01-02
 
+### Changed
+
+- Switch to only using `endpoint` to identify notification subscriptions ([#8733](https://github.com/open-chat-labs/open-chat/pull/8733))
+
 ### Fixed
 
 - Fix Base64 encoding of notifications ([#8743](https://github.com/open-chat-labs/open-chat/pull/8743))
@@ -22,6 +26,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Use the endpoint as unique identifier for notification subscriptions ([#8670](https://github.com/open-chat-labs/open-chat/pull/8670))
 - Log the user Id when a subscription is removed ([#8675](https://github.com/open-chat-labs/open-chat/pull/8675))
+
+## [[2.0.1911](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1911-notification_pusher)] - 2025-10-03
+
+### Changed
+
+- Set notification priority on the server side ([#8636](https://github.com/open-chat-labs/open-chat/pull/8636))
 
 ## [[2.0.1894](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1894-notification_pusher)] - 2025-09-11
 
